@@ -74,6 +74,8 @@ STUDIO_RULES = [
 # under this owner and keep their names.
 FORK_RULES = [
     (re.compile(r"marvis-ai/marvis(?![\w-])"), "yunboom/marvis"),
+    # The same path escaped inside a regular-expression literal.
+    (re.compile(r"marvis-ai\\/marvis(?![\w-])"), r"yunboom\\/marvis"),
     (re.compile(r"ghcr\.io/marvis-ai/"), "ghcr.io/yunboom/"),
     (re.compile(r"^(\s*owner: )marvis-ai$", re.M), r"\1yunboom"),
     (re.compile(r"marvis-ai/(tap\b|homebrew-tap)"), r"yunboom/\1"),
