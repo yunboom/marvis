@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/daemon"
+	"github.com/marvis-ai/marvis/server/internal/daemon"
 )
 
 // multiHarness serves several tasks and sessions at once; setup() models one.
@@ -78,7 +78,7 @@ func setupMulti(t *testing.T, limit int, tasks ...*daemon.Task) *multiHarness {
 		case strings.HasSuffix(r.URL.Path, "/messages"), strings.HasSuffix(r.URL.Path, "/session"), strings.HasSuffix(r.URL.Path, "/cancel-ack"):
 			io.WriteString(w, `{}`)
 		default:
-			t.Errorf("unexpected Multica request %s", r.URL)
+			t.Errorf("unexpected Marvis request %s", r.URL)
 			http.NotFound(w, r)
 		}
 	}))
@@ -136,7 +136,7 @@ func setupMulti(t *testing.T, limit int, tasks ...*daemon.Task) *multiHarness {
 	}))
 	t.Cleanup(q.Close)
 	var err error
-	h.b, err = New(Config{MulticaURL: m.URL, MulticaToken: "multica-secret", WorkspaceID: workspaceID, QoderURL: q.URL, QoderToken: "qoder-secret", EnvironmentID: "env_1", StateDir: t.TempDir(), MaxConcurrency: limit}, nil)
+	h.b, err = New(Config{MarvisURL: m.URL, MarvisToken: "marvis-secret", WorkspaceID: workspaceID, QoderURL: q.URL, QoderToken: "qoder-secret", EnvironmentID: "env_1", StateDir: t.TempDir(), MaxConcurrency: limit}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,7 +297,7 @@ func TestPromptAsksForLinkableBranch(t *testing.T) {
 		t.Fatal(err)
 	}
 	prompt := h.prompts["sess_new_1"]
-	if !strings.Contains(prompt, "multica/mul-42-fix-the-login-bug") || !strings.Contains(prompt, `"MUL-42: "`) {
+	if !strings.Contains(prompt, "marvis/mul-42-fix-the-login-bug") || !strings.Contains(prompt, `"MUL-42: "`) {
 		t.Fatalf("prompt lacks branch convention: %s", prompt)
 	}
 }
@@ -317,9 +317,9 @@ func TestLegacySingleRunJournalDecodes(t *testing.T) {
 
 func TestBranchName(t *testing.T) {
 	for _, tc := range []struct{ id, title, want string }{
-		{"MUL-7", "Fix: Login → SSO!", "multica/mul-7-fix-login-sso"},
-		{"MUL-7", "修复登录", "multica/mul-7"},
-		{"MUL-7", strings.Repeat("long title ", 10), "multica/mul-7-long-title-long-title-long-title-long"},
+		{"MUL-7", "Fix: Login → SSO!", "marvis/mul-7-fix-login-sso"},
+		{"MUL-7", "修复登录", "marvis/mul-7"},
+		{"MUL-7", strings.Repeat("long title ", 10), "marvis/mul-7-long-title-long-title-long-title-long"},
 	} {
 		if got := BranchName(tc.id, tc.title); got != tc.want {
 			t.Errorf("BranchName(%q) = %q, want %q", tc.title, got, tc.want)

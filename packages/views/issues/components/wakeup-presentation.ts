@@ -5,7 +5,7 @@ import type {
   IssueWakeup,
   WakeupCondition,
   WakeupPreview,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { useLocale, useT } from "../../i18n";
 import { useViewingTimezone } from "../../common/use-viewing-timezone";
 import { parseCron } from "../../autopilots/components/schedule-editor/cron-mapping";

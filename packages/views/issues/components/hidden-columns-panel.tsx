@@ -1,21 +1,21 @@
 "use client";
 
 import { Eye, Filter, MoreHorizontal } from "lucide-react";
-import type { IssueStatus } from "@multica/core/types";
-import { IconButton } from "@multica/ui/components/common/icon-button";
+import type { IssueStatus } from "@marvis/core/types";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { useViewStore, useViewStoreApi } from "@multica/core/issues/stores/view-store-context";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { useViewStore, useViewStoreApi } from "@marvis/core/issues/stores/view-store-context";
 import { StatusIcon } from "./status-icon";
 import { useT } from "../../i18n";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { useStatusLabel } from "../utils/status-label";
-import { useWorkspacePaths } from "@multica/core/paths";
+import { useWorkspacePaths } from "@marvis/core/paths";
 import { AppLink } from "../../navigation";
 import { useWorkflowPermissions } from "../../workflows/permissions";
 

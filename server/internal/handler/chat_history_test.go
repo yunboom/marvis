@@ -14,9 +14,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/slack"
-	"github.com/multica-ai/multica/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/slack"
+	"github.com/marvis-ai/marvis/server/internal/util"
 )
 
 type fakeChatHistoryReader struct {

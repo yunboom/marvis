@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/service"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 // batchClaimResponse mirrors the {"tasks":[...]} envelope ClaimTasksByRuntime
@@ -236,7 +236,7 @@ func TestClaimTasksByRuntime_SkipsCrossWorkspaceRuntime(t *testing.T) {
 
 	// A foreign workspace with its own runtime + agent + queued task.
 	var foreignUser, foreignWS string
-	if err := testPool.QueryRow(ctx, `INSERT INTO "user" (name, email) VALUES ('Foreign User', 'batch-foreign@multica.ai') RETURNING id`).Scan(&foreignUser); err != nil {
+	if err := testPool.QueryRow(ctx, `INSERT INTO "user" (name, email) VALUES ('Foreign User', 'batch-foreign@marvis.ai') RETURNING id`).Scan(&foreignUser); err != nil {
 		t.Fatalf("foreign user: %v", err)
 	}
 	t.Cleanup(func() { testPool.Exec(ctx, `DELETE FROM "user" WHERE id = $1`, foreignUser) })

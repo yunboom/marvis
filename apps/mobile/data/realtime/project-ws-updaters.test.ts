@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
-import type { Project } from "@multica/core/types";
+import type { Project } from "@marvis/core/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/data/api";

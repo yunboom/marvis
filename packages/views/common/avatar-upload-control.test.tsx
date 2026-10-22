@@ -12,11 +12,11 @@ vi.mock("sonner", () => ({
   toast: { error: toastError, success: toastSuccess },
 }));
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { getBaseUrl: () => "https://api.test" },
 }));
 
-vi.mock("@multica/core/hooks/use-file-upload", () => ({
+vi.mock("@marvis/core/hooks/use-file-upload", () => ({
   useFileUpload: () => ({ upload: uploadMock }),
 }));
 

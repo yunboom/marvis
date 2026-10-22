@@ -23,7 +23,7 @@ When you assign to a squad, the squad becomes the issue's assignee and the squad
 
 ## Execution after assignment
 
-Multica creates a [run](/tasks) for the agent. Once an online runtime claims the run, it invokes the AI coding tool on that machine; progress, comments, and results then appear in the issue.
+Marvis creates a [run](/tasks) for the agent. Once an online runtime claims the run, it invokes the AI coding tool on that machine; progress, comments, and results then appear in the issue.
 
 If the runtime is temporarily offline, the run waits in the queue; a run is bound to its runtime and never moves to another machine.
 
@@ -71,13 +71,13 @@ Changing or removing an assignee does not normally stop a run already underway. 
 ## Use the CLI
 
 ```bash
-multica issue assign MUL-42 --to "Agent name"
-multica issue assign MUL-42 --to-id <agent-uuid> --no-start
-multica issue status MUL-42 in_progress --no-start
-multica issue assign MUL-42 --unassign
+marvis issue assign MUL-42 --to "Agent name"
+marvis issue assign MUL-42 --to-id <agent-uuid> --no-start
+marvis issue status MUL-42 in_progress --no-start
+marvis issue assign MUL-42 --unassign
 ```
 
-In scripts, use `--to-id <uuid>` to avoid matching the wrong object with the same name. Look up UUIDs with `multica agent list --output json` or `multica workspace member list --output json`.
+In scripts, use `--to-id <uuid>` to avoid matching the wrong object with the same name. Look up UUIDs with `marvis agent list --output json` or `marvis workspace member list --output json`.
 
 Use `--no-start` when the assignment should record ownership without creating a new run — for example, when the same agent is already handling the issue from another run. The same flag is available on `issue update` and `issue status`. If an ownership-only flow changes both assignment and status, pass it to both commands; suppressing the assignment does not suppress a later status-triggered run.
 

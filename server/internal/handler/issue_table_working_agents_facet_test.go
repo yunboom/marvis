@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // workingAgentsFacetCounts posts one facets request and returns the
@@ -97,7 +97,7 @@ func TestIssueTableWorkingAgentsFacetCountsOnlyEligibleRuns(t *testing.T) {
 }
 
 func TestIssueTableWorkingAgentsFacetVisibility(t *testing.T) {
-	memberID := dbfx.User(t, "working facet member", "working-facet-member@multica.test")
+	memberID := dbfx.User(t, "working facet member", "working-facet-member@marvis.test")
 	dbfx.Member(t, testWorkspaceID, memberID, "member")
 	issueID := dbfx.Issue(t, "working facet visibility")
 	privateID := dbfx.Agent(t, "working facet private", "")
@@ -145,7 +145,7 @@ func TestIssueTableWorkingAgentsFacetVisibility(t *testing.T) {
 }
 
 func TestIssueTableWorkingAgentsFacetMyRelations(t *testing.T) {
-	otherID := dbfx.User(t, "working facet other member", "working-facet-other@multica.test")
+	otherID := dbfx.User(t, "working facet other member", "working-facet-other@marvis.test")
 	dbfx.Member(t, testWorkspaceID, otherID, "admin")
 	agentID := dbfx.Agent(t, "working facet my agent", "")
 	for _, cols := range []testutil.Cols{

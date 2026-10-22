@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { I18nProvider } from "@multica/core/i18n/react";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enSkills from "../../locales/en/skills.json";
 
@@ -13,20 +13,20 @@ const mockImportSkillArchive = vi.hoisted(() => vi.fn());
 const mockPrepareFromPicker = vi.hoisted(() => vi.fn());
 const mockWrap = vi.hoisted(() => vi.fn());
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     importSkillArchive: (...args: unknown[]) => mockImportSkillArchive(...args),
   },
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
-vi.mock("@multica/core/skills", async () => {
+vi.mock("@marvis/core/skills", async () => {
   const actual = await vi.importActual<
-    typeof import("@multica/core/skills")
-  >("@multica/core/skills");
+    typeof import("@marvis/core/skills")
+  >("@marvis/core/skills");
   return {
     ...actual,
     prepareSkillArchiveFromPickerFiles: (...args: unknown[]) =>

@@ -26,7 +26,7 @@ func BuildNewCommentsHint(issueID, triggerCommentID, triggerThreadID, newComment
 		"%d new comment(s) on this issue since your last run, across all threads — "+
 			"the server computed this delta, and reading it is the scan workflow step 2 requires. "+
 			"Read exactly those comments with "+
-			"`multica issue comment list %s --since %s --compact --output json` "+
+			"`marvis issue comment list %s --since %s --compact --output json` "+
 			"(every comment created after that anchor, in every thread — it also returns the triggering comment and your own replies, "+
 			"which the count above excludes, so expect more rows than that number).",
 		newCommentCount, issueID, newCommentsSince,
@@ -38,7 +38,7 @@ func BuildNewCommentsHint(issueID, triggerCommentID, triggerThreadID, newComment
 	}
 	return fmt.Sprintf(
 		"%s Triggering thread in full, if resumed memory is not enough for the reply: "+
-			"`multica issue comment list %s --thread %s --tail 30 --compact --output json`.\n\n",
+			"`marvis issue comment list %s --thread %s --tail 30 --compact --output json`.\n\n",
 		delta, issueID, threadID,
 	)
 }
@@ -76,7 +76,7 @@ func BuildResumedCommentsHint(issueID, triggerCommentID, triggerThreadID string)
 			"No other new comments on this issue since your last run — this turn's issue-wide delta is empty, "+
 			"which answers the scan workflow step 2 requires. "+
 			"Triggering thread in full, if resumed memory is not enough for the reply: "+
-			"`multica issue comment list %s --thread %s --tail 30 --compact --output json`.\n\n",
+			"`marvis issue comment list %s --thread %s --tail 30 --compact --output json`.\n\n",
 		issueID, threadID,
 	)
 }
@@ -99,17 +99,17 @@ func BuildResumedUnknownDeltaCommentsHint(issueID, triggerCommentID, triggerThre
 		return fmt.Sprintf(
 			"You're resuming the prior session, and the triggering comment is already included above. "+
 				"This turn carries no issue-wide comment delta, so nothing here answers the scan workflow step 2 requires — run it: "+
-				"`multica issue comment list %s --roots-only --summary --compact --output json`.\n\n",
+				"`marvis issue comment list %s --roots-only --summary --compact --output json`.\n\n",
 			issueID,
 		)
 	}
 	return fmt.Sprintf(
 		"You're resuming the prior session, and the triggering comment is already included above. "+
 			"This turn carries no issue-wide comment delta, so nothing here answers the scan workflow step 2 requires — run it: "+
-			"`multica issue comment list %s --roots-only --summary --compact --output json`, "+
+			"`marvis issue comment list %s --roots-only --summary --compact --output json`, "+
 			"and expand what its `last_activity_at` shows has moved. "+
 			"Triggering thread in full, if resumed memory is not enough for the reply: "+
-			"`multica issue comment list %s --thread %s --tail 30 --compact --output json`.\n\n",
+			"`marvis issue comment list %s --thread %s --tail 30 --compact --output json`.\n\n",
 		issueID, issueID, threadID,
 	)
 }
@@ -146,7 +146,7 @@ func BuildColdCommentsHint(issueID, triggerCommentID, triggerThreadID string) st
 	// routing value (MUL-5721 OPT-1).
 	return fmt.Sprintf(
 		"Triggering thread: "+
-			"`multica issue comment list %s --thread %s --tail 30 --compact --output json` "+
+			"`marvis issue comment list %s --thread %s --tail 30 --compact --output json` "+
 			"(that thread's root + its 30 newest replies). "+
 			"The scan workflow step 2 requires is the same command with `--roots-only --summary` in place of `--thread ... --tail 30`.\n\n",
 		issueID, threadID,
@@ -222,11 +222,11 @@ func buildCommentReplyInstructionsSlim(provider, issueID, triggerCommentID strin
 				"do NOT reuse --parent values from previous turns in this session.\n\n"+
 				"Write the body file first — never pipe via `--content-stdin` (PowerShell drops non-ASCII; full rules: ## Comment Formatting above). Use the variant for the shell your command tool runs:\n\n"+
 				"PowerShell:\n\n"+
-				"    multica issue comment add %[1]s --parent %[2]s --content-file ./reply.md --output table\n"+
+				"    marvis issue comment add %[1]s --parent %[2]s --content-file ./reply.md --output table\n"+
 				"    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n"+
 				"    Remove-Item ./reply.md\n\n"+
 				"Git Bash:\n\n"+
-				"    multica issue comment add %[1]s --parent %[2]s --content-file ./reply.md --output table && rm ./reply.md\n\n"+
+				"    marvis issue comment add %[1]s --parent %[2]s --content-file ./reply.md --output table && rm ./reply.md\n\n"+
 				"Do NOT drop the exit-code check or the `&&`: a bare cleanup after a failed post reports success and deletes the body.\n\n"+
 				"Do NOT write literal `\\n` escapes to simulate line breaks; the file preserves real newlines.\n",
 			issueID, triggerCommentID,
@@ -236,7 +236,7 @@ func buildCommentReplyInstructionsSlim(provider, issueID, triggerCommentID strin
 		lead+
 			"do NOT reuse --parent values from previous turns in this session.\n\n"+
 			"Write the body file first (rules: ## Comment Formatting above — MUL-2904 / #4182):\n\n"+
-			"    multica issue comment add %s --parent %s --content-file ./reply.md --output table && rm ./reply.md\n\n"+
+			"    marvis issue comment add %s --parent %s --content-file ./reply.md --output table && rm ./reply.md\n\n"+
 			"Keep the `&&`: as two separate statements a failed post is masked by the cleanup's success, and the body file is deleted.\n\n"+
 			"Do NOT write literal `\\n` escapes to simulate line breaks; the file preserves real newlines.\n",
 		issueID, triggerCommentID,
@@ -297,7 +297,7 @@ func BuildMultiThreadCommentReplyInstructions(issueID string, targets []ThreadRe
 	// byte-for-byte.
 	lead := "This run coalesced comments from %d DISTINCT threads. Post ONE reply per thread"
 	if squadLeader {
-		lead = "This run coalesced comments from %d DISTINCT threads. **If your outcome is `no_action`, skip this ENTIRE fan-out block — post no replies at all and exit via `multica squad activity` as your leader rules direct; everything below applies only otherwise.** Otherwise, post ONE reply per thread"
+		lead = "This run coalesced comments from %d DISTINCT threads. **If your outcome is `no_action`, skip this ENTIRE fan-out block — post no replies at all and exit via `marvis squad activity` as your leader rules direct; everything below applies only otherwise.** Otherwise, post ONE reply per thread"
 	}
 	return fmt.Sprintf(
 		lead+" — %d in total. This OVERRIDES the \"post exactly one comment per run\" rule: for THIS run multiple replies are required and correct. Do NOT merge separate threads into one comment or post twice in the same thread.\n\n"+

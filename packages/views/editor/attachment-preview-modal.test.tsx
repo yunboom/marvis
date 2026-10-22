@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
-import type { Attachment } from "@multica/core/types";
+import type { Attachment } from "@marvis/core/types";
 
 const { openExternalMock, isDesktopShellMock, copyImageMock, toastMock } =
   vi.hoisted(() => ({
@@ -21,7 +21,7 @@ vi.mock("../platform/local-directory", () => ({
   isDesktopShell: isDesktopShellMock,
 }));
 
-vi.mock("@multica/ui/lib/clipboard", () => ({
+vi.mock("@marvis/ui/lib/clipboard", () => ({
   copyImage: copyImageMock,
 }));
 
@@ -65,7 +65,7 @@ const {
   };
 });
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     getAttachmentTextContent: getAttachmentTextContentMock,
     getAttachment: getAttachmentMock,
@@ -103,8 +103,8 @@ vi.mock("../navigation", () => ({
   }),
 }));
 
-vi.mock("@multica/core/paths", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@multica/core/paths")>();
+vi.mock("@marvis/core/paths", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@marvis/core/paths")>();
   return {
     ...actual,
     useWorkspaceSlug: () => slugState.value,

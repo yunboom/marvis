@@ -15,12 +15,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
 )
 
 const (
-	longPathExecutableHelperEnv = "MULTICA_LONG_PATH_EXECUTABLE_HELPER"
-	longPathExecutableMarkerEnv = "MULTICA_LONG_PATH_EXECUTABLE_MARKER"
+	longPathExecutableHelperEnv = "MARVIS_LONG_PATH_EXECUTABLE_HELPER"
+	longPathExecutableMarkerEnv = "MARVIS_LONG_PATH_EXECUTABLE_MARKER"
 )
 
 func TestLongPathExecutableHelper(t *testing.T) {

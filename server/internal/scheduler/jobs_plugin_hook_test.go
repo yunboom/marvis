@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/featureflags"
-	"github.com/multica-ai/multica/server/internal/service"
-	"github.com/multica-ai/multica/server/internal/util"
-	"github.com/multica-ai/multica/server/pkg/featureflag"
+	"github.com/marvis-ai/marvis/server/internal/featureflags"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/marvis-ai/marvis/server/pkg/featureflag"
 )
 
 func TestPluginHookSchedulePlansCollapseToLatestAndStaySerial(t *testing.T) {

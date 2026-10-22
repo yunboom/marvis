@@ -5,18 +5,18 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight, ExternalLink, Trash2 } from "lucide-react";
 import { TelegramMark } from "./telegram-mark";
-import { cn } from "@multica/ui/lib/utils";
-import { Button } from "@multica/ui/components/ui/button";
-import { Card, CardContent } from "@multica/ui/components/ui/card";
+import { cn } from "@marvis/ui/lib/utils";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Card, CardContent } from "@marvis/ui/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Input } from "@multica/ui/components/ui/input";
-import { Label } from "@multica/ui/components/ui/label";
+} from "@marvis/ui/components/ui/dialog";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Label } from "@marvis/ui/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,19 +26,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { memberListOptions } from "@multica/core/workspace/queries";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { telegramInstallationsOptions, telegramKeys } from "@multica/core/telegram";
-import { api } from "@multica/core/api";
-import type { TelegramInstallation } from "@multica/core/types";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { memberListOptions } from "@marvis/core/workspace/queries";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { telegramInstallationsOptions, telegramKeys } from "@marvis/core/telegram";
+import { api } from "@marvis/core/api";
+import type { TelegramInstallation } from "@marvis/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { docsLocalePrefix } from "../../common/docs-locale";
 import { openExternal } from "../../platform";
 import { useLocale, useT } from "../../i18n";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 
 // TelegramTab is the workspace settings panel for Telegram bot installations,
 // mirroring SlackTab: listing is member-visible; the disconnect action is
@@ -109,7 +109,7 @@ export function TelegramTab() {
             <p className="text-caption text-muted-foreground">
               {t(($) => $.telegram.not_enabled_description_prefix)}{" "}
               <code className="rounded-xs bg-muted px-1 py-0.5 text-micro">
-                MULTICA_TELEGRAM_SECRET_KEY
+                MARVIS_TELEGRAM_SECRET_KEY
               </code>{" "}
               {t(($) => $.telegram.not_enabled_description_suffix)}{" "}
               {t(($) => $.telegram.not_enabled_self_host_hint)}
@@ -236,7 +236,7 @@ function InstallationRow({
 // telegramDocsUrl points at the Telegram integration guide on the docs site,
 // localized like the Slack docs link.
 function telegramDocsUrl(lang: string | undefined): string {
-  return `https://multica.ai/docs${docsLocalePrefix(lang)}/telegram-bot-integration`;
+  return `https://marvis.ai/docs${docsLocalePrefix(lang)}/telegram-bot-integration`;
 }
 
 // TelegramAgentBindButton is the per-agent CTA on the agent detail page.

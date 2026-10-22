@@ -1,8 +1,8 @@
 import { CheckCircle2, ChevronRight } from "lucide-react";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { Card } from "@multica/ui/components/ui/card";
-import type { TimelineEntry } from "@multica/core/types";
-import { isDeletedComment } from "@multica/core/issues/comment-deletion";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { Card } from "@marvis/ui/components/ui/card";
+import type { TimelineEntry } from "@marvis/core/types";
+import { isDeletedComment } from "@marvis/core/issues/comment-deletion";
 import { useT } from "../../i18n";
 
 interface ResolvedThreadBarProps {

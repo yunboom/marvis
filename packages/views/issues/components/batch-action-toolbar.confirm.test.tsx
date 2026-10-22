@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import type { Issue, UpdateIssueRequest } from "@multica/core/types";
+import type { Issue, UpdateIssueRequest } from "@marvis/core/types";
 import { BatchActionToolbar } from "./batch-action-toolbar";
 
 // MUL-4155: batch status changes must apply directly (no run-confirm modal),
@@ -14,19 +14,19 @@ const selection = vi.hoisted(() => ({
   select: vi.fn(),
   deselect: vi.fn(),
 }));
-vi.mock("@multica/core/issues/stores/selection-store", () => ({
+vi.mock("@marvis/core/issues/stores/selection-store", () => ({
   useIssueSelectionStore: (selector: (s: typeof selection) => unknown) => selector(selection),
 }));
 
 const batchUpdate = vi.hoisted(() => vi.fn().mockResolvedValue({ updated: 1 }));
 const batchDelete = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
-vi.mock("@multica/core/issues/mutations", () => ({
+vi.mock("@marvis/core/issues/mutations", () => ({
   useBatchUpdateIssues: () => ({ mutateAsync: batchUpdate, isPending: false }),
   useBatchDeleteIssues: () => ({ mutateAsync: batchDelete, isPending: false }),
 }));
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/issue-workflows", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/issue-workflows", () => ({
   useIssueWorkflows: () => ({ workflows: [] }),
   sharedWorkflowStatusKeys: () => null,
 }));
@@ -36,7 +36,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
 }));
 
 const openModal = vi.hoisted(() => vi.fn());
-vi.mock("@multica/core/modals", () => ({
+vi.mock("@marvis/core/modals", () => ({
   useModalStore: (selector: (s: { open: typeof openModal }) => unknown) => selector({ open: openModal }),
 }));
 

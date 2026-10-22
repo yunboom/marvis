@@ -1,6 +1,6 @@
 # 按钮
 
-从 `@multica/ui/components/ui/button` 导入。
+从 `@marvis/ui/components/ui/button` 导入。
 
 ## 使用规则
 

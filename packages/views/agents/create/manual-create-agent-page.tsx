@@ -3,18 +3,18 @@
 import { useEffect, useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@multica/core/api";
+import { api } from "@marvis/core/api";
 import {
   agentBuilderSessionKeys,
   toStoredAgentDraft,
-} from "@multica/core/agents";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { runtimeDisplayLabel } from "@multica/core/runtimes";
-import type { RuntimeDevice } from "@multica/core/types";
-import { agentListOptions } from "@multica/core/workspace/queries";
-import { Button } from "@multica/ui/components/ui/button";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/agents";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { runtimeDisplayLabel } from "@marvis/core/runtimes";
+import type { RuntimeDevice } from "@marvis/core/types";
+import { agentListOptions } from "@marvis/core/workspace/queries";
+import { Button } from "@marvis/ui/components/ui/button";
+import { cn } from "@marvis/ui/lib/utils";
 import { useBackOrReplace, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { ProviderLogo } from "../../runtimes/components/provider-logo";

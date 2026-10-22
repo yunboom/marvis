@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { labelListOptions } from "@multica/core/labels";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { labelListOptions } from "@marvis/core/labels";
 import { useT } from "../../i18n";
 import { LabelManager, type LabelScope } from "../../labels/label-manager";
 import { SettingsTab, SettingsViewTabs } from "./settings-layout";

@@ -18,7 +18,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/multica-ai/multica/server/pkg/redact"
+	"github.com/marvis-ai/marvis/server/pkg/redact"
 )
 
 func newTestCodexClient(t *testing.T) (*codexClient, *fakeStdin, []Message) {
@@ -897,7 +897,7 @@ func TestCodexFirstTurnNoProgressTimeoutClamp(t *testing.T) {
 }
 
 // TestCodexFirstTurnNoProgressTimeoutExplicitOverride covers the
-// MULTICA_CODEX_FIRST_TURN_TIMEOUT path added for GH #3262 / #5959: a positive
+// MARVIS_CODEX_FIRST_TURN_TIMEOUT path added for GH #3262 / #5959: a positive
 // configured value is honored as-is for the first-turn watchdog ceiling,
 // including upward past the default that the semantic inactivity timeout alone
 // can never raise. This resolver only sets that one timer's duration; the
@@ -1413,8 +1413,8 @@ func TestCodexRawItemMCPToolCall(t *testing.T) {
 		messages = append(messages, msg)
 	}
 
-	c.handleLine(`{"jsonrpc":"2.0","method":"item/started","params":{"item":{"type":"mcpToolCall","id":"mcp-1","server":"plugin-exa-search","tool":"web_search_exa","arguments":{"query":"latest Multica news","credentials":{"api_key":"sk-12345678901234567890"}},"status":"inProgress"}}}`)
-	c.handleLine(`{"jsonrpc":"2.0","method":"item/completed","params":{"item":{"type":"mcpToolCall","id":"mcp-1","server":"plugin-exa-search","tool":"web_search_exa","arguments":{"query":"latest Multica news"},"status":"completed","durationMs":1429,"result":{"content":[{"type":"text","text":"private provider payload"}]}}}}`)
+	c.handleLine(`{"jsonrpc":"2.0","method":"item/started","params":{"item":{"type":"mcpToolCall","id":"mcp-1","server":"plugin-exa-search","tool":"web_search_exa","arguments":{"query":"latest Marvis news","credentials":{"api_key":"sk-12345678901234567890"}},"status":"inProgress"}}}`)
+	c.handleLine(`{"jsonrpc":"2.0","method":"item/completed","params":{"item":{"type":"mcpToolCall","id":"mcp-1","server":"plugin-exa-search","tool":"web_search_exa","arguments":{"query":"latest Marvis news"},"status":"completed","durationMs":1429,"result":{"content":[{"type":"text","text":"private provider payload"}]}}}}`)
 
 	if len(messages) != 2 {
 		t.Fatalf("expected 2 messages, got %d", len(messages))
@@ -1428,7 +1428,7 @@ func TestCodexRawItemMCPToolCall(t *testing.T) {
 		t.Fatalf("expected MCP server provenance, got %#v", begin.Input)
 	}
 	arguments, ok := begin.Input["arguments"].(map[string]any)
-	if !ok || arguments["query"] != "latest Multica news" {
+	if !ok || arguments["query"] != "latest Marvis news" {
 		t.Fatalf("expected MCP arguments, got %#v", begin.Input["arguments"])
 	}
 	credentials, ok := arguments["credentials"].(map[string]any)
@@ -1883,7 +1883,7 @@ func TestCodexDeliverableOutputExcludesNarration(t *testing.T) {
 				t.Fatalf("Result.Output = %q, want %q", got, tc.want)
 			}
 			// Narrowing delivery must not narrow the transcript: both messages
-			// still stream to the timeline the Multica UI renders.
+			// still stream to the timeline the Marvis UI renders.
 			if len(streamed) != 2 || streamed[0] != "Let me check the logs." {
 				t.Fatalf("expected both agent messages streamed, got %q", streamed)
 			}
@@ -2423,9 +2423,9 @@ func TestCodexStartOrResumeThreadResumesPriorThread(t *testing.T) {
 	}
 }
 
-// codexRuntimeBriefCanary stands in for the Multica runtime brief the daemon
+// codexRuntimeBriefCanary stands in for the Marvis runtime brief the daemon
 // would inline if developerInstructions were ever wired back up.
-const codexRuntimeBriefCanary = "MULTICA-RUNTIME-BRIEF-CANARY"
+const codexRuntimeBriefCanary = "MARVIS-RUNTIME-BRIEF-CANARY"
 
 // assertNoDeveloperInstructions pins the MUL-5392 contract: Codex loads the
 // per-task AGENTS.md from the thread's cwd, so the daemon never inlines the
@@ -3256,7 +3256,7 @@ func TestCodexExecuteFirstTurnNoProgressSurfacesDiagnostics(t *testing.T) {
 }
 
 // TestCodexExecuteFirstTurnOverrideAboveSemanticIsTruncated pins the competing-
-// timer contract for MULTICA_CODEX_FIRST_TURN_TIMEOUT (GH #3262 / #5959): the
+// timer contract for MARVIS_CODEX_FIRST_TURN_TIMEOUT (GH #3262 / #5959): the
 // first status:running arms the semantic-inactivity timer and the first-turn
 // timer together, so a first-turn override ABOVE the semantic timeout cannot
 // extend the first-item wait — the semantic timer fires first. That also
@@ -5104,9 +5104,9 @@ func TestEnsureCodexMcpConfigEmptyClearsBlock(t *testing.T) {
 	// `[mcp_servers.user]`) is left untouched.
 	tmp := filepath.Join(t.TempDir(), "config.toml")
 	initial := "sandbox_mode = \"workspace-write\"\n\n" +
-		multicaCodexMcpBeginMarker + "\n" +
+		marvisCodexMcpBeginMarker + "\n" +
 		"[mcp_servers.fetch]\ncommand = \"uvx\"\n" +
-		multicaCodexMcpEndMarker + "\n\n" +
+		marvisCodexMcpEndMarker + "\n\n" +
 		"[mcp_servers.user_global]\ncommand = \"keep\"\n"
 	if err := os.WriteFile(tmp, []byte(initial), 0o600); err != nil {
 		t.Fatalf("seed config: %v", err)
@@ -5120,7 +5120,7 @@ func TestEnsureCodexMcpConfigEmptyClearsBlock(t *testing.T) {
 		t.Fatalf("read after: %v", err)
 	}
 	got := string(data)
-	if strings.Contains(got, multicaCodexMcpBeginMarker) {
+	if strings.Contains(got, marvisCodexMcpBeginMarker) {
 		t.Fatalf("managed block should be cleared, got:\n%s", got)
 	}
 	if !strings.Contains(got, "[mcp_servers.user_global]") {
@@ -5152,7 +5152,7 @@ func TestEnsureCodexMcpConfigWritesManagedBlock(t *testing.T) {
 	}
 	got := string(data)
 
-	if !strings.Contains(got, multicaCodexMcpBeginMarker) || !strings.Contains(got, multicaCodexMcpEndMarker) {
+	if !strings.Contains(got, marvisCodexMcpBeginMarker) || !strings.Contains(got, marvisCodexMcpEndMarker) {
 		t.Fatalf("expected managed block markers, got:\n%s", got)
 	}
 	alphaIdx := strings.Index(got, "[mcp_servers.alpha]")
@@ -5468,7 +5468,7 @@ func TestEnsureCodexMcpConfigAbsentLeavesUserTablesAlone(t *testing.T) {
 		if !strings.Contains(got, "[mcp_servers.user_global]") {
 			t.Fatalf("absent mcp_config (%q) must leave user MCP tables alone, got:\n%s", string(raw), got)
 		}
-		if strings.Contains(got, multicaCodexMcpBeginMarker) {
+		if strings.Contains(got, marvisCodexMcpBeginMarker) {
 			t.Fatalf("absent mcp_config (%q) must not write managed markers, got:\n%s", string(raw), got)
 		}
 	}
@@ -5501,7 +5501,7 @@ func TestEnsureCodexMcpConfigEmptyManagedSetStripsUserMcp(t *testing.T) {
 		if strings.Contains(got, "user_global") {
 			t.Fatalf("managed empty set (%q) must strip user MCP tables, got:\n%s", string(raw), got)
 		}
-		if !strings.Contains(got, multicaCodexMcpBeginMarker) || !strings.Contains(got, multicaCodexMcpEndMarker) {
+		if !strings.Contains(got, marvisCodexMcpBeginMarker) || !strings.Contains(got, marvisCodexMcpEndMarker) {
 			t.Fatalf("managed empty set (%q) must still write markers so future runs find them, got:\n%s", string(raw), got)
 		}
 		if !strings.Contains(got, `sandbox_mode = "workspace-write"`) {

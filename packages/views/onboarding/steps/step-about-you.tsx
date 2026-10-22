@@ -17,8 +17,8 @@ import {
   Settings2,
   User,
 } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import type { QuestionnaireAnswers, Role, UseCase } from "@multica/core/onboarding";
+import { Button } from "@marvis/ui/components/ui/button";
+import type { QuestionnaireAnswers, Role, UseCase } from "@marvis/core/onboarding";
 import {
   StepFooter,
   StepHeading,

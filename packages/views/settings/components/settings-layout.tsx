@@ -11,10 +11,10 @@ import {
   UserRound,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@multica/ui/components/ui/card";
-import { cn } from "@multica/ui/lib/utils";
-import { useCurrentWorkspace } from "@multica/core/paths";
-import { memberListOptions } from "@multica/core/workspace/queries";
+import { Card, CardContent } from "@marvis/ui/components/ui/card";
+import { cn } from "@marvis/ui/lib/utils";
+import { useCurrentWorkspace } from "@marvis/core/paths";
+import { memberListOptions } from "@marvis/core/workspace/queries";
 import { WorkspaceAvatar } from "../../workspace/workspace-avatar";
 import { useT } from "../../i18n";
 

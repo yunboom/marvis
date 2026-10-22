@@ -18,25 +18,25 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { childIssuesOptions, issueDetailOptions, useCreateIssueWakeup } from "@multica/core/issues";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { labelListOptions } from "@multica/core/labels/queries";
-import { propertyListOptions } from "@multica/core/properties/queries";
-import { isAgentRuntimeBound } from "@multica/core/agents";
-import { ApiError } from "@multica/core/api";
-import { agentListOptions, memberListOptions, squadListOptions } from "@multica/core/workspace/queries";
-import { shortcutMatchesEvent, useShortcut } from "@multica/core/shortcuts";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Input } from "@multica/ui/components/ui/input";
-import { Textarea } from "@multica/ui/components/ui/textarea";
+import { childIssuesOptions, issueDetailOptions, useCreateIssueWakeup } from "@marvis/core/issues";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { labelListOptions } from "@marvis/core/labels/queries";
+import { propertyListOptions } from "@marvis/core/properties/queries";
+import { isAgentRuntimeBound } from "@marvis/core/agents";
+import { ApiError } from "@marvis/core/api";
+import { agentListOptions, memberListOptions, squadListOptions } from "@marvis/core/workspace/queries";
+import { shortcutMatchesEvent, useShortcut } from "@marvis/core/shortcuts";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
   PopoverTitle,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
-import { DialogTitle } from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/popover";
+import { DialogTitle } from "@marvis/ui/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -48,8 +48,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { ShortcutKeycaps } from "../../common/shortcut-keycaps";
 import { useViewingTimezone } from "../../common/use-viewing-timezone";
@@ -80,7 +80,7 @@ const pillClass =
 
 /**
  * Lets a member add a wakeup from the issue sidebar. It creates the same rule
- * an agent creates with `multica issue wakeup create`.
+ * an agent creates with `marvis issue wakeup create`.
  */
 export function WakeupCreate({
   workspaceId,

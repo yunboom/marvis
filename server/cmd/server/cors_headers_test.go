@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/handler"
-	"github.com/multica-ai/multica/server/internal/realtime"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/handler"
+	"github.com/marvis-ai/marvis/server/internal/realtime"
 )
 
 func TestRouterCORSContract(t *testing.T) {

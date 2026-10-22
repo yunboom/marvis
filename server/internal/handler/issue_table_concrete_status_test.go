@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 func TestIssueTableConcreteStatusCatalogOrder(t *testing.T) {

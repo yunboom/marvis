@@ -11,8 +11,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/dbid"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/dbid"
 )
 
 // Exercise evaluation and diagnostic persistence even without local PostgreSQL.

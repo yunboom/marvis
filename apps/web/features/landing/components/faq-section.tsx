@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import { InlineLinks } from "./inline-links";
 import { useLocale } from "../i18n";
 

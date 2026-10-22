@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/realtime"
-	"github.com/multica-ai/multica/server/internal/util/secretbox"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // The deduper is an optional field on ChannelDeps, and a missing one has no
@@ -40,7 +40,7 @@ func TestWecomChannelGetsItsDeduperOnTheRealBootPath(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(&logged, &slog.HandlerOptions{Level: slog.LevelDebug})))
 	t.Cleanup(func() { slog.SetDefault(restore) })
 
-	t.Setenv("MULTICA_WECOM_SECRET_KEY", base64.StdEncoding.EncodeToString(key))
+	t.Setenv("MARVIS_WECOM_SECRET_KEY", base64.StdEncoding.EncodeToString(key))
 	withWecom := events.New()
 	NewRouter(nil, realtime.NewHub(), withWecom, analytics.NoopClient{}, nil)
 

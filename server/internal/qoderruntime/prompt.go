@@ -22,20 +22,20 @@ func (b *Bridge) prepare(ctx context.Context, t *claimedTask) (*run, error) {
 		return nil, fmt.Errorf("claim is missing a task-scoped credential")
 	}
 	if len(t.RemoteMCPConnections) > 0 || len(t.ConnectedApps) > 0 || len(t.PluginHookTools) > 0 {
-		return nil, fmt.Errorf("Multica connected apps and runtime MCP tools are not supported by the Qoder bridge")
+		return nil, fmt.Errorf("Marvis connected apps and runtime MCP tools are not supported by the Qoder bridge")
 	}
 	if t.Agent != nil && (hasCustomSkills(t.Agent.Skills) || len(t.Agent.SkillRefs) > 0 || len(t.Agent.CustomEnv) > 0 || len(t.Agent.CustomArgs) > 0 || len(t.Agent.McpConfig) > 0 && string(t.Agent.McpConfig) != "null" && string(t.Agent.McpConfig) != "{}" || t.Agent.Model != "" || t.Agent.ThinkingLevel != "" || t.Agent.ServiceTier != "") {
-		return nil, fmt.Errorf("configure skills, tools, credentials and model on the Qoder Agent; Multica execution overrides are not supported by this bridge")
+		return nil, fmt.Errorf("configure skills, tools, credentials and model on the Qoder Agent; Marvis execution overrides are not supported by this bridge")
 	}
 	if t.Agent == nil {
-		return nil, fmt.Errorf("associate a QCA Agent in the Multica agent runtime configuration")
+		return nil, fmt.Errorf("associate a QCA Agent in the Marvis agent runtime configuration")
 	}
 	binding, err := ParseAgentConfig(t.Agent.RuntimeConfig)
 	if err != nil {
 		return nil, err
 	}
 	r.AgentID = binding.AgentID
-	taskAPI := *b.multica
+	taskAPI := *b.marvis
 	taskAPI.token = t.AuthToken
 	var issue struct {
 		Title       string            `json:"title"`
@@ -49,14 +49,14 @@ func (b *Bridge) prepare(ctx context.Context, t *claimedTask) (*run, error) {
 		return nil, fmt.Errorf("issue attachments are not supported by the Qoder bridge")
 	}
 	var p strings.Builder
-	p.WriteString("Complete the following Multica issue in your Qoder environment. Return a final summary including code changes, tests and branch/PR/MR links when available. This bridge does not expose a local Multica daemon.\n")
+	p.WriteString("Complete the following Marvis issue in your Qoder environment. Return a final summary including code changes, tests and branch/PR/MR links when available. This bridge does not expose a local Marvis daemon.\n")
 	if t.PriorSessionID != "" {
 		r.PriorSessionID = t.PriorSessionID
 		p.WriteString("This is a follow-up on the same issue. If the earlier conversation is not in your context, rely on the issue and comments below.\n")
 	}
 	fmt.Fprintf(&p, "\nRun: %s\nIssue: %s\n\n%s\n\n%s\n", t.ID, t.IssueIdentifier, issue.Title, issue.Description)
 	if t.IssueIdentifier != "" {
-		fmt.Fprintf(&p, "\nWhen you change code, push a new branch named %s (never the default branch), open a pull request whose title starts with \"%s: \", and put the pull request link in your final summary. Multica links the pull request to this issue through that identifier.\n", BranchName(t.IssueIdentifier, issue.Title), t.IssueIdentifier)
+		fmt.Fprintf(&p, "\nWhen you change code, push a new branch named %s (never the default branch), open a pull request whose title starts with \"%s: \", and put the pull request link in your final summary. Marvis links the pull request to this issue through that identifier.\n", BranchName(t.IssueIdentifier, issue.Title), t.IssueIdentifier)
 	}
 	if t.Agent != nil {
 		fmt.Fprintf(&p, "\nAgent instructions:\n%s\n", t.Agent.Instructions)
@@ -120,17 +120,17 @@ type Repository struct {
 	Ref string `json:"ref,omitempty"`
 }
 
-// AgentConfig is the runtime_config of a Multica agent bound to Qoder.
+// AgentConfig is the runtime_config of a Marvis agent bound to Qoder.
 type AgentConfig struct {
 	AgentID    string      `json:"qoder_agent_id"`
 	Repository *Repository `json:"repository,omitempty"`
 }
 
-// ParseAgentConfig validates the Qoder binding stored on a Multica agent.
+// ParseAgentConfig validates the Qoder binding stored on a Marvis agent.
 func ParseAgentConfig(raw json.RawMessage) (AgentConfig, error) {
 	var cfg AgentConfig
 	if err := json.Unmarshal(raw, &cfg); err != nil || !ValidAgentID(cfg.AgentID) {
-		return cfg, fmt.Errorf("associate a QCA Agent in the Multica agent runtime configuration")
+		return cfg, fmt.Errorf("associate a QCA Agent in the Marvis agent runtime configuration")
 	}
 	if cfg.Repository != nil && cfg.Repository.URL != "" {
 		if _, err := repositoryResource(*cfg.Repository); err != nil {
@@ -159,7 +159,7 @@ func repositoryResource(ref Repository) (map[string]any, error) {
 
 var nonSlug = regexp.MustCompile(`[^a-z0-9]+`)
 
-// BranchName gives remote work a branch Multica's GitHub integration links back
+// BranchName gives remote work a branch Marvis's GitHub integration links back
 // to the issue: the identifier must appear in the branch name.
 func BranchName(identifier, title string) string {
 	slug := strings.Trim(nonSlug.ReplaceAllString(strings.ToLower(title), "-"), "-")
@@ -171,7 +171,7 @@ func BranchName(identifier, title string) string {
 			slug = slug[:40]
 		}
 	}
-	branch := "multica/" + strings.ToLower(identifier)
+	branch := "marvis/" + strings.ToLower(identifier)
 	if slug != "" {
 		branch += "-" + slug
 	}

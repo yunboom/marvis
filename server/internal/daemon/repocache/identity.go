@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const identityConfigInclude = "# Multica identity defaults; explicit worktree settings below take precedence.\n[include]\n\tpath = multica-identity.config\n"
+const identityConfigInclude = "# Marvis identity defaults; explicit worktree settings below take precedence.\n[include]\n\tpath = marvis-identity.config\n"
 
 // isolateWorktreeIdentityContext masks identity inherited from the shared cache
 // without rewriting it: other, possibly running, worktrees must not change.
@@ -70,7 +70,7 @@ func isolateWorktreeIdentityContext(ctx context.Context, barePath, checkoutPath 
 			fmt.Fprintf(&config, "\t%s = %s\n", field, quoteGitConfig(values[section+"."+field]))
 		}
 	}
-	if err := editGitConfigFile(filepath.Join(gitDir, "multica-identity.config"), func(_ []byte, _ string) ([]byte, error) {
+	if err := editGitConfigFile(filepath.Join(gitDir, "marvis-identity.config"), func(_ []byte, _ string) ([]byte, error) {
 		return []byte(config.String()), nil
 	}); err != nil {
 		return err

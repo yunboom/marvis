@@ -15,23 +15,23 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
-import { Button } from "@multica/ui/components/ui/button";
-import { NumberFlow } from "@multica/ui/components/ui/number-flow";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
+} from "@marvis/ui/components/ui/tooltip";
+import { Button } from "@marvis/ui/components/ui/button";
+import { NumberFlow } from "@marvis/ui/components/ui/number-flow";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { useInfiniteQuery, useQueries, useQuery } from "@tanstack/react-query";
-import type { Agent, AgentTask, Issue } from "@multica/core/types";
+import type { Agent, AgentTask, Issue } from "@marvis/core/types";
 import {
   type AgentActivity,
   agentTaskSnapshotOptions,
   agentTasksOptions,
   summarizeActivityWindow,
   useWorkspaceActivityMap,
-} from "@multica/core/agents";
-import { api } from "@multica/core/api";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { issueDetailOptions } from "@multica/core/issues/queries";
+} from "@marvis/core/agents";
+import { api } from "@marvis/core/api";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { issueDetailOptions } from "@marvis/core/issues/queries";
 import { AppLink } from "../../../navigation";
 import { TranscriptButton } from "../../../common/task-transcript";
 import { AttributionBadge } from "../../../issues/components/attribution-badge";

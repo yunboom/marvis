@@ -443,7 +443,7 @@ func TestOpenclawActiveConfigPathReadsThePathFromANonZeroExit(t *testing.T) {
 //
 // This is a deliberate loss of tolerance on that one command, taken because the
 // alternative was demonstrated to return a wrong path. The deadline is what makes
-// it bounded, and MULTICA_OPENCLAW_CLI_TIMEOUT (#7142) is what makes it tunable.
+// it bounded, and MARVIS_OPENCLAW_CLI_TIMEOUT (#7142) is what makes it tunable.
 func TestOpenclawActiveConfigPathFailsClosedWhenConfigFileNeverExits(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

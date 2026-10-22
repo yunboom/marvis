@@ -31,7 +31,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // Installation is the flat, feishu-shaped view of a channel_installation row.
@@ -63,7 +63,7 @@ type Installation struct {
 type UserBinding struct {
 	ID             pgtype.UUID
 	WorkspaceID    pgtype.UUID
-	MulticaUserID  pgtype.UUID
+	MarvisUserID   pgtype.UUID
 	InstallationID pgtype.UUID
 	ChannelUserID  string
 	UnionID        pgtype.Text
@@ -86,7 +86,7 @@ type ChatSessionBinding struct {
 	// LastSenderID is the channel-native id (open_id) of whoever sent the
 	// trigger LastMessageID refers to — the account an outbound reply
 	// @-mentions. Frozen per task via channel_task_delivery, never re-derived
-	// from the Multica member: one member can hold several open_ids on one
+	// from the Marvis member: one member can hold several open_ids on one
 	// installation, so a member-keyed lookup could name the wrong account.
 	LastSenderID pgtype.Text
 }
@@ -205,7 +205,7 @@ func userBindingFromRow(row db.ChannelUserBinding) (UserBinding, error) {
 	return UserBinding{
 		ID:             row.ID,
 		WorkspaceID:    row.WorkspaceID,
-		MulticaUserID:  row.MulticaUserID,
+		MarvisUserID:   row.MarvisUserID,
 		InstallationID: row.InstallationID,
 		ChannelUserID:  row.ChannelUserID,
 		UnionID:        textOrNull(cfg.UnionID),

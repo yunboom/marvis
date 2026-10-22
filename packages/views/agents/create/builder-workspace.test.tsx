@@ -4,9 +4,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EMPTY_AGENT_DRAFT, toStoredAgentDraft, type AgentDraft } from "@multica/core/agents";
-import type { AgentBuilderSessionSummary, ChatMessage } from "@multica/core/types";
-import type { SupportedLocale } from "@multica/core/i18n";
+import { EMPTY_AGENT_DRAFT, toStoredAgentDraft, type AgentDraft } from "@marvis/core/agents";
+import type { AgentBuilderSessionSummary, ChatMessage } from "@marvis/core/types";
+import type { SupportedLocale } from "@marvis/core/i18n";
 import { renderWithI18n } from "../../test/i18n";
 import { BuilderWorkspace } from "./builder-workspace";
 
@@ -20,7 +20,7 @@ const h = vi.hoisted(() => ({
   clearUnsupportedModel: false,
   save: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { saveAgentBuilderDraft: h.save },
 }));
 vi.mock("./use-builder-session", () => ({
@@ -75,7 +75,7 @@ vi.mock("./builder-conversation", () => ({
 }));
 vi.mock("./create-agent-footer", () => ({ CreateAgentFooter: () => null }));
 vi.mock("react-resizable-panels", () => ({ useDefaultLayout: () => ({}) }));
-vi.mock("@multica/ui/components/ui/resizable", () => ({
+vi.mock("@marvis/ui/components/ui/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: ReactNode }) => <>{children}</>,
   ResizablePanel: ({ children }: { children: ReactNode }) => <>{children}</>,
   ResizableHandle: () => null,

@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, CalendarClock, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { useCurrentMember } from "@multica/core/permissions";
+import { useCurrentMember } from "@marvis/core/permissions";
 import {
   pluginInstallationsOptions,
   pluginPackagesOptions,
@@ -15,29 +15,29 @@ import {
   usePublishPluginPackage,
   useSetPluginEnabled,
   useUninstallPlugin,
-} from "@multica/core/plugins";
-import { useCurrentWorkspace } from "@multica/core/paths";
+} from "@marvis/core/plugins";
+import { useCurrentWorkspace } from "@marvis/core/paths";
 import type {
   PluginConfigField,
   PluginInstallation,
   PluginPackage,
   PluginPreview,
-} from "@multica/core/types";
-import { Alert, AlertDescription, AlertTitle } from "@multica/ui/components/ui/alert";
-import { Badge } from "@multica/ui/components/ui/badge";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Input } from "@multica/ui/components/ui/input";
+} from "@marvis/core/types";
+import { Alert, AlertDescription, AlertTitle } from "@marvis/ui/components/ui/alert";
+import { Badge } from "@marvis/ui/components/ui/badge";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@multica/ui/components/ui/select";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
-import { Textarea } from "@multica/ui/components/ui/textarea";
-import { Switch } from "@multica/ui/components/ui/switch";
+} from "@marvis/ui/components/ui/select";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
+import { Switch } from "@marvis/ui/components/ui/switch";
 import { mcpHooks, PluginHookActivity, PluginMCPApproval, PluginScheduleActivity } from "../../plugins";
 import { useLocale, useT } from "../../i18n";
 import {

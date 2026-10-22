@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { MyIssuesPage } from "@multica/views/my-issues";
+import { MyIssuesPage } from "@marvis/views/my-issues";
 import { useIssueViewUrlSync } from "../../../../platform/use-issue-view-url-sync";
 
 function IssueViewUrlSync() {

@@ -8,17 +8,17 @@ import {
   decodeBuilderInput,
   pickBuilderRestore,
   type BuilderRestore,
-} from "@multica/core/agents";
-import { api, ApiError } from "@multica/core/api";
+} from "@marvis/core/agents";
+import { api, ApiError } from "@marvis/core/api";
 import {
   chatKeys,
   chatMessagesOptions,
   pendingChatTaskOptions,
-} from "@multica/core/chat/queries";
-import { upsertChatMessageToCaches } from "@multica/core/chat/message-cache";
-import { removeChatMessageFromCaches } from "@multica/core/realtime";
-import { useWorkspaceId } from "@multica/core/hooks";
-import type { ChatMessage } from "@multica/core/types";
+} from "@marvis/core/chat/queries";
+import { upsertChatMessageToCaches } from "@marvis/core/chat/message-cache";
+import { removeChatMessageFromCaches } from "@marvis/core/realtime";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import type { ChatMessage } from "@marvis/core/types";
 import { useAppForeground } from "../../common/use-app-foreground";
 import { useChatDraftRestore } from "../../chat/components/use-chat-draft-restore";
 import { useT } from "../../i18n";

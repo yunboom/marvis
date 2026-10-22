@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { AutopilotTrigger } from "@multica/core/types";
+import type { AutopilotTrigger } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 
 // The editor a trigger row opens (MUL-7478). Before it, an existing schedule
@@ -11,14 +11,14 @@ import { renderWithI18n } from "../../test/i18n";
 
 const mockUpdateTrigger = vi.hoisted(() => vi.fn());
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
 
 // The submit path validates over the network before it writes. Parking that
 // round trip holds the dialog mid-flight, in the window a label typed after
 // Save used to fall into.
 const preview = vi.hoisted(() => ({ release: null as null | (() => void), hold: false }));
 
-vi.mock("@multica/core/autopilots/queries", () => ({
+vi.mock("@marvis/core/autopilots/queries", () => ({
   cronPreviewOptions: (wsId: string, expr: string, tz: string) => ({
     queryKey: ["cron-preview", wsId, expr, tz],
     queryFn: async () => {
@@ -33,7 +33,7 @@ vi.mock("@multica/core/autopilots/queries", () => ({
   }),
 }));
 
-vi.mock("@multica/core/autopilots/mutations", () => ({
+vi.mock("@marvis/core/autopilots/mutations", () => ({
   useUpdateAutopilotTrigger: () => ({ mutateAsync: mockUpdateTrigger }),
 }));
 

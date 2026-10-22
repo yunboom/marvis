@@ -1,4 +1,4 @@
-// Copyright 2026 Multica. All rights reserved.
+// Copyright 2026 Marvis. All rights reserved.
 
 package daemon
 
@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // TestMain redirects the home environment variables to one scratch directory
@@ -18,18 +18,18 @@ import (
 // their own redirect; per-test t.Setenv overrides still take precedence.
 func TestMain(m *testing.M) {
 	for _, key := range []string{
-		"MULTICA_AGENT_ID",
-		"MULTICA_TASK_ID",
-		"MULTICA_TOKEN",
-		"MULTICA_DAEMON_PORT",
-		"MULTICA_WORKSPACE_ID",
-		"MULTICA_SERVER_URL",
-		"MULTICA_TASK_CONFIG_ROOT",
+		"MARVIS_AGENT_ID",
+		"MARVIS_TASK_ID",
+		"MARVIS_TOKEN",
+		"MARVIS_DAEMON_PORT",
+		"MARVIS_WORKSPACE_ID",
+		"MARVIS_SERVER_URL",
+		"MARVIS_TASK_CONFIG_ROOT",
 	} {
 		os.Unsetenv(key)
 	}
 
-	scratchHome, err := testutil.IsolateUserHome("multica-daemon-tests-home-")
+	scratchHome, err := testutil.IsolateUserHome("marvis-daemon-tests-home-")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "isolate internal/daemon test home: %v\n", err)
 		os.Exit(1)

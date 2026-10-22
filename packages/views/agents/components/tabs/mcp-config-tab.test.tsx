@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { Agent, AgentRuntime } from "@multica/core/types";
-import { ApiError } from "@multica/core/api";
-import { I18nProvider } from "@multica/core/i18n/react";
+import type { Agent, AgentRuntime } from "@marvis/core/types";
+import { ApiError } from "@marvis/core/api";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../../locales/en/common.json";
 import enAgents from "../../../locales/en/agents.json";
 import { McpConfigTab } from "./mcp-config-tab";
@@ -27,7 +27,7 @@ const workspaceMcp = vi.hoisted(() => ({
 // The workspace section reads the agent's assignments plus the library.
 // Stubbing the query options keeps this a pure render test — the real ones
 // would hit fetch.
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   agentMcpServersOptions: (agentId: string) => ({
     queryKey: ["agents", agentId, "mcp-servers"],
     queryFn: () => Promise.resolve(workspaceMcp.assigned),
@@ -40,7 +40,7 @@ vi.mock("@multica/core/workspace/queries", () => ({
   }),
 }));
 
-vi.mock("@multica/core/workspace/mutations", () => ({
+vi.mock("@marvis/core/workspace/mutations", () => ({
   useAddAgentMcpServer: () => ({ mutateAsync: mockAddServer, isPending: false }),
   useSetAgentMcpServerEnabled: () => ({ mutateAsync: mockSetEnabled, isPending: false }),
   useRemoveAgentMcpServer: () => ({ mutateAsync: mockRemoveServer, isPending: false }),
@@ -58,10 +58,10 @@ const wsServer = (over: Record<string, unknown>) => ({
 
 // The tab reads discovery through runtimeCapabilitiesOptions; existing tests
 // render with runtime={null} so the query stays disabled and never fires.
-vi.mock("@multica/core/runtimes", async () => {
+vi.mock("@marvis/core/runtimes", async () => {
   const actual =
-    await vi.importActual<typeof import("@multica/core/runtimes")>(
-      "@multica/core/runtimes",
+    await vi.importActual<typeof import("@marvis/core/runtimes")>(
+      "@marvis/core/runtimes",
     );
   return {
     ...actual,
@@ -192,7 +192,7 @@ describe("McpConfigTab", () => {
     expect(screen.getByLabelText("Streamable HTTP")).toBeInTheDocument();
     expect(screen.getByText("STDIO")).toBeVisible();
     expect(screen.getByText("Streamable HTTP")).toBeVisible();
-    expect(screen.getByRole("heading", { name: /managed by multica/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /managed by marvis/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /inherited from runtime/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/MCP config JSON editor/i)).not.toBeInTheDocument();
   });
@@ -893,7 +893,7 @@ describe("McpConfigTab effective set", () => {
     renderTab({ mcp_config: null }, vi.fn(), onlineRuntime);
 
     expect(
-      await screen.findByText("Overridden by Multica"),
+      await screen.findByText("Overridden by Marvis"),
     ).toBeInTheDocument();
   });
 
@@ -909,7 +909,7 @@ describe("McpConfigTab effective set", () => {
     // "fetch" renders twice — once as the (disabled) assignment, once as the
     // runtime's own server — which is exactly the state under test.
     await waitFor(() => expect(screen.getAllByText("fetch")).toHaveLength(2));
-    expect(screen.queryByText("Overridden by Multica")).toBeNull();
+    expect(screen.queryByText("Overridden by Marvis")).toBeNull();
   });
 
   // Same transport hazard as before, reached through the SAVED config: the

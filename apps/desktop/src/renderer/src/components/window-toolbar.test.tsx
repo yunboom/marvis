@@ -1,8 +1,8 @@
 import type { ComponentProps, ReactNode } from "react";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { I18nProvider } from "@multica/core/i18n/react";
-import { RESOURCES } from "@multica/views/locales";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import { RESOURCES } from "@marvis/views/locales";
 
 const historyState = vi.hoisted(() => ({
   canGoBack: true,
@@ -28,7 +28,7 @@ vi.mock("@/hooks/use-tab-history", () => ({
   useTabHistory: () => historyState,
 }));
 
-vi.mock("@multica/views/layout", () => ({
+vi.mock("@marvis/views/layout", () => ({
   useTabPresentation: (url: string, fallbackTitle?: string) => ({
     visual: { kind: "icon", icon: "Inbox" },
     title: fallbackTitle ?? `Title ${url}`,
@@ -36,7 +36,7 @@ vi.mock("@multica/views/layout", () => ({
   ResourceLeadingVisual: () => <span aria-hidden />,
 }));
 
-vi.mock("@multica/ui/components/ui/sidebar", () => ({
+vi.mock("@marvis/ui/components/ui/sidebar", () => ({
   useSidebar: () => sidebarState,
   SidebarTrigger: (props: ComponentProps<"button">) => (
     <button type="button" aria-label="Toggle sidebar" {...props} />

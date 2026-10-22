@@ -7,21 +7,21 @@ import type {
   AgentConversationStarter,
   AgentRuntime,
   MemberWithUser,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import {
   AGENT_DESCRIPTION_MAX_LENGTH,
   AGENT_MAX_CONCURRENT_TASKS_MAX,
   AGENT_MAX_CONCURRENT_TASKS_MIN,
-} from "@multica/core/agents";
+} from "@marvis/core/agents";
 import {
   isRuntimeUsableForUser,
   runtimeModelsOptions,
-} from "@multica/core/runtimes";
-import { useConfigStore } from "@multica/core/config";
-import { isImeComposing } from "@multica/core/utils";
-import { Input } from "@multica/ui/components/ui/input";
-import { Textarea } from "@multica/ui/components/ui/textarea";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/runtimes";
+import { useConfigStore } from "@marvis/core/config";
+import { isImeComposing } from "@marvis/core/utils";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
+import { cn } from "@marvis/ui/lib/utils";
 import { AvatarUploadControl } from "../../common/avatar-upload-control";
 import {
   SettingsCard,

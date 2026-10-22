@@ -8,31 +8,31 @@ import {
   useState,
 } from "react";
 import { Globe2, Loader2, Plus, SquareTerminal, Trash2 } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { cn } from "@multica/ui/lib/utils";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@multica/ui/components/ui/field";
-import { Input } from "@multica/ui/components/ui/input";
+} from "@marvis/ui/components/ui/field";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@multica/ui/components/ui/tabs";
-import { Textarea } from "@multica/ui/components/ui/textarea";
+} from "@marvis/ui/components/ui/tabs";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { useT } from "../../../i18n";
 import type { ManagedMcpServer } from "./mcp-config-model";
 import { isRecord, mcpTransport } from "./mcp-config-model";

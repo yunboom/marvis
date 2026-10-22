@@ -9,7 +9,7 @@ type DBRoutingMetrics struct {
 func NewDBRoutingMetrics() *DBRoutingMetrics {
 	return &DBRoutingMetrics{
 		readRoutes: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "multica_db_read_routes_total",
+			Name: "marvis_db_read_routes_total",
 			Help: "Routing decisions by business, role, and reason; a replica fallback records both the replica selection and primary retry.",
 		}, []string{"business", "role", "reason"}),
 	}

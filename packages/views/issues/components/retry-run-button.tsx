@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { api, dispatchReasonCode } from "@multica/core/api";
-import type { AgentTask } from "@multica/core/types";
+import { api, dispatchReasonCode } from "@marvis/core/api";
+import type { AgentTask } from "@marvis/core/types";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
+} from "@marvis/ui/components/ui/tooltip";
 import { useT } from "../../i18n";
 
 /** Retry only makes sense for terminal-but-not-success runs. */

@@ -463,8 +463,8 @@ func TestOmpAndPiRegisterSideBySide(t *testing.T) {
 		cmd      string
 		id       string
 	}{
-		{"MULTICA_PI_PATH", "MULTICA_PI_MODEL", "pi", "pi"},
-		{"MULTICA_OMP_PATH", "MULTICA_OMP_MODEL", "omp", "omp"},
+		{"MARVIS_PI_PATH", "MARVIS_PI_MODEL", "pi", "pi"},
+		{"MARVIS_OMP_PATH", "MARVIS_OMP_MODEL", "omp", "omp"},
 	} {
 		t.Run(tc.id, func(t *testing.T) {
 			// Verify the descriptor's env prefix and command match what
@@ -560,7 +560,7 @@ func TestOmpThinkingFromCatalogEntry(t *testing.T) {
 			wantLevels: []string{"off"},
 		},
 		{
-			// No reasoning at all: an off-only control would be inert, so Multica
+			// No reasoning at all: an off-only control would be inert, so Marvis
 			// hides the picker exactly as it does for pi.
 			name:         "not a reasoning model has no picker",
 			reasoning:    false,
@@ -589,7 +589,7 @@ func TestOmpThinkingFromCatalogEntry(t *testing.T) {
 			wantLevels: []string{"off", "low", "high", "max"},
 		},
 		{
-			// Only tokens Multica knows survive, so a future omp effort cannot
+			// Only tokens Marvis knows survive, so a future omp effort cannot
 			// reach the picker before the server's enum accepts it.
 			name:       "unknown tokens are dropped",
 			reasoning:  true,

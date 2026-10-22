@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EMPTY_AGENT_DRAFT } from "@multica/core/agents";
+import { EMPTY_AGENT_DRAFT } from "@marvis/core/agents";
 import { renderWithI18n } from "../../test/i18n";
 import { ManualCreateAgentPage } from "./manual-create-agent-page";
 
@@ -15,15 +15,15 @@ const nav = vi.hoisted(() => ({
   replace: vi.fn(),
 }));
 
-vi.mock("@multica/core/api", () => ({ api: {} }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/api", () => ({ api: {} }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     newAgent: () => "/acme/agents/new",
     newAgentManual: () => "/acme/agents/new/manual",
   }),
 }));
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   agentListOptions: () => ({ queryKey: ["agents"], queryFn: () => [] }),
 }));
 vi.mock("../../navigation", () => ({

@@ -35,11 +35,11 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
-import { cn } from "@multica/ui/lib/utils";
-import { copyText } from "@multica/ui/lib/clipboard";
-import { api } from "@multica/core/api";
-import { useConfigStore } from "@multica/core/config";
-import type { Attachment as AttachmentRecord } from "@multica/core/types";
+import { cn } from "@marvis/ui/lib/utils";
+import { copyText } from "@marvis/ui/lib/clipboard";
+import { api } from "@marvis/core/api";
+import { useConfigStore } from "@marvis/core/config";
+import type { Attachment as AttachmentRecord } from "@marvis/core/types";
 import { useT } from "../i18n";
 import { DeferredTooltip } from "../common/deferred-tooltip";
 import { useAttachmentDownloadResolver } from "./attachment-download-context";

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TriangleAlert } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import { GithubRefField, githubRefHasError } from "./github-ref-field";
 import { useT } from "../../i18n/use-t";
 import { githubShortLabel } from "../../common/github-url";

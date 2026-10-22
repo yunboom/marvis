@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@multica/core/i18n/react";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../locales/en/common.json";
 import enModals from "../locales/en/modals.json";
 import enEditor from "../locales/en/editor.json";
@@ -76,7 +76,7 @@ vi.mock("../navigation/context", () => ({
   useNavigation: () => ({ push: vi.fn() }),
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useCurrentWorkspace: () => ({ name: "Test Workspace" }),
   useWorkspacePaths: () => ({
     issueDetail: (id: string) => `/ws-test/issues/${id}`,
@@ -84,7 +84,7 @@ vi.mock("@multica/core/paths", () => ({
   }),
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-test",
 }));
 
@@ -92,7 +92,7 @@ vi.mock("./use-issue-limit-upgrade-prompt", () => ({
   useIssueLimitUpgradePrompt: () => vi.fn(),
 }));
 
-vi.mock("@multica/core/issues/queries", () => ({
+vi.mock("@marvis/core/issues/queries", () => ({
   issueDetailOptions: (wsId: string, id: string) => ({
     queryKey: ["issues", wsId, "detail", id],
     queryFn: () => Promise.resolve(null),
@@ -111,7 +111,7 @@ vi.mock("../issues/hooks/use-issue-trigger-preview", () => ({
   useIssueTriggerPreview: () => ({ triggers: [], totalCount: 0, isLoading: false }),
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: () => "Agent" }),
 }));
 
@@ -119,7 +119,7 @@ vi.mock("../common/actor-avatar", () => ({
   ActorAvatar: () => null,
 }));
 
-vi.mock("@multica/core/issues/mutations", () => ({
+vi.mock("@marvis/core/issues/mutations", () => ({
   useCreateIssue: () => ({ mutateAsync: mockCreateIssue }),
   useCreateCommentSubIssue: () => ({
     mutateAsync: ({ anchorCommentId, data }: { anchorCommentId: string; data: unknown }) =>
@@ -128,25 +128,25 @@ vi.mock("@multica/core/issues/mutations", () => ({
   useUpdateIssue: () => ({ mutate: vi.fn() }),
 }));
 
-vi.mock("@multica/core/labels", () => ({
+vi.mock("@marvis/core/labels", () => ({
   useAttachLabelToIssue: () => ({ mutateAsync: vi.fn() }),
 }));
 
-vi.mock("@multica/core/properties", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@multica/core/properties")>();
+vi.mock("@marvis/core/properties", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@marvis/core/properties")>();
   return {
     ...actual,
     useSetIssueProperty: () => ({ mutateAsync: vi.fn() }),
   };
 });
 
-vi.mock("@multica/core/api", async () => {
-  const { parseWithFallback } = await vi.importActual<typeof import("@multica/core/api/schema")>(
-    "@multica/core/api/schema",
+vi.mock("@marvis/core/api", async () => {
+  const { parseWithFallback } = await vi.importActual<typeof import("@marvis/core/api/schema")>(
+    "@marvis/core/api/schema",
   );
   const { DuplicateIssueErrorBodySchema } = await vi.importActual<
-    typeof import("@multica/core/api/schemas")
-  >("@multica/core/api/schemas");
+    typeof import("@marvis/core/api/schemas")
+  >("@marvis/core/api/schemas");
   return {
     api: {
       listProperties: mockListProperties,
@@ -264,7 +264,7 @@ vi.mock("../projects/components/project-picker", () => ({
   ProjectPicker: () => <div data-testid="project-picker" />,
 }));
 
-vi.mock("@multica/ui/components/ui/dialog", () => ({
+vi.mock("@marvis/ui/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children, className }: { children: ReactNode; className?: string }) => (
     <div className={className}>{children}</div>
@@ -274,7 +274,7 @@ vi.mock("@multica/ui/components/ui/dialog", () => ({
   ),
 }));
 
-vi.mock("@multica/ui/components/ui/dropdown-menu", () => {
+vi.mock("@marvis/ui/components/ui/dropdown-menu", () => {
   const Pass = ({ children }: { children: ReactNode }) => <>{children}</>;
   return {
     DropdownMenu: Pass,
@@ -290,7 +290,7 @@ vi.mock("@multica/ui/components/ui/dropdown-menu", () => {
   };
 });
 
-vi.mock("@multica/ui/components/ui/tooltip", () => {
+vi.mock("@marvis/ui/components/ui/tooltip", () => {
   const Pass = ({ children }: { children: ReactNode }) => <>{children}</>;
   return {
     Tooltip: Pass,
@@ -300,7 +300,7 @@ vi.mock("@multica/ui/components/ui/tooltip", () => {
   };
 });
 
-vi.mock("@multica/ui/components/ui/button", () => ({
+vi.mock("@marvis/ui/components/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -320,7 +320,7 @@ vi.mock("@multica/ui/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@multica/ui/components/ui/switch", () => ({
+vi.mock("@marvis/ui/components/ui/switch", () => ({
   Switch: ({
     checked,
     onCheckedChange,
@@ -337,11 +337,11 @@ vi.mock("@multica/ui/components/ui/switch", () => ({
   ),
 }));
 
-vi.mock("@multica/ui/components/common/file-upload-button", () => ({
+vi.mock("@marvis/ui/components/common/file-upload-button", () => ({
   FileUploadButton: () => null,
 }));
 
-vi.mock("@multica/ui/lib/utils", () => ({
+vi.mock("@marvis/ui/lib/utils", () => ({
   cn: (...values: Array<string | false | null | undefined>) => values.filter(Boolean).join(" "),
 }));
 
@@ -360,8 +360,8 @@ import { CreateIssueDialog } from "./create-issue-dialog";
 import {
   useIssueDraftStore,
   type IssueCreateDraft,
-} from "@multica/core/issues/stores/draft-store";
-import { useQuickCreateStore } from "@multica/core/issues/stores/quick-create-store";
+} from "@marvis/core/issues/stores/draft-store";
+import { useQuickCreateStore } from "@marvis/core/issues/stores/quick-create-store";
 
 const emptyDraft = (): IssueCreateDraft => ({
   shared: { projectId: undefined, priority: "none", dueDate: null, attachments: [] },

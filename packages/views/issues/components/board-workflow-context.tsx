@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { IssueStatus, IssueWorkflow, Project } from "@multica/core/types";
+import type { IssueStatus, IssueWorkflow, Project } from "@marvis/core/types";
 
 /**
  * Workflow facts a board column needs (MUL-7420), provided once by BoardView

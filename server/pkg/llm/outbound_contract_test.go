@@ -27,8 +27,8 @@ func (c *countingHTTPClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 // TestUnconfiguredClientMakesZeroUpstreamRequests pins the contract a
-// deployment relies on when it leaves MULTICA_LLM_API_KEY and
-// MULTICA_LLM_BASE_URL empty: this layer sends nothing, to anyone. (Only this
+// deployment relies on when it leaves MARVIS_LLM_API_KEY and
+// MARVIS_LLM_BASE_URL empty: this layer sends nothing, to anyone. (Only this
 // layer — agent runs reach a model by their own path, which no variable here
 // governs. See the package doc.)
 //

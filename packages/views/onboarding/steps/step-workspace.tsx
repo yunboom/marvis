@@ -3,22 +3,22 @@
 import { type ReactNode, useRef, useEffect, useState } from "react";
 import { Dices, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@multica/ui/components/ui/button";
-import { Input } from "@multica/ui/components/ui/input";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@multica/ui/components/ui/field";
-import { cn } from "@multica/ui/lib/utils";
-import { useCreateWorkspace } from "@multica/core/workspace/mutations";
-import type { Workspace } from "@multica/core/types";
-import { isImeComposing } from "@multica/core/utils";
-import { matchLocale } from "@multica/core/i18n";
-import { useConfigStore } from "@multica/core/config";
-import { workspaceUrlHost } from "@multica/core/workspace/workspace-url";
+} from "@marvis/ui/components/ui/field";
+import { cn } from "@marvis/ui/lib/utils";
+import { useCreateWorkspace } from "@marvis/core/workspace/mutations";
+import type { Workspace } from "@marvis/core/types";
+import { isImeComposing } from "@marvis/core/utils";
+import { matchLocale } from "@marvis/core/i18n";
+import { useConfigStore } from "@marvis/core/config";
+import { workspaceUrlHost } from "@marvis/core/workspace/workspace-url";
 import { useLogout } from "../../auth";
 import {
   StepFooter,
@@ -33,7 +33,7 @@ import {
   nameToWorkspaceSlug,
   randomCelestialWorkspaceIdentity,
 } from "../../workspace/slug";
-import { isReservedSlug } from "@multica/core/paths";
+import { isReservedSlug } from "@marvis/core/paths";
 
 /**
  * Step 2 — create your first workspace, or continue with one set up in

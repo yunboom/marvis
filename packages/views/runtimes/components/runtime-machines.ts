@@ -1,5 +1,5 @@
-import { deriveRuntimeHealth, type RuntimeHealth } from "@multica/core/runtimes";
-import type { AgentRuntime } from "@multica/core/types";
+import { deriveRuntimeHealth, type RuntimeHealth } from "@marvis/core/runtimes";
+import type { AgentRuntime } from "@marvis/core/types";
 import { formatDeviceInfo } from "../utils";
 
 export type RuntimeMachineSection = "local" | "remote" | "cloud";

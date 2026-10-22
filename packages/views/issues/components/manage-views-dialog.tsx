@@ -18,18 +18,18 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { GripVertical, Layers, Pencil, Trash2 } from "lucide-react";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { Switch } from "@multica/ui/components/ui/switch";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { Switch } from "@marvis/ui/components/ui/switch";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { cn } from "@multica/ui/lib/utils";
-import type { IssueView } from "@multica/core/api/schemas";
+} from "@marvis/ui/components/ui/dialog";
+import { cn } from "@marvis/ui/lib/utils";
+import type { IssueView } from "@marvis/core/api/schemas";
 import {
   DeleteViewConfirm,
   type ViewBarItem,

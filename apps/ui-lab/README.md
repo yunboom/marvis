@@ -1,6 +1,6 @@
-# Multica UI Lab
+# Marvis UI Lab
 
-An internal, independently running design workbench for Multica Web and Desktop.
+An internal, independently running design workbench for Marvis Web and Desktop.
 
 ```sh
 pnpm install
@@ -56,11 +56,11 @@ clearing browser data or changing ports. All sample edits stay inside the frame.
 
 ## Preview fidelity
 
-- The gallery imports production primitives directly from `@multica/ui`. Its
+- The gallery imports production primitives directly from `@marvis/ui`. Its
   cards only arrange specimens; they do not override control styles. CSS resets
   remain in the base layer so they cannot override Tailwind component utilities.
 - Business previews mount the production `IssuesPage`, `IssueDetail`, and
-  `AppSidebar` from `@multica/views`. They include the real ListRow, toolbars,
+  `AppSidebar` from `@marvis/views`. They include the real ListRow, toolbars,
   property pickers, rich-text editor, comment cards and responsive sidebar.
   There are no recreated list/detail/sidebar templates or page-specific CSS.
 - `product-preview.tsx` supplies the platform providers used by these views:
@@ -85,10 +85,10 @@ clearing browser data or changing ports. All sample edits stay inside the frame.
 ## Verify
 
 ```sh
-pnpm --filter @multica/ui-lab typecheck
-pnpm --filter @multica/ui-lab lint
-pnpm --filter @multica/ui-lab test
-pnpm --filter @multica/ui-lab build
+pnpm --filter @marvis/ui-lab typecheck
+pnpm --filter @marvis/ui-lab lint
+pnpm --filter @marvis/ui-lab test
+pnpm --filter @marvis/ui-lab build
 ```
 
 The pure tests cover source token parsing, CSS export scope, restored defaults,
@@ -159,7 +159,7 @@ exported as a product setting.
 The inspector edits `--dialog-enter-duration`, `--dialog-exit-duration`,
 `--dialog-enter-easing` and `--dialog-exit-easing`. Popup and backdrop consume
 these variables. Existing 100ms/ease defaults are preserved, with shared easing
-presets sourced from `@multica/ui/lib/motion`. Saved schemes, undo/redo and CSS
+presets sourced from `@marvis/ui/lib/motion`. Saved schemes, undo/redo and CSS
 export include these tokens. They affect shared Dialog consumers only, not
 Popover, Tooltip, AlertDialog or JavaScript animation constants.
 

@@ -18,7 +18,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
 )
 
 // countingMetrics records every call so a test can assert on the shape of what

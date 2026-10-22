@@ -66,7 +66,7 @@ func TestCopilotExecuteSendsLargePromptOnStdinNotArgv(t *testing.T) {
 		"cat > %[2]q\n", argvPath, stdinPath) + copilotStreamTail
 
 	// ~1.2 MB, far above MAX_ARG_STRLEN and every pipe buffer.
-	prompt := "MULTICA_COPILOT_PROMPT\n" + strings.Repeat("pasted daemon log line 0123456789 \"quoted\"\n", 28_000)
+	prompt := "MARVIS_COPILOT_PROMPT\n" + strings.Repeat("pasted daemon log line 0123456789 \"quoted\"\n", 28_000)
 	if len(prompt) <= 131_072 {
 		t.Fatalf("test prompt must exceed MAX_ARG_STRLEN, got %d bytes", len(prompt))
 	}
@@ -86,7 +86,7 @@ func TestCopilotExecuteSendsLargePromptOnStdinNotArgv(t *testing.T) {
 	}
 	argv := strings.Split(strings.TrimSuffix(string(argvRaw), "\n"), "\n")
 	for _, a := range argv {
-		if a == "-p" || strings.Contains(a, "MULTICA_COPILOT_PROMPT") {
+		if a == "-p" || strings.Contains(a, "MARVIS_COPILOT_PROMPT") {
 			t.Fatalf("prompt leaked onto argv: %v", argv)
 		}
 	}

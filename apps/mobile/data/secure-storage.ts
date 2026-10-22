@@ -1,7 +1,7 @@
 /**
  * The app's single writer for the auth token.
  *
- * Keyed identically to web/desktop ("multica_token") so logic stays aligned
+ * Keyed identically to web/desktop ("marvis_token") so logic stays aligned
  * with packages/core/auth/store.ts even though storage backends differ.
  *
  * Every Keychain operation is async, and several things race to write this one
@@ -21,7 +21,7 @@ import * as SecureStore from "expo-secure-store";
 
 import { sessionEpochChanged } from "./session-epoch";
 
-const TOKEN_KEY = "multica_token";
+const TOKEN_KEY = "marvis_token";
 
 // Tail of the write queue. Each operation chains onto the previous one so no
 // two can be in flight at once; failures do not stall the queue.

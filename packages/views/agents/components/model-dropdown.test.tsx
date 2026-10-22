@@ -3,8 +3,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentProps } from "react";
 import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
-import { I18nProvider } from "@multica/core/i18n/react";
-import type { RuntimeModelsResult } from "@multica/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import type { RuntimeModelsResult } from "@marvis/core/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import enAgents from "../../locales/en/agents.json";
 import enCommon from "../../locales/en/common.json";
@@ -34,7 +34,7 @@ const CODEX_MODELS: RuntimeModelsResult = {
 let discovery: () => Promise<RuntimeModelsResult> = async () => CODEX_MODELS;
 const mockRefreshRuntimeModels = vi.hoisted(() => vi.fn());
 
-vi.mock("@multica/core/runtimes", () => ({
+vi.mock("@marvis/core/runtimes", () => ({
   runtimeModelsOptions: (runtimeId: string | null) => ({
     enabled: Boolean(runtimeId),
     queryKey: ["runtime-models", runtimeId, discoveryKey],
@@ -191,7 +191,7 @@ describe("ModelDropdown", () => {
   });
 
   // MUL-6961: Claude Code reports a model its own version cannot run in a
-  // separate list. It must be visible — a missing row reads as "Multica doesn't
+  // separate list. It must be visible — a missing row reads as "Marvis doesn't
   // support Fable 5.1" when the truth is the user's CLI is behind — and it must
   // be impossible to pick, because picking one is a guaranteed 400.
   describe("models the runtime cannot run", () => {

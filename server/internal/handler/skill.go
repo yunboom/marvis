@@ -20,11 +20,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/logger"
-	skillpkg "github.com/multica-ai/multica/server/internal/skill"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/logger"
+	skillpkg "github.com/marvis-ai/marvis/server/internal/skill"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -59,7 +59,7 @@ type SkillResponse struct {
 // SkillSummaryResponse is the list-endpoint shape: everything SkillResponse
 // has except `content`. SKILL.md bodies routinely run 50–200KB and shipping
 // them in list payloads bloats responses past CLI timeouts on high-latency
-// links (GH multica-ai/multica#2174). Detail endpoints still return the full
+// links (GH marvis-ai/marvis#2174). Detail endpoints still return the full
 // SkillResponse with content.
 type SkillSummaryResponse struct {
 	ID          string  `json:"id"`
@@ -107,7 +107,7 @@ type SkillFileResponse struct {
 //
 // A ~600KB skill could not be listed at all while every row carried its full
 // body, so the one command that would have diagnosed the problem was itself a
-// casualty of it (GH multica-ai/multica#7498). A list endpoint lists.
+// casualty of it (GH marvis-ai/marvis#7498). A list endpoint lists.
 type SkillFileMetadataResponse struct {
 	ID      string `json:"id"`
 	SkillID string `json:"skill_id"`

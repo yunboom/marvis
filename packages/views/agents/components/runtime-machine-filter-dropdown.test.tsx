@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import { I18nProvider } from "@multica/core/i18n/react";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enAgents from "../../locales/en/agents.json";
 import type { RuntimeMachine } from "../../runtimes/components/runtime-machines";
@@ -130,7 +130,7 @@ describe("RuntimeMachineFilterDropdown", () => {
       }),
       makeMachine({
         id: "m-cloud",
-        title: "Multica cloud",
+        title: "Marvis cloud",
         section: "cloud",
         isCurrent: false,
         mode: "cloud",
@@ -153,7 +153,7 @@ describe("RuntimeMachineFilterDropdown", () => {
     // The menu items themselves also render.
     expect(screen.getByText("dev.local")).toBeTruthy();
     expect(screen.getByText("build-server")).toBeTruthy();
-    expect(screen.getByText("Multica cloud")).toBeTruthy();
+    expect(screen.getByText("Marvis cloud")).toBeTruthy();
   });
 
   it("fires onChange(null) when the All-runtimes row is clicked", () => {

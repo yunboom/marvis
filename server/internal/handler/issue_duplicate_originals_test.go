@@ -10,9 +10,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // A page resolves the originals its duplicates point at in one read, the way

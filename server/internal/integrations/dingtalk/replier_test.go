@@ -9,9 +9,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 func TestIssueCreatedText(t *testing.T) {
@@ -80,10 +80,10 @@ func TestReplierCommandConfirmationsKeepSuccessMarker(t *testing.T) {
 		plainReply bool
 	}{
 		{name: "clear", result: engine.Result{Outcome: engine.OutcomeFreshPending}, text: "Fresh start ready. Your next chat message will run without previous context.", success: true},
-		{name: "new", result: engine.Result{Outcome: engine.OutcomeChatStarted}, text: "Started a new Multica chat. Your next message will enter it.", success: true},
-		{name: "issue", result: engine.Result{Outcome: engine.OutcomeIngested, IssueID: pgtype.UUID{Valid: true}, IssueWorkspaceSlug: "team-b", IssueIdentifier: "MUL-42", IssueTitle: "✅ Keep this title"}, text: "Created [MUL-42](https://multica.example/team-b/issues/00000000-0000-0000-0000-000000000000) — ✅ Keep this title", success: true},
-		{name: "issue without title", result: engine.Result{Outcome: engine.OutcomeIngested, IssueID: pgtype.UUID{Valid: true}, IssueWorkspaceSlug: "team-b", IssueNumber: 7}, text: "Created [#7](https://multica.example/team-b/issues/00000000-0000-0000-0000-000000000000)", success: true},
-		{name: "duplicate issue", result: engine.Result{Outcome: engine.OutcomeIngested, IssueID: pgtype.UUID{Valid: true}, IssueWorkspaceSlug: "team-b", IssueIdentifier: "MUL-42", IssueTitle: "✅ Keep this title", IssueDuplicate: true}, text: "⚠️ Not created — active issue [MUL-42](https://multica.example/team-b/issues/00000000-0000-0000-0000-000000000000) already exists: ✅ Keep this title"},
+		{name: "new", result: engine.Result{Outcome: engine.OutcomeChatStarted}, text: "Started a new Marvis chat. Your next message will enter it.", success: true},
+		{name: "issue", result: engine.Result{Outcome: engine.OutcomeIngested, IssueID: pgtype.UUID{Valid: true}, IssueWorkspaceSlug: "team-b", IssueIdentifier: "MUL-42", IssueTitle: "✅ Keep this title"}, text: "Created [MUL-42](https://marvis.example/team-b/issues/00000000-0000-0000-0000-000000000000) — ✅ Keep this title", success: true},
+		{name: "issue without title", result: engine.Result{Outcome: engine.OutcomeIngested, IssueID: pgtype.UUID{Valid: true}, IssueWorkspaceSlug: "team-b", IssueNumber: 7}, text: "Created [#7](https://marvis.example/team-b/issues/00000000-0000-0000-0000-000000000000)", success: true},
+		{name: "duplicate issue", result: engine.Result{Outcome: engine.OutcomeIngested, IssueID: pgtype.UUID{Valid: true}, IssueWorkspaceSlug: "team-b", IssueIdentifier: "MUL-42", IssueTitle: "✅ Keep this title", IssueDuplicate: true}, text: "⚠️ Not created — active issue [MUL-42](https://marvis.example/team-b/issues/00000000-0000-0000-0000-000000000000) already exists: ✅ Keep this title"},
 		{name: "offline", result: engine.Result{Outcome: engine.OutcomeAgentOffline}, text: "⚠️ The agent is offline, so this message won't be processed automatically."},
 		{name: "ordinary reply", text: "✅ Keep this reply", plainReply: true},
 	} {
@@ -102,7 +102,7 @@ func TestReplierCommandConfirmationsKeepSuccessMarker(t *testing.T) {
 					Text:   "✅ Keep this quote",
 				}
 				r := NewOutboundReplier(OutboundReplierConfig{
-					Client: NewClient(nil, d.srv.URL), AppURL: "https://multica.example",
+					Client: NewClient(nil, d.srv.URL), AppURL: "https://marvis.example",
 				})
 				if tc.plainReply {
 					if err := r.post(context.Background(), inst, msg, tc.text); err != nil {

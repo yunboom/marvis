@@ -340,7 +340,7 @@ describe("ApiClient Plugin surface bridge routes", () => {
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       method: "GET",
       headers: expect.objectContaining({
-        "X-Multica-Plugin-Installation": "installation-1",
+        "X-Marvis-Plugin-Installation": "installation-1",
       }),
     });
   });
@@ -2829,7 +2829,7 @@ describe("ApiClient session expiry", () => {
         }),
       ),
     );
-    const storage = makeStorage({ multica_token: "live-token" });
+    const storage = makeStorage({ marvis_token: "live-token" });
     // The client is constructed before the store it notifies, exactly as
     // CoreProvider's initCore does; the hook only ever runs from a request.
     const session: { store?: ReturnType<typeof createAuthStore> } = {};
@@ -2850,7 +2850,7 @@ describe("ApiClient session expiry", () => {
     expect(store.getState().user).toBeNull();
     expect(store.getState().status).toBe("unauthenticated");
     expect(store.getState().expired).toBe(true);
-    expect(storage.getItem("multica_token")).toBeNull();
+    expect(storage.getItem("marvis_token")).toBeNull();
   });
 });
 
@@ -2966,7 +2966,7 @@ describe("ApiClient CSRF headers", () => {
   // server's CORS allowlist, and a rolled-back server allowlists only the
   // names it shipped with — the preflight would fail and no retry could help.
   it("sends exactly one CSRF header, preferring the session-bound value", async () => {
-    stubCookies("multica_csrf=token-bound; multica_csrf_session=session-bound");
+    stubCookies("marvis_csrf=token-bound; marvis_csrf_session=session-bound");
     const fetchMock = vi.fn().mockImplementation(async () => jsonResponse({}));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -2980,7 +2980,7 @@ describe("ApiClient CSRF headers", () => {
   // A session that predates the session-bound cookie, and every request after
   // a rollback, has only the token-bound value to offer.
   it("falls back to the token-bound value when no session cookie exists", async () => {
-    stubCookies("multica_csrf=token-bound");
+    stubCookies("marvis_csrf=token-bound");
     const fetchMock = vi.fn().mockImplementation(async () => jsonResponse({}));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -3004,7 +3004,7 @@ describe("ApiClient CSRF headers", () => {
   // and switch — otherwise the user is authenticated for reads and rejected
   // for every write.
   it("retries with the token-bound value when the server rejects the session-bound one", async () => {
-    stubCookies("multica_csrf=token-bound; multica_csrf_session=session-bound");
+    stubCookies("marvis_csrf=token-bound; marvis_csrf_session=session-bound");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ error: "CSRF validation failed" }, 403))
@@ -3023,7 +3023,7 @@ describe("ApiClient CSRF headers", () => {
   // ...and it stays switched, so a rolled-back server does not cost two
   // requests per write for the rest of the session.
   it("keeps using the token-bound value while the rejected cookie is current", async () => {
-    stubCookies("multica_csrf=token-bound; multica_csrf_session=session-bound");
+    stubCookies("marvis_csrf=token-bound; marvis_csrf_session=session-bound");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ error: "CSRF validation failed" }, 403))
@@ -3045,7 +3045,7 @@ describe("ApiClient CSRF headers", () => {
   // on the value rather than a boolean is what stops this oscillating once
   // per renewal against a server that understands it perfectly well.
   it("prefers the session-bound value again once the cookie changes", async () => {
-    stubCookies("multica_csrf=token-bound; multica_csrf_session=session-bound");
+    stubCookies("marvis_csrf=token-bound; marvis_csrf_session=session-bound");
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ error: "CSRF validation failed" }, 403))
@@ -3057,7 +3057,7 @@ describe("ApiClient CSRF headers", () => {
     const client = new ApiClient("https://api.example.test");
     await client.markOnboardingComplete();
 
-    stubCookies("multica_csrf=token-bound-2; multica_csrf_session=session-bound-2");
+    stubCookies("marvis_csrf=token-bound-2; marvis_csrf_session=session-bound-2");
     await client.markOnboardingComplete();
 
     expect(capturedHeaders(fetchMock, 2)["X-CSRF-Token"]).toBe("session-bound-2");

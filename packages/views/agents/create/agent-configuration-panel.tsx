@@ -7,13 +7,13 @@ import {
   applyDraftRuntimeChange,
   type AgentDraft,
   type AgentPermissionScope,
-} from "@multica/core/agents";
-import { useConfigStore } from "@multica/core/config";
-import type { MemberWithUser, RuntimeDevice } from "@multica/core/types";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
-import { Input } from "@multica/ui/components/ui/input";
-import { Textarea } from "@multica/ui/components/ui/textarea";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/agents";
+import { useConfigStore } from "@marvis/core/config";
+import type { MemberWithUser, RuntimeDevice } from "@marvis/core/types";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
+import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { AvatarUploadControl } from "../../common/avatar-upload-control";
 import { useT } from "../../i18n";

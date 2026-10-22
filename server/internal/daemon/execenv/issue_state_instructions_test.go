@@ -10,7 +10,7 @@ const issueStateTestIssueID = "55555555-6666-7777-8888-999999999999"
 // coldIssueRead is the instruction every non-resumed run has always been
 // handed. It is spelled out here rather than taken from the helper so a silent
 // reword of the cold path fails this test instead of passing it.
-const coldIssueRead = "Start by running `multica issue get " + issueStateTestIssueID +
+const coldIssueRead = "Start by running `marvis issue get " + issueStateTestIssueID +
 	" --output json` to understand your task, then decide how to proceed.\n\n"
 
 // TestBuildIssueStateHintUnchangedReplacesTheRead pins the one rendering that
@@ -48,7 +48,7 @@ func TestBuildIssueStateHintNamesChangedFields(t *testing.T) {
 	for _, want := range []string{
 		"Since your last run the issue changed: description, status",
 		"status: todo; assignee: member user-9",
-		"Read it: `multica issue get " + issueStateTestIssueID + " --output json`",
+		"Read it: `marvis issue get " + issueStateTestIssueID + " --output json`",
 	} {
 		if !strings.Contains(hint, want) {
 			t.Errorf("changed hint missing %q\n---\n%s", want, hint)

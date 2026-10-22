@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import type { AgentTask, TimelineEntry } from "@multica/core/types";
+import type { AgentTask, TimelineEntry } from "@marvis/core/types";
 import { commentRunOutput, buildCommentRunView, isRunFailureNotice, orderThreadWithRuns, orderTimelineWithRuns, type CommentRun } from "./comment-runs";
 import { collectThreadReplies } from "./thread-utils";
 

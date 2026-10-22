@@ -11,7 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // stubAPIClientWithRecorder is a fake APIClient that captures the
@@ -151,7 +151,7 @@ func TestLarkOutcomeReplierFallsBackToNoopWhenStubAPI(t *testing.T) {
 		BindingSvc:  &BindingTokenService{}, // not nil so we exercise the IsConfigured guard
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 	if _, isNoop := rep.(*noopReplier); !isNoop {
@@ -192,7 +192,7 @@ func TestLarkOutcomeReplierAgentOfflineSendsCard(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{agent: db.Agent{Name: "Trump"}},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 	inst := Installation{AppID: "cli_x"}
@@ -227,7 +227,7 @@ func TestLarkOutcomeReplierAgentArchivedSendsCard(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 	msg := InboundMessage{ChatID: "oc_chat_arch"}
@@ -256,7 +256,7 @@ func TestLarkOutcomeReplierCommandOutcomesSendGuidance(t *testing.T) {
 			stub := &stubAPIClientWithRecorder{configured: true}
 			rep := NewLarkOutcomeReplier(OutcomeReplierConfig{
 				APIClient: stub, BindingSvc: &BindingTokenService{}, Credentials: stubCredentialsResolver{secret: "s"},
-				Queries: stubReplierQueries{}, AppURL: "https://multica.test", Logger: log,
+				Queries: stubReplierQueries{}, AppURL: "https://marvis.test", Logger: log,
 			})
 			rep.Reply(context.Background(), Installation{}, InboundMessage{ChatID: "oc_chat"}, DispatchResult{Outcome: tc.outcome, IssueUsageHadMedia: tc.hadMedia})
 			if len(stub.interactiveOut) != 1 {
@@ -281,7 +281,7 @@ func TestLarkOutcomeReplierIngestedAndDroppedAreSilent(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 	msg := InboundMessage{ChatID: "oc_x"}
@@ -306,7 +306,7 @@ func TestLarkOutcomeReplierOfflineSwallowsAPIError(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 	// Should NOT panic.
@@ -327,7 +327,7 @@ func TestLarkOutcomeReplierUsesAppURLForWebLinks(t *testing.T) {
 		BindingSvc:  fakeBindingMinter{raw: "token with space"},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://app.multica.test/",
+		AppURL:      "https://app.marvis.test/",
 		Logger:      log,
 	})
 
@@ -350,13 +350,13 @@ func TestLarkOutcomeReplierUsesAppURLForWebLinks(t *testing.T) {
 	if len(stub.bindingCalls) != 1 {
 		t.Fatalf("expected one binding prompt, got %d", len(stub.bindingCalls))
 	}
-	if got := stub.bindingCalls[0].BindURL; got != "https://app.multica.test/lark/bind?token=token+with+space" {
+	if got := stub.bindingCalls[0].BindURL; got != "https://app.marvis.test/lark/bind?token=token+with+space" {
 		t.Fatalf("binding URL should use AppURL; got %q", got)
 	}
 	if len(stub.textOut) != 1 {
 		t.Fatalf("expected one issue-created text, got %d", len(stub.textOut))
 	}
-	if !strings.Contains(stub.textOut[0].Text, "https://app.multica.test/demo-web/issues/MUL-42") {
+	if !strings.Contains(stub.textOut[0].Text, "https://app.marvis.test/demo-web/issues/MUL-42") {
 		t.Fatalf("issue-created text should use AppURL and workspace slug; got %q", stub.textOut[0].Text)
 	}
 }
@@ -377,7 +377,7 @@ func TestLarkOutcomeReplierNeedsBindingFallsBackToGroupNoticeWhenPrivateUnavaila
 		BindingSvc:  fakeBindingMinter{raw: "token"},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -423,7 +423,7 @@ func TestLarkOutcomeReplierNeedsBindingFallsBackForStatusErrorNoAvailabilityCode
 		BindingSvc:  fakeBindingMinter{raw: "token"},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -452,7 +452,7 @@ func TestLarkOutcomeReplierNeedsBindingDoesNotFallbackForUnstructuredNoAvailabil
 		BindingSvc:  fakeBindingMinter{raw: "token"},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -495,7 +495,7 @@ func TestLarkOutcomeReplierNeedsBindingSuppressesFallbackOutsideGroupChats(t *te
 				BindingSvc:  fakeBindingMinter{raw: "token"},
 				Credentials: stubCredentialsResolver{secret: "s"},
 				Queries:     stubReplierQueries{},
-				AppURL:      "https://multica.test",
+				AppURL:      "https://marvis.test",
 				Logger:      log,
 			})
 
@@ -532,7 +532,7 @@ func TestLarkOutcomeReplierNeedsBindingPreservesPromptAndFallbackErrors(t *testi
 		BindingSvc:  fakeBindingMinter{raw: "token"},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -565,7 +565,7 @@ func TestLarkOutcomeReplierNeedsBindingDoesNotFallbackForNonAvailabilityError(t 
 		BindingSvc:  fakeBindingMinter{raw: "token"},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -590,7 +590,7 @@ func TestLarkOutcomeReplierNeedsBindingDoesNotFallbackForNonAvailabilityError(t 
 // blocker on PR #3277 review. Fix: OutcomeIngested with IssueID.Valid
 // triggers a plain text confirmation send via SendTextMessage,
 // composing the workspace-qualified identifier with the title and a
-// deep link back to Multica.
+// deep link back to Marvis.
 func TestLarkOutcomeReplierIssueCreatedSendsConfirmation(t *testing.T) {
 	t.Parallel()
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -600,7 +600,7 @@ func TestLarkOutcomeReplierIssueCreatedSendsConfirmation(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -631,8 +631,8 @@ func TestLarkOutcomeReplierIssueCreatedSendsConfirmation(t *testing.T) {
 	if !strings.Contains(got.Text, "fix login bug") {
 		t.Errorf("text should embed the issue title; got %q", got.Text)
 	}
-	if !strings.Contains(got.Text, "https://multica.test/demo-web/issues/MUL-42") {
-		t.Errorf("text should embed the workspace issue deep link back to Multica; got %q", got.Text)
+	if !strings.Contains(got.Text, "https://marvis.test/demo-web/issues/MUL-42") {
+		t.Errorf("text should embed the workspace issue deep link back to Marvis; got %q", got.Text)
 	}
 	// No interactive card on this path — the confirmation must be
 	// plain text, matching how chat replies render.
@@ -650,7 +650,7 @@ func TestLarkOutcomeReplierIssueDuplicateSendsConflict(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -678,7 +678,7 @@ func TestLarkOutcomeReplierIssueDuplicateSendsConflict(t *testing.T) {
 	if strings.Contains(text, "Created MUL-42") {
 		t.Fatalf("duplicate reply falsely claimed creation: %q", text)
 	}
-	if !strings.Contains(text, "https://multica.test/demo-web/issues/MUL-42") {
+	if !strings.Contains(text, "https://marvis.test/demo-web/issues/MUL-42") {
 		t.Fatalf("duplicate reply should embed the workspace issue deep link; got %q", text)
 	}
 }
@@ -698,7 +698,7 @@ func TestLarkOutcomeReplierIssueLinkOmittedOnDegradedWorkspaceRead(t *testing.T)
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -720,7 +720,7 @@ func TestLarkOutcomeReplierIssueLinkOmittedOnDegradedWorkspaceRead(t *testing.T)
 	if !strings.Contains(text, "Created #42") {
 		t.Fatalf("degraded reply should still confirm with the #42 label; got %q", text)
 	}
-	if strings.Contains(text, "https://multica.test") {
+	if strings.Contains(text, "https://marvis.test") {
 		t.Fatalf("degraded reply must omit the link entirely; got %q", text)
 	}
 }
@@ -739,7 +739,7 @@ func TestLarkOutcomeReplierOutcomeIngestedSilentWithoutIssue(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -773,7 +773,7 @@ func TestLarkOutcomeReplierIssueCreatedThreadFallback(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -810,7 +810,7 @@ func TestLarkOutcomeReplierIssueCreatedNoFallbackOnAmbiguous(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -842,7 +842,7 @@ func TestLarkOutcomeReplierNoticeThreadFallback(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{agent: db.Agent{Name: "Trump"}},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -872,7 +872,7 @@ func TestLarkOutcomeReplierNoticeNoFallbackOnAmbiguous(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -914,7 +914,7 @@ func TestLarkOutcomeReplierRepliesNativelyInOrdinaryGroup(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 
@@ -953,7 +953,7 @@ func TestLarkOutcomeReplierSendsToChatWithoutTriggerMessage(t *testing.T) {
 		BindingSvc:  &BindingTokenService{},
 		Credentials: stubCredentialsResolver{secret: "s"},
 		Queries:     stubReplierQueries{},
-		AppURL:      "https://multica.test",
+		AppURL:      "https://marvis.test",
 		Logger:      log,
 	})
 

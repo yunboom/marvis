@@ -3,17 +3,17 @@
 import type { ReactNode } from "react";
 import { ArrowRight, AtSign, CircleCheck, ListPlus, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useModalStore } from "@multica/core/modals";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { runtimeDisplayLabel } from "@multica/core/runtimes";
-import { runtimeListOptions } from "@multica/core/runtimes/queries";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useModalStore } from "@marvis/core/modals";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { runtimeDisplayLabel } from "@marvis/core/runtimes";
+import { runtimeListOptions } from "@marvis/core/runtimes/queries";
 import {
   agentDetailOptions,
   squadListOptions,
-} from "@multica/core/workspace/queries";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/workspace/queries";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";

@@ -49,7 +49,7 @@ import {
   indexOfImageKey,
   type ImageSequenceBlock,
   type ImageSequenceItem,
-} from "@multica/core/attachments/image-sequence";
+} from "@marvis/core/attachments/image-sequence";
 import { useT } from "../i18n";
 import {
   AttachmentPreviewModal,

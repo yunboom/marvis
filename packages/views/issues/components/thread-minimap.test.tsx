@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, screen, within } from "@testing-library/react";
-import type { TimelineEntry } from "@multica/core/types";
+import type { TimelineEntry } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { MAX_RAIL_TICKS, ThreadMinimap, commentPreview, waveScale } from "./thread-minimap";
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({
     getActorName: (type: string, id: string) => `${type}:${id}`,
     getActorInitials: (_type: string, _id: string, name: string) => name.slice(0, 1),

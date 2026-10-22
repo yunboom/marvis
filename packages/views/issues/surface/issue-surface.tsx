@@ -2,34 +2,34 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { StoreApi } from "zustand/vanilla";
-import type { IssueViewState } from "@multica/core/issues/stores/view-store";
-import type { IssueViewBaseline } from "@multica/core/issue-views/baseline";
+import type { IssueViewState } from "@marvis/core/issues/stores/view-store";
+import type { IssueViewBaseline } from "@marvis/core/issue-views/baseline";
 import { AlertTriangle, FilterX, ListTodo, Plus } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
-import { cn } from "@multica/ui/lib/utils";
-import { useWorkspaceId } from "@multica/core/hooks";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { cn } from "@marvis/ui/lib/utils";
+import { useWorkspaceId } from "@marvis/core/hooks";
 import { useQuery } from "@tanstack/react-query";
-import { workspaceWakeupSummariesOptions } from "@multica/core/issues/wakeups";
+import { workspaceWakeupSummariesOptions } from "@marvis/core/issues/wakeups";
 import {
   useViewStore,
   ViewStoreProvider,
-} from "@multica/core/issues/stores/view-store-context";
+} from "@marvis/core/issues/stores/view-store-context";
 import {
   getIssueSurfaceViewStore,
   seedIssueSurfaceViewState,
-} from "@multica/core/issues/stores/surface-view-store";
-import { useActiveIssueView } from "@multica/core/issue-views/use-active-view";
-import { baselineFromQuery } from "@multica/core/issue-views/baseline";
+} from "@marvis/core/issues/stores/surface-view-store";
+import { useActiveIssueView } from "@marvis/core/issue-views/use-active-view";
+import { baselineFromQuery } from "@marvis/core/issue-views/baseline";
 import { ViewBaselineProvider, useViewBaseline } from "./view-baseline-context";
-import type { IssueViewScope } from "@multica/core/issue-views/queries";
+import type { IssueViewScope } from "@marvis/core/issue-views/queries";
 import {
   actorKindForViewVariant,
   issueScopeKey,
   myRelationForViewVariant,
   type IssueScope,
-} from "@multica/core/issues/surface/scope";
-import type { Issue } from "@multica/core/types";
+} from "@marvis/core/issues/surface/scope";
+import type { Issue } from "@marvis/core/types";
 import { BoardView } from "../components/board-view";
 import { BatchActionToolbar } from "../components/batch-action-toolbar";
 import { GanttView } from "../components/gantt-view";

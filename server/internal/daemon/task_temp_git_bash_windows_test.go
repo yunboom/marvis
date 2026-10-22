@@ -15,17 +15,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/daemon/execenv"
+	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
 )
 
 // This is an opt-in test of real Git for Windows, not an agent CLI or account.
-// Run with -tags=gitbashintegration and MULTICA_TEST_GIT_BASH=<bash.exe>.
+// Run with -tags=gitbashintegration and MARVIS_TEST_GIT_BASH=<bash.exe>.
 // Tasks alternate providers: the MSYS /tmp mount is shared by every live Bash
 // of this user, so a non-Claude task seeding it must be just as safe (#8824).
 func TestWindowsGitBashTaskTempLifecycle(t *testing.T) {
-	bash := os.Getenv("MULTICA_TEST_GIT_BASH")
+	bash := os.Getenv("MARVIS_TEST_GIT_BASH")
 	if bash == "" {
-		t.Skip("set MULTICA_TEST_GIT_BASH to explicitly select Git for Windows")
+		t.Skip("set MARVIS_TEST_GIT_BASH to explicitly select Git for Windows")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -57,7 +57,7 @@ func TestWindowsGitBashTaskTempLifecycle(t *testing.T) {
 		script := `printf 'PID='; /usr/bin/cat /proc/$$/winpid; printf '\n'
 printf 'TMPDIR=%s\n' "$(/usr/bin/cygpath -w "$TMPDIR")"
 printf 'TARGET=%s\n' "$(/usr/bin/cygpath -w /tmp)"
-if file=$(/usr/bin/mktemp /tmp/multica-regression-XXXXXXXX); then
+if file=$(/usr/bin/mktemp /tmp/marvis-regression-XXXXXXXX); then
   /usr/bin/rm -- "$file"
   printf 'TMP_OK=yes\n'
 else
@@ -87,7 +87,7 @@ IFS= read -r release
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 		cmd.Stdin, cmd.Stdout, cmd.Stderr = input, sink, stderr
 		cmd.Env = os.Environ()
-		for key, value := range taskMulticaEnvironment(Task{}, provider, "", "", "", "", "", 0, 0, dir) {
+		for key, value := range taskMarvisEnvironment(Task{}, provider, "", "", "", "", "", 0, 0, dir) {
 			cmd.Env = append(cmd.Env, key+"="+value)
 		}
 		if err := cmd.Start(); err != nil {

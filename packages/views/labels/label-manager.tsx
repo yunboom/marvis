@@ -4,19 +4,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MoreHorizontal, Pencil, Plus, Search, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useWorkspaceId } from "@multica/core/hooks";
+import { useWorkspaceId } from "@marvis/core/hooks";
 import {
   labelListOptions,
   useCreateLabel,
   useDeleteLabel,
   useUpdateLabel,
-} from "@multica/core/labels";
-import type { Label, LabelResourceType } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Input } from "@multica/ui/components/ui/input";
-import { Textarea } from "@multica/ui/components/ui/textarea";
-import { Label as FieldLabel } from "@multica/ui/components/ui/label";
+} from "@marvis/core/labels";
+import type { Label, LabelResourceType } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
+import { Label as FieldLabel } from "@marvis/ui/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,13 +34,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
+} from "@marvis/ui/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { ColorPicker, COLOR_PICKER_PRESETS } from "../common/color-picker";
 import { useLocale, useT } from "../i18n";
 

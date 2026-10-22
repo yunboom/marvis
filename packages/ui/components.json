@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@multica/ui/components",
-    "ui": "@multica/ui/components/ui",
-    "hooks": "@multica/ui/hooks",
-    "lib": "@multica/ui/lib",
-    "utils": "@multica/ui/lib/utils"
+    "components": "@marvis/ui/components",
+    "ui": "@marvis/ui/components/ui",
+    "hooks": "@marvis/ui/hooks",
+    "lib": "@marvis/ui/lib",
+    "utils": "@marvis/ui/lib/utils"
   },
   "registries": {
     "@reui": {

@@ -17,10 +17,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/storage"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/storage"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // Persist raw storage URLs as durable avatar references. At read time, private
@@ -314,7 +314,7 @@ func (h *Handler) avatarObjectLoadsUnauthenticated(rawURL string) bool {
 	return h.storageURLIsPubliclyReadable(rawURL)
 }
 
-// absolutizeAvatarPath anchors the served path on MULTICA_PUBLIC_URL when it
+// absolutizeAvatarPath anchors the served path on MARVIS_PUBLIC_URL when it
 // is configured, so clients that don't share the API's document origin
 // (Desktop, mobile webview) can load it. Same policy as buildMarkdownURL;
 // falling back to the site-relative path is safe because every client

@@ -14,7 +14,7 @@ func TestProductionHTTPClientIsFixedAndBounded(t *testing.T) {
 	t.Parallel()
 	client := newHTTPClient()
 	defer client.Close()
-	if client.endpoint != "https://telemetry.multica.ai/v1/telemetry/events" {
+	if client.endpoint != "https://telemetry.marvis.ai/v1/telemetry/events" {
 		t.Fatalf("endpoint = %q", client.endpoint)
 	}
 	if client.client.Timeout != 5*time.Second {

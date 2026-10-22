@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"github.com/jackc/pgx/v5"
-	"github.com/multica-ai/multica/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/util"
 	"strings"
 	"testing"
 	"time"

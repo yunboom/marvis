@@ -4,7 +4,7 @@ import type {
   ExternalScrollSource,
   ScrollRestorationAdapter,
   ScrollRestorationEntry,
-} from "@multica/views/platform";
+} from "@marvis/views/platform";
 import { createAppRouter } from "@/routes";
 import {
   useTabStore,
@@ -96,7 +96,7 @@ export function registerCoordinatorQueryClient(qc: QueryClient): void {
 
 /**
  * Serves saved scroll offsets back to mounting views (pull-based restore —
- * see ScrollRestorationProvider in @multica/views/platform). Offsets are
+ * see ScrollRestorationProvider in @marvis/views/platform). Offsets are
  * looked up live against the tab's memento, scoped to the route the view is
  * mounting under, so in-tab back/forward pulls each route's own offsets.
  *

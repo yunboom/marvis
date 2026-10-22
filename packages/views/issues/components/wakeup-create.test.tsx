@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { ApiError } from "@multica/core/api";
-import { configureShortcutPlatform } from "@multica/core/shortcuts";
+import { ApiError } from "@marvis/core/api";
+import { configureShortcutPlatform } from "@marvis/core/shortcuts";
 import { renderWithI18n } from "../../test/i18n";
 import { WakeupCreate } from "./wakeup-create";
 
@@ -10,7 +10,7 @@ let assigneeAgent = "emacs";
 vi.mock("./wakeup-condition-names", () => ({
   useConditionNames: () => ({ status: (key: string) => key, label: () => undefined, property: () => undefined, actor: (_type: string, id: string) => id }),
 }));
-vi.mock("@multica/core/issues", () => ({
+vi.mock("@marvis/core/issues", () => ({
   useCreateIssueWakeup: () => ({ mutateAsync: create, isPending: false }),
   childIssuesOptions: () => ({ queryKey: ["children"] }),
   issueDetailOptions: () => ({ queryKey: ["issue-detail"] }),
@@ -28,7 +28,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
         ],
   }),
 }));
-vi.mock("@multica/core/agents", () => ({ isAgentRuntimeBound: () => true }));
+vi.mock("@marvis/core/agents", () => ({ isAgentRuntimeBound: () => true }));
 vi.mock("../../common/actor-avatar", () => ({ ActorAvatar: () => <span /> }));
 vi.mock("../../common/use-viewing-timezone", () => ({ useViewingTimezone: () => "Asia/Shanghai" }));
 

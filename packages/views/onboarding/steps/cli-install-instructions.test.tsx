@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { I18nProvider } from "@multica/core/i18n/react";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enOnboarding from "../../locales/en/onboarding.json";
 import { CliInstallInstructions } from "./cli-install-instructions";
@@ -9,7 +9,7 @@ import { CliInstallInstructions } from "./cli-install-instructions";
 const TEST_RESOURCES = { en: { common: enCommon, onboarding: enOnboarding } };
 
 const WINDOWS_CMD =
-  "irm https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.ps1 | iex";
+  "irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex";
 
 describe("CliInstallInstructions", () => {
   // The switch itself is covered in common/cli-install-command.test.tsx; this
@@ -25,6 +25,6 @@ describe("CliInstallInstructions", () => {
     await user.click(screen.getByRole("tab", { name: "Windows" }));
 
     expect(screen.getByText(WINDOWS_CMD)).toBeInTheDocument();
-    expect(screen.getByText("multica setup")).toBeInTheDocument();
+    expect(screen.getByText("marvis setup")).toBeInTheDocument();
   });
 });

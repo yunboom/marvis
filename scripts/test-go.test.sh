@@ -2,7 +2,7 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/multica-test-go.XXXXXX")
+TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/marvis-test-go.XXXXXX")
 BIN_DIR="$TEST_DIR/bin"
 CALLS_FILE="$TEST_DIR/go-calls.log"
 OUTPUT_FILE="$TEST_DIR/output.log"
@@ -13,7 +13,7 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "$BIN_DIR"
-export MULTICA_TEST_GO_CALLS="$CALLS_FILE"
+export MARVIS_TEST_GO_CALLS="$CALLS_FILE"
 : >"$CALLS_FILE"
 
 cat >"$BIN_DIR/go" <<'FAKE'
@@ -27,13 +27,13 @@ case "${1:-}" in
       exit 2
     fi
     printf '%s\n' \
-      github.com/multica-ai/multica/server \
-      github.com/multica-ai/multica/server/internal/daemon \
-      github.com/multica-ai/multica/server/pkg/agent \
-      github.com/multica-ai/multica/server/pkg/agent/internal/testutil
+      github.com/marvis-ai/marvis/server \
+      github.com/marvis-ai/marvis/server/internal/daemon \
+      github.com/marvis-ai/marvis/server/pkg/agent \
+      github.com/marvis-ai/marvis/server/pkg/agent/internal/testutil
     ;;
   test)
-    printf '%s\n' "$*" >>"$MULTICA_TEST_GO_CALLS"
+    printf '%s\n' "$*" >>"$MARVIS_TEST_GO_CALLS"
     ;;
   *)
     echo "unexpected go command: $*" >&2
@@ -43,7 +43,7 @@ esac
 FAKE
 chmod 755 "$BIN_DIR/go"
 
-regular_call='test -race github.com/multica-ai/multica/server github.com/multica-ai/multica/server/internal/daemon'
+regular_call='test -race github.com/marvis-ai/marvis/server github.com/marvis-ai/marvis/server/internal/daemon'
 agent_call='test -race -p 2 -parallel 2 ./pkg/agent/...'
 
 # $1: case label; $2: expected go calls, one per line. Clears the log after.

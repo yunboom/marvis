@@ -30,8 +30,8 @@ function macContext(releaseInfo) {
 function publishedUpdateInfo(context) {
   return {
     version: "0.7.0",
-    files: [{ url: "multica-desktop-0.7.0-mac-arm64.zip", sha512: "x" }],
-    path: "multica-desktop-0.7.0-mac-arm64.zip",
+    files: [{ url: "marvis-desktop-0.7.0-mac-arm64.zip", sha512: "x" }],
+    path: "marvis-desktop-0.7.0-mac-arm64.zip",
     sha512: "x",
     ...context.packager.platformSpecificBuildOptions.releaseInfo,
   };

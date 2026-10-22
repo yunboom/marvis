@@ -1,7 +1,7 @@
 import { createStore } from "zustand/vanilla";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses/queries";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses/queries";
 
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () => buildIssueStatusCatalog([]),
 }));
 import { describe, expect, it, vi, beforeAll, afterAll } from "vitest";
@@ -9,9 +9,9 @@ import { screen } from "@testing-library/react";
 import {
   type IssueViewState,
   viewStoreSlice,
-} from "@multica/core/issues/stores/view-store";
-import { ViewStoreProvider } from "@multica/core/issues/stores/view-store-context";
-import type { Issue } from "@multica/core/types";
+} from "@marvis/core/issues/stores/view-store";
+import { ViewStoreProvider } from "@marvis/core/issues/stores/view-store-context";
+import type { Issue } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { IssueContextMenuProvider } from "../actions";
 
@@ -20,13 +20,13 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQuery: () => ({ data: [] }),
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
 // The row's start / due range lives in a tooltip. This test is about how the
 // dates are formatted, not about hover timing, so render the content inline.
-vi.mock("@multica/ui/components/ui/tooltip", () => ({
+vi.mock("@marvis/ui/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => children,
   TooltipTrigger: ({ render }: { render: React.ReactNode }) => render,
   TooltipContent: ({ children }: { children: React.ReactNode }) => children,
@@ -46,8 +46,8 @@ vi.mock("../../navigation", () => ({
   NavigationProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-vi.mock("@multica/core/paths", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@multica/core/paths")>();
+vi.mock("@marvis/core/paths", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@marvis/core/paths")>();
   return {
     ...actual,
     useWorkspaceSlug: () => "acme",

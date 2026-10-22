@@ -4,27 +4,27 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
 import { Minus, Maximize2, Minimize2, ChevronDown, Plus, Check, Archive, Pencil, Loader2, Square } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { cn } from "@multica/ui/lib/utils";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@multica/ui/components/ui/tooltip";
+import { Button } from "@marvis/ui/components/ui/button";
+import { cn } from "@marvis/ui/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/popover";
 import { toast } from "sonner";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useAuthStore } from "@multica/core/auth";
-import { agentListOptions, memberListOptions } from "@multica/core/workspace/queries";
-import { projectListOptions } from "@multica/core/projects/queries";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useAuthStore } from "@marvis/core/auth";
+import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
+import { projectListOptions } from "@marvis/core/projects/queries";
 import { canAssignAgent } from "../../issues/components/pickers/assignee-picker";
-import { api, dispatchReasonCode } from "@multica/core/api";
+import { api, dispatchReasonCode } from "@marvis/core/api";
 import {
   isAgentRuntimeBound,
   useAgentPresenceDetail,
   useCustomizeConversationStartersHref,
   useWorkspaceAgentAvailability,
-} from "@multica/core/agents";
+} from "@marvis/core/agents";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { DeferredTooltip } from "../../common/deferred-tooltip";
 import { ActionShortcutKeycaps } from "../../common/shortcut-keycaps";
@@ -52,20 +52,20 @@ import {
   pendingChatTasksOptions,
   chatKeys,
   isTaskMessageTaskId,
-} from "@multica/core/chat/queries";
+} from "@marvis/core/chat/queries";
 import {
   useCreateChatSession,
   useMarkChatSessionRead,
   useSetChatSessionArchived,
   useSetChatSessionProject,
   useUpdateChatSession,
-} from "@multica/core/chat/mutations";
-import { useChatStore } from "@multica/core/chat";
-import { upsertChatMessageToCaches } from "@multica/core/chat/message-cache";
-import { chatQuickActionsPendingOptions } from "@multica/core/chat/queries";
-import { useQuickActionsPendingTimeout } from "@multica/core/chat/use-quick-actions-pending-timeout";
+} from "@marvis/core/chat/mutations";
+import { useChatStore } from "@marvis/core/chat";
+import { upsertChatMessageToCaches } from "@marvis/core/chat/message-cache";
+import { chatQuickActionsPendingOptions } from "@marvis/core/chat/queries";
+import { useQuickActionsPendingTimeout } from "@marvis/core/chat/use-quick-actions-pending-timeout";
 import { useQuickActionsFailureToast } from "./use-quick-actions-failure-toast";
-import { removeChatMessageFromCaches } from "@multica/core/realtime";
+import { removeChatMessageFromCaches } from "@marvis/core/realtime";
 import { useChatDraftRestore } from "./use-chat-draft-restore";
 import { useChatTaskActions } from "./use-chat-task-actions";
 import { useChatInputFocus } from "./use-chat-input-focus";
@@ -78,7 +78,7 @@ import { ChatResizeHandles } from "./chat-resize-handles";
 import { useChatContextItems } from "./use-chat-context-items";
 import { useChatResize } from "./use-chat-resize";
 import { useVisualViewportKeyboard } from "./use-visual-viewport-keyboard";
-import { useIsMobile } from "@multica/ui/hooks/use-mobile";
+import { useIsMobile } from "@marvis/ui/hooks/use-mobile";
 import {
   hasInFlightPendingTask,
   isStillOnComposeTarget,
@@ -86,8 +86,8 @@ import {
   seedAcceptedPendingTask,
 } from "./use-chat-controller";
 import { useChatProjectContextSupport } from "./use-chat-project-context-support";
-import { createLogger } from "@multica/core/logger";
-import type { Agent, Attachment, ChatMessage, ChatSession, PendingChatTasksResponse } from "@multica/core/types";
+import { createLogger } from "@marvis/core/logger";
+import type { Agent, Attachment, ChatMessage, ChatSession, PendingChatTasksResponse } from "@marvis/core/types";
 import { useLocale, useT } from "../../i18n";
 
 const uiLogger = createLogger("chat.ui");

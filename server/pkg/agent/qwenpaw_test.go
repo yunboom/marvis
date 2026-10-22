@@ -22,7 +22,7 @@ func TestQwenpawModelSelectionUnsupported(t *testing.T) {
 }
 
 // fakeQwenpawACPScript impersonates `qwenpaw acp` for unit tests.
-// Wire format mirrors other Multica ACP fakes (grok/kimi):
+// Wire format mirrors other Marvis ACP fakes (grok/kimi):
 // session/new returns sessionId, session/load accepts an existing session,
 // session/prompt returns stopReason=end_turn.
 // session/set_model is also handled for backward compatibility with older
@@ -574,7 +574,7 @@ done
 	}
 }
 
-// TestQwenpawExtraArgsReachTheCommandLine pins MULTICA_QWENPAW_ARGS end to
+// TestQwenpawExtraArgsReachTheCommandLine pins MARVIS_QWENPAW_ARGS end to
 // end. config.go reads it and daemon.go forwards it as ExecOptions.ExtraArgs,
 // but the backend used to consume CustomArgs only, so the variable was read,
 // plumbed, and then silently dropped. ExtraArgs must land before CustomArgs,

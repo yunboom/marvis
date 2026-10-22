@@ -22,7 +22,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => state.pathname,
 }));
 
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: (
     selector: (auth: {
       user: typeof state.user;
@@ -31,7 +31,7 @@ vi.mock("@multica/core/auth", () => ({
   ) => selector({ user: state.user, isLoading: state.isAuthLoading }),
 }));
 
-vi.mock("@multica/core/workspace", () => ({
+vi.mock("@marvis/core/workspace", () => ({
   workspaceBySlugOptions: (slug: string) => ({
     queryKey: ["workspace-by-slug", slug],
     queryFn: async () => {
@@ -42,7 +42,7 @@ vi.mock("@multica/core/workspace", () => ({
   }),
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   WorkspaceSlugProvider: ({ children }: { children: ReactNode }) => (
     <>{children}</>
   ),
@@ -52,23 +52,23 @@ vi.mock("@multica/core/paths", () => ({
   },
 }));
 
-vi.mock("@multica/core/platform", () => ({
+vi.mock("@marvis/core/platform", () => ({
   setCurrentWorkspace: vi.fn(),
 }));
 
-vi.mock("@multica/views/workspace/no-access-page", () => ({
+vi.mock("@marvis/views/workspace/no-access-page", () => ({
   NoAccessPage: () => <div data-testid="no-access" />,
 }));
 
-vi.mock("@multica/views/workspace/use-workspace-seen", () => ({
+vi.mock("@marvis/views/workspace/use-workspace-seen", () => ({
   useWorkspaceSeen: () => state.hasBeenSeen,
 }));
 
-vi.mock("@multica/ui/components/common/multica-icon", () => ({
-  MulticaIcon: () => <div data-testid="workspace-loading" />,
+vi.mock("@marvis/ui/components/common/marvis-icon", () => ({
+  MarvisIcon: () => <div data-testid="workspace-loading" />,
 }));
 
-import { setCurrentWorkspace } from "@multica/core/platform";
+import { setCurrentWorkspace } from "@marvis/core/platform";
 import WorkspaceLayout from "./layout";
 
 /** `use()` unwraps a params promise synchronously only when it is already

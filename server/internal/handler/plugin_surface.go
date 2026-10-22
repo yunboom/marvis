@@ -16,16 +16,16 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/multica-ai/multica/server/internal/util"
-	"github.com/multica-ai/multica/server/internal/util/secretbox"
-	"github.com/multica-ai/multica/server/pkg/plugincontract"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
+	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
 )
 
 const (
 	pluginSurfaceLaunchTTL       = 2 * time.Minute
 	pluginSurfaceProtocolVersion = 2
-	pluginSurfaceConnectMessage  = "multica:plugin-bridge-connect"
-	pluginSurfacePortGlobal      = "__multicaPluginBridgePortV2"
+	pluginSurfaceConnectMessage  = "marvis:plugin-bridge-connect"
+	pluginSurfacePortGlobal      = "__marvisPluginBridgePortV2"
 )
 
 var errInvalidPluginSurfaceOrigin = errors.New("plugin surface origin must be an absolute HTTP(S) origin without a path")
@@ -55,7 +55,7 @@ func NewPluginSurfaceTokenBox(deploymentKey []byte) (*secretbox.Box, error) {
 		return nil, secretbox.ErrInvalidKey
 	}
 	mac := hmac.New(sha256.New, deploymentKey)
-	_, _ = mac.Write([]byte("multica/plugin-surface-launch/v1"))
+	_, _ = mac.Write([]byte("marvis/plugin-surface-launch/v1"))
 	return secretbox.New(mac.Sum(nil))
 }
 
@@ -154,12 +154,12 @@ func (h *Handler) GetPluginSurfaceLaunch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if strings.TrimSpace(h.cfg.PluginSurfaceOrigin) == "" || h.PluginSurfaceTokens == nil {
-		writeFeatureDisabled(w, "plugin_surfaces_not_configured", "Plugin surfaces are unavailable: MULTICA_PLUGIN_SURFACE_ORIGIN and MULTICA_PLUGIN_SECRET_KEY must be configured")
+		writeFeatureDisabled(w, "plugin_surfaces_not_configured", "Plugin surfaces are unavailable: MARVIS_PLUGIN_SURFACE_ORIGIN and MARVIS_PLUGIN_SECRET_KEY must be configured")
 		return
 	}
 	origin, err := parsePluginSurfaceOrigin(h.cfg.PluginSurfaceOrigin)
 	if err != nil {
-		writeErrorCode(w, http.StatusInternalServerError, "plugin_surfaces_misconfigured", "Plugin surfaces require a valid MULTICA_PLUGIN_SURFACE_ORIGIN")
+		writeErrorCode(w, http.StatusInternalServerError, "plugin_surfaces_misconfigured", "Plugin surfaces require a valid MARVIS_PLUGIN_SURFACE_ORIGIN")
 		return
 	}
 	if !h.pluginSurfaceOriginIsDedicated(origin) {
@@ -300,13 +300,13 @@ func buildPluginSurfaceDocument(code, challenge string) string {
 	encodedCode := base64.StdEncoding.EncodeToString([]byte(code))
 	bootstrap := fmt.Sprintf(`(function () {
   var challenge = %s;
-  var codeElement = document.getElementById("multica-surface-code");
+  var codeElement = document.getElementById("marvis-surface-code");
   var bootstrapElement = document.currentScript;
   var failed = false;
   function reportSurfaceError() {
     if (failed) return;
     failed = true;
-    parent.postMessage({ type: "multica:plugin-surface-error" }, "*");
+    parent.postMessage({ type: "marvis:plugin-surface-error" }, "*");
   }
   window.addEventListener("error", reportSurfaceError);
   window.addEventListener("unhandledrejection", reportSurfaceError);
@@ -319,7 +319,7 @@ func buildPluginSurfaceDocument(code, challenge string) string {
       writable: false
     });
     window.addEventListener("pagehide", function () {
-      parent.postMessage({ type: "multica:plugin-surface-navigated" }, "*");
+      parent.postMessage({ type: "marvis:plugin-surface-navigated" }, "*");
     });
     parent.postMessage({
       type: %s,
@@ -359,7 +359,7 @@ body {
 </head>
 <body>
 <div id="root"></div>
-<script type="text/plain" id="multica-surface-code">` + html.EscapeString(encodedCode) + `</script>
+<script type="text/plain" id="marvis-surface-code">` + html.EscapeString(encodedCode) + `</script>
 <script>` + bootstrap + `</script>
 </body>
 </html>`

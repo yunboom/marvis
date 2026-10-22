@@ -7,8 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 func TestCommentThreadQueuesMergeAndExecuteIndependently(t *testing.T) {

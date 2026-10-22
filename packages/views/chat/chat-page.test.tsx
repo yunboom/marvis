@@ -4,8 +4,8 @@ import { StrictMode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import type { Agent } from "@multica/core/types";
-import { I18nProvider } from "@multica/core/i18n/react";
+import type { Agent } from "@marvis/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../locales/en/common.json";
 import enChat from "../locales/en/chat.json";
 import {
@@ -62,7 +62,7 @@ vi.mock("./components/archived-agent-banner", () => ({
 vi.mock("react-resizable-panels", () => ({
   useDefaultLayout: () => ({ defaultLayout: undefined, onLayoutChanged: vi.fn() }),
 }));
-vi.mock("@multica/ui/components/ui/resizable", () => ({
+vi.mock("@marvis/ui/components/ui/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -78,17 +78,17 @@ const FOLD_INNER = 851;
 const TABLET = 1024;
 const DESKTOP = 1440;
 const layout = vi.hoisted(() => ({ width: 1440 }));
-vi.mock("@multica/ui/hooks/use-mobile", () => ({
+vi.mock("@marvis/ui/hooks/use-mobile", () => ({
   useIsMobile: () => layout.width < 768,
   useIsCompact: () => layout.width < 1024,
 }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useRequiredWorkspaceSlug: () => "acme",
   useWorkspacePaths: () => ({ chat: () => "/acme/chat" }),
 }));
 const platformWorkspace = vi.hoisted(() => ({ slug: "acme" }));
-vi.mock("@multica/core/platform", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/platform")>()),
+vi.mock("@marvis/core/platform", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/platform")>()),
   getCurrentSlug: () => platformWorkspace.slug,
 }));
 
@@ -121,7 +121,7 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: mockToastError },
 }));
 
-vi.mock("@multica/core/chat", () => ({
+vi.mock("@marvis/core/chat", () => ({
   useChatStore: Object.assign(
     (selector?: (s: { activeSessionId: string | null }) => unknown) =>
       selector ? selector(storeRef.current) : storeRef.current,

@@ -1,4 +1,4 @@
-import type { IssueWakeupInput, WakeupCondition as PlatformCondition } from "@multica/core/types";
+import type { IssueWakeupInput, WakeupCondition as PlatformCondition } from "@marvis/core/types";
 
 /** The 25 issue-scoped events, in catalog order. */
 export const WAKEUP_EVENT_TYPES = [

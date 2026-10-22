@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { InvitePage } from "@multica/views/invite";
-import { InvitationsPage } from "@multica/views/invitations";
-import { OnboardingFlow } from "@multica/views/onboarding";
-import { useNavigation } from "@multica/views/navigation";
-import { paths } from "@multica/core/paths";
-import { workspaceListOptions } from "@multica/core/workspace/queries";
+import { InvitePage } from "@marvis/views/invite";
+import { InvitationsPage } from "@marvis/views/invitations";
+import { OnboardingFlow } from "@marvis/views/onboarding";
+import { useNavigation } from "@marvis/views/navigation";
+import { paths } from "@marvis/core/paths";
+import { workspaceListOptions } from "@marvis/core/workspace/queries";
 import { useWindowOverlayStore } from "@/stores/window-overlay-store";
 import { useLocalRuntimesPending } from "../platform/use-local-runtimes-pending";
 

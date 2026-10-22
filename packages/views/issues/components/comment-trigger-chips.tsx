@@ -2,13 +2,13 @@
 
 import { useMemo, useState, type ReactElement } from "react";
 import { ChevronDown, TriangleAlert, Users } from "lucide-react";
-import type { CommentTriggerPreviewAgent, CommentTriggerOutcome } from "@multica/core/types";
-import type { AgentRunState, RecipientAction } from "@multica/core/issues/run-steering";
-import { useAgentPresenceDetail } from "@multica/core/agents";
-import { mentionLabelsByTarget } from "@multica/core/issues/comment-trigger-outcomes";
-import { useCurrentWorkspace } from "@multica/core/paths";
-import { ActorAvatar as ActorAvatarBase } from "@multica/ui/components/common/actor-avatar";
-import { AVATAR_SIZE_PX } from "@multica/ui/lib/avatar-size";
+import type { CommentTriggerPreviewAgent, CommentTriggerOutcome } from "@marvis/core/types";
+import type { AgentRunState, RecipientAction } from "@marvis/core/issues/run-steering";
+import { useAgentPresenceDetail } from "@marvis/core/agents";
+import { mentionLabelsByTarget } from "@marvis/core/issues/comment-trigger-outcomes";
+import { useCurrentWorkspace } from "@marvis/core/paths";
+import { ActorAvatar as ActorAvatarBase } from "@marvis/ui/components/common/actor-avatar";
+import { AVATAR_SIZE_PX } from "@marvis/ui/lib/avatar-size";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,14 +16,14 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@multica/ui/components/ui/tooltip";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@marvis/ui/components/ui/tooltip";
+import { cn } from "@marvis/ui/lib/utils";
 import { AgentStatusDot } from "../../common/actor-avatar";
 import { useT } from "../../i18n";
 import { blockedReasonLabel, blockedShortReasonLabel } from "../blocked-trigger-copy";

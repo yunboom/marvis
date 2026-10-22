@@ -15,13 +15,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/featureflags"
-	"github.com/multica-ai/multica/server/internal/issuestatus"
-	"github.com/multica-ai/multica/server/internal/issueworkflow"
-	"github.com/multica-ai/multica/server/internal/logger"
-	"github.com/multica-ai/multica/server/internal/service"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/featureflags"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	"github.com/marvis-ai/marvis/server/internal/issueworkflow"
+	"github.com/marvis-ai/marvis/server/internal/logger"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // Project workflow API (MUL-7420).

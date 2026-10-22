@@ -233,7 +233,7 @@ func TestDisableThinkingDefaultOmitsChatTemplateKwargs(t *testing.T) {
 }
 
 // TestDisableThinkingInjectsChatTemplateKwargs pins the request shape behind
-// MULTICA_LLM_DISABLE_THINKING: the hint rides on every request the client
+// MARVIS_LLM_DISABLE_THINKING: the hint rides on every request the client
 // makes — GenerateText (titles) and GenerateJSON (quick actions) alike — as a
 // body mutation that must not disturb the fields the helpers manage
 // themselves.

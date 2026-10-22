@@ -3,12 +3,12 @@
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ChevronDown, ChevronRight, TriangleAlert } from "lucide-react";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { workflowHandoffPreviewOptions } from "@multica/core/issue-workflows";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { Button } from "@multica/ui/components/ui/button";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { workflowHandoffPreviewOptions } from "@marvis/core/issue-workflows";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -16,8 +16,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Spinner } from "@multica/ui/components/ui/spinner";
+} from "@marvis/ui/components/ui/dialog";
+import { Spinner } from "@marvis/ui/components/ui/spinner";
 import { ActorAvatar } from "../common/actor-avatar";
 import { StatusIcon } from "../issues/components/status-icon";
 import { useStatusLabel } from "../issues/utils/status-label";

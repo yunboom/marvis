@@ -2,11 +2,11 @@
 
 import { Server } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { AgentRuntime } from "@multica/core/types";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { runtimeListOptions } from "@multica/core/runtimes/queries";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
+import type { AgentRuntime } from "@marvis/core/types";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { runtimeListOptions } from "@marvis/core/runtimes/queries";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { RuntimeDetail } from "./runtime-detail";
 import { buildRuntimeMachines } from "./runtime-machines";
 import { QoderDetailPage } from "./qoder-detail-page";

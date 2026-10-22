@@ -20,13 +20,13 @@ import {
   X as XIcon,
   Zap,
 } from "lucide-react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@multica/ui/components/ui/tooltip";
+} from "@marvis/ui/components/ui/dialog";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
 import {
   Popover,
   PopoverTrigger,
@@ -34,26 +34,26 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverDescription,
-} from "@multica/ui/components/ui/popover";
-import { Button } from "@multica/ui/components/ui/button";
-import { useCurrentWorkspace } from "@multica/core/paths";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { agentListOptions, squadListOptions } from "@multica/core/workspace/queries";
-import { projectListOptions } from "@multica/core/projects/queries";
+} from "@marvis/ui/components/ui/popover";
+import { Button } from "@marvis/ui/components/ui/button";
+import { useCurrentWorkspace } from "@marvis/core/paths";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { agentListOptions, squadListOptions } from "@marvis/core/workspace/queries";
+import { projectListOptions } from "@marvis/core/projects/queries";
 import {
   useCreateAutopilot,
   useCreateAutopilotTrigger,
   useUpdateAutopilot,
   useUpdateAutopilotTrigger,
-} from "@multica/core/autopilots/mutations";
-import { buildAutopilotWebhookUrl } from "@multica/core/autopilots";
-import { api } from "@multica/core/api";
+} from "@marvis/core/autopilots/mutations";
+import { buildAutopilotWebhookUrl } from "@marvis/core/autopilots";
+import { api } from "@marvis/core/api";
 import type {
   AutopilotAssigneeType,
   AutopilotCollaborator,
   AutopilotExecutionMode,
   AutopilotTrigger,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { TitleEditor, ContentEditor, type TitleEditorRef } from "../../editor";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { SegmentedToggle } from "../../common/segmented-toggle";
@@ -71,7 +71,7 @@ import { WebhookEventFilterSection } from "./webhook-event-filter-section";
 import { WebhookUrlField } from "./webhook-url-field";
 import { useT } from "../../i18n";
 import { formatSchedulePartialFailureToast } from "./autopilot-dialog-toast";
-import type { WebhookEventFilter } from "@multica/core/types";
+import type { WebhookEventFilter } from "@marvis/core/types";
 
 // Types
 

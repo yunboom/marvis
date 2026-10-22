@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,22 +14,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
+} from "@marvis/ui/components/ui/alert-dialog";
 import { useQuery } from "@tanstack/react-query";
-import type { Issue, UpdateIssueRequest } from "@multica/core/types";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { commonIssueFields } from "@multica/core/issues/batch";
-import { sharedWorkflowStatusKeys, useIssueWorkflows } from "@multica/core/issue-workflows";
-import { projectListOptions } from "@multica/core/projects/queries";
-import { useBatchUpdateIssues, useBatchDeleteIssues } from "@multica/core/issues/mutations";
-import { useModalStore } from "@multica/core/modals";
+import type { Issue, UpdateIssueRequest } from "@marvis/core/types";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { commonIssueFields } from "@marvis/core/issues/batch";
+import { sharedWorkflowStatusKeys, useIssueWorkflows } from "@marvis/core/issue-workflows";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import { useBatchUpdateIssues, useBatchDeleteIssues } from "@marvis/core/issues/mutations";
+import { useModalStore } from "@marvis/core/modals";
 import { StatusPicker, PriorityPicker, AssigneePicker } from "./pickers";
 import { useT } from "../../i18n";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   UI_EASE_OUT,
   UI_MOTION_DURATION,
-} from "@multica/ui/lib/motion";
+} from "@marvis/ui/lib/motion";
 import { useIssueSurfaceActionsOptional } from "../surface/actions-context";
 import { useIssueSurfaceSelection } from "../surface/selection-context";
 

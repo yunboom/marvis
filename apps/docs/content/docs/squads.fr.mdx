@@ -5,7 +5,7 @@ description: Un chef coordonne plusieurs agents ou membres et confie le travail 
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-Un squad se compose d'un agent chef et d'un nombre quelconque de membres. Assigner une tâche à un squad ne lance pas tous les agents à la fois. Multica réveille d'abord le chef ; celui-ci lit le contexte et décide qui se charge de l'étape suivante.
+Un squad se compose d'un agent chef et d'un nombre quelconque de membres. Assigner une tâche à un squad ne lance pas tous les agents à la fois. Marvis réveille d'abord le chef ; celui-ci lit le contexte et décide qui se charge de l'étape suivante.
 
 Les squads répondent à la question de savoir à qui revient le travail. Ils ne fusionnent pas plusieurs agents en un nouvel agent et n'augmentent pas automatiquement le parallélisme.
 
@@ -28,12 +28,12 @@ Pour créer un squad, il faut un nom et un chef. Le chef du squad en devient aut
 
 ## Déroulement de l'exécution après l'assignation
 
-Lorsqu'une tâche qui n'est pas dans À planifier est assignée à un squad, Multica met immédiatement en file une exécution pour l'**agent chef** (et non pour chaque membre). Le déroulement est ensuite le suivant :
+Lorsqu'une tâche qui n'est pas dans À planifier est assignée à un squad, Marvis met immédiatement en file une exécution pour l'**agent chef** (et non pour chaque membre). Le déroulement est ensuite le suivant :
 
 1. **Le chef récupère l'exécution.** Le runtime de l'agent prend en charge l'exécution lors de sa prochaine interrogation, comme pour toute autre assignation d'agent.
-2. **Le chef reçoit ses consignes.** Au moment de la récupération, Multica ajoute trois sections au prompt système du chef — voir [Ce que le chef voit à chaque tour](#ce-que-le-chef-voit-à-chaque-tour) ci-dessous.
+2. **Le chef reçoit ses consignes.** Au moment de la récupération, Marvis ajoute trois sections au prompt système du chef — voir [Ce que le chef voit à chaque tour](#ce-que-le-chef-voit-à-chaque-tour) ci-dessous.
 3. **Le chef publie un commentaire de délégation.** Le commentaire mentionne avec `@` le ou les membres choisis, en reprenant exactement le markdown de mention fourni par le roster — cette mention déclenche une nouvelle exécution pour chaque agent mentionné.
-4. **Le chef consigne son évaluation** via `multica squad activity <issue-id> action --reason "..."`. Cela ajoute une entrée dans la chronologie d'activité de la tâche, afin que les humains voient que le chef a bien évalué le déclencheur.
+4. **Le chef consigne son évaluation** via `marvis squad activity <issue-id> action --reason "..."`. Cela ajoute une entrée dans la chronologie d'activité de la tâche, afin que les humains voient que le chef a bien évalué le déclencheur.
 5. **Le tour de répartition laisse la tâche parente en `in_progress`.** Même contrat de statut géré par l'agent que pour une assignation directe à un agent — coordonner le squad revient à traiter la demande de la tâche parente, qui passe donc de `todo` à `in_progress` ; répartir le travail entre les membres n'est pas une livraison, donc elle y reste pendant que le squad travaille.
 6. **Le chef s'arrête.** Le chef ne réalise pas lui-même l'implémentation. Lorsque le membre délégué publie un retour — ou lorsqu'une sous-tâche ou une barrière d'étape se ferme — le chef est redéclenché pour lire la mise à jour et, au choix, déléguer l'étape suivante, escalader, passer la tâche parente en `in_review` une fois l'objectif global atteint, ou rester silencieux. `done` est laissé à un relecteur humain ou aux intégrations existantes (par exemple une PR avec intention de fermeture qui est fusionnée).
 
@@ -47,7 +47,7 @@ Si la tâche est dans **À planifier**, le chef n'est pas déclenché — À pla
 
   La partie de ce protocole consacrée au statut **ne s'applique qu'aux tâches effectivement assignées à ce squad**. Un chef réveillé par une mention `@squad` sur la tâche de quelqu'un d'autre reçoit le même roster et les mêmes règles de délégation, mais il lui est explicitement indiqué de **ne pas** toucher au statut de cette tâche — le statut reste du ressort de l'assigné de la tâche.
 - **Squad Roster** — la ligne du chef lui-même, plus une ligne par membre non archivé. Chaque ligne contient exactement le markdown de mention (`[@Name](mention://agent/<uuid>)` ou `[@Name](mention://member/<uuid>)`) que le chef doit coller — taper un simple `@name` ne déclenche personne.
-- **Squad Instructions** — vos consignes personnalisées pour ce squad (définies sur la page de détail du squad ou via `multica squad update --instructions`). Utilisez-les pour les règles de routage (« confier le travail de base de données à Alice, le frontend à Bob »), les politiques d'escalade ou tout ce que le chef doit savoir et qui ne figure pas déjà dans la tâche.
+- **Squad Instructions** — vos consignes personnalisées pour ce squad (définies sur la page de détail du squad ou via `marvis squad update --instructions`). Utilisez-les pour les règles de routage (« confier le travail de base de données à Alice, le frontend à Bob »), les politiques d'escalade ou tout ce que le chef doit savoir et qui ne figure pas déjà dans la tâche.
 
 ## Règles de redéclenchement du chef
 
@@ -74,7 +74,7 @@ La déduplication s'ajoute à ces règles : si le chef a déjà une exécution `
 | **Assigner une tâche à un squad** | Oui | Le squad devient l'assigné et le chef est déclenché. |
 | **@mentionner un squad dans un commentaire** | Non | Le chef traite uniquement ce commentaire ; l'assigné actuel reste inchangé. |
 
-@mentionner directement un membre précis lui confie le travail. Multica déduplique également les déclenchements répétés et empêche les commentaires du chef de le redéclencher lui-même, ce qui évite les boucles d'exécution.
+@mentionner directement un membre précis lui confie le travail. Marvis déduplique également les déclenchements répétés et empêche les commentaires du chef de le redéclencher lui-même, ce qui évite les boucles d'exécution.
 
 ## Squads et Accès
 
@@ -101,8 +101,8 @@ L'archivage est irréversible.
 ## Utiliser le CLI
 
 ```bash
-multica squad create --name "Product Delivery" --leader delivery-lead
-multica squad member add <squad-id> \
+marvis squad create --name "Product Delivery" --leader delivery-lead
+marvis squad member add <squad-id> \
   --member-id <agent-or-member-id> \
   --type agent \
   --role "Responsable de l'implémentation frontend"

@@ -4,14 +4,14 @@ import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Settings, Workflow } from "lucide-react";
 import { toast } from "sonner";
-import { api, clientErrorMessage } from "@multica/core/api";
-import { useFeatureEnabled } from "@multica/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@multica/core/feature-flags";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { handoffStepCount, resolveProjectWorkflow, useIssueWorkflows, useSetProjectWorkflow } from "@multica/core/issue-workflows";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { projectListOptions } from "@multica/core/projects/queries";
-import type { IssueWorkflow, IssueWorkflowMappingPlan, Project } from "@multica/core/types";
+import { api, clientErrorMessage } from "@marvis/core/api";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { handoffStepCount, resolveProjectWorkflow, useIssueWorkflows, useSetProjectWorkflow } from "@marvis/core/issue-workflows";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import type { IssueWorkflow, IssueWorkflowMappingPlan, Project } from "@marvis/core/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { useNavigation } from "../navigation";
 import { useT } from "../i18n";
 import { WorkflowMappingDialog } from "./workflow-mapping-dialog";

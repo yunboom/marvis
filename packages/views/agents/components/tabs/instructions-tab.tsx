@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Save } from "lucide-react";
-import type { Agent } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { Textarea } from "@multica/ui/components/ui/textarea";
+import type { Agent } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { ReadonlyContent } from "../../../editor/readonly-content";
 import { useT } from "../../../i18n";
 import { SettingsViewTabs } from "../../../settings/components/settings-layout";

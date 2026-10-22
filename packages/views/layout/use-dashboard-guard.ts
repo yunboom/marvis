@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect } from "react";
-import { useNavigationStore } from "@multica/core/navigation";
-import { useAuthStore } from "@multica/core/auth";
+import { useNavigationStore } from "@marvis/core/navigation";
+import { useAuthStore } from "@marvis/core/auth";
 import {
   paths,
   resolvePostAuthDestination,
   useCurrentWorkspace,
   useHasOnboarded,
-} from "@multica/core/paths";
-import { useWorkspaceList } from "@multica/core/workspace";
-import { useRecentIssuesStore } from "@multica/core/issues/stores";
+} from "@marvis/core/paths";
+import { useWorkspaceList } from "@marvis/core/workspace";
+import { useRecentIssuesStore } from "@marvis/core/issues/stores";
 import { useNavigation } from "../navigation";
 
 /**

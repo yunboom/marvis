@@ -183,10 +183,10 @@ func TestResolveSymlinksBestEffort(t *testing.T) {
 		// "/" always resolves, so the walk starts from it and re-attaches
 		// everything below it lexically. The root itself is never resolved by
 		// the walk — it is the starting point — which is what serves the
-		// Windows shape in cmd/multica's cross-volume test: a drive letter
+		// Windows shape in cmd/marvis's cross-volume test: a drive letter
 		// with no volume behind it yields the cleaned lexical form rather
 		// than depending on what EvalSymlinks does at a root.
-		in := filepath.Join(string(filepath.Separator), "multica-does-not-exist-0d1f", "a", "b")
+		in := filepath.Join(string(filepath.Separator), "marvis-does-not-exist-0d1f", "a", "b")
 		want, err := filepath.Abs(in)
 		if err != nil {
 			t.Fatalf("abs: %v", err)

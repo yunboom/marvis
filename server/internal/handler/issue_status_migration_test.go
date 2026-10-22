@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/multica-ai/multica/server/internal/issuestatus"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
 )
 
 // Exercise the actual migration against the previous catalog schema. The

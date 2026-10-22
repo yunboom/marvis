@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { IssueWorkflow } from "@multica/core/types";
+import type { IssueWorkflow } from "@marvis/core/types";
 import { renderWithI18n } from "../test/i18n";
 import { WorkflowPill } from "./workflow-pill";
 
@@ -19,10 +19,10 @@ function workflow(id: string, name: string, isDefault: boolean): IssueWorkflow {
   };
 }
 
-vi.mock("@multica/core/config", () => ({ useFeatureEnabled: () => true }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
+vi.mock("@marvis/core/config", () => ({ useFeatureEnabled: () => true }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
 const workflows = vi.hoisted(() => ({ list: [] as IssueWorkflow[] }));
-vi.mock("@multica/core/issue-workflows", () => ({
+vi.mock("@marvis/core/issue-workflows", () => ({
   useIssueWorkflows: () => ({ workflows: workflows.list }),
 }));
 

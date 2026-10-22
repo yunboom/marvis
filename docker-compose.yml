@@ -1,12 +1,12 @@
-name: multica
+name: marvis
 
 services:
   postgres:
     image: pgvector/pgvector:pg17
     environment:
-      POSTGRES_DB: multica
-      POSTGRES_USER: ${POSTGRES_USER:-multica}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-multica}
+      POSTGRES_DB: marvis
+      POSTGRES_USER: ${POSTGRES_USER:-marvis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marvis}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:

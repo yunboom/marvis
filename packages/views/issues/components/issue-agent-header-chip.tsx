@@ -6,13 +6,13 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { cn } from "@multica/ui/lib/utils";
-import { BorderBeam } from "@multica/ui/components/common/border-beam";
-import { api } from "@multica/core/api";
-import { issueKeys } from "@multica/core/issues/queries";
-import type { AgentTask } from "@multica/core/types";
+} from "@marvis/ui/components/ui/popover";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { cn } from "@marvis/ui/lib/utils";
+import { BorderBeam } from "@marvis/ui/components/common/border-beam";
+import { api } from "@marvis/core/api";
+import { issueKeys } from "@marvis/core/issues/queries";
+import type { AgentTask } from "@marvis/core/types";
 import { TranscriptButton } from "../../common/task-transcript";
 import { AgentAvatarStack } from "../../agents/components/agent-avatar-stack";
 import { ActiveTaskRow } from "./execution-log-section";

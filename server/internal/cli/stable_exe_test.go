@@ -14,13 +14,13 @@ import (
 func TestStableExecutablePath(t *testing.T) {
 	t.Parallel()
 
-	keg := "/home/linuxbrew/.linuxbrew/Cellar/multica/0.4.33/bin/multica"
+	keg := "/home/linuxbrew/.linuxbrew/Cellar/marvis/0.4.33/bin/marvis"
 
 	t.Run("brew install maps to the stable prefix path", func(t *testing.T) {
 		got := StableExecutablePath(keg, "/home/linuxbrew/.linuxbrew", true)
 		// filepath.Join semantics: identical strings on unix (where brew
 		// exists), OS-native separators wherever the test runs.
-		if want := filepath.Join("/home/linuxbrew/.linuxbrew", "bin", "multica"); got != want {
+		if want := filepath.Join("/home/linuxbrew/.linuxbrew", "bin", "marvis"); got != want {
 			t.Errorf("StableExecutablePath = %q, want %q", got, want)
 		}
 	})
@@ -34,7 +34,7 @@ func TestStableExecutablePath(t *testing.T) {
 	})
 
 	t.Run("non-brew install resolves symlinks", func(t *testing.T) {
-		file := filepath.Join(t.TempDir(), "multica")
+		file := filepath.Join(t.TempDir(), "marvis")
 		if err := os.WriteFile(file, []byte("x"), 0o755); err != nil {
 			t.Fatalf("write fixture: %v", err)
 		}
@@ -48,7 +48,7 @@ func TestStableExecutablePath(t *testing.T) {
 	})
 
 	t.Run("non-brew install keeps an unresolvable path", func(t *testing.T) {
-		gone := filepath.Join(t.TempDir(), "gone", "multica")
+		gone := filepath.Join(t.TempDir(), "gone", "marvis")
 		if got := StableExecutablePath(gone, "", false); got != gone {
 			t.Errorf("StableExecutablePath = %q, want the input unchanged", got)
 		}
@@ -68,19 +68,19 @@ func TestStableSelfExecutableResolvesBrewKegPaths(t *testing.T) {
 		keg    string
 		prefix string
 	}{
-		{"/opt/homebrew/Cellar/multica/0.4.33/bin/multica", "/opt/homebrew"},
-		{"/home/linuxbrew/.linuxbrew/Cellar/multica/0.4.33/bin/multica", "/home/linuxbrew/.linuxbrew"},
-		{"/usr/local/Cellar/multica/0.4.33/bin/multica", "/usr/local"},
+		{"/opt/homebrew/Cellar/marvis/0.4.33/bin/marvis", "/opt/homebrew"},
+		{"/home/linuxbrew/.linuxbrew/Cellar/marvis/0.4.33/bin/marvis", "/home/linuxbrew/.linuxbrew"},
+		{"/usr/local/Cellar/marvis/0.4.33/bin/marvis", "/usr/local"},
 	}
 	for _, c := range cases {
-		want := filepath.Join(c.prefix, "bin", "multica")
+		want := filepath.Join(c.prefix, "bin", "marvis")
 		if got := StableSelfExecutable(c.keg); got != want {
 			t.Errorf("StableSelfExecutable(%q) = %q, want %q", c.keg, got, want)
 		}
 	}
 
 	t.Run("non-brew path passes through", func(t *testing.T) {
-		file := filepath.Join(t.TempDir(), "multica")
+		file := filepath.Join(t.TempDir(), "marvis")
 		if err := os.WriteFile(file, []byte("x"), 0o755); err != nil {
 			t.Fatalf("write fixture: %v", err)
 		}

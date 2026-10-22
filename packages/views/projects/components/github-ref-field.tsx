@@ -5,7 +5,7 @@ import {
   looksLikeCommitSha,
   validateGitRef,
   type GitRefInvalidReason,
-} from "@multica/core/github";
+} from "@marvis/core/github";
 import { useT } from "../../i18n/use-t";
 
 /**
@@ -15,7 +15,7 @@ import { useT } from "../../i18n/use-t";
  * daemon can resolve. The reason is delivery: a pinned starting point is also
  * where tasks open their pull requests, and a tag or a commit has nothing to
  * merge back into. Tags and commits remain reachable per task through
- * `multica repo checkout --ref`, which is where a one-off revision belongs.
+ * `marvis repo checkout --ref`, which is where a one-off revision belongs.
  *
  * That promise cannot be enforced here — `v1.2.3` is a legal branch name and
  * `main` is a legal tag, so telling them apart means asking the remote, which

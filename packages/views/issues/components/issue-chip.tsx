@@ -1,11 +1,11 @@
 "use client";
 
-import { issueStatusCategory } from "@multica/core/issues";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+import { issueStatusCategory } from "@marvis/core/issues";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { issueListOptions, issueDetailOptions } from "@multica/core/issues/queries";
-import { useWorkspaceId } from "@multica/core/hooks";
+import { issueListOptions, issueDetailOptions } from "@marvis/core/issues/queries";
+import { useWorkspaceId } from "@marvis/core/hooks";
 import { StatusIcon } from "./status-icon";
 
 /**

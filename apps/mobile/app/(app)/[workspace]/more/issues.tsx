@@ -28,7 +28,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type {
   IssuePriority,
   IssueStatus,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 // Header chrome (back + "Issues" title) comes from the parent Stack

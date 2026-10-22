@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 func TestAgentActivityOutcomes(t *testing.T) {

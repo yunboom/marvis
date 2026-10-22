@@ -14,12 +14,12 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/multica-ai/multica/server/internal/daemon/processtree"
-	"github.com/multica-ai/multica/server/pkg/agent"
-	"github.com/multica-ai/multica/server/pkg/redact"
+	"github.com/marvis-ai/marvis/server/internal/daemon/processtree"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/redact"
 )
 
-// The DSH backend drives `dsh --profile multica --stdio`, and that profile is
+// The DSH backend drives `dsh --profile marvis --stdio`, and that profile is
 // what supplies the protocol: DSH ships no machine-drivable mode of its own.
 // `--profile headless` answers one task and exits, and ACP — the one protocol
 // DSH does implement — is itself a profile rather than a built-in. Every other
@@ -31,36 +31,36 @@ import (
 // These knobs let the daemon close that gap instead of only reporting it.
 const (
 	// dshProfileBundleEnv names the DSH-side bundle to install into the
-	// `multica` profile when a dsh CLI resolves without one. It takes a
+	// `marvis` profile when a dsh CLI resolves without one. It takes a
 	// comma-separated list of candidates tried in order, each of which may be
-	// anything `dsh plugin --profile multica add` accepts: an npm spec, a
+	// anything `dsh plugin --profile marvis add` accepts: an npm spec, a
 	// directory, or a packed tarball.
 	//
 	// Unset is the default and means "do not touch the user's DSH
 	// installation". Installing a bundle into another product's home is a
 	// side effect the operator has to ask for — and there is nothing to point
-	// it at by default either, because Multica's own DSH bridge is not
-	// published to npm yet (multica#6936). Setting this is what turns the
+	// it at by default either, because Marvis's own DSH bridge is not
+	// published to npm yet (marvis#6936). Setting this is what turns the
 	// reported drop into a self-healing one.
-	dshProfileBundleEnv = "MULTICA_DSH_PROFILE_BUNDLE"
+	dshProfileBundleEnv = "MARVIS_DSH_PROFILE_BUNDLE"
 
 	// dshPluginPathEnv overrides where `dsh plugin` finds pnpm. It exists
 	// because DSH Desktop ships pnpm inside its own runtime-commands
 	// directory and injects that directory into the PATH of the processes it
-	// spawns itself. A daemon started by Multica's desktop app, by launchd or
+	// spawns itself. A daemon started by Marvis's desktop app, by launchd or
 	// from a terminal is not one of them, so the install fails with "pnpm not
 	// found on PATH" on exactly the machines this feature is for.
-	dshPluginPathEnv = "MULTICA_DSH_PLUGIN_PATH"
+	dshPluginPathEnv = "MARVIS_DSH_PLUGIN_PATH"
 
-	// dshMulticaProfileName is the profile the backend launches. Kept beside
+	// dshMarvisProfileName is the profile the backend launches. Kept beside
 	// the install command so the two cannot drift.
-	dshMulticaProfileName = "multica"
+	dshMarvisProfileName = "marvis"
 
-	// dshMulticaRuntimePackage is the bridge a multica profile has to name
+	// dshMarvisRuntimePackage is the bridge a marvis profile has to name
 	// before this daemon will treat the profile as installed. `dsh plugin add`
 	// records that name in dependencies and, when the package is a bundle, in
 	// dsh.profile.bundles — including installs from git, a directory, or a tarball.
-	dshMulticaRuntimePackage = "@multica-ai/dsh-runtime"
+	dshMarvisRuntimePackage = "@marvis-ai/dsh-runtime"
 )
 
 // dshProfileManifest is the slice of a profile package.json this daemon reads.
@@ -79,9 +79,9 @@ type dshProfileManifest struct {
 // talking to a registry, so it is generous next to the CLI probes.
 const dshProvisionTimeout = 3 * time.Minute
 
-// dshMulticaProfilePresent reports whether the `multica` profile is installed.
+// dshMarvisProfilePresent reports whether the `marvis` profile is installed.
 //
-// Installed means the manifest names the Multica runtime, not that the file
+// Installed means the manifest names the Marvis runtime, not that the file
 // exists. A refused `dsh plugin add` leaves package.json behind with empty
 // dependencies and only DSH's template bundle; a stat of that file made every
 // later probe look transient and blocked the automatic install.
@@ -93,8 +93,8 @@ const dshProvisionTimeout = 3 * time.Minute
 // The authoritative question — "does --probe actually succeed?" — costs booting
 // a whole DSH process, so it stays in the probe round this signal forces. This
 // read is the cheap check the discovery loop runs on every tick.
-func dshMulticaProfilePresent() bool {
-	path := dshMulticaProfileManifestPath()
+func dshMarvisProfilePresent() bool {
+	path := dshMarvisProfileManifestPath()
 	if path == "" {
 		return false
 	}
@@ -112,9 +112,9 @@ func dshMulticaProfilePresent() bool {
 	return dshProfileNamesRuntime(manifest)
 }
 
-// dshMulticaProfileManifestPath is <DSH_HOME>/profiles/multica/package.json.
+// dshMarvisProfileManifestPath is <DSH_HOME>/profiles/marvis/package.json.
 // An empty result means the home directory could not be resolved.
-func dshMulticaProfileManifestPath() string {
+func dshMarvisProfileManifestPath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ""
@@ -125,17 +125,17 @@ func dshMulticaProfileManifestPath() string {
 	if dshHome == "" {
 		dshHome = filepath.Join(home, ".dsh")
 	}
-	return filepath.Join(dshHome, "profiles", dshMulticaProfileName, "package.json")
+	return filepath.Join(dshHome, "profiles", dshMarvisProfileName, "package.json")
 }
 
-// dshProfileNamesRuntime reports whether the manifest lists the Multica runtime
+// dshProfileNamesRuntime reports whether the manifest lists the Marvis runtime
 // as a dependency or as a profile bundle.
 func dshProfileNamesRuntime(manifest dshProfileManifest) bool {
-	if _, ok := manifest.Dependencies[dshMulticaRuntimePackage]; ok {
+	if _, ok := manifest.Dependencies[dshMarvisRuntimePackage]; ok {
 		return true
 	}
 	for _, bundle := range manifest.DSH.Profile.Bundles {
-		if bundle == dshMulticaRuntimePackage {
+		if bundle == dshMarvisRuntimePackage {
 			return true
 		}
 	}
@@ -278,9 +278,9 @@ func dshProvisionOutput(raw []byte) string {
 
 // dshProfileRepair names what is missing, and deliberately carries NO command.
 //
-// The install is `dsh plugin --profile multica add <bundle>`, and <bundle> is
-// the operator's own choice of npm spec, directory or tarball — Multica's own
-// bridge is not on a public registry yet (multica#6936). A Repair.Command is
+// The install is `dsh plugin --profile marvis add <bundle>`, and <bundle> is
+// the operator's own choice of npm spec, directory or tarball — Marvis's own
+// bridge is not on a public registry yet (marvis#6936). A Repair.Command is
 // rendered to the user inside a shell code fence as the thing to run on that
 // machine, so shipping the placeholder there hands out a line that fails when
 // pasted. Package alone still tells the server which repair to explain; the
@@ -295,13 +295,13 @@ func dshProfileRepair() agent.ExecFormatRepair {
 // platform, including the Windows ones where a shell fixture cannot stand in
 // for a package manager.
 func dshProvisionCommand(dshPath, spec string) *exec.Cmd {
-	cmd := exec.Command(dshPath, "plugin", "--profile", dshMulticaProfileName, "add", spec)
+	cmd := exec.Command(dshPath, "plugin", "--profile", dshMarvisProfileName, "add", spec)
 	cmd.Env = dshPluginEnv()
 	return cmd
 }
 
-// provisionDshMulticaProfile installs the configured runtime bundle into the
-// `multica` profile, so a later discovery round finds a usable dsh. Candidates
+// provisionDshMarvisProfile installs the configured runtime bundle into the
+// `marvis` profile, so a later discovery round finds a usable dsh. Candidates
 // are tried in order and the first success wins.
 //
 // Runs the package manager through processtree: `dsh plugin` forwards to pnpm,
@@ -320,7 +320,7 @@ func dshProvisionCommand(dshPath, spec string) *exec.Cmd {
 // Returns nil when nothing is configured — the caller treats provisioning as
 // best-effort either way, and the missing-profile verdict stands until a probe
 // succeeds.
-func provisionDshMulticaProfile(ctx context.Context, dshPath string, logger *slog.Logger) error {
+func provisionDshMarvisProfile(ctx context.Context, dshPath string, logger *slog.Logger) error {
 	specs := dshProfileBundleSpecs()
 	if len(specs) == 0 {
 		return nil
@@ -332,14 +332,14 @@ func provisionDshMulticaProfile(ctx context.Context, dshPath string, logger *slo
 	for i, spec := range specs {
 		output, err := processtree.CombinedOutput(ctx, dshProvisionCommand(dshPath, spec), 5*time.Second)
 		switch {
-		case err == nil && dshMulticaProfilePresent():
+		case err == nil && dshMarvisProfilePresent():
 			logger.Info("installed the DSH runtime profile",
 				"bundle_candidate", i+1, "candidates", len(specs),
-				"path", dshPath, "profile", dshMulticaProfileName)
+				"path", dshPath, "profile", dshMarvisProfileName)
 			return nil
 		case err == nil:
 			// Exit 0 with no manifest behind it. The exit status is the package
-			// manager's opinion about its own run; dshMulticaProfilePresent is
+			// manager's opinion about its own run; dshMarvisProfilePresent is
 			// the fact the REST of the daemon judges by — the probe
 			// classification and the discovery loop's mismatch check both read
 			// it — so an install allowed to report success while disagreeing
@@ -352,13 +352,13 @@ func provisionDshMulticaProfile(ctx context.Context, dshPath string, logger *slo
 			// done the job, and stopping on it would hide a later spec that
 			// would have.
 			lastErr = fmt.Errorf("dsh plugin --profile %s add (candidate %d of %d): reported success without creating the profile: %s",
-				dshMulticaProfileName, i+1, len(specs), dshProvisionOutput(output))
+				dshMarvisProfileName, i+1, len(specs), dshProvisionOutput(output))
 		default:
 			lastErr = fmt.Errorf("dsh plugin --profile %s add (candidate %d of %d): %w: %s",
-				dshMulticaProfileName, i+1, len(specs), err, dshProvisionOutput(output))
+				dshMarvisProfileName, i+1, len(specs), err, dshProvisionOutput(output))
 		}
 		// Leave the directory. A refused add can write a skeleton, and a failure
-		// can also land on a profile the user already had. dshMulticaProfilePresent
+		// can also land on a profile the user already had. dshMarvisProfilePresent
 		// treats a manifest that does not name the runtime as missing, so the
 		// next restart retries over it and --probe is not started.
 		logger.Warn("DSH runtime profile install failed",
@@ -392,10 +392,10 @@ func (d *Daemon) startDshProfileProvision(dshPath string) bool {
 		d.dshInstallInFlight.Store(true)
 		go func() {
 			defer d.dshInstallInFlight.Store(false)
-			// provisionDshMulticaProfile returns nil only once the profile is
+			// provisionDshMarvisProfile returns nil only once the profile is
 			// actually on disk, so nil here means there is something new to
 			// find. The exit status alone would not have meant that.
-			err := provisionDshMulticaProfile(ctx, dshPath, d.logger)
+			err := provisionDshMarvisProfile(ctx, dshPath, d.logger)
 			if err == nil {
 				d.logger.Info("DSH runtime profile installed; re-probing to bring dsh online")
 				// Re-probe now rather than at the next scheduled round. The

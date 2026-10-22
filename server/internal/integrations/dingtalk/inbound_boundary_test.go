@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
 )
 
 func TestDingTalkCallbackWireDecodingBoundaries(t *testing.T) {

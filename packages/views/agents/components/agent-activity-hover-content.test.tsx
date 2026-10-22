@@ -2,7 +2,7 @@
 
 import { cleanup, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Agent, AgentRuntime, AgentTask, Issue } from "@multica/core/types";
+import type { Agent, AgentRuntime, AgentTask, Issue } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 
 const activityQueryData = vi.hoisted(() => ({
@@ -17,11 +17,11 @@ const activityQueryData = vi.hoisted(() => ({
 // here would print "3 agents working" for those two agents, contradicting the
 // chip. MUL-3872.
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({
     getActorName: (_type: string, id: string) =>
       ({ "agent-1": "Niko", "agent-2": "J" })[id] ?? "Unknown Agent",
@@ -34,15 +34,15 @@ vi.mock("@multica/core/workspace/hooks", () => ({
 // The card only reads these query results for avatars / availability, never
 // for the header count, so empty lists keep the row chrome inert while the
 // header still derives from the task array.
-vi.mock("@multica/core/runtimes/queries", () => ({
+vi.mock("@marvis/core/runtimes/queries", () => ({
   runtimeListOptions: () => ({ queryKey: ["runtimes"] }),
 }));
 
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   agentListOptions: () => ({ queryKey: ["agents"] }),
 }));
 
-vi.mock("@multica/ui/components/common/actor-avatar", () => ({
+vi.mock("@marvis/ui/components/common/actor-avatar", () => ({
   ActorAvatar: ({ name }: { name: string }) => (
     <span data-testid="actor-avatar">{name}</span>
   ),

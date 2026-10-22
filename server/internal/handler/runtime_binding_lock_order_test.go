@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 func TestRuntimeBindingLocksWorkspaceBeforeRuntime(t *testing.T) {

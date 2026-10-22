@@ -2,8 +2,8 @@
 
 import { act, cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AgentTask, TaskUsage } from "@multica/core/types";
-import { useCustomPricingStore } from "@multica/core/runtimes/custom-pricing-store";
+import type { AgentTask, TaskUsage } from "@marvis/core/types";
+import { useCustomPricingStore } from "@marvis/core/runtimes/custom-pricing-store";
 import { renderWithI18n } from "../../test/i18n";
 
 vi.mock("../../common/actor-avatar", () => ({
@@ -16,7 +16,7 @@ vi.mock("../../common/task-transcript", () => ({
   ),
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: () => "Lambda" }),
 }));
 

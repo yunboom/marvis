@@ -15,7 +15,7 @@ vi.mock("./code-block-static", () => ({
 }));
 
 const copyTextMock = vi.hoisted(() => vi.fn().mockResolvedValue(true));
-vi.mock("@multica/ui/lib/clipboard", () => ({ copyText: copyTextMock }));
+vi.mock("@marvis/ui/lib/clipboard", () => ({ copyText: copyTextMock }));
 
 const mermaidRenderMock = vi.hoisted(() => vi.fn());
 const mermaidInitializeMock = vi.hoisted(() => vi.fn());

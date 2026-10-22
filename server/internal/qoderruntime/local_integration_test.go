@@ -19,12 +19,12 @@ import (
 	"github.com/google/uuid"
 )
 
-// TestLocalMultica exercises the actual authenticated HTTP router and database.
+// TestLocalMarvis exercises the actual authenticated HTTP router and database.
 // Qoder is a local fixture: no remote credentials, agent execution or quota.
-func TestLocalMultica(t *testing.T) {
-	path := os.Getenv("MULTICA_QODER_INTEGRATION_CONFIG")
+func TestLocalMarvis(t *testing.T) {
+	path := os.Getenv("MARVIS_QODER_INTEGRATION_CONFIG")
 	if path == "" {
-		t.Skip("set MULTICA_QODER_INTEGRATION_CONFIG to a local bridge config")
+		t.Skip("set MARVIS_QODER_INTEGRATION_CONFIG to a local bridge config")
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -34,9 +34,9 @@ func TestLocalMultica(t *testing.T) {
 	if err = json.Unmarshal(raw, &cfg); err != nil {
 		t.Fatal("invalid integration config")
 	}
-	u, err := url.Parse(cfg.MulticaURL)
+	u, err := url.Parse(cfg.MarvisURL)
 	if err != nil || (u.Hostname() != "localhost" && u.Hostname() != "127.0.0.1") {
-		t.Fatal("integration test requires a loopback Multica server")
+		t.Fatal("integration test requires a loopback Marvis server")
 	}
 	var mu sync.Mutex
 	var prompt string
@@ -96,7 +96,7 @@ func TestLocalMultica(t *testing.T) {
 	}
 	cleanup := func(method, path string) {
 		t.Cleanup(func() {
-			if err := b.multica.call(context.Background(), method, path, map[string]any{}, nil); err != nil {
+			if err := b.marvis.call(context.Background(), method, path, map[string]any{}, nil); err != nil {
 				t.Errorf("cleanup %s failed: %v", path, err)
 			}
 		})
@@ -106,7 +106,7 @@ func TestLocalMultica(t *testing.T) {
 		ID   string `json:"id"`
 		Mode string `json:"runtime_mode"`
 	}
-	if err = b.multica.call(ctx, http.MethodGet, "/api/runtimes/", nil, &runtimes); err != nil {
+	if err = b.marvis.call(ctx, http.MethodGet, "/api/runtimes/", nil, &runtimes); err != nil {
 		t.Fatal(err)
 	}
 	mode := ""
@@ -121,19 +121,19 @@ func TestLocalMultica(t *testing.T) {
 	var agent struct {
 		ID string `json:"id"`
 	}
-	if err = b.multica.call(ctx, http.MethodPost, "/api/agents/", map[string]any{"name": "Qoder fixture " + uuid.NewString(), "runtime_id": b.state.RuntimeID, "runtime_config": map[string]string{"qoder_agent_id": "agent_fixture"}, "instructions": "Return a concise result", "max_concurrent_tasks": 1}, &agent); err != nil {
+	if err = b.marvis.call(ctx, http.MethodPost, "/api/agents/", map[string]any{"name": "Qoder fixture " + uuid.NewString(), "runtime_id": b.state.RuntimeID, "runtime_config": map[string]string{"qoder_agent_id": "agent_fixture"}, "instructions": "Return a concise result", "max_concurrent_tasks": 1}, &agent); err != nil {
 		t.Fatal(err)
 	}
 	cleanup(http.MethodPost, "/api/agents/"+agent.ID+"/archive")
 	var issue struct {
 		ID string `json:"id"`
 	}
-	if err = b.multica.call(ctx, http.MethodPost, "/api/issues/", map[string]any{"title": "Qoder bridge fixture " + uuid.NewString(), "description": "Validate remote execution", "status": "todo", "assignee_type": "agent", "assignee_id": agent.ID}, &issue); err != nil {
+	if err = b.marvis.call(ctx, http.MethodPost, "/api/issues/", map[string]any{"title": "Qoder bridge fixture " + uuid.NewString(), "description": "Validate remote execution", "status": "todo", "assignee_type": "agent", "assignee_id": agent.ID}, &issue); err != nil {
 		t.Fatal(err)
 	}
 	cleanup(http.MethodDelete, "/api/issues/"+issue.ID)
 	// Lose exactly one successful transcript response after the real server commits.
-	b.multica.client = &http.Client{Timeout: 10 * time.Second, Transport: &loseMessageResponse{base: http.DefaultTransport}}
+	b.marvis.client = &http.Client{Timeout: 10 * time.Second, Transport: &loseMessageResponse{base: http.DefaultTransport}}
 	err = b.step(ctx)
 	if err == nil || b.state.first() == nil {
 		t.Fatalf("expected lost message response, got err=%v", err)
@@ -148,7 +148,7 @@ func TestLocalMultica(t *testing.T) {
 	var status struct {
 		Status string `json:"status"`
 	}
-	if err = b.multica.call(ctx, http.MethodGet, "/api/daemon/tasks/"+taskID+"/status", nil, &status); err != nil {
+	if err = b.marvis.call(ctx, http.MethodGet, "/api/daemon/tasks/"+taskID+"/status", nil, &status); err != nil {
 		t.Fatal(err)
 	}
 	if status.Status != "completed" {
@@ -157,7 +157,7 @@ func TestLocalMultica(t *testing.T) {
 	var messages []struct {
 		Content string `json:"content"`
 	}
-	if err = b.multica.call(ctx, http.MethodGet, "/api/tasks/"+taskID+"/messages", nil, &messages); err != nil {
+	if err = b.marvis.call(ctx, http.MethodGet, "/api/tasks/"+taskID+"/messages", nil, &messages); err != nil {
 		t.Fatal(err)
 	}
 	if len(messages) != 1 || messages[0].Content != "Local bridge integration passed" {

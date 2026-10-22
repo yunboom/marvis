@@ -1,11 +1,11 @@
 ---
 title: Contribuer
-description: Configurez un environnement de développement Multica local, exécutez les tests et soumettez vos modifications en suivant les conventions du dépôt.
+description: Configurez un environnement de développement Marvis local, exécutez les tests et soumettez vos modifications en suivant les conventions du dépôt.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-Multica est composé d'un backend Go et d'un monorepo pnpm. Le moyen le plus simple de démarrer en local est `make dev` : cette commande prépare l'environnement, la base de données et les migrations pour le checkout courant, puis démarre Web et l'API.
+Marvis est composé d'un backend Go et d'un monorepo pnpm. Le moyen le plus simple de démarrer en local est `make dev` : cette commande prépare l'environnement, la base de données et les migrations pour le checkout courant, puis démarre Web et l'API.
 
 ## Prérequis
 
@@ -20,8 +20,8 @@ Le `package.json` racine, `server/go.mod` et les workflows de CI font foi pour l
 ## Premier démarrage
 
 ```bash
-git clone https://github.com/multica-ai/multica.git
-cd multica
+git clone https://github.com/marvis-ai/marvis.git
+cd marvis
 make dev
 ```
 
@@ -41,8 +41,8 @@ Le code de vérification local fixe provient de la configuration de développeme
 Le dépôt permet d'exécuter le checkout principal et plusieurs worktrees en même temps. Ils partagent un même conteneur PostgreSQL, mais utilisent des bases de données et des ports distincts.
 
 ```bash
-git worktree add ../multica-feature -b feat/my-change main
-cd ../multica-feature
+git worktree add ../marvis-feature -b feat/my-change main
+cd ../marvis-feature
 make setup-worktree
 make start-worktree
 ```
@@ -82,7 +82,7 @@ make build            # Compile les binaires server, CLI et migrate
 ```
 
 `make up` traite un environnement comme un objet nommé : il alloue sous verrou les ports de l'API, de Web et du renderer Desktop,
-le nom de la base de données et le profil CLI, puis les enregistre dans `~/.multica/dev/`,
+le nom de la base de données et le profil CLI, puis les enregistre dans `~/.marvis/dev/`,
 de sorte que deux checkouts ne peuvent pas occuper le même emplacement sans que l'un d'eux en soit averti.
 Il vérifie la base de données via `DATABASE_URL` et le backend via
 `GET /health`, qui renvoie `pid`, `commit` et `started_at` — une simple réponse 200
@@ -162,7 +162,7 @@ Utilisez une transaction applicative dans la couche service lorsque plusieurs é
 Exécutez d'abord la vérification la plus proche de la modification, puis élargissez la portée. Pour une modification qui ne touche que Docs :
 
 ```bash
-pnpm --filter @multica/docs typecheck
+pnpm --filter @marvis/docs typecheck
 ```
 
 Pour les modifications frontend partagées :

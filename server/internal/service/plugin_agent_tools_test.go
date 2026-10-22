@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"testing"
 
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/plugincontract"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
 )
 
 // Two plugins may both contribute a hook called "summarize". The agent sees one
 // tool list, so the names have to be distinguishable in it.
 func TestPluginToolNameNamespacesByPlugin(t *testing.T) {
 	first := PluginToolName("com.example.triage", "summarize")
-	second := PluginToolName("ai.multica.release", "summarize")
+	second := PluginToolName("ai.marvis.release", "summarize")
 	if first == second {
 		t.Fatalf("two plugins' hooks collapsed to one tool name: %q", first)
 	}

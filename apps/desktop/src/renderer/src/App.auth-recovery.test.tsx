@@ -26,25 +26,25 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ setQueryData: vi.fn() }),
 }));
 
-vi.mock("@multica/core/platform", () => ({
+vi.mock("@marvis/core/platform", () => ({
   CoreProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   setCurrentWorkspace: vi.fn(),
 }));
 
-vi.mock("@multica/core/i18n", () => ({
+vi.mock("@marvis/core/i18n", () => ({
   pickLocale: () => "en",
 }));
 
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: (selector: (auth: typeof state.auth) => unknown) =>
     selector(state.auth),
 }));
 
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   workspaceKeys: { list: () => ["workspace-list"] },
 }));
 
-vi.mock("@multica/core/workspace", () => ({
+vi.mock("@marvis/core/workspace", () => ({
   useWorkspaceList: () => ({
     isFetching: false,
     ready: true,
@@ -54,26 +54,26 @@ vi.mock("@multica/core/workspace", () => ({
   }),
 }));
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     listMyInvitations: vi.fn(),
     listWorkspaces: vi.fn(),
   },
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useHasOnboarded: () => true,
 }));
 
-vi.mock("@multica/core/analytics", () => ({ captureEvent: vi.fn() }));
-vi.mock("@multica/ui/components/common/theme-provider", () => ({
+vi.mock("@marvis/core/analytics", () => ({ captureEvent: vi.fn() }));
+vi.mock("@marvis/ui/components/common/theme-provider", () => ({
   ThemeProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
-vi.mock("@multica/ui/components/common/multica-icon", () => ({
-  MulticaIcon: () => <div data-testid="app-loading" />,
+vi.mock("@marvis/ui/components/common/marvis-icon", () => ({
+  MarvisIcon: () => <div data-testid="app-loading" />,
 }));
-vi.mock("@multica/ui/components/ui/sonner", () => ({ Toaster: () => null }));
-vi.mock("@multica/views/locales", () => ({ RESOURCES: { en: {} } }));
+vi.mock("@marvis/ui/components/ui/sonner", () => ({ Toaster: () => null }));
+vi.mock("@marvis/views/locales", () => ({ RESOURCES: { en: {} } }));
 
 vi.mock("./pages/login", () => ({
   DesktopLoginPage: () => <div data-testid="login-page" />,

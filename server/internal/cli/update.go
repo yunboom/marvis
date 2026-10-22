@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/selfexec"
+	"github.com/marvis-ai/marvis/server/internal/selfexec"
 )
 
 // ChecksumManifestName is the asset name GoReleaser publishes for the
@@ -33,11 +33,11 @@ const ChecksumManifestName = "checksums.txt"
 
 const defaultReleaseAPIBaseURL = "https://api.github.com"
 
-// MULTICA_RELEASE_API_BASE_URL points at a GitHub Releases API-compatible
-// mirror. MULTICA_RELEASE_DOWNLOAD_BASE_URL points at an artifact mirror
+// MARVIS_RELEASE_API_BASE_URL points at a GitHub Releases API-compatible
+// mirror. MARVIS_RELEASE_DOWNLOAD_BASE_URL points at an artifact mirror
 // serving /<tag>/<asset-name>; when unset, the release-provided URLs win.
-const releaseAPIBaseURLEnv = "MULTICA_RELEASE_API_BASE_URL"
-const releaseDownloadBaseURLEnv = "MULTICA_RELEASE_DOWNLOAD_BASE_URL"
+const releaseAPIBaseURLEnv = "MARVIS_RELEASE_API_BASE_URL"
+const releaseDownloadBaseURLEnv = "MARVIS_RELEASE_DOWNLOAD_BASE_URL"
 
 const DefaultUpdateDownloadTimeout = 120 * time.Second
 
@@ -175,10 +175,10 @@ func releaseAssetCandidates(targetVersion, goos, goarch string) []string {
 	version := strings.TrimPrefix(tag, "v")
 	ext := releaseArchiveExtension(goos)
 	// Prefer the versioned name (current scheme); fall back to the legacy
-	// `multica_{os}_{arch}` name for releases that still ship it.
+	// `marvis_{os}_{arch}` name for releases that still ship it.
 	return []string{
-		fmt.Sprintf("multica-cli-%s-%s-%s.%s", version, goos, goarch, ext),
-		fmt.Sprintf("multica_%s_%s.%s", goos, goarch, ext),
+		fmt.Sprintf("marvis-cli-%s-%s-%s.%s", version, goos, goarch, ext),
+		fmt.Sprintf("marvis_%s_%s.%s", goos, goarch, ext),
 	}
 }
 
@@ -254,7 +254,7 @@ func verifyAssetSHA256(data []byte, expectedHex, assetName string) error {
 
 func fetchReleaseByTag(tag string) (*GitHubRelease, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, releaseAPIBaseURL()+"/repos/multica-ai/multica/releases/tags/"+url.PathEscape(tag), nil)
+	req, err := http.NewRequest(http.MethodGet, releaseAPIBaseURL()+"/repos/marvis-ai/marvis/releases/tags/"+url.PathEscape(tag), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -277,10 +277,10 @@ func fetchReleaseByTag(tag string) (*GitHubRelease, error) {
 	return &release, nil
 }
 
-// FetchLatestRelease fetches the latest release tag from the multica GitHub repo.
+// FetchLatestRelease fetches the latest release tag from the marvis GitHub repo.
 func FetchLatestRelease() (*GitHubRelease, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, releaseAPIBaseURL()+"/repos/multica-ai/multica/releases/latest", nil)
+	req, err := http.NewRequest(http.MethodGet, releaseAPIBaseURL()+"/repos/marvis-ai/marvis/releases/latest", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func MatchKnownBrewPrefix(path string) string {
 	return ""
 }
 
-// IsBrewInstall checks whether the running multica binary was installed via Homebrew.
+// IsBrewInstall checks whether the running marvis binary was installed via Homebrew.
 // The check itself lives in brewInstallForPath (stable_exe.go) so it stays
 // one implementation with the stable-path resolver that depends on it.
 func IsBrewInstall() bool {
@@ -346,10 +346,10 @@ func GetBrewPrefix() string {
 	return strings.TrimSpace(string(out))
 }
 
-// UpdateViaBrew runs `brew upgrade multica-ai/tap/multica`.
+// UpdateViaBrew runs `brew upgrade marvis-ai/tap/marvis`.
 // Returns the combined output and any error.
 func UpdateViaBrew() (string, error) {
-	cmd := exec.Command("brew", "upgrade", "multica-ai/tap/multica")
+	cmd := exec.Command("brew", "upgrade", "marvis-ai/tap/marvis")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return string(out), fmt.Errorf("brew upgrade failed: %w", err)
@@ -449,9 +449,9 @@ func UpdateViaDownloadWithTimeout(targetVersion string, downloadTimeout time.Dur
 	}
 
 	// Extract the binary from the archive.
-	binaryName := "multica"
+	binaryName := "marvis"
 	if runtime.GOOS == "windows" {
-		binaryName = "multica.exe"
+		binaryName = "marvis.exe"
 	}
 	var binaryData []byte
 	if runtime.GOOS == "windows" {
@@ -465,7 +465,7 @@ func UpdateViaDownloadWithTimeout(targetVersion string, downloadTimeout time.Dur
 
 	// Atomic replace: write to temp file, then rename over the original.
 	dir := filepath.Dir(exePath)
-	tmpFile, err := os.CreateTemp(dir, "multica-update-*")
+	tmpFile, err := os.CreateTemp(dir, "marvis-update-*")
 	if err != nil {
 		return "", fmt.Errorf("create temp file: %w", err)
 	}

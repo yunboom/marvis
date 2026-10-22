@@ -5,7 +5,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
+} from "@marvis/ui/components/ui/tooltip";
 
 /**
  * Tooltip for a control that keeps its own element and styling (a raw

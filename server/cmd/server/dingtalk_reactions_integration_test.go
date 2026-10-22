@@ -14,15 +14,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/dingtalk"
-	"github.com/multica-ai/multica/server/internal/realtime"
-	dbfx "github.com/multica-ai/multica/server/internal/testutil"
-	"github.com/multica-ai/multica/server/internal/util/secretbox"
-	"github.com/multica-ai/multica/server/pkg/dbid"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/dingtalk"
+	"github.com/marvis-ai/marvis/server/internal/realtime"
+	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
+	"github.com/marvis-ai/marvis/server/pkg/dbid"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 type dingTalkReactionTransport func(*http.Request) (*http.Response, error)
@@ -33,7 +33,7 @@ func (f dingTalkReactionTransport) RoundTrip(r *http.Request) (*http.Response, e
 // subscriber must share the same local source cache and reaction lifecycle.
 func TestDingTalkReactionsThroughServerRouter(t *testing.T) {
 	key := bytes.Repeat([]byte{0x83}, secretbox.KeySize)
-	t.Setenv("MULTICA_DINGTALK_SECRET_KEY", base64.StdEncoding.EncodeToString(key))
+	t.Setenv("MARVIS_DINGTALK_SECRET_KEY", base64.StdEncoding.EncodeToString(key))
 	box, err := secretbox.New(key)
 	if err != nil {
 		t.Fatal(err)
@@ -50,7 +50,7 @@ func TestDingTalkReactionsThroughServerRouter(t *testing.T) {
 	fx := dbfx.New(testPool, testWorkspaceID, testUserID)
 	agentID := fx.Agent(t, "DingTalk reaction fixture", fx.Runtime(t, "DingTalk fixture runtime"))
 	installation := fx.Insert(t, "channel_installation", dbfx.Cols{"workspace_id": testWorkspaceID, "agent_id": agentID, "channel_type": "dingtalk", "config": string(config), "installer_user_id": testUserID, "status": "active"})
-	fx.Insert(t, "channel_user_binding", dbfx.Cols{"installation_id": installation, "workspace_id": testWorkspaceID, "channel_type": "dingtalk", "channel_user_id": "sender", "multica_user_id": testUserID})
+	fx.Insert(t, "channel_user_binding", dbfx.Cols{"installation_id": installation, "workspace_id": testWorkspaceID, "channel_type": "dingtalk", "channel_user_id": "sender", "marvis_user_id": testUserID})
 	fx.Cleanup(t, "DELETE FROM channel_inbound_dedup WHERE installation_id = $1", installation)
 	fx.Cleanup(t, "DELETE FROM channel_task_delivery WHERE installation_id = $1", installation)
 	var mu sync.Mutex

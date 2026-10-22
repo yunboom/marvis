@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { cn } from "@multica/ui/lib/utils";
-import { useActorName } from "@multica/core/workspace/hooks";
+import { cn } from "@marvis/ui/lib/utils";
+import { useActorName } from "@marvis/core/workspace/hooks";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { formatDuration } from "../../dashboard/utils";
 import { useLocale, useT } from "../../i18n";

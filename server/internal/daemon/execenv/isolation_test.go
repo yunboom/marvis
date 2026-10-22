@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/cli"
+	"github.com/marvis-ai/marvis/server/internal/cli"
 )
 
 const preparationHelperTestMode = "execenv-preparation-helper"
@@ -35,8 +35,8 @@ const preparationHelperTestMode = "execenv-preparation-helper"
 // It also clears TaskConfigRootEnv, which the daemon sets for every task it
 // runs. Tests here isolate themselves by pointing HOME at a t.TempDir(), but
 // cli.ProfileDir consults that variable first and never reaches HOME while it
-// is set — so a test asserting a path under $HOME/.multica passed in CI and
-// failed for any agent running the suite from inside a Multica task. Clearing
+// is set — so a test asserting a path under $HOME/.marvis passed in CI and
+// failed for any agent running the suite from inside a Marvis task. Clearing
 // it once here makes the package resolve profile dirs the same way everywhere,
 // and keeps working for parallel tests, which cannot call t.Setenv. A test
 // that wants the task-local branch sets the variable itself.
@@ -64,7 +64,7 @@ func preparationHelperTestCommand(setenv ...string) []string {
 
 // TestPreparationHelperProcess is both a no-op parent-side test and the child
 // entry point used by isolation tests. Keeping it in the package test binary
-// exercises the same stdin/stdout protocol as the real multica helper.
+// exercises the same stdin/stdout protocol as the real marvis helper.
 func TestPreparationHelperProcess(t *testing.T) {
 	if len(os.Args) == 0 || os.Args[len(os.Args)-1] != preparationHelperTestMode {
 		return
@@ -107,7 +107,7 @@ func TestPreparationHelperRoundTripsReuse(t *testing.T) {
 				{
 					ID:           "resource-helper-reuse",
 					ResourceType: "github_repo",
-					ResourceRef:  json.RawMessage(`{"url":"https://github.com/multica-ai/multica"}`),
+					ResourceRef:  json.RawMessage(`{"url":"https://github.com/marvis-ai/marvis"}`),
 				},
 			},
 		},
@@ -136,8 +136,8 @@ func TestPreparationHelperRoundTripsProjectResources(t *testing.T) {
 				{
 					ID:           "resource-helper-project-resource",
 					ResourceType: "github_repo",
-					ResourceRef:  json.RawMessage(`{"url":"https://github.com/multica-ai/multica"}`),
-					Label:        "Multica",
+					ResourceRef:  json.RawMessage(`{"url":"https://github.com/marvis-ai/marvis"}`),
+					Label:        "Marvis",
 				},
 			},
 		},
@@ -149,7 +149,7 @@ func TestPreparationHelperRoundTripsProjectResources(t *testing.T) {
 	}
 	defer env.Cleanup(true)
 
-	data, err := os.ReadFile(filepath.Join(env.WorkDir, ".multica", "project", "resources.json"))
+	data, err := os.ReadFile(filepath.Join(env.WorkDir, ".marvis", "project", "resources.json"))
 	if err != nil {
 		t.Fatalf("read project resources: %v", err)
 	}
@@ -169,8 +169,8 @@ func TestPreparationHelperRoundTripsProjectResources(t *testing.T) {
 	}
 	if resource.ID != "resource-helper-project-resource" ||
 		resource.ResourceType != "github_repo" ||
-		ref.URL != "https://github.com/multica-ai/multica" ||
-		resource.Label != "Multica" {
+		ref.URL != "https://github.com/marvis-ai/marvis" ||
+		resource.Label != "Marvis" {
 		t.Fatalf("project resource = %#v, want all fields preserved", resource)
 	}
 }

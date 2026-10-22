@@ -6,12 +6,12 @@ description: Connectez un ordinateur, créez votre premier agent et faites-lui a
 import { Callout } from "fumadocs-ui/components/callout";
 
 <Callout type="info">
-Avant qu'un agent puisse s'exécuter, l'ordinateur qui l'exécute doit disposer d'au moins un [outil de codage IA pris en charge](/providers), installé et connecté — par exemple Claude Code, Codex ou Cursor. Multica ne fournit pas ces outils.
+Avant qu'un agent puisse s'exécuter, l'ordinateur qui l'exécute doit disposer d'au moins un [outil de codage IA pris en charge](/providers), installé et connecté — par exemple Claude Code, Codex ou Cursor. Marvis ne fournit pas ces outils.
 </Callout>
 
 ## 1. Connectez-vous et ouvrez votre espace de travail
 
-Connectez-vous sur le web ([multica.ai](https://multica.ai)) ou avec [Multica Desktop](https://multica.ai/download). La connexion par code de vérification envoyé par e-mail et la connexion Google sont toutes deux prises en charge.
+Connectez-vous sur le web ([marvis.ai](https://marvis.ai)) ou avec [Marvis Desktop](https://marvis.ai/download). La connexion par code de vérification envoyé par e-mail et la connexion Google sont toutes deux prises en charge.
 
 - **Desktop** : peut connecter automatiquement cet ordinateur.
 - **Web** : connectez l'ordinateur depuis la ligne de commande à l'étape suivante.
@@ -26,18 +26,18 @@ Les agents exécutent le travail sur les ordinateurs que vous connectez. Ouvrez 
   **macOS / Linux**
 
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.sh | bash
-  multica setup
+  curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash
+  marvis setup
   ```
 
   **Windows PowerShell**
 
   ```powershell
-  irm https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.ps1 | iex
-  multica setup
+  irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex
+  marvis setup
   ```
 
-  `multica setup` ouvre un navigateur pour finaliser la connexion, puis laisse le daemon tourner en arrière-plan. Une fois le daemon en ligne, la boîte de dialogue détecte généralement l'ordinateur en moins d'une minute.
+  `marvis setup` ouvre un navigateur pour finaliser la connexion, puis laisse le daemon tourner en arrière-plan. Une fois le daemon en ligne, la boîte de dialogue détecte généralement l'ordinateur en moins d'une minute.
 
 **Vérification** : un ordinateur en ligne apparaît dans la liste des runtimes.
 
@@ -66,9 +66,9 @@ Cliquez sur **Nouvelle tâche** en haut de la barre latérale (ou appuyez sur `C
 
 1. Sous **Créé par**, sélectionnez l'agent que vous venez de créer.
 2. Décrivez le travail en une ou deux phrases, par exemple « Explique comment cet espace de travail peut être utilisé. »
-3. Validez. Multica crée la tâche, l'assigne à l'agent et lance l'exécution immédiatement.
+3. Validez. Marvis crée la tâche, l'assigne à l'agent et lance l'exécution immédiatement.
 
-![Boîte de dialogue Nouvelle tâche en mode agent : Créé par défini sur Multica Assistant](/images/docs/quickstart-new-issue.webp)
+![Boîte de dialogue Nouvelle tâche en mode agent : Créé par défini sur Marvis Assistant](/images/docs/quickstart-new-issue.webp)
 
 ## 5. Suivez l'avancement et les résultats
 
@@ -82,14 +82,14 @@ Après validation, ouvrez la tâche : le journal d'exécution affiche le statut 
 
 | Symptôme | À vérifier en premier |
 |---|---|
-| Aucun runtime trouvé | Vérifiez que l'outil de codage IA est installé et fonctionne dans un terminal. Sur Desktop, cliquez sur **Actualiser** ; avec le CLI, relancez `multica setup`. |
-| Le runtime apparaît hors ligne | Gardez Desktop ouvert ; avec le CLI, exécutez `multica daemon status`, puis `multica daemon start` s'il n'est pas lancé. |
+| Aucun runtime trouvé | Vérifiez que l'outil de codage IA est installé et fonctionne dans un terminal. Sur Desktop, cliquez sur **Actualiser** ; avec le CLI, relancez `marvis setup`. |
+| Le runtime apparaît hors ligne | Gardez Desktop ouvert ; avec le CLI, exécutez `marvis daemon status`, puis `marvis daemon start` s'il n'est pas lancé. |
 | La tâche reste en file d'attente | Vérifiez que le runtime utilisé par l'agent est en ligne. Lorsqu'un runtime atteint sa limite de parallélisme, les nouvelles exécutions restent en file d'attente. |
 
 Pour d'autres cas, consultez [Dépannage](/troubleshooting).
 
 ## Étapes suivantes
 
-- [Concepts clés](/concepts) — découvrez en trois minutes tous les objets clés de Multica.
-- [Fonctionnement de Multica](/how-multica-works) — comment les tâches, les agents, les runtimes et chaque exécution s'articulent.
+- [Concepts clés](/concepts) — découvrez en trois minutes tous les objets clés de Marvis.
+- [Fonctionnement de Marvis](/how-marvis-works) — comment les tâches, les agents, les runtimes et chaque exécution s'articulent.
 - [Mettre les agents au travail](/triggering-agents) — au-delà de l'assignation : @mentions, Discussion et automatisations.

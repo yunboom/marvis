@@ -22,9 +22,9 @@ import {
   UserPen,
   Waves,
 } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { Spinner } from "@multica/ui/components/ui/spinner";
-import { Input } from "@multica/ui/components/ui/input";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Spinner } from "@marvis/ui/components/ui/spinner";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -39,14 +39,14 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from "@multica/ui/components/ui/popover";
-import { Calendar } from "@multica/ui/components/ui/calendar";
-import { Switch } from "@multica/ui/components/ui/switch";
+} from "@marvis/ui/components/ui/popover";
+import { Calendar } from "@marvis/ui/components/ui/calendar";
+import { Switch } from "@marvis/ui/components/ui/switch";
 import {
   Select,
   SelectTrigger,
@@ -54,20 +54,20 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-} from "@multica/ui/components/ui/select";
-import { Toggle } from "@multica/ui/components/ui/toggle";
+} from "@marvis/ui/components/ui/select";
+import { Toggle } from "@marvis/ui/components/ui/toggle";
 import {
   PRIORITY_DISPLAY_ORDER,
-} from "@multica/core/issues/config";
+} from "@marvis/core/issues/config";
 import { StatusIcon, PriorityIcon } from ".";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { memberListOptions, agentListOptions, squadListOptions } from "@multica/core/workspace/queries";
-import { projectListOptions } from "@multica/core/projects/queries";
-import { PROJECT_STATUS_CONFIG, PROJECT_STATUS_ORDER } from "@multica/core/projects/config";
-import { labelListOptions } from "@multica/core/labels/queries";
-import { propertyListOptions } from "@multica/core/properties";
-import { propertyIdFromViewKey } from "@multica/core/issues/stores/view-store";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { memberListOptions, agentListOptions, squadListOptions } from "@marvis/core/workspace/queries";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import { PROJECT_STATUS_CONFIG, PROJECT_STATUS_ORDER } from "@marvis/core/projects/config";
+import { labelListOptions } from "@marvis/core/labels/queries";
+import { propertyListOptions } from "@marvis/core/properties";
+import { propertyIdFromViewKey } from "@marvis/core/issues/stores/view-store";
 import type {
   Issue,
   IssueProperty,
@@ -75,8 +75,8 @@ import type {
   IssueTableFacetsResponse,
   ProjectStatus,
   WorkingAgentSummary,
-} from "@multica/core/types";
-import { formatActorRef, isActorPropertyType, isFilterablePropertyType, isListPropertyType, isScalarPropertyType, propertyFilterValueKey, PROPERTY_FILTER_OP_SYMBOLS, PROPERTY_FILTER_OPS_BY_TYPE, type PropertyFilterOp, type PropertyFilterValue } from "@multica/core/types";
+} from "@marvis/core/types";
+import { formatActorRef, isActorPropertyType, isFilterablePropertyType, isListPropertyType, isScalarPropertyType, propertyFilterValueKey, PROPERTY_FILTER_OP_SYMBOLS, PROPERTY_FILTER_OPS_BY_TYPE, type PropertyFilterOp, type PropertyFilterValue } from "@marvis/core/types";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { useProjectStatusLabels } from "../../projects/components/labels";
 import { ActorAvatar } from "../../common/actor-avatar";
@@ -98,27 +98,27 @@ import {
   type SwimlaneGrouping,
   type TableGrouping,
   type ViewMode,
-} from "@multica/core/issues/stores/view-store";
-import { useViewStore, useViewStoreApi } from "@multica/core/issues/stores/view-store-context";
+} from "@marvis/core/issues/stores/view-store";
+import { useViewStore, useViewStoreApi } from "@marvis/core/issues/stores/view-store-context";
 import { FilterChipsBar } from "./filter-chips-bar";
 import { SaveViewDialog, type SaveViewScope } from "./save-view-dialog";
 import { ViewBar } from "./view-bar";
 import { toast } from "sonner";
-import { useActiveIssueView } from "@multica/core/issue-views/use-active-view";
-import { useAuthStore } from "@multica/core/auth";
-import type { IssueViewScope } from "@multica/core/issue-views/queries";
-import { actorFilterKey, baselineFromQuery, type IssueViewBaseline } from "@multica/core/issue-views/baseline";
-import type { IssueView } from "@multica/core/api/schemas";
-import { addDaysDateOnly, dateOnlyToLocalDate, formatDateOnly, toDateOnly, todayDateOnly } from "@multica/core/issues/date";
+import { useActiveIssueView } from "@marvis/core/issue-views/use-active-view";
+import { useAuthStore } from "@marvis/core/auth";
+import type { IssueViewScope } from "@marvis/core/issue-views/queries";
+import { actorFilterKey, baselineFromQuery, type IssueViewBaseline } from "@marvis/core/issue-views/baseline";
+import type { IssueView } from "@marvis/core/api/schemas";
+import { addDaysDateOnly, dateOnlyToLocalDate, formatDateOnly, toDateOnly, todayDateOnly } from "@marvis/core/issues/date";
 import {
   useIssuesScope,
   useIssuesScopeStore,
   type IssuesScope,
   type IssuesScopePageKey,
-} from "@multica/core/issues/stores/issues-scope-store";
-import { actorKindForViewVariant } from "@multica/core/issues/surface/scope";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@multica/ui/components/ui/tooltip";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/issues/stores/issues-scope-store";
+import { actorKindForViewVariant } from "@marvis/core/issues/surface/scope";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
+import { cn } from "@marvis/ui/lib/utils";
 import { PAGE_GUTTER } from "../../layout/page-header";
 import { useT } from "../../i18n";
 import { useStatusOptions } from "../utils/status-options";

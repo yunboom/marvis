@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-var testCursorHookCommand = []string{"/opt/multica tools/multica", CursorHookHelperArg}
+var testCursorHookCommand = []string{"/opt/marvis tools/marvis", CursorHookHelperArg}
 
 func startTestCursorSupplements(t *testing.T, ctx context.Context) (*cursorSupplementSession, string) {
 	t.Helper()
@@ -96,7 +96,7 @@ func TestCursorSupplementDeliversThroughHookRelay(t *testing.T) {
 	if err := json.Unmarshal(data, &hooks); err != nil {
 		t.Fatal(err)
 	}
-	wantCommand := `'/opt/multica tools/multica' '` + CursorHookHelperArg + `'`
+	wantCommand := `'/opt/marvis tools/marvis' '` + CursorHookHelperArg + `'`
 	for _, event := range []string{"postToolUse", "postToolUseFailure"} {
 		if got := hooks.Hooks[event]; len(got) != 1 || got[0].Command != wantCommand {
 			t.Fatalf("%s hooks = %#v, want command %q", event, got, wantCommand)
@@ -325,7 +325,7 @@ func TestCursorSupplementKeepsUnmanagedHooksFile(t *testing.T) {
 		t.Fatalf("unmanaged hooks.json changed to %q", got)
 	}
 
-	stale := []byte(`{"hooks":{"postToolUse":[{"command":"'/old/multica' '` + CursorHookHelperArg + `'"}]}}`)
+	stale := []byte(`{"hooks":{"postToolUse":[{"command":"'/old/marvis' '` + CursorHookHelperArg + `'"}]}}`)
 	if err := os.WriteFile(path, stale, 0o600); err != nil {
 		t.Fatal(err)
 	}

@@ -26,16 +26,16 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { MulticaIcon } from "@multica/ui/components/common/multica-icon";
-import { Input } from "@multica/ui/components/ui/input";
+import { Button } from "@marvis/ui/components/ui/button";
+import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   type ButtonScale,
   isColorToken,
@@ -90,7 +90,7 @@ function PreviewFrame({
   const send = useCallback(() => {
     ref.current?.contentWindow?.postMessage(
       {
-        type: "multica-ui-lab:preview",
+        type: "marvis-ui-lab:preview",
         draft,
         theme,
         scene,
@@ -114,7 +114,7 @@ function PreviewFrame({
       if (
         event.origin === location.origin &&
         event.source === ref.current?.contentWindow &&
-        event.data?.type === "multica-ui-lab:ready"
+        event.data?.type === "marvis-ui-lab:ready"
       )
         send();
     };
@@ -147,7 +147,7 @@ function PreviewFrame({
               onClick={() =>
                 ref.current?.contentWindow?.postMessage(
                   {
-                    type: "multica-ui-lab:dialog",
+                    type: "marvis-ui-lab:dialog",
                     action,
                   } satisfies DialogCommand,
                   location.origin,
@@ -251,7 +251,7 @@ function Workbench({
   const [panels, setPanels] = useState(() => {
     try {
       const saved = JSON.parse(
-        localStorage.getItem("multica-ui-lab:panels") ?? "null",
+        localStorage.getItem("marvis-ui-lab:panels") ?? "null",
       );
       return {
         leftCollapsed: saved?.leftCollapsed === true,
@@ -263,7 +263,7 @@ function Workbench({
   });
   useEffect(() => {
     try {
-      localStorage.setItem("multica-ui-lab:panels", JSON.stringify(panels));
+      localStorage.setItem("marvis-ui-lab:panels", JSON.stringify(panels));
     } catch {
       /* Panel toggles remain usable when storage is unavailable. */
     }
@@ -347,7 +347,7 @@ function Workbench({
     );
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "multica-ui-tokens.css";
+    anchor.download = "marvis-ui-tokens.css";
     anchor.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     setNotice({ key: "exported" });
@@ -425,11 +425,11 @@ function Workbench({
         >
           <PanelLeft />
         </Button>
-        <a className="lab-brand" href="#/overview" aria-label="Multica UI Lab">
+        <a className="lab-brand" href="#/overview" aria-label="Marvis UI Lab">
           <span className="logo-mark">
-            <MulticaIcon className="size-4" noSpin />
+            <MarvisIcon className="size-4" noSpin />
           </span>
-          <strong>multica</strong>
+          <strong>marvis</strong>
           <span className="brand-divider" />
           <span>UI Lab</span>
         </a>

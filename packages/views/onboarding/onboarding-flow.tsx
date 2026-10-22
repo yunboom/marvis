@@ -8,8 +8,8 @@ import {
   DuplicateIssueErrorBodySchema,
   type DuplicateIssueErrorBody,
   parseWithFallback,
-} from "@multica/core/api";
-import { useAuthStore } from "@multica/core/auth";
+} from "@marvis/core/api";
+import { useAuthStore } from "@marvis/core/auth";
 import {
   completeOnboarding,
   ONBOARDING_STEP_ORDER,
@@ -17,9 +17,9 @@ import {
   useBootstrapMika,
   type OnboardingStep,
   type QuestionnaireAnswers,
-} from "@multica/core/onboarding";
-import { useWorkspaceList } from "@multica/core/workspace";
-import type { AgentRuntime, Workspace } from "@multica/core/types";
+} from "@marvis/core/onboarding";
+import { useWorkspaceList } from "@marvis/core/workspace";
+import type { AgentRuntime, Workspace } from "@marvis/core/types";
 import { StepWelcome } from "./steps/step-welcome";
 import { StepShell } from "./components/step-shell";
 import { StepAboutYou } from "./steps/step-about-you";
@@ -117,7 +117,7 @@ interface OnboardingFlowProps {
     destination?: OnboardingDestination,
   ) => void;
   /** "new_workspace" is the same flow run by someone who already uses
-   *  Multica: it starts at the workspace step, because the intro and the
+   *  Marvis: it starts at the workspace step, because the intro and the
    *  questionnaire only make sense once per person, and it always creates a
    *  workspace rather than offering to continue with an existing one. */
   mode?: OnboardingMode;

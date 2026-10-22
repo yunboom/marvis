@@ -20,17 +20,17 @@ beforeEach(() => {
 describe("issue opening preference", () => {
   it("restores the saved choice on rehydration", async () => {
     useIssueOpeningStore.getState().setOpenMode("peek");
-    const saved = storage.get("multica_issue_opening")!;
+    const saved = storage.get("marvis_issue_opening")!;
     expect(JSON.parse(saved).state).toEqual({ openMode: "peek" });
     useIssueOpeningStore.getState().setOpenMode("page");
-    storage.set("multica_issue_opening", saved);
+    storage.set("marvis_issue_opening", saved);
     await useIssueOpeningStore.persist.rehydrate();
     expect(useIssueOpeningStore.getState().openMode).toBe("peek");
   });
 
   it.each([null, {}, { openMode: "unknown" }])("defaults to full pages for missing or invalid preferences: %j", async (state) => {
     useIssueOpeningStore.getState().setOpenMode("peek");
-    storage.set("multica_issue_opening", JSON.stringify({ state, version: 0 }));
+    storage.set("marvis_issue_opening", JSON.stringify({ state, version: 0 }));
     await useIssueOpeningStore.persist.rehydrate();
     expect(useIssueOpeningStore.getState().openMode).toBe("page");
   });

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ChevronRight, LayoutGrid } from "lucide-react";
-import type { DeliverableFile } from "@multica/core/attachments/deliverables";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import type { DeliverableFile } from "@marvis/core/attachments/deliverables";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { useT } from "../../../i18n";
 import { formatBytes } from "../../../common/format-bytes";
 import { fileIcon } from "../../../editor/utils/file-icon";

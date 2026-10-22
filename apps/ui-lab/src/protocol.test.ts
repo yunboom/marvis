@@ -6,7 +6,7 @@ import { isDialogCommand, isPreviewSettings } from "./protocol";
 describe("motion preview boundary", () => {
   it("accepts only supported playback speeds and commands", () => {
     const message = {
-      type: "multica-ui-lab:preview",
+      type: "marvis-ui-lab:preview",
       selectedColor: "--brand",
       draft: emptyDraft(),
       theme: "light",
@@ -19,13 +19,13 @@ describe("motion preview boundary", () => {
     for (const playbackSpeed of [0, -1, 2, Infinity, "1", null, undefined])
       expect(isPreviewSettings({ ...message, playbackSpeed })).toBe(false);
     for (const action of ["open", "close", "replay"])
-      expect(isDialogCommand({ type: "multica-ui-lab:dialog", action })).toBe(
+      expect(isDialogCommand({ type: "marvis-ui-lab:dialog", action })).toBe(
         true,
       );
     for (const value of [
       null,
       {},
-      { type: "multica-ui-lab:dialog", action: "execute" },
+      { type: "marvis-ui-lab:dialog", action: "execute" },
       { type: "other", action: "open" },
     ])
       expect(isDialogCommand(value)).toBe(false);

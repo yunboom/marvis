@@ -40,9 +40,9 @@ tmp_env="$(mktemp)"
 tmp_dir="$(mktemp -d)"
 trap 'rm -f "$tmp_env"; rm -rf "$tmp_dir"' EXIT
 sed 's/^FRONTEND_PORT=.*/FRONTEND_PORT=3100/' .env.example >"$tmp_env"
-printf '\nBACKEND_PORT=9100\nSMTP_FROM_EMAIL=multica@example.com\n' >>"$tmp_env"
-printf 'MULTICA_LLM_API_KEY=llm-key-from-env\nMULTICA_LLM_BASE_URL=http://gateway.example/v1\nMULTICA_LLM_DEFAULT_MODEL=model-from-env\nMULTICA_LLM_MAX_RETRIES=3\n' >>"$tmp_env"
-printf 'DATABASE_REPLICA_URL=postgres://reader:secret@replica.example.com:5432/multica?sslmode=require\nDATABASE_REPLICA_MAX_CONNS=12\nDATABASE_REPLICA_MIN_CONNS=1\n' >>"$tmp_env"
+printf '\nBACKEND_PORT=9100\nSMTP_FROM_EMAIL=marvis@example.com\n' >>"$tmp_env"
+printf 'MARVIS_LLM_API_KEY=llm-key-from-env\nMARVIS_LLM_BASE_URL=http://gateway.example/v1\nMARVIS_LLM_DEFAULT_MODEL=model-from-env\nMARVIS_LLM_MAX_RETRIES=3\n' >>"$tmp_env"
+printf 'DATABASE_REPLICA_URL=postgres://reader:secret@replica.example.com:5432/marvis?sslmode=require\nDATABASE_REPLICA_MAX_CONNS=12\nDATABASE_REPLICA_MIN_CONNS=1\n' >>"$tmp_env"
 
 config="$(
   docker compose \
@@ -55,10 +55,10 @@ require_config "$config" 'published: "3100"'
 require_config "$config" 'published: "9100"'
 require_config "$config" 'FRONTEND_ORIGIN: http://localhost:3100'
 require_config "$config" 'GOOGLE_REDIRECT_URI: http://localhost:3100/auth/callback'
-require_config "$config" 'MULTICA_APP_URL: http://localhost:3100'
-require_config "$config" 'SMTP_FROM_EMAIL: multica@example.com'
-require_config "$config" 'MULTICA_DATABASE_STARTUP_TIMEOUT: 3m'
-require_config "$config" 'MULTICA_DATABASE_CONNECT_TIMEOUT: 5s'
+require_config "$config" 'MARVIS_APP_URL: http://localhost:3100'
+require_config "$config" 'SMTP_FROM_EMAIL: marvis@example.com'
+require_config "$config" 'MARVIS_DATABASE_STARTUP_TIMEOUT: 3m'
+require_config "$config" 'MARVIS_DATABASE_CONNECT_TIMEOUT: 5s'
 require_config "$config" 'MAINTENANCE_PORT: ""'
 maintenance_config="$(MAINTENANCE_PORT=6061 docker compose --env-file "$tmp_env" -f docker-compose.selfhost.yml config)"
 require_config "$maintenance_config" 'MAINTENANCE_PORT: "6061"'
@@ -66,7 +66,7 @@ if grep -Eq '(published|target):.*6061' <<<"$maintenance_config"; then
   echo "Maintenance loopback port must not be published"
   exit 1
 fi
-require_config "$config" 'DATABASE_REPLICA_URL: postgres://reader:secret@replica.example.com:5432/multica?sslmode=require'
+require_config "$config" 'DATABASE_REPLICA_URL: postgres://reader:secret@replica.example.com:5432/marvis?sslmode=require'
 require_config "$config" 'DATABASE_REPLICA_MAX_CONNS: "12"'
 require_config "$config" 'DATABASE_REPLICA_MIN_CONNS: "1"'
 
@@ -75,10 +75,10 @@ require_config "$config" 'DATABASE_REPLICA_MIN_CONNS: "1"'
 # operator configures it, the server never sees it, and nothing reports the gap.
 # Assert the values actually land, then assert the allowlist has not drifted
 # behind the documentation the next time an LLM knob is added.
-require_config "$config" 'MULTICA_LLM_API_KEY: llm-key-from-env'
-require_config "$config" 'MULTICA_LLM_BASE_URL: http://gateway.example/v1'
-require_config "$config" 'MULTICA_LLM_DEFAULT_MODEL: model-from-env'
-require_config "$config" 'MULTICA_LLM_MAX_RETRIES: "3"'
+require_config "$config" 'MARVIS_LLM_API_KEY: llm-key-from-env'
+require_config "$config" 'MARVIS_LLM_BASE_URL: http://gateway.example/v1'
+require_config "$config" 'MARVIS_LLM_DEFAULT_MODEL: model-from-env'
+require_config "$config" 'MARVIS_LLM_MAX_RETRIES: "3"'
 
 while IFS= read -r llm_var; do
   if ! grep -Eq "^[[:space:]]+${llm_var}: \\\$\{${llm_var}:-" docker-compose.selfhost.yml; then
@@ -86,7 +86,7 @@ while IFS= read -r llm_var; do
     echo "service in docker-compose.selfhost.yml, so self-hosted deployments cannot set it."
     exit 1
   fi
-done < <(grep -oE '^MULTICA_LLM_[A-Z_]+' .env.example)
+done < <(grep -oE '^MARVIS_LLM_[A-Z_]+' .env.example)
 
 # The same drift for integration encryption keys, keyed on the server rather
 # than on .env.example: each secretbox.LoadKey() gates an integration that
@@ -135,9 +135,9 @@ local_env="$(
       "PORT=${PORT}" \
       "FRONTEND_PORT=${FRONTEND_PORT}" \
       "FRONTEND_ORIGIN=${FRONTEND_ORIGIN}" \
-      "MULTICA_APP_URL=${MULTICA_APP_URL}" \
+      "MARVIS_APP_URL=${MARVIS_APP_URL}" \
       "GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}" \
-      "MULTICA_SERVER_URL=${MULTICA_SERVER_URL}" \
+      "MARVIS_SERVER_URL=${MARVIS_SERVER_URL}" \
       "LOCAL_UPLOAD_BASE_URL=${LOCAL_UPLOAD_BASE_URL}" \
       "PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL}"
   ' _ "$tmp_env"
@@ -146,16 +146,16 @@ local_env="$(
 require_env "$local_env" 'PORT=9100'
 require_env "$local_env" 'FRONTEND_PORT=3100'
 require_env "$local_env" 'FRONTEND_ORIGIN=http://localhost:3100'
-require_env "$local_env" 'MULTICA_APP_URL=http://localhost:3100'
+require_env "$local_env" 'MARVIS_APP_URL=http://localhost:3100'
 require_env "$local_env" 'GOOGLE_REDIRECT_URI=http://localhost:3100/auth/callback'
-require_env "$local_env" 'MULTICA_SERVER_URL=ws://localhost:9100/ws'
+require_env "$local_env" 'MARVIS_SERVER_URL=ws://localhost:9100/ws'
 require_env "$local_env" 'LOCAL_UPLOAD_BASE_URL=http://localhost:9100'
 require_env "$local_env" 'PLAYWRIGHT_BASE_URL=http://localhost:3100'
 
 worktree_env="$tmp_dir/.env.worktree"
 WORKTREE_NAME=selfhost-config-test bash scripts/init-worktree-env.sh "$worktree_env" >/dev/null
 worktree_backend_port="$(sed -n 's/^PORT=//p' "$worktree_env")"
-require_env "$(cat "$worktree_env")" "MULTICA_PUBLIC_URL=http://localhost:${worktree_backend_port}"
+require_env "$(cat "$worktree_env")" "MARVIS_PUBLIC_URL=http://localhost:${worktree_backend_port}"
 
 resolve_local_public_url() {
   env -i PATH="$PATH" bash -c '
@@ -167,7 +167,7 @@ resolve_local_public_url() {
     set +a
     # shellcheck disable=SC1091
     . scripts/local-env.sh
-    printf "%s\n" "$MULTICA_PUBLIC_URL"
+    printf "%s\n" "$MARVIS_PUBLIC_URL"
   ' _ "$1"
 }
 
@@ -175,7 +175,7 @@ make_env_probe="$tmp_dir/print-public-url.mk"
 printf '%s\n' \
   '.PHONY: print-public-url' \
   'print-public-url:' \
-  '	@printf "%s\n" "$$MULTICA_PUBLIC_URL"' \
+  '	@printf "%s\n" "$$MARVIS_PUBLIC_URL"' \
   >"$make_env_probe"
 
 resolve_make_public_url() {
@@ -189,7 +189,7 @@ resolve_make_public_url() {
 }
 
 old_worktree_env="$tmp_dir/.env.worktree.old"
-grep -v '^MULTICA_PUBLIC_URL=' "$worktree_env" >"$old_worktree_env"
+grep -v '^MARVIS_PUBLIC_URL=' "$worktree_env" >"$old_worktree_env"
 require_env \
   "$(resolve_local_public_url "$old_worktree_env")" \
   "http://localhost:${worktree_backend_port}"
@@ -199,7 +199,7 @@ require_env \
 
 explicit_worktree_env="$tmp_dir/.env.worktree.explicit"
 cp "$old_worktree_env" "$explicit_worktree_env"
-printf '\nMULTICA_PUBLIC_URL=https://api.explicit.example\n' >>"$explicit_worktree_env"
+printf '\nMARVIS_PUBLIC_URL=https://api.explicit.example\n' >>"$explicit_worktree_env"
 require_env \
   "$(resolve_local_public_url "$explicit_worktree_env")" \
   "https://api.explicit.example"

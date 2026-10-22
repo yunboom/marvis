@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { Agent } from "@multica/core/types";
-import { qoderAgentId, qoderDefaultRepository } from "@multica/core/agents";
-import { Button } from "@multica/ui/components/ui/button";
-import { Input } from "@multica/ui/components/ui/input";
+import type { Agent } from "@marvis/core/types";
+import { qoderAgentId, qoderDefaultRepository } from "@marvis/core/agents";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Input } from "@marvis/ui/components/ui/input";
 import { QoderAgentSelect } from "../qoder-agent-select";
 import { useT } from "../../../i18n";
 

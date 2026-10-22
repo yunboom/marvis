@@ -17,7 +17,7 @@
  */
 
 import { useLayoutEffect, useState, type ReactNode } from "react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../i18n";
 
 export type HtmlViewport = "fill" | "desktop" | "tablet" | "phone";

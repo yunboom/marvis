@@ -35,15 +35,15 @@ const inboxMarkdownMaxLen = 4000
 // The notification type labels and the deep link's anchor text live in the
 // copy pack (strings.go), read through copyPack.label / InboxDetailLink. The
 // pack's zh-Hans labels are the same table this file used to hold, character
-// for character; the card is a 1:1 push to a named Multica member, so it is
+// for character; the card is a 1:1 push to a named Marvis member, so it is
 // their own profile language that picks the pack (outbound.go).
 
 // inboxAppURL resolves the frontend URL for building the "view detail" link.
-// Priority: WECOM_APP_URL → MULTICA_APP_URL → FRONTEND_ORIGIN. Only HTTPS
+// Priority: WECOM_APP_URL → MARVIS_APP_URL → FRONTEND_ORIGIN. Only HTTPS
 // values are accepted; a non-HTTPS override is silently dropped so a
 // misconfigured env cannot leak an http:// URL into a user chat.
 func inboxAppURL() string {
-	for _, name := range []string{"WECOM_APP_URL", "MULTICA_APP_URL", "FRONTEND_ORIGIN"} {
+	for _, name := range []string{"WECOM_APP_URL", "MARVIS_APP_URL", "FRONTEND_ORIGIN"} {
 		v := strings.TrimSpace(os.Getenv(name))
 		if v == "" {
 			continue

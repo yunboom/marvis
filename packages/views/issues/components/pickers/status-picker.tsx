@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { CircleEqual, CornerDownRight } from "lucide-react";
-import type { IssueStatus, UpdateIssueRequest } from "@multica/core/types";
-import { STATUS_CONFIG } from "@multica/core/issues/config";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { stepHandsOff, workflowStep } from "@multica/core/issue-workflows";
-import type { IssueWorkflowStep, Project } from "@multica/core/types";
+import type { IssueStatus, UpdateIssueRequest } from "@marvis/core/types";
+import { STATUS_CONFIG } from "@marvis/core/issues/config";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { stepHandsOff, workflowStep } from "@marvis/core/issue-workflows";
+import type { IssueWorkflowStep, Project } from "@marvis/core/types";
 import { StatusIcon } from "../status-icon";
 import { PropertyPicker, PickerItem } from "./property-picker";
 import { useT } from "../../../i18n";

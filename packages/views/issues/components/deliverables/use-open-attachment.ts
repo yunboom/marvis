@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { Attachment } from "@multica/core/types";
+import type { Attachment } from "@marvis/core/types";
 import {
   useAttachmentPreview,
   useDownloadAttachment,

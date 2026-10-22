@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import { HtmlPreviewSurface } from "./html-preview-surface";
 import { useT } from "../i18n";
 import { CodeBlockIframe } from "./code-block-iframe";
@@ -38,7 +38,7 @@ import {
 } from "./utils/html-block-document";
 import { hashSource } from "./utils/source-hash";
 
-const HEIGHT_CACHE_PREFIX = "multica:html-block:height:";
+const HEIGHT_CACHE_PREFIX = "marvis:html-block:height:";
 
 // A document that never reports (a Content-Security-Policy in the author's
 // HTML can block the bridge) is shown at the old fixed height, scrolling

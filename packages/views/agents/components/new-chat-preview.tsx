@@ -1,9 +1,9 @@
 "use client";
 
-import { selectConversationStarters } from "@multica/core/agents";
-import type { AgentConversationStarter } from "@multica/core/types";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
-import { ActorAvatar } from "@multica/ui/components/common/actor-avatar";
+import { selectConversationStarters } from "@marvis/core/agents";
+import type { AgentConversationStarter } from "@marvis/core/types";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
+import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
 import {
   ConversationStarterList,
   useFallbackConversationStarters,

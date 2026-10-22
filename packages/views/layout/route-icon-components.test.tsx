@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { paths, DEFAULT_ROUTE_ICON_NAME } from "@multica/core/paths";
+import { paths, DEFAULT_ROUTE_ICON_NAME } from "@marvis/core/paths";
 import { ROUTE_ICON_COMPONENTS, routeIconForPath } from "./route-icon-components";
 
 describe("routeIconForPath", () => {

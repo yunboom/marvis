@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 type wakeupActorKey struct{}
@@ -44,14 +44,14 @@ func (h *Handler) beginWakeupWrite(ctx context.Context) (pgx.Tx, error) {
 		return nil, err
 	}
 	if actor, ok := ctx.Value(wakeupActorKey{}).(wakeupActor); ok {
-		_, err = tx.Exec(ctx, `SELECT set_config('multica.actor_type',$1,true),set_config('multica.actor_id',$2,true),set_config('multica.source_task_id',$3,true)`, actor.kind, actor.id, actor.task)
+		_, err = tx.Exec(ctx, `SELECT set_config('marvis.actor_type',$1,true),set_config('marvis.actor_id',$2,true),set_config('marvis.source_task_id',$3,true)`, actor.kind, actor.id, actor.task)
 		if err != nil {
 			_ = tx.Rollback(ctx)
 			return nil, err
 		}
 	}
 	if agent, ok := ctx.Value(wakeupHandedToKey{}).(string); ok {
-		if _, err = tx.Exec(ctx, `SELECT set_config('multica.handed_to_agent',$1,true)`, agent); err != nil {
+		if _, err = tx.Exec(ctx, `SELECT set_config('marvis.handed_to_agent',$1,true)`, agent); err != nil {
 			_ = tx.Rollback(ctx)
 			return nil, err
 		}

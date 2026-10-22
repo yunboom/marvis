@@ -5,7 +5,7 @@ const UUID_VALUE = new RegExp(`^${UUID}$`, "i");
 // Only these positional arguments identify issues. In particular --thread and
 // --parent identify comments, and must never be sent to the issue resolver.
 const ISSUE_COMMAND = new RegExp(
-  `\\bmultica\\s+issue\\s+(?:get|update|comment\\s+(?:list|add))\\s+["']?(${UUID})(?![\\w-])`,
+  `\\bmarvis\\s+issue\\s+(?:get|update|comment\\s+(?:list|add))\\s+["']?(${UUID})(?![\\w-])`,
   "gi",
 );
 

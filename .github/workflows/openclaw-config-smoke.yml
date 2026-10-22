@@ -52,7 +52,7 @@ jobs:
         run: openclaw --version
 
       # A skipped Go test reports `ok` at the package level, so without this the
-      # job goes green whenever the CLI is absent, MULTICA_RUN_REAL_AGENT_SMOKE
+      # job goes green whenever the CLI is absent, MARVIS_RUN_REAL_AGENT_SMOKE
       # is unset, or the -run pattern stops matching — i.e. exactly when the
       # thing being verified is not being verified. #6897's Windows step calls
       # out the same hazard for the same reason. Require the RUN/PASS line and
@@ -60,7 +60,7 @@ jobs:
       - name: Verify managed MCP isolation through the real loader
         working-directory: server
         env:
-          MULTICA_RUN_REAL_AGENT_SMOKE: "1"
+          MARVIS_RUN_REAL_AGENT_SMOKE: "1"
         run: |
           set -o pipefail
           go test -tags agentintegration ./internal/daemon/execenv/ \

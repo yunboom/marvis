@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/featureflags"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/featureflags"
 )
 
 type AppConfig struct {
@@ -35,16 +35,16 @@ type AppConfig struct {
 	// previous shape for the common managed-cloud case (#3433).
 	WorkspaceCreationDisabled bool `json:"workspace_creation_disabled,omitempty"`
 	// Public daemon setup config consumed by the web app at runtime so
-	// self-hosted instances can show `multica setup self-host` commands
-	// with the operator's own domains instead of Multica Cloud defaults.
+	// self-hosted instances can show `marvis setup self-host` commands
+	// with the operator's own domains instead of Marvis Cloud defaults.
 	DaemonServerURL string `json:"daemon_server_url,omitempty"`
 	DaemonAppURL    string `json:"daemon_app_url,omitempty"`
 
-	// VCSIntegrationAvailable mirrors the MULTICA_VCS_INTEGRATION_ENABLED
+	// VCSIntegrationAvailable mirrors the MARVIS_VCS_INTEGRATION_ENABLED
 	// deployment switch so the Settings UI can hide the whole self-hosted Git
 	// provider section on deployments where it is off (the managed cloud),
 	// instead of rendering it and surfacing an operator-only "missing
-	// MULTICA_VCS_SECRET_KEY" hint a cloud user cannot resolve. Omitted when
+	// MARVIS_VCS_SECRET_KEY" hint a cloud user cannot resolve. Omitted when
 	// false so the managed-cloud response keeps its previous shape; the UI
 	// defaults absent to false (hidden).
 	VCSIntegrationAvailable bool `json:"vcs_integration_available,omitempty"`
@@ -151,9 +151,9 @@ func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func daemonSetupURLsFromEnv() (string, string) {
-	serverURL := normalizePublicURL(os.Getenv("MULTICA_DAEMON_SERVER_URL"))
+	serverURL := normalizePublicURL(os.Getenv("MARVIS_DAEMON_SERVER_URL"))
 	if serverURL == "" {
-		serverURL = normalizePublicURL(os.Getenv("MULTICA_PUBLIC_URL"))
+		serverURL = normalizePublicURL(os.Getenv("MARVIS_PUBLIC_URL"))
 	}
 	appURL := resolveFrontendAppURL()
 	if appURL == "" {
@@ -170,11 +170,11 @@ func daemonSetupURLsFromEnv() (string, string) {
 }
 
 // resolveFrontendAppURL returns the operator-configured frontend origin
-// (MULTICA_APP_URL, falling back to FRONTEND_ORIGIN), normalized. Shared by
+// (MARVIS_APP_URL, falling back to FRONTEND_ORIGIN), normalized. Shared by
 // the daemon-setup URLs and the managed-cloud detection so both read the same
 // signal.
 func resolveFrontendAppURL() string {
-	appURL := normalizePublicURL(os.Getenv("MULTICA_APP_URL"))
+	appURL := normalizePublicURL(os.Getenv("MARVIS_APP_URL"))
 	if appURL == "" {
 		appURL = normalizePublicURL(os.Getenv("FRONTEND_ORIGIN"))
 	}
@@ -186,20 +186,20 @@ func normalizePublicURL(raw string) string {
 }
 
 // isOfficialCloudDaemonConfig reports whether this deployment is the official
-// Multica Cloud, identified by its frontend host alone (multica.ai). The
+// Marvis Cloud, identified by its frontend host alone (marvis.ai). The
 // daemon setup for the managed cloud is always
-// `multica setup` (which hardcodes api.multica.ai), so the per-deployment URLs
-// must be omitted from /api/config even when MULTICA_PUBLIC_URL is unset or
-// misconfigured. Previously this also required serverURL==api.multica.ai, so a
-// cloud deployment that forgot MULTICA_PUBLIC_URL fell through and emitted a
-// `setup self-host --server-url https://multica.ai` command — pointing the
+// `marvis setup` (which hardcodes api.marvis.ai), so the per-deployment URLs
+// must be omitted from /api/config even when MARVIS_PUBLIC_URL is unset or
+// misconfigured. Previously this also required serverURL==api.marvis.ai, so a
+// cloud deployment that forgot MARVIS_PUBLIC_URL fell through and emitted a
+// `setup self-host --server-url https://marvis.ai` command — pointing the
 // daemon's backend at the frontend (no /health, no WebSocket proxy).
 func isOfficialCloudDaemonConfig(appURL string) bool {
-	return urlHostEquals(appURL, "multica.ai")
+	return urlHostEquals(appURL, "marvis.ai")
 }
 
-// isOfficialCloudDeployment reports whether this server is the official Multica
-// Cloud, reusing the same frontend-host signal as the daemon setup (multica.ai).
+// isOfficialCloudDeployment reports whether this server is the official Marvis
+// Cloud, reusing the same frontend-host signal as the daemon setup (marvis.ai).
 // Managed-cloud-only behavior — such as suppressing the Help popover's
 // server-version row, which only matters to self-hosted operators — is gated on
 // this.

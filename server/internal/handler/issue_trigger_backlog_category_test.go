@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // Only the fixed backlog key parks work. A custom unstarted status does not.

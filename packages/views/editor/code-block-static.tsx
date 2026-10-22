@@ -16,7 +16,7 @@
 
 import { useMemo, type CSSProperties } from "react";
 import { toHtml } from "hast-util-to-html";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import { highlightCode } from "./syntax-highlight";
 import { highlightToLines } from "../common/task-transcript/diff-highlight";
 import "./styles/code.css";

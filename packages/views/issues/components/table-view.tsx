@@ -52,11 +52,11 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { DataTable } from "@multica/ui/components/ui/data-table";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { Input } from "@multica/ui/components/ui/input";
+import { DataTable } from "@marvis/ui/components/ui/data-table";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,39 +66,39 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   TableCell,
   TableRow,
-} from "@multica/ui/components/ui/table";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
-import { cn } from "@multica/ui/lib/utils";
-import { ApiError } from "@multica/core/api";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { useModalStore } from "@multica/core/modals";
+} from "@marvis/ui/components/ui/table";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { cn } from "@marvis/ui/lib/utils";
+import { ApiError } from "@marvis/core/api";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { useModalStore } from "@marvis/core/modals";
 import {
   issueKeys,
   issueTableGroupsOptions,
   issueTableRowPageOptions,
-} from "@multica/core/issues/queries";
+} from "@marvis/core/issues/queries";
 import {
   TABLE_SYSTEM_COLUMNS,
   propertyIdFromViewKey,
   type SortField,
   type TableColumnKey,
   type TableSystemColumnKey,
-} from "@multica/core/issues/stores/view-store";
-import { useViewStore } from "@multica/core/issues/stores/view-store-context";
-import { propertyListOptions } from "@multica/core/properties";
-import { projectListOptions } from "@multica/core/projects/queries";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { buildActorNameResolver, useActorName } from "@multica/core/workspace/hooks";
+} from "@marvis/core/issues/stores/view-store";
+import { useViewStore } from "@marvis/core/issues/stores/view-store-context";
+import { propertyListOptions } from "@marvis/core/properties";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { buildActorNameResolver, useActorName } from "@marvis/core/workspace/hooks";
 import {
   agentListOptions,
   memberListOptions,
   squadListOptions,
-} from "@multica/core/workspace/queries";
+} from "@marvis/core/workspace/queries";
 import type {
   Issue,
   IssueProperty,
@@ -109,12 +109,12 @@ import type {
   IssueTableRowsResponse,
   Project,
   UpdateIssueRequest,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import {
   actorRefsFromValue,
   formatActorRef,
   isActorPropertyType,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import {
   useInfiniteQuery,
   useQueries,

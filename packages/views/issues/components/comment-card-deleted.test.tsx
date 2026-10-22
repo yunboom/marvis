@@ -2,7 +2,7 @@ import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { fireEvent, screen } from "@testing-library/react";
 import { forwardRef, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { TimelineEntry } from "@multica/core/types";
+import type { TimelineEntry } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 
 // #8296: deleting a comment keeps its replies. A comment deleted while it had
@@ -11,7 +11,7 @@ import { renderWithI18n } from "../../test/i18n";
 // tombstoned ROOT keeps a placeholder, since it heads the thread. The cache
 // rules live in packages/core/issues/comment-deletion.test.ts.
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { uploadFile: vi.fn() },
   dispatchReasonCode: () => undefined,
   errorCode: () => undefined,
@@ -25,7 +25,7 @@ vi.mock("../../navigation", () => ({
   }),
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: () => "Ada" }),
 }));
 
@@ -52,7 +52,7 @@ vi.mock("../../editor", async () => ({
   }),
 }));
 
-import { configStore } from "@multica/core/config";
+import { configStore } from "@marvis/core/config";
 import { CommentCard } from "./comment-card";
 
 const DELETED_AT = "2026-09-11T08:00:00Z";

@@ -8,18 +8,18 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/popover";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@multica/ui/components/ui/tabs";
+} from "@marvis/ui/components/ui/tabs";
 import {
   baseline,
   motionTokens,

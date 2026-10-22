@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AGENT_FOCUS_CONVERSATION_STARTERS } from "@multica/core/paths";
+import { AGENT_FOCUS_CONVERSATION_STARTERS } from "@marvis/core/paths";
 import { useOptionalNavigation } from "../../navigation";
 
 /** How long the deep-linked conversation-starters editor stays ringed. */

@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/awakeclock"
+	"github.com/marvis-ai/marvis/server/pkg/awakeclock"
 )
 
 type cursorBackgroundTool struct {
@@ -137,7 +137,7 @@ func (b *cursorBackgroundTools) Add(call cursorToolCall) {
 // shells one run may launch is not, so "bounded per process" is not a bound on
 // finalization. It has to be one, because Close() runs after the terminal
 // result has been observed — the point at which the daemon's watchdog has
-// deliberately stopped supervising this run, and MULTICA_AGENT_TIMEOUT is 0 by
+// deliberately stopped supervising this run, and MARVIS_AGENT_TIMEOUT is 0 by
 // default. Work still unconfirmed when the budget runs out takes the existing
 // unconfirmed-at-close path: its result is preserved and its cleanup is logged
 // as unconfirmed, never reported as successful.

@@ -20,18 +20,18 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { Check, Copy, Search, X } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { DataTable } from "@multica/ui/components/ui/data-table";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { DataTable } from "@marvis/ui/components/ui/data-table";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Input } from "@multica/ui/components/ui/input";
-import { copyText } from "@multica/ui/lib/clipboard";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/dialog";
+import { Input } from "@marvis/ui/components/ui/input";
+import { copyText } from "@marvis/ui/lib/clipboard";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../i18n";
 import { SortHeader, compareCells, textWidth } from "../editor/table-preview";
 import { tableToCsv, type RichTableModel } from "./rich-table-model";

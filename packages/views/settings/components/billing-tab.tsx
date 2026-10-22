@@ -12,8 +12,8 @@ import {
   Plus,
   RefreshCw,
 } from "lucide-react";
-import { ApiError, errorCode } from "@multica/core/api";
-import { autopilotQuotaUsageOptions } from "@multica/core/autopilots";
+import { ApiError, errorCode } from "@marvis/core/api";
+import { autopilotQuotaUsageOptions } from "@marvis/core/autopilots";
 import {
   useCreateWorkspaceSubscriptionCheckout,
   useCreateWorkspaceSubscriptionPortal,
@@ -22,20 +22,20 @@ import {
   issueLimitUsageOptions,
   workspaceSubscriptionPricesOptions,
   workspaceSubscriptionSummaryOptions,
-} from "@multica/core/billing";
-import { useFeatureEnabled } from "@multica/core/config";
-import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@multica/core/feature-flags";
-import { useCurrentWorkspace } from "@multica/core/paths";
+} from "@marvis/core/billing";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@marvis/core/feature-flags";
+import { useCurrentWorkspace } from "@marvis/core/paths";
 import type {
   PurchaseWorkspaceSeatsRequest,
   WorkspaceSeatPurchasePreview,
   WorkspaceSubscriptionInterval,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@multica/ui/components/ui/alert";
+} from "@marvis/ui/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,10 +45,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { Badge } from "@multica/ui/components/ui/badge";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { Badge } from "@marvis/ui/components/ui/badge";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import {
   Dialog,
   DialogContent,
@@ -56,20 +56,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Input } from "@multica/ui/components/ui/input";
+} from "@marvis/ui/components/ui/dialog";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverDescription,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/popover";
 import {
   Progress,
   ProgressLabel,
   ProgressValue,
-} from "@multica/ui/components/ui/progress";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
+} from "@marvis/ui/components/ui/progress";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { useLocale, useT } from "../../i18n";
 import { useNavigation } from "../../navigation";
 import { openExternal } from "../../platform";

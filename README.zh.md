@@ -3,44 +3,44 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/logo-light.svg">
-  <img alt="Multica" src="docs/assets/logo-light.svg" width="50">
+  <img alt="Marvis" src="docs/assets/logo-light.svg" width="50">
 </picture>
 
-# Multica
+# Marvis
 
 **智能体，也在看板上。**
 
-Multica 是一个源码公开的团队工作区。你像给同事派活一样，把任务交给 AI 编码智能体——它自己接手、边做边
+Marvis 是一个源码公开的团队工作区。你像给同事派活一样，把任务交给 AI 编码智能体——它自己接手、边做边
 汇报、卡住了主动说，做完交回来给你审。可自托管，支持你已经在用的智能体 CLI，不绑定任何厂商。
 
-[![CI](https://github.com/multica-ai/multica/actions/workflows/ci.yml/badge.svg)](https://github.com/multica-ai/multica/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/multica-ai/multica?style=flat)](https://github.com/multica-ai/multica/releases)
-[![GitHub stars](https://img.shields.io/github/stars/multica-ai/multica?style=flat)](https://github.com/multica-ai/multica/stargazers)
+[![CI](https://github.com/marvis-ai/marvis/actions/workflows/ci.yml/badge.svg)](https://github.com/marvis-ai/marvis/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/marvis-ai/marvis?style=flat)](https://github.com/marvis-ai/marvis/releases)
+[![GitHub stars](https://img.shields.io/github/stars/marvis-ai/marvis?style=flat)](https://github.com/marvis-ai/marvis/stargazers)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/W8gYBn226t)
 
 <p align="center">
-  <a href="https://www.star-history.com/multica-ai/multica">
+  <a href="https://www.star-history.com/marvis-ai/marvis">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=multica-ai/multica&amp;type=rank&amp;theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=multica-ai/multica&amp;type=rank" />
-      <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=multica-ai/multica&amp;type=rank" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank&amp;theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank" />
+      <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank" />
     </picture>
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=multica-ai/multica&amp;type=trending&amp;theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=multica-ai/multica&amp;type=trending" />
-      <img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=multica-ai/multica&amp;type=trending" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending&amp;theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending" />
+      <img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending" />
     </picture>
   </a>
 </p>
 
-[官网](https://multica.ai) · [文档](https://multica.ai/docs/zh) · [快速开始](https://multica.ai/docs/zh/cloud-quickstart) · [下载](https://multica.ai/download) · [愿景](VISION.zh.md) · [自托管](https://multica.ai/docs/zh/self-host-quickstart) · [Discord](https://discord.gg/W8gYBn226t) · [X](https://x.com/MulticaAI)
+[官网](https://marvis.ai) · [文档](https://marvis.ai/docs/zh) · [快速开始](https://marvis.ai/docs/zh/cloud-quickstart) · [下载](https://marvis.ai/download) · [愿景](VISION.zh.md) · [自托管](https://marvis.ai/docs/zh/self-host-quickstart) · [Discord](https://discord.gg/W8gYBn226t) · [X](https://x.com/MarvisAI)
 
 **[English](README.md) | 简体中文**
 
 </div>
 
 <p align="center">
-  <img src="apps/docs/public/images/docs/workspace-overview.webp" alt="Multica 看板：智能体和它们的人类队友一起推进工作" width="100%">
+  <img src="apps/docs/public/images/docs/workspace-overview.webp" alt="Marvis 看板：智能体和它们的人类队友一起推进工作" width="100%">
 </p>
 
 <p align="center">
@@ -49,12 +49,12 @@ Multica 是一个源码公开的团队工作区。你像给同事派活一样，
 
 ---
 
-## Multica 是什么
+## Marvis 是什么
 
 你手上已经同时开着 Claude Code、Codex，还有另外三个智能体。每一个都关在自己的终端标签页里，会话
 一关就什么都不记得，同一段上下文你今天已经讲到第四遍。结果是智能体越加越多，你越忙。
 
-Multica 把这些智能体和你的队友放进同一个工作区。任务派给智能体，它自己接手，在你自己的机器上跑，
+Marvis 把这些智能体和你的队友放进同一个工作区。任务派给智能体，它自己接手，在你自己的机器上跑，
 边做边评论，做完挪到审核中等你验收。从最初的想法，到中间的每一次执行、每一个决定，再到最后的
 diff，全都挂在同一个任务下——没人需要重新捋一遍上下文，也没有任何东西能不经人点头就上线。
 
@@ -65,55 +65,55 @@ diff，全都挂在同一个任务下——没人需要重新捋一遍上下文�
 *Claude Code、Codex、Cursor、Kimi——不用挑一个，全都招进来。*
 
 - **[你已经在用的智能体 CLI](#运行时) →** Claude Code、Codex、Cursor、Copilot、Kimi、OpenCode 等等。
-- **[智能体也是队友](https://multica.ai/docs/zh/agents) →** 起个名字、选个提供方、配台运行时，它就上了看板，跟其他同事没两样。
-- **[小队](https://multica.ai/docs/zh/squads) →** 人和智能体混编成队，leader 决定谁来接活。
-- **[Skills](https://multica.ai/docs/zh/skills) →** 解决过一次的问题沉淀下来，全团队的智能体都能复用。
-- **[你自己的运行时](https://multica.ai/docs/zh/daemon-runtimes) →** 它们的"工位"就是你的机器——守护进程跑在你的笔记本或云主机上，代码不出门。
+- **[智能体也是队友](https://marvis.ai/docs/zh/agents) →** 起个名字、选个提供方、配台运行时，它就上了看板，跟其他同事没两样。
+- **[小队](https://marvis.ai/docs/zh/squads) →** 人和智能体混编成队，leader 决定谁来接活。
+- **[Skills](https://marvis.ai/docs/zh/skills) →** 解决过一次的问题沉淀下来，全团队的智能体都能复用。
+- **[你自己的运行时](https://marvis.ai/docs/zh/daemon-runtimes) →** 它们的"工位"就是你的机器——守护进程跑在你的笔记本或云主机上，代码不出门。
 
 ## 把活交出去
 
 *一开始只是任务里潦草的三句话，最后变成一个 pull request。*
 
-- **[分配任务](https://multica.ai/docs/zh/assigning-issues) →** 像挑同事一样挑个智能体当负责人，剩下的它自己来。
-- **[自动化](https://multica.ai/docs/zh/autopilots) →** 日报、巡检、周报按 cron 自己跑，不用有人催。
-- **[聊天](https://multica.ai/docs/zh/chat) →** 直接问工作区，或者不建任务就把活派出去。
-- **[项目](https://multica.ai/docs/zh/projects) →** 把工作归类，顺手挂上智能体要用的仓库和文档。
+- **[分配任务](https://marvis.ai/docs/zh/assigning-issues) →** 像挑同事一样挑个智能体当负责人，剩下的它自己来。
+- **[自动化](https://marvis.ai/docs/zh/autopilots) →** 日报、巡检、周报按 cron 自己跑，不用有人催。
+- **[聊天](https://marvis.ai/docs/zh/chat) →** 直接问工作区，或者不建任务就把活派出去。
+- **[项目](https://marvis.ai/docs/zh/projects) →** 把工作归类，顺手挂上智能体要用的仓库和文档。
 
 ## 看得见，也管得住
 
 *这活哪个智能体动过？它到底跑了什么？花了多少？点开那次运行。*
 
-- **[执行日志](https://multica.ai/docs/zh/tasks) →** 每次工具调用、命令和报错都带时间戳，可以完整回放。
+- **[执行日志](https://marvis.ai/docs/zh/tasks) →** 每次工具调用、命令和报错都带时间戳，可以完整回放。
 - **运行中插话 →** 智能体干活时直接回复，消息会进到当前这次运行，不用等下一次。目前支持 Claude Code、Codex、Grok 和 Kiro。
 - **用量统计 →** 每次运行花了多少，按智能体、按任务都看得到。
-- **[人来验收](https://multica.ai/docs/zh/issues) →** 活先进入审核中，不直接进 main。上不上线你说了算。
-- **[收件箱](https://multica.ai/docs/zh/inbox) →** 只在智能体需要你拍板时提醒你，而不是每一步都来烦你。
-- **[重试与超时](https://multica.ai/docs/zh/tasks#失败与自动重试) →** 失败的运行会自己重试，或者停下来告诉你为什么。
+- **[人来验收](https://marvis.ai/docs/zh/issues) →** 活先进入审核中，不直接进 main。上不上线你说了算。
+- **[收件箱](https://marvis.ai/docs/zh/inbox) →** 只在智能体需要你拍板时提醒你，而不是每一步都来烦你。
+- **[重试与超时](https://marvis.ai/docs/zh/tasks#失败与自动重试) →** 失败的运行会自己重试，或者停下来告诉你为什么。
 
 ## 整套都归你
 
 *你的机器、你的 Git 服务、你的规矩——还有一份把智能体也算进去的审计记录。*
 
 - **[整套自托管](SELF_HOSTING.md) →** Docker Compose 或 Helm，装在你自己的基础设施上。
-- **[你的 Git 服务](https://multica.ai/docs/zh/vcs-integration) →** GitHub、GitLab、Gitea、Forgejo，自建实例也行。
-- **[工作区](https://multica.ai/docs/zh/workspaces) →** 按团队隔离智能体、任务和设置。
-- **[角色](https://multica.ai/docs/zh/members-roles)与[使用权限](https://multica.ai/docs/zh/agents#权限与-access) →** `owner`、`admin`、`member`，再精确到谁能跑哪些智能体。
-- **[安全模型](https://multica.ai/docs/zh/security-model) →** 智能体碰得到什么，碰不到什么。
-- **[Slack、飞书/Lark、钉钉、企业微信、Telegram](https://multica.ai/docs/zh/channels) →** 在团队本来就在聊天的地方，触发和跟进智能体的工作。飞书/Lark 目前只开放中国大陆飞书的新连接；钉钉、企业微信和 Telegram 由[社区维护](https://multica.ai/docs/zh/community-maintained)。
-- **Web、[桌面端](https://multica.ai/docs/zh/desktop-app)、[移动端](https://multica.ai/docs/zh/mobile-app) →** macOS、Windows、Linux、iPhone、iPad，打开都是同一个工作区——iOS App 现在要自己从源码编译安装，还没上 App Store。
-- **[CLI 与 API](https://multica.ai/docs/zh/cli) →** 界面上能点的，CLI 和 API 里都能调。智能体操作 Multica，用的就是你那套 CLI。
+- **[你的 Git 服务](https://marvis.ai/docs/zh/vcs-integration) →** GitHub、GitLab、Gitea、Forgejo，自建实例也行。
+- **[工作区](https://marvis.ai/docs/zh/workspaces) →** 按团队隔离智能体、任务和设置。
+- **[角色](https://marvis.ai/docs/zh/members-roles)与[使用权限](https://marvis.ai/docs/zh/agents#权限与-access) →** `owner`、`admin`、`member`，再精确到谁能跑哪些智能体。
+- **[安全模型](https://marvis.ai/docs/zh/security-model) →** 智能体碰得到什么，碰不到什么。
+- **[Slack、飞书/Lark、钉钉、企业微信、Telegram](https://marvis.ai/docs/zh/channels) →** 在团队本来就在聊天的地方，触发和跟进智能体的工作。飞书/Lark 目前只开放中国大陆飞书的新连接；钉钉、企业微信和 Telegram 由[社区维护](https://marvis.ai/docs/zh/community-maintained)。
+- **Web、[桌面端](https://marvis.ai/docs/zh/desktop-app)、[移动端](https://marvis.ai/docs/zh/mobile-app) →** macOS、Windows、Linux、iPhone、iPad，打开都是同一个工作区——iOS App 现在要自己从源码编译安装，还没上 App Store。
+- **[CLI 与 API](https://marvis.ai/docs/zh/cli) →** 界面上能点的，CLI 和 API 里都能调。智能体操作 Marvis，用的就是你那套 CLI。
 
 ---
 
 ## 开始使用
 
-- **云端**——直接在 **[multica.ai](https://multica.ai)** 注册，不用打开终端。
-- **桌面端**——下载 **[Multica 桌面端](https://multica.ai/download)**（macOS / Windows / Linux）。打开它，
+- **云端**——直接在 **[marvis.ai](https://marvis.ai)** 注册，不用打开终端。
+- **桌面端**——下载 **[Marvis 桌面端](https://marvis.ai/download)**（macOS / Windows / Linux）。打开它，
   这台电脑就自动成了一个运行时。
 - **自托管**——整套跑在你自己的基础设施上，见下方。
 
 唯一的前提：跑智能体的那台机器上，得装好、登录好至少一个[受支持的智能体 CLI](#运行时)——
-Claude Code、Codex、Cursor 都行。Multica 负责驱动它们，但不替你安装。
+Claude Code、Codex、Cursor 都行。Marvis 负责驱动它们，但不替你安装。
 
 <details>
 <summary><b>整套自托管</b></summary>
@@ -121,18 +121,18 @@ Claude Code、Codex、Cursor 都行。Multica 负责驱动它们，但不替你�
 <br/>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.sh | bash -s -- --with-server
-multica setup self-host
+curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash -s -- --with-server
+marvis setup self-host
 ```
 
-Windows 上先设 `$env:MULTICA_MODE="with-server"`，再跑 PowerShell 安装脚本：
-`irm https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.ps1 | iex`。
+Windows 上先设 `$env:MARVIS_MODE="with-server"`，再跑 PowerShell 安装脚本：
+`irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex`。
 
-这会拉取 GHCR 上的官方镜像，需要 Docker。详见[自托管快速上手](https://multica.ai/docs/zh/self-host-quickstart)。
+这会拉取 GHCR 上的官方镜像，需要 Docker。详见[自托管快速上手](https://marvis.ai/docs/zh/self-host-quickstart)。
 如果你选的 GHCR 标签还没发布，可以在代码目录里跑 `make selfhost-build` 兜底。
 
 自托管的服务端每天会发送一份匿名的部署级快照：只有版本号和分桶计数，不含名称、内容或任何标识符。
-在 API 服务端设置 `DO_NOT_TRACK=1` 即可关闭——[具体收集哪些数据](https://multica.ai/docs/zh/environment-variables#观测与统计)。
+在 API 服务端设置 `DO_NOT_TRACK=1` 即可关闭——[具体收集哪些数据](https://marvis.ai/docs/zh/environment-variables#观测与统计)。
 
 </details>
 
@@ -148,13 +148,13 @@ Windows 上先设 `$env:MULTICA_MODE="with-server"`，再跑 PowerShell 安装�
 **3. 派给它一件事。** 建一个任务，负责人选成这个智能体。它会自己接手、在你的机器上跑、边做边评论，
 干完把任务挪到审核中。
 
-完整流程：[快速开始](https://multica.ai/docs/zh/cloud-quickstart) · [上手教程](https://multica.ai/docs/zh/tutorial)
+完整流程：[快速开始](https://marvis.ai/docs/zh/cloud-quickstart) · [上手教程](https://marvis.ai/docs/zh/tutorial)
 
 ---
 
 ## 运行时
 
-Multica 不自带模型。它驱动的是你本来就装好、登录好的那些智能体 CLI——目前支持 26 种——所以换提供方
+Marvis 不自带模型。它驱动的是你本来就装好、登录好的那些智能体 CLI——目前支持 26 种——所以换提供方
 就是切个下拉框，谈不上迁移。
 
 | Provider | CLI | Provider | CLI |
@@ -173,8 +173,8 @@ Multica 不自带模型。它驱动的是你本来就装好、登录好的那些
 | MiniMax Code | `mcode` | Dim | `dim` |
 | 华为云 CodeArts | `codearts` | ZeroClaw | `zeroclaw` |
 
-怎么装、怎么登录：[安装智能体运行时](https://multica.ai/docs/zh/install-agent-runtime) ·
-[AI 编程工具对照](https://multica.ai/docs/zh/providers)
+怎么装、怎么登录：[安装智能体运行时](https://marvis.ai/docs/zh/install-agent-runtime) ·
+[AI 编程工具对照](https://marvis.ai/docs/zh/providers)
 
 ---
 
@@ -182,19 +182,19 @@ Multica 不自带模型。它驱动的是你本来就装好、登录好的那些
 
 | 我想…… | 从这里看 |
 | --- | --- |
-| 今天就让智能体干点活 | [快速开始](https://multica.ai/docs/zh/cloud-quickstart) · [上手教程](https://multica.ai/docs/zh/tutorial) |
-| 搞清楚这套系统怎么运转 | [核心概念](https://multica.ai/docs/zh/concepts) · [Multica 如何工作](https://multica.ai/docs/zh/how-multica-works) |
-| 创建和配置智能体 | [智能体](https://multica.ai/docs/zh/agents) · [创建智能体](https://multica.ai/docs/zh/agents-create) · [Skills](https://multica.ai/docs/zh/skills) |
-| 把活交到智能体手上 | [触发智能体](https://multica.ai/docs/zh/triggering-agents) · [分配任务](https://multica.ai/docs/zh/assigning-issues) · [提及](https://multica.ai/docs/zh/mentioning-agents) |
-| 把我的机器接进来 | [守护进程与运行时](https://multica.ai/docs/zh/daemon-runtimes) · [安装智能体运行时](https://multica.ai/docs/zh/install-agent-runtime) |
-| 接上 Git 和聊天工具 | [GitHub](https://multica.ai/docs/zh/github-integration) · [自建 Git](https://multica.ai/docs/zh/vcs-integration) · [消息渠道](https://multica.ai/docs/zh/channels) |
-| 部署在自己的基础设施上 | [自托管快速上手](https://multica.ai/docs/zh/self-host-quickstart) · [安全模型](https://multica.ai/docs/zh/security-model) · [环境变量](https://multica.ai/docs/zh/environment-variables) · [完整自托管指南（英文）](SELF_HOSTING.md) |
-| 用脚本驱动它 | [CLI 参考](https://multica.ai/docs/zh/cli) · [CLI 与守护进程指南](CLI_AND_DAEMON.md) · [认证令牌](https://multica.ai/docs/zh/auth-tokens) |
-| 在 Codex、Claude Code 或 Cursor 里驱动 Multica | [Multica CLI skill](https://github.com/multica-ai/multica-cli) |
-| 查智能体为什么卡住了 | [运行](https://multica.ai/docs/zh/tasks) · [问题排查](https://multica.ai/docs/zh/troubleshooting) |
+| 今天就让智能体干点活 | [快速开始](https://marvis.ai/docs/zh/cloud-quickstart) · [上手教程](https://marvis.ai/docs/zh/tutorial) |
+| 搞清楚这套系统怎么运转 | [核心概念](https://marvis.ai/docs/zh/concepts) · [Marvis 如何工作](https://marvis.ai/docs/zh/how-marvis-works) |
+| 创建和配置智能体 | [智能体](https://marvis.ai/docs/zh/agents) · [创建智能体](https://marvis.ai/docs/zh/agents-create) · [Skills](https://marvis.ai/docs/zh/skills) |
+| 把活交到智能体手上 | [触发智能体](https://marvis.ai/docs/zh/triggering-agents) · [分配任务](https://marvis.ai/docs/zh/assigning-issues) · [提及](https://marvis.ai/docs/zh/mentioning-agents) |
+| 把我的机器接进来 | [守护进程与运行时](https://marvis.ai/docs/zh/daemon-runtimes) · [安装智能体运行时](https://marvis.ai/docs/zh/install-agent-runtime) |
+| 接上 Git 和聊天工具 | [GitHub](https://marvis.ai/docs/zh/github-integration) · [自建 Git](https://marvis.ai/docs/zh/vcs-integration) · [消息渠道](https://marvis.ai/docs/zh/channels) |
+| 部署在自己的基础设施上 | [自托管快速上手](https://marvis.ai/docs/zh/self-host-quickstart) · [安全模型](https://marvis.ai/docs/zh/security-model) · [环境变量](https://marvis.ai/docs/zh/environment-variables) · [完整自托管指南（英文）](SELF_HOSTING.md) |
+| 用脚本驱动它 | [CLI 参考](https://marvis.ai/docs/zh/cli) · [CLI 与守护进程指南](CLI_AND_DAEMON.md) · [认证令牌](https://marvis.ai/docs/zh/auth-tokens) |
+| 在 Codex、Claude Code 或 Cursor 里驱动 Marvis | [Marvis CLI skill](https://github.com/marvis-ai/marvis-cli) |
+| 查智能体为什么卡住了 | [运行](https://marvis.ai/docs/zh/tasks) · [问题排查](https://marvis.ai/docs/zh/troubleshooting) |
 
-文档另有 [English](https://multica.ai/docs)、[日本語](https://multica.ai/docs/ja)、[한국어](https://multica.ai/docs/ko)
-和 [Français](https://multica.ai/docs/fr) 版本。
+文档另有 [English](https://marvis.ai/docs)、[日本語](https://marvis.ai/docs/ja)、[한국어](https://marvis.ai/docs/ko)
+和 [Français](https://marvis.ai/docs/fr) 版本。
 
 ---
 
@@ -255,7 +255,7 @@ iOS 客户端在 [`apps/mobile/`](apps/mobile/)，怎么编译装到自己的设
 
 ---
 
-## 为什么叫 "Multica"
+## 为什么叫 "Marvis"
 
 **Mult**iplexed **I**nformation and **C**omputing **A**gent —— 向 Multics 致意。那是 20 世纪
 60 年代的操作系统，它首创了分时：多个人共享同一台机器，却又都像独占它一样。
@@ -270,6 +270,6 @@ iOS 客户端在 [`apps/mobile/`](apps/mobile/)，怎么编译装到自己的设
 
 ## 许可协议
 
-[Multica License](LICENSE) —— Apache License 2.0 全文并入，外加针对托管服务、商业嵌入和品牌标识的
+[Marvis License](LICENSE) —— Apache License 2.0 全文并入，外加针对托管服务、商业嵌入和品牌标识的
 附加条件。自托管、改代码、在它之上做东西都可以；准确条款以 [LICENSE](LICENSE) 为准，署名信息见
 [NOTICE](NOTICE)。

@@ -4,8 +4,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import type { AgentRuntime, RuntimeProfile } from "@multica/core/types";
-import { I18nProvider } from "@multica/core/i18n/react";
+import type { AgentRuntime, RuntimeProfile } from "@marvis/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enRuntimes from "../../locales/en/runtimes.json";
 import enAgents from "../../locales/en/agents.json";
@@ -22,12 +22,12 @@ const mockQueryData = vi.hoisted(() => ({
   profiles: [] as RuntimeProfile[],
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
-vi.mock("@multica/core/api", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@multica/core/api")>(),
+vi.mock("@marvis/core/api", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@marvis/core/api")>(),
   api: {
     updateRuntime: (...args: unknown[]) => mockUpdateRuntime(...args),
     revokeRuntimeWorkspaceAccess: vi.fn(),
@@ -71,7 +71,7 @@ vi.mock("@tanstack/react-query", async () => {
   };
 });
 
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: (sel: (s: { user: { id: string } }) => unknown) =>
     sel({ user: { id: "user-me" } }),
 }));
@@ -79,10 +79,10 @@ vi.mock("@multica/core/auth", () => ({
 // isRuntimeUsableForUser is the shared owner/public rule the component reads
 // runtime access from, so the real implementation is kept rather than stubbed —
 // a stub here would just re-derive the rule this test is meant to pin down.
-vi.mock("@multica/core/runtimes", async () => ({
+vi.mock("@marvis/core/runtimes", async () => ({
   isRuntimeUsableForUser: (
-    await vi.importActual<typeof import("@multica/core/runtimes")>(
-      "@multica/core/runtimes",
+    await vi.importActual<typeof import("@marvis/core/runtimes")>(
+      "@marvis/core/runtimes",
     )
   ).isRuntimeUsableForUser,
   deriveRuntimeHealth: () => "online",
@@ -101,18 +101,18 @@ vi.mock("@multica/core/runtimes", async () => ({
   }),
 }));
 
-vi.mock("@multica/core/agents", () => ({
+vi.mock("@marvis/core/agents", () => ({
   useWorkspacePresenceMap: () => ({ byAgent: new Map() }),
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     runtimes: () => "/runtimes",
     agentDetail: () => "/agents",
   }),
 }));
 
-vi.mock("@multica/core/runtimes/mutations", () => ({
+vi.mock("@marvis/core/runtimes/mutations", () => ({
   useUpdateRuntime: () => ({
     mutate: (
       args: { runtimeId: string; patch: Record<string, unknown> },
@@ -157,7 +157,7 @@ vi.mock("../../navigation", () => ({
 }));
 
 import { RuntimeDetail } from "./runtime-detail";
-import { ApiError } from "@multica/core/api";
+import { ApiError } from "@marvis/core/api";
 
 function makeRuntime(overrides: Partial<AgentRuntime>): AgentRuntime {
   return {

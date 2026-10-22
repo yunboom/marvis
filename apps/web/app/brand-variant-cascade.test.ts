@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import postcss from "postcss";
 import tailwind from "@tailwindcss/postcss";
-import { cn } from "@multica/ui/lib/utils";
-import { buttonVariants } from "@multica/ui/components/ui/button";
+import { cn } from "@marvis/ui/lib/utils";
+import { buttonVariants } from "@marvis/ui/components/ui/button";
 import { beforeAll, describe, expect, it } from "vitest";
 
 /**

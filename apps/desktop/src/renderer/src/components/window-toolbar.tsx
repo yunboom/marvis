@@ -10,25 +10,25 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import {
   SidebarTrigger,
   useSidebar,
-} from "@multica/ui/components/ui/sidebar";
+} from "@marvis/ui/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
+} from "@marvis/ui/components/ui/tooltip";
 import {
   ResourceLeadingVisual,
   useTabPresentation,
-} from "@multica/views/layout";
-import { ActionShortcutKeycaps } from "@multica/views/common/shortcut-keycaps";
-import { useT } from "@multica/views/i18n";
+} from "@marvis/views/layout";
+import { ActionShortcutKeycaps } from "@marvis/views/common/shortcut-keycaps";
+import { useT } from "@marvis/views/i18n";
 import { useTabHistory } from "@/hooks/use-tab-history";
 import { browsingHistoryKeyForUrl } from "@/stores/tab-store";
 

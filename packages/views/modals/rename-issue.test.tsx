@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ApiError } from "@multica/core/api";
-import { issueKeys } from "@multica/core/issues/queries";
-import type { Issue, UpdateIssueRequest } from "@multica/core/types";
+import { ApiError } from "@marvis/core/api";
+import { issueKeys } from "@marvis/core/issues/queries";
+import type { Issue, UpdateIssueRequest } from "@marvis/core/types";
 import { RenameIssueModal } from "./rename-issue";
 
 const { mockUpdate, toastErrorMock, toastSuccessMock } = vi.hoisted(() => ({
@@ -12,12 +12,12 @@ const { mockUpdate, toastErrorMock, toastSuccessMock } = vi.hoisted(() => ({
   toastSuccessMock: vi.fn(),
 }));
 
-vi.mock("@multica/core/api", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/api")>()),
+vi.mock("@marvis/core/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/api")>()),
   api: { updateIssue: mockUpdate },
 }));
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
 
 vi.mock("sonner", () => ({
   toast: { success: toastSuccessMock, error: toastErrorMock },

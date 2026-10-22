@@ -511,7 +511,7 @@ export interface Agent {
   /** Up to three agent-authored first-turn suggestions. Older servers omit it. */
   conversation_starters?: AgentConversationStarter[];
   /** Set for product-defined agents (e.g. "mika"). Absent for user- and
-   *  template-created agents. Identity for "maintained by Multica" checks —
+   *  template-created agents. Identity for "maintained by Marvis" checks —
    *  never the display name, which owners may change. */
   system_key?: string;
   /** Read-only product half of a system agent's prompt, served from the
@@ -859,7 +859,7 @@ export interface UpdateAgentEnvRequest {
  * `GET /api/agents/:id/skills`). The full SKILL.md `content` is intentionally
  * omitted — bodies routinely run 50–200KB each and shipping them in list
  * payloads tripped CLI timeouts on high-latency links (GH
- * multica-ai/multica#2174). Use `Skill` from a detail endpoint when you need
+ * marvis-ai/marvis#2174). Use `Skill` from a detail endpoint when you need
  * the body. For skills embedded in an `Agent` payload see `AgentSkillSummary`.
  */
 export interface SkillSummary {
@@ -1162,7 +1162,7 @@ export interface RuntimeModel {
  * These arrive in their own list and never inside `models`, which is what keeps
  * an older client from offering one: it reads `models`, and they are not there.
  * The picker shows them greyed out with `reason` so the gap reads as "your CLI
- * is behind" rather than "Multica does not support this model" (MUL-6961).
+ * is behind" rather than "Marvis does not support this model" (MUL-6961).
  */
 export interface RuntimeUnavailableModel {
   id: string;
@@ -1185,7 +1185,7 @@ export interface RuntimeModelThinking {
   supported_levels: RuntimeModelThinkingLevel[];
   /** Informational: the level the upstream CLI documents as its built-in
    *  default when no `--effort` flag is passed. Surfaced by the daemon
-   *  but not actively rendered today — Multica's empty `thinking_level`
+   *  but not actively rendered today — Marvis's empty `thinking_level`
    *  means "no override; let the local CLI config decide", which may
    *  itself differ from this value. */
   default_level?: string;

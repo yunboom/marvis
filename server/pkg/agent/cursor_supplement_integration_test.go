@@ -13,7 +13,7 @@ import (
 )
 
 // TestCursorRealSupplementReachesTheTurn steers a real cursor-agent run through
-// the real multica hook relay and asserts the model acted on the guidance in
+// the real marvis hook relay and asserts the model acted on the guidance in
 // the same turn. It is what catches Cursor changing hook delivery, or a model
 // starting to reject tagged guidance as a prompt injection.
 func TestCursorRealSupplementReachesTheTurn(t *testing.T) {
@@ -29,9 +29,9 @@ func TestCursorRealSupplementReachesTheTurn(t *testing.T) {
 	if err != nil || !SupportsTaskSupplement("cursor", strings.TrimSpace(string(version))) {
 		t.Skipf("cursor-agent %q predates hook additional_context", strings.TrimSpace(string(version)))
 	}
-	relay := filepath.Join(t.TempDir(), "multica")
-	if out, err := exec.Command("go", "build", "-o", relay, "github.com/multica-ai/multica/server/cmd/multica").CombinedOutput(); err != nil {
-		t.Fatalf("build multica relay: %v\n%s", err, out)
+	relay := filepath.Join(t.TempDir(), "marvis")
+	if out, err := exec.Command("go", "build", "-o", relay, "github.com/marvis-ai/marvis/server/cmd/marvis").CombinedOutput(); err != nil {
+		t.Fatalf("build marvis relay: %v\n%s", err, out)
 	}
 
 	backend, err := New("cursor", Config{ExecutablePath: path, Logger: slog.Default()})

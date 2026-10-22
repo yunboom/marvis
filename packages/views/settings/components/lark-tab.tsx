@@ -12,9 +12,9 @@ import { ChevronRight, ExternalLink, RefreshCw, Trash2 } from "lucide-react";
 // was fine. The named export maps straight to `exports.QRCode` and
 // resolves correctly under both bundlers.
 import { QRCode } from "react-qr-code";
-import { cn } from "@multica/ui/lib/utils";
-import { Button } from "@multica/ui/components/ui/button";
-import { Card, CardContent } from "@multica/ui/components/ui/card";
+import { cn } from "@marvis/ui/lib/utils";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Card, CardContent } from "@marvis/ui/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
+} from "@marvis/ui/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -32,18 +32,18 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@multica/ui/components/ui/dialog";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { memberListOptions } from "@multica/core/workspace/queries";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { larkInstallationsOptions, larkKeys } from "@multica/core/lark";
-import { api, ApiError } from "@multica/core/api";
-import type { LarkInstallation, LarkInstallStatusResponse } from "@multica/core/types";
+} from "@marvis/ui/components/ui/dialog";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { memberListOptions } from "@marvis/core/workspace/queries";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { larkInstallationsOptions, larkKeys } from "@marvis/core/lark";
+import { api, ApiError } from "@marvis/core/api";
+import type { LarkInstallation, LarkInstallStatusResponse } from "@marvis/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { docsLocalePrefix } from "../../common/docs-locale";
 import { useLocale, useT } from "../../i18n";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 
 // MUL-3083: the Lark (international, open.larksuite.com) "connect a Bot"
 // entry is temporarily hidden while its install → inbound pipeline is
@@ -59,7 +59,7 @@ const LARK_INTL_CONNECT_ENABLED: boolean = false;
 // backend enforces it; the UI hides the button for non-admins to match).
 //
 // Adding a new installation flows through the Agent detail page: the
-// install path is per-agent (each Multica Agent gets exactly one Bot —
+// install path is per-agent (each Marvis Agent gets exactly one Bot —
 // see the (workspace_id, agent_id) UNIQUE in lark_installation), so
 // asking the user to pick an agent here would re-create that page's
 // picker. The "Bind your first agent" copy in the empty state hints
@@ -116,7 +116,7 @@ export function LarkTab() {
             <p className="text-caption text-muted-foreground">
               {t(($) => $.lark.not_enabled_description_prefix)}{" "}
               <code className="rounded-xs bg-muted px-1 py-0.5 text-micro">
-                MULTICA_LARK_SECRET_KEY
+                MARVIS_LARK_SECRET_KEY
               </code>{" "}
               {t(($) => $.lark.not_enabled_description_suffix)}{" "}
               {t(($) => $.lark.not_enabled_self_host_hint)}
@@ -217,8 +217,8 @@ function InstallationRow({
 }) {
   const { t } = useT("settings");
   const locale = useLocale();
-  // The bot is bound 1:1 to a Multica Agent (per the (workspace_id,
-  // agent_id) UNIQUE in lark_installation). Render the Multica agent's
+  // The bot is bound 1:1 to a Marvis Agent (per the (workspace_id,
+  // agent_id) UNIQUE in lark_installation). Render the Marvis agent's
   // identity here rather than the raw Lark app_id / bot_open_id — those
   // mean nothing to product users. getAgentName falls back to
   // "Unknown Agent" when the agent has been deleted; the Disconnect
@@ -518,7 +518,7 @@ function larkDevConsoleHost(region?: string): string {
 // larkDocsUrl points at the Lark/Feishu integration guide, localized the
 // same way as the Telegram and Slack docs links.
 function larkDocsUrl(lang: string | undefined): string {
-  return `https://multica.ai/docs${docsLocalePrefix(lang)}/lark-bot-integration`;
+  return `https://marvis.ai/docs${docsLocalePrefix(lang)}/lark-bot-integration`;
 }
 
 function LarkAgentBotConnectedBadge({

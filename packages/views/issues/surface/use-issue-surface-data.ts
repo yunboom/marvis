@@ -2,15 +2,15 @@
 
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { Issue, Project } from "@multica/core/types";
-import { projectListOptions } from "@multica/core/projects/queries";
-import { childIssueProgressOptions } from "@multica/core/issues/queries";
-import { issueSurfaceGanttOptions } from "@multica/core/issues/surface/repository";
-import type { IssueSurfaceQueryPlan } from "@multica/core/issues/surface/query-plan";
-import type { IssueStatus, ProjectStatus, PropertyFilterValue } from "@multica/core/types";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+import type { Issue, Project } from "@marvis/core/types";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import { childIssueProgressOptions } from "@marvis/core/issues/queries";
+import { issueSurfaceGanttOptions } from "@marvis/core/issues/surface/repository";
+import type { IssueSurfaceQueryPlan } from "@marvis/core/issues/surface/query-plan";
+import type { IssueStatus, ProjectStatus, PropertyFilterValue } from "@marvis/core/types";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { surfaceStatusOrder, useColumnWorkflow, workflowColumns } from "../utils/workflow-columns";
-import { issueBehavesAsAny, statusColumnKeys, visibleStatusKeys } from "@multica/core/issues";
+import { issueBehavesAsAny, statusColumnKeys, visibleStatusKeys } from "@marvis/core/issues";
 import {
   applyIssueFilters,
   type IssueFilterState,

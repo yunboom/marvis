@@ -18,12 +18,12 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // The ways a streaming reply ends in something other than an answer live in
@@ -117,7 +117,7 @@ type TypingIndicatorConfig struct {
 	Deliveries deliveryLookup
 
 	// Languages resolves the chat a bubble was opened in to the language it is
-	// closed in: a 1:1 reads the asker's own Multica profile, a room the
+	// closed in: a 1:1 reads the asker's own Marvis profile, a room the
 	// deployment's. Nil puts every bubble on the deployment's.
 	Languages languageLookup
 }
@@ -410,7 +410,7 @@ func (m *TypingIndicatorManager) handleTaskFailed(e events.Event) {
 	// A ROUND ON THE OPEN LIST IS NOT PROOF OF ORIGIN, and it used to be read
 	// as one. Under the batch identity the engine handed down, a bound round
 	// was WeCom's by construction. Binding off task:queued it is not: a
-	// question typed in Multica on this same session publishes an event with
+	// question typed in Marvis on this same session publishes an event with
 	// the same chat_session_id and the same NULL issue_id — CreateChatTask
 	// writes NULL for every chat task — so the browser's run can hold the
 	// room's bubble. Skipping the gate for it put a web run's error text in
@@ -431,7 +431,7 @@ func (m *TypingIndicatorManager) handleTaskFailed(e events.Event) {
 	//     which is what a foreign failure cost before the gate existed
 	//     (TestAnotherChannelsFailureNeverReachesTheTaskRow).
 	//   routingOurs — a live WeCom address. The row is itself the proof of
-	//     origin, because a run typed in Multica never has one, so this skips
+	//     origin, because a run typed in Marvis never has one, so this skips
 	//     the gate's two reads entirely.
 	//   routingNoRow — nothing filed. THIS is the first-party population the
 	//     gate exists for, and the only one that pays for it.
@@ -521,7 +521,7 @@ const (
 
 // originOf asks where this run's input came from: the channel, or
 // somewhere else? The engine makes the INSTALLER the creator of a group's
-// chat_session, so that session appears in their own Multica chat list and they
+// chat_session, so that session appears in their own Marvis chat list and they
 // can ask it something in a browser. Both runs fail the same way, on the same
 // bus, carrying the same session — nothing in the event says which surface
 // asked.
@@ -619,7 +619,7 @@ func (m *TypingIndicatorManager) handleTaskCancelled(e events.Event) {
 		return
 	}
 	// Same gate as the failure path, and for the same reason: a round bound
-	// off task:queued may belong to a question typed in Multica on this
+	// off task:queued may belong to a question typed in Marvis on this
 	// session, and "这次处理已取消" sealing the room's bubble would end a
 	// question the room is still waiting on, over a cancellation nobody in it
 	// performed. Asked before the take, so a refusal leaves the round where it
@@ -779,7 +779,7 @@ func (m *TypingIndicatorManager) sayAsPlainMessage(ctx context.Context, sessionI
 // taskRouting is what one delivery-row read establishes about a run, and it
 // has three answers rather than two. Collapsing the first two is what made the
 // origin gate unreachable: "no row" was read as "not ours" and returned, and a
-// run typed in Multica has no row by design.
+// run typed in Marvis has no row by design.
 type taskRouting int
 
 const (
@@ -792,7 +792,7 @@ const (
 	// way this subscriber says nothing, and it costs the task row no read.
 	routingSilent
 	// routingOurs: a live WeCom address. The row IS the proof of origin — a
-	// run typed in Multica never has one — so this answer skips the gate.
+	// run typed in Marvis never has one — so this answer skips the gate.
 	routingOurs
 )
 

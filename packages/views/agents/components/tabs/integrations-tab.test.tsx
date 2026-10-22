@@ -4,8 +4,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { ReactNode } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Agent } from "@multica/core/types";
-import { I18nProvider } from "@multica/core/i18n/react";
+import type { Agent } from "@marvis/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../../locales/en/common.json";
 import enAgents from "../../../locales/en/agents.json";
 import enSettings from "../../../locales/en/settings.json";
@@ -58,43 +58,43 @@ vi.mock("@tanstack/react-query", () => ({
   queryOptions: <T,>(opts: T) => opts,
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   memberListOptions: () => ({ queryKey: ["members"], queryFn: vi.fn() }),
 }));
 
-vi.mock("@multica/core/lark", () => ({
+vi.mock("@marvis/core/lark", () => ({
   larkInstallationsOptions: () => ({
     queryKey: ["lark", "installations"],
     queryFn: vi.fn(),
   }),
 }));
 
-vi.mock("@multica/core/slack", () => ({
+vi.mock("@marvis/core/slack", () => ({
   slackInstallationsOptions: () => ({
     queryKey: ["slack", "installations"],
     queryFn: vi.fn(),
   }),
 }));
 
-vi.mock("@multica/core/wecom", () => ({
+vi.mock("@marvis/core/wecom", () => ({
   wecomInstallationsOptions: () => ({
     queryKey: ["wecom", "installations"],
     queryFn: vi.fn(),
   }),
 }));
 
-vi.mock("@multica/core/telegram", () => ({
+vi.mock("@marvis/core/telegram", () => ({
   telegramInstallationsOptions: () => ({
     queryKey: ["telegram", "installations"],
     queryFn: vi.fn(),
   }),
 }));
 
-vi.mock("@multica/core/dingtalk", () => ({
+vi.mock("@marvis/core/dingtalk", () => ({
   dingtalkInstallationsOptions: () => ({
     queryKey: ["dingtalk", "installations"],
     queryFn: vi.fn(),
@@ -112,7 +112,7 @@ vi.mock("@multica/core/dingtalk", () => ({
   },
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getAgentName: (id: string) => `Agent ${id}` }),
 }));
 
@@ -122,7 +122,7 @@ vi.mock("../../../common/actor-avatar", () => ({
   ),
 }));
 
-vi.mock("@multica/core/auth", () => {
+vi.mock("@marvis/core/auth", () => {
   const useAuthStore = Object.assign(
     (sel?: (s: { user: { id: string } }) => unknown) =>
       sel ? sel({ user: { id: "user-1" } }) : { user: { id: "user-1" } },

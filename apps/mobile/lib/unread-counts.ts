@@ -18,7 +18,7 @@
  * the N rendered here MUST equal the N web shows for the same user/workspace.
  */
 import { useQuery } from "@tanstack/react-query";
-import { countUnreadChatMessages } from "@multica/core/chat/unread";
+import { countUnreadChatMessages } from "@marvis/core/chat/unread";
 import { inboxUnreadSummaryOptions } from "@/data/queries/inbox";
 import { chatSessionsOptions } from "@/data/queries/chat";
 

@@ -9,15 +9,15 @@ import type {
   StorageAdapter,
   IssueTableQuerySpec,
   Comment,
-} from "@multica/core/types";
-import { STATUS_ORDER } from "@multica/core/issues/config";
-import { ApiClient } from "@multica/core/api";
+} from "@marvis/core/types";
+import { STATUS_ORDER } from "@marvis/core/issues/config";
+import { ApiClient } from "@marvis/core/api";
 
 const time = "2026-09-14T06:00:00Z";
 export const workspace: Workspace = {
   id: "10000000-0000-4000-8000-000000000001",
   slug: "ui-lab",
-  name: "Multica",
+  name: "Marvis",
   description: "UI Lab fixture workspace",
   context: null,
   settings: {},

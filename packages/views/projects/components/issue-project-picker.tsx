@@ -2,10 +2,10 @@
 
 import { useState, type ComponentProps } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { projectMoveMayHandOff, resolveProjectWorkflow, useIssueWorkflows } from "@multica/core/issue-workflows";
-import { projectListOptions } from "@multica/core/projects/queries";
-import type { Project, UpdateIssueRequest } from "@multica/core/types";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { projectMoveMayHandOff, resolveProjectWorkflow, useIssueWorkflows } from "@marvis/core/issue-workflows";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import type { Project, UpdateIssueRequest } from "@marvis/core/types";
 import { WorkflowHandoffConfirmDialog } from "../../workflows/handoff-confirm-dialog";
 import { ProjectPicker } from "./project-picker";
 

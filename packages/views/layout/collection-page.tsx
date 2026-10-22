@@ -2,7 +2,7 @@
 
 import type { ComponentProps, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -10,8 +10,8 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@multica/ui/components/ui/empty";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/empty";
+import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "./page-header";
 
 interface CollectionPageHeaderProps {

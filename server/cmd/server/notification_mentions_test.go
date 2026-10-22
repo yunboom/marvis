@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/handler"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/handler"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 func TestNotification_MalformedMemberMentionPreservesValidRecipients(t *testing.T) {
@@ -25,8 +25,8 @@ func TestNotification_MalformedMemberMentionPreservesValidRecipients(t *testing.
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			fx := workspaceFixture(t)
-			recipientID := fx.User(t, "Mention recipient", "mention-recipient@multica.ai")
-			mutedID := fx.User(t, "Muted recipient", "mention-muted@multica.ai")
+			recipientID := fx.User(t, "Mention recipient", "mention-recipient@marvis.ai")
+			mutedID := fx.User(t, "Muted recipient", "mention-muted@marvis.ai")
 			fx.Member(t, testWorkspaceID, recipientID, "member")
 			fx.Member(t, testWorkspaceID, mutedID, "member")
 			fx.Insert(t, "notification_preference", testutil.Cols{

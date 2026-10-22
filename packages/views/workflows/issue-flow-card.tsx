@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { Settings, Workflow } from "lucide-react";
-import { useFeatureEnabled } from "@multica/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@multica/core/feature-flags";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { useProjectWithWorkflow } from "@multica/core/issue-workflows";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { Button } from "@multica/ui/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@multica/ui/components/ui/popover";
-import { cn } from "@multica/ui/lib/utils";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { useProjectWithWorkflow } from "@marvis/core/issue-workflows";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@marvis/ui/components/ui/popover";
+import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../common/actor-avatar";
 import { StatusIcon } from "../issues/components/status-icon";
 import { useStatusLabel } from "../issues/utils/status-label";

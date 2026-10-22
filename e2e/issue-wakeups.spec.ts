@@ -38,8 +38,8 @@ test("members see the child-done system rule and create a wakeup", async ({ page
     await api.createIssue("Server-side multipart upload", { parent_issue_id: parent.id, stage: 2, status: "backlog" });
 
     await page.addInitScript((token) => {
-      localStorage.setItem("multica_token", token!);
-      localStorage.setItem("multica:chat:isOpen", "false");
+      localStorage.setItem("marvis_token", token!);
+      localStorage.setItem("marvis:chat:isOpen", "false");
     }, api.getToken());
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(`/${workspace.slug}/issues/${parent.id}`, { waitUntil: "domcontentloaded" });
@@ -113,8 +113,8 @@ test("a member waits for a condition the platform checks", async ({ page }) => {
     await db.query(`UPDATE issue SET assignee_type = 'agent', assignee_id = $1 WHERE id = $2`, [agentId, issue.id]);
 
     await page.addInitScript((token) => {
-      localStorage.setItem("multica_token", token!);
-      localStorage.setItem("multica:chat:isOpen", "false");
+      localStorage.setItem("marvis_token", token!);
+      localStorage.setItem("marvis:chat:isOpen", "false");
     }, api.getToken());
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(`/${workspace.slug}/issues/${issue.id}`, { waitUntil: "domcontentloaded" });

@@ -9,8 +9,8 @@ import {
   Lock,
   Monitor,
 } from "lucide-react";
-import { isRuntimeUsableForUser } from "@multica/core/runtimes";
-import type { AgentRuntime, MemberWithUser } from "@multica/core/types";
+import { isRuntimeUsableForUser } from "@marvis/core/runtimes";
+import type { AgentRuntime, MemberWithUser } from "@marvis/core/types";
 import { ActorAvatar } from "../../../common/actor-avatar";
 import {
   PickerItem,
@@ -22,7 +22,7 @@ import {
   runtimeRowLabel,
   type RuntimeMachine,
 } from "../../../runtimes/components/runtime-machines";
-import { Label } from "@multica/ui/components/ui/label";
+import { Label } from "@marvis/ui/components/ui/label";
 import { CHIP_CLASS } from "./chip";
 import { useT } from "../../../i18n";
 

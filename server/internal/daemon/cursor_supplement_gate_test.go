@@ -8,14 +8,14 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/daemon/execenv"
-	"github.com/multica-ai/multica/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
 )
 
 func TestCursorSupplementHookCommandOnlyForManagedWorkdirs(t *testing.T) {
 	originalResolveSelfExecutable := resolveSelfExecutable
 	t.Cleanup(func() { resolveSelfExecutable = originalResolveSelfExecutable })
-	resolveSelfExecutable = func() (string, error) { return "/usr/local/bin/multica", nil }
+	resolveSelfExecutable = func() (string, error) { return "/usr/local/bin/marvis", nil }
 
 	workdir := t.TempDir()
 	command, ok := cursorSupplementHookCommand(&execenv.Environment{WorkDir: workdir})
@@ -25,7 +25,7 @@ func TestCursorSupplementHookCommandOnlyForManagedWorkdirs(t *testing.T) {
 		}
 		return
 	}
-	if want := []string{"/usr/local/bin/multica", agent.CursorHookHelperArg}; !ok || !slices.Equal(command, want) {
+	if want := []string{"/usr/local/bin/marvis", agent.CursorHookHelperArg}; !ok || !slices.Equal(command, want) {
 		t.Fatalf("managed workdir: command=%q ok=%v, want %q", command, ok, want)
 	}
 
@@ -53,7 +53,7 @@ func TestCursorSupplementHookCommandRequiresInstallableHooks(t *testing.T) {
 	}
 	originalResolveSelfExecutable := resolveSelfExecutable
 	t.Cleanup(func() { resolveSelfExecutable = originalResolveSelfExecutable })
-	resolveSelfExecutable = func() (string, error) { return "/opt/multica", nil }
+	resolveSelfExecutable = func() (string, error) { return "/opt/marvis", nil }
 
 	writeHooks := func(t *testing.T, data string) string {
 		t.Helper()
@@ -72,9 +72,9 @@ func TestCursorSupplementHookCommandRequiresInstallableHooks(t *testing.T) {
 		t.Fatal("steering offered for a workdir whose own hooks.json blocks the managed hooks")
 	}
 
-	leftover := writeHooks(t, `{"version":1,"hooks":{"postToolUse":[{"command":"'/opt/multica' '`+agent.CursorHookHelperArg+`'"}]}}`)
+	leftover := writeHooks(t, `{"version":1,"hooks":{"postToolUse":[{"command":"'/opt/marvis' '`+agent.CursorHookHelperArg+`'"}]}}`)
 	if _, ok := cursorSupplementHookCommand(&execenv.Environment{WorkDir: leftover}); !ok {
-		t.Fatal("steering refused for a workdir holding only Multica's own hooks.json")
+		t.Fatal("steering refused for a workdir holding only Marvis's own hooks.json")
 	}
 
 	cursorFile := t.TempDir()

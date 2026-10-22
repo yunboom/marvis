@@ -26,7 +26,7 @@ import { registerDraftCleanup } from "./cleanup-registry";
 // Keep clearing the old persisted key so text written before the move never
 // outlives logout or workspace removal.
 registerDraftCleanup({
-  storageKey: "multica_task_supplement_drafts",
+  storageKey: "marvis_task_supplement_drafts",
   workspaceScoped: true,
   resetInMemory: () => {},
 });

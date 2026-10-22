@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,17 +10,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from "@multica/ui/components/ui/select";
-import { Spinner } from "@multica/ui/components/ui/spinner";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import type { IssueWorkflowMappingPlan } from "@multica/core/types";
+} from "@marvis/ui/components/ui/select";
+import { Spinner } from "@marvis/ui/components/ui/spinner";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import type { IssueWorkflowMappingPlan } from "@marvis/core/types";
 import { StatusIcon } from "../issues/components/status-icon";
 import { useStatusLabel } from "../issues/utils/status-label";
 import { useT } from "../i18n";

@@ -94,7 +94,7 @@ func opencodeModelArg(model, thinkingLevel string) (string, bool) {
 	return model + "#" + thinkingLevel, true
 }
 
-// ErrOpenCodeV2MCPUnsupported reports that the MCP servers Multica manages for
+// ErrOpenCodeV2MCPUnsupported reports that the MCP servers Marvis manages for
 // a task cannot be delivered to an OpenCode 2.x runtime yet.
 //
 // The message deliberately does not name agent.mcp_config. ExecOptions.McpConfig
@@ -131,11 +131,11 @@ func opencodeModelArg(model, thinkingLevel string) (string, bool) {
 // process topology cancellation depends on, so it is not something to fold into
 // a compatibility fix.
 var ErrOpenCodeV2MCPUnsupported = errors.New(
-	"opencode: Multica-managed MCP servers cannot be delivered to an OpenCode 2.x runtime yet. " +
+	"opencode: Marvis-managed MCP servers cannot be delivered to an OpenCode 2.x runtime yet. " +
 		"2.x accepts MCP configuration only through a file in the task working directory, where " +
 		"the agent's own commits would capture the servers' credentials. " +
 		"To run this task: point the agent at an OpenCode 1.x runtime, or remove the MCP servers " +
-		"Multica supplies it — these can come from the agent's MCP configuration, workspace MCP " +
+		"Marvis supplies it — these can come from the agent's MCP configuration, workspace MCP " +
 		"servers bound to the agent, the workspace's integration tools, or an installed plugin's " +
 		"hook tools")
 
@@ -238,7 +238,7 @@ func opencodeConnectionFromArgs(args []string) (server string, standalone bool) 
 // `opencode run` is a thin client: the work happens inside a background service
 // that outlives it, so the SIGTERM→SIGKILL the backend sends to the client's
 // process group leaves the agent running — still calling tools, still writing to
-// the workdir — after Multica has already recorded the task as finished.
+// the workdir — after Marvis has already recorded the task as finished.
 // Reproduced against 2.0.10: with the client confirmed dead, a shell command the
 // agent had started went on to complete 35 seconds later.
 //

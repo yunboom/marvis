@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { I18nProvider } from "@multica/core/i18n/react";
-import { RESOURCES } from "@multica/views/locales";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import { RESOURCES } from "@marvis/views/locales";
 import NotFound from "./not-found";
 
 describe("NotFound", () => {
@@ -18,7 +18,7 @@ describe("NotFound", () => {
     expect(
       screen.getByText("你要查找的页面不存在或已被移动。"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "返回 Multica" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "返回 Marvis" })).toHaveAttribute(
       "href",
       "/",
     );

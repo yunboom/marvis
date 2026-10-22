@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { MessageSquarePlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { isImeComposing } from "@multica/core/utils";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { useCommentDraftStore, type CommentDraftKey } from "@multica/core/issues/stores";
-import { MAX_ANNOTATION_QUOTE_LENGTH, MAX_REPLY_ANNOTATIONS, type ReplyAnnotation } from "@multica/core/drafts/reply-annotation";
+import { isImeComposing } from "@marvis/core/utils";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { useCommentDraftStore, type CommentDraftKey } from "@marvis/core/issues/stores";
+import { MAX_ANNOTATION_QUOTE_LENGTH, MAX_REPLY_ANNOTATIONS, type ReplyAnnotation } from "@marvis/core/drafts/reply-annotation";
 import { useT } from "../../i18n";
 import { annotationRange, captureCommentSelection, findAnnotationSource } from "./comment-annotation-selection";
 import { CommentSelectionBubble } from "./comment-selection-bubble";

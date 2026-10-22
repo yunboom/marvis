@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/service"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // TestClaimTaskByRuntime_LegacySkillRedirectFollowsTheCapability covers the
@@ -28,7 +28,7 @@ func TestClaimTaskByRuntime_LegacySkillRedirectFollowsTheCapability(t *testing.T
 		t.Skip("database not available")
 	}
 
-	const legacy = "multica-working-on-issues"
+	const legacy = "marvis-working-on-issues"
 
 	tests := []struct {
 		name         string
@@ -51,7 +51,7 @@ func TestClaimTaskByRuntime_LegacySkillRedirectFollowsTheCapability(t *testing.T
 			wantRedirect: true,
 		},
 		{
-			// A current daemon names multica-platform itself and must not be
+			// A current daemon names marvis-platform itself and must not be
 			// charged for the stub.
 			name:         "inline claim with the capability",
 			fixture:      "legacyredirinlinenew",

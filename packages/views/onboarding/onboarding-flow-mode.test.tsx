@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { I18nProvider } from "@multica/core/i18n/react";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../locales/en/common.json";
 import enOnboarding from "../locales/en/onboarding.json";
 import enWorkspace from "../locales/en/workspace.json";
@@ -11,21 +11,21 @@ const TEST_RESOURCES = {
 
 vi.mock("../auth", () => ({ useLogout: () => vi.fn() }));
 
-vi.mock("@multica/core/config", () => ({
+vi.mock("@marvis/core/config", () => ({
   useConfigStore: (
     selector: (s: { workspaceCreationDisabled: boolean; daemonAppUrl: string }) => unknown,
   ) => selector({ workspaceCreationDisabled: false, daemonAppUrl: "" }),
 }));
 
-vi.mock("@multica/core/api", () => ({
-  api: { getBaseUrl: () => "https://multica.ai" },
+vi.mock("@marvis/core/api", () => ({
+  api: { getBaseUrl: () => "https://marvis.ai" },
 }));
 
-vi.mock("@multica/core/workspace/mutations", () => ({
+vi.mock("@marvis/core/workspace/mutations", () => ({
   useCreateWorkspace: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: Object.assign(
     (selector: (s: { user: unknown }) => unknown) =>
       selector({ user: { id: "u-1", onboarding_questionnaire: {} } }),
@@ -35,7 +35,7 @@ vi.mock("@multica/core/auth", () => ({
 
 // Returning one workspace proves new-workspace mode does not offer to
 // continue with it.
-vi.mock("@multica/core/workspace", () => {
+vi.mock("@marvis/core/workspace", () => {
   return {
     useWorkspaceList: () => ({
       workspaces: [{ id: "ws-1", name: "Existing", slug: "existing" }],
@@ -44,9 +44,9 @@ vi.mock("@multica/core/workspace", () => {
   };
 });
 
-vi.mock("@multica/core/onboarding", async () => {
+vi.mock("@marvis/core/onboarding", async () => {
   const actual = await vi.importActual<Record<string, unknown>>(
-    "@multica/core/onboarding",
+    "@marvis/core/onboarding",
   );
   return { ...actual, useBootstrapMika: () => ({ mutateAsync: vi.fn() }) };
 });
@@ -65,7 +65,7 @@ describe("OnboardingFlow — new-workspace mode", () => {
   it("starts at the workspace step instead of the product intro", () => {
     renderFlow({ mode: "new_workspace", onCancel: vi.fn() });
 
-    // The welcome screen teaches what Multica is; someone creating a second
+    // The welcome screen teaches what Marvis is; someone creating a second
     // workspace already knows, so the flow opens on naming it.
     expect(
       screen.getByRole("heading", { name: /Name your workspace/i }),

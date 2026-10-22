@@ -8,14 +8,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 func TestUpdateMeFrenchLanguageRoundTrip(t *testing.T) {
 	if testHandler == nil || testPool == nil {
 		t.Skip("database not available")
 	}
-	userID := dbfx.User(t, "French user", "lang-fr@multica.ai", testutil.Cols{"language": "en"})
+	userID := dbfx.User(t, "French user", "lang-fr@marvis.ai", testutil.Cols{"language": "en"})
 	var updated UserResponse
 	testutil.Call(t, testHandler.UpdateMe, newPatchMeRequest(userID, `{"language":"fr"}`)).Want(http.StatusOK).JSON(&updated)
 	if updated.Language == nil || *updated.Language != "fr" {
@@ -57,7 +57,7 @@ func newPatchMeRequest(userID, body string) *http.Request {
 }
 
 func TestUpdateMeAcceptsLanguage(t *testing.T) {
-	userID := newLanguageTestUser(t, "lang-set@multica.ai")
+	userID := newLanguageTestUser(t, "lang-set@marvis.ai")
 
 	w := httptest.NewRecorder()
 	req := newPatchMeRequest(userID, `{"language":"zh-Hans"}`)
@@ -87,7 +87,7 @@ func TestUpdateMeAcceptsLanguage(t *testing.T) {
 }
 
 func TestUpdateMeAcceptsKoreanLanguage(t *testing.T) {
-	userID := newLanguageTestUser(t, "lang-ko@multica.ai")
+	userID := newLanguageTestUser(t, "lang-ko@marvis.ai")
 
 	w := httptest.NewRecorder()
 	req := newPatchMeRequest(userID, `{"language":"ko"}`)
@@ -107,7 +107,7 @@ func TestUpdateMeAcceptsKoreanLanguage(t *testing.T) {
 }
 
 func TestUpdateMeAcceptsJapaneseLanguage(t *testing.T) {
-	userID := newLanguageTestUser(t, "lang-ja@multica.ai")
+	userID := newLanguageTestUser(t, "lang-ja@marvis.ai")
 
 	w := httptest.NewRecorder()
 	req := newPatchMeRequest(userID, `{"language":"ja"}`)
@@ -127,7 +127,7 @@ func TestUpdateMeAcceptsJapaneseLanguage(t *testing.T) {
 }
 
 func TestUpdateMeRejectsUnsupportedLanguage(t *testing.T) {
-	userID := newLanguageTestUser(t, "lang-reject@multica.ai")
+	userID := newLanguageTestUser(t, "lang-reject@marvis.ai")
 
 	w := httptest.NewRecorder()
 	req := newPatchMeRequest(userID, `{"language":"<script>"}`)
@@ -150,7 +150,7 @@ func TestUpdateMeRejectsUnsupportedLanguage(t *testing.T) {
 
 // COALESCE semantics: omitting language must NOT clear an existing value.
 func TestUpdateMePreservesLanguageWhenNotProvided(t *testing.T) {
-	userID := newLanguageTestUser(t, "lang-preserve@multica.ai")
+	userID := newLanguageTestUser(t, "lang-preserve@marvis.ai")
 
 	if _, err := testPool.Exec(context.Background(),
 		`UPDATE "user" SET language = 'en' WHERE id = $1`, userID,

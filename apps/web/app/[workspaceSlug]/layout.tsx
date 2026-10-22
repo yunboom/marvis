@@ -3,13 +3,13 @@
 import { use, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, usePathname } from "next/navigation";
-import { WorkspaceSlugProvider, paths } from "@multica/core/paths";
-import { workspaceBySlugOptions } from "@multica/core/workspace";
-import { setCurrentWorkspace } from "@multica/core/platform";
-import { useAuthStore } from "@multica/core/auth";
-import { NoAccessPage } from "@multica/views/workspace/no-access-page";
-import { MulticaIcon } from "@multica/ui/components/common/multica-icon";
-import { useWorkspaceSeen } from "@multica/views/workspace/use-workspace-seen";
+import { WorkspaceSlugProvider, paths } from "@marvis/core/paths";
+import { workspaceBySlugOptions } from "@marvis/core/workspace";
+import { setCurrentWorkspace } from "@marvis/core/platform";
+import { useAuthStore } from "@marvis/core/auth";
+import { NoAccessPage } from "@marvis/views/workspace/no-access-page";
+import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
+import { useWorkspaceSeen } from "@marvis/views/workspace/use-workspace-seen";
 import { workspaceSlugFromPathname } from "@/lib/workspace-slug-from-pathname";
 
 export default function WorkspaceLayout({
@@ -78,7 +78,7 @@ export default function WorkspaceLayout({
 
   const loadingIndicator = (
     <div className="flex h-svh items-center justify-center">
-      <MulticaIcon className="size-6 animate-pulse" />
+      <MarvisIcon className="size-6 animate-pulse" />
     </div>
   );
 

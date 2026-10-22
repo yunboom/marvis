@@ -2,7 +2,7 @@
 
 import { cleanup, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import type { AgentConversationStarter } from "@multica/core/types";
+import type { AgentConversationStarter } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { NewChatPreview } from "./new-chat-preview";
 

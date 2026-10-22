@@ -3,9 +3,9 @@
 import { useCallback, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
-import { issueTasksOptions, issueWakeupsOptions } from "@multica/core/issues";
-import type { AgentTask, IssueWakeup } from "@multica/core/types";
-import { useWorkspaceId } from "@multica/core/hooks";
+import { issueTasksOptions, issueWakeupsOptions } from "@marvis/core/issues";
+import type { AgentTask, IssueWakeup } from "@marvis/core/types";
+import { useWorkspaceId } from "@marvis/core/hooks";
 import { useT } from "../../i18n";
 import { useWakeupText } from "./wakeup-presentation";
 

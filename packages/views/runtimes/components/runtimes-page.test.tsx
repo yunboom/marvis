@@ -3,17 +3,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { I18nProvider } from "@multica/core/i18n/react";
-import { agentTaskSnapshotOptions } from "@multica/core/agents";
-import { chatSessionsOptions } from "@multica/core/chat/queries";
-import { runtimeProfileListOptions } from "@multica/core/runtimes";
-import { qoderOptions, type QoderConnection } from "@multica/core/runtimes/qoder";
-import { runtimeListOptions } from "@multica/core/runtimes/queries";
-import type { AgentRuntime } from "@multica/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import { agentTaskSnapshotOptions } from "@marvis/core/agents";
+import { chatSessionsOptions } from "@marvis/core/chat/queries";
+import { runtimeProfileListOptions } from "@marvis/core/runtimes";
+import { qoderOptions, type QoderConnection } from "@marvis/core/runtimes/qoder";
+import { runtimeListOptions } from "@marvis/core/runtimes/queries";
+import type { AgentRuntime } from "@marvis/core/types";
 import {
   agentListOptions,
   memberListOptions,
-} from "@multica/core/workspace/queries";
+} from "@marvis/core/workspace/queries";
 import enCommon from "../../locales/en/common.json";
 import enRuntimes from "../../locales/en/runtimes.json";
 import { RuntimesPage } from "./runtimes-page";
@@ -21,19 +21,19 @@ import { RuntimesPage } from "./runtimes-page";
 const TEST_RESOURCES = { en: { common: enCommon, runtimes: enRuntimes } };
 const WS = "ws-test";
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: (select: (state: unknown) => unknown) =>
     select({ isLoading: false, user: { id: "user-1" } }),
 }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     runtimeDetail: (id: string) => `/runtimes/${id}`,
   }),
   useRequiredWorkspaceSlug: () => "workspace-test",
 }));
-vi.mock("@multica/core/realtime", () => ({ useWSEvent: () => {} }));
-vi.mock("@multica/core/onboarding", () => ({
+vi.mock("@marvis/core/realtime", () => ({ useWSEvent: () => {} }));
+vi.mock("@marvis/core/onboarding", () => ({
   memberNeedsMikaSetup: () => false,
   useBootstrapMika: () => ({ isPending: false, mutateAsync: vi.fn() }),
 }));

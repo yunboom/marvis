@@ -3,8 +3,8 @@
 import { useRef } from "react";
 import { Paperclip } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { cn } from "@multica/ui/lib/utils";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { cn } from "@marvis/ui/lib/utils";
 
 interface FileUploadButtonProps {
   /** Called with the selected File — caller handles upload. */

@@ -1,6 +1,6 @@
 # Self-Hosting — Advanced Configuration
 
-This document covers advanced configuration for self-hosted Multica deployments. For the quick start guide, see [SELF_HOSTING.md](SELF_HOSTING.md).
+This document covers advanced configuration for self-hosted Marvis deployments. For the quick start guide, see [SELF_HOSTING.md](SELF_HOSTING.md).
 
 ## Configuration
 
@@ -10,7 +10,7 @@ All configuration is done via environment variables. Copy `.env.example` as a st
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgres://multica:multica@localhost:5432/multica?sslmode=disable` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgres://marvis:marvis@localhost:5432/marvis?sslmode=disable` |
 | `JWT_SECRET` | **Required — no safe default.** Secret key for signing JWT tokens. A production backend refuses to boot if this is empty or a known placeholder. Generate with `openssl rand -hex 32`. | `openssl rand -hex 32` |
 | `FRONTEND_ORIGIN` | URL where the frontend is served (used for CORS) | `https://app.example.com` |
 
@@ -30,14 +30,14 @@ Budget the sum of primary and replica pool limits across every API pod against t
 
 ### Email (Required for Authentication)
 
-Multica supports two email backends. `SMTP_HOST` takes priority when set; otherwise `RESEND_API_KEY` is used. With neither configured, verification codes are printed to the server log — copy them from there to log in.
+Marvis supports two email backends. `SMTP_HOST` takes priority when set; otherwise `RESEND_API_KEY` is used. With neither configured, verification codes are printed to the server log — copy them from there to log in.
 
 #### Option A: Resend (recommended for cloud deployments)
 
 | Variable | Description |
 |----------|-------------|
 | `RESEND_API_KEY` | Your Resend API key |
-| `RESEND_FROM_EMAIL` | Sender email address (default: `noreply@multica.ai`) |
+| `RESEND_FROM_EMAIL` | Sender email address (default: `noreply@marvis.ai`) |
 
 #### Option B: SMTP relay (for self-hosted / on-premise deployments)
 
@@ -55,7 +55,7 @@ Use this option when your deployment cannot reach the public internet or you alr
 
 STARTTLS is used automatically when advertised by the server. Port 465 (SMTPS / implicit TLS) is supported and auto-enables implicit TLS; set `SMTP_TLS=implicit` (aliases `smtps`, `ssl`) to force it on a non-standard port.
 
-> **Note:** If neither Resend nor SMTP is configured, generated verification codes are printed to backend logs — copy them from there to log in. A fixed local testing code (e.g. `888888`) is **opt-in only**: set `MULTICA_DEV_VERIFICATION_CODE=888888` in `.env` and keep `APP_ENV` non-production. The Docker self-host stack pins `APP_ENV=production`, so the shortcut is ignored there. **Never enable a fixed code on a publicly reachable instance.**
+> **Note:** If neither Resend nor SMTP is configured, generated verification codes are printed to backend logs — copy them from there to log in. A fixed local testing code (e.g. `888888`) is **opt-in only**: set `MARVIS_DEV_VERIFICATION_CODE=888888` in `.env` and keep `APP_ENV` non-production. The Docker self-host stack pins `APP_ENV=production`, so the shortcut is ignored there. **Never enable a fixed code on a publicly reachable instance.**
 
 ### Google OAuth (Optional)
 
@@ -169,7 +169,7 @@ existed are fixed without a backfill.
 
 The `Secure` flag on session cookies is derived automatically from the scheme of `FRONTEND_ORIGIN`: HTTPS origins get `Secure` cookies; plain-HTTP origins (LAN / private-network self-host) get non-secure cookies so the browser can actually store them.
 
-If the frontend and backend are served from different hostnames, `COOKIE_DOMAIN` is **required**, not optional: the browser must be able to read the `multica_csrf` cookie from the page's own origin to send the `X-CSRF-Token` header, and without it every write request fails with `403 {"error":"CSRF validation failed"}`. Scope it to the narrowest parent domain that covers both hosts — it also shares the `multica_auth` session cookie with every host under that domain. See [Reverse Proxy](#reverse-proxy) for the full split-domain configuration and its trust requirements.
+If the frontend and backend are served from different hostnames, `COOKIE_DOMAIN` is **required**, not optional: the browser must be able to read the `marvis_csrf` cookie from the page's own origin to send the `X-CSRF-Token` header, and without it every write request fails with `403 {"error":"CSRF validation failed"}`. Scope it to the narrowest parent domain that covers both hosts — it also shares the `marvis_auth` session cookie with every host under that domain. See [Reverse Proxy](#reverse-proxy) for the full split-domain configuration and its trust requirements.
 
 ### Server
 
@@ -203,7 +203,7 @@ rewrite configuration. Its backend fallback therefore accepts
 
 The backend checks the TLS certificates of the HTTPS services it calls against
 the system trust store in its image. A service whose certificate comes from an
-internal CA — for example a [self-hosted Gitea, Forgejo, or GitLab](https://multica.ai/docs/vcs-integration)
+internal CA — for example a [self-hosted Gitea, Forgejo, or GitLab](https://marvis.ai/docs/vcs-integration)
 — fails until the backend trusts that CA. Connecting such a Git provider reports
 that its certificate is signed by a certificate authority the server does not
 trust.
@@ -214,18 +214,18 @@ plus every PEM file in the directories listed in `SSL_CERT_DIR`. Mount the CA
 into its own read-only directory and list it after the system directory:
 
 ```
-SSL_CERT_DIR=/etc/ssl/certs:/etc/multica/ca-certs
+SSL_CERT_DIR=/etc/ssl/certs:/etc/marvis/ca-certs
 ```
 
 **Kubernetes (Helm):** create a ConfigMap whose keys are PEM files, then point
 `backend.extraCACerts.configMap` at it. The chart mounts it at
-`/etc/multica/ca-certs` and sets `SSL_CERT_DIR` as above.
+`/etc/marvis/ca-certs` and sets `SSL_CERT_DIR` as above.
 
 ```bash
-kubectl -n multica create configmap multica-extra-ca --from-file=internal-ca.crt
-helm upgrade multica oci://ghcr.io/multica-ai/charts/multica \
-  --version <chart-version> -n multica --reuse-values \
-  --set backend.extraCACerts.configMap=multica-extra-ca
+kubectl -n marvis create configmap marvis-extra-ca --from-file=internal-ca.crt
+helm upgrade marvis oci://ghcr.io/marvis-ai/charts/marvis \
+  --version <chart-version> -n marvis --reuse-values \
+  --set backend.extraCACerts.configMap=marvis-extra-ca
 ```
 
 **Docker Compose:** put the PEM files in a directory next to
@@ -236,9 +236,9 @@ helm upgrade multica oci://ghcr.io/multica-ai/charts/multica \
 services:
   backend:
     environment:
-      SSL_CERT_DIR: /etc/ssl/certs:/etc/multica/ca-certs
+      SSL_CERT_DIR: /etc/ssl/certs:/etc/marvis/ca-certs
     volumes:
-      - ./ca-certs:/etc/multica/ca-certs:ro
+      - ./ca-certs:/etc/marvis/ca-certs:ro
 ```
 
 ```bash
@@ -252,7 +252,7 @@ recreates the backend without the CA.
 Things to know:
 
 - **The backend reads the CA only when it starts.** After you add or replace a
-  CA file, restart the backend: `kubectl -n multica rollout restart deploy/multica-backend`,
+  CA file, restart the backend: `kubectl -n marvis rollout restart deploy/marvis-backend`,
   or `docker compose -f docker-compose.selfhost.yml -f docker-compose.ca.yml restart backend`.
   With Compose, `up -d` is not enough here: the container's configuration has
   not changed, so Compose keeps the running container. With Helm, a
@@ -295,7 +295,7 @@ Things to know:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MULTICA_WECOM_TRACE` | empty (off) | `1` records every WeCom frame the backend reads and writes, including the first 120 runes of each message body. Anything else is off. |
+| `MARVIS_WECOM_TRACE` | empty (off) | `1` records every WeCom frame the backend reads and writes, including the first 120 runes of each message body. Anything else is off. |
 
 Turn it on for a debugging session and unset it when the session ends. Before
 you do:
@@ -321,41 +321,41 @@ These are configured on each user's machine, not on the server:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MULTICA_SERVER_URL` | `ws://localhost:8080/ws` | WebSocket URL for daemon → server connection |
-| `MULTICA_APP_URL` | `http://localhost:3000` | Frontend URL for CLI login flow |
-| `MULTICA_DAEMON_POLL_INTERVAL` | `30s` | Catch-up poll for tasks; WebSocket wake signals normally deliver work sooner |
-| `MULTICA_DAEMON_WS_CLAIM_POLL_INTERVAL` | `3m` | Upper bound for healthy WebSocket claim safety polls, configured independently of `MULTICA_DAEMON_POLL_INTERVAL`; downward jitter keeps normal polls at `2m30s`–`2m45s`, while old servers and uncertain claims retain the ordinary poll interval |
-| `MULTICA_DAEMON_HEARTBEAT_INTERVAL` | `15s` | Heartbeat frequency |
+| `MARVIS_SERVER_URL` | `ws://localhost:8080/ws` | WebSocket URL for daemon → server connection |
+| `MARVIS_APP_URL` | `http://localhost:3000` | Frontend URL for CLI login flow |
+| `MARVIS_DAEMON_POLL_INTERVAL` | `30s` | Catch-up poll for tasks; WebSocket wake signals normally deliver work sooner |
+| `MARVIS_DAEMON_WS_CLAIM_POLL_INTERVAL` | `3m` | Upper bound for healthy WebSocket claim safety polls, configured independently of `MARVIS_DAEMON_POLL_INTERVAL`; downward jitter keeps normal polls at `2m30s`–`2m45s`, while old servers and uncertain claims retain the ordinary poll interval |
+| `MARVIS_DAEMON_HEARTBEAT_INTERVAL` | `15s` | Heartbeat frequency |
 
 Agent-specific overrides:
 
 | Variable | Description |
 |----------|-------------|
-| `MULTICA_CLAUDE_PATH` | Custom path to the `claude` binary |
-| `MULTICA_CLAUDE_MODEL` | Override the Claude model used |
-| `MULTICA_CODEX_PATH` | Custom path to the `codex` binary |
-| `MULTICA_CODEX_MODEL` | Override the Codex model used |
-| `MULTICA_COPILOT_PATH` | Custom path to the `copilot` (GitHub Copilot CLI) binary |
-| `MULTICA_COPILOT_MODEL` | Override the Copilot model used (note: GitHub Copilot routes models through your account entitlement, so this may not be honoured) |
-| `MULTICA_OPENCODE_PATH` | Custom path to the `opencode` binary |
-| `MULTICA_OPENCODE_MODEL` | Override the OpenCode model used |
-| `MULTICA_CODEARTS_PATH` | Custom path to the `codearts` launcher or binary |
-| `MULTICA_CODEARTS_MODEL` | Override the CodeArts model used |
-| `MULTICA_OPENCLAW_PATH` | Custom path to the `openclaw` binary |
-| `MULTICA_OPENCLAW_MODEL` | Override the OpenClaw model used |
-| `MULTICA_OPENCLAW_CLI_TIMEOUT` | Deadline for each `openclaw config ...` call during task preparation (default 30s; accepts `45s` or `45`). Raise it when the local CLI is slow to start; the daemon also reads it from `backends.openclaw.cli_timeout` in the CLI config |
-| `MULTICA_HERMES_PATH` | Custom path to the `hermes` binary |
-| `MULTICA_HERMES_MODEL` | Override the Hermes model used |
-| `MULTICA_PI_PATH` | Custom path to the `pi` binary |
-| `MULTICA_PI_MODEL` | Override the Pi model used |
-| `MULTICA_CURSOR_PATH` | Custom path to the `cursor-agent` binary |
-| `MULTICA_CURSOR_MODEL` | Override the Cursor Agent model used |
-| `MULTICA_GROK_PATH` | Custom path to the `grok` binary |
-| `MULTICA_GROK_MODEL` | Override the Grok model used (e.g. `grok-4.5`) |
+| `MARVIS_CLAUDE_PATH` | Custom path to the `claude` binary |
+| `MARVIS_CLAUDE_MODEL` | Override the Claude model used |
+| `MARVIS_CODEX_PATH` | Custom path to the `codex` binary |
+| `MARVIS_CODEX_MODEL` | Override the Codex model used |
+| `MARVIS_COPILOT_PATH` | Custom path to the `copilot` (GitHub Copilot CLI) binary |
+| `MARVIS_COPILOT_MODEL` | Override the Copilot model used (note: GitHub Copilot routes models through your account entitlement, so this may not be honoured) |
+| `MARVIS_OPENCODE_PATH` | Custom path to the `opencode` binary |
+| `MARVIS_OPENCODE_MODEL` | Override the OpenCode model used |
+| `MARVIS_CODEARTS_PATH` | Custom path to the `codearts` launcher or binary |
+| `MARVIS_CODEARTS_MODEL` | Override the CodeArts model used |
+| `MARVIS_OPENCLAW_PATH` | Custom path to the `openclaw` binary |
+| `MARVIS_OPENCLAW_MODEL` | Override the OpenClaw model used |
+| `MARVIS_OPENCLAW_CLI_TIMEOUT` | Deadline for each `openclaw config ...` call during task preparation (default 30s; accepts `45s` or `45`). Raise it when the local CLI is slow to start; the daemon also reads it from `backends.openclaw.cli_timeout` in the CLI config |
+| `MARVIS_HERMES_PATH` | Custom path to the `hermes` binary |
+| `MARVIS_HERMES_MODEL` | Override the Hermes model used |
+| `MARVIS_PI_PATH` | Custom path to the `pi` binary |
+| `MARVIS_PI_MODEL` | Override the Pi model used |
+| `MARVIS_CURSOR_PATH` | Custom path to the `cursor-agent` binary |
+| `MARVIS_CURSOR_MODEL` | Override the Cursor Agent model used |
+| `MARVIS_GROK_PATH` | Custom path to the `grok` binary |
+| `MARVIS_GROK_MODEL` | Override the Grok model used (e.g. `grok-4.5`) |
 
 ## Database Setup
 
-Multica requires PostgreSQL 17. It does **not** use pgvector — no migration
+Marvis requires PostgreSQL 17. It does **not** use pgvector — no migration
 declares a `vector` column or runs `CREATE EXTENSION vector`. The bundled image
 is named `pgvector/pgvector:pg17` for historical reasons only; a stock
 PostgreSQL 17 is sufficient.
@@ -453,7 +453,7 @@ docker compose -f docker-compose.selfhost.yml exec backend \
   ./backfill_task_usage_hourly --sleep-between-slices=2s
 
 # Kubernetes
-kubectl -n multica exec deploy/multica-backend -- \
+kubectl -n marvis exec deploy/marvis-backend -- \
   ./backfill_task_usage_hourly --sleep-between-slices=2s
 ```
 
@@ -512,10 +512,10 @@ In production, put a reverse proxy in front of both the backend and frontend to 
 **Single-domain layout** — frontend and backend served on the same hostname (this is what `docker-compose.selfhost.yml` defaults to):
 
 ```
-multica.example.com {
+marvis.example.com {
     # WebSocket route — must come before the catch-all
-    @multica_ws path /ws /ws/*
-    handle @multica_ws {
+    @marvis_ws path /ws /ws/*
+    handle @marvis_ws {
         reverse_proxy localhost:8080 {
             flush_interval -1
         }
@@ -526,7 +526,7 @@ multica.example.com {
 }
 ```
 
-> Even on a single domain, set `FRONTEND_ORIGIN` / `CORS_ALLOWED_ORIGINS` to that public origin (e.g. `https://multica.example.com`) on the backend. The backend's default origin allowlist is `localhost` only, so without this it rejects the WebSocket upgrade from the public URL with `403` and real-time updates silently stop working. See [LAN / Non-localhost Access](#lan--non-localhost-access).
+> Even on a single domain, set `FRONTEND_ORIGIN` / `CORS_ALLOWED_ORIGINS` to that public origin (e.g. `https://marvis.example.com`) on the backend. The backend's default origin allowlist is `localhost` only, so without this it rejects the WebSocket upgrade from the public URL with `403` and real-time updates silently stop working. See [LAN / Non-localhost Access](#lan--non-localhost-access).
 
 **Separate-domain layout** — frontend and backend on different hostnames:
 
@@ -536,8 +536,8 @@ app.example.com {
 }
 
 api.example.com {
-    @multica_ws path /ws /ws/*
-    handle @multica_ws {
+    @marvis_ws path /ws /ws/*
+    handle @marvis_ws {
         reverse_proxy localhost:8080 {
             flush_interval -1
         }
@@ -618,11 +618,11 @@ NEXT_PUBLIC_WS_URL=wss://api.example.com/ws
 >
 > This bites on upgrade: before v0.4.10 `NEXT_PUBLIC_API_URL` was inert in the published images, so a wrong value sat in `.env` doing nothing. v0.4.10 wired it through, and the stale value took effect. If you upgraded and the UI loads but nothing else does, check this variable first, then recreate the frontend container (`docker compose ... up -d --force-recreate frontend`) so the new value is picked up.
 
-> **`COOKIE_DOMAIN` is required in this setup — omitting it breaks every write.** The web app authenticates with an HttpOnly `multica_auth` cookie plus a JS-readable `multica_csrf` cookie, and sends the CSRF value as an `X-CSRF-Token` header on every non-GET request. Both cookies are host-only unless `COOKIE_DOMAIN` is set, so a frontend on `app.example.com` cannot read a cookie issued by `api.example.com`. The header is then never sent and the backend rejects the request with `403 {"error":"CSRF validation failed"}` — while GET requests keep working, so the app renders but nothing can be created or edited.
+> **`COOKIE_DOMAIN` is required in this setup — omitting it breaks every write.** The web app authenticates with an HttpOnly `marvis_auth` cookie plus a JS-readable `marvis_csrf` cookie, and sends the CSRF value as an `X-CSRF-Token` header on every non-GET request. Both cookies are host-only unless `COOKIE_DOMAIN` is set, so a frontend on `app.example.com` cannot read a cookie issued by `api.example.com`. The header is then never sent and the backend rejects the request with `403 {"error":"CSRF validation failed"}` — while GET requests keep working, so the app renders but nothing can be created or edited.
 >
-> After changing `COOKIE_DOMAIN`, delete the existing `multica_auth` / `multica_csrf` cookies on **both** hosts and log in again. Stale host-only cookies otherwise sit alongside the new domain-scoped ones and the browser sends both.
+> After changing `COOKIE_DOMAIN`, delete the existing `marvis_auth` / `marvis_csrf` cookies on **both** hosts and log in again. Stale host-only cookies otherwise sit alongside the new domain-scoped ones and the browser sends both.
 
-> **Scope `COOKIE_DOMAIN` as narrowly as possible.** The same value also scopes `multica_auth`, the session JWT, and the browser then sends it to **every** host under that domain. `HttpOnly` only stops page scripts from reading the cookie — it does not stop the server behind a sibling subdomain from receiving it on every request. Use the narrowest parent that still covers both hosts: for `agent.example.com` + `api.agent.example.com` that is `.agent.example.com`, **not** `.example.com`, which would also hand your users' session cookie to unrelated hosts such as a separately deployed `docs.example.com`.
+> **Scope `COOKIE_DOMAIN` as narrowly as possible.** The same value also scopes `marvis_auth`, the session JWT, and the browser then sends it to **every** host under that domain. `HttpOnly` only stops page scripts from reading the cookie — it does not stop the server behind a sibling subdomain from receiving it on every request. Use the narrowest parent that still covers both hosts: for `agent.example.com` + `api.agent.example.com` that is `.agent.example.com`, **not** `.example.com`, which would also hand your users' session cookie to unrelated hosts such as a separately deployed `docs.example.com`.
 
 Both of these must hold, or this layout is not safe to use:
 
@@ -667,7 +667,7 @@ This keeps cookies, CORS, and the WebSocket origin check on a single origin. It 
 
 ## LAN / Non-localhost Access
 
-By default, Multica works on `localhost`. If you access it from another machine on the LAN (e.g. `http://192.168.1.100:3000`), you need to tell the backend to accept that origin:
+By default, Marvis works on `localhost`. If you access it from another machine on the LAN (e.g. `http://192.168.1.100:3000`), you need to tell the backend to accept that origin:
 
 ```bash
 # .env — replace with your server's LAN IP
@@ -699,7 +699,7 @@ HTTP requests (Plugin API, issues, comments, uploads) work on LAN out of the box
 
    `NEXT_PUBLIC_WS_URL` is a build-time variable (see `Dockerfile.web`), so setting it only in `environment:` on the pre-built image has no effect — you must use the `selfhost.build.yml` override that rebuilds the image.
 
-**Also required: allowlist the browser origin.** The two options above fix the WebSocket *upgrade proxying*, but a second, independent setting gates the connection: the backend validates the WebSocket `Origin` header against an allowlist that defaults to `localhost` only. When you open Multica from any other origin — a LAN IP **or a public domain behind a reverse proxy** — set `CORS_ALLOWED_ORIGINS` (or `FRONTEND_ORIGIN`) on the backend to that exact origin and restart, exactly as shown under [LAN / Non-localhost Access](#lan--non-localhost-access) above. Otherwise the upgrade is refused with `403`: the backend logs `websocket: request origin not allowed by Upgrader.CheckOrigin` and the browser console loops `disconnected, reconnecting in 3s`, while HTTP requests (and manual page refreshes) keep working because they are same-origin to the page. The single value covers both HTTP CORS and the WebSocket origin check.
+**Also required: allowlist the browser origin.** The two options above fix the WebSocket *upgrade proxying*, but a second, independent setting gates the connection: the backend validates the WebSocket `Origin` header against an allowlist that defaults to `localhost` only. When you open Marvis from any other origin — a LAN IP **or a public domain behind a reverse proxy** — set `CORS_ALLOWED_ORIGINS` (or `FRONTEND_ORIGIN`) on the backend to that exact origin and restart, exactly as shown under [LAN / Non-localhost Access](#lan--non-localhost-access) above. Otherwise the upgrade is refused with `403`: the backend logs `websocket: request origin not allowed by Upgrader.CheckOrigin` and the browser console loops `disconnected, reconnecting in 3s`, while HTTP requests (and manual page refreshes) keep working because they are same-origin to the page. The single value covers both HTTP CORS and the WebSocket origin check.
 
 > **Note:** If you need to hard-code a different public API / WebSocket endpoint into the web image for any other reason, use the same source-build override: `docker compose -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml up -d --build`.
 
@@ -780,5 +780,5 @@ docker compose -f docker-compose.selfhost.yml pull
 docker compose -f docker-compose.selfhost.yml up -d
 ```
 
-Pin `MULTICA_IMAGE_TAG` in `.env` to an exact release like `v0.2.4` if you want to stay on a specific version. Migrations run automatically on backend startup. They are idempotent — running them multiple times has no effect.
+Pin `MARVIS_IMAGE_TAG` in `.env` to an exact release like `v0.2.4` if you want to stay on a specific version. Migrations run automatically on backend startup. They are idempotent — running them multiple times has no effect.
 If the selected GHCR tag has not been published yet, fall back to `docker compose -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml up -d --build`.

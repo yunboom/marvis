@@ -1,2 +1,2 @@
-import reactConfig from "@multica/eslint-config/react";
+import reactConfig from "@marvis/eslint-config/react";
 export default [...reactConfig, { ignores: ["dist/"] }];

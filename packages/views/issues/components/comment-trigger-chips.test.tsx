@@ -1,21 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, within } from "@testing-library/react";
-import type { AgentTask, CommentTriggerPreviewAgent } from "@multica/core/types";
+import type { AgentTask, CommentTriggerPreviewAgent } from "@marvis/core/types";
 import {
   recipientActions,
   resolveRecipientAction,
   type AgentRunState,
   type RecipientAction,
-} from "@multica/core/issues/run-steering";
+} from "@marvis/core/issues/run-steering";
 import type { RecipientEntry } from "../hooks/use-recipient-actions";
 import { renderWithI18n } from "../../test/i18n";
 import { CommentTriggerChips } from "./comment-trigger-chips";
 
-vi.mock("@multica/core/agents", () => ({
+vi.mock("@marvis/core/agents", () => ({
   useAgentPresenceDetail: () => ({ availability: "online", workload: "idle" }),
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useCurrentWorkspace: () => ({ id: "ws-1" }),
 }));
 

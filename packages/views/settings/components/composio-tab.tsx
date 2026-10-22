@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AlertTriangle, Check, Loader2, Plug, RefreshCw, Trash2 } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { Card, CardContent } from "@multica/ui/components/ui/card";
-import { Input } from "@multica/ui/components/ui/input";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Card, CardContent } from "@marvis/ui/components/ui/card";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,14 +16,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { api } from "@multica/core/api";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { api } from "@marvis/core/api";
 import {
   composioConnectionsOptions,
   composioKeys,
   composioToolkitsOptions,
-} from "@multica/core/composio";
-import type { ComposioToolkit } from "@multica/core/types";
+} from "@marvis/core/composio";
+import type { ComposioToolkit } from "@marvis/core/types";
 import { ComposioToolkitLogo } from "../../common/composio-toolkit-logo";
 import { useT, useTimeAgo } from "../../i18n";
 import { useNavigation } from "../../navigation";

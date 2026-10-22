@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement, ReactNode } from "react";
-import { I18nProvider } from "@multica/core/i18n/react";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../locales/en/common.json";
 import enAuth from "../locales/en/auth.json";
 import enSettings from "../locales/en/settings.json";
@@ -45,7 +45,7 @@ vi.mock("@tanstack/react-query", async () => {
   return { ...actual, useQueryClient: () => ({ setQueryData: mockSetQueryData }) };
 });
 
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: Object.assign(
     // Zustand hook form — component may call useAuthStore(selector)
     (selector?: (s: unknown) => unknown) => {
@@ -65,7 +65,7 @@ vi.mock("@multica/core/auth", () => ({
   ),
 }));
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     listWorkspaces: mockApiListWorkspaces,
     verifyCode: mockApiVerifyCode,
@@ -75,7 +75,7 @@ vi.mock("@multica/core/api", () => ({
   },
 }));
 
-vi.mock("@multica/core/types", () => ({}));
+vi.mock("@marvis/core/types", () => ({}));
 
 // ---------------------------------------------------------------------------
 // Import after mocks
@@ -134,10 +134,10 @@ describe("LoginPage", () => {
     expect(screen.queryByText(/your session expired/i)).not.toBeInTheDocument();
   });
 
-  it("renders email form with 'Sign in to Multica' title", () => {
+  it("renders email form with 'Sign in to Marvis' title", () => {
     renderWithI18n(<LoginPage onSuccess={onSuccess} />);
     expect(
-      screen.getByText(/sign in to multica/i),
+      screen.getByText(/sign in to marvis/i),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/enter your email to get a login code/i),
@@ -415,7 +415,7 @@ describe("LoginPage", () => {
   // -------------------------------------------------------------------------
 
   it("shows cli_confirm step when existing session + cliCallback", async () => {
-    localStorage.setItem("multica_token", "existing-jwt");
+    localStorage.setItem("marvis_token", "existing-jwt");
     // Cookie attempt fails first, then localStorage fallback succeeds
     mockApiGetMe
       .mockRejectedValueOnce(new Error("no cookie"))
@@ -447,14 +447,14 @@ describe("LoginPage", () => {
   });
 
   it("still finds the stored token after the cookie probe's 401 clears it", async () => {
-    localStorage.setItem("multica_token", "existing-jwt");
+    localStorage.setItem("marvis_token", "existing-jwt");
     // The cookie probe 401s, and a 401 ends the session — which wipes the very
     // key the localStorage fallback is about to look for. The component has to
     // have read it before probing, or token-mode users can never authorize a
     // CLI (they land on the email step instead).
     mockApiGetMe
       .mockImplementationOnce(() => {
-        localStorage.removeItem("multica_token");
+        localStorage.removeItem("marvis_token");
         return Promise.reject(new Error("no cookie"));
       })
       .mockResolvedValueOnce({
@@ -474,11 +474,11 @@ describe("LoginPage", () => {
       expect(screen.getByText(/authorize cli/i)).toBeInTheDocument();
     });
     expect(mockApiSetToken).toHaveBeenCalledWith("existing-jwt");
-    expect(localStorage.getItem("multica_token")).toBe("existing-jwt");
+    expect(localStorage.getItem("marvis_token")).toBe("existing-jwt");
   });
 
   it("CLI authorize button redirects to callback URL", async () => {
-    localStorage.setItem("multica_token", "existing-jwt");
+    localStorage.setItem("marvis_token", "existing-jwt");
     // Cookie attempt fails, localStorage fallback succeeds
     mockApiGetMe
       .mockRejectedValueOnce(new Error("no cookie"))
@@ -513,7 +513,7 @@ describe("LoginPage", () => {
   });
 
   it("'Use a different account' returns to email step", async () => {
-    localStorage.setItem("multica_token", "existing-jwt");
+    localStorage.setItem("marvis_token", "existing-jwt");
     // Cookie attempt fails, localStorage fallback succeeds
     mockApiGetMe
       .mockRejectedValueOnce(new Error("no cookie"))
@@ -542,7 +542,7 @@ describe("LoginPage", () => {
     );
 
     expect(
-      screen.getByText(/sign in to multica/i),
+      screen.getByText(/sign in to marvis/i),
     ).toBeInTheDocument();
   });
 
@@ -723,7 +723,7 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: /back/i }));
 
     expect(
-      screen.getByText(/sign in to multica/i),
+      screen.getByText(/sign in to marvis/i),
     ).toBeInTheDocument();
   });
 

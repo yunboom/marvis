@@ -114,12 +114,12 @@ describe("column width storage", () => {
 
   it("keeps only the most recently used tables", () => {
     for (let i = 0; i < 205; i++) writeColumnWidths(`k${i}`, [100]);
-    const stored = JSON.parse(window.localStorage.getItem("multica:rich-table-widths") ?? "{}");
+    const stored = JSON.parse(window.localStorage.getItem("marvis:rich-table-widths") ?? "{}");
     expect(Object.keys(stored)).toHaveLength(200);
   });
 
   it("survives a corrupt entry", () => {
-    window.localStorage.setItem("multica:rich-table-widths", "{not json");
+    window.localStorage.setItem("marvis:rich-table-widths", "{not json");
     expect(readColumnWidths("k", 1)).toBeNull();
     writeColumnWidths("k", [90]);
     expect(readColumnWidths("k", 1)).toEqual([90]);

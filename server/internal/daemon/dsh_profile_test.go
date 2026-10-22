@@ -31,26 +31,26 @@ func fakeDsh(t *testing.T) (path, record string) {
 // both name the runtime. Either place is enough for the daemon to call it
 // installed; writing both matches what a finished `dsh plugin add` leaves.
 func installedDshProfileManifest() string {
-	return "{\"dependencies\":{\"@multica-ai/dsh-runtime\":\"1.0.0\"},\"dsh\":{\"profile\":{\"bundles\":[\"@multica-ai/dsh-runtime\"]}}}\n"
+	return "{\"dependencies\":{\"@marvis-ai/dsh-runtime\":\"1.0.0\"},\"dsh\":{\"profile\":{\"bundles\":[\"@marvis-ai/dsh-runtime\"]}}}\n"
 }
 
 // dshSkeletonProfileManifest is what a refused `dsh plugin add` restores: empty
 // dependencies and only DSH's own template bundle.
 func dshSkeletonProfileManifest() string {
-	return "{\"name\":\"dsh-profile-multica\",\"private\":true,\"dependencies\":{},\"dsh\":{\"profile\":{\"bundles\":[\"@deepseek-ai/dsh-base\"]}}}\n"
+	return "{\"name\":\"dsh-profile-marvis\",\"private\":true,\"dependencies\":{},\"dsh\":{\"profile\":{\"bundles\":[\"@deepseek-ai/dsh-base\"]}}}\n"
 }
 
-// dshProfileWriteCommand is the shell that creates the multica profile manifest.
+// dshProfileWriteCommand is the shell that creates the marvis profile manifest.
 // The manifest is fed through a quoted heredoc so its JSON quotes need no
 // escaping inside the fixture script.
 func dshProfileWriteCommand(manifest string) string {
-	return "mkdir -p \"$DSH_HOME/profiles/multica\" && cat > \"$DSH_HOME/profiles/multica/package.json\" <<'EOF'\n" + manifest + "EOF"
+	return "mkdir -p \"$DSH_HOME/profiles/marvis\" && cat > \"$DSH_HOME/profiles/marvis/package.json\" <<'EOF'\n" + manifest + "EOF"
 }
 
 // fakeDshSilentlySucceeds exits 0 from `add` and writes no profile: a package
 // manager reporting success over a run that produced nothing. Whether any real
 // bundle behaves this way, the daemon must not disagree with
-// dshMulticaProfilePresent about whether a profile exists, because that is the
+// dshMarvisProfilePresent about whether a profile exists, because that is the
 // fact every other part of it reads.
 func fakeDshSilentlySucceeds(t *testing.T) (path, record string) {
 	t.Helper()
@@ -80,9 +80,9 @@ func fakeDshScript(t *testing.T, onSuccess string) (path, record string) {
 
 // pinnedDshHome points DSH_HOME at a directory the test owns and reports it.
 //
-// Without this, dshMulticaProfilePresent() reads the developer's real ~/.dsh,
+// Without this, dshMarvisProfilePresent() reads the developer's real ~/.dsh,
 // so whether a test passes depends on whether the machine running it happens to
-// have a `multica` profile installed. That is the ambient-agent-state
+// have a `marvis` profile installed. That is the ambient-agent-state
 // dependency the repo forbids, and it hid here until the install path started
 // checking the profile rather than only the exit status.
 func pinnedDshHome(t *testing.T) string {
@@ -92,16 +92,16 @@ func pinnedDshHome(t *testing.T) string {
 	return home
 }
 
-// installMulticaProfile creates the manifest dshMulticaProfilePresent looks for:
-// one that names the Multica runtime, not a file that merely exists.
-func installMulticaProfile(t *testing.T, dshHome string) {
+// installMarvisProfile creates the manifest dshMarvisProfilePresent looks for:
+// one that names the Marvis runtime, not a file that merely exists.
+func installMarvisProfile(t *testing.T, dshHome string) {
 	t.Helper()
 	writeDshProfileManifest(t, dshHome, installedDshProfileManifest())
 }
 
 func writeDshProfileManifest(t *testing.T, dshHome, manifest string) {
 	t.Helper()
-	dir := filepath.Join(dshHome, "profiles", dshMulticaProfileName)
+	dir := filepath.Join(dshHome, "profiles", dshMarvisProfileName)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func readRecord(t *testing.T, record string) string {
 
 // An unconfigured daemon must leave the user's DSH installation alone: the
 // reported drop is the whole response.
-func TestProvisionDshMulticaProfile_UnconfiguredIsANoOp(t *testing.T) {
+func TestProvisionDshMarvisProfile_UnconfiguredIsANoOp(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture")
 	}
@@ -132,7 +132,7 @@ func TestProvisionDshMulticaProfile_UnconfiguredIsANoOp(t *testing.T) {
 	t.Setenv(dshProfileBundleEnv, "")
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := provisionDshMulticaProfile(context.Background(), dshPath, logger); err != nil {
+	if err := provisionDshMarvisProfile(context.Background(), dshPath, logger); err != nil {
 		t.Fatalf("provision returned %v, want nil", err)
 	}
 	if got := readRecord(t, record); got != "" {
@@ -140,17 +140,17 @@ func TestProvisionDshMulticaProfile_UnconfiguredIsANoOp(t *testing.T) {
 	}
 }
 
-func TestProvisionDshMulticaProfile_InstallsTheFirstWorkingCandidate(t *testing.T) {
+func TestProvisionDshMarvisProfile_InstallsTheFirstWorkingCandidate(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture")
 	}
 	dshPath, record := fakeDsh(t)
 	pluginDir := t.TempDir()
-	t.Setenv(dshProfileBundleEnv, " FAILME-package , @multica-ai/dsh-runtime , /tmp/local-bundle ")
+	t.Setenv(dshProfileBundleEnv, " FAILME-package , @marvis-ai/dsh-runtime , /tmp/local-bundle ")
 	t.Setenv(dshPluginPathEnv, pluginDir)
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := provisionDshMulticaProfile(context.Background(), dshPath, logger); err != nil {
+	if err := provisionDshMarvisProfile(context.Background(), dshPath, logger); err != nil {
 		t.Fatalf("provision returned %v, want nil once a later candidate succeeds", err)
 	}
 
@@ -160,11 +160,11 @@ func TestProvisionDshMulticaProfile_InstallsTheFirstWorkingCandidate(t *testing.
 		t.Fatalf("dsh was invoked %d time(s), want 2 (first candidate fails, second succeeds):\n%s", len(lines)/2, got)
 	}
 	// Candidates are trimmed and tried in order.
-	first := "args=plugin --profile multica add FAILME-package"
+	first := "args=plugin --profile marvis add FAILME-package"
 	if lines[0] != first {
 		t.Errorf("first invocation = %q, want %q", lines[0], first)
 	}
-	second := "args=plugin --profile multica add @multica-ai/dsh-runtime"
+	second := "args=plugin --profile marvis add @marvis-ai/dsh-runtime"
 	if lines[2] != second {
 		t.Errorf("second invocation = %q, want %q", lines[2], second)
 	}
@@ -182,27 +182,27 @@ func TestProvisionDshMulticaProfile_InstallsTheFirstWorkingCandidate(t *testing.
 }
 
 // The whole point of the knob is to be able to point it at a local build before
-// Multica's bridge is published (multica#6936), so a directory spec must reach
+// Marvis's bridge is published (marvis#6936), so a directory spec must reach
 // dsh unmodified.
-func TestProvisionDshMulticaProfile_ForwardsTheSpecVerbatim(t *testing.T) {
+func TestProvisionDshMarvisProfile_ForwardsTheSpecVerbatim(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture")
 	}
 	dshPath, record := fakeDsh(t)
-	t.Setenv(dshProfileBundleEnv, "/Users/someone/builds/dsh-multica-runtime")
+	t.Setenv(dshProfileBundleEnv, "/Users/someone/builds/dsh-marvis-runtime")
 	t.Setenv(dshPluginPathEnv, "")
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := provisionDshMulticaProfile(context.Background(), dshPath, logger); err != nil {
+	if err := provisionDshMarvisProfile(context.Background(), dshPath, logger); err != nil {
 		t.Fatalf("provision returned %v, want nil", err)
 	}
-	want := "args=plugin --profile multica add /Users/someone/builds/dsh-multica-runtime"
+	want := "args=plugin --profile marvis add /Users/someone/builds/dsh-marvis-runtime"
 	if got := readRecord(t, record); !strings.Contains(got, want) {
 		t.Fatalf("recorded %q, want it to contain %q", got, want)
 	}
 }
 
-func TestProvisionDshMulticaProfile_ReportsEveryCandidateFailure(t *testing.T) {
+func TestProvisionDshMarvisProfile_ReportsEveryCandidateFailure(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture")
 	}
@@ -211,7 +211,7 @@ func TestProvisionDshMulticaProfile_ReportsEveryCandidateFailure(t *testing.T) {
 	t.Setenv(dshPluginPathEnv, "")
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	err := provisionDshMulticaProfile(context.Background(), dshPath, logger)
+	err := provisionDshMarvisProfile(context.Background(), dshPath, logger)
 	if err == nil {
 		t.Fatal("provision returned nil, want the last failure")
 	}
@@ -231,7 +231,7 @@ func TestProvisionDshMulticaProfile_ReportsEveryCandidateFailure(t *testing.T) {
 // that returns 0 and writes no profile leaves the operator exactly where a
 // failure does, so it must not end the loop, must not be logged as an install,
 // and must let the next candidate try.
-func TestProvisionDshMulticaProfile_ExitZeroWithoutAProfileIsAFailedCandidate(t *testing.T) {
+func TestProvisionDshMarvisProfile_ExitZeroWithoutAProfileIsAFailedCandidate(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture")
 	}
@@ -240,7 +240,7 @@ func TestProvisionDshMulticaProfile_ExitZeroWithoutAProfileIsAFailedCandidate(t 
 	t.Setenv(dshPluginPathEnv, "")
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	err := provisionDshMulticaProfile(context.Background(), dshPath, logger)
+	err := provisionDshMarvisProfile(context.Background(), dshPath, logger)
 	if err == nil {
 		t.Fatal("provision returned nil while the profile is still absent")
 	}
@@ -260,7 +260,7 @@ func TestProvisionDshMulticaProfile_ExitZeroWithoutAProfileIsAFailedCandidate(t 
 // the runtime. That directory stays. The manifest check already classifies it
 // as missing, so the next restart retries over it, and deleting it would also
 // remove files that were already there.
-func TestProvisionDshMulticaProfile_FailedInstallLeavesTheProfileDirectory(t *testing.T) {
+func TestProvisionDshMarvisProfile_FailedInstallLeavesTheProfileDirectory(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture")
 	}
@@ -275,17 +275,17 @@ func TestProvisionDshMulticaProfile_FailedInstallLeavesTheProfileDirectory(t *te
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			body := dshProfileWriteCommand(tc.manifest) + "\nprintf 'x\\n' > \"$DSH_HOME/profiles/multica/cordis.yml\"\nexit " + strconv.Itoa(tc.code)
+			body := dshProfileWriteCommand(tc.manifest) + "\nprintf 'x\\n' > \"$DSH_HOME/profiles/marvis/cordis.yml\"\nexit " + strconv.Itoa(tc.code)
 			dshPath, _ := fakeDshScript(t, body)
-			t.Setenv(dshProfileBundleEnv, "@multica-ai/dsh-runtime")
+			t.Setenv(dshProfileBundleEnv, "@marvis-ai/dsh-runtime")
 			t.Setenv(dshPluginPathEnv, "")
 
 			logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-			err := provisionDshMulticaProfile(context.Background(), dshPath, logger)
+			err := provisionDshMarvisProfile(context.Background(), dshPath, logger)
 			if err == nil {
 				t.Fatal("provision returned nil for a manifest that does not name the runtime")
 			}
-			dir := filepath.Join(os.Getenv("DSH_HOME"), "profiles", dshMulticaProfileName)
+			dir := filepath.Join(os.Getenv("DSH_HOME"), "profiles", dshMarvisProfileName)
 			got, readErr := os.ReadFile(filepath.Join(dir, "package.json"))
 			if readErr != nil {
 				t.Fatalf("profile manifest was removed: %v", readErr)
@@ -306,23 +306,23 @@ func TestProvisionDshMulticaProfile_FailedInstallLeavesTheProfileDirectory(t *te
 
 // A failed install that never touches an existing profile has no reason to
 // remove it. The directory may already hold the user's own files.
-func TestProvisionDshMulticaProfile_PreservesPreexistingProfileOnFailure(t *testing.T) {
+func TestProvisionDshMarvisProfile_PreservesPreexistingProfileOnFailure(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture")
 	}
 	// An installer that fails without touching the profile, like an early network error.
 	dshPath, _ := fakeDshScript(t, "printf 'registry unreachable\\n' >&2\nexit 1")
-	t.Setenv(dshProfileBundleEnv, "@multica-ai/dsh-runtime")
+	t.Setenv(dshProfileBundleEnv, "@marvis-ai/dsh-runtime")
 	t.Setenv(dshPluginPathEnv, "")
 	home := os.Getenv("DSH_HOME")
 	writeDshProfileManifest(t, home, dshSkeletonProfileManifest())
-	configPath := filepath.Join(home, "profiles", dshMulticaProfileName, "cordis.yml")
+	configPath := filepath.Join(home, "profiles", dshMarvisProfileName, "cordis.yml")
 	want := "# user-maintained profile configuration\nplugins: {}\n"
 	if err := os.WriteFile(configPath, []byte(want), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	if err := provisionDshMulticaProfile(context.Background(), dshPath, logger); err == nil {
+	if err := provisionDshMarvisProfile(context.Background(), dshPath, logger); err == nil {
 		t.Fatal("expected failed install")
 	}
 	got, err := os.ReadFile(configPath)
@@ -332,7 +332,7 @@ func TestProvisionDshMulticaProfile_PreservesPreexistingProfileOnFailure(t *test
 	if string(got) != want {
 		t.Fatalf("pre-existing user configuration changed: %q", got)
 	}
-	manifestPath := filepath.Join(home, "profiles", dshMulticaProfileName, "package.json")
+	manifestPath := filepath.Join(home, "profiles", dshMarvisProfileName, "package.json")
 	manifest, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatalf("pre-existing manifest was deleted after a failed install: %v", err)
@@ -346,7 +346,7 @@ func TestProvisionDshMulticaProfile_PreservesPreexistingProfileOnFailure(t *test
 // that cannot be read must not delete the directory. The first is someone
 // else's install; the second is a profile this daemon must not overwrite; the
 // third is a file it cannot safely judge.
-func TestProvisionDshMulticaProfile_FailedInstallKeepsNonSkeletonProfiles(t *testing.T) {
+func TestProvisionDshMarvisProfile_FailedInstallKeepsNonSkeletonProfiles(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture")
 	}
@@ -362,14 +362,14 @@ func TestProvisionDshMulticaProfile_FailedInstallKeepsNonSkeletonProfiles(t *tes
 		t.Run(tc.name, func(t *testing.T) {
 			body := dshProfileWriteCommand(tc.manifest) + "\nexit 1"
 			dshPath, _ := fakeDshScript(t, body)
-			t.Setenv(dshProfileBundleEnv, "@multica-ai/dsh-runtime")
+			t.Setenv(dshProfileBundleEnv, "@marvis-ai/dsh-runtime")
 			t.Setenv(dshPluginPathEnv, "")
 
 			logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-			if err := provisionDshMulticaProfile(context.Background(), dshPath, logger); err == nil {
+			if err := provisionDshMarvisProfile(context.Background(), dshPath, logger); err == nil {
 				t.Fatal("provision returned nil after dsh exited 1")
 			}
-			manifestPath := filepath.Join(os.Getenv("DSH_HOME"), "profiles", dshMulticaProfileName, "package.json")
+			manifestPath := filepath.Join(os.Getenv("DSH_HOME"), "profiles", dshMarvisProfileName, "package.json")
 			if _, err := os.Stat(manifestPath); err != nil {
 				t.Fatalf("manifest was removed: %v", err)
 			}
@@ -385,7 +385,7 @@ func TestStartDshProfileProvision_RunsAtMostOnce(t *testing.T) {
 		t.Skip("shell fixture")
 	}
 	dshPath, record := fakeDsh(t)
-	t.Setenv(dshProfileBundleEnv, "@multica-ai/dsh-runtime")
+	t.Setenv(dshProfileBundleEnv, "@marvis-ai/dsh-runtime")
 	t.Setenv(dshPluginPathEnv, "")
 
 	// A tracked workspace keeps the finished install on the cheap kick path;
@@ -404,7 +404,7 @@ func TestStartDshProfileProvision_RunsAtMostOnce(t *testing.T) {
 
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
-		if strings.Contains(readRecord(t, record), "plugin --profile multica add") {
+		if strings.Contains(readRecord(t, record), "plugin --profile marvis add") {
 			return
 		}
 		time.Sleep(20 * time.Millisecond)
@@ -434,7 +434,7 @@ func TestStartDshProfileProvision_KicksDiscoveryWhenTheInstallFinishes(t *testin
 		t.Skip("shell fixture")
 	}
 	dshPath, _ := fakeDsh(t)
-	t.Setenv(dshProfileBundleEnv, "@multica-ai/dsh-runtime")
+	t.Setenv(dshProfileBundleEnv, "@marvis-ai/dsh-runtime")
 	t.Setenv(dshPluginPathEnv, "")
 
 	d := &Daemon{
@@ -465,7 +465,7 @@ func TestStartDshProfileProvision_SuccessWithoutAProfileWithdrawsTheWait(t *test
 		t.Skip("shell fixture")
 	}
 	dshPath, _ := fakeDshSilentlySucceeds(t)
-	t.Setenv(dshProfileBundleEnv, "@multica-ai/dsh-runtime")
+	t.Setenv(dshProfileBundleEnv, "@marvis-ai/dsh-runtime")
 	t.Setenv(dshPluginPathEnv, "")
 
 	rec, client := newDeregisterRecorder(t)
@@ -540,21 +540,21 @@ func TestKickAgentDiscovery_NonBlockingAndCollapsing(t *testing.T) {
 // A file existing is not an installed profile: a refused plugin install leaves
 // a manifest that does not name the runtime, and treating that as installed is
 // what made the runtime permanently undiagnosable.
-func TestDshMulticaProfilePresent(t *testing.T) {
+func TestDshMarvisProfilePresent(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("DSH_HOME", home)
 
-	if dshMulticaProfilePresent() {
+	if dshMarvisProfilePresent() {
 		t.Fatal("profile reported installed before it exists")
 	}
-	dir := filepath.Join(home, "profiles", dshMulticaProfileName)
+	dir := filepath.Join(home, "profiles", dshMarvisProfileName)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
 	// DSH's loadProfile falls back to a built-in template (or fails, for a
 	// profile that has none) when the manifest is missing, so a bare directory
 	// is not an installed profile.
-	if dshMulticaProfilePresent() {
+	if dshMarvisProfilePresent() {
 		t.Fatal("a directory without a manifest was reported as an installed profile")
 	}
 
@@ -565,13 +565,13 @@ func TestDshMulticaProfilePresent(t *testing.T) {
 		{name: "empty object", manifest: "{}\n"},
 		{name: "empty dependencies", manifest: "{\"dependencies\":{}}\n"},
 		{name: "refused-install skeleton", manifest: dshSkeletonProfileManifest()},
-		{name: "similar package name", manifest: "{\"dependencies\":{\"@multica-ai/dsh-runtime-extra\":\"1.0.0\"}}\n"},
+		{name: "similar package name", manifest: "{\"dependencies\":{\"@marvis-ai/dsh-runtime-extra\":\"1.0.0\"}}\n"},
 	}
 	for _, tc := range absent {
 		t.Run(tc.name, func(t *testing.T) {
 			writeDshProfileManifest(t, home, tc.manifest)
-			if dshMulticaProfilePresent() {
-				t.Fatal("profile reported installed without the Multica runtime")
+			if dshMarvisProfilePresent() {
+				t.Fatal("profile reported installed without the Marvis runtime")
 			}
 		})
 	}
@@ -580,15 +580,15 @@ func TestDshMulticaProfilePresent(t *testing.T) {
 		name     string
 		manifest string
 	}{
-		{name: "dependency names the runtime", manifest: "{\"dependencies\":{\"@multica-ai/dsh-runtime\":\"1.0.0\"}}\n"},
-		{name: "dependency value is an object", manifest: "{\"dependencies\":{\"@multica-ai/dsh-runtime\":{\"version\":\"1.0.0\"}}}\n"},
-		{name: "bundle names the runtime", manifest: "{\"dsh\":{\"profile\":{\"bundles\":[\"@multica-ai/dsh-runtime\"]}}}\n"},
+		{name: "dependency names the runtime", manifest: "{\"dependencies\":{\"@marvis-ai/dsh-runtime\":\"1.0.0\"}}\n"},
+		{name: "dependency value is an object", manifest: "{\"dependencies\":{\"@marvis-ai/dsh-runtime\":{\"version\":\"1.0.0\"}}}\n"},
+		{name: "bundle names the runtime", manifest: "{\"dsh\":{\"profile\":{\"bundles\":[\"@marvis-ai/dsh-runtime\"]}}}\n"},
 		{name: "unparseable manifest", manifest: "{\n"},
 	}
 	for _, tc := range present {
 		t.Run(tc.name, func(t *testing.T) {
 			writeDshProfileManifest(t, home, tc.manifest)
-			if !dshMulticaProfilePresent() {
+			if !dshMarvisProfilePresent() {
 				t.Fatal("profile reported missing")
 			}
 		})
@@ -597,7 +597,7 @@ func TestDshMulticaProfilePresent(t *testing.T) {
 	if err := os.RemoveAll(dir); err != nil {
 		t.Fatal(err)
 	}
-	if dshMulticaProfilePresent() {
+	if dshMarvisProfilePresent() {
 		t.Fatal("removing the profile was not observed; the loop would never force a demotion round")
 	}
 }
@@ -645,8 +645,8 @@ func TestDshProvisionCommand(t *testing.T) {
 	pluginDir := t.TempDir()
 	t.Setenv(dshPluginPathEnv, pluginDir)
 
-	cmd := dshProvisionCommand("/usr/local/bin/dsh", "@multica-ai/dsh-runtime")
-	want := []string{"/usr/local/bin/dsh", "plugin", "--profile", "multica", "add", "@multica-ai/dsh-runtime"}
+	cmd := dshProvisionCommand("/usr/local/bin/dsh", "@marvis-ai/dsh-runtime")
+	want := []string{"/usr/local/bin/dsh", "plugin", "--profile", "marvis", "add", "@marvis-ai/dsh-runtime"}
 	if strings.Join(cmd.Args, "\x00") != strings.Join(want, "\x00") {
 		t.Fatalf("argv = %q, want %q", cmd.Args, want)
 	}
@@ -699,7 +699,7 @@ func TestDshProvisionOutput(t *testing.T) {
 	t.Run("leaves ordinary URLs intact", func(t *testing.T) {
 		for _, raw := range []string{
 			"GET https://registry.example.com:8443/@acme/pkg failed",
-			"cloning ssh://git@github.com/multica-ai/multica.git",
+			"cloning ssh://git@github.com/marvis-ai/marvis.git",
 			"see https://example.com/a:b for details",
 		} {
 			if got := dshProvisionOutput([]byte(raw)); got != raw {
@@ -728,7 +728,7 @@ func processAlive(pid int) bool {
 // own wait, so the assertion is about survival rather than about a race: an
 // unsynchronized grandchild can be killed before it publishes anything, which
 // would let this pass without testing anything.
-func TestProvisionDshMulticaProfile_CancellationKillsTheWholeTree(t *testing.T) {
+func TestProvisionDshMarvisProfile_CancellationKillsTheWholeTree(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("shell fixture; the tree is a Job Object there")
 	}
@@ -746,13 +746,13 @@ func TestProvisionDshMulticaProfile_CancellationKillsTheWholeTree(t *testing.T) 
 	if err := os.WriteFile(dshPath, []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv(dshProfileBundleEnv, "@multica-ai/dsh-runtime")
+	t.Setenv(dshProfileBundleEnv, "@marvis-ai/dsh-runtime")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	provisionDone := make(chan error, 1)
 	go func() {
-		provisionDone <- provisionDshMulticaProfile(ctx, dshPath,
+		provisionDone <- provisionDshMarvisProfile(ctx, dshPath,
 			slog.New(slog.NewTextHandler(io.Discard, nil)))
 	}()
 

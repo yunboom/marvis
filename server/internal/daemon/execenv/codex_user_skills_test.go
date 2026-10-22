@@ -217,7 +217,7 @@ func TestHydrateCodexSkillsNeverWritesThroughAUserSkillLink(t *testing.T) {
 	if string(body) != validUserSkillFixture("user version") {
 		t.Fatalf("workspace skill was written through the link into the user's skill dir: %q", body)
 	}
-	if _, err := os.Stat(filepath.Join(skillsDir, "alpha-multica", "SKILL.md")); err != nil {
+	if _, err := os.Stat(filepath.Join(skillsDir, "alpha-marvis", "SKILL.md")); err != nil {
 		t.Errorf("colliding workspace skill did not land in a sibling dir: %v", err)
 	}
 }

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { BUILT_IN_STATUS_ORDER } from "@multica/core/issues/config";
+import { BUILT_IN_STATUS_ORDER } from "@marvis/core/issues/config";
 import { BoardColumn } from "./board-column";
 import { ListView } from "./list-view";
 import type { IssueStatusPagination } from "../surface/use-issue-status-branches";
 
-vi.mock("@multica/core/issue-statuses/hooks", async () => {
-  const { buildIssueStatusCatalog } = await import("@multica/core/issue-statuses/queries");
+vi.mock("@marvis/core/issue-statuses/hooks", async () => {
+  const { buildIssueStatusCatalog } = await import("@marvis/core/issue-statuses/queries");
   return { useIssueStatuses: () => buildIssueStatusCatalog([{ key: "retired", name: "Retired", category: "started", is_system: false, archived_at: "2026-01-01" } as any]) };
 });
 
@@ -34,17 +34,17 @@ function emptyStatusPagination(): IssueStatusPagination {
   ) as unknown as IssueStatusPagination;
 }
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
-vi.mock("@multica/core/modals", () => ({
+vi.mock("@marvis/core/modals", () => ({
   useModalStore: {
     getState: () => ({ open: openModal }),
   },
 }));
 
-vi.mock("@multica/core/issues/stores/view-store-context", () => ({
+vi.mock("@marvis/core/issues/stores/view-store-context", () => ({
   useViewStore: (selector?: any) => {
     const state = {
       grouping: "status",
@@ -59,7 +59,7 @@ vi.mock("@multica/core/issues/stores/view-store-context", () => ({
   }),
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({
     getActorName: (_type: string, id: string) => id,
   }),

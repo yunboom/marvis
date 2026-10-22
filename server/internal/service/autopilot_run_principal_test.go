@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // MUL-6951 (Elon review). One automatic dispatch must resolve exactly ONE human
@@ -53,7 +53,7 @@ func newPrincipalFixture(t *testing.T) (principalFixture, string) {
 	// before the workspace and user it references.
 	n := principalSeq.Add(1)
 	fx := testutil.New(pool, "", "")
-	ownerUserID := fx.User(t, "principal owner", fmt.Sprintf("principal-owner-%d@multica.test", n))
+	ownerUserID := fx.User(t, "principal owner", fmt.Sprintf("principal-owner-%d@marvis.test", n))
 	workspaceID := fx.Workspace(t, "principal ws", fmt.Sprintf("principal-ws-%d", n))
 	fx.Member(t, workspaceID, ownerUserID, "owner")
 	fx.WorkspaceID = workspaceID
@@ -73,7 +73,7 @@ func newPrincipalFixture(t *testing.T) (principalFixture, string) {
 func (f principalFixture) member(t *testing.T, label string) string {
 	t.Helper()
 	n := principalSeq.Add(1)
-	userID := f.User(t, label, fmt.Sprintf("%s-%d@multica.test", label, n))
+	userID := f.User(t, label, fmt.Sprintf("%s-%d@marvis.test", label, n))
 	f.Member(t, f.WorkspaceID, userID, "member")
 	return userID
 }

@@ -14,19 +14,19 @@ import {
   AGENT_CONVERSATION_STARTER_LABEL_MAX_LENGTH,
   AGENT_CONVERSATION_STARTER_MAX_LENGTH,
   type AgentDraft,
-} from "@multica/core/agents";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { isRuntimeUsableForUser, runtimeListOptions } from "@multica/core/runtimes";
+} from "@marvis/core/agents";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { isRuntimeUsableForUser, runtimeListOptions } from "@marvis/core/runtimes";
 import type {
   MemberWithUser,
   RuntimeDevice,
   SkillSummary,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import {
   memberListOptions,
   skillListOptions,
-} from "@multica/core/workspace/queries";
+} from "@marvis/core/workspace/queries";
 
 interface CreateAgentForm {
   draft: AgentDraft;

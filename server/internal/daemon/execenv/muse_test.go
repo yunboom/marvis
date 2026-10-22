@@ -35,7 +35,7 @@ func TestMusePrepareDeliversBriefAndSkills(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{repoInstructions, "multica issue comment add", "## Output"} {
+	for _, want := range []string{repoInstructions, "marvis issue comment add", "## Output"} {
 		if !strings.Contains(string(brief), want) {
 			t.Errorf("runtime brief is missing %q", want)
 		}

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsDefault, waitForPageText } from "./helpers";
 
-const REPO = "https://github.com/multica-ai/multica";
+const REPO = "https://github.com/marvis-ai/marvis";
 
 /**
  * The checkout ref of a github_repo project resource, end to end.
@@ -47,14 +47,14 @@ test("pins, edits and clears a repository's checkout ref", async ({ page }) => {
   // URL rode along with it rather than being replaced away.
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page.getByText("v1.4.0")).toBeVisible({ timeout: 15000 });
-  await expect(page.getByText("multica-ai/multica")).toBeVisible();
+  await expect(page.getByText("marvis-ai/marvis")).toBeVisible();
 
   // Clearing goes back to the repository's default branch.
   await page.getByTitle(/change the branch tasks work on/i).first().click();
   await page.getByLabel(/starting branch/i).fill("");
   await page.getByRole("button", { name: /^save$/i }).click();
   await expect(page.getByText("v1.4.0")).toHaveCount(0, { timeout: 10000 });
-  await expect(page.getByText("multica-ai/multica")).toBeVisible();
+  await expect(page.getByText("marvis-ai/marvis")).toBeVisible();
   // Not an empty row: an unpinned repo says which branch it uses, so clearing
   // is confirmable rather than indistinguishable from the setting not existing.
   // Exact text, because the success toast also says "Back to the default branch".

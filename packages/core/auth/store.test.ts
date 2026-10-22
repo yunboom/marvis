@@ -34,7 +34,7 @@ function makeApi(): ApiClient {
 
 describe("authStore", () => {
   it("publishes a retry request instead of silently ignoring it", () => {
-    const storage = makeStorage({ multica_token: "t" });
+    const storage = makeStorage({ marvis_token: "t" });
     const api = makeApi();
     const store = createAuthStore({ api, storage });
 
@@ -46,7 +46,7 @@ describe("authStore", () => {
   });
 
   it("explicit logout still clears credentials and publishes unauthenticated state", () => {
-    const storage = makeStorage({ multica_token: "t" });
+    const storage = makeStorage({ marvis_token: "t" });
     const api = makeApi();
     const onLogout = vi.fn();
     const store = createAuthStore({ api, storage, onLogout });
@@ -54,7 +54,7 @@ describe("authStore", () => {
     store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
     store.getState().logout();
 
-    expect(storage.snapshot().multica_token).toBeUndefined();
+    expect(storage.snapshot().marvis_token).toBeUndefined();
     expect(api.setToken).toHaveBeenCalledWith(null);
     expect(onLogout).toHaveBeenCalledOnce();
     expect(store.getState().user).toBeNull();
@@ -63,7 +63,7 @@ describe("authStore", () => {
   });
 
   it("ends the session when the server rejects the credential", () => {
-    const storage = makeStorage({ multica_token: "t" });
+    const storage = makeStorage({ marvis_token: "t" });
     const api = makeApi();
     const onLogout = vi.fn();
     const store = createAuthStore({ api, storage, onLogout });
@@ -71,7 +71,7 @@ describe("authStore", () => {
     store.setState({ user: fakeUser, status: "authenticated", isLoading: false });
     store.getState().sessionExpired();
 
-    expect(storage.snapshot().multica_token).toBeUndefined();
+    expect(storage.snapshot().marvis_token).toBeUndefined();
     expect(api.setToken).toHaveBeenCalledWith(null);
     expect(onLogout).toHaveBeenCalledOnce();
     expect(store.getState().user).toBeNull();
@@ -99,7 +99,7 @@ describe("authStore", () => {
     // Stands in for the api client's 401 hook, which fires inside getMe.
     store.getState().sessionExpired();
 
-    expect(storage.snapshot().multica_token).toBeUndefined();
+    expect(storage.snapshot().marvis_token).toBeUndefined();
     expect(api.setToken).toHaveBeenLastCalledWith(null);
   });
 
@@ -117,18 +117,18 @@ describe("authStore", () => {
   });
 
   it("flags expiry when a stored token is rejected at boot", () => {
-    const storage = makeStorage({ multica_token: "stale" });
+    const storage = makeStorage({ marvis_token: "stale" });
     const api = makeApi();
     const store = createAuthStore({ api, storage });
 
     store.getState().sessionExpired();
 
     expect(store.getState().expired).toBe(true);
-    expect(storage.snapshot().multica_token).toBeUndefined();
+    expect(storage.snapshot().marvis_token).toBeUndefined();
   });
 
   it("runs the expiry handler instead of the logout one when given both", () => {
-    const storage = makeStorage({ multica_token: "t" });
+    const storage = makeStorage({ marvis_token: "t" });
     const api = makeApi();
     const onLogout = vi.fn();
     const onSessionExpired = vi.fn();
@@ -144,7 +144,7 @@ describe("authStore", () => {
   });
 
   it("still runs the logout teardown for an explicit logout", () => {
-    const storage = makeStorage({ multica_token: "t" });
+    const storage = makeStorage({ marvis_token: "t" });
     const api = makeApi();
     const onLogout = vi.fn();
     const onSessionExpired = vi.fn();
@@ -158,7 +158,7 @@ describe("authStore", () => {
   });
 
   it("treats a burst of parallel 401s as the one expiry it is", () => {
-    const storage = makeStorage({ multica_token: "t" });
+    const storage = makeStorage({ marvis_token: "t" });
     const api = makeApi();
     const onLogout = vi.fn();
     const store = createAuthStore({ api, storage, onLogout });

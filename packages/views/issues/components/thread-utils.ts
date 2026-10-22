@@ -1,6 +1,6 @@
-import type { TimelineEntry } from "@multica/core/types";
-import { isDeletedComment } from "@multica/core/issues/comment-deletion";
-import { sortTimelineEntriesAsc } from "@multica/core/issues/timeline-sort";
+import type { TimelineEntry } from "@marvis/core/types";
+import { isDeletedComment } from "@marvis/core/issues/comment-deletion";
+import { sortTimelineEntriesAsc } from "@marvis/core/issues/timeline-sort";
 
 /**
  * Walks the parent_id graph rooted at `rootId` and returns every descendant in

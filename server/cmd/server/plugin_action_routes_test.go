@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	publicapiv1 "github.com/multica-ai/multica/server/pkg/publicapi/v1"
+	publicapiv1 "github.com/marvis-ai/marvis/server/pkg/publicapi/v1"
 )
 
 func TestPluginActionRouteTrustBoundaries(t *testing.T) {
@@ -123,7 +123,7 @@ func TestPluginActionRouteTrustBoundaries(t *testing.T) {
 }
 
 func TestPluginActionBaseURLPrefersDedicatedVersionedBase(t *testing.T) {
-	t.Setenv("MULTICA_PLUGIN_API_URL", " https://plugin-api.example.com/v1/ ")
+	t.Setenv("MARVIS_PLUGIN_API_URL", " https://plugin-api.example.com/v1/ ")
 
 	if got := pluginActionBaseURL("https://api.example.com/"); got != "https://plugin-api.example.com/v1" {
 		t.Fatalf("pluginActionBaseURL() = %q", got)
@@ -131,7 +131,7 @@ func TestPluginActionBaseURLPrefersDedicatedVersionedBase(t *testing.T) {
 }
 
 func TestPluginActionBaseURLFallsBackToPublicURL(t *testing.T) {
-	t.Setenv("MULTICA_PLUGIN_API_URL", "")
+	t.Setenv("MARVIS_PLUGIN_API_URL", "")
 
 	if got := pluginActionBaseURL(" https://api.example.com/ "); got != "https://api.example.com/v1" {
 		t.Fatalf("pluginActionBaseURL() = %q", got)
@@ -139,7 +139,7 @@ func TestPluginActionBaseURLFallsBackToPublicURL(t *testing.T) {
 }
 
 func TestPluginActionBaseURLOmittedWithoutPublicOrigin(t *testing.T) {
-	t.Setenv("MULTICA_PLUGIN_API_URL", "")
+	t.Setenv("MARVIS_PLUGIN_API_URL", "")
 
 	if got := pluginActionBaseURL(""); got != "" {
 		t.Fatalf("pluginActionBaseURL() = %q, want empty", got)

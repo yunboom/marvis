@@ -23,7 +23,7 @@ for (const [platform, arch, goos, goarch, foreignCaller] of [
 ]) {
   for (const missingRevision of [false, true]) {
     test(`bundled ${platform}/${arch} preserves source-root commit (missing=${missingRevision}, foreignCaller=${foreignCaller})`, () => {
-      const root = mkdtempSync(join(tmpdir(), "multica-bundle-commit-"));
+      const root = mkdtempSync(join(tmpdir(), "marvis-bundle-commit-"));
       try {
         const scripts = join(root, "apps", "desktop", "scripts");
         const bin = join(root, "fake-bin");
@@ -68,7 +68,7 @@ else if (args[0] === "build") {
         assert.equal(build.goos, goos);
         assert.equal(build.goarch, goarch);
         assert.equal(build.cgo, "0");
-        const artifact = platform === "win32" ? "multica.exe" : "multica";
+        const artifact = platform === "win32" ? "marvis.exe" : "marvis";
         assert.equal(readFileSync(join(root, "apps", "desktop", "resources", "bin", artifact), "utf8"), "fake artifact");
       } finally {
         rmSync(root, { recursive: true, force: true });

@@ -1,5 +1,5 @@
 {
-  "name": "@multica/core",
+  "name": "@marvis/core",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -185,8 +185,8 @@
     "react": "catalog:"
   },
   "devDependencies": {
-    "@multica/eslint-config": "workspace:*",
-    "@multica/tsconfig": "workspace:*",
+    "@marvis/eslint-config": "workspace:*",
+    "@marvis/tsconfig": "workspace:*",
     "@testing-library/react": "catalog:",
     "@types/react": "catalog:",
     "jsdom": "catalog:",

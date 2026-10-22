@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { QueryClient } from "@tanstack/react-query";
-import type { InboxItem } from "@multica/core/types";
+import type { InboxItem } from "@marvis/core/types";
 import { describe, expect, it, vi } from "vitest";
 
 import { inboxKeys } from "@/data/queries/inbox";

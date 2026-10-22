@@ -11,9 +11,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/multica-ai/multica/server/internal/daemon/execenv"
-	"github.com/multica-ai/multica/server/internal/skill"
-	"github.com/multica-ai/multica/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/marvis-ai/marvis/server/internal/skill"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
 )
 
 const (

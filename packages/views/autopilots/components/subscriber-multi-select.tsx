@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { memberListOptions } from "@multica/core/workspace/queries";
-import { cn } from "@multica/ui/lib/utils";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { memberListOptions } from "@marvis/core/workspace/queries";
+import { cn } from "@marvis/ui/lib/utils";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { ActorAvatar } from "../../common/actor-avatar";
 import {
   PropertyPicker,

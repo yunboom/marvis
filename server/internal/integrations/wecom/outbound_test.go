@@ -21,10 +21,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // fakeOutboundQueries is an in-memory stand-in for the queries Outbound
@@ -33,7 +33,7 @@ import (
 // branches).
 type fakeOutboundQueries struct {
 	// userBinding* / user* answer the languageLookup half of the interface:
-	// which Multica user a channel userid belongs to, and what language that
+	// which Marvis user a channel userid belongs to, and what language that
 	// user reads. A fake with no profile set answers "nothing", which is the
 	// deployment default — the answer every test written before the copy pack
 	// expects.
@@ -82,7 +82,7 @@ type fakeOutboundQueries struct {
 	originGateReads int
 	// channelIngested is the channel_ingested stamp on the input batch the
 	// task owns: askedOverWecom for a question typed in the room,
-	// askedInTheWebUI for one typed in Multica.
+	// askedInTheWebUI for one typed in Marvis.
 	//
 	// It is a pointer, and it has no default on purpose. Two gates read this
 	// one stamp in opposite directions — the answer path delivers only when it
@@ -99,7 +99,7 @@ type fakeOutboundQueries struct {
 	originAskedFor  []string
 	// perTaskIngested overrides channelIngested for one id. A rig needs it
 	// whenever two runs of DIFFERENT origin share a session — a question typed
-	// in the room and one typed in Multica against the same agent — which is
+	// in the room and one typed in Marvis against the same agent — which is
 	// the population every binding rule here is about.
 	perTaskIngested map[string]bool
 	// deliveryFiled says whether channel_task_delivery holds a row for the run,
@@ -111,7 +111,7 @@ type fakeOutboundQueries struct {
 	// EnqueueChannelChatTask passes true (internal/service/task.go:1912).
 	// EnqueueChatTask passes false with the reason in its own doc — "no
 	// external delivery snapshot is created: first-party sends reply only to
-	// first-party clients" (:1882) — so a run typed in Multica has NO row even
+	// first-party clients" (:1882) — so a run typed in Marvis has NO row even
 	// in a chat with a WeCom binding, while another platform's run has a row
 	// naming that platform.
 	//
@@ -164,12 +164,12 @@ func (f *fakeOutboundQueries) filedFor(id string) (filed bool, explicit bool) {
 }
 
 // notFiled and filed are the two answers to "was a delivery route frozen for
-// this run": filed for a channel-owned task, notFiled for one typed in Multica.
+// this run": filed for a channel-owned task, notFiled for one typed in Marvis.
 func notFiled() *bool { v := false; return &v }
 
 // refuseImpossibleRouting ends the test when a rig asks for a state production
 // cannot produce: a run with a WeCom delivery row whose question was typed in
-// Multica. Both facts come from the same enqueue — requireDelivery is true
+// Marvis. Both facts come from the same enqueue — requireDelivery is true
 // exactly for EnqueueChannelChatTask — so a rig asserting both is asserting
 // against a world that does not exist, and a gate tested in that world can
 // pass while being unreachable in this one. That is precisely what happened:
@@ -197,7 +197,7 @@ func (f *fakeOutboundQueries) refuseImpossibleRouting(id string) {
 // EnqueueChatTask's own doc says a first-party run gets none ("no external
 // delivery snapshot is created"), SendDirectChatMessage inserts none, and
 // main's channel_new_e2e_test.go:353 says the direct task deliberately gets
-// none — so for a run typed in Multica this query returns pgx.ErrNoRows.
+// none — so for a run typed in Marvis this query returns pgx.ErrNoRows.
 //
 // This double used to ignore the id and hand back a WeCom row for every one,
 // which put a run in a state production cannot be in: asked in the web UI AND
@@ -275,9 +275,9 @@ func (f *fakeOutboundQueries) GetChannelUserBindingByUserID(_ context.Context, a
 		if !id.Valid {
 			return db.ChannelUserBinding{}, pgx.ErrNoRows
 		}
-		return db.ChannelUserBinding{MulticaUserID: id}, nil
+		return db.ChannelUserBinding{MarvisUserID: id}, nil
 	}
-	return db.ChannelUserBinding{MulticaUserID: f.userBindingID}, nil
+	return db.ChannelUserBinding{MarvisUserID: f.userBindingID}, nil
 }
 
 func (f *fakeOutboundQueries) GetUser(_ context.Context, id pgtype.UUID) (db.User, error) {
@@ -352,7 +352,7 @@ func (f *fakeOutboundQueries) failStampNotSet(taskID string) {
 	msg := "fakeOutboundQueries: the origin gate read the channel_ingested stamp for task " +
 		taskID + ", but this rig never set channelIngested. Say where the question was asked: " +
 		"channelIngested: askedOverWecom() for one typed in the room, askedInTheWebUI() for one " +
-		"typed in Multica. There is no default — the answer path delivers only when the stamp is " +
+		"typed in Marvis. There is no default — the answer path delivers only when the stamp is " +
 		"set and the failure path delivers unless it is, so either zero value would let one of " +
 		"those two pass a test that never stated what it meant."
 	if f.t == nil {
@@ -956,8 +956,8 @@ func TestChatDoneContent(t *testing.T) {
 }
 
 // TestProcessEvent_DoesNotPushAWebUIAnswerIntoTheRoom is the privacy case. A
-// session that originated in WeCom can be continued from the Multica web UI,
-// and that answer belongs only in Multica. Without the origin gate it is
+// session that originated in WeCom can be continued from the Marvis web UI,
+// and that answer belongs only in Marvis. Without the origin gate it is
 // pushed to the bound chat — which in a group means in front of everyone in
 // the room, an answer to a question none of them saw asked.
 func TestProcessEvent_DoesNotPushAWebUIAnswerIntoTheRoom(t *testing.T) {

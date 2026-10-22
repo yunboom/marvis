@@ -4,18 +4,18 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Loader2, Maximize2, Square } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@multica/core/api";
-import { issueTasksOptions } from "@multica/core/issues/queries";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { useCustomPricingStore } from "@multica/core/runtimes/custom-pricing-store";
-import type { AgentTask } from "@multica/core/types";
-import { cn } from "@multica/ui/lib/utils";
+import { api } from "@marvis/core/api";
+import { issueTasksOptions } from "@marvis/core/issues/queries";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { useCustomPricingStore } from "@marvis/core/runtimes/custom-pricing-store";
+import type { AgentTask } from "@marvis/core/types";
+import { cn } from "@marvis/ui/lib/utils";
 import { useLocale, useTimeAgo } from "../../i18n";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
+} from "@marvis/ui/components/ui/tooltip";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { formatDuration } from "../../agents/components/agent-activity-hover-content";
 import { TranscriptButton } from "../../common/task-transcript";

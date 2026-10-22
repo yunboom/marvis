@@ -11,12 +11,12 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import { Input } from "@multica/ui/components/ui/input";
-import { Label } from "@multica/ui/components/ui/label";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Badge } from "@multica/ui/components/ui/badge";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Label } from "@marvis/ui/components/ui/label";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Badge } from "@marvis/ui/components/ui/badge";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -24,14 +24,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@multica/ui/components/ui/select";
+} from "@marvis/ui/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,33 +41,33 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
+} from "@marvis/ui/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   useInfiniteQuery,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useCurrentMember } from "@multica/core/permissions";
-import { useCurrentWorkspace } from "@multica/core/paths";
-import { workspaceKeys } from "@multica/core/workspace/queries";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useCurrentMember } from "@marvis/core/permissions";
+import { useCurrentWorkspace } from "@marvis/core/paths";
+import { workspaceKeys } from "@marvis/core/workspace/queries";
 import {
   githubInstallationRepositoriesOptions,
   githubInstallationsOptions,
-} from "@multica/core/github";
-import { api } from "@multica/core/api";
+} from "@marvis/core/github";
+import { api } from "@marvis/core/api";
 import type {
   GitHubRepository,
   Workspace,
   WorkspaceRepo,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { SettingsCard, SettingsSection } from "./settings-layout";

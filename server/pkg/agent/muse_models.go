@@ -115,7 +115,7 @@ func discoverMuseModels(ctx context.Context, runtimeCmd Command) (Catalog, error
 	}
 
 	if _, err := call("initialize", map[string]any{
-		"clientInfo":   map[string]any{"name": "multica_model_discovery", "version": museLauncherVersion},
+		"clientInfo":   map[string]any{"name": "marvis_model_discovery", "version": museLauncherVersion},
 		"capabilities": map[string]any{},
 	}); err != nil {
 		return Catalog{Models: []Model{}, Fallback: true}, nil

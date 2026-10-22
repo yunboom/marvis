@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, ChevronRight } from "lucide-react";
-import type { TimelineEntry } from "@multica/core/types";
-import { isDeletedComment } from "@multica/core/issues/comment-deletion";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { cn } from "@multica/ui/lib/utils";
-import { ActorAvatar } from "@multica/ui/components/common/actor-avatar";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
+import type { TimelineEntry } from "@marvis/core/types";
+import { isDeletedComment } from "@marvis/core/issues/comment-deletion";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { cn } from "@marvis/ui/lib/utils";
+import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { useT, useTimeAgo } from "../../i18n";
 
 // ThreadMinimap — quick-jump rail with a complete comment outline.

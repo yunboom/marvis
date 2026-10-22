@@ -17,8 +17,8 @@ func TestRedisClientName(t *testing.T) {
 		suffix   string
 		want     string
 	}{
-		{"empty_suffix_returns_existing", "multica-api:store", "", "multica-api:store"},
-		{"empty_existing_uses_default_prefix", "", "store", "multica-api:store"},
+		{"empty_suffix_returns_existing", "marvis-api:store", "", "marvis-api:store"},
+		{"empty_existing_uses_default_prefix", "", "store", "marvis-api:store"},
 		{"both_set_joins_with_colon", "custom", "store", "custom:store"},
 		{"empty_both_returns_empty", "", "", ""},
 	}
@@ -116,8 +116,8 @@ func TestNewNamedRedisClient_SetsClientName(t *testing.T) {
 	defer client.Close()
 
 	opts := client.(*redis.Client).Options()
-	if opts.ClientName != "multica-api:store" {
-		t.Errorf("ClientName = %q, want %q", opts.ClientName, "multica-api:store")
+	if opts.ClientName != "marvis-api:store" {
+		t.Errorf("ClientName = %q, want %q", opts.ClientName, "marvis-api:store")
 	}
 }
 
@@ -154,8 +154,8 @@ func TestNewNamedRedisClient_DisableClientName_InvalidValue(t *testing.T) {
 
 	opts := client.(*redis.Client).Options()
 	// Invalid value falls back to default (false), so ClientName IS set
-	if opts.ClientName != "multica-api:store" {
-		t.Errorf("ClientName = %q, want %q (invalid env should fall back to naming enabled)", opts.ClientName, "multica-api:store")
+	if opts.ClientName != "marvis-api:store" {
+		t.Errorf("ClientName = %q, want %q (invalid env should fall back to naming enabled)", opts.ClientName, "marvis-api:store")
 	}
 }
 
@@ -321,7 +321,7 @@ func TestJWTSecretBootError(t *testing.T) {
 		wantErr   bool
 	}{
 		{"production_with_empty_secret_is_rejected", "", "production", true},
-		{"production_with_code_default_is_rejected", "multica-dev-secret-change-in-production", "production", true},
+		{"production_with_code_default_is_rejected", "marvis-dev-secret-change-in-production", "production", true},
 		{"production_with_compose_default_is_rejected", "change-me-in-production", "production", true},
 		{"production_with_uppercase_env_is_rejected", "change-me-in-production", "PRODUCTION", true},
 		{"production_with_whitespace_env_is_rejected", "change-me-in-production", " production ", true},

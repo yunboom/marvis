@@ -6,12 +6,12 @@ import {
   AGENT_CONVERSATION_STARTER_LABEL_MAX_LENGTH,
   AGENT_CONVERSATION_STARTER_MAX_LENGTH,
   AGENT_CONVERSATION_STARTERS_MAX,
-} from "@multica/core/agents";
-import type { AgentConversationStarter } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Input } from "@multica/ui/components/ui/input";
-import { Textarea } from "@multica/ui/components/ui/textarea";
+} from "@marvis/core/agents";
+import type { AgentConversationStarter } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { useFallbackConversationStarters } from "../../chat/components/conversation-starter-list";
 import { useT } from "../../i18n";
 

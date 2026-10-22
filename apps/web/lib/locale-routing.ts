@@ -2,9 +2,9 @@ import {
   matchLocale,
   SUPPORTED_LOCALES,
   type SupportedLocale,
-} from "@multica/core/i18n";
+} from "@marvis/core/i18n";
 
-export const MULTICA_LOCALE_HEADER = "x-multica-locale";
+export const MARVIS_LOCALE_HEADER = "x-marvis-locale";
 
 export function isSupportedLocale(
   value: string | null,

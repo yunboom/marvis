@@ -2,9 +2,9 @@ package lark
 
 import (
 	"context"
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	dbfx "github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
 	"testing"
 )
 

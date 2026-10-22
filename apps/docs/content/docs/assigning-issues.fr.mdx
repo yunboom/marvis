@@ -23,7 +23,7 @@ Lorsque vous assignez la tâche à un squad, le squad devient l'assigné de la t
 
 ## Exécution après l'assignation
 
-Multica crée une [exécution](/tasks) pour l'agent. Dès qu'un runtime en ligne récupère l'exécution, il lance l'outil de codage IA sur cette machine ; l'avancement, les commentaires et les résultats apparaissent ensuite dans la tâche.
+Marvis crée une [exécution](/tasks) pour l'agent. Dès qu'un runtime en ligne récupère l'exécution, il lance l'outil de codage IA sur cette machine ; l'avancement, les commentaires et les résultats apparaissent ensuite dans la tâche.
 
 Si le runtime est temporairement hors ligne, l'exécution attend dans la file ; une exécution est liée à son runtime et ne passe jamais sur une autre machine.
 
@@ -71,13 +71,13 @@ Changer ou retirer le responsable n’arrête généralement pas une exécution 
 ## Utiliser le CLI
 
 ```bash
-multica issue assign MUL-42 --to "Agent name"
-multica issue assign MUL-42 --to-id <agent-uuid> --no-start
-multica issue status MUL-42 in_progress --no-start
-multica issue assign MUL-42 --unassign
+marvis issue assign MUL-42 --to "Agent name"
+marvis issue assign MUL-42 --to-id <agent-uuid> --no-start
+marvis issue status MUL-42 in_progress --no-start
+marvis issue assign MUL-42 --unassign
 ```
 
-Dans les scripts, utilisez `--to-id <uuid>` pour éviter de cibler un mauvais objet portant le même nom. Retrouvez les UUID avec `multica agent list --output json` ou `multica workspace member list --output json`.
+Dans les scripts, utilisez `--to-id <uuid>` pour éviter de cibler un mauvais objet portant le même nom. Retrouvez les UUID avec `marvis agent list --output json` ou `marvis workspace member list --output json`.
 
 Utilisez `--no-start` lorsque l'assignation doit enregistrer le responsable sans créer de nouvelle exécution — par exemple lorsque le même agent traite déjà la tâche depuis une autre exécution. La même option est disponible sur `issue update` et `issue status`. Si un flux qui ne fait qu'enregistrer le responsable modifie à la fois l'assignation et le statut, passez-la aux deux commandes : neutraliser le déclenchement de l'assignation ne neutralise pas une exécution déclenchée ensuite par le changement de statut.
 

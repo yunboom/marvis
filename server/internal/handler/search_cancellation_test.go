@@ -13,9 +13,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/multica-ai/multica/server/internal/metrics"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // searchFailureTx injects a query failure after the transaction-local settings
@@ -130,7 +130,7 @@ func assertSearchStatus(t *testing.T, h *Handler, endpoint string, ctx context.C
 	rec := httptest.NewRecorder()
 	metrics.NewHandler(registry.Gatherer).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/metrics", nil))
 	body := rec.Body.String()
-	want := `multica_http_requests_total{method="GET",route="` + path + `",status="` + strconv.Itoa(status) + `"} 1`
+	want := `marvis_http_requests_total{method="GET",route="` + path + `",status="` + strconv.Itoa(status) + `"} 1`
 	if !strings.Contains(body, want) {
 		t.Fatalf("missing request classification %q in metrics:\n%s", want, body)
 	}

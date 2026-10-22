@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import { diffTraceLines } from "../../common/task-transcript/trace-event-presenter";
 
 interface RevisionConflictCompareProps {

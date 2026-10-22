@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 func TestQoderConnectionSecrets(t *testing.T) {
@@ -42,12 +42,12 @@ func TestQoderConnectionSecrets(t *testing.T) {
 	if err != nil || cfg.QoderToken != "qca-test-secret" || cfg.GitHubTokens["https://github.com/owner/repo"] != "github-test-secret" {
 		t.Fatal("blank field did not retain credentials")
 	}
-	if !strings.HasPrefix(cfg.MulticaToken, "mdt_") {
+	if !strings.HasPrefix(cfg.MarvisToken, "mdt_") {
 		t.Fatal("managed bridge must use a daemon credential")
 	}
 	var credentialWorkspace, daemonID string
 	var expiring bool
-	dbfx.QueryRow(t, `SELECT workspace_id::text,daemon_id,expires_at>now() AND expires_at<now()+interval '2 hours' FROM daemon_token WHERE token_hash=$1`, auth.HashToken(cfg.MulticaToken)).Scan(&credentialWorkspace, &daemonID, &expiring)
+	dbfx.QueryRow(t, `SELECT workspace_id::text,daemon_id,expires_at>now() AND expires_at<now()+interval '2 hours' FROM daemon_token WHERE token_hash=$1`, auth.HashToken(cfg.MarvisToken)).Scan(&credentialWorkspace, &daemonID, &expiring)
 	if credentialWorkspace != testWorkspaceID || daemonID != "qoder-managed-"+testWorkspaceID || !expiring {
 		t.Fatal("unscoped or non-expiring service credential")
 	}
@@ -85,7 +85,7 @@ func TestQoderConnectionSecrets(t *testing.T) {
 	body["base_url"] = "http://127.0.0.1:1"
 	testutil.Call(t, testHandler.SaveQoderConnection, vcsHandlerRequest("PUT", "/qoder", body, "")).Want(400)
 	body["base_url"] = "https://api.qoder.com/api/v1/cloud"
-	body["multica_token"] = "injected"
+	body["marvis_token"] = "injected"
 	testutil.Call(t, testHandler.SaveQoderConnection, vcsHandlerRequest("PUT", "/qoder", body, "")).Want(400)
 }
 
@@ -207,7 +207,7 @@ func TestQoderManagedRegistrationAndRevocation(t *testing.T) {
 	}
 	daemonID := "qoder-managed-" + testWorkspaceID
 	req := newDaemonTokenRequest("POST", "/api/daemon/register", map[string]any{"workspace_id": testWorkspaceID, "daemon_id": daemonID, "runtimes": []map[string]any{{"name": "QCA", "type": "qoder_cloud", "runtime_mode": "cloud", "status": "online"}}}, testWorkspaceID, daemonID)
-	req.Header.Set("Authorization", "Bearer "+cfg.MulticaToken)
+	req.Header.Set("Authorization", "Bearer "+cfg.MarvisToken)
 	testutil.Call(t, testHandler.DaemonRegister, req).Want(200)
 	testutil.Call(t, testHandler.StopQoderConnection, vcsHandlerRequest("POST", "/qoder/stop", nil, "")).Want(200)
 	allowed, err := testHandler.qoderCredentialAllowed(req, testWorkspaceID, daemonID)

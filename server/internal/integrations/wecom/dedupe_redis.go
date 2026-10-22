@@ -18,7 +18,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/database"
+	"github.com/marvis-ai/marvis/server/internal/database"
 	"github.com/redis/go-redis/v9"
 )
 

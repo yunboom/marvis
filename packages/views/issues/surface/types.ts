@@ -1,6 +1,6 @@
-import type { IssueScope } from "@multica/core/issues/surface/scope";
-import type { CreateIssueRequest } from "@multica/core/types";
-import type { ViewMode } from "@multica/core/issues/stores/view-store";
+import type { IssueScope } from "@marvis/core/issues/surface/scope";
+import type { CreateIssueRequest } from "@marvis/core/types";
+import type { ViewMode } from "@marvis/core/issues/stores/view-store";
 
 export type IssueCreateDefaults = Partial<
   Omit<

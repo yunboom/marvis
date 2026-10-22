@@ -43,7 +43,7 @@ func snippetBlock(t *testing.T, rendered, marker string) []string {
 	return nil
 }
 
-// stubMultica puts a fake `multica` on PATH that exits with the given code, so
+// stubMarvis puts a fake `marvis` on PATH that exits with the given code, so
 // the snippet's failure handling can be exercised without the real CLI (and
 // without any network or agent binary — see the default-test rule in
 // CLAUDE.md). Returns the directory to prepend to PATH.
@@ -51,12 +51,12 @@ func snippetBlock(t *testing.T, rendered, marker string) []string {
 // The stub's form follows the HOST, not the snippet variant being rendered:
 // PowerShell is cross-platform, so the Windows cookbook is exercised on a
 // Linux runner too, and there a `.cmd` shim would never resolve.
-func stubMultica(t *testing.T, exitCode int) string {
+func stubMarvis(t *testing.T, exitCode int) string {
 	t.Helper()
 	dir := t.TempDir()
-	name, body := "multica", "#!/bin/sh\nexit "+strconv.Itoa(exitCode)+"\n"
+	name, body := "marvis", "#!/bin/sh\nexit "+strconv.Itoa(exitCode)+"\n"
 	if runtime.GOOS == "windows" {
-		name, body = "multica.cmd", "@exit /b "+strconv.Itoa(exitCode)+"\r\n"
+		name, body = "marvis.cmd", "@exit /b "+strconv.Itoa(exitCode)+"\r\n"
 	}
 	if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o755); err != nil {
 		t.Fatal(err)
@@ -152,7 +152,7 @@ func TestCommentReplySnippetPropagatesPostFailure(t *testing.T) {
 			script := strings.Join(snippetBlock(t, BuildCommentReplyInstructions("claude", issueID, triggerID, false), tc.marker), "\n")
 
 			t.Run("failed post keeps the failure and the body", func(t *testing.T) {
-				code, bodyKept := runSnippet(t, tc.shell, tc.wrap(script), stubMultica(t, 3))
+				code, bodyKept := runSnippet(t, tc.shell, tc.wrap(script), stubMarvis(t, 3))
 				if code == 0 {
 					t.Errorf("failed post reported success (exit 0); the cleanup masked it\n---\n%s", script)
 				}
@@ -162,7 +162,7 @@ func TestCommentReplySnippetPropagatesPostFailure(t *testing.T) {
 			})
 
 			t.Run("successful post still cleans up", func(t *testing.T) {
-				code, bodyKept := runSnippet(t, tc.shell, tc.wrap(script), stubMultica(t, 0))
+				code, bodyKept := runSnippet(t, tc.shell, tc.wrap(script), stubMarvis(t, 0))
 				if code != 0 {
 					t.Errorf("successful post reported exit %d\n---\n%s", code, script)
 				}

@@ -9,9 +9,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // chatTitleGenTimeout bounds the whole best-effort title generation (LLM call
@@ -91,7 +91,7 @@ Rules:
 // model condenses into a title.
 func (h *Handler) maybeGenerateChatTitleAsync(workspaceID, userID string, sessionID pgtype.UUID, currentTitle, sourceText string) {
 	// Short-circuit before spawning a goroutine when the LLM layer is disabled
-	// (self-hosted without MULTICA_LLM_API_KEY / MULTICA_LLM_BASE_URL): the
+	// (self-hosted without MARVIS_LLM_API_KEY / MARVIS_LLM_BASE_URL): the
 	// original title is kept as-is, exactly matching pre-feature behavior.
 	if h.LLM == nil || !h.LLM.Enabled() {
 		return
@@ -160,7 +160,7 @@ func (h *Handler) maybeGenerateChatTitleAsync(workspaceID, userID string, sessio
 //     keep the original title.
 func (h *Handler) generateChatSessionTitle(ctx context.Context, sessionID pgtype.UUID, currentTitle, sourceText string) (db.ChatSession, bool, error) {
 	// DefaultModel() is used implicitly by GenerateText when model == "": a
-	// deployment configures MULTICA_LLM_DEFAULT_MODEL (or the built-in
+	// deployment configures MARVIS_LLM_DEFAULT_MODEL (or the built-in
 	// gpt-6-luna fallback) — no model is threaded through from the frontend.
 	raw, err := h.LLM.GenerateText(ctx, "", chatTitleSystemPrompt, sourceText)
 	if err != nil {

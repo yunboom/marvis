@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createFixtureApi, issues } from "./product-fixtures";
 import type { LabLocale } from "./locale";
-import type { IssueTableQuerySpec } from "@multica/core/types";
+import type { IssueTableQuerySpec } from "@marvis/core/types";
 
 const query: IssueTableQuerySpec = {
   scope: { kind: "workspace" },

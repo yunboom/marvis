@@ -9,7 +9,7 @@ import {
   type ReactNode,
   type Ref,
 } from "react";
-import { Tooltip, TooltipContent } from "@multica/ui/components/ui/tooltip";
+import { Tooltip, TooltipContent } from "@marvis/ui/components/ui/tooltip";
 
 // Matches the ui TooltipProvider default delay so the deferred first-open
 // feels identical to a native tooltip.

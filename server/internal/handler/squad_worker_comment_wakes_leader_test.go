@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 func TestGuestSquadWorkerReplayRequiresPlannedInput_GH8301(t *testing.T) {
@@ -80,7 +80,7 @@ func TestCreateComment_GuestSquadWorkerRouting_GH8301(t *testing.T) {
 			mode := tc.mode
 			var outsiderID string
 			if mode == "permission_denied" {
-				outsiderID = dbfx.User(t, "GH-8301 outsider", "gh-8301-outsider-"+uuid.NewString()+"@multica.test")
+				outsiderID = dbfx.User(t, "GH-8301 outsider", "gh-8301-outsider-"+uuid.NewString()+"@marvis.test")
 			}
 			assignedLeaderID := dbfx.Agent(t, "GH-8301 assigned leader "+mode, testRuntimeID)
 			guestLeaderID := dbfx.Agent(t, "GH-8301 exact guest leader "+mode, testRuntimeID)

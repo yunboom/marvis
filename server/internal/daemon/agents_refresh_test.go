@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
 )
 
 // The loop backs off whenever a round cannot shrink the missing-runtime set,
@@ -117,7 +117,7 @@ func TestDshRuntimeProfileMismatch(t *testing.T) {
 	}
 
 	// Installing the profile makes the two agree.
-	installMulticaProfile(t, home)
+	installMarvisProfile(t, home)
 	if d.dshRuntimeProfileMismatch() != dshMismatchNone {
 		t.Fatal("a registered dsh with its profile installed was judged inconsistent")
 	}

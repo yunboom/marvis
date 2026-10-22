@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	productionEndpoint = "https://telemetry.multica.ai/v1/telemetry/events"
+	productionEndpoint = "https://telemetry.marvis.ai/v1/telemetry/events"
 	httpTimeout        = 5 * time.Second
 )
 

@@ -14,34 +14,34 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { memberListOptions } from "@multica/core/workspace/queries";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { memberListOptions } from "@marvis/core/workspace/queries";
 import {
   propertyListOptions,
   useCreateProperty,
   useUpdateProperty,
-} from "@multica/core/properties";
+} from "@marvis/core/properties";
 import type {
   IssueProperty,
   IssuePropertyOption,
   IssuePropertyType,
-} from "@multica/core/types";
-import { ISSUE_PROPERTY_TYPES } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Badge } from "@multica/ui/components/ui/badge";
-import { Input } from "@multica/ui/components/ui/input";
-import { Textarea } from "@multica/ui/components/ui/textarea";
-import { Label as FieldLabel } from "@multica/ui/components/ui/label";
-import { Switch } from "@multica/ui/components/ui/switch";
+} from "@marvis/core/types";
+import { ISSUE_PROPERTY_TYPES } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Badge } from "@marvis/ui/components/ui/badge";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
+import { Label as FieldLabel } from "@marvis/ui/components/ui/label";
+import { Switch } from "@marvis/ui/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@multica/ui/components/ui/select";
+} from "@marvis/ui/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +49,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,18 +59,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
+} from "@marvis/ui/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/popover";
 import { ColorPicker, COLOR_PICKER_PRESETS } from "../../common/color-picker";
 import {
   PropertyIcon,

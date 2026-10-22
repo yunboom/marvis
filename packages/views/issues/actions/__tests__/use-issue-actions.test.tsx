@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses";
-import { statusCategoryOfKey } from "@multica/core/issues";
-import type { Issue, IssueStatusEntry } from "@multica/core/types";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
+import { statusCategoryOfKey } from "@marvis/core/issues";
+import type { Issue, IssueStatusEntry } from "@marvis/core/types";
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
 const mockOpenModal = vi.fn();
-vi.mock("@multica/core/modals", () => ({
+vi.mock("@marvis/core/modals", () => ({
   useModalStore: Object.assign(
     (selector?: any) => {
       const state = { open: mockOpenModal };
@@ -21,7 +21,7 @@ vi.mock("@multica/core/modals", () => ({
 }));
 
 const mockAuthState = { user: { id: "user-1" }, isAuthenticated: true };
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: Object.assign(
     (selector?: any) => (selector ? selector(mockAuthState) : mockAuthState),
     { getState: () => mockAuthState },
@@ -35,7 +35,7 @@ const pinListRef: { value: Array<{ item_type: string; item_id: string }> } = {
 };
 const mockCreatePinMutate = vi.fn();
 const mockDeletePinMutate = vi.fn();
-vi.mock("@multica/core/pins", () => ({
+vi.mock("@marvis/core/pins", () => ({
   pinListOptions: () => ({
     queryKey: ["pins", "ws-1", "user-1"],
     queryFn: () => Promise.resolve(pinListRef.value),
@@ -45,7 +45,7 @@ vi.mock("@multica/core/pins", () => ({
 }));
 
 const mockUpdateMutate = vi.fn();
-vi.mock("@multica/core/issues/mutations", () => ({
+vi.mock("@marvis/core/issues/mutations", () => ({
   useUpdateIssue: () => ({ mutate: mockUpdateMutate }),
 }));
 
@@ -85,13 +85,13 @@ function statusEntry(overrides: Partial<IssueStatusEntry>): IssueStatusEntry {
     ...overrides,
   };
 }
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () => buildIssueStatusCatalog(catalogEntries),
 }));
 
-vi.mock("@multica/core/paths", async () => {
-  const actual = await vi.importActual<typeof import("@multica/core/paths")>(
-    "@multica/core/paths",
+vi.mock("@marvis/core/paths", async () => {
+  const actual = await vi.importActual<typeof import("@marvis/core/paths")>(
+    "@marvis/core/paths",
   );
   return {
     ...actual,
@@ -108,7 +108,7 @@ vi.mock("../../../navigation", () => ({
     hash: "",
     back: vi.fn(),
     replace: vi.fn(),
-    getShareableUrl: (p: string) => `https://app.multica.com${p}`,
+    getShareableUrl: (p: string) => `https://app.marvis.com${p}`,
   }),
 }));
 
@@ -279,7 +279,7 @@ describe("useIssueActions", () => {
     });
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "https://app.multica.com/test/issues/TES-1",
+      "https://app.marvis.com/test/issues/TES-1",
     );
   });
 
@@ -294,7 +294,7 @@ describe("useIssueActions", () => {
     });
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "https://app.multica.com/test/issues/issue-1",
+      "https://app.marvis.com/test/issues/issue-1",
     );
   });
 
@@ -306,7 +306,7 @@ describe("useIssueActions", () => {
     });
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "https://app.multica.com/test/issues/TES-1#comment-comment-7",
+      "https://app.marvis.com/test/issues/TES-1#comment-comment-7",
     );
   });
 

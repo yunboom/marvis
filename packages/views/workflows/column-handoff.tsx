@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { Plus, Workflow } from "lucide-react";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { statusAcceptsHandoff, workflowStep } from "@multica/core/issue-workflows";
-import { useActorName } from "@multica/core/workspace/hooks";
-import type { IssueWorkflow, Project } from "@multica/core/types";
-import { Popover, PopoverContent, PopoverTrigger } from "@multica/ui/components/ui/popover";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { statusAcceptsHandoff, workflowStep } from "@marvis/core/issue-workflows";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import type { IssueWorkflow, Project } from "@marvis/core/types";
+import { Popover, PopoverContent, PopoverTrigger } from "@marvis/ui/components/ui/popover";
 import { ActorAvatar } from "../common/actor-avatar";
 import { useStatusLabel } from "../issues/utils/status-label";
 import { useT } from "../i18n";

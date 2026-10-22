@@ -14,11 +14,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/multica-ai/multica/server/internal/entitlement"
-	"github.com/multica-ai/multica/server/internal/entitlement/entitlementtest"
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/entitlement"
+	"github.com/marvis-ai/marvis/server/internal/entitlement/entitlementtest"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 type autopilotQuotaFixture struct {
@@ -119,7 +119,7 @@ func addAutopilotQuotaMember(t *testing.T, f *autopilotQuotaFixture, role string
 	t.Helper()
 	ctx := context.Background()
 	var userID pgtype.UUID
-	email := fmt.Sprintf("quota-notice-%s-%d@multica.test", role, time.Now().UnixNano())
+	email := fmt.Sprintf("quota-notice-%s-%d@marvis.test", role, time.Now().UnixNano())
 	if err := f.pool.QueryRow(ctx, `INSERT INTO "user" (name, email) VALUES ('Quota Notice Member', $1) RETURNING id`, email).Scan(&userID); err != nil {
 		t.Fatalf("insert quota notice user: %v", err)
 	}

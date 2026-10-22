@@ -2,11 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/multica-check.XXXXXX")
+TEST_DIR=$(mktemp -d "${TMPDIR:-/tmp}/marvis-check.XXXXXX")
 trap 'rm -rf "$TEST_DIR"' EXIT
 mkdir -p "$TEST_DIR/scripts" "$TEST_DIR/server" "$TEST_DIR/bin"
 # Keep the production script's fixed service logs inside the fixture too.
-sed "s|/tmp/multica-check-|$TEST_DIR/multica-check-|g" \
+sed "s|/tmp/marvis-check-|$TEST_DIR/marvis-check-|g" \
   "$SCRIPT_DIR/check.sh" >"$TEST_DIR/scripts/check.sh"
 export CHECK_TEST_DIR="$TEST_DIR"
 

@@ -15,19 +15,19 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { Agent, SkillSummary } from "@multica/core/types";
-import { api } from "@multica/core/api";
-import { workspaceKeys } from "@multica/core/workspace/queries";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
-import { Button } from "@multica/ui/components/ui/button";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
-import { Input } from "@multica/ui/components/ui/input";
+import type { Agent, SkillSummary } from "@marvis/core/types";
+import { api } from "@marvis/core/api";
+import { workspaceKeys } from "@marvis/core/workspace/queries";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@multica/ui/components/ui/collapsible";
+} from "@marvis/ui/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -35,28 +35,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
-import { ActorAvatar } from "@multica/ui/components/common/actor-avatar";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/tooltip";
+import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
 import { useIntentNavigate } from "../../navigation";
 import { isRefreshableOrigin, readOrigin } from "../lib/origin";
 import { RefreshSkillDialog } from "./refresh-skill-dialog";
 import type { SkillRow } from "./skill-list-filter";
-import { DeferredTooltip } from "@multica/ui/components/common/deferred-tooltip";
+import { DeferredTooltip } from "@marvis/ui/components/common/deferred-tooltip";
 
 // Shared context the row kebab and the batch toolbar both need. Assembled
 // once at the page level.

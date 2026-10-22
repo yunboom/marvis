@@ -4,11 +4,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { IssueStatusEntry } from "@multica/core/types";
-import { ISSUE_STATUS_ICONS } from "@multica/core/types/issue-status";
+import type { IssueStatusEntry } from "@marvis/core/types";
+import { ISSUE_STATUS_ICONS } from "@marvis/core/types/issue-status";
 import en from "../../locales/en/settings.json";
 import { IssueStatusesTab } from "./issue-statuses-tab";
-import { ApiError } from "@multica/core/api/client";
+import { ApiError } from "@marvis/core/api/client";
 
 const reorderMutate = vi.hoisted(() => vi.fn());
 const createMutate = vi.hoisted(() => vi.fn());
@@ -17,12 +17,12 @@ const archiveMutate = vi.hoisted(() => vi.fn());
 const navigatePush = vi.hoisted(() => vi.fn());
 const updateWorkspace = vi.hoisted(() => vi.fn());
 let workspaceSettings: Record<string, unknown> = {};
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({ issues: () => "/dev/issues" }),
   useCurrentWorkspace: () => ({ id: "ws-1", settings: workspaceSettings }),
 }));
-vi.mock("@multica/core/api", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/api")>()),
+vi.mock("@marvis/core/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/api")>()),
   api: { updateWorkspace },
 }));
 vi.mock("../../navigation", () => ({
@@ -49,21 +49,21 @@ vi.mock("@tanstack/react-query", () => ({
   }),
   useQueryClient: () => ({ setQueryData: vi.fn() }),
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: (selector: (s: unknown) => unknown) => selector({ user: { id: "u-1" } }),
 }));
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   memberListOptions: () => ({ queryKey: ["members", "ws-1"] }),
   workspaceKeys: { list: () => ["workspaces"] },
 }));
 // Only the fetch is stubbed. The module's pure helpers (`issueStatusColor`)
 // are what the rows render with, and a stub of those would test the stub.
-vi.mock("@multica/core/issue-statuses/queries", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/issue-statuses/queries")>()),
+vi.mock("@marvis/core/issue-statuses/queries", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/issue-statuses/queries")>()),
   issueStatusListOptions: () => ({ queryKey: ["issue-statuses", "ws-1"] }),
 }));
-vi.mock("@multica/core/issue-statuses/mutations", () => ({
+vi.mock("@marvis/core/issue-statuses/mutations", () => ({
   useCreateIssueStatus: () => ({ mutate: createMutate, isPending: false }),
   useUpdateIssueStatus: () => ({ mutate: updateMutate, isPending: false }),
   useArchiveIssueStatus: () => ({ mutate: archiveMutate, isPending: false }),

@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/featureflags"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/featureflags"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // searchIndexWorkspace creates an isolated workspace so manifest and snapshot

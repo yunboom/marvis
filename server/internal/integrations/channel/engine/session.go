@@ -13,10 +13,10 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/channelmedia"
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/dbid"
+	"github.com/marvis-ai/marvis/server/internal/channelmedia"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/dbid"
 )
 
 // This file is the SHARED, channel-agnostic chat-session service every IM
@@ -274,7 +274,7 @@ func newChatSessionWith(q SessionQueries, tx TxStarter, channelType channel.Type
 // Slack's real channel_id when BindingKey is a composite — persisted on the
 // binding's config for the outbound path to read back. nil means "{}".
 //
-// Sender is the already-resolved Multica user (the session creator: the sole
+// Sender is the already-resolved Marvis user (the session creator: the sole
 // human for p2p, the installer for group chats — the caller decides which).
 type EnsureSessionInput struct {
 	WorkspaceID    pgtype.UUID
@@ -392,9 +392,9 @@ type AppendInput struct {
 	DedupMessageID string
 	ThreadID       string
 	// SenderChannelID is the platform-native id of whoever sent THIS message
-	// (Lark open_id, Slack user id, ...). Sender above is the Multica user it
+	// (Lark open_id, Slack user id, ...). Sender above is the Marvis user it
 	// resolved to; both are recorded because the outbound side needs the
-	// platform id to render a native @-mention, and a Multica user can hold
+	// platform id to render a native @-mention, and a Marvis user can hold
 	// more than one platform identity on the same installation.
 	SenderChannelID     string
 	ClaimToken          pgtype.UUID

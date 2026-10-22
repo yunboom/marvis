@@ -3,8 +3,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { configStore } from "@multica/core/config";
-import type { Agent, AgentRuntime } from "@multica/core/types";
+import { configStore } from "@marvis/core/config";
+import type { Agent, AgentRuntime } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { AgentDetailInspector } from "./agent-detail-inspector";
 

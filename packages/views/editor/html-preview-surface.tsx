@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { X } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import { useT } from "../i18n";
 
 /**

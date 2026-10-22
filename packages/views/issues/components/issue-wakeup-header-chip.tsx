@@ -3,10 +3,10 @@
 import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, TriangleAlert } from "lucide-react";
-import { issueSystemWakeupsOptions, issueWakeupsOptions } from "@multica/core/issues";
-import type { IssueWakeup, SystemWakeup } from "@multica/core/types";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { cn } from "@multica/ui/lib/utils";
+import { issueSystemWakeupsOptions, issueWakeupsOptions } from "@marvis/core/issues";
+import type { IssueWakeup, SystemWakeup } from "@marvis/core/types";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
 import { useWakeupText } from "./wakeup-presentation";
 

@@ -2,11 +2,11 @@
 
 import { useRef, useState } from "react";
 import { MessageSquare, X } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Popover, PopoverContent, PopoverTrigger } from "@multica/ui/components/ui/popover";
-import { useCommentDraftStore, type CommentDraftKey } from "@multica/core/issues/stores";
-import type { ReplyAnnotation } from "@multica/core/drafts/reply-annotation";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Popover, PopoverContent, PopoverTrigger } from "@marvis/ui/components/ui/popover";
+import { useCommentDraftStore, type CommentDraftKey } from "@marvis/core/issues/stores";
+import type { ReplyAnnotation } from "@marvis/core/drafts/reply-annotation";
 import { useT } from "../../i18n";
 
 export function ReplyAnnotations({ draftKey, annotations, disabled, onEditAnnotation }: {

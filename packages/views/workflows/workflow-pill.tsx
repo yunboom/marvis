@@ -1,10 +1,10 @@
 "use client";
 
 import { Check, Workflow } from "lucide-react";
-import { useFeatureEnabled } from "@multica/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@multica/core/feature-flags";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueWorkflows } from "@multica/core/issue-workflows";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueWorkflows } from "@marvis/core/issue-workflows";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { PillButton } from "../common/pill-button";
 import { useT } from "../i18n";
 

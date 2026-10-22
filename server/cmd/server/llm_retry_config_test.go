@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/pkg/llm"
+	"github.com/marvis-ai/marvis/server/pkg/llm"
 )
 
 // TestParseLLMMaxRetriesAccepted pins the states an operator is allowed to
@@ -97,7 +97,7 @@ func TestParsedLLMMaxRetriesReachesTheClient(t *testing.T) {
 	}
 }
 
-// TestParseLLMDisableThinking pins the MULTICA_LLM_DISABLE_THINKING states.
+// TestParseLLMDisableThinking pins the MARVIS_LLM_DISABLE_THINKING states.
 // Unset means the knob stays off — the state every existing deployment gets
 // without the variable present — and anything that is not a deliberate
 // true/false must stop the boot rather than be coerced (MUL-6364 contract).

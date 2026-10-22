@@ -20,7 +20,7 @@ import type {
   IssueStatus,
   IssueStatusCategory,
   IssueStatusEntry,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 
 /**
  * The four categories in canonical display order. Mirrors `ALL_STATUSES` in

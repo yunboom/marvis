@@ -5,9 +5,9 @@ import type {
   Agent,
   AgentRuntime,
   MemberWithUser,
-} from "@multica/core/types";
-import { qoderAgentId } from "@multica/core/agents";
-import { runtimeDisplayLabel } from "@multica/core/runtimes";
+} from "@marvis/core/types";
+import { qoderAgentId } from "@marvis/core/agents";
+import { runtimeDisplayLabel } from "@marvis/core/runtimes";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { useT } from "../../i18n";
 import { VisibilityBadge } from "./visibility-badge";

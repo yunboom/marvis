@@ -2,14 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@multica/core/auth";
+import { useAuthStore } from "@marvis/core/auth";
 import {
   paths,
   resolvePostAuthDestination,
   useHasOnboarded,
-} from "@multica/core/paths";
-import { useWorkspaceList } from "@multica/core/workspace";
-import { CliInstallInstructions, OnboardingFlow } from "@multica/views/onboarding";
+} from "@marvis/core/paths";
+import { useWorkspaceList } from "@marvis/core/workspace";
+import { CliInstallInstructions, OnboardingFlow } from "@marvis/views/onboarding";
 
 /**
  * Web shell for the onboarding flow. The route is the platform chrome on

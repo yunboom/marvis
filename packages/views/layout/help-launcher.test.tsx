@@ -1,7 +1,7 @@
 import { cloneElement, type ReactElement, type ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { configStore } from "@multica/core/config";
+import { configStore } from "@marvis/core/config";
 import enLayout from "../locales/en/layout.json";
 import { isDesktopShell } from "../platform/local-directory";
 import { HelpLauncher } from "./help-launcher";
@@ -44,7 +44,7 @@ vi.mock("../i18n", () => ({
 // DropdownMenuGroup crashed the whole app (no error boundary above the sidebar)
 // the moment the Help menu opened. Mirroring the throw here keeps the guard.
 // The group context lives inside the factory so it survives vi.mock hoisting.
-vi.mock("@multica/ui/components/ui/dropdown-menu", async () => {
+vi.mock("@marvis/ui/components/ui/dropdown-menu", async () => {
   const { createContext, useContext } = await import("react");
   const GroupContext = createContext(false);
   return {
@@ -104,13 +104,13 @@ describe("HelpLauncher", () => {
   it("links to the download page on web", () => {
     render(<HelpLauncher />);
     const link = screen.getByRole("link", { name: /Desktop app/ });
-    expect(link).toHaveAttribute("href", "https://multica.ai/download");
+    expect(link).toHaveAttribute("href", "https://marvis.ai/download");
   });
 
   it.each([
-    ["en", "https://multica.ai/docs"],
-    ["zh-Hans", "https://multica.ai/docs/zh"],
-    ["fr", "https://multica.ai/docs/fr"],
+    ["en", "https://marvis.ai/docs"],
+    ["zh-Hans", "https://marvis.ai/docs/zh"],
+    ["fr", "https://marvis.ai/docs/fr"],
   ])("links Docs to the %s docs", (language, href) => {
     i18nState.language = language;
     render(<HelpLauncher />);

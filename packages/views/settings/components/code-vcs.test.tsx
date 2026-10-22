@@ -24,8 +24,8 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
   queryOptions: <T,>(opts: T) => opts,
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/api", () => ({
   api: {
     connectVCS: mockConnect,
     rotateVCSWebhook: mockRotate,
@@ -99,7 +99,7 @@ describe("VCSConnectionRows", () => {
     listing.current.configured = false;
     renderWithI18n(<VCSConnectionRows />);
 
-    expect(screen.getByText("MULTICA_VCS_SECRET_KEY")).toBeInTheDocument();
+    expect(screen.getByText("MARVIS_VCS_SECRET_KEY")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Connect" })).toBeDisabled();
   });
 

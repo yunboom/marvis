@@ -21,20 +21,20 @@ import {
   Unlink,
   UserMinus,
 } from "lucide-react";
-import type { Issue } from "@multica/core/types";
-import { resolveWorkdirCopyTarget } from "@multica/core/issues";
-import { todayDateOnly, addDaysDateOnly } from "@multica/core/issues/date";
-import { api } from "@multica/core/api";
+import type { Issue } from "@marvis/core/types";
+import { resolveWorkdirCopyTarget } from "@marvis/core/issues";
+import { todayDateOnly, addDaysDateOnly } from "@marvis/core/issues/date";
+import { api } from "@marvis/core/api";
 import {
   PRIORITY_DISPLAY_ORDER,
   PRIORITY_CONFIG,
-} from "@multica/core/issues/config";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { stepHandsOff, workflowAllowsStatus, workflowStep } from "@multica/core/issue-workflows";
-import { useModalStore } from "@multica/core/modals";
+} from "@marvis/core/issues/config";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { stepHandsOff, workflowAllowsStatus, workflowStep } from "@marvis/core/issue-workflows";
+import { useModalStore } from "@marvis/core/modals";
 import { useIssueStatusOptions } from "../utils/status-options";
-import { issueKeys } from "@multica/core/issues/queries";
+import { issueKeys } from "@marvis/core/issues/queries";
 import { StatusIcon } from "../components/status-icon";
 import { PriorityIcon } from "../components/priority-icon";
 import {
@@ -43,15 +43,15 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuSeparator,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   ContextMenuItem,
   ContextMenuSub,
   ContextMenuSubTrigger,
   ContextMenuSubContent,
   ContextMenuSeparator,
-} from "@multica/ui/components/ui/context-menu";
-import { copyText } from "@multica/ui/lib/clipboard";
+} from "@marvis/ui/components/ui/context-menu";
+import { copyText } from "@marvis/ui/lib/clipboard";
 import type { UseIssueActionsResult } from "./use-issue-actions";
 import { PluginHookMenuItems, PluginModalMenuItems } from "../../plugins";
 import { useT } from "../../i18n";

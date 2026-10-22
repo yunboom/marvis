@@ -6,7 +6,7 @@ import (
 )
 
 // StableExecutablePath maps a self-executable path to the path that should be
-// recorded wherever a multica invocation has to outlive a brew upgrade — the
+// recorded wherever a marvis invocation has to outlive a brew upgrade — the
 // daemon's binary-update restart target and a boot-autostart entry's
 // ExecStart/ProgramArguments.
 //
@@ -22,7 +22,7 @@ import (
 //
 // brewInstall and brewPrefix are the caller's detection facts:
 //
-//	brewInstall=true,  prefix!=""  -> <prefix>/bin/multica (stable brew symlink)
+//	brewInstall=true,  prefix!=""  -> <prefix>/bin/marvis (stable brew symlink)
 //	brewInstall=true,  prefix==""  -> path unchanged; the caller decides how to
 //	                                  report a brew install whose prefix it
 //	                                  could not resolve
@@ -40,7 +40,7 @@ func StableExecutablePath(path, brewPrefix string, brewInstall bool) string {
 			// filepath.Join, as the daemon has always done: brew only exists
 			// on unix where the separators coincide anyway, and matching the
 			// historical mapping keeps every existing expectation intact.
-			return filepath.Join(brewPrefix, "bin", "multica")
+			return filepath.Join(brewPrefix, "bin", "marvis")
 		}
 		return path
 	}

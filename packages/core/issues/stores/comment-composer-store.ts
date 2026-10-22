@@ -35,7 +35,7 @@ export const useCommentComposerStore = create<CommentComposerStore>()(
       setRunningAgentReply: (runningAgentReply) => set({ runningAgentReply }),
     }),
     {
-      name: "multica_comment_composer",
+      name: "marvis_comment_composer",
       storage: createJSONStorage(() => defaultStorage),
     },
   ),

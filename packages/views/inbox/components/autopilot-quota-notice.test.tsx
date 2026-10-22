@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { InboxItem } from "@multica/core/types";
+import type { InboxItem } from "@marvis/core/types";
 import en from "../../locales/en/inbox.json";
 import { AutopilotQuotaNotice } from "./autopilot-quota-notice";
 

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { buttonVariants } from "@multica/ui/components/ui/button";
-import { useT } from "@multica/views/i18n";
+import { buttonVariants } from "@marvis/ui/components/ui/button";
+import { useT } from "@marvis/views/i18n";
 
 export default function NotFound() {
   const { t } = useT("common");
@@ -16,7 +16,7 @@ export default function NotFound() {
         {t(($) => $.not_found.description)}
       </p>
       <Link href="/" className={buttonVariants({ className: "mt-2" })}>
-        {t(($) => $.not_found.back_to_multica)}
+        {t(($) => $.not_found.back_to_marvis)}
       </Link>
     </main>
   );

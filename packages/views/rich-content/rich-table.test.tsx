@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 
 const copyText = vi.hoisted(() => vi.fn(async () => true));
-vi.mock("@multica/ui/lib/clipboard", () => ({ copyText }));
+vi.mock("@marvis/ui/lib/clipboard", () => ({ copyText }));
 
 vi.mock("../issues/hooks", () => ({
   useResolveIssueIdentifier: () => null,
@@ -25,13 +25,13 @@ vi.mock("../i18n", async () => {
   return { useT: () => ({ t }), useTimeAgo: () => "just now" };
 });
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { getAttachmentTextContent: vi.fn() },
   PreviewTooLargeError: class extends Error {},
   PreviewUnsupportedError: class extends Error {},
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({ issueDetail: (id: string) => `/acme/issues/${id}` }),
   useWorkspaceSlug: () => "acme",
 }));
@@ -91,7 +91,7 @@ describe("RichTable", () => {
       expect(table).toHaveAttribute("data-column-widths");
       expect(table.closest(".rich-table")).not.toHaveAttribute("data-resized");
       expect(screen.queryByRole("button", { name: "Reset widths" })).toBeNull();
-      expect(window.localStorage.getItem("multica:rich-table-widths")).toBeNull();
+      expect(window.localStorage.getItem("marvis:rich-table-widths")).toBeNull();
     } finally {
       rect.mockRestore();
       clientWidth.mockRestore();
@@ -106,7 +106,7 @@ describe("RichTable", () => {
 
     expect(table).toHaveAttribute("data-column-widths");
     expect(table.querySelectorAll("colgroup col")).toHaveLength(3);
-    expect(window.localStorage.getItem("multica:rich-table-widths")).toContain("widths");
+    expect(window.localStorage.getItem("marvis:rich-table-widths")).toContain("widths");
 
     // Widths belong to the table's content, so a fresh mount restores them.
     unmount();
@@ -116,7 +116,7 @@ describe("RichTable", () => {
     await userEvent.click(screen.getByRole("button", { name: "Reset widths" }));
     expect(remounted.table).not.toHaveAttribute("data-column-widths");
     expect(remounted.table.querySelectorAll("colgroup col")).toHaveLength(0);
-    expect(window.localStorage.getItem("multica:rich-table-widths")).toBe("{}");
+    expect(window.localStorage.getItem("marvis:rich-table-widths")).toBe("{}");
   });
 
   it("keeps a handle's height after a click, so a double-click lands", () => {

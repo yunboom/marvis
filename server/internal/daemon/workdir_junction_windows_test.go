@@ -24,7 +24,7 @@ import (
 func junctionedWorkspacesRoot(t *testing.T) (root, target string) {
 	t.Helper()
 	target = t.TempDir()
-	root = filepath.Join(t.TempDir(), "multica_workspaces")
+	root = filepath.Join(t.TempDir(), "marvis_workspaces")
 	createJunction(t, target, root)
 	return root, target
 }

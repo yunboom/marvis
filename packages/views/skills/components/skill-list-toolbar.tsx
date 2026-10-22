@@ -14,12 +14,12 @@ import {
   X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { labelListOptions } from "@multica/core/labels/queries";
-import type { Agent, Label, MemberWithUser } from "@multica/core/types";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { labelListOptions } from "@marvis/core/labels/queries";
+import type { Agent, Label, MemberWithUser } from "@marvis/core/types";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -32,20 +32,20 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { Input } from "@multica/ui/components/ui/input";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
-import { Switch } from "@multica/ui/components/ui/switch";
+} from "@marvis/ui/components/ui/popover";
+import { Switch } from "@marvis/ui/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
-import { ActorAvatar } from "@multica/ui/components/common/actor-avatar";
+} from "@marvis/ui/components/ui/tooltip";
+import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
 import { FILTER_ITEM_CLASS, HoverCheck } from "../../common/hover-check";
 import {
   type SkillColumnKey,
@@ -53,7 +53,7 @@ import {
   type SkillOriginType,
   type SkillSortDirection,
   type SkillSortField,
-} from "@multica/core/skills/stores";
+} from "@marvis/core/skills/stores";
 import { LabelChip } from "../../labels/label-chip";
 import { LabelManager } from "../../labels/label-manager";
 import {
@@ -61,7 +61,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import { useT } from "../../i18n";
 import type { SkillRow } from "./skill-list-filter";
 import { PAGE_TOOLBAR } from "../../layout/page-header";

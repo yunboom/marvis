@@ -16,7 +16,7 @@
 
 import { useState, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../i18n";
 import "./styles/code.css";
 

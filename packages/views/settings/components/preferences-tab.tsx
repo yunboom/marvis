@@ -9,46 +9,46 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@multica/ui/components/ui/select";
-import { Switch } from "@multica/ui/components/ui/switch";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
+} from "@marvis/ui/components/ui/select";
+import { Switch } from "@marvis/ui/components/ui/switch";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/popover";
 import {
   Command,
   CommandEmpty,
   CommandInput,
   CommandItem,
   CommandList,
-} from "@multica/ui/components/ui/command";
-import { useTheme } from "@multica/ui/components/common/theme-provider";
+} from "@marvis/ui/components/ui/command";
+import { useTheme } from "@marvis/ui/components/common/theme-provider";
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   type SupportedLocale,
-} from "@multica/core/i18n";
-import { useLocaleAdapter } from "@multica/core/i18n/react";
-import { useAuthStore } from "@multica/core/auth";
-import { useChatStore } from "@multica/core/chat";
+} from "@marvis/core/i18n";
+import { useLocaleAdapter } from "@marvis/core/i18n/react";
+import { useAuthStore } from "@marvis/core/auth";
+import { useChatStore } from "@marvis/core/chat";
 import {
   useCommentComposerStore,
   type RunningAgentReply,
-} from "@multica/core/issues/stores";
+} from "@marvis/core/issues/stores";
 import {
   useIssueOpeningStore,
   type IssueOpenMode,
-} from "@multica/core/issues/stores/issue-opening-store";
+} from "@marvis/core/issues/stores/issue-opening-store";
 import {
   MANUAL_CREATE_FIELDS,
   QUICK_CREATE_FIELDS,
   useIssueCreateSettingsStore,
   type ManualCreateField,
   type QuickCreateField,
-} from "@multica/core/issues/stores/issue-create-settings-store";
-import { api } from "@multica/core/api";
+} from "@marvis/core/issues/stores/issue-create-settings-store";
+import { api } from "@marvis/core/api";
 import { browserTimezone, timezoneOptions } from "../../common/timezone-select";
 import { SegmentedToggle } from "../../common/segmented-toggle";
 import { useT } from "../../i18n";

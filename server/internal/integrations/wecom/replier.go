@@ -16,9 +16,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	"github.com/multica-ai/multica/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/marvis-ai/marvis/server/internal/util"
 )
 
 // defaultBindingPath is where the web app serves the bind page.
@@ -65,16 +65,16 @@ type OutboundReplierConfig struct {
 	Senders *sendersRegistry
 
 	// Languages resolves the notice's DESTINATION to a copy language
-	// (language.go): a 1:1 reads the sender's own Multica profile, a room
+	// (language.go): a 1:1 reads the sender's own Marvis profile, a room
 	// reads the deployment default. Nil — and every unbound sender, which
 	// notably includes everyone the binding prompt is FOR — gets the
 	// deployment default.
 	Languages languageLookup
 
-	// AppURL is the Multica web app host the user clicks into to redeem
-	// the binding token (e.g. https://multica.example). It comes from
-	// MULTICA_APP_URL (falling back to FRONTEND_ORIGIN) and is
-	// intentionally separate from MULTICA_PUBLIC_URL, which is the
+	// AppURL is the Marvis web app host the user clicks into to redeem
+	// the binding token (e.g. https://marvis.example). It comes from
+	// MARVIS_APP_URL (falling back to FRONTEND_ORIGIN) and is
+	// intentionally separate from MARVIS_PUBLIC_URL, which is the
 	// backend/API URL — the bind page (/wecom/bind) is served by the web
 	// app, so the link must point at the app host.
 	AppURL      string
@@ -227,7 +227,7 @@ func (r *OutboundReplier) sendBindingPrompt(ctx context.Context, inst engine.Res
 	// the redeemer belongs to the token's workspace, and the bind page redeems
 	// on load as whoever is signed in. Sending it to msg.Source.ChatID — which
 	// in a group IS the group — would let any member click first and bind the
-	// sender's WeCom userid to their own Multica account, after which the
+	// sender's WeCom userid to their own Marvis account, after which the
 	// sender's messages (/issue included) resolve to the hijacker. So deliver
 	// the link privately to the sender's own userid with chat_type=1 (the same
 	// address outbound.go uses for inbox pushes), never to the room. Lark's

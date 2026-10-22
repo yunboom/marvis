@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
-import type { Attachment } from "@multica/core/types";
+import type { Attachment } from "@marvis/core/types";
 
 const { downloadMock, getBaseUrlMock, toastErrorMock } = vi.hoisted(() => ({
   downloadMock: vi.fn(),
@@ -18,7 +18,7 @@ const { downloadMock, getBaseUrlMock, toastErrorMock } = vi.hoisted(() => ({
 
 vi.mock("../platform", () => ({ openExternal: vi.fn() }));
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { getBaseUrl: getBaseUrlMock, getAttachmentTextContent: vi.fn() },
   PreviewTooLargeError: class extends Error {},
   PreviewUnsupportedError: class extends Error {},

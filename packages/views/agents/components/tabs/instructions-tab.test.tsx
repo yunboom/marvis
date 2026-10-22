@@ -3,7 +3,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Agent } from "@multica/core/types";
+import type { Agent } from "@marvis/core/types";
 import { renderWithI18n } from "../../../test/i18n";
 import { InstructionsTab } from "./instructions-tab";
 

@@ -1,7 +1,7 @@
 package telegram
 
 // Outbound media: the last hop for files an agent produced. The agent side is
-// platform-agnostic — `multica attachment upload <path>` puts the file in
+// platform-agnostic — `marvis attachment upload <path>` puts the file in
 // object storage and CompleteTask binds it to the assistant message. This file
 // sends those attachments into the Telegram chat once the reply text has
 // settled, each as its own sendPhoto / sendDocument / … message (Telegram has
@@ -26,9 +26,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // Bot API upload ceilings: 10 MB for a photo, 50 MB for anything else. A photo
@@ -58,12 +58,12 @@ const (
 	// upload, a shed delivery, and a send whose response was lost after
 	// Telegram accepted it — so it claims nothing about what did or did not
 	// land.
-	attachmentNoticeText = "⚠️ I couldn't confirm that every file from this reply reached Telegram. Anything missing is still attached to the reply in Multica."
+	attachmentNoticeText = "⚠️ I couldn't confirm that every file from this reply reached Telegram. Anything missing is still attached to the reply in Marvis."
 	// attachmentLookupFailedText: the lookup itself failed, so whether the
 	// reply had files at all is unknown. Saying nothing would leave a member
 	// waiting for a file the text refers to; claiming a file existed would
 	// be a guess.
-	attachmentLookupFailedText = "⚠️ I couldn't check whether this reply had files attached, so if it did, they were not sent. They stay attached to the reply in Multica."
+	attachmentLookupFailedText = "⚠️ I couldn't check whether this reply had files attached, so if it did, they were not sent. They stay attached to the reply in Marvis."
 )
 
 // EnableFileDelivery turns on the attachment hop. Call at boot, before
@@ -110,7 +110,7 @@ func (o *Outbound) deliverAttachments(ctx context.Context, reply *terminalReply)
 	case attachmentSlots <- struct{}{}:
 	default:
 		// Every slot is uploading. The files are known to exist, so this is
-		// said, not just logged; they stay in Multica.
+		// said, not just logged; they stay in Marvis.
 		o.logger.WarnContext(ctx, "telegram outbound: attachment delivery shed, every slot busy",
 			"attachments", len(rows), "chat_message_id", uuidText(messageID))
 		o.tellUser(ctx, api, target, attachmentNoticeText)

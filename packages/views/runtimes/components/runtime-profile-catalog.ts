@@ -2,7 +2,7 @@ import {
   RUNTIME_PROFILE_RUNTIME_TYPES,
   type RuntimeProfile,
   type RuntimeProfileType,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 
 // A single row in the runtimes catalog the management dialog renders: the
 // built-in runtime targets ship as read-only reference rows, while custom

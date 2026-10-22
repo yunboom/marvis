@@ -16,7 +16,7 @@ import (
 
 // hermesEscapedHolderEnv carries the path the re-executed helper records its
 // identity in. Empty means this process is the ordinary test run.
-const hermesEscapedHolderEnv = "MULTICA_FAKE_HERMES_ESCAPED_HOLDER"
+const hermesEscapedHolderEnv = "MARVIS_FAKE_HERMES_ESCAPED_HOLDER"
 
 // hermesEscapedHolderBound is what the daemon's shutdown may cost: the drain
 // grace, then a forced shutdown whose own cost is one cmd.Wait() on an

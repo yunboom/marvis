@@ -2088,7 +2088,7 @@ func (q *Queries) SetIssueMetadataKey(ctx context.Context, arg SetIssueMetadataK
 }
 
 const updateIssue = `-- name: UpdateIssue :one
-WITH wakeup_source AS MATERIALIZED (SELECT set_config('multica.source_task_id', COALESCE($3::uuid::text, ''), true)), candidate AS MATERIALIZED (
+WITH wakeup_source AS MATERIALIZED (SELECT set_config('marvis.source_task_id', COALESCE($3::uuid::text, ''), true)), candidate AS MATERIALIZED (
     -- FOR UPDATE, so every next_* value below is computed from the row this
     -- statement is about to write rather than from the snapshot the statement
     -- started with. Without it a write that waits here behind a concurrent one
@@ -2283,7 +2283,7 @@ func (q *Queries) UpdateIssue(ctx context.Context, arg UpdateIssueParams) (Issue
 }
 
 const updateIssueStatus = `-- name: UpdateIssueStatus :one
-WITH wakeup_source AS MATERIALIZED (SELECT set_config('multica.source_task_id', COALESCE($4::uuid::text, ''), true))
+WITH wakeup_source AS MATERIALIZED (SELECT set_config('marvis.source_task_id', COALESCE($4::uuid::text, ''), true))
 UPDATE issue AS i SET
     status = $2,
     -- Same rule as UpdateIssue: a mark only survives cancelled -> cancelled.

@@ -1,6 +1,6 @@
 import { cleanup, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { IssueWorkflow, Project } from "@multica/core/types";
+import type { IssueWorkflow, Project } from "@marvis/core/types";
 import { renderWithI18n } from "../test/i18n";
 import { ProjectWorkflowControl } from "./project-workflow-row";
 
@@ -18,12 +18,12 @@ const releaseWorkflow = {
 } as IssueWorkflow;
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: [] }) }));
-vi.mock("@multica/core/api", () => ({ api: {}, clientErrorMessage: () => null }));
-vi.mock("@multica/core/config", () => ({ useFeatureEnabled: () => true }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
-vi.mock("@multica/core/paths", () => ({ useWorkspacePaths: () => ({ settings: () => "/settings" }) }));
-vi.mock("@multica/core/projects/queries", () => ({ projectListOptions: () => ({}) }));
-vi.mock("@multica/core/issue-workflows", () => ({
+vi.mock("@marvis/core/api", () => ({ api: {}, clientErrorMessage: () => null }));
+vi.mock("@marvis/core/config", () => ({ useFeatureEnabled: () => true }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
+vi.mock("@marvis/core/paths", () => ({ useWorkspacePaths: () => ({ settings: () => "/settings" }) }));
+vi.mock("@marvis/core/projects/queries", () => ({ projectListOptions: () => ({}) }));
+vi.mock("@marvis/core/issue-workflows", () => ({
   useIssueWorkflows: () => ({ workflows: [releaseWorkflow] }),
   resolveProjectWorkflow: () => releaseWorkflow,
   handoffStepCount: () => 3,
@@ -35,7 +35,7 @@ vi.mock("./workflow-mapping-dialog", () => ({ WorkflowMappingDialog: () => null 
 
 afterEach(cleanup);
 
-const project = { id: "project-1", title: "Multica 线上发布", workflow_id: "wf-release" } as Project;
+const project = { id: "project-1", title: "Marvis 线上发布", workflow_id: "wf-release" } as Project;
 
 describe("ProjectWorkflowControl", () => {
   // MUL-8119: in the narrow project sidebar the handoff count used to keep its

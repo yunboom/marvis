@@ -45,7 +45,7 @@ var museBlockedArgs = map[string]blockedArgMode{
 // passes its own skip-approvals flag.
 const museApprovalMode = "allowAll"
 
-// museLauncherVersion identifies Multica's MSP client in the handshake. Muse
+// museLauncherVersion identifies Marvis's MSP client in the handshake. Muse
 // records clientInfo for diagnostics and telemetry only; it carries no
 // authority, so this is a stable identifier rather than the daemon version.
 const museLauncherVersion = "0.1.0"
@@ -67,7 +67,7 @@ var (
 // unit of work is submitted with `turn/start`, which answers immediately and
 // completes through `turn/completed`. Assistant text, reasoning and tool calls
 // arrive as transcript items (`item/started`, `item/delta`, `item/completed`),
-// so the adapter's job is to fold those items into Multica's Message stream and
+// so the adapter's job is to fold those items into Marvis's Message stream and
 // to read the terminal turn outcome.
 //
 // Approval is a session property, not a launch flag. A fresh session is created
@@ -436,7 +436,7 @@ func (b *museBackend) Execute(ctx context.Context, prompt string, opts ExecOptio
 	runCtx, cancel := runContext(ctx, opts.Timeout)
 	// --disable-sandbox and --trust-workspace mirror what --yolo enables for a
 	// terminal run: the daemon owns the worktree and must let the agent use it,
-	// and the Multica brief lives in the workdir as AGENTS.md, which Muse only
+	// and the Marvis brief lives in the workdir as AGENTS.md, which Muse only
 	// reads for a trusted workspace. Approval stays on the wire
 	// (session/start approvalMode) instead of argv. --disable-request-user-input
 	// withholds the clarify tool, because a claimed task has no surface to
@@ -616,7 +616,7 @@ func (b *museBackend) Execute(ctx context.Context, prompt string, opts ExecOptio
 
 		if _, err := client.request(handshakeCtx, "initialize", map[string]any{
 			"clientInfo": map[string]any{
-				"name":    "multica_agent",
+				"name":    "marvis_agent",
 				"version": museLauncherVersion,
 			},
 			"capabilities": map[string]any{},
@@ -1002,8 +1002,8 @@ func museToolInput(raw json.RawMessage) map[string]any {
 	return map[string]any{"arguments": text}
 }
 
-// museTokenUsage maps MSP's per-turn counters onto Multica's TokenUsage. The
-// four Multica fields are mutually exclusive: MSP reports promptTokens including
+// museTokenUsage maps MSP's per-turn counters onto Marvis's TokenUsage. The
+// four Marvis fields are mutually exclusive: MSP reports promptTokens including
 // the cached prefix, so cache reads are subtracted out of the input total rather
 // than added to it.
 func (u TokenUsage) reported() bool {

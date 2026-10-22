@@ -32,11 +32,11 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import type { Reaction, TimelineEntry } from "@multica/core/types";
+import type { Reaction, TimelineEntry } from "@marvis/core/types";
 import {
   commentLandingTarget,
   isDeletedComment,
-} from "@multica/core/issues/comment-deletion";
+} from "@marvis/core/issues/comment-deletion";
 import { Text } from "@/components/ui/text";
 import { ActorAvatar } from "@/components/ui/actor-avatar";
 import { useActorLookup } from "@/data/use-actor-name";

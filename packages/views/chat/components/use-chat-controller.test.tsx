@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { Agent, ChatPendingTask, ChatSession, Project } from "@multica/core/types";
+import type { Agent, ChatPendingTask, ChatSession, Project } from "@marvis/core/types";
 
 interface QueuedRestore {
   id: string;
@@ -83,19 +83,19 @@ const h = vi.hoisted(() => {
   };
 });
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/platform", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/platform", () => ({
   getCurrentWsId: () => "ws-1",
 }));
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: (sel: (s: { user: { id: string } }) => unknown) =>
     sel({ user: { id: "user-1" } }),
 }));
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   agentListOptions: () => ({ queryKey: ["agents"] }),
   memberListOptions: () => ({ queryKey: ["members"] }),
 }));
-vi.mock("@multica/core/projects/queries", () => ({
+vi.mock("@marvis/core/projects/queries", () => ({
   projectListOptions: () => ({ queryKey: ["projects"] }),
 }));
 // Steerable per test: the invoke rule is what decides whether an OPEN session's
@@ -106,7 +106,7 @@ vi.mock("../../issues/components/pickers/assignee-picker", () => ({
     invokableAgentIds.current === null ||
     invokableAgentIds.current.includes(agent.id),
 }));
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   ApiError: class ApiError extends Error {
     constructor(
       message: string,
@@ -125,17 +125,17 @@ vi.mock("@multica/core/api", () => ({
   // failures have no reason code.
   dispatchReasonCode: () => undefined,
 }));
-vi.mock("@multica/core/agents", () => ({
+vi.mock("@marvis/core/agents", () => ({
   isAgentRuntimeBound: (agent: { runtime_id: string; runtime_bound?: boolean }) =>
     agent.runtime_bound !== false && agent.runtime_id.length > 0,
   useAgentPresenceDetail: () => ({ availability: "online" }),
   useCustomizeConversationStartersHref: () => null,
   useWorkspaceAgentAvailability: () => "available",
 }));
-vi.mock("@multica/core/hooks/use-file-upload", () => ({
+vi.mock("@marvis/core/hooks/use-file-upload", () => ({
   useFileUpload: () => ({ uploadWithToast: vi.fn() }),
 }));
-vi.mock("@multica/core/chat/mutations", () => ({
+vi.mock("@marvis/core/chat/mutations", () => ({
   useCreateChatSession: () => ({ mutateAsync: h.createSessionMutate }),
   useMarkChatSessionRead: () => ({ mutate: h.markReadMutate }),
   useSetChatSessionArchived: () => ({ mutate: h.archivedMutate }),
@@ -148,16 +148,16 @@ vi.mock("@multica/core/chat/mutations", () => ({
 vi.mock("../../common/use-app-foreground", () => ({
   useAppForeground: () => h.appForeground.value,
 }));
-vi.mock("@multica/core/chat", () => ({
+vi.mock("@marvis/core/chat", () => ({
   useChatStore: Object.assign(
     (sel: (s: typeof h.store) => unknown) => sel(h.store),
     { getState: () => h.store },
   ),
 }));
-vi.mock("@multica/core/realtime", () => ({
+vi.mock("@marvis/core/realtime", () => ({
   removeChatMessageFromCaches: h.removeFromCaches,
 }));
-vi.mock("@multica/core/logger", () => ({
+vi.mock("@marvis/core/logger", () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
 vi.mock("../../i18n", () => ({ useT: () => ({ t: () => "x" }) }));
@@ -192,7 +192,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 import { useChatController } from "./use-chat-controller";
-import { api, ApiError } from "@multica/core/api";
+import { api, ApiError } from "@marvis/core/api";
 
 // --- Fixtures ---------------------------------------------------------------
 function makeSession(

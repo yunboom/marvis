@@ -8,17 +8,17 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { setApiInstance } from "@multica/core/api";
-import type { ApiClient } from "@multica/core/api/client";
+import { setApiInstance } from "@marvis/core/api";
+import type { ApiClient } from "@marvis/core/api/client";
 import {
   BUILT_IN_STATUS_CATEGORY,
   BUILT_IN_STATUS_ORDER,
-} from "@multica/core/issues/config";
+} from "@marvis/core/issues/config";
 import {
   type InboxPriorityFilterSupport,
   useInboxFilterStore,
-} from "@multica/core/inbox/filter-store";
-import type { InboxItem, IssueStatusEntry } from "@multica/core/types";
+} from "@marvis/core/inbox/filter-store";
+import type { InboxItem, IssueStatusEntry } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { InboxFilterMenu } from "./inbox-filter-menu";
 
@@ -26,10 +26,10 @@ import { InboxFilterMenu } from "./inbox-filter-menu";
 // this leaf render has none of — stubbed the same way the sibling
 // inbox-detail-label suite stubs it.
 const ACTOR_NAMES: Record<string, string> = { alice: "Alice", bob: "Bob" };
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({
     getActorName: (type: string, id: string) =>
-      type === "system" ? "Multica" : (ACTOR_NAMES[id] ?? "Unknown"),
+      type === "system" ? "Marvis" : (ACTOR_NAMES[id] ?? "Unknown"),
     getActorInitials: () => "??",
     getActorAvatarUrl: () => null,
   }),

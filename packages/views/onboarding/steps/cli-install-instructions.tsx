@@ -2,15 +2,15 @@
 
 import { useState, type ReactNode } from "react";
 import { Check, Copy, Terminal } from "lucide-react";
-import { Card, CardContent } from "@multica/ui/components/ui/card";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { CODE_LIGATURE_CLASS } from "@multica/ui/lib/code-style";
-import { cn } from "@multica/ui/lib/utils";
-import { copyText } from "@multica/ui/lib/clipboard";
+import { Card, CardContent } from "@marvis/ui/components/ui/card";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { CODE_LIGATURE_CLASS } from "@marvis/ui/lib/code-style";
+import { cn } from "@marvis/ui/lib/utils";
+import { copyText } from "@marvis/ui/lib/clipboard";
 import { CliInstallCommand } from "../../common/cli-install-command";
 import { useT } from "../../i18n";
 
-const SETUP_CMD = "multica setup";
+const SETUP_CMD = "marvis setup";
 
 function CopyButton({ text }: { text: string }) {
   const { t } = useT("onboarding");
@@ -82,7 +82,7 @@ function Step({
  * CLI install instructions — two copy-and-run commands. Step 1 is the public
  * install script, which differs per OS and so renders through
  * `CliInstallCommand`'s platform switch; step 2 is the cloud
- * `multica setup`, hardcoded because the CLI itself knows the endpoints for
+ * `marvis setup`, hardcoded because the CLI itself knows the endpoints for
  * it. Local development tests a self-host variant by typing the extended
  * command directly in the terminal; no need to thread env vars through React.
  */

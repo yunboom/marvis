@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { isRouteErrorResponse, useLocation, useRouteError } from "react-router-dom";
 import { AlertTriangle, Compass, RotateCw, Send, X } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import type { DesktopRouteErrorFeedbackContext } from "@multica/core/feedback";
-import { useModalStore } from "@multica/core/modals";
+import { Button } from "@marvis/ui/components/ui/button";
+import type { DesktopRouteErrorFeedbackContext } from "@marvis/core/feedback";
+import { useModalStore } from "@marvis/core/modals";
 import { useTabStore } from "@/stores/tab-store";
 
 export function createRouteErrorFeedbackContext({

@@ -15,42 +15,42 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { DialogTitle } from "@multica/ui/components/ui/dialog";
+import { DialogTitle } from "@marvis/ui/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { Button } from "@multica/ui/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@multica/ui/components/ui/tooltip";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { Switch } from "@multica/ui/components/ui/switch";
-import { cn } from "@multica/ui/lib/utils";
-import { api, ApiError } from "@multica/core/api";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useCurrentWorkspace, useWorkspacePaths } from "@multica/core/paths";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@marvis/ui/components/ui/tooltip";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { Switch } from "@marvis/ui/components/ui/switch";
+import { cn } from "@marvis/ui/lib/utils";
+import { api, ApiError } from "@marvis/core/api";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useCurrentWorkspace, useWorkspacePaths } from "@marvis/core/paths";
 import { AppLink, resolveClickIntent } from "../navigation";
-import { agentListOptions, squadListOptions } from "@multica/core/workspace/queries";
-import { projectListOptions } from "@multica/core/projects/queries";
+import { agentListOptions, squadListOptions } from "@marvis/core/workspace/queries";
+import { projectListOptions } from "@marvis/core/projects/queries";
 import {
   useQuickCreateStore,
   type QuickCreateActorType,
-} from "@multica/core/issues/stores/quick-create-store";
+} from "@marvis/core/issues/stores/quick-create-store";
 import {
   useIssueCreateSettingsStore,
   type QuickCreateField,
-} from "@multica/core/issues/stores/issue-create-settings-store";
-import { useIssueDraftStore, type IssueCreateDraft } from "@multica/core/issues/stores/draft-store";
-import { useCreateModeStore } from "@multica/core/issues/stores/create-mode-store";
+} from "@marvis/core/issues/stores/issue-create-settings-store";
+import { useIssueDraftStore, type IssueCreateDraft } from "@marvis/core/issues/stores/draft-store";
+import { useCreateModeStore } from "@marvis/core/issues/stores/create-mode-store";
 import {
   runtimeListOptions,
   checkQuickCreateCliVersion,
   checkQuickCreateFieldsCliVersion,
   readRuntimeCliVersion,
-} from "@multica/core/runtimes";
-import { useShortcut } from "@multica/core/shortcuts";
+} from "@marvis/core/runtimes";
+import { useShortcut } from "@marvis/core/shortcuts";
 import { ShortcutKeycaps } from "../common/shortcut-keycaps";
 import { DeferredTooltip } from "../common/deferred-tooltip";
 import {
@@ -59,21 +59,21 @@ import {
   type IssuePriority,
   type SourceContextPreview,
   type Squad,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { ActorAvatar } from "../common/actor-avatar";
 import { ClearablePillButton, PillButton } from "../common/pill-button";
 import { ProjectPicker } from "../projects/components/project-picker";
 import { DueDatePicker, PriorityIcon, PriorityPicker } from "../issues/components";
 import { canAssignAgent } from "../issues/components/pickers/assignee-picker";
-import { isAgentRuntimeBound } from "@multica/core/agents";
+import { isAgentRuntimeBound } from "@marvis/core/agents";
 import {
   PropertyPicker,
   PickerItem,
   PickerSection,
   PickerEmpty,
 } from "../issues/components/pickers/property-picker";
-import { useAuthStore } from "@multica/core/auth";
-import { memberListOptions } from "@multica/core/workspace/queries";
+import { useAuthStore } from "@marvis/core/auth";
+import { memberListOptions } from "@marvis/core/workspace/queries";
 import {
   ContentEditor,
   type ContentEditorRef,
@@ -83,7 +83,7 @@ import {
   useComposerSubmit,
 } from "../editor";
 import { useIssueCreateUploads } from "./use-issue-create-uploads";
-import { FileUploadButton } from "@multica/ui/components/common/file-upload-button";
+import { FileUploadButton } from "@marvis/ui/components/common/file-upload-button";
 import { useT } from "../i18n";
 import { matchesPinyin } from "../editor/extensions/pinyin-match";
 import { SourceContextPreviewCard, useSourceContextFailureMessage } from "./source-context-preview";
@@ -327,7 +327,7 @@ export function AgentCreatePanel({
   }, [setActiveMode]);
 
   // Daemon CLI version gate. The agent-create flow needs the runtime's
-  // bundled multica CLI to be ≥ MIN_QUICK_CREATE_CLI_VERSION; older
+  // bundled marvis CLI to be ≥ MIN_QUICK_CREATE_CLI_VERSION; older
   // daemons handle attachments and partial-failure retries incorrectly
   // (see PR #1851 / MUL-1496). Pre-check on the picker so the user gets
   // immediate feedback instead of waiting for the inbox failure; the

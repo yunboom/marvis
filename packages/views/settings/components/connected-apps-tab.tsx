@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ApiError, errorCode } from "@multica/core/api";
-import { composioToolkitsOptions } from "@multica/core/composio";
-import { useFeatureEnabled } from "@multica/core/config";
-import { COMPOSIO_MCP_APPS_FLAG } from "@multica/core/feature-flags";
+import { ApiError, errorCode } from "@marvis/core/api";
+import { composioToolkitsOptions } from "@marvis/core/composio";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { COMPOSIO_MCP_APPS_FLAG } from "@marvis/core/feature-flags";
 import { useT } from "../../i18n";
 import { ComposioTab } from "./composio-tab";
 import { SettingsTab } from "./settings-layout";

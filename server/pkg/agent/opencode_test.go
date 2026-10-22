@@ -85,7 +85,7 @@ func TestOpencodeHandleToolUseEventCompleted(t *testing.T) {
 			State: &opencodeToolState{
 				Status: "completed",
 				Input:  json.RawMessage(`{"command":"pwd","description":"Prints current working directory path"}`),
-				Output: "/tmp/multica\n",
+				Output: "/tmp/marvis\n",
 			},
 		},
 	}
@@ -120,7 +120,7 @@ func TestOpencodeHandleToolUseEventCompleted(t *testing.T) {
 	if msg.CallID != "call_BHA1" {
 		t.Errorf("callID: got %q, want %q", msg.CallID, "call_BHA1")
 	}
-	if msg.Output != "/tmp/multica\n" {
+	if msg.Output != "/tmp/marvis\n" {
 		t.Errorf("output: got %q", msg.Output)
 	}
 }
@@ -324,7 +324,7 @@ func TestOpencodeEventParsingToolUseFixture(t *testing.T) {
 	t.Parallel()
 
 	// Real `tool_use` JSON from live `opencode run --format json` output.
-	line := `{"type":"tool_use","timestamp":1775117187163,"sessionID":"ses_abc","part":{"id":"prt_123","messageID":"msg_456","sessionID":"ses_abc","type":"tool","tool":"bash","callID":"call_BHA1","state":{"status":"completed","input":{"command":"pwd","description":"Prints current working directory path"},"output":"/tmp/multica\n","metadata":{"exit":0},"time":{"start":1775117187092,"end":1775117187162}}}}`
+	line := `{"type":"tool_use","timestamp":1775117187163,"sessionID":"ses_abc","part":{"id":"prt_123","messageID":"msg_456","sessionID":"ses_abc","type":"tool","tool":"bash","callID":"call_BHA1","state":{"status":"completed","input":{"command":"pwd","description":"Prints current working directory path"},"output":"/tmp/marvis\n","metadata":{"exit":0},"time":{"start":1775117187092,"end":1775117187162}}}}`
 
 	var event opencodeEvent
 	if err := json.Unmarshal([]byte(line), &event); err != nil {
@@ -356,7 +356,7 @@ func TestOpencodeEventParsingToolUseFixture(t *testing.T) {
 	}
 
 	// state.output should be a string
-	if output, ok := event.Part.State.Output.(string); !ok || output != "/tmp/multica\n" {
+	if output, ok := event.Part.State.Output.(string); !ok || output != "/tmp/marvis\n" {
 		t.Errorf("state.output: got %v (%T)", event.Part.State.Output, event.Part.State.Output)
 	}
 }
@@ -1195,7 +1195,7 @@ func fakeStat(present ...string) func(string) (os.FileInfo, error) {
 func TestResolveOpenCodeNativeFromShimResolvesNpmShim(t *testing.T) {
 	t.Parallel()
 
-	// Reporter's exact layout from multica#1717.
+	// Reporter's exact layout from marvis#1717.
 	shim := filepath.Join("C:\\nvm4w", "nodejs", "opencode.cmd")
 	native := filepath.Join("C:\\nvm4w", "nodejs", "node_modules", "opencode-ai", "node_modules", "opencode-windows-x64", "bin", "opencode.exe")
 
@@ -1457,7 +1457,7 @@ func TestOpencodeBackendNeverEmitsPromptFlag(t *testing.T) {
 	defer cancel()
 
 	// SystemPrompt is set deliberately; the backend must NOT forward it.
-	const brief = "the entire multica runtime brief"
+	const brief = "the entire marvis runtime brief"
 	session, err := backend.Execute(ctx, "do the thing", ExecOptions{
 		Cwd:          workDir,
 		SystemPrompt: brief,

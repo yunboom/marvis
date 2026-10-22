@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@multica/core/i18n/react";
-import { ApiError } from "@multica/core/api";
-import type { PRAutoComplete } from "@multica/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import { ApiError } from "@marvis/core/api";
+import type { PRAutoComplete } from "@marvis/core/types";
 import enCommon from "../../locales/en/common.json";
 import enIssues from "../../locales/en/issues.json";
 
 const TEST_RESOURCES = { en: { common: enCommon, issues: enIssues } };
 
 let mockAutoComplete: PRAutoComplete | null = null;
-vi.mock("@multica/core/github/queries", async () => {
-  const actual = await vi.importActual<typeof import("@multica/core/github/queries")>(
-    "@multica/core/github/queries",
+vi.mock("@marvis/core/github/queries", async () => {
+  const actual = await vi.importActual<typeof import("@marvis/core/github/queries")>(
+    "@marvis/core/github/queries",
   );
   return {
     ...actual,
@@ -27,8 +27,8 @@ const apiMock = vi.hoisted(() => ({
   linkIssuePullRequest: vi.fn(),
   setIssuePRAutoComplete: vi.fn(),
 }));
-vi.mock("@multica/core/api", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/api")>()),
+vi.mock("@marvis/core/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/api")>()),
   api: apiMock,
 }));
 const navigatePush = vi.hoisted(() => vi.fn());
@@ -36,10 +36,10 @@ vi.mock("../../navigation", () => ({
   useNavigation: () => ({ push: navigatePush }),
   AppLink: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
 let mockWorkspaceSettings: Record<string, unknown> = {};
-vi.mock("@multica/core/paths", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/paths")>()),
+vi.mock("@marvis/core/paths", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/paths")>()),
   useWorkspacePaths: () => ({ settings: () => "/acme/settings" }),
   useCurrentWorkspace: () => ({ id: "ws-1", slug: "acme", settings: mockWorkspaceSettings }),
 }));
@@ -102,7 +102,7 @@ describe("PullRequestsSection (MUL-7429)", () => {
     );
   });
 
-  it("explains a PR Multica has not received", async () => {
+  it("explains a PR Marvis has not received", async () => {
     apiMock.linkIssuePullRequest.mockRejectedValue(new ApiError("not found", 404, "Not Found"));
     renderSection();
     fireEvent.click(await screen.findByRole("button", { name: "Link pull request" }));
@@ -111,7 +111,7 @@ describe("PullRequestsSection (MUL-7429)", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Link" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Multica hasn’t received this PR yet. Check that its repository is connected.",
+      "Marvis hasn’t received this PR yet. Check that its repository is connected.",
     );
   });
 

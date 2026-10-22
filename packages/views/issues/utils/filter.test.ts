@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from "vitest";
-import type { Issue, IssueAssigneeGroup, ProjectStatus, PropertyFilterValue } from "@multica/core/types";
+import type { Issue, IssueAssigneeGroup, ProjectStatus, PropertyFilterValue } from "@marvis/core/types";
 import {
   applyIssueFilters,
   filterAssigneeGroups,

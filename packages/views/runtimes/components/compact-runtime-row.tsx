@@ -1,6 +1,6 @@
-import { cn } from "@multica/ui/lib/utils";
-import type { AgentRuntime } from "@multica/core/types";
-import { runtimeDisplayName } from "@multica/core/runtimes";
+import { cn } from "@marvis/ui/lib/utils";
+import type { AgentRuntime } from "@marvis/core/types";
+import { runtimeDisplayName } from "@marvis/core/runtimes";
 import { ProviderLogo } from "./provider-logo";
 import { useT } from "../../i18n";
 

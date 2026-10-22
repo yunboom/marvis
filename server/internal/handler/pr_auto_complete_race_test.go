@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // hookedTxStarter runs hook before starting a transaction, to schedule work

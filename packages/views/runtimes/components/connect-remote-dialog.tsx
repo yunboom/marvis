@@ -10,11 +10,11 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, ChevronRight, Copy, Terminal } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { runtimeKeys } from "@multica/core/runtimes/queries";
-import { useWSEvent } from "@multica/core/realtime";
-import { paths, useWorkspaceSlug } from "@multica/core/paths";
-import { useConfigStore } from "@multica/core/config";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { runtimeKeys } from "@marvis/core/runtimes/queries";
+import { useWSEvent } from "@marvis/core/realtime";
+import { paths, useWorkspaceSlug } from "@marvis/core/paths";
+import { useConfigStore } from "@marvis/core/config";
 import {
   Dialog,
   DialogContent,
@@ -22,24 +22,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Button } from "@multica/ui/components/ui/button";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { CODE_LIGATURE_CLASS } from "@multica/ui/lib/code-style";
-import { copyText } from "@multica/ui/lib/clipboard";
+} from "@marvis/ui/components/ui/dialog";
+import { Button } from "@marvis/ui/components/ui/button";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { CODE_LIGATURE_CLASS } from "@marvis/ui/lib/code-style";
+import { copyText } from "@marvis/ui/lib/clipboard";
 import {
   UI_EASE_OUT,
   UI_MOTION_DURATION,
-} from "@multica/ui/lib/motion";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/lib/motion";
+import { cn } from "@marvis/ui/lib/utils";
 import { CliInstallCommand } from "../../common/cli-install-command";
 import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 
 type Step = "instructions" | "success";
 
-const CLOUD_SERVER_URL = "https://api.multica.ai";
-const CLOUD_APP_URL = "https://multica.ai";
+const CLOUD_SERVER_URL = "https://api.marvis.ai";
+const CLOUD_APP_URL = "https://marvis.ai";
 
 function normalizeCommandURL(url: string | undefined) {
   return url?.trim().replace(/\/+$/, "") ?? "";
@@ -50,20 +50,20 @@ function daemonCommands(serverUrl: string | undefined, appUrl: string | undefine
   const normalizedAppUrl = normalizeCommandURL(appUrl);
   if (normalizedServerUrl && normalizedAppUrl) {
     return {
-      setupCmd: `multica setup self-host --server-url ${normalizedServerUrl} --app-url ${normalizedAppUrl}`,
-      tokenCmd: `multica config set server_url ${normalizedServerUrl}
-multica config set app_url ${normalizedAppUrl}
-multica login --token <YOUR_TOKEN>
-multica daemon start`,
+      setupCmd: `marvis setup self-host --server-url ${normalizedServerUrl} --app-url ${normalizedAppUrl}`,
+      tokenCmd: `marvis config set server_url ${normalizedServerUrl}
+marvis config set app_url ${normalizedAppUrl}
+marvis login --token <YOUR_TOKEN>
+marvis daemon start`,
     };
   }
 
   return {
-    setupCmd: "multica setup",
-    tokenCmd: `multica config set server_url ${CLOUD_SERVER_URL}
-multica config set app_url ${CLOUD_APP_URL}
-multica login --token <YOUR_TOKEN>
-multica daemon start`,
+    setupCmd: "marvis setup",
+    tokenCmd: `marvis config set server_url ${CLOUD_SERVER_URL}
+marvis config set app_url ${CLOUD_APP_URL}
+marvis login --token <YOUR_TOKEN>
+marvis daemon start`,
   };
 }
 
@@ -76,7 +76,7 @@ export function ConnectRemoteDialog({ onClose }: { onClose: () => void }) {
   const shouldReduceMotion = useReducedMotion() ?? false;
   const newRuntimeIdRef = useRef<string | null>(null);
 
-  // `multica setup` is one blocking command that handles config + login
+  // `marvis setup` is one blocking command that handles config + login
   // + daemon start; the dialog passively listens for the resulting
   // `daemon:register` WS event and auto-advances to success.
   const handleDaemonRegister = useCallback(
@@ -258,7 +258,7 @@ function InstructionsStep({ onClose }: { onClose: () => void }) {
         <div className="space-y-4">
           {/* Step 1 owns the platform switch: the install command differs by
               OS, so the user picks instead of us guessing. Step 2's
-              `multica setup` is platform-independent. */}
+              `marvis setup` is platform-independent. */}
           <CommandStep n={1} label={t(($) => $.connect.step1_label)}>
             <CliInstallCommand
               labels={{
@@ -339,7 +339,7 @@ function TroubleshootingDetails({ tokenCmd }: { tokenCmd: string }) {
                 CODE_LIGATURE_CLASS,
               )}
             >
-              {"multica daemon status"}
+              {"marvis daemon status"}
             </code>
           </li>
           <li className="flex items-center gap-1.5">
@@ -351,7 +351,7 @@ function TroubleshootingDetails({ tokenCmd }: { tokenCmd: string }) {
                 CODE_LIGATURE_CLASS,
               )}
             >
-              {"multica daemon logs -f"}
+              {"marvis daemon logs -f"}
             </code>
           </li>
         </ul>

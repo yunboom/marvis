@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
-import { EMPTY_APP_CONFIG } from "@multica/core/api/schemas";
-import type { AppConfigResponse } from "@multica/core/api/schemas";
-import type { Issue, TimelineEntry } from "@multica/core/types";
+import { EMPTY_APP_CONFIG } from "@marvis/core/api/schemas";
+import type { AppConfigResponse } from "@marvis/core/api/schemas";
+import type { Issue, TimelineEntry } from "@marvis/core/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/data/api";

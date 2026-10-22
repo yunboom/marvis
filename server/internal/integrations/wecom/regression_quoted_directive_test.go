@@ -26,7 +26,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
 )
 
 func quotedDirectiveCallback(directive string) aibotMsgCallback {

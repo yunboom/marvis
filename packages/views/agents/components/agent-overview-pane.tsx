@@ -2,16 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { Agent, AgentRuntime, MemberWithUser } from "@multica/core/types";
-import { providerSupportsMcpConfig } from "@multica/core/agents";
-import { useFeatureEnabled } from "@multica/core/config";
-import { COMPOSIO_MCP_APPS_FLAG } from "@multica/core/feature-flags";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { larkInstallationsOptions } from "@multica/core/lark";
-import { slackInstallationsOptions } from "@multica/core/slack";
-import { dingtalkInstallationsOptions } from "@multica/core/dingtalk";
-import { wecomInstallationsOptions } from "@multica/core/wecom";
-import { telegramInstallationsOptions } from "@multica/core/telegram";
+import type { Agent, AgentRuntime, MemberWithUser } from "@marvis/core/types";
+import { providerSupportsMcpConfig } from "@marvis/core/agents";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { COMPOSIO_MCP_APPS_FLAG } from "@marvis/core/feature-flags";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { larkInstallationsOptions } from "@marvis/core/lark";
+import { slackInstallationsOptions } from "@marvis/core/slack";
+import { dingtalkInstallationsOptions } from "@marvis/core/dingtalk";
+import { wecomInstallationsOptions } from "@marvis/core/wecom";
+import { telegramInstallationsOptions } from "@marvis/core/telegram";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +21,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { cn } from "@marvis/ui/lib/utils";
 import { PAGE_GUTTER, PAGE_RAIL } from "../../layout/page-header";
 import { ActivityTab } from "./tabs/activity-tab";
 import { InstructionsTab } from "./tabs/instructions-tab";

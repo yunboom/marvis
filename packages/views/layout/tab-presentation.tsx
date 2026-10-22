@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { issueStatusListOptions, buildIssueStatusCatalog } from "@multica/core/issue-statuses/queries";
+import { issueStatusListOptions, buildIssueStatusCatalog } from "@marvis/core/issue-statuses/queries";
 import {
   parseTabSubject,
   resolveTabPresentation,
@@ -12,26 +12,26 @@ import {
   type TabTitleSpec,
   type TabEntityData,
   type TabLabelKey,
-} from "@multica/core/paths";
-import { issueDetailOptions } from "@multica/core/issues/queries";
-import { projectDetailOptions } from "@multica/core/projects/queries";
-import { autopilotDetailOptions } from "@multica/core/autopilots/queries";
+} from "@marvis/core/paths";
+import { issueDetailOptions } from "@marvis/core/issues/queries";
+import { projectDetailOptions } from "@marvis/core/projects/queries";
+import { autopilotDetailOptions } from "@marvis/core/autopilots/queries";
 import {
   skillDetailOptions,
   agentListOptions,
   memberListOptions,
   squadListOptions,
-} from "@multica/core/workspace/queries";
-import { runtimeListOptions } from "@multica/core/runtimes/queries";
-import { runtimeDisplayName } from "@multica/core/runtimes";
-import { chatSessionsOptions } from "@multica/core/chat/queries";
+} from "@marvis/core/workspace/queries";
+import { runtimeListOptions } from "@marvis/core/runtimes/queries";
+import { runtimeDisplayName } from "@marvis/core/runtimes";
+import { chatSessionsOptions } from "@marvis/core/chat/queries";
 import {
   inboxListOptions,
   archivedInboxPagesOptions,
   archivedInboxLookupOptions,
-} from "@multica/core/inbox/queries";
-import { useInboxFilters } from "@multica/core/inbox/filter-store";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/inbox/queries";
+import { useInboxFilters } from "@marvis/core/inbox/filter-store";
+import { cn } from "@marvis/ui/lib/utils";
 import { StatusIcon } from "../issues/components";
 import { ProjectIcon } from "../projects/components/project-icon";
 import { ActorAvatar } from "../common/actor-avatar";
@@ -42,7 +42,7 @@ import { ROUTE_ICON_COMPONENTS } from "./route-icon-components";
 /**
  * Desktop tab presentation: turn a tab URL into a leading visual and a title,
  * live from the query cache. This is the view half of the contract whose pure
- * core is `@multica/core/paths` (`parseTabSubject` + `resolveTabPresentation`).
+ * core is `@marvis/core/paths` (`parseTabSubject` + `resolveTabPresentation`).
  *
  * Cache-only reads: every query in `useTabEntityData` is `enabled: false`. It
  * observes whatever the pages/directory already loaded and re-renders when that

@@ -21,7 +21,7 @@ import type { AgentDraft } from "./draft";
  * malformed JSON, and a draft that fails to parse must degrade to "no form
  * update" rather than breaking the conversation.
  */
-const BUILDER_INPUT_PREFIX = "MULTICA_AGENT_BUILDER_INPUT\n";
+const BUILDER_INPUT_PREFIX = "MARVIS_AGENT_BUILDER_INPUT\n";
 
 export interface BuilderDraftPayload {
   name?: unknown;

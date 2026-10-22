@@ -8,16 +8,16 @@ import {
   stripBuilderDraft,
   type AgentDraft,
   type BuilderRestore,
-} from "@multica/core/agents";
-import { isRuntimeUsableForUser } from "@multica/core/runtimes";
+} from "@marvis/core/agents";
+import { isRuntimeUsableForUser } from "@marvis/core/runtimes";
 import type {
   ChatMessage,
   MemberWithUser,
   RuntimeDevice,
-} from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { cn } from "@marvis/ui/lib/utils";
 import { ChatInput } from "../../chat/components/chat-input";
 import { CHAT_COLUMN, CHAT_GUTTER } from "../../chat/components/chat-column";
 import {

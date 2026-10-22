@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/multica-ai/multica/server/internal/middleware"
-	"github.com/multica-ai/multica/server/internal/service"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // Each case gets its own workspace so Mika's one-per-workspace lookup cannot
@@ -20,8 +20,8 @@ import (
 func runtimeBindingVisibilityRequest(t *testing.T, h *Handler, entry string) (*testutil.Fixture, string, http.HandlerFunc, *http.Request) {
 	t.Helper()
 	workspaceID := dbfx.Workspace(t, "Runtime binding visibility", "runtime-binding-"+uuid.NewString())
-	ownerID := dbfx.User(t, "Runtime binding owner", uuid.NewString()+"@multica.test")
-	memberID := dbfx.User(t, "Runtime binding member", uuid.NewString()+"@multica.test")
+	ownerID := dbfx.User(t, "Runtime binding owner", uuid.NewString()+"@marvis.test")
+	memberID := dbfx.User(t, "Runtime binding member", uuid.NewString()+"@marvis.test")
 	dbfx.Member(t, workspaceID, ownerID, "member")
 	dbfx.Member(t, workspaceID, memberID, "member")
 	fx := testutil.New(testPool, workspaceID, memberID)

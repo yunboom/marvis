@@ -9,8 +9,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/multica-ai/multica/server/internal/qoderruntime"
-	"github.com/multica-ai/multica/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/qoderruntime"
+	"github.com/marvis-ai/marvis/server/internal/util"
 )
 
 // Retired connections keep their encrypted journal until remote cancellation

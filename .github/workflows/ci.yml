@@ -145,8 +145,8 @@ jobs:
         # to apps/mobile/** + packages/core/**) so it doesn't add
         # ~50s of expo-lint + tsc to every web/desktop PR. Keep this
         # filter in sync with the root package.json scripts, which also
-        # exclude @multica/mobile.
-        run: pnpm exec turbo build typecheck lint --filter='!@multica/docs' --filter='!@multica/mobile'
+        # exclude @marvis/mobile.
+        run: pnpm exec turbo build typecheck lint --filter='!@marvis/docs' --filter='!@marvis/mobile'
 
       - name: Check frontend quality
         uses: ./.github/actions/frontend-quality
@@ -194,7 +194,7 @@ jobs:
         # job's responsibility -- frontend-build owns the `typecheck` task.
         # `test` reaches dependency sources through the hash-only
         # `^cache-inputs` edge (see turbo.json), so no `tsc` runs here.
-        run: pnpm exec turbo test --filter='!@multica/docs' --filter='!@multica/mobile' --filter='!@multica/views'
+        run: pnpm exec turbo test --filter='!@marvis/docs' --filter='!@marvis/mobile' --filter='!@marvis/views'
 
   # Split views across two runners. GitHub reports the matrix job's combined
   # result, so the aggregate gate can continue depending on this one job ID.
@@ -246,7 +246,7 @@ jobs:
             turbo-views-test-${{ matrix.index }}-of-${{ matrix.total }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.runtime.outputs.node }}-
 
       - name: Test views shard ${{ matrix.index }}/${{ matrix.total }}
-        run: pnpm exec turbo test --filter='@multica/views' -- --shard=${{ matrix.index }}/${{ matrix.total }}
+        run: pnpm exec turbo test --filter='@marvis/views' -- --shard=${{ matrix.index }}/${{ matrix.total }}
 
   # Preserve the aggregate check names while validating intentional skips.
   frontend:
@@ -313,13 +313,13 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg17
         env:
-          POSTGRES_DB: multica
-          POSTGRES_USER: multica
-          POSTGRES_PASSWORD: multica
+          POSTGRES_DB: marvis
+          POSTGRES_USER: marvis
+          POSTGRES_PASSWORD: marvis
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U multica -d multica"
+          --health-cmd "pg_isready -U marvis -d marvis"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
@@ -333,7 +333,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgres://multica:multica@localhost:5432/multica?sslmode=disable
+      DATABASE_URL: postgres://marvis:marvis@localhost:5432/marvis?sslmode=disable
       # Wires up the RedisLocalSkill*_test.go suite. Distinct from REDIS_URL
       # (which would flip the server binary itself onto the Redis-backed
       # realtime relay + request stores); the tests talk to this Redis
@@ -550,9 +550,9 @@ jobs:
       - name: Test Windows Git Bash temp lifecycle
         working-directory: server
         run: |
-          $env:MULTICA_TEST_GIT_BASH = "$env:ProgramFiles\Git\usr\bin\bash.exe"
-          if (-not (Test-Path -LiteralPath $env:MULTICA_TEST_GIT_BASH)) { throw "Git for Windows is required" }
-          go test -tags=gitbashintegration ./internal/daemon -v -run '^(TestWindowsGitBashTaskTempLifecycle|TestTaskMulticaEnvironment.*|TestTaskTempBaseDir)$' -count=1 -timeout=5m
+          $env:MARVIS_TEST_GIT_BASH = "$env:ProgramFiles\Git\usr\bin\bash.exe"
+          if (-not (Test-Path -LiteralPath $env:MARVIS_TEST_GIT_BASH)) { throw "Git for Windows is required" }
+          go test -tags=gitbashintegration ./internal/daemon -v -run '^(TestWindowsGitBashTaskTempLifecycle|TestTaskMarvisEnvironment.*|TestTaskTempBaseDir)$' -count=1 -timeout=5m
 
       - name: Test Windows agent launcher argv/stdin handling
         working-directory: server
@@ -658,13 +658,13 @@ jobs:
         # junction test pins that gap deliberately, records the observations it
         # rests on, and fails with instructions if the platform ever starts
         # resolving them.
-        # cmd/multica has no Windows job otherwise, so these windows-tagged
+        # cmd/marvis has no Windows job otherwise, so these windows-tagged
         # tests run nowhere else. It matters twice over on a non-admin host,
         # where the package's cross-platform cases skip for want of the symlink
         # privilege; the ubuntu backend job covers those shapes instead.
         # -v so a silent skip (or a -run pattern that stops matching) is visible
         # in the log instead of passing as "ok".
-        run: go test ./cmd/multica -v -run '^TestFileWithinWorkingDirWindows' -count=1 -timeout=5m
+        run: go test ./cmd/marvis -v -run '^TestFileWithinWorkingDirWindows' -count=1 -timeout=5m
 
       - name: Test Windows link-target classification in internal/util
         if: ${{ needs.changes.outputs.backend == 'true' }}
@@ -763,7 +763,7 @@ jobs:
 
       - name: Build Windows CLI helper entrypoint
         working-directory: server
-        run: go build ./cmd/multica
+        run: go build ./cmd/marvis
 
       - name: Test Windows Cursor background ownership
         working-directory: server

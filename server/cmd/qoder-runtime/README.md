@@ -1,7 +1,7 @@
 # Qoder Cloud Agents runtime bridge (PoC)
 
-This standalone service registers a `qoder_cloud` runtime in one Multica
-workspace. Bind a Multica agent to that runtime and assign it an issue. The
+This standalone service registers a `qoder_cloud` runtime in one Marvis
+workspace. Bind a Marvis agent to that runtime and assign it an issue. The
 bridge reads issue context using the claim's task-scoped token, creates a
 managed Qoder session, sends the work, and reports messages and the final result.
 No local coding-agent CLI, repository checkout, or shell execution is performed
@@ -35,9 +35,9 @@ store. Do not commit tokens to source control.
 
 | Variable | Value |
 | --- | --- |
-| `MULTICA_SERVER_URL` | Multica server origin, without `/api` |
-| `MULTICA_TOKEN` | Multica workspace administrator PAT (standalone mode only) |
-| `MULTICA_WORKSPACE_ID` | Workspace UUID |
+| `MARVIS_SERVER_URL` | Marvis server origin, without `/api` |
+| `MARVIS_TOKEN` | Marvis workspace administrator PAT (standalone mode only) |
+| `MARVIS_WORKSPACE_ID` | Workspace UUID |
 | `QODER_CLOUD_BASE_URL` | Qoder managed API base, including its gateway prefix (for example `https://api.qoder.com/api/v1/cloud`) |
 | `QODER_CLOUD_TOKEN` | Qoder PAT with access to the configured agent/environment |
 | `QODER_CLOUD_ENVIRONMENT_ID` | Existing managed Qoder Environment ID |
@@ -53,15 +53,15 @@ fields inherit environment values. Unknown keys are rejected to catch typos.
 ./qoder-runtime --config /private/path/config.json
 ```
 
-`--check` only reads the Multica workspace and Qoder environment. It does
+`--check` only reads the Marvis workspace and Qoder environment. It does
 not register a runtime, claim a task or start execution.
 
-Start `./qoder-runtime`. Startup checks access to the Multica workspace and Qoder environment
+Start `./qoder-runtime`. Startup checks access to the Marvis workspace and Qoder environment
 before registering. Copy the `runtime_id` from its registration log and bind
-an existing Multica agent:
+an existing Marvis agent:
 
 ```sh
-multica agent update <agent-id> --runtime-id <runtime-id>
+marvis agent update <agent-id> --runtime-id <runtime-id>
 ```
 
 Configure the model, tools and skills on the Qoder Agent. GitHub resources require
@@ -89,8 +89,8 @@ Without one, the agent's default repository (`runtime_config.repository`) is
 mounted, and failing that the workspace's only repository when a credential is
 configured for it. Other workspace repositories are context only.
 
-The prompt asks the agent to push a branch named `multica/<identifier>-<slug>`
-and to prefix the pull request title with the issue identifier, so Multica's
+The prompt asks the agent to push a branch named `marvis/<identifier>-<slug>`
+and to prefix the pull request title with the issue identifier, so Marvis's
 GitHub integration links the pull request back to the issue.
 
 
@@ -98,7 +98,7 @@ GitHub integration links the pull request back to the issue.
 
 - Up to `max_concurrency` runs (default 1 for this binary, 3 for managed
   connections, at most 10) execute at once per bridge; further tasks stay
-  queued in Multica. Deploy one instance per configuration with its dedicated
+  queued in Marvis. Deploy one instance per configuration with its dedicated
   persistent state volume; this is not an HA service.
 - A follow-up run on the same issue continues the agent's previous Qoder session
   when that session is idle, uses the same Qoder agent and environment, and no
@@ -109,7 +109,7 @@ GitHub integration links the pull request back to the issue.
   Event IDs and opaque page cursors are tracked separately. A turn is successful
   only after its user message and `session.status_idle` with `end_turn`, without
   an unrecovered error. Thread-level idle does not complete the run.
-- Cancelling/deleting a Multica run requests Qoder cancellation and waits for
+- Cancelling/deleting a Marvis run requests Qoder cancellation and waits for
   the session to become idle or terminated. Losing runtime access also requests
   cancellation. The session cancellation response alone is not proof of a stop.
 - Shutdown leaves remote execution running. Restart with the same directory
@@ -141,13 +141,13 @@ attachments, arbitrary Git hosts, tag/commit checkout, full comment-history
 hydration, interactive tool approval, custom client-side tools, terminal access,
 file transfer and billing/usage conversion are not implemented. Set up a Qoder
 Agent that can execute autonomously with its configured tools. `requires_action`
-ends the Multica run as failed with the stop reason; approvals are not granted
+ends the Marvis run as failed with the stop reason; approvals are not granted
 implicitly.
 
-Multica custom skills and execution overrides are rejected; built-in Multica
+Marvis custom skills and execution overrides are rejected; built-in Marvis
 CLI skills are omitted because their local tools are unavailable. Qoder sessions
 keep any artifacts they produce; textual result and PR/MR links are returned in
-the final summary, without parsing them into structured Multica branch fields.
+the final summary, without parsing them into structured Marvis branch fields.
 
 The bridge uses the existing daemon registration protocol with
 `runtime_mode=cloud` and provider `qoder_cloud`. Existing daemons that omit the
@@ -161,17 +161,17 @@ go vet ./internal/qoderruntime ./cmd/qoder-runtime
 ```
 
 Tests use local HTTP fixtures and never access real accounts or execute an
-installed coding-agent CLI. Live integration still requires a configured Multica
+installed coding-agent CLI. Live integration still requires a configured Marvis
 workspace and Qoder environment; it is not covered by these tests.
 
-To exercise a running **local** Multica server with a simulated Qoder API:
+To exercise a running **local** Marvis server with a simulated Qoder API:
 
 ```sh
-MULTICA_QODER_INTEGRATION_CONFIG=/private/path/config.json \
-  go test -race -tags=integration ./internal/qoderruntime -run '^TestLocalMultica$' -count=1 -v
+MARVIS_QODER_INTEGRATION_CONFIG=/private/path/config.json \
+  go test -race -tags=integration ./internal/qoderruntime -run '^TestLocalMarvis$' -count=1 -v
 ```
 
-This test requires a loopback Multica URL and a test workspace. It creates an
+This test requires a loopback Marvis URL and a test workspace. It creates an
 isolated runtime, agent and issue through the real authenticated API, simulates
 a lost transcript response, verifies one persisted output, then cleans up the
 issue/runtime and archives the fixture agent. Qoder credentials in the file are
@@ -183,19 +183,19 @@ The runtime page presents a **Qoder Cloud** card with live status, associated
 agent count, **Configure credentials**, and **Add agent**. Credentials are grouped
 into QCA connection and GitHub repository sections; saved PATs remain hidden until
 the administrator chooses **Update credentials**. The quick-add dialog creates a
-Multica agent linked to an existing QCA Agent and uses the configured environment.
+Marvis agent linked to an existing QCA Agent and uses the configured environment.
 
 
 Workspace administrators can open **Runtimes → Add → Cloud services → Qoder Cloud Agents** to configure one
 managed QCA connection per workspace, load environments from the PAT and check environment access, bind GitHub
 repository tokens, and **Connect**. The Qoder Cloud Agents page can later **Pause** an idle runtime, resume it, or
-**Disconnect** it. The menu entry only appears when the server has `MULTICA_VCS_SECRET_KEY` set. The existing project
+**Disconnect** it. The menu entry only appears when the server has `MARVIS_VCS_SECRET_KEY` set. The existing project
 resource picker selects the repository and starting branch. The managed form
 offers Qoder's official regions, `https://api.qoder.com/api/v1/cloud` (Global) and
 `https://api.qoder.com.cn/api/v1/cloud` (China); a PAT works only in the region
 that issued it. Custom endpoints remain available to the standalone bridge only.
 
-Server setup requires `MULTICA_VCS_SECRET_KEY` (a base64-encoded 32-byte encryption
+Server setup requires `MARVIS_VCS_SECRET_KEY` (a base64-encoded 32-byte encryption
 key). Keep the key stable across restarts. Credentials and the run journal are
 encrypted in `cloud_agent_connection`, so no local state directory is needed, and API
 responses return only presence flags and repository names. Empty password fields
@@ -228,11 +228,11 @@ After entering a PAT in the Web/Desktop runtime dialog, available environments
 load automatically; one available environment is selected automatically.
 Names are displayed instead of requiring copied IDs. Archived resources are excluded.
 
-In the Multica agent creation form, select the QCA Agent under execution settings.
+In the Marvis agent creation form, select the QCA Agent under execution settings.
 For existing agents, use the runtime configuration tab. The association is stored
 in `agent.runtime_config.qoder_agent_id` and copied into each run journal before
-session creation. Several Multica agents can share a runtime with different QCA
-Agents. Configure QCA models, tools and skills in Qoder; the Multica page links
+session creation. Several Marvis agents can share a runtime with different QCA
+Agents. Configure QCA models, tools and skills in Qoder; the Marvis page links
 existing QCA Agents rather than creating or editing those remote resources.
 
 The API exposes `POST /api/workspaces/{id}/qoder/environments` (admin-only,
@@ -242,7 +242,7 @@ Only IDs and names are returned; provider configuration and credentials stay
 server-side. Listing follows pagination and excludes archived resources.
 
 When upgrading an earlier PoC configuration, stop idle bridges first, copy the
-old fixed Agent ID to every associated Multica agent's runtime configuration,
+old fixed Agent ID to every associated Marvis agent's runtime configuration,
 and remove `agent_id` from standalone config files. Runtime identity and the
 journal directory now depend on connection/environment, not the fixed Agent ID;
 migrate an idle journal and daemon identity together to preserve existing runtime

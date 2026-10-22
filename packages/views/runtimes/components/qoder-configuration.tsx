@@ -2,10 +2,10 @@
 
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@multica/core/auth";
-import { memberListOptions } from "@multica/core/workspace/queries";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { qoderOptions } from "@multica/core/runtimes/qoder";
+import { useAuthStore } from "@marvis/core/auth";
+import { memberListOptions } from "@marvis/core/workspace/queries";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { qoderOptions } from "@marvis/core/runtimes/qoder";
 import { QoderConnectForm } from "./qoder-connect-form";
 import { useT } from "../../i18n";
 

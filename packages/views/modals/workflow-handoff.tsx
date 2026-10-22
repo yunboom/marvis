@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { useUpdateIssue } from "@multica/core/issues/mutations";
+import { useUpdateIssue } from "@marvis/core/issues/mutations";
 import { useT } from "../i18n";
 import { WorkflowHandoffConfirmDialog } from "../workflows/handoff-confirm-dialog";
 

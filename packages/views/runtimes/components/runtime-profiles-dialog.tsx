@@ -15,18 +15,18 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { ApiError } from "@multica/core/api";
+import { ApiError } from "@marvis/core/api";
 import type {
   RuntimeProfile,
   RuntimeProfileType,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import {
   runtimeProfileListOptions,
   useCreateRuntimeProfile,
   useUpdateRuntimeProfile,
-} from "@multica/core/runtimes";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
+} from "@marvis/core/runtimes";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import {
   Dialog,
   DialogClose,
@@ -34,11 +34,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Input } from "@multica/ui/components/ui/input";
-import { Label } from "@multica/ui/components/ui/label";
-import { Textarea } from "@multica/ui/components/ui/textarea";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/dialog";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Label } from "@marvis/ui/components/ui/label";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
+import { cn } from "@marvis/ui/lib/utils";
 import { ProviderLogo } from "./provider-logo";
 import { DeleteRuntimeProfileDialog } from "./delete-runtime-profile-dialog";
 import {

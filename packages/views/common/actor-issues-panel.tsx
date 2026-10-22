@@ -7,15 +7,15 @@ import type {
   Issue,
   IssueTableFacetSpec,
   IssueTableFacetsResponse,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import {
   actorIssuesViewStore,
   type ActorIssuesScope,
-} from "@multica/core/issues/stores/actor-issues-view-store";
-import { Button } from "@multica/ui/components/ui/button";
-import { cn } from "@multica/ui/lib/utils";
-import { Input } from "@multica/ui/components/ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@multica/ui/components/ui/tooltip";
+} from "@marvis/core/issues/stores/actor-issues-view-store";
+import { Button } from "@marvis/ui/components/ui/button";
+import { cn } from "@marvis/ui/lib/utils";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@marvis/ui/components/ui/tooltip";
 import {
   IssueDisplayControls,
   ViewRefreshIndicator,

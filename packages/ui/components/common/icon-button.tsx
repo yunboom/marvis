@@ -1,13 +1,13 @@
 "use client";
 
 import { useId, type ComponentProps, type ReactNode } from "react";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/tooltip";
+import { cn } from "@marvis/ui/lib/utils";
 
 type IconButtonProps = Omit<ComponentProps<typeof Button>, "aria-label"> & {
   /** Names the action: the accessible name and the tooltip text. */

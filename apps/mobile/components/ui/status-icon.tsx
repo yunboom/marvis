@@ -22,7 +22,7 @@ import type {
   BuiltInIssueStatus,
   IssueStatus,
   IssueStatusCategory,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { isBuiltInIssueStatus, statusCategoryOfKey, statusIconRenderer } from "@/lib/issue-status";
 
 const CX = 7;

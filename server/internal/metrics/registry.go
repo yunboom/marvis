@@ -7,8 +7,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 
-	"github.com/multica-ai/multica/server/internal/daemonws"
-	"github.com/multica-ai/multica/server/internal/realtime"
+	"github.com/marvis-ai/marvis/server/internal/daemonws"
+	"github.com/marvis-ai/marvis/server/internal/realtime"
 )
 
 type RegistryOptions struct {
@@ -36,8 +36,8 @@ func NewRegistry(opts RegistryOptions) *Registry {
 	reg.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 
 	buildInfo := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "multica_build_info",
-		Help: "Build information for the Multica server binary.",
+		Name: "marvis_build_info",
+		Help: "Build information for the Marvis server binary.",
 	}, []string{"version", "commit"})
 	buildInfo.WithLabelValues(defaultLabel(opts.Version, "dev"), defaultLabel(opts.Commit, "unknown")).Set(1)
 	reg.MustRegister(buildInfo)

@@ -26,14 +26,14 @@ func TestReleaseSourceOverridesGitHub(t *testing.T) {
 	if got := releaseAPIBaseURL(); got != "https://mirror.example/api" {
 		t.Fatalf("release API base URL = %q", got)
 	}
-	if got := releaseAssetDownloadURL("multica-cli-1.2.3-linux-amd64.tar.gz", "v1.2.3", "https://github.example/archive.tar.gz"); got != "https://mirror.example/releases/v1.2.3/multica-cli-1.2.3-linux-amd64.tar.gz" {
+	if got := releaseAssetDownloadURL("marvis-cli-1.2.3-linux-amd64.tar.gz", "v1.2.3", "https://github.example/archive.tar.gz"); got != "https://mirror.example/releases/v1.2.3/marvis-cli-1.2.3-linux-amd64.tar.gz" {
 		t.Fatalf("mirror download URL = %q", got)
 	}
 }
 
 func TestFetchLatestReleaseUsesConfiguredAPI(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/repos/multica-ai/multica/releases/latest" {
+		if r.URL.Path != "/repos/marvis-ai/marvis/releases/latest" {
 			http.NotFound(w, r)
 			return
 		}

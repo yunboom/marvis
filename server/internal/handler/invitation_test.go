@@ -16,13 +16,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
-	"github.com/multica-ai/multica/server/internal/middleware"
-	"github.com/multica-ai/multica/server/internal/seatcapacity"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/marvis-ai/marvis/server/internal/seatcapacity"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
-const invitationTestEmail = "invitation-test@multica.ai"
+const invitationTestEmail = "invitation-test@marvis.ai"
 
 type stubSeatCapacity struct {
 	reserveDecision seatcapacity.Decision
@@ -212,7 +212,7 @@ func TestCreateInvitation_BlocksWhenPurchasedCapacityIsFull(t *testing.T) {
 	useInvitationRateLimiters(t, InvitationRateLimiters{Actor: actor, Workspace: workspace, Recipient: recipient})
 
 	req := newRequest(http.MethodPost, "/api/workspaces/"+testWorkspaceID+"/members", CreateMemberRequest{
-		Email: "capacity-full-invite@multica.ai", Role: "member",
+		Email: "capacity-full-invite@marvis.ai", Role: "member",
 	})
 	req = withURLParam(req, "id", testWorkspaceID)
 	rec := httptest.NewRecorder()
@@ -251,7 +251,7 @@ func TestCreateInvitation_BlocksWhenPurchasedCapacityIsFull(t *testing.T) {
 		}
 	}
 	var invitationCount, outboxCount int
-	if err := testPool.QueryRow(context.Background(), `SELECT count(*) FROM workspace_invitation WHERE workspace_id = $1 AND invitee_email = $2`, parseUUID(testWorkspaceID), "capacity-full-invite@multica.ai").Scan(&invitationCount); err != nil {
+	if err := testPool.QueryRow(context.Background(), `SELECT count(*) FROM workspace_invitation WHERE workspace_id = $1 AND invitee_email = $2`, parseUUID(testWorkspaceID), "capacity-full-invite@marvis.ai").Scan(&invitationCount); err != nil {
 		t.Fatal(err)
 	}
 	if err := testPool.QueryRow(context.Background(), `SELECT count(*) FROM seat_capacity_outbox WHERE workspace_id = $1`, parseUUID(testWorkspaceID)).Scan(&outboxCount); err != nil {
@@ -275,7 +275,7 @@ func TestCreateInvitation_BlocksOvercommittedCapacityWithoutOfferingSingleSeatSe
 	useInvitationRateLimiters(t, InvitationRateLimiters{Actor: actor, Workspace: workspace, Recipient: recipient})
 
 	req := newRequest(http.MethodPost, "/api/workspaces/"+testWorkspaceID+"/members", CreateMemberRequest{
-		Email: "capacity-overcommitted-invite@multica.ai", Role: "member",
+		Email: "capacity-overcommitted-invite@marvis.ai", Role: "member",
 	})
 	req = withURLParam(req, "id", testWorkspaceID)
 	rec := httptest.NewRecorder()
@@ -324,7 +324,7 @@ func TestCreateInvitation_MapsCloudCapacityRateLimitWithoutConsumingInvitationBu
 	useInvitationRateLimiters(t, InvitationRateLimiters{Actor: actor, Workspace: workspace, Recipient: recipient})
 
 	req := newRequest(http.MethodPost, "/api/workspaces/"+testWorkspaceID+"/members", CreateMemberRequest{
-		Email: "capacity-rate-limited@multica.ai", Role: "member",
+		Email: "capacity-rate-limited@marvis.ai", Role: "member",
 	})
 	req = withURLParam(req, "id", testWorkspaceID)
 	rec := httptest.NewRecorder()
@@ -374,7 +374,7 @@ func TestCreateInvitation_CompensatesCapacityWhenCommitRollsBack(t *testing.T) {
 	testHandler.TxStarter = rollbackOnCommitTxStarter{pool: testPool}
 	t.Cleanup(func() { testHandler.TxStarter = previousTxStarter })
 
-	const email = "capacity-commit-failure@multica.ai"
+	const email = "capacity-commit-failure@marvis.ai"
 	req := newRequest(http.MethodPost, "/api/workspaces/"+testWorkspaceID+"/members", CreateMemberRequest{
 		Email: email, Role: "member",
 	})
@@ -472,7 +472,7 @@ func TestCreateInvitation_RateLimitChecksEveryGateBeforeCapacityReservation(t *t
 	recipient := &stubInvitationRateLimiter{allowed: false, retryAfter: 24 * time.Hour}
 	useInvitationRateLimiters(t, InvitationRateLimiters{Actor: actor, Workspace: workspace, Recipient: recipient})
 
-	const rawEmail = "  Invitation-Limited@Multica.AI  "
+	const rawEmail = "  Invitation-Limited@Marvis.AI  "
 	req := newRequest(http.MethodPost, "/api/workspaces/"+testWorkspaceID+"/members", CreateMemberRequest{
 		Email: rawEmail,
 		Role:  "member",
@@ -562,7 +562,7 @@ func TestCreateInvitation_RateLimiterFailureReturnsServiceUnavailable(t *testing
 	})
 
 	req := newRequest(http.MethodPost, "/api/workspaces/"+testWorkspaceID+"/members", CreateMemberRequest{
-		Email: "invitation-limiter-error@multica.ai",
+		Email: "invitation-limiter-error@marvis.ai",
 		Role:  "member",
 	})
 	req = withURLParam(req, "id", testWorkspaceID)
@@ -582,7 +582,7 @@ func TestCreateInvitation_RateLimiterFailureReturnsServiceUnavailable(t *testing
 	if body["code"] != "invitation_rate_limiter_unavailable" {
 		t.Errorf("code = %q, want invitation_rate_limiter_unavailable", body["code"])
 	}
-	metricFamily := obsmetrics.GatherForTest(t, testHandler.Metrics)["multica_email_rate_limited_total"]
+	metricFamily := obsmetrics.GatherForTest(t, testHandler.Metrics)["marvis_email_rate_limited_total"]
 	for _, metric := range metricFamily.GetMetric() {
 		if metric.GetCounter().GetValue() != 0 {
 			t.Errorf("rate-limit metric = %v, want 0 when the final response is 503", metric.GetCounter().GetValue())
@@ -605,7 +605,7 @@ func TestCreateInvitation_RateLimiterFailureReturnsServiceUnavailable(t *testing
 	var pendingCount int
 	if err := testPool.QueryRow(context.Background(), `
 		SELECT COUNT(*) FROM workspace_invitation
-		WHERE workspace_id = $1 AND invitee_email = 'invitation-limiter-error@multica.ai' AND status = 'pending'
+		WHERE workspace_id = $1 AND invitee_email = 'invitation-limiter-error@marvis.ai' AND status = 'pending'
 	`, parseUUID(testWorkspaceID)).Scan(&pendingCount); err != nil {
 		t.Fatalf("count pending invitations: %v", err)
 	}
@@ -632,15 +632,15 @@ func TestInvitationAdmission_RejectedActorDoesNotConsumeWorkspaceBudget(t *testi
 		return ok
 	}
 
-	if !admit("actor-a", "first@multica.ai") {
+	if !admit("actor-a", "first@marvis.ai") {
 		t.Fatal("first invitation was unexpectedly rejected")
 	}
 	for i := 0; i < 3; i++ {
-		if admit("actor-a", fmt.Sprintf("rejected-%d@multica.ai", i)) {
+		if admit("actor-a", fmt.Sprintf("rejected-%d@marvis.ai", i)) {
 			t.Fatalf("actor-limited invitation %d was unexpectedly admitted", i)
 		}
 	}
-	if !admit("actor-b", "second@multica.ai") {
+	if !admit("actor-b", "second@marvis.ai") {
 		t.Fatal("actor-limited retries consumed the shared workspace budget")
 	}
 }
@@ -656,7 +656,7 @@ func TestInvitationAdmission_RejectedActorDoesNotConsumeRecipientBudget(t *testi
 
 	admit := func(actorID, workspaceID string) bool {
 		req := httptest.NewRequest(http.MethodPost, "/api/workspaces/"+workspaceID+"/members", nil)
-		admission, ok := h.checkInvitationAdmission(httptest.NewRecorder(), req, actorID, workspaceID, "shared@multica.ai")
+		admission, ok := h.checkInvitationAdmission(httptest.NewRecorder(), req, actorID, workspaceID, "shared@marvis.ai")
 		if ok {
 			h.consumeInvitationAdmission(req, admission)
 		}
@@ -683,7 +683,7 @@ func TestInvitationAdmission_AllowsBoundedOvershootWhenGateFillsAfterCheck(t *te
 	h.InvitationRateLimiters = InvitationRateLimiters{Actor: actor, Workspace: workspace, Recipient: recipient}
 
 	req := httptest.NewRequest(http.MethodPost, "/api/workspaces/workspace-a/members", nil)
-	admission, ok := h.checkInvitationAdmission(httptest.NewRecorder(), req, "actor-a", "workspace-a", "recipient@multica.ai")
+	admission, ok := h.checkInvitationAdmission(httptest.NewRecorder(), req, "actor-a", "workspace-a", "recipient@marvis.ai")
 	if !ok {
 		t.Fatal("invitation was rejected during the non-consuming check")
 	}
@@ -707,7 +707,7 @@ func TestInvitationAdmission_AllowsBoundedOvershootWhenBackendFailsAfterChecks(t
 
 	req := httptest.NewRequest(http.MethodPost, "/api/workspaces/workspace-a/members", nil)
 	rec := httptest.NewRecorder()
-	admission, ok := h.checkInvitationAdmission(rec, req, "actor-a", "workspace-a", "recipient@multica.ai")
+	admission, ok := h.checkInvitationAdmission(rec, req, "actor-a", "workspace-a", "recipient@marvis.ai")
 	if !ok {
 		t.Fatalf("invitation was rejected during successful checks with %d: %s", rec.Code, rec.Body.String())
 	}
@@ -728,7 +728,7 @@ func TestInvitationAdmission_AllowsBoundedOvershootWhenBackendFailsAfterChecks(t
 func TestCreateInvitation_RouteRequiresAdminRole(t *testing.T) {
 	clearInvitationsForTestWorkspace(t)
 	ctx := context.Background()
-	const memberEmail = "invitation-route-member@multica.ai"
+	const memberEmail = "invitation-route-member@marvis.ai"
 	_, _ = testPool.Exec(ctx, `DELETE FROM "user" WHERE email = $1`, memberEmail)
 	var memberUserID string
 	if err := testPool.QueryRow(ctx, `INSERT INTO "user" (name, email) VALUES ('Invitation Route Member', $1) RETURNING id`, memberEmail).Scan(&memberUserID); err != nil {
@@ -762,10 +762,10 @@ func TestCreateInvitation_RouteRequiresAdminRole(t *testing.T) {
 		return rec
 	}
 
-	if rec := call(memberUserID, "invitation-route-rejected@multica.ai"); rec.Code != http.StatusForbidden {
+	if rec := call(memberUserID, "invitation-route-rejected@marvis.ai"); rec.Code != http.StatusForbidden {
 		t.Errorf("member status = %d, want 403: %s", rec.Code, rec.Body.String())
 	}
-	if rec := call(testUserID, fmt.Sprintf("invitation-route-owner-%s@multica.ai", testWorkspaceID)); rec.Code != http.StatusCreated {
+	if rec := call(testUserID, fmt.Sprintf("invitation-route-owner-%s@marvis.ai", testWorkspaceID)); rec.Code != http.StatusCreated {
 		t.Errorf("owner status = %d, want 201: %s", rec.Code, rec.Body.String())
 	}
 }
@@ -775,7 +775,7 @@ func TestCreateInvitation_RouteRequiresAdminRole(t *testing.T) {
 // Re-accept must be idempotent for the membership the first accept created,
 // so the client's refetch drops the stale row instead of sticking forever.
 func TestAcceptInvitation_AlreadyAcceptedIsIdempotentForExistingMember(t *testing.T) {
-	email := "idempotent-accept-" + uuid.NewString() + "@multica.ai"
+	email := "idempotent-accept-" + uuid.NewString() + "@marvis.ai"
 	userID := dbfx.User(t, "Idempotent Accept Invitee", email)
 	invitationID := dbfx.Insert(t, "workspace_invitation", testutil.Cols{
 		"workspace_id":    testWorkspaceID,
@@ -804,7 +804,7 @@ func TestAcceptInvitation_AlreadyAcceptedIsIdempotentForExistingMember(t *testin
 // A concluded invitation whose membership is gone (the user left the
 // workspace afterwards) must not be re-acceptable: leaving was explicit.
 func TestAcceptInvitation_AlreadyAcceptedWithoutMembershipStillFails(t *testing.T) {
-	email := "stale-accept-no-member-" + uuid.NewString() + "@multica.ai"
+	email := "stale-accept-no-member-" + uuid.NewString() + "@marvis.ai"
 	userID := dbfx.User(t, "Stale Accept Invitee", email)
 	invitationID := dbfx.Insert(t, "workspace_invitation", testutil.Cols{
 		"workspace_id":    testWorkspaceID,
@@ -829,7 +829,7 @@ func TestAcceptInvitation_AlreadyAcceptedWithoutMembershipStillFails(t *testing.
 // clients that concluded the same invitation elsewhere, and a 204 lets their
 // refetch drop it.
 func TestDeclineInvitation_AlreadyAcceptedIsNoOp(t *testing.T) {
-	email := "idempotent-decline-" + uuid.NewString() + "@multica.ai"
+	email := "idempotent-decline-" + uuid.NewString() + "@marvis.ai"
 	userID := dbfx.User(t, "Idempotent Decline Invitee", email)
 	invitationID := dbfx.Insert(t, "workspace_invitation", testutil.Cols{
 		"workspace_id":    testWorkspaceID,

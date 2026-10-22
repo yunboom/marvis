@@ -9,7 +9,7 @@ import (
 
 func TestLoadConfigPrecedenceAndValidation(t *testing.T) {
 	env := func(key string) string {
-		if key == "MULTICA_TOKEN" {
+		if key == "MARVIS_TOKEN" {
 			return "private-env-token"
 		}
 		if key == "QODER_CLOUD_ENVIRONMENT_ID" {
@@ -25,7 +25,7 @@ func TestLoadConfigPrecedenceAndValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.EnvironmentID != "env_file" || cfg.MulticaToken != "private-env-token" {
+	if cfg.EnvironmentID != "env_file" || cfg.MarvisToken != "private-env-token" {
 		t.Fatal("configuration precedence changed")
 	}
 	for _, body := range []string{`{"misspelled_secret":"sensitive"}`, `{"qoder_token":`, `{} {}`, `null`, `[]`} {

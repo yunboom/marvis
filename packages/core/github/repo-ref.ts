@@ -1,7 +1,7 @@
 /**
  * Checkout-ref helpers for `github_repo` project resources.
  *
- * The ref pins where a project's tasks START — `multica repo checkout` falls
+ * The ref pins where a project's tasks START — `marvis repo checkout` falls
  * back to the remote default branch when it is empty, and an explicit
  * `--ref` on the command line still wins over it. It is not a promise that
  * work lands on that branch, and it does not retarget pull requests.

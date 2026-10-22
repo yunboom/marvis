@@ -34,7 +34,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
 )
 
 // TestAnEnrichedWeComBodyDoesNotBecomeTheChatTitle is the title half of the

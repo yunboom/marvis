@@ -890,8 +890,8 @@ func writeFakePiRPCModelsBinary(t *testing.T) string {
 if [ "$1" = "--mode" ] && [ "$2" = "rpc" ]; then
   IFS= read -r _state_request
   IFS= read -r _models_request
-  printf '%s\n' '{"id":"multica-state","type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5.6-luna","name":"Luna","provider":"openai-multi","reasoning":true,"thinkingLevelMap":{"off":"none","minimal":"none","low":"low","medium":null,"high":"high","xhigh":"xhigh","max":"max"}},"thinkingLevel":"max"}}'
-  printf '%s\n' '{"id":"multica-models","type":"response","command":"get_available_models","success":true,"data":{"models":[{"id":"gpt-5.6-sol","name":"Sol","provider":"openai-multi","reasoning":true},{"id":"gpt-5.6-luna","name":"Luna","provider":"openai-multi","reasoning":true,"thinkingLevelMap":{"off":"none","minimal":"none","low":"low","medium":null,"high":"high","xhigh":"xhigh","max":"max"}},{"id":"plain-chat","name":"Plain chat","provider":"openai-multi","reasoning":false}]}}'
+  printf '%s\n' '{"id":"marvis-state","type":"response","command":"get_state","success":true,"data":{"model":{"id":"gpt-5.6-luna","name":"Luna","provider":"openai-multi","reasoning":true,"thinkingLevelMap":{"off":"none","minimal":"none","low":"low","medium":null,"high":"high","xhigh":"xhigh","max":"max"}},"thinkingLevel":"max"}}'
+  printf '%s\n' '{"id":"marvis-models","type":"response","command":"get_available_models","success":true,"data":{"models":[{"id":"gpt-5.6-sol","name":"Sol","provider":"openai-multi","reasoning":true},{"id":"gpt-5.6-luna","name":"Luna","provider":"openai-multi","reasoning":true,"thinkingLevelMap":{"off":"none","minimal":"none","low":"low","medium":null,"high":"high","xhigh":"xhigh","max":"max"}},{"id":"plain-chat","name":"Plain chat","provider":"openai-multi","reasoning":false}]}}'
   exit 0
 fi
 printf '%s\n' 'provider model context max-out thinking images'
@@ -956,7 +956,7 @@ func TestDiscoverPiModelsIDLessRPCErrorFallsBack(t *testing.T) {
 if [ "$1" = "--mode" ] && [ "$2" = "rpc" ]; then
   IFS= read -r _state_request
   IFS= read -r _models_request
-  printf '%s\n' '{"id":"multica-state","type":"response","command":"get_state","success":true,"data":{"thinkingLevel":"high"}}'
+  printf '%s\n' '{"id":"marvis-state","type":"response","command":"get_state","success":true,"data":{"thinkingLevel":"high"}}'
   printf '%s\n' '{"type":"response","command":"get_available_models","success":false,"error":"Unknown command: get_available_models"}'
   cat >/dev/null
   exit 0
@@ -1710,9 +1710,9 @@ func TestQualifyModelID(t *testing.T) {
 	t.Parallel()
 
 	gateway := []Model{
-		{ID: "multica-anthropic/claude/claude-opus-5", Provider: "multica-anthropic"},
-		{ID: "multica-anthropic/claude/claude-sonnet-5", Provider: "multica-anthropic"},
-		{ID: "multica-codex/codex/gpt-5.6-sol", Provider: "multica-codex"},
+		{ID: "marvis-anthropic/claude/claude-opus-5", Provider: "marvis-anthropic"},
+		{ID: "marvis-anthropic/claude/claude-sonnet-5", Provider: "marvis-anthropic"},
+		{ID: "marvis-codex/codex/gpt-5.6-sol", Provider: "marvis-codex"},
 	}
 
 	tests := []struct {
@@ -1726,14 +1726,14 @@ func TestQualifyModelID(t *testing.T) {
 			name:          "slash-shaped id gains its provider",
 			catalog:       Catalog{Models: gateway},
 			model:         "claude/claude-opus-5",
-			want:          "multica-anthropic/claude/claude-opus-5",
+			want:          "marvis-anthropic/claude/claude-opus-5",
 			wantRewritten: true,
 		},
 		{
 			name:    "already canonical is left alone",
 			catalog: Catalog{Models: gateway},
-			model:   "multica-anthropic/claude/claude-opus-5",
-			want:    "multica-anthropic/claude/claude-opus-5",
+			model:   "marvis-anthropic/claude/claude-opus-5",
+			want:    "marvis-anthropic/claude/claude-opus-5",
 		},
 		{
 			name: "an exact catalog id wins over a qualifiable one",
@@ -1813,15 +1813,15 @@ func TestSlashShapedPiModelKeepsItsThinkingCatalog(t *testing.T) {
 	// Verbatim shape of a real `get_available_models` RPC response for the
 	// reporter's models.json.
 	raw := []piRPCModel{
-		{ID: "claude/claude-opus-5", Name: "Claude Opus 5", Provider: "multica-anthropic", Reasoning: true},
-		{ID: "claude/claude-sonnet-5", Name: "Claude Sonnet 5", Provider: "multica-anthropic", Reasoning: true},
+		{ID: "claude/claude-opus-5", Name: "Claude Opus 5", Provider: "marvis-anthropic", Reasoning: true},
+		{ID: "claude/claude-sonnet-5", Name: "Claude Sonnet 5", Provider: "marvis-anthropic", Reasoning: true},
 	}
 	models := piModelsFromRPC(raw, piRPCState{})
 
 	qualified, rewritten := QualifyModelID(Catalog{Models: models}, "claude/claude-opus-5")
-	if !rewritten || qualified != "multica-anthropic/claude/claude-opus-5" {
+	if !rewritten || qualified != "marvis-anthropic/claude/claude-opus-5" {
 		t.Fatalf("qualified = (%q, %v), want (%q, true)",
-			qualified, rewritten, "multica-anthropic/claude/claude-opus-5")
+			qualified, rewritten, "marvis-anthropic/claude/claude-opus-5")
 	}
 
 	var thinking *ModelThinking

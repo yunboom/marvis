@@ -18,7 +18,7 @@ func TestCursorExecuteInstallsSupplementHooksForTheRun(t *testing.T) {
 	cwd := t.TempDir()
 	script := `#!/bin/sh
 cat > prompt.txt
-printf '%s\n%s\n' "$MULTICA_CURSOR_HOOK_URL" "$MULTICA_CURSOR_HOOK_TOKEN" > hook-env.txt
+printf '%s\n%s\n' "$MARVIS_CURSOR_HOOK_URL" "$MARVIS_CURSOR_HOOK_TOKEN" > hook-env.txt
 printf '%s\n' '{"type":"system","subtype":"init","session_id":"sess-steer"}'
 while [ ! -f receipt.jsonl ]; do sleep 0.02; done
 cat receipt.jsonl

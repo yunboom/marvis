@@ -10,16 +10,16 @@ import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api } from "@multica/core/api";
-import type { AgentTask } from "@multica/core/types";
+import { api } from "@marvis/core/api";
+import type { AgentTask } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { IssueAgentHeaderChip } from "./issue-agent-header-chip";
 
-vi.mock("@multica/core/api", () => ({ api: {
+vi.mock("@marvis/core/api", () => ({ api: {
   listTasksByIssue: vi.fn(), listTaskMessages: vi.fn(), cancelTask: vi.fn(),
 }, dispatchReasonCode: () => undefined }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "workspace" }));
-vi.mock("@multica/core/workspace/hooks", () => ({ useActorName: () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace" }));
+vi.mock("@marvis/core/workspace/hooks", () => ({ useActorName: () => ({
   getActorName: () => "Reviewer", getActorInitials: () => "RE", getActorAvatarUrl: () => null,
 }) }));
 vi.mock("../../common/actor-avatar", () => ({ ActorAvatar: () => <span /> }));
@@ -28,7 +28,7 @@ vi.mock("../../agents/components/agent-avatar-stack", () => ({ AgentAvatarStack:
 // Stand in for the transcript body only; the dialog shell stays real so
 // `finalFocus` reaches Base UI's focus manager as it does in the app.
 vi.mock("../../common/task-transcript/agent-transcript-dialog", async () => {
-  const { Dialog, DialogContent, DialogTitle } = await import("@multica/ui/components/ui/dialog");
+  const { Dialog, DialogContent, DialogTitle } = await import("@marvis/ui/components/ui/dialog");
   return {
     AgentTranscriptDialog: ({ open, onOpenChange, finalFocus }: {
       open: boolean; onOpenChange: (open: boolean) => void; finalFocus?: boolean;

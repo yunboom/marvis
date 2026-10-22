@@ -9,8 +9,8 @@
  * mobile clients in the wild must render them as a generic fallback, not
  * crash).
  */
-import type { IssuePriority, TimelineEntry } from "@multica/core/types";
-import { formatDateOnly } from "@multica/core/issues/date";
+import type { IssuePriority, TimelineEntry } from "@marvis/core/types";
+import { formatDateOnly } from "@marvis/core/issues/date";
 import { i18n } from "@/lib/i18n/singleton";
 import { STATUS_LABEL, isBuiltInIssueStatus } from "@/lib/issue-status";
 

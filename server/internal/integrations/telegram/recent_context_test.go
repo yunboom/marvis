@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
 )
 
 // groupUpdate builds one human message in a supergroup, optionally inside a

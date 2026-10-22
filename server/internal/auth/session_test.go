@@ -31,7 +31,7 @@ func sessionClaims(t *testing.T, exp time.Time, sid string) jwt.MapClaims {
 	// not exist.
 	claims := jwt.MapClaims{
 		"sub":   "user-1",
-		"email": "user-1@multica.ai",
+		"email": "user-1@marvis.ai",
 		"name":  "User One",
 		"exp":   float64(exp.Unix()),
 		"iat":   float64(time.Now().Add(-time.Hour).Unix()),
@@ -264,7 +264,7 @@ func TestRenewSessionToken_RejectsDisabledUser(t *testing.T) {
 }
 
 func TestRenewSessionToken_RejectsClaimsWithoutSubject(t *testing.T) {
-	_, _, err := RenewSessionToken(jwt.MapClaims{"email": "nobody@multica.ai"})
+	_, _, err := RenewSessionToken(jwt.MapClaims{"email": "nobody@marvis.ai"})
 	if err != ErrNotSessionToken {
 		t.Fatalf("err = %v, want ErrNotSessionToken", err)
 	}

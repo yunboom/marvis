@@ -7,7 +7,7 @@ package wecom
 // receipts, prompts and cards in strings.go.
 //
 // A destination is a person or a room, and only a person has a language of
-// their own. Multica already carries a validated language on every user profile
+// their own. Marvis already carries a validated language on every user profile
 // (the web UI's own setting), so a 1:1 goes to that. A group has many readers,
 // no shared profile, and no member list WeCom hands us — so it goes to the
 // deployment's language. Picking one member's personal setting to address a
@@ -27,7 +27,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // languageLookup resolves the person behind a message to their profile
@@ -55,9 +55,9 @@ func localeFor(ctx context.Context, q languageLookup, installationID pgtype.UUID
 	return localeForSender(ctx, q, installationID, personID)
 }
 
-// localeForUser reads a Multica user's profile language. Anything missing —
+// localeForUser reads a Marvis user's profile language. Anything missing —
 // nil lookup, no row, an empty field — is the deployment default. Used where
-// the reader is a named Multica user rather than a chat: the inbox push, which
+// the reader is a named Marvis user rather than a chat: the inbox push, which
 // is addressed to one person by their binding row.
 func localeForUser(ctx context.Context, q languageLookup, userID pgtype.UUID) Locale {
 	if q == nil || !userID.Valid {
@@ -91,5 +91,5 @@ func localeForSender(ctx context.Context, q languageLookup, installationID pgtyp
 	if err != nil {
 		return deploymentLocale()
 	}
-	return localeForUser(ctx, q, binding.MulticaUserID)
+	return localeForUser(ctx, q, binding.MarvisUserID)
 }

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/dispatch"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/dispatch"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // AgentAvailability is what a readiness check concluded, in the vocabulary the
@@ -111,7 +111,7 @@ func RuntimeBlockedNeedsNotice(code dispatch.ReasonCode) bool {
 //
 // The lookup carries the connection to read on plus the source label the
 // runtime read is attributed to (MUL-6884), so each admission path stays
-// distinguishable in multica_agent_runtime_lookup_total.
+// distinguishable in marvis_agent_runtime_lookup_total.
 //
 // err is non-nil only on DB lookup failure for the runtime row. Callers that
 // treat a transient DB error as "do not skip" (the autopilot admission gate)
@@ -293,19 +293,19 @@ func RuntimeUnusableNotice(agentName string, verdict AgentVerdict) string {
 }
 
 // runtimeProfileMissingNotice explains a runtime whose CLI runs but whose
-// Multica runtime profile is absent.
+// Marvis runtime profile is absent.
 //
-// No fenced command, deliberately. The install is `dsh plugin --profile multica
+// No fenced command, deliberately. The install is `dsh plugin --profile marvis
 // add <bundle>`, and <bundle> is the operator's own choice of package,
-// directory or tarball — Multica's bridge is not on a public registry yet
-// (multica#6936). Rendering that line in a code block presents a placeholder as
+// directory or tarball — Marvis's bridge is not on a public registry yet
+// (marvis#6936). Rendering that line in a code block presents a placeholder as
 // something to copy and run, which is the shape of instruction people paste
 // verbatim and then report as broken. Naming the two ways to supply a real
 // bundle, and pointing at the docs that list them, is the honest version.
 func runtimeProfileMissingNotice(name string) string {
 	return fmt.Sprintf(
-		"%s could not start: the DeepSeek Harness CLI is installed on that machine, but the `multica` runtime profile it needs is not, so this trigger was not queued.\n\n"+
-			"The profile supplies the protocol Multica drives — the CLI itself is fine, and reinstalling it changes nothing. On that machine, either add the Multica DSH runtime bundle to the profile with `dsh plugin --profile multica add`, or set `MULTICA_DSH_PROFILE_BUNDLE` for the daemon so it installs the bundle itself. See the agent runtime install docs for the bundle to use.\n\n"+
+		"%s could not start: the DeepSeek Harness CLI is installed on that machine, but the `marvis` runtime profile it needs is not, so this trigger was not queued.\n\n"+
+			"The profile supplies the protocol Marvis drives — the CLI itself is fine, and reinstalling it changes nothing. On that machine, either add the Marvis DSH runtime bundle to the profile with `dsh plugin --profile marvis add`, or set `MARVIS_DSH_PROFILE_BUNDLE` for the daemon so it installs the bundle itself. See the agent runtime install docs for the bundle to use.\n\n"+
 			"The runtime registers on its own within a couple of minutes after that; trigger the agent again then.",
 		name,
 	)

@@ -3,9 +3,9 @@
 import { useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@multica/core/api";
-import { useCurrentWorkspace } from "@multica/core/paths";
-import { quickActionListOptions } from "@multica/core/quick-actions";
+import { api } from "@marvis/core/api";
+import { useCurrentWorkspace } from "@marvis/core/paths";
+import { quickActionListOptions } from "@marvis/core/quick-actions";
 
 /**
  * Supplies the comment composer's `/` menu with this workspace's quick actions

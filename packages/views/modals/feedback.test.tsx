@@ -56,7 +56,7 @@ vi.mock("../i18n", () => ({
   }),
 }));
 
-vi.mock("@multica/core/paths", () => ({ useCurrentWorkspace: () => ({ id: "ws1" }) }));
+vi.mock("@marvis/core/paths", () => ({ useCurrentWorkspace: () => ({ id: "ws1" }) }));
 // Only the adapter is stubbed: `currentPath()` stays real, because how it
 // composes pathname + search + fragment is exactly what these tests check.
 vi.mock("../navigation", async (importOriginal) => ({
@@ -68,12 +68,12 @@ vi.mock("../navigation", async (importOriginal) => ({
     getShareableUrl: feedbackMocks.getShareableUrl,
   }),
 }));
-vi.mock("@multica/core/hooks/use-file-upload", () => ({
+vi.mock("@marvis/core/hooks/use-file-upload", () => ({
   useFileUpload: () => ({ uploadWithToast: vi.fn() }),
 }));
-vi.mock("@multica/core/api", () => ({ api: {} }));
+vi.mock("@marvis/core/api", () => ({ api: {} }));
 vi.mock("sonner", () => ({ toast: { info: vi.fn(), error: vi.fn(), success: vi.fn() } }));
-vi.mock("@multica/core/feedback", () => ({
+vi.mock("@marvis/core/feedback", () => ({
   FEEDBACK_KINDS: ["bug", "feature", "general", "praise"] as const,
   isFeedbackContext: (value: unknown) =>
     typeof value === "object" &&

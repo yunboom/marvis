@@ -96,7 +96,7 @@ function initCore({
     // leaves the others sending a token that is on its way out (MUL-7436).
     getToken: cookieAuth
       ? undefined
-      : () => storage.getItem("multica_token"),
+      : () => storage.getItem("marvis_token"),
     identity,
   });
   setApiInstance(api);
@@ -104,7 +104,7 @@ function initCore({
 
   // In token mode, hydrate token from storage.
   if (!cookieAuth) {
-    const token = storage.getItem("multica_token");
+    const token = storage.getItem("marvis_token");
     if (token) api.setToken(token);
   }
   // Workspace identity is URL-driven: the [workspaceSlug] layout resolves

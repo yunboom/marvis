@@ -2,16 +2,16 @@
 
 import { useId, useState } from "react";
 import { toast } from "sonner";
-import type { AgentTask, IssueWakeup } from "@multica/core/types";
-import { Switch } from "@multica/ui/components/ui/switch";
-import { Input } from "@multica/ui/components/ui/input";
+import type { AgentTask, IssueWakeup } from "@marvis/core/types";
+import { Switch } from "@marvis/ui/components/ui/switch";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Button } from "@multica/ui/components/ui/button";
+} from "@marvis/ui/components/ui/dialog";
+import { Button } from "@marvis/ui/components/ui/button";
 import { useT } from "../../i18n";
 import { isActiveWakeupRun, useWakeupText } from "./wakeup-presentation";
 

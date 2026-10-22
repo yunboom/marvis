@@ -2,8 +2,8 @@ import { useSyncExternalStore, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { configStore } from "@multica/core/config";
-import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@multica/core/feature-flags";
+import { configStore } from "@marvis/core/config";
+import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@marvis/core/feature-flags";
 import { renderWithI18n } from "../../test/i18n";
 
 const mockCreateMember = vi.hoisted(() => vi.fn());
@@ -44,22 +44,22 @@ vi.mock("@tanstack/react-query", () => ({
     fetchQuery: vi.fn(),
   }),
 }));
-vi.mock("@multica/core/billing", () => ({
+vi.mock("@marvis/core/billing", () => ({
   usePreviewWorkspaceSeatPurchase: () => ({ mutateAsync: vi.fn() }),
   usePurchaseWorkspaceSeats: () => ({ mutateAsync: vi.fn() }),
   workspaceSubscriptionSummaryOptions: (wsId: string) => ({
     queryKey: ["billing", wsId, "summary"],
   }),
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/paths", () => ({
   useCurrentWorkspace: () => ({ id: "ws-1", name: "Acme", slug: "acme" }),
 }));
-vi.mock("@multica/core/api", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/api")>()),
+vi.mock("@marvis/core/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/api")>()),
   api: { createMember: mockCreateMember },
 }));
-vi.mock("@multica/core/auth", () => {
+vi.mock("@marvis/core/auth", () => {
   const state = { user: { id: "user-1" } };
   const useAuthStore = Object.assign(
     (selector?: (s: typeof state) => unknown) => (selector ? selector(state) : state),

@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import type { IssueStatus } from "@multica/core/types";
+import type { IssueStatus } from "@marvis/core/types";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { StatusIcon } from "@/components/ui/status-icon";

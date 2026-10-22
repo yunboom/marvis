@@ -15,10 +15,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/integrations/vcs"
-	"github.com/multica-ai/multica/server/internal/middleware"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/integrations/vcs"
+	"github.com/marvis-ai/marvis/server/internal/middleware"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // ── Response shapes ─────────────────────────────────────────────────────────
@@ -168,7 +168,7 @@ func (h *Handler) ConnectVCS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.isVCSConfigured() {
-		writeFeatureDisabled(w, "vcs_not_configured", "vcs integration not configured (MULTICA_VCS_SECRET_KEY unset)")
+		writeFeatureDisabled(w, "vcs_not_configured", "vcs integration not configured (MARVIS_VCS_SECRET_KEY unset)")
 		return
 	}
 
@@ -264,7 +264,7 @@ func vcsValidationFailureMessage(err error) string {
 	var verification *tls.CertificateVerificationError
 	switch {
 	case errors.As(err, &unknownCA):
-		return "the provider's TLS certificate is signed by a certificate authority this server does not trust; add that CA to the Multica server's trust store"
+		return "the provider's TLS certificate is signed by a certificate authority this server does not trust; add that CA to the Marvis server's trust store"
 	case errors.As(err, &hostname):
 		return "the provider's TLS certificate does not match the instance URL's host name"
 	case errors.As(err, &verification):
@@ -317,7 +317,7 @@ func (h *Handler) RotateVCSConnectionWebhook(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if !h.isVCSConfigured() {
-		writeFeatureDisabled(w, "vcs_not_configured", "vcs integration not configured (MULTICA_VCS_SECRET_KEY unset)")
+		writeFeatureDisabled(w, "vcs_not_configured", "vcs integration not configured (MARVIS_VCS_SECRET_KEY unset)")
 		return
 	}
 

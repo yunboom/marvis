@@ -1,4 +1,4 @@
-import type { AgentTask } from "@multica/core/types";
+import type { AgentTask } from "@marvis/core/types";
 import {
   estimateCost,
   estimateCostBreakdown,

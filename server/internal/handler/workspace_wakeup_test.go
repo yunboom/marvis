@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/service"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 func TestWorkspaceWakeupsInventory(t *testing.T) {
@@ -119,7 +119,7 @@ func TestWorkspaceWakeupsInventory(t *testing.T) {
 	for _, q := range []string{"scope=oops", "kind=oops", "limit=0", "limit=101", "offset=-1", "offset=2147483648", "agent_id=bad"} {
 		read(newRequest("GET", "/?"+q, nil), 400)
 	}
-	outsider := dbfx.User(t, "inventory outsider", "inventory-outsider@multica.test")
+	outsider := dbfx.User(t, "inventory outsider", "inventory-outsider@marvis.test")
 	req := newRequest("GET", "/?scope=all", nil)
 	req.Header.Set("X-User-ID", outsider)
 	read(req, 404)

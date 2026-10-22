@@ -68,7 +68,7 @@ func setupBotSwap(t *testing.T) (context.Context, *pgxpool.Pool, *InstallationSe
 	}
 	exec(`INSERT INTO workspace (id, name, slug, description) VALUES ($1, 'wecom bot swap', 'wecom-bot-swap', '') ON CONFLICT (id) DO NOTHING`, wcSwapWS)
 	exec(`INSERT INTO agent_runtime (id, workspace_id, name, runtime_mode, provider)
-VALUES ($1, $2, 'wecom bot swap runtime', 'local', 'multica_daemon') ON CONFLICT (id) DO NOTHING`, wcSwapRuntime, wcSwapWS)
+VALUES ($1, $2, 'wecom bot swap runtime', 'local', 'marvis_daemon') ON CONFLICT (id) DO NOTHING`, wcSwapRuntime, wcSwapWS)
 	exec(`INSERT INTO agent (id, workspace_id, name, runtime_mode, runtime_id)
 VALUES ($1, $2, 'wecom bot swap agent', 'local', $3) ON CONFLICT (id) DO NOTHING`, wcSwapAgent, wcSwapWS, wcSwapRuntime)
 	t.Cleanup(clean)
@@ -96,7 +96,7 @@ func seedBotScopedRows(t *testing.T, ctx context.Context, pool *pgxpool.Pool, in
 			t.Fatalf("seed bot-scoped row: %v", err)
 		}
 	}
-	exec(`INSERT INTO channel_user_binding (workspace_id, multica_user_id, installation_id, channel_type, channel_user_id, config)
+	exec(`INSERT INTO channel_user_binding (workspace_id, marvis_user_id, installation_id, channel_type, channel_user_id, config)
 VALUES ($1, $2, $3, 'wecom', $4, '{}'::jsonb)`, wcSwapWS, wcSwapUser, installationID, wcSwapUserIDUnderA)
 	exec(`INSERT INTO channel_chat_session_binding (chat_session_id, installation_id, channel_type, channel_chat_id, chat_type, config)
 VALUES ($1, $2, 'wecom', $3, 'p2p', '{}'::jsonb)`, wcSwapChat, installationID, wcSwapUserIDUnderA)

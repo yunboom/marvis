@@ -3,9 +3,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { Agent, AgentActivityBucket, AgentTask } from "@multica/core/types";
-import { WorkspaceSlugProvider } from "@multica/core/paths";
-import { I18nProvider } from "@multica/core/i18n/react";
+import type { Agent, AgentActivityBucket, AgentTask } from "@marvis/core/types";
+import { WorkspaceSlugProvider } from "@marvis/core/paths";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../../locales/en/common.json";
 import enAgents from "../../../locales/en/agents.json";
 import {
@@ -15,12 +15,12 @@ import {
 
 const TEST_RESOURCES = { en: { common: enCommon, agents: enAgents } };
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
 // History fixtures have no issue links, so they need no issue-detail requests.
-vi.mock("@multica/core/api", () => ({ api: {} }));
+vi.mock("@marvis/core/api", () => ({ api: {} }));
 
 // Keep transcript internals out of history pagination tests while exposing
 // the identity of each rendered task row.
@@ -33,8 +33,8 @@ const agentTasksRef = vi.hoisted(() => ({
   current: (_before?: string) => new Promise<unknown>(() => {}),
 }));
 const activityRef = vi.hoisted(() => ({ current: [] as AgentActivityBucket[] }));
-vi.mock("@multica/core/agents", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@multica/core/agents")>();
+vi.mock("@marvis/core/agents", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@marvis/core/agents")>();
   return {
     ...actual,
     agentTaskSnapshotOptions: () => ({

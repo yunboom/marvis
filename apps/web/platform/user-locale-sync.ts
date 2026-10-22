@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { paths } from "@multica/core/paths";
+import { paths } from "@marvis/core/paths";
 
 export function useUserLocaleSyncEnabled(): boolean {
   const pathname = usePathname();

@@ -1,6 +1,6 @@
 "use client";
 
-import { issueStatusCategory } from "@multica/core/issues";
+import { issueStatusCategory } from "@marvis/core/issues";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
@@ -28,46 +28,46 @@ import type {
   SearchIssueResult,
   SearchProjectResult,
   Workspace,
-} from "@multica/core/types";
-import { isLocalSearchReady, searchIssues, searchProjects } from "@multica/core/search-index";
-import { partitionAggregatedSearchResults } from "@multica/core/search/cancelled-rank";
+} from "@marvis/core/types";
+import { isLocalSearchReady, searchIssues, searchProjects } from "@marvis/core/search-index";
+import { partitionAggregatedSearchResults } from "@marvis/core/search/cancelled-rank";
 import {
   openCreateIssueWithPreference,
   selectRecentIssues,
   useCommentCollapseStore,
   useRecentIssuesStore,
   useResolvedExpandStore,
-} from "@multica/core/issues/stores";
-import { issueDetailOptions, issueTimelineOptions } from "@multica/core/issues/queries";
-import { useWorkspaceId } from "@multica/core";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { paths, useWorkspacePaths, WORKSPACE_PAGES } from "@multica/core/paths";
-import type { WorkspacePageKey, WorkspacePaths } from "@multica/core/paths";
-import { useModalStore } from "@multica/core/modals";
-import { createShortcutChord } from "@multica/core/shortcuts";
-import { memberListOptions, workspaceListOptions } from "@multica/core/workspace/queries";
-import { inboxUnreadSummaryOptions, unreadWorkspaceIds } from "@multica/core/inbox/queries";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
+} from "@marvis/core/issues/stores";
+import { issueDetailOptions, issueTimelineOptions } from "@marvis/core/issues/queries";
+import { useWorkspaceId } from "@marvis/core";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { paths, useWorkspacePaths, WORKSPACE_PAGES } from "@marvis/core/paths";
+import type { WorkspacePageKey, WorkspacePaths } from "@marvis/core/paths";
+import { useModalStore } from "@marvis/core/modals";
+import { createShortcutChord } from "@marvis/core/shortcuts";
+import { memberListOptions, workspaceListOptions } from "@marvis/core/workspace/queries";
+import { inboxUnreadSummaryOptions, unreadWorkspaceIds } from "@marvis/core/inbox/queries";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { StatusIcon } from "../issues/components";
 import { resolvedThreadRootIds, rootCommentIds } from "../issues/components/thread-utils";
 import { ProjectIcon } from "../projects/components/project-icon";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
 import { useProjectStatusLabels } from "../projects/components/labels";
 import { routeIconForPath } from "../layout/route-icon-components";
-import { PROJECT_STATUS_CONFIG } from "@multica/core/projects/config";
-import type { ProjectStatus } from "@multica/core/types";
+import { PROJECT_STATUS_CONFIG } from "@marvis/core/projects/config";
+import type { ProjectStatus } from "@marvis/core/types";
 import { ActorAvatar } from "../common/actor-avatar";
 import { ShortcutKeycaps } from "../common/shortcut-keycaps";
-import { ActorAvatar as ActorAvatarBase } from "@multica/ui/components/common/actor-avatar";
+import { ActorAvatar as ActorAvatarBase } from "@marvis/ui/components/common/actor-avatar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@multica/ui/components/ui/dialog";
-import { useTheme } from "@multica/ui/components/common/theme-provider";
-import { copyText } from "@multica/ui/lib/clipboard";
+} from "@marvis/ui/components/ui/dialog";
+import { useTheme } from "@marvis/ui/components/common/theme-provider";
+import { copyText } from "@marvis/ui/lib/clipboard";
 import {
   resolveClickIntent,
   useIntentNavigate,

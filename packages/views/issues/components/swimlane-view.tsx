@@ -3,9 +3,9 @@
 import {
   issueStatusCategory,
   statusColumnKeys,
-} from "@multica/core/issues";
+} from "@marvis/core/issues";
 import { memo, useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import { useIssuePeekActions } from "../surface/peek-context";
 import {
   DndContext,
@@ -33,29 +33,29 @@ import type {
   IssueTableGroupDescriptor,
   Project,
   UpdateIssueRequest,
-} from "@multica/core/types";
-import { useViewStore, useViewStoreApi } from "@multica/core/issues/stores/view-store-context";
+} from "@marvis/core/types";
+import { useViewStore, useViewStoreApi } from "@marvis/core/issues/stores/view-store-context";
 import { useViewBaseline } from "../surface/view-baseline-context";
 import { filterIssues, type IssueFilters } from "../utils/filter";
 import { getMoveAnchors } from "../utils/drag-utils";
-import type { SwimlaneGrouping } from "@multica/core/issues/stores/view-store";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { useWorkspaceId } from "@multica/core/hooks";
-import type { IssueStatusCatalog } from "@multica/core/issue-statuses";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { childrenByParentsOptions, issueKeys } from "@multica/core/issues/queries";
+import type { SwimlaneGrouping } from "@marvis/core/issues/stores/view-store";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import type { IssueStatusCatalog } from "@marvis/core/issue-statuses";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { childrenByParentsOptions, issueKeys } from "@marvis/core/issues/queries";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { sortIssues } from "../utils/sort";
-import { BUILT_IN_STATUS_ORDER, STATUS_CONFIG } from "@multica/core/issues/config";
+import { BUILT_IN_STATUS_ORDER, STATUS_CONFIG } from "@marvis/core/issues/config";
 import { DraggableBoardCard, BoardCardContent } from "./board-card";
 import { StatusIcon } from "./status-icon";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import { StatusHeading } from "./status-heading";
 import { HiddenColumnsPanel, HiddenColumnRow } from "./hidden-columns-panel";
 import { InfiniteScrollSentinel } from "./infinite-scroll-sentinel";

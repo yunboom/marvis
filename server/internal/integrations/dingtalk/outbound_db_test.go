@@ -9,16 +9,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	"github.com/multica-ai/multica/server/internal/service"
-	dbfx "github.com/multica-ai/multica/server/internal/testutil"
-	"github.com/multica-ai/multica/server/internal/util"
-	"github.com/multica-ai/multica/server/internal/util/secretbox"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/dbid"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/dbid"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 func TestOutboundDB_SealedQuoteAndMemoryAnchor(t *testing.T) {
@@ -39,7 +39,7 @@ func testOutboundSealedInput(t *testing.T, scenario string, restart bool) {
 	defer cancel()
 	fx := dbfx.New(pool, "", "")
 	suffix := util.UUIDToString(dbid.NewV7())
-	fx.UserID = fx.User(t, "Sender", "dingtalk-sealed-"+suffix+"@multica.test")
+	fx.UserID = fx.User(t, "Sender", "dingtalk-sealed-"+suffix+"@marvis.test")
 	fx.WorkspaceID = fx.Workspace(t, "DingTalk sealed input", "dingtalk-sealed-"+suffix)
 	fx.Member(t, fx.WorkspaceID, fx.UserID, "owner")
 	runtimeID := fx.Runtime(t, "Runtime")

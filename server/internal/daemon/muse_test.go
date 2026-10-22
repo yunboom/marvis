@@ -54,10 +54,10 @@ func TestMuseDetectedThroughLoginShell(t *testing.T) {
 	t.Setenv("PATH", "/usr/bin:/bin")
 	t.Setenv("SHELL", "/bin/sh")
 	t.Setenv("ENV", rc)
-	t.Setenv("MULTICA_DAEMON_ID", "11111111-1111-1111-1111-111111111111")
+	t.Setenv("MARVIS_DAEMON_ID", "11111111-1111-1111-1111-111111111111")
 	pinNonCodexAgentsToMissingPaths(t)
-	t.Setenv("MULTICA_CODEX_PATH", filepath.Join(t.TempDir(), "missing-codex"))
-	t.Setenv("MULTICA_MUSE_PATH", "")
+	t.Setenv("MARVIS_CODEX_PATH", filepath.Join(t.TempDir(), "missing-codex"))
+	t.Setenv("MARVIS_MUSE_PATH", "")
 	cfg, err := LoadConfig(Overrides{ServerURL: "http://localhost:0", WorkspacesRoot: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)

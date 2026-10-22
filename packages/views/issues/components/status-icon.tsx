@@ -1,12 +1,12 @@
-import { statusCategoryOfKey } from "@multica/core/issues";
-import { isBuiltInIssueStatus } from "@multica/core/issue-statuses";
+import { statusCategoryOfKey } from "@marvis/core/issues";
+import { isBuiltInIssueStatus } from "@marvis/core/issue-statuses";
 import type {
   BuiltInIssueStatus,
   IssueStatus,
   IssueStatusCategory,
   IssueStatusIcon,
-} from "@multica/core/types";
-import { STATUS_CONFIG } from "@multica/core/issues/config";
+} from "@marvis/core/types";
+import { STATUS_CONFIG } from "@marvis/core/issues/config";
 
 // Geometry constants (viewBox 0 0 14 14, center 7,7)
 

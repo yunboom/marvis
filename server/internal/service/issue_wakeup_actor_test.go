@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 func TestIssueWakeupMemberFilterPreservesOnceUntilMatchingComment(t *testing.T) {
 	f, s, issue, agent := wakeFixture(t)
-	other := f.User(t, "monitored member", "wakeup-member@multica.test")
+	other := f.User(t, "monitored member", "wakeup-member@marvis.test")
 	f.Member(t, f.WorkspaceID, other, "member")
 	w := wakeCreate(t, f, s, issue, WakeupInput{AgentID: agent, Kind: "event", EventTypes: []string{"comment.created"}, FilterActorType: "member", FilterActorID: other, Instruction: "continue after member reply"})
 	f.Comment(t, util.UUIDToString(issue), "another member")
@@ -39,7 +39,7 @@ func TestIssueWakeupMemberFilterPreservesOnceUntilMatchingComment(t *testing.T) 
 
 func TestIssueWakeupActorMatchesEditorNotOriginalAuthor(t *testing.T) {
 	f, s, issue, agent := wakeFixture(t)
-	other := f.User(t, "editor", "wakeup-editor@multica.test")
+	other := f.User(t, "editor", "wakeup-editor@marvis.test")
 	f.Member(t, f.WorkspaceID, other, "member")
 	comment := f.Comment(t, util.UUIDToString(issue), "original")
 	makeRule := func(kind, id string) db.IssueWakeup {
@@ -54,7 +54,7 @@ func TestIssueWakeupActorMatchesEditorNotOriginalAuthor(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer tx.Rollback(ctx)
-		if _, err = tx.Exec(ctx, "SELECT set_config('multica.actor_type',$1,true),set_config('multica.actor_id',$2,true)", kind, id); err != nil {
+		if _, err = tx.Exec(ctx, "SELECT set_config('marvis.actor_type',$1,true),set_config('marvis.actor_id',$2,true)", kind, id); err != nil {
 			t.Fatal(err)
 		}
 		if _, err = tx.Exec(ctx, "UPDATE comment SET content=$2 WHERE id=$1", comment, body); err != nil {

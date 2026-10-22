@@ -29,25 +29,25 @@ import {
   type ProjectListFilters,
   type ProjectSortField,
   type ProjectViewMode,
-} from "@multica/core/projects";
+} from "@marvis/core/projects";
 import {
   pinListOptions,
   useCreatePin,
   useDeletePin,
-} from "@multica/core/pins";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { useAuthStore } from "@multica/core/auth";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { memberListOptions } from "@multica/core/workspace/queries";
-import { useModalStore } from "@multica/core/modals";
+} from "@marvis/core/pins";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { useAuthStore } from "@marvis/core/auth";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { memberListOptions } from "@marvis/core/workspace/queries";
+import { useModalStore } from "@marvis/core/modals";
 import { AppLink, useIntentNavigate, useRowLink } from "../../navigation";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { FILTER_ITEM_CLASS, HoverCheck } from "../../common/hover-check";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
-import { Button } from "@multica/ui/components/ui/button";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
-import { Input } from "@multica/ui/components/ui/input";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -55,7 +55,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -70,7 +70,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   ListGrid,
   ListGridCell,
@@ -79,27 +79,27 @@ import {
   ListGridRow,
   LIST_GRID_BOTTOM_CLEARANCE,
   type ListGridSortDirection,
-} from "@multica/ui/components/ui/list-grid";
+} from "@marvis/ui/components/ui/list-grid";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
-import { Switch } from "@multica/ui/components/ui/switch";
+} from "@marvis/ui/components/ui/popover";
+import { Switch } from "@marvis/ui/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+} from "@marvis/ui/components/ui/tooltip";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import type {
   MemberWithUser,
   Project,
   ProjectPriority,
   ProjectStatus,
   UpdateProjectRequest,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import {
   CollectionPageHeader,
   CollectionPageHeaderAction,
@@ -112,8 +112,8 @@ import { useFormatRelativeDate } from "./labels";
 import { ProjectStatusBadge, ProjectPriorityBadge } from "./project-badge";
 import { ProjectLeadPicker } from "./project-lead-picker";
 import { PAGE_GUTTER, PAGE_TOOLBAR } from "../../layout/page-header";
-import { cn } from "@multica/ui/lib/utils";
-import { DeferredTooltip } from "@multica/ui/components/common/deferred-tooltip";
+import { cn } from "@marvis/ui/lib/utils";
+import { DeferredTooltip } from "@marvis/ui/components/common/deferred-tooltip";
 
 // Sort order maps for the enum columns (header sort needs a total order).
 const PRIORITY_ORDER: Record<ProjectPriority, number> = {

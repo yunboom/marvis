@@ -2,19 +2,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { AutopilotTrigger } from "@multica/core/types";
+import type { AutopilotTrigger } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 
 // The detail page's trigger row: what a schedule row says about itself, and
 // the edit entry it grew in MUL-7478.
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({}),
   useCurrentWorkspace: () => ({ name: "Acme" }),
 }));
 
-vi.mock("@multica/core/autopilots/queries", () => ({
+vi.mock("@marvis/core/autopilots/queries", () => ({
   autopilotDetailOptions: () => ({ queryKey: ["autopilot"], queryFn: async () => null }),
   autopilotRunsOptions: () => ({ queryKey: ["runs"], queryFn: async () => [] }),
   autopilotRunOptions: () => ({ queryKey: ["run"], queryFn: async () => null }),
@@ -25,7 +25,7 @@ vi.mock("@multica/core/autopilots/queries", () => ({
   }),
 }));
 
-vi.mock("@multica/core/autopilots/mutations", () => ({
+vi.mock("@marvis/core/autopilots/mutations", () => ({
   useUpdateAutopilot: () => ({ mutateAsync: vi.fn() }),
   useDeleteAutopilot: () => ({ mutateAsync: vi.fn() }),
   useTriggerAutopilot: () => ({ mutateAsync: vi.fn() }),
@@ -37,8 +37,8 @@ vi.mock("@multica/core/autopilots/mutations", () => ({
 
 // A webhook row composes its URL from the API base; everything else in this
 // module (ApiError, which the schedule gate type-checks against) stays real.
-vi.mock("@multica/core/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@multica/core/api")>();
+vi.mock("@marvis/core/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@marvis/core/api")>();
   return { ...actual, api: { ...actual.api, getBaseUrl: () => "https://api.test" } };
 });
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { issueStatusCategory } from "@multica/core/issues";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+import { issueStatusCategory } from "@marvis/core/issues";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { useStatusLabel } from "./../utils/status-label";
 import { useCallback, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -15,22 +15,22 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react";
-import { childIssueProgressOptions, issueDetailOptions } from "@multica/core/issues/queries";
-import { formatDateOnly, isPastDateOnly } from "@multica/core/issues/date";
-import { agentTaskSnapshotOptions } from "@multica/core/agents";
-import { issuePullRequestsOptions } from "@multica/core/github";
-import { projectListOptions } from "@multica/core/projects";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useActorName } from "@multica/core/workspace/hooks";
-import type { AgentTask, GitHubPullRequest, Issue } from "@multica/core/types";
+import { childIssueProgressOptions, issueDetailOptions } from "@marvis/core/issues/queries";
+import { formatDateOnly, isPastDateOnly } from "@marvis/core/issues/date";
+import { agentTaskSnapshotOptions } from "@marvis/core/agents";
+import { issuePullRequestsOptions } from "@marvis/core/github";
+import { projectListOptions } from "@marvis/core/projects";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import type { AgentTask, GitHubPullRequest, Issue } from "@marvis/core/types";
 import {
   HoverCard,
   HoverCardTrigger,
   HoverCardContent,
-} from "@multica/ui/components/ui/hover-card";
-import { ShimmerText } from "@multica/ui/components/common/shimmer-text";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/hover-card";
+import { ShimmerText } from "@marvis/ui/components/common/shimmer-text";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { cn } from "@marvis/ui/lib/utils";
 import { useLocale, useT, useTimeAgo } from "../../i18n";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { LabelChip } from "../../labels/label-chip";

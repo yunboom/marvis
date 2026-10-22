@@ -3,9 +3,9 @@ import {
   NavigationProvider,
   type LinkClickIntent,
   type NavigationAdapter,
-} from "@multica/views/navigation";
-import { useAuthStore } from "@multica/core/auth";
-import { workspaceSlugForPath, paths } from "@multica/core/paths";
+} from "@marvis/views/navigation";
+import { useAuthStore } from "@marvis/core/auth";
+import { workspaceSlugForPath, paths } from "@marvis/core/paths";
 import {
   useTabStore,
   getActiveTab,
@@ -91,7 +91,7 @@ function tryRouteToOtherWorkspace(path: string): boolean {
 }
 
 /**
- * Execute a content link (the `multica:navigate` event fired by the shared
+ * Execute a content link (the `marvis:navigate` event fired by the shared
  * editor/markdown link handler) with the disposition the click resolved to:
  * a plain click navigates in place — the same thing a plain click means on
  * every other internal link — and modifier clicks open a background or

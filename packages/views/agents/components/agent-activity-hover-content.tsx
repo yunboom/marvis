@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { ActorAvatar as ActorAvatarBase } from "@multica/ui/components/common/actor-avatar";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { runtimeListOptions } from "@multica/core/runtimes/queries";
-import { agentListOptions } from "@multica/core/workspace/queries";
-import { deriveAgentPresenceDetail } from "@multica/core/agents/derive-presence";
-import type { AgentTask, Issue } from "@multica/core/types";
+import { ActorAvatar as ActorAvatarBase } from "@marvis/ui/components/common/actor-avatar";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { runtimeListOptions } from "@marvis/core/runtimes/queries";
+import { agentListOptions } from "@marvis/core/workspace/queries";
+import { deriveAgentPresenceDetail } from "@marvis/core/agents/derive-presence";
+import type { AgentTask, Issue } from "@marvis/core/types";
 import { workloadConfig } from "../presence";
 import { useT } from "../../i18n";
 

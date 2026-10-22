@@ -18,7 +18,7 @@ export const useIssueOpeningStore = create<IssueOpeningState>()(
       setOpenMode: (openMode) => set({ openMode }),
     }),
     {
-      name: "multica_issue_opening",
+      name: "marvis_issue_opening",
       storage: createJSONStorage(() => defaultStorage),
       partialize: ({ openMode }) => ({ openMode }),
       merge: (persisted, current) => ({

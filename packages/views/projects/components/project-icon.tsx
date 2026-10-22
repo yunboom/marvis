@@ -1,5 +1,5 @@
-import type { Project } from "@multica/core/types";
-import { cn } from "@multica/ui/lib/utils";
+import type { Project } from "@marvis/core/types";
+import { cn } from "@marvis/ui/lib/utils";
 
 export type ProjectIconSize = "sm" | "md" | "lg";
 

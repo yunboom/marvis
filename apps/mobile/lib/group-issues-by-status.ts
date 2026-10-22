@@ -3,7 +3,7 @@
  * merges them. Mobile groups its already-loaded rows and keeps unknown keys
  * visible while the catalog is loading.
  */
-import type { Issue, IssueStatus, IssueStatusEntry } from "@multica/core/types";
+import type { Issue, IssueStatus, IssueStatusEntry } from "@marvis/core/types";
 import { BUILT_IN_STATUS_ORDER, BUILT_IN_STATUS_CATEGORY, STATUS_CATEGORIES, issueStatusCategory } from "./issue-status";
 
 export interface IssueSection {

@@ -20,11 +20,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/logger"
-	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/logger"
+	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // SignupError represents signup restriction errors
@@ -47,7 +47,7 @@ const (
 	googleLoginCodeInvalidOAuthCode    = "oauth_code_invalid"
 )
 
-const devVerificationCodeEnv = "MULTICA_DEV_VERIFICATION_CODE"
+const devVerificationCodeEnv = "MARVIS_DEV_VERIFICATION_CODE"
 
 // supportedLanguages mirrors `SUPPORTED_LOCALES` in packages/core/i18n/types.ts.
 // Keep both lists in sync when adding a locale — the user-controlled `language`
@@ -236,7 +236,7 @@ func (h *Handler) findOrCreateUser(ctx context.Context, email string) (user db.U
 const signupSourceMaxLen = 512
 
 func signupSourceFromRequest(r *http.Request) string {
-	c, err := r.Cookie("multica_signup_source")
+	c, err := r.Cookie("marvis_signup_source")
 	if err != nil || c == nil {
 		return ""
 	}

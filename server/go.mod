@@ -1,4 +1,4 @@
-module github.com/multica-ai/multica/server
+module github.com/marvis-ai/marvis/server
 
 go 1.26.9
 

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import type { AgentTask } from "@multica/core/types";
+import type { AgentTask } from "@marvis/core/types";
 import { compareActiveIssueTasks } from "./active-task-order";
 
 const task = (id: string, status: AgentTask["status"], priority = 0, created_at = "2026-09-08T03:00:00Z") =>

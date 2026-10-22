@@ -1,6 +1,6 @@
-import type { AgentTask, TimelineEntry } from "@multica/core/types";
-import { isDeletedComment } from "@multica/core/issues/comment-deletion";
-import { commentSupplementReceipts } from "@multica/core/issues/run-steering";
+import type { AgentTask, TimelineEntry } from "@marvis/core/types";
+import { isDeletedComment } from "@marvis/core/issues/comment-deletion";
+import { commentSupplementReceipts } from "@marvis/core/issues/run-steering";
 
 export interface CommentRun {
   task: AgentTask;

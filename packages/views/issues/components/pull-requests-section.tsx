@@ -4,25 +4,25 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight, CircleSlash, MoreHorizontal, Plus, RotateCcw, Settings } from "lucide-react";
-import { ApiError } from "@multica/core/api";
+import { ApiError } from "@marvis/core/api";
 import {
   issuePullRequestsOptions,
   useGitHubSettings,
   useLinkIssuePullRequest,
   useSetIssuePRAutoComplete,
-} from "@multica/core/github";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
+} from "@marvis/core/github";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { Input } from "@multica/ui/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@marvis/ui/components/ui/popover";
 import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { PullRequestList } from "./pull-request-list";

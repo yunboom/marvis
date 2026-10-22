@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/multica-ai/multica/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/util"
 )
 
 func TestIssueWakeupInstructionPreservesStateAndPendingEvents(t *testing.T) {
@@ -113,7 +113,7 @@ func TestIssueWakeupInstructionPreservesQueuedRunAndChecksScope(t *testing.T) {
 	if err = s.EditInstruction(ctx, parseTestUUID(t, other), w.ID, owner, in); !errors.Is(err, pgx.ErrNoRows) {
 		t.Fatalf("cross issue: %v", err)
 	}
-	outsider := f.User(t, "outsider", "edit-outsider@multica.test")
+	outsider := f.User(t, "outsider", "edit-outsider@marvis.test")
 	if err = s.EditInstruction(ctx, issue, w.ID, parseTestUUID(t, outsider), in); !errors.Is(err, ErrWakeupForbidden) {
 		t.Fatalf("outsider: %v", err)
 	}

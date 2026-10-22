@@ -276,7 +276,7 @@ export function startSearchIndexWorker(): WorkerChannel | null {
     try {
       const worker = new SharedWorker(new URL("./worker.ts", import.meta.url), {
         type: "module",
-        name: "multica-search-index",
+        name: "marvis-search-index",
       });
       const port = worker.port;
       const channel: WorkerChannel = {
@@ -298,7 +298,7 @@ export function startSearchIndexWorker(): WorkerChannel | null {
     try {
       const worker = new Worker(new URL("./worker.ts", import.meta.url), {
         type: "module",
-        name: "multica-search-index",
+        name: "marvis-search-index",
       });
       return {
         post: (message) => worker.postMessage(message),

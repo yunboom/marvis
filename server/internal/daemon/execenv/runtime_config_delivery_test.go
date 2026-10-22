@@ -92,17 +92,17 @@ func TestBriefSurfaceDeliveryPolicy(t *testing.T) {
 	}{
 		// Issue surfaces: files ride the comment.
 		"comment": {
-			mustHave: []string{"`--attachment <path>` to `multica issue comment add`", inlineBlocksRule},
-			mustNot:  []string{"multica attachment upload"},
+			mustHave: []string{"`--attachment <path>` to `marvis issue comment add`", inlineBlocksRule},
+			mustNot:  []string{"marvis attachment upload"},
 		},
 		"assignment": {
-			mustHave: []string{"`--attachment <path>` to `multica issue comment add`", inlineBlocksRule},
-			mustNot:  []string{"multica attachment upload"},
+			mustHave: []string{"`--attachment <path>` to `marvis issue comment add`", inlineBlocksRule},
+			mustNot:  []string{"marvis attachment upload"},
 		},
 		// Direct chat: the upload binds to the reply and the browser renders a
 		// card, so the file can sit inline where the agent puts it.
 		"chat_direct": {
-			mustHave: []string{"`multica attachment upload <local-path>`", inlineBlocksRule},
+			mustHave: []string{"`marvis attachment upload <local-path>`", inlineBlocksRule},
 			mustNot:  []string{"text-only", "separate message"},
 		},
 		// A channel-backed chat names its platform, defers the verdict to the
@@ -118,7 +118,7 @@ func TestBriefSurfaceDeliveryPolicy(t *testing.T) {
 				"never report a file as delivered",
 			},
 			mustNot: []string{
-				"run `multica attachment upload",
+				"run `marvis attachment upload",
 				"separate message",
 				"conversation is text-only",
 				"does NOT apply",
@@ -131,7 +131,7 @@ func TestBriefSurfaceDeliveryPolicy(t *testing.T) {
 				"the per-turn user message tells you",
 			},
 			mustNot: []string{
-				"run `multica attachment upload",
+				"run `marvis attachment upload",
 				"separate message",
 				"conversation is text-only",
 				"does NOT apply",
@@ -144,7 +144,7 @@ func TestBriefSurfaceDeliveryPolicy(t *testing.T) {
 				"the per-turn user message tells you",
 			},
 			mustNot: []string{
-				"run `multica attachment upload",
+				"run `marvis attachment upload",
 				"separate message",
 				"conversation is text-only",
 				"does NOT apply",
@@ -176,7 +176,7 @@ func TestBriefSurfaceDeliveryPolicy(t *testing.T) {
 				"never report a file as delivered",
 			},
 			mustNot: []string{
-				"run `multica attachment upload",
+				"run `marvis attachment upload",
 				"separate message",
 				"conversation is text-only",
 				"does NOT apply",
@@ -190,7 +190,7 @@ func TestBriefSurfaceDeliveryPolicy(t *testing.T) {
 				"never report a file as delivered",
 			},
 			mustNot: []string{
-				"run `multica attachment upload",
+				"run `marvis attachment upload",
 				"separate message",
 				"conversation is text-only",
 				"does NOT apply",
@@ -199,11 +199,11 @@ func TestBriefSurfaceDeliveryPolicy(t *testing.T) {
 		},
 		"autopilot": {
 			mustHave: []string{"this surface is text-only"},
-			mustNot:  []string{"multica attachment upload", inlineBlocksRule},
+			mustNot:  []string{"marvis attachment upload", inlineBlocksRule},
 		},
 		"quickcreate": {
-			mustHave: []string{"your stdout is text-only", "`multica issue create` call itself via `--attachment <path>`"},
-			mustNot:  []string{"multica attachment upload", inlineBlocksRule},
+			mustHave: []string{"your stdout is text-only", "`marvis issue create` call itself via `--attachment <path>`"},
+			mustNot:  []string{"marvis attachment upload", inlineBlocksRule},
 		},
 	}
 

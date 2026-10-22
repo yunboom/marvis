@@ -14,9 +14,9 @@ import {
   isEditableShortcutTarget,
   shortcutMatchesEvent,
   useShortcut,
-} from "@multica/core/shortcuts";
-import { isImeComposing } from "@multica/core/utils";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/shortcuts";
+import { isImeComposing } from "@marvis/core/utils";
+import { cn } from "@marvis/ui/lib/utils";
 
 export const rightSidebarPanelMotionProps = {
   "data-right-sidebar-panel": "true",

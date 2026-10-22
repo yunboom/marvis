@@ -326,7 +326,7 @@ export function AuthInitializer({
     };
 
     if (!cookieAuth) {
-      const token = storage.getItem("multica_token");
+      const token = storage.getItem("marvis_token");
       if (!token) {
         // No credential to verify. Same published state as a rejected one,
         // and the same teardown — which on desktop is what keeps a daemon

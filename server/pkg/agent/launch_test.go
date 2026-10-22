@@ -47,7 +47,7 @@ func TestLaunchPrefixPrecedesProtocolFlags(t *testing.T) {
 }
 
 // TestLaunchPrefixPlacesFlagStyleWrappersFirst pins where a flag-style prefix
-// lands. It asserts the argv Multica builds, not that any particular third-party
+// lands. It asserts the argv Marvis builds, not that any particular third-party
 // parser accepts the new position — most treat the two orders as equivalent,
 // but a CLI that separates global from subcommand flags may not, which is why
 // the docs call the move out instead of promising it is invisible.
@@ -252,7 +252,7 @@ func TestLogAgentCommandRedactsTextAndJSON(t *testing.T) {
 
 			var buf bytes.Buffer
 			cfg := Config{Logger: slog.New(tc.handler(&buf)), provider: "codex"}
-			cmd := &exec.Cmd{Path: "/opt/multica/bin/codex", Args: append([]string{"codex"}, args...)}
+			cmd := &exec.Cmd{Path: "/opt/marvis/bin/codex", Args: append([]string{"codex"}, args...)}
 			cfg.logAgentCommandWithPrompt(cmd, newAgentCommandLogArgs(args), 123)
 
 			output := buf.String()
@@ -262,7 +262,7 @@ func TestLogAgentCommandRedactsTextAndJSON(t *testing.T) {
 				}
 			}
 			for _, diagnostic := range []string{
-				"agent command", "provider", "codex", "/opt/multica/bin/codex",
+				"agent command", "provider", "codex", "/opt/marvis/bin/codex",
 				"--api-key", "--token", "--header", "-c", "--future-secret",
 				redactedAgentCommandArg, "arg_count", "prompt_bytes",
 			} {

@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { api } from "@multica/core/api";
-import { issueKeys } from "@multica/core/issues/queries";
-import { parseMentions } from "@multica/core/issues/comment-trigger-outcomes";
-import type { CommentTriggerPreviewAgent, CommentTriggerOutcome } from "@multica/core/types";
+import { api } from "@marvis/core/api";
+import { issueKeys } from "@marvis/core/issues/queries";
+import { parseMentions } from "@marvis/core/issues/comment-trigger-outcomes";
+import type { CommentTriggerPreviewAgent, CommentTriggerOutcome } from "@marvis/core/types";
 
 const COMMENT_TRIGGER_PREVIEW_DEBOUNCE_MS = 300;
 const NOTE_COMMAND_RE = /^\/note(?:$|\s)/i;

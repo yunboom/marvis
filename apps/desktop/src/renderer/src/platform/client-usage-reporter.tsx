@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef } from "react";
-import { api } from "@multica/core/api";
-import { useAuthStore } from "@multica/core/auth";
-import { getOrCreateInstallId, utcDay } from "@multica/core/client-usage";
-import { defaultStorage } from "@multica/core/platform";
+import { api } from "@marvis/core/api";
+import { useAuthStore } from "@marvis/core/auth";
+import { getOrCreateInstallId, utcDay } from "@marvis/core/client-usage";
+import { defaultStorage } from "@marvis/core/platform";
 import type { LocalRuntimeProbe } from "../../../shared/daemon-types";
 
-const LAST_RUNTIME_PREFIX = "multica_runtime_probe_last_reported";
+const LAST_RUNTIME_PREFIX = "marvis_runtime_probe_last_reported";
 
 export function runtimeProbeSignature(probe: LocalRuntimeProbe): string {
   if (probe.probeResult === "error") return "error";

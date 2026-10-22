@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { AgentCreatedPage as SharedAgentCreatedPage } from "@multica/views/agents";
+import { AgentCreatedPage as SharedAgentCreatedPage } from "@marvis/views/agents";
 
 export function AgentCreatedPage() {
   const { agentId } = useParams<{ agentId: string }>();

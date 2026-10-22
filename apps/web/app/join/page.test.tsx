@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@multica/core/i18n/react";
-import enCommon from "@multica/views/locales/en/common.json";
-import enAuth from "@multica/views/locales/en/auth.json";
-import enSettings from "@multica/views/locales/en/settings.json";
-import { ApiError } from "@multica/core/api";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import enCommon from "@marvis/views/locales/en/common.json";
+import enAuth from "@marvis/views/locales/en/auth.json";
+import enSettings from "@marvis/views/locales/en/settings.json";
+import { ApiError } from "@marvis/core/api";
 import type { ReactNode } from "react";
 
 const TEST_RESOURCES = {
@@ -49,9 +49,9 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => searchParamsState.params,
 }));
 
-vi.mock("@multica/core/auth", async () => {
-  const actual = await vi.importActual<typeof import("@multica/core/auth")>(
-    "@multica/core/auth",
+vi.mock("@marvis/core/auth", async () => {
+  const actual = await vi.importActual<typeof import("@marvis/core/auth")>(
+    "@marvis/core/auth",
   );
   const useAuthStore = Object.assign(
     (selector: (s: typeof authStateRef.state) => unknown) =>
@@ -61,9 +61,9 @@ vi.mock("@multica/core/auth", async () => {
   return { ...actual, useAuthStore };
 });
 
-vi.mock("@multica/core/api", async () => {
-  const actual = await vi.importActual<typeof import("@multica/core/api")>(
-    "@multica/core/api",
+vi.mock("@marvis/core/api", async () => {
+  const actual = await vi.importActual<typeof import("@marvis/core/api")>(
+    "@marvis/core/api",
   );
   return {
     ...actual,

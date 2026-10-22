@@ -4,13 +4,13 @@ import { useState } from "react";
 import { AlertCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import type { Agent, AgentRuntime } from "@multica/core/types";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { useWorkspacePresenceMap } from "@multica/core/agents";
-import { isRuntimeUsableForUser } from "@multica/core/runtimes";
-import { runtimeListOptions } from "@multica/core/runtimes/queries";
+import type { Agent, AgentRuntime } from "@marvis/core/types";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { useWorkspacePresenceMap } from "@marvis/core/agents";
+import { isRuntimeUsableForUser } from "@marvis/core/runtimes";
+import { runtimeListOptions } from "@marvis/core/runtimes/queries";
 import {
   QODER_REGIONS,
   qoderOptions,
@@ -18,13 +18,13 @@ import {
   useResumeQoder,
   useStopQoder,
   type QoderConnection,
-} from "@multica/core/runtimes/qoder";
+} from "@marvis/core/runtimes/qoder";
 import {
   agentListOptions,
   memberListOptions,
-} from "@multica/core/workspace/queries";
-import { Button } from "@multica/ui/components/ui/button";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
+} from "@marvis/core/workspace/queries";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,8 +34,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { cn } from "@marvis/ui/lib/utils";
 import { PAGE_GUTTER, PAGE_RAIL } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { createPathWithParams } from "../../agents/create/squad-param";

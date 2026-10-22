@@ -10,23 +10,23 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import { api } from "@multica/core/api";
-import type { AgentTask } from "@multica/core/types";
+import { api } from "@marvis/core/api";
+import type { AgentTask } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { InlineCommentRun } from "./inline-comment-run";
 
-vi.mock("@multica/core/api", () => ({ api: {
+vi.mock("@marvis/core/api", () => ({ api: {
   getIssue: vi.fn(), listTaskMessages: vi.fn(), cancelTask: vi.fn(), rerunIssue: vi.fn(),
 }, dispatchReasonCode: () => undefined }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "workspace" }));
-vi.mock("@multica/core/workspace/hooks", () => ({ useActorName: () => ({ getActorName: () => "Reviewer" }) }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace" }));
+vi.mock("@marvis/core/workspace/hooks", () => ({ useActorName: () => ({ getActorName: () => "Reviewer" }) }));
 vi.mock("../../common/actor-avatar", () => ({ ActorAvatar: () => <span /> }));
 vi.mock("../../editor", () => ({ ReadonlyContent: () => <div /> }));
 
 // Stand in for the transcript body only. The dialog shell stays real so
 // `finalFocus` reaches Base UI's focus manager exactly as it does in the app.
 vi.mock("../../common/task-transcript/agent-transcript-dialog", async () => {
-  const { Dialog, DialogContent, DialogTitle } = await import("@multica/ui/components/ui/dialog");
+  const { Dialog, DialogContent, DialogTitle } = await import("@marvis/ui/components/ui/dialog");
   return {
     AgentTranscriptDialog: ({ open, onOpenChange, finalFocus }: {
       open: boolean; onOpenChange: (open: boolean) => void; finalFocus?: boolean;

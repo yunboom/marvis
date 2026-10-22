@@ -123,7 +123,7 @@
     "mode_worktree_title": "Run in parallel, isolated",
     "mode_worktree_description": "Runs execute at the same time without touching your working copy. Each one hands back an agent/… branch in this repo for you to review and merge.",
     "mode_worktree_needs_git": "This folder is not a git repository, so there is nowhere to put the branch. Pick a repository, or keep editing the folder directly.",
-    "mode_worktree_needs_server_upgrade": "Your Multica server is too old to execute runs in parallel — it would quietly execute them in this folder instead. Update the server, then switch this on.",
+    "mode_worktree_needs_server_upgrade": "Your Marvis server is too old to execute runs in parallel — it would quietly execute them in this folder instead. Update the server, then switch this on.",
     "mode_cancel": "Cancel",
     "mode_save": "Save",
     "mode_add": "Add folder",
@@ -148,7 +148,7 @@
     "toast_ref_updated": "Branch updated",
     "toast_ref_cleared": "Back to the default branch",
     "toast_ref_update_failed": "Could not update the branch",
-    "ref_error_commit": "That's a commit, not a branch. Tasks deliver back to the branch they start from — for a one-off revision, pass --ref to multica repo checkout.",
+    "ref_error_commit": "That's a commit, not a branch. Tasks deliver back to the branch they start from — for a one-off revision, pass --ref to marvis repo checkout.",
     "ref_default_label": "Default branch",
     "ref_default_tooltip": "No branch set — tasks use whatever the repository's default branch is at the time."
   },

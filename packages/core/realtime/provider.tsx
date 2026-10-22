@@ -84,7 +84,7 @@ export function WSProvider({
 
     // In token mode we need a token from storage; in cookie mode the HttpOnly
     // cookie is sent automatically with the WS upgrade request.
-    const token = cookieAuth ? null : storage.getItem("multica_token");
+    const token = cookieAuth ? null : storage.getItem("marvis_token");
     if (!cookieAuth && !token) return;
 
     const ws = new WSClient(wsUrl, {
@@ -93,7 +93,7 @@ export function WSProvider({
       // Re-read on every (re)connect instead of pinning the token captured
       // below: a session renewed since this effect ran would otherwise keep
       // reconnecting with a credential that is on its way to expiring.
-      getToken: cookieAuth ? undefined : () => storage.getItem("multica_token"),
+      getToken: cookieAuth ? undefined : () => storage.getItem("marvis_token"),
       identity:
         identityPlatform || identityVersion || identityOS
           ? {

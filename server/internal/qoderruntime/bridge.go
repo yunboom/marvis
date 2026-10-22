@@ -28,8 +28,8 @@ type Config struct {
 	OnReady           func(context.Context, string) error   `json:"-"`
 	GitHubTokens      map[string]string                     `json:"-"`
 	GitHubTokenFiles  map[string]string                     `json:"github_token_files,omitempty"`
-	MulticaURL        string                                `json:"multica_url"`
-	MulticaToken      string                                `json:"multica_token"`
+	MarvisURL         string                                `json:"marvis_url"`
+	MarvisToken       string                                `json:"marvis_token"`
 	WorkspaceID       string                                `json:"workspace_id"`
 	QoderURL          string                                `json:"qoder_url"`
 	QoderToken        string                                `json:"qoder_token"`
@@ -39,7 +39,7 @@ type Config struct {
 	RunTimeout        time.Duration                         `json:"-"`
 	SubmissionTimeout time.Duration                         `json:"-"`
 	PollInterval      time.Duration                         `json:"-"`
-	// MaxConcurrency bounds simultaneous remote sessions; extra tasks stay queued in Multica.
+	// MaxConcurrency bounds simultaneous remote sessions; extra tasks stay queued in Marvis.
 	MaxConcurrency int `json:"max_concurrency,omitempty"`
 }
 
@@ -47,12 +47,12 @@ type Config struct {
 const MaxConcurrencyLimit = 10
 
 type Bridge struct {
-	cfg            Config
-	multica, qoder *api
-	state          *journal
-	path           string
-	log            *slog.Logger
-	turn           int
+	cfg           Config
+	marvis, qoder *api
+	state         *journal
+	path          string
+	log           *slog.Logger
+	turn          int
 }
 
 func New(cfg Config, log *slog.Logger) (*Bridge, error) {
@@ -94,9 +94,9 @@ func New(cfg Config, log *slog.Logger) (*Bridge, error) {
 	if cfg.Name == "" {
 		cfg.Name = "Qoder Cloud Agents"
 	}
-	m, err := newAPI(cfg.MulticaURL, cfg.MulticaToken, cfg.WorkspaceID)
+	m, err := newAPI(cfg.MarvisURL, cfg.MarvisToken, cfg.WorkspaceID)
 	if err != nil {
-		return nil, fmt.Errorf("Multica: %w", err)
+		return nil, fmt.Errorf("Marvis: %w", err)
 	}
 	q, err := newAPI(cfg.QoderURL, cfg.QoderToken, "")
 	if err != nil {
@@ -105,7 +105,7 @@ func New(cfg Config, log *slog.Logger) (*Bridge, error) {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Bridge{cfg: cfg, multica: m, qoder: q, path: filepath.Join(cfg.StateDir, "state.json"), log: log}, nil
+	return &Bridge{cfg: cfg, marvis: m, qoder: q, path: filepath.Join(cfg.StateDir, "state.json"), log: log}, nil
 }
 
 // Run is single-instance per journal and processes up to MaxConcurrency runs.
@@ -124,7 +124,7 @@ func (b *Bridge) Run(ctx context.Context) error {
 		}
 		defer lock.Close()
 	}
-	binding := Binding(b.multica.base, b.cfg.WorkspaceID, b.qoder.base, b.cfg.EnvironmentID)
+	binding := Binding(b.marvis.base, b.cfg.WorkspaceID, b.qoder.base, b.cfg.EnvironmentID)
 	if b.cfg.SaveState != nil {
 		binding = Binding("", b.cfg.WorkspaceID, b.qoder.base, b.cfg.EnvironmentID)
 	}
@@ -169,7 +169,7 @@ func (b *Bridge) Run(ctx context.Context) error {
 		}
 		b.cleanup(ctx)
 		// Heartbeats run even while event delivery or submission reconciliation is failing.
-		if err := b.multica.call(ctx, http.MethodPost, "/api/daemon/heartbeat", map[string]any{"runtime_id": b.state.RuntimeID}, nil); err != nil {
+		if err := b.marvis.call(ctx, http.MethodPost, "/api/daemon/heartbeat", map[string]any{"runtime_id": b.state.RuntimeID}, nil); err != nil {
 			b.log.WarnContext(ctx, "runtime heartbeat failed", "error", err)
 			var denied *apiError
 			if errors.As(err, &denied) && (denied.Status == 401 || denied.Status == 403 || denied.Status == 404) {
@@ -212,7 +212,7 @@ func (b *Bridge) register(ctx context.Context, binding string) error {
 			Provider string `json:"provider"`
 		} `json:"runtimes"`
 	}
-	err := b.multica.call(ctx, http.MethodPost, "/api/daemon/register", map[string]any{
+	err := b.marvis.call(ctx, http.MethodPost, "/api/daemon/register", map[string]any{
 		"workspace_id": b.cfg.WorkspaceID, "daemon_id": daemonID, "device_name": b.cfg.Name,
 		"runtimes": []map[string]string{{"name": b.cfg.Name, "type": Provider, "status": "online", "runtime_mode": "cloud"}},
 	}, &response)
@@ -229,7 +229,7 @@ func (b *Bridge) register(ctx context.Context, binding string) error {
 	return nil
 }
 func (b *Bridge) taskCall(ctx context.Context, r *run, suffix string, body, out any) error {
-	return b.multica.call(ctx, http.MethodPost, "/api/daemon/tasks/"+url.PathEscape(r.TaskID)+suffix, body, out)
+	return b.marvis.call(ctx, http.MethodPost, "/api/daemon/tasks/"+url.PathEscape(r.TaskID)+suffix, body, out)
 }
 
 // step advances every active run, then claims new work while capacity remains.
@@ -285,7 +285,7 @@ func (b *Bridge) claim(ctx context.Context) (*run, error) {
 	var response struct {
 		Task *claimedTask `json:"task"`
 	}
-	if err := b.multica.call(ctx, http.MethodPost, "/api/daemon/runtimes/"+url.PathEscape(b.state.RuntimeID)+"/tasks/claim", map[string]any{}, &response); err != nil {
+	if err := b.marvis.call(ctx, http.MethodPost, "/api/daemon/runtimes/"+url.PathEscape(b.state.RuntimeID)+"/tasks/claim", map[string]any{}, &response); err != nil {
 		return nil, err
 	}
 	if response.Task == nil {
@@ -327,7 +327,7 @@ func (b *Bridge) stepRun(ctx context.Context, r *run) error {
 	var status struct {
 		Status string `json:"status"`
 	}
-	err := b.multica.call(ctx, http.MethodGet, "/api/daemon/tasks/"+url.PathEscape(r.TaskID)+"/status", nil, &status)
+	err := b.marvis.call(ctx, http.MethodGet, "/api/daemon/tasks/"+url.PathEscape(r.TaskID)+"/status", nil, &status)
 	var remoteErr *apiError
 	if err != nil && !(errors.As(err, &remoteErr) && remoteErr.Status == 404) {
 		return err
@@ -365,7 +365,7 @@ func (b *Bridge) stepRun(ctx context.Context, r *run) error {
 			return err
 		}
 	} else if status.Status != "running" {
-		return fmt.Errorf("unexpected Multica run status %q", status.Status)
+		return fmt.Errorf("unexpected Marvis run status %q", status.Status)
 	}
 	if r.Phase == "prepared" {
 		// Resolve credentials before reusing a session too, so a revoked or
@@ -443,8 +443,8 @@ func (b *Bridge) createSession(ctx context.Context, r *run, resources []map[stri
 	if err := b.persist(); err != nil {
 		return err
 	}
-	metadata := map[string]string{"multica_task_id": r.TaskID, "multica_workspace_id": b.cfg.WorkspaceID, resourcesMetadataKey: fingerprint}
-	if err := b.qoder.call(ctx, http.MethodPost, "/sessions", map[string]any{"agent": r.AgentID, "environment_id": b.cfg.EnvironmentID, "title": "Multica run " + r.TaskID, "metadata": metadata, "resources": resources}, &session); err != nil {
+	metadata := map[string]string{"marvis_task_id": r.TaskID, "marvis_workspace_id": b.cfg.WorkspaceID, resourcesMetadataKey: fingerprint}
+	if err := b.qoder.call(ctx, http.MethodPost, "/sessions", map[string]any{"agent": r.AgentID, "environment_id": b.cfg.EnvironmentID, "title": "Marvis run " + r.TaskID, "metadata": metadata, "resources": resources}, &session); err != nil {
 		if rateLimited(err) {
 			r.Phase = "prepared"
 			r.RetryAt = time.Now().Add(30 * time.Second)
@@ -463,14 +463,14 @@ func (b *Bridge) createSession(ctx context.Context, r *run, resources []map[stri
 	return b.persist()
 }
 
-// resourcesMetadataKey stores resourceFingerprint on each session Multica creates.
-const resourcesMetadataKey = "multica_resources"
+// resourcesMetadataKey stores resourceFingerprint on each session Marvis creates.
+const resourcesMetadataKey = "marvis_resources"
 
 // resourceFingerprint identifies the repositories, branches and credentials a
 // session was created with. Only this digest leaves the bridge.
 func resourceFingerprint(resources []map[string]any) string {
 	h := sha256.New()
-	h.Write([]byte("multica-qoder-resources-v1\n"))
+	h.Write([]byte("marvis-qoder-resources-v1\n"))
 	for _, res := range resources {
 		raw, _ := res["url"].(string)
 		key, _ := repositoryKey(raw)
@@ -612,11 +612,11 @@ func (b *Bridge) Check(ctx context.Context) error {
 		api            *api
 		path, id, name string
 	}{
-		{b.multica, "/api/workspaces/" + url.PathEscape(b.cfg.WorkspaceID), b.cfg.WorkspaceID, "Multica workspace"},
+		{b.marvis, "/api/workspaces/" + url.PathEscape(b.cfg.WorkspaceID), b.cfg.WorkspaceID, "Marvis workspace"},
 		{b.qoder, "/environments/" + url.PathEscape(b.cfg.EnvironmentID), b.cfg.EnvironmentID, "Qoder environment"},
 	}
 	for _, resource := range resources {
-		if resource.api == b.multica && strings.HasPrefix(b.cfg.MulticaToken, "mdt_") {
+		if resource.api == b.marvis && strings.HasPrefix(b.cfg.MarvisToken, "mdt_") {
 			continue
 		}
 		var response struct {
@@ -674,13 +674,13 @@ func (b *Bridge) cleanup(ctx context.Context) {
 }
 
 // Binding identifies one workspace/environment independently of process lifetime.
-func Binding(multicaURL, workspaceID, qoderURL, environmentID string) string {
-	sum := sha256.Sum256([]byte(strings.TrimRight(multicaURL, "/") + "\n" + workspaceID + "\n" + strings.TrimRight(qoderURL, "/") + "\n" + environmentID))
+func Binding(marvisURL, workspaceID, qoderURL, environmentID string) string {
+	sum := sha256.Sum256([]byte(strings.TrimRight(marvisURL, "/") + "\n" + workspaceID + "\n" + strings.TrimRight(qoderURL, "/") + "\n" + environmentID))
 	return hex.EncodeToString(sum[:])
 }
 
 // CancelRemoteSession is used by the managed supervisor after user access is
-// revoked. It needs only Qoder credentials, never a former owner's Multica PAT.
+// revoked. It needs only Qoder credentials, never a former owner's Marvis PAT.
 func CancelRemoteSession(ctx context.Context, baseURL, token, sessionID string) error {
 	api, err := newAPI(baseURL, token, "")
 	if err != nil {

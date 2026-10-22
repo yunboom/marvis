@@ -136,7 +136,7 @@ $cases = @(
     @{ Label = "env-file empty BACKEND_PORT falls back"; Env = @{}; Mutation = @{ BACKEND_PORT = ""; PORT = "9100" }; Backend = "9100"; Frontend = "3000" }
 )
 
-$runnerScript = Join-Path ([System.IO.Path]::GetTempPath()) "multica-install-ps1-case.ps1"
+$runnerScript = Join-Path ([System.IO.Path]::GetTempPath()) "marvis-install-ps1-case.ps1"
 
 # Each case runs in its own process using the current PowerShell host, so the
 # Windows PowerShell 5.1 suite cannot silently delegate its cases to PowerShell 7.
@@ -154,8 +154,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 if (-not $env:USERPROFILE) { $env:USERPROFILE = [System.IO.Path]::GetTempPath() }
-$env:MULTICA_INSTALL_DIR = $WorkDir
-$env:MULTICA_SELFHOST_REF = "main"
+$env:MARVIS_INSTALL_DIR = $WorkDir
+$env:MARVIS_SELFHOST_REF = "main"
 
 $source = Get-Content -Raw -Path $InstallerPath
 $index = $source.IndexOf("# Entry point")
@@ -232,7 +232,7 @@ Start-LocalInstall
 '@ | Set-Content -Path $runnerScript -Encoding UTF8
 
 foreach ($case in $cases) {
-    $workDir = Join-Path ([System.IO.Path]::GetTempPath()) ("multica-ps1-" + [guid]::NewGuid().ToString("N"))
+    $workDir = Join-Path ([System.IO.Path]::GetTempPath()) ("marvis-ps1-" + [guid]::NewGuid().ToString("N"))
     New-Item -ItemType Directory -Path (Join-Path $workDir ".git") -Force | Out-Null
 
     $envLines = @(
@@ -242,7 +242,7 @@ foreach ($case in $cases) {
         "# SERVER_PORT=8080"
         "FRONTEND_PORT=3000"
         "JWT_SECRET=change-me-in-production"
-        "POSTGRES_PASSWORD=multica"
+        "POSTGRES_PASSWORD=marvis"
     )
     if ($case.Mutation) {
         foreach ($key in $case.Mutation.Keys) {

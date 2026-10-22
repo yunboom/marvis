@@ -35,12 +35,12 @@ import {
   TriangleAlert,
   Workflow,
 } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@multica/ui/components/ui/tabs";
-import { Spinner } from "@multica/ui/components/ui/spinner";
-import { copyText } from "@multica/ui/lib/clipboard";
-import { cn } from "@multica/ui/lib/utils";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@marvis/ui/components/ui/tabs";
+import { Spinner } from "@marvis/ui/components/ui/spinner";
+import { copyText } from "@marvis/ui/lib/clipboard";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../i18n";
 import { CodeBlockStatic } from "./code-block-static";
 

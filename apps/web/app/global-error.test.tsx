@@ -4,11 +4,11 @@ import { act } from "react";
 import { hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LOCALE_COOKIE } from "@multica/core/i18n";
+import { LOCALE_COOKIE } from "@marvis/core/i18n";
 import { resolveEmergencyLocale } from "./emergency-locale";
 import GlobalError from "./global-error";
 
-vi.mock("@multica/core/analytics", () => ({
+vi.mock("@marvis/core/analytics", () => ({
   captureException: vi.fn(),
 }));
 

@@ -1,20 +1,20 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { Agent, AgentRuntime } from "@multica/core/types";
-import { useAgentPresenceDetail } from "@multica/core/agents";
-import { useWorkspaceId } from "@multica/core/hooks";
+import type { Agent, AgentRuntime } from "@marvis/core/types";
+import { useAgentPresenceDetail } from "@marvis/core/agents";
+import { useWorkspaceId } from "@marvis/core/hooks";
 import {
   deriveRuntimeHealth,
   runtimeDisplayLabel,
   type RuntimeHealth,
-} from "@multica/core/runtimes";
-import { agentListOptions, memberListOptions } from "@multica/core/workspace/queries";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
-import { runtimeListOptions } from "@multica/core/runtimes/queries";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { ActorAvatar as ActorAvatarBase } from "@multica/ui/components/common/actor-avatar";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
+} from "@marvis/core/runtimes";
+import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
+import { runtimeListOptions } from "@marvis/core/runtimes/queries";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { ActorAvatar as ActorAvatarBase } from "@marvis/ui/components/common/actor-avatar";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { AppLink } from "../../navigation";
 import { HealthIcon } from "../../runtimes/components/shared";
 import { availabilityConfig } from "../presence";

@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { arrayMove } from "@dnd-kit/sortable";
-import { createPersistStorage, defaultStorage } from "@multica/core/platform";
-import { createSafeId } from "@multica/core/utils";
-import { workspaceSlugForPath } from "@multica/core/paths";
+import { createPersistStorage, defaultStorage } from "@marvis/core/platform";
+import { createSafeId } from "@marvis/core/utils";
+import { workspaceSlugForPath } from "@marvis/core/paths";
 
 // Tab sessions hold serializable URLs, identity, virtual history, and view
 // mementos. The coordinator projects the active session onto the single router;
@@ -14,7 +14,7 @@ import { workspaceSlugForPath } from "@multica/core/paths";
  *
  * `contentKey` is an optional fingerprint of the rendered content, used by
  * out-of-DOM scroll sources (the sandboxed HTML-attachment iframe — see
- * multica-ai#6405) to invalidate restoration when the content changed
+ * marvis-ai#6405) to invalidate restoration when the content changed
  * (re-upload to the same attachment id). Plain `[data-tab-scroll-root]`
  * containers leave it undefined; identity comparison (undefined ===
  * undefined) means their behavior is unchanged.
@@ -288,8 +288,8 @@ interface TabStore {
 // Session identity helpers
 //
 // A tab's icon is NOT part of this model. It is derived from `tab.url` at
-// render time via `routeIconForPath` (@multica/views/layout), which shares the
-// route → icon map in `@multica/core/paths` with the sidebar nav — so the two
+// render time via `routeIconForPath` (@marvis/views/layout), which shares the
+// route → icon map in `@marvis/core/paths` with the sidebar nav — so the two
 // surfaces cannot drift, and no stale icon can survive in persisted state.
 // Title is likewise not determined here; it comes from document.title.
 
@@ -1242,7 +1242,7 @@ export const useTabStore = create<TabStore>()(
       },
     }),
     {
-      name: "multica_tabs",
+      name: "marvis_tabs",
       version: 5,
       storage: createJSONStorage(() => createPersistStorage(defaultStorage)),
       migrate: (persistedState, version) => {

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
 )
 
 func testRefID(t *testing.T) pgtype.UUID {

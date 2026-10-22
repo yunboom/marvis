@@ -3,25 +3,25 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { CalendarDays, Check, ExternalLink, X } from "lucide-react";
 import { toast } from "sonner";
-import type { Issue, IssueProperty, IssuePropertyValue } from "@multica/core/types";
-import { hasUnknownActorRef, isListPropertyType } from "@multica/core/types";
+import type { Issue, IssueProperty, IssuePropertyValue } from "@marvis/core/types";
+import { hasUnknownActorRef, isListPropertyType } from "@marvis/core/types";
 import {
   useSetIssueProperty,
   useUnsetIssueProperty,
-} from "@multica/core/properties";
+} from "@marvis/core/properties";
 import {
   toDateOnly,
   dateOnlyToLocalDate,
   formatDateOnly,
-} from "@multica/core/issues/date";
-import { Calendar } from "@multica/ui/components/ui/calendar";
+} from "@marvis/core/issues/date";
+import { Calendar } from "@marvis/ui/components/ui/calendar";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from "@multica/ui/components/ui/popover";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Input } from "@multica/ui/components/ui/input";
+} from "@marvis/ui/components/ui/popover";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Input } from "@marvis/ui/components/ui/input";
 import { useLocale, useT } from "../../../i18n";
 import { PropertyPicker, PickerItem } from "./property-picker";
 import { ActorPropertyPicker, ActorPropertyDisplay } from "./actor-property-picker";

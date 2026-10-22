@@ -4,12 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/issuestatus"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
 )
 
 // builtInStatusLine is the status bullet for workspaces without custom
 // statuses, including deployments behind an old server.
-const builtInStatusLine = "- `multica issue status <id> <status>` — flip status (todo / in_progress / in_review / done / blocked / backlog / cancelled).\n"
+const builtInStatusLine = "- `marvis issue status <id> <status>` — flip status (todo / in_progress / in_review / done / blocked / backlog / cancelled).\n"
 
 // catalogBridgeBullet distinguishes workflow keys from lifecycle categories;
 // it must appear exactly when a catalog is present.
@@ -63,7 +63,7 @@ func TestBriefStatusCatalogRendered(t *testing.T) {
 		t.Errorf("catalog brief must replace the built-in seven-value enumeration")
 	}
 	for _, want := range []string{
-		"- `multica issue status <id> <status>` — flip status. Available statuses by lifecycle category:\n",
+		"- `marvis issue status <id> <status>` — flip status. Available statuses by lifecycle category:\n",
 		"  - unstarted category: `backlog`, `todo` (built-in), `later` (Later — Deferred on purpose), `rework` (Rework)\n",
 		"  - done category: `done` (built-in)\n",
 		"  - started category: `in_progress`, `in_review`, `blocked` (built-in), `human_review` (Human Review — Awaiting human acceptance)\n",

@@ -1,4 +1,4 @@
-import { locateReplyAnnotation, type ReplyAnnotation } from "@multica/core/drafts/reply-annotation";
+import { locateReplyAnnotation, type ReplyAnnotation } from "@marvis/core/drafts/reply-annotation";
 
 const EXCLUDED = 'button, input, textarea, [aria-hidden="true"], [hidden], script, style';
 const BLOCKS = new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6", "TR"]);

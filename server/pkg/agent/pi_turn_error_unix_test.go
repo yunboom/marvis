@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	piEscapedStdoutHelperEnv = "MULTICA_TEST_PI_ESCAPED_STDOUT_HELPER"
-	piEscapedStdoutPIDEnv    = "MULTICA_TEST_PI_ESCAPED_STDOUT_PID_FILE"
+	piEscapedStdoutHelperEnv = "MARVIS_TEST_PI_ESCAPED_STDOUT_HELPER"
+	piEscapedStdoutPIDEnv    = "MARVIS_TEST_PI_ESCAPED_STDOUT_PID_FILE"
 )
 
 // TestPiEscapedStdoutHolderProcess runs only in the subprocess launched by the

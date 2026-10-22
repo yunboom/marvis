@@ -13,17 +13,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/multica-ai/multica/server/internal/channelmedia"
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/dbid"
+	"github.com/marvis-ai/marvis/server/internal/channelmedia"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/dbid"
 )
 
 func sessionPersistenceTestDB(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "postgres://multica:multica@localhost:5432/multica?sslmode=disable"
+		dsn = "postgres://marvis:marvis@localhost:5432/marvis?sslmode=disable"
 	}
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, dsn)
@@ -91,7 +91,7 @@ func seedSessionPersistenceFixtureWithoutChannel(t *testing.T, pool *pgxpool.Poo
 	var runtimeID pgtype.UUID
 
 	if err := pool.QueryRow(ctx, `INSERT INTO "user" (name, email) VALUES ($1, $2) RETURNING id`,
-		"Channel media test", fmt.Sprintf("channel-media-%d@multica.test", suffix)).Scan(&f.userID); err != nil {
+		"Channel media test", fmt.Sprintf("channel-media-%d@marvis.test", suffix)).Scan(&f.userID); err != nil {
 		t.Fatalf("create user: %v", err)
 	}
 	t.Cleanup(func() {
@@ -113,7 +113,7 @@ func seedSessionPersistenceFixtureWithoutChannel(t *testing.T, pool *pgxpool.Poo
 	}
 	if err := pool.QueryRow(ctx, `
 		INSERT INTO agent_runtime (workspace_id, name, runtime_mode, provider, owner_id)
-		VALUES ($1, $2, 'local', 'multica_daemon', $3)
+		VALUES ($1, $2, 'local', 'marvis_daemon', $3)
 		RETURNING id`, f.workspaceID, fmt.Sprintf("channel-media-runtime-%d", suffix), f.userID).Scan(&runtimeID); err != nil {
 		t.Fatalf("create runtime: %v", err)
 	}

@@ -17,7 +17,7 @@ vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => queryClient,
 }));
 
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: Object.assign(
     (selector?: (s: unknown) => unknown) => {
       const state = { logout: mockAuthLogout };
@@ -27,11 +27,11 @@ vi.mock("@multica/core/auth", () => ({
   ),
 }));
 
-vi.mock("@multica/core/platform", () => ({
+vi.mock("@marvis/core/platform", () => ({
   clearClientSessionData: mockClearClientSessionData,
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   paths: { login: () => "/login" },
 }));
 

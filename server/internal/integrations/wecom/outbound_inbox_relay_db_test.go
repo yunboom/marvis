@@ -33,9 +33,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/util"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 const (
@@ -98,11 +98,11 @@ func seedInboxRelayFixture(t *testing.T, pool *pgxpool.Pool) inboxRelayFixture {
 	// B is bound LAST, so the recipient-wide lookup answers B. That is the
 	// fallback route, and it is deliberately a different bot from A.
 	exec(`INSERT INTO channel_user_binding
-	        (workspace_id, multica_user_id, installation_id, channel_type, channel_user_id, bound_at)
+	        (workspace_id, marvis_user_id, installation_id, channel_type, channel_user_id, bound_at)
 	      VALUES ($1, $2, $3, 'wecom', $4, now() - interval '1 hour')`,
 		inboxRelayWS, inboxRelayUser, inboxRelayInstA, inboxRelayChatA)
 	exec(`INSERT INTO channel_user_binding
-	        (workspace_id, multica_user_id, installation_id, channel_type, channel_user_id, bound_at)
+	        (workspace_id, marvis_user_id, installation_id, channel_type, channel_user_id, bound_at)
 	      VALUES ($1, $2, $3, 'wecom', $4, now())`,
 		inboxRelayWS, inboxRelayUser, inboxRelayInstB, inboxRelayChatB)
 	return inboxRelayFixture{

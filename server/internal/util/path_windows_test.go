@@ -181,7 +181,7 @@ func TestResolveSymlinksFollowsJunctions(t *testing.T) {
 	if err := os.MkdirAll(workdirViaTarget, 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	root := filepath.Join(t.TempDir(), "multica_workspaces")
+	root := filepath.Join(t.TempDir(), "marvis_workspaces")
 	mklinkJunction(t, target, root)
 	outside := t.TempDir()
 	escape := filepath.Join(workdirViaTarget, "escape")

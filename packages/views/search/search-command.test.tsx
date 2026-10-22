@@ -1,16 +1,16 @@
 import { act, type ReactNode } from "react";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses/queries";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses/queries";
 
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () => buildIssueStatusCatalog([]),
 }));
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { I18nProvider } from "@multica/core/i18n/react";
-import { WORKSPACE_PAGES } from "@multica/core/paths";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import { WORKSPACE_PAGES } from "@marvis/core/paths";
 import { SearchCommand } from "./search-command";
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
 import { useSearchStore } from "./search-store";
 import enCommon from "../locales/en/common.json";
 import enAuth from "../locales/en/auth.json";
@@ -102,7 +102,7 @@ const {
   mockSetTheme: vi.fn(),
   mockTheme: { current: "system" as "light" | "dark" | "system" },
   mockPathname: { current: "/ws-test/issues" as string },
-  mockGetShareableUrl: vi.fn((p: string) => `https://app.multica/${p}`),
+  mockGetShareableUrl: vi.fn((p: string) => `https://app.marvis/${p}`),
   mockMembers: {
     current: [] as Array<{
       id: string;
@@ -151,7 +151,7 @@ const {
   mockResolvedExpandAll: vi.fn(),
 }));
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     getBaseUrl: () => "http://127.0.0.1:8080",
     searchIssues: mockSearchIssues,
@@ -184,7 +184,7 @@ vi.mock("../common/actor-avatar", () => ({
   },
 }));
 
-vi.mock("@multica/core/issues/stores", () => {
+vi.mock("@marvis/core/issues/stores", () => {
   const EMPTY: Array<{ id: string; visitedAt: number }> = [];
   return {
     useRecentIssuesStore: (
@@ -216,14 +216,14 @@ vi.mock("@multica/core/issues/stores", () => {
   };
 });
 
-vi.mock("@multica/core", () => ({
+vi.mock("@marvis/core", () => ({
   useWorkspaceId: () => "ws-test",
 }));
 
-vi.mock("@multica/core/paths", async (importOriginal) => ({
+vi.mock("@marvis/core/paths", async (importOriginal) => ({
   // Spread the real module so pure helpers (resolveRouteIconName, used to
   // derive each nav page's icon from its href) stay intact.
-  ...(await importOriginal<typeof import("@multica/core/paths")>()),
+  ...(await importOriginal<typeof import("@marvis/core/paths")>()),
   useWorkspacePaths: () => ({
     inbox: () => "/ws-test/inbox",
     chat: () => "/ws-test/chat",
@@ -245,7 +245,7 @@ vi.mock("@multica/core/paths", async (importOriginal) => ({
   }),
 }));
 
-vi.mock("@multica/core/issues/queries", () => ({
+vi.mock("@marvis/core/issues/queries", () => ({
   issueDetailOptions: (_wsId: string, id: string) => ({
     queryKey: ["issues", "ws-test", "detail", id],
   }),
@@ -254,19 +254,19 @@ vi.mock("@multica/core/issues/queries", () => ({
   }),
 }));
 
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   memberListOptions: () => ({ queryKey: ["workspaces", "ws-test", "members"] }),
   agentListOptions: () => ({ queryKey: ["workspaces", "ws-test", "agents"] }),
   squadListOptions: () => ({ queryKey: ["workspaces", "ws-test", "squads"] }),
   workspaceListOptions: () => ({ queryKey: ["workspaces", "list"] }),
 }));
 
-vi.mock("@multica/core/inbox/queries", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/inbox/queries")>()),
+vi.mock("@marvis/core/inbox/queries", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/inbox/queries")>()),
   inboxUnreadSummaryOptions: () => ({ queryKey: ["inbox", "unread-summary"] }),
 }));
 
-vi.mock("@multica/core/modals", () => ({
+vi.mock("@marvis/core/modals", () => ({
   useModalStore: Object.assign(vi.fn(), {
     getState: () => ({ open: mockOpenModal }),
   }),
@@ -327,7 +327,7 @@ vi.mock("../navigation/context", () => {
   };
 });
 
-vi.mock("@multica/ui/components/common/theme-provider", () => ({
+vi.mock("@marvis/ui/components/common/theme-provider", () => ({
   useTheme: () => ({ theme: mockTheme.current, setTheme: mockSetTheme }),
 }));
 
@@ -349,7 +349,7 @@ describe("SearchCommand", () => {
     mockSetTheme.mockReset();
     mockTheme.current = "system";
     mockPathname.current = "/ws-test/issues";
-    mockGetShareableUrl.mockReset().mockImplementation((p: string) => `https://app.multica/${p}`);
+    mockGetShareableUrl.mockReset().mockImplementation((p: string) => `https://app.marvis/${p}`);
     mockMembers.current = [];
     mockOpenModal.mockReset();
     mockToastSuccess.mockReset();
@@ -496,7 +496,7 @@ describe("SearchCommand", () => {
     fireEvent.click(settingsItem, { metaKey: true });
 
     expect(open).toHaveBeenCalledWith(
-      "https://app.multica//ws-test/settings",
+      "https://app.marvis//ws-test/settings",
       "_blank",
       "noopener,noreferrer",
     );
@@ -516,7 +516,7 @@ describe("SearchCommand", () => {
     fireEvent.keyDown(input, { key: "Enter", metaKey: true });
 
     expect(open).toHaveBeenCalledWith(
-      "https://app.multica//ws-test/settings",
+      "https://app.marvis//ws-test/settings",
       "_blank",
       "noopener,noreferrer",
     );
@@ -759,7 +759,7 @@ describe("SearchCommand", () => {
     await user.click(linkItem);
 
     expect(mockGetShareableUrl).toHaveBeenCalledWith("/ws-test/issues/issue-1");
-    expect(mockClipboardWrite).toHaveBeenCalledWith("https://app.multica//ws-test/issues/issue-1");
+    expect(mockClipboardWrite).toHaveBeenCalledWith("https://app.marvis//ws-test/issues/issue-1");
     expect(mockToastSuccess).toHaveBeenCalledWith("Link copied");
 
     // Reopen palette and test identifier copy

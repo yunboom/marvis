@@ -30,16 +30,16 @@ import {
   useSetIssuePRAutoComplete,
   useUnlinkIssuePullRequest,
   type PullRequestVerdict,
-} from "@multica/core/github";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+} from "@marvis/core/github";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import type {
   GitHubPullRequest,
   GitHubPullRequestState,
   PRAutoComplete,
-} from "@multica/core/types";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@multica/ui/components/ui/tooltip";
+} from "@marvis/core/types";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@marvis/ui/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,8 +47,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT, useTimeAgo } from "../../i18n";
 import { useStatusLabel } from "../utils/status-label";
 import { StatusIcon } from "./status-icon";

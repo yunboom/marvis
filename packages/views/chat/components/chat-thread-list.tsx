@@ -14,19 +14,19 @@ import {
   Square,
   Trash2,
 } from "lucide-react";
-import { cn } from "@multica/ui/lib/utils";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { paths, useWorkspaceSlug } from "@multica/core/paths";
-import { useWorkspacePresenceMap } from "@multica/core/agents";
-import { api } from "@multica/core/api";
-import { pendingChatTasksOptions, chatKeys, sortChatSessions } from "@multica/core/chat/queries";
+import { cn } from "@marvis/ui/lib/utils";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { paths, useWorkspaceSlug } from "@marvis/core/paths";
+import { useWorkspacePresenceMap } from "@marvis/core/agents";
+import { api } from "@marvis/core/api";
+import { pendingChatTasksOptions, chatKeys, sortChatSessions } from "@marvis/core/chat/queries";
 import {
   useDeleteChatSession,
   useSetChatSessionArchived,
   useSetChatSessionPinned,
-} from "@multica/core/chat/mutations";
-import { useChatStore } from "@multica/core/chat";
-import type { Agent, ChatSession, PendingChatTasksResponse } from "@multica/core/types";
+} from "@marvis/core/chat/mutations";
+import { useChatStore } from "@marvis/core/chat";
+import type { Agent, ChatSession, PendingChatTasksResponse } from "@marvis/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { DeferredTooltip } from "../../common/deferred-tooltip";
 import {
@@ -35,8 +35,8 @@ import {
   type RowActionItem,
 } from "../../common/row-actions-menu";
 import { resolveClickIntent, useOptionalNavigation } from "../../navigation";
-import { createLogger } from "@multica/core/logger";
-import { removeChatMessageFromCaches } from "@multica/core/realtime";
+import { createLogger } from "@marvis/core/logger";
+import { removeChatMessageFromCaches } from "@marvis/core/realtime";
 import { useLocale, useT } from "../../i18n";
 
 const apiLogger = createLogger("chat.api");

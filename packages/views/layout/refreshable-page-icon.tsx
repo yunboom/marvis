@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Spinner } from "@multica/ui/components/ui/spinner";
+import { Spinner } from "@marvis/ui/components/ui/spinner";
 import { useT } from "../i18n";
 
 /** Replace the title icon without changing its footprint or flashing on fast requests. */

@@ -2,9 +2,9 @@
 
 import type { KeyboardEvent } from "react";
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
-import { Input } from "@multica/ui/components/ui/input";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { cn } from "@multica/ui/lib/utils";
+import { Input } from "@marvis/ui/components/ui/input";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
 import type { UseInPageFindResult } from "../hooks/use-in-page-find";
 

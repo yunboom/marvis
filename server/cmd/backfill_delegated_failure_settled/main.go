@@ -44,8 +44,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/multica-ai/multica/server/internal/delegatedrecoverybackfill"
-	"github.com/multica-ai/multica/server/internal/logger"
+	"github.com/marvis-ai/marvis/server/internal/delegatedrecoverybackfill"
+	"github.com/marvis-ai/marvis/server/internal/logger"
 )
 
 const advisoryLockName = "delegated_failure_recovery_settled_backfill"
@@ -152,7 +152,7 @@ func run() error {
 	defer stop()
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://multica:multica@localhost:5432/multica?sslmode=disable"
+		dbURL = "postgres://marvis:marvis@localhost:5432/marvis?sslmode=disable"
 	}
 	pool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {

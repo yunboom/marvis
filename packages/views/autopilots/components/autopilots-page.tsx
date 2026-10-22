@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { autopilotListOptions } from "@multica/core/autopilots/queries";
+import { autopilotListOptions } from "@marvis/core/autopilots/queries";
 import {
   useAutopilotsViewStore,
   AUTOPILOT_DEFAULT_HIDDEN_COLUMNS,
@@ -26,13 +26,13 @@ import {
   type AutopilotColumnKey,
   type AutopilotScope,
   type AutopilotSortField,
-} from "@multica/core/autopilots/stores";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { useActorName } from "@multica/core/workspace/hooks";
-import type { Autopilot } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
+} from "@marvis/core/autopilots/stores";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import type { Autopilot } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
 import {
   LIST_GRID_BOTTOM_CLEARANCE,
   ListGrid,
@@ -42,14 +42,14 @@ import {
   ListGridHeaderCell,
   ListGridRow,
   type ListGridSortDirection,
-} from "@multica/ui/components/ui/list-grid";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
+} from "@marvis/ui/components/ui/list-grid";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import {
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "@multica/ui/components/ui/tabs";
+} from "@marvis/ui/components/ui/tabs";
 import { WorkspaceWakeupCreate, WorkspaceWakeups } from "./workspace-wakeups";
 import { useNavigation, useRowLink } from "../../navigation";
 import { ActorAvatar } from "../../common/actor-avatar";

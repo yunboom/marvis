@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/auth"
 )
 
 // authRequestWithAgent makes a request the server resolves as coming from an

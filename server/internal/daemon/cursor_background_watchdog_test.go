@@ -8,8 +8,8 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/agent"
-	"github.com/multica-ai/multica/server/pkg/awakeclock"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/awakeclock"
 )
 
 type backgroundToolBackend struct {
@@ -227,7 +227,7 @@ func TestExecuteAndDrain_BackgroundNativeCountSurvivesDroppedTranscript(t *testi
 // means what it says and nothing force-stops the run — the same outcome a
 // foreground tool that never returns already has. The uncaptured case releases
 // its tool precisely because nothing was claimed there; these two must not be
-// "fixed" into agreeing without changing what MULTICA_AGENT_TOOL_WATCHDOG=0
+// "fixed" into agreeing without changing what MARVIS_AGENT_TOOL_WATCHDOG=0
 // promises. See the knob's documentation in config.go.
 func TestCursorBackgroundCapturedDisabledToolWatchdog(t *testing.T) {
 	t.Parallel()
@@ -240,7 +240,7 @@ func TestCursorBackgroundCapturedDisabledToolWatchdog(t *testing.T) {
 	// server). invalid stays false, so ownership is held and the tool is real.
 	backend := &backgroundToolBackend{noResult: true}
 
-	// Stands in for MULTICA_AGENT_TIMEOUT, which is 0 (unbounded) by default.
+	// Stands in for MARVIS_AGENT_TIMEOUT, which is 0 (unbounded) by default.
 	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
 	defer cancel()
 	result, _, err := d.executeAndDrain(ctx, backend, "test", agent.ExecOptions{}, slog.Default(), "captured-background", "", new(atomic.Int32))

@@ -19,12 +19,12 @@ import (
 // without sending a prompt. Use an explicitly selected OMP binary and an empty
 // home/config directory; no user account or provider credential is consulted.
 func TestOmpSessionStartupWithoutModelCall(t *testing.T) {
-	if os.Getenv("MULTICA_RUN_REAL_AGENT_SMOKE") != "1" {
-		t.Skip("set MULTICA_RUN_REAL_AGENT_SMOKE=1 to run real-agent smoke tests")
+	if os.Getenv("MARVIS_RUN_REAL_AGENT_SMOKE") != "1" {
+		t.Skip("set MARVIS_RUN_REAL_AGENT_SMOKE=1 to run real-agent smoke tests")
 	}
-	binary := os.Getenv("MULTICA_OMP_SMOKE_EXECUTABLE")
+	binary := os.Getenv("MARVIS_OMP_SMOKE_EXECUTABLE")
 	if binary == "" {
-		t.Skip("set MULTICA_OMP_SMOKE_EXECUTABLE to the OMP binary to verify")
+		t.Skip("set MARVIS_OMP_SMOKE_EXECUTABLE to the OMP binary to verify")
 	}
 	home := t.TempDir()
 	cwd := t.TempDir()

@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/daemon/processtree"
+	"github.com/marvis-ai/marvis/server/internal/daemon/processtree"
 )
 
 // gitEnv returns an environment for git subprocesses that contact remotes.
@@ -176,7 +176,7 @@ type CachedRepo struct {
 
 // Cache manages bare git clones for workspace repositories.
 type Cache struct {
-	root   string // base directory for all caches (e.g. ~/multica_workspaces/.repos)
+	root   string // base directory for all caches (e.g. ~/marvis_workspaces/.repos)
 	logger *slog.Logger
 	// repoLocks maps bare repo path → dedicated mutex. Any mutating operation
 	// on a given bare repo (clone, fetch, worktree add, ref update) must
@@ -440,7 +440,7 @@ func (c *Cache) BarePath(workspaceID, url string) string {
 // out in months. atime is worse: noatime is common on Linux and Windows
 // disables it by default. So the signal has to be written explicitly, at the
 // one place that means a repo was really used — CreateWorktree.
-const lastUsedFile = ".multica_last_used"
+const lastUsedFile = ".marvis_last_used"
 
 // MarkUsed records that this bare repo was just used for a checkout. Callers
 // must already hold the repo lock. Best-effort: a failed stamp only risks the
@@ -752,8 +752,8 @@ type WorktreeParams struct {
 	// inside WorkDir instead of a linked worktree whose gitdir lives under the
 	// shared cache. Codex tasks need this because workspace-write keeps a
 	// resolved external worktree gitdir read-only even when it is explicitly
-	// listed as a writable root — on Linux (multica-ai/multica#2925) and on the
-	// Windows native sandbox (multica-ai/multica#6449).
+	// listed as a writable root — on Linux (marvis-ai/marvis#2925) and on the
+	// Windows native sandbox (marvis-ai/marvis#6449).
 	IsolatedGitMetadata bool
 	// Fresh discards what an existing checkout at the target path holds —
 	// uncommitted changes, untracked files, its branch position — and starts
@@ -1012,9 +1012,9 @@ func (c *Cache) logCheckoutReady(msg, repoURL, baseRef string, result *WorktreeR
 }
 
 const (
-	isolatedCheckoutConfigKey   = "multica.checkout-mode"
+	isolatedCheckoutConfigKey   = "marvis.checkout-mode"
 	isolatedCheckoutConfigValue = "isolated"
-	isolatedCacheRemoteName     = "multica-cache"
+	isolatedCacheRemoteName     = "marvis-cache"
 )
 
 // createOrUpdateIsolatedCheckout keeps Git metadata inside the task workdir.
@@ -1093,7 +1093,7 @@ func (c *Cache) createOrUpdateIsolatedCheckoutContext(ctx context.Context, bareP
 		}
 	}
 	if _, err := os.Stat(checkoutPath); err == nil {
-		return nil, fmt.Errorf("checkout path already exists and is not a Multica isolated checkout: %s", checkoutPath)
+		return nil, fmt.Errorf("checkout path already exists and is not a Marvis isolated checkout: %s", checkoutPath)
 	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("stat checkout path: %w", err)
 	}
@@ -1363,7 +1363,7 @@ func deleteAllLocalBranchesContext(ctx context.Context, repoPath string) error {
 	return deleteLocalBranchesUnderContext(ctx, repoPath, "refs/heads/", nil)
 }
 
-// deleteStaleAgentBranches prunes branches left by earlier Multica tasks while
+// deleteStaleAgentBranches prunes branches left by earlier Marvis tasks while
 // preserving the current task branch, every user-created local branch, and
 // every agent branch holding commits no remote-tracking ref reaches. In an
 // isolated checkout that branch is the only copy of those commits; deleting it
@@ -1796,23 +1796,23 @@ func bareHeadBranchContext(ctx context.Context, barePath string) string {
 	return ref
 }
 
-// multicaHookMarker is a sentinel comment embedded in every prepare-commit-msg
+// marvisHookMarker is a sentinel comment embedded in every prepare-commit-msg
 // hook installed by the daemon. removeCoAuthoredByHook uses it to recognize
 // hooks it owns so it never deletes a hook installed by the user or another
 // tool. Do not change without bumping the recognition logic.
-const multicaHookMarker = "# multica:prepare-commit-msg:co-authored-by"
+const marvisHookMarker = "# marvis:prepare-commit-msg:co-authored-by"
 
 // daemonInstalledHookSignatures lists substrings that identify a
 // prepare-commit-msg hook as one the daemon installed. removeCoAuthoredByHook
-// treats a hook as Multica-owned if its content contains ANY of these
+// treats a hook as Marvis-owned if its content contains ANY of these
 // substrings. The list deliberately includes the legacy comment that the
-// daemon used before multicaHookMarker existed, so disabling the toggle on
+// daemon used before marvisHookMarker existed, so disabling the toggle on
 // existing installations still cleans up old hooks seeded by previous daemon
 // versions. Add to this list — never remove from it — so future tweaks to
 // prepareCommitMsgHook keep recognizing every previously-shipped variant.
 var daemonInstalledHookSignatures = []string{
-	multicaHookMarker,
-	"# Installed by the Multica daemon.",
+	marvisHookMarker,
+	"# Installed by the Marvis daemon.",
 }
 
 // coAuthoredByStateFile records the workspace's current Co-authored-by setting
@@ -1822,7 +1822,7 @@ var daemonInstalledHookSignatures = []string{
 // commits under the current value. Without it the decision would be frozen
 // into the hook file at checkout time (MUL-6921).
 const (
-	coAuthoredByStateFile     = ".multica_co_authored_by"
+	coAuthoredByStateFile     = ".marvis_co_authored_by"
 	coAuthoredByStateEnabled  = "1"
 	coAuthoredByStateDisabled = "0"
 )
@@ -2035,7 +2035,7 @@ func (c *Cache) reconcileHookAt(hooksDir, workspaceID string, enabled bool) erro
 }
 
 // prepareCommitMsgHook builds the prepare-commit-msg hook script that appends
-// a Co-authored-by trailer for the Multica Agent to every commit message.
+// a Co-authored-by trailer for the Marvis Agent to every commit message.
 //
 // The script re-reads statePath on every commit instead of trusting its own
 // presence on disk: the hook is installed in the git common directory and
@@ -2062,9 +2062,9 @@ fi
 `, shellSingleQuoted(filepath.ToSlash(statePath)))
 	}
 	return `#!/bin/sh
-# multica:prepare-commit-msg:co-authored-by
-# Multica: add Co-authored-by trailer for the Multica Agent.
-# Installed by the Multica daemon. Do not edit — it will be overwritten.
+# marvis:prepare-commit-msg:co-authored-by
+# Marvis: add Co-authored-by trailer for the Marvis Agent.
+# Installed by the Marvis daemon. Do not edit — it will be overwritten.
 
 COMMIT_MSG_FILE="$1"
 COMMIT_SOURCE="$2"
@@ -2074,7 +2074,7 @@ case "$COMMIT_SOURCE" in
   merge|squash) exit 0 ;;
 esac
 
-` + gate + `TRAILER="Co-authored-by: multica-agent <github@multica.ai>"
+` + gate + `TRAILER="Co-authored-by: marvis-agent <github@marvis.ai>"
 
 # Don't add if already present.
 if grep -qF "$TRAILER" "$COMMIT_MSG_FILE"; then
@@ -2093,7 +2093,7 @@ func shellSingleQuoted(s string) string {
 }
 
 // installCoAuthoredByHook installs a prepare-commit-msg git hook that appends
-// a Co-authored-by trailer for the Multica Agent. The hook is installed in the
+// a Co-authored-by trailer for the Marvis Agent. The hook is installed in the
 // git common directory (the bare repo for worktrees) so it applies to all
 // worktrees created from this cache.
 //
@@ -2130,7 +2130,7 @@ func installCoAuthoredByHookContext(ctx context.Context, worktreePath, statePath
 // script, and this path rewrites hooks in repos with checkouts live on them.
 func writeHookFile(hookPath, contents string) error {
 	dir := filepath.Dir(hookPath)
-	tmp, err := os.CreateTemp(dir, ".multica-hook-*")
+	tmp, err := os.CreateTemp(dir, ".marvis-hook-*")
 	if err != nil {
 		return err
 	}
@@ -2156,7 +2156,7 @@ func writeHookFile(hookPath, contents string) error {
 }
 
 // isDaemonInstalledHook reports whether a prepare-commit-msg hook on disk was
-// installed by the Multica daemon (current or any previously released
+// installed by the Marvis daemon (current or any previously released
 // version). It returns false for hooks that don't carry any known daemon
 // signature, so a user-installed hook at the same path is left alone.
 func isDaemonInstalledHook(contents []byte) bool {

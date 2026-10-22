@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
-import type { Attachment } from "@multica/core/types";
+import type { Attachment } from "@marvis/core/types";
 import type { ScrollRestorationAdapter } from "../platform";
 import { ScrollRestorationProvider } from "../platform";
 import { renderWithI18n } from "../test/i18n";
@@ -19,7 +19,7 @@ const { getAttachmentMock, getAttachmentTextContentMock } = vi.hoisted(() => ({
   getAttachmentTextContentMock: vi.fn(),
 }));
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     getAttachment: getAttachmentMock,
     getAttachmentTextContent: getAttachmentTextContentMock,

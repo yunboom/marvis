@@ -46,7 +46,7 @@ describe("useSkillsViewStore", () => {
     // the key to undefined (the skills list filter predicate reads
     // `filters.labels.length` and would crash).
     localStorage.setItem(
-      "multica_skills_view:acme",
+      "marvis_skills_view:acme",
       JSON.stringify({
         state: { filters: { usage: ["used"], origins: [], agents: [], creators: [] } },
         version: 0,

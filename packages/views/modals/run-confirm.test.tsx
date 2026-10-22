@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
 import {
   configureShortcutPlatform,
   createShortcutChord,
   useShortcutStore,
-} from "@multica/core/shortcuts";
+} from "@marvis/core/shortcuts";
 import { RunConfirmModal } from "./run-confirm";
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-test" }));
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () =>
     buildIssueStatusCatalog([
       {
@@ -31,12 +31,12 @@ vi.mock("@multica/core/issue-statuses/hooks", () => ({
 
 const mockUpdate = vi.fn().mockResolvedValue({ id: "issue-1" });
 const mockBatch = vi.fn().mockResolvedValue({ updated: 2 });
-vi.mock("@multica/core/issues/mutations", () => ({
+vi.mock("@marvis/core/issues/mutations", () => ({
   useUpdateIssue: () => ({ mutateAsync: mockUpdate }),
   useBatchUpdateIssues: () => ({ mutateAsync: mockBatch }),
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: () => "Walt" }),
 }));
 
@@ -71,7 +71,7 @@ vi.mock("../i18n", () => ({
 }));
 
 // Keep the ui primitives as light DOM so the logic is what's under test.
-vi.mock("@multica/ui/components/ui/dialog", () => ({
+vi.mock("@marvis/ui/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   // Keeps the real Popup's prop passthrough, which the send chord binds to.
   DialogContent: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -82,12 +82,12 @@ vi.mock("@multica/ui/components/ui/dialog", () => ({
   DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
-vi.mock("@multica/ui/components/ui/button", () => ({
+vi.mock("@marvis/ui/components/ui/button", () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
 }));
-vi.mock("@multica/ui/components/ui/spinner", () => ({
+vi.mock("@marvis/ui/components/ui/spinner", () => ({
   Spinner: () => <span data-testid="spinner" />,
 }));
 // vi.hoisted: vi.mock factories run before module-level consts initialize.

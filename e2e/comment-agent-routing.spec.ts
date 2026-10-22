@@ -68,8 +68,8 @@ test("reply stays with the thread agent and hides unused historical fallbacks", 
     );
     const controlId = control.rows[0]!.id;
     await page.addInitScript((token) => {
-      localStorage.setItem("multica_token", token!);
-      localStorage.setItem("multica:chat:isOpen", "false");
+      localStorage.setItem("marvis_token", token!);
+      localStorage.setItem("marvis:chat:isOpen", "false");
     }, api.getToken());
     await page.setViewportSize({ width: 1440, height: 1050 });
     await page.goto(`/${workspace.slug}/issues/${issue.id}`, { waitUntil: "domcontentloaded" });

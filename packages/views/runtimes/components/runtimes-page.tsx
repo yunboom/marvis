@@ -17,41 +17,41 @@ import {
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceId } from "@multica/core/hooks";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceId } from "@marvis/core/hooks";
 import {
   memberNeedsMikaSetup,
   useBootstrapMika,
-} from "@multica/core/onboarding";
+} from "@marvis/core/onboarding";
 import { MIKA_PLACEHOLDER_EMOJI } from "../../onboarding/components/mika-intro";
 import {
   useRequiredWorkspaceSlug,
   useWorkspacePaths,
-} from "@multica/core/paths";
-import { agentTaskSnapshotOptions } from "@multica/core/agents";
-import { chatSessionsOptions } from "@multica/core/chat/queries";
-import { runtimeProfileListOptions } from "@multica/core/runtimes";
+} from "@marvis/core/paths";
+import { agentTaskSnapshotOptions } from "@marvis/core/agents";
+import { chatSessionsOptions } from "@marvis/core/chat/queries";
+import { runtimeProfileListOptions } from "@marvis/core/runtimes";
 import {
   runtimeListOptions,
   runtimeKeys,
-} from "@multica/core/runtimes/queries";
-import { useWSEvent } from "@multica/core/realtime";
+} from "@marvis/core/runtimes/queries";
+import { useWSEvent } from "@marvis/core/realtime";
 import {
   agentListOptions,
   memberListOptions,
-} from "@multica/core/workspace/queries";
-import type { AgentRuntime, MemberWithUser } from "@multica/core/types";
-import type { QoderConnection } from "@multica/core/runtimes/qoder";
-import { Badge } from "@multica/ui/components/ui/badge";
-import { Button, buttonVariants } from "@multica/ui/components/ui/button";
-import { Input } from "@multica/ui/components/ui/input";
+} from "@marvis/core/workspace/queries";
+import type { AgentRuntime, MemberWithUser } from "@marvis/core/types";
+import type { QoderConnection } from "@marvis/core/runtimes/qoder";
+import { Badge } from "@marvis/ui/components/ui/badge";
+import { Button, buttonVariants } from "@marvis/ui/components/ui/button";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,22 +60,22 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   ListGrid,
   ListGridCell,
   ListGridHeader,
   ListGridHeaderCell,
   ListGridRow,
-} from "@multica/ui/components/ui/list-grid";
+} from "@marvis/ui/components/ui/list-grid";
 import {
   MikaRuntimeChoice,
   type MikaRuntimeSelection,
 } from "./mika-runtime-choice";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { CollectionPageHeader } from "../../layout/collection-page";
 import { PAGE_GUTTER, PAGE_RAIL, PageHeader } from "../../layout/page-header";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   AppLink,
   rowLinkInteractiveProps,
@@ -83,7 +83,7 @@ import {
   useRowLink,
 } from "../../navigation";
 import { getMikaOnboarding, pickContentLang } from "../../onboarding/templates";
-import { qoderOptions } from "@multica/core/runtimes/qoder";
+import { qoderOptions } from "@marvis/core/runtimes/qoder";
 import { QODER_RUNTIME_LOCATOR } from "./qoder-detail-page";
 import { RemoteRuntimeDialog } from "./remote-runtime-dialog";
 import { ConnectRemoteDialog } from "./connect-remote-dialog";

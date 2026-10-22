@@ -13,7 +13,7 @@ vi.mock("./code-block-static", () => ({
 }));
 
 const { copyTextMock } = vi.hoisted(() => ({ copyTextMock: vi.fn() }));
-vi.mock("@multica/ui/lib/clipboard", () => ({ copyText: copyTextMock }));
+vi.mock("@marvis/ui/lib/clipboard", () => ({ copyText: copyTextMock }));
 
 import { DynamicBlock } from "./dynamic-block";
 

@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // TestListAgentTasksHydratesUsage pins the JSON contract used by
-// `multica agent tasks --output json`: usage is returned at the stored
+// `marvis agent tasks --output json`: usage is returned at the stored
 // (provider, model) grain, only for tasks owned by the requested agent, and
 // remains absent when a task has no recorded usage.
 func TestListAgentTasksHydratesUsage(t *testing.T) {

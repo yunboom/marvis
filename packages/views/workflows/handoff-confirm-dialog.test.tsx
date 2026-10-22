@@ -3,25 +3,25 @@
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses";
-import type { WorkflowHandoffPreview } from "@multica/core/types";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
+import type { WorkflowHandoffPreview } from "@marvis/core/types";
 import { renderWithI18n } from "../test/i18n";
 import { WorkflowHandoffConfirmDialog } from "./handoff-confirm-dialog";
 
 const previewWorkflowHandoff = vi.fn<(issueId: string, status: string) => Promise<WorkflowHandoffPreview>>();
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { previewWorkflowHandoff: (issueId: string, status: string) => previewWorkflowHandoff(issueId, status) },
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () =>
     buildIssueStatusCatalog([
       { id: "a", workspace_id: "ws-1", key: "implement", name: "Implement", description: "", category: "started", color: "#3b82f6", is_system: false, position: 1, archived_at: null, created_at: "", updated_at: "" },
       { id: "b", workspace_id: "ws-1", key: "code_review", name: "Code review", description: "", category: "started", color: "#a855f7", is_system: false, position: 2, archived_at: null, created_at: "", updated_at: "" },
     ]),
 }));
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: (_type: string, id: string) => ({ forge: "Forge", sentinel: "Sentinel" })[id] ?? "?" }),
 }));
 vi.mock("../common/actor-avatar", () => ({

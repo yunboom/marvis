@@ -40,8 +40,8 @@ import {
   type RefObject,
 } from "react";
 import { Check, Copy, Frame, Maximize2, Minus, Plus } from "lucide-react";
-import { copyText } from "@multica/ui/lib/clipboard";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { copyText } from "@marvis/ui/lib/clipboard";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { useT } from "../i18n";
 import { DYNAMIC_BLOCK_COLLAPSE_AT_PX, DynamicBlockSkeleton } from "./dynamic-block";
 import { useDragToScroll } from "./hooks/use-drag-to-scroll";
@@ -180,7 +180,7 @@ function getMermaidLayout(svg: string): Size | null {
 // excessive empty space; web.dev's CLS guidance recommends reserving any
 // such space upfront so async content doesn't shift surrounding layout.
 export const MERMAID_SKELETON_HEIGHT_PX = 280;
-const MERMAID_LAYOUT_CACHE_PREFIX = "multica:mermaid:layout:";
+const MERMAID_LAYOUT_CACHE_PREFIX = "marvis:mermaid:layout:";
 
 // `.mermaid-diagram` padding, top plus bottom (1rem each).
 const DIAGRAM_PADDING_Y_PX = 32;

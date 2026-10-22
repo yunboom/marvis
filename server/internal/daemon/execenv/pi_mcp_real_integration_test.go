@@ -19,11 +19,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
 )
 
 // Real-CLI acceptance for Pi MCP delivery. Opt-in twice: the agentintegration
-// build tag, and MULTICA_RUN_REAL_AGENT_SMOKE, because this executes the pi
+// build tag, and MARVIS_RUN_REAL_AGENT_SMOKE, because this executes the pi
 // binary installed on the host. HOME points at a temp directory so the test
 // does not read or write the user's ~/.pi. Pi exits before connecting MCP
 // when the temp home has no model credential, so the fixture points --model
@@ -241,12 +241,12 @@ func piHTTPMCPProbe(t *testing.T) (string, <-chan struct{}) {
 	return server.URL + "/mcp", initialized
 }
 
-const piMcpExtensionGlob = "multica-pi-mcp-*"
+const piMcpExtensionGlob = "marvis-pi-mcp-*"
 
 func piMcpFixture(t *testing.T) (bin, workDir, sentinel string, raw json.RawMessage) {
 	t.Helper()
-	if os.Getenv("MULTICA_RUN_REAL_AGENT_SMOKE") != "1" {
-		t.Skip("set MULTICA_RUN_REAL_AGENT_SMOKE=1 to allow real agent CLI access")
+	if os.Getenv("MARVIS_RUN_REAL_AGENT_SMOKE") != "1" {
+		t.Skip("set MARVIS_RUN_REAL_AGENT_SMOKE=1 to allow real agent CLI access")
 	}
 	if testing.Short() {
 		t.Skip("skipping real-binary smoke test in -short mode")

@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/multica-ai/multica/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/util"
 )
 
 // Hermes discovers skills in HERMES_HOME/skills before skills.external_dirs;
@@ -59,7 +59,7 @@ import (
 // HERMES_HOME to the overlay, and is written even when the source has none so
 // Hermes' project-.env fallback (loaded with override=True only when no user
 // .env loaded) can't relocate the home either.
-const hermesTaskLocalStateMarker = ".multica-task-local-state-v1"
+const hermesTaskLocalStateMarker = ".marvis-task-local-state-v1"
 
 var hermesOverriddenEntries = map[string]struct{}{
 	"skills":                   {},
@@ -733,7 +733,7 @@ func computeHermesExternalDirs(sharedHome string, existing []string, env map[str
 
 // writeHermesBoundSkills rebuilds the task-local skills/ dir from scratch so a
 // skill removed since the last run can't linger, then writes only the
-// Multica-bound skills. They keep their natural slug (no user skills share this
+// Marvis-bound skills. They keep their natural slug (no user skills share this
 // dir) and therefore take precedence over any same-named external skill.
 func writeHermesBoundSkills(hermesHome string, workspaceSkills []SkillContextForEnv, logger *slog.Logger) error {
 	skillsDir := filepath.Join(hermesHome, "skills")

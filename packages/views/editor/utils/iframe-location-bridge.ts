@@ -33,7 +33,7 @@
  */
 
 /** Marker on every bridge message, in both directions. */
-export const HTML_PREVIEW_LOCATION_KEY = "__multicaHtmlLocation";
+export const HTML_PREVIEW_LOCATION_KEY = "__marvisHtmlLocation";
 
 /** Upper bound on an address; anything longer is not an address we keep. */
 export const HTML_PREVIEW_ADDRESS_MAX_LENGTH = 2048;

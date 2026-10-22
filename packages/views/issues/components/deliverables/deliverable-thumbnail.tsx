@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { Attachment } from "@multica/core/types";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
-import { cn } from "@multica/ui/lib/utils";
+import type { Attachment } from "@marvis/core/types";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
+import { cn } from "@marvis/ui/lib/utils";
 import { useResignedInlineMedia } from "../../../editor/hooks/use-inline-media-url";
 import { fileTypeLabel, getPreviewKind } from "../../../editor/utils/preview";
 import { fileIcon } from "../../../editor/utils/file-icon";

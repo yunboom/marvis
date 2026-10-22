@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	dshProfile = "multica"
+	dshProfile = "marvis"
 	// DshProtocolVersion is the DSH stdio protocol this backend speaks. Exported
 	// because the daemon's profile probe accepts or rejects a runtime profile on
 	// this exact number, and a second copy of it there is a copy that can drift.
@@ -25,10 +25,10 @@ const (
 	dshTerminateGrace  = 2 * time.Second
 )
 
-// dshBackend drives the Multica DSH bundle over its versioned JSONL
+// dshBackend drives the Marvis DSH bundle over its versioned JSONL
 // stdio protocol. The adapter is intentionally independent of ACP: DSH owns
 // the agent loop, session store, model catalog, tools, and MCP clients, while
-// this package only translates those events into Multica's Backend contract.
+// this package only translates those events into Marvis's Backend contract.
 type dshBackend struct {
 	cfg Config
 }
@@ -251,7 +251,7 @@ func (b *dshBackend) Execute(ctx context.Context, prompt string, opts ExecOption
 
 	requestID := b.cfg.TaskID
 	if requestID == "" {
-		requestID = "multica-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+		requestID = "marvis-" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	}
 	command := dshExecuteCommand{
 		Version: DshProtocolVersion, Type: "execute", RequestID: requestID,

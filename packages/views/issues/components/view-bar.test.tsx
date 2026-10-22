@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createAuthStore, registerAuthStore } from "@multica/core/auth";
-import type { ApiClient } from "@multica/core/api/client";
-import { IssueViewSchema, type IssueView } from "@multica/core/api/schemas";
-import { issueViewPrefKeys } from "@multica/core/issue-views/preferences";
-import { workspaceKeys } from "@multica/core/workspace/queries";
+import { createAuthStore, registerAuthStore } from "@marvis/core/auth";
+import type { ApiClient } from "@marvis/core/api/client";
+import { IssueViewSchema, type IssueView } from "@marvis/core/api/schemas";
+import { issueViewPrefKeys } from "@marvis/core/issue-views/preferences";
+import { workspaceKeys } from "@marvis/core/workspace/queries";
 import { renderWithI18n } from "../../test/i18n";
 import { ViewBar, type ViewBarBuiltin } from "./view-bar";
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 

@@ -47,8 +47,8 @@ BEGIN
  ELSE
   IF NEW.status IS DISTINCT FROM OLD.status THEN
    PERFORM capture_issue_wakeup(NEW.id,'issue.status_changed',NEW.id::text||':'||NEW.revision::text,
-    (SELECT agent_id FROM agent_task_queue WHERE id=NULLIF(current_setting('multica.source_task_id',true),'')::uuid),
-    NULLIF(current_setting('multica.source_task_id',true),'')::uuid,
+    (SELECT agent_id FROM agent_task_queue WHERE id=NULLIF(current_setting('marvis.source_task_id',true),'')::uuid),
+    NULLIF(current_setting('marvis.source_task_id',true),'')::uuid,
     jsonb_build_object('issue_id',NEW.id,'status',NEW.status));
   END IF;
  END IF;

@@ -4,7 +4,7 @@
  * The coordinated-upload engine shared by every composer surface (MUL-5181, L2).
  *
  * Ownership inversion: an upload is owned by the module-level upload
- * coordinator (`@multica/core/drafts`), not by the React component that
+ * coordinator (`@marvis/core/drafts`), not by the React component that
  * started it. On file pick the engine writes a persisted placeholder into the
  * surface's draft IMMEDIATELY (through the {@link UploadDraftBinding}), then
  * hands the file to the coordinator. Closing or scrolling the composer away no
@@ -40,22 +40,22 @@ import {
   type RefObject,
 } from "react";
 import { toast } from "sonner";
-import { api } from "@multica/core/api";
+import { api } from "@marvis/core/api";
 import {
   startUpload,
   abortUpload,
   hasUploadingDraft,
   attachmentToDraftUpload,
   type DraftUpload,
-} from "@multica/core/drafts";
-import { createSafeId } from "@multica/core/utils";
-import { contentReferencesAttachment, type Attachment } from "@multica/core/types";
+} from "@marvis/core/drafts";
+import { createSafeId } from "@marvis/core/utils";
+import { contentReferencesAttachment, type Attachment } from "@marvis/core/types";
 import {
   toUploadResult,
   type UploadContext,
   type UploadResult,
-} from "@multica/core/hooks/use-file-upload";
-import { MAX_FILE_SIZE } from "@multica/core/constants/upload";
+} from "@marvis/core/hooks/use-file-upload";
+import { MAX_FILE_SIZE } from "@marvis/core/constants/upload";
 import { useT } from "../i18n";
 import type { UploadGate } from "./use-upload-gate";
 import type { ContentEditorRef } from "./content-editor";

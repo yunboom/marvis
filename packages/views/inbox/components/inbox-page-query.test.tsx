@@ -2,21 +2,21 @@ import { useEffect, type ReactNode } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { setApiInstance } from "@multica/core/api";
-import type { ApiClient } from "@multica/core/api/client";
-import { useInboxFilterStore, type InboxFilters } from "@multica/core/inbox/filter-store";
-import { archivedInboxLookupOptions, inboxKeys } from "@multica/core/inbox/queries";
-import { onInboxIssueDeleted, patchInboxIssueProjection } from "@multica/core/inbox/ws-updaters";
-import type { ArchivedInboxPage } from "@multica/core/types/inbox";
-import type { InboxItem } from "@multica/core/types";
+import { setApiInstance } from "@marvis/core/api";
+import type { ApiClient } from "@marvis/core/api/client";
+import { useInboxFilterStore, type InboxFilters } from "@marvis/core/inbox/filter-store";
+import { archivedInboxLookupOptions, inboxKeys } from "@marvis/core/inbox/queries";
+import { onInboxIssueDeleted, patchInboxIssueProjection } from "@marvis/core/inbox/ws-updaters";
+import type { ArchivedInboxPage } from "@marvis/core/types/inbox";
+import type { InboxItem } from "@marvis/core/types";
 import { InboxPage } from "./inbox-page";
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("react-resizable-panels", () => ({
   useDefaultLayout: () => ({ defaultLayout: undefined, onLayoutChanged: vi.fn() }),
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     inbox: () => "/acme/inbox",
     issueDetail: (id: string) => `/acme/issues/${id}`,
@@ -40,8 +40,8 @@ vi.mock("../../navigation", () => ({
   useNavigation: () => ({ searchParams, replace }),
   useReportNavigating: () => {},
 }));
-vi.mock("@multica/ui/hooks/use-mobile", () => ({ useIsCompact: () => false }));
-vi.mock("@multica/ui/components/ui/resizable", () => ({
+vi.mock("@marvis/ui/hooks/use-mobile", () => ({ useIsCompact: () => false }));
+vi.mock("@marvis/ui/components/ui/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ResizablePanel: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ResizableHandle: () => null,

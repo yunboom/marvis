@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { labelListOptions } from "@multica/core/labels/queries";
-import { propertyListOptions } from "@multica/core/properties/queries";
-import { useActorName } from "@multica/core/workspace/hooks";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { labelListOptions } from "@marvis/core/labels/queries";
+import { propertyListOptions } from "@marvis/core/properties/queries";
+import { useActorName } from "@marvis/core/workspace/hooks";
 import { useStatusLabel } from "../utils/status-label";
 
 /**

@@ -3,23 +3,23 @@
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "motion/react";
 import { ChevronDown, ChevronUp, Maximize2, X } from "lucide-react";
-import { Button, buttonVariants } from "@multica/ui/components/ui/button";
+import { Button, buttonVariants } from "@marvis/ui/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
-import { ErrorBoundary } from "@multica/ui/components/common/error-boundary";
-import { cn } from "@multica/ui/lib/utils";
-import { UI_EASE_OUT, UI_MOTION_DURATION } from "@multica/ui/lib/motion";
-import { useModalStore } from "@multica/core/modals";
-import { useWorkspacePaths } from "@multica/core/paths";
+} from "@marvis/ui/components/ui/tooltip";
+import { ErrorBoundary } from "@marvis/ui/components/common/error-boundary";
+import { cn } from "@marvis/ui/lib/utils";
+import { UI_EASE_OUT, UI_MOTION_DURATION } from "@marvis/ui/lib/motion";
+import { useModalStore } from "@marvis/core/modals";
+import { useWorkspacePaths } from "@marvis/core/paths";
 import {
   createShortcutChord,
   isEditableShortcutTarget,
   isPortalLayerShortcutTarget,
-} from "@multica/core/shortcuts";
-import { isImeComposing } from "@multica/core/utils";
+} from "@marvis/core/shortcuts";
+import { isImeComposing } from "@marvis/core/utils";
 import { AppLink } from "../../navigation";
 import { PAGE_GUTTER } from "../../layout/page-header";
 import { ShortcutKeycaps } from "../../common/shortcut-keycaps";

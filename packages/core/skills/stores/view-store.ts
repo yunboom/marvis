@@ -130,7 +130,7 @@ export const useSkillsViewStore = create<SkillsViewState>()(
       clearFilters: () => set({ filters: EMPTY_SKILL_FILTERS }),
     }),
     {
-      name: "multica_skills_view",
+      name: "marvis_skills_view",
       storage: createJSONStorage(() => createWorkspaceAwareStorage(defaultStorage)),
       partialize: (state) => ({
         sortField: state.sortField,

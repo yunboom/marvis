@@ -7,8 +7,8 @@ RETURNS void LANGUAGE plpgsql AS $$
 DECLARE w issue_wakeup; owner_workspace uuid; evidence jsonb; violated_constraint text;
 BEGIN
  IF NOT EXISTS (SELECT 1 FROM issue_wakeup WHERE issue_id=p_issue AND enabled AND kind='event' AND p_type=ANY(event_types)) THEN RETURN; END IF;
- IF p_agent IS NULL AND current_setting('multica.actor_type',true)='agent' THEN
-  p_agent := NULLIF(current_setting('multica.actor_id',true),'')::uuid;
+ IF p_agent IS NULL AND current_setting('marvis.actor_type',true)='agent' THEN
+  p_agent := NULLIF(current_setting('marvis.actor_id',true),'')::uuid;
  END IF;
  SELECT i.workspace_id INTO owner_workspace FROM issue i
  WHERE i.id=p_issue AND i.status NOT IN ('done','cancelled') AND NOT EXISTS
@@ -17,8 +17,8 @@ BEGIN
  evidence := jsonb_build_object('event_id',p_key,'event_type',p_type,'version',1,
   'occurred_at',clock_timestamp(),'workspace_id',owner_workspace,'issue_id',p_issue,
   'source_task_id',p_task,'agent_id',p_agent,
-  'actor_type',COALESCE(NULLIF(current_setting('multica.actor_type',true),''),CASE WHEN p_agent IS NOT NULL THEN 'agent' ELSE 'system' END),
-  'actor_id',COALESCE(NULLIF(current_setting('multica.actor_id',true),''),p_agent::text)) || p_payload;
+  'actor_type',COALESCE(NULLIF(current_setting('marvis.actor_type',true),''),CASE WHEN p_agent IS NOT NULL THEN 'agent' ELSE 'system' END),
+  'actor_id',COALESCE(NULLIF(current_setting('marvis.actor_id',true),''),p_agent::text)) || p_payload;
  FOR w IN SELECT * FROM issue_wakeup WHERE issue_id=p_issue AND workspace_id=owner_workspace AND enabled AND kind='event'
    AND p_type=ANY(event_types)
    AND (filter_actor_type IS NULL OR (filter_actor_type=evidence->>'actor_type' AND filter_actor_id::text=evidence->>'actor_id'))

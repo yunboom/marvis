@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { ArrowUpRight, Check, Clock, LoaderCircle } from "lucide-react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@multica/ui/components/ui/tooltip";
-import type { ChatQuickAction } from "@multica/core/types";
+} from "@marvis/ui/components/ui/tooltip";
+import type { ChatQuickAction } from "@marvis/core/types";
 import { useT } from "../../i18n";
 
 /**

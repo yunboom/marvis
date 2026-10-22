@@ -1,5 +1,5 @@
 import { Ban, CheckCircle2, XCircle } from "lucide-react";
-import type { AgentTask } from "@multica/core/types";
+import type { AgentTask } from "@marvis/core/types";
 
 // Terminal-status glyph for one agent run. Shared by the execution log rows
 // and the Runs dialog so a failed run carries the same mark wherever

@@ -1,6 +1,6 @@
 # Button
 
-Import from `@multica/ui/components/ui/button`.
+Import from `@marvis/ui/components/ui/button`.
 
 ## Usage
 

@@ -9,11 +9,11 @@ vi.mock("@tanstack/react-query", () => ({
   useQuery: vi.fn(),
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   // This suite replaces useQuery wholesale, so the catalog hook is stubbed
   // rather than left to fall through the shared useQuery mock.
   useIssueStatuses: () => ({
@@ -30,7 +30,7 @@ vi.mock("@multica/core/issue-statuses/hooks", () => ({
   }),
 }));
 
-vi.mock("@multica/core/issues/queries", () => ({
+vi.mock("@marvis/core/issues/queries", () => ({
   issueDetailOptions: (_workspaceId: string, issueId: string) => ({
     queryKey: ["issue", issueId],
   }),
@@ -39,19 +39,19 @@ vi.mock("@multica/core/issues/queries", () => ({
   }),
 }));
 
-vi.mock("@multica/core/agents", () => ({
+vi.mock("@marvis/core/agents", () => ({
   agentTaskSnapshotOptions: (workspaceId: string) => ({
     queryKey: ["agent-tasks", workspaceId],
   }),
 }));
 
-vi.mock("@multica/core/projects", () => ({
+vi.mock("@marvis/core/projects", () => ({
   projectListOptions: (workspaceId: string) => ({
     queryKey: ["projects", workspaceId],
   }),
 }));
 
-vi.mock("@multica/core/github", () => ({
+vi.mock("@marvis/core/github", () => ({
   issuePullRequestsOptions: (issueId: string) => ({
     queryKey: ["pull-requests", issueId],
   }),
@@ -93,7 +93,7 @@ const ACTOR_NAMES: Record<string, string> = {
   "agent-triage": "GitHub Triage",
 };
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({
     getActorName: (_type: string, id: string) => ACTOR_NAMES[id] ?? id,
   }),

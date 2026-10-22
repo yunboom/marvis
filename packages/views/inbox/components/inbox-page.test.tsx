@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
-import { ApiError } from "@multica/core/api";
-import type { AgentTask, InboxItem } from "@multica/core/types";
-import { useInboxFilterStore } from "@multica/core/inbox/filter-store";
+import { ApiError } from "@marvis/core/api";
+import type { AgentTask, InboxItem } from "@marvis/core/types";
+import { useInboxFilterStore } from "@marvis/core/inbox/filter-store";
 import { InboxPage } from "./inbox-page";
 
 vi.mock("sonner", () => ({
@@ -50,11 +50,11 @@ vi.mock("@tanstack/react-query", () => ({
   }); },
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     inbox: () => "/acme/inbox",
     issueDetail: (id: string) => `/acme/issues/${id}`,
@@ -65,15 +65,15 @@ const modalState: { modal: string | null; open: ReturnType<typeof vi.fn> } = {
   modal: null,
   open: vi.fn(),
 };
-vi.mock("@multica/core/modals", () => ({
+vi.mock("@marvis/core/modals", () => ({
   useModalStore: { getState: () => modalState },
 }));
 
-vi.mock("@multica/core/issues/stores/draft-store", () => ({
+vi.mock("@marvis/core/issues/stores/draft-store", () => ({
   useIssueDraftStore: { getState: () => ({ setDraft: vi.fn() }) },
 }));
 
-vi.mock("@multica/core/inbox/queries", () => ({
+vi.mock("@marvis/core/inbox/queries", () => ({
   inboxListOptions: () => ({ queryKey: ["inbox", "workspace-1", "list"] }),
   archivedInboxPagesOptions: () => ({ queryKey: ["inbox", "workspace-1", "archived", "pages"] }),
   archivedInboxLookupOptions: () => ({ queryKey: ["inbox", "workspace-1", "archived", "lookup"] }),
@@ -99,7 +99,7 @@ vi.mock("../../modals/use-issue-limit-upgrade-prompt", () => ({
       : showIssueLimitUpgradePrompt,
 }));
 
-vi.mock("@multica/core/inbox/mutations", () => {
+vi.mock("@marvis/core/inbox/mutations", () => {
   const mutation = () => ({ mutate: vi.fn() });
   return {
     useMarkInboxRead: () => ({ mutate: markReadMutate }),
@@ -151,11 +151,11 @@ const FOLD_INNER = 851;
 const TABLET = 1024;
 const DESKTOP = 1440;
 const layout = { width: PHONE };
-vi.mock("@multica/ui/hooks/use-mobile", () => ({
+vi.mock("@marvis/ui/hooks/use-mobile", () => ({
   useIsMobile: () => layout.width < 768,
   useIsCompact: () => layout.width < 1024,
 }));
-vi.mock("@multica/ui/components/ui/resizable", () => ({
+vi.mock("@marvis/ui/components/ui/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

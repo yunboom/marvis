@@ -1,24 +1,24 @@
 ---
 title: Démarrage rapide en auto-hébergement
-description: Démarrez Multica avec Docker Compose, connectez-vous, puis reliez votre premier ordinateur.
+description: Démarrez Marvis avec Docker Compose, connectez-vous, puis reliez votre premier ordinateur.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-L'auto-hébergement de Multica comporte deux parties :
+L'auto-hébergement de Marvis comporte deux parties :
 
 | Partie | Ce qu'elle exécute | Où elle se trouve |
 |---|---|---|
-| **Service Multica** | Web, API et PostgreSQL | Une machine sur laquelle Docker est installé |
-| **Ordinateur** | Le daemon Multica et les outils de codage IA | L'ordinateur sur lequel les développeurs travaillent réellement |
+| **Service Marvis** | Web, API et PostgreSQL | Une machine sur laquelle Docker est installé |
+| **Ordinateur** | Le daemon Marvis et les outils de codage IA | L'ordinateur sur lequel les développeurs travaillent réellement |
 
-Il peut s'agir de la même machine ou de machines distinctes. L'auto-hébergement ne remplace que la partie Multica Cloud.
+Il peut s'agir de la même machine ou de machines distinctes. L'auto-hébergement ne remplace que la partie Marvis Cloud.
 
-Ce guide utilise Docker Compose. Pour un déploiement sur Kubernetes, consultez le [guide d'auto-hébergement](https://github.com/multica-ai/multica/blob/main/SELF_HOSTING.md#kubernetes-deployment-alternative) dans le dépôt.
+Ce guide utilise Docker Compose. Pour un déploiement sur Kubernetes, consultez le [guide d'auto-hébergement](https://github.com/marvis-ai/marvis/blob/main/SELF_HOSTING.md#kubernetes-deployment-alternative) dans le dépôt.
 
 ## Avant de commencer
 
-La machine qui exécute le service Multica a besoin de :
+La machine qui exécute le service Marvis a besoin de :
 
 - Docker Engine ou Docker Desktop, avec `docker compose` fonctionnel
 - Git, Make, curl et OpenSSL
@@ -31,25 +31,25 @@ docker info
 docker compose version
 ```
 
-Multica utilise Compose v2, invoqué via `docker compose`. L'ancien `docker-compose` v1 n'est pas pris en charge.
+Marvis utilise Compose v2, invoqué via `docker compose`. L'ancien `docker-compose` v1 n'est pas pris en charge.
 
-L'ordinateur doit également disposer d'au moins un [outil de codage IA](/providers) installé et connecté, comme Claude Code, Codex ou Cursor. Le CLI Multica est installé à l'étape 5.
+L'ordinateur doit également disposer d'au moins un [outil de codage IA](/providers) installé et connecté, comme Claude Code, Codex ou Cursor. Le CLI Marvis est installé à l'étape 5.
 
-## 1. Démarrer Multica
+## 1. Démarrer Marvis
 
 Sur la machine qui fera tourner le service :
 
 ```bash
-git clone --depth 1 https://github.com/multica-ai/multica.git
-cd multica
+git clone --depth 1 https://github.com/marvis-ai/marvis.git
+cd marvis
 make selfhost
 ```
 
 Au premier lancement, `make selfhost` :
 
 1. Crée `.env` à partir de `.env.example`
-2. Génère un `JWT_SECRET` aléatoire, un mot de passe PostgreSQL et une `MULTICA_VCS_SECRET_KEY` (la clé de chiffrement des intégrations Git auto-hébergées)
-3. Télécharge les images PostgreSQL, backend Multica et frontend Multica
+2. Génère un `JWT_SECRET` aléatoire, un mot de passe PostgreSQL et une `MARVIS_VCS_SECRET_KEY` (la clé de chiffrement des intégrations Git auto-hébergées)
+3. Télécharge les images PostgreSQL, backend Marvis et frontend Marvis
 4. Crée des volumes persistants et démarre les trois conteneurs
 5. Attend que le backend commence à répondre aux vérifications d'état
 
@@ -92,7 +92,7 @@ Le conteneur backend exécute les migrations de base de données à chaque déma
 
 ### Accès local
 
-Ouvrez directement [http://localhost:3000](http://localhost:3000). Vous n'aurez pas non plus besoin de fournir d'URL lorsque vous lancerez `multica setup self-host` plus tard.
+Ouvrez directement [http://localhost:3000](http://localhost:3000). Vous n'aurez pas non plus besoin de fournir d'URL lorsque vous lancerez `marvis setup self-host` plus tard.
 
 ### Accès distant
 
@@ -100,15 +100,15 @@ Docker Compose lie `3000` et `8080` uniquement à `127.0.0.1`. Ne remplacez pas 
 
 L'exemple ci-dessous utilise deux domaines :
 
-- `app.example.com` : l'application web Multica
+- `app.example.com` : l'application web Marvis
 - `api.example.com` : l'API, les vérifications d'état et les connexions des daemons
 
 Définissez d'abord les URL publiques dans `.env` :
 
 ```bash
 FRONTEND_ORIGIN=https://app.example.com
-MULTICA_APP_URL=https://app.example.com
-MULTICA_PUBLIC_URL=https://api.example.com
+MARVIS_APP_URL=https://app.example.com
+MARVIS_PUBLIC_URL=https://api.example.com
 ```
 
 Avec cette configuration, tout le trafic du navigateur reste sur le domaine de l'application : les cookies ne passent jamais d'un domaine à l'autre et `COOKIE_DOMAIN` n'est pas nécessaire. Si le navigateur communique plutôt directement avec le domaine de l'API, vous devez la définir — consultez [Variables d'environnement](/environment-variables).
@@ -141,8 +141,8 @@ api.example.com {
 Si vous préférez tout servir sur une **origine unique** (un seul domaine, ou un seul hôte avec un seul port — courant sur les petits serveurs), routez explicitement vers le backend les chemins indispensables au daemon et laissez le frontend gérer le reste :
 
 ```text
-multica.example.com {
-    # Sonde d'accessibilité du CLI : `multica setup` envoie un GET à <server-url>/health et
+marvis.example.com {
+    # Sonde d'accessibilité du CLI : `marvis setup` envoie un GET à <server-url>/health et
     # attend un 200 — les anciennes versions web ne le relaient pas, il faut donc le router directement
     handle /health {
         reverse_proxy 127.0.0.1:8080
@@ -171,7 +171,7 @@ multica.example.com {
 }
 ```
 
-Avec une origine unique, faites pointer les deux URL vers celle-ci (`FRONTEND_ORIGIN` et `MULTICA_APP_URL` dans `.env`, puis `--server-url` et `--app-url` dans `multica setup self-host`).
+Avec une origine unique, faites pointer les deux URL vers celle-ci (`FRONTEND_ORIGIN` et `MARVIS_APP_URL` dans `.env`, puis `--server-url` et `--app-url` dans `marvis setup self-host`).
 
 Caddy obtient les certificats TLS et relaie les WebSockets. Après avoir modifié `.env`, recréez les conteneurs avec `up -d` pour que la nouvelle configuration soit prise en compte :
 
@@ -181,7 +181,7 @@ curl -fsS https://api.example.com/readyz
 curl -fsS https://app.example.com/api/config | grep -o '"daemon_server_url":"[^"]*"'
 ```
 
-La dernière commande affiche `daemon_server_url`, l'URL que les daemons utilisent pour joindre l'API : `MULTICA_DAEMON_SERVER_URL` si elle est définie, puis `MULTICA_PUBLIC_URL`, sinon l'URL de l'application — `MULTICA_APP_URL`, avec `FRONTEND_ORIGIN` en repli. Lorsque ni `MULTICA_APP_URL` ni `FRONTEND_ORIGIN` n'est défini, le champ est entièrement omis de la réponse (le grep n'affiche donc rien), même si `MULTICA_DAEMON_SERVER_URL` ou `MULTICA_PUBLIC_URL` est défini. S'il affiche une adresse `localhost`, `.env` contient encore les valeurs locales par défaut : définissez explicitement `FRONTEND_ORIGIN` et `MULTICA_APP_URL` avec les URL publiques au lieu de vous appuyer sur les références `${FRONTEND_PORT}` copiées depuis `.env.example`, puis recréez les conteneurs.
+La dernière commande affiche `daemon_server_url`, l'URL que les daemons utilisent pour joindre l'API : `MARVIS_DAEMON_SERVER_URL` si elle est définie, puis `MARVIS_PUBLIC_URL`, sinon l'URL de l'application — `MARVIS_APP_URL`, avec `FRONTEND_ORIGIN` en repli. Lorsque ni `MARVIS_APP_URL` ni `FRONTEND_ORIGIN` n'est défini, le champ est entièrement omis de la réponse (le grep n'affiche donc rien), même si `MARVIS_DAEMON_SERVER_URL` ou `MARVIS_PUBLIC_URL` est défini. S'il affiche une adresse `localhost`, `.env` contient encore les valeurs locales par défaut : définissez explicitement `FRONTEND_ORIGIN` et `MARVIS_APP_URL` avec les URL publiques au lieu de vous appuyer sur les références `${FRONTEND_PORT}` copiées depuis `.env.example`, puis recréez les conteneurs.
 
 <Callout type="warning">
 `docker compose restart` ne fait que redémarrer les conteneurs existants et ne relit pas `.env`. Après une modification de configuration, exécutez `docker compose -f docker-compose.selfhost.yml up -d` pour relire `.env`.
@@ -207,7 +207,7 @@ Les journaux contiennent une ligne comme celle-ci :
 Saisissez le code et créez votre premier espace de travail. Une fois Resend ou SMTP configuré, les codes sont envoyés par e-mail et les membres n'ont plus besoin de lire les journaux des conteneurs — consultez [Configuration de l'authentification](/auth-setup).
 
 <Callout type="warning">
-Les déploiements auto-hébergés utilisent par défaut `APP_ENV=production`, qui désactive les codes de vérification fixes. Ne définissez pas `MULTICA_DEV_VERIFICATION_CODE` sur une instance publique.
+Les déploiements auto-hébergés utilisent par défaut `APP_ENV=production`, qui désactive les codes de vérification fixes. Ne définissez pas `MARVIS_DEV_VERIFICATION_CODE` sur une instance publique.
 </Callout>
 
 ## 5. Connecter un ordinateur
@@ -218,40 +218,40 @@ Lancez les commandes ci-dessous sur **l'ordinateur qui fait tourner vos outils d
 Les exécutions disposent de toutes les permissions de l'utilisateur qui fait tourner le daemon : elles peuvent lire et écrire tout ce à quoi cet utilisateur a accès. Faites tourner le daemon sous un utilisateur Unix dédié, dans un conteneur ou dans une VM plutôt que sous votre compte personnel. Consultez le [modèle de sécurité](/security-model).
 </Callout>
 
-Installez d'abord le CLI Multica :
+Installez d'abord le CLI Marvis :
 
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex
 ```
 
-Si le service Multica tourne sur ce même ordinateur :
+Si le service Marvis tourne sur ce même ordinateur :
 
 ```bash
-multica setup self-host
+marvis setup self-host
 ```
 
-Si le service Multica tourne sur une autre machine, passez les deux URL configurées précédemment :
+Si le service Marvis tourne sur une autre machine, passez les deux URL configurées précédemment :
 
 ```bash
-multica setup self-host \
+marvis setup self-host \
   --server-url https://api.example.com \
   --app-url https://app.example.com
 ```
 
-La commande vérifie d'abord `<server-url>/health`, puis ouvre un navigateur pour terminer la connexion. Une fois la connexion effectuée, elle enregistre les identifiants en local et démarre le daemon. Une erreur `Server not reachable` à cette étape signifie que la sonde n'a pas obtenu de 200 sur `/health` : soit le proxy transmet tout à une version web qui ne relaie pas ce chemin, soit le proxy ne route pas du tout `/health` vers le backend, soit il s'agit d'une défaillance de plus bas niveau (DNS, TLS, pare-feu, délai d'attente dépassé, 5xx renvoyé par le backend) — consultez [Dépannage](/troubleshooting#multica-setup-signale-que-le-serveur-est-injoignable).
+La commande vérifie d'abord `<server-url>/health`, puis ouvre un navigateur pour terminer la connexion. Une fois la connexion effectuée, elle enregistre les identifiants en local et démarre le daemon. Une erreur `Server not reachable` à cette étape signifie que la sonde n'a pas obtenu de 200 sur `/health` : soit le proxy transmet tout à une version web qui ne relaie pas ce chemin, soit le proxy ne route pas du tout `/health` vers le backend, soit il s'agit d'une défaillance de plus bas niveau (DNS, TLS, pare-feu, délai d'attente dépassé, 5xx renvoyé par le backend) — consultez [Dépannage](/troubleshooting#marvis-setup-signale-que-le-serveur-est-injoignable).
 
 Vérifiez la connexion :
 
 ```bash
-multica daemon status
+marvis daemon status
 ```
 
 La sortie doit afficher :
@@ -262,13 +262,13 @@ La sortie doit afficher :
 
 ## 6. Terminer la première exécution
 
-De retour dans Multica, dès qu'un runtime en ligne apparaît dans la liste des runtimes, créez un agent et assignez-lui votre première tâche.
+De retour dans Marvis, dès qu'un runtime en ligne apparaît dans la liste des runtimes, créez un agent et assignez-lui votre première tâche.
 
 Lorsque l'exécution apparaît comme terminée et que la réponse de l'agent s'affiche dans la chronologie, le service auto-hébergé, l'ordinateur et l'outil de codage IA sont tous connectés. Pour le détail, consultez les étapes 3 à 5 du [démarrage rapide](/cloud-quickstart).
 
 ## Commandes d'administration courantes
 
-Lancez-les toutes depuis le répertoire du dépôt `multica` :
+Lancez-les toutes depuis le répertoire du dépôt `marvis` :
 
 ```bash
 # Vérifier l'état
@@ -296,13 +296,13 @@ curl -fsS http://localhost:8080/readyz
 Il existe deux façons de mettre à niveau une installation Docker Compose. Sur une installation existante, elles produisent le **même résultat** — la cible `selfhost` du `Makefile` exécute les mêmes `docker compose pull` + `up -d`, et en plus crée `.env` s'il est absent et attend `/health` avant d'afficher un résumé de l'état. Choisissez celle que vous préférez :
 
 ```bash
-cd multica
+cd marvis
 git pull
 make selfhost
 ```
 
 ```bash
-cd multica
+cd marvis
 git pull
 docker compose -f docker-compose.selfhost.yml pull
 docker compose -f docker-compose.selfhost.yml up -d
@@ -310,16 +310,16 @@ docker compose -f docker-compose.selfhost.yml up -d
 
 ### Ce que fait réellement `git pull`
 
-`git pull` met à jour **`docker-compose.selfhost.yml` lui-même** — nouvelles variables d'environnement, nouveaux services, vérifications d'état modifiées. Ce n'est **pas** ainsi que vous obtenez une nouvelle version de Multica.
+`git pull` met à jour **`docker-compose.selfhost.yml` lui-même** — nouvelles variables d'environnement, nouveaux services, vérifications d'état modifiées. Ce n'est **pas** ainsi que vous obtenez une nouvelle version de Marvis.
 
 La version que vous exécutez au final est déterminée par `docker compose pull`, qui demande à GHCR vers quoi pointe le tag à cet instant. Une copie locale en retard de plusieurs mois téléchargera quand même les images `latest` du jour ; à l'inverse, `git pull` seul ne change rien tant que vous n'avez pas téléchargé les images et recréé les conteneurs.
 
 <Callout type="warning">
-**Si vous avez figé `MULTICA_IMAGE_TAG`, aucune des deux commandes ne met quoi que ce soit à niveau.** Les deux images sont résolues en `${MULTICA_IMAGE_TAG:-latest}` (`docker-compose.selfhost.yml`, `services.backend.image` / `services.frontend.image`), et `.env.example` fournit `MULTICA_IMAGE_TAG=latest`. Si votre `.env` fige une version précise, `pull` récupère simplement de nouveau ce même tag et vous restez sur l'ancienne version — sans erreur ni avertissement. Vérifiez avant de mettre à niveau :
+**Si vous avez figé `MARVIS_IMAGE_TAG`, aucune des deux commandes ne met quoi que ce soit à niveau.** Les deux images sont résolues en `${MARVIS_IMAGE_TAG:-latest}` (`docker-compose.selfhost.yml`, `services.backend.image` / `services.frontend.image`), et `.env.example` fournit `MARVIS_IMAGE_TAG=latest`. Si votre `.env` fige une version précise, `pull` récupère simplement de nouveau ce même tag et vous restez sur l'ancienne version — sans erreur ni avertissement. Vérifiez avant de mettre à niveau :
 
 ```bash
-grep MULTICA_IMAGE_TAG .env
-# MULTICA_IMAGE_TAG=v0.4.5   ← figé : remplacez-le d'abord par `latest` (ou la version souhaitée)
+grep MARVIS_IMAGE_TAG .env
+# MARVIS_IMAGE_TAG=v0.4.5   ← figé : remplacez-le d'abord par `latest` (ou la version souhaitée)
 ```
 </Callout>
 
@@ -333,18 +333,18 @@ Les migrations ne vont que vers l'avant ; faites donc un dump avant de mettre à
 
 ```bash
 docker compose -f docker-compose.selfhost.yml exec -T postgres \
-  pg_dump -U multica multica > multica-backup.sql && gzip multica-backup.sql
+  pg_dump -U marvis marvis > marvis-backup.sql && gzip marvis-backup.sql
 ```
 
 <Callout type="warning">
 **Ne redirigez pas `pg_dump` directement vers `gzip` par un pipe.** Un shell renvoie le code de sortie de la *dernière* commande d'un pipeline : `pg_dump … | gzip > backup.sql.gz` se termine donc avec `0` même si le dump a échoué — ce qui laisse une archive de 20 octets parfaitement valide, mais vide. Rediriger d'abord vers un fichier fait compter le code de sortie de `pg_dump` lui-même, et `&&` ne compresse qu'un dump qui a réellement réussi.
 </Callout>
 
-Utilisez vos propres `POSTGRES_USER` / `POSTGRES_DB` de `.env` si vous avez modifié les valeurs par défaut `multica`. Les données résident dans le volume nommé `multica_pgdata`, qui survit à `docker compose down` — mais pas à `down -v`.
+Utilisez vos propres `POSTGRES_USER` / `POSTGRES_DB` de `.env` si vous avez modifié les valeurs par défaut `marvis`. Les données résident dans le volume nommé `marvis_pgdata`, qui survit à `docker compose down` — mais pas à `down -v`.
 
 ### Les migrations s'exécutent d'elles-mêmes
 
-Comme à l'[étape 1](#1-démarrer-multica), le conteneur backend exécute `./migrate up` au démarrage (`docker/entrypoint.sh`) avant de servir le trafic. Il n'y a pas de commande de mise à niveau distincte — démarrer la nouvelle image *est* l'étape de migration. Pour suivre le déroulement :
+Comme à l'[étape 1](#1-démarrer-marvis), le conteneur backend exécute `./migrate up` au démarrage (`docker/entrypoint.sh`) avant de servir le trafic. Il n'y a pas de commande de mise à niveau distincte — démarrer la nouvelle image *est* l'étape de migration. Pour suivre le déroulement :
 
 ```bash
 docker compose -f docker-compose.selfhost.yml logs -f backend
@@ -367,7 +367,7 @@ Toute réponse autre qu'un HTTP 200 avec les deux vérifications à `ok` signifi
 
 Helm a son propre chemin de mise à niveau : définissez `images.backend.tag` / `images.frontend.tag` sur la version souhaitée dans votre fichier de valeurs, puis lancez `helm upgrade`. Changer le tag modifie la spécification du pod : Kubernetes télécharge donc la nouvelle image et redéploie progressivement les Deployments — c'est la méthode fiable.
 
-`kubectl -n multica rollout restart` n'est **pas** une mise à niveau en soi. Le chart est livré avec `pullPolicy: IfNotPresent` (`deploy/helm/multica/values.yaml`) : un nœud qui a déjà ce tag en cache réutilise donc l'ancienne image, et le redémarrage ne change silencieusement rien — le même type de piège qu'un `MULTICA_IMAGE_TAG` figé. Si vous voulez suivre un tag flottant de cette manière, définissez d'abord `images.backend.pullPolicy` / `images.frontend.pullPolicy` sur `Always`. Consultez le [guide d'auto-hébergement](https://github.com/multica-ai/multica/blob/main/SELF_HOSTING.md#kubernetes-deployment-alternative).
+`kubectl -n marvis rollout restart` n'est **pas** une mise à niveau en soi. Le chart est livré avec `pullPolicy: IfNotPresent` (`deploy/helm/marvis/values.yaml`) : un nœud qui a déjà ce tag en cache réutilise donc l'ancienne image, et le redémarrage ne change silencieusement rien — le même type de piège qu'un `MARVIS_IMAGE_TAG` figé. Si vous voulez suivre un tag flottant de cette manière, définissez d'abord `images.backend.pullPolicy` / `images.frontend.pullPolicy` sur `Always`. Consultez le [guide d'auto-hébergement](https://github.com/marvis-ai/marvis/blob/main/SELF_HOSTING.md#kubernetes-deployment-alternative).
 
 <Callout type="warning">
 `docker compose down` conserve `pgdata` et `backend_uploads`. Ajouter `-v` supprime ces volumes, base de données comprise ; n'exécutez pas `docker compose down -v`, sauf si vous avez l'intention d'effacer l'instance.
@@ -379,9 +379,9 @@ Helm a son propre chemin de mise à niveau : définissez `images.backend.tag` / 
 |---|---|
 | `/readyz` ne renvoie pas `ok` | Exécutez `docker compose -f docker-compose.selfhost.yml logs backend postgres`. |
 | Aucun code de vérification n'arrive | Demandez un code, puis cherchez `Verification code` dans les journaux du backend. |
-| `setup self-host` signale que le serveur est injoignable | Depuis l'ordinateur, envoyez une requête à `https://api.example.com/health` pour confirmer que le DNS, le TLS et le proxy inverse sont tous joignables. Un 404 signifie que le proxy envoie `/health` à une ancienne version web qui ne le relaie pas — routez-le vers le backend ([Dépannage](/troubleshooting#multica-setup-signale-que-le-serveur-est-injoignable)). |
-| Le daemon n'affiche rien sous `Agents` | Vérifiez que les outils de codage IA sont dans le `PATH` et connectés, puis exécutez `multica daemon restart`. |
-| Les tâches restent en file d'attente | Exécutez `multica daemon status` pour confirmer que le daemon tourne et qu'il est connecté à l'espace de travail. |
+| `setup self-host` signale que le serveur est injoignable | Depuis l'ordinateur, envoyez une requête à `https://api.example.com/health` pour confirmer que le DNS, le TLS et le proxy inverse sont tous joignables. Un 404 signifie que le proxy envoie `/health` à une ancienne version web qui ne le relaie pas — routez-le vers le backend ([Dépannage](/troubleshooting#marvis-setup-signale-que-le-serveur-est-injoignable)). |
+| Le daemon n'affiche rien sous `Agents` | Vérifiez que les outils de codage IA sont dans le `PATH` et connectés, puis exécutez `marvis daemon restart`. |
+| Les tâches restent en file d'attente | Exécutez `marvis daemon status` pour confirmer que le daemon tourne et qu'il est connecté à l'espace de travail. |
 
 Pour d'autres scénarios, consultez [Dépannage](/troubleshooting).
 
@@ -389,5 +389,5 @@ Pour d'autres scénarios, consultez [Dépannage](/troubleshooting).
 
 - [Configuration de l'authentification](/auth-setup) — configurer l'e-mail, la connexion Google et le périmètre d'inscription.
 - [Variables d'environnement](/environment-variables) — la référence complète de configuration du serveur.
-- [Guide d'auto-hébergement](https://github.com/multica-ai/multica/blob/main/SELF_HOSTING.md) — Kubernetes, mises à niveau et déploiement manuel.
+- [Guide d'auto-hébergement](https://github.com/marvis-ai/marvis/blob/main/SELF_HOSTING.md) — Kubernetes, mises à niveau et déploiement manuel.
 - [Application de bureau](/desktop-app) — connecter l'application de bureau à un service auto-hébergé.

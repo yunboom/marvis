@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { cn } from "@multica/ui/lib/utils";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   laneSegmentPosition,
   timelineTicks,

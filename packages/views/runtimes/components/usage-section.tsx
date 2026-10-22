@@ -3,21 +3,21 @@
 import { useMemo, useState } from "react";
 import { BarChart3, ChevronRight, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
-import { Button } from "@multica/ui/components/ui/button";
-import { cn } from "@multica/ui/lib/utils";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { Button } from "@marvis/ui/components/ui/button";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   CompactNumberFlow,
   CurrencyNumberFlow,
-} from "@multica/ui/components/ui/number-flow";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { agentListOptions } from "@multica/core/workspace/queries";
-import type { RuntimeUsage, AgentRuntime } from "@multica/core/types";
+} from "@marvis/ui/components/ui/number-flow";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { agentListOptions } from "@marvis/core/workspace/queries";
+import type { RuntimeUsage, AgentRuntime } from "@marvis/core/types";
 import {
   runtimeUsageOptions,
   runtimeUsageByAgentOptions,
-} from "@multica/core/runtimes/queries";
-import { useCustomPricingStore } from "@multica/core/runtimes/custom-pricing-store";
+} from "@marvis/core/runtimes/queries";
+import { useCustomPricingStore } from "@marvis/core/runtimes/custom-pricing-store";
 import { useViewingTimezone } from "../../common/use-viewing-timezone";
 import {
   cacheHitRatePercent,

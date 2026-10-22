@@ -3,14 +3,14 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useAuthStore } from "@multica/core/auth";
-import { memberListOptions } from "@multica/core/workspace/queries";
-import { useUpdateWorkspaceSystemWakeup, workspaceSystemWakeupsOptions } from "@multica/core/issues";
-import type { WorkspaceSystemWakeup } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { Switch } from "@multica/ui/components/ui/switch";
-import { Textarea } from "@multica/ui/components/ui/textarea";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useAuthStore } from "@marvis/core/auth";
+import { memberListOptions } from "@marvis/core/workspace/queries";
+import { useUpdateWorkspaceSystemWakeup, workspaceSystemWakeupsOptions } from "@marvis/core/issues";
+import type { WorkspaceSystemWakeup } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Switch } from "@marvis/ui/components/ui/switch";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { useT } from "../../i18n";
 import { SettingsCard, SettingsRow, SettingsSection, SettingsTab } from "./settings-layout";
 

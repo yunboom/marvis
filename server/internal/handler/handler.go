@@ -18,33 +18,33 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/cloudruntime"
-	"github.com/multica-ai/multica/server/internal/daemonws"
-	"github.com/multica-ai/multica/server/internal/dbreader"
-	"github.com/multica-ai/multica/server/internal/entitlement"
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	composio "github.com/multica-ai/multica/server/internal/integrations/composio"
-	"github.com/multica-ai/multica/server/internal/integrations/dingtalk"
-	"github.com/multica-ai/multica/server/internal/integrations/ghsnapshot"
-	"github.com/multica-ai/multica/server/internal/integrations/lark"
-	"github.com/multica-ai/multica/server/internal/integrations/slack"
-	"github.com/multica-ai/multica/server/internal/integrations/telegram"
-	"github.com/multica-ai/multica/server/internal/integrations/wecom"
-	"github.com/multica-ai/multica/server/internal/issuestatus"
-	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
-	"github.com/multica-ai/multica/server/internal/middleware"
-	"github.com/multica-ai/multica/server/internal/realtime"
-	"github.com/multica-ai/multica/server/internal/seatcapacity"
-	"github.com/multica-ai/multica/server/internal/service"
-	"github.com/multica-ai/multica/server/internal/storage"
-	"github.com/multica-ai/multica/server/internal/util"
-	"github.com/multica-ai/multica/server/internal/util/secretbox"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/featureflag"
-	"github.com/multica-ai/multica/server/pkg/llm"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/cloudruntime"
+	"github.com/marvis-ai/marvis/server/internal/daemonws"
+	"github.com/marvis-ai/marvis/server/internal/dbreader"
+	"github.com/marvis-ai/marvis/server/internal/entitlement"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	composio "github.com/marvis-ai/marvis/server/internal/integrations/composio"
+	"github.com/marvis-ai/marvis/server/internal/integrations/dingtalk"
+	"github.com/marvis-ai/marvis/server/internal/integrations/ghsnapshot"
+	"github.com/marvis-ai/marvis/server/internal/integrations/lark"
+	"github.com/marvis-ai/marvis/server/internal/integrations/slack"
+	"github.com/marvis-ai/marvis/server/internal/integrations/telegram"
+	"github.com/marvis-ai/marvis/server/internal/integrations/wecom"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/marvis-ai/marvis/server/internal/seatcapacity"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/storage"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/featureflag"
+	"github.com/marvis-ai/marvis/server/pkg/llm"
 )
 
 // randomID returns a random 16-byte hex string used as a request ID for
@@ -85,16 +85,16 @@ type Config struct {
 	WorkspaceCreationAllowedEmails []string
 	// VCSIntegrationEnabled gates the self-hosted Git provider integration
 	// (Forgejo / Gitea / GitLab) at the deployment level, independent of whether
-	// MULTICA_VCS_SECRET_KEY is set. It is the product boundary: the feature is
-	// intended for self-hosted Multica only (where Multica and the Git instance
+	// MARVIS_VCS_SECRET_KEY is set. It is the product boundary: the feature is
+	// intended for self-hosted Marvis only (where Marvis and the Git instance
 	// can share a network), and is left off on the managed cloud — connect,
 	// rotate, and webhook handlers reject when it is false, and /api/config
 	// omits it so the UI hides the whole section rather than showing a
 	// "missing key" message a cloud user cannot act on. Populated from
-	// MULTICA_VCS_INTEGRATION_ENABLED; the self-host compose defaults it on.
+	// MARVIS_VCS_INTEGRATION_ENABLED; the self-host compose defaults it on.
 	VCSIntegrationEnabled bool
 	// PublicURL is the absolute base URL the API is reachable at from the
-	// public internet, with no trailing slash (e.g. "https://multica.ai").
+	// public internet, with no trailing slash (e.g. "https://marvis.ai").
 	// Used to build webhook_url responses and the fixed Remote MCP OAuth
 	// callback URI — never to decide request identity, routing, or workspace
 	// scope. Empty when unset; webhook clients can fall back to their own origin,
@@ -105,18 +105,18 @@ type Config struct {
 	// host.
 	PublicURL string
 	// AppURL is the browser application's canonical origin, resolved from
-	// MULTICA_APP_URL (falling back to FRONTEND_ORIGIN). It is kept separate
+	// MARVIS_APP_URL (falling back to FRONTEND_ORIGIN). It is kept separate
 	// from PublicURL because split app/API deployments use different origins.
 	AppURL string
 	// TrustedProxies are CIDRs whose source IP we trust to set
 	// X-Forwarded-For / X-Real-IP. Empty means "trust nothing": the rate
 	// limiter uses r.RemoteAddr exclusively. Populated via the
-	// MULTICA_TRUSTED_PROXIES env var (comma-separated CIDRs, e.g.
+	// MARVIS_TRUSTED_PROXIES env var (comma-separated CIDRs, e.g.
 	// "10.0.0.0/8,127.0.0.1/32"). This is specifically to keep the per-IP
 	// webhook limiter from being bypassed by a spoofed XFF on deployments
 	// without a header-stripping reverse proxy in front.
 	TrustedProxies []netip.Prefix
-	// CloudURL enables the SaaS-only multica-cloud connection when set. Empty
+	// CloudURL enables the SaaS-only marvis-cloud connection when set. Empty
 	// keeps self-hosted deployments explicit: Cloud endpoints return 403 instead
 	// of attempting to dial a hard-coded private service.
 	CloudURL                 string
@@ -138,22 +138,22 @@ type Config struct {
 	// MUL-4309; LLM access is internal-only now. When both LLMAPIKey and
 	// LLMBaseURL are empty the layer is disabled and callers fall back
 	// silently (see maybeGenerateChatTitleAsync).
-	//   - LLMAPIKey       -> MULTICA_LLM_API_KEY
-	//   - LLMBaseURL       -> MULTICA_LLM_BASE_URL (OpenAI or any compatible gateway)
-	//   - LLMDefaultModel  -> MULTICA_LLM_DEFAULT_MODEL (used when a request omits `model`)
-	//   - LLMMaxRetries    -> MULTICA_LLM_MAX_RETRIES (transport retry budget)
-	//   - LLMDisableThinking -> MULTICA_LLM_DISABLE_THINKING (gateway hint to
+	//   - LLMAPIKey       -> MARVIS_LLM_API_KEY
+	//   - LLMBaseURL       -> MARVIS_LLM_BASE_URL (OpenAI or any compatible gateway)
+	//   - LLMDefaultModel  -> MARVIS_LLM_DEFAULT_MODEL (used when a request omits `model`)
+	//   - LLMMaxRetries    -> MARVIS_LLM_MAX_RETRIES (transport retry budget)
+	//   - LLMDisableThinking -> MARVIS_LLM_DISABLE_THINKING (gateway hint to
 	//     turn model reasoning off; see llm.Config.DisableThinking)
 	LLMAPIKey       string
 	LLMBaseURL      string
 	LLMDefaultModel string
-	// LLMMaxRetries is the parsed MULTICA_LLM_MAX_RETRIES budget. nil means
+	// LLMMaxRetries is the parsed MARVIS_LLM_MAX_RETRIES budget. nil means
 	// unset (llm.DefaultMaxRetries applies); llm.Retries(0) disables retries.
 	// The type carries the validation: it can only be built through llm.Retries,
 	// and cmd/server additionally fails the boot on an out-of-range value before
 	// one reaches this struct. See llm.Config.MaxRetries for the full semantics.
 	LLMMaxRetries *llm.RetryOverride
-	// LLMDisableThinking is the parsed MULTICA_LLM_DISABLE_THINKING switch.
+	// LLMDisableThinking is the parsed MARVIS_LLM_DISABLE_THINKING switch.
 	// cmd/server validates the raw value before the boot continues, so a
 	// non-boolean never reaches this struct.
 	LLMDisableThinking bool
@@ -281,7 +281,7 @@ type Handler struct {
 	// Test-only HTTP override; nil uses the default client in production.
 	googleOAuthHTTPClient *http.Client
 	// Lark integration. All three are nil when the Lark master key
-	// (MULTICA_LARK_SECRET_KEY) is unset; the corresponding HTTP
+	// (MARVIS_LARK_SECRET_KEY) is unset; the corresponding HTTP
 	// handlers return 403 in that case so a misconfigured self-host
 	// deployment surfaces a clear error instead of silently using a
 	// zero key. Wired in cmd/server/router.go after handler.New.
@@ -297,7 +297,7 @@ type Handler struct {
 	// LarkAPIClient is the live transport that backs SendInteractiveCard,
 	// PatchInteractiveCard, SendBindingPromptCard, GetBotInfo. The
 	// router wires the real Lark HTTP client whenever
-	// MULTICA_LARK_SECRET_KEY is set; tests that need a no-op
+	// MARVIS_LARK_SECRET_KEY is set; tests that need a no-op
 	// behaviour can swap in `lark.NewStubAPIClient(...)` directly. The
 	// UI consults IsConfigured() to decide whether to surface install
 	// entry points.
@@ -313,7 +313,7 @@ type Handler struct {
 	// drives any channel type, not just Feishu. It remains nil when lease
 	// configuration is unsafe or a selected Redis backend fails its startup
 	// readiness check; each platform registers its Factory only when configured
-	// (Feishu when MULTICA_LARK_SECRET_KEY is set). The router does NOT
+	// (Feishu when MARVIS_LARK_SECRET_KEY is set). The router does NOT
 	// call Run; the process owner (main.go) starts it under a long-running
 	// context and joins via WaitWithTimeout (bounded, fenced by
 	// ShutdownTimeout) during graceful shutdown so the lease renewer yields
@@ -335,18 +335,18 @@ type Handler struct {
 	LarkTyping *lark.TypingIndicatorManager
 	// SlackInstall owns the bring-your-own-app Slack install lifecycle (register
 	// pasted tokens / list / revoke) and the at-rest encryption of each app's bot
-	// + app tokens (MUL-3666). Nil unless MULTICA_SLACK_SECRET_KEY is set.
+	// + app tokens (MUL-3666). Nil unless MARVIS_SLACK_SECRET_KEY is set.
 	SlackInstall *slack.InstallService
 	// SlackBindingTokens mints/redeems the user-binding tokens behind the
 	// "link your Slack account" prompt (MUL-3666). Nil unless Slack is
-	// configured (MULTICA_SLACK_SECRET_KEY set).
+	// configured (MARVIS_SLACK_SECRET_KEY set).
 	SlackBindingTokens *slack.BindingTokenService
 	// DingTalkInstall owns the bring-your-own-app DingTalk lifecycle. It is nil
-	// unless MULTICA_DINGTALK_SECRET_KEY is configured.
+	// unless MARVIS_DINGTALK_SECRET_KEY is configured.
 	DingTalkInstall *dingtalk.InstallService
 	// DingTalkBindingTokens mints and redeems the single-use account-link tokens.
 	DingTalkBindingTokens *dingtalk.BindingTokenService
-	// SlackHistory backs the agent-facing `multica chat history` command: it
+	// SlackHistory backs the agent-facing `marvis chat history` command: it
 	// reads a chat session's bound Slack conversation on demand (MUL-3871). Nil
 	// unless Slack is configured; GetChatChannelHistory then reports "no channel
 	// integration". A future platform satisfies the same reader interface.
@@ -359,7 +359,7 @@ type Handler struct {
 	// WebSocket subscribe frame. Nil disables the wecom integration.
 	WecomCredentials wecom.CredentialsResolver
 	// WecomBindingTokens mints/redeems the user-binding tokens behind the
-	// "link your Multica account" prompt sent to first-time WeCom users
+	// "link your Marvis account" prompt sent to first-time WeCom users
 	// (their aibot userid is a "T"-prefixed anonymized id with no relation
 	// to their real userid or email, so an explicit binding is required —
 	// see wecom/binding.go). Nil disables the redeem endpoint (returns 403)
@@ -373,7 +373,7 @@ type Handler struct {
 
 	// TelegramInstall owns the Telegram bot install lifecycle (register a
 	// pasted BotFather token / list / revoke) and the at-rest encryption of
-	// each bot's token. Nil unless MULTICA_TELEGRAM_SECRET_KEY is set.
+	// each bot's token. Nil unless MARVIS_TELEGRAM_SECRET_KEY is set.
 	TelegramInstall *telegram.InstallService
 	// TelegramBindingTokens mints/redeems the user-binding tokens behind the
 	// "link your Telegram account" prompt. Nil unless Telegram is configured.
@@ -387,7 +387,7 @@ type Handler struct {
 	// DEPLOYMENT, carry a file the agent produced the last hop into the
 	// conversation. It answers the claim response's
 	// chat_channel_delivers_files, which the agent's PER-TURN prompt turns into
-	// either "run `multica attachment upload`" or "describe the file in words"
+	// either "run `marvis attachment upload`" or "describe the file in words"
 	// (daemon/prompt.go). Not the brief: the brief is the prompt cache prefix and
 	// this is a per-turn verdict, so stating it there made one session render two
 	// briefs (MUL-5377).
@@ -414,13 +414,13 @@ type Handler struct {
 	LLM *llm.Client
 	// VCSSecretBox encrypts/decrypts per-workspace Git provider access tokens and
 	// webhook secrets at rest (Forgejo / Gitea / GitLab). Nil when
-	// MULTICA_VCS_SECRET_KEY is unset; connect returns 403 and webhook returns 404
+	// MARVIS_VCS_SECRET_KEY is unset; connect returns 403 and webhook returns 404
 	// in that case so a misconfigured self-host deployment surfaces a clear
 	// error rather than silently storing plaintext. Wired in
 	// cmd/server/router.go after New.
 	VCSSecretBox *secretbox.Box
 	// PluginSurfaceTokens seal short-lived launch claims. Nil disables surface
-	// launches; wired from a domain-separated MULTICA_PLUGIN_SECRET_KEY at boot.
+	// launches; wired from a domain-separated MARVIS_PLUGIN_SECRET_KEY at boot.
 	PluginSurfaceTokens *secretbox.Box
 	// PRRefresh drives the GitHub API snapshot pipeline for PR cards (MUL-5265):
 	// webhook / page-visit / TTL triggers → authenticated GraphQL fetch →
@@ -492,7 +492,7 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 	taskSvc.Analytics = analyticsClient
 	taskSvc.SourceContextStorage = store
 	// Chat follow-up suggestions run through the same internal LLM layer that
-	// backs auto-titling. A deployment with no MULTICA_LLM_* configuration gets
+	// backs auto-titling. A deployment with no MARVIS_LLM_* configuration gets
 	// a disabled client, which turns the feature off rather than failing.
 	taskSvc.QuickActions = llmClient
 	h := &Handler{

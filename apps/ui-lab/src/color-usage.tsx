@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@multica/ui/components/ui/button";
-import { Input } from "@multica/ui/components/ui/input";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "@multica/ui/components/ui/tabs";
+} from "@marvis/ui/components/ui/tabs";
 import { contrastPasses, contrastRatio, resolveBackground } from "./contrast";
 import type { ColorToken, Draft, Theme } from "./tokens";
 
@@ -333,7 +333,7 @@ export function ColorUsage({
             <span>{t(($) => $.colorUsage.taskName)}</span>
             <Input
               data-color-probe={t(($) => $.colorUsage.taskName)}
-              defaultValue="Multica"
+              defaultValue="Marvis"
               aria-invalid={invalid || undefined}
               disabled={disabled}
             />

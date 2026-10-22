@@ -2,8 +2,8 @@
 
 import { useState, lazy, Suspense } from "react";
 import { SmilePlus } from "lucide-react";
-import { cn } from "@multica/ui/lib/utils";
-import { Popover, PopoverTrigger, PopoverContent } from "@multica/ui/components/ui/popover";
+import { cn } from "@marvis/ui/lib/utils";
+import { Popover, PopoverTrigger, PopoverContent } from "@marvis/ui/components/ui/popover";
 import { DeferredTooltip } from "./deferred-tooltip";
 
 const EmojiPicker = lazy(() =>

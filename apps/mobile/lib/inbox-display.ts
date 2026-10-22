@@ -6,7 +6,7 @@
  * the title a user sees in the mobile inbox MUST match what they see on
  * web for the same item. When the web version changes, sync this file.
  */
-import type { InboxItem } from "@multica/core/types";
+import type { InboxItem } from "@marvis/core/types";
 import { i18n } from "@/lib/i18n/singleton";
 
 function formatResetAt(value: string | undefined): string {

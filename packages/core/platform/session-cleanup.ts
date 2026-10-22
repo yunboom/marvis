@@ -67,7 +67,7 @@ export function clearClientSessionData(
   // Clear desktop tab state. Tab paths can contain workspace slugs and issue
   // UUIDs that must not survive across user sessions on a shared machine.
   // No-op on web (web doesn't write this key).
-  storage.removeItem("multica_tabs");
+  storage.removeItem("marvis_tabs");
 
   // The local search index holds a copy of every issue and comment the user
   // could read. Deleting it is asynchronous; nothing waits on it because the

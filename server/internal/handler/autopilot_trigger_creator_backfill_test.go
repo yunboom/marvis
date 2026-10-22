@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // Migration 467 fills a legacy trigger's missing creator from its autopilot's
@@ -22,9 +22,9 @@ func TestMigration467BackfillsTriggerCreatorFromAutopilot(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	otherMemberID := dbfx.User(t, "Backfill Other Member", "mul7267-member@multica.test")
+	otherMemberID := dbfx.User(t, "Backfill Other Member", "mul7267-member@marvis.test")
 	dbfx.Member(t, testWorkspaceID, otherMemberID, "member")
-	departedID := dbfx.User(t, "Backfill Departed Member", "mul7267-departed@multica.test")
+	departedID := dbfx.User(t, "Backfill Departed Member", "mul7267-departed@marvis.test")
 	agentID := dbfx.Agent(t, "Backfill Agent", handlerTestRuntimeID(t))
 
 	autopilot := func(creatorID string) string {

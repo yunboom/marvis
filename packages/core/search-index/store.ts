@@ -12,7 +12,7 @@ import type { SearchIndexComment, SearchIndexIssue, SearchIndexProject } from ".
 /** Bump to discard every local copy, e.g. after changing what a record holds. */
 export const SEARCH_INDEX_SCHEMA_VERSION = 1;
 
-const DB_PREFIX = "multica-search-index";
+const DB_PREFIX = "marvis-search-index";
 
 export interface IndexMeta {
   schemaVersion: number;

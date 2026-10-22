@@ -2,22 +2,22 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { useViewStore, useViewStoreApi } from "@multica/core/issues/stores/view-store-context";
-import type { GanttZoom } from "@multica/core/issues/stores/view-store";
-import { projectListOptions } from "@multica/core/projects/queries";
-import type { Issue, IssueStatusCategory } from "@multica/core/types";
-import { issueStatusCategory, statusColumnKeys } from "@multica/core/issues";
-import { dateOnlyToUTCDate } from "@multica/core/issues/date";
-import { cn } from "@multica/ui/lib/utils";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { useViewStore, useViewStoreApi } from "@marvis/core/issues/stores/view-store-context";
+import type { GanttZoom } from "@marvis/core/issues/stores/view-store";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import type { Issue, IssueStatusCategory } from "@marvis/core/types";
+import { issueStatusCategory, statusColumnKeys } from "@marvis/core/issues";
+import { dateOnlyToUTCDate } from "@marvis/core/issues/date";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@multica/ui/components/ui/tooltip";
-import { Button } from "@multica/ui/components/ui/button";
+} from "@marvis/ui/components/ui/tooltip";
+import { Button } from "@marvis/ui/components/ui/button";
 import { AppLink } from "../../navigation";
 import {
   PEEK_TARGET_ATTR,
@@ -52,7 +52,7 @@ function daysBetween(a: Date, b: Date): number {
 
 // Issue dates arrive as date-only "YYYY-MM-DD" strings (calendar days). Anchor
 // each to UTC midnight so the bar lands on exactly that day, independent of the
-// viewer's timezone. See @multica/core/issues/date.
+// viewer's timezone. See @marvis/core/issues/date.
 function parseDay(iso: string | null): Date | null {
   return dateOnlyToUTCDate(iso);
 }

@@ -1,5 +1,5 @@
-import type { QoderConnection } from "@multica/core/runtimes/qoder";
-import { Badge } from "@multica/ui/components/ui/badge";
+import type { QoderConnection } from "@marvis/core/runtimes/qoder";
+import { Badge } from "@marvis/ui/components/ui/badge";
 import { useT } from "../../i18n";
 
 export function QoderStatusBadge({

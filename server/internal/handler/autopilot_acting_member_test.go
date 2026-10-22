@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // Every write on the autopilot surface is judged as the human it acts FOR — the
@@ -408,7 +408,7 @@ func TestCreateAutopilot_OrderingHumanMustBeAWorkspaceMember(t *testing.T) {
 	dbfx.QueryRow(t, `SELECT id FROM agent WHERE workspace_id = $1 LIMIT 1`, testWorkspaceID).Scan(&agentID)
 	// A user of the platform, but not of THIS workspace — the shape an
 	// originator has after leaving it.
-	stranger := dbfx.User(t, "Autopilot Stranger", fmt.Sprintf("autopilot-stranger-%d@multica.test", time.Now().UnixNano()))
+	stranger := dbfx.User(t, "Autopilot Stranger", fmt.Sprintf("autopilot-stranger-%d@marvis.test", time.Now().UnixNano()))
 	title := fmt.Sprintf("acting member create stranger %d", time.Now().UnixNano())
 
 	caller := actingCaller{

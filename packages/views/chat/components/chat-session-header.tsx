@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Archive, ArchiveRestore, MoreHorizontal, Pencil, Trash2, UserRound } from "lucide-react";
-import { IconButton } from "@multica/ui/components/common/icon-button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,20 +19,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { useWorkspacePaths } from "@multica/core/paths";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { useWorkspacePaths } from "@marvis/core/paths";
 import {
   useUpdateChatSession,
   useDeleteChatSession,
   useSetChatSessionArchived,
-} from "@multica/core/chat/mutations";
-import { useChatStore } from "@multica/core/chat";
-import type { Agent, ChatSession } from "@multica/core/types";
-import { isImeComposing } from "@multica/core/utils";
+} from "@marvis/core/chat/mutations";
+import { useChatStore } from "@marvis/core/chat";
+import type { Agent, ChatSession } from "@marvis/core/types";
+import { isImeComposing } from "@marvis/core/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { AppLink } from "../../navigation";
 import { useT } from "../../i18n";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 
 /**
  * Per-session header for the conversation pane: agent avatar + editable chat

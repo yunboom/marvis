@@ -1,8 +1,8 @@
 import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { I18nProvider } from "@multica/core/i18n/react";
-import { RESOURCES } from "@multica/views/locales";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import { RESOURCES } from "@marvis/views/locales";
 import type { DaemonStatus } from "../../../shared/daemon-types";
 import { DaemonPanel } from "./daemon-panel";
 import { DaemonSettingsTab } from "./daemon-settings-tab";
@@ -59,8 +59,8 @@ describe("Desktop daemon localization with real zh-Hans resources", () => {
         "登录时自动启动。",
       ),
     ).toBeInTheDocument();
-    const command = screen.getByText("multica daemon stop");
-    expect(command.closest("p")).toHaveTextContent(/multica daemon stop。$/);
+    const command = screen.getByText("marvis daemon stop");
+    expect(command.closest("p")).toHaveTextContent(/marvis daemon stop。$/);
   });
 
   it("renders repeated log messages with straight double quotes", async () => {

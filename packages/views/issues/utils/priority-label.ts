@@ -1,5 +1,5 @@
-import { PRIORITY_CONFIG } from "@multica/core/issues/config";
-import type { IssuePriority } from "@multica/core/types";
+import { PRIORITY_CONFIG } from "@marvis/core/issues/config";
+import type { IssuePriority } from "@marvis/core/types";
 import { useT } from "../../i18n";
 
 /** The `t` of the issues namespace, where every priority name lives. */

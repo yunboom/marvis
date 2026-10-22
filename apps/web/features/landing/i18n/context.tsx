@@ -9,8 +9,8 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
-import { useConfigStore } from "@multica/core/config";
-import { createBrowserCookieLocaleAdapter } from "@multica/core/i18n/browser";
+import { useConfigStore } from "@marvis/core/config";
+import { createBrowserCookieLocaleAdapter } from "@marvis/core/i18n/browser";
 import { createLandingDict } from "./dictionary";
 import type { LandingDict, Locale } from "./types";
 

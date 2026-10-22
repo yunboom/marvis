@@ -14,26 +14,26 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/daemonws"
-	"github.com/multica-ai/multica/server/internal/database"
-	"github.com/multica-ai/multica/server/internal/dbreader"
-	"github.com/multica-ai/multica/server/internal/dbstartup"
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/handler"
-	"github.com/multica-ai/multica/server/internal/integrations/wecom"
-	"github.com/multica-ai/multica/server/internal/logger"
-	"github.com/multica-ai/multica/server/internal/maintenance"
-	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
-	"github.com/multica-ai/multica/server/internal/profiling"
-	"github.com/multica-ai/multica/server/internal/realtime"
-	"github.com/multica-ai/multica/server/internal/scheduler"
-	"github.com/multica-ai/multica/server/internal/selfhosttelemetry"
-	"github.com/multica-ai/multica/server/internal/service"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/featureflag"
-	"github.com/multica-ai/multica/server/pkg/llm"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/daemonws"
+	"github.com/marvis-ai/marvis/server/internal/database"
+	"github.com/marvis-ai/marvis/server/internal/dbreader"
+	"github.com/marvis-ai/marvis/server/internal/dbstartup"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/handler"
+	"github.com/marvis-ai/marvis/server/internal/integrations/wecom"
+	"github.com/marvis-ai/marvis/server/internal/logger"
+	"github.com/marvis-ai/marvis/server/internal/maintenance"
+	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/marvis-ai/marvis/server/internal/profiling"
+	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/marvis-ai/marvis/server/internal/scheduler"
+	"github.com/marvis-ai/marvis/server/internal/selfhosttelemetry"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/featureflag"
+	"github.com/marvis-ai/marvis/server/pkg/llm"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -79,7 +79,7 @@ func redisClientName(existing, suffix string) string {
 	if existing != "" {
 		return existing + ":" + suffix
 	}
-	return "multica-api:" + suffix
+	return "marvis-api:" + suffix
 }
 
 func closeRedisClient(label string, client redis.UniversalClient) {
@@ -157,7 +157,7 @@ func envNonNegativeInt(name string, def int) int {
 	return v
 }
 
-// maxLLMRetriesLimit caps MULTICA_LLM_MAX_RETRIES. The ceiling is a latency
+// maxLLMRetriesLimit caps MARVIS_LLM_MAX_RETRIES. The ceiling is a latency
 // budget, not a taste call: SDK backoff is 0.5s doubling to an 8s cap, so 6
 // retries spend ~21s and 10 spend ~48s sleeping before the last attempt. Every
 // internal caller of pkg/llm runs under a far tighter deadline (8s for chat
@@ -165,7 +165,7 @@ func envNonNegativeInt(name string, def int) int {
 // it only converts a retryable upstream failure into a deadline-exceeded one.
 const maxLLMRetriesLimit = 5
 
-// parseLLMMaxRetries turns the raw MULTICA_LLM_MAX_RETRIES value into the
+// parseLLMMaxRetries turns the raw MARVIS_LLM_MAX_RETRIES value into the
 // tri-state llm.Config.MaxRetries expects: nil for unset (use the default),
 // llm.Retries(0) to disable retries, llm.Retries(N) for a ceiling of N.
 //
@@ -197,7 +197,7 @@ func parseLLMMaxRetries(raw string) (*llm.RetryOverride, error) {
 	return override, nil
 }
 
-// parseLLMDisableThinking turns the raw MULTICA_LLM_DISABLE_THINKING value
+// parseLLMDisableThinking turns the raw MARVIS_LLM_DISABLE_THINKING value
 // into the bool llm.Config.DisableThinking expects. It follows the
 // parseLLMMaxRetries contract: unset is a valid state (the knob stays off),
 // and anything that does not read as a deliberate true/false stops the boot
@@ -345,11 +345,11 @@ func main() {
 	if os.Getenv("RESEND_API_KEY") == "" && strings.TrimSpace(os.Getenv("SMTP_HOST")) == "" {
 		slog.Warn("no email backend configured (RESEND_API_KEY and SMTP_HOST both empty) — verification codes will be printed to the log instead of emailed.")
 	}
-	if os.Getenv("MULTICA_DEV_VERIFICATION_CODE") != "" {
+	if os.Getenv("MARVIS_DEV_VERIFICATION_CODE") != "" {
 		if strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production") {
-			slog.Warn("MULTICA_DEV_VERIFICATION_CODE is set but ignored because APP_ENV=production.")
+			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is set but ignored because APP_ENV=production.")
 		} else {
-			slog.Warn("MULTICA_DEV_VERIFICATION_CODE is enabled. Use it only for local development or private test instances.")
+			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is enabled. Use it only for local development or private test instances.")
 		}
 	}
 
@@ -357,9 +357,9 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	shutdownHoldDuration := envNonNegativeDuration("MULTICA_SHUTDOWN_HOLD_DURATION", 0)
+	shutdownHoldDuration := envNonNegativeDuration("MARVIS_SHUTDOWN_HOLD_DURATION", 0)
 
-	// Feature flags: loaded once at startup from MULTICA_FEATURE_FLAGS_FILE
+	// Feature flags: loaded once at startup from MARVIS_FEATURE_FLAGS_FILE
 	// (a YAML rule set) with FF_<KEY> env overrides layered on top.
 	// See server/pkg/featureflag for the schema and lifecycle rules.
 	//
@@ -368,7 +368,7 @@ func main() {
 	// default, so existing code paths are unchanged until someone adds a
 	// rule. A misconfigured (malformed / missing) file surfaces as a hard
 	// error so operators see misconfig the same way they do for any other
-	// MULTICA_*_FILE knob.
+	// MARVIS_*_FILE knob.
 	flags, err := featureflag.NewServiceFromEnv(featureflag.WithLogger(slog.Default()))
 	if err != nil {
 		slog.Error("feature flag configuration failed to load", "error", err)
@@ -378,7 +378,7 @@ func main() {
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://multica:multica@localhost:5432/multica?sslmode=disable"
+		dbURL = "postgres://marvis:marvis@localhost:5432/marvis?sslmode=disable"
 	}
 
 	startupSettings := dbstartup.SettingsFromEnv()
@@ -661,9 +661,9 @@ func main() {
 	// Validate the LLM retry budget before the router exists: an operator who
 	// typed a value we cannot honor should see the boot stop, the same way a
 	// malformed feature-flag file does above.
-	llmMaxRetries, err := parseLLMMaxRetries(os.Getenv("MULTICA_LLM_MAX_RETRIES"))
+	llmMaxRetries, err := parseLLMMaxRetries(os.Getenv("MARVIS_LLM_MAX_RETRIES"))
 	if err != nil {
-		slog.Error("invalid MULTICA_LLM_MAX_RETRIES", "error", err)
+		slog.Error("invalid MARVIS_LLM_MAX_RETRIES", "error", err)
 		os.Exit(1)
 	}
 	var readRecorder dbreader.Recorder
@@ -673,9 +673,9 @@ func main() {
 
 	// Same contract for the thinking-off hint: an unparseable value must stop
 	// the boot rather than read as "disabled" and look configured.
-	llmDisableThinking, err := parseLLMDisableThinking(os.Getenv("MULTICA_LLM_DISABLE_THINKING"))
+	llmDisableThinking, err := parseLLMDisableThinking(os.Getenv("MARVIS_LLM_DISABLE_THINKING"))
 	if err != nil {
-		slog.Error("invalid MULTICA_LLM_DISABLE_THINKING", "error", err)
+		slog.Error("invalid MARVIS_LLM_DISABLE_THINKING", "error", err)
 		os.Exit(1)
 	}
 
@@ -737,7 +737,7 @@ func main() {
 	}
 
 	// Start background sweeper to mark stale runtimes as offline.
-	runtimeReconnectGrace := envDuration("MULTICA_RUNTIME_RECONNECT_GRACE", defaultRuntimeReconnectGrace)
+	runtimeReconnectGrace := envDuration("MARVIS_RUNTIME_RECONNECT_GRACE", defaultRuntimeReconnectGrace)
 	if runtimeReconnectGrace < minimumRuntimeReconnectGrace {
 		slog.Warn("runtime reconnect grace is shorter than heartbeat freshness; clamping",
 			"configured", runtimeReconnectGrace,

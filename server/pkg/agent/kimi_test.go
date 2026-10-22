@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 func TestKimiToolNameFromTitle(t *testing.T) {

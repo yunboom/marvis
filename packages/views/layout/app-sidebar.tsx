@@ -1,10 +1,10 @@
 "use client";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 
-import { issueStatusCategory } from "@multica/core/issues";
+import { issueStatusCategory } from "@marvis/core/issues";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "@multica/ui/lib/utils";
-import { useScrollFade } from "@multica/ui/hooks/use-scroll-fade";
+import { cn } from "@marvis/ui/lib/utils";
+import { useScrollFade } from "@marvis/ui/hooks/use-scroll-fade";
 import { AppLink, useNavigation } from "../navigation";
 import { HelpLauncher } from "./help-launcher";
 import { JoinDiscordCard } from "./join-discord-card";
@@ -28,13 +28,13 @@ import { Layers,
   X,
 } from "lucide-react";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
-import { ActorAvatar } from "@multica/ui/components/common/actor-avatar";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@multica/ui/components/ui/tooltip";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@multica/ui/components/ui/collapsible";
-import { CappedNumberFlow } from "@multica/ui/components/ui/number-flow";
+import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@marvis/ui/components/ui/collapsible";
+import { CappedNumberFlow } from "@marvis/ui/components/ui/number-flow";
 import { StatusIcon } from "../issues/components/status-icon";
-import { useIssueDraftStore } from "@multica/core/issues/stores/draft-store";
-import { openCreateIssueWithPreference } from "@multica/core/issues/stores/create-mode-store";
+import { useIssueDraftStore } from "@marvis/core/issues/stores/draft-store";
+import { openCreateIssueWithPreference } from "@marvis/core/issues/stores/create-mode-store";
 import {
   Sidebar,
   SidebarContent,
@@ -48,7 +48,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
-} from "@multica/ui/components/ui/sidebar";
+} from "@marvis/ui/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,35 +57,35 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { useAuthStore } from "@multica/core/auth";
-import { issueViewDetailOptions } from "@multica/core/issue-views/queries";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { useAuthStore } from "@marvis/core/auth";
+import { issueViewDetailOptions } from "@marvis/core/issue-views/queries";
 import {
   issueViewContainerKey,
   useActiveIssueViewStore,
-} from "@multica/core/issue-views/active-view-store";
-import { useCurrentWorkspace, useWorkspacePaths, paths } from "@multica/core/paths";
-import { workspaceListOptions, myInvitationListOptions, workspaceKeys } from "@multica/core/workspace/queries";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
+} from "@marvis/core/issue-views/active-view-store";
+import { useCurrentWorkspace, useWorkspacePaths, paths } from "@marvis/core/paths";
+import { workspaceListOptions, myInvitationListOptions, workspaceKeys } from "@marvis/core/workspace/queries";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { inboxUnreadSummaryEnabled, inboxUnreadSummaryOptions, useInboxUnreadCount, hasOtherWorkspaceUnread, unreadWorkspaceIds } from "@multica/core/inbox/queries";
-import { chatSessionsOptions } from "@multica/core/chat/queries";
-import { countUnreadChatMessages } from "@multica/core/chat/unread";
-import { useChatStore } from "@multica/core/chat";
-import { api, ApiError } from "@multica/core/api";
-import { useConfigStore } from "@multica/core/config";
-import { pinListOptions } from "@multica/core/pins/queries";
-import { useDeletePin, useReorderPins } from "@multica/core/pins/mutations";
-import { issueDetailOptions } from "@multica/core/issues/queries";
-import { projectDetailOptions } from "@multica/core/projects/queries";
-import type { PinnedItem } from "@multica/core/types";
+import { inboxUnreadSummaryEnabled, inboxUnreadSummaryOptions, useInboxUnreadCount, hasOtherWorkspaceUnread, unreadWorkspaceIds } from "@marvis/core/inbox/queries";
+import { chatSessionsOptions } from "@marvis/core/chat/queries";
+import { countUnreadChatMessages } from "@marvis/core/chat/unread";
+import { useChatStore } from "@marvis/core/chat";
+import { api, ApiError } from "@marvis/core/api";
+import { useConfigStore } from "@marvis/core/config";
+import { pinListOptions } from "@marvis/core/pins/queries";
+import { useDeletePin, useReorderPins } from "@marvis/core/pins/mutations";
+import { issueDetailOptions } from "@marvis/core/issues/queries";
+import { projectDetailOptions } from "@marvis/core/projects/queries";
+import type { PinnedItem } from "@marvis/core/types";
 import { useLogout } from "../auth";
 import { ProjectIcon } from "../projects/components/project-icon";
 import { routeIconForPath } from "./route-icon-components";
 import { useT } from "../i18n";
 import {
   useShortcut,
-} from "@multica/core/shortcuts";
+} from "@marvis/core/shortcuts";
 import { ShortcutKeycaps } from "../common/shortcut-keycaps";
 import { useAppForeground } from "../common/use-app-foreground";
 
@@ -631,7 +631,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                         )}
                       </span>
                       <span className="flex-1 truncate font-medium">
-                        {workspace?.name ?? "Multica"}
+                        {workspace?.name ?? "Marvis"}
                       </span>
                       <ChevronDown className="size-3 text-muted-foreground" />
                     </SidebarMenuButton>

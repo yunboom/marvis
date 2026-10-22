@@ -1,25 +1,25 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses/queries";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses/queries";
 
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () => buildIssueStatusCatalog([]),
 }));
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { I18nProvider } from "@multica/core/i18n/react";
-import type { Issue, IssueSourceContext, SourceContextCommentSnapshot } from "@multica/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import type { Issue, IssueSourceContext, SourceContextCommentSnapshot } from "@marvis/core/types";
 import enIssues from "../../locales/en/issues.json";
 import zhHansIssues from "../../locales/zh-Hans/issues.json";
 
 const navigationPush = vi.hoisted(() => vi.fn());
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
 
 vi.mock("../../navigation", () => ({
   useNavigation: () => ({ push: navigationPush }),
   AppLink: ({ href, ...props }: ComponentProps<"a">) => <a href={href} {...props} />,
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({ issueDetail: (id: string) => `/acme/issues/${id}` }),
 }));
 

@@ -6,18 +6,18 @@ import { Gauge, Loader2 } from "lucide-react";
 import {
   useCreateWorkspaceSubscriptionPortal,
   workspaceSubscriptionSummaryOptions,
-} from "@multica/core/billing";
-import { resolveBillingRecovery } from "@multica/core/billing/recovery";
-import { useFeatureEnabled } from "@multica/core/config";
-import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@multica/core/feature-flags";
-import { useWorkspaceId } from "@multica/core/hooks";
+} from "@marvis/core/billing";
+import { resolveBillingRecovery } from "@marvis/core/billing/recovery";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@marvis/core/feature-flags";
+import { useWorkspaceId } from "@marvis/core/hooks";
 import {
   useModalStore,
   type IssueLimitRecoveryReason,
-} from "@multica/core/modals";
-import { useWorkspacePaths } from "@multica/core/paths";
-import type { WorkspaceSubscriptionSummary } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
+} from "@marvis/core/modals";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import type { WorkspaceSubscriptionSummary } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import { useT } from "../i18n";
 import { useNavigation } from "../navigation";
 import { openExternal } from "../platform";

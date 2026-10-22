@@ -5,8 +5,8 @@ import userEvent from "@testing-library/user-event";
 import {
   type IssueViewState,
   viewStoreSlice,
-} from "@multica/core/issues/stores/view-store";
-import { ViewStoreProvider } from "@multica/core/issues/stores/view-store-context";
+} from "@marvis/core/issues/stores/view-store";
+import { ViewStoreProvider } from "@marvis/core/issues/stores/view-store-context";
 import { renderWithI18n } from "../../test/i18n";
 import { DraftDefinitionFields, SaveViewDialog } from "./save-view-dialog";
 
@@ -15,11 +15,11 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQuery: () => ({ data: [] }),
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
-vi.mock("@multica/core/issue-views/mutations", () => ({
+vi.mock("@marvis/core/issue-views/mutations", () => ({
   useCreateIssueView: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateIssueView: () => ({ mutate: vi.fn(), isPending: false }),
 }));

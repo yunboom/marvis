@@ -47,25 +47,25 @@ Clients do not resend instructions, filters or thread references. The new UI
 requires this endpoint for restore; deploy the server first. Old clients and the
 existing full-config CLI update continue to work without a migration.
 
-Agents manage configurations with `multica issue wakeup`:
+Agents manage configurations with `marvis issue wakeup`:
 
 ```sh
-multica issue wakeup events
-multica issue wakeup create ISSUE --kind at --after 10m --instruction-file ./instruction.md
-multica issue wakeup create ISSUE --kind every --every 1h --instruction-file ./instruction.md
-multica issue wakeup create ISSUE --kind cron --cron '0 * * * *' --timezone Asia/Shanghai --instruction-file ./instruction.md
-multica issue wakeup create ISSUE --kind event --event task.completed,task.failed,task.cancelled --task-id RUN --instruction-file ./instruction.md
-multica issue wakeup create ISSUE --until-status in_review --instruction-file ./instruction.md
-multica issue wakeup create ISSUE --until-pr checks --expires-in 2h --on-timeout wake --instruction-file ./instruction.md
-multica issue wakeup create ISSUE --until-children-done --stage 1 --instruction-file ./instruction.md
-multica issue wakeup create ISSUE --until-issue MUL-123 --until-issue-state done --instruction-file ./instruction.md
-multica issue wakeup list ISSUE
-multica issue wakeup get ISSUE WAKEUP
-multica issue wakeup runs ISSUE WAKEUP
-multica issue wakeup trigger ISSUE WAKEUP
-multica issue wakeup disable ISSUE WAKEUP
-multica issue wakeup delete ISSUE WAKEUP
-multica issue wakeup checkin ISSUE WAKEUP --note "CI still running"
+marvis issue wakeup events
+marvis issue wakeup create ISSUE --kind at --after 10m --instruction-file ./instruction.md
+marvis issue wakeup create ISSUE --kind every --every 1h --instruction-file ./instruction.md
+marvis issue wakeup create ISSUE --kind cron --cron '0 * * * *' --timezone Asia/Shanghai --instruction-file ./instruction.md
+marvis issue wakeup create ISSUE --kind event --event task.completed,task.failed,task.cancelled --task-id RUN --instruction-file ./instruction.md
+marvis issue wakeup create ISSUE --until-status in_review --instruction-file ./instruction.md
+marvis issue wakeup create ISSUE --until-pr checks --expires-in 2h --on-timeout wake --instruction-file ./instruction.md
+marvis issue wakeup create ISSUE --until-children-done --stage 1 --instruction-file ./instruction.md
+marvis issue wakeup create ISSUE --until-issue MUL-123 --until-issue-state done --instruction-file ./instruction.md
+marvis issue wakeup list ISSUE
+marvis issue wakeup get ISSUE WAKEUP
+marvis issue wakeup runs ISSUE WAKEUP
+marvis issue wakeup trigger ISSUE WAKEUP
+marvis issue wakeup disable ISSUE WAKEUP
+marvis issue wakeup delete ISSUE WAKEUP
+marvis issue wakeup checkin ISSUE WAKEUP --note "CI still running"
 ```
 
 Specify `--agent-id` for human callers; authenticated agents default to themselves.
@@ -95,7 +95,7 @@ request conditions read the stored PR snapshot; there is no separate CI event.
 
 ## Event catalog
 
-`multica issue wakeup events` lists the 25 supported issue-scoped subscriptions:
+`marvis issue wakeup events` lists the 25 supported issue-scoped subscriptions:
 
 | Area | Events |
 | --- | --- |
@@ -137,7 +137,7 @@ Use `--filter-actor-type member --filter-actor-id USER_ID` to wait for a
 specific workspace member, or type `agent` for a source agent. For example:
 
 ```sh
-multica issue wakeup create ISSUE --kind event --event comment.created \
+marvis issue wakeup create ISSUE --kind event --event comment.created \
   --filter-actor-type member --filter-actor-id USER_ID \
   --instruction-file ./instruction.md
 ```
@@ -525,7 +525,7 @@ checks two things before it creates a run:
   or its creating run belonged to the agent, and every run that caused it is
   the agent's unfinished run on this issue. Causes travel with the hints:
   captured events carry `source_task_id`, and `issue_child_event.source_task_id`
-  records `multica.source_task_id` for closing, leaving and restaging (adding
+  records `marvis.source_task_id` for closing, leaving and restaging (adding
   or reopening a sub-issue satisfies nothing and is ignored). A person's
   condition rule still runs after the agent's own change, because the running
   agent does not have its instruction. The inputs are consumed with a

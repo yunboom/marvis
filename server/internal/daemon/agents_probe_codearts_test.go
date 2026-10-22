@@ -32,8 +32,8 @@ func TestProbeAgentCLIsDiscoversCodeArtsDefaultInstallPath(t *testing.T) {
 	redirectTestHome(t, home)
 	t.Setenv("USERPROFILE", home)
 	t.Setenv("PATH", t.TempDir())
-	t.Setenv("MULTICA_CODEARTS_PATH", "")
-	t.Setenv("MULTICA_CODEARTS_MODEL", "mimo/mimo-v2.5")
+	t.Setenv("MARVIS_CODEARTS_PATH", "")
+	t.Setenv("MARVIS_CODEARTS_MODEL", "mimo/mimo-v2.5")
 
 	entry, ok := probeAgentCLIs()["codearts"]
 	if !ok {

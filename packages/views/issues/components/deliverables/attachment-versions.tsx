@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, use, useMemo, type ReactNode } from "react";
-import type { DeliverableFile } from "@multica/core/attachments/deliverables";
+import type { DeliverableFile } from "@marvis/core/attachments/deliverables";
 
 /**
  * Which version of its file each comment upload is (MUL-7649), so a comment's

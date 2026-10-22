@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
-import { I18nProvider } from "@multica/core/i18n/react";
-import enUi from "@multica/views/locales/en/ui.json";
-import zhUi from "@multica/views/locales/zh-Hans/ui.json";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import enUi from "@marvis/views/locales/en/ui.json";
+import zhUi from "@marvis/views/locales/zh-Hans/ui.json";
 import en from "./locales/en.json";
 import zh from "./locales/zh.json";
 import { productLocale, type LabLocale } from "./locale";

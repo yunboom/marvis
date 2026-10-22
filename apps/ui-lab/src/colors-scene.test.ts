@@ -60,7 +60,7 @@ describe("semantic color catalog", () => {
   it("accepts only known color selections from the frame", () => {
     expect(
       isColorSelection({
-        type: "multica-ui-lab:color-select",
+        type: "marvis-ui-lab:color-select",
         token: "--brand",
       }),
     ).toBe(true);
@@ -72,7 +72,7 @@ describe("semantic color catalog", () => {
       undefined,
     ]) {
       expect(
-        isColorSelection({ type: "multica-ui-lab:color-select", token }),
+        isColorSelection({ type: "marvis-ui-lab:color-select", token }),
       ).toBe(false);
     }
     expect(isColorSelection({ type: "other", token: "--brand" })).toBe(false);

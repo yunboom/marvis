@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	publicapiv1 "github.com/multica-ai/multica/server/pkg/publicapi/v1"
+	publicapiv1 "github.com/marvis-ai/marvis/server/pkg/publicapi/v1"
 )
 
 // PluginBearerOnly keeps the public Action API on a machine-credential trust

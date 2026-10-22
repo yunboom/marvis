@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 // hermesProviderUnconfiguredACPError is the failure exactly as discoverACPModels

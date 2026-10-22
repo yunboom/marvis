@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-vi.mock("@multica/ui/components/ui/tooltip", () => ({
+vi.mock("@marvis/ui/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ render }: { render: ReactElement }) => render,
   TooltipContent: ({ children }: { children: ReactNode }) => (

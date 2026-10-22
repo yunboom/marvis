@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Agent } from "@multica/core/types";
+import type { Agent } from "@marvis/core/types";
 
 import { agentListOptions } from "./agents";
 

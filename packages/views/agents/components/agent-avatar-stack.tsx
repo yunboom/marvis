@@ -1,9 +1,9 @@
 "use client";
 
-import { ActorAvatar as ActorAvatarBase } from "@multica/ui/components/common/actor-avatar";
-import { AVATAR_SIZE_PX, type AvatarSize } from "@multica/ui/lib/avatar-size";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { cn } from "@multica/ui/lib/utils";
+import { ActorAvatar as ActorAvatarBase } from "@marvis/ui/components/common/actor-avatar";
+import { AVATAR_SIZE_PX, type AvatarSize } from "@marvis/ui/lib/avatar-size";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
 
 interface AgentAvatarStackProps {

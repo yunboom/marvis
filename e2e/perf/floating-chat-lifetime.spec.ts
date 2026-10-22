@@ -31,14 +31,14 @@ test("closing floating chat releases its list and preserves the live composer", 
   page.on("pageerror", error => errors.push(error.message));
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await context.addCookies([
-    { name: "multica_logged_in", value: "1", url: origin },
+    { name: "marvis_logged_in", value: "1", url: origin },
     { name: "last_workspace_slug", value: "perf", url: origin },
   ]);
   await context.addInitScript(({ sessionId, agentId }) => {
-    localStorage.setItem("multica:chat:isOpen", "true");
-    localStorage.setItem("multica:chat:floatingChatEnabled", "true");
-    localStorage.setItem("multica:chat:activeSessionId:perf", sessionId);
-    localStorage.setItem("multica:chat:selectedAgentId:perf", agentId);
+    localStorage.setItem("marvis:chat:isOpen", "true");
+    localStorage.setItem("marvis:chat:floatingChatEnabled", "true");
+    localStorage.setItem("marvis:chat:activeSessionId:perf", sessionId);
+    localStorage.setItem("marvis:chat:selectedAgentId:perf", agentId);
   }, { sessionId, agentId });
   let latestContent = "Latest fixture message";
   const taskMessages = [{ task_id: taskId, seq: 0, type: "text", content: "Streaming fixture. " }];
@@ -167,7 +167,7 @@ test("closing floating chat releases its list and preserves the live composer", 
     getComputedStyle(element.closest('[aria-hidden]')!).transform)).toBe("none");
   finishUpload();
   await expect.poll(() => page.evaluate(() =>
-    localStorage.getItem("multica:chat:draft-attachments:perf"))).toContain("66666666-6666-4666-8666-666666666666");
+    localStorage.getItem("marvis:chat:draft-attachments:perf"))).toContain("66666666-6666-4666-8666-666666666666");
 
   latestContent = "Arrived while closed";
   for (let chunk = 0; chunk < 10; chunk++) {
@@ -176,7 +176,7 @@ test("closing floating chat releases its list and preserves the live composer", 
   }
   await expect(page.locator('[data-tab-scroll-root]').filter({ hasText: "Latest fixture message" })).toHaveCount(0);
   invalidateMessages();
-  await page.getByRole("button", { name: "Multica is working...", exact: true }).click();
+  await page.getByRole("button", { name: "Marvis is working...", exact: true }).click();
   await expect(page.getByText("Arrived while closed", { exact: true })).toBeVisible();
   await expect(page.getByText(/Streaming fixture\. Hidden chunk 0\./)).toContainText("Hidden chunk 9.");
   expect(await composer?.evaluate(element => element.isConnected)).toBe(true);
@@ -187,7 +187,7 @@ test("closing floating chat releases its list and preserves the live composer", 
 
   // Reopening inside the exit animation must cancel removal of the same list.
   await reopened.locator('button:has(svg.lucide-minus)').evaluate(button => (button as HTMLButtonElement).click());
-  await page.getByRole("button", { name: "Multica is working...", exact: true }).evaluate(button => (button as HTMLButtonElement).click());
+  await page.getByRole("button", { name: "Marvis is working...", exact: true }).evaluate(button => (button as HTMLButtonElement).click());
   // Let the interrupted 150ms exit finish before checking that it cannot remove the reopened list.
   await page.waitForTimeout(250);
   await expect(page.getByText("Arrived while closed", { exact: true })).toBeVisible();

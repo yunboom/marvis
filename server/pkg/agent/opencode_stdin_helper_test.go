@@ -12,10 +12,10 @@ import (
 // (the Chocolatey shim in #6538 is a real PE binary, not a .cmd wrapper), so
 // the backend's argv reaches CreateProcess unmediated.
 const (
-	opencodeStdinHelperEnv       = "MULTICA_OPENCODE_STDIN_HELPER"
-	opencodeStdinHelperArgvFile  = "MULTICA_OPENCODE_STDIN_HELPER_ARGV_FILE"
-	opencodeStdinHelperInFile    = "MULTICA_OPENCODE_STDIN_HELPER_STDIN_FILE"
-	opencodeStdinHelperUsageOnly = "MULTICA_OPENCODE_STDIN_HELPER_USAGE_ONLY"
+	opencodeStdinHelperEnv       = "MARVIS_OPENCODE_STDIN_HELPER"
+	opencodeStdinHelperArgvFile  = "MARVIS_OPENCODE_STDIN_HELPER_ARGV_FILE"
+	opencodeStdinHelperInFile    = "MARVIS_OPENCODE_STDIN_HELPER_STDIN_FILE"
+	opencodeStdinHelperUsageOnly = "MARVIS_OPENCODE_STDIN_HELPER_USAGE_ONLY"
 )
 
 const (

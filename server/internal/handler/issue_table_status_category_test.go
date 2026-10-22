@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/issuestatus"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // Pin the legacy category grouping API retained for installed clients.

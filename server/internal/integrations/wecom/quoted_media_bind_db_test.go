@@ -26,9 +26,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	dbfx "github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // quotedBindWorld is what the wecom ResolverSet resolves against: an
@@ -48,11 +48,11 @@ func seedQuotedBindWorld(t *testing.T, pool *pgxpool.Pool) quotedBindWorld {
 	w := quotedBindWorld{botID: "wb-qbind-" + tag, senderID: "T-qbind-" + tag}
 
 	f := dbfx.New(pool, "", "")
-	f.UserID = f.User(t, "wecom quoted bind", "wecom-quoted-bind-"+tag+"@multica.test")
+	f.UserID = f.User(t, "wecom quoted bind", "wecom-quoted-bind-"+tag+"@marvis.test")
 	f.WorkspaceID = f.Workspace(t, "wecom quoted bind", "wecom-quoted-bind-"+tag)
 	w.workspaceID = f.WorkspaceID
 	f.Member(t, f.WorkspaceID, f.UserID, "owner")
-	runtimeID := f.Runtime(t, "wecom-qbind-runtime-"+tag, dbfx.Cols{"runtime_mode": "local", "provider": "multica_daemon"})
+	runtimeID := f.Runtime(t, "wecom-qbind-runtime-"+tag, dbfx.Cols{"runtime_mode": "local", "provider": "marvis_daemon"})
 	agentID := f.Agent(t, "wecom-qbind-agent-"+tag, runtimeID, dbfx.Cols{"runtime_mode": "local"})
 	installationID := f.Insert(t, "channel_installation", dbfx.Cols{
 		"workspace_id":      f.WorkspaceID,
@@ -64,7 +64,7 @@ func seedQuotedBindWorld(t *testing.T, pool *pgxpool.Pool) quotedBindWorld {
 	})
 	f.Insert(t, "channel_user_binding", dbfx.Cols{
 		"workspace_id":    f.WorkspaceID,
-		"multica_user_id": f.UserID,
+		"marvis_user_id":  f.UserID,
 		"installation_id": installationID,
 		"channel_type":    "wecom",
 		"channel_user_id": w.senderID,

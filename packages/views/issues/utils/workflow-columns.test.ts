@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
-import type { IssueWorkflow } from "@multica/core/types";
+import type { IssueWorkflow } from "@marvis/core/types";
 import { surfaceStatusOrder, useColumnWorkflow, workflowColumns } from "./workflow-columns";
 
 const workflow: IssueWorkflow = {
@@ -39,8 +39,8 @@ const { defaultWithoutBlocked } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@multica/core/config", () => ({ useFeatureEnabled: () => true }));
-vi.mock("@multica/core/issue-workflows", () => ({
+vi.mock("@marvis/core/config", () => ({ useFeatureEnabled: () => true }));
+vi.mock("@marvis/core/issue-workflows", () => ({
   defaultWorkflow: () => defaultWithoutBlocked,
   useIssueWorkflows: () => ({ workflows: [defaultWithoutBlocked] }),
   useProjectWorkflow: () => defaultWithoutBlocked,

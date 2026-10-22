@@ -14,12 +14,12 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // bubbleConn answers every write like the server does, and can be told to
@@ -346,7 +346,7 @@ func (r *bubbleRig) reconnect() *bubbleConn {
 // The enqueue only ever happens for messages this adapter ingested, so the run
 // was asked in the room by construction — which is the answer both origin gates
 // want, and the reason it is stated here rather than in every test. A test
-// modelling a question typed in Multica does not come through here; it says so
+// modelling a question typed in Marvis does not come through here; it says so
 // itself with askedInTheBrowser.
 func (r *bubbleRig) queued(t *testing.T, taskName string) {
 	t.Helper()
@@ -456,7 +456,7 @@ var testTaskUUIDs = map[string]string{
 	"retry":  "aaaaaaaa-0000-0000-0000-0000000000ff",
 	// An issue or autopilot run: the same events, no chat session at all.
 	"issue-run": "aaaaaaaa-0000-0000-0000-0000000000e1",
-	// A question typed in Multica on this same WeCom-bound session. Its
+	// A question typed in Marvis on this same WeCom-bound session. Its
 	// task:queued is indistinguishable from the room's on the bus.
 	"web-1": "aaaaaaaa-0000-0000-0000-0000000000b1",
 	"web-2": "aaaaaaaa-0000-0000-0000-0000000000b2",

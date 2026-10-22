@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/agent"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 func taskSupplementTestDaemon(t *testing.T, handler http.HandlerFunc) *Daemon {

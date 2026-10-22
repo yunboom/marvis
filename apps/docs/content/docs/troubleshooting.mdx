@@ -5,13 +5,13 @@ description: Diagnose common problems with connections, execution, realtime upda
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-First work out which layer the problem lives in: the Multica service, the daemon, the runtime, or the AI coding tool. These commands are usually enough to surface the first meaningful error:
+First work out which layer the problem lives in: the Marvis service, the daemon, the runtime, or the AI coding tool. These commands are usually enough to surface the first meaningful error:
 
 ```bash
-multica version
-multica auth status
-multica daemon status --output json
-multica daemon logs --lines 100
+marvis version
+marvis auth status
+marvis daemon status --output json
+marvis daemon logs --lines 100
 ```
 
 Self-hosted instances can also check the service directly:
@@ -28,15 +28,15 @@ curl -i https://api.example.com/readyz
 Run these first:
 
 ```bash
-multica auth status
-multica daemon status --output json
-multica daemon logs --lines 100
+marvis auth status
+marvis daemon status --output json
+marvis daemon logs --lines 100
 ```
 
 Common causes include:
 
 - The CLI has not signed in, or the token stored on this machine has expired.
-- The daemon is connected to the wrong Multica service.
+- The daemon is connected to the wrong Marvis service.
 - The executing computer cannot reach the API, or DNS, TLS, or a firewall blocks the connection.
 - The current account is no longer a member of the target workspace.
 - No supported AI coding tool is installed on this machine, so the daemon cannot start.
@@ -44,14 +44,14 @@ Common causes include:
 Sign in again and restart the daemon:
 
 ```bash
-multica login
-multica daemon restart
+marvis login
+marvis daemon restart
 ```
 
-Self-hosted deployments should also request the API's `/health` from the **executing computer** — testing on the server itself cannot expose DNS, TLS, or firewall problems on the executing computer's side. To change the address, rerun `multica setup self-host`, or check the current profile's `server_url`:
+Self-hosted deployments should also request the API's `/health` from the **executing computer** — testing on the server itself cannot expose DNS, TLS, or firewall problems on the executing computer's side. To change the address, rerun `marvis setup self-host`, or check the current profile's `server_url`:
 
 ```bash
-multica config show
+marvis config show
 ```
 
 ## Issue does not start executing
@@ -70,20 +70,20 @@ Open the issue's **execution log** and check the run's current status and what i
 An agent executes at most 6 runs concurrently by default; a single daemon executes at most 20. At the limit, new runs stay in the queue until an active one finishes. Runs also keep queueing while the runtime is offline; they only fail once that runtime has stopped heartbeating for longer than the reconnect grace and the run has itself waited that long, so a long queue behind a busy runtime is never expired for waiting, and assigning work to a machine that is already offline still leaves a full grace to bring it back.
 
 ```bash
-multica daemon status --output json
-multica agent get <agent-id>
-multica issue runs <issue-id>
+marvis daemon status --output json
+marvis agent get <agent-id>
+marvis issue runs <issue-id>
 ```
 
-If the runtime list is missing an expected tool, first confirm the tool runs and is signed in under the same system account and `PATH`, then run `multica daemon restart`.
+If the runtime list is missing an expected tool, first confirm the tool runs and is signed in under the same system account and `PATH`, then run `marvis daemon restart`.
 
 ### `waiting_local_directory` status
 
-This means another in-flight run is using the same local directory. Multica waits for the directory lock to be released so two agents never modify the same files at once.
+This means another in-flight run is using the same local directory. Marvis waits for the directory lock to be released so two agents never modify the same files at once.
 
 This wait only exists in the directory's `in_place` ("Direct") mode. If the directory is a git repository, switching the resource to `worktree` ("Parallel") removes the queue altogether: each run gets its own worktree and hands its work back as a branch, so nothing waits on anything. See [Project resources](/project-resources#how-runs-share-the-directory).
 
-Otherwise you just wait for the earlier run to finish. If it is stuck, stop it from its execution log, or pick a different local directory for the current agent. This directory mutex lives in the daemon's memory — no lock file is written to disk. If you suspect stale lock state, `multica daemon restart` releases it; there is nothing to delete manually.
+Otherwise you just wait for the earlier run to finish. If it is stuck, stop it from its execution log, or pick a different local directory for the current agent. This directory mutex lives in the daemon's memory — no lock file is written to disk. If you suspect stale lock state, `marvis daemon restart` releases it; there is nothing to delete manually.
 
 ## AI coding tool fails to start
 
@@ -99,17 +99,17 @@ Run the same tool directly in a terminal on the executing computer first. If the
 
 ## Runs hang on macOS after a CLI upgrade
 
-After the Homebrew `multica` CLI is upgraded, by `brew upgrade`, `multica update`, **Update** on the Runtimes page, or the daemon's auto-update, a run that reads `~/Desktop`, `~/Documents`, `~/Downloads`, iCloud Drive, or another protected folder can stop making progress: the agent's process uses no CPU, and the run neither finishes nor fails.
+After the Homebrew `marvis` CLI is upgraded, by `brew upgrade`, `marvis update`, **Update** on the Runtimes page, or the daemon's auto-update, a run that reads `~/Desktop`, `~/Documents`, `~/Downloads`, iCloud Drive, or another protected folder can stop making progress: the agent's process uses no CPU, and the run neither finishes nor fails.
 
-This happens when macOS attributes privacy permissions (TCC) to the daemon itself, as it does for a daemon started by launchd (for example a LaunchAgent): the pending dialog names `multica`, and every tool an agent starts uses the daemon's grants. The Homebrew CLI binary is not signed with a stable identity, so macOS ties those grants to that exact build at its resolved path, such as `/opt/homebrew/Cellar/multica/<version>/bin/multica`. After an upgrade, macOS treats the new binary as a different app and asks again. The file access blocks until someone answers the prompt, and the daemon cannot tell that a prompt is pending.
+This happens when macOS attributes privacy permissions (TCC) to the daemon itself, as it does for a daemon started by launchd (for example a LaunchAgent): the pending dialog names `marvis`, and every tool an agent starts uses the daemon's grants. The Homebrew CLI binary is not signed with a stable identity, so macOS ties those grants to that exact build at its resolved path, such as `/opt/homebrew/Cellar/marvis/<version>/bin/marvis`. After an upgrade, macOS treats the new binary as a different app and asks again. The file access blocks until someone answers the prompt, and the daemon cannot tell that a prompt is pending.
 
 To restore access:
 
 1. On that Mac, answer the pending "would like to access" dialog with **Allow**. The stuck run continues.
-2. For a Mac that runs unattended, grant Full Disk Access to the new binary. Print its path with `realpath "$(command -v multica)"`, then under **System Settings → Privacy & Security → Full Disk Access** remove the stale `multica` entry and add that path (press ⌘⇧G in the file picker to paste it).
-3. Restart the daemon the same way you started it: `multica daemon restart`, or `launchctl kickstart -k gui/$(id -u)/<label>` for a LaunchAgent.
+2. For a Mac that runs unattended, grant Full Disk Access to the new binary. Print its path with `realpath "$(command -v marvis)"`, then under **System Settings → Privacy & Security → Full Disk Access** remove the stale `marvis` entry and add that path (press ⌘⇧G in the file picker to paste it).
+3. Restart the daemon the same way you started it: `marvis daemon restart`, or `launchctl kickstart -k gui/$(id -u)/<label>` for a LaunchAgent.
 
-Repeat this after every CLI upgrade. Auto-update is on by default only for daemons connected to Multica Cloud; start the daemon with `--no-auto-update` so upgrades happen only when you run them. The CLI bundled with [Multica Desktop](/desktop-app) is signed with a Developer ID, so its grants survive upgrades.
+Repeat this after every CLI upgrade. Auto-update is on by default only for daemons connected to Marvis Cloud; start the daemon with `--no-auto-update` so upgrades happen only when you run them. The CLI bundled with [Marvis Desktop](/desktop-app) is signed with a Developer ID, so its grants survive upgrades.
 
 ## Realtime updates stop working
 
@@ -134,7 +134,7 @@ docker compose -f docker-compose.selfhost.yml up -d
 
 For a complete reverse-proxy example, see the [self-host quickstart](/self-host-quickstart#3-choose-how-to-access).
 
-## `multica setup` reports the server is not reachable
+## `marvis setup` reports the server is not reachable
 
 The CLI reachability probe GETs `<server-url>/health` and needs a 200. The backend serves this path. Current web releases forward `/health` to the backend, but older ones do not — a reverse proxy that forwards everything to such an older frontend returns 404, and the CLI concludes the server is down while the stack is healthy.
 
@@ -144,24 +144,24 @@ Routing `/health` to the backend (port 8080) explicitly in your proxy works acro
 curl -fsS <server-url>/health
 ```
 
-## `multica login` fails with a TLS handshake timeout
+## `marvis login` fails with a TLS handshake timeout
 
-`multica login` opens the browser and the web sign-in completes, but the CLI still fails with "Sign-in did not complete" or "TLS handshake timed out". `multica --debug login` shows `net/http: TLS handshake timeout` on `POST /api/tokens`, while `curl.exe -I https://api.multica.ai` or a browser on the same machine connects fine.
+`marvis login` opens the browser and the web sign-in completes, but the CLI still fails with "Sign-in did not complete" or "TLS handshake timed out". `marvis --debug login` shows `net/http: TLS handshake timeout` on `POST /api/tokens`, while `curl.exe -I https://api.marvis.ai` or a browser on the same machine connects fine.
 
-The TCP connection opens, but the TLS handshake never completes. Go clients, including the Multica CLI and daemon, send a post-quantum key share in the TLS ClientHello by default, which makes it about 1.5 KB and splits it across two packets. Some security software, VPNs, routers, and firewalls drop such handshakes; curl sends a much smaller ClientHello and gets through.
+The TCP connection opens, but the TLS handshake never completes. Go clients, including the Marvis CLI and daemon, send a post-quantum key share in the TLS ClientHello by default, which makes it about 1.5 KB and splits it across two packets. Some security software, VPNs, routers, and firewalls drop such handshakes; curl sends a much smaller ClientHello and gets through.
 
 Confirm the cause by retrying with the post-quantum key share disabled:
 
 ```powershell
 $env:GODEBUG = 'tlsmlkem=0'
-multica --debug login
+marvis --debug login
 ```
 
 ```bash
-GODEBUG=tlsmlkem=0 multica --debug login
+GODEBUG=tlsmlkem=0 marvis --debug login
 ```
 
-If that succeeds, set `GODEBUG=tlsmlkem=0` permanently for the user that runs the CLI and the daemon — on Windows, run `[Environment]::SetEnvironmentVariable('GODEBUG', 'tlsmlkem=0', 'User')` and open a new terminal — then restart the daemon or the desktop app. Raising `MULTICA_HTTP_TIMEOUT` does not help: it does not govern the handshake. The permanent fix is on the network side: update or reconfigure the device or software that drops split TLS handshakes.
+If that succeeds, set `GODEBUG=tlsmlkem=0` permanently for the user that runs the CLI and the daemon — on Windows, run `[Environment]::SetEnvironmentVariable('GODEBUG', 'tlsmlkem=0', 'User')` and open a new terminal — then restart the daemon or the desktop app. Raising `MARVIS_HTTP_TIMEOUT` does not help: it does not govern the handshake. The permanent fix is on the network side: update or reconfigure the device or software that drops split TLS handshakes.
 
 ## Verification code and invitation emails not delivered
 
@@ -176,7 +176,7 @@ docker compose -f docker-compose.selfhost.yml logs backend \
 - **Resend**: confirm the API key is valid and the sender address's domain is verified.
 - **SMTP**: confirm the host, port, credentials, and sender address, and use the error log to tell whether the failure happened at the connection, TLS, authentication, or delivery stage.
 
-When `SMTP_HOST` and Resend are both configured, Multica prefers SMTP. For configuration, see [Sign-in and signup](/auth-setup#email-verification-codes).
+When `SMTP_HOST` and Resend are both configured, Marvis prefers SMTP. For configuration, see [Sign-in and signup](/auth-setup#email-verification-codes).
 
 <Callout type="warning">
 Do not rely on codes in the log in production, and do not enable the fixed local test code.
@@ -238,30 +238,30 @@ lsof -nP -iTCP:8080 -sTCP:LISTEN   # macOS / Linux
 netstat -ano | findstr :8080       # Windows
 ```
 
-If it is another Multica checkout, run `make stop` in that directory first. Otherwise stop the offending program normally, or change the current service's port. Public ports 80/443 are listened on by a reverse proxy such as Caddy or Nginx.
+If it is another Marvis checkout, run `make stop` in that directory first. Otherwise stop the offending program normally, or change the current service's port. Public ports 80/443 are listened on by a reverse proxy such as Caddy or Nginx.
 
 ## Log locations
 
 | Component | How to view |
 | --- | --- |
-| Background daemon | `multica daemon logs --lines 100` |
-| Follow daemon logs live | `multica daemon logs --follow` |
-| Default profile's log file | `~/.multica/daemon.log` |
-| Default profile's startup or crash log | `~/.multica/daemon.err.log` |
-| Named profiles | the matching logs under `~/.multica/profiles/<name>/` |
+| Background daemon | `marvis daemon logs --lines 100` |
+| Follow daemon logs live | `marvis daemon logs --follow` |
+| Default profile's log file | `~/.marvis/daemon.log` |
+| Default profile's startup or crash log | `~/.marvis/daemon.err.log` |
+| Named profiles | the matching logs under `~/.marvis/profiles/<name>/` |
 | Docker backend | `docker compose -f docker-compose.selfhost.yml logs -f backend` |
 | Browser | Console and Network in the developer tools |
 
-Which of those files is the live one depends on the profile the daemon was started with, and a stale log from an earlier daemon still reads perfectly — the easiest way to debug the wrong file. Don't open one by guess: `multica daemon logs` prints the absolute path it resolved before streaming it. Add `--profile <name>` to read a named profile's log.
+Which of those files is the live one depends on the profile the daemon was started with, and a stale log from an earlier daemon still reads perfectly — the easiest way to debug the wrong file. Don't open one by guess: `marvis daemon logs` prints the absolute path it resolved before streaming it. Add `--profile <name>` to read a named profile's log.
 
 To observe the daemon's startup directly, run it in the foreground instead:
 
 ```bash
-multica daemon stop
-multica daemon start --foreground
+marvis daemon stop
+marvis daemon start --foreground
 ```
 
-If you still cannot pin it down, search existing issues or file a new one on [GitHub Issues](https://github.com/multica-ai/multica/issues).
+If you still cannot pin it down, search existing issues or file a new one on [GitHub Issues](https://github.com/marvis-ai/marvis/issues).
 
 ## Next steps
 

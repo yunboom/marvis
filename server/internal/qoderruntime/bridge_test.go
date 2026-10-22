@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/daemon"
+	"github.com/marvis-ai/marvis/server/internal/daemon"
 )
 
 const workspaceID = "11111111-1111-4111-8111-111111111111"
@@ -34,13 +34,13 @@ type harness struct {
 func setup(t *testing.T) *harness {
 	t.Helper()
 	h := &harness{status: "dispatched"}
-	h.task = &daemon.Task{ID: "task-1", RuntimeID: "runtime-1", WorkspaceID: workspaceID, IssueID: "issue-1", AuthToken: "mat_task", Agent: &daemon.AgentData{Instructions: "Run tests", RuntimeConfig: json.RawMessage(`{"qoder_agent_id":"agent_1"}`), Skills: []daemon.SkillData{{Name: "multica-platform"}}}}
+	h.task = &daemon.Task{ID: "task-1", RuntimeID: "runtime-1", WorkspaceID: workspaceID, IssueID: "issue-1", AuthToken: "mat_task", Agent: &daemon.AgentData{Instructions: "Run tests", RuntimeConfig: json.RawMessage(`{"qoder_agent_id":"agent_1"}`), Skills: []daemon.SkillData{{Name: "marvis-platform"}}}}
 	m := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Header.Get("X-Workspace-ID") != workspaceID {
 			t.Error("missing workspace")
 		}
-		auth := "Bearer multica-secret"
+		auth := "Bearer marvis-secret"
 		if strings.HasPrefix(r.URL.Path, "/api/issues/") {
 			auth = "Bearer mat_task"
 		}
@@ -79,7 +79,7 @@ func setup(t *testing.T) *harness {
 		case strings.HasSuffix(r.URL.Path, "/session"), strings.HasSuffix(r.URL.Path, "/cancel-ack"):
 			io.WriteString(w, `{}`)
 		default:
-			t.Errorf("unexpected Multica request %s", r.URL)
+			t.Errorf("unexpected Marvis request %s", r.URL)
 			http.NotFound(w, r)
 		}
 	}))
@@ -140,7 +140,7 @@ func setup(t *testing.T) *harness {
 	}))
 	t.Cleanup(q.Close)
 	var err error
-	h.b, err = New(Config{MulticaURL: m.URL, MulticaToken: "multica-secret", WorkspaceID: workspaceID, QoderURL: q.URL, QoderToken: "qoder-secret", EnvironmentID: "env_1", StateDir: t.TempDir()}, nil)
+	h.b, err = New(Config{MarvisURL: m.URL, MarvisToken: "marvis-secret", WorkspaceID: workspaceID, QoderURL: q.URL, QoderToken: "qoder-secret", EnvironmentID: "env_1", StateDir: t.TempDir()}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -405,7 +405,7 @@ func TestRegistrationAndShutdown(t *testing.T) {
 		}
 	}))
 	defer m.Close()
-	h.b.multica.base = m.URL
+	h.b.marvis.base = m.URL
 	q := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/agents/agent_1" && r.URL.Path != "/environments/env_1" {
 			t.Error("unexpected remote validation")
@@ -608,7 +608,7 @@ func (j *journal) first() *run {
 }
 
 func TestJournalStorageConfig(t *testing.T) {
-	base := Config{MulticaURL: "http://127.0.0.1:1", MulticaToken: "m", WorkspaceID: workspaceID, QoderURL: "http://127.0.0.1:2", QoderToken: "q", EnvironmentID: "env_1"}
+	base := Config{MarvisURL: "http://127.0.0.1:1", MarvisToken: "m", WorkspaceID: workspaceID, QoderURL: "http://127.0.0.1:2", QoderToken: "q", EnvironmentID: "env_1"}
 	load := func(context.Context) ([]byte, error) { return nil, nil }
 	save := func(context.Context, []byte) error { return nil }
 

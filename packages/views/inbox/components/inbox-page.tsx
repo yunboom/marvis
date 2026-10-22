@@ -10,18 +10,18 @@ import {
 } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { ApiError, errorCode } from "@multica/core/api";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { useModalStore } from "@multica/core/modals";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { ApiError, errorCode } from "@marvis/core/api";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { useModalStore } from "@marvis/core/modals";
 import {
   getShortcut,
   isEditableShortcutTarget,
   isPortalLayerShortcutTarget,
   shortcutMatchesEvent,
-} from "@multica/core/shortcuts";
-import { isImeComposing } from "@multica/core/utils";
-import { useIssueDraftStore } from "@multica/core/issues/stores/draft-store";
+} from "@marvis/core/shortcuts";
+import { isImeComposing } from "@marvis/core/utils";
+import { useIssueDraftStore } from "@marvis/core/issues/stores/draft-store";
 import {
   inboxListOptions,
   archivedInboxPagesOptions,
@@ -29,7 +29,7 @@ import {
   deduplicateInboxItems,
   deduplicateArchivedInboxItems,
   useInboxUnreadCount,
-} from "@multica/core/inbox/queries";
+} from "@marvis/core/inbox/queries";
 import {
   useMarkInboxRead,
   useMarkInboxUnread,
@@ -40,7 +40,7 @@ import {
   useArchiveAllReadInbox,
   useArchiveCompletedInbox,
   useRetrySourceContextQuickCreate,
-} from "@multica/core/inbox/mutations";
+} from "@marvis/core/inbox/mutations";
 import {
   filterInboxItems,
   inboxFiltersForArchive,
@@ -49,14 +49,14 @@ import {
   inboxPriorityFilterSupport,
   useInboxFilters,
   useInboxFilterStore,
-} from "@multica/core/inbox/filter-store";
+} from "@marvis/core/inbox/filter-store";
 
 import { IssueDetail, issueHighlightMementoKey } from "../../issues/components/issue-detail";
 import { ActionShortcutKeycaps } from "../../common/shortcut-keycaps";
 import { IssuePeekHost } from "../../issues/components/issue-peek";
 import { useIssueSurfaceActivity } from "../../issues/surface/activity";
 import { useViewStateWriter } from "../../platform";
-import { ErrorBoundary } from "@multica/ui/components/common/error-boundary";
+import { ErrorBoundary } from "@marvis/ui/components/common/error-boundary";
 import { useNavigation, useReportNavigating } from "../../navigation";
 import { toast } from "sonner";
 import {
@@ -70,30 +70,30 @@ import {
   ListChecks,
   ArrowLeft,
 } from "lucide-react";
-import type { InboxItem } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
+import type { InboxItem } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
+} from "@marvis/ui/components/ui/tooltip";
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
-} from "@multica/ui/components/ui/resizable";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
-import { NumberFlow } from "@multica/ui/components/ui/number-flow";
+} from "@marvis/ui/components/ui/resizable";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { NumberFlow } from "@marvis/ui/components/ui/number-flow";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { useIsCompact } from "@multica/ui/hooks/use-mobile";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { useIsCompact } from "@marvis/ui/hooks/use-mobile";
+import { cn } from "@marvis/ui/lib/utils";
 import { PAGE_GUTTER, PageHeader } from "../../layout/page-header";
 import { useTimeAgo } from "./inbox-list-item";
 import { InboxList } from "./inbox-list";
@@ -326,7 +326,7 @@ export function InboxPage() {
   ]);
 
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: "multica_inbox_layout",
+    id: "marvis_inbox_layout",
   });
 
   const isCompact = useIsCompact();
@@ -784,7 +784,7 @@ export function InboxPage() {
           key={detailItem.issue_id}
           issueId={detailItem.issue_id}
           defaultSidebarOpen={false}
-          layoutId="multica_inbox_issue_detail_layout"
+          layoutId="marvis_inbox_issue_detail_layout"
           highlightCommentId={detailItem.details?.comment_id ?? undefined}
           highlightRequestToken={highlightRequestToken}
           // The split layout already has a nav trigger in the list header.

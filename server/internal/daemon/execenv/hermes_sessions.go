@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/cli"
+	"github.com/marvis-ai/marvis/server/internal/cli"
 )
 
 // Persist Hermes ACP session databases by agent, profile, and conversation under
@@ -21,7 +21,7 @@ import (
 // task teardown cannot remove them. Detect provider session-ID rebinding when a
 // requested session is absent.
 
-// hermesSessionStoreRoot is the directory under the daemon's Multica profile
+// hermesSessionStoreRoot is the directory under the daemon's Marvis profile
 // dir that holds every agent's persistent Hermes conversation shards.
 const hermesSessionStoreRoot = "hermes-sessions"
 
@@ -32,7 +32,7 @@ const hermesSessionDBEntry = "state.db"
 // HermesSessionStorePath returns the persistent session store for
 // (daemonProfile, agentID, sourceHome, conversation), or "" when the session
 // database must stay task-local — no agent to key on, no conversation to key
-// on (neither an issue nor a chat session), or an unresolvable Multica profile
+// on (neither an issue nor a chat session), or an unresolvable Marvis profile
 // dir. The daemon marks the returned path in-use for the task's duration so
 // PruneHermesSessionStores never reclaims it mid-mount.
 func HermesSessionStorePath(daemonProfile, agentID, sourceHome string, task TaskContextForEnv) string {
@@ -173,7 +173,7 @@ func mountHermesSessionDB(hermesHome, storeDir string, logger *slog.Logger) (her
 // published over state.db. Dot-prefixed so isHermesTaskLocalStateEntry does not
 // match it and the family cleanup cannot remove the link it is about to
 // publish.
-const hermesSessionLinkStagingEntry = ".multica-session-link"
+const hermesSessionLinkStagingEntry = ".marvis-session-link"
 
 // hermesStoreHasSessionDB reports whether storeDir holds a session database
 // with readable content. A zero-length file is what SQLite leaves after an

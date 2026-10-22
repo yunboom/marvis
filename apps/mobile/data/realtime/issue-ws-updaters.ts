@@ -13,7 +13,7 @@ import type {
   Label,
   Reaction,
   TimelineEntry,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { issueKeys } from "@/data/queries/issue-keys";
 
 type TimelinePredicate = (entry: TimelineEntry) => boolean;

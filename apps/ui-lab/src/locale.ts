@@ -1,5 +1,5 @@
 export type LabLocale = "en" | "zh";
-export const LOCALE_STORAGE_KEY = "multica-ui-lab:locale";
+export const LOCALE_STORAGE_KEY = "marvis-ui-lab:locale";
 export function isLabLocale(value: unknown): value is LabLocale {
   return value === "en" || value === "zh";
 }

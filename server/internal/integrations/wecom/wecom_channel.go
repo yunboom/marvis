@@ -28,9 +28,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	"github.com/multica-ai/multica/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/marvis-ai/marvis/server/internal/util"
 )
 
 // DefaultWSURL is the aibot long-connection endpoint. WeCom publishes a
@@ -565,7 +565,7 @@ func (c *wecomChannel) pingLoop(ctx context.Context, sender *wsSender, log *slog
 // back on the length heuristic used by internal-customer-service (chat ids
 // are ≥33 chars, userids are shorter), which is stable in practice.
 //
-// The Channel is not the primary outbound path in the multica engine — the
+// The Channel is not the primary outbound path in the marvis engine — the
 // EventChatDone subscriber and the OutboundReplier handle most sends — but
 // Channel.Send is still the contract that lets the engine deliver ad-hoc
 // replies, so we implement it here for parity with feishuChannel /

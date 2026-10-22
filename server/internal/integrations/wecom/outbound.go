@@ -21,11 +21,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 // outboundQueries is the slice of generated queries the WeCom outbound
@@ -57,7 +57,7 @@ type outboundQueries interface {
 	GetWorkspace(ctx context.Context, id pgtype.UUID) (db.Workspace, error)
 	ListAttachmentsByChatMessage(ctx context.Context, arg db.ListAttachmentsByChatMessageParams) ([]db.Attachment, error)
 	// Which language this round's bubble is closed in: a 1:1 reads the asker's
-	// own Multica profile, a room the deployment's (language.go).
+	// own Marvis profile, a room the deployment's (language.go).
 	languageLookup
 }
 
@@ -239,8 +239,8 @@ func (o *Outbound) processEvent(ctx context.Context, e events.Event) error {
 	// two cases apart.
 	// Only bound, non-empty completions reach here, so classify the task
 	// origin before loading credentials or sending. A question asked in the
-	// Multica web UI can reuse a session that originated in WeCom — and its
-	// answer belongs only in Multica. Without this gate that answer is pushed
+	// Marvis web UI can reuse a session that originated in WeCom — and its
+	// answer belongs only in Marvis. Without this gate that answer is pushed
 	// into the WeCom chat, which in a group means in front of everyone in the
 	// room. slack/outbound.go:118 and the lark and dingtalk equivalents all
 	// gate here; WeCom was the one that did not.
@@ -295,7 +295,7 @@ func (o *Outbound) processEvent(ctx context.Context, e events.Event) error {
 		return nil
 	}
 	if !origin.ChannelIngested {
-		// Give the bubble back. A run typed in Multica can hold the room's
+		// Give the bubble back. A run typed in Marvis can hold the room's
 		// round — it is bound off task:queued, and a chat task's event carries
 		// nothing that tells the two apart — so returning here without
 		// releasing leaves the round bound to a run that will never close it:
@@ -467,7 +467,7 @@ func taskAddress(ctx context.Context, q deliveryLookup, taskID pgtype.UUID) (rou
 		if errors.Is(err, pgx.ErrNoRows) {
 			// NO ROW AT ALL IS NOT THE SAME ANSWER as a row naming another
 			// platform, and the third return is what keeps them apart. A run
-			// typed in Multica has no row by design — EnqueueChatTask writes no
+			// typed in Marvis has no row by design — EnqueueChatTask writes no
 			// external delivery snapshot — so "no row" is the one answer that
 			// leaves the origin still open, and the only one a caller should
 			// spend further reads on.
@@ -561,7 +561,7 @@ func (o *Outbound) sendAsMessage(ctx context.Context, e events.Event, taskID pgt
 		// that reaches here is past the origin gate, so its question DID come
 		// in over a channel — which is what makes a missing row worth a word
 		// rather than the ordinary traffic of a shared bus. Ahead of the gate
-		// this same branch also caught every question ever typed in the Multica
+		// this same branch also caught every question ever typed in the Marvis
 		// web UI, and an exit shared with those could only be silent.
 		//
 		// Behind the gate, a missing row means a turn the channel ingested and
@@ -820,7 +820,7 @@ func (o *Outbound) tryDeliverInbox(ctx context.Context, item map[string]any, rec
 
 	// Resolve slug for the link. Best-effort — a missing slug just falls
 	// back to the workspace UUID in the URL.
-	// The card is a 1:1 push to a known Multica member, so their own profile
+	// The card is a 1:1 push to a known Marvis member, so their own profile
 	// language decides what it says — the one surface where the reader is
 	// always resolvable by construction.
 	cp := copyFor(localeForUser(ctx, o.q, recipientID))
@@ -857,9 +857,9 @@ func (o *Outbound) tryDeliverInbox(ctx context.Context, item map[string]any, rec
 	// way the old path reported it: no bot push, and the in-app inbox still
 	// carries the notification.
 	fallback, err := o.q.FindChannelBindingForMember(ctx, db.FindChannelBindingForMemberParams{
-		WorkspaceID:   workspaceID,
-		MulticaUserID: recipientID,
-		ChannelType:   channelTypeWecom,
+		WorkspaceID:  workspaceID,
+		MarvisUserID: recipientID,
+		ChannelType:  channelTypeWecom,
 	})
 	if err != nil {
 		if !errors.Is(err, pgx.ErrNoRows) {
@@ -984,10 +984,10 @@ func (o *Outbound) pushInbox(ctx context.Context, item map[string]any, binding d
 func (o *Outbound) memberBindingFor(ctx context.Context, item map[string]any, workspaceID, recipientID pgtype.UUID) (db.ChannelUserBinding, bool, error) {
 	if agentID, ok := inboxActorAgent(item); ok {
 		binding, err := o.q.FindChannelBindingForMemberOnAgentInstallation(ctx, db.FindChannelBindingForMemberOnAgentInstallationParams{
-			WorkspaceID:   workspaceID,
-			MulticaUserID: recipientID,
-			ChannelType:   channelTypeWecom,
-			AgentID:       agentID,
+			WorkspaceID:  workspaceID,
+			MarvisUserID: recipientID,
+			ChannelType:  channelTypeWecom,
+			AgentID:      agentID,
 		})
 		switch {
 		case err == nil:
@@ -1004,9 +1004,9 @@ func (o *Outbound) memberBindingFor(ctx context.Context, item map[string]any, wo
 		}
 	}
 	binding, err := o.q.FindChannelBindingForMember(ctx, db.FindChannelBindingForMemberParams{
-		WorkspaceID:   workspaceID,
-		MulticaUserID: recipientID,
-		ChannelType:   channelTypeWecom,
+		WorkspaceID:  workspaceID,
+		MarvisUserID: recipientID,
+		ChannelType:  channelTypeWecom,
 	})
 	return binding, false, err
 }

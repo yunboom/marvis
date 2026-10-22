@@ -11,7 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/multica-ai/multica/server/internal/dbstartup"
+	"github.com/marvis-ai/marvis/server/internal/dbstartup"
 )
 
 const (

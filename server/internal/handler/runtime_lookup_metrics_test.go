@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 	dto "github.com/prometheus/client_model/go"
 
-	"github.com/multica-ai/multica/server/internal/daemonws"
-	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/daemonws"
+	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // TestAgentRuntimeLookupWSHotPathIsZeroRead drives 1,000 heartbeats through one
@@ -90,7 +90,7 @@ func TestAgentRuntimeLookupWSHotPathIsZeroRead(t *testing.T) {
 
 // TestAgentRuntimeLookupBatchClaimIsAttributed pins the MUL-6788 review fix at
 // the handler level: the batch claim endpoint must report its runtime reads on
-// multica_agent_runtime_lookup_total like every other reader.
+// marvis_agent_runtime_lookup_total like every other reader.
 //
 // This is the counter's most load-bearing series, not a completeness exercise.
 // Both /tasks/claim and /claim route here (router.go) and the WebSocket claim
@@ -160,9 +160,9 @@ func withTestMetrics(t *testing.T) *obsmetrics.BusinessMetrics {
 func lookupSnapshot(t *testing.T, m *obsmetrics.BusinessMetrics) map[string]float64 {
 	t.Helper()
 
-	fam := obsmetrics.GatherForTest(t, m)["multica_agent_runtime_lookup_total"]
+	fam := obsmetrics.GatherForTest(t, m)["marvis_agent_runtime_lookup_total"]
 	if fam == nil {
-		t.Fatalf("multica_agent_runtime_lookup_total not registered")
+		t.Fatalf("marvis_agent_runtime_lookup_total not registered")
 	}
 	out := map[string]float64{}
 	for _, mtr := range fam.GetMetric() {

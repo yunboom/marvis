@@ -1,5 +1,5 @@
-import { UI_EASE_OUT_CSS, UI_EASE_IN } from "@multica/ui/lib/motion";
-import source from "@multica/ui/styles/tokens.css?raw";
+import { UI_EASE_OUT_CSS, UI_EASE_IN } from "@marvis/ui/lib/motion";
+import source from "@marvis/ui/styles/tokens.css?raw";
 
 export type Theme = "light" | "dark";
 export type Scope = Theme | "shared";
@@ -350,7 +350,7 @@ export function previewCss(draft: Draft): string {
 }
 export function exportCss(draft: Draft): string {
   if (!changeCount(draft))
-    return "/* No changes to the current Multica tokens. */\n";
+    return "/* No changes to the current Marvis tokens. */\n";
   const typography = Object.fromEntries(
     Object.entries(draft.shared).filter(([key]) => key.startsWith("--text-")),
   );
@@ -359,7 +359,7 @@ export function exportCss(draft: Draft): string {
   );
   return (
     [
-      "/* Multica UI Lab — merge these declarations into the matching blocks in\n   packages/ui/styles/tokens.css. Review both themes before applying.\n   Existing aliases and radius multipliers remain unchanged. */",
+      "/* Marvis UI Lab — merge these declarations into the matching blocks in\n   packages/ui/styles/tokens.css. Review both themes before applying.\n   Existing aliases and radius multipliers remain unchanged. */",
       block("@theme", typography),
       block(":root", {
         ...geometry,

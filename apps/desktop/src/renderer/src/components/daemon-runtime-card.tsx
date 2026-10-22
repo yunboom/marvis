@@ -10,10 +10,10 @@ import {
   Info,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { runtimeListOptions } from "@multica/core/runtimes";
-import { agentTaskSnapshotOptions } from "@multica/core/agents";
-import { Button } from "@multica/ui/components/ui/button";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { runtimeListOptions } from "@marvis/core/runtimes";
+import { agentTaskSnapshotOptions } from "@marvis/core/agents";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -21,9 +21,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import { toast } from "sonner";
-import { useT } from "@multica/views/i18n";
+import { useT } from "@marvis/views/i18n";
 import { DaemonPanel } from "./daemon-panel";
 import { reauthenticateDaemon } from "../platform/daemon-reauth";
 import type { DaemonStatus } from "../../../shared/daemon-types";

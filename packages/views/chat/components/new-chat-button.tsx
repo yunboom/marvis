@@ -2,9 +2,9 @@
 
 import React, { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@multica/ui/components/ui/tooltip";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
 import { ActorAvatar } from "../../common/actor-avatar";
 import {
   PickerEmpty,
@@ -13,8 +13,8 @@ import {
   PropertyPicker,
 } from "../../issues/components/pickers/property-picker";
 import { matchesPinyin } from "../../editor/extensions/pinyin-match";
-import type { Agent } from "@multica/core/types";
-import { isAgentRuntimeBound } from "@multica/core/agents";
+import type { Agent } from "@marvis/core/types";
+import { isAgentRuntimeBound } from "@marvis/core/agents";
 import { toast } from "sonner";
 import { useT } from "../../i18n";
 

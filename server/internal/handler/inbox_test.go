@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/middleware"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 func inboxRequest(method, path, workspaceID string) *http.Request {

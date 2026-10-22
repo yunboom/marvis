@@ -3,19 +3,19 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, ListTree, Settings, Workflow } from "lucide-react";
-import { useFeatureEnabled } from "@multica/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@multica/core/feature-flags";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import {
   resolveProjectWorkflow,
   statusAcceptsHandoff,
   useIssueWorkflows,
-} from "@multica/core/issue-workflows";
-import { useWorkspacePaths } from "@multica/core/paths";
-import { projectListOptions } from "@multica/core/projects/queries";
-import type { IssueWorkflow, Project } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
+} from "@marvis/core/issue-workflows";
+import { useWorkspacePaths } from "@marvis/core/paths";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import type { IssueWorkflow, Project } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +27,9 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@multica/ui/components/ui/sheet";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@marvis/ui/components/ui/sheet";
+import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../common/actor-avatar";
 import { StatusIcon } from "../issues/components/status-icon";
 import { useStatusLabel } from "../issues/utils/status-label";

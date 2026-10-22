@@ -4,7 +4,7 @@ import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { PriorityIcon } from "./priority-icon";
 import { StatusIcon } from "./status-icon";
-import { ISSUE_STATUS_ICONS } from "@multica/core/types/issue-status";
+import { ISSUE_STATUS_ICONS } from "@marvis/core/types/issue-status";
 
 afterEach(cleanup);
 

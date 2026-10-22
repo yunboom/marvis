@@ -21,7 +21,7 @@ import { withFragmentNavShim } from "./iframe-fragment-nav";
  */
 
 /** Marker on every bridge message; anything without it is ignored. */
-export const HTML_BLOCK_MESSAGE_KEY = "__multicaHtmlBlock";
+export const HTML_BLOCK_MESSAGE_KEY = "__marvisHtmlBlock";
 
 /**
  * Theme tokens copied into the sandbox. Only color and shape tokens: a chart

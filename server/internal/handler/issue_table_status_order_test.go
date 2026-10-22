@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 func TestIssueTableStatusOrder(t *testing.T) {

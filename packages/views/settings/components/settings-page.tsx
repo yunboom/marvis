@@ -26,19 +26,19 @@ import {
   Workflow,
   Zap,
 } from "lucide-react";
-import { useAuthStore } from "@multica/core/auth";
-import { useCurrentWorkspace } from "@multica/core/paths";
-import { useFeatureEnabled } from "@multica/core/config";
-import { useCurrentMember } from "@multica/core/permissions";
+import { useAuthStore } from "@marvis/core/auth";
+import { useCurrentWorkspace } from "@marvis/core/paths";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { useCurrentMember } from "@marvis/core/permissions";
 import {
   BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
   PLUGINS_V1_FLAG,
   PROJECT_WORKFLOWS_V1_FLAG,
-} from "@multica/core/feature-flags";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
-import { ActorAvatar } from "@multica/ui/components/common/actor-avatar";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/feature-flags";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
+import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { cn } from "@marvis/ui/lib/utils";
 import { resolveSettingsLocation, settingsHref } from "./settings-navigation";
 import { AppLink, useNavigation } from "../../navigation";
 import { WorkspaceAvatar } from "../../workspace/workspace-avatar";

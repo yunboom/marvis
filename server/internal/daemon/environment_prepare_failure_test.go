@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/daemon/execenv"
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 // TestTaskRunFailureReasonLabelsEnvironmentSetup is the daemon half of #7913.
@@ -21,10 +21,10 @@ import (
 func TestTaskRunFailureReasonLabelsEnvironmentSetup(t *testing.T) {
 	cases := map[string]error{
 		"windows lock": asEnvironmentSetupFailure(fmt.Errorf("prepare execution environment: %w",
-			errors.New(`execenv: remove existing env: unlinkat C:\Users\u\multica_workspaces_p\ws\prefix\workdir: `+
+			errors.New(`execenv: remove existing env: unlinkat C:\Users\u\marvis_workspaces_p\ws\prefix\workdir: `+
 				"The process cannot access the file because it is being used by another process"))),
 		"disk full": asEnvironmentSetupFailure(fmt.Errorf("prepare execution environment: %w",
-			errors.New("execenv: mkdir /home/u/multica_workspaces/ws: no space left on device"))),
+			errors.New("execenv: mkdir /home/u/marvis_workspaces/ws: no space left on device"))),
 		"permission denied": asEnvironmentSetupFailure(fmt.Errorf("prepare execution environment: %w",
 			errors.New("execenv: open ownership manifest: permission denied"))),
 		"reuse io error": asEnvironmentSetupFailure(fmt.Errorf("reuse execution environment: %w",
@@ -80,7 +80,7 @@ func TestEnvironmentSetupFailurePreservesMessage(t *testing.T) {
 // order. Preparation is one phase with several known causes, and three of them
 // already have their own reason. The generic bucket is what is left over, so it
 // has to be checked last — a run that died on the OpenClaw CLI deadline still
-// needs the copy naming MULTICA_OPENCLAW_CLI_TIMEOUT, and one that ran out of
+// needs the copy naming MARVIS_OPENCLAW_CLI_TIMEOUT, and one that ran out of
 // skill downloads still needs to be retryable.
 func TestTaskRunFailureReasonPrefersSpecificPreparationSentinels(t *testing.T) {
 	cases := map[string]struct {

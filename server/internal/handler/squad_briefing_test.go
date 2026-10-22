@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // TestSquadOperatingProtocolScopesParentStatusOwnership is the guard for the
@@ -25,7 +25,7 @@ func TestSquadOperatingProtocolScopesParentStatusOwnership(t *testing.T) {
 	for _, want := range []string{
 		"Do NOT change this issue's status",
 		"not assigned to your squad",
-		"never run `multica issue status` on it",
+		"never run `marvis issue status` on it",
 	} {
 		if !strings.Contains(compactGuest, want) {
 			t.Errorf("expected guest-leader protocol to contain %q\n--- protocol ---\n%s", want, guest)
@@ -34,7 +34,7 @@ func TestSquadOperatingProtocolScopesParentStatusOwnership(t *testing.T) {
 	// The grant must be entirely absent — not merely qualified.
 	for _, forbidden := range []string{
 		"Own the parent issue status",
-		"multica issue status <issue-id> in_review",
+		"marvis issue status <issue-id> in_review",
 	} {
 		if strings.Contains(compactGuest, forbidden) {
 			t.Errorf("guest-leader protocol must not contain status grant %q\n--- protocol ---\n%s", forbidden, guest)
@@ -158,7 +158,7 @@ func TestSquadOperatingProtocolOwnsNoActionRule(t *testing.T) {
 
 		for _, want := range []string{
 			// the rule and how it is recorded
-			"multica squad activity <issue-id> <outcome> --reason",
+			"marvis squad activity <issue-id> <outcome> --reason",
 			"record `no_action` and exit silently",
 			// what "silently" forbids — MUL-2168 was a leader posting
 			// "no reply needed. Exiting silently."

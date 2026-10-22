@@ -25,8 +25,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,16 +36,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
+} from "@marvis/ui/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { cn } from "@multica/ui/lib/utils";
-import type { IssueView } from "@multica/core/api/schemas";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { cn } from "@marvis/ui/lib/utils";
+import type { IssueView } from "@marvis/core/api/schemas";
 import { useT } from "../../i18n";
 
 /** One entry on the bar: a built-in tab or a saved view. */

@@ -6,8 +6,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/issuestatus"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 func TestProjectTerminalIssueStatusKeysFallsBackToCanonicalKeys(t *testing.T) {

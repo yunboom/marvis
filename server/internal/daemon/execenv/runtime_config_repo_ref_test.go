@@ -20,12 +20,12 @@ func TestRepositoriesSectionCarriesPinnedRefAndDeliveryTarget(t *testing.T) {
 	ctx := TaskContextForEnv{
 		IssueID: "i-1", AgentName: "Eve", AgentID: "eve-1",
 		Repos: []RepoContextForEnv{
-			{URL: "https://github.com/multica-ai/multica", Ref: "release/2026-09"},
+			{URL: "https://github.com/marvis-ai/marvis", Ref: "release/2026-09"},
 		},
 	}
 	out := buildMetaSkillContent("claude", ctx)
 
-	if !strings.Contains(out, "https://github.com/multica-ai/multica (starts from `release/2026-09`)") {
+	if !strings.Contains(out, "https://github.com/marvis-ai/marvis (starts from `release/2026-09`)") {
 		t.Errorf("Repositories section should name the pinned ref beside its repo; got:\n%s", out)
 	}
 	if !strings.Contains(out, "gh pr create --base") {
@@ -48,12 +48,12 @@ func TestRepositoriesSectionOmitsDeliveryRuleWhenNothingIsPinned(t *testing.T) {
 	ctx := TaskContextForEnv{
 		IssueID: "i-1", AgentName: "Eve", AgentID: "eve-1",
 		Repos: []RepoContextForEnv{
-			{URL: "https://github.com/multica-ai/multica", Description: "the platform"},
+			{URL: "https://github.com/marvis-ai/marvis", Description: "the platform"},
 		},
 	}
 	out := buildMetaSkillContent("claude", ctx)
 
-	if !strings.Contains(out, "https://github.com/multica-ai/multica — the platform") {
+	if !strings.Contains(out, "https://github.com/marvis-ai/marvis — the platform") {
 		t.Errorf("unpinned repo should still render its description; got:\n%s", out)
 	}
 	if strings.Contains(out, "starts from") || strings.Contains(out, "gh pr create --base") {

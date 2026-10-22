@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import type { SkillListFilters } from "@multica/core/skills/stores";
-import type { Agent, Label, SkillSummary } from "@multica/core/types";
+import type { SkillListFilters } from "@marvis/core/skills/stores";
+import type { Agent, Label, SkillSummary } from "@marvis/core/types";
 import { rowMatchesFilters, type SkillRow } from "./skill-list-filter";
 
 function makeSkill(overrides: Partial<SkillSummary> = {}): SkillSummary {

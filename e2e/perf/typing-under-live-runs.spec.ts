@@ -148,13 +148,13 @@ test("comment typing stays responsive while runs stream", async ({ page, context
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });
 
   await context.addCookies([
-    { name: "multica_logged_in", value: "1", url: origin },
+    { name: "marvis_logged_in", value: "1", url: origin },
     { name: "last_workspace_slug", value: fx.WORKSPACE_SLUG, url: origin },
   ]);
   // The floating chat mounts its own queries on every page; this scenario is
   // about the issue thread, and those requests are not part of it.
   await context.addInitScript(() => {
-    window.localStorage.setItem("multica:chat:floatingChatEnabled", "false");
+    window.localStorage.setItem("marvis:chat:floatingChatEnabled", "false");
   });
   // Long tasks are read from the browser's own observer rather than a
   // threshold invented here. Records still queued at the end are drained.

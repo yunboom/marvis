@@ -158,7 +158,7 @@ export class WorkspaceIndex {
       try {
         do {
           this.rerun = false;
-          await this.options.withLock(`multica-search-index:${this.key}`, () => this.syncOnce());
+          await this.options.withLock(`marvis-search-index:${this.key}`, () => this.syncOnce());
         } while (this.rerun && this.state !== "disposed");
       } finally {
         this.running = null;

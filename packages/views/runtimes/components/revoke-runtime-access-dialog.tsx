@@ -3,19 +3,19 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import type { AgentRuntime } from "@multica/core/types";
-import { ApiError, parseWithFallback } from "@multica/core/api";
-import { RuntimeAccessRevocationPlanSchema } from "@multica/core/api/schemas";
-import { runtimeDisplayLabel } from "@multica/core/runtimes";
-import { useRevokeRuntimeWorkspaceAccess } from "@multica/core/runtimes/mutations";
+import type { AgentRuntime } from "@marvis/core/types";
+import { ApiError, parseWithFallback } from "@marvis/core/api";
+import { RuntimeAccessRevocationPlanSchema } from "@marvis/core/api/schemas";
+import { runtimeDisplayLabel } from "@marvis/core/runtimes";
+import { useRevokeRuntimeWorkspaceAccess } from "@marvis/core/runtimes/mutations";
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { Button } from "@multica/ui/components/ui/button";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
 import { useT } from "../../i18n";
 
 export interface RuntimeAccessRevocationPlan {

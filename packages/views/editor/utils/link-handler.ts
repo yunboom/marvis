@@ -9,8 +9,8 @@ import {
   isGlobalPath,
   isKnownWorkspacePath,
   workspaceSlugForPath,
-} from "@multica/core/paths";
-import { isIssueIdentifier } from "@multica/ui/markdown";
+} from "@marvis/core/paths";
+import { isIssueIdentifier } from "@marvis/ui/markdown";
 import type { LinkClickIntent } from "../../navigation/click-intent";
 
 /**
@@ -218,7 +218,7 @@ export function parseWorkspaceEntityLink(
 }
 
 /**
- * Open a link — internal paths dispatch multica:navigate, external open new tab.
+ * Open a link — internal paths dispatch marvis:navigate, external open new tab.
  *
  * If `currentSlug` is provided and `href` is a workspace-scoped path lacking a
  * slug (e.g. "/issues/abc" instead of "/{slug}/issues/abc"), the slug is
@@ -229,7 +229,7 @@ export function parseWorkspaceEntityLink(
  * internal route as a relative path.
  *
  * `intent` is how the user clicked (see `resolveClickIntent`); the platform
- * listener answering `multica:navigate` executes it — in-place navigation for
+ * listener answering `marvis:navigate` executes it — in-place navigation for
  * "push", a new tab otherwise. External links ignore it: they always hand off
  * to the browser / system browser.
  */
@@ -261,7 +261,7 @@ export function openLink(
       // the user wrote what they meant.
     }
     window.dispatchEvent(
-      new CustomEvent("multica:navigate", {
+      new CustomEvent("marvis:navigate", {
         detail: { path, disposition: intent },
       }),
     );

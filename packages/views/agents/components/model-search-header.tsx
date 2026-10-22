@@ -1,8 +1,8 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Input } from "@multica/ui/components/ui/input";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Input } from "@marvis/ui/components/ui/input";
 import { useT } from "../../i18n";
 
 export function ModelSearchHeader({

@@ -3,15 +3,15 @@
 import { Fragment, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, LayoutTemplate, Plus } from "lucide-react";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { statusColumnKeys } from "@multica/core/issues";
-import { useIssueWorkflows } from "@multica/core/issue-workflows";
-import { projectListOptions } from "@multica/core/projects/queries";
-import { memberListOptions } from "@multica/core/workspace/queries";
-import type { IssueWorkflow, IssueWorkflowStep, Project } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { statusColumnKeys } from "@marvis/core/issues";
+import { useIssueWorkflows } from "@marvis/core/issue-workflows";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import { memberListOptions } from "@marvis/core/workspace/queries";
+import type { IssueWorkflow, IssueWorkflowStep, Project } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { ActorAvatar } from "../common/actor-avatar";
 import { StatusIcon } from "../issues/components/status-icon";
 import { useStatusLabel } from "../issues/utils/status-label";

@@ -3,8 +3,8 @@ import { act, render } from "@testing-library/react";
 import {
   bindWorkspaceSlugLookup,
   createQueryClient,
-} from "@multica/core/query-client";
-import { workspaceKeys } from "@multica/core/workspace/queries";
+} from "@marvis/core/query-client";
+import { workspaceKeys } from "@marvis/core/workspace/queries";
 import { useEffect } from "react";
 
 // MUL-4741: the adapter mutates tab sessions in the REAL store (no router,
@@ -26,14 +26,14 @@ vi.mock("@/stores/window-overlay-store", () => ({
 
 const auth = vi.hoisted(() => ({ logout: vi.fn() }));
 
-vi.mock("@multica/core/auth", () => ({
+vi.mock("@marvis/core/auth", () => ({
   useAuthStore: Object.assign(() => null, {
     getState: () => auth,
   }),
 }));
 
 import { DesktopNavigationProvider, routeContentLinkPath } from "./navigation";
-import { currentPath, useNavigation } from "@multica/views/navigation";
+import { currentPath, useNavigation } from "@marvis/views/navigation";
 import { useTabStore, getActiveTab } from "@/stores/tab-store";
 
 let unbindWorkspaces: () => void = () => {};

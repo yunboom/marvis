@@ -16,35 +16,35 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "@multica/core/api";
-import type { Skill } from "@multica/core/types";
+import { api } from "@marvis/core/api";
+import type { Skill } from "@marvis/core/types";
 import {
   prepareSkillArchiveFromPickerFiles,
   wrapExistingSkillArchive,
   type PreparedSkillArchive,
-} from "@multica/core/skills";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { isImeComposing } from "@multica/core/utils";
+} from "@marvis/core/skills";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { isImeComposing } from "@marvis/core/utils";
 import {
   skillDetailOptions,
   workspaceKeys,
-} from "@multica/core/workspace/queries";
+} from "@marvis/core/workspace/queries";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@multica/ui/components/ui/tooltip";
-import { Button } from "@multica/ui/components/ui/button";
-import { Input } from "@multica/ui/components/ui/input";
-import { Label } from "@multica/ui/components/ui/label";
-import { Textarea } from "@multica/ui/components/ui/textarea";
-import { useScrollFade } from "@multica/ui/hooks/use-scroll-fade";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/tooltip";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Label } from "@marvis/ui/components/ui/label";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
+import { useScrollFade } from "@marvis/ui/hooks/use-scroll-fade";
+import { cn } from "@marvis/ui/lib/utils";
 import { openExternal } from "../../platform";
 import { RuntimeLocalSkillImportPanel } from "./runtime-local-skill-import-panel";
 import { useT } from "../../i18n";

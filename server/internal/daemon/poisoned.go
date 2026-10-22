@@ -3,8 +3,8 @@ package daemon
 import (
 	"strings"
 
-	"github.com/multica-ai/multica/server/pkg/agent"
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 // FailureReason values for tasks whose session is "poisoned" — i.e.

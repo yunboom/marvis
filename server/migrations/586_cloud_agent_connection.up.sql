@@ -1,5 +1,5 @@
 -- One managed cloud-agent provider connection per workspace and provider.
--- Secrets and the run journal are sealed with MULTICA_VCS_SECRET_KEY.
+-- Secrets and the run journal are sealed with MARVIS_VCS_SECRET_KEY.
 CREATE TABLE cloud_agent_connection (
  workspace_id uuid NOT NULL,
  provider text NOT NULL,

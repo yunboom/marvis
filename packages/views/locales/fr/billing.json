@@ -1,6 +1,6 @@
 {
   "title": "Facturation (page de test)",
-  "subtitle": "Passe-plat direct vers /api/v1/billing/* de multica-cloud. Interface inachevée — tous les points d'accès entassés sur une page pour vérifier le proxy et le flux Stripe.",
+  "subtitle": "Passe-plat direct vers /api/v1/billing/* de marvis-cloud. Interface inachevée — tous les points d'accès entassés sur une page pour vérifier le proxy et le flux Stripe.",
   "endpoints": {
     "balance": "GET /api/cloud-billing/balance",
     "transactions": "GET /api/cloud-billing/transactions",
@@ -259,6 +259,6 @@
     "workspace_missing_title": "Espace de travail introuvable",
     "workspace_missing_description": "Vous revenez de Stripe, mais cet espace de travail ne vous est plus accessible — il a peut-être été supprimé, ou vos droits ont changé. Ouvrez Facturation dans l'espace de travail attendu pour vérifier l'état actuel.",
     "retry": "Réessayer",
-    "go_to_app": "Aller sur Multica"
+    "go_to_app": "Aller sur Marvis"
   }
 }

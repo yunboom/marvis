@@ -177,7 +177,7 @@ func TestOpenclawShimDiagnosticReportsInterpreterOnPath(t *testing.T) {
 
 // TestOpenclawShimDiagnosticIsPhrasedConditionally is the rest of must-fix 2. A
 // batch extension does not prove npm authorship — an operator can point
-// MULTICA_OPENCLAW_PATH at any batch file — so the text must not assert npm
+// MARVIS_OPENCLAW_PATH at any batch file — so the text must not assert npm
 // shim semantics as established fact for whatever failed.
 func TestOpenclawShimDiagnosticIsPhrasedConditionally(t *testing.T) {
 	pathWithout(t)

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/multica-ai/multica/server/internal/handler"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/handler"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // TestAutopilotWebhookTokenIsNotBroadcastToTheWorkspace is the end-to-end proof
@@ -24,7 +24,7 @@ import (
 func TestAutopilotWebhookTokenIsNotBroadcastToTheWorkspace(t *testing.T) {
 	fx := testutil.New(testPool, testWorkspaceID, testUserID)
 
-	email := fmt.Sprintf("autopilot-broadcast-reader-%d@multica.test", time.Now().UnixNano())
+	email := fmt.Sprintf("autopilot-broadcast-reader-%d@marvis.test", time.Now().UnixNano())
 	reader := fx.User(t, "Autopilot Broadcast Reader", email)
 	fx.Member(t, testWorkspaceID, reader, "member")
 	readerToken, err := generateTestJWT(reader, email, "Autopilot Broadcast Reader")

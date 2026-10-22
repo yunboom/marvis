@@ -13,7 +13,7 @@ import (
 )
 
 // Real-CLI coverage for the managed-MCP include chain. Opt-in twice over: the
-// agentintegration build tag, and MULTICA_RUN_REAL_AGENT_SMOKE, because this
+// agentintegration build tag, and MARVIS_RUN_REAL_AGENT_SMOKE, because this
 // executes the openclaw binary installed on the host.
 //
 // The unit tests assert the JSON this package writes. That is not enough for a

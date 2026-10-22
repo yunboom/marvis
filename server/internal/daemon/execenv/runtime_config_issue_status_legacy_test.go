@@ -13,7 +13,7 @@ var legacyStatusCategoryOrder = []string{"backlog", "todo", "in_progress", "in_r
 
 func writeLegacyIssueStatusCommand(b *strings.Builder, ctx TaskContextForEnv) {
 	if len(ctx.IssueStatuses) == 0 {
-		b.WriteString("- `multica issue status <id> <status> [--no-start]` — flip status (todo / in_progress / in_review / done / blocked / backlog / cancelled).\n")
+		b.WriteString("- `marvis issue status <id> <status> [--no-start]` — flip status (todo / in_progress / in_review / done / blocked / backlog / cancelled).\n")
 		return
 	}
 	byCategory := make(map[string][]IssueStatusForEnv, len(legacyStatusCategoryOrder))
@@ -23,7 +23,7 @@ func writeLegacyIssueStatusCommand(b *strings.Builder, ctx TaskContextForEnv) {
 		}
 		byCategory[s.Category] = append(byCategory[s.Category], s)
 	}
-	b.WriteString("- `multica issue status <id> <status> [--no-start]` — flip status. This workspace's statuses by category — a custom status inherits its category's platform behavior in full:\n")
+	b.WriteString("- `marvis issue status <id> <status> [--no-start]` — flip status. This workspace's statuses by category — a custom status inherits its category's platform behavior in full:\n")
 	builtInOnly := make([]string, 0, len(legacyStatusCategoryOrder))
 	for _, category := range legacyStatusCategoryOrder {
 		customs := byCategory[category]

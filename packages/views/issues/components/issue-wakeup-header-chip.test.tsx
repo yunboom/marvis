@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen } from "@testing-library/react";
-import type { IssueWakeup, SystemWakeup } from "@multica/core/types";
+import type { IssueWakeup, SystemWakeup } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { IssueWakeupHeaderChip, primaryWakeup } from "./issue-wakeup-header-chip";
 
@@ -9,8 +9,8 @@ let system: SystemWakeup[] = [];
 vi.mock("./wakeup-condition-names", () => ({
   useConditionNames: () => ({ status: (key: string) => key, label: () => undefined, property: () => undefined, actor: (_type: string, id: string) => id }),
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws" }));
-vi.mock("@multica/core/issues", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws" }));
+vi.mock("@marvis/core/issues", () => ({
   issueWakeupsOptions: () => ({ queryKey: ["wakeups"] }),
   issueSystemWakeupsOptions: () => ({ queryKey: ["system"] }),
 }));

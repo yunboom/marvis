@@ -1,8 +1,8 @@
-import { useIssueOpeningStore } from "@multica/core/issues/stores/issue-opening-store";
+import { useIssueOpeningStore } from "@marvis/core/issues/stores/issue-opening-store";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Issue } from "@multica/core/types";
+import type { Issue } from "@marvis/core/types";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
 import {
   IssuePeekActionsContext,
@@ -16,19 +16,19 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
   useQuery: () => ({ data: [] }),
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
-vi.mock("@multica/core/properties", () => ({
+vi.mock("@marvis/core/properties", () => ({
   propertyListOptions: () => ({ queryKey: ["properties"] }),
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({ issueDetail: (id: string) => `/acme/issues/${id}` }),
 }));
 
-vi.mock("@multica/core/issues/stores/view-store-context", () => ({
+vi.mock("@marvis/core/issues/stores/view-store-context", () => ({
   useViewStore: (selector: (state: unknown) => unknown) =>
     selector({ cardProperties: {}, cardPropertyIds: [] }),
 }));

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { issueDetailOptions } from "@multica/core/issues/queries";
+import { issueDetailOptions } from "@marvis/core/issues/queries";
 import type { TraceEvent } from "./trace-event-presenter";
 import { collectTraceIssueIds, replaceTraceIssueIds } from "./trace-issue-labels";
 

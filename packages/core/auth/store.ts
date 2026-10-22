@@ -76,7 +76,7 @@ export function createAuthStore(options: AuthStoreOptions) {
       const { token, user } = await api.verifyCode(email, code);
       if (!cookieAuth) {
         // Token mode: persist for Electron / legacy.
-        storage.setItem("multica_token", token);
+        storage.setItem("marvis_token", token);
         api.setToken(token);
       }
       onLogin?.();
@@ -88,7 +88,7 @@ export function createAuthStore(options: AuthStoreOptions) {
     loginWithGoogle: async (code: string, redirectUri: string) => {
       const { token, user } = await api.googleLogin(code, redirectUri);
       if (!cookieAuth) {
-        storage.setItem("multica_token", token);
+        storage.setItem("marvis_token", token);
         api.setToken(token);
       }
       onLogin?.();
@@ -98,7 +98,7 @@ export function createAuthStore(options: AuthStoreOptions) {
     },
 
     loginWithToken: async (token: string) => {
-      storage.setItem("multica_token", token);
+      storage.setItem("marvis_token", token);
       api.setToken(token);
       const user = await api.getMe();
       onLogin?.();
@@ -112,7 +112,7 @@ export function createAuthStore(options: AuthStoreOptions) {
         // Clear server-side HttpOnly cookie.
         api.logout().catch(() => {});
       }
-      storage.removeItem("multica_token");
+      storage.removeItem("marvis_token");
       api.setToken(null);
       setCurrentWorkspace(null, null);
       resetAnalytics();
@@ -146,7 +146,7 @@ export function createAuthStore(options: AuthStoreOptions) {
       // teardown below removes the evidence.
       const hadCredential =
         get().status === "authenticated" ||
-        storage.getItem("multica_token") !== null;
+        storage.getItem("marvis_token") !== null;
 
       // Dropping the rejected credential happens before the idempotence
       // guard, and unconditionally. A login attempt that 401s never leaves
@@ -154,7 +154,7 @@ export function createAuthStore(options: AuthStoreOptions) {
       // getMe, and gets rejected — so a guard placed first would return with
       // that invalid token still sitting in storage, to be replayed at the
       // next launch. Nothing below this point is safe to repeat; this is.
-      storage.removeItem("multica_token");
+      storage.removeItem("marvis_token");
       api.setToken(null);
 
       // Past here we are ending a session, which happens once no matter how

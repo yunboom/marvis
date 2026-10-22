@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { setApiInstance } from "@multica/core/api";
-import type { ApiClient } from "@multica/core/api/client";
+import { setApiInstance } from "@marvis/core/api";
+import type { ApiClient } from "@marvis/core/api/client";
 import { NavigationProvider } from "../../navigation";
 import { IssueDetail } from "./issue-detail";
 import { IssueDetailRoute } from "./issue-detail-route";
@@ -12,13 +12,13 @@ vi.mock("./issue-detail", async () => {
   return { ...actual, IssueDetail: vi.fn(() => null) };
 });
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
-vi.mock("@multica/core/paths", async () => {
-  const actual = await vi.importActual<typeof import("@multica/core/paths")>(
-    "@multica/core/paths",
+vi.mock("@marvis/core/paths", async () => {
+  const actual = await vi.importActual<typeof import("@marvis/core/paths")>(
+    "@marvis/core/paths",
   );
   return {
     ...actual,
@@ -64,7 +64,7 @@ describe("IssueDetailRoute comment deep links", () => {
             pathname: `/acme/issues/${routeId}`,
             searchParams: new URLSearchParams(),
             hash,
-            getShareableUrl: (p: string) => `https://app.multica.com${p}`,
+            getShareableUrl: (p: string) => `https://app.marvis.com${p}`,
           }}
         >
           <IssueDetailRoute routeId={routeId} />

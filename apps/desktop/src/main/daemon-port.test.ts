@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { healthPortForProfile } from "./daemon-profile";
 import { parseDaemonPortRecord, probeProfileHealth } from "./daemon-port";
 
-const profile = "desktop-api.multica.ai";
+const profile = "desktop-api.marvis.ai";
 
 describe("daemon port discovery", () => {
   it("accepts only a live matching profile and PID from daemon.port", async () => {

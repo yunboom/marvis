@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { ChevronRight, Loader2, RefreshCw } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { cn } from "@multica/ui/lib/utils";
-import type { SourceContextPreview } from "@multica/core/types";
-import { ApiError } from "@multica/core/api";
+import { Button } from "@marvis/ui/components/ui/button";
+import { cn } from "@marvis/ui/lib/utils";
+import type { SourceContextPreview } from "@marvis/core/types";
+import { ApiError } from "@marvis/core/api";
 import { SourceContextContent } from "../issues/components/source-context-content";
 import { useT } from "../i18n";
 

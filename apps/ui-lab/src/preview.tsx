@@ -2,13 +2,13 @@ import { LabI18nProvider } from "./lab-i18n";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowUpRight, Check, Inbox, Plus } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { Badge } from "@multica/ui/components/ui/badge";
-import { Input } from "@multica/ui/components/ui/input";
-import { Checkbox } from "@multica/ui/components/ui/checkbox";
-import { Switch } from "@multica/ui/components/ui/switch";
-import { Avatar, AvatarFallback } from "@multica/ui/components/ui/avatar";
-import { Skeleton } from "@multica/ui/components/ui/skeleton";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Badge } from "@marvis/ui/components/ui/badge";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Checkbox } from "@marvis/ui/components/ui/checkbox";
+import { Switch } from "@marvis/ui/components/ui/switch";
+import { Avatar, AvatarFallback } from "@marvis/ui/components/ui/avatar";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -16,8 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@multica/ui/components/ui/dialog";
-import { StatusIcon } from "@multica/views/issues/visuals";
+} from "@marvis/ui/components/ui/dialog";
+import { StatusIcon } from "@marvis/views/issues/visuals";
 import { ColorsScene } from "./colors-scene";
 import { DialogScene } from "./dialog-scene";
 import { ButtonScene } from "./button-scene";
@@ -240,7 +240,7 @@ function ComponentsScene() {
 }
 export function Preview() {
   const [settings, setSettings] = useState<PreviewSettings>({
-    type: "multica-ui-lab:preview",
+    type: "marvis-ui-lab:preview",
     draft: emptyDraft(),
     theme: "light",
     scene: "components",
@@ -260,7 +260,7 @@ export function Preview() {
     };
     window.addEventListener("message", receive);
     window.parent.postMessage(
-      { type: "multica-ui-lab:ready" },
+      { type: "marvis-ui-lab:ready" },
       location.origin,
     );
     return () => window.removeEventListener("message", receive);

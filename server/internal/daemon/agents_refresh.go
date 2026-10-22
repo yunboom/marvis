@@ -158,7 +158,7 @@ func dshOnlyVerdicts(demotable map[string]runtimeVerdict) map[string]runtimeVerd
 }
 
 // dshProfileMismatch names a disagreement between the two states the daemon has
-// to keep aligned: whether the Multica runtime profile is installed, and whether
+// to keep aligned: whether the Marvis runtime profile is installed, and whether
 // a dsh runtime is registered.
 //
 // The kind, rather than a bare bool, is what the caller needs, because the two
@@ -174,7 +174,7 @@ const (
 	// routing work into a CLI that cannot start.
 	dshMismatchRuntimeWithoutProfile dshProfileMismatch = "runtime-without-profile"
 	// dshMismatchProfileWithoutRuntime is the mirror image, and is what a
-	// manual `dsh plugin --profile multica add` produces.
+	// manual `dsh plugin --profile marvis add` produces.
 	dshMismatchProfileWithoutRuntime dshProfileMismatch = "profile-without-runtime"
 )
 
@@ -206,7 +206,7 @@ func (m dshProfileMismatch) forcesEveryTick() bool {
 // was not looking — is caught on the very next tick rather than never.
 func (d *Daemon) dshRuntimeProfileMismatch() dshProfileMismatch {
 	registered := d.dshRuntimeRegistered()
-	if registered == dshMulticaProfilePresent() {
+	if registered == dshMarvisProfilePresent() {
 		return dshMismatchNone
 	}
 	if registered {

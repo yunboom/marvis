@@ -10,7 +10,7 @@ import type { StorageAdapter } from "../types/storage";
 import type { RefreshSessionResponse } from "../api/schemas";
 import { createSessionRenewal, watchSessionActivity } from "./session-renewal";
 
-const TOKEN_KEY = "multica_token";
+const TOKEN_KEY = "marvis_token";
 
 function makeStorage(
   initial: Record<string, string> = {},

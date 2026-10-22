@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Keyboard, RotateCcw, Search, X } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Input } from "@multica/ui/components/ui/input";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,8 +14,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   findShortcutConflict,
   createShortcutChord,
@@ -30,8 +30,8 @@ import {
   type ShortcutActionId,
   type ShortcutCategory,
   type ShortcutChord,
-} from "@multica/core/shortcuts";
-import { isImeComposing } from "@multica/core/utils";
+} from "@marvis/core/shortcuts";
+import { isImeComposing } from "@marvis/core/utils";
 import { useT } from "../../i18n";
 import { ShortcutKeycaps } from "../../common/shortcut-keycaps";
 import {

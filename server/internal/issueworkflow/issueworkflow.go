@@ -28,8 +28,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/issuestatus"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // Handler types a project can hand an issue to when it enters a status.
@@ -697,14 +697,14 @@ func Brief(in BriefInput) string {
 	}
 	b.WriteString("\nHand off by changing the status — moving the issue into a step that hands off reassigns it to that step's handler and starts their run:\n")
 	if next := in.Workflow.NextStatus(in.StatusKey); next != "" {
-		fmt.Fprintf(&b, "Step done      → multica issue status %s %s\n", in.IssueIdentifier, next)
+		fmt.Fprintf(&b, "Step done      → marvis issue status %s %s\n", in.IssueIdentifier, next)
 	}
 	if step.BackStatusKey != "" {
-		fmt.Fprintf(&b, "Needs changes  → multica issue status %s %s\n", in.IssueIdentifier, step.BackStatusKey)
+		fmt.Fprintf(&b, "Needs changes  → marvis issue status %s %s\n", in.IssueIdentifier, step.BackStatusKey)
 	}
 	switch {
 	case in.Workflow.Has(issuestatus.Blocked):
-		fmt.Fprintf(&b, "Can't proceed  → multica issue status %s blocked, then comment why\n", in.IssueIdentifier)
+		fmt.Fprintf(&b, "Can't proceed  → marvis issue status %s blocked, then comment why\n", in.IssueIdentifier)
 	case step.BackStatusKey != "":
 		b.WriteString("Can't proceed  → this workflow has no blocked status: comment why, then use the \"Needs changes\" command above\n")
 	default:

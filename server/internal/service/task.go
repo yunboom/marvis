@@ -16,25 +16,25 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/attribution"
-	"github.com/multica-ai/multica/server/internal/chattitle"
-	"github.com/multica-ai/multica/server/internal/entitlement"
-	"github.com/multica-ai/multica/server/internal/events"
-	"github.com/multica-ai/multica/server/internal/featureflags"
-	"github.com/multica-ai/multica/server/internal/inbox"
-	"github.com/multica-ai/multica/server/internal/issuestatus"
-	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
-	"github.com/multica-ai/multica/server/internal/realtime"
-	"github.com/multica-ai/multica/server/internal/runtimeapps"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/dbid"
-	"github.com/multica-ai/multica/server/pkg/featureflag"
-	"github.com/multica-ai/multica/server/pkg/protocol"
-	"github.com/multica-ai/multica/server/pkg/redact"
-	"github.com/multica-ai/multica/server/pkg/skillbundle"
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/attribution"
+	"github.com/marvis-ai/marvis/server/internal/chattitle"
+	"github.com/marvis-ai/marvis/server/internal/entitlement"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/marvis-ai/marvis/server/internal/featureflags"
+	"github.com/marvis-ai/marvis/server/internal/inbox"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/marvis-ai/marvis/server/internal/runtimeapps"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/dbid"
+	"github.com/marvis-ai/marvis/server/pkg/featureflag"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/pkg/redact"
+	"github.com/marvis-ai/marvis/server/pkg/skillbundle"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 type TaskService struct {
@@ -70,14 +70,14 @@ type TaskService struct {
 	// epic, MUL-3721) — the integration's "current user's connected apps
 	// → MCP session URL" hook called from each Enqueue* path. Optional: a
 	// nil ComposioOverlayBuilder turns the overlay step into a no-op so
-	// every Multica deployment that hasn't enabled Composio behaves
+	// every Marvis deployment that hasn't enabled Composio behaves
 	// exactly as before. Wired in router.go after composiointeg.NewService
 	// succeeds; the concrete type is *composio.Service.
 	Composio ComposioOverlayBuilder
 	// QuickActions generates chat follow-up suggestions through the
 	// server-internal LLM layer. Optional: nil (or a disabled client) turns the
 	// whole feature off — no pending marker, no pills — which is the expected
-	// state for a self-hosted deployment with no MULTICA_LLM_* configuration.
+	// state for a self-hosted deployment with no MARVIS_LLM_* configuration.
 	// Wired in router.go from the same *llm.Client that backs chat auto-titling.
 	QuickActions ChatQuickActionsLLM
 	// quickActionsInFlight (chat session id -> struct{}{}) and
@@ -1124,7 +1124,7 @@ func taskErrorType(reason string) string {
 
 // EnqueueTaskForIssue creates a queued task for an agent-assigned issue.
 // No context snapshot is stored — the agent fetches all data it needs at
-// runtime via the multica CLI.
+// runtime via the marvis CLI.
 func (s *TaskService) EnqueueTaskForIssue(ctx context.Context, issue db.Issue, triggerCommentID ...pgtype.UUID) (db.AgentTaskQueue, error) {
 	var commentID pgtype.UUID
 	if len(triggerCommentID) > 0 {
@@ -1558,7 +1558,7 @@ const QuickCreateContextType = "quick_create"
 // EnqueueQuickCreateTask creates a queued task that has no issue / chat /
 // autopilot link — the user's natural-language prompt is stored in the
 // task's context JSONB and the agent is expected to translate it into a
-// `multica issue create` call. Pre-validates that the agent is reachable
+// `marvis issue create` call. Pre-validates that the agent is reachable
 // (not archived, has a runtime) so the API can reject up-front rather than
 // queue a task no one will ever claim.
 //
@@ -1819,7 +1819,7 @@ var ErrChatTaskAgentNoRuntime = errors.New("chat task: agent has no runtime")
 var ErrChatQuickActionsNoTurn = errors.New("chat quick actions: no assistant turn to regenerate")
 
 // ErrChatQuickActionsUnavailable signals that the deployment has no LLM layer
-// configured (no MULTICA_LLM_API_KEY / MULTICA_LLM_BASE_URL), so suggestions
+// configured (no MARVIS_LLM_API_KEY / MARVIS_LLM_BASE_URL), so suggestions
 // cannot be generated at all. Automatic generation degrades silently in that
 // case; an explicit refresh gets this error so the client can say why nothing
 // happened.
@@ -2622,7 +2622,7 @@ func (s *TaskService) OpenMikaOnboardingChat(ctx context.Context, session db.Cha
 //
 // Before #1587 this path was "cancel rows and return", which left each affected
 // agent stuck at status="working" indefinitely, requiring a manual
-// `multica agent update <id> --status idle` to unwedge. It now reconciles agent
+// `marvis agent update <id> --status idle` to unwedge. It now reconciles agent
 // status and broadcasts task:cancelled, matching CancelTask and RerunIssue.
 func (s *TaskService) CancelTasksForIssue(ctx context.Context, issueID pgtype.UUID) error {
 	var cancelled []db.AgentTaskQueue
@@ -3229,7 +3229,7 @@ func (s *TaskService) finalizeCancelledChatMessage(ctx context.Context, task db.
 		restorable := !hasMessages
 		if restorable {
 			// Channel-ingested user messages are the durable record of what
-			// the platform sender wrote — the sender has no Multica composer
+			// the platform sender wrote — the sender has no Marvis composer
 			// to restore a draft into. The gate is the immutable per-message
 			// channel_ingested stamp, NOT the channel_chat_session_binding
 			// row: archiving a session or rebinding an installation deletes
@@ -5824,7 +5824,7 @@ func (s *TaskService) RerunIssue(ctx context.Context, issueID pgtype.UUID, sourc
 	// active run reaches a terminal state. Rerun used to cancel these too, so
 	// asking an agent for another pass silently killed the pass it was still
 	// working on; interrupting an in-flight run is what CancelTask /
-	// `multica issue cancel-task` is for.
+	// `marvis issue cancel-task` is for.
 	clearPendingSlot := func() int {
 		var cancelled []db.AgentTaskQueue
 		// Atomic with the cancel: a pending coordinator task can already hold a
@@ -7620,7 +7620,7 @@ func (s *TaskService) AutoUnresolveThreadOnReply(ctx context.Context, parent *db
 		return
 	}
 	defer tx.Rollback(ctx)
-	_, err = tx.Exec(ctx, `SELECT set_config('multica.actor_type',$1,true),set_config('multica.actor_id',$2,true),set_config('multica.source_task_id',$3,true)`, actorType, actorID, util.UUIDToString(sourceTaskID))
+	_, err = tx.Exec(ctx, `SELECT set_config('marvis.actor_type',$1,true),set_config('marvis.actor_id',$2,true),set_config('marvis.source_task_id',$3,true)`, actorType, actorID, util.UUIDToString(sourceTaskID))
 	if err != nil {
 		slog.Warn("auto-unresolve source attribution failed", "error", err)
 		return
@@ -7848,7 +7848,7 @@ const quickCreateOversizedFailureDetail = "Quick create failed, but the agent's 
 
 // quickCreateFailureDetail extracts a user-facing failure reason from a
 // quick-create task's final output. The quick-create prompt instructs the agent
-// to exit with the CLI error as its only output when `multica issue create`
+// to exit with the CLI error as its only output when `marvis issue create`
 // fails, so this normally carries the real reason (e.g. an active-duplicate
 // message naming the existing issue). Returns "" when there is no usable output
 // so the caller falls back to a generic message; redaction is applied by
@@ -7873,7 +7873,7 @@ func quickCreateFailureDetail(result []byte) string {
 // notifyQuickCreateCompleted writes a success inbox notification to the
 // requester pointing at the issue the agent just created. The issue is
 // stamped with origin_type=quick_create + origin_id=<task_id> by the
-// daemon-injected MULTICA_QUICK_CREATE_TASK_ID env var, so this lookup is
+// daemon-injected MARVIS_QUICK_CREATE_TASK_ID env var, so this lookup is
 // deterministic — robust against the same agent creating other issues in
 // parallel (e.g. assignment task running while max_concurrent_tasks > 1
 // permits another quick-create alongside it).

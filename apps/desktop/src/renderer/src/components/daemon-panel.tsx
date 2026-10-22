@@ -15,18 +15,18 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { truncateWithEllipsis } from "@multica/core/utils";
-import { cn } from "@multica/ui/lib/utils";
-import { copyText } from "@multica/ui/lib/clipboard";
-import { Button } from "@multica/ui/components/ui/button";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { truncateWithEllipsis } from "@marvis/core/utils";
+import { cn } from "@marvis/ui/lib/utils";
+import { copyText } from "@marvis/ui/lib/clipboard";
+import { Button } from "@marvis/ui/components/ui/button";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import { toast } from "sonner";
-import { useT } from "@multica/views/i18n";
+import { useT } from "@marvis/views/i18n";
 import type { DaemonStatus } from "../../../shared/daemon-types";
 import {
   DAEMON_STATE_COLORS,

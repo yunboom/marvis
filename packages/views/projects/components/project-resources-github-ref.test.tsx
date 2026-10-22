@@ -13,7 +13,7 @@ const PINNED = {
   workspace_id: "workspace-1",
   resource_type: "github_repo",
   resource_ref: {
-    url: "https://github.com/multica-ai/multica",
+    url: "https://github.com/marvis-ai/marvis",
     ref: "release/2026-09",
   },
   // A custom name, which is what used to hide the ref: the row rendered
@@ -26,17 +26,17 @@ const PINNED = {
 };
 
 const AVAILABLE_REPO = {
-  url: "https://github.com/multica-ai/api",
+  url: "https://github.com/marvis-ai/api",
   description: "API and daemon runtime",
 };
 
 const ATTACHABLE_REPO = {
-  url: "https://github.com/multica-ai/daemon",
+  url: "https://github.com/marvis-ai/daemon",
   description: "Background task runner",
 };
 
 const PINNED_REPO = {
-  url: "https://github.com/multica-ai/multica",
+  url: "https://github.com/marvis-ai/marvis",
   description: "The main monorepo",
 };
 
@@ -62,23 +62,23 @@ vi.mock("@tanstack/react-query", () => ({
   queryOptions: (options: unknown) => options,
 }));
 
-vi.mock("@multica/core/projects", () => ({
+vi.mock("@marvis/core/projects", () => ({
   projectResourcesOptions: () => ({ queryKey: ["project-resources"], queryFn: vi.fn() }),
   useCreateProjectResource: () => ({ mutateAsync: createMock, isPending: false }),
   useUpdateProjectResource: () => ({ mutateAsync: updateMock }),
   useDeleteProjectResource: () => ({ mutateAsync: vi.fn() }),
 }));
 
-vi.mock("@multica/core/config", () => ({
+vi.mock("@marvis/core/config", () => ({
   useConfigStore: (selector: (state: { localWorktreeSupported: boolean }) => unknown) =>
     selector({ localWorktreeSupported: true }),
 }));
-vi.mock("@multica/core/runtimes", () => ({
+vi.mock("@marvis/core/runtimes", () => ({
   runtimeListOptions: () => ({ queryKey: ["runtimes"], queryFn: vi.fn() }),
   runtimeAdvertisesLocalWorktree: () => true,
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
+vi.mock("@marvis/core/paths", () => ({
   useCurrentWorkspace: () => ({
     id: "workspace-1",
     slug: "ws",
@@ -112,13 +112,13 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
 
   it("shows a live workspace repository description and keeps it out of the attached resource label", async () => {
     renderWithI18n(<ProjectResourcesSection projectId="p1" />);
-    expect(screen.getAllByText("multica-ai/api")).not.toHaveLength(0);
+    expect(screen.getAllByText("marvis-ai/api")).not.toHaveLength(0);
     expect(screen.getByText(AVAILABLE_REPO.description)).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: /add resource/i }));
     expect(screen.getByText(ATTACHABLE_REPO.description)).toBeTruthy();
     fireEvent.click(
-      screen.getByRole("button", { name: /multica-ai\/daemon/i }),
+      screen.getByRole("button", { name: /marvis-ai\/daemon/i }),
     );
 
     await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
@@ -146,7 +146,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
     // deep-merging, so an edit that sends only `ref` is a 400 at best and
     // drops the repository at worst.
     expect(payload.data.resource_ref).toEqual({
-      url: "https://github.com/multica-ai/multica",
+      url: "https://github.com/marvis-ai/marvis",
       ref: "release/2026-10",
     });
   });
@@ -165,7 +165,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
       data: { resource_ref: Record<string, unknown> };
     };
     expect(payload.data.resource_ref).toEqual({
-      url: "https://github.com/multica-ai/multica",
+      url: "https://github.com/marvis-ai/marvis",
       ref: undefined,
     });
   });
@@ -191,7 +191,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
     fireEvent.click(screen.getByRole("button", { name: /add resource/i }));
     const urlInput = screen.getByLabelText(/attach a github repo/i);
     fireEvent.change(urlInput, {
-      target: { value: "https://github.com/multica-ai/other" },
+      target: { value: "https://github.com/marvis-ai/other" },
     });
     fireEvent.change(screen.getByLabelText(/starting branch/i), {
       target: { value: "main" },
@@ -201,7 +201,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
     await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
     expect(createMock.mock.calls[0]?.[0]).toEqual({
       resource_type: "github_repo",
-      resource_ref: { url: "https://github.com/multica-ai/other", ref: "main" },
+      resource_ref: { url: "https://github.com/marvis-ai/other", ref: "main" },
     });
   });
 
@@ -212,12 +212,12 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
     // What someone copies out of the address bar when they want a branch.
     // Stored whole, this is a clone URL that does not exist.
     fireEvent.change(screen.getByLabelText(/attach a github repo/i), {
-      target: { value: "https://github.com/multica-ai/other/tree/release/2026-09" },
+      target: { value: "https://github.com/marvis-ai/other/tree/release/2026-09" },
     });
 
     const urlInput = screen.getByLabelText(/attach a github repo/i) as HTMLInputElement;
     const refInput = screen.getByLabelText(/starting branch/i) as HTMLInputElement;
-    expect(urlInput.value).toBe("https://github.com/multica-ai/other");
+    expect(urlInput.value).toBe("https://github.com/marvis-ai/other");
     expect(refInput.value).toBe("release/2026-09");
 
     fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
@@ -225,7 +225,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
     expect(createMock.mock.calls[0]?.[0]).toEqual({
       resource_type: "github_repo",
       resource_ref: {
-        url: "https://github.com/multica-ai/other",
+        url: "https://github.com/marvis-ai/other",
         ref: "release/2026-09",
       },
     });
@@ -241,22 +241,22 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
     const refInput = () => screen.getByLabelText(/starting branch/i) as HTMLInputElement;
 
     fireEvent.change(urlInput(), {
-      target: { value: "https://github.com/multica-ai/one/tree/release/2026-09" },
+      target: { value: "https://github.com/marvis-ai/one/tree/release/2026-09" },
     });
-    expect(urlInput().value).toBe("https://github.com/multica-ai/one");
+    expect(urlInput().value).toBe("https://github.com/marvis-ai/one");
     expect(refInput().value).toBe("release/2026-09");
 
     fireEvent.change(urlInput(), {
-      target: { value: "https://github.com/multica-ai/two/tree/main" },
+      target: { value: "https://github.com/marvis-ai/two/tree/main" },
     });
-    expect(urlInput().value).toBe("https://github.com/multica-ai/two");
+    expect(urlInput().value).toBe("https://github.com/marvis-ai/two");
     expect(refInput().value).toBe("main");
 
     fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
     await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
     expect(createMock.mock.calls[0]?.[0]).toEqual({
       resource_type: "github_repo",
-      resource_ref: { url: "https://github.com/multica-ai/two", ref: "main" },
+      resource_ref: { url: "https://github.com/marvis-ai/two", ref: "main" },
     });
   });
 
@@ -265,14 +265,14 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /add resource/i }));
     fireEvent.change(screen.getByLabelText(/attach a github repo/i), {
-      target: { value: "https://github.com/multica-ai/other" },
+      target: { value: "https://github.com/marvis-ai/other" },
     });
     fireEvent.click(screen.getByRole("button", { name: /^add$/i }));
 
     await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
     expect(createMock.mock.calls[0]?.[0]).toEqual({
       resource_type: "github_repo",
-      resource_ref: { url: "https://github.com/multica-ai/other" },
+      resource_ref: { url: "https://github.com/marvis-ai/other" },
     });
   });
 
@@ -281,7 +281,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /add resource/i }));
     fireEvent.change(screen.getByLabelText(/attach a github repo/i), {
-      target: { value: "https://github.com/multica-ai/other" },
+      target: { value: "https://github.com/marvis-ai/other" },
     });
     fireEvent.change(screen.getByLabelText(/starting branch/i), {
       target: { value: "bad ref" },
@@ -303,7 +303,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
     expect(within(pinnedRow).queryByText("release/2026-09")).toBeTruthy();
     expect(within(pinnedRow).queryByText(/default branch/i)).toBeNull();
 
-    const plainRow = screen.getAllByText("multica-ai/api")[0]?.closest(".group") as HTMLElement;
+    const plainRow = screen.getAllByText("marvis-ai/api")[0]?.closest(".group") as HTMLElement;
     expect(within(plainRow).queryByText(/default branch/i)).toBeTruthy();
     expect(within(plainRow).queryByText("release/2026-09")).toBeNull();
   });

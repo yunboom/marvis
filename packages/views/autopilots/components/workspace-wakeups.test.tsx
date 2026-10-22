@@ -3,12 +3,12 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { api } from "@multica/core/api";
+import { api } from "@marvis/core/api";
 import type {
   Issue,
   WorkspaceWakeup,
   WorkspaceWakeupFilters,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { WorkspaceWakeupCreate, WorkspaceWakeups } from "./workspace-wakeups";
 
@@ -18,7 +18,7 @@ vi.mock("../../issues/components/wakeup-condition-names", () => ({
 vi.mock("../../common/use-viewing-timezone", () => ({
   useViewingTimezone: () => "UTC",
 }));
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     listWorkspaceWakeups: vi.fn(),
     disableIssueWakeup: vi.fn(),
@@ -29,8 +29,8 @@ vi.mock("@multica/core/api", () => ({
   },
 }));
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws" }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws" }));
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     issueDetail: (id: string) => `/ws/issues/${id}`,
   }),

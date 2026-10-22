@@ -4,22 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@multica/ui/components/ui/button";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
-} from "@multica/ui/components/ui/resizable";
-import { useIsCompact } from "@multica/ui/hooks/use-mobile";
-import { useRequiredWorkspaceSlug, useWorkspacePaths } from "@multica/core/paths";
-import { getCurrentSlug } from "@multica/core/platform";
-import { useChatStore } from "@multica/core/chat";
-import { chatQuickActionsPendingOptions } from "@multica/core/chat/queries";
-import { useRegenerateChatQuickActions } from "@multica/core/chat/mutations";
-import { useQuickActionsPendingTimeout } from "@multica/core/chat/use-quick-actions-pending-timeout";
+} from "@marvis/ui/components/ui/resizable";
+import { useIsCompact } from "@marvis/ui/hooks/use-mobile";
+import { useRequiredWorkspaceSlug, useWorkspacePaths } from "@marvis/core/paths";
+import { getCurrentSlug } from "@marvis/core/platform";
+import { useChatStore } from "@marvis/core/chat";
+import { chatQuickActionsPendingOptions } from "@marvis/core/chat/queries";
+import { useRegenerateChatQuickActions } from "@marvis/core/chat/mutations";
+import { useQuickActionsPendingTimeout } from "@marvis/core/chat/use-quick-actions-pending-timeout";
 import { useQuickActionsFailureToast } from "./components/use-quick-actions-failure-toast";
 import { useQuery } from "@tanstack/react-query";
-import type { Agent, ChatSession } from "@multica/core/types";
+import type { Agent, ChatSession } from "@marvis/core/types";
 import { PageHeader } from "../layout/page-header";
 import { useNavigation } from "../navigation";
 import { useT } from "../i18n";
@@ -129,7 +129,7 @@ export function ChatPage() {
   }, [isCurrentChatRoute, workspaceSlug, c.activeSessionId]);
 
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: "multica_chat_layout",
+    id: "marvis_chat_layout",
   });
 
   // `?agent=` intent bookkeeping. The ref holds the param value already

@@ -35,8 +35,8 @@ import Animated, {
 import type {
   ChatPendingTask,
   TaskMessagePayload,
-} from "@multica/core/types";
-import type { AgentAvailability } from "@multica/core/agents";
+} from "@marvis/core/types";
+import type { AgentAvailability } from "@marvis/core/agents";
 import { Text } from "@/components/ui/text";
 import { formatElapsedSecs } from "@/lib/format-elapsed";
 import { useColorScheme } from "@/lib/use-color-scheme";

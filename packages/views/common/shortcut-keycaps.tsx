@@ -21,9 +21,9 @@ import {
   type ShortcutActionId,
   type ShortcutChord,
   type ShortcutPlatform,
-} from "@multica/core/shortcuts";
-import { Kbd } from "@multica/ui/components/ui/kbd";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/shortcuts";
+import { Kbd } from "@marvis/ui/components/ui/kbd";
+import { cn } from "@marvis/ui/lib/utils";
 
 type ShortcutToken = {
   id: string;

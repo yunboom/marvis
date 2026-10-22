@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // MUL-6951. An autopilot run carries the human who armed its trigger as the run's
@@ -328,7 +328,7 @@ func TestCreateIssue_AutopilotRunAssignsPrivateAgent(t *testing.T) {
 			// parent even though the gate no longer needs it.
 			workerID, ownerID, _ := privateAgentTestFixture(t)
 			fx := newRunOnlyAutopilotFixture(t, workerID, ownerID)
-			foreignUserID := dbfx.User(t, "MUL-6951 Foreign", fmt.Sprintf("mul6951-foreign-%d@multica.test", runOnlyFixtureSeq.Add(1)))
+			foreignUserID := dbfx.User(t, "MUL-6951 Foreign", fmt.Sprintf("mul6951-foreign-%d@marvis.test", runOnlyFixtureSeq.Add(1)))
 			foreignWorkspaceID := dbfx.Workspace(t, "MUL-6951 Foreign WS", fmt.Sprintf("mul6951-foreign-ws-%d", runOnlyFixtureSeq.Add(1)))
 			var foreignIssueID string
 			dbfx.QueryRow(t, `

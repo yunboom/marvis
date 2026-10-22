@@ -14,7 +14,7 @@ import {
   type IssuePeekActions,
 } from "../surface/peek-context";
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     issueDetail: (id: string) => `/acme/issues/${id}`,
   }),

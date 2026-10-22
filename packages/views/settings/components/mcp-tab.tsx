@@ -13,21 +13,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { Badge } from "@multica/ui/components/ui/badge";
-import { Button } from "@multica/ui/components/ui/button";
-import { useCurrentWorkspace } from "@multica/core/paths";
-import { useCurrentMember } from "@multica/core/permissions";
-import { useFeatureEnabled } from "@multica/core/config";
-import { PLUGINS_V1_FLAG } from "@multica/core/feature-flags";
-import { cn } from "@multica/ui/lib/utils";
-import { workspaceMcpServersOptions } from "@multica/core/workspace/queries";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { Badge } from "@marvis/ui/components/ui/badge";
+import { Button } from "@marvis/ui/components/ui/button";
+import { useCurrentWorkspace } from "@marvis/core/paths";
+import { useCurrentMember } from "@marvis/core/permissions";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { PLUGINS_V1_FLAG } from "@marvis/core/feature-flags";
+import { cn } from "@marvis/ui/lib/utils";
+import { workspaceMcpServersOptions } from "@marvis/core/workspace/queries";
 import {
   useCreateWorkspaceMcpServer,
   useDeleteWorkspaceMcpServer,
   useUpdateWorkspaceMcpServer,
-} from "@multica/core/workspace/mutations";
-import type { WorkspaceMcpServer } from "@multica/core/types";
+} from "@marvis/core/workspace/mutations";
+import type { WorkspaceMcpServer } from "@marvis/core/types";
 import { McpServerDialog } from "../../agents/components/tabs/mcp-server-dialog";
 import type { ManagedMcpServer } from "../../agents/components/tabs/mcp-config-model";
 import { McpServerRow } from "../../common/mcp-server-row";

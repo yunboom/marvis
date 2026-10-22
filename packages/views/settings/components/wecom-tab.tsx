@@ -5,18 +5,18 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronRight, Trash2 } from "lucide-react";
 import { WecomMark } from "./wecom-mark";
-import { cn } from "@multica/ui/lib/utils";
-import { Button } from "@multica/ui/components/ui/button";
-import { Card, CardContent } from "@multica/ui/components/ui/card";
+import { cn } from "@marvis/ui/lib/utils";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Card, CardContent } from "@marvis/ui/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Input } from "@multica/ui/components/ui/input";
-import { Label } from "@multica/ui/components/ui/label";
+} from "@marvis/ui/components/ui/dialog";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Label } from "@marvis/ui/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,18 +26,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { memberListOptions } from "@multica/core/workspace/queries";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { wecomInstallationsOptions, wecomKeys } from "@multica/core/wecom";
-import { errorCode } from "@multica/core/api";
-import { api } from "@multica/core/api";
-import type { WecomInstallation } from "@multica/core/types";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { memberListOptions } from "@marvis/core/workspace/queries";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { wecomInstallationsOptions, wecomKeys } from "@marvis/core/wecom";
+import { errorCode } from "@marvis/core/api";
+import { api } from "@marvis/core/api";
+import type { WecomInstallation } from "@marvis/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { useT } from "../../i18n";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 
 // WecomTab is the workspace settings panel for WeCom smart-bot
 // installations. Listing is member-visible; the disconnect action is
@@ -45,7 +45,7 @@ import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
 // admins to match).
 //
 // Adding a new installation flows through the Agent detail page: the install
-// path is per-agent (each Multica agent gets exactly one bot — the
+// path is per-agent (each Marvis agent gets exactly one bot — the
 // (workspace_id, agent_id, channel_type) UNIQUE in channel_installation), so
 // asking the user to pick an agent here would re-create that page's picker.
 export function WecomTab() {
@@ -96,7 +96,7 @@ export function WecomTab() {
             <p className="text-caption text-muted-foreground">
               {t(($) => $.wecom.not_enabled_description_prefix)}{" "}
               <code className="rounded-xs bg-muted px-1 py-0.5 text-micro">
-                MULTICA_WECOM_SECRET_KEY
+                MARVIS_WECOM_SECRET_KEY
               </code>{" "}
               {t(($) => $.wecom.not_enabled_description_suffix)}{" "}
               {t(($) => $.wecom.not_enabled_self_host_hint)}

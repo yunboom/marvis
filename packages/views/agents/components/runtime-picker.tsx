@@ -7,21 +7,21 @@ import { ActorAvatar } from "../../common/actor-avatar";
 import {
   isRuntimeUsableForUser,
   runtimeDisplayName,
-} from "@multica/core/runtimes";
-import type { MemberWithUser, RuntimeDevice } from "@multica/core/types";
+} from "@marvis/core/runtimes";
+import type { MemberWithUser, RuntimeDevice } from "@marvis/core/types";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from "@multica/ui/components/ui/popover";
-import { Label } from "@multica/ui/components/ui/label";
+} from "@marvis/ui/components/ui/popover";
+import { Label } from "@marvis/ui/components/ui/label";
 import { useT } from "../../i18n";
 import {
   buildRuntimeMachines,
   filterRuntimeMachines,
   runtimeRowLabel,
 } from "../../runtimes/components/runtime-machines";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 
 export type RuntimeFilter = "mine" | "all";
 

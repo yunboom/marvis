@@ -2,11 +2,11 @@ import { StrictMode, type ReactNode } from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { I18nProvider } from "@multica/core/i18n/react";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enSettings from "../../locales/en/settings.json";
 
-// ApiError is re-exported from @multica/core/api; we mock the api module
+// ApiError is re-exported from @marvis/core/api; we mock the api module
 // itself but still need a real ApiError class so `e instanceof ApiError`
 // in the polling catch behaves the way it does at runtime.
 const ApiError = vi.hoisted(() => {
@@ -59,22 +59,22 @@ vi.mock("@tanstack/react-query", () => ({
   queryOptions: <T,>(opts: T) => opts,
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   memberListOptions: () => ({ queryKey: ["members"], queryFn: vi.fn() }),
 }));
 
 // useActorName is the workspace-wide identity helper. The Installation
-// row uses it to render the Multica agent's name in place of the raw
+// row uses it to render the Marvis agent's name in place of the raw
 // Lark app_id. Stubbing it here decouples LarkTab tests from the agent
 // list query plumbing.
 const agentNameByIdRef = vi.hoisted(() => ({
   current: new Map<string, string>(),
 }));
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({
     getAgentName: (agentId: string) =>
       agentNameByIdRef.current.get(agentId) ?? "Unknown Agent",
@@ -96,7 +96,7 @@ vi.mock("../../common/actor-avatar", () => ({
   ),
 }));
 
-vi.mock("@multica/core/lark", () => ({
+vi.mock("@marvis/core/lark", () => ({
   larkInstallationsOptions: () => ({
     queryKey: ["lark", "installations"],
     queryFn: vi.fn(),
@@ -104,7 +104,7 @@ vi.mock("@multica/core/lark", () => ({
   larkKeys: { installations: (wsId: string) => ["lark", "installations", wsId] },
 }));
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     beginLarkInstall: mockBeginInstall,
     getLarkInstallStatus: mockGetStatus,
@@ -113,7 +113,7 @@ vi.mock("@multica/core/api", () => ({
   ApiError,
 }));
 
-vi.mock("@multica/core/auth", () => {
+vi.mock("@marvis/core/auth", () => {
   const useAuthStore = Object.assign(
     (sel?: (s: { user: { id: string } }) => unknown) =>
       sel ? sel({ user: { id: "user-1" } }) : { user: { id: "user-1" } },
@@ -494,7 +494,7 @@ describe("LarkAgentBotConnectedBadge (Unbind / Disconnect)", () => {
     expect(screen.getByText(/long connection/i)).toBeTruthy();
     const docs = screen.getByRole("link", { name: /Troubleshooting/i });
     expect(docs.getAttribute("href")).toBe(
-      "https://multica.ai/docs/lark-bot-integration",
+      "https://marvis.ai/docs/lark-bot-integration",
     );
   });
 
@@ -724,13 +724,13 @@ describe("LarkInstallDialog (polling terminal errors)", () => {
 
 // The Connected bots list used to surface Lark's raw cli_… app_id and
 // ou_… bot_open_id, which are meaningless to product users. The row now
-// renders the Multica agent's avatar + name (joined via inst.agent_id),
+// renders the Marvis agent's avatar + name (joined via inst.agent_id),
 // since the binding is 1:1 with an Agent. These tests pin that identity
 // rendering so the row never regresses to leaking the cli_ prefix.
 describe("LarkTab connected bots list (agent identity rendering)", () => {
   beforeEach(resetFixtures);
 
-  it("renders the Multica agent's name and avatar instead of the raw Lark app_id / bot_open_id", () => {
+  it("renders the Marvis agent's name and avatar instead of the raw Lark app_id / bot_open_id", () => {
     agentNameByIdRef.current = new Map([["agent-1", "Bohan's Helper"]]);
     installationsRef.current.installations = [
       {

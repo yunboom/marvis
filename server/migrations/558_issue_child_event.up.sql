@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS issue_child_event (
 CREATE OR REPLACE FUNCTION record_issue_child_event() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE old_closed boolean; new_closed boolean; source uuid;
 BEGIN
- source := NULLIF(current_setting('multica.source_task_id',true),'')::uuid;
+ source := NULLIF(current_setting('marvis.source_task_id',true),'')::uuid;
  IF TG_OP='INSERT' THEN
   INSERT INTO issue_child_event(workspace_id,parent_id,child_id,kind,source_task_id) VALUES(NEW.workspace_id,NEW.parent_issue_id,NEW.id,'attached',source);
   RETURN NULL;

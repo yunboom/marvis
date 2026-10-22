@@ -25,11 +25,11 @@ import type {
   PurchaseWorkspaceSeatsRequest,
   ShareLink,
   WorkspaceSeatPurchasePreview,
-} from "@multica/core/types";
-import { Input } from "@multica/ui/components/ui/input";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Label } from "@multica/ui/components/ui/label";
+} from "@marvis/core/types";
+import { Input } from "@marvis/ui/components/ui/input";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Label } from "@marvis/ui/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -37,8 +37,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Badge } from "@multica/ui/components/ui/badge";
+} from "@marvis/ui/components/ui/dialog";
+import { Badge } from "@marvis/ui/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -48,14 +48,14 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@multica/ui/components/ui/alert-dialog";
+} from "@marvis/ui/components/ui/alert-dialog";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@multica/ui/components/ui/select";
+} from "@marvis/ui/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -65,26 +65,26 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from "@multica/ui/components/ui/dropdown-menu";
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@multica/core/auth";
+import { useAuthStore } from "@marvis/core/auth";
 import {
   usePreviewWorkspaceSeatPurchase,
   usePurchaseWorkspaceSeats,
   workspaceSubscriptionSummaryOptions,
-} from "@multica/core/billing";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useFeatureEnabled } from "@multica/core/config";
-import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@multica/core/feature-flags";
-import { useCurrentWorkspace } from "@multica/core/paths";
+} from "@marvis/core/billing";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@marvis/core/feature-flags";
+import { useCurrentWorkspace } from "@marvis/core/paths";
 import {
   invitationListOptions,
   memberListOptions,
   shareLinkListOptions,
   workspaceKeys,
-} from "@multica/core/workspace/queries";
-import { api, errorCode } from "@multica/core/api";
+} from "@marvis/core/workspace/queries";
+import { api, errorCode } from "@marvis/core/api";
 import { useLocale, useT } from "../../i18n";
 import {
   SettingsCard,

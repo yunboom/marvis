@@ -13,7 +13,7 @@ import {
   viewStoreSlice,
 } from "./view-store";
 
-export const ISSUE_SURFACE_VIEW_STORAGE_KEY = "multica_issue_surface_views";
+export const ISSUE_SURFACE_VIEW_STORAGE_KEY = "marvis_issue_surface_views";
 
 type PersistedIssueViewState = ReturnType<
   ReturnType<typeof viewStorePersistOptions>["partialize"]

@@ -1,8 +1,8 @@
 // @vitest-environment node
 
 import { describe, expect, it } from "vitest";
-import { SUPPORTED_LOCALES } from "@multica/core/i18n";
-import { createI18n } from "@multica/core/i18n/react";
+import { SUPPORTED_LOCALES } from "@marvis/core/i18n";
+import { createI18n } from "@marvis/core/i18n/react";
 import enAgents from "./en/agents.json";
 import enSettings from "./en/settings.json";
 import { RESOURCES } from "./index";

@@ -2,13 +2,13 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AnimatePresence } from "motion/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { chatKeys } from "@multica/core/chat/queries";
-import type { ChatMessage } from "@multica/core/types";
+import { chatKeys } from "@marvis/core/chat/queries";
+import type { ChatMessage } from "@marvis/core/types";
 import { ChatWindowMessages } from "./chat-window-messages";
 
 const fetchMessages = vi.hoisted(() => vi.fn());
-vi.mock("@multica/core/api", () => ({ api: { listChatMessagesPage: fetchMessages } }));
-vi.mock("@multica/core/chat/mutations", () => ({
+vi.mock("@marvis/core/api", () => ({ api: { listChatMessagesPage: fetchMessages } }));
+vi.mock("@marvis/core/chat/mutations", () => ({
   useRegenerateChatQuickActions: () => ({ mutateAsync: vi.fn() }),
 }));
 vi.mock("./chat-message-list", () => ({

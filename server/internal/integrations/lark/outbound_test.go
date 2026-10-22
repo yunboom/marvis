@@ -11,9 +11,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/events"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/internal/events"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 type fakePatcherQueries struct {
@@ -1084,7 +1084,7 @@ func TestPatcherClearsTypingStateWhenTaskIsNotChannelIngested(t *testing.T) {
 		Type:          protocol.EventChatDone,
 		TaskID:        uuidString(taskID),
 		ChatSessionID: uuidString(q.binding.ChatSessionID),
-		Payload:       protocol.ChatDonePayload{Content: "answered in Multica only"},
+		Payload:       protocol.ChatDonePayload{Content: "answered in Marvis only"},
 	})
 
 	if len(typingAPI.deleteCalled) != 1 || typingAPI.deleteCalled[0].reactionID != "reaction-web-turn" {
@@ -1273,14 +1273,14 @@ func TestPatcherMentionsEachTaskOwnSender(t *testing.T) {
 
 // TestPatcherMentionsTriggeringAccountNotSiblingIdentity is the regression
 // for the identity bug the first cut of #8234 shipped with. That version
-// resolved the mention by looking the sender back up from the task's Multica
+// resolved the mention by looking the sender back up from the task's Marvis
 // member, which is unsound: channel_user_binding is unique on
 // (installation_id, channel_user_id) but NOT on (installation_id,
-// multica_user_id), so one member can legitimately hold two open_ids on one
+// marvis_user_id), so one member can legitimately hold two open_ids on one
 // installation — the redeem path plain-INSERTs the second — and a
 // member-keyed lookup is then free to return either.
 //
-// Here both accounts belong to the same Multica member and the SECOND one
+// Here both accounts belong to the same Marvis member and the SECOND one
 // triggers the run. The reply must mention the account that sent the
 // message, not its sibling identity. Reading the frozen sender is what makes
 // the member's other open_id unreachable from this path.
@@ -1290,7 +1290,7 @@ func TestPatcherMentionsTriggeringAccountNotSiblingIdentity(t *testing.T) {
 	taskID := uuidFromString(t, "ee998888-ee99-ee99-ee99-eeeeeeeeeeee")
 
 	// One member, two bound Feishu accounts on this installation. The task
-	// records only the shared Multica user, so the member alone cannot say
+	// records only the shared Marvis user, so the member alone cannot say
 	// which account spoke.
 	q.task = db.AgentTaskQueue{InitiatorUserID: member}
 	q.deliveriesByTask = map[string]db.ChannelTaskDelivery{

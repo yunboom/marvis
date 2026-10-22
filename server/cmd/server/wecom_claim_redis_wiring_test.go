@@ -22,7 +22,7 @@ import (
 // dedupe store is handed the right one is guarded at runtime instead, by the
 // warning NewRedisDedupe logs for a client that ignores deadlines.
 func TestClaimRedisClientHonoursContextDeadlines(t *testing.T) {
-	base := &redis.UniversalOptions{Addrs: []string{"localhost:6379"}, ClientName: "multica", ReadTimeout: 3 * time.Second}
+	base := &redis.UniversalOptions{Addrs: []string{"localhost:6379"}, ClientName: "marvis", ReadTimeout: 3 * time.Second}
 
 	claim := newClaimRedisClient(base, "wecom-claim")
 	defer claim.Close()
@@ -46,7 +46,7 @@ func TestClaimRedisClientHonoursContextDeadlines(t *testing.T) {
 	if got := claimOptions.ReadTimeout; got != base.ReadTimeout {
 		t.Fatalf("ReadTimeout = %v, want the configured %v", got, base.ReadTimeout)
 	}
-	if got := claimOptions.ClientName; got != "multica:wecom-claim" {
+	if got := claimOptions.ClientName; got != "marvis:wecom-claim" {
 		t.Fatalf("ClientName = %q, want the suffixed name", got)
 	}
 	if base.ContextTimeoutEnabled {

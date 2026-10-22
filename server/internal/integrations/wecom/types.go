@@ -9,7 +9,7 @@
 //
 // Files are delivered after the agent exits, so failures are reported to the chat
 // rather than the producing run. Community ownership and support boundaries live
-// at https://multica.ai/docs/community-maintained.
+// at https://marvis.ai/docs/community-maintained.
 package wecom
 
 import (
@@ -19,8 +19,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // TypeWecom is the channel discriminator for the WeCom smart-bot adapter.
@@ -64,7 +64,7 @@ type Installation struct {
 	SecretEncrypted []byte
 
 	// BotDisplayName is what the bot is called in a chat. A WeCom group
-	// mention arrives as literal text — "@Multica Bot /new 重新分析" — with no
+	// mention arrives as literal text — "@Marvis Bot /new 重新分析" — with no
 	// structured mention list anywhere in the payload, so recognising where
 	// the mention ends is the only way a name containing a space does not
 	// swallow the command after it.

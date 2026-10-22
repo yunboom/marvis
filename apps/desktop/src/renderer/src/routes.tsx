@@ -13,25 +13,25 @@ import {
   RuntimeSettingsPage,
 } from "./pages/runtime-detail-page";
 import { AttachmentPreviewRoute } from "./pages/attachment-preview-page";
-import { IssuesPage } from "@multica/views/issues/components";
-import { ProjectsPage } from "@multica/views/projects/components";
-import { DashboardPage } from "@multica/views/dashboard";
-import { AutopilotsPage } from "@multica/views/autopilots/components";
-import { MyIssuesPage } from "@multica/views/my-issues";
-import { SkillsPage } from "@multica/views/skills";
+import { IssuesPage } from "@marvis/views/issues/components";
+import { ProjectsPage } from "@marvis/views/projects/components";
+import { DashboardPage } from "@marvis/views/dashboard";
+import { AutopilotsPage } from "@marvis/views/autopilots/components";
+import { MyIssuesPage } from "@marvis/views/my-issues";
+import { SkillsPage } from "@marvis/views/skills";
 import { DesktopRuntimesPage } from "./components/desktop-runtimes-page";
 import { DesktopAgentsPage } from "./components/desktop-agents-page";
 import {
   AiCreateAgentPage,
   ManualCreateAgentPage,
-} from "@multica/views/agents";
+} from "@marvis/views/agents";
 import { DesktopChooseRuntimePage } from "./components/desktop-choose-runtime-page";
 import { AgentCreatedPage } from "./pages/agent-created-page";
-import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@multica/views/squads/components";
-import { InboxPage } from "@multica/views/inbox";
-import { ChatPage } from "@multica/views/chat";
-import { SettingsPage } from "@multica/views/settings";
-import { useT } from "@multica/views/i18n";
+import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@marvis/views/squads/components";
+import { InboxPage } from "@marvis/views/inbox";
+import { ChatPage } from "@marvis/views/chat";
+import { SettingsPage } from "@marvis/views/settings";
+import { useT } from "@marvis/views/i18n";
 import { Download, Server } from "lucide-react";
 import { DaemonSettingsTab } from "./components/daemon-settings-tab";
 import { UpdatesSettingsTab } from "./components/updates-settings-tab";

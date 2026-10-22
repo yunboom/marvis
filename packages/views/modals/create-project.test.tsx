@@ -5,10 +5,10 @@ import userEvent from "@testing-library/user-event";
 import { renderWithI18n } from "../test/i18n";
 
 const longRepoUrl =
-  "https://github.com/multica-ai/a-very-long-repository-name-that-needs-a-tooltip";
-const apiRepoUrl = "https://github.com/multica-ai/api";
+  "https://github.com/marvis-ai/a-very-long-repository-name-that-needs-a-tooltip";
+const apiRepoUrl = "https://github.com/marvis-ai/api";
 const apiRepoDescription = "API and daemon runtime";
-const webRepoUrl = "https://github.com/multica-ai/web";
+const webRepoUrl = "https://github.com/marvis-ai/web";
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: () => ({ data: [] }),
@@ -19,11 +19,11 @@ vi.mock("@tanstack/react-query", () => ({
 
 const createProjectMock = vi.hoisted(() => vi.fn().mockResolvedValue({ id: "p1" }));
 
-vi.mock("@multica/core/projects/mutations", () => ({
+vi.mock("@marvis/core/projects/mutations", () => ({
   useCreateProject: () => ({ mutateAsync: createProjectMock }),
 }));
 
-vi.mock("@multica/core/projects", () => ({
+vi.mock("@marvis/core/projects", () => ({
   useProjectDraftStore: (selector: (state: unknown) => unknown) =>
     selector({
       draft: {
@@ -40,11 +40,11 @@ vi.mock("@multica/core/projects", () => ({
     }),
 }));
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useCurrentWorkspace: () => ({
     id: "workspace-1",
     name: "Test Workspace",
@@ -60,12 +60,12 @@ vi.mock("@multica/core/paths", () => ({
   }),
 }));
 
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/workspace/queries", () => ({
   memberListOptions: () => ({ queryKey: ["members"], queryFn: vi.fn() }),
   agentListOptions: () => ({ queryKey: ["agents"], queryFn: vi.fn() }),
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: vi.fn() }),
 }));
 
@@ -136,13 +136,13 @@ vi.mock("../projects/components/project-due-date-picker", () => ({
   ProjectDueDatePicker: () => <button type="button">Due date</button>,
 }));
 
-vi.mock("@multica/ui/components/ui/dialog", () => ({
+vi.mock("@marvis/ui/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@multica/ui/components/ui/dropdown-menu", () => ({
+vi.mock("@marvis/ui/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -159,13 +159,13 @@ vi.mock("@multica/ui/components/ui/dropdown-menu", () => ({
   ),
 }));
 
-vi.mock("@multica/ui/components/ui/popover", () => ({
+vi.mock("@marvis/ui/components/ui/popover", () => ({
   Popover: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   PopoverTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
   PopoverContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("@multica/ui/components/ui/tooltip", () => ({
+vi.mock("@marvis/ui/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
@@ -173,7 +173,7 @@ vi.mock("@multica/ui/components/ui/tooltip", () => ({
   ),
 }));
 
-vi.mock("@multica/ui/components/ui/button", () => ({
+vi.mock("@marvis/ui/components/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -191,11 +191,11 @@ vi.mock("@multica/ui/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@multica/ui/components/common/emoji-picker", () => ({
+vi.mock("@marvis/ui/components/common/emoji-picker", () => ({
   EmojiPicker: () => null,
 }));
 
-vi.mock("@multica/ui/lib/utils", () => ({
+vi.mock("@marvis/ui/lib/utils", () => ({
   cn: (...values: Array<string | false | null | undefined>) =>
     values.filter(Boolean).join(" "),
 }));
@@ -376,16 +376,16 @@ describe("CreateProjectModal", () => {
     await user.type(screen.getByPlaceholderText(/project title/i), "Second paste");
     const urlField = screen.getByPlaceholderText(/github\.com\/owner\/repo/i);
     await user.clear(urlField);
-    await user.paste("https://github.com/multica-ai/one/tree/release/2026-09");
-    expect((urlField as HTMLInputElement).value).toBe("https://github.com/multica-ai/one");
+    await user.paste("https://github.com/marvis-ai/one/tree/release/2026-09");
+    expect((urlField as HTMLInputElement).value).toBe("https://github.com/marvis-ai/one");
     expect((screen.getByLabelText(/starting branch/i) as HTMLInputElement).value).toBe(
       "release/2026-09",
     );
 
     // Changing your mind about which repo: the whole pair is replaced.
     await user.clear(urlField);
-    await user.paste("https://github.com/multica-ai/two/tree/main");
-    expect((urlField as HTMLInputElement).value).toBe("https://github.com/multica-ai/two");
+    await user.paste("https://github.com/marvis-ai/two/tree/main");
+    expect((urlField as HTMLInputElement).value).toBe("https://github.com/marvis-ai/two");
     expect((screen.getByLabelText(/starting branch/i) as HTMLInputElement).value).toBe("main");
 
     await user.click(screen.getByRole("button", { name: /^add$/i }));
@@ -395,7 +395,7 @@ describe("CreateProjectModal", () => {
       resources?: Array<{ resource_ref: Record<string, unknown> }>;
     };
     expect(payload.resources?.[0]?.resource_ref).toEqual({
-      url: "https://github.com/multica-ai/two",
+      url: "https://github.com/marvis-ai/two",
       ref: "main",
     });
   });

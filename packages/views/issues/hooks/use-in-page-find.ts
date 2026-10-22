@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getShortcut, shortcutMatchesEvent } from "@multica/core/shortcuts";
-import { isImeComposing } from "@multica/core/utils";
+import { getShortcut, shortcutMatchesEvent } from "@marvis/core/shortcuts";
+import { isImeComposing } from "@marvis/core/utils";
 
 // In-page find (Cmd/Ctrl+F) for the issue detail page.
 //
@@ -14,8 +14,8 @@ import { isImeComposing } from "@multica/core/utils";
 // over React-rendered markdown AND the contenteditable title/description
 // editors without fighting ProseMirror.
 
-const HIGHLIGHT_NAME = "multica-find";
-const ACTIVE_HIGHLIGHT_NAME = "multica-find-active";
+const HIGHLIGHT_NAME = "marvis-find";
+const ACTIVE_HIGHLIGHT_NAME = "marvis-find-active";
 
 // Feature detection, evaluated lazily per call site. On browsers without the
 // CSS Custom Highlight API the bar still opens and navigates, it just paints

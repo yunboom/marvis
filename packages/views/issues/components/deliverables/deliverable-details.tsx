@@ -5,18 +5,18 @@ import { Check, ChevronDown, FileText, ImageIcon, MessageSquareText } from "luci
 import {
   findDeliverableVersion,
   type DeliverableFile,
-} from "@multica/core/attachments/deliverables";
-import type { ImageSequenceItem } from "@multica/core/attachments/image-sequence";
-import type { Attachment, TimelineEntry } from "@multica/core/types";
-import { useActorName } from "@multica/core/workspace/hooks";
+} from "@marvis/core/attachments/deliverables";
+import type { ImageSequenceItem } from "@marvis/core/attachments/image-sequence";
+import type { Attachment, TimelineEntry } from "@marvis/core/types";
+import { useActorName } from "@marvis/core/workspace/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { cn } from "@marvis/ui/lib/utils";
 import { useLocale, useT, useTimeAgo } from "../../../i18n";
 import { ActorAvatar } from "../../../common/actor-avatar";
 import { formatBytes } from "../../../common/format-bytes";

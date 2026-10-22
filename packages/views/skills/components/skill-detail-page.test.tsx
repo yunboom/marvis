@@ -4,8 +4,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { Skill } from "@multica/core/types";
-import { I18nProvider } from "@multica/core/i18n/react";
+import type { Skill } from "@marvis/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../../locales/en/common.json";
 import enSkills from "../../locales/en/skills.json";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
@@ -30,8 +30,8 @@ const agentsRef = vi.hoisted(() => ({ current: [] as unknown[] }));
 const membersRef = vi.hoisted(() => ({ current: [] as unknown[] }));
 const canEditRef = vi.hoisted(() => ({ current: true }));
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/workspace/queries", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/workspace/queries", () => ({
   skillDetailOptions: (wsId: string, id: string) => ({
     queryKey: ["skill", wsId, id],
     queryFn: () => Promise.resolve(skillRef.current),
@@ -50,14 +50,14 @@ vi.mock("@multica/core/workspace/queries", () => ({
     agents: (wsId: string) => ["agents", wsId],
   },
 }));
-vi.mock("@multica/core/runtimes", () => ({
+vi.mock("@marvis/core/runtimes", () => ({
   runtimeListOptions: (wsId: string) => ({
     queryKey: ["runtimes", wsId],
     queryFn: () => Promise.resolve([]),
   }),
   runtimeDisplayLabel: (r: { name?: string }) => r.name ?? "runtime",
 }));
-vi.mock("@multica/core/auth", () => {
+vi.mock("@marvis/core/auth", () => {
   const state = () => ({ user: { id: "user-1" } });
   return {
     useAuthStore: Object.assign(
@@ -69,17 +69,17 @@ vi.mock("@multica/core/auth", () => {
 });
 // Partial: `WORKSPACE_PAGES` also comes from here and backs the shared
 // SkillIcon, so the real module has to stay reachable.
-vi.mock("@multica/core/paths", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/paths")>()),
+vi.mock("@marvis/core/paths", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/paths")>()),
   useWorkspacePaths: () => ({ skills: () => "/acme/skills" }),
 }));
-vi.mock("@multica/core/permissions", () => ({
+vi.mock("@marvis/core/permissions", () => ({
   useSkillPermissions: () => ({ canEdit: { allowed: true, reason: null } }),
 }));
-vi.mock("@multica/core/workspace/avatar-url", () => ({
+vi.mock("@marvis/core/workspace/avatar-url", () => ({
   resolvePublicFileUrl: (v: string | null) => v,
 }));
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { updateSkill: vi.fn(), deleteSkill: vi.fn() },
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -97,10 +97,10 @@ vi.mock("../../labels/resource-label-picker", () => ({
   ResourceLabelPicker: () => <div data-testid="labels" />,
 }));
 vi.mock("./skill-list-actions", () => ({ AddToAgentDialog: () => null }));
-vi.mock("@multica/ui/components/common/capability-banner", () => ({
+vi.mock("@marvis/ui/components/common/capability-banner", () => ({
   CapabilityBanner: () => <div data-testid="capability-banner" />,
 }));
-vi.mock("@multica/ui/components/common/actor-avatar", () => ({
+vi.mock("@marvis/ui/components/common/actor-avatar", () => ({
   ActorAvatar: () => <div />,
 }));
 

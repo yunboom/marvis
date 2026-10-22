@@ -12,7 +12,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/daemon/repocache"
+	"github.com/marvis-ai/marvis/server/internal/daemon/repocache"
 )
 
 type caRecordingCache struct {

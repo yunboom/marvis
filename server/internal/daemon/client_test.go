@@ -11,10 +11,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/multica-ai/multica/server/pkg/remotemcp"
+	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
 )
 
 func TestClient_IdentityHeaders_PostJSON(t *testing.T) {
@@ -44,7 +44,7 @@ func TestClient_IdentityHeaders_PostJSON(t *testing.T) {
 			// dropping it from the list can never be a silent change.
 			protocol.DaemonCapabilityLocalWorktreeV1,
 			// Same shape, opposite default: this daemon's brief names the
-			// merged multica-platform skill, and advertising that is what
+			// merged marvis-platform skill, and advertising that is what
 			// stops the server shipping it a redirect stub under the old name
 			// (MUL-6986). Dropping it would silently hand every task on this
 			// machine a skill it does not need; the failure is extra payload

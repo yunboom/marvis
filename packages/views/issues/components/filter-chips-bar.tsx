@@ -1,6 +1,6 @@
 "use client";
 
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { useStatusLabel } from "../utils/status-label";
 import { NO_PROPERTY_VALUE } from "../utils/filter";
 import { useMemo, type ReactNode } from "react";
@@ -16,26 +16,26 @@ import {
   X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@multica/ui/components/ui/button";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { memberListOptions, agentListOptions, squadListOptions } from "@multica/core/workspace/queries";
-import { projectListOptions } from "@multica/core/projects/queries";
-import { PROJECT_STATUS_CONFIG } from "@multica/core/projects/config";
-import { labelListOptions } from "@multica/core/labels/queries";
-import { propertyListOptions } from "@multica/core/properties";
-import { isActorPropertyType, isListPropertyType, isScalarPropertyType, parseActorRef, propertyFilterValueKey, PROPERTY_FILTER_OP_SYMBOLS, type PropertyFilterValue } from "@multica/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { memberListOptions, agentListOptions, squadListOptions } from "@marvis/core/workspace/queries";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import { PROJECT_STATUS_CONFIG } from "@marvis/core/projects/config";
+import { labelListOptions } from "@marvis/core/labels/queries";
+import { propertyListOptions } from "@marvis/core/properties";
+import { isActorPropertyType, isListPropertyType, isScalarPropertyType, parseActorRef, propertyFilterValueKey, PROPERTY_FILTER_OP_SYMBOLS, type PropertyFilterValue } from "@marvis/core/types";
 import {
   type ActorFilterValue,
   type FilterDimension,
   type FilterSnapshot,
   type IssueDateFilter,
-} from "@multica/core/issues/stores/view-store";
+} from "@marvis/core/issues/stores/view-store";
 import {
   actorFilterKey,
   type IssueViewBaseline,
-} from "@multica/core/issue-views/baseline";
-import { useViewStore, useViewStoreApi } from "@multica/core/issues/stores/view-store-context";
+} from "@marvis/core/issue-views/baseline";
+import { useViewStore, useViewStoreApi } from "@marvis/core/issues/stores/view-store-context";
 import { StatusIcon } from "./status-icon";
 import { PriorityIcon } from "./priority-icon";
 import { ActorAvatar } from "../../common/actor-avatar";

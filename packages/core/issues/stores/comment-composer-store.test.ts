@@ -38,11 +38,11 @@ describe("comment composer store", () => {
     expect(useCommentComposerStore.getState().runningAgentReply).toBe("steer");
     useCommentComposerStore.getState().setRunningAgentReply("after_run");
     expect(useCommentComposerStore.getState().runningAgentReply).toBe("after_run");
-    expect(JSON.parse(localStorage.getItem("multica_comment_composer")!).state.runningAgentReply).toBe("after_run");
+    expect(JSON.parse(localStorage.getItem("marvis_comment_composer")!).state.runningAgentReply).toBe("after_run");
   });
 
   it("keeps steering as the default for preferences saved before the option existed", async () => {
-    localStorage.setItem("multica_comment_composer", JSON.stringify({ state: { sticky: false }, version: 0 }));
+    localStorage.setItem("marvis_comment_composer", JSON.stringify({ state: { sticky: false }, version: 0 }));
     await useCommentComposerStore.persist.rehydrate();
     expect(useCommentComposerStore.getState()).toMatchObject({ sticky: false, runningAgentReply: "steer" });
   });

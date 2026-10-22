@@ -1,7 +1,7 @@
 // @vitest-environment node
 import type { TFunction } from "i18next";
-import { createI18n } from "@multica/core/i18n/react";
-import type { SupportedLocale } from "@multica/core/i18n";
+import { createI18n } from "@marvis/core/i18n/react";
+import type { SupportedLocale } from "@marvis/core/i18n";
 import { describe, expect, it } from "vitest";
 import enAgents from "../../../locales/en/agents.json";
 import frAgents from "../../../locales/fr/agents.json";

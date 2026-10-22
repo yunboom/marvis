@@ -18,17 +18,17 @@ import (
 )
 
 const (
-	AuthCookieName = "multica_auth"
+	AuthCookieName = "marvis_auth"
 	// CSRFCookieName carries the token-bound CSRF value, and keeps carrying
 	// it: every server that has ever run this code understands this cookie,
 	// which is what makes rolling BACK past MUL-7436 safe. See
 	// SessionCSRFCookieName.
-	CSRFCookieName = "multica_csrf"
+	CSRFCookieName = "marvis_csrf"
 	// SessionCSRFCookieName carries the session-bound CSRF value added by
 	// MUL-7436. It is the one the server prefers, because it survives a
 	// sliding renewal; the token-bound cookie above cannot, since renewal
 	// replaces the very token it is keyed to.
-	SessionCSRFCookieName = "multica_csrf_session"
+	SessionCSRFCookieName = "marvis_csrf_session"
 
 	// CSRFHeaderName is where clients echo ONE of the two cookies back, and
 	// there is deliberately only one header name.

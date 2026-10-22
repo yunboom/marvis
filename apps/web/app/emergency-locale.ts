@@ -1,5 +1,5 @@
-import { matchLocale, type SupportedLocale } from "@multica/core/i18n";
-import { createBrowserCookieLocaleAdapter } from "@multica/core/i18n/browser";
+import { matchLocale, type SupportedLocale } from "@marvis/core/i18n";
+import { createBrowserCookieLocaleAdapter } from "@marvis/core/i18n/browser";
 
 export function resolveEmergencyLocale(): SupportedLocale {
   const adapter = createBrowserCookieLocaleAdapter();

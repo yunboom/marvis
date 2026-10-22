@@ -68,7 +68,7 @@ DROP TRIGGER IF EXISTS trg_issue_search_index_change ON issue;
 CREATE TRIGGER trg_issue_search_index_change
 AFTER INSERT OR UPDATE OR DELETE ON issue
 FOR EACH ROW
-WHEN (current_setting('multica.workspace_teardown', true) IS DISTINCT FROM 'on')
+WHEN (current_setting('marvis.workspace_teardown', true) IS DISTINCT FROM 'on')
 EXECUTE FUNCTION record_search_index_change('issue');
 
 -- Comments only contribute their text and placement; resolve/revision bumps do
@@ -77,19 +77,19 @@ DROP TRIGGER IF EXISTS trg_comment_search_index_change ON comment;
 CREATE TRIGGER trg_comment_search_index_change
 AFTER INSERT OR DELETE ON comment
 FOR EACH ROW
-WHEN (current_setting('multica.workspace_teardown', true) IS DISTINCT FROM 'on')
+WHEN (current_setting('marvis.workspace_teardown', true) IS DISTINCT FROM 'on')
 EXECUTE FUNCTION record_search_index_change('comment');
 
 DROP TRIGGER IF EXISTS trg_comment_update_search_index_change ON comment;
 CREATE TRIGGER trg_comment_update_search_index_change
 AFTER UPDATE OF content, deleted_at, issue_id, created_at ON comment
 FOR EACH ROW
-WHEN (current_setting('multica.workspace_teardown', true) IS DISTINCT FROM 'on')
+WHEN (current_setting('marvis.workspace_teardown', true) IS DISTINCT FROM 'on')
 EXECUTE FUNCTION record_search_index_change('comment');
 
 DROP TRIGGER IF EXISTS trg_project_search_index_change ON project;
 CREATE TRIGGER trg_project_search_index_change
 AFTER INSERT OR UPDATE OR DELETE ON project
 FOR EACH ROW
-WHEN (current_setting('multica.workspace_teardown', true) IS DISTINCT FROM 'on')
+WHEN (current_setting('marvis.workspace_teardown', true) IS DISTINCT FROM 'on')
 EXECUTE FUNCTION record_search_index_change('project');

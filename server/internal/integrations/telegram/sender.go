@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
 )
 
 // User-facing copy the bot speaks in Telegram. English, matching the Slack
@@ -35,7 +35,7 @@ const (
 	msgAgentArchived    = "⚠️ This agent has been archived and can't respond. Please contact your workspace admin."
 	msgUnsupportedType  = "Sorry, I can't handle this kind of message yet. Please send text."
 	msgMediaUnavailable = "⚠️ I couldn't fetch that file from Telegram, so the agent won't see it. Bots can only download files up to 20 MB."
-	msgBindingGroupHint = "Please message me in a direct chat first, then link your Multica account."
+	msgBindingGroupHint = "Please message me in a direct chat first, then link your Marvis account."
 )
 
 // maxMessageUnits caps one outbound sendMessage body. Telegram hard-caps a

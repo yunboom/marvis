@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 func TestGetConfigReportsCdnSignedMode(t *testing.T) {
@@ -65,9 +65,9 @@ func TestGetConfigIncludesRuntimeAuthConfig(t *testing.T) {
 	t.Setenv("GOOGLE_CLIENT_ID", "google-client-id")
 	t.Setenv("POSTHOG_API_KEY", "phc_test")
 	t.Setenv("POSTHOG_HOST", "https://eu.i.posthog.com")
-	t.Setenv("MULTICA_DAEMON_SERVER_URL", "")
-	t.Setenv("MULTICA_PUBLIC_URL", "https://api.example.com/")
-	t.Setenv("MULTICA_APP_URL", "https://app.example.com/")
+	t.Setenv("MARVIS_DAEMON_SERVER_URL", "")
+	t.Setenv("MARVIS_PUBLIC_URL", "https://api.example.com/")
+	t.Setenv("MARVIS_APP_URL", "https://app.example.com/")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	w := httptest.NewRecorder()
@@ -115,9 +115,9 @@ func TestGetConfigIncludesRuntimeAuthConfig(t *testing.T) {
 }
 
 func TestGetConfigUsesDaemonServerURLOverride(t *testing.T) {
-	t.Setenv("MULTICA_DAEMON_SERVER_URL", " https://api.internal.example/// ")
-	t.Setenv("MULTICA_PUBLIC_URL", "https://hooks.example.com/")
-	t.Setenv("MULTICA_APP_URL", "https://app.example.com/")
+	t.Setenv("MARVIS_DAEMON_SERVER_URL", " https://api.internal.example/// ")
+	t.Setenv("MARVIS_PUBLIC_URL", "https://hooks.example.com/")
+	t.Setenv("MARVIS_APP_URL", "https://app.example.com/")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	var cfg AppConfig
@@ -165,9 +165,9 @@ func TestGetConfigHonorsVCSIntegrationSwitch(t *testing.T) {
 }
 
 func TestGetConfigUsesAppURLForSameOriginDaemonSetup(t *testing.T) {
-	t.Setenv("MULTICA_DAEMON_SERVER_URL", "")
-	t.Setenv("MULTICA_PUBLIC_URL", "")
-	t.Setenv("MULTICA_APP_URL", "https://multica.internal.example/")
+	t.Setenv("MARVIS_DAEMON_SERVER_URL", "")
+	t.Setenv("MARVIS_PUBLIC_URL", "")
+	t.Setenv("MARVIS_APP_URL", "https://marvis.internal.example/")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	w := httptest.NewRecorder()
@@ -181,19 +181,19 @@ func TestGetConfigUsesAppURLForSameOriginDaemonSetup(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &cfg); err != nil {
 		t.Fatalf("decode config: %v", err)
 	}
-	if cfg.DaemonServerURL != "https://multica.internal.example" {
+	if cfg.DaemonServerURL != "https://marvis.internal.example" {
 		t.Fatalf("daemon_server_url: want same-origin URL, got %q", cfg.DaemonServerURL)
 	}
-	if cfg.DaemonAppURL != "https://multica.internal.example" {
+	if cfg.DaemonAppURL != "https://marvis.internal.example" {
 		t.Fatalf("daemon_app_url: want app URL, got %q", cfg.DaemonAppURL)
 	}
 }
 
 func TestGetConfigUsesFrontendOriginForSameOriginDaemonSetup(t *testing.T) {
-	t.Setenv("MULTICA_DAEMON_SERVER_URL", "")
-	t.Setenv("MULTICA_PUBLIC_URL", "")
-	t.Setenv("MULTICA_APP_URL", "")
-	t.Setenv("FRONTEND_ORIGIN", "https://multica.internal.example/")
+	t.Setenv("MARVIS_DAEMON_SERVER_URL", "")
+	t.Setenv("MARVIS_PUBLIC_URL", "")
+	t.Setenv("MARVIS_APP_URL", "")
+	t.Setenv("FRONTEND_ORIGIN", "https://marvis.internal.example/")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	w := httptest.NewRecorder()
@@ -207,18 +207,18 @@ func TestGetConfigUsesFrontendOriginForSameOriginDaemonSetup(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &cfg); err != nil {
 		t.Fatalf("decode config: %v", err)
 	}
-	if cfg.DaemonServerURL != "https://multica.internal.example" {
+	if cfg.DaemonServerURL != "https://marvis.internal.example" {
 		t.Fatalf("daemon_server_url: want same-origin URL, got %q", cfg.DaemonServerURL)
 	}
-	if cfg.DaemonAppURL != "https://multica.internal.example" {
+	if cfg.DaemonAppURL != "https://marvis.internal.example" {
 		t.Fatalf("daemon_app_url: want frontend origin, got %q", cfg.DaemonAppURL)
 	}
 }
 
 func TestGetConfigOmitsOfficialCloudDaemonSetup(t *testing.T) {
-	t.Setenv("MULTICA_PUBLIC_URL", "https://api.multica.ai")
-	t.Setenv("MULTICA_APP_URL", "")
-	t.Setenv("FRONTEND_ORIGIN", "https://multica.ai")
+	t.Setenv("MARVIS_PUBLIC_URL", "https://api.marvis.ai")
+	t.Setenv("MARVIS_APP_URL", "")
+	t.Setenv("FRONTEND_ORIGIN", "https://marvis.ai")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	w := httptest.NewRecorder()
@@ -242,17 +242,17 @@ func TestGetConfigOmitsOfficialCloudDaemonSetup(t *testing.T) {
 
 // TestGetConfigOmitsCloudDaemonSetupWithoutPublicURL reproduces the production
 // regression behind the broken "Add a computer" command: the official cloud
-// frontend is multica.ai, but the deployment does not set MULTICA_PUBLIC_URL to
+// frontend is marvis.ai, but the deployment does not set MARVIS_PUBLIC_URL to
 // the api host. Previously this fell through to the same-origin branch and
-// emitted daemon_server_url=https://multica.ai, which the dialog turned into
-// `multica setup self-host --server-url https://multica.ai` — pointing the
+// emitted daemon_server_url=https://marvis.ai, which the dialog turned into
+// `marvis setup self-host --server-url https://marvis.ai` — pointing the
 // daemon's backend at the frontend (no /health, no WebSocket proxy). The
 // official cloud must be recognised by its frontend host alone so the daemon
-// setup URLs are omitted and the dialog falls back to `multica setup`.
+// setup URLs are omitted and the dialog falls back to `marvis setup`.
 func TestGetConfigOmitsCloudDaemonSetupWithoutPublicURL(t *testing.T) {
-	t.Setenv("MULTICA_PUBLIC_URL", "")
-	t.Setenv("MULTICA_APP_URL", "")
-	t.Setenv("FRONTEND_ORIGIN", "https://multica.ai")
+	t.Setenv("MARVIS_PUBLIC_URL", "")
+	t.Setenv("MARVIS_APP_URL", "")
+	t.Setenv("FRONTEND_ORIGIN", "https://marvis.ai")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	w := httptest.NewRecorder()
@@ -275,10 +275,10 @@ func TestGetConfigOmitsCloudDaemonSetupWithoutPublicURL(t *testing.T) {
 }
 
 // TestGetConfigOmitsCloudDaemonSetupForConfiguredAppURL covers the official
-// cloud frontend when it is configured through MULTICA_APP_URL.
+// cloud frontend when it is configured through MARVIS_APP_URL.
 func TestGetConfigOmitsCloudDaemonSetupForConfiguredAppURL(t *testing.T) {
-	t.Setenv("MULTICA_PUBLIC_URL", "")
-	t.Setenv("MULTICA_APP_URL", "https://multica.ai")
+	t.Setenv("MARVIS_PUBLIC_URL", "")
+	t.Setenv("MARVIS_APP_URL", "https://marvis.ai")
 	t.Setenv("FRONTEND_ORIGIN", "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
@@ -307,17 +307,17 @@ func TestURLHostEqualsCanonicalizesCommonHostForms(t *testing.T) {
 		raw  string
 		want bool
 	}{
-		{name: "full URL", raw: "https://api.multica.ai", want: true},
-		{name: "bare host", raw: "api.multica.ai", want: true},
-		{name: "host port", raw: "api.multica.ai:8080", want: true},
-		{name: "trailing dot", raw: "https://api.multica.ai.", want: true},
+		{name: "full URL", raw: "https://api.marvis.ai", want: true},
+		{name: "bare host", raw: "api.marvis.ai", want: true},
+		{name: "host port", raw: "api.marvis.ai:8080", want: true},
+		{name: "trailing dot", raw: "https://api.marvis.ai.", want: true},
 		{name: "different host", raw: "https://evil.example", want: false},
 		{name: "empty", raw: "", want: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := urlHostEquals(tt.raw, "api.multica.ai"); got != tt.want {
+			if got := urlHostEquals(tt.raw, "api.marvis.ai"); got != tt.want {
 				t.Fatalf("urlHostEquals(%q): want %v, got %v", tt.raw, tt.want, got)
 			}
 		})
@@ -360,7 +360,7 @@ func TestGetConfigExposesServerVersion(t *testing.T) {
 	defer func() { testHandler.cfg = origCfg }()
 
 	// Self-hosted frontend origin: the version row is meant for these deployments.
-	t.Setenv("MULTICA_APP_URL", "https://multica.self-hosted.example")
+	t.Setenv("MARVIS_APP_URL", "https://marvis.self-hosted.example")
 	t.Setenv("FRONTEND_ORIGIN", "")
 
 	testHandler.cfg.ServerVersion = ""
@@ -390,7 +390,7 @@ func TestGetConfigExposesServerVersion(t *testing.T) {
 }
 
 // TestGetConfigOmitsServerVersionOnOfficialCloud verifies the build version is
-// suppressed on the managed cloud (frontend host multica.ai) even when the
+// suppressed on the managed cloud (frontend host marvis.ai) even when the
 // binary is stamped, while a self-hosted frontend origin still reports it. The
 // managed cloud is continuously deployed, so its users don't need the row.
 func TestGetConfigOmitsServerVersionOnOfficialCloud(t *testing.T) {
@@ -400,8 +400,8 @@ func TestGetConfigOmitsServerVersionOnOfficialCloud(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 
-	// Official cloud: frontend host multica.ai -> version omitted.
-	t.Setenv("MULTICA_APP_URL", "https://multica.ai")
+	// Official cloud: frontend host marvis.ai -> version omitted.
+	t.Setenv("MARVIS_APP_URL", "https://marvis.ai")
 	t.Setenv("FRONTEND_ORIGIN", "")
 	w := httptest.NewRecorder()
 	testHandler.GetConfig(w, req)
@@ -414,7 +414,7 @@ func TestGetConfigOmitsServerVersionOnOfficialCloud(t *testing.T) {
 	}
 
 	// Self-hosted: operator's own frontend origin -> version reported.
-	t.Setenv("MULTICA_APP_URL", "https://multica.self-hosted.example")
+	t.Setenv("MARVIS_APP_URL", "https://marvis.self-hosted.example")
 	w = httptest.NewRecorder()
 	testHandler.GetConfig(w, req)
 	if err := json.Unmarshal(w.Body.Bytes(), &cfg); err != nil {

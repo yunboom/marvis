@@ -54,7 +54,7 @@ for (const scenario of [
     });
 
     await context.addCookies([
-      { name: "multica-locale", value: "zh-Hans", url: origin },
+      { name: "marvis-locale", value: "zh-Hans", url: origin },
     ]);
     // Isolate application WebSockets without intercepting Next.js HMR.
     await context.routeWebSocket(
@@ -139,7 +139,7 @@ for (const scenario of [
       expect(exchanges).toEqual([{ code, redirect_uri: `${origin}/auth/callback` }]);
       expect(callbackDocuments).toBe(1);
       expect(
-        (await context.cookies(origin)).find((cookie) => cookie.name === "multica-locale")?.value,
+        (await context.cookies(origin)).find((cookie) => cookie.name === "marvis-locale")?.value,
       ).toBe("zh-Hans");
       releaseWorkspaces();
 
@@ -149,9 +149,9 @@ for (const scenario of [
         page.getByRole("button", { name: scenario.continueLabel, exact: true }),
       ).toBeVisible();
       expect(
-        (await context.cookies(origin)).find((cookie) => cookie.name === "multica-locale")?.value,
+        (await context.cookies(origin)).find((cookie) => cookie.name === "marvis-locale")?.value,
       ).toBe(scenario.language);
-      expect(await page.evaluate(() => localStorage.getItem("multica_token"))).toBeNull();
+      expect(await page.evaluate(() => localStorage.getItem("marvis_token"))).toBeNull();
       expect(exchanges).toHaveLength(1);
       expect(callbackDocuments).toBe(1);
       expect(unexpectedApiRequests).toEqual([]);

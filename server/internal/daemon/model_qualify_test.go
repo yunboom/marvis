@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/multica-ai/multica/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
 )
 
 // stubModelDiscovery replaces the daemon's listModels indirection with a
@@ -50,8 +50,8 @@ func quietTaskLog() *slog.Logger {
 // catalog. codex carries a service tier so the codex-specific paths are real.
 func thinkingCatalogs() map[string]agent.Catalog {
 	gatewayOpus := agent.Model{
-		ID:       "multica-anthropic/claude/claude-opus-5",
-		Provider: "multica-anthropic",
+		ID:       "marvis-anthropic/claude/claude-opus-5",
+		Provider: "marvis-anthropic",
 		Thinking: &agent.ModelThinking{SupportedLevels: []agent.ThinkingLevel{
 			{Value: "high", Label: "High"},
 		}},
@@ -98,14 +98,14 @@ func TestResolveTaskModelSelectionReadsTheCatalogAtMostOnce(t *testing.T) {
 			name:      "pi qualifies and validates on a single read",
 			provider:  "pi",
 			in:        taskModelSelection{Model: "claude/claude-opus-5", ThinkingLevel: "high"},
-			want:      taskModelSelection{Model: "multica-anthropic/claude/claude-opus-5", ThinkingLevel: "high"},
+			want:      taskModelSelection{Model: "marvis-anthropic/claude/claude-opus-5", ThinkingLevel: "high"},
 			wantReads: 1,
 		},
 		{
 			name:      "opencode qualifies and validates on a single read",
 			provider:  "opencode",
 			in:        taskModelSelection{Model: "claude/claude-opus-5", ThinkingLevel: "high"},
-			want:      taskModelSelection{Model: "multica-anthropic/claude/claude-opus-5", ThinkingLevel: "high"},
+			want:      taskModelSelection{Model: "marvis-anthropic/claude/claude-opus-5", ThinkingLevel: "high"},
 			wantReads: 1,
 		},
 		{
@@ -130,7 +130,7 @@ func TestResolveTaskModelSelectionReadsTheCatalogAtMostOnce(t *testing.T) {
 			name:      "opencode reads even without a capability override",
 			provider:  "opencode",
 			in:        taskModelSelection{Model: "claude/claude-opus-5"},
-			want:      taskModelSelection{Model: "multica-anthropic/claude/claude-opus-5"},
+			want:      taskModelSelection{Model: "marvis-anthropic/claude/claude-opus-5"},
 			wantReads: 1,
 		},
 		{

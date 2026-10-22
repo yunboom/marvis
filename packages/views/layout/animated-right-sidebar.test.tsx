@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   configureShortcutPlatform,
   useShortcutStore,
-} from "@multica/core/shortcuts";
+} from "@marvis/core/shortcuts";
 
 import {
   getAnimatedRightSidebarInitialOpen,

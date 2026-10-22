@@ -11,8 +11,8 @@ import {
   getShortcut,
   isPlainShortcut,
   type ShortcutChord,
-} from "@multica/core/shortcuts";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/core/shortcuts";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../i18n";
 import { createSubmitShortcutExtension } from "./extensions/submit-shortcut";
 import "./title-editor.css";

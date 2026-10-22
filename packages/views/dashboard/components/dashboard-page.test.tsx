@@ -215,17 +215,17 @@ vi.mock("@tanstack/react-query", async () => {
   };
 });
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
 // The leaderboard renders ActorAvatar, which resolves avatar URLs through
 // the api singleton. Only the base-URL read is exercised here.
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { getBaseUrl: () => "https://example.test" },
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     agentDetail: (id: string) => `/acme/agents/${id}`,
   }),
@@ -233,7 +233,7 @@ vi.mock("@multica/core/paths", () => ({
 
 const tzRef = vi.hoisted(() => ({ current: "UTC" as string | null }));
 
-vi.mock("@multica/core/auth", () => {
+vi.mock("@marvis/core/auth", () => {
   type AuthState = { user: { timezone: string | null } | null };
   const state = (): AuthState => ({ user: { timezone: tzRef.current } });
   const useAuthStore = Object.assign(
@@ -243,7 +243,7 @@ vi.mock("@multica/core/auth", () => {
   return { useAuthStore };
 });
 
-vi.mock("@multica/core/runtimes/custom-pricing-store", () => {
+vi.mock("@marvis/core/runtimes/custom-pricing-store", () => {
   const state = () => ({ pricings: {} });
   const useCustomPricingStore = Object.assign(
     (sel?: (s: ReturnType<typeof state>) => unknown) =>
@@ -327,7 +327,7 @@ describe("DashboardPage — viewing timezone drives the query key", () => {
   });
 
   // The `tz` segment is the last element of every dashboard key
-  // (see dashboardKeys in @multica/core/dashboard/queries).
+  // (see dashboardKeys in @marvis/core/dashboard/queries).
   function tzSegments(): unknown[] {
     return queryKeys
       .filter((k) => k[0] === "dashboard")

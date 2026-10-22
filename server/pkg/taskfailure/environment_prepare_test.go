@@ -20,9 +20,9 @@ func TestNormalizeDaemonReasonUpgradesEnvironmentPrepare(t *testing.T) {
 
 	rawErrors := map[string]string{
 		"windows lock": "prepare execution environment: execenv: remove existing env: unlinkat " +
-			`C:\Users\u\multica_workspaces_p\ws\prefix\workdir: ` +
+			`C:\Users\u\marvis_workspaces_p\ws\prefix\workdir: ` +
 			"The process cannot access the file because it is being used by another process",
-		"disk full":         "prepare execution environment: execenv: mkdir /home/u/multica_workspaces/ws: no space left on device",
+		"disk full":         "prepare execution environment: execenv: mkdir /home/u/marvis_workspaces/ws: no space left on device",
 		"permission denied": "prepare execution environment: execenv: open ownership manifest: permission denied",
 		"reuse io error":    "reuse execution environment: stat workdir: input/output error",
 		// Preparation is not only filesystem work: it also writes and validates
@@ -75,7 +75,7 @@ func TestNormalizeDaemonReasonEnvironmentPrepareStaysNarrow(t *testing.T) {
 		// The OpenClaw config-discovery stall is a preparation failure too, and
 		// its own rule runs first because it names the specific cause. Losing
 		// that to the generic bucket would drop the copy that tells the user to
-		// raise MULTICA_OPENCLAW_CLI_TIMEOUT.
+		// raise MARVIS_OPENCLAW_CLI_TIMEOUT.
 		"openclaw cli timeout keeps its own reason": {
 			reason: string(ReasonAgentProviderNetwork),
 			rawError: "prepare execution environment: execenv: prepare openclaw config: " +
@@ -117,7 +117,7 @@ func TestNormalizeDaemonReasonEnvironmentPrepareStaysNarrow(t *testing.T) {
 func TestClassifyStillReadsPrepareErrorsAsAgentErrors(t *testing.T) {
 	t.Parallel()
 
-	const rawError = "prepare execution environment: execenv: mkdir /home/u/multica_workspaces/ws: no space left on device"
+	const rawError = "prepare execution environment: execenv: mkdir /home/u/marvis_workspaces/ws: no space left on device"
 	if got := Classify(rawError); !got.IsAgentError() {
 		t.Fatalf("Classify(prepare error) = %q; the premise of this fix is that Classify cannot label these", got)
 	}

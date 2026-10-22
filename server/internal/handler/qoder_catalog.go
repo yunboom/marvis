@@ -13,8 +13,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
-	"github.com/multica-ai/multica/server/internal/qoderruntime"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/qoderruntime"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 const qoderAPIURL = "https://api.qoder.com/api/v1/cloud"

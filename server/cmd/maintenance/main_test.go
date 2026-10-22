@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/maintenance"
+	"github.com/marvis-ai/marvis/server/internal/maintenance"
 )
 
 const testID = "00000000-0000-4000-8000-000000000001"

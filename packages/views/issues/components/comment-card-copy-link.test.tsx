@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, screen } from "@testing-library/react";
 import { forwardRef, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { TimelineEntry } from "@multica/core/types";
+import type { TimelineEntry } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 
 // Per-comment copy link: the menu must offer a link to the single comment
@@ -10,7 +10,7 @@ import { renderWithI18n } from "../../test/i18n";
 // `useIssueActions.copyCommentLink`; this suite pins that the card routes each
 // row's own id to the handler and hides the item when no handler is wired.
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { uploadFile: vi.fn() },
   dispatchReasonCode: () => undefined,
   errorCode: () => undefined,
@@ -24,7 +24,7 @@ vi.mock("../../navigation", () => ({
   }),
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: () => "Ada" }),
 }));
 

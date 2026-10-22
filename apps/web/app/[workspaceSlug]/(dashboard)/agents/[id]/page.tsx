@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { AgentDetailPage } from "@multica/views/agents/agent-detail-page";
+import { AgentDetailPage } from "@marvis/views/agents/agent-detail-page";
 
 export default function AgentDetailRoute({
   params,

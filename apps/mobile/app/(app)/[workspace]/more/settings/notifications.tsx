@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import type {
   NotificationGroupKey,
   NotificationPreferences,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { Text } from "@/components/ui/text";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";

@@ -1,4 +1,4 @@
-import type { AgentRuntime } from "@multica/core/types";
+import type { AgentRuntime } from "@marvis/core/types";
 import type { RuntimeMachine } from "./runtime-machines";
 import { UpdateSection } from "./update-section";
 

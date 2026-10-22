@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { Outlet, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { WorkspaceSlugProvider } from "@multica/core/paths";
+import { WorkspaceSlugProvider } from "@marvis/core/paths";
 import {
   workspaceBySlugOptions,
   workspaceListOptions,
-} from "@multica/core/workspace";
-import { getCurrentSlug, setCurrentWorkspace } from "@multica/core/platform";
-import { isWorkspaceDeletePending } from "@multica/core/workspace/pending-delete";
-import { useAuthStore } from "@multica/core/auth";
-import { useWorkspaceSeen } from "@multica/views/workspace/use-workspace-seen";
-import { WorkspacePresencePrefetch } from "@multica/views/layout";
-import { SourceBackfillModal } from "@multica/views/onboarding";
+} from "@marvis/core/workspace";
+import { getCurrentSlug, setCurrentWorkspace } from "@marvis/core/platform";
+import { isWorkspaceDeletePending } from "@marvis/core/workspace/pending-delete";
+import { useAuthStore } from "@marvis/core/auth";
+import { useWorkspaceSeen } from "@marvis/views/workspace/use-workspace-seen";
+import { WorkspacePresencePrefetch } from "@marvis/views/layout";
+import { SourceBackfillModal } from "@marvis/views/onboarding";
 import { useTabStore } from "@/stores/tab-store";
 import { useWindowOverlayStore } from "@/stores/window-overlay-store";
 

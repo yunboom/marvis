@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { MulticaLanding } from "@/features/landing/components/multica-landing";
+import { MarvisLanding } from "@/features/landing/components/marvis-landing";
 
 export const metadata: Metadata = {
   title: "Homepage",
   description:
-    "Multica — source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills.",
+    "Marvis — source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills.",
   openGraph: {
-    title: "Multica — Project Management for Human + Agent Teams",
+    title: "Marvis — Project Management for Human + Agent Teams",
     description:
       "Manage your human + agent workforce in one place.",
     url: "/homepage",
@@ -17,5 +17,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomepagePage() {
-  return <MulticaLanding />;
+  return <MarvisLanding />;
 }

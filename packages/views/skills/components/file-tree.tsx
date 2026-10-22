@@ -13,16 +13,16 @@ import {
   PencilLine,
   Trash2,
 } from "lucide-react";
-import { Input } from "@multica/ui/components/ui/input";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
-import { DeferredTooltip } from "@multica/ui/components/common/deferred-tooltip";
+import { DeferredTooltip } from "@marvis/ui/components/common/deferred-tooltip";
 
 /**
  * What a row may offer beyond selection. Absent for read-only viewers, so the

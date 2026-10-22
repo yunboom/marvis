@@ -32,8 +32,8 @@ import {
 import { createPortal } from "react-dom";
 import type { ExtraProps } from "react-markdown";
 import { Check, Copy, Maximize2, RotateCcw } from "lucide-react";
-import { copyText } from "@multica/ui/lib/clipboard";
-import { cn } from "@multica/ui/lib/utils";
+import { copyText } from "@marvis/ui/lib/clipboard";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../i18n";
 import { DeferredTooltip } from "../common/deferred-tooltip";
 import { RichTableDialog } from "./rich-table-dialog";

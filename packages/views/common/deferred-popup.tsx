@@ -1,7 +1,7 @@
 "use client";
 
 import { cloneElement, useState, type ReactElement, type ReactNode } from "react";
-import { DeferredTooltip } from "@multica/ui/components/common/deferred-tooltip";
+import { DeferredTooltip } from "@marvis/ui/components/common/deferred-tooltip";
 
 /**
  * Defers mounting a popup component (Popover/Menu root + trigger machinery)

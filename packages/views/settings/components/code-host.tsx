@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 
 /** The square logo tile code hosts share on this page. */
 export function HostMark({ children }: { children: ReactNode }) {

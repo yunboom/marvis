@@ -7,7 +7,7 @@
 --
 --   * Resolving the open_id at send time from the task's initiator_user_id.
 --     channel_user_binding is unique on (installation_id, channel_user_id) and
---     NOT on (installation_id, multica_user_id), so a member who binds a
+--     NOT on (installation_id, marvis_user_id), so a member who binds a
 --     second Feishu account on one installation has two rows and the reverse
 --     lookup could name either.
 --

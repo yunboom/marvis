@@ -4,13 +4,13 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CircleOff } from "lucide-react";
-import { api } from "@multica/core/api";
-import { derivePRMergeStatus, PR_MERGE_STATUS_NONE } from "@multica/core/github";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
-import { useCurrentWorkspace } from "@multica/core/paths";
-import type { IssueStatusCategory, Workspace } from "@multica/core/types";
-import { workspaceKeys } from "@multica/core/workspace/queries";
+import { api } from "@marvis/core/api";
+import { derivePRMergeStatus, PR_MERGE_STATUS_NONE } from "@marvis/core/github";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { useCurrentWorkspace } from "@marvis/core/paths";
+import type { IssueStatusCategory, Workspace } from "@marvis/core/types";
+import { workspaceKeys } from "@marvis/core/workspace/queries";
 import {
   Select,
   SelectContent,
@@ -20,7 +20,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@multica/ui/components/ui/select";
+} from "@marvis/ui/components/ui/select";
 import { StatusIcon } from "../../issues/components/status-icon";
 import { useStatusLabel } from "../../issues/utils/status-label";
 import { useT } from "../../i18n";

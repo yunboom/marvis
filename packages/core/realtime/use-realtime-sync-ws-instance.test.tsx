@@ -606,14 +606,14 @@ describe("useRealtimeSync — workspace:deleted self-initiated suppression", () 
       wrapper: createWrapper(qc),
     });
     qc.setQueryData(workspaceKeys.list(), [{ id: "ws-2", slug: "delete-me" }]);
-    defaultStorage.setItem("multica_issue_draft:delete-me", "draft");
+    defaultStorage.setItem("marvis_issue_draft:delete-me", "draft");
 
     markWorkspaceDeletePending("ws-2");
     dispatchWorkspaceDeleted(ws, "ws-2");
 
     // useDeleteWorkspace.onSuccess owns cleanup for self-initiated deletes;
     // the handler must not have touched storage.
-    expect(defaultStorage.getItem("multica_issue_draft:delete-me")).toBe("draft");
+    expect(defaultStorage.getItem("marvis_issue_draft:delete-me")).toBe("draft");
     expect(forgetLocalSearchIndex).not.toHaveBeenCalled();
   });
 
@@ -623,11 +623,11 @@ describe("useRealtimeSync — workspace:deleted self-initiated suppression", () 
       wrapper: createWrapper(qc),
     });
     qc.setQueryData(workspaceKeys.list(), [{ id: "ws-2", slug: "delete-me" }]);
-    defaultStorage.setItem("multica_issue_draft:delete-me", "draft");
+    defaultStorage.setItem("marvis_issue_draft:delete-me", "draft");
 
     dispatchWorkspaceDeleted(ws, "ws-2");
 
-    expect(defaultStorage.getItem("multica_issue_draft:delete-me")).toBeNull();
+    expect(defaultStorage.getItem("marvis_issue_draft:delete-me")).toBeNull();
     // Not the current workspace, but its local search copy must still go.
     expect(forgetLocalSearchIndex).toHaveBeenCalledWith("ws-2");
   });

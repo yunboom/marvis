@@ -5,14 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { setApiInstance } from "@multica/core/api";
-import type { ApiClient } from "@multica/core/api/client";
-import { workspaceWorkingAgentsKeys } from "@multica/core/agents/queries";
+import { setApiInstance } from "@marvis/core/api";
+import type { ApiClient } from "@marvis/core/api/client";
+import { workspaceWorkingAgentsKeys } from "@marvis/core/agents/queries";
 import {
   getIssueSurfaceViewStore,
   pruneIssueSurfaceViewStates,
-} from "@multica/core/issues/stores/surface-view-store";
-import { ViewStoreProvider } from "@multica/core/issues/stores/view-store-context";
+} from "@marvis/core/issues/stores/surface-view-store";
+import { ViewStoreProvider } from "@marvis/core/issues/stores/view-store-context";
 import type {
   AgentTask,
   Issue,
@@ -20,7 +20,7 @@ import type {
   ListIssuesParams,
   ListIssuesResponse,
   WorkspaceWorkingAgent,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { useIssueSurfaceController } from "./use-issue-surface-controller";
 import { IssueTableExportIntegrityError } from "../components/table-view-model";
 import { statusTableMethodsFromLegacy } from "./status-table-test-api";
@@ -58,11 +58,11 @@ const batchUpdateMutateAsync = vi.hoisted(() => vi.fn());
 const batchDeleteMutateAsync = vi.hoisted(() => vi.fn());
 const openModal = vi.hoisted(() => vi.fn());
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "ws-1",
 }));
 
-vi.mock("@multica/core/issues/mutations", () => ({
+vi.mock("@marvis/core/issues/mutations", () => ({
   useUpdateIssue: () => ({ mutate: updateIssueMutate, isPending: false }),
   useBatchUpdateIssues: () => ({
     mutateAsync: batchUpdateMutateAsync,
@@ -74,7 +74,7 @@ vi.mock("@multica/core/issues/mutations", () => ({
   }),
 }));
 
-vi.mock("@multica/core/modals", () => ({
+vi.mock("@marvis/core/modals", () => ({
   useModalStore: {
     getState: () => ({ open: openModal }),
   },

@@ -30,9 +30,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	dbfx "github.com/multica-ai/multica/server/internal/testutil"
+	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
 
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // originLab is one workspace holding the task shapes the gate has to tell
@@ -213,7 +213,7 @@ func TestGetTaskChannelOrigin_RealSQL(t *testing.T) {
 			// batch_owner_unknown is how a caller that needs the OTHER
 			// direction — whether to warn about a missing route — tells this
 			// pair apart from a verdict that was actually established.
-			name: "a legacy row with no batch owner, asked in Multica", taskID: lab.legacyPlain, ingested: true,
+			name: "a legacy row with no batch owner, asked in Marvis", taskID: lab.legacyPlain, ingested: true,
 			ownerUnknown: true,
 			why: "NULL chat_input_task_id is 'legacy row OR channel task' (migration 158), so the " +
 				"row cannot say which. It is delivered, and batch_owner_unknown is what keeps the " +

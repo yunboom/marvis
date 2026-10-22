@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 // A real cursor-agent reads the prompt from stdin to EOF (see buildCursorArgs).

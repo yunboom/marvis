@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { AgentCreatedPage } from "@multica/views/agents/agent-created-page";
+import { AgentCreatedPage } from "@marvis/views/agents/agent-created-page";
 
 export default function NewAgentDoneRoute({
   params,

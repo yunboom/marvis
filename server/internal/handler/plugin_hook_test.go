@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/multica-ai/multica/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/service"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/multica-ai/multica/server/internal/featureflags"
-	"github.com/multica-ai/multica/server/pkg/featureflag"
-	"github.com/multica-ai/multica/server/pkg/plugincontract"
+	"github.com/marvis-ai/marvis/server/internal/featureflags"
+	"github.com/marvis-ai/marvis/server/pkg/featureflag"
+	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
 )
 
 // hookHandlerTestManifest declares the three host-driven triggers. Its endpoint

@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nProvider } from "@multica/core/i18n/react";
-import { ApiError } from "@multica/core/api";
-import type { AgentRuntime } from "@multica/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import { ApiError } from "@marvis/core/api";
+import type { AgentRuntime } from "@marvis/core/types";
 import enRuntimes from "../../locales/en/runtimes.json";
 import { RevokeRuntimeAccessDialog, parseRuntimeAccessRevocationPlan } from "./revoke-runtime-access-dialog";
 
 const revoke = vi.hoisted(() => vi.fn());
-vi.mock("@multica/core/api", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@multica/core/api")>(),
+vi.mock("@marvis/core/api", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@marvis/core/api")>(),
   api: { revokeRuntimeWorkspaceAccess: revoke },
 }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));

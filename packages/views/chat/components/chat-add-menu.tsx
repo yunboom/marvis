@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { Check, FolderKanban, Image as ImageIcon, Plus, X } from "lucide-react";
-import { IconButton } from "@multica/ui/components/common/icon-button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -12,8 +12,8 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import type { Project } from "@multica/core/types";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import type { Project } from "@marvis/core/types";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { useT } from "../../i18n";
 

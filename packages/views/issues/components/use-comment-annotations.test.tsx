@@ -1,7 +1,7 @@
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useCommentDraftStore } from "@multica/core/issues/stores";
-import type { TimelineEntry } from "@multica/core/types";
+import { useCommentDraftStore } from "@marvis/core/issues/stores";
+import type { TimelineEntry } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { useCommentAnnotations } from "./use-comment-annotations";
 import { Profiler } from "react";

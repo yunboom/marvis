@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 const testAgentID = "0f0e0d0c-0b0a-4909-8807-060504030201"
@@ -263,9 +263,9 @@ func TestBriefNamesStepCommandsAndHandlers(t *testing.T) {
 		"- `implement` Implement — hands off to Forge\n",
 		"- `code_review` Code review — hands off to Lin (project lead)   ← current\n",
 		"- `done` Done\n",
-		"Step done      → multica issue status MUL-7 done\n",
-		"Needs changes  → multica issue status MUL-7 implement\n",
-		"Can't proceed  → multica issue status MUL-7 blocked",
+		"Step done      → marvis issue status MUL-7 done\n",
+		"Needs changes  → marvis issue status MUL-7 implement\n",
+		"Can't proceed  → marvis issue status MUL-7 blocked",
 	} {
 		if !strings.Contains(brief, want) {
 			t.Fatalf("brief is missing %q:\n%s", want, brief)
@@ -344,7 +344,7 @@ func TestBriefPrintsBuiltInKeysOnce(t *testing.T) {
 	if !strings.Contains(brief, "- `todo`\n") || strings.Contains(brief, "`todo` todo") {
 		t.Fatalf("a built-in step should print its key once:\n%s", brief)
 	}
-	if !strings.Contains(brief, "Step done      → multica issue status MUL-1 done\n") {
+	if !strings.Contains(brief, "Step done      → marvis issue status MUL-1 done\n") {
 		t.Fatalf("the last own step should suggest done:\n%s", brief)
 	}
 }

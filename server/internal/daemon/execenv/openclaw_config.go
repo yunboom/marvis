@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/multica-ai/multica/server/pkg/agent"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
 )
 
 // openclawConfigFile is the per-task synthesized OpenClaw config the daemon
@@ -48,7 +48,7 @@ const openclawMcpResetFile = "openclaw-mcp-reset.json"
 const openclawMcpResetBody = "{\n  \"mcp\": {\n    \"servers\": null\n  }\n}\n"
 
 // openclawCLITimeout bounds each setup CLI call with headroom for slower hosts;
-// MULTICA_OPENCLAW_CLI_TIMEOUT overrides it. The serial call budget must fit the
+// MARVIS_OPENCLAW_CLI_TIMEOUT overrides it. The serial call budget must fit the
 // outer preparation deadline.
 //
 // RunCollectQuiet owns pipes and process cleanup so descendants retaining stdout
@@ -62,7 +62,7 @@ const openclawCLITimeout = 30 * time.Second
 // [openclawCLIMinTimeout, openclawCLIMaxTimeout] are clamped, and anything
 // unparseable is ignored, so a typo degrades to the default instead of
 // disabling the deadline.
-const OpenclawCLITimeoutEnv = "MULTICA_OPENCLAW_CLI_TIMEOUT"
+const OpenclawCLITimeoutEnv = "MARVIS_OPENCLAW_CLI_TIMEOUT"
 
 const (
 	// openclawCLIMinTimeout keeps an override from being so small that no real
@@ -136,7 +136,7 @@ func (e *openclawCLITimeoutError) Unwrap() []error {
 }
 
 // resolveOpenclawCLITimeout picks the deadline for one CLI invocation:
-// explicit (tests) > MULTICA_OPENCLAW_CLI_TIMEOUT > openclawCLITimeout.
+// explicit (tests) > MARVIS_OPENCLAW_CLI_TIMEOUT > openclawCLITimeout.
 func resolveOpenclawCLITimeout(explicit time.Duration, logger *slog.Logger) time.Duration {
 	if explicit > 0 {
 		return explicit
@@ -178,7 +178,7 @@ type OpenclawConfigPrep struct {
 	OpenclawBin string
 	// Timeout sets the context deadline for each CLI invocation — not a
 	// guaranteed cap on how long the call takes; see openclawCLITimeout. Zero
-	// falls back to the MULTICA_OPENCLAW_CLI_TIMEOUT override, then to
+	// falls back to the MARVIS_OPENCLAW_CLI_TIMEOUT override, then to
 	// openclawCLITimeout.
 	Timeout time.Duration
 	// CacheDir is the directory holding this daemon profile's shared
@@ -492,7 +492,7 @@ func buildPerTaskOpenclawConfig(activePath string, exists bool, resetPath string
 	// `gateway.*` shape so OpenClaw's deep-merge $include semantics produce
 	// the right composed config: anything we set here wins over the user's
 	// global, anything we omit inherits from the user's global. Only emit
-	// fields the multica admin explicitly populated — zero strings/ints
+	// fields the marvis admin explicitly populated — zero strings/ints
 	// would override the user's value with junk.
 	if gw := buildGatewayOverride(gateway); gw != nil {
 		cfg["gateway"] = gw
@@ -585,7 +585,7 @@ func rewriteAgentsListWorkspaces(list []any, workDir string) []any {
 // values (see rewriteAgentsEntriesWorkspaces), so keeping the payload around
 // would only create copies — in the row, in the cache file — of data that must
 // never be written back anyway.
-const openclawEntriesKeyField = "__multica_entries_key"
+const openclawEntriesKeyField = "__marvis_entries_key"
 
 // rewriteAgentsEntriesWorkspaces rebuilds the `agents.entries.<id>` map from a
 // resolved entries list, pinning every entry's `workspace` to workDir.
@@ -1357,7 +1357,7 @@ func execOpenclawCLI(ctx context.Context, bin string, args ...string) (string, e
 // `{}` / `{"mcpServers":{}}` — and `false` when the field is null/absent so
 // the user's global config flows through unmodified.
 //
-// Input shape mirrors the rest of Multica: Claude-style
+// Input shape mirrors the rest of Marvis: Claude-style
 // `{"mcpServers": {"<name>": {...}}}`. The server-entry fields pass through
 // verbatim. OpenClaw's stdio schema uses the same camelCase keys (`command`,
 // `args`, `env`) as Claude; HTTP/SSE entries should set OpenClaw's

@@ -32,7 +32,7 @@ import (
 // here, and writeSkillFiles then writes the workspace version into a clean
 // slot. writeSkillFiles never writes through a link it did not create:
 // allocateCollisionFreeSkillDir probes with os.Lstat, so a link left here
-// counts as occupied and the workspace skill lands in a `-multica` sibling.
+// counts as occupied and the workspace skill lands in a `-marvis` sibling.
 //
 // Per-skill failures are logged and skipped — a single broken user skill
 // must not prevent the task from running. Returning an error is reserved for
@@ -282,7 +282,7 @@ func seedCodexUserSkill(src, dst, name string) error {
 	}
 	// A hidden sibling is owned and reclaimed with the per-task skills tree.
 	// Keeping dst a link also preserves junction-based hydration on Windows.
-	overlay := filepath.Join(filepath.Dir(dst), ".multica-normalized", name)
+	overlay := filepath.Join(filepath.Dir(dst), ".marvis-normalized", name)
 	if err := os.RemoveAll(overlay); err != nil {
 		return err
 	}

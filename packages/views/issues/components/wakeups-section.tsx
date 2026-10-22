@@ -13,16 +13,16 @@ import {
   useEnableIssueWakeup,
   useTriggerIssueWakeup,
   issueTasksOptions,
-} from "@multica/core/issues";
-import type { AgentTask, IssueWakeup, WakeupCondition } from "@multica/core/types";
-import { useCurrentWorkspace } from "@multica/core/paths";
+} from "@marvis/core/issues";
+import type { AgentTask, IssueWakeup, WakeupCondition } from "@marvis/core/types";
+import { useCurrentWorkspace } from "@marvis/core/paths";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
   PopoverTitle,
-} from "@multica/ui/components/ui/popover";
-import { Button } from "@multica/ui/components/ui/button";
+} from "@marvis/ui/components/ui/popover";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +32,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
+} from "@marvis/ui/components/ui/alert-dialog";
 import { WakeupInstructionEditor } from "./wakeup-instruction-editor";
 import { WakeupControl } from "./wakeup-control";
 import { WakeupCreate } from "./wakeup-create";

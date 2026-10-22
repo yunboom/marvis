@@ -3,12 +3,12 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { cn } from "@multica/ui/lib/utils"
-import { Button } from "@multica/ui/components/ui/button"
-import { Input } from "@multica/ui/components/ui/input"
-import { SelectTrigger } from "@multica/ui/components/ui/select"
-import { Textarea } from "@multica/ui/components/ui/textarea"
-import { TimeInput } from "@multica/ui/components/ui/time-input"
+import { cn } from "@marvis/ui/lib/utils"
+import { Button } from "@marvis/ui/components/ui/button"
+import { Input } from "@marvis/ui/components/ui/input"
+import { SelectTrigger } from "@marvis/ui/components/ui/select"
+import { Textarea } from "@marvis/ui/components/ui/textarea"
+import { TimeInput } from "@marvis/ui/components/ui/time-input"
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (

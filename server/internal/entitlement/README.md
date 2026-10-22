@@ -1,11 +1,11 @@
 # Entitlement policy consumer
 
-This package is the mechanical Multica-side consumer of the private Cloud
+This package is the mechanical Marvis-side consumer of the private Cloud
 enforcement-policy endpoint. Commercial inputs stay in Cloud: this package does
 not contain plan names, subscription-state mapping, limit values, or policy
 switches.
 
-Production wiring has one boundary: setting `MULTICA_CLOUD_URL` connects this
+Production wiring has one boundary: setting `MARVIS_CLOUD_URL` connects this
 consumer as well as the other managed Cloud clients. An empty URL performs no
 HTTP request, issue creation does not count rows, and the autopilot consumer
 does not access its quota tables. Self-hosted deployments therefore retain the
@@ -32,7 +32,7 @@ The client reads:
 - `valid_until`: diagnostic Cloud wall-clock time only; it is never used to
   extend enforcement.
 - `gates`: effective `off` or `enforce` instructions and parameters. Cloud does
-  not expose an `observe` rollout mode; `observe` exists only as Multica's local
+  not expose an `observe` rollout mode; `observe` exists only as Marvis's local
   downgrade of an expired cached `enforce` instruction.
 - `gates.*.notifications`: an optional, additive delivery policy. The autopilot
   quota consumer recognizes `first_rejection_per_period` and delivers one
@@ -40,7 +40,7 @@ The client reads:
   period. A malformed notification policy is ignored without invalidating an
   otherwise valid enforcement gate.
 
-Deploy Cloud policy revision 2 before the Multica consumer. The consumer treats
+Deploy Cloud policy revision 2 before the Marvis consumer. The consumer treats
 a missing notification policy as notices-disabled while continuing to enforce
 the quota. The reverse order is safe because older consumers ignore the
 additive notification fields.

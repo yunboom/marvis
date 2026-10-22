@@ -24,10 +24,10 @@ func TestAuthAndConnectFailuresAreSeparateSeries(t *testing.T) {
 	m.RecordConnectFailure()
 
 	values := gatherWecomCounterValues(t, reg)
-	if got := values["multica_wecom_auth_failures_total"]; got != 2 {
+	if got := values["marvis_wecom_auth_failures_total"]; got != 2 {
 		t.Errorf("auth failures = %v, want 2", got)
 	}
-	if got := values["multica_wecom_connect_failures_total"]; got != 1 {
+	if got := values["marvis_wecom_connect_failures_total"]; got != 1 {
 		t.Errorf("connect failures = %v, want 1", got)
 	}
 }
@@ -66,7 +66,7 @@ func gatherWecomCounterValues(t *testing.T, reg prometheus.Gatherer) map[string]
 // The words are load-bearing. Reword the Help and this goes red; keep the claim
 // and the test moves with it.
 func TestSkippedHelpPutsEachReasonOnTheRightSideOfTheAlertLine(t *testing.T) {
-	help := helpFor(t, "multica_wecom_outbound_skipped_total", func(m *WecomMetrics) {
+	help := helpFor(t, "marvis_wecom_outbound_skipped_total", func(m *WecomMetrics) {
 		m.RecordOutboundSkipped("no_delivery_row")
 	})
 	// Four that were never owed to WeCom, the one that may well have been, and
@@ -126,7 +126,7 @@ func TestSkippedHelpPutsEachReasonOnTheRightSideOfTheAlertLine(t *testing.T) {
 // an operator hunting a network fault for a reply that was lost on our side of
 // it.
 func TestDroppedHelpDefinesADropByWhatWasOwed(t *testing.T) {
-	help := helpFor(t, "multica_wecom_outbound_dropped_total", func(m *WecomMetrics) {
+	help := helpFor(t, "marvis_wecom_outbound_dropped_total", func(m *WecomMetrics) {
 		m.RecordOutboundDropped("task_missing")
 	})
 	if first := sentences(help)[0]; !strings.Contains(first, "owed") {

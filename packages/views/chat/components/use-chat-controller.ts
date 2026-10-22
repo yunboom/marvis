@@ -7,19 +7,19 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useAuthStore } from "@multica/core/auth";
-import { getCurrentWsId } from "@multica/core/platform";
-import { agentListOptions, memberListOptions } from "@multica/core/workspace/queries";
-import { projectListOptions } from "@multica/core/projects/queries";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useAuthStore } from "@marvis/core/auth";
+import { getCurrentWsId } from "@marvis/core/platform";
+import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
+import { projectListOptions } from "@marvis/core/projects/queries";
 import { canAssignAgent } from "../../issues/components/pickers/assignee-picker";
-import { api, dispatchReasonCode } from "@multica/core/api";
+import { api, dispatchReasonCode } from "@marvis/core/api";
 import {
   isAgentRuntimeBound as hasAgentRuntime,
   useAgentPresenceDetail,
   useCustomizeConversationStartersHref,
   useWorkspaceAgentAvailability,
-} from "@multica/core/agents";
+} from "@marvis/core/agents";
 import {
   chatSessionsOptions,
   chatMessagesPageOptions,
@@ -27,29 +27,29 @@ import {
   chatKeys,
   isTaskMessageTaskId,
   sortChatSessions,
-} from "@multica/core/chat/queries";
+} from "@marvis/core/chat/queries";
 import {
   useCreateChatSession,
   useMarkChatSessionRead,
   useSetChatSessionProject,
   useSetChatSessionArchived,
-} from "@multica/core/chat/mutations";
-import { useChatStore } from "@multica/core/chat";
-import { upsertChatMessageToCaches } from "@multica/core/chat/message-cache";
+} from "@marvis/core/chat/mutations";
+import { useChatStore } from "@marvis/core/chat";
+import { upsertChatMessageToCaches } from "@marvis/core/chat/message-cache";
 import {
   enqueuePendingChatTask,
   hideQueuedChatMessages,
-} from "@multica/core/chat/pending";
+} from "@marvis/core/chat/pending";
 import { useChatDraftRestore } from "./use-chat-draft-restore";
 import { useChatTaskActions } from "./use-chat-task-actions";
 import { useChatProjectContextSupport } from "./use-chat-project-context-support";
-import { createLogger } from "@multica/core/logger";
+import { createLogger } from "@marvis/core/logger";
 import type {
   Agent,
   Attachment,
   ChatMessage,
   ChatPendingTask,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 import { useT } from "../../i18n";
 import { useAppForeground } from "../../common/use-app-foreground";
 

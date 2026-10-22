@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 
 const copyText = vi.hoisted(() => vi.fn(async () => true));
-vi.mock("@multica/ui/lib/clipboard", () => ({ copyText }));
+vi.mock("@marvis/ui/lib/clipboard", () => ({ copyText }));
 
 vi.mock("../../issues/hooks", () => ({
   useResolveIssueIdentifier: () => null,
@@ -25,13 +25,13 @@ vi.mock("../../i18n", async () => {
   return { useT: () => ({ t }), useTimeAgo: () => "just now" };
 });
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: { getAttachmentTextContent: vi.fn() },
   PreviewTooLargeError: class extends Error {},
   PreviewUnsupportedError: class extends Error {},
 }));
 
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({ issueDetail: (id: string) => `/acme/issues/${id}` }),
   useWorkspaceSlug: () => "acme",
 }));
@@ -120,7 +120,7 @@ describe("editor TableView", () => {
     });
     expect(editor.getMarkdown()).toContain("now tracks it");
     expect(table).toHaveAttribute("data-column-widths");
-    expect(Object.keys(JSON.parse(window.localStorage.getItem("multica:rich-table-widths") ?? "{}"))).toHaveLength(1);
+    expect(Object.keys(JSON.parse(window.localStorage.getItem("marvis:rich-table-widths") ?? "{}"))).toHaveLength(1);
   });
 
   it("copies the table's Markdown", async () => {

@@ -251,7 +251,7 @@ func (b *reasonixBackend) Execute(ctx context.Context, prompt string, opts ExecO
 		initResult, err := c.request(runCtx, "initialize", map[string]any{
 			"protocolVersion": 1,
 			"clientInfo": map[string]any{
-				"name":    "multica-agent-sdk",
+				"name":    "marvis-agent-sdk",
 				"version": "0.2.0",
 			},
 			"clientCapabilities": map[string]any{},
@@ -510,7 +510,7 @@ func (b *reasonixBackend) Execute(ctx context.Context, prompt string, opts ExecO
 }
 
 // reasonixToolNameFromTitle normalises tool names emitted by Reasonix's ACP
-// server into the snake_case identifiers the Multica UI expects.
+// server into the snake_case identifiers the Marvis UI expects.
 //
 // Reasonix follows the ACP spec where `title` is a short human-readable
 // label such as "Read file: /path/to/foo.go" or "Run command: ls".
@@ -598,7 +598,7 @@ func selectReasonixPermissionOption(params json.RawMessage) (optionID string, gr
 	}
 
 	if reasonixPermissionIsQuestion(p) {
-		reason := "Reasonix requested interactive user input, which is unavailable in an unattended Multica task"
+		reason := "Reasonix requested interactive user input, which is unavailable in an unattended Marvis task"
 		if title := strings.TrimSpace(p.ToolCall.Title); title != "" {
 			reason += ": " + clipReasonixPermissionTitle(title)
 		}

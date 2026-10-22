@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useCommentDraftStore } from "@multica/core/issues/stores";
+import { useCommentDraftStore } from "@marvis/core/issues/stores";
 import { renderWithI18n } from "../../test/i18n";
 import { ReplyAnnotations } from "./reply-annotations";
 

@@ -44,7 +44,7 @@ var claudeListModelsArgs = []string{
 // claudeListModelsRequestID labels our control request so the reply can be
 // picked out of the stream. Claude answers a discovery-only session in a single
 // stdout line today, but matching on the id keeps that from being load-bearing.
-const claudeListModelsRequestID = "multica-list-models"
+const claudeListModelsRequestID = "marvis-list-models"
 
 // claudeListModelsTimeout bounds one discovery round trip.
 //
@@ -134,7 +134,7 @@ func resetClaudeCapabilityCacheForTests() {
 // claudeModelInfo is one row of the control protocol's model catalog.
 //
 // Value is the picker token (`sonnet`, `opus[1m]`, or the sentinel `default`);
-// ResolvedModel is what that token actually runs and is what Multica persists.
+// ResolvedModel is what that token actually runs and is what Marvis persists.
 // Disabled marks a row the CLI shows greyed out — visible on purpose, so the
 // user learns the model exists and why it is out of reach, with Description
 // carrying the runtime's own remedy.
@@ -164,7 +164,7 @@ type claudeControlResponse struct {
 }
 
 // claudeDefaultModelValue is the picker row meaning "whatever this CLI resolves
-// to", not a model in its own right. Multica already spells that "leave the
+// to", not a model in its own right. Marvis already spells that "leave the
 // agent's model empty", so the row is folded into the Default flag rather than
 // offered as a pick.
 const claudeDefaultModelValue = "default"
@@ -322,7 +322,7 @@ func claudeModelsFromInfos(infos []claudeModelInfo) ([]Model, []UnavailableModel
 			continue
 		}
 		if strings.TrimSpace(info.Value) == claudeDefaultModelValue {
-			// Held back rather than emitted: Multica already spells "whatever
+			// Held back rather than emitted: Marvis already spells "whatever
 			// this CLI resolves to" as an empty model. Resolved after the loop,
 			// once we know whether a real row carries the same model.
 			defaultRow = &infos[i]
@@ -374,7 +374,7 @@ func claudeModelsFromInfos(infos []claudeModelInfo) ([]Model, []UnavailableModel
 	return models, unavailable
 }
 
-// claudeModelID is the identity Multica persists and passes to `--model`:
+// claudeModelID is the identity Marvis persists and passes to `--model`:
 // what the picker token resolves to, falling back to the token itself.
 func claudeModelID(info claudeModelInfo) string {
 	if id := strings.TrimSpace(info.ResolvedModel); id != "" {

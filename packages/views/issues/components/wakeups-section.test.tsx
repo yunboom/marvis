@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
-import type { IssueWakeup, SystemWakeup } from "@multica/core/types";
+import type { IssueWakeup, SystemWakeup } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { WakeupsSection } from "./wakeups-section";
 const mutate = vi.fn();
@@ -17,10 +17,10 @@ let viewTZ = "UTC";
 vi.mock("./wakeup-condition-names", () => ({
   useConditionNames: () => ({ status: (key: string) => key, label: () => undefined, property: () => undefined, actor: (_type: string, id: string) => id }),
 }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useCurrentWorkspace: () => ({ id: "ws" }),
 }));
-vi.mock("@multica/core/issues", () => ({
+vi.mock("@marvis/core/issues", () => ({
   issueWakeupsOptions: () => ({ queryKey: ["wakeups"] }),
   issueTasksOptions: () => ({ queryKey: ["tasks"] }),
   issueSystemWakeupsOptions: () => ({ queryKey: ["system"] }),

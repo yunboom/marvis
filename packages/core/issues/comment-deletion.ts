@@ -1,4 +1,4 @@
-import type { TimelineEntry } from "@multica/core/types";
+import type { TimelineEntry } from "@marvis/core/types";
 
 /**
  * True for a comment deleted while it still had replies (#8296). The server

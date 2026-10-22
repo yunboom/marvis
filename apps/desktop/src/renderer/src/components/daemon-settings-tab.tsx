@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { AlertCircle, Info, LogIn } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { Switch } from "@multica/ui/components/ui/switch";
-import { cn } from "@multica/ui/lib/utils";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Switch } from "@marvis/ui/components/ui/switch";
+import { cn } from "@marvis/ui/lib/utils";
 import { toast } from "sonner";
 import {
   SettingsCard,
   SettingsRow,
   SettingsSection,
   SettingsTab,
-} from "@multica/views/settings";
-import { useT } from "@multica/views/i18n";
+} from "@marvis/views/settings";
+import { useT } from "@marvis/views/i18n";
 import { reauthenticateDaemon } from "../platform/daemon-reauth";
 import type { DaemonPrefs, DaemonStatus } from "../../../shared/daemon-types";
 import {
@@ -128,8 +128,8 @@ export function DaemonSettingsTab() {
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <p className="min-w-0 text-body text-muted-foreground">
             {t(($) => $.desktop.daemon.external_description_before)}{" "}
-            <code className="font-mono text-caption">multica daemon start</code> /{" "}
-            <code className="font-mono text-caption">multica daemon stop</code>
+            <code className="font-mono text-caption">marvis daemon start</code> /{" "}
+            <code className="font-mono text-caption">marvis daemon stop</code>
             {t(($) => $.desktop.daemon.external_description_after)}
           </p>
         </div>
@@ -174,7 +174,7 @@ export function DaemonSettingsTab() {
               size="sm"
               onClick={() =>
                 window.desktopAPI.openExternal(
-                  "https://github.com/multica-ai/multica#cli-installation",
+                  "https://github.com/marvis-ai/marvis#cli-installation",
                 )
               }
             >

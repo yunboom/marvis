@@ -1,16 +1,16 @@
 "use client";
 
 import { useRef, useState, useEffect, useMemo } from "react";
-import { cn } from "@multica/ui/lib/utils";
+import { cn } from "@marvis/ui/lib/utils";
 import { ContentEditor, type ContentEditorRef, useFileDropZone, FileDropOverlay, useLazyEditor, useUploadGate, useComposerSubmit } from "../../editor";
-import { FileUploadButton } from "@multica/ui/components/common/file-upload-button";
-import { SubmitButton } from "@multica/ui/components/common/submit-button";
-import { Button } from "@multica/ui/components/ui/button";
-import { contentReferencesAttachment, type AgentTask } from "@multica/core/types";
-import { useShortcut } from "@multica/core/shortcuts";
+import { FileUploadButton } from "@marvis/ui/components/common/file-upload-button";
+import { SubmitButton } from "@marvis/ui/components/common/submit-button";
+import { Button } from "@marvis/ui/components/ui/button";
+import { contentReferencesAttachment, type AgentTask } from "@marvis/core/types";
+import { useShortcut } from "@marvis/core/shortcuts";
 import { ShortcutKeycaps } from "../../common/shortcut-keycaps";
-import { useCommentDraftStore } from "@multica/core/issues/stores";
-import { composeAnnotatedReply, hasReplyIntent } from "@multica/core/drafts/reply-annotation";
+import { useCommentDraftStore } from "@marvis/core/issues/stores";
+import { composeAnnotatedReply, hasReplyIntent } from "@marvis/core/drafts/reply-annotation";
 import { ReplyAnnotations } from "./reply-annotations";
 import { useT } from "../../i18n";
 import { CommentTriggerChips } from "./comment-trigger-chips";

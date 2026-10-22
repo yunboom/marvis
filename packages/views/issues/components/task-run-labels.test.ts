@@ -27,7 +27,7 @@ describe("plainTriggerSummary", () => {
   it("replaces an image the snapshot cut mid-way", () => {
     // The server cuts at ~200 runes and appends "…", usually inside the URL.
     expect(
-      plainTriggerSummary("看看这个 ![CleanShot 2026-09-26 at 23.25.40@2x.png](https://multica-app.example/api/attach…", IMAGE),
+      plainTriggerSummary("看看这个 ![CleanShot 2026-09-26 at 23.25.40@2x.png](https://marvis-app.example/api/attach…", IMAGE),
     ).toBe("看看这个 [Image]");
     expect(plainTriggerSummary("![CleanShot 2026-09-26 at 23.2…", IMAGE)).toBe("[Image]");
   });

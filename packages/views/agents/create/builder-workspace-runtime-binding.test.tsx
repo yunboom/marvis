@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chatKeys } from "@multica/core/chat/queries";
-import { runtimeKeys } from "@multica/core/runtimes/queries";
-import { runtimeModelsKeys } from "@multica/core/runtimes";
-import { workspaceKeys } from "@multica/core/workspace/queries";
-import type { AgentBuilderSessionSummary, RuntimeDevice } from "@multica/core/types";
+import { chatKeys } from "@marvis/core/chat/queries";
+import { runtimeKeys } from "@marvis/core/runtimes/queries";
+import { runtimeModelsKeys } from "@marvis/core/runtimes";
+import { workspaceKeys } from "@marvis/core/workspace/queries";
+import type { AgentBuilderSessionSummary, RuntimeDevice } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { BuilderWorkspace } from "./builder-workspace";
 
@@ -16,14 +16,14 @@ const apiMocks = vi.hoisted(() => ({
   switchRuntime: vi.fn(),
   saveDraft: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock("@multica/core/api", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@multica/core/api")>(),
+vi.mock("@marvis/core/api", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@marvis/core/api")>(),
   api: {
     switchAgentBuilderRuntime: apiMocks.switchRuntime,
     saveAgentBuilderDraft: apiMocks.saveDraft,
   },
 }));
-vi.mock("@multica/core/auth", () => {
+vi.mock("@marvis/core/auth", () => {
   const state = { user: { id: "member-1" } };
   return {
     useAuthStore: Object.assign(
@@ -32,7 +32,7 @@ vi.mock("@multica/core/auth", () => {
     ),
   };
 });
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
 vi.mock("./use-create-agent-submit", () => ({
   useCreateAgentSubmit: () => ({ creating: false, clearNameError: vi.fn() }),
 }));
@@ -47,7 +47,7 @@ vi.mock("../../runtimes/components/provider-logo", () => ({ ProviderLogo: () => 
 vi.mock("../components/model-dropdown", () => ({ ModelDropdown: () => null }));
 vi.mock("../components/skill-multi-select", () => ({ SkillMultiSelect: () => null }));
 vi.mock("react-resizable-panels", () => ({ useDefaultLayout: () => ({}) }));
-vi.mock("@multica/ui/components/ui/resizable", () => ({
+vi.mock("@marvis/ui/components/ui/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: ReactNode }) => <>{children}</>,
   ResizablePanel: ({ children }: { children: ReactNode }) => <>{children}</>,
   ResizableHandle: () => null,

@@ -2,8 +2,8 @@
 
 import { Fragment, type ReactNode } from "react";
 import { ArrowLeft, Check, X } from "lucide-react";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { cn } from "@multica/ui/lib/utils";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
 
 export type AgentCreateStep = 1 | 2 | 3;

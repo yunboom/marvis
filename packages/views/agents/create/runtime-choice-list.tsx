@@ -14,9 +14,9 @@ import {
   SquareTerminal,
   TriangleAlert,
 } from "lucide-react";
-import type { QoderConnection } from "@multica/core/runtimes/qoder";
-import { Button, buttonVariants } from "@multica/ui/components/ui/button";
-import { cn } from "@multica/ui/lib/utils";
+import type { QoderConnection } from "@marvis/core/runtimes/qoder";
+import { Button, buttonVariants } from "@marvis/ui/components/ui/button";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
 import { ProviderLogo } from "../../runtimes/components/provider-logo";
 import { HealthDot, useHealthLabel } from "../../runtimes/components/shared";

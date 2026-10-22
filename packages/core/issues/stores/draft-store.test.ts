@@ -90,7 +90,7 @@ describe("issue draft store — last assignee", () => {
     await flush();
 
     const storedStatus = () =>
-      JSON.parse(localStorage.getItem("multica_issue_draft:batch") ?? "{}").state.draft.manual.status;
+      JSON.parse(localStorage.getItem("marvis_issue_draft:batch") ?? "{}").state.draft.manual.status;
 
     const store = useIssueDraftStore.getState();
     // "Create another" resets the form but carries the submitted status and
@@ -116,7 +116,7 @@ describe("issue draft store — last assignee", () => {
 
     useIssueDraftStore.getState().setManual({ status: "in_progress" });
 
-    const stored = JSON.parse(localStorage.getItem("multica_issue_draft:status-only") ?? "{}");
+    const stored = JSON.parse(localStorage.getItem("marvis_issue_draft:status-only") ?? "{}");
     expect(stored.state.draft.manual.status).toBe("in_progress");
     setCurrentWorkspace(null, null);
   });
@@ -128,7 +128,7 @@ describe("issue draft store — last assignee", () => {
 
     useIssueDraftStore.getState().setManual({ status: "in_progress" });
     expect(
-      JSON.parse(localStorage.getItem("multica_issue_draft:status-rehydrate") ?? "{}")
+      JSON.parse(localStorage.getItem("marvis_issue_draft:status-rehydrate") ?? "{}")
         .state.draft.manual.status,
     ).toBe("in_progress");
 
@@ -303,7 +303,7 @@ describe("issue draft store — keep-open batch continuation", () => {
     await flush();
 
     const storedStatus = () =>
-      JSON.parse(localStorage.getItem("multica_issue_draft:mode-switch") ?? "{}").state.draft.manual.status;
+      JSON.parse(localStorage.getItem("marvis_issue_draft:mode-switch") ?? "{}").state.draft.manual.status;
 
     beginContinuation();
     expect(storedStatus()).toBe("todo");
@@ -341,7 +341,7 @@ describe("issue draft store — keep-open batch continuation", () => {
     await flush();
 
     const storedDraft = () =>
-      JSON.parse(localStorage.getItem("multica_issue_draft:switch-edit") ?? "{}").state.draft ?? {};
+      JSON.parse(localStorage.getItem("marvis_issue_draft:switch-edit") ?? "{}").state.draft ?? {};
 
     beginContinuation();
     // A real selection for the next issue, re-committed by the switch along
@@ -491,7 +491,7 @@ describe("issue draft store — legacy rehydrate", () => {
 
   it("drops obsolete status and stage preferences from persisted state", async () => {
     localStorage.setItem(
-      "multica_issue_draft:legacy-pref",
+      "marvis_issue_draft:legacy-pref",
       JSON.stringify({
         state: {
           draft: { manual: { status: "todo" } },
@@ -512,7 +512,7 @@ describe("issue draft store — legacy rehydrate", () => {
     expect("lastStage" in state).toBe(false);
     expect("lastStageParentIssueId" in state).toBe(false);
     state.setManual({ title: "new draft" });
-    const stored = JSON.parse(localStorage.getItem("multica_issue_draft:legacy-pref") ?? "{}");
+    const stored = JSON.parse(localStorage.getItem("marvis_issue_draft:legacy-pref") ?? "{}");
     expect(stored.state).not.toHaveProperty("lastStatus");
     expect(stored.state).not.toHaveProperty("lastStage");
     expect(stored.state).not.toHaveProperty("lastStageParentIssueId");
@@ -520,7 +520,7 @@ describe("issue draft store — legacy rehydrate", () => {
 
   it("migrates a pre-MUL-5181 flat draft into the shared/manual slots", async () => {
     localStorage.setItem(
-      "multica_issue_draft:acme",
+      "marvis_issue_draft:acme",
       JSON.stringify({
         state: {
           draft: {
@@ -563,7 +563,7 @@ describe("issue draft store — legacy rehydrate", () => {
 
   it("backfills missing sub-fields on an already-nested persisted draft", async () => {
     localStorage.setItem(
-      "multica_issue_draft:beta",
+      "marvis_issue_draft:beta",
       JSON.stringify({
         state: {
           draft: {
@@ -595,7 +595,7 @@ describe("issue draft store — legacy rehydrate", () => {
 
   it("normalizes pre-L2 shared attachments and drops stale uploading placeholders", async () => {
     localStorage.setItem(
-      "multica_issue_draft:gamma",
+      "marvis_issue_draft:gamma",
       JSON.stringify({
         state: {
           draft: {
@@ -711,7 +711,7 @@ describe("issue draft store — logout cleanup", () => {
     const { setManual, setLastAssignee } = useIssueDraftStore.getState();
     setManual({ title: "secret wip" });
     setLastAssignee("member", "alice");
-    expect(localStorage.getItem("multica_issue_draft:acme")).not.toBeNull();
+    expect(localStorage.getItem("marvis_issue_draft:acme")).not.toBeNull();
 
     // use-logout's order: reset first (each reset is a setState, and persist
     // writes the new state back to storage under the still-active slug), THEN
@@ -720,6 +720,6 @@ describe("issue draft store — logout cleanup", () => {
     resetAllRegisteredDrafts();
     clearWorkspaceStorage(defaultStorage, "acme");
 
-    expect(localStorage.getItem("multica_issue_draft:acme")).toBeNull();
+    expect(localStorage.getItem("marvis_issue_draft:acme")).toBeNull();
   });
 });

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { hashKey, keepPreviousData, useQuery } from "@tanstack/react-query";
-import { api } from "@multica/core/api";
+import { api } from "@marvis/core/api";
 import type {
   Issue,
   IssueStatus,
@@ -12,27 +12,27 @@ import type {
   IssueTableQuerySpec,
   Project,
   WorkingAgentSummary,
-} from "@multica/core/types";
-import { workspaceWorkingAgentsOptions } from "@multica/core/agents";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+} from "@marvis/core/types";
+import { workspaceWorkingAgentsOptions } from "@marvis/core/agents";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { useColumnWorkflow, workflowColumns } from "../utils/workflow-columns";
-import { statusFilterColumns, visibleStatusKeys } from "@multica/core/issues";
-import { dateOnlyToLocalDate } from "@multica/core/issues/date";
-import type { IssueSortParam } from "@multica/core/issues/queries";
-import { issueTableFacetsOptions } from "@multica/core/issues/queries";
+import { statusFilterColumns, visibleStatusKeys } from "@marvis/core/issues";
+import { dateOnlyToLocalDate } from "@marvis/core/issues/date";
+import type { IssueSortParam } from "@marvis/core/issues/queries";
+import { issueTableFacetsOptions } from "@marvis/core/issues/queries";
 import {
   buildIssueSurfaceQueryPlan,
   type IssueSurfaceQueryPlan,
-} from "@multica/core/issues/surface/query-plan";
+} from "@marvis/core/issues/surface/query-plan";
 import {
   assigneeTypesForActorKind,
   type IssueScope,
-} from "@multica/core/issues/surface/scope";
-import type { IssueDateFilter, SortField } from "@multica/core/issues/stores/view-store";
-import { propertyListOptions } from "@multica/core/properties";
-import { propertyIdFromViewKey } from "@multica/core/issues/stores/view-store";
-import { useViewStore } from "@multica/core/issues/stores/view-store-context";
+} from "@marvis/core/issues/surface/scope";
+import type { IssueDateFilter, SortField } from "@marvis/core/issues/stores/view-store";
+import { propertyListOptions } from "@marvis/core/properties";
+import { propertyIdFromViewKey } from "@marvis/core/issues/stores/view-store";
+import { useViewStore } from "@marvis/core/issues/stores/view-store-context";
 import type { IssueFilters } from "../utils/filter";
 import type { ChildProgress } from "../components/list-row";
 import { IssueTableExportIntegrityError } from "../components/table-view-model";

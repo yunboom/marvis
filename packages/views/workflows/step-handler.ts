@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import { useActorName } from "@multica/core/workspace/hooks";
-import type { IssueWorkflowStep, Project } from "@multica/core/types";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import type { IssueWorkflowStep, Project } from "@marvis/core/types";
 import { useT } from "../i18n";
 
 /** The concrete actor a step hands off to, when one can be named up front. */

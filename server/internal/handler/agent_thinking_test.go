@@ -988,7 +988,7 @@ func createOmpAgent(t *testing.T, name, runtimeID, model, level string) string {
 // own default role model at task time and clamps the level to what THAT model
 // supports, so a stored level would save cleanly, read back as set, and then run
 // at a different level. Hiding the picker in the inspector does not cover
-// `multica agent create/update` or a direct API call, so the refusal has to live
+// `marvis agent create/update` or a direct API call, so the refusal has to live
 // here.
 func TestAgent_OmpThinkingLevelRequiresExplicitModel(t *testing.T) {
 	if testHandler == nil {

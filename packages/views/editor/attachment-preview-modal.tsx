@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import {
   PreviewTooLargeError,
   PreviewUnsupportedError,
-} from "@multica/core/api";
+} from "@marvis/core/api";
 import {
   ChevronLeft,
   ChevronRight,
@@ -54,17 +54,17 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import type { Attachment } from "@multica/core/types";
-import { paths, useWorkspaceSlug } from "@multica/core/paths";
-import { createShortcutChord } from "@multica/core/shortcuts";
-import { cn } from "@multica/ui/lib/utils";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
-import { copyImage } from "@multica/ui/lib/clipboard";
-import { resolvePublicFileUrl } from "@multica/core/workspace/avatar-url";
+import type { Attachment } from "@marvis/core/types";
+import { paths, useWorkspaceSlug } from "@marvis/core/paths";
+import { createShortcutChord } from "@marvis/core/shortcuts";
+import { cn } from "@marvis/ui/lib/utils";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import { copyImage } from "@marvis/ui/lib/clipboard";
+import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import {
   UI_EASE_OUT,
   UI_MOTION_DURATION,
-} from "@multica/ui/lib/motion";
+} from "@marvis/ui/lib/motion";
 import { useT } from "../i18n";
 import { useNavigation } from "../navigation";
 import { openExternal } from "../platform";

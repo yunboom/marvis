@@ -22,8 +22,8 @@ import { useQuery } from "@tanstack/react-query";
 import type {
   Issue,
   IssuePriority,
-} from "@multica/core/types";
-import { formatDateOnly } from "@multica/core/issues/date";
+} from "@marvis/core/types";
+import { formatDateOnly } from "@marvis/core/issues/date";
 import { Text } from "@/components/ui/text";
 import { StatusIcon } from "@/components/ui/status-icon";
 import { PriorityIcon } from "@/components/ui/priority-icon";

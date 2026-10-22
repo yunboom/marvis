@@ -13,7 +13,7 @@ import (
 // The problem it solves is the mirror of the comment delta's (MUL-6984, and
 // MUL-7344 for the `--since` form). A follow-up turn that resumes its provider
 // session already holds the issue body it read minutes ago, yet the per-turn
-// message told it to run `multica issue get` again before doing anything. On an
+// message told it to run `marvis issue get` again before doing anything. On an
 // issue that did not move, that read returns bytes the session already has.
 //
 // Three renderings, and which one applies is decided by the CALLER, not here:
@@ -43,7 +43,7 @@ import (
 // its values are per-run, and the brief stays byte-identical across runs of a
 // resumed session (MUL-5377).
 func BuildIssueStateHint(issueID, issueStatus, assigneeType, assigneeID string, changedFields []string, deltaKnown, resumed bool) string {
-	readCommand := fmt.Sprintf("`multica issue get %s --output json`", issueID)
+	readCommand := fmt.Sprintf("`marvis issue get %s --output json`", issueID)
 	// The cold instruction is a byte-for-byte literal, not a format of the
 	// other two: it is what every non-resumed run has always been handed, and
 	// the tests that pin the cold path pin these exact bytes.

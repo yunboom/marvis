@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import type { Issue, IssueStatusEntry } from "@multica/core/types";
+import type { Issue, IssueStatusEntry } from "@marvis/core/types";
 import { groupIssuesByStatus } from "./group-issues-by-status";
 
 function issue(id: string, status: string, statusCategory?: string): Issue {

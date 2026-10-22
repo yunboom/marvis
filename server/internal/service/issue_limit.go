@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/entitlement"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/entitlement"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // IssueLimitReachedError carries Cloud's effective limit and policy revision

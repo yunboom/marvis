@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Agent } from "@multica/core/types";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { skillListOptions } from "@multica/core/workspace/queries";
+import type { Agent } from "@marvis/core/types";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { skillListOptions } from "@marvis/core/workspace/queries";
 import { SkillAddDialog } from "../skill-add-dialog";
 import { useT } from "../../../i18n";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 
 /**
  * Inline "+ Attach" trigger for the inspector's Skills row. The trigger is

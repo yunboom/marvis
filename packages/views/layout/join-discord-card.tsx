@@ -1,8 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useAuthStore } from "@multica/core/auth";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { useAuthStore } from "@marvis/core/auth";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { DISCORD_URL, DiscordIcon } from "./discord";
 import { useDiscordCardDismissed } from "./use-discord-card-dismissed";
 import { useT } from "../i18n";

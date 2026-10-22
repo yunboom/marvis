@@ -1,7 +1,7 @@
-import { useFeatureEnabled } from "@multica/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@multica/core/feature-flags";
-import { defaultWorkflow, useIssueWorkflows, useProjectWorkflow } from "@multica/core/issue-workflows";
-import type { IssueStatus, IssueWorkflow } from "@multica/core/types";
+import { useFeatureEnabled } from "@marvis/core/config";
+import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
+import { defaultWorkflow, useIssueWorkflows, useProjectWorkflow } from "@marvis/core/issue-workflows";
+import type { IssueStatus, IssueWorkflow } from "@marvis/core/types";
 
 /**
  * The status columns of a surface whose columns follow a workflow (MUL-7420):

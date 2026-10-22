@@ -336,12 +336,12 @@ func TestCreateWorktreeContextCancelsRunningGitProcessTree(t *testing.T) {
 	binDir := t.TempDir()
 	marker := filepath.Join(t.TempDir(), "git-descendant-survived")
 	script := filepath.Join(binDir, "git")
-	body := "#!/bin/sh\n(sleep 0.5; echo leaked > \"$MULTICA_TEST_GIT_MARKER\") &\nwait\n"
+	body := "#!/bin/sh\n(sleep 0.5; echo leaked > \"$MARVIS_TEST_GIT_MARKER\") &\nwait\n"
 	if err := os.WriteFile(script, []byte(body), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
-	t.Setenv("MULTICA_TEST_GIT_MARKER", marker)
+	t.Setenv("MARVIS_TEST_GIT_MARKER", marker)
 
 	root := t.TempDir()
 	cache := New(root, testLogger())
@@ -1098,7 +1098,7 @@ func TestLocalCloneArgsOnlyDisablesHardlinksOnWindows(t *testing.T) {
 }
 
 // TestIsolatedCheckoutCloneWithoutHardlinksIsIndependent runs the exact clone
-// invocation Windows Codex tasks now use (multica-ai/multica#6449) and proves
+// invocation Windows Codex tasks now use (marvis-ai/marvis#6449) and proves
 // it still yields a usable checkout whose object files are private copies
 // rather than links back into the daemon-owned cache. Kept platform-agnostic
 // so Linux/macOS CI guards the Windows-only flag.
@@ -1902,7 +1902,7 @@ func TestGetRemoteDefaultBranchUsesBareHeadHintForCustomDefault(t *testing.T) {
 
 // TestCreateWorktreeInstallsCoAuthoredByHook verifies that CreateWorktree
 // installs a prepare-commit-msg hook that appends a Co-authored-by trailer
-// for the Multica Agent to every commit made in the worktree.
+// for the Marvis Agent to every commit made in the worktree.
 func TestCreateWorktreeInstallsCoAuthoredByHook(t *testing.T) {
 	t.Parallel()
 	sourceRepo := createTestRepo(t)
@@ -1939,7 +1939,7 @@ func TestCreateWorktreeInstallsCoAuthoredByHook(t *testing.T) {
 		t.Fatalf("git log failed: %v", err)
 	}
 	commitMsg := string(out)
-	expectedTrailer := "Co-authored-by: multica-agent <github@multica.ai>"
+	expectedTrailer := "Co-authored-by: marvis-agent <github@marvis.ai>"
 	if !strings.Contains(commitMsg, expectedTrailer) {
 		t.Errorf("commit message missing Co-authored-by trailer.\ngot:\n%s", commitMsg)
 	}
@@ -1971,7 +1971,7 @@ func TestCoAuthoredByHookIdempotent(t *testing.T) {
 	}
 
 	// Commit with the trailer already in the message.
-	trailer := "Co-authored-by: multica-agent <github@multica.ai>"
+	trailer := "Co-authored-by: marvis-agent <github@marvis.ai>"
 	if err := os.WriteFile(filepath.Join(result.Path, "test.txt"), []byte("hello\n"), 0o644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
@@ -1992,7 +1992,7 @@ func TestCoAuthoredByHookIdempotent(t *testing.T) {
 }
 
 // TestCreateWorktreeRemovesCoAuthoredByHookWhenDisabled verifies the toggle-off
-// path: a bare cache that already carries the Multica prepare-commit-msg hook
+// path: a bare cache that already carries the Marvis prepare-commit-msg hook
 // (e.g. from a prior worktree created with the setting on) must drop the hook
 // when the next CreateWorktree call passes CoAuthoredByEnabled=false.
 // Otherwise commits keep getting the trailer even after the user disables the
@@ -2058,15 +2058,15 @@ func TestCreateWorktreeRemovesCoAuthoredByHookWhenDisabled(t *testing.T) {
 		t.Fatalf("git log failed: %v", err)
 	}
 	commitMsg := string(out)
-	if strings.Contains(commitMsg, "Co-authored-by: multica-agent") {
+	if strings.Contains(commitMsg, "Co-authored-by: marvis-agent") {
 		t.Errorf("commit unexpectedly carries the Co-authored-by trailer with setting disabled.\ngot:\n%s", commitMsg)
 	}
 }
 
 // TestCreateWorktreeRemovesLegacyCoAuthoredByHook verifies the migration
 // path: bare clones already on disk from previous daemon versions carry a
-// prepare-commit-msg hook that does NOT include the multicaHookMarker
-// sentinel — only the older `# Installed by the Multica daemon.` comment.
+// prepare-commit-msg hook that does NOT include the marvisHookMarker
+// sentinel — only the older `# Installed by the Marvis daemon.` comment.
 // Toggling the workspace setting off must still remove those legacy hooks,
 // otherwise users who flip the toggle in production keep seeing the trailer
 // indefinitely (the exact bug reported in MUL-1704).
@@ -2081,12 +2081,12 @@ func TestCreateWorktreeRemovesLegacyCoAuthoredByHook(t *testing.T) {
 	}
 
 	// Seed the bare cache with the exact hook content shipped by the
-	// previous daemon release (no multicaHookMarker line). Keeping a
+	// previous daemon release (no marvisHookMarker line). Keeping a
 	// verbatim copy here means the test fails if recognition logic ever
 	// drifts away from what production hosts actually have on disk.
 	const legacyHook = `#!/bin/sh
-# Multica: add Co-authored-by trailer for the Multica Agent.
-# Installed by the Multica daemon. Do not edit — it will be overwritten.
+# Marvis: add Co-authored-by trailer for the Marvis Agent.
+# Installed by the Marvis daemon. Do not edit — it will be overwritten.
 
 COMMIT_MSG_FILE="$1"
 COMMIT_SOURCE="$2"
@@ -2096,7 +2096,7 @@ case "$COMMIT_SOURCE" in
   merge|squash) exit 0 ;;
 esac
 
-TRAILER="Co-authored-by: multica-agent <github@multica.ai>"
+TRAILER="Co-authored-by: marvis-agent <github@marvis.ai>"
 
 # Don't add if already present.
 if grep -qF "$TRAILER" "$COMMIT_MSG_FILE"; then
@@ -2144,14 +2144,14 @@ git interpret-trailers --in-place --trailer "$TRAILER" "$COMMIT_MSG_FILE"
 	if err != nil {
 		t.Fatalf("git log failed: %v", err)
 	}
-	if commitMsg := string(out); strings.Contains(commitMsg, "Co-authored-by: multica-agent") {
+	if commitMsg := string(out); strings.Contains(commitMsg, "Co-authored-by: marvis-agent") {
 		t.Errorf("commit unexpectedly carries the Co-authored-by trailer after legacy hook removal.\ngot:\n%s", commitMsg)
 	}
 }
 
 // TestRemoveCoAuthoredByHookPreservesUserHook verifies that the disable path
 // only deletes hooks installed by the daemon. A prepare-commit-msg hook
-// without the Multica marker (e.g. one a user added manually) must be left
+// without the Marvis marker (e.g. one a user added manually) must be left
 // untouched even when CoAuthoredByEnabled=false.
 func TestRemoveCoAuthoredByHookPreservesUserHook(t *testing.T) {
 	t.Parallel()
@@ -2169,7 +2169,7 @@ func TestRemoveCoAuthoredByHookPreservesUserHook(t *testing.T) {
 		t.Fatalf("create hooks dir: %v", err)
 	}
 	hookPath := filepath.Join(hooksDir, "prepare-commit-msg")
-	userHook := "#!/bin/sh\n# user hook, not Multica\nexit 0\n"
+	userHook := "#!/bin/sh\n# user hook, not Marvis\nexit 0\n"
 	if err := os.WriteFile(hookPath, []byte(userHook), 0o755); err != nil {
 		t.Fatalf("seed user hook: %v", err)
 	}
@@ -2411,7 +2411,7 @@ func TestCoAuthoredByStateStopsTrailerInExistingCheckout(t *testing.T) {
 		return string(out)
 	}
 
-	if msg := commit("a.txt", "enabled commit"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commit("a.txt", "enabled commit"); !strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Fatalf("precondition: commit made with the setting on lacks the trailer.\ngot:\n%s", msg)
 	}
 
@@ -2421,10 +2421,10 @@ func TestCoAuthoredByStateStopsTrailerInExistingCheckout(t *testing.T) {
 		t.Fatalf("WriteCoAuthoredByState(false) failed: %v", err)
 	}
 
-	if msg := commit("b.txt", "disabled commit"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commit("b.txt", "disabled commit"); strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Errorf("commit in the existing checkout still carries the trailer after the toggle was turned off.\ngot:\n%s", msg)
 	}
-	if msg := commit("c.txt", "disabled commit, no-verify", "--no-verify"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commit("c.txt", "disabled commit, no-verify", "--no-verify"); strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Errorf("--no-verify commit still carries the trailer after the toggle was turned off.\ngot:\n%s", msg)
 	}
 
@@ -2432,7 +2432,7 @@ func TestCoAuthoredByStateStopsTrailerInExistingCheckout(t *testing.T) {
 	if err := cache.WriteCoAuthoredByState("ws-1", true); err != nil {
 		t.Fatalf("WriteCoAuthoredByState(true) failed: %v", err)
 	}
-	if msg := commit("d.txt", "re-enabled commit"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commit("d.txt", "re-enabled commit"); !strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Errorf("commit missing the trailer after the toggle was turned back on.\ngot:\n%s", msg)
 	}
 }
@@ -2520,9 +2520,9 @@ func TestWriteCoAuthoredByStateIsAtomic(t *testing.T) {
 // under the old release, so the migration path has to be tested against the
 // real bytes rather than against a hook this PR's code produced.
 const releasedUngatedHook = `#!/bin/sh
-# multica:prepare-commit-msg:co-authored-by
-# Multica: add Co-authored-by trailer for the Multica Agent.
-# Installed by the Multica daemon. Do not edit — it will be overwritten.
+# marvis:prepare-commit-msg:co-authored-by
+# Marvis: add Co-authored-by trailer for the Marvis Agent.
+# Installed by the Marvis daemon. Do not edit — it will be overwritten.
 
 COMMIT_MSG_FILE="$1"
 COMMIT_SOURCE="$2"
@@ -2532,7 +2532,7 @@ case "$COMMIT_SOURCE" in
   merge|squash) exit 0 ;;
 esac
 
-TRAILER="Co-authored-by: multica-agent <github@multica.ai>"
+TRAILER="Co-authored-by: marvis-agent <github@marvis.ai>"
 
 # Don't add if already present.
 if grep -qF "$TRAILER" "$COMMIT_MSG_FILE"; then
@@ -2595,7 +2595,7 @@ func TestReconcileCoAuthoredByHooksMigratesReleasedHook(t *testing.T) {
 	t.Parallel()
 	cache, worktreePath, hookPath := seedUpgradedHost(t, "55555555-0000-0000-0000-000000000000")
 
-	if msg := commitInWorktree(t, worktreePath, "a.txt", "before the toggle"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, worktreePath, "a.txt", "before the toggle"); !strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Fatalf("precondition: the previous release's hook should still add the trailer.\ngot:\n%s", msg)
 	}
 
@@ -2611,7 +2611,7 @@ func TestReconcileCoAuthoredByHooksMigratesReleasedHook(t *testing.T) {
 	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
 		t.Errorf("expected the previous release's hook to be removed at %s, stat err=%v", hookPath, err)
 	}
-	if msg := commitInWorktree(t, worktreePath, "b.txt", "after the toggle"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, worktreePath, "b.txt", "after the toggle"); strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Errorf("upgraded host still adds the trailer after the toggle was turned off.\ngot:\n%s", msg)
 	}
 }
@@ -2637,7 +2637,7 @@ func TestReconcileCoAuthoredByHooksUpgradesReleasedHookInPlace(t *testing.T) {
 	if !strings.Contains(string(hook), filepath.ToSlash(cache.CoAuthoredByStatePath("ws-1"))) {
 		t.Fatalf("hook was not upgraded to read the state file.\ngot:\n%s", hook)
 	}
-	if msg := commitInWorktree(t, worktreePath, "a.txt", "still enabled"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, worktreePath, "a.txt", "still enabled"); !strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Errorf("upgraded hook dropped the trailer while the setting is on.\ngot:\n%s", msg)
 	}
 
@@ -2645,7 +2645,7 @@ func TestReconcileCoAuthoredByHooksUpgradesReleasedHookInPlace(t *testing.T) {
 	if err := cache.WriteCoAuthoredByState("ws-1", false); err != nil {
 		t.Fatalf("WriteCoAuthoredByState failed: %v", err)
 	}
-	if msg := commitInWorktree(t, worktreePath, "b.txt", "toggled off"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, worktreePath, "b.txt", "toggled off"); strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Errorf("upgraded hook ignored the published state.\ngot:\n%s", msg)
 	}
 }
@@ -2722,7 +2722,7 @@ func TestCreateWorktreeDoesNotResurrectDisabledState(t *testing.T) {
 	if strings.TrimSpace(string(state)) != "0" {
 		t.Errorf("state = %q, want it left at 0: a checkout must not republish its snapshot", state)
 	}
-	if msg := commitInWorktree(t, result.Path, "a.txt", "checked out with a stale snapshot"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, result.Path, "a.txt", "checked out with a stale snapshot"); strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Errorf("commit carries the trailer although the workspace setting is off.\ngot:\n%s", msg)
 	}
 }
@@ -2761,7 +2761,7 @@ func TestReconcileCoAuthoredByHookInCheckoutMigratesReleasedHook(t *testing.T) {
 	if err := os.WriteFile(hookPath, []byte(releasedUngatedHook), 0o755); err != nil {
 		t.Fatalf("seed previous-release hook: %v", err)
 	}
-	if msg := commitInWorktree(t, result.Path, "a.txt", "before the toggle"); !strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, result.Path, "a.txt", "before the toggle"); !strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Fatalf("precondition: the previous release's hook should still add the trailer.\ngot:\n%s", msg)
 	}
 
@@ -2775,7 +2775,7 @@ func TestReconcileCoAuthoredByHookInCheckoutMigratesReleasedHook(t *testing.T) {
 	if _, err := os.Stat(hookPath); !os.IsNotExist(err) {
 		t.Errorf("expected the hook to be removed at %s, stat err=%v", hookPath, err)
 	}
-	if msg := commitInWorktree(t, result.Path, "b.txt", "after the toggle"); strings.Contains(msg, "Co-authored-by: multica-agent") {
+	if msg := commitInWorktree(t, result.Path, "b.txt", "after the toggle"); strings.Contains(msg, "Co-authored-by: marvis-agent") {
 		t.Errorf("isolated checkout still adds the trailer after the toggle was turned off.\ngot:\n%s", msg)
 	}
 }

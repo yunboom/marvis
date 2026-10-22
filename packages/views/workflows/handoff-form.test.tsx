@@ -3,22 +3,22 @@
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses";
-import { agentListOptions, memberListOptions } from "@multica/core/workspace/queries";
-import { projectListOptions } from "@multica/core/projects/queries";
-import type { IssueWorkflow, IssueWorkflowStep } from "@multica/core/types";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
+import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
+import { projectListOptions } from "@marvis/core/projects/queries";
+import type { IssueWorkflow, IssueWorkflowStep } from "@marvis/core/types";
 import { renderWithI18n } from "../test/i18n";
 import { HandoffFields, WorkflowHandoffForm } from "./handoff-form";
 
 const { mutateAsync } = vi.hoisted(() => ({ mutateAsync: vi.fn() }));
 
-vi.mock("@multica/core/api", () => ({ api: {}, clientErrorMessage: () => null }));
-vi.mock("@multica/core/issue-workflows", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/issue-workflows")>()),
+vi.mock("@marvis/core/api", () => ({ api: {}, clientErrorMessage: () => null }));
+vi.mock("@marvis/core/issue-workflows", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/issue-workflows")>()),
   useSetWorkflowHandoff: () => ({ mutateAsync, isPending: false }),
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/issue-statuses/hooks", () => ({ useIssueStatuses: () => buildIssueStatusCatalog([]) }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({ useIssueStatuses: () => buildIssueStatusCatalog([]) }));
 vi.mock("../common/actor-avatar", () => ({
   ActorAvatar: ({ actorId }: { actorId: string }) => <span data-testid={`avatar-${actorId}`} />,
 }));

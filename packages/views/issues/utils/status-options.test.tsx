@@ -1,8 +1,8 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses";
-import { statusCategoryOfKey } from "@multica/core/issues";
-import type { IssueStatusEntry } from "@multica/core/types";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
+import { statusCategoryOfKey } from "@marvis/core/issues";
+import type { IssueStatusEntry } from "@marvis/core/types";
 import en from "../../locales/en/issues.json";
 import { useStatusOptions } from "./status-options";
 import { useStatusLabel } from "./status-label";
@@ -11,11 +11,11 @@ import { useStatusLabel } from "./status-label";
 // the filter are allowed to offer, so the catalog is fed in directly.
 let catalogEntries: IssueStatusEntry[] | undefined;
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () => buildIssueStatusCatalog(catalogEntries),
 }));
 

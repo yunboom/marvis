@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // fetchTimeline issues a GET /timeline request and returns the decoded entries
@@ -212,7 +212,7 @@ func TestListTimeline_HydratesDepartedMemberIdentity(t *testing.T) {
 }
 
 // fetchTimelineWrapped exercises the legacy wrapped response shape that
-// stale Multica.app v0.2.26+ builds still expect — sending any of
+// stale Marvis.app v0.2.26+ builds still expect — sending any of
 // limit/before/after/around makes the server emit a TimelinePage-style
 // object (entries DESC, null cursors, has_more_*=false) instead of the new
 // flat array. Used to verify the boundary-compat path doesn't regress.

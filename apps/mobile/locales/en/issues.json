@@ -230,7 +230,7 @@
     "attach": "Attach",
     "attaching": "Attaching...",
     "branch_hint": "Runs start from this branch and open their pull requests against it. Leave empty to use the repository default branch.",
-    "commit": "This is a commit ID, not a branch. Runs deliver back to the branch they start from. For a one-off revision, pass --ref to multica repo checkout.",
+    "commit": "This is a commit ID, not a branch. Runs deliver back to the branch they start from. For a one-off revision, pass --ref to marvis repo checkout.",
     "too_long": "Use at most 255 characters.",
     "invalid_characters": "A branch name can't contain spaces or any of ~ ^ : ? * [ \\",
     "invalid": "Not a valid branch name.",

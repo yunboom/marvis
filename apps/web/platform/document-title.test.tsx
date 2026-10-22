@@ -2,7 +2,7 @@
 /**
  * MUL-6222 — the web half of the tab-title contract.
  *
- * What a URL is *named* is resolved by `@multica/core/paths` +
+ * What a URL is *named* is resolved by `@marvis/core/paths` +
  * `useTabPresentation` and tested there; mocked out here so these cover only
  * the platform wiring web owns: the site suffix, the unknown-route and
  * navigation behavior of `document.title`.
@@ -20,7 +20,7 @@ const presentation = vi.hoisted(() => ({
   title: "Issues",
   urls: [] as string[],
 }));
-vi.mock("@multica/views/layout", () => ({
+vi.mock("@marvis/views/layout", () => ({
   useTabPresentation: (url: string) => {
     presentation.urls.push(url);
     return { title: presentation.title, visual: { kind: "icon", icon: "ListTodo" } };
@@ -48,7 +48,7 @@ beforeEach(() => {
 describe("formatDocumentTitle", () => {
   it("puts the page name in front of the product name", () => {
     expect(formatDocumentTitle("MUL-123: Fix login")).toBe(
-      "MUL-123: Fix login | Multica",
+      "MUL-123: Fix login | Marvis",
     );
   });
 
@@ -64,14 +64,14 @@ describe("formatDocumentTitle", () => {
     const formatted = formatDocumentTitle(title);
 
     expect(formatted.startsWith("MUL-123: long")).toBe(true);
-    expect(formatted.endsWith("… | Multica")).toBe(true);
+    expect(formatted.endsWith("… | Marvis")).toBe(true);
     // Ellipsis replaces the clipped remainder, and no trailing space survives.
     expect(formatted).not.toContain(" … ");
   });
 
   it("clips on code points so an emoji is never cut in half", () => {
     const formatted = formatDocumentTitle("🎯".repeat(MAX_PAGE_TITLE_LENGTH + 10));
-    const pageTitle = formatted.slice(0, formatted.indexOf(" | Multica"));
+    const pageTitle = formatted.slice(0, formatted.indexOf(" | Marvis"));
 
     expect(Array.from(pageTitle)).toHaveLength(MAX_PAGE_TITLE_LENGTH + 1);
     expect(pageTitle).not.toContain("�");
@@ -80,7 +80,7 @@ describe("formatDocumentTitle", () => {
 
   it("leaves a title at the limit untouched", () => {
     const exact = "x".repeat(MAX_PAGE_TITLE_LENGTH);
-    expect(formatDocumentTitle(exact)).toBe(`${exact} | Multica`);
+    expect(formatDocumentTitle(exact)).toBe(`${exact} | Marvis`);
   });
 });
 
@@ -91,7 +91,7 @@ describe("WorkspaceDocumentTitle", () => {
 
     render(<WorkspaceDocumentTitle />);
 
-    expect(document.title).toBe("MUL-123: Fix login | Multica");
+    expect(document.title).toBe("MUL-123: Fix login | Marvis");
   });
 
   it("resolves against the full URL so a container's selection titles the tab", () => {
@@ -101,7 +101,7 @@ describe("WorkspaceDocumentTitle", () => {
     render(<WorkspaceDocumentTitle />);
 
     expect(presentation.urls).toContain("/acme/inbox?issue=abc&view=archived");
-    expect(document.title).toBe("MUL-9: Ping | Multica");
+    expect(document.title).toBe("MUL-9: Ping | Marvis");
   });
 
   it("keeps the site title on an unrecognized route", () => {
@@ -118,7 +118,7 @@ describe("WorkspaceDocumentTitle", () => {
     presentation.title = "Website redesign";
 
     const view = render(<WorkspaceDocumentTitle />);
-    expect(document.title).toBe("Website redesign | Multica");
+    expect(document.title).toBe("Website redesign | Marvis");
 
     view.unmount();
     expect(document.title).toBe(SITE_TITLE);
@@ -128,7 +128,7 @@ describe("WorkspaceDocumentTitle", () => {
     open("/acme/inbox");
     presentation.title = "Inbox";
     const view = render(<WorkspaceDocumentTitle />);
-    expect(document.title).toBe("Inbox | Multica");
+    expect(document.title).toBe("Inbox | Marvis");
 
     // A route change re-renders the target's metadata, resetting the title to
     // the root default before our effect gets to run again.
@@ -136,7 +136,7 @@ describe("WorkspaceDocumentTitle", () => {
     open("/acme/inbox", "view=archived");
     view.rerender(<WorkspaceDocumentTitle />);
 
-    expect(document.title).toBe("Inbox | Multica");
+    expect(document.title).toBe("Inbox | Marvis");
   });
   it("restores the workspace title when route metadata overwrites it", async () => {
     open("/acme/issues/MUL-123");
@@ -146,20 +146,20 @@ describe("WorkspaceDocumentTitle", () => {
     document.title = SITE_TITLE;
 
     await waitFor(() => {
-      expect(document.title).toBe("MUL-123: Fix login | Multica");
+      expect(document.title).toBe("MUL-123: Fix login | Marvis");
     });
   });
   it("updates when navigating from one issue to another", () => {
     open("/acme/issues/HIBE-63");
     presentation.title = "HIBE-63: First issue";
     const view = render(<WorkspaceDocumentTitle />);
-    expect(document.title).toBe("HIBE-63: First issue | Multica");
+    expect(document.title).toBe("HIBE-63: First issue | Marvis");
 
     open("/acme/issues/HIBE-64");
     presentation.title = "HIBE-64: Second issue";
     view.rerender(<WorkspaceDocumentTitle />);
 
-    expect(document.title).toBe("HIBE-64: Second issue | Multica");
+    expect(document.title).toBe("HIBE-64: Second issue | Marvis");
   });
 
   it("restores the latest issue after metadata overwrites a later navigation", async () => {
@@ -173,7 +173,7 @@ describe("WorkspaceDocumentTitle", () => {
     document.title = SITE_TITLE;
 
     await waitFor(() => {
-      expect(document.title).toBe("HIBE-64: Second issue | Multica");
+      expect(document.title).toBe("HIBE-64: Second issue | Marvis");
     });
   });
 });

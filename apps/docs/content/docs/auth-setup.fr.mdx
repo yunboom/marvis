@@ -5,11 +5,11 @@ description: Configurez les codes de vérification par e-mail, la connexion avec
 
 import { Callout } from "fumadocs-ui/components/callout";
 
-Par défaut, Multica connecte les utilisateurs au moyen de codes de vérification envoyés par e-mail ; Google OAuth peut être ajouté en complément. Les utilisateurs existants peuvent toujours se reconnecter — les restrictions d'inscription décident uniquement si de nouveaux comptes peuvent être créés.
+Par défaut, Marvis connecte les utilisateurs au moyen de codes de vérification envoyés par e-mail ; Google OAuth peut être ajouté en complément. Les utilisateurs existants peuvent toujours se reconnecter — les restrictions d'inscription décident uniquement si de nouveaux comptes peuvent être créés.
 
 ## Codes de vérification par e-mail
 
-Une fois que l'utilisateur a saisi une adresse e-mail, Multica envoie un code de vérification à 6 chiffres. Le code est valable 10 minutes ; une fois vérifié, le navigateur reçoit un cookie de connexion.
+Une fois que l'utilisateur a saisi une adresse e-mail, Marvis envoie un code de vérification à 6 chiffres. Le code est valable 10 minutes ; une fois vérifié, le navigateur reçoit un cookie de connexion.
 
 Les e-mails peuvent être envoyés via Resend ou SMTP. Lorsque les deux sont configurés, `SMTP_HOST` est prioritaire.
 
@@ -34,7 +34,7 @@ Définissez au minimum l'hôte et l'adresse de l'expéditeur :
 ```dotenv
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
-SMTP_USERNAME=multica
+SMTP_USERNAME=marvis
 SMTP_PASSWORD=<password>
 SMTP_FROM_EMAIL=noreply@example.com
 ```
@@ -67,22 +67,22 @@ Les tests automatisés locaux peuvent définir un code de vérification fixe :
 
 ```dotenv
 APP_ENV=development
-MULTICA_DEV_VERIFICATION_CODE=888888
+MARVIS_DEV_VERIFICATION_CODE=888888
 ```
 
 Le code doit comporter 6 chiffres. Le code fixe est ignoré lorsque `APP_ENV=production`.
 
 <Callout type="warning">
-N'activez pas de code fixe sur une instance accessible publiquement. La combinaison de production est `APP_ENV=production` avec un `MULTICA_DEV_VERIFICATION_CODE` vide.
+N'activez pas de code fixe sur une instance accessible publiquement. La combinaison de production est `APP_ENV=production` avec un `MARVIS_DEV_VERIFICATION_CODE` vide.
 </Callout>
 
 ## Connexion avec Google
 
 1. Créez un client OAuth 2.0 dans la [Google Cloud Console](https://console.cloud.google.com/).
-2. Ajoutez l'URL de rappel du frontend Multica dans **Authorized redirect URIs** (« URI de redirection autorisés » dans la console en français) :
+2. Ajoutez l'URL de rappel du frontend Marvis dans **Authorized redirect URIs** (« URI de redirection autorisés » dans la console en français) :
 
    ```text
-   https://multica.example.com/auth/callback
+   https://marvis.example.com/auth/callback
    ```
 
 3. Définissez :
@@ -90,7 +90,7 @@ N'activez pas de code fixe sur une instance accessible publiquement. La combinai
    ```dotenv
    GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
    GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxx
-   GOOGLE_REDIRECT_URI=https://multica.example.com/auth/callback
+   GOOGLE_REDIRECT_URI=https://marvis.example.com/auth/callback
    ```
 
 4. Redémarrez le service API.

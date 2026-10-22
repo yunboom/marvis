@@ -3,18 +3,18 @@
 import { useId, useState } from "react";
 import { ListChecks, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { useUpdateIssueSystemWakeup } from "@multica/core/issues";
-import type { SystemWakeup } from "@multica/core/types";
-import { Button } from "@multica/ui/components/ui/button";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Switch } from "@multica/ui/components/ui/switch";
-import { Textarea } from "@multica/ui/components/ui/textarea";
+import { useUpdateIssueSystemWakeup } from "@marvis/core/issues";
+import type { SystemWakeup } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Switch } from "@marvis/ui/components/ui/switch";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
   PopoverTitle,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/popover";
 import { useT } from "../../i18n";
 import { useWakeupText } from "./wakeup-presentation";
 

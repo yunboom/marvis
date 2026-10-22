@@ -28,11 +28,11 @@ func TestBuildAgentSkillBundlesProducesRefsAndFullBundles(t *testing.T) {
 }
 
 func TestBuildAgentSkillBundlesAssignsBuiltinID(t *testing.T) {
-	_, refs := BuildAgentSkillBundles([]AgentSkillData{{Name: "multica-platform", Content: "body"}})
+	_, refs := BuildAgentSkillBundles([]AgentSkillData{{Name: "marvis-platform", Content: "body"}})
 	if len(refs) != 1 {
 		t.Fatalf("refs = %d, want 1", len(refs))
 	}
-	if refs[0].ID != "builtin:multica-platform" || refs[0].Source != "builtin" {
+	if refs[0].ID != "builtin:marvis-platform" || refs[0].Source != "builtin" {
 		t.Fatalf("builtin ref = %+v", refs[0])
 	}
 }

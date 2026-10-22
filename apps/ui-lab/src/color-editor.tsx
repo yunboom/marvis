@@ -2,13 +2,13 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useId, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { Check, ChevronDown, Copy, RotateCcw, Search } from "lucide-react";
-import { Button } from "@multica/ui/components/ui/button";
-import { Input } from "@multica/ui/components/ui/input";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/popover";
 import { colorToHex, hexToOklch, isSrgb } from "./color";
 import { NumberField } from "./number-field";
 import { colorTokens, parseColor, colorAlpha, withColorAlpha } from "./tokens";

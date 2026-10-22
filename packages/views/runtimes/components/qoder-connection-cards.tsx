@@ -24,7 +24,7 @@ import {
   useSaveQoder,
   type QoderConnection,
   type QoderInput,
-} from "@multica/core/runtimes/qoder";
+} from "@marvis/core/runtimes/qoder";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,10 +34,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@multica/ui/components/ui/alert-dialog";
-import { DeferredTooltip } from "@multica/ui/components/common/deferred-tooltip";
-import { IconButton } from "@multica/ui/components/common/icon-button";
-import { Button } from "@multica/ui/components/ui/button";
+} from "@marvis/ui/components/ui/alert-dialog";
+import { DeferredTooltip } from "@marvis/ui/components/common/deferred-tooltip";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Button } from "@marvis/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -45,28 +45,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
+} from "@marvis/ui/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@multica/ui/components/ui/dropdown-menu";
-import { Input } from "@multica/ui/components/ui/input";
+} from "@marvis/ui/components/ui/dropdown-menu";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@multica/ui/components/ui/popover";
+} from "@marvis/ui/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@multica/ui/components/ui/select";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/select";
+import { cn } from "@marvis/ui/lib/utils";
 import { openExternal } from "../../platform";
 import { useT } from "../../i18n";
 import { regionOf, RegionToggle } from "./qoder-connect-form";

@@ -12,7 +12,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { configStore } from "@multica/core/config";
+import { configStore } from "@marvis/core/config";
 
 const APP_ORIGIN = "https://app.example";
 
@@ -22,8 +22,8 @@ vi.mock("../issues/hooks", () => ({
 
 // Only the workspace hooks are stubbed — the real path helpers stay in place so
 // the reserved-slug rule that decides in-app vs external is the shipped one.
-vi.mock("@multica/core/paths", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/paths")>()),
+vi.mock("@marvis/core/paths", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/paths")>()),
   useWorkspacePaths: () => ({
     issueDetail: (id: string) => `/test/issues/${id}`,
     projectDetail: (id: string) => `/test/projects/${id}`,
@@ -67,14 +67,14 @@ let openSpy: ReturnType<typeof vi.spyOn>;
 beforeEach(() => {
   navigatedPaths = [];
   act(() => {
-    configStore.getState().setAttachmentPublicUrl("https://multica-api.erlinerd.com");
+    configStore.getState().setAttachmentPublicUrl("https://marvis-api.erlinerd.com");
   });
-  window.addEventListener("multica:navigate", captureNavigate);
+  window.addEventListener("marvis:navigate", captureNavigate);
   openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
 });
 
 afterEach(() => {
-  window.removeEventListener("multica:navigate", captureNavigate);
+  window.removeEventListener("marvis:navigate", captureNavigate);
   vi.restoreAllMocks();
   downloadAttachmentSpy.mockClear();
   act(() => {
@@ -109,7 +109,7 @@ describe("RichContent link routing", () => {
   });
 
   it("still hands a genuinely external link to the browser", () => {
-    const external = "https://github.com/multica-ai/multica/pull/1";
+    const external = "https://github.com/marvis-ai/marvis/pull/1";
     renderContent(`[#1](${external})`);
 
     screen.getByText("#1").click();
@@ -156,7 +156,7 @@ describe("RichContent link routing", () => {
   // the credentialed download hook rather than window.open.
   it("routes a UUID attachment download link through the download hook (WK-11)", () => {
     const id = "01a13179-08aa-7898-ae86-3a1994d2147e";
-    const download = `https://multica-api.erlinerd.com/api/attachments/${id}/download`;
+    const download = `https://marvis-api.erlinerd.com/api/attachments/${id}/download`;
     renderContent(`[audit-report.md](${download})`);
 
     screen.getByText("audit-report.md").click();
@@ -170,11 +170,11 @@ describe("RichContent link routing", () => {
 
   it("recognizes the API-host link when runtime config arrives after rendering", () => {
     const id = "01a13179-08aa-7898-ae86-3a1994d2147e";
-    const download = `https://multica-api.erlinerd.com/api/attachments/${id}/download`;
+    const download = `https://marvis-api.erlinerd.com/api/attachments/${id}/download`;
     act(() => configStore.getState().setAttachmentPublicUrl(""));
     renderContent(`[report.pdf](${download})`);
 
-    act(() => configStore.getState().setAttachmentPublicUrl("https://multica-api.erlinerd.com"));
+    act(() => configStore.getState().setAttachmentPublicUrl("https://marvis-api.erlinerd.com"));
     screen.getByText("report.pdf").click();
 
     expect(downloadAttachmentSpy).toHaveBeenCalledWith(id);

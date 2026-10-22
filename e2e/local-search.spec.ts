@@ -27,7 +27,7 @@ function searchIndexDatabases(page: Page): Promise<string[]> {
   return page.evaluate(async () =>
     (await indexedDB.databases())
       .map((db) => db.name ?? "")
-      .filter((name) => name.startsWith("multica-search-index:")),
+      .filter((name) => name.startsWith("marvis-search-index:")),
   );
 }
 
@@ -112,7 +112,7 @@ test.describe("Local search index", () => {
   test("deletes a workspace's local copy when the user is removed from it", async ({ page }) => {
     const run = Date.now().toString(36);
     const owner = new TestApiClient();
-    await owner.login(`e2e-owner-${run}@multica.ai`, "E2E Owner");
+    await owner.login(`e2e-owner-${run}@marvis.ai`, "E2E Owner");
     const shared = await owner.ensureWorkspace(`E2E Shared ${run}`, `e2e-shared-${run}`);
     await owner.markUserOnboarded();
     await owner.createIssue(`shared ${run} issue`);
@@ -132,7 +132,7 @@ test.describe("Local search index", () => {
       // workspace's copy must not survive on the device. A read that fails
       // mid-navigation counts as "still there", so polling continues until a
       // successful read confirms the deletion.
-      const unreadable = [`multica-search-index:unreadable:${shared.id}`];
+      const unreadable = [`marvis-search-index:unreadable:${shared.id}`];
       await expect
         .poll(async () => sharedCopy(await searchIndexDatabases(page).catch(() => unreadable)), { timeout: 20_000 })
         .toBe(false);

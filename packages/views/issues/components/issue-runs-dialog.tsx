@@ -2,17 +2,17 @@
 
 import { useMemo, useRef, useState } from "react";
 import { ArrowRight, Ban, ChevronRight, XCircle } from "lucide-react";
-import type { AgentTask } from "@multica/core/types";
-import { cn } from "@multica/ui/lib/utils";
+import type { AgentTask } from "@marvis/core/types";
+import { cn } from "@marvis/ui/lib/utils";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { useCustomPricingStore } from "@multica/core/runtimes/custom-pricing-store";
+} from "@marvis/ui/components/ui/dialog";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { useCustomPricingStore } from "@marvis/core/runtimes/custom-pricing-store";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { DeferredTooltip } from "../../common/deferred-tooltip";
 import { TranscriptButton } from "../../common/task-transcript";

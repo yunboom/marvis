@@ -17,10 +17,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/middleware"
-	"github.com/multica-ai/multica/server/internal/qoderruntime"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/marvis-ai/marvis/server/internal/qoderruntime"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 type qoderSettings struct {
@@ -29,7 +29,7 @@ type qoderSettings struct {
 	EnvironmentID     string            `json:"environment_id"`
 	QoderToken        string            `json:"qoder_token,omitempty"`
 	GitHubTokens      map[string]string `json:"github_tokens,omitempty"`
-	MulticaToken      string            `json:"multica_token,omitempty"`
+	MarvisToken       string            `json:"marvis_token,omitempty"`
 	MaxConcurrency    int               `json:"max_concurrency,omitempty"`
 	RunTimeoutMinutes int               `json:"run_timeout_minutes,omitempty"`
 }
@@ -129,7 +129,7 @@ func (h *Handler) GetQoderConnection(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) qoderInput(w http.ResponseWriter, r *http.Request, ws string) (qoderSettings, bool) {
 	var cfg qoderSettings
 	if h.VCSSecretBox == nil {
-		writeError(w, 503, "QCA requires MULTICA_VCS_SECRET_KEY on the server")
+		writeError(w, 503, "QCA requires MARVIS_VCS_SECRET_KEY on the server")
 		return cfg, false
 	}
 	var req struct {
@@ -344,7 +344,7 @@ func (h *Handler) saveQoderConnection(w http.ResponseWriter, r *http.Request, re
 		writeError(w, 500, "cannot create service credential")
 		return
 	}
-	cfg.MulticaToken = rawToken
+	cfg.MarvisToken = rawToken
 	raw, _ := json.Marshal(cfg)
 	encrypted, err := h.sealVCSSecret(string(raw))
 	if err != nil {
@@ -485,7 +485,7 @@ func (h *Handler) runQoderSupervisor(ctx context.Context, conn *pgxpool.Conn, se
 			if err != nil {
 				continue
 			}
-			bridge, err := qoderruntime.New(qoderruntime.Config{DaemonID: "qoder-managed-" + ws, MulticaURL: serverURL, MulticaToken: cfg.MulticaToken, WorkspaceID: ws, QoderURL: cfg.BaseURL, QoderToken: cfg.QoderToken, EnvironmentID: cfg.EnvironmentID, Name: cfg.Name, MaxConcurrency: cfg.MaxConcurrency, RunTimeout: time.Duration(cfg.RunTimeoutMinutes) * time.Minute, GitHubTokens: cfg.GitHubTokens,
+			bridge, err := qoderruntime.New(qoderruntime.Config{DaemonID: "qoder-managed-" + ws, MarvisURL: serverURL, MarvisToken: cfg.MarvisToken, WorkspaceID: ws, QoderURL: cfg.BaseURL, QoderToken: cfg.QoderToken, EnvironmentID: cfg.EnvironmentID, Name: cfg.Name, MaxConcurrency: cfg.MaxConcurrency, RunTimeout: time.Duration(cfg.RunTimeoutMinutes) * time.Minute, GitHubTokens: cfg.GitHubTokens,
 				LoadState: func(loadCtx context.Context) ([]byte, error) {
 					var encrypted string
 					if err := h.DB.QueryRow(loadCtx, `SELECT journal_encrypted FROM cloud_agent_connection WHERE provider='qoder_cloud' AND workspace_id=$1`, ws).Scan(&encrypted); err != nil {

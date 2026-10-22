@@ -27,10 +27,10 @@ describe("iOS scene lifecycle configuration", () => {
   });
 
   it.each([
-    [undefined, "Multica (Dev)", "ai.multica.mobile.dev"],
-    ["development", "Multica (Dev)", "ai.multica.mobile.dev"],
-    ["staging", "Multica (Staging)", "ai.multica.mobile.staging"],
-    ["production", "Multica", "ai.multica.mobile"],
+    [undefined, "Marvis (Dev)", "ai.marvis.mobile.dev"],
+    ["development", "Marvis (Dev)", "ai.marvis.mobile.dev"],
+    ["staging", "Marvis (Staging)", "ai.marvis.mobile.staging"],
+    ["production", "Marvis", "ai.marvis.mobile"],
   ])("enables scene support for %s without changing app identity", (env, name, bundleIdentifier) => {
     vi.stubEnv("APP_ENV", env);
     vi.stubEnv("EXPO_BUNDLE_IDENTIFIER_DEV", undefined);
@@ -40,7 +40,7 @@ describe("iOS scene lifecycle configuration", () => {
 
     expect(config.name).toBe(name);
     expect(config.ios?.bundleIdentifier).toBe(bundleIdentifier);
-    expect(config.scheme).toBe("multica");
+    expect(config.scheme).toBe("marvis");
     expect(config.plugins).toContainEqual([
       "expo-build-properties",
       { ios: { buildReactNativeFromSource: true, enableSceneSupport: true } },
@@ -48,18 +48,18 @@ describe("iOS scene lifecycle configuration", () => {
   });
 
   it.each([
-    ["development", "com.example.multica.dev"],
-    ["staging", "com.example.multica.staging"],
-    ["production", "com.example.multica"],
+    ["development", "com.example.marvis.dev"],
+    ["staging", "com.example.marvis.staging"],
+    ["production", "com.example.marvis"],
   ])("preserves signing overrides for %s", (env, bundleIdentifier) => {
     vi.stubEnv("APP_ENV", env);
-    vi.stubEnv("EXPO_BUNDLE_IDENTIFIER_DEV", "com.example.multica.dev");
-    vi.stubEnv("EXPO_BUNDLE_IDENTIFIER_STAGING", "com.example.multica.staging");
-    vi.stubEnv("EXPO_BUNDLE_IDENTIFIER_PROD", "com.example.multica");
+    vi.stubEnv("EXPO_BUNDLE_IDENTIFIER_DEV", "com.example.marvis.dev");
+    vi.stubEnv("EXPO_BUNDLE_IDENTIFIER_STAGING", "com.example.marvis.staging");
+    vi.stubEnv("EXPO_BUNDLE_IDENTIFIER_PROD", "com.example.marvis");
     vi.stubEnv("EXPO_APPLE_TEAM_ID", "ABCDE12345");
 
     const config = createConfig({ config: {} } as ConfigContext);
     expect(config.ios).toMatchObject({ bundleIdentifier, appleTeamId: "ABCDE12345" });
-    expect(config.scheme).toBe("multica");
+    expect(config.scheme).toBe("marvis");
   });
 });

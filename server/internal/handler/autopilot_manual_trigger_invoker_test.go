@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/multica-ai/multica/server/internal/testutil"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
 )
 
 // A manual "run now" spends a human's authority. When the caller is an agent —
@@ -93,7 +93,7 @@ func triggerAsAgentAuthedAs(t *testing.T, runtimeOwnerID, autopilotID, agentID, 
 // not a creator, not an admin, not a collaborator.
 func plainMember(t *testing.T, label string) string {
 	t.Helper()
-	userID := dbfx.User(t, label, fmt.Sprintf("%s-%d@multica.test", label, time.Now().UnixNano()))
+	userID := dbfx.User(t, label, fmt.Sprintf("%s-%d@marvis.test", label, time.Now().UnixNano()))
 	dbfx.Member(t, testWorkspaceID, userID, "member")
 	return userID
 }
@@ -205,7 +205,7 @@ func TestTriggerAutopilot_AgentCannotExceedItsOriginator(t *testing.T) {
 	}
 	autopilotID, agentID := triggerInvokerFixture(t, "originator lacks write")
 
-	outsiderID := dbfx.User(t, "Trigger Outsider", fmt.Sprintf("trigger-outsider-%d@multica.test", time.Now().UnixNano()))
+	outsiderID := dbfx.User(t, "Trigger Outsider", fmt.Sprintf("trigger-outsider-%d@marvis.test", time.Now().UnixNano()))
 	// A plain member: in the workspace, but neither the autopilot's creator nor
 	// an admin nor a granted collaborator.
 	dbfx.Member(t, testWorkspaceID, outsiderID, "member")

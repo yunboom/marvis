@@ -138,7 +138,7 @@ export function tableToCsv(header: string[], rows: string[][]): string {
 // the content: an agent's comment can be resized by someone who cannot edit it.
 // A table is identified by its own text, so the widths follow it into every
 // place it renders and lapse once its content changes.
-const WIDTHS_STORAGE_KEY = "multica:rich-table-widths";
+const WIDTHS_STORAGE_KEY = "marvis:rich-table-widths";
 const MAX_STORED_TABLES = 200;
 
 interface StoredWidths {

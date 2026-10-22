@@ -7,15 +7,15 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
-	"github.com/multica-ai/multica/server/internal/util"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // RuntimeLookup is how production code reads agent_runtime rows by id
 // (MUL-6884) — one row via Get, or many in one query via GetMany. Every read
 // that resolves a runtime for a product behaviour goes through it, so
-// multica_agent_runtime_lookup_total can attribute that behaviour.
+// marvis_agent_runtime_lookup_total can attribute that behaviour.
 //
 // One reader is deliberately outside it: the agent-list presence projection
 // (handler.loadAgentRuntimeAvailability) batch-reads runtime rows to derive a
@@ -65,7 +65,7 @@ func (l RuntimeLookup) Get(ctx context.Context, id pgtype.UUID) (db.AgentRuntime
 // Metric accounting mirrors N individual Get calls: a batch read error counts
 // one "error" per requested id (the whole lookup failed for each), and on
 // success each id is counted "ok" when its row came back and "not_found" when
-// it did not — so multica_agent_runtime_lookup_total keeps the same shape it
+// it did not — so marvis_agent_runtime_lookup_total keeps the same shape it
 // had before batching. The read error is returned untouched so callers can fail
 // closed instead of treating a hiccup as "every runtime is gone".
 func (l RuntimeLookup) GetMany(ctx context.Context, ids []pgtype.UUID) (map[string]db.AgentRuntime, error) {

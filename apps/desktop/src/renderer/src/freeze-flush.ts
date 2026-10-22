@@ -1,4 +1,4 @@
-import type { CaptureEventOptions } from "@multica/core/analytics";
+import type { CaptureEventOptions } from "@marvis/core/analytics";
 import type { FreezeBreadcrumb } from "../../shared/freeze-breadcrumb";
 
 // Reporting a failure the previous session couldn't report itself.

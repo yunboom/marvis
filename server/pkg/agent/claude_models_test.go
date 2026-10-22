@@ -19,7 +19,7 @@ import (
 //   - 2.1.258 offers Fable 5.1 as a normal selectable row.
 //   - 2.1.246 — the build whose 400 opened the issue — does not offer it at
 //     all. It reports a disabled row instead, carrying the upstream remedy
-//     ("Update to 2.1.255+ to use Fable 5.1"). That row is the reason Multica
+//     ("Update to 2.1.255+ to use Fable 5.1"). That row is the reason Marvis
 //     does not need a per-model minimum-version table: the CLI already knows.
 func loadClaudeListModelsFixture(t *testing.T, version string) []byte {
 	t.Helper()
@@ -71,7 +71,7 @@ func TestParseClaudeModelCatalog_SkipsUnrelatedLines(t *testing.T) {
 // version gate: the failure is explicit, immediate, and cheap.
 func TestParseClaudeModelCatalog_ErrorSubtype(t *testing.T) {
 	t.Parallel()
-	raw := `{"type":"control_response","response":{"subtype":"error","request_id":"multica-list-models","error":"Unsupported control request subtype: list_models"}}`
+	raw := `{"type":"control_response","response":{"subtype":"error","request_id":"marvis-list-models","error":"Unsupported control request subtype: list_models"}}`
 	_, err := parseClaudeModelCatalog([]byte(raw))
 	if err == nil {
 		t.Fatal("expected an error for an error-subtype response")
@@ -370,14 +370,14 @@ func TestDiscoverClaudeModels_ErrorPaths(t *testing.T) {
 
 	for name, body := range map[string]string{
 		// The reply an old CLI without list_models sends.
-		"unsupported subtype": `echo '{"type":"control_response","response":{"subtype":"error","request_id":"multica-list-models","error":"Unsupported control request subtype: list_models"}}'` + "\n",
+		"unsupported subtype": `echo '{"type":"control_response","response":{"subtype":"error","request_id":"marvis-list-models","error":"Unsupported control request subtype: list_models"}}'` + "\n",
 		"no reply":            "exit 0\n",
 		"garbage":             "echo 'not json'\n",
 		// A well-formed reply with nothing usable must not pass as a catalog.
-		"empty catalog": `echo '{"type":"control_response","response":{"subtype":"success","request_id":"multica-list-models","response":{"models":[]}}}'` + "\n",
+		"empty catalog": `echo '{"type":"control_response","response":{"subtype":"success","request_id":"marvis-list-models","response":{"models":[]}}}'` + "\n",
 		// Rows that exist but none of which can be run: the picker would have
 		// nothing to offer, so the static list is the better answer.
-		"only unavailable rows": `echo '{"type":"control_response","response":{"subtype":"success","request_id":"multica-list-models","response":{"models":[{"value":"cc-update-required-1","resolvedModel":"cc-update-required-1","displayName":"Nope","disabled":true}]}}}'` + "\n",
+		"only unavailable rows": `echo '{"type":"control_response","response":{"subtype":"success","request_id":"marvis-list-models","response":{"models":[{"value":"cc-update-required-1","resolvedModel":"cc-update-required-1","displayName":"Nope","disabled":true}]}}}'` + "\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -456,7 +456,7 @@ func TestDiscoverClaudeCatalog_RemembersUnsupported(t *testing.T) {
 		"if [ \"$1\" != \"--print\" ]; then echo '2.1.100 (Claude Code)'; exit 0; fi\n" +
 		"cat > /dev/null\n" +
 		"echo x >> '" + countFile + "'\n" +
-		`echo '{"type":"control_response","response":{"subtype":"error","request_id":"multica-list-models",` +
+		`echo '{"type":"control_response","response":{"subtype":"error","request_id":"marvis-list-models",` +
 		`"error":"Unsupported control request subtype: list_models"}}'` + "\n"
 	writeTestExecutable(t, fake, []byte(script))
 

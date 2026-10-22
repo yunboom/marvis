@@ -2,8 +2,8 @@
 
 import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildIssueStatusCatalog } from "@multica/core/issue-statuses";
-import type { IssueStatusEntry, IssueWorkflow } from "@multica/core/types";
+import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
+import type { IssueStatusEntry, IssueWorkflow } from "@marvis/core/types";
 import { renderWithI18n } from "../../../test/i18n";
 import { StatusPicker } from "./status-picker";
 
@@ -13,11 +13,11 @@ import { StatusPicker } from "./status-picker";
 // the trigger and the list read it from the same place.
 let catalogEntries: IssueStatusEntry[] | undefined;
 
-vi.mock("@multica/core/hooks", () => ({
+vi.mock("@marvis/core/hooks", () => ({
   useWorkspaceId: () => "workspace-1",
 }));
 
-vi.mock("@multica/core/issue-statuses/hooks", () => ({
+vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () => buildIssueStatusCatalog(catalogEntries),
 }));
 
@@ -26,8 +26,8 @@ vi.mock("@multica/core/issue-statuses/hooks", () => ({
 let projectWorkflow: IssueWorkflow | null = null;
 let workspaceDefault: IssueWorkflow | null = null;
 
-vi.mock("@multica/core/issue-workflows", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/issue-workflows")>()),
+vi.mock("@marvis/core/issue-workflows", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/issue-workflows")>()),
   useProjectWithWorkflow: () => ({ project: null, workflow: projectWorkflow, defaultWorkflow: workspaceDefault }),
 }));
 
@@ -35,7 +35,7 @@ vi.mock("../../../common/actor-avatar", () => ({
   ActorAvatar: ({ actorId }: { actorId: string }) => <span data-testid={`avatar-${actorId}`} />,
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({ getActorName: (_type: string, id: string) => (id === "agent-1" ? "Sentinel" : "Unknown") }),
 }));
 

@@ -125,7 +125,7 @@ describe("comment draft store — attachments in the draft", () => {
 });
 
 describe("comment draft store — prune on rehydrate", () => {
-  const KEY = "multica_comment_drafts:acme";
+  const KEY = "marvis_comment_drafts:acme";
 
   beforeEach(() => {
     localStorage.clear();
@@ -372,9 +372,9 @@ describe("reply annotations", () => {
     store.setDraft(key, "Keep reply");
     store.addAnnotation(key, annotation);
     await flush();
-    const saved = JSON.parse(localStorage.getItem("multica_comment_drafts:annotation-tests")!);
+    const saved = JSON.parse(localStorage.getItem("marvis_comment_drafts:annotation-tests")!);
     saved.state.drafts[key].annotations[0].note = " ";
-    localStorage.setItem("multica_comment_drafts:annotation-tests", JSON.stringify(saved));
+    localStorage.setItem("marvis_comment_drafts:annotation-tests", JSON.stringify(saved));
     useCommentDraftStore.getState().drafts = {};
     await useCommentDraftStore.persist.rehydrate();
     expect(store.getAnnotations(key)).toHaveLength(0);
@@ -434,9 +434,9 @@ describe("reply annotations", () => {
     setCurrentWorkspace("annotations-a", "ws_a");
     await flush();
     expect(useCommentDraftStore.getState().getAnnotations(key)).toHaveLength(1);
-    const saved = JSON.parse(localStorage.getItem("multica_comment_drafts:annotations-a")!);
+    const saved = JSON.parse(localStorage.getItem("marvis_comment_drafts:annotations-a")!);
     saved.state.drafts[key].updatedAt = Date.now() - 31 * DAY_MS;
-    localStorage.setItem("multica_comment_drafts:annotations-a", JSON.stringify(saved));
+    localStorage.setItem("marvis_comment_drafts:annotations-a", JSON.stringify(saved));
     await useCommentDraftStore.persist.rehydrate();
     expect(useCommentDraftStore.getState().getAnnotations(key)).toHaveLength(0);
     useCommentDraftStore.getState().addAnnotation(key, annotation);

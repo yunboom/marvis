@@ -12,9 +12,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/service"
-	"github.com/multica-ai/multica/server/internal/testutil"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/testutil"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // The refusals these tests cover are the ones a user acts on. A profile spans
@@ -128,7 +128,7 @@ func TestDeleteAgentRuntime_OnlineProfileInstanceRefusalSaysStopTheDaemon(t *tes
 }
 
 // The cascade endpoint shares the guard, so it must share the guidance —
-// `multica runtime delete --cascade` is the retry a blocked user reaches for.
+// `marvis runtime delete --cascade` is the retry a blocked user reaches for.
 func TestUnbindAgentsAndDeleteRuntime_ProfileInstanceRefusalCarriesGuidance(t *testing.T) {
 	if testHandler == nil {
 		t.Skip("database not available")
@@ -368,7 +368,7 @@ func TestDeleteRuntimeProfile_MikaBlockerGetsItsOwnRemedy(t *testing.T) {
 	if !strings.Contains(msg, "a runtime that this profile does not provide") {
 		t.Fatalf("refusal must point at the rebind that actually clears this, got: %s", msg)
 	}
-	if !strings.Contains(msg, "built into Multica)") {
+	if !strings.Contains(msg, "built into Marvis)") {
 		t.Fatalf("the listed blocker should be marked as product-owned, got: %s", msg)
 	}
 
@@ -396,7 +396,7 @@ func TestDeleteRuntimeProfile_BuilderCarrierBlockerPointsAtItsSession(t *testing
 	profileID := insertRuntimeProfileFixture(t, ctx, "Builder Held Profile", "codex", "builder-held")
 	runtimeID := insertProfileRuntimeFixture(t, ctx, profileID, "BUILDER-HOST", "codex")
 	createSystemFixtureAgent(t, ctx, runtimeID,
-		".multica-agent-builder-flow1", "system", "agent_builder:flow1")
+		".marvis-agent-builder-flow1", "system", "agent_builder:flow1")
 
 	body := deleteProfileExpectingConflict(t, ctx, profileID)
 	msg := conflictMessage(t, body)
@@ -428,15 +428,15 @@ func TestDeleteRuntimeProfile_MixedBlockersGiveEachItsOwnRemedy(t *testing.T) {
 	_ = createCascadeFixtureAgent(t, ctx, runtimeID, "Ordinary Agent")
 	createSystemFixtureAgent(t, ctx, runtimeID, "Mika (mixed guard)", "user", "mika")
 	createSystemFixtureAgent(t, ctx, runtimeID,
-		".multica-agent-builder-flow2", "system", "agent_builder:flow2")
+		".marvis-agent-builder-flow2", "system", "agent_builder:flow2")
 
 	body := deleteProfileExpectingConflict(t, ctx, profileID)
 	msg := conflictMessage(t, body)
 
 	for _, want := range []string{
-		"not marked as built into Multica can be reassigned or archived",
+		"not marked as built into Marvis can be reassigned or archived",
 		"Agent Builder session",
-		"Mika is built into Multica, so it cannot be archived",
+		"Mika is built into Marvis, so it cannot be archived",
 	} {
 		if !strings.Contains(msg, want) {
 			t.Fatalf("mixed refusal missing %q, got: %s", want, msg)
@@ -560,7 +560,7 @@ func TestDeleteRuntimeProfile_RemedyCoversBlockersBeyondTheSample(t *testing.T) 
 	body := deleteProfileExpectingConflict(t, ctx, profileID)
 	msg := conflictMessage(t, body)
 
-	if !strings.Contains(msg, "Mika is built into Multica") {
+	if !strings.Contains(msg, "Mika is built into Marvis") {
 		t.Fatalf("Mika is blocker #21 and must still be reported, got: %s", msg)
 	}
 	if !strings.Contains(msg, "a runtime that this profile does not provide") {
@@ -589,7 +589,7 @@ func TestDeleteRuntimeProfile_BuilderCarrierBeyondTheSampleStillReported(t *test
 	}
 	// "zzz-" sorts last, so the carrier lands past the cap.
 	createSystemFixtureAgent(t, ctx, runtimeID,
-		"zzz-multica-agent-builder-flow9", "system", "agent_builder:flow9")
+		"zzz-marvis-agent-builder-flow9", "system", "agent_builder:flow9")
 
 	msg := conflictMessage(t, deleteProfileExpectingConflict(t, ctx, profileID))
 	if !strings.Contains(msg, "Agent Builder session") {
@@ -738,7 +738,7 @@ func TestDeleteRuntimeProfile_BuilderRemedyAddressesTheSessionCreator(t *testing
 		t.Skip("database not available")
 	}
 	ctx := context.Background()
-	creatorID := dbfx.User(t, "Review Builder Owner", "review-builder-owner@multica.ai")
+	creatorID := dbfx.User(t, "Review Builder Owner", "review-builder-owner@marvis.ai")
 	dbfx.Insert(t, "member", testutil.Cols{"workspace_id": testWorkspaceID, "user_id": creatorID, "role": "member"})
 	runtimeID, profileID := createProfileBackedRuntime(t, ctx, "Review Shared Builder Host")
 	dbfx.Exec(t, `UPDATE agent_runtime SET visibility='public' WHERE id=$1`, runtimeID)
@@ -929,7 +929,7 @@ func TestMikaRemedyMatchesWhatMikaCanDo(t *testing.T) {
 	if got, _ := body["active_agent_count"].(float64); int(got) != 0 {
 		t.Fatalf("after the rebind the source should hold no agents, got %v", got)
 	}
-	if msg := conflictMessage(t, body); strings.Contains(msg, "Mika is built into Multica") {
+	if msg := conflictMessage(t, body); strings.Contains(msg, "Mika is built into Marvis") {
 		t.Fatalf("Mika moved away but is still named as a blocker: %s", msg)
 	}
 }

@@ -39,7 +39,7 @@ describe("UI Lab language preference", () => {
 
   it("validates iframe locales and maps zh to the production locale", () => {
     const message = {
-      type: "multica-ui-lab:preview",
+      type: "marvis-ui-lab:preview",
       selectedColor: "--brand",
       playbackSpeed: 1,
       scene: "button",

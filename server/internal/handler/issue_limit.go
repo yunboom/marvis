@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/multica-ai/multica/server/internal/entitlement"
-	"github.com/multica-ai/multica/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/entitlement"
+	"github.com/marvis-ai/marvis/server/internal/service"
 )
 
 type IssueLimitUsageResponse struct {

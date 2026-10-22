@@ -1,8 +1,8 @@
 "use client";
 
-import type { Label } from "@multica/core/types";
+import type { Label } from "@marvis/core/types";
 import { X } from "lucide-react";
-import { TooltipHint } from "@multica/ui/components/common/tooltip-hint";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { useT } from "../i18n";
 
 /**

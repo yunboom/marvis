@@ -18,8 +18,8 @@ import type {
   ChatPendingTask,
   ChatQuickAction,
   TaskMessagePayload,
-} from "@multica/core/types";
-import type { AgentAvailability } from "@multica/core/agents";
+} from "@marvis/core/types";
+import type { AgentAvailability } from "@marvis/core/agents";
 import { continuousCorners } from "@/lib/radius";
 import { taskMessagesOptions } from "@/data/queries/chat";
 import { Text } from "@/components/ui/text";

@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { issueTasksOptions } from "@multica/core/issues/queries";
-import { useCommentComposerStore } from "@multica/core/issues/stores";
+import { issueTasksOptions } from "@marvis/core/issues/queries";
+import { useCommentComposerStore } from "@marvis/core/issues/stores";
 import {
   agentRunState,
   recipientActions,
@@ -12,8 +12,8 @@ import {
   type AgentRunState,
   type RecipientAction,
   type RecipientRouting,
-} from "@multica/core/issues/run-steering";
-import type { AgentTask, CommentTriggerPreviewAgent } from "@multica/core/types";
+} from "@marvis/core/issues/run-steering";
+import type { AgentTask, CommentTriggerPreviewAgent } from "@marvis/core/types";
 
 const NO_TASKS: AgentTask[] = [];
 const ACTIVE_STATUSES = new Set<AgentTask["status"]>(["queued", "deferred", "dispatched", "waiting_local_directory", "running"]);

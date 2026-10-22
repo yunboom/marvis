@@ -2,8 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { I18nProvider } from "@multica/core/i18n/react";
-import type { RuntimeModelsResult } from "@multica/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import type { RuntimeModelsResult } from "@marvis/core/types";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import enAgents from "../../../locales/en/agents.json";
 import enCommon from "../../../locales/en/common.json";
@@ -35,7 +35,7 @@ let discovery: () => Promise<RuntimeModelsResult> = async () => CLAUDE_CATALOG;
 let discoveryKey = 0;
 const mockRefreshRuntimeModels = vi.hoisted(() => vi.fn());
 
-vi.mock("@multica/core/runtimes", () => ({
+vi.mock("@marvis/core/runtimes", () => ({
   runtimeModelsOptions: (runtimeId: string | null) => ({
     enabled: Boolean(runtimeId),
     queryKey: ["runtime-models", runtimeId, discoveryKey],

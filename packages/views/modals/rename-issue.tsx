@@ -8,11 +8,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Button } from "@multica/ui/components/ui/button";
-import { Input } from "@multica/ui/components/ui/input";
-import { errorCode } from "@multica/core/api";
-import { useUpdateIssue } from "@multica/core/issues/mutations";
+} from "@marvis/ui/components/ui/dialog";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Input } from "@marvis/ui/components/ui/input";
+import { errorCode } from "@marvis/core/api";
+import { useUpdateIssue } from "@marvis/core/issues/mutations";
 import { useT } from "../i18n";
 
 /**

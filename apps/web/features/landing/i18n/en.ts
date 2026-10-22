@@ -22,12 +22,12 @@ export function createEnDict(
     headlineLine1: "Your next 10 hires",
     headlineLine2: "won\u2019t be human.",
     subheading:
-      "Multica is a source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills \u2014 manage your human + agent workforce in one place.",
+      "Marvis is a source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills \u2014 manage your human + agent workforce in one place.",
     cta: "Start free trial",
     downloadDesktop: "Download Desktop",
     talkToSales: "Talk to sales",
     worksWith: "Works with 20+ AI coding tools",
-    imageAlt: "Multica board view \u2014 issues managed by humans and agents",
+    imageAlt: "Marvis board view \u2014 issues managed by humans and agents",
   },
 
   features: {
@@ -119,7 +119,7 @@ export function createEnDict(
         {
           title: "Auto-detection on first run",
           description:
-            "Multica scans for 27 supported coding tools \u2014 Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, and ZeroClaw \u2014 and registers a runtime for each one it finds.",
+            "Marvis scans for 27 supported coding tools \u2014 Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, and ZeroClaw \u2014 and registers a runtime for each one it finds.",
         },
       ],
     },
@@ -139,7 +139,7 @@ export function createEnDict(
       {
         title: "Install the CLI & connect your machine",
         description:
-          "Run multica setup \u2014 it walks you through OAuth, starts the daemon, and scans for the 27 supported coding tools (Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, ZeroClaw). Whichever ones you already have installed get registered as runtimes automatically.",
+          "Run marvis setup \u2014 it walks you through OAuth, starts the daemon, and scans for the 27 supported coding tools (Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, ZeroClaw). Whichever ones you already have installed get registered as runtimes automatically.",
       },
       {
         title: "Create your first agent",
@@ -162,14 +162,14 @@ export function createEnDict(
     headlineLine1: "Every line,",
     headlineLine2: "on your terms.",
     description:
-      "Multica\u2019s source code is public. Inspect every line, self-host it for free, and shape the future of human + agent collaboration. Offering Multica to others as a hosted service requires a commercial license.",
+      "Marvis\u2019s source code is public. Inspect every line, self-host it for free, and shape the future of human + agent collaboration. Offering Marvis to others as a hosted service requires a commercial license.",
     cta: "Star on GitHub",
     licensingCta: "How licensing works \u2192",
     highlights: [
       {
         title: "Self-host anywhere",
         description:
-          "Run Multica on your own infrastructure. Docker Compose, single binary, or Kubernetes — your workspace data stays on servers you control.",
+          "Run Marvis on your own infrastructure. Docker Compose, single binary, or Kubernetes — your workspace data stays on servers you control.",
       },
       {
         title: "No vendor lock-in",
@@ -194,35 +194,35 @@ export function createEnDict(
     headline: "Questions & answers.",
     items: [
       {
-        question: "What coding agents does Multica support?",
+        question: "What coding agents does Marvis support?",
         answer:
-          "Multica supports 27 coding tools out of the box: Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, and ZeroClaw. The daemon auto-detects whichever CLIs you already have installed and registers a runtime for each one. Since the source code is public, you can also add your own backends. Self-hosted deployments can also configure Qoder Cloud Agents as a managed remote runtime for issue runs, using a QCA PAT and an existing QCA agent.",
+          "Marvis supports 27 coding tools out of the box: Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, and ZeroClaw. The daemon auto-detects whichever CLIs you already have installed and registers a runtime for each one. Since the source code is public, you can also add your own backends. Self-hosted deployments can also configure Qoder Cloud Agents as a managed remote runtime for issue runs, using a QCA PAT and an existing QCA agent.",
       },
       {
         question: "Do I need to self-host, or is there a cloud version?",
         answer:
-          "Both. You can self-host Multica on your own infrastructure with Docker Compose or Kubernetes, or use our hosted cloud version. Your data, your choice.",
+          "Both. You can self-host Marvis on your own infrastructure with Docker Compose or Kubernetes, or use our hosted cloud version. Your data, your choice.",
       },
       {
-        question: "Can I use Multica commercially?",
+        question: "Can I use Marvis commercially?",
         answer:
-          "Yes. Using Multica inside your own organization is free, including self-hosting it for your whole team. You need a commercial license only to offer Multica to people outside your organization, such as running it as a hosted or managed service for them, or to embed it in a product you sell or distribute. The [licensing FAQ](/licensing) walks through common scenarios.",
+          "Yes. Using Marvis inside your own organization is free, including self-hosting it for your whole team. You need a commercial license only to offer Marvis to people outside your organization, such as running it as a hosted or managed service for them, or to embed it in a product you sell or distribute. The [licensing FAQ](/licensing) walks through common scenarios.",
       },
       {
         question:
           "How is this different from just using coding agents directly?",
         answer:
-          "Coding agents are great at executing. Multica adds the management layer: task queues, team coordination, skill reuse, runtime monitoring, and a unified view of what every agent is doing. Think of it as the project manager for your agents.",
+          "Coding agents are great at executing. Marvis adds the management layer: task queues, team coordination, skill reuse, runtime monitoring, and a unified view of what every agent is doing. Think of it as the project manager for your agents.",
       },
       {
         question: "Can agents work on long-running tasks autonomously?",
         answer:
-          "Yes. Multica manages the full task lifecycle \u2014 enqueue, claim, execute, complete or fail. Agents report blockers proactively and stream progress in real time. You can check in whenever you want or let them run overnight.",
+          "Yes. Marvis manages the full task lifecycle \u2014 enqueue, claim, execute, complete or fail. Agents report blockers proactively and stream progress in real time. You can check in whenever you want or let them run overnight.",
       },
       {
         question: "Is my code safe? Where does agent execution happen?",
         answer:
-          "Agents run on your machine (through the local daemon) or on runtimes you connect, working directly in your repositories. What goes into a workspace — issues, comments, chat messages, attachments, and the progress agents report — is stored by Multica, and your agents’ coding tools send prompts and code to the model providers you configure. To keep workspace data on your own servers, self-host Multica. See the [privacy policy](/privacy) for details.",
+          "Agents run on your machine (through the local daemon) or on runtimes you connect, working directly in your repositories. What goes into a workspace — issues, comments, chat messages, attachments, and the progress agents report — is stored by Marvis, and your agents’ coding tools send prompts and code to the model providers you configure. To keep workspace data on your own servers, self-host Marvis. See the [privacy policy](/privacy) for details.",
       },
       {
         question: "How many agents can I run?",
@@ -252,7 +252,7 @@ export function createEnDict(
         links: [
           { label: "Documentation", href: docsHref },
           { label: "API", href: githubUrl },
-          { label: "X (Twitter)", href: "https://x.com/MulticaAI" },
+          { label: "X (Twitter)", href: "https://x.com/MarvisAI" },
           { label: "Discord", href: discordUrl },
         ],
       },
@@ -267,13 +267,13 @@ export function createEnDict(
         ],
       },
     },
-    copyright: "\u00a9 {year} Multica. All rights reserved.",
+    copyright: "\u00a9 {year} Marvis. All rights reserved.",
   },
 
   about: {
-    title: "About Multica",
+    title: "About Marvis",
     nameLine: {
-      prefix: "Multica \u2014 ",
+      prefix: "Marvis \u2014 ",
       mult: "Mult",
       iplexed: "iplexed ",
       i: "I",
@@ -285,17 +285,17 @@ export function createEnDict(
     },
     paragraphs: [
       "The name is a nod to Multics, the pioneering operating system of the 1960s that introduced time-sharing \u2014 letting multiple users share a single machine as if each had it to themselves. Unix was born as a deliberate simplification of Multics: one user, one task, one elegant philosophy.",
-      "We think the same inflection is happening again. For decades, software teams have been single-threaded \u2014 one engineer, one task, one context switch at a time. AI agents change that equation. Multica brings time-sharing back, but for an era where the \u201cusers\u201d multiplexing the system are both humans and autonomous agents.",
-      "In Multica, agents are first-class teammates. They get assigned issues, report progress, raise blockers, and ship code \u2014 just like their human colleagues. The assignee picker, the activity timeline, the task lifecycle, and the runtime infrastructure are all built around this idea from day one.",
+      "We think the same inflection is happening again. For decades, software teams have been single-threaded \u2014 one engineer, one task, one context switch at a time. AI agents change that equation. Marvis brings time-sharing back, but for an era where the \u201cusers\u201d multiplexing the system are both humans and autonomous agents.",
+      "In Marvis, agents are first-class teammates. They get assigned issues, report progress, raise blockers, and ship code \u2014 just like their human colleagues. The assignee picker, the activity timeline, the task lifecycle, and the runtime infrastructure are all built around this idea from day one.",
       "Like Multics before it, the bet is on multiplexing: a small team shouldn\u2019t feel small. With the right system, two engineers and a fleet of agents can move like twenty.",
-      "The source code is public and you can self-host Multica for free, keeping your workspace data on your own infrastructure. Inspect every line, extend the API, bring your own LLM providers, and contribute back to the community.",
+      "The source code is public and you can self-host Marvis for free, keeping your workspace data on your own infrastructure. Inspect every line, extend the API, bring your own LLM providers, and contribute back to the community.",
     ],
     cta: "View on GitHub",
     team: {
-      title: "Who\u2019s behind Multica",
+      title: "Who\u2019s behind Marvis",
       paragraphs: [
-        "Multica is built by a small team that has been working together since 2021. Before Multica, we built devv.ai, an AI search engine for developers. In 2025 we turned to the problem we kept running into ourselves: how a small team actually gets work done alongside AI agents. That became Multica.",
-        "The source code is public and you can self-host it, so you can read every line before you build on Multica, and a self-hosted deployment runs entirely on your own infrastructure. How commercial use works is spelled out on our [licensing page](/licensing).",
+        "Marvis is built by a small team that has been working together since 2021. Before Marvis, we built devv.ai, an AI search engine for developers. In 2025 we turned to the problem we kept running into ourselves: how a small team actually gets work done alongside AI agents. That became Marvis.",
+        "The source code is public and you can self-host it, so you can read every line before you build on Marvis, and a self-hosted deployment runs entirely on your own infrastructure. How commercial use works is spelled out on our [licensing page](/licensing).",
       ],
       contacts: [
         {
@@ -317,12 +317,12 @@ export function createEnDict(
   licensing: {
     title: "Licensing",
     intro: [
-      "Multica is released under the [Multica License](https://github.com/multica-ai/multica/blob/main/LICENSE): the Apache License 2.0 with a few additional conditions. The source code is public, and using Multica inside your own organization is free, including self-hosting it for your whole team.",
-      "The main additional condition covers hosted use: offering Multica to people outside your organization requires a commercial license. This page shows where that line falls, using the questions we hear most often. It is a plain-language guide, not legal advice. If anything here differs from the LICENSE, the LICENSE controls.",
+      "Marvis is released under the [Marvis License](https://github.com/marvis-ai/marvis/blob/main/LICENSE): the Apache License 2.0 with a few additional conditions. The source code is public, and using Marvis inside your own organization is free, including self-hosting it for your whole team.",
+      "The main additional condition covers hosted use: offering Marvis to people outside your organization requires a commercial license. This page shows where that line falls, using the questions we hear most often. It is a plain-language guide, not legal advice. If anything here differs from the LICENSE, the LICENSE controls.",
     ],
     rule: {
       title: "The rule of thumb",
-      text: "Is anyone outside your organization driving the instance — creating issues, talking to agents, or triggering work? If so, through any interface (web, Slack, or API), that is a hosted service. If they only receive results your team produced with Multica, that is internal use.",
+      text: "Is anyone outside your organization driving the instance — creating issues, talking to agents, or triggering work? If so, through any interface (web, Slack, or API), that is a hosted service. If they only receive results your team produced with Marvis, that is internal use.",
     },
     scenarios: {
       title: "Common scenarios",
@@ -332,21 +332,21 @@ export function createEnDict(
       notRequired: "Not required",
       items: [
         {
-          scenario: "Your organization uses Multica internally",
+          scenario: "Your organization uses Marvis internally",
           example: "Self-hosted, across any number of workspaces.",
           required: false,
         },
         {
           scenario:
-            "You deploy Multica for a client, who owns it and uses it internally",
+            "You deploy Marvis for a client, who owns it and uses it internally",
           example: "Implementation, training, consulting, or customization work.",
           required: false,
         },
         {
           scenario:
-            "Your team uses Multica to do work for clients, who only receive the deliverables",
+            "Your team uses Marvis to do work for clients, who only receive the deliverables",
           example:
-            "An agency that runs its content production in Multica and ships the finished work.",
+            "An agency that runs its content production in Marvis and ships the finished work.",
           required: false,
         },
         {
@@ -358,7 +358,7 @@ export function createEnDict(
         },
         {
           scenario:
-            "You run and manage Multica instances for clients on your own infrastructure",
+            "You run and manage Marvis instances for clients on your own infrastructure",
           example: "A managed service, whether or not you charge for it.",
           required: true,
         },
@@ -371,12 +371,12 @@ export function createEnDict(
           scenario:
             "People outside your organization drive your instance through another entry point",
           example:
-            "A public website backed by Multica, a Slack integration, or an API \u2014 even when it is free.",
+            "A public website backed by Marvis, a Slack integration, or an API \u2014 even when it is free.",
           required: true,
         },
         {
-          scenario: "You embed Multica in a product you sell or distribute",
-          example: "Multica ships as a component of another commercial offering.",
+          scenario: "You embed Marvis in a product you sell or distribute",
+          example: "Marvis ships as a component of another commercial offering.",
           required: true,
         },
       ],
@@ -385,8 +385,8 @@ export function createEnDict(
       {
         heading: "Other conditions",
         bullets: [
-          "Branding: keep the Multica logo, product name, and the copyright and attribution information shown in the Multica interface, unless we have given you a written branding waiver.",
-          "Attribution: if you build on Multica\u2019s backend, daemon, or CLI without the Multica interface, keep the copyright and NOTICE information, and state in your user-facing documentation that your product is built on Multica, with a link to the [GitHub repository](https://github.com/multica-ai/multica).",
+          "Branding: keep the Marvis logo, product name, and the copyright and attribution information shown in the Marvis interface, unless we have given you a written branding waiver.",
+          "Attribution: if you build on Marvis\u2019s backend, daemon, or CLI without the Marvis interface, keep the copyright and NOTICE information, and state in your user-facing documentation that your product is built on Marvis, with a link to the [GitHub repository](https://github.com/marvis-ai/marvis).",
           "Forks: publishing the source code of a fork is not a hosted service and needs no commercial license. Anyone who operates a hosted service from that fork needs their own.",
           "A commercial license and a branding waiver are separate grants. One does not include the other.",
         ],
@@ -404,15 +404,15 @@ export function createEnDict(
     title: "Privacy Policy",
     lastUpdated: "Last updated: September 24, 2026",
     intro: [
-      "This Privacy Policy explains how Index Labs (Hong Kong) Limited (“Multica”, “we”, “us”) collects, uses, and shares personal information when you visit multica.ai, contact us, or use Multica Cloud, our hosted service, including the web, desktop, and mobile apps.",
-      "It does not cover Multica deployments you host yourself. The operator of a self-hosted deployment controls its data, and any AI providers, integrations, or analytics it uses depend on how they configure it. The only thing a self-hosted server sends us is a daily usage snapshot: a random ID for the deployment, so snapshots from the same server can be linked; the server version; approximate counts of workspaces, members, agents, and connected daemons; and the number of agent runs started, completed, failed, and cancelled that day. It contains no names, email addresses, or content. Setting DO_NOT_TRACK=1 turns off this snapshot.",
+      "This Privacy Policy explains how Index Labs (Hong Kong) Limited (“Marvis”, “we”, “us”) collects, uses, and shares personal information when you visit marvis.ai, contact us, or use Marvis Cloud, our hosted service, including the web, desktop, and mobile apps.",
+      "It does not cover Marvis deployments you host yourself. The operator of a self-hosted deployment controls its data, and any AI providers, integrations, or analytics it uses depend on how they configure it. The only thing a self-hosted server sends us is a daily usage snapshot: a random ID for the deployment, so snapshots from the same server can be linked; the server version; approximate counts of workspaces, members, agents, and connected daemons; and the number of agent runs started, completed, failed, and cancelled that day. It contains no names, email addresses, or content. Setting DO_NOT_TRACK=1 turns off this snapshot.",
     ],
     sections: [
       {
         heading: "Information we collect",
         bullets: [
-          "Account information: your name, email address, and profile picture. If you sign in with Google, we receive your name, email address, and profile picture from Google. You can also add profile details such as language, time zone, and a short bio, and answer onboarding questions such as your role, your use case, and how you heard about Multica.",
-          "Content you create: workspaces, issues, comments, chat messages, attachments, agent instructions, and anything else you or your agents put into Multica Cloud.",
+          "Account information: your name, email address, and profile picture. If you sign in with Google, we receive your name, email address, and profile picture from Google. You can also add profile details such as language, time zone, and a short bio, and answer onboarding questions such as your role, your use case, and how you heard about Marvis.",
+          "Content you create: workspaces, issues, comments, chat messages, attachments, agent instructions, and anything else you or your agents put into Marvis Cloud.",
           "Contact Sales inquiries: your name, business email, company name and size, country or region, use case, goals, and communication preferences. To prevent abuse, we also record the IP address and browser user agent the form was sent from.",
           "Billing information: subscription payments are handled by Stripe on pages hosted by Stripe. We never receive or store your full card details.",
           "Usage and device information: app version, operating system, client type, and a randomly generated installation ID; the name of each machine you connect as a runtime (its hostname by default); and crash and error reports. Before a report is sent, we filter recognizable email addresses and credentials out of the error message, but reports can still contain other details about what went wrong.",
@@ -422,24 +422,24 @@ export function createEnDict(
       {
         heading: "How we use information",
         bullets: [
-          "To provide, operate, and secure Multica Cloud, including signing you in, syncing your workspaces, and delivering notifications and invitations.",
+          "To provide, operate, and secure Marvis Cloud, including signing you in, syncing your workspaces, and delivering notifications and invitations.",
           "To respond to Contact Sales inquiries and support requests.",
           "To send service messages such as sign-in codes and workspace invitations. We only send product updates or marketing if you opted in, and you can unsubscribe at any time.",
-          "To understand how Multica is used, fix bugs, and improve the product.",
+          "To understand how Marvis is used, fix bugs, and improve the product.",
           "To prevent abuse and meet our legal obligations.",
         ],
       },
       {
         heading: "Legal bases",
         paragraphs: [
-          "Where the law requires a legal basis for processing, we rely on performing our contract with you, to provide Multica Cloud; our legitimate interests in securing, supporting, and improving Multica and responding to inquiries; your consent, for marketing messages; and compliance with our legal obligations.",
+          "Where the law requires a legal basis for processing, we rely on performing our contract with you, to provide Marvis Cloud; our legitimate interests in securing, supporting, and improving Marvis and responding to inquiries; your consent, for marketing messages; and compliance with our legal obligations.",
         ],
       },
       {
         heading: "AI features",
         paragraphs: [
-          "Your coding agents run on your own machines or on runtimes you connect, using the coding tools and accounts you set up. An agent running on your machine does not mean the model runs there: those tools send prompts, code, files, and tool results to their model providers, under the terms of the tool and account you use. Multica coordinates their work.",
-          "Some Multica Cloud features, such as chat titles and suggested follow-ups, send your first chat message or a few recent messages to a third-party large language model provider we choose, to generate the result. Multica does not use your content to train AI models.",
+          "Your coding agents run on your own machines or on runtimes you connect, using the coding tools and accounts you set up. An agent running on your machine does not mean the model runs there: those tools send prompts, code, files, and tool results to their model providers, under the terms of the tool and account you use. Marvis coordinates their work.",
+          "Some Marvis Cloud features, such as chat titles and suggested follow-ups, send your first chat message or a few recent messages to a third-party large language model provider we choose, to generate the result. Marvis does not use your content to train AI models.",
         ],
       },
       {
@@ -453,8 +453,8 @@ export function createEnDict(
         heading: "Who we share information with",
         paragraphs: [
           "Information you put into a workspace is visible to its other members and admins, and to the agents and integrations they authorize, according to the workspace’s permissions. If your workspace belongs to an organization, that organization manages its content and may handle requests about it.",
-          "We also disclose information when the law requires it, and to a buyer or successor if Multica is involved in a merger, acquisition, or sale of assets.",
-          "Beyond that, we share personal information only with the service providers that help us run Multica and with integrations you choose to connect:",
+          "We also disclose information when the law requires it, and to a buyer or successor if Marvis is involved in a merger, acquisition, or sale of assets.",
+          "Beyond that, we share personal information only with the service providers that help us run Marvis and with integrations you choose to connect:",
         ],
         bullets: [
           "Amazon Web Services: hosting, file storage, and content delivery",
@@ -470,19 +470,19 @@ export function createEnDict(
       {
         heading: "Where information is stored",
         paragraphs: [
-          "Multica Cloud is hosted on Amazon Web Services and Vercel. We and our service providers may process your information in the United States and other countries. Wherever it is processed, we protect it as described in this policy.",
+          "Marvis Cloud is hosted on Amazon Web Services and Vercel. We and our service providers may process your information in the United States and other countries. Wherever it is processed, we protect it as described in this policy.",
         ],
       },
       {
         heading: "How long we keep information",
         paragraphs: [
-          "We keep account information and workspace content for as long as your account or workspace exists. When a workspace owner deletes a workspace, its issues, comments, and other content are removed from Multica Cloud, though backups we keep for recovery may still contain copies for a period afterwards. To have files uploaded to a deleted workspace erased from our file storage, email [support@multica.ai](mailto:support@multica.ai). We keep billing records for as long as accounting and tax rules require, and product analytics, crash reports, Contact Sales inquiries, and feedback for as long as they are useful for supporting you and improving Multica. We delete inquiries and feedback on request.",
+          "We keep account information and workspace content for as long as your account or workspace exists. When a workspace owner deletes a workspace, its issues, comments, and other content are removed from Marvis Cloud, though backups we keep for recovery may still contain copies for a period afterwards. To have files uploaded to a deleted workspace erased from our file storage, email [support@marvis.ai](mailto:support@marvis.ai). We keep billing records for as long as accounting and tax rules require, and product analytics, crash reports, Contact Sales inquiries, and feedback for as long as they are useful for supporting you and improving Marvis. We delete inquiries and feedback on request.",
         ],
       },
       {
         heading: "Your choices and rights",
         paragraphs: [
-          "Depending on where you live, you may have the right to access, correct, delete, or export your personal information; to object to or restrict certain processing; to withdraw consent you have given, such as for marketing messages; and to complain to your local data protection authority. You can update your profile in Multica at any time and delete a workspace you own from its settings. For anything else, including deleting your account, email [support@multica.ai](mailto:support@multica.ai). We will respond within 30 days.",
+          "Depending on where you live, you may have the right to access, correct, delete, or export your personal information; to object to or restrict certain processing; to withdraw consent you have given, such as for marketing messages; and to complain to your local data protection authority. You can update your profile in Marvis at any time and delete a workspace you own from its settings. For anything else, including deleting your account, email [support@marvis.ai](mailto:support@marvis.ai). We will respond within 30 days.",
         ],
       },
       {
@@ -494,7 +494,7 @@ export function createEnDict(
       {
         heading: "Children",
         paragraphs: [
-          "Multica is not directed to children under 16, and we do not knowingly collect their personal information.",
+          "Marvis is not directed to children under 16, and we do not knowingly collect their personal information.",
         ],
       },
       {
@@ -506,7 +506,7 @@ export function createEnDict(
       {
         heading: "Contact us",
         paragraphs: [
-          "Multica is operated by Index Labs (Hong Kong) Limited, which is responsible for your personal information. For privacy questions or requests, email [support@multica.ai](mailto:support@multica.ai).",
+          "Marvis is operated by Index Labs (Hong Kong) Limited, which is responsible for your personal information. For privacy questions or requests, email [support@marvis.ai](mailto:support@marvis.ai).",
         ],
       },
     ],
@@ -514,7 +514,7 @@ export function createEnDict(
 
   changelog: {
     title: "Changelog",
-    subtitle: "New updates and improvements to Multica.",
+    subtitle: "New updates and improvements to Marvis.",
     toc: "All releases",
     categories: {
       features: "New Features",
@@ -733,7 +733,7 @@ export function createEnDict(
           "Add new instructions to a Grok Build task while it is still running.",
           "Browse every attachment on an Issue full-window and page through them.",
           "Read the whole documentation site in French.",
-          "Find licensing answers, the privacy policy, and the team behind Multica on the site.",
+          "Find licensing answers, the privacy policy, and the team behind Marvis on the site.",
           "Self-hosted admins can make automatic titles and quick actions respond faster.",
         ],
         improvements: [
@@ -794,7 +794,7 @@ export function createEnDict(
           "Choose the branch or commit a project's repository work starts from.",
           "Copy a direct link to any comment or reply, and open it with that comment highlighted.",
           "A WeCom answer comes back inside the message you asked from.",
-          "Point a self-hosted Multica at Gitea or a compatible mirror for updates.",
+          "Point a self-hosted Marvis at Gitea or a compatible mirror for updates.",
         ],
         improvements: [
           "A long WeCom answer arrives in full instead of being dropped.",
@@ -1099,8 +1099,8 @@ export function createEnDict(
         features: [
           "Use Huawei Cloud CodeArts as a native agent runtime.",
           "Pick its models, pick up past sessions, and bring your MCP servers and local Skills.",
-          "Install Multica natively on iPad, in any screen orientation.",
-          "WeCom bot replies still arrive when you self-host Multica across several servers.",
+          "Install Marvis natively on iPad, in any screen orientation.",
+          "WeCom bot replies still arrive when you self-host Marvis across several servers.",
           "See how many WeCom replies never made it out, and why.",
         ],
         improvements: [
@@ -1357,7 +1357,7 @@ export function createEnDict(
           "You can now create a share link that lets someone join your workspace directly.",
           "The transcript now reads as steps, with a two-lane timeline and an outcome summary.",
           "Files sent in Slack now arrive in the conversation as attachments.",
-          "You can now add Multica to your phone's home screen and open it like an app.",
+          "You can now add Marvis to your phone's home screen and open it like an app.",
           "Browser tabs are now named after the workspace page you have open.",
           "Imported skills now show where they came from.",
           "A mention of the Issue you are reading now reads as \"This issue\".",
@@ -1404,7 +1404,7 @@ export function createEnDict(
         fixes: [
           "An agent CLI that cannot run now tells you how to repair it.",
           "Someone else's private runtime can no longer be used from the API or CLI.",
-          "Leftover task files no longer break every multica command in a folder.",
+          "Leftover task files no longer break every marvis command in a folder.",
           "Agents installed through Volta or Vite Plus are now recognised.",
           "The gap between the last reply and the composer is back.",
           "In dark mode the active tab no longer prints dark squares, and hover corners stay round.",
@@ -1427,7 +1427,7 @@ export function createEnDict(
           "Self-hosted setups can now keep task temp files on a bigger disk.",
         ],
         improvements: [
-          "`multica daemon logs` now tells you where the log file is.",
+          "`marvis daemon logs` now tells you where the log file is.",
           "A Hermes task now says which HERMES_HOME it read.",
         ],
         fixes: [
@@ -1466,7 +1466,7 @@ export function createEnDict(
           "Bold text next to Chinese, Japanese and Korean punctuation renders again.",
           "On Android the keyboard stays open after you send or stop a message.",
           "Self-hosted Hermes chats no longer fail on every other message.",
-          "A leftover port setting no longer blocks `multica login`.",
+          "A leftover port setting no longer blocks `marvis login`.",
           "Cursor tasks now reach the MCP servers you configured.",
           "Issue titles created from Slack keep their links unchanged.",
           "A PR no longer closes a same-numbered Issue in another workspace.",
@@ -1517,7 +1517,7 @@ export function createEnDict(
           "Oh-My-Pi can now run your agents as well.",
           "Voice notes sent in WeCom now reach your agents as text.",
           "Kimi and Pi agents can now be set to think harder or faster.",
-          "Cmd/Ctrl+click or middle-click any link in Multica to open it in a new tab.",
+          "Cmd/Ctrl+click or middle-click any link in Marvis to open it in a new tab.",
           "When WeCom cannot connect, the page now says whether it was refused or simply unreachable.",
         ],
         improvements: [
@@ -1586,7 +1586,7 @@ export function createEnDict(
           "The execution log shows what each run cost, and the whole Issue's total.",
           "Muting comment notifications no longer hides messages that @-mention you.",
           "Chat on a phone opens full screen and the composer rides above the keyboard.",
-          "Replacing your multica or agent CLI now takes effect on its own, no restart.",
+          "Replacing your marvis or agent CLI now takes effect on its own, no restart.",
         ],
         improvements: [
           "Agents read shorter instructions each run, leaving more room for your work.",
@@ -1723,7 +1723,7 @@ export function createEnDict(
           "Every workspace can now label agents and Skills to keep them organized.",
           "Codex on Linux now uses the tools and logins already set up on that machine.",
           "Built-in Skills have consistent names and take up far less of each agent run.",
-          "Dimmed text across Multica is now solid and readable instead of washed out.",
+          "Dimmed text across Marvis is now solid and readable instead of washed out.",
         ],
         fixes: [
           "Multi-line prompts sent to Copilot on Windows no longer lose their line breaks.",
@@ -1752,14 +1752,14 @@ export function createEnDict(
         ],
         improvements: [
           "Issue tables stay responsive when you switch workspaces.",
-          "Multica's interface and four-language docs are more consistent and readable.",
+          "Marvis's interface and four-language docs are more consistent and readable.",
           "Attachment-heavy CLI and agent workflows now transfer less data.",
           "Self-hosted setup now carries your configuration into the daemon.",
         ],
         fixes: [
           "Codex file changes are now preserved in task transcripts.",
           "Hermes agents now recover from a lost resumed session.",
-          "Qoder CLI is now found when Multica starts from a desktop app.",
+          "Qoder CLI is now found when Marvis starts from a desktop app.",
           "Daemon updates no longer wait forever while the machine is idle.",
           "Issue activity labels no longer clip letters below the baseline.",
         ],
@@ -1810,7 +1810,7 @@ export function createEnDict(
           "Long pasted text now becomes a text attachment automatically.",
           "Uploads now appear once and become draft content only after they finish.",
           "Webhook URLs now hide their secret tokens until you choose to reveal them.",
-          "Starting Multica with many workspaces now launches far fewer agent checks.",
+          "Starting Marvis with many workspaces now launches far fewer agent checks.",
           "Usage rankings now focus on the top agents and sort failures more clearly.",
           "Each composer now leaves the cursor where that surface expects it.",
         ],
@@ -1985,7 +1985,7 @@ export function createEnDict(
           "Your settings now save reliably after you reopen the panel.",
           "Resumed Codex tasks now report their usage accurately.",
           "Comments no longer turn the wrong text into links.",
-          "Direct chat replies now stay in Multica.",
+          "Direct chat replies now stay in Marvis.",
           "AI-assisted creation is now always available.",
           "The Issues page no longer stutters when you first open it.",
           "Codex agents on Linux now save their Git details correctly.",
@@ -2052,7 +2052,7 @@ export function createEnDict(
           "Labels you pick while creating an issue are now saved together with it, every time.",
           "Pasting formatted text into a comment no longer leaves stray ++ marks.",
           "Hover cards no longer pop up when you just move the mouse past an avatar.",
-          "The Linux desktop app now installs under the name multica-desktop.",
+          "The Linux desktop app now installs under the name marvis-desktop.",
         ],
       },
       {
@@ -2289,7 +2289,7 @@ export function createEnDict(
         changes: [],
         features: [
           "The task transcript remembers your filter and expansion choices, and restores them the next time you open the run.",
-          "Self-hosted (Helm): a new `postgres.external.enabled` toggle points Multica at an externally managed PostgreSQL (RDS, CNPG, Cloud SQL, Neon…) and skips the built-in database.",
+          "Self-hosted (Helm): a new `postgres.external.enabled` toggle points Marvis at an externally managed PostgreSQL (RDS, CNPG, Cloud SQL, Neon…) and skips the built-in database.",
         ],
         fixes: [
           "Ordered-list caret no longer strands on the block below when a comment draft with an empty `1. ` line reloads.",
@@ -2343,8 +2343,8 @@ export function createEnDict(
         title: "Slack /issue slash command, ByteDance TRAE CLI runtime, and Claude Sonnet 5",
         changes: [],
         features: [
-          "Slack's native /issue slash command creates a Multica Issue and replies to you privately with the link.",
-          "A Slack user who already linked their account to one Multica bot no longer re-links when the same Slack workspace connects a second bot.",
+          "Slack's native /issue slash command creates a Marvis Issue and replies to you privately with the link.",
+          "A Slack user who already linked their account to one Marvis bot no longer re-links when the same Slack workspace connects a second bot.",
           "Slack channel context is now driven by two focused reads: a channel overview and a per-thread read.",
           "ByteDance TRAE CLI (traecli) joins the built-in agent runtimes over the standard ACP transport.",
           "Claude Sonnet 5 is now available in the Anthropic model catalog with introductory pricing.",
@@ -2358,9 +2358,9 @@ export function createEnDict(
           "The Slack chat agent no longer narrates its channel-history reads — it reads silently and replies with the answer.",
           "Attachment previews again open on self-hosted local-disk deployments. (Community-reported.)",
           "Cursor and Kiro runtime completion transcripts are recovered so the final result no longer goes missing.",
-          "Self-host: MULTICA_SLACK_SECRET_KEY is now passed through to the backend container in docker-compose.selfhost.yml. (Community-reported.)",
+          "Self-host: MARVIS_SLACK_SECRET_KEY is now passed through to the backend container in docker-compose.selfhost.yml. (Community-reported.)",
           "The Issues board \"N working\" chip counts distinct Issues instead of distinct agents.",
-          "Anonymous self-host source-channel reports go back to the official Multica API endpoint.",
+          "Anonymous self-host source-channel reports go back to the official Marvis API endpoint.",
           "Comment deep-link highlights are now background-only and consistent between root comments and replies.",
         ],
       },
@@ -2371,10 +2371,10 @@ export function createEnDict(
         changes: [],
         features: [
           "Autopilots now have a clear write-permission layer, plus a Manage Access dialog that lets the creator grant write access to specific workspace members.",
-          "Slack channels can backfill their conversation history into Multica, so an agent has the prior context the moment it joins.",
+          "Slack channels can backfill their conversation history into Marvis, so an agent has the prior context the moment it joins.",
           "Slack messages show a 👀 reaction while an agent is preparing its reply, and the reaction is always cleared on the way out.",
           "Skill bundles can be installed from a local .skill or .zip archive.",
-          "multica issue commands no longer accept short UUID prefixes — use the issue key (MUL-123) or the full UUID.",
+          "marvis issue commands no longer accept short UUID prefixes — use the issue key (MUL-123) or the full UUID.",
           "The Agents page is now usable on mobile.",
         ],
         improvements: [
@@ -2399,7 +2399,7 @@ export function createEnDict(
           "Issues now have a Remove parent action, so you can detach a sub-Issue without first having to pick a different parent.",
         ],
         improvements: [
-          "The local daemon reconnects to Multica through a more resilient WebSocket flow with bounded backoff, so brief network drops recover smoothly instead of stalling.",
+          "The local daemon reconnects to Marvis through a more resilient WebSocket flow with bounded backoff, so brief network drops recover smoothly instead of stalling.",
           "The daemon now bounds each runtime probe with its own timeout, so a single wedged CLI can no longer block every other runtime from coming online.",
         ],
         fixes: [
@@ -2636,7 +2636,7 @@ export function createEnDict(
         title: "CodeBuddy Runtime",
         changes: [],
         features: [
-          "CodeBuddy can now run local Multica agents, with its available model and effort choices shown automatically",
+          "CodeBuddy can now run local Marvis agents, with its available model and effort choices shown automatically",
           "Quick-created Issues now keep uploaded files attached from the first draft through the final Issue",
         ],
         improvements: [
@@ -2678,15 +2678,15 @@ export function createEnDict(
           "Comment boxes now show which agents or squads will start work before you send, with controls to avoid accidental runs",
           "Run transcripts now include timestamps, making agent progress and handoffs easier to review",
           "Autopilot detail pages now show who created each autopilot",
-          "Claude Fable 5 is now available in Multica's supported model and pricing list",
+          "Claude Fable 5 is now available in Marvis's supported model and pricing list",
           "Issue conversations can now resolve a specific reply, making long threads easier to close while keeping the final answer visible",
-          "Lark and Feishu conversations now show a typing reaction while Multica is preparing a reply, then clear it before the answer is sent",
+          "Lark and Feishu conversations now show a typing reaction while Marvis is preparing a reply, then clear it before the answer is sent",
           "Agent runs now know who started each task, making handoffs, audit trails, and privacy-aware behavior more accurate",
-          "OpenClaw users can point Multica at a custom app location and data folder from their local configuration",
+          "OpenClaw users can point Marvis at a custom app location and data folder from their local configuration",
         ],
         improvements: [
           "Comment trigger indicators are quieter, clearer, and less likely to crowd long agent names",
-          "Desktop now disables daemon start and stop controls when the daemon is managed outside Multica, such as in WSL2",
+          "Desktop now disables daemon start and stop controls when the daemon is managed outside Marvis, such as in WSL2",
           "The active agent indicator in an Issue header is easier to read, with motion only while work is running and clearer queued wording otherwise",
           "The CLI now gives clearer guidance around common errors, sign-in problems, and project setup values",
         ],
@@ -2710,7 +2710,7 @@ export function createEnDict(
         title: "Web Notifications and /note Command",
         changes: [],
         features: [
-          "The web app can now show native browser notification banners, making workspace activity easier to catch while Multica is in the background",
+          "The web app can now show native browser notification banners, making workspace activity easier to catch while Marvis is in the background",
           "Comments that start with /note can record context without waking the assigned agent, so teams can leave coordination notes without triggering a run",
           "Antigravity is now available as a per-agent model choice for daemon-run agents",
           "The CLI now explains common request failures in plain language and points to the next action",
@@ -2768,10 +2768,10 @@ export function createEnDict(
         title: "Lark Bot Integration",
         changes: [],
         features: [
-          "Multica now supports Lark as a third-party integration, so teams can scan a QR code and create a Multica agent as a Lark Bot",
+          "Marvis now supports Lark as a third-party integration, so teams can scan a QR code and create a Marvis agent as a Lark Bot",
           "Chat now has a searchable agent picker and an explicit context picker, making it easier to choose who should respond and what they should see",
           "Descriptions and comments now support checkbox task lists for lightweight planning inside an Issue",
-          "Agents now include built-in Multica skills so they can follow workspace workflows more consistently",
+          "Agents now include built-in Marvis skills so they can follow workspace workflows more consistently",
         ],
         improvements: [
           "Chat context is represented with clear mentions, making handoffs and later review easier to understand",
@@ -2815,7 +2815,7 @@ export function createEnDict(
         title: "Japanese Support and /skill Command",
         changes: [],
         features: [
-          "Multica now supports Japanese across the app, site, and docs",
+          "Marvis now supports Japanese across the app, site, and docs",
           "Chat now supports a /skill command for choosing an agent Skill",
           "Workspaces can now show a custom logo",
           "Teams can add Skills to an agent without replacing existing Skills",
@@ -2871,7 +2871,7 @@ export function createEnDict(
         changes: [],
         features: [
           "Agents that continue work from an Issue comment now resume the previous session instead of starting over, keeping the task context intact",
-          "Multica now supports Korean across the app, public site, and documentation, including Korean docs pages and localized date formatting",
+          "Marvis now supports Korean across the app, public site, and documentation, including Korean docs pages and localized date formatting",
           "Issue pages now keep active agent work visible near the title, with a cleaner view when multiple agents are working at once",
           "Agents can scan Issue discussions faster with thread previews, reply counts, and recent activity before opening the full conversation",
           "OpenClaw runtimes can use the MCP setup saved on an agent, and Claude Opus 4.8 is available in model selection and usage estimates",
@@ -2919,7 +2919,7 @@ export function createEnDict(
         title: "Local Working Directories",
         changes: [],
         features: [
-          "Projects can now use a local working directory on Desktop, so tasks can run in an existing folder while Multica shows when another task is waiting for that directory",
+          "Projects can now use a local working directory on Desktop, so tasks can run in an existing folder while Marvis shows when another task is waiting for that directory",
           "Autopilot webhook triggers can now filter incoming events and actions before work starts, with docs linked directly from the setup flow",
           "Swimlane views can group Issues by parent Issue, project, or assignee, making large boards easier to slice by how the team plans work",
           "Comments now support selecting multiple attachments and keeping, removing, or replacing attachments while editing",
@@ -2966,11 +2966,11 @@ export function createEnDict(
       {
         version: "0.3.8",
         date: "2026-05-25",
-        title: "Multica for iOS, Helm Self-Hosting & Smoother Collaboration",
+        title: "Marvis for iOS, Helm Self-Hosting & Smoother Collaboration",
         changes: [],
         features: [
-          "Multica for iOS is now available as our first official usable mobile client, covering login, workspaces, inbox, Issues, projects, chat, comments, reactions, presence, and live updates; it is not on the App Store yet, so users need to build and install it manually",
-          "Self-hosted teams can now deploy Multica to Kubernetes with a Helm chart, while Docker-based installs keep clearer port and URL controls",
+          "Marvis for iOS is now available as our first official usable mobile client, covering login, workspaces, inbox, Issues, projects, chat, comments, reactions, presence, and live updates; it is not on the App Store yet, so users need to build and install it manually",
+          "Self-hosted teams can now deploy Marvis to Kubernetes with a Helm chart, while Docker-based installs keep clearer port and URL controls",
           "Project resource pickers now include repository search, and workspace repository settings can store descriptions that help agents understand each codebase",
           "Runtime usage now recognizes DeepSeek, Kimi K2.6, Zhipu GLM, and long-context Claude Opus model costs more accurately",
           "The public site now supports use-case pages and a clearer path to Docs, Changelog, and getting started",
@@ -2984,7 +2984,7 @@ export function createEnDict(
         ],
         fixes: [
           "Issue timelines stay in chronological order when live comments and activity arrive close together",
-          "Codex runs no longer inherit hidden host memory during Multica tasks, and Pi runs receive a cleaner end-of-input signal",
+          "Codex runs no longer inherit hidden host memory during Marvis tasks, and Pi runs receive a cleaner end-of-input signal",
           "Local runtime delete actions now avoid self-healing rows that would immediately reappear, and dependency updates close server security advisories",
           "Title fields now refresh safely after external updates, and markdown code no longer uses ligatures that can distort command flags",
         ],
@@ -3114,7 +3114,7 @@ export function createEnDict(
         ],
         improvements: [
           "Failed issue actions now show clearer error messages so teams can understand what happened without digging through logs",
-          "GitHub-linked pull requests now surface CI and merge-conflict status inside Multica",
+          "GitHub-linked pull requests now surface CI and merge-conflict status inside Marvis",
           "Self-hosted deployments get safer defaults and clearer guidance for reverse proxies, auth limits, and local-only services",
           "Search results are ranked more usefully and include better snippets",
         ],
@@ -3206,7 +3206,7 @@ export function createEnDict(
         title: "GitHub Integration, Chat Attachments & Safer Issue Navigation",
         changes: [],
         features: [
-          "Connect GitHub so linked pull requests appear on Multica issues, sync their status, and close the Multica issue automatically when the PR closes",
+          "Connect GitHub so linked pull requests appear on Marvis issues, sync their status, and close the Marvis issue automatically when the PR closes",
           "Chat messages can include file attachments and image previews",
           "Agents and runtimes can now be kept public or private for clearer team access",
           "Stopping a single agent task now asks for confirmation before it is terminated",
@@ -3217,7 +3217,7 @@ export function createEnDict(
           "Long issue timelines scroll more smoothly",
           "The feedback dialog now points contributors toward GitHub discussions and issues",
           "Self-hosted Caddy guidance now calls out real-time connection requirements",
-          "Linux desktop packages show the Multica app icon again",
+          "Linux desktop packages show the Marvis app icon again",
         ],
         fixes: [
           "Downloaded attachments keep their original filenames",
@@ -3303,7 +3303,7 @@ export function createEnDict(
         title: "Daemon Disk-Usage CLI, Timeline Polish & Task Usage Rollup",
         changes: [],
         features: [
-          "New `multica daemon disk-usage` CLI surfaces per-task and per-workspace disk footprint",
+          "New `marvis daemon disk-usage` CLI surfaces per-task and per-workspace disk footprint",
           "Skill picker in agent settings has a search box for fast lookup",
           "Daemon GC extends to chat, autopilot, and quick-create tasks",
           "Issue detail breadcrumb now shows the MUL-xxxx identifier for quick reference",
@@ -3319,7 +3319,7 @@ export function createEnDict(
           "Linux daemon self-restart uses `brew prefix` symlinks, so Homebrew Cellar deletion no longer orphans runtimes",
           "CLI short IDs now route correctly — copied prefixes no longer 404",
           "Windows non-ASCII comment / description input lands via new `--content-file` / `--description-file` flags",
-          "Windows / Linux desktop replaces the Electron placeholder icon with the Multica asterisk",
+          "Windows / Linux desktop replaces the Electron placeholder icon with the Marvis asterisk",
           "Orphaned timeline replies are now correctly surfaced",
           "Timeline comment pagination budget excludes activities, so heavy activity no longer crowds out real comments",
         ],
@@ -3387,8 +3387,8 @@ export function createEnDict(
         title: "Repo Checkout `--ref`, Hermes Replay Fix & Multi-Replica Model Picker",
         changes: [],
         features: [
-          "`multica repo checkout --ref` targets a branch, tag, or specific commit when pulling a repo into the workspace",
-          "`multica agent avatar` uploads an agent avatar straight from the CLI",
+          "`marvis repo checkout --ref` targets a branch, tag, or specific commit when pulling a repo into the workspace",
+          "`marvis agent avatar` uploads an agent avatar straight from the CLI",
           "Inbox shows an archive button on done tasks; the redundant mark-as-done hover button is gone",
         ],
         improvements: [
@@ -3400,7 +3400,7 @@ export function createEnDict(
           "Newly created agents show up everywhere immediately — the agent cache is hydrated on create",
           "Hermes no longer replays the previous answer when a new turn starts — historical chunks are gated behind a per-turn flag",
           "Codex runtime model picker exposes the GPT-5.5 family",
-          "`multica login --token <PAT>` accepts the PAT as a flag value instead of rejecting it",
+          "`marvis login --token <PAT>` accepts the PAT as a flag value instead of rejecting it",
           "CLI update completion status is now reliable",
           "Session resume is guarded by runtime, preventing cross-runtime resume",
           "Kanban display settings survive when dragging issues across columns",
@@ -3423,7 +3423,7 @@ export function createEnDict(
         ],
         improvements: [
           "Daemon `/tasks/claim` polling uses a Redis empty-claim fast-path, dropping idle DB load and reclaiming disk on long-open issues",
-          "Multica Agent commits include a `Co-authored-by` trailer for proper Git attribution",
+          "Marvis Agent commits include a `Co-authored-by` trailer for proper Git attribution",
           "Desktop blocks Cmd+R / Ctrl+R / F5 from reloading the app and shows the real version in dev and Updates settings",
         ],
         fixes: [
@@ -3446,7 +3446,7 @@ export function createEnDict(
         ],
         improvements: [
           "Server caches PAT / daemon token lookups in Redis, so large fleets stop hammering the database on every request",
-          "Backend default agent CLI args via `MULTICA_CLAUDE_ARGS` / `MULTICA_CODEX_ARGS` env vars",
+          "Backend default agent CLI args via `MARVIS_CLAUDE_ARGS` / `MARVIS_CODEX_ARGS` env vars",
           "Manual and agent create-issue flows share one dialog shell, and picker agents become the default assignee",
         ],
         fixes: [
@@ -3507,9 +3507,9 @@ export function createEnDict(
         title: "Custom Agent Env, Better Failure Messages & Reliability Fixes",
         changes: [],
         features: [
-          "`multica agent create/update --custom-env KEY=VALUE` injects custom environment variables into agent runs",
+          "`marvis agent create/update --custom-env KEY=VALUE` injects custom environment variables into agent runs",
           "Agent failure messages now include a tail of the runtime CLI's stderr — much easier to debug runtime errors",
-          "CLI update download timeout is now configurable, so slow links no longer abort `multica update`",
+          "CLI update download timeout is now configurable, so slow links no longer abort `marvis update`",
         ],
         improvements: [
           "Daemon reports cancelled tasks as `cancelled` instead of `timeout`, and reconciles agent status when an issue's tasks are cancelled",
@@ -3586,7 +3586,7 @@ export function createEnDict(
         changes: [],
         features: [
           "Desktop app cross-platform packaging — macOS, Windows, and Linux artifacts from a single release pipeline",
-          "`multica update` self-update command — upgrade the CLI and local daemon without reinstalling",
+          "`marvis update` self-update command — upgrade the CLI and local daemon without reinstalling",
           "Issue board paginates every status column, not only Done — large backlogs stay responsive",
         ],
         fixes: [
@@ -3603,7 +3603,7 @@ export function createEnDict(
         title: "Per-Agent Models, Kimi Runtime & Self-Host Auth",
         changes: [],
         features: [
-          "Per-agent `model` field with a provider-aware dropdown — pick the LLM model for each agent from the UI or via `multica agent create/update --model`, with live discovery from each runtime's CLI",
+          "Per-agent `model` field with a provider-aware dropdown — pick the LLM model for each agent from the UI or via `marvis agent create/update --model`, with live discovery from each runtime's CLI",
           "Kimi CLI as a new agent runtime (Moonshot AI's `kimi-cli` over ACP), with model selection, auto-approved tool permissions, and streaming tool-call rendering",
           "Expand toggle on inline comment and reply editors for composing long text",
         ],
@@ -3751,7 +3751,7 @@ export function createEnDict(
         title: "One-Click Setup, Self-Hosting & Stability",
         changes: [],
         features: [
-          "One-click install & setup — `curl | bash` installs CLI, `--with-server` bootstraps full self-hosting, `multica setup` configures your environment",
+          "One-click install & setup — `curl | bash` installs CLI, `--with-server` bootstraps full self-hosting, `marvis setup` configures your environment",
           "Self-hosted storage — local file fallback when S3 is unavailable, plus custom S3 endpoint support (MinIO)",
           "Inline property editing (priority, status, lead) on project list page",
         ],
@@ -3897,7 +3897,7 @@ export function createEnDict(
           "Load all open issues without pagination limit; closed issues paginate on scroll",
           "JWT and CloudFront cookie expiration extended from 72 hours to 30 days",
           "Remember last selected workspace after re-login",
-          "Daemon ensures multica CLI is on PATH in agent task environment",
+          "Daemon ensures marvis CLI is on PATH in agent task environment",
           "PR template and CLI install guide for agent-driven setup",
         ],
       },
@@ -4026,29 +4026,29 @@ export function createEnDict(
   download: {
     hero: {
       macArm64: {
-        title: "Multica for macOS",
+        title: "Marvis for macOS",
         sub: "Apple Silicon · bundled daemon, zero setup",
         primary: "Download (.dmg)",
         altZip: "or download .zip",
       },
       macIntel: {
-        title: "Multica for macOS",
+        title: "Marvis for macOS",
         sub: "Intel · bundled daemon, zero setup",
         primary: "Download (.dmg)",
         altZip: "or download .zip",
       },
       winX64: {
-        title: "Multica for Windows",
+        title: "Marvis for Windows",
         sub: "Bundled daemon, zero setup",
         primary: "Download (.exe)",
       },
       winArm64: {
-        title: "Multica for Windows",
+        title: "Marvis for Windows",
         sub: "ARM · bundled daemon, zero setup",
         primary: "Download (.exe)",
       },
       linux: {
-        title: "Multica for Linux",
+        title: "Marvis for Linux",
         sub: "Bundled daemon, zero setup",
         primary: "Download AppImage",
         altFormats: "or .deb / .rpm",
@@ -4102,7 +4102,7 @@ export function createEnDict(
   contactSales: {
     pageTitle: "Contact Sales",
     pageDescription:
-      "Talk to the Multica team about rolling out human + agent workflows at your company.",
+      "Talk to the Marvis team about rolling out human + agent workflows at your company.",
     eyebrow: "Contact Sales",
     title: "Let’s understand your needs",
     fields: {
@@ -4114,7 +4114,7 @@ export function createEnDict(
       companyName: "Company name",
       companySize: "Company size",
       countryRegion: "Country / Region",
-      useCase: "How do you plan to use or collaborate with Multica?",
+      useCase: "How do you plan to use or collaborate with Marvis?",
       goals: "Your goals or challenges",
       selectPlaceholder: "Please select",
       submit: "Submit",
@@ -4129,10 +4129,10 @@ export function createEnDict(
       { value: "1000+", label: "1,000+ employees" },
     ],
     useCases: [
-      { value: "evaluate", label: "Evaluating Multica for my team" },
-      { value: "adopt_team", label: "Rolling out Multica to a team or company" },
+      { value: "evaluate", label: "Evaluating Marvis for my team" },
+      { value: "adopt_team", label: "Rolling out Marvis to a team or company" },
       { value: "self_host", label: "Self-hosting on our own infrastructure" },
-      { value: "integrate", label: "Integrating Multica with existing tools" },
+      { value: "integrate", label: "Integrating Marvis with existing tools" },
       { value: "partner", label: "Partnership or reseller inquiry" },
       { value: "other", label: "Something else" },
     ],
@@ -4180,22 +4180,22 @@ export function createEnDict(
     ],
     consent: {
       intro:
-        "Multica respects your privacy. We’ll use your personal information only to manage your account and deliver the products or services you’ve requested. Occasionally, we’d love to share product updates, best practices, and insights that may be relevant to you. Please let us know below if you’d like to hear from us.",
+        "Marvis respects your privacy. We’ll use your personal information only to manage your account and deliver the products or services you’ve requested. Occasionally, we’d love to share product updates, best practices, and insights that may be relevant to you. Please let us know below if you’d like to hear from us.",
       outreach:
-        "I’d like to receive one-to-one communication from Multica, including service updates, support inquiries, and business-related follow-ups.",
+        "I’d like to receive one-to-one communication from Marvis, including service updates, support inquiries, and business-related follow-ups.",
       updates:
-        "I’d like to receive product updates, insights, and event invitations from Multica.",
+        "I’d like to receive product updates, insights, and event invitations from Marvis.",
       unsubscribe:
         "You can unsubscribe from our communications at any time. For more details on how we handle your data and privacy rights, please review our",
       submitConsent:
-        "By clicking “Submit,” you consent to allow Multica to store and process your information for the purpose of delivering the requested content.",
+        "By clicking “Submit,” you consent to allow Marvis to store and process your information for the purpose of delivering the requested content.",
       privacyLinkLabel: "Privacy Policy.",
       privacyLinkHref: "/privacy",
     },
     success: {
       title: "Thanks — we got it.",
       message:
-        "A member of the Multica team will respond within three business days. In the meantime, feel free to explore the docs or star us on GitHub.",
+        "A member of the Marvis team will respond within three business days. In the meantime, feel free to explore the docs or star us on GitHub.",
       cta: "Back to home",
     },
     errors: {

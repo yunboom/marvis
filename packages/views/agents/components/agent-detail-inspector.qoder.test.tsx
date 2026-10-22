@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, screen } from "@testing-library/react";
-import type { Agent, AgentRuntime } from "@multica/core/types";
+import type { Agent, AgentRuntime } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 
 const picker = vi.hoisted(() => ({
@@ -11,7 +11,7 @@ const picker = vi.hoisted(() => ({
 }));
 const mockInitiateListModels = vi.hoisted(() => vi.fn());
 
-vi.mock("@multica/core/api", () => ({
+vi.mock("@marvis/core/api", () => ({
   api: {
     initiateListModels: (...args: unknown[]) => mockInitiateListModels(...args),
     getListModelsResult: vi.fn(),

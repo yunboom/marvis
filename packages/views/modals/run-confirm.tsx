@@ -9,16 +9,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@multica/ui/components/ui/dialog";
-import { Button } from "@multica/ui/components/ui/button";
-import { Spinner } from "@multica/ui/components/ui/spinner";
-import type { IssueAssigneeType, IssueStatus, UpdateIssueRequest } from "@multica/core/types";
-import { useUpdateIssue, useBatchUpdateIssues } from "@multica/core/issues/mutations";
-import { errorCode } from "@multica/core/api";
-import { useActorName } from "@multica/core/workspace/hooks";
-import { useWorkspaceId } from "@multica/core/hooks";
-import { useShortcut, shortcutMatchesEvent, isPlainShortcut } from "@multica/core/shortcuts";
-import { isImeComposing } from "@multica/core/utils";
+} from "@marvis/ui/components/ui/dialog";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Spinner } from "@marvis/ui/components/ui/spinner";
+import type { IssueAssigneeType, IssueStatus, UpdateIssueRequest } from "@marvis/core/types";
+import { useUpdateIssue, useBatchUpdateIssues } from "@marvis/core/issues/mutations";
+import { errorCode } from "@marvis/core/api";
+import { useActorName } from "@marvis/core/workspace/hooks";
+import { useWorkspaceId } from "@marvis/core/hooks";
+import { useShortcut, shortcutMatchesEvent, isPlainShortcut } from "@marvis/core/shortcuts";
+import { isImeComposing } from "@marvis/core/utils";
 import { ShortcutKeycaps } from "../common/shortcut-keycaps";
 import { useStatusLabel } from "../issues/utils/status-label";
 import { useT } from "../i18n";

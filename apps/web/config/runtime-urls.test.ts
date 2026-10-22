@@ -134,9 +134,9 @@ describe("browser runtime URLs", () => {
   it("keeps a non-/api path prefix so prefix-mounted backends still work", () => {
     expect(
       resolveBrowserApiBaseUrl({
-        NEXT_PUBLIC_API_URL: "https://app.example.com/multica",
+        NEXT_PUBLIC_API_URL: "https://app.example.com/marvis",
       }),
-    ).toBe("https://app.example.com/multica");
+    ).toBe("https://app.example.com/marvis");
   });
 
   it("does not mistake an `api` host for an /api path suffix", () => {
@@ -271,9 +271,9 @@ describe("runtimeRewriteDestination", () => {
   it("maps docs paths to the runtime docs origin", () => {
     expect(
       runtimeRewriteDestination("/docs/zh/agents", {
-        DOCS_URL: "http://multica-docs:3000",
+        DOCS_URL: "http://marvis-docs:3000",
       }),
-    ).toBe("http://multica-docs:3000/docs/zh/agents");
+    ).toBe("http://marvis-docs:3000/docs/zh/agents");
   });
 
   it("maps the CLI health probe to the runtime API origin", () => {

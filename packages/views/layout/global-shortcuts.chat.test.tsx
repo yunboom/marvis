@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { configureShortcutPlatform } from "@multica/core/shortcuts";
-import { openCreateIssueWithPreference } from "@multica/core/issues/stores";
+import { configureShortcutPlatform } from "@marvis/core/shortcuts";
+import { openCreateIssueWithPreference } from "@marvis/core/issues/stores";
 import { useRef } from "react";
 import { useChatInputFocus } from "../chat/components/use-chat-input-focus";
 import { GlobalShortcuts } from "./global-shortcuts";
@@ -16,19 +16,19 @@ const h = vi.hoisted(() => ({
   searchToggle: vi.fn(),
 }));
 
-vi.mock("@multica/core/chat", () => ({
+vi.mock("@marvis/core/chat", () => ({
   useChatStore: Object.assign(
     (selector: (state: typeof h.chat) => unknown) => selector(h.chat),
     { getState: () => h.chat },
   ),
 }));
-vi.mock("@multica/core/issues/stores", () => ({
+vi.mock("@marvis/core/issues/stores", () => ({
   openCreateIssueWithPreference: vi.fn(),
 }));
-vi.mock("@multica/core/modals", () => ({
+vi.mock("@marvis/core/modals", () => ({
   useModalStore: { getState: () => ({ modal: null }) },
 }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     inbox: () => "/acme/inbox",
     chat: () => "/acme/chat",
@@ -44,7 +44,7 @@ vi.mock("@multica/core/paths", () => ({
     settings: () => "/acme/settings",
   }),
 }));
-vi.mock("@multica/ui/components/ui/sidebar", () => ({
+vi.mock("@marvis/ui/components/ui/sidebar", () => ({
   useSidebar: () => ({ toggleSidebar: h.toggleSidebar }),
 }));
 vi.mock("../navigation", () => ({ useNavigation: () => h.navigation }));

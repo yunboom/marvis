@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback } from "react";
-import { useWorkspaceId } from "@multica/core/hooks";
+import { useWorkspaceId } from "@marvis/core/hooks";
 import {
   useModalStore,
   type IssueLimitRecoveryReason,
-} from "@multica/core/modals";
+} from "@marvis/core/modals";
 
 /** Opens the shared limit-recovery dialog without closing the current surface. */
 export function useIssueLimitUpgradePrompt(

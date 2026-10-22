@@ -24,7 +24,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/util"
+	"github.com/marvis-ai/marvis/server/internal/util"
 )
 
 // streamMaxAge is how long a handle is worth keeping: ten minutes, measured
@@ -612,7 +612,7 @@ func (s *streamStore) retryUnbind(sessionID pgtype.UUID, taskID string) bool {
 }
 
 // releaseRound hands a bubble back when the run bound to it turns out not to be
-// one this adapter will ever close — a question typed in Multica that took the
+// one this adapter will ever close — a question typed in Marvis that took the
 // room's round off task:queued.
 //
 // Unlike retryUnbind there is no replacement coming, so the round genuinely

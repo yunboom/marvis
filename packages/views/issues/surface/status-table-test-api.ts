@@ -1,8 +1,8 @@
 import {
   ALL_STATUSES,
   BUILT_IN_STATUS_ORDER,
-} from "@multica/core/issues/config";
-import { issueColumnCategory } from "@multica/core/issues";
+} from "@marvis/core/issues/config";
+import { issueColumnCategory } from "@marvis/core/issues";
 import type {
   Issue,
   IssueTableGroupDescriptor,
@@ -13,7 +13,7 @@ import type {
   IssueTableRowsRequest,
   ListIssuesParams,
   ListIssuesResponse,
-} from "@multica/core/types";
+} from "@marvis/core/types";
 
 type LegacyListIssues = (
   params?: ListIssuesParams,

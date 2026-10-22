@@ -5,8 +5,8 @@ import { useState, type ReactNode } from "react";
 import {
   collectDeliverableFiles,
   type DeliverableFile,
-} from "@multica/core/attachments/deliverables";
-import type { Attachment, TimelineEntry } from "@multica/core/types";
+} from "@marvis/core/attachments/deliverables";
+import type { Attachment, TimelineEntry } from "@marvis/core/types";
 import { renderWithI18n } from "../../../test/i18n";
 
 const { openAtMock, tryOpenMock, downloadMock } = vi.hoisted(() => ({
@@ -15,7 +15,7 @@ const { openAtMock, tryOpenMock, downloadMock } = vi.hoisted(() => ({
   downloadMock: vi.fn(),
 }));
 
-vi.mock("@multica/core/workspace/hooks", () => ({
+vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({
     getActorName: (type: string, id: string) => (type === "agent" ? `Agent ${id}` : `Member ${id}`),
   }),
@@ -33,7 +33,7 @@ vi.mock("../../../editor/hooks/use-inline-media-url", () => ({
   useResignedInlineMedia: (_id: string | undefined, url: string) => ({ url, pending: false }),
 }));
 
-vi.mock("@multica/core/workspace/avatar-url", () => ({
+vi.mock("@marvis/core/workspace/avatar-url", () => ({
   resolvePublicFileUrl: (url: string) => url,
 }));
 

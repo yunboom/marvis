@@ -26,7 +26,7 @@ import type { Logger } from "../logger";
  * session, and that path already exists (ApiClient's 401 handling).
  */
 
-const TOKEN_STORAGE_KEY = "multica_token";
+const TOKEN_STORAGE_KEY = "marvis_token";
 
 /**
  * How long to wait after a FAILED check before another is allowed, by

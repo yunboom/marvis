@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/daemon/execenv"
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 // TestTaskRunFailureReasonLabelsOpenclawCLITimeout is the daemon half of the

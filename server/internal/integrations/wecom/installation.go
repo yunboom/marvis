@@ -16,9 +16,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/multica-ai/multica/server/internal/integrations/channel/engine"
-	"github.com/multica-ai/multica/server/internal/util/secretbox"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
 )
 
 // InstallationParams is the plaintext-bearing input to InstallationService.
@@ -370,7 +370,7 @@ var (
 
 	// ErrBotOwnedByAnotherWorkspace — the holder is out of sight entirely and
 	// only someone with access there can release it.
-	ErrBotOwnedByAnotherWorkspace = errors.New("wecom: this bot is already connected to a different Multica workspace")
+	ErrBotOwnedByAnotherWorkspace = errors.New("wecom: this bot is already connected to a different Marvis workspace")
 )
 
 // pgUniqueViolation is Postgres' unique_violation SQLSTATE.

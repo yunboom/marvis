@@ -25,7 +25,7 @@ func (s *claudeSupplementSession) handleHook(msg claudeSDKMessage, w io.Writer) 
 
 func claudeSupplementHook(event, agentID string) claudeSDKMessage {
 	request, _ := json.Marshal(map[string]any{
-		"subtype": "hook_callback", "callback_id": "multica-supplement-" + event,
+		"subtype": "hook_callback", "callback_id": "marvis-supplement-" + event,
 		"input": map[string]any{"hook_event_name": event, "agent_id": agentID},
 	})
 	return claudeSDKMessage{Type: "control_request", RequestID: "hook-request", Request: request}

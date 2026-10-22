@@ -20,24 +20,24 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/multica-ai/multica/server/internal/analytics"
-	"github.com/multica-ai/multica/server/internal/auth"
-	"github.com/multica-ai/multica/server/internal/daemonws"
-	"github.com/multica-ai/multica/server/internal/integrations/slack"
-	"github.com/multica-ai/multica/server/internal/issuestatus"
-	"github.com/multica-ai/multica/server/internal/logger"
-	obsmetrics "github.com/multica-ai/multica/server/internal/metrics"
-	"github.com/multica-ai/multica/server/internal/middleware"
-	"github.com/multica-ai/multica/server/internal/runtimeapps"
-	"github.com/multica-ai/multica/server/internal/service"
-	"github.com/multica-ai/multica/server/internal/util"
-	"github.com/multica-ai/multica/server/pkg/agent"
-	db "github.com/multica-ai/multica/server/pkg/db/generated"
-	"github.com/multica-ai/multica/server/pkg/dbid"
-	"github.com/multica-ai/multica/server/pkg/protocol"
-	"github.com/multica-ai/multica/server/pkg/redact"
-	"github.com/multica-ai/multica/server/pkg/skillbundle"
-	"github.com/multica-ai/multica/server/pkg/taskfailure"
+	"github.com/marvis-ai/marvis/server/internal/analytics"
+	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/marvis-ai/marvis/server/internal/daemonws"
+	"github.com/marvis-ai/marvis/server/internal/integrations/slack"
+	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	"github.com/marvis-ai/marvis/server/internal/logger"
+	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/marvis-ai/marvis/server/internal/runtimeapps"
+	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/marvis-ai/marvis/server/pkg/agent"
+	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/marvis-ai/marvis/server/pkg/dbid"
+	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/marvis-ai/marvis/server/pkg/redact"
+	"github.com/marvis-ai/marvis/server/pkg/skillbundle"
+	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 )
 
 // claimPollHintMinDelay bounds a future mismatch between the hint query and
@@ -313,7 +313,7 @@ type DaemonRegisterRequest struct {
 	// and tasks keep working without manual intervention.
 	LegacyDaemonIDs []string `json:"legacy_daemon_ids"`
 	DeviceName      string   `json:"device_name"`
-	CLIVersion      string   `json:"cli_version"` // multica CLI version
+	CLIVersion      string   `json:"cli_version"` // marvis CLI version
 	LaunchedBy      string   `json:"launched_by"` // "desktop" when spawned by the Electron app
 	Runtimes        []struct {
 		Name        string `json:"name"`
@@ -1332,7 +1332,7 @@ func (h *Handler) DaemonDeregister(w http.ResponseWriter, r *http.Request) {
 
 	// Batch the runtime lookups instead of one GetAgentRuntime per id (N+1),
 	// while keeping the MUL-6884 per-source attribution: getAgentRuntimes
-	// records one multica_agent_runtime_lookup_total result per requested id.
+	// records one marvis_agent_runtime_lookup_total result per requested id.
 	// A read error is NOT "the rows don't exist": fail closed with 500 (like
 	// ListRuntimesForClaim) so a transient blip can't report a successful
 	// deregister while every runtime silently stays online until the liveness
@@ -2150,7 +2150,7 @@ func (h *Handler) ClaimTasksByRuntime(w http.ResponseWriter, r *http.Request) {
 	//
 	// This read goes through RuntimeLookup like every other agent_runtime read
 	// by id (MUL-6884), so the claim path is attributed on
-	// multica_agent_runtime_lookup_total instead of being invisible on it. That
+	// marvis_agent_runtime_lookup_total instead of being invisible on it. That
 	// matters more here than on any other caller: both /tasks/claim and /claim
 	// route to this handler and the WebSocket claim RPC replays through it, so
 	// an unattributed read here would make the busiest reader in the system
@@ -2615,7 +2615,7 @@ func (h *Handler) rejectClaimSkillLoad(task *db.AgentTaskQueue, err error) *clai
 
 // rejectClaimOnWorkspaceMismatch enforces the claim's tenant boundary against
 // the workspace that OWNS the task's context (issue / chat session / autopilot
-// / quick-create), which is the only authority for MULTICA_WORKSPACE_ID in the
+// / quick-create), which is the only authority for MARVIS_WORKSPACE_ID in the
 // agent env. An empty value would make the CLI silently fall back to the
 // user-global config and talk to whatever workspace the user happened to last
 // configure; a value that doesn't match the runtime's workspace means upstream
@@ -2758,7 +2758,7 @@ func rerunSourceMatchesTaskScope(task, source db.AgentTaskQueue) bool {
 // child: a poisoned conversation says nothing about the files it left behind,
 // the same contract the manual-retry branch applies (MUL-4869, MUL-7034).
 //
-// The workdir is offered only to a daemon whose `multica repo checkout` keeps
+// The workdir is offered only to a daemon whose `marvis repo checkout` keeps
 // an existing checkout's work (DaemonCapabilityCheckoutKeepsWorkV1). The fresh
 // session has no memory of that work and will fetch its repositories again;
 // an older daemon's checkout resets the checkout and deletes the work being
@@ -2903,7 +2903,7 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 		)
 	}
 	useSkillRefs := requestHasClientCapability(r, protocol.DaemonCapabilitySkillBundlesV1)
-	// A daemon older than the multica-platform merge assembles a brief that
+	// A daemon older than the marvis-platform merge assembles a brief that
 	// still names the built-ins this server stopped shipping. It cannot be
 	// fixed from here — the brief lives in the daemon binary — so the missing
 	// capability buys that daemon a redirect stub under the old name instead of
@@ -3528,7 +3528,7 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 		// A task-level delivery snapshot, not the Chat's historical binding,
 		// decides whether this run is operating for an external audience.
 		// Web/Desktop/Mobile turns in an old channel-originated Chat have no
-		// snapshot and remain private to Multica after /new rotates the route.
+		// snapshot and remain private to Marvis after /new rotates the route.
 		delivery, deliveryErr := h.Queries.GetChannelTaskDelivery(r.Context(), task.ID)
 		if deliveryErr == nil {
 			resp.ChatChannelType = delivery.ChannelType
@@ -3586,7 +3586,7 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 		// (MUL-2968: "看上海天气" then "还有青岛" must both be delivered) —
 		// so a rolling deploy never replays their history. Attachments are
 		// collected per included message so the agent can
-		// `multica attachment download <id>` (the inline markdown URL is
+		// `marvis attachment download <id>` (the inline markdown URL is
 		// signed + 30-min expiring on the CDN).
 		var unanswered []db.ChatMessage
 		var inputLoadErr error
@@ -4149,8 +4149,8 @@ func worktreeClaimBlockReason(resources []ProjectResourceData, runtime db.AgentR
 			continue
 		}
 		return fmt.Sprintf(
-			"This machine's Multica runtime does not support parallel (worktree) mode, which %q is set to use. "+
-				"Update the Multica app on that machine to the latest version, then re-run this task. "+
+			"This machine's Marvis runtime does not support parallel (worktree) mode, which %q is set to use. "+
+				"Update the Marvis app on that machine to the latest version, then re-run this task. "+
 				"Refusing to run rather than falling back to editing the directory directly, which is what this mode exists to prevent.",
 			ref.LocalPath)
 	}
@@ -4248,7 +4248,7 @@ func (h *Handler) ClaimTaskByRuntime(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Mint a task-scoped `mat_` token bound to (agent, task, workspace,
-	// owner). The daemon will inject this as MULTICA_TOKEN into the agent
+	// owner). The daemon will inject this as MARVIS_TOKEN into the agent
 	// process instead of its own credential, so any API call the agent
 	// makes — even one that strips X-Agent-ID / X-Task-ID headers — is
 	// recognized server-side as actor=agent, closing the lateral-movement
@@ -5985,7 +5985,7 @@ const HeaderActiveRunsTruncated = "X-Active-Runs-Truncated"
 
 // ActiveRunSummary is one in-flight run as the coordination read reports it:
 // which issue, which agent, what state, since when, and the task id to follow
-// up with `multica issue run-messages`.
+// up with `marvis issue run-messages`.
 //
 // Deliberately NOT AgentTaskResponse. That type is the execution log's row —
 // result, work_dir, attribution, coalesced comment ids — and it costs roughly
@@ -6005,7 +6005,7 @@ type ActiveRunSummary struct {
 
 // ListTasksByIssue returns tasks for an issue — the execution history behind
 // the issue-detail sidebar, and the coordination reads behind
-// `multica issue runs --active` / `--siblings`.
+// `marvis issue runs --active` / `--siblings`.
 //
 // Two optional query params narrow or widen it; with neither, the response is
 // byte-identical to what it has always been (full history, newest first), which

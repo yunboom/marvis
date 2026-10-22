@@ -1,5 +1,5 @@
-import type { Agent, AgentRuntime, MemberWithUser, SkillSummary } from "@multica/core/types";
-import type { SkillListFilters } from "@multica/core/skills/stores";
+import type { Agent, AgentRuntime, MemberWithUser, SkillSummary } from "@marvis/core/types";
+import type { SkillListFilters } from "@marvis/core/skills/stores";
 import type { OriginInfo } from "../lib/origin";
 
 export interface SkillRow {

@@ -1,6 +1,6 @@
 import { emptyDraft, isDraft, sourceRevision, type Draft } from "./tokens";
 
-export const STORAGE_KEY = "multica-ui-lab:v1";
+export const STORAGE_KEY = "marvis-ui-lab:v1";
 export type SavedDesign = {
   id: string;
   name: string;

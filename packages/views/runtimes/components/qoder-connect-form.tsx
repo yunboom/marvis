@@ -20,17 +20,17 @@ import {
   useSaveQoder,
   type QoderConnection,
   type QoderRegion,
-} from "@multica/core/runtimes/qoder";
-import { Button } from "@multica/ui/components/ui/button";
-import { Input } from "@multica/ui/components/ui/input";
+} from "@marvis/core/runtimes/qoder";
+import { Button } from "@marvis/ui/components/ui/button";
+import { Input } from "@marvis/ui/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@multica/ui/components/ui/select";
-import { cn } from "@multica/ui/lib/utils";
+} from "@marvis/ui/components/ui/select";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
 
 const DEFAULT_NAME = "Qoder Cloud Agents";

@@ -5,14 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { setApiInstance } from "@multica/core/api";
-import type { ApiClient } from "@multica/core/api/client";
+import { setApiInstance } from "@marvis/core/api";
+import type { ApiClient } from "@marvis/core/api/client";
 import {
   getIssueSurfaceViewStore,
   pruneIssueSurfaceViewStates,
-} from "@multica/core/issues/stores/surface-view-store";
-import { ViewStoreProvider } from "@multica/core/issues/stores/view-store-context";
-import type { IssueStatusEntry, IssueTableGroupsRequest, IssueTableRowsRequest } from "@multica/core/types";
+} from "@marvis/core/issues/stores/surface-view-store";
+import { ViewStoreProvider } from "@marvis/core/issues/stores/view-store-context";
+import type { IssueStatusEntry, IssueTableGroupsRequest, IssueTableRowsRequest } from "@marvis/core/types";
 import { useIssueSurfaceController } from "./use-issue-surface-controller";
 
 /**
@@ -25,7 +25,7 @@ import { useIssueSurfaceController } from "./use-issue-surface-controller";
  * - Each concrete status becomes a branch only after catalog resolution.
  */
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
 
 const QA_ENTRY: IssueStatusEntry = {
   id: "s-qa",

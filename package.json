@@ -1,13 +1,13 @@
 {
-  "name": "multica",
+  "name": "marvis",
   "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev:web": "turbo dev --filter=@multica/web",
-    "dev:docs": "turbo dev --filter=@multica/docs",
-    "dev:desktop": "turbo dev --filter=@multica/desktop",
-    "dev:desktop:staging": "turbo dev:staging --filter=@multica/desktop",
+    "dev:web": "turbo dev --filter=@marvis/web",
+    "dev:docs": "turbo dev --filter=@marvis/docs",
+    "dev:desktop": "turbo dev --filter=@marvis/desktop",
+    "dev:desktop:staging": "turbo dev:staging --filter=@marvis/desktop",
     "dev:mobile": "pnpm -C apps/mobile dev",
     "dev:mobile:staging": "pnpm -C apps/mobile dev:staging",
     "dev:mobile:prod": "pnpm -C apps/mobile dev:prod",
@@ -19,17 +19,17 @@
     "ios:mobile:device:staging:release": "pnpm -C apps/mobile ios:device:staging:release",
     "ios:mobile:device:prod": "pnpm -C apps/mobile ios:device:prod",
     "ios:mobile:device:prod:release": "pnpm -C apps/mobile ios:device:prod:release",
-    "build": "turbo build --filter=!@multica/mobile",
-    "typecheck": "turbo typecheck --filter=!@multica/mobile",
-    "test": "turbo test --filter=!@multica/mobile",
-    "lint": "turbo lint --filter=!@multica/mobile",
+    "build": "turbo build --filter=!@marvis/mobile",
+    "typecheck": "turbo typecheck --filter=!@marvis/mobile",
+    "test": "turbo test --filter=!@marvis/mobile",
+    "lint": "turbo lint --filter=!@marvis/mobile",
     "knip": "knip",
     "check:ui-exports": "node scripts/check-ui-wildcard-exports.mjs",
     "check:ui-radii": "node scripts/check-ui-radius-tokens.mjs",
     "clean": "turbo clean && rm -rf node_modules",
     "ui:add": "cd packages/ui && npx shadcn@latest add",
     "generate:reserved-slugs": "node scripts/generate-reserved-slugs.mjs",
-    "dev:ui-lab": "pnpm --filter @multica/ui-lab dev"
+    "dev:ui-lab": "pnpm --filter @marvis/ui-lab dev"
   },
   "engines": {
     "node": ">=22"

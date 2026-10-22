@@ -1,6 +1,6 @@
 "use client";
 
-import { useIssueStatuses } from "@multica/core/issue-statuses/hooks";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { StatusIcon } from "../../issues/components";
 import {
   IssueAgentActivityIndicator,
@@ -8,7 +8,7 @@ import {
 import { ActorAvatar } from "../../common/actor-avatar";
 import { DeferredTooltip } from "../../common/deferred-tooltip";
 import { Archive, ArchiveRestore } from "lucide-react";
-import type { InboxItem } from "@multica/core/types";
+import type { InboxItem } from "@marvis/core/types";
 import type { InboxView } from "./inbox-view";
 import { InboxDetailLabel, useTypeLabels } from "./inbox-detail-label";
 import {
@@ -20,7 +20,7 @@ import { useStatusLabel } from "../../issues/utils/status-label";
 import { InboxRowMenu } from "./inbox-row-menu";
 import { handleRowActivationKey } from "../../common/row-actions-menu";
 import { useT } from "../../i18n";
-import { paths, useWorkspaceSlug } from "@multica/core/paths";
+import { paths, useWorkspaceSlug } from "@marvis/core/paths";
 import { resolveClickIntent, useIntentNavigate } from "../../navigation";
 
 // Hook returning a localized relative-time formatter — the i18n equivalent

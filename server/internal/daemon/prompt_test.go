@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/multica-ai/multica/server/internal/daemon/execenv"
-	"github.com/multica-ai/multica/server/internal/service"
+	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/marvis-ai/marvis/server/internal/service"
 )
 
 // TestBuildQuickCreatePromptRules locks in the rules that govern how the
@@ -29,7 +29,7 @@ func TestBuildQuickCreatePromptRules(t *testing.T) {
 		"verbal routing wrappers about creating the issue",
 		"pure conversational fillers",
 		// cc routing must survive: mention link stays in description so the
-		// auto-subscribe path fires (multica issue create has no --subscriber flag)
+		// auto-subscribe path fires (marvis issue create has no --subscriber flag)
 		"CC exception",
 		"auto-subscribes members",
 		// context section is conditional and must not be an apology log
@@ -64,7 +64,7 @@ func TestBuildQuickCreatePromptRules(t *testing.T) {
 	// put two hand-maintained copies in one context window (MUL-6984).
 	for _, moved := range []string{
 		"Output format:",
-		"Run exactly one `multica issue create --output json` invocation",
+		"Run exactly one `marvis issue create --output json` invocation",
 		"Created <identifier-or-id>: <title>",
 		"Passing the description:",
 		"never `/tmp` or any machine-shared path",
@@ -127,7 +127,7 @@ func TestIssuePromptsKeepSourceContextRuleOutOfPerTurnMessage(t *testing.T) {
 func TestBuildQuickCreatePromptAssigneeIncludesSquads(t *testing.T) {
 	out := buildQuickCreatePrompt(Task{QuickCreatePrompt: "fix the login button color"})
 	mustContain := []string{
-		"multica squad list",
+		"marvis squad list",
 		"Squads are first-class assignees",
 		"Treat bare @-routing as an assignee directive",
 		"让 @独立团 review 这个 PR",
@@ -459,7 +459,7 @@ func TestBuildPromptProtocolHeadingInInstructionsIsNotALeader(t *testing.T) {
 
 	for _, banned := range []string{
 		"Squad leader no_action rule",
-		"multica squad activity",
+		"marvis squad activity",
 		"DO NOT post any comment",
 		"Unless your outcome is `no_action`",
 	} {
@@ -512,7 +512,7 @@ func TestBuildChatPromptAttachmentIDsCanBeBoundToCreatedIssues(t *testing.T) {
 	for _, want := range []string{
 		"Attachments on this message:",
 		"id=019ec09d-6222-722b-bdfa-427b105d80be",
-		"multica attachment download <id>",
+		"marvis attachment download <id>",
 		"--attachment-id <id>",
 	} {
 		if !strings.Contains(out, want) {
@@ -528,7 +528,7 @@ func TestBuildChatPromptChannelAwareness(t *testing.T) {
 			ChatChannelType: "slack",
 			ChatMessage:     "你刚刚和 xxx 聊了什么",
 		})
-		for _, want := range []string{"Slack", "NOT in Multica", "multica chat history", "multica chat thread", "Do NOT narrate"} {
+		for _, want := range []string{"Slack", "NOT in Marvis", "marvis chat history", "marvis chat thread", "Do NOT narrate"} {
 			if !strings.Contains(out, want) {
 				t.Fatalf("slack-backed prompt missing %q\n--- output ---\n%s", want, out)
 			}
@@ -537,14 +537,14 @@ func TestBuildChatPromptChannelAwareness(t *testing.T) {
 
 	t.Run("top-level mention starts with history", func(t *testing.T) {
 		out := buildChatPrompt(Task{ChatSessionID: "s", ChatChannelType: "slack", ChatInThread: false, ChatMessage: "hi"})
-		if !strings.Contains(out, "top level: start with `multica chat history`") {
+		if !strings.Contains(out, "top level: start with `marvis chat history`") {
 			t.Fatalf("expected top-level guidance, got:\n%s", out)
 		}
 	})
 
 	t.Run("in-thread mention starts with thread", func(t *testing.T) {
 		out := buildChatPrompt(Task{ChatSessionID: "s", ChatChannelType: "slack", ChatInThread: true, ChatMessage: "hi"})
-		if !strings.Contains(out, "inside a thread: start with `multica chat thread`") {
+		if !strings.Contains(out, "inside a thread: start with `marvis chat thread`") {
 			t.Fatalf("expected in-thread guidance, got:\n%s", out)
 		}
 	})
@@ -554,13 +554,13 @@ func TestBuildChatPromptChannelAwareness(t *testing.T) {
 			ChatSessionID: "sess-1",
 			ChatMessage:   "hi",
 		})
-		if strings.Contains(out, "multica chat history") {
+		if strings.Contains(out, "marvis chat history") {
 			t.Fatalf("web-only chat prompt should not mention channel history, got:\n%s", out)
 		}
 	})
 
-	// A transcript surface must not be told its history is "NOT in Multica" and
-	// then handed a Multica command to read that history. The claim used to be
+	// A transcript surface must not be told its history is "NOT in Marvis" and
+	// then handed a Marvis command to read that history. The claim used to be
 	// unconditional, so every Feishu/WeCom/DingTalk prompt carried both halves;
 	// an agent that believes the first one has no reason to run the second.
 	for _, channelType := range []string{
@@ -574,15 +574,15 @@ func TestBuildChatPromptChannelAwareness(t *testing.T) {
 				ChatChannelType: channelType,
 				ChatMessage:     "刚刚聊到哪了",
 			})
-			if !strings.Contains(out, "multica chat history") {
+			if !strings.Contains(out, "marvis chat history") {
 				t.Fatalf("transcript surface lost its read-back command\n--- output ---\n%s", out)
 			}
-			if strings.Contains(out, "NOT in Multica") {
-				t.Errorf("transcript surface told its history is NOT in Multica, then told to read it from Multica\n--- output ---\n%s", out)
+			if strings.Contains(out, "NOT in Marvis") {
+				t.Errorf("transcript surface told its history is NOT in Marvis, then told to read it from Marvis\n--- output ---\n%s", out)
 			}
 			// The useful half of the original sentence must survive: the agent
 			// still must not go hunting through issues and comments.
-			if !strings.Contains(out, "Never look in Multica issues or comments") {
+			if !strings.Contains(out, "Never look in Marvis issues or comments") {
 				t.Errorf("lost the issues/comments prohibition\n--- output ---\n%s", out)
 			}
 		})
@@ -653,9 +653,9 @@ func TestBuildChatPromptNoNarrationOnEveryChannel(t *testing.T) {
 //     guidance only where the adapter goes back for the bound attachment AND
 //     that deployment has the object storage to go back to
 //     (integrations/wecom/outbound_media.go, cmd/server/router.go).
-//   - history: `multica chat history` is injected for Slack (live channel) and
+//   - history: `marvis chat history` is injected for Slack (live channel) and
 //     for every surface that persists a transcript (Feishu, WeCom, DingTalk);
-//     `multica chat thread` is Slack-only. handler/chat_history.go reads the
+//     `marvis chat thread` is Slack-only. handler/chat_history.go reads the
 //     live channel for Slack and falls back to the stored chat_message
 //     transcript for every other session.
 //
@@ -667,13 +667,13 @@ func TestBuildChatPromptNoNarrationOnEveryChannel(t *testing.T) {
 // why it cannot be the channel type either.
 func TestBuildChatPromptTwoLayerChannelPolicy(t *testing.T) {
 	// Match the IMPERATIVE, not the bare command name. An IM prompt names
-	// `multica attachment upload` on purpose — to state that it does not apply
+	// `marvis attachment upload` on purpose — to state that it does not apply
 	// here. That negation is the useful copy (an agent carries the command over
 	// from every other surface, and the brief no longer names it for a
 	// channel-backed chat, so silence would leave it guessing), so asserting on
 	// the bare name would forbid the very sentence we want.
-	const uploadGuidance = "run `multica attachment upload <local-path>`"
-	const historyGuidance = "multica chat history"
+	const uploadGuidance = "run `marvis attachment upload <local-path>`"
+	const historyGuidance = "marvis chat history"
 
 	cases := []struct {
 		name          string
@@ -713,7 +713,7 @@ func TestBuildChatPromptTwoLayerChannelPolicy(t *testing.T) {
 			wantHistory: true,
 			wantPhrases: []string{
 				"Feishu/Lark",
-				"read it back with `multica chat history`",
+				"read it back with `marvis chat history`",
 				"delivered to Feishu/Lark as text",
 				"You cannot attach a file to it",
 			},
@@ -736,7 +736,7 @@ func TestBuildChatPromptTwoLayerChannelPolicy(t *testing.T) {
 				"WeCom",
 				"sends it into the WeCom conversation as a separate message",
 				"there is no way to place it inline",
-				"read it back with `multica chat history`",
+				"read it back with `marvis chat history`",
 			},
 		},
 		{
@@ -756,7 +756,7 @@ func TestBuildChatPromptTwoLayerChannelPolicy(t *testing.T) {
 				"WeCom",
 				"delivered to WeCom as text",
 				"You cannot attach a file to it",
-				"read it back with `multica chat history`",
+				"read it back with `marvis chat history`",
 			},
 		},
 		{
@@ -769,7 +769,7 @@ func TestBuildChatPromptTwoLayerChannelPolicy(t *testing.T) {
 			wantHistory: true,
 			wantPhrases: []string{
 				"DingTalk",
-				"read it back with `multica chat history`",
+				"read it back with `marvis chat history`",
 				"delivered to DingTalk as text",
 				"You cannot attach a file to it",
 			},
@@ -809,8 +809,8 @@ func TestBuildChatPromptFeishuIgnoresChatInThread(t *testing.T) {
 		ChatInThread:    true,
 		ChatMessage:     "hi",
 	})
-	if strings.Contains(out, "multica chat thread") {
-		t.Errorf("feishu prompt must not teach `multica chat thread` (no thread reader)\n--- output ---\n%s", out)
+	if strings.Contains(out, "marvis chat thread") {
+		t.Errorf("feishu prompt must not teach `marvis chat thread` (no thread reader)\n--- output ---\n%s", out)
 	}
 }
 
@@ -1009,7 +1009,7 @@ func TestBuildChatPromptSlashSkills(t *testing.T) {
 func TestBuildPromptDefaultScansRootsFirst(t *testing.T) {
 	out := BuildPrompt(Task{IssueID: "issue-default-1"}, "claude")
 	for _, s := range []string{
-		"multica issue comment list issue-default-1 --roots-only --summary --compact --output json",
+		"marvis issue comment list issue-default-1 --roots-only --summary --compact --output json",
 		"--since",
 	} {
 		if !strings.Contains(out, s) {
@@ -1042,7 +1042,7 @@ func TestBuildPromptDefaultScansRootsFirst(t *testing.T) {
 	if strings.Contains(out, "If you need comment history") {
 		t.Errorf("default BuildPrompt still carries the legacy 'If you need' soft phrasing that conflicts with the mandatory workflow\n--- output ---\n%s", out)
 	}
-	if strings.Contains(out, "multica issue comment list issue-default-1 --output json") {
+	if strings.Contains(out, "marvis issue comment list issue-default-1 --output json") {
 		t.Errorf("default BuildPrompt still presents the unbounded flat read as the assignment catch-up command\n--- output ---\n%s", out)
 	}
 }
@@ -1103,7 +1103,7 @@ func TestBuildPromptNewCommentsHint(t *testing.T) {
 	// ONE read, and it is the issue-wide delta the server already computed
 	// (MUL-7344): `--since` without `--thread` returns every comment created
 	// after the anchor in every thread, so it IS the scan's answer.
-	if !strings.Contains(out, "multica issue comment list "+issueID+" --since "+since+" --compact --output json") {
+	if !strings.Contains(out, "marvis issue comment list "+issueID+" --since "+since+" --compact --output json") {
 		t.Errorf("hint must point at the issue-wide --since delta read, got:\n%s", out)
 	}
 	if !strings.Contains(out, "reading it is the scan workflow step 2 requires") {
@@ -1111,7 +1111,7 @@ func TestBuildPromptNewCommentsHint(t *testing.T) {
 	}
 	// The full-thread read stays available for the reply itself, on --tail 30
 	// (never `--thread ... --since ...`, which drops the thread root).
-	if !strings.Contains(out, "multica issue comment list "+issueID+" --thread thread-root-1 --tail 30 --compact --output json") {
+	if !strings.Contains(out, "marvis issue comment list "+issueID+" --thread thread-root-1 --tail 30 --compact --output json") {
 		t.Errorf("hint must offer the full-thread (--tail 30) read, got:\n%s", out)
 	}
 	// The scan the delta read replaces must not also be handed over.
@@ -1151,7 +1151,7 @@ func TestBuildPromptColdStartThreadRead(t *testing.T) {
 	if strings.Contains(out, "new comment(s) since your last run") {
 		t.Errorf("no since-delta hint should render on cold start, got:\n%s", out)
 	}
-	if !strings.Contains(out, "multica issue comment list "+issueID+" --thread thread-root-1 --tail 30 --compact --output json") {
+	if !strings.Contains(out, "marvis issue comment list "+issueID+" --thread thread-root-1 --tail 30 --compact --output json") {
 		t.Errorf("cold start must point at the triggering thread read, got:\n%s", out)
 	}
 	// MUL-5372: cross-thread background is a cheap roots scan. The hint names
@@ -1166,7 +1166,7 @@ func TestBuildPromptColdStartThreadRead(t *testing.T) {
 	if strings.Contains(out, "Need cross-thread background") {
 		t.Errorf("cold hint must not make the scan optional (MUL-6984), got:\n%s", out)
 	}
-	if strings.Contains(out, "multica issue comment list "+issueID+" --roots-only --summary --output json") {
+	if strings.Contains(out, "marvis issue comment list "+issueID+" --roots-only --summary --output json") {
 		t.Errorf("cold hint must not render a second full command for the roots scan (MUL-5721 OPT-1), got:\n%s", out)
 	}
 	if strings.Contains(out, "--recent") {
@@ -1203,7 +1203,7 @@ func TestBuildPromptResumedNoDeltaDoesNotForceThreadRead(t *testing.T) {
 		"No other new comments on this issue since your last run",
 		"issue-wide delta is empty",
 		"if resumed memory is not enough",
-		"multica issue comment list " + issueID + " --thread thread-root-1 --tail 30 --compact --output json",
+		"marvis issue comment list " + issueID + " --thread thread-root-1 --tail 30 --compact --output json",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("resumed/no-delta prompt missing %q\n--- output ---\n%s", want, out)
@@ -1245,7 +1245,7 @@ func TestBuildPromptDroppedResumeWithNewCommentsTakesFreshPath(t *testing.T) {
 	}
 	out := BuildPrompt(task, "claude")
 	for _, want := range []string{
-		"multica issue comment list " + issueID + " --thread thread-root-1 --tail 30 --compact --output json",
+		"marvis issue comment list " + issueID + " --thread thread-root-1 --tail 30 --compact --output json",
 		"`--roots-only --summary` in place of `--thread ... --tail 30`",
 		"## Session Continuity Notice",
 	} {
@@ -1298,7 +1298,7 @@ func TestBuildPromptOlderFallbackSessionRequiresReconstruction(t *testing.T) {
 	out := BuildPrompt(task, "claude")
 
 	for _, want := range []string{
-		"multica issue comment list " + issueID + " --thread thread-root-1 --tail 30 --compact --output json",
+		"marvis issue comment list " + issueID + " --thread thread-root-1 --tail 30 --compact --output json",
 		"`--roots-only --summary` in place of `--thread ... --tail 30`",
 		"## Session Continuity Notice",
 	} {
@@ -1348,7 +1348,7 @@ func TestBuildPromptResumedDeltaUnavailableStillRequiresScan(t *testing.T) {
 			t.Errorf("resumed prompt lost the session fact\n--- output ---\n%s", out)
 		}
 		// The scan is handed over, not waived.
-		if !strings.Contains(out, "multica issue comment list "+issueID+" --roots-only --summary --compact --output json") {
+		if !strings.Contains(out, "marvis issue comment list "+issueID+" --roots-only --summary --compact --output json") {
 			t.Errorf("resumed prompt with no delta must hand over the scan\n--- output ---\n%s", out)
 		}
 		for _, banned := range []string{
@@ -1469,7 +1469,7 @@ func TestBuildCommentPromptCoalescedIDsOnlyFallback(t *testing.T) {
 		task.NewCommentsSince = "2026-08-03T06:00:00Z"
 		out := BuildPrompt(task, "claude")
 
-		want := "multica issue comment list issue-fallback-1 --since 2026-08-03T06:00:00Z --compact --output json"
+		want := "marvis issue comment list issue-fallback-1 --since 2026-08-03T06:00:00Z --compact --output json"
 		if !strings.Contains(out, want) {
 			t.Errorf("id-only fallback should prefetch the window with %q, got:\n%s", want, out)
 		}
@@ -1522,7 +1522,7 @@ func assertBoundedIDOnlyFallback(t *testing.T, out string) {
 	// id is reachable without knowing its thread; paging keeps it reachable even
 	// when it is older than the tail window.
 	for _, want := range []string{
-		"multica issue comment list issue-fallback-1 --thread <comment-id> --tail 30 --compact --output json",
+		"marvis issue comment list issue-fallback-1 --thread <comment-id> --tail 30 --compact --output json",
 		"accepts a reply id",
 		"Next reply cursor",
 		"--before-id",
@@ -1683,7 +1683,7 @@ func TestBuildCommentPromptCrossThreadFansOutReplies(t *testing.T) {
 	// Formatting` for the posting mechanism instead of restating it, so the
 	// assembled cross-thread prompt carries no `comment add` example commands
 	// at all — the `--parent` targets plus the pointer are the whole recipe.
-	if strings.Contains(out, "multica issue comment add") {
+	if strings.Contains(out, "marvis issue comment add") {
 		t.Errorf("cross-thread prompt re-grew embedded comment-add commands (mechanism lives in ## Comment Formatting — MUL-5825), got:\n%s", out)
 	}
 	if !strings.Contains(out, "`## Comment Formatting`") {
@@ -1945,7 +1945,7 @@ func TestChatChannelDeliversFilesDefaultsOffAcrossVersions(t *testing.T) {
 	}
 
 	out := buildChatPrompt(task)
-	if strings.Contains(out, "run `multica attachment upload <local-path>`") {
+	if strings.Contains(out, "run `marvis attachment upload <local-path>`") {
 		t.Errorf("an old server's WeCom claim was told to upload files\n--- output ---\n%s", out)
 	}
 	if !strings.Contains(out, "You cannot attach a file to it") {
@@ -1959,7 +1959,7 @@ func TestChatChannelDeliversFilesDefaultsOffAcrossVersions(t *testing.T) {
 	if err := json.Unmarshal([]byte(`{"chat_session_id":"sess-1","chat_channel_type":"wecom","chat_channel_delivers_files":true}`), &delivering); err != nil {
 		t.Fatalf("decode claim: %v", err)
 	}
-	if !strings.Contains(buildChatPrompt(delivering), "run `multica attachment upload <local-path>`") {
+	if !strings.Contains(buildChatPrompt(delivering), "run `marvis attachment upload <local-path>`") {
 		t.Error("a server that reported file delivery did not produce the upload guidance")
 	}
 }
@@ -2142,7 +2142,7 @@ func issueStateTask(issueID string) Task {
 
 // TestBuildPromptIssueUnchangedDropsTheIssueRead pins MUL-7344's acceptance
 // case: a resumed follow-up whose issue did not move is no longer told to run
-// `multica issue get` before doing anything. The comparison is reported as
+// `marvis issue get` before doing anything. The comparison is reported as
 // workflow step 1's answer, with the read left as a conditional fallback.
 func TestBuildPromptIssueUnchangedDropsTheIssueRead(t *testing.T) {
 	const issueID = "issue-unchanged-1"
@@ -2153,7 +2153,7 @@ func TestBuildPromptIssueUnchangedDropsTheIssueRead(t *testing.T) {
 	task.IssueAssigneeID = "agent-7"
 	out := BuildPrompt(task, "claude")
 
-	if strings.Contains(out, "Start by running `multica issue get") {
+	if strings.Contains(out, "Start by running `marvis issue get") {
 		t.Errorf("an unchanged issue must not carry the unconditional read imperative, got:\n%s", out)
 	}
 	for _, want := range []string{
@@ -2189,7 +2189,7 @@ func TestBuildPromptIssueChangedNamesFieldsAndReads(t *testing.T) {
 	for _, want := range []string{
 		"Since your last run the issue changed: description, status",
 		"status: todo; assignee: member user-3",
-		"Read it: `multica issue get " + issueID + " --output json`",
+		"Read it: `marvis issue get " + issueID + " --output json`",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("prompt missing %q, got:\n%s", want, out)
@@ -2227,7 +2227,7 @@ func TestBuildPromptIssueStateFallsBackToTheRead(t *testing.T) {
 			task.IssueStatus = "todo"
 			mutate(&task)
 			out := BuildPrompt(task, "claude")
-			if !strings.Contains(out, "Start by running `multica issue get "+issueID+" --output json` to understand your task, then decide how to proceed.") {
+			if !strings.Contains(out, "Start by running `marvis issue get "+issueID+" --output json` to understand your task, then decide how to proceed.") {
 				t.Errorf("expected the unconditional issue read, got:\n%s", out)
 			}
 			if strings.Contains(out, "The issue is unchanged") {

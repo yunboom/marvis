@@ -6,8 +6,8 @@ RETURNS void LANGUAGE plpgsql AS $$
 DECLARE w issue_wakeup; owner_workspace uuid; evidence jsonb;
 BEGIN
  IF NOT EXISTS (SELECT 1 FROM issue_wakeup WHERE issue_id=p_issue AND enabled AND kind='event' AND p_type=ANY(event_types)) THEN RETURN; END IF;
- IF p_agent IS NULL AND current_setting('multica.actor_type',true)='agent' THEN
-  p_agent := NULLIF(current_setting('multica.actor_id',true),'')::uuid;
+ IF p_agent IS NULL AND current_setting('marvis.actor_type',true)='agent' THEN
+  p_agent := NULLIF(current_setting('marvis.actor_id',true),'')::uuid;
  END IF;
  SELECT i.workspace_id INTO owner_workspace FROM issue i
  WHERE i.id=p_issue AND i.status NOT IN ('done','cancelled') AND NOT EXISTS
@@ -16,8 +16,8 @@ BEGIN
  evidence := jsonb_build_object('event_id',p_key,'event_type',p_type,'version',1,
   'occurred_at',clock_timestamp(),'workspace_id',owner_workspace,'issue_id',p_issue,
   'source_task_id',p_task,'agent_id',p_agent,
-  'actor_type',COALESCE(NULLIF(current_setting('multica.actor_type',true),''),CASE WHEN p_agent IS NOT NULL THEN 'agent' ELSE 'system' END),
-  'actor_id',COALESCE(NULLIF(current_setting('multica.actor_id',true),''),p_agent::text)) || p_payload;
+  'actor_type',COALESCE(NULLIF(current_setting('marvis.actor_type',true),''),CASE WHEN p_agent IS NOT NULL THEN 'agent' ELSE 'system' END),
+  'actor_id',COALESCE(NULLIF(current_setting('marvis.actor_id',true),''),p_agent::text)) || p_payload;
  FOR w IN SELECT * FROM issue_wakeup WHERE issue_id=p_issue AND workspace_id=owner_workspace AND enabled AND kind='event'
    AND p_type=ANY(event_types) AND (filter_agent_id IS NULL OR filter_agent_id=p_agent)
    AND (filter_task_id IS NULL OR filter_task_id=p_task)
@@ -55,7 +55,7 @@ DECLARE c comment; event_type text; source_id uuid; source_agent uuid; payload j
 BEGIN
  c := CASE WHEN TG_OP='DELETE' THEN OLD ELSE NEW END;
  IF NOT EXISTS (SELECT 1 FROM issue_wakeup WHERE issue_id=c.issue_id AND enabled AND kind='event') THEN RETURN c; END IF;
- source_id := NULLIF(current_setting('multica.source_task_id',true),'')::uuid;
+ source_id := NULLIF(current_setting('marvis.source_task_id',true),'')::uuid;
  IF TG_OP='INSERT' THEN
   event_type := 'comment.created';
   source_id := COALESCE(source_id,c.source_task_id);
@@ -76,7 +76,7 @@ BEGIN
  -- Keep author and actor distinct: an admin editing an agent's comment is
  -- not an event produced by that agent's original run.
  IF TG_OP<>'INSERT' AND source_id IS NULL THEN
-  source_agent := CASE WHEN current_setting('multica.actor_type',true)='agent' THEN NULLIF(current_setting('multica.actor_id',true),'')::uuid END;
+  source_agent := CASE WHEN current_setting('marvis.actor_type',true)='agent' THEN NULLIF(current_setting('marvis.actor_id',true),'')::uuid END;
  END IF;
  root_id := c.id;
  IF c.parent_id IS NOT NULL THEN
@@ -121,10 +121,10 @@ BEGIN
   'due_date','start_date','stage','properties','metadata','acceptance_criteria','context_refs','triage_state']) k
  WHERE before_row->k IS DISTINCT FROM after_row->k;
  IF fields IS NULL THEN RETURN NEW; END IF;
- source_id := NULLIF(current_setting('multica.source_task_id',true),'')::uuid;
+ source_id := NULLIF(current_setting('marvis.source_task_id',true),'')::uuid;
  SELECT agent_id INTO source_agent FROM agent_task_queue WHERE id=source_id;
- IF source_agent IS NULL AND current_setting('multica.actor_type',true)='agent' THEN
-  source_agent := NULLIF(current_setting('multica.actor_id',true),'')::uuid;
+ IF source_agent IS NULL AND current_setting('marvis.actor_type',true)='agent' THEN
+  source_agent := NULLIF(current_setting('marvis.actor_id',true),'')::uuid;
  END IF;
  PERFORM capture_issue_wakeup(NEW.id,'issue.updated',event_key||':updated',source_agent,source_id,jsonb_build_object('changed_fields',fields));
  FOR field_name,event_type IN SELECT * FROM (VALUES
@@ -153,7 +153,7 @@ CREATE TRIGGER capture_issue_collaboration_wakeup AFTER UPDATE ON issue FOR EACH
 CREATE FUNCTION capture_issue_label_wakeup() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE row_data jsonb := CASE WHEN TG_OP='DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END; source_id uuid; source_agent uuid;
 BEGIN
- source_id := NULLIF(current_setting('multica.source_task_id',true),'')::uuid;
+ source_id := NULLIF(current_setting('marvis.source_task_id',true),'')::uuid;
  SELECT agent_id INTO source_agent FROM agent_task_queue WHERE id=source_id;
  PERFORM capture_issue_wakeup((row_data->>'issue_id')::uuid,'issue.labels_changed',gen_random_uuid()::text,source_agent,source_id,
   jsonb_build_object('label_id',row_data->'label_id','action',CASE WHEN TG_OP='INSERT' THEN 'added' ELSE 'removed' END));
@@ -170,7 +170,7 @@ BEGIN
   SELECT issue_id INTO owner_issue FROM comment WHERE id=target_id AND workspace_id=(row_data->>'workspace_id')::uuid;
  ELSE target_type := 'issue'; target_id := (row_data->>'issue_id')::uuid; owner_issue := target_id;
  END IF;
- source_id := NULLIF(current_setting('multica.source_task_id',true),'')::uuid;
+ source_id := NULLIF(current_setting('marvis.source_task_id',true),'')::uuid;
  IF source_id IS NOT NULL THEN SELECT agent_id INTO source_agent FROM agent_task_queue WHERE id=source_id;
  ELSIF TG_OP='INSERT' AND row_data->>'actor_type'='agent' THEN source_agent := (row_data->>'actor_id')::uuid;
  END IF;
@@ -191,7 +191,7 @@ BEGIN
  IF TG_OP<>'INSERT' THEN before_row:=to_jsonb(OLD); before_target:=COALESCE(OLD.comment_id,OLD.issue_id); END IF;
  IF TG_OP<>'DELETE' THEN after_row:=to_jsonb(NEW); after_target:=COALESCE(NEW.comment_id,NEW.issue_id); END IF;
  IF before_target IS NOT DISTINCT FROM after_target THEN RETURN COALESCE(NEW,OLD); END IF;
- source_id := NULLIF(current_setting('multica.source_task_id',true),'')::uuid;
+ source_id := NULLIF(current_setting('marvis.source_task_id',true),'')::uuid;
  SELECT agent_id INTO source_agent FROM agent_task_queue WHERE id=source_id;
  FOR row_data,event_type IN SELECT * FROM (VALUES (before_row,'attachment.detached'),(after_row,'attachment.attached')) v(r,e)
  LOOP

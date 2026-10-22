@@ -1,7 +1,7 @@
 /**
  * Mobile inbox mutations. Mirrors the optimistic-update + invalidate pattern
  * of packages/core/inbox/mutations.ts — written here in mobile-owned code
- * per Sharing Principles (no runtime imports from @multica/core mutations).
+ * per Sharing Principles (no runtime imports from @marvis/core mutations).
  *
  * Behavioral parity:
  *   - mark-read: flip `read` to true locally; rollback on error; settle invalidate.
@@ -27,7 +27,7 @@
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
-import type { InboxItem } from "@multica/core/types";
+import type { InboxItem } from "@marvis/core/types";
 import { api } from "@/data/api";
 import { inboxKeys } from "@/data/queries/inbox";
 import {

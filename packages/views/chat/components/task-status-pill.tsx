@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ShimmerText } from "@multica/ui/components/common/shimmer-text";
-import { UnicodeSpinner } from "@multica/ui/components/common/unicode-spinner";
-import type { AgentAvailability } from "@multica/core/agents";
-import type { ChatPendingTask, TaskMessagePayload } from "@multica/core/types";
+import { ShimmerText } from "@marvis/ui/components/common/shimmer-text";
+import { UnicodeSpinner } from "@marvis/ui/components/common/unicode-spinner";
+import type { AgentAvailability } from "@marvis/core/agents";
+import type { ChatPendingTask, TaskMessagePayload } from "@marvis/core/types";
 import { formatElapsedSecs } from "../lib/format";
 import { useT } from "../../i18n";
 

@@ -16,7 +16,7 @@ const RESOURCE = {
     label: "game-client",
     execution_mode: "worktree",
   },
-  // Written by a label update (`multica project resource update --label`):
+  // Written by a label update (`marvis project resource update --label`):
   // the column the row must read before the copy left inside the ref.
   label: "Game Client",
   position: 0,
@@ -33,24 +33,24 @@ vi.mock("@tanstack/react-query", () => ({
   queryOptions: (options: unknown) => options,
 }));
 
-vi.mock("@multica/core/projects", () => ({
+vi.mock("@marvis/core/projects", () => ({
   projectResourcesOptions: () => ({ queryKey: ["project-resources"], queryFn: vi.fn() }),
   useCreateProjectResource: () => ({ mutateAsync: vi.fn() }),
   useUpdateProjectResource: () => ({ mutateAsync: vi.fn() }),
   useDeleteProjectResource: () => ({ mutateAsync: vi.fn() }),
 }));
 
-vi.mock("@multica/core/config", () => ({
+vi.mock("@marvis/core/config", () => ({
   useConfigStore: (selector: (state: { localWorktreeSupported: boolean }) => unknown) =>
     selector({ localWorktreeSupported: true }),
 }));
 
-vi.mock("@multica/core/runtimes", () => ({
+vi.mock("@marvis/core/runtimes", () => ({
   runtimeListOptions: () => ({ queryKey: ["runtimes"], queryFn: vi.fn() }),
   runtimeAdvertisesLocalWorktree: () => true,
 }));
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
-vi.mock("@multica/core/paths", () => ({
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
+vi.mock("@marvis/core/paths", () => ({
   useCurrentWorkspace: () => ({ id: "workspace-1", slug: "ws", repos: [] }),
 }));
 vi.mock("../../platform/local-directory", () => ({

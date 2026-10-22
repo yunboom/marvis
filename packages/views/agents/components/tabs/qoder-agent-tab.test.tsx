@@ -1,7 +1,7 @@
 import { vi, it, expect, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
-import { I18nProvider } from "@multica/core/i18n/react";
-import type { Agent } from "@multica/core/types";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import type { Agent } from "@marvis/core/types";
 import enRuntimes from "../../../locales/en/runtimes.json";
 import { QoderAgentTab } from "./qoder-agent-tab";
 

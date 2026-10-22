@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import type { Issue } from "@multica/core/types";
+import type { Issue } from "@marvis/core/types";
 import { BatchActionToolbar } from "./batch-action-toolbar";
 
 // Mutable selection state shared with the store mock below. The real toolbar
@@ -11,12 +11,12 @@ const selection = vi.hoisted(() => ({
   clear: () => {},
 }));
 
-vi.mock("@multica/core/issues/stores/selection-store", () => ({
+vi.mock("@marvis/core/issues/stores/selection-store", () => ({
   useIssueSelectionStore: (selector: (s: typeof selection) => unknown) =>
     selector(selection),
 }));
 
-vi.mock("@multica/core/issues/mutations", () => ({
+vi.mock("@marvis/core/issues/mutations", () => ({
   useBatchUpdateIssues: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useBatchDeleteIssues: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
@@ -47,9 +47,9 @@ const { WORKFLOWS, PROJECTS } = vi.hoisted(() => {
   };
 });
 
-vi.mock("@multica/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@multica/core/issue-workflows", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@multica/core/issue-workflows")>()),
+vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+vi.mock("@marvis/core/issue-workflows", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/issue-workflows")>()),
   useIssueWorkflows: () => ({ workflows: WORKFLOWS }),
 }));
 vi.mock("@tanstack/react-query", async (importOriginal) => ({

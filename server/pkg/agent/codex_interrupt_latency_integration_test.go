@@ -20,10 +20,10 @@ import (
 )
 
 const (
-	codexInterruptSamplesEnv     = "MULTICA_CODEX_INTERRUPT_SAMPLES"
-	codexInterruptWarmupsEnv     = "MULTICA_CODEX_INTERRUPT_WARMUPS"
-	codexInterruptSettleDelayEnv = "MULTICA_CODEX_INTERRUPT_SETTLE_DELAY"
-	codexInterruptModelEnv       = "MULTICA_CODEX_INTERRUPT_MODEL"
+	codexInterruptSamplesEnv     = "MARVIS_CODEX_INTERRUPT_SAMPLES"
+	codexInterruptWarmupsEnv     = "MARVIS_CODEX_INTERRUPT_WARMUPS"
+	codexInterruptSettleDelayEnv = "MARVIS_CODEX_INTERRUPT_SETTLE_DELAY"
+	codexInterruptModelEnv       = "MARVIS_CODEX_INTERRUPT_MODEL"
 )
 
 type codexInterruptScenario struct {
@@ -67,13 +67,13 @@ func (b *synchronizedBuffer) String() string {
 //
 // Run it explicitly with:
 //
-//	MULTICA_RUN_REAL_AGENT_SMOKE=1 go test -tags=agentintegration ./pkg/agent \
+//	MARVIS_RUN_REAL_AGENT_SMOKE=1 go test -tags=agentintegration ./pkg/agent \
 //	  -run TestCodexRealTurnInterruptLatency -count=1 -v
 //
-// MULTICA_CODEX_INTERRUPT_SAMPLES and MULTICA_CODEX_INTERRUPT_WARMUPS control
-// the measured and discarded sample counts. MULTICA_CODEX_INTERRUPT_MODEL can
+// MARVIS_CODEX_INTERRUPT_SAMPLES and MARVIS_CODEX_INTERRUPT_WARMUPS control
+// the measured and discarded sample counts. MARVIS_CODEX_INTERRUPT_MODEL can
 // pin a model; empty preserves the authenticated CLI's configured default.
-// MULTICA_CODEX_INTERRUPT_SETTLE_DELAY controls how long generation continues
+// MARVIS_CODEX_INTERRUPT_SETTLE_DELAY controls how long generation continues
 // after its first observed agent-message delta before cancellation.
 func TestCodexRealTurnInterruptLatency(t *testing.T) {
 	requireRealAgentSmoke(t)
