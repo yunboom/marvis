@@ -1196,7 +1196,7 @@ export function MembersTab() {
           </AlertDialogHeader>
 
           {inviteSeatPurchase?.phase === "review" && (
-            <div className="divide-y rounded-lg border text-body">
+            <div className="divide-y divide-surface-border rounded-xl border border-surface-border text-body">
               <div className="flex items-center justify-between gap-4 px-4 py-3">
                 <span className="text-muted-foreground">
                   {billingT(($) => $.workspace.seat_purchase.seats_after)}

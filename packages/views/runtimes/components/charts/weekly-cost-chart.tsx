@@ -14,23 +14,24 @@ import {
 } from "@marvis/ui/components/ui/chart";
 import type { WeeklyCostStackData } from "../../utils";
 import { useT } from "../../../i18n";
+import { CHART_MONO, monoBarFill } from "./chart-tones";
 
 // Same four-segment stack as DailyCostChart — keeping series, colours, and
 // ordering identical so the user reads "Weekly" as a coarser cut of the same
 // chart, not a different chart. Partial-week bars render at half-opacity so
 // "this week is in progress" is visually obvious without a separate legend.
 export const weeklyCostStackConfig = {
-  input: { label: "Input", color: "var(--chart-1)" },
-  output: { label: "Output", color: "var(--chart-2)" },
-  cacheRead: { label: "Cache read", color: "var(--chart-4)" },
-  cacheWrite: { label: "Cache write", color: "var(--chart-3)" },
+  input: { label: "Input", color: CHART_MONO[1] },
+  output: { label: "Output", color: CHART_MONO[2] },
+  cacheRead: { label: "Cache read", color: CHART_MONO[4] },
+  cacheWrite: { label: "Cache write", color: CHART_MONO[3] },
 } satisfies ChartConfig;
 
 export function WeeklyCostChart({ data }: { data: WeeklyCostStackData[] }) {
   const { t } = useT("runtimes");
   return (
     <ChartContainer config={weeklyCostStackConfig} className="aspect-[3/1] w-full">
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -47,6 +48,7 @@ export function WeeklyCostChart({ data }: { data: WeeklyCostStackData[] }) {
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               labelKey="rangeLabel"
@@ -83,17 +85,17 @@ export function WeeklyCostChart({ data }: { data: WeeklyCostStackData[] }) {
             />
           }
         />
-        <Bar dataKey="input" stackId="cost" fill="var(--color-input)">
+        <Bar dataKey="input" stackId="cost" {...monoBarFill("input")}>
           {data.map((d) => (
             <Cell key={d.weekStart} fillOpacity={d.partial ? 0.5 : 1} />
           ))}
         </Bar>
-        <Bar dataKey="output" stackId="cost" fill="var(--color-output)">
+        <Bar dataKey="output" stackId="cost" {...monoBarFill("output")}>
           {data.map((d) => (
             <Cell key={d.weekStart} fillOpacity={d.partial ? 0.5 : 1} />
           ))}
         </Bar>
-        <Bar dataKey="cacheRead" stackId="cost" fill="var(--color-cacheRead)">
+        <Bar dataKey="cacheRead" stackId="cost" {...monoBarFill("cacheRead")}>
           {data.map((d) => (
             <Cell key={d.weekStart} fillOpacity={d.partial ? 0.5 : 1} />
           ))}
@@ -101,7 +103,7 @@ export function WeeklyCostChart({ data }: { data: WeeklyCostStackData[] }) {
         <Bar
           dataKey="cacheWrite"
           stackId="cost"
-          fill="var(--color-cacheWrite)"
+          {...monoBarFill("cacheWrite")}
           radius={[3, 3, 0, 0]}
         >
           {data.map((d) => (

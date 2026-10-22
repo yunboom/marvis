@@ -15,12 +15,12 @@ export function StatusHeading({
   const labelOf = useStatusLabel(wsId);
   const { categoryOf, colorOf, iconOf } = useIssueStatuses(wsId);
   return (
-    <div className="flex items-center gap-2">
-      <span className="inline-flex items-center gap-1.5 text-caption font-semibold">
-        <StatusIcon category={categoryOf(status)} color={colorOf(status)} icon={iconOf(status)} status={status} className="h-3 w-3" />
-        {labelOf(status)}
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="inline-flex min-w-0 items-center gap-2 text-body font-semibold">
+        <StatusIcon category={categoryOf(status)} color={colorOf(status)} icon={iconOf(status)} status={status} className="size-3.5 shrink-0" />
+        <span className="truncate">{labelOf(status)}</span>
       </span>
-      <span className="text-caption text-muted-foreground">{count}</span>
+      <span className="shrink-0 text-label tabular-nums text-muted-foreground">{count}</span>
     </div>
   );
 }

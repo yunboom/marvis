@@ -905,7 +905,7 @@ export function IssueTableGroupRow({
   return (
     <TableRow
       {...rowProps}
-      className="bg-muted/40 hover:bg-muted/60"
+      className="bg-surface-sunken hover:bg-surface-hover"
       onClick={onToggle}
     >
       <TableCell colSpan={colSpan} className="h-9 px-4 py-1.5">

@@ -16,6 +16,7 @@ import {
 import type { AgentRuntime } from "@marvis/core/types";
 import { MikaIntro } from "../components/mika-intro";
 import {
+  STEP_FOOTER_BUTTON,
   StepFooter,
 } from "../components/step-shell";
 import { useRuntimePicker } from "../components/use-runtime-picker";
@@ -271,7 +272,7 @@ function FancyView({
       <StepFooter hint={footerHint}>
         {phase === "found" && (
           <Button
-            className="w-full"
+            className={STEP_FOOTER_BUTTON}
             disabled={!canContinue || submitting}
             onClick={handleContinue}
           >
@@ -284,7 +285,7 @@ function FancyView({
         {phase !== "empty" && (
           <Button
             variant="ghost"
-            className="w-full"
+            className={STEP_FOOTER_BUTTON}
             disabled={submitting}
             onClick={handleSkip}
           >
@@ -297,16 +298,19 @@ function FancyView({
   );
 }
 
+// 运行时步骤里的小节标题：17 号中粗。
+const RUNTIME_SECTION_TITLE = "text-[17px] leading-normal font-medium text-foreground";
+
 // Phase views (inline — all three share the same 620px column)
 
 function ScanningView() {
   const { t } = useT("onboarding");
   return (
     <div>
-      <h2 className="text-title-sm font-medium tracking-tight text-foreground">
+      <h2 className={RUNTIME_SECTION_TITLE}>
         {t(($) => $.step_runtime.scanning_headline)}
       </h2>
-      <p className="mt-2 text-body text-muted-foreground">
+      <p className="mt-2 text-body leading-[1.7] text-muted-foreground">
         {t(($) => $.step_runtime.scanning_lede_prefix)}
         <span className="font-medium text-foreground">{"Claude Code"}</span>
         {", "}
@@ -315,7 +319,7 @@ function ScanningView() {
         <span className="font-medium text-foreground">{"Cursor"}</span>
         {t(($) => $.step_runtime.scanning_lede_suffix)}
       </p>
-      <div className="mt-10 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         <SkeletonRuntimeCard />
         <SkeletonRuntimeCard />
       </div>
@@ -357,11 +361,11 @@ function FoundView({
 
   return (
     <div>
-      <h2 className="text-title-sm font-medium tracking-tight text-foreground">
+      <h2 className={RUNTIME_SECTION_TITLE}>
         {t(($) => $.step_runtime.found_headline)}
       </h2>
 
-      <div className="mt-8 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-muted/60 px-4 py-2.5 text-caption">
+      <div className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-surface-sunken py-1.5 pr-1.5 pl-4 text-label">
         <span className="font-semibold text-foreground">
           {t(($) => $.step_runtime.runtime_count, { count: total })}
         </span>
@@ -369,7 +373,7 @@ function FoundView({
         <span className={cn("flex items-center gap-1", statusTone)}>
           <span
             className={cn(
-              "h-1.5 w-1.5 rounded-full",
+              "size-1.5 rounded-full",
               onlineCount === 0 ? "bg-muted-foreground/40" : "bg-success",
             )}
             aria-hidden
@@ -383,7 +387,7 @@ function FoundView({
         />
       </div>
 
-      <div className="mt-6 flex flex-col gap-4">
+      <div className="mt-5 flex flex-col gap-4">
         <MikaRuntimeChoice
           runtimes={runtimes}
           currentUserId={currentUserId}
@@ -414,16 +418,16 @@ function EmptyView({
   return (
     <div>
       <div className="flex items-start justify-between gap-4">
-        <h2 className="text-title-sm font-medium tracking-tight text-foreground">
+        <h2 className={RUNTIME_SECTION_TITLE}>
           {t(($) => $.step_runtime.empty_headline)}
         </h2>
         <RefreshButton
           onClick={onRefresh}
           refreshing={refreshing}
-          className="mt-2 shrink-0"
+          className="shrink-0"
         />
       </div>
-      <p className="mt-2 text-body text-muted-foreground">
+      <p className="mt-2 text-body leading-[1.7] text-muted-foreground">
         {t(($) => $.step_runtime.empty_lede_prefix)}
         <span className="font-medium text-foreground">{"Claude Code"}</span>
         {", "}
@@ -433,7 +437,7 @@ function EmptyView({
         {t(($) => $.step_runtime.empty_lede_suffix)}
       </p>
 
-      <div className="mt-10 flex flex-col gap-3.5">
+      <div className="mt-8 flex flex-col gap-3">
         <EmptyCard
           title={t(($) => $.step_runtime.empty_skip_title)}
           subtitle={t(($) => $.step_runtime.empty_skip_subtitle)}
@@ -470,17 +474,17 @@ function ComingSoonCard({
   return (
     <div
       aria-disabled
-      className="flex items-center justify-between gap-4 rounded-lg border border-dashed bg-muted/20 px-5 py-4 opacity-70"
+      className="flex items-center justify-between gap-4 rounded-xl border border-dashed border-input bg-surface-sunken px-5 py-4 opacity-70"
     >
       <div className="min-w-0">
-        <div className="text-body font-medium text-foreground">{title}</div>
-        <p className="mt-1 text-caption leading-[1.55] text-muted-foreground">
+        <div className="text-body-lg font-medium text-foreground">{title}</div>
+        <p className="mt-1 text-label leading-normal text-muted-foreground">
           {subtitle}
         </p>
       </div>
       <span
         aria-hidden
-        className="inline-flex shrink-0 items-center rounded-full border bg-background px-3 py-1.5 text-caption font-medium uppercase tracking-wide text-muted-foreground"
+        className="inline-flex shrink-0 items-center rounded-full border border-surface-border bg-background px-3 py-1 text-caption font-medium text-muted-foreground"
       >
         {badgeLabel}
       </span>
@@ -505,10 +509,10 @@ function RefreshButton({
       size="sm"
       disabled={refreshing}
       onClick={onClick}
-      className={className}
+      className={cn("gap-1.5 px-2.5", className)}
     >
       <RefreshCw
-        className={cn("h-3.5 w-3.5", refreshing && "animate-spin")}
+        className={cn("size-3.5", refreshing && "animate-spin")}
         aria-hidden
       />
       {refreshing
@@ -542,17 +546,17 @@ function EmptyCard({
       onClick={onAction}
       disabled={busy}
       aria-busy={busy}
-      className="group flex items-center justify-between gap-4 rounded-lg border bg-card px-5 py-4 text-left transition-colors hover:border-foreground/30 hover:bg-muted/30 disabled:pointer-events-none"
+      className="group flex items-center justify-between gap-4 rounded-xl border border-surface-border bg-background px-5 py-4 text-left transition-colors duration-(--motion-fast) ease-out hover:border-input hover:bg-accent disabled:pointer-events-none"
     >
       <div className="min-w-0">
-        <div className="text-body font-medium text-foreground">{title}</div>
-        <p className="mt-1 text-caption leading-[1.55] text-muted-foreground">
+        <div className="text-body-lg font-medium text-foreground">{title}</div>
+        <p className="mt-1 text-label leading-normal text-muted-foreground">
           {subtitle}
         </p>
       </div>
       <span
         aria-hidden
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-background px-4 py-2 text-label font-medium text-foreground transition-colors group-hover:border-foreground group-hover:bg-foreground group-hover:text-background"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-input bg-background px-4 py-[7px] text-body font-medium text-foreground transition-colors duration-(--motion-fast) ease-out group-hover:border-foreground group-hover:bg-foreground group-hover:text-background"
       >
         {actionLabel}
         {busy ? (
@@ -571,14 +575,14 @@ function SkeletonRuntimeCard() {
   return (
     <div
       aria-hidden
-      className="flex animate-pulse items-center gap-3 rounded-lg border bg-card p-4"
+      className="flex animate-pulse items-center gap-3 rounded-lg border border-surface-border bg-background p-4"
     >
-      <div className="h-7 w-7 shrink-0 rounded-md bg-muted" />
+      <div className="size-7 shrink-0 rounded-row bg-skeleton" />
       <div className="flex-1 space-y-2">
-        <div className="h-3 w-28 rounded-xs bg-muted" />
-        <div className="h-2.5 w-16 rounded-xs bg-muted/70" />
+        <div className="h-2.5 w-25 rounded-xs bg-skeleton" />
+        <div className="h-2 w-15 rounded-xs bg-skeleton" />
       </div>
-      <div className="h-4 w-4 shrink-0 rounded-full border-[1.5px] border-muted" />
+      <div className="size-4 shrink-0 rounded-full border-[1.5px] border-skeleton" />
     </div>
   );
 }

@@ -24,6 +24,11 @@ export interface QuestionOption {
   isOther?: boolean;
 }
 
+// 选项药丸：40 高、14 内边距、常规字重；选中时主色描边 + 浅灰底。
+const OPTION_CHIP_CLASS = "gap-2 px-3.5 font-normal";
+const OPTION_CHIP_SELECTED_CLASS =
+  "border-foreground bg-surface-selected hover:bg-surface-selected";
+
 /**
  * A questionnaire option, rendered as a wrapping chip.
  *
@@ -60,13 +65,13 @@ export function IconOptionCard({
       role={mode}
       aria-checked={selected}
       onClick={onSelect}
-      className={cn(selected && "border-primary/30 bg-primary/5")}
+      className={cn(OPTION_CHIP_CLASS, selected && OPTION_CHIP_SELECTED_CLASS)}
     >
       <span
         aria-hidden
         className={cn(
           "flex shrink-0 items-center text-muted-foreground [&_svg]:size-4",
-          selected && "text-primary",
+          selected && "text-foreground",
         )}
       >
         {icon}
@@ -114,13 +119,13 @@ export function IconOtherOptionCard({
       onClick={() => {
         if (!selected) onSelect();
       }}
-      className={cn(selected && "border-primary/30 bg-primary/5")}
+      className={cn(OPTION_CHIP_CLASS, selected && OPTION_CHIP_SELECTED_CLASS)}
     >
       <span
         aria-hidden
         className={cn(
           "flex shrink-0 items-center text-muted-foreground [&_svg]:size-4",
-          selected && "text-primary",
+          selected && "text-foreground",
         )}
       >
         {icon}
@@ -140,7 +145,7 @@ export function IconOtherOptionCard({
           placeholder={placeholder}
           maxLength={OTHER_INPUT_MAX_LENGTH}
           aria-label={placeholder}
-          className="w-32 min-w-0 border-0 bg-transparent p-0 text-inherit placeholder:text-muted-foreground focus:outline-none"
+          className="w-38 min-w-0 border-0 bg-transparent p-0 text-inherit placeholder:text-muted-foreground focus:outline-none"
         />
       ) : (
         <span>{label}</span>

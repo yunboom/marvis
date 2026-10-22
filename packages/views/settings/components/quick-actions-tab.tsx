@@ -271,8 +271,8 @@ export function QuickActionsTab() {
           </Button>
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-surface-border bg-card">
-          <div className="hidden grid-cols-[minmax(10rem,1fr)_minmax(9rem,1fr)_6rem_5rem_7rem_2rem] gap-4 border-b border-surface-border bg-muted/20 px-4 py-2.5 text-caption font-medium text-muted-foreground md:grid">
+        <div className="overflow-hidden rounded-xl border border-surface-border bg-card">
+          <div className="hidden h-9 grid-cols-[minmax(10rem,1fr)_minmax(9rem,1fr)_6rem_5rem_7rem_2rem] items-center gap-4 border-b border-surface-border bg-surface-sunken px-4.5 text-caption font-medium text-muted-foreground md:grid">
             <span>{t(($) => $.quick_actions.columns.name)}</span>
             <span>{t(($) => $.quick_actions.columns.target)}</span>
             <span>{t(($) => $.quick_actions.columns.visibility)}</span>

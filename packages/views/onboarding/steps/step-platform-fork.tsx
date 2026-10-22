@@ -14,6 +14,7 @@ import { cn } from "@marvis/ui/lib/utils";
 import type { AgentRuntime } from "@marvis/core/types";
 import { runtimeDisplayLabel } from "@marvis/core/runtimes";
 import {
+  STEP_FOOTER_BUTTON,
   StepFooter,
   StepHeading,
 } from "../components/step-shell";
@@ -150,7 +151,7 @@ export function StepPlatformFork({
       <StepFooter hint={footerHint}>
         <Button
           variant="ghost"
-          className="w-full"
+          className={STEP_FOOTER_BUTTON}
           disabled={skipping}
           onClick={handleSkip}
         >
@@ -197,8 +198,8 @@ function ForkPrimary({ onClick }: { onClick: () => void }) {
       )}
     >
       <div className="min-w-0">
-        <div className="flex items-center gap-2 text-title font-medium tracking-tight">
-          <Download className="h-4 w-4" aria-hidden />
+        <div className="flex items-center gap-2 text-[17px] leading-6 font-medium">
+          <Download className="size-4" aria-hidden />
           {t(($) => $.step_platform.download_title)}
         </div>
         <div className="mt-1 text-label text-background/60">
@@ -207,7 +208,7 @@ function ForkPrimary({ onClick }: { onClick: () => void }) {
       </div>
       <span
         aria-hidden
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-background/10 px-4 py-2 text-label font-medium transition-colors group-hover:bg-background/20"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-background/12 px-4 py-2 text-body font-medium transition-colors duration-(--motion-fast) ease-out group-hover:bg-background/20"
       >
         {t(($) => $.step_platform.download_button)}
         <ArrowRight className="h-3.5 w-3.5" />
@@ -238,25 +239,24 @@ function ForkAlt({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-4 rounded-lg border bg-card px-5 py-4",
+        "flex items-center justify-between gap-4 rounded-xl border border-surface-border bg-background px-5 py-4",
         disabled && "opacity-70",
       )}
     >
       <div className="min-w-0">
-        <div className="text-body font-medium text-foreground">{title}</div>
-        <div className="mt-1 text-caption leading-[1.5] text-muted-foreground">
+        <div className="text-body-lg font-medium text-foreground">{title}</div>
+        <div className="mt-1 text-label leading-normal text-muted-foreground">
           {subtitle}
         </div>
       </div>
       {disabled ? (
-        <span className="shrink-0 rounded-full border bg-muted px-3 py-1 text-caption font-medium text-muted-foreground">
+        <span className="shrink-0 rounded-full border border-surface-border bg-surface-sunken px-3 py-1 text-caption font-medium text-muted-foreground">
           {actionLabel}
         </span>
       ) : (
         <Button
           variant="outline"
-          size="sm"
-          className="shrink-0"
+          className="shrink-0 text-label"
           onClick={onAction}
         >
           {actionLabel}
@@ -305,16 +305,18 @@ function CliInstallDialog({
     <Dialog open={open} onOpenChange={(o) => (o ? null : onClose())}>
       <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle>{t(($) => $.step_platform.cli_dialog_title)}</DialogTitle>
+          <DialogTitle className="text-title font-semibold">
+            {t(($) => $.step_platform.cli_dialog_title)}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pt-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
           {cliInstructions}
 
           {hasRuntimes ? (
             <>
-              <div className="flex items-center gap-2 pt-1 text-body">
-                <div className="h-2 w-2 rounded-full bg-success" />
+              <div className="flex items-center gap-2 text-body">
+                <div className="size-2 rounded-full bg-success" />
                 <span className="font-medium">
                   {t(($) => $.step_platform.runtimes_connected, { count: runtimes.length })}
                 </span>
@@ -335,12 +337,12 @@ function CliInstallDialog({
           )}
         </div>
 
-        <DialogFooter className="flex items-center justify-between gap-3 sm:justify-between">
+        <DialogFooter className="flex items-center justify-between gap-3 pt-1 sm:justify-between">
           {/* Hint is only useful AFTER a runtime has registered — "pick
               one" / "selected X". While still waiting, the body's
               CliWaitingStatus already conveys the live-listening state,
               so an additional "Waiting..." footer line is duplication. */}
-          <span className="text-caption text-muted-foreground">
+          <span className="text-label text-muted-foreground">
             {hasRuntimes
               ? canConnect && selectedName
                 ? t(($) => $.step_runtime.hint_selected, { name: selectedName })
@@ -348,13 +350,18 @@ function CliInstallDialog({
               : null}
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="ghost" size="lg" className="px-4" onClick={onClose}>
               {t(($) => $.common.cancel)}
             </Button>
-            <Button disabled={!canConnect || connecting} onClick={onConnect}>
-              {connecting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Button
+              size="lg"
+              className="gap-1.5 px-4.5"
+              disabled={!canConnect || connecting}
+              onClick={onConnect}
+            >
+              {connecting && <Loader2 className="size-3.5 animate-spin" />}
               {t(($) => $.step_runtime.continue)}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="size-3.5" />
             </Button>
           </div>
         </DialogFooter>
@@ -427,7 +434,7 @@ function CliWaitingStatus({ dialogOpen }: { dialogOpen: boolean }) {
           : "stalled";
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4">
+    <div className="flex flex-col gap-2.5 rounded-xl border border-surface-border bg-surface-sunken p-4">
       <div className="flex items-center gap-2 text-body">
         {/* Pulsing green dot signals active WS subscription — the
             useRuntimePicker hook is already subscribed to `daemon:register`,
@@ -446,7 +453,7 @@ function CliWaitingStatus({ dialogOpen }: { dialogOpen: boolean }) {
 
       <p
         aria-live="polite"
-        className="text-caption leading-[1.55] text-muted-foreground"
+        className="text-label leading-relaxed text-muted-foreground"
       >
         {stage === "normal" && (
           <>

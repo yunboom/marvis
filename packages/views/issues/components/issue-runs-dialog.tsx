@@ -841,7 +841,7 @@ function RunListRow({ run, issueId }: { run: TimelineRun; issueId: string }) {
 
   return (
     <div className={cn("border-b", expanded && "bg-accent/40")}>
-      <div className="group/run-row flex h-9 items-center gap-2 text-caption transition-colors hover:bg-accent/40">
+      <div className="group/run-row flex h-9 items-center gap-2 text-caption transition-colors hover:bg-accent">
         <span className={cn(COL.time, "font-mono text-micro tabular-nums text-muted-foreground")}>
           {time}
         </span>

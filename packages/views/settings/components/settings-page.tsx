@@ -365,7 +365,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         href={href(item.value)}
         aria-current={active.value === item.value ? "page" : undefined}
         className={cn(
-          "flex min-h-8 items-center gap-2.5 rounded-lg px-3 py-1.5 text-body transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+          "flex h-7.5 items-center gap-2.5 rounded-row px-2.5 text-body transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:outline-2 focus-visible:outline-ring",
           active.value === item.value
             ? "bg-surface-selected font-medium text-surface-selected-foreground hover:bg-surface-selected"
             : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
@@ -385,7 +385,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
 
   const searchResults = (
     <div className="space-y-1">
-      <p className="px-3 pb-1 text-caption text-muted-foreground" role="status">
+      <p className="px-2.5 pb-1.5 pt-1 text-caption text-muted-foreground" role="status">
         {results.length > 0
           ? t(($) => $.page.search_results, { count: results.length })
           : t(($) => $.page.search_empty)}
@@ -406,7 +406,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                 onClick={() => openResult(position)}
                 onMouseMove={() => setActiveResult(position)}
                 className={cn(
-                  "w-full rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+                  "w-full rounded-md px-2.5 py-2 text-left transition-colors duration-(--motion-fast) ease-out focus-visible:outline-2 focus-visible:outline-ring",
                   position === activeResult
                     ? "bg-surface-selected text-surface-selected-foreground"
                     : "hover:bg-surface-hover",
@@ -433,10 +433,10 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:flex-row">
-      <aside className="shrink-0 border-b border-surface-border md:flex md:w-60 md:flex-col md:border-b-0 md:border-r">
-        <div className="flex h-16 shrink-0 items-center gap-1 px-4 md:px-5">
+      <aside className="shrink-0 border-b border-surface-border md:flex md:w-62 md:flex-col md:border-b-0 md:border-r">
+        <div className="flex h-16 shrink-0 items-center gap-1 px-4 md:px-5.5">
           <CollapsedNavTrigger />
-          <h1 className="text-title font-semibold tracking-tight">
+          <h1 className="text-title-lg font-bold">
             {t(($) => $.page.title)}
           </h1>
         </div>
@@ -446,7 +446,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
           </label>
           <select
             id="settings-navigation"
-            className="h-10 w-full rounded-lg border border-input bg-background px-3 text-body text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            className="h-10 w-full rounded-lg border-0 bg-field px-3 text-body text-foreground focus-visible:outline-2 focus-visible:outline-ring"
             value={active.value}
             onChange={(event) => navigation.push(href(event.target.value))}
           >
@@ -466,10 +466,10 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
             )}
           </select>
         </div>
-        <div className="relative mx-3 mb-3 hidden shrink-0 md:block">
+        <div className="relative mx-3 mb-2.5 hidden shrink-0 md:block">
           <Search
             aria-hidden="true"
-            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-2.5 top-1/2 size-3.75 -translate-y-1/2 text-muted-foreground"
           />
           <input
             type="search"
@@ -499,7 +499,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
             placeholder={t(($) => $.page.search)}
             aria-label={t(($) => $.page.search)}
             aria-controls={query ? "settings-search-results" : undefined}
-            className="h-8 w-full rounded-lg border border-input bg-transparent pl-8 pr-8 text-body outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 [&::-webkit-search-cancel-button]:hidden"
+            className="h-8.5 w-full rounded-lg border-0 bg-field pl-8 pr-8 text-label outline-none transition-colors placeholder:text-muted-foreground hover:bg-field-hover focus-visible:bg-field-hover focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-search-cancel-button]:hidden"
           />
           {query ? (
             <TooltipHint label={t(($) => $.page.search_clear)}>
@@ -507,9 +507,9 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                 type="button"
                 onClick={() => setQuery("")}
                 aria-label={t(($) => $.page.search_clear)}
-                className="absolute right-1.5 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground"
+                className="absolute right-1.5 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:bg-surface-hover hover:text-foreground"
               >
-                <X className="size-3.5" aria-hidden="true" />
+                <X className="size-3.25" aria-hidden="true" />
               </button>
             </TooltipHint>
           ) : null}
@@ -530,7 +530,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                 >
                   <h2
                     id={`settings-group-${group.key}`}
-                    className="flex h-8 min-w-0 items-center gap-2.5 px-3 text-label font-semibold text-foreground"
+                    className="flex h-7.5 min-w-0 items-center gap-2.5 px-2.5 text-label font-semibold text-foreground"
                   >
                     <span className="flex size-4 shrink-0 items-center justify-center">
                       {group.mark}
@@ -553,7 +553,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                       {subgroup.label ? (
                         <h3
                           id={`settings-subgroup-${subgroup.key}`}
-                          className="px-3 pb-1 pt-3 text-caption font-medium text-muted-foreground"
+                          className="px-2.5 pb-0.75 pt-2.5 text-caption font-medium text-muted-foreground"
                         >
                           {subgroup.label}
                         </h3>
@@ -574,8 +574,8 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
       >
         <div
           className={cn(
-            "mx-auto w-full px-4 py-6 sm:px-6 md:px-10 md:py-8",
-            active.wide ? "max-w-5xl" : "max-w-4xl",
+            "mx-auto w-full px-4 py-6 sm:px-6 md:px-10 md:pt-8 md:pb-10",
+            active.wide ? "max-w-5xl" : "max-w-[52.5rem]",
           )}
         >
           {active.content}

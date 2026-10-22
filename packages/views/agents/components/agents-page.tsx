@@ -64,10 +64,15 @@ import { ActorAvatar } from "../../common/actor-avatar";
 import { docsLocalePrefix } from "../../common/docs-locale";
 import { ProviderLogo } from "../../runtimes/components/provider-logo";
 import {
+  COLLECTION_ROW,
+  COLLECTION_ROW_SELECTED,
+  COLLECTION_ROW_TALL,
+  COLLECTION_TABLE_INSET,
   CollectionPageHeader,
   CollectionPageHeaderAction,
   CollectionPageState,
 } from "../../layout/collection-page";
+import { cn } from "@marvis/ui/lib/utils";
 import { availabilityConfig } from "../presence";
 import { AgentRowActions } from "./agent-row-actions";
 import {
@@ -92,6 +97,12 @@ const GRID_COLS =
 
 // Two-line rows; the virtualizer's fixed-size contract.
 const ROW_HEIGHT = 64;
+
+// Header band: the collection table head (40px grey band, rounded ends) on
+// the ListGrid header row. Header cells set their own text size, so the
+// 13px label size is pushed down to them.
+const LIST_HEAD =
+  "h-10 rounded-lg bg-surface-sunken [&_[role=columnheader]]:text-label [&_[role=columnheader]_button]:text-label";
 
 // Single source for hideable column widths: track vars and the grid's
 // min-width derive from the same numbers.
@@ -269,6 +280,7 @@ function PageHeaderBar({
           icon={Plus}
           label={t(($) => $.page.new_agent)}
           onClick={onCreate}
+          variant="default"
         />
       }
     />
@@ -317,7 +329,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       description={t(($) => $.empty.description)}
       actions={
         <Button type="button" onClick={onCreate} size="sm">
-          <Plus aria-hidden="true" className="size-3" />
+          <Plus aria-hidden="true" className="size-3.5" />
           {t(($) => $.page.new_agent)}
         </Button>
       }
@@ -371,7 +383,7 @@ function NameCell({ row }: { row: AgentListRow }) {
       <ActorAvatar
         actorType="agent"
         actorId={agent.id}
-        size="lg"
+        size="xl"
         className={`shrink-0 ${isArchived ? "opacity-50 grayscale" : ""}`}
         showStatusDot
       />
@@ -401,7 +413,7 @@ function NameCell({ row }: { row: AgentListRow }) {
           )}
         </div>
         {agent.description ? (
-          <div className="mt-0.5 truncate text-caption text-muted-foreground">
+          <div className="mt-0.5 truncate text-label text-muted-foreground">
             {agent.description}
           </div>
         ) : null}
@@ -418,7 +430,7 @@ function StatusCell({ row }: { row: AgentListRow }) {
   if (agent.archived_at) {
     return (
       <ListGridCell>
-        <span className="text-caption text-muted-foreground">
+        <span className="text-label text-muted-foreground">
           {t(($) => $.row.archived)}
         </span>
       </ListGridCell>
@@ -427,8 +439,8 @@ function StatusCell({ row }: { row: AgentListRow }) {
   if (!isAgentRuntimeBound(agent)) {
     return (
       <ListGridCell className="gap-1.5">
-        <AlertCircle className="size-3.5 shrink-0 text-amber-500" />
-        <span className="truncate text-caption text-amber-600 dark:text-amber-400">
+        <AlertCircle className="size-3.5 shrink-0 text-warning" />
+        <span className="truncate text-label text-amber-600 dark:text-amber-400">
           {t(($) => $.row.needs_runtime)}
         </span>
       </ListGridCell>
@@ -437,7 +449,7 @@ function StatusCell({ row }: { row: AgentListRow }) {
   if (!presence) {
     return (
       <ListGridCell>
-        <span className="text-caption text-faint-foreground">—</span>
+        <span className="text-label text-faint-foreground">—</span>
       </ListGridCell>
     );
   }
@@ -446,7 +458,7 @@ function StatusCell({ row }: { row: AgentListRow }) {
   return (
     <ListGridCell className="gap-1.5">
       <span className={`size-1.5 shrink-0 rounded-full ${visual.dotClass}`} />
-      <span className={`truncate text-caption ${visual.textClass}`}>
+      <span className={`truncate text-label ${visual.textClass}`}>
         {t(($) => $.availability[presence.availability])}
         {active > 0 && (
           <span className="text-muted-foreground">
@@ -467,14 +479,14 @@ function OwnerCell({ row }: { row: AgentListRow }) {
   if (!agent.owner_id) {
     return (
       <ListGridCell className="hidden @2xl:flex">
-        <span className="text-caption text-faint-foreground">—</span>
+        <span className="text-label text-faint-foreground">—</span>
       </ListGridCell>
     );
   }
   return (
     <ListGridCell className="hidden gap-1.5 @2xl:flex">
       <ActorAvatar actorType="member" actorId={agent.owner_id} size="sm" />
-      <span className="min-w-0 truncate text-caption text-muted-foreground">
+      <span className="min-w-0 truncate text-label text-muted-foreground">
         {owner?.name ?? agent.owner_id.slice(0, 8)}
       </span>
     </ListGridCell>
@@ -503,7 +515,7 @@ export function AccessCell({ row }: { row: AgentListRow }) {
   );
   return (
     <ListGridCell className="hidden @2xl:flex">
-      <span className="min-w-0 truncate text-caption text-muted-foreground">
+      <span className="min-w-0 truncate text-label text-muted-foreground">
         {label}
       </span>
     </ListGridCell>
@@ -515,7 +527,7 @@ function RuntimeCell({ row }: { row: AgentListRow }) {
   if (!isAgentRuntimeBound(row.agent)) {
     return (
       <ListGridCell className="hidden @2xl:flex">
-        <span className="truncate text-caption text-amber-600 dark:text-amber-400">
+        <span className="truncate text-label text-amber-600 dark:text-amber-400">
           {t(($) => $.row.needs_runtime)}
         </span>
       </ListGridCell>
@@ -532,12 +544,12 @@ function RuntimeCell({ row }: { row: AgentListRow }) {
             provider={runtime.provider}
             className="h-3.5 w-3.5 shrink-0"
           />
-          <span className="min-w-0 truncate text-caption text-muted-foreground">
+          <span className="min-w-0 truncate text-label text-muted-foreground">
             {runtimeDisplayLabel(runtime)}
           </span>
         </span>
       ) : (
-        <span className="text-caption text-faint-foreground">—</span>
+        <span className="text-label text-faint-foreground">—</span>
       )}
     </ListGridCell>
   );
@@ -549,11 +561,11 @@ function LastActiveCell({ row }: { row: AgentListRow }) {
   return (
     <ListGridCell className="hidden @2xl:flex">
       {days === null ? (
-        <span className="truncate text-caption text-muted-foreground">
+        <span className="truncate text-label text-muted-foreground">
           {row.agent.archived_at ? "—" : t(($) => $.last_active.none)}
         </span>
       ) : (
-        <span className="whitespace-nowrap text-caption tabular-nums text-muted-foreground">
+        <span className="whitespace-nowrap text-label tabular-nums text-muted-foreground">
           {days === 0
             ? t(($) => $.last_active.today)
             : t(($) => $.last_active.days_ago, { count: days })}
@@ -587,7 +599,7 @@ function AgentListHeader({
     sortField === field ? sortDirection : false;
   const anySelected = allSelected || someSelected;
   return (
-    <ListGridHeader>
+    <ListGridHeader className={LIST_HEAD}>
       <div className="hidden items-center justify-center @2xl:flex">
         <button
           type="button"
@@ -690,7 +702,7 @@ function LoadingSkeleton() {
         (key) => !AGENT_DEFAULT_HIDDEN_COLUMNS.includes(key),
       )}
     >
-      <ListGridHeader>
+      <ListGridHeader className={LIST_HEAD}>
         <span aria-hidden="true" className="hidden @2xl:inline" />
         <ListGridHeaderCell>
           <Skeleton className="h-3 w-12" />
@@ -718,10 +730,13 @@ function LoadingSkeleton() {
         <span aria-hidden="true" />
       </ListGridHeader>
       {Array.from({ length: 5 }).map((_, i) => (
-        <ListGridRow key={i} className="h-16 hover:bg-transparent">
+        <ListGridRow
+          key={i}
+          className={cn(COLLECTION_ROW, COLLECTION_ROW_TALL, "hover:bg-transparent")}
+        >
           <span aria-hidden="true" className="hidden @2xl:inline" />
           <ListGridCell className="gap-3">
-            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="size-10 rounded-full" />
             <div className="min-w-0 flex-1 space-y-1.5">
               <Skeleton className="h-3.5 w-32 max-w-full" />
               <Skeleton className="h-3 w-48 max-w-full" />
@@ -1033,7 +1048,7 @@ export function AgentsPage(_props: AgentsPageProps = {}) {
       />
 
       {isLoading || (!showEmpty && !listReady) ? (
-        <div className="flex-1 overflow-y-auto @container">
+        <div className={cn("flex-1 overflow-y-auto @container", COLLECTION_TABLE_INSET)}>
           <LoadingSkeleton />
         </div>
       ) : showEmpty ? (
@@ -1063,7 +1078,10 @@ export function AgentsPage(_props: AgentsPageProps = {}) {
           />
           <div
             ref={listScrollRef}
-            className="min-h-0 flex-1 overflow-auto @container"
+            className={cn(
+              "min-h-0 flex-1 overflow-auto @container",
+              COLLECTION_TABLE_INSET,
+            )}
           >
             <ListGrid
               className={`${GRID_COLS} @2xl:min-w-[var(--agc-minw)]`}
@@ -1096,9 +1114,13 @@ export function AgentsPage(_props: AgentsPageProps = {}) {
                   return (
                     <ListGridRow
                       key={row.agent.id}
-                      className={`h-16 cursor-pointer ${
-                        selectedIds.has(row.agent.id) ? "bg-accent/30" : ""
-                      }`}
+                      className={cn(
+                        COLLECTION_ROW,
+                        COLLECTION_ROW_TALL,
+                        "cursor-pointer",
+                        selectedIds.has(row.agent.id) &&
+                          COLLECTION_ROW_SELECTED,
+                      )}
                       {...rowLink(paths.agentDetail(row.agent.id), row.agent.name)}
                     >
                       <CheckboxCell
@@ -1140,7 +1162,7 @@ export function AgentsPage(_props: AgentsPageProps = {}) {
                       )}
                       {isColVisible("model") ? (
                         <ListGridCell className="hidden @2xl:flex">
-                          <span className="min-w-0 truncate text-caption text-muted-foreground">
+                          <span className="min-w-0 truncate text-label text-muted-foreground">
                             {row.agent.model || "—"}
                           </span>
                         </ListGridCell>
@@ -1148,7 +1170,7 @@ export function AgentsPage(_props: AgentsPageProps = {}) {
                         <ListGridCell className="hidden px-0 @2xl:flex" />
                       )}
                       {isColVisible("created") ? (
-                        <ListGridCell className="hidden whitespace-nowrap text-caption tabular-nums text-muted-foreground @2xl:flex">
+                        <ListGridCell className="hidden whitespace-nowrap text-label tabular-nums text-muted-foreground @2xl:flex">
                           {new Date(
                             row.agent.created_at,
                           ).toLocaleDateString(locale)}

@@ -31,11 +31,11 @@ export function OnboardingLogoutButton({
   return (
     <Button
       variant="ghost"
-      size="sm"
       className={cn(
+        "gap-1.5 text-label [&_svg:not([class*='size-'])]:size-3.5",
         inline
-          ? "-ml-2 w-fit shrink-0 text-muted-foreground hover:text-foreground"
-          : "fixed right-8 top-8 z-50 text-muted-foreground hover:text-destructive",
+          ? "-ml-2 w-fit shrink-0 px-2.5 text-muted-foreground hover:text-foreground"
+          : "fixed right-8 top-8 z-50 px-3 text-muted-foreground hover:text-destructive",
       )}
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
       onClick={logout}

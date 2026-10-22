@@ -167,7 +167,7 @@ export function CommentTriggerChips({
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {hasAllMembersMention && (
-        <span className="inline-flex h-6 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-md px-1.5 text-micro font-medium text-muted-foreground">
+        <span className="inline-flex h-6 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-row px-1.5 text-micro font-medium text-muted-foreground">
           <Users className="size-3 shrink-0" />
           <span className="truncate">{t(($) => $.comment.all_members_notice)}</span>
         </span>
@@ -204,7 +204,7 @@ function BlockedTriggerChip({
       <TooltipTrigger
         render={
           <span
-            className="inline-flex h-6 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-md px-1.5 text-micro font-medium text-destructive"
+            className="inline-flex h-6 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-row px-1.5 text-micro font-medium text-destructive"
             aria-label={
               label
                 ? t(($) => $.comment.trigger_blocked_chip_aria, { name: label, reason: shortReason })
@@ -301,7 +301,7 @@ function SingleRecipientChip({
           type="button"
           aria-label={t(($) => $.comment.trigger_chip_aria, { name: entry.agent.name, state: label })}
           className={cn(
-            "inline-flex h-6 min-w-0 max-w-full animate-in fade-in cursor-pointer items-center gap-1.5 rounded-md border border-transparent px-1.5 text-micro font-medium transition-colors duration-200",
+            "inline-flex h-6 min-w-0 max-w-full animate-in fade-in cursor-pointer items-center gap-1.5 rounded-row border border-transparent px-1.5 text-micro font-medium transition-colors duration-200",
             chipToneClass(entry.action),
           )}
         >
@@ -345,7 +345,7 @@ function MultiRecipientChip({
         <button
           type="button"
           className={cn(
-            "inline-flex h-6 min-w-0 max-w-full animate-in fade-in cursor-pointer items-center gap-1.5 rounded-md border border-transparent px-1.5 text-micro font-medium transition-colors duration-200",
+            "inline-flex h-6 min-w-0 max-w-full animate-in fade-in cursor-pointer items-center gap-1.5 rounded-row border border-transparent px-1.5 text-micro font-medium transition-colors duration-200",
             chipToneClass(tone),
           )}
         />
@@ -396,7 +396,7 @@ function MultiRecipientChip({
             const label = actionLabel(entry.action, entry.state, t);
             const state = stateLabel(entry.state, t);
             return (
-              <div key={entry.agent.id} className="flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1">
+              <div key={entry.agent.id} className="flex min-w-0 items-center gap-2 rounded-row px-1.5 py-1">
                 <TriggerAgentAvatar agent={entry.agent} suppressed={entry.action === "skip"} />
                 <span className="min-w-0 flex-1 truncate text-caption">
                   {entry.agent.name}
@@ -411,7 +411,7 @@ function MultiRecipientChip({
                       type="button"
                       aria-label={t(($) => $.comment.trigger_chip_aria, { name: entry.agent.name, state: label })}
                       className={cn(
-                        "inline-flex h-6 max-w-40 shrink-0 cursor-pointer items-center gap-1 rounded-md border border-transparent px-1.5 text-micro font-medium transition-colors",
+                        "inline-flex h-6 max-w-40 shrink-0 cursor-pointer items-center gap-1 rounded-row border border-transparent px-1.5 text-micro font-medium transition-colors",
                         chipToneClass(entry.action),
                       )}
                     >

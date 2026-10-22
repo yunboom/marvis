@@ -24,7 +24,7 @@
  * Without that ancestor the `@` variants simply never match and the column keeps
  * the base 20px, which is the old behavior rather than a broken layout.
  */
-export const CHAT_GUTTER = "px-5 @2xl:px-8 @4xl:px-12";
+export const CHAT_GUTTER = "px-5 @2xl:px-10 @4xl:px-12";
 
 /** The reading column: centered, capped, full-width below the cap. */
 export const CHAT_COLUMN = "mx-auto w-full max-w-4xl";

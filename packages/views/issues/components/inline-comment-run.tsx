@@ -174,9 +174,9 @@ export function InlineCommentRun({ run, className, viewState, showIdentity = fal
   return (
     <section aria-label={t(($) => $.inline_run.label, { name })}
       className={cn("@container/run min-w-0 py-2", className)} data-run-id={task.id}>
-      <div ref={animationVisibility.ref} className="flex min-h-7 min-w-0 items-center gap-2" data-run-summary-row>
+      <div ref={animationVisibility.ref} className={cn("flex min-h-7 min-w-0 items-center gap-2", showIdentity && "gap-2.5")} data-run-summary-row>
         {showIdentity && <>
-          <ActorAvatar actorType="agent" actorId={task.agent_id} size="md" enableHoverCard showStatusDot />
+          <ActorAvatar actorType="agent" actorId={task.agent_id} size="lg" enableHoverCard showStatusDot />
           <span className="max-w-[30%] shrink-0 truncate text-body font-medium" title={name}>{name}</span>
           {!active && task.completed_at && <Tooltip>
             <TooltipTrigger render={<span className="shrink-0 cursor-default text-caption text-muted-foreground @max-[32rem]/run:hidden">
@@ -222,11 +222,11 @@ export function InlineCommentRun({ run, className, viewState, showIdentity = fal
           <RotateCcw /><span className={cn(showIdentity && "@max-[32rem]/run:sr-only")}>{t(($) => $.execution_log.retry_task_tooltip)}</span>
         </Button>}
       </div>
-      <div className={cn(showIdentity && "pl-8")}>
+      <div className={cn(showIdentity && "pl-10.5")}>
         {replyTo}
         {output && <div className="mt-2 text-body"><ReadonlyContent content={redactSecrets(output)} /></div>}
         {needsAction && rawError && <p title={rawError}
-          className="mt-1.5 line-clamp-4 whitespace-pre-wrap break-words rounded-md border bg-muted/50 px-2.5 py-1.5 font-mono text-caption text-muted-foreground">
+          className="mt-1.5 line-clamp-4 whitespace-pre-wrap break-words rounded-row bg-field px-2.5 py-1.5 font-mono text-caption text-muted-foreground">
           {rawError}
         </p>}
         {expanded && <div id={regionId} className="mt-2 min-w-0 space-y-1">
@@ -338,7 +338,7 @@ function InlineStep({ row, live, formatText }: { row: TraceRow; live: boolean; f
     : row.kind === "thinking" ? thinkingPreview(row.item.content, formatText) || t(($) => $.inline_run.thinking)
     : t(($) => $.inline_run.error);
   return <details className="min-w-0 text-caption" onToggle={onToggle}>
-    <summary onClick={disclosure.onTrigger} className="flex cursor-pointer list-none items-center gap-2 rounded-xs py-1.5 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+    <summary onClick={disclosure.onTrigger} className="flex cursor-pointer list-none items-center gap-2 rounded-xs py-1.5 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
       {pending ? <Loader2 aria-hidden className="size-3.5 shrink-0 animate-spin text-info motion-reduce:animate-none" />
         : <Icon aria-hidden className={cn("size-3.5 shrink-0", error ? "text-destructive" : "text-muted-foreground")} />}
       <span className={cn("min-w-0 flex-1 truncate", error && "text-destructive")} title={summary}>{summary}</span>

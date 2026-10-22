@@ -571,7 +571,7 @@ export function WorkspaceTab() {
                 {t(($) => $.workspace.prefix_rule)}
               </p>
             </div>
-            <div className="flex items-center gap-2 rounded-lg border border-surface-border px-3 py-2 font-mono text-label">
+            <div className="flex items-center gap-2 rounded-lg bg-field px-3 py-2 font-mono text-label">
               <span className="text-muted-foreground line-through">
                 {`${workspace.issue_prefix}-123`}
               </span>

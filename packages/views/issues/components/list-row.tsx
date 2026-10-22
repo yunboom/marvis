@@ -20,6 +20,7 @@ import { CustomPropertyValueDisplay } from "./pickers/custom-property-picker";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { PriorityIcon } from "./priority-icon";
 import { ProgressRing } from "./progress-ring";
+import { DRAG_SHIFT_TRANSITION } from "./board-card";
 import { IssueActionsContextMenu } from "../actions";
 import { LabelChip } from "../../labels/label-chip";
 import { CustomStatusChip } from "./custom-status-chip";
@@ -94,10 +95,10 @@ function ListRowContent({
         data-peeked={peeked ? "" : undefined}
         style={containerStyle}
         {...containerProps}
-        className={`group/row flex h-[var(--issue-row-height)] items-center gap-2 px-4 text-body transition-colors ${
+        className={`group/row flex h-[var(--issue-row-height)] items-center gap-2 rounded-lg pr-3 pl-3.5 text-body-lg transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) motion-reduce:transition-none! ${
           selected
             ? "bg-surface-selected hover:not-data-[popup-open]:bg-surface-selected data-[popup-open]:bg-surface-selected"
-            : "hover:not-data-[popup-open]:bg-surface-hover data-[popup-open]:bg-surface-hover"
+            : "hover:not-data-[popup-open]:bg-accent data-[popup-open]:bg-accent"
         } ${PEEKED_ROW_CLASS} ${isDragging ? "opacity-30" : ""}`}
       >
         <div
@@ -114,7 +115,7 @@ function ListRowContent({
             type="checkbox"
             checked={selected}
             onChange={() => toggle(issue.id)}
-            className={`absolute inset-0 cursor-pointer accent-primary ${
+            className={`absolute inset-0 size-4 cursor-pointer accent-primary ${
               selected ? "" : "hidden group-hover/row:block"
             }`}
           />
@@ -125,7 +126,7 @@ function ListRowContent({
           className={`flex flex-1 items-center gap-2 min-w-0 ${isDragging ? "pointer-events-none" : ""}`}
           {...peekLinkProps}
         >
-          <span className="min-w-16 shrink-0 text-caption text-muted-foreground">
+          <span className="min-w-16 shrink-0 text-label text-muted-foreground">
             {issue.identifier}
           </span>
           <IssueAgentActivityIndicator issueId={issue.id} />
@@ -136,7 +137,7 @@ function ListRowContent({
             <CustomStatusChip status={issue.status} className="shrink-0" />
             <IssueDuplicateOfMarker issue={issue} insideLink />
             {showChildProgress && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5">
+              <span className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-field pr-1.5 pl-1">
                 <ProgressRing done={childProgress!.done} total={childProgress!.total} size={14} />
                 <span className="text-micro text-muted-foreground tabular-nums font-medium">
                   {childProgress!.done}/{childProgress!.total}
@@ -160,7 +161,7 @@ function ListRowContent({
                 {cardCustomProperties.slice(0, 3).map((property) => (
                   <span
                     key={property.id}
-                    className="inline-flex max-w-[120px] items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground"
+                    className="inline-flex h-5 max-w-30 items-center gap-1 rounded-full bg-field pr-1.5 pl-1 text-micro text-muted-foreground"
                   >
                     <PropertyIcon property={property} className="size-3 text-micro" />
                     <CustomPropertyValueDisplay property={property} value={issue.properties?.[property.id]} />
@@ -170,18 +171,18 @@ function ListRowContent({
             )}
           </span>
           {showProject && (
-            <span className="inline-flex shrink-0 items-center gap-1 text-caption text-muted-foreground max-w-[140px]">
+            <span className="inline-flex max-w-35 shrink-0 items-center gap-1 text-label text-muted-foreground">
               <ProjectIcon project={project} size="sm" />
               <span className="truncate">{project!.title}</span>
             </span>
           )}
           {showStartDate && (
-            <span className="shrink-0 text-caption text-muted-foreground">
+            <span className="shrink-0 text-label text-muted-foreground">
               {formatDate(issue.start_date!, locale)}
             </span>
           )}
           {showDueDate && (
-            <span className="shrink-0 text-caption text-muted-foreground">
+            <span className="shrink-0 text-label text-muted-foreground">
               {formatDate(issue.due_date!, locale)}
             </span>
           )}
@@ -249,6 +250,7 @@ export const DraggableListRow = memo(function DraggableListRow({
     id: issue.id,
     data: { status: issue.status },
     animateLayoutChanges,
+    transition: DRAG_SHIFT_TRANSITION,
     disabled: disableSorting ? { droppable: true } : undefined,
   });
 

@@ -29,7 +29,7 @@ function CopyButton({ text }: { text: string }) {
       <button
         type="button"
         onClick={handleCopy}
-        className="shrink-0 rounded-xs p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="flex size-[22px] shrink-0 items-center justify-center rounded-xs text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
         aria-label={t(($) => $.cli_install.copy_aria)}
       >
         {copied ? (
@@ -44,7 +44,7 @@ function CopyButton({ text }: { text: string }) {
 
 function CommandRow({ cmd }: { cmd: string }) {
   return (
-    <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 font-mono text-body">
+    <div className="flex items-start gap-2 rounded-md bg-field px-3 py-2.5 font-mono text-label">
       <Terminal className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <code
         className={cn(
@@ -70,7 +70,7 @@ function Step({
 }) {
   return (
     <div>
-      <p className="mb-1.5 text-caption font-medium text-foreground">
+      <p className="mb-1.5 text-label font-medium text-foreground">
         {n}. {label}
       </p>
       {children}
@@ -89,9 +89,9 @@ function Step({
 export function CliInstallInstructions() {
   const { t } = useT("onboarding");
   return (
-    <Card className="w-full">
-      <CardContent className="space-y-4 pt-4">
-        <p className="text-caption leading-[1.55] text-muted-foreground">
+    <Card className="w-full gap-0 rounded-xl py-0 shadow-none">
+      <CardContent className="space-y-4 p-4">
+        <p className="text-label leading-relaxed text-muted-foreground">
           {t(($) => $.cli_install.intro)}
         </p>
         <Step n={1} label={t(($) => $.cli_install.step1_label)}>

@@ -49,7 +49,7 @@ export function CustomStatusChip({
 
   return (
     <span
-      className={`inline-flex max-w-[160px] items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground ${className}`}
+      className={`inline-flex h-5 max-w-40 items-center gap-1 rounded-full bg-field pr-1.5 pl-1 text-micro text-muted-foreground ${className}`}
     >
       <StatusIcon
         status={status}

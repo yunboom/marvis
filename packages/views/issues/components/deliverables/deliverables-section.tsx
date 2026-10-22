@@ -50,12 +50,12 @@ export function DeliverablesSection({
     <div>
       <button
         type="button"
-        className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors mb-2 hover:bg-accent/70 ${open ? "" : "text-muted-foreground hover:text-foreground"}`}
+        className={`flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors mb-1.5 hover:bg-accent ${open ? "" : "text-muted-foreground hover:text-foreground"}`}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
         {t(($) => $.deliverables.section_title)}{" "}
-        <span className="rounded-xs bg-muted px-1 text-micro font-medium tabular-nums text-muted-foreground">
+        <span className="rounded-full bg-field px-1.5 text-micro font-medium tabular-nums text-muted-foreground">
           {files.length}
         </span>
         <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`} />
@@ -68,7 +68,7 @@ export function DeliverablesSection({
                 <TooltipHint key={file.key} label={file.latest.filename}>
                   <button
                     type="button"
-                    className="relative aspect-[4/3] overflow-hidden rounded-md ring-1 ring-border transition-shadow hover:ring-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="relative aspect-[4/3] overflow-hidden rounded-row ring-1 ring-border transition-shadow hover:ring-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={versionedName(file, t)}
                     onClick={() => openAttachment(file.latest)}
                   >
@@ -91,7 +91,7 @@ export function DeliverablesSection({
           ))}
           <button
             type="button"
-            className="mt-0.5 flex w-[calc(100%+1rem)] -mx-2 items-center gap-2 rounded-md px-2 py-1 text-left text-caption text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+            className="mt-0.5 flex h-7.5 w-[calc(100%+1rem)] -mx-2 items-center gap-2 rounded-row px-2 text-left text-label text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             onClick={onOpenOverview}
           >
             <LayoutGrid className="size-3.5 shrink-0" />
@@ -122,7 +122,7 @@ function FileRow({ file, onOpen }: { file: DeliverableFile; onOpen: () => void }
   return (
     <button
       type="button"
-      className="group flex w-[calc(100%+1rem)] -mx-2 items-center gap-2 rounded-md px-2 py-1 text-left text-caption transition-colors hover:bg-accent/50"
+      className="group flex h-7.5 w-[calc(100%+1rem)] -mx-2 items-center gap-2 rounded-row px-2 text-left text-label transition-colors hover:bg-accent"
       title={latest.filename}
       aria-label={versionedName(file, t)}
       onClick={onOpen}

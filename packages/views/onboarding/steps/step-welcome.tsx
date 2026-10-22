@@ -37,6 +37,9 @@ import { useT } from "../../i18n";
  * before the user has invested in questionnaire / workspace. Desktop
  * bundles a daemon, so the same prompt would be noise there.
  */
+// 欢迎页大按钮：48 高、24 内边距、15 号字。
+const WELCOME_CTA_CLASS = "h-12 gap-2 px-6 text-body-lg";
+
 export function StepWelcome({
   onNext,
   onSkip,
@@ -72,32 +75,32 @@ export function StepWelcome({
   };
 
   return (
-    <div className="animate-onboarding-enter flex h-full min-h-[640px] flex-col lg:flex-row">
+    <div className="animate-onboarding-enter flex h-full min-h-[640px] flex-col bg-app-shell lg:grid lg:grid-cols-2 lg:gap-4 lg:p-4">
       {/* Left — prose + CTA */}
-      <div className="flex flex-col lg:flex-1">
+      <div className="flex min-w-0 flex-col">
         <DragStrip />
-        <div className="flex flex-1 flex-col justify-center px-6 pb-12 sm:px-10 md:px-20 lg:px-20 xl:px-24">
+        <div className="flex flex-1 flex-col justify-center px-6 pb-12 sm:px-10 md:px-18 lg:px-18 lg:pb-0">
           <div className="flex w-full max-w-[540px] flex-col gap-8">
             <div className="flex items-center gap-2.5">
-              <MarvisIcon className="size-5 text-foreground" noSpin />
-              <span className="font-serif text-title-lg font-medium tracking-tight">
+              <MarvisIcon className="size-[22px] text-foreground" noSpin />
+              <span className="text-[17px] font-semibold">
                 {t(($) => $.welcome.wordmark)}
               </span>
             </div>
 
-            <h1 className="text-balance font-serif text-5xl font-medium leading-[1.04] tracking-tight sm:text-6xl">
+            <h1 className="text-balance text-5xl leading-[1.12] font-bold tracking-[-0.01em] sm:text-[52px]">
               {t(($) => $.welcome.headline_line1)}
               <br />
               {t(($) => $.welcome.headline_line2)}{" "}
               <em className="italic text-brand">{t(($) => $.welcome.headline_emphasis)}</em>
             </h1>
 
-            <div className="flex flex-col gap-4">
-              <p className="text-title leading-relaxed text-foreground">
+            <div className="flex flex-col gap-3.5">
+              <p className="text-title leading-[1.7] text-foreground">
                 {t(($) => $.welcome.lede)}
               </p>
               {isWeb && (
-                <p className="text-body leading-relaxed text-muted-foreground">
+                <p className="text-body leading-[1.7] text-muted-foreground">
                   {t(($) => $.welcome.lede_web)}
                 </p>
               )}
@@ -117,7 +120,7 @@ export function StepWelcome({
                     href="/download"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={buttonVariants({ size: "lg" })}
+                    className={cn(buttonVariants({ size: "lg" }), WELCOME_CTA_CLASS)}
                   >
                     <Download className="h-4 w-4" />
                     {t(($) => $.welcome.download_desktop)}
@@ -125,6 +128,7 @@ export function StepWelcome({
                   <Button
                     size="lg"
                     variant="outline"
+                    className={cn(WELCOME_CTA_CLASS, "bg-background")}
                     onClick={handleNext}
                     disabled={pending !== null}
                   >
@@ -138,6 +142,7 @@ export function StepWelcome({
               ) : (
                 <Button
                   size="lg"
+                  className={WELCOME_CTA_CLASS}
                   onClick={handleNext}
                   disabled={pending !== null}
                 >
@@ -152,6 +157,7 @@ export function StepWelcome({
                 <Button
                   size="lg"
                   variant="ghost"
+                  className={cn(WELCOME_CTA_CLASS, "px-5 text-muted-foreground")}
                   onClick={handleSkip}
                   disabled={pending !== null}
                 >
@@ -172,9 +178,9 @@ export function StepWelcome({
           fills the viewport edge-to-edge. `justify-center` inside
           centers the mock cards vertically, mirroring the left
           column's copy-center layout. */}
-      <div className="hidden border-l bg-muted/40 lg:flex lg:flex-1 lg:flex-col lg:overflow-hidden">
+      <div className="hidden min-w-0 rounded-2xl bg-background ring-1 ring-surface-border lg:flex lg:flex-col lg:overflow-hidden">
         <DragStrip />
-        <div className="flex flex-1 flex-col items-center justify-center gap-7 px-8 py-8">
+        <div className="flex flex-1 flex-col items-center justify-center gap-7 p-12">
           <WelcomeIllustration />
         </div>
       </div>
@@ -304,12 +310,12 @@ function MockActivityCard({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card px-4 py-3.5 shadow-sm",
+        "rounded-lg border border-surface-border bg-background px-4 py-3.5 shadow-control",
         // Decorative hover: lift, straighten, deeper shadow. Cards aren't
         // clickable — this is ambient polish so the illustration feels like
         // real app UI rather than a flat screenshot.
         "transition-all duration-200 ease-out will-change-transform",
-        "hover:-translate-y-0.5 hover:rotate-0 hover:shadow-md",
+        "hover:-translate-y-0.5 hover:rotate-0 hover:shadow-surface",
         className,
       )}
     >
@@ -325,7 +331,7 @@ function MockActivityCard({
         </span>
       </div>
 
-      <p className="mt-2.5 text-body leading-snug text-foreground">
+      <p className="mt-2.5 text-body leading-[1.55] text-foreground">
         {content}
       </p>
 
@@ -339,7 +345,7 @@ function MockAvatar({ actor }: { actor: ActivityActor }) {
     return (
       <div
         aria-hidden
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-micro font-semibold text-background"
+        className="flex size-5 shrink-0 items-center justify-center rounded-full bg-identity-gray text-[10px] font-semibold text-identity-gray-foreground"
       >
         {actor.initial}
       </div>
@@ -348,9 +354,9 @@ function MockAvatar({ actor }: { actor: ActivityActor }) {
   return (
     <div
       aria-hidden
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-muted/40 text-foreground"
+      className="flex size-5 shrink-0 items-center justify-center rounded-full bg-identity-gray text-identity-gray-foreground"
     >
-      <ProviderLogo provider={actor.provider} className="h-3.5 w-3.5" />
+      <ProviderLogo provider={actor.provider} className="size-3" />
     </div>
   );
 }

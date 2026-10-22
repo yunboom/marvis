@@ -36,11 +36,11 @@ export function AutopilotQuotaNotice({
   return (
     <>
       {body && (
-        <div className="mt-4 whitespace-pre-wrap text-body leading-relaxed text-foreground">
+        <div className="mt-4.5 whitespace-pre-wrap text-body leading-relaxed text-foreground">
           {body}
         </div>
       )}
-      <Button className="mt-4" size="sm" onClick={onOpenRecovery}>
+      <Button className="mt-5" onClick={onOpenRecovery}>
         {t(($) => $.detail.autopilot_quota_upgrade)}
       </Button>
     </>

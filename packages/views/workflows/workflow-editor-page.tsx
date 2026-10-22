@@ -85,6 +85,18 @@ import { WorkflowMappingDialog } from "./workflow-mapping-dialog";
 const INLINE_FIELD =
   "-mx-1.5 block w-[calc(100%+0.75rem)] rounded-md bg-transparent px-1.5 outline-none transition-colors placeholder:text-muted-foreground read-only:cursor-default hover:[&:not(:read-only)]:bg-accent/60 focus-visible:[&:not(:read-only)]:bg-accent/60 focus-visible:[&:not(:read-only)]:ring-1 focus-visible:[&:not(:read-only)]:ring-ring/40";
 
+/**
+ * 编辑器铺满设置页内容区：抵消 settings-page 内容容器的内边距，
+ * 顶部 60px 页头带下描边，下方左右两栏。
+ */
+const EDITOR_BLEED = "-mx-4 -my-6 flex flex-col sm:-mx-6 md:-mx-10 md:-mt-8 md:-mb-10";
+
+/** 编辑器页头：面包屑在左，操作在右。 */
+const EDITOR_HEADER = "flex h-15 shrink-0 items-center gap-2 border-b border-surface-border pl-7 pr-5";
+
+/** 步骤卡片之间的竖向连接线，对齐状态图标中心；最后一步不画。 */
+const STEP_CONNECTOR = "ml-9.5 h-2.5 w-0.5 bg-input group-last/step:hidden";
+
 /** A new workflow starts from the common delivery loop instead of nothing. */
 const NEW_WORKFLOW_MIDDLE = ["in_progress", "in_review"];
 
@@ -353,9 +365,11 @@ export function WorkflowEditorPage({
 
   if (workflowId && isLoaded && !saved) {
     return (
-      <div className="space-y-4">
-        <Breadcrumb onBack={onBack} current="" />
-        <p className="text-body text-muted-foreground">{t(($) => $.workflows.editor.not_found)}</p>
+      <div className={EDITOR_BLEED}>
+        <header className={EDITOR_HEADER}>
+          <Breadcrumb onBack={onBack} current="" />
+        </header>
+        <p className="px-7 py-6 text-body text-muted-foreground">{t(($) => $.workflows.editor.not_found)}</p>
       </div>
     );
   }
@@ -393,8 +407,9 @@ export function WorkflowEditorPage({
         : undefined,
     };
     return (
-      <li key={column.id}>
+      <li key={column.id} className="group/step flex flex-col">
         {middleIds.has(column.id) ? <SortableStepCard {...props} draggable={canEdit} /> : <StepCard {...props} />}
+        <span aria-hidden className={STEP_CONNECTOR} />
       </li>
     );
   };
@@ -415,11 +430,68 @@ export function WorkflowEditorPage({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
+    <div className={EDITOR_BLEED}>
+      <header className={EDITOR_HEADER}>
         <Breadcrumb onBack={onBack} current={title} />
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
+        {(canEdit || canDuplicate) && (
+          <div className="flex shrink-0 items-center gap-2">
+            {canEdit && dirty && workflowId && (
+              <span className="mr-1 flex items-center gap-1.5 text-label text-muted-foreground">
+                <span aria-hidden className="size-1.5 rounded-full bg-warning" />
+                {t(($) => $.workflows.editor.unsaved)}
+              </span>
+            )}
+            {canDuplicate && workflowId && (
+              <Button variant="outline" className="h-9 gap-1.5 pl-3.5 pr-4" onClick={() => onOpen({ duplicateOf: workflowId })}>
+                <Copy className="size-3.5" />
+                {t(($) => $.workflows.editor.duplicate)}
+              </Button>
+            )}
+            {canEdit && (
+              <Button className="h-9 px-5" onClick={() => void save()} disabled={!canSave} aria-busy={pending}>
+                {pending && <Spinner className="size-3.5" />}
+                {workflowId ? t(($) => $.workflows.editor.save) : t(($) => $.workflows.editor.create)}
+              </Button>
+            )}
+            {canEdit && workflowId && !isDefault && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <IconButton
+                      variant="ghost"
+                      size="icon"
+                      className="size-9 text-muted-foreground"
+                      label={t(($) => $.workflows.editor.more)}
+                      tooltipSide="bottom"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </IconButton>
+                  }
+                />
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={usedBy.length > 0 || deleteWorkflow.isPending}
+                    onClick={() => void remove()}
+                  >
+                    <Trash2 className="size-3.5" />
+                    {t(($) => $.workflows.settings.delete)}
+                  </DropdownMenuItem>
+                  {usedBy.length > 0 && (
+                    <p className="px-2.5 pb-1.5 pt-0.5 text-caption leading-5 text-muted-foreground">
+                      {t(($) => $.workflows.settings.delete_in_use)}
+                    </p>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        )}
+      </header>
+
+      <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_23.75rem]">
+        <div className="min-w-0 space-y-5 px-7 py-6">
+          <div>
             <input
               aria-label={t(($) => $.workflows.editor.name)}
               value={draft.name}
@@ -427,7 +499,7 @@ export function WorkflowEditorPage({
               readOnly={!canEdit || isDefault}
               placeholder={t(($) => $.workflows.editor.name_placeholder)}
               onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-              className={cn(INLINE_FIELD, "h-9 text-title-lg font-semibold tracking-tight")}
+              className={cn(INLINE_FIELD, "h-9.5 text-display-sm font-bold")}
             />
             <input
               aria-label={t(($) => $.workflows.editor.description)}
@@ -436,10 +508,10 @@ export function WorkflowEditorPage({
               readOnly={!canEdit}
               placeholder={canEdit ? t(($) => $.workflows.editor.description_placeholder) : ""}
               onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-              className={cn(INLINE_FIELD, "mt-0.5 h-7 text-body")}
+              className={cn(INLINE_FIELD, "mt-1 h-6.5 text-body-lg text-muted-foreground")}
             />
-            <p className="mt-2 flex items-start gap-1.5 text-caption leading-5 text-muted-foreground">
-              <FolderKanban aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+            <p className="mt-2.5 flex items-start gap-1.5 text-label leading-5 text-muted-foreground">
+              <FolderKanban aria-hidden className="mt-0.75 size-3.5 shrink-0" />
               <span>
                 {isDefault
                   ? t(($) => $.workflows.editor.default_note)
@@ -452,136 +524,91 @@ export function WorkflowEditorPage({
               </span>
             </p>
           </div>
-          {(canEdit || canDuplicate) && (
-            <div className="flex shrink-0 items-center gap-2">
-              {canEdit && dirty && workflowId && (
-                <span className="text-caption text-muted-foreground">{t(($) => $.workflows.editor.unsaved)}</span>
-              )}
-              {canDuplicate && workflowId && (
-                <Button variant="outline" className="gap-1.5" onClick={() => onOpen({ duplicateOf: workflowId })}>
-                  <Copy className="size-3.5" />
-                  {t(($) => $.workflows.editor.duplicate)}
-                </Button>
-              )}
-              {canEdit && (
-                <Button onClick={() => void save()} disabled={!canSave} aria-busy={pending}>
-                  {pending && <Spinner className="size-3.5" />}
-                  {workflowId ? t(($) => $.workflows.editor.save) : t(($) => $.workflows.editor.create)}
-                </Button>
-              )}
-              {canEdit && workflowId && !isDefault && (
+          <div>
+            <ol className="flex flex-col">
+              {card(listed[0]!)}
+              {card(listed[1]!)}
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                  {draft.middle.map(card)}
+                </SortableContext>
+              </DndContext>
+              {listed.slice(-3).map(card)}
+            </ol>
+            {canEdit && (
+              <div className="mt-2.5 flex flex-col gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
-                      <IconButton variant="ghost" size="icon" label={t(($) => $.workflows.editor.more)} tooltipSide="bottom">
-                        <MoreHorizontal className="size-4" />
-                      </IconButton>
+                      <Button
+                        variant="ghost"
+                        className="h-11 w-full gap-1.5 rounded-xl border-[1.5px] border-dashed border-input font-normal text-muted-foreground"
+                      >
+                        <Plus className="size-3.5" />
+                        {t(($) => $.workflows.editor.add_step)}
+                      </Button>
                     }
                   />
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem
-                      variant="destructive"
-                      disabled={usedBy.length > 0 || deleteWorkflow.isPending}
-                      onClick={() => void remove()}
-                    >
-                      <Trash2 className="size-3.5" />
-                      {t(($) => $.workflows.settings.delete)}
-                    </DropdownMenuItem>
-                    {usedBy.length > 0 && (
-                      <p className="px-2 pb-1.5 text-caption text-muted-foreground">
-                        {t(($) => $.workflows.settings.delete_in_use)}
-                      </p>
+                  <DropdownMenuContent align="start" className="max-h-80 w-56 overflow-y-auto">
+                    {addable.map((key) => (
+                      <DropdownMenuItem
+                        key={key}
+                        onClick={() => {
+                          setDraft((d) => ({ ...d, middle: [...d.middle, { id: key, status_key: key }] }));
+                          setSelected(key);
+                        }}
+                      >
+                        <StatusIcon
+                          status={key}
+                          category={catalog.categoryOf(key)}
+                          color={catalog.colorOf(key)}
+                          icon={catalog.iconOf(key)}
+                          className="h-3.5 w-3.5"
+                        />
+                        <span className="truncate">{labelOf(key)}</span>
+                      </DropdownMenuItem>
+                    ))}
+                    {canCreateStatus && (
+                      <>
+                        {addable.length > 0 && <DropdownMenuSeparator />}
+                        <DropdownMenuItem onClick={() => setNewName("")}>
+                          <Plus className="size-3.5" />
+                          {t(($) => $.workflows.columns.new_status)}
+                        </DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
-        <div className="min-w-0">
-          <ol className="space-y-2">
-            {card(listed[0]!)}
-            {card(listed[1]!)}
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-              <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-                {draft.middle.map(card)}
-              </SortableContext>
-            </DndContext>
-            {listed.slice(-3).map(card)}
-          </ol>
-          {canEdit && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button variant="outline" size="sm" className="gap-1.5">
-                      <Plus className="size-3.5" />
-                      {t(($) => $.workflows.editor.add_step)}
-                    </Button>
-                  }
-                />
-                <DropdownMenuContent align="start" className="max-h-80 w-56 overflow-y-auto">
-                  {addable.map((key) => (
-                    <DropdownMenuItem
-                      key={key}
-                      onClick={() => {
-                        setDraft((d) => ({ ...d, middle: [...d.middle, { id: key, status_key: key }] }));
-                        setSelected(key);
+                {newName !== null && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      autoFocus
+                      maxLength={64}
+                      value={newName}
+                      className="h-9 min-w-0 flex-1"
+                      placeholder={t(($) => $.workflows.columns.name_placeholder)}
+                      onChange={(e) => setNewName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") addNew();
+                        if (e.key === "Escape") setNewName(null);
                       }}
-                    >
-                      <StatusIcon
-                        status={key}
-                        category={catalog.categoryOf(key)}
-                        color={catalog.colorOf(key)}
-                        icon={catalog.iconOf(key)}
-                        className="h-3.5 w-3.5"
-                      />
-                      <span className="truncate">{labelOf(key)}</span>
-                    </DropdownMenuItem>
-                  ))}
-                  {canCreateStatus && (
-                    <>
-                      {addable.length > 0 && <DropdownMenuSeparator />}
-                      <DropdownMenuItem onClick={() => setNewName("")}>
-                        <Plus className="size-3.5" />
-                        {t(($) => $.workflows.columns.new_status)}
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {newName !== null && (
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    autoFocus
-                    maxLength={64}
-                    value={newName}
-                    className="h-8 w-44"
-                    placeholder={t(($) => $.workflows.columns.name_placeholder)}
-                    onChange={(e) => setNewName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") addNew();
-                      if (e.key === "Escape") setNewName(null);
-                    }}
-                  />
-                  <Button size="sm" variant="ghost" onClick={addNew} disabled={!newName.trim()}>
-                    {t(($) => $.workflows.columns.add)}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-          {canEdit && missingStatuses.length > 0 && (
-            <p role="alert" className="mt-2.5 text-caption leading-5 text-destructive">
-              {t(($) => $.workflows.editor.status_needs_admin, {
-                names: missingStatuses.join(t(($) => $.workflows.list_separator)),
-              })}
-            </p>
-          )}
-          <p className="mt-2.5 text-caption leading-5 text-muted-foreground">{t(($) => $.workflows.editor.steps_hint)}</p>
+                    />
+                    <Button variant="secondary" className="h-9 px-4" onClick={addNew} disabled={!newName.trim()}>
+                      {t(($) => $.workflows.columns.add)}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            {canEdit && missingStatuses.length > 0 && (
+              <p role="alert" className="mt-2.5 text-caption leading-5 text-destructive">
+                {t(($) => $.workflows.editor.status_needs_admin, {
+                  names: missingStatuses.join(t(($) => $.workflows.list_separator)),
+                })}
+              </p>
+            )}
+            <p className="mt-2.5 text-label leading-5 text-muted-foreground">{t(($) => $.workflows.editor.steps_hint)}</p>
+          </div>
         </div>
 
         <StepDetail
@@ -624,20 +651,20 @@ function Breadcrumb({ onBack, current }: { onBack: () => void; current: string }
   const { t } = useT("issues");
   const workspace = useCurrentWorkspace();
   return (
-    <nav className="flex items-center gap-1.5 text-caption text-muted-foreground">
+    <nav className="flex min-w-0 flex-1 items-center gap-2 text-body text-muted-foreground">
       {workspace?.name && (
         <>
           <span className="truncate">{workspace.name}</span>
-          <ChevronRight aria-hidden className="size-3" />
+          <ChevronRight aria-hidden className="size-3 shrink-0" />
         </>
       )}
-      <button type="button" onClick={onBack} className="hover:text-foreground transition-colors">
+      <button type="button" onClick={onBack} className="shrink-0 transition-colors hover:text-foreground">
         {t(($) => $.workflows.settings.title)}
       </button>
       {current && (
         <>
-          <ChevronRight aria-hidden className="size-3" />
-          <span className="truncate text-foreground">{current}</span>
+          <ChevronRight aria-hidden className="size-3 shrink-0" />
+          <span className="truncate font-medium text-foreground">{current}</span>
         </>
       )}
     </nav>
@@ -714,9 +741,9 @@ function StepCard({
       ref={sortable?.ref}
       style={sortable?.style}
       className={cn(
-        "flex items-start gap-1 rounded-lg border px-2 py-2.5 transition-colors",
-        selected ? "border-foreground/20 bg-accent" : "border-surface-border bg-card hover:bg-accent/50",
-        off && !selected && "border-dashed bg-transparent",
+        "flex h-12.5 items-center gap-2 rounded-xl border-[1.5px] pl-2 pr-3 transition-colors duration-(--motion-fast) ease-out",
+        selected ? "border-foreground bg-field" : "border-transparent bg-field hover:bg-field-hover",
+        off && !selected && "border-dashed border-input bg-transparent hover:bg-transparent",
         sortable?.dragging && "z-10 shadow-[var(--surface-shadow)]",
       )}
     >
@@ -728,7 +755,7 @@ function StepCard({
             className="flex h-5 w-4 shrink-0 touch-none items-center justify-center rounded-xs cursor-grab text-muted-foreground active:cursor-grabbing"
             {...sortable.handle}
           >
-            <GripVertical className="size-3.5" />
+            <GripVertical className="size-3.25" />
           </button>
         </TooltipHint>
       ) : (
@@ -738,40 +765,40 @@ function StepCard({
         type="button"
         onClick={onSelect}
         aria-pressed={selected}
-        className={cn("min-w-0 flex-1 text-left", off && "opacity-60")}
+        className={cn("flex h-full min-w-0 flex-1 items-center gap-2 text-left", off && "opacity-60")}
       >
-        <span className="flex h-5 items-center gap-2">
-          {"status_key" in column ? (
-            <StatusIcon
-              status={column.status_key}
-              category={catalog.categoryOf(column.status_key)}
-              color={catalog.colorOf(column.status_key)}
-              icon={catalog.iconOf(column.status_key)}
-              className="h-3.5 w-3.5 shrink-0"
-            />
-          ) : (
-            <Plus aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
-          )}
-          <span className="min-w-0 truncate text-body font-medium">{label}</span>
+        {"status_key" in column ? (
+          <StatusIcon
+            status={column.status_key}
+            category={catalog.categoryOf(column.status_key)}
+            color={catalog.colorOf(column.status_key)}
+            icon={catalog.iconOf(column.status_key)}
+            className="h-3.5 w-3.5 shrink-0"
+          />
+        ) : (
+          <Plus aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
+        )}
+        <span className="flex min-w-21 max-w-[45%] shrink-0 items-center gap-1.5">
+          <span className="min-w-0 truncate text-body-lg font-semibold">{label}</span>
           {start && <Badge>{t(($) => $.workflows.editor.start)}</Badge>}
           {!("status_key" in column) && <Badge>{t(($) => $.workflows.editor.new_badge)}</Badge>}
         </span>
-        <span className="mt-1 flex min-w-0 items-center gap-1 text-caption text-muted-foreground">
+        <span className="flex min-w-0 flex-1 items-center gap-1.5 text-label text-muted-foreground">
           {off ? (
             <span className="truncate">{t(($) => $.workflows.editor.step_off_short)}</span>
           ) : who ? (
             <>
-              <CornerDownRight aria-hidden className="size-3 shrink-0" />
+              <CornerDownRight aria-hidden className="size-3.25 shrink-0" />
               <span className="shrink-0">{t(($) => $.workflows.editor.card_hand_to)}</span>
-              {actor && <ActorAvatar actorType={actor.type} actorId={actor.id} size="xs" profileLink={false} />}
-              <span className="min-w-0 truncate text-foreground">{actor ? getActorName(actor.type, actor.id) : who}</span>
+              {actor && <ActorAvatar actorType={actor.type} actorId={actor.id} size="sm" profileLink={false} />}
+              <span className="min-w-0 truncate font-medium text-foreground">{actor ? getActorName(actor.type, actor.id) : who}</span>
               {handoff?.handler.type === "agent" && nextLabel && (
-                <span className="shrink-0 truncate">· {t(($) => $.workflows.editor.card_then, { status: nextLabel })}</span>
+                <span className="ml-auto shrink-0 whitespace-nowrap pl-1">· {t(($) => $.workflows.editor.card_then, { status: nextLabel })}</span>
               )}
             </>
           ) : (
             <>
-              <UserRound aria-hidden className="size-3 shrink-0" />
+              <UserRound aria-hidden className="size-3.25 shrink-0" />
               <span className="truncate">{t(($) => $.workflows.handler.none)}</span>
             </>
           )}
@@ -779,8 +806,6 @@ function StepCard({
       </button>
       {toggle && (
         <Switch
-          size="sm"
-          className="mt-0.5"
           checked={toggle.checked}
           disabled={toggle.disabled}
           onCheckedChange={toggle.onChange}
@@ -793,7 +818,7 @@ function StepCard({
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="shrink-0 rounded-xs bg-muted px-1.5 py-0.5 text-micro text-muted-foreground">{children}</span>
+    <span className="shrink-0 rounded-sm bg-field px-1.5 py-px text-micro font-normal text-muted-foreground">{children}</span>
   );
 }
 
@@ -848,10 +873,10 @@ function StepDetail({
   );
 
   return (
-    <section className="min-w-0 rounded-xl border border-surface-border bg-card lg:sticky lg:top-4">
-      <header className="flex items-center gap-2 border-b border-surface-border px-5 py-3.5">
+    <section className="min-w-0 space-y-5 border-t border-surface-border p-6 lg:border-t-0 lg:border-l">
+      <header className="flex min-h-8 items-center gap-2">
         {key ? icon(key, "h-4 w-4 shrink-0") : <Plus aria-hidden className="size-4 shrink-0 text-muted-foreground" />}
-        <h3 className="min-w-0 truncate text-body font-semibold">{label}</h3>
+        <h3 className="min-w-0 truncate text-title-sm font-semibold">{label}</h3>
         {key ? (
           <code className="truncate font-mono text-caption text-muted-foreground">{key}</code>
         ) : (
@@ -860,16 +885,16 @@ function StepDetail({
         {onRemove && (
           <IconButton
             variant="ghost"
-            size="icon-sm"
+            size="icon"
             className="ml-auto text-muted-foreground"
             label={t(($) => $.workflows.editor.remove)}
             onClick={onRemove}
           >
-            <Trash2 className="size-3.5" />
+            <Trash2 className="size-4" />
           </IconButton>
         )}
       </header>
-      <div className="space-y-6 p-5">
+      <div className="space-y-5">
         <DetailField label={t(($) => $.workflows.editor.status)} hint={key ? t(($) => $.workflows.editor.status_hint) : t(($) => $.workflows.editor.status_new_hint)}>
           {statusOptions && canEdit ? (
             <DropdownMenu>
@@ -877,7 +902,7 @@ function StepDetail({
                 render={
                   <button
                     type="button"
-                    className="flex h-8 w-full max-w-sm items-center justify-between gap-2 rounded-md border border-input bg-background px-2.5 text-body transition-colors hover:bg-accent/50"
+                    className="flex h-11 w-full items-center justify-between gap-2 rounded-lg bg-field px-3.5 text-body transition-colors hover:bg-field-hover"
                   />
                 }
               >
@@ -898,7 +923,7 @@ function StepDetail({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex h-8 w-full max-w-sm items-center rounded-md border border-input bg-muted/40 px-2.5 text-body">
+            <div className="flex h-11 w-full items-center rounded-lg bg-surface-sunken px-3.5 text-body text-muted-foreground">
               {statusField}
             </div>
           )}
@@ -929,7 +954,7 @@ function StepDetail({
 function DetailField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <p className="text-caption font-medium">{label}</p>
+      <p className="text-label font-medium">{label}</p>
       {children}
       {hint && <p className="text-caption leading-5 text-muted-foreground">{hint}</p>}
     </div>

@@ -73,8 +73,13 @@ import {
   type MikaRuntimeSelection,
 } from "./mika-runtime-choice";
 import { Skeleton } from "@marvis/ui/components/ui/skeleton";
-import { CollectionPageHeader } from "../../layout/collection-page";
-import { PAGE_GUTTER, PAGE_RAIL, PageHeader } from "../../layout/page-header";
+import {
+  COLLECTION_TABLE_INSET,
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
+  CollectionPageHeader,
+} from "../../layout/collection-page";
+import { PAGE_RAIL, PageHeader } from "../../layout/page-header";
 import { cn } from "@marvis/ui/lib/utils";
 import {
   AppLink,
@@ -123,9 +128,23 @@ const COMING_SOON_SERVICES = [
 // string so Tailwind sees the arbitrary template.
 const GRID_COLS =
   "grid-cols-[0.5rem_minmax(160px,1fr)_112px_5.5rem_0.5rem] " +
-  "@2xl:grid-cols-[0.5rem_minmax(120px,1fr)_128px_64px_112px_136px_5.5rem_0.5rem]";
+  "@2xl:grid-cols-[0.5rem_minmax(120px,1fr)_128px_72px_168px_148px_5.5rem_0.5rem]";
 
 const OPTIONAL_CELL = "hidden @2xl:flex";
+
+// 表头单元格：13px 次要文字。
+const HEAD_CELL = "text-label";
+
+// 机器 / 云服务行：60px 高，细分隔线，悬停整行变浅灰。
+const ROW =
+  "h-auto min-h-15 border-b duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)";
+
+// 行图标角上的状态点、Harness 叠放图标的描边：跟随行底色，悬停时一起变色。
+const DOT_RING =
+  "ring-2 ring-card transition-shadow group-hover/row:ring-accent";
+
+// 引导行右侧的描边按钮：32px 药丸。
+const ROW_ACTION_BUTTON = "h-8 gap-1.5 px-3.5 text-label font-normal";
 
 function useNowTick(intervalMs = 30_000): number {
   const [now, setNow] = useState(() => Date.now());
@@ -329,7 +348,7 @@ export function RuntimesPage({
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className={cn(PAGE_RAIL, PAGE_GUTTER, "flex flex-col gap-3 py-4 sm:py-6")}>
+        <div className={cn(PAGE_RAIL, COLLECTION_TABLE_INSET, "flex flex-col gap-3 pb-6")}>
           <RuntimesToolbar
             query={query}
             onQueryChange={setQuery}
@@ -338,20 +357,24 @@ export function RuntimesPage({
             counts={statusCounts}
           />
 
-          <div className="@container overflow-hidden rounded-lg border bg-card">
+          <div className="@container overflow-hidden rounded-xl border bg-card">
             <ListGrid className={cn(GRID_COLS, "[&>[role=row]:last-child]:border-b-0")}>
-              <ListGridHeader className="static border-b bg-card after:hidden">
-                <ListGridHeaderCell>{t(($) => $.page.columns.name)}</ListGridHeaderCell>
-                <ListGridHeaderCell className={OPTIONAL_CELL}>
+              <ListGridHeader className="static h-10 border-b bg-card after:hidden">
+                <ListGridHeaderCell className={HEAD_CELL}>
+                  {t(($) => $.page.columns.name)}
+                </ListGridHeaderCell>
+                <ListGridHeaderCell className={cn(OPTIONAL_CELL, HEAD_CELL)}>
                   {t(($) => $.page.columns.harness)}
                 </ListGridHeaderCell>
-                <ListGridHeaderCell className={OPTIONAL_CELL}>
+                <ListGridHeaderCell className={cn(OPTIONAL_CELL, HEAD_CELL)}>
                   {t(($) => $.page.columns.agents)}
                 </ListGridHeaderCell>
-                <ListGridHeaderCell className={OPTIONAL_CELL}>
+                <ListGridHeaderCell className={cn(OPTIONAL_CELL, HEAD_CELL)}>
                   {t(($) => $.page.columns.workload)}
                 </ListGridHeaderCell>
-                <ListGridHeaderCell>{t(($) => $.page.columns.status)}</ListGridHeaderCell>
+                <ListGridHeaderCell className={HEAD_CELL}>
+                  {t(($) => $.page.columns.status)}
+                </ListGridHeaderCell>
                 <ListGridHeaderCell aria-hidden="true" />
               </ListGridHeader>
 
@@ -392,7 +415,10 @@ export function RuntimesPage({
                           href="/download"
                           target="_blank"
                           rel="noreferrer"
-                          className={buttonVariants({ variant: "outline", size: "sm" })}
+                          className={cn(
+                            buttonVariants({ variant: "outline", size: "sm" }),
+                            ROW_ACTION_BUTTON,
+                          )}
                         >
                           <Download aria-hidden="true" className="size-3.5" />
                           {t(($) => $.page.rows.download_desktop)}
@@ -409,6 +435,7 @@ export function RuntimesPage({
                         <Button
                           variant="outline"
                           size="sm"
+                          className={ROW_ACTION_BUTTON}
                           onClick={() => setShowConnectDialog(true)}
                         >
                           {t(($) => $.page.rows.view_commands)}
@@ -495,8 +522,8 @@ function AddRuntimeMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button size="sm" className="gap-1">
-            <Plus aria-hidden="true" className="size-3.5" />
+          <Button size="sm" className="h-9 gap-1.5 px-3 text-body font-medium">
+            <Plus aria-hidden="true" className="size-4" />
             {t(($) => $.page.add)}
             <ChevronDown aria-hidden="true" className="size-3.5 opacity-70" />
           </Button>
@@ -597,8 +624,8 @@ function AddMenuItem({
   trailing?: ReactNode;
 } & Omit<React.ComponentProps<typeof DropdownMenuItem>, "children" | "title">) {
   return (
-    <DropdownMenuItem className="gap-2.5 px-2 py-1.5" {...props}>
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-background">
+    <DropdownMenuItem className="min-h-11 gap-2.5 px-2 py-1" {...props}>
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-row border bg-background">
         {icon}
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
@@ -634,33 +661,34 @@ function RuntimesToolbar({
     offline: t(($) => $.page.filters.offline),
   };
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className="flex h-14 min-w-0 items-center gap-2 px-2">
       <div className="relative min-w-0 flex-1 sm:flex-none">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           aria-label={t(($) => $.page.search_placeholder)}
           placeholder={t(($) => $.page.search_placeholder)}
-          className="h-8 w-full pl-8 text-body sm:w-64"
+          className="h-9 w-full rounded-lg border-0 bg-field pl-9 text-body hover:bg-field-hover focus-visible:bg-field-hover sm:w-66"
         />
       </div>
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-2">
         {STATUS_FILTERS.map((filter) => (
           <Button
             key={filter}
             variant="outline"
             size="sm"
             aria-pressed={statusFilter === filter}
-            className={
+            className={cn(
+              COLLECTION_TOOLBAR_BUTTON,
               statusFilter === filter
-                ? "gap-1.5 bg-accent text-accent-foreground hover:bg-accent/80"
-                : "gap-1.5 text-muted-foreground"
-            }
+                ? "bg-accent font-medium text-foreground hover:bg-accent"
+                : COLLECTION_TOOLBAR_BUTTON_IDLE,
+            )}
             onClick={() => onStatusFilterChange(filter)}
           >
             {labels[filter]}
-            <span className="tabular-nums text-caption text-muted-foreground">
+            <span className="font-normal tabular-nums text-muted-foreground">
               {counts[filter]}
             </span>
           </Button>
@@ -674,10 +702,10 @@ function GroupHeader({ title, count }: { title: string; count: number }) {
   return (
     <div
       role="row"
-      className="col-span-full flex h-9 min-w-0 items-center gap-2 border-b bg-muted/40 px-4 text-caption"
+      className="col-span-full flex h-9 min-w-0 items-center gap-2 border-b bg-surface-sunken px-4 text-label"
     >
       <span className="font-semibold text-foreground">{title}</span>
-      <span className="font-mono tabular-nums text-muted-foreground">{count}</span>
+      <span className="tabular-nums text-muted-foreground">{count}</span>
     </div>
   );
 }
@@ -696,12 +724,12 @@ function ActionRow({
   return (
     <div
       role="row"
-      className="col-span-full flex min-h-14 items-center gap-3 border-b px-4 py-2.5"
+      className="col-span-full flex min-h-15 items-center gap-3 border-b px-4 py-2.5"
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-dashed text-muted-foreground">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-dashed border-input text-muted-foreground">
         <Icon aria-hidden="true" className="size-4" />
       </span>
-      <span className="min-w-0 flex-1">
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="block truncate text-body font-medium">{title}</span>
         <span className="block truncate text-caption text-muted-foreground">
           {description}
@@ -720,7 +748,7 @@ function RowTile({
   dot?: ReactNode;
 }) {
   return (
-    <span className="relative flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background">
+    <span className="relative flex size-8 shrink-0 items-center justify-center rounded-md border bg-card">
       {children}
       {dot}
     </span>
@@ -745,7 +773,7 @@ function NameCell({
   return (
     <ListGridCell className="gap-3 py-2.5">
       {tile}
-      <span className="min-w-0 flex-1">
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex min-w-0 items-center gap-2">
           {href ? (
             <AppLink
@@ -777,7 +805,7 @@ function NameCell({
 
 function EmptyCell({ optional = true }: { optional?: boolean }) {
   return (
-    <ListGridCell className={cn(optional && OPTIONAL_CELL, "text-caption text-faint-foreground")}>
+    <ListGridCell className={cn(optional && OPTIONAL_CELL, "text-label text-faint-foreground")}>
       —
     </ListGridCell>
   );
@@ -804,13 +832,13 @@ function WorkloadText({
   const { t } = useT("runtimes");
   if (running + queued === 0) {
     return (
-      <span className="text-caption text-muted-foreground">
+      <span className="truncate text-label text-muted-foreground">
         {t(($) => $.machine.metrics.workload_idle)}
       </span>
     );
   }
   return (
-    <span className="truncate text-caption tabular-nums">
+    <span className="truncate text-label tabular-nums">
       {t(($) => $.machine.metrics.workload_hint, { running, queued })}
     </span>
   );
@@ -856,7 +884,7 @@ function MachineRow({
 
   return (
     <ListGridRow
-      className="h-auto min-h-14 cursor-pointer border-b"
+      className={cn(ROW, "cursor-pointer")}
       {...rowLink(href, machine.title)}
     >
       <NameCell
@@ -865,7 +893,7 @@ function MachineRow({
             dot={
               <HealthDot
                 health={machine.health}
-                className="absolute -bottom-0.5 -right-0.5 ring-2 ring-card"
+                className={cn("absolute -right-0.75 -bottom-0.75", DOT_RING)}
               />
             }
           >
@@ -899,7 +927,7 @@ function MachineRow({
       ) : (
         <EmptyCell />
       )}
-      <ListGridCell className="gap-1.5 text-caption">
+      <ListGridCell className="gap-1.5 text-label">
         {starting ? (
           <>
             <Loader2 aria-hidden="true" className="size-3 animate-spin text-muted-foreground" />
@@ -909,7 +937,7 @@ function MachineRow({
           </>
         ) : (
           <>
-            <HealthIcon health={machine.health} />
+            <HealthIcon health={machine.health} className="size-3.5 shrink-0" />
             <span className={cn("truncate", !online && "text-muted-foreground")}>
               {healthLabel(machine.health)}
               {!online && machine.lastSeenAt
@@ -943,12 +971,17 @@ function QoderRow({
 
   if (!connection.configured) {
     return (
-      <ListGridRow className="h-auto min-h-14 border-b">
+      <ListGridRow className={ROW}>
         <NameCell
           tile={
             <RowTile
               dot={
-                <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-warning ring-2 ring-card" />
+                <span
+                  className={cn(
+                    "absolute -right-0.75 -bottom-0.75 size-2 rounded-full bg-warning",
+                    DOT_RING,
+                  )}
+                />
               }
             >
               {logo}
@@ -966,7 +999,12 @@ function QoderRow({
           </Badge>
         </ListGridCell>
         <ListGridCell className="justify-end">
-          <Button variant="outline" size="sm" onClick={onConnect}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7.5 px-3.5 text-label font-normal"
+            onClick={onConnect}
+          >
             {t(($) => $.page.rows.connect)}
           </Button>
         </ListGridCell>
@@ -996,7 +1034,7 @@ function QoderRow({
 
   return (
     <ListGridRow
-      className="h-auto min-h-14 cursor-pointer border-b"
+      className={cn(ROW, "cursor-pointer")}
       {...rowLink(detailHref, title)}
     >
       <NameCell
@@ -1005,7 +1043,8 @@ function QoderRow({
             dot={
               <span
                 className={cn(
-                  "absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-2 ring-card",
+                  "absolute -right-0.75 -bottom-0.75 size-2 rounded-full",
+                  DOT_RING,
                   dotTone,
                 )}
               />
@@ -1032,7 +1071,7 @@ function QoderRow({
       ) : (
         <EmptyCell />
       )}
-      <ListGridCell className="gap-1.5 text-caption">
+      <ListGridCell className="gap-1.5 text-label">
         <span aria-hidden="true" className={cn("size-1.5 rounded-full", dotTone)} />
         <span
           className={cn(
@@ -1060,7 +1099,7 @@ function ComingSoonRow({
 }) {
   const { t } = useT("runtimes");
   return (
-    <ListGridRow className="h-auto min-h-14 border-b hover:bg-transparent">
+    <ListGridRow className={cn(ROW, "hover:bg-transparent")}>
       <NameCell
         tile={
           <RowTile>
@@ -1149,7 +1188,7 @@ function MikaSetupCard({
 
   return (
     <>
-      <div className="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center">
+      <div className="flex animate-content-rise flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center">
         <span
           role="img"
           aria-label={t(($) => $.mika_setup.title)}
@@ -1158,14 +1197,14 @@ function MikaSetupCard({
           {MIKA_PLACEHOLDER_EMOJI}
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-body font-semibold">
+          <h2 className="text-body-lg font-semibold">
             {t(($) => $.mika_setup.title)}
           </h2>
           <p className="mt-1 text-body leading-relaxed text-muted-foreground">
             {t(($) => $.mika_setup.description)}
           </p>
         </div>
-        <Button className="shrink-0" onClick={() => setOpen(true)}>
+        <Button className="h-9 shrink-0 px-4.5" onClick={() => setOpen(true)}>
           {t(($) => $.mika_setup.action)}
         </Button>
       </div>
@@ -1229,7 +1268,7 @@ function OrphanRuntimeProfiles({
           {t(($) => $.profiles.unassigned_description)}
         </p>
       </div>
-      <div className="overflow-hidden rounded-lg border bg-card">
+      <div className="overflow-hidden rounded-xl border bg-card">
         <RuntimeList runtimes={runtimes} now={now} />
       </div>
     </section>
@@ -1241,17 +1280,25 @@ function ProviderIconStack({ providers }: { providers: string[] }) {
   const extra = providers.length - visible.length;
   if (visible.length === 0) return null;
   return (
-    <span className="flex min-w-0 items-center -space-x-1">
+    <span className="flex min-w-0 items-center -space-x-1.5">
       {visible.map((provider) => (
         <span
           key={provider}
-          className="inline-flex h-5 w-5 items-center justify-center rounded-xs bg-background ring-1 ring-border"
+          className={cn(
+            "inline-flex size-6 items-center justify-center rounded-sm bg-muted",
+            DOT_RING,
+          )}
         >
-          <ProviderLogo provider={provider} className="h-3.5 w-3.5" />
+          <ProviderLogo provider={provider} className="size-3.5" />
         </span>
       ))}
       {extra > 0 && (
-        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-xs bg-muted px-1 text-micro font-medium text-muted-foreground ring-1 ring-border">
+        <span
+          className={cn(
+            "inline-flex h-6 min-w-6 items-center justify-center rounded-sm bg-muted px-1 text-micro font-semibold text-muted-foreground",
+            DOT_RING,
+          )}
+        >
           +{extra}
         </span>
       )}
@@ -1262,20 +1309,20 @@ function ProviderIconStack({ providers }: { providers: string[] }) {
 function RuntimesPageSkeleton() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader>
-        <Skeleton className="h-4 w-24" />
+      <PageHeader className="h-18 border-b-0">
+        <Skeleton className="h-4.5 w-30 rounded-full" />
       </PageHeader>
-      <div className={cn(PAGE_RAIL, PAGE_GUTTER, "py-6")}>
-        <div className="overflow-hidden rounded-lg border">
+      <div className={cn(PAGE_RAIL, COLLECTION_TABLE_INSET, "pt-3")}>
+        <div className="overflow-hidden rounded-xl border">
           {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
-              className="flex h-[76px] items-center gap-3 border-b px-4 last:border-b-0"
+              className="flex h-18 items-center gap-3 border-b px-4 last:border-b-0"
             >
-              <Skeleton className="h-10 w-10 rounded-lg" />
+              <Skeleton className="size-10 rounded-lg" />
               <div className="flex-1">
-                <Skeleton className="h-4 w-44" />
-                <Skeleton className="mt-2 h-3 w-28" />
+                <Skeleton className="h-3.5 w-44 rounded-full" />
+                <Skeleton className="mt-2 h-3 w-28 rounded-full" />
               </div>
               <Skeleton className="hidden h-4 w-24 md:block" />
               <Skeleton className="hidden h-4 w-28 lg:block" />

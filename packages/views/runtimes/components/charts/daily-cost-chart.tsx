@@ -13,6 +13,7 @@ import {
 } from "@marvis/ui/components/ui/chart";
 import type { DailyCostStackData } from "../../utils";
 import { useT } from "../../../i18n";
+import { CHART_MONO, monoBarFill } from "./chart-tones";
 
 // Four-segment stack (input / output / cache read / cache write) — every
 // category `estimateCost` bills for, so the bars add up to the same money the
@@ -20,15 +21,13 @@ import { useT } from "../../../i18n";
 // see, so a category left out of this config is a category left out of the
 // user's total (MUL-6334: cache read alone was >50% of some buckets).
 //
-// Series → CSS chart token: input/output/cache-write keep chart-1/2/3, and
-// cache read takes chart-4 in the output→cache-write slot — the same colour
-// and position DailyTokensChart gives it, so the cost and token views of the
-// same day read as one chart at two scales.
+// 单色方案与 DailyTokensChart 相同：同一系列用同一灰阶，费用和 Token
+// 两个视图读起来是同一张图的两种刻度。
 export const costStackConfig = {
-  input: { label: "Input", color: "var(--chart-1)" },
-  output: { label: "Output", color: "var(--chart-2)" },
-  cacheRead: { label: "Cache read", color: "var(--chart-4)" },
-  cacheWrite: { label: "Cache write", color: "var(--chart-3)" },
+  input: { label: "Input", color: CHART_MONO[1] },
+  output: { label: "Output", color: CHART_MONO[2] },
+  cacheRead: { label: "Cache read", color: CHART_MONO[4] },
+  cacheWrite: { label: "Cache write", color: CHART_MONO[3] },
 } satisfies ChartConfig;
 
 export function DailyCostChart({ data }: { data: DailyCostStackData[] }) {
@@ -38,7 +37,7 @@ export function DailyCostChart({ data }: { data: DailyCostStackData[] }) {
   // recharts render an empty axis would be both ugly and uninformative.
   return (
     <ChartContainer config={costStackConfig} className="aspect-[3/1] w-full">
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -55,6 +54,7 @@ export function DailyCostChart({ data }: { data: DailyCostStackData[] }) {
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               formatter={(value, name) =>
@@ -87,25 +87,25 @@ export function DailyCostChart({ data }: { data: DailyCostStackData[] }) {
         <Bar
           dataKey="input"
           stackId="cost"
-          fill="var(--color-input)"
+          {...monoBarFill("input")}
           radius={[0, 0, 0, 0]}
         />
         <Bar
           dataKey="output"
           stackId="cost"
-          fill="var(--color-output)"
+          {...monoBarFill("output")}
           radius={[0, 0, 0, 0]}
         />
         <Bar
           dataKey="cacheRead"
           stackId="cost"
-          fill="var(--color-cacheRead)"
+          {...monoBarFill("cacheRead")}
           radius={[0, 0, 0, 0]}
         />
         <Bar
           dataKey="cacheWrite"
           stackId="cost"
-          fill="var(--color-cacheWrite)"
+          {...monoBarFill("cacheWrite")}
           radius={[3, 3, 0, 0]}
         />
       </BarChart>

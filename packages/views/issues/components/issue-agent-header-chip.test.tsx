@@ -356,7 +356,7 @@ describe("IssueAgentHeaderChip", () => {
     const trigger = screen.getByRole("button", { name: "Walt is queued" });
     expect(trigger.querySelector("[data-slot='avatar']")).not.toBeNull();
     expect(trigger.className).toContain("h-9 min-w-9");
-    expect(trigger.className).toContain("md:h-7 md:min-w-0");
+    expect(trigger.className).toContain("md:h-7.5 md:min-w-0");
     const label = screen.getByText("Walt is queued");
     expect(label.className).toContain("hidden");
     expect(label.className).toContain("md:inline");

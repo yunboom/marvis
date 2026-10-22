@@ -85,6 +85,12 @@ export interface ViewBarBuiltin {
 
 /** Width shared by every tab: fits short names, truncates long ones. */
 const TAB_MAX_W = "max-w-40";
+
+// 视图标签：32px 药丸，未选中描边 + 次要文字，选中为浅灰实底、无描边
+const TAB_BASE = "h-8 px-3.5 text-body";
+const TAB_IDLE = "font-normal text-muted-foreground";
+const TAB_ACTIVE =
+  "border-transparent bg-secondary font-medium text-foreground hover:bg-secondary hover:text-foreground";
 /** Reserved px beside the tabs, by what actually renders there: the [⧉]
  *  menu is permanent; the "more" trigger exists only while something is
  *  overflowed; the promoted active tab is the wide shape. */
@@ -154,9 +160,8 @@ function BarTabButton({
       size="sm"
       className={cn(
         TAB_MAX_W,
-        active
-          ? "bg-accent text-accent-foreground hover:bg-accent/80"
-          : "text-muted-foreground",
+        TAB_BASE,
+        active ? TAB_ACTIVE : TAB_IDLE,
       )}
       onClick={onClick}
       tabIndex={onClick ? undefined : -1}
@@ -377,9 +382,8 @@ export function ViewBar({
               size="sm"
               className={cn(
                 TAB_MAX_W,
-                active
-                  ? "bg-accent text-accent-foreground hover:bg-accent/80"
-                  : "text-muted-foreground",
+                TAB_BASE,
+                active ? TAB_ACTIVE : TAB_IDLE,
               )}
               onClick={() => onSelectView(active ? null : view)}
             />
@@ -491,10 +495,7 @@ export function ViewBar({
               <Button
                 variant="outline"
                 size="sm"
-                className={cn(
-                  TAB_MAX_W,
-                  "shrink-0 gap-1 bg-accent text-accent-foreground hover:bg-accent/80",
-                )}
+                className={cn(TAB_MAX_W, TAB_BASE, TAB_ACTIVE, "shrink-0 gap-1")}
               >
                 <span className="truncate">{activeView.name}</span>
                 <ChevronDown className="size-3 shrink-0" />
@@ -504,7 +505,7 @@ export function ViewBar({
                 variant="outline"
                 size="sm"
                 aria-label={t(($) => $.view_bar.more_label)}
-                className="shrink-0 px-1.5 text-muted-foreground"
+                className="size-8 shrink-0 px-0 text-muted-foreground"
               >
                 <MoreHorizontal className="size-3.5" />
               </Button>
@@ -547,9 +548,9 @@ export function ViewBar({
                     variant="ghost"
                     size="icon-sm"
                     aria-label={t(($) => $.view_bar.menu_label)}
-                    className="shrink-0 text-muted-foreground"
+                    className="size-8 shrink-0 rounded-full text-muted-foreground"
                   >
-                    <Layers className="size-3.5" />
+                    <Layers className="size-4" />
                   </Button>
                 }
               />

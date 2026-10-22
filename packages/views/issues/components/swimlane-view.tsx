@@ -5,6 +5,7 @@ import {
   statusColumnKeys,
 } from "@marvis/core/issues";
 import { memo, useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useReducedMotion } from "motion/react";
 import { cn } from "@marvis/ui/lib/utils";
 import { useIssuePeekActions } from "../surface/peek-context";
 import {
@@ -53,7 +54,7 @@ import {
 } from "@marvis/ui/components/ui/dropdown-menu";
 import { sortIssues } from "../utils/sort";
 import { BUILT_IN_STATUS_ORDER, STATUS_CONFIG } from "@marvis/core/issues/config";
-import { DraggableBoardCard, BoardCardContent } from "./board-card";
+import { DraggableBoardCard, BoardCardContent, DragLift, issueDropAnimation } from "./board-card";
 import { StatusIcon } from "./status-icon";
 import { Button } from "@marvis/ui/components/ui/button";
 import { StatusHeading } from "./status-heading";
@@ -1056,6 +1057,8 @@ function SwimLaneViewImpl({
       activationConstraint: { distance: 5 },
     }),
   );
+  const reducedMotion = useReducedMotion() ?? false;
+  const dropAnimation = useMemo(() => issueDropAnimation(reducedMotion), [reducedMotion]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     isDraggingRef.current = true;
@@ -1552,9 +1555,9 @@ function SwimLaneViewImpl({
         </div>
       </div>
 
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={dropAnimation}>
         {activeIssue ? (
-          <div className="w-[280px] rotate-2 scale-105 cursor-grabbing opacity-90 shadow-lg shadow-black/10">
+          <DragLift className="w-70">
             <BoardCardContent
               issue={activeIssue}
               childProgress={childProgressMap.get(activeIssue.id)}
@@ -1564,7 +1567,7 @@ function SwimLaneViewImpl({
                   : undefined
               }
             />
-          </div>
+          </DragLift>
         ) : null}
       </DragOverlay>
     </DndContext>
@@ -1684,11 +1687,11 @@ function DraggableSwimLane({
           )}
           <span className="truncate text-body font-semibold">{lane.title}</span>
           {lane.identifier && (
-            <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-micro font-medium tabular-nums text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-field px-1.5 py-0.5 text-micro font-medium tabular-nums text-muted-foreground">
               {lane.identifier}
             </span>
           )}
-          <span className="shrink-0 text-caption tabular-nums text-muted-foreground">
+          <span className="shrink-0 text-label tabular-nums text-muted-foreground">
             {laneTotal}
           </span>
         </button>
@@ -1811,8 +1814,8 @@ function SwimLaneCell({
     <div className={`flex min-h-[120px] flex-col rounded-xl ${cfg?.columnBg ?? "bg-muted/40"} p-2`}>
       <div
         ref={setNodeRef}
-        className={`flex-1 space-y-2 rounded-sm p-1 transition-colors ${
-          isOver ? "bg-accent/60" : ""
+        className={`flex-1 space-y-2 rounded-lg p-1 transition-colors duration-(--motion-fast) ease-out ${
+          isOver ? "bg-surface-hover" : ""
         }`}
       >
         <SortableContext items={issueIds} strategy={verticalListSortingStrategy}>

@@ -189,15 +189,17 @@ export function KpiCard({
         ? "text-success"
         : "";
   return (
-    <div className="flex flex-col gap-2 p-5">
-      <div className="text-micro font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-      <div className={`text-display font-semibold leading-none tabular-nums ${valueClass}`}>
+    <div className="flex min-w-0 flex-col px-6 py-4.5">
+      <div className="truncate text-label text-muted-foreground">{label}</div>
+      <div
+        className={`mt-2 text-[1.75rem] leading-9 font-bold tracking-[-0.01em] tabular-nums ${valueClass}`}
+      >
         {value}
       </div>
       {hint != null && (
-        <div className="text-caption text-muted-foreground">{hint}</div>
+        <div className="mt-1 truncate text-caption leading-4.5 text-muted-foreground">
+          {hint}
+        </div>
       )}
     </div>
   );

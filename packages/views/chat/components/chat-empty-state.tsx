@@ -45,27 +45,26 @@ export function EmptyState({
           actorType="agent"
           actorId={agent.id}
           size="2xl"
-          className="ring-1 ring-inset ring-border"
         />
       )}
-      <div className="max-w-sm space-y-1 text-center">
-        <h3 className="text-title-sm font-semibold">
+      <div className="max-w-100 space-y-1 text-center">
+        <h3 className="mb-1 text-title-lg font-semibold">
           {agent
             ? t(($) => $.empty_state.chat_with_named, { name: agent.name })
             : t(($) => $.empty_state.first_time_title)}
         </h3>
         {description && (
-          <p className="text-body text-muted-foreground">{description}</p>
+          <p className="text-body leading-relaxed text-muted-foreground">{description}</p>
         )}
         {!hasSessions && (
-          <p className="text-body text-muted-foreground">
+          <p className="text-body leading-relaxed text-muted-foreground">
             {t(($) => $.empty_state.first_time_actions)}
           </p>
         )}
       </div>
       {agent ? (
         <div
-          className="w-full max-w-sm space-y-2"
+          className="w-full max-w-100 space-y-2"
           aria-label={t(($) => $.conversation_starters.aria_label)}
         >
           <ConversationStarterList starters={starters} onPick={onPickPrompt} />
@@ -73,7 +72,7 @@ export function EmptyState({
             <div className="flex justify-center pt-1">
               <AppLink
                 href={customizeHref}
-                className="inline-flex items-center gap-1.5 text-caption text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
               >
                 <Settings2 className="size-3.5" aria-hidden="true" />
                 {t(($) => $.conversation_starters.customize)}

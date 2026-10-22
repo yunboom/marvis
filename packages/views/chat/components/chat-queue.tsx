@@ -82,7 +82,7 @@ export function ChatQueue({
       // queue reads as emerging from behind the input. z-0 keeps it there even
       // while the entrance animation's opacity/transform spawns a stacking
       // context. The composer's own chrome never changes.
-      className={cn(CHAT_GUTTER, "relative z-0 -mb-3")}
+      className={cn(CHAT_GUTTER, "relative z-0 -mb-3.5")}
       aria-live="polite"
       aria-busy={busyAction !== null}
     >
@@ -91,18 +91,18 @@ export function ChatQueue({
           data-slot="chat-queue"
           aria-label={t(($) => $.queue.title, { count: tasks.length })}
           className={cn(
-            // Quiet secondary surface: border only, no shadow, so the composer
-            // below stays the visually dominant card. pb-4 = the 12px hidden
-            // behind the composer plus a visible 4px breathing room above it.
+            // Quiet secondary surface: sunken grey with a hairline, no shadow, so
+            // the composer below stays the visually dominant card. pb-4.5 = the
+            // 14px hidden behind the composer plus a visible 4px breathing room.
             // mx-3 pulls the rear card in from the composer's edges so the
             // stack reads as two distinct layers.
-            "mx-3 overflow-hidden rounded-lg border border-surface-border bg-surface pb-4",
+            "mx-3 overflow-hidden rounded-lg border border-border bg-surface-sunken pb-4.5",
             "animate-in fade-in slide-in-from-bottom-2 duration-300",
           )}
         >
           <div
             data-slot="chat-queue-list"
-            className="max-h-40 overflow-y-auto px-2 py-1"
+            className="max-h-40 overflow-y-auto px-2 pt-1"
           >
             {tasks.map((task) => {
               const sendNowKey = `send-now:${task.task_id}`;
@@ -113,7 +113,7 @@ export function ChatQueue({
                 <div
                   key={task.task_id}
                   data-slot="chat-queue-row"
-                  className="flex min-h-7 min-w-0 items-center gap-2 rounded-md px-1.5 py-0.5 text-caption animate-in fade-in duration-200"
+                  className="flex min-h-7.5 min-w-0 items-center gap-2 rounded-row px-1 text-label animate-in fade-in duration-200"
                 >
                   <ListEnd
                     data-slot="chat-queue-item-icon"

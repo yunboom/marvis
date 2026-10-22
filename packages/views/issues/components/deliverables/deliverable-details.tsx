@@ -228,7 +228,7 @@ function DeliverableInfo({
             {onLocate && (
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-md border border-input px-2 py-1 text-caption text-foreground transition-colors hover:bg-secondary"
+                className="inline-flex items-center gap-1.5 rounded-full border border-input px-2.5 py-1 text-caption text-foreground transition-colors hover:bg-secondary"
                 onClick={onLocate}
               >
                 <MessageSquareText className="size-3.5" />
@@ -255,7 +255,7 @@ function DeliverableInfo({
                   <button
                     type="button"
                     className={cn(
-                      "aspect-square overflow-hidden rounded-md ring-1 transition-shadow",
+                      "aspect-square overflow-hidden rounded-row ring-1 transition-shadow",
                       current
                         ? "ring-2 ring-foreground"
                         : "ring-border hover:ring-foreground/40",

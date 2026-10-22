@@ -181,7 +181,7 @@ function CreateRunHint({
       <div className="overflow-hidden">
         <div
           aria-live="polite"
-          className="flex items-center gap-1.5 px-4 pb-1 pt-0.5 text-micro text-muted-foreground"
+          className="flex items-center gap-1.5 px-5 pb-1.5 text-caption text-muted-foreground"
         >
           {avatarId && (
             <ActorAvatar
@@ -214,7 +214,7 @@ function WorkflowHandoffHint({ projectId, status }: { projectId?: string; status
   if (!label) return null;
   const actor = stepHandlerActor(step, project);
   return (
-    <div aria-live="polite" className="flex items-center gap-1.5 px-4 pb-1 pt-0.5 text-micro text-muted-foreground">
+    <div aria-live="polite" className="flex items-center gap-1.5 px-5 pb-1.5 text-caption text-muted-foreground">
       {actor && <ActorAvatar actorType={actor.type} actorId={actor.id} size="sm" profileLink={false} />}
       <span className="truncate">{t(($) => $.workflows.create_handoff_hint, { name: label })}</span>
     </div>
@@ -653,14 +653,14 @@ export function ManualCreatePanel({
       // reset + close/keep-open happens in onAccepted once we report success.
       {
         toast.custom((toastId) => (
-          <div className="bg-popover text-popover-foreground border rounded-lg shadow-lg p-4 w-[360px]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center justify-center size-5 rounded-full bg-emerald-500/15 text-emerald-500">
+          <div className="w-[360px] rounded-lg border border-border bg-popover px-4 py-3.5 text-popover-foreground shadow-toast">
+            <div className="flex items-center gap-2">
+              <div className="flex size-5 items-center justify-center rounded-full bg-success/15 text-success">
                 <Check className="size-3" />
               </div>
               <span className="text-body font-medium">{t(($) => $.create_issue.toast_created)}</span>
             </div>
-            <div className="flex items-center gap-2 text-body text-muted-foreground ml-7">
+            <div className="mt-1.5 ml-7 flex items-center gap-1.5 text-label text-muted-foreground">
               <StatusIcon
                 status={issue.status}
                 icon={iconOf(issue.status)}
@@ -675,7 +675,7 @@ export function ManualCreatePanel({
                 would throw here. */}
             <button
               type="button"
-              className="ml-7 mt-2 text-body text-primary hover:underline cursor-pointer"
+              className="ml-7 mt-2 text-label font-medium text-foreground underline underline-offset-3 cursor-pointer"
               onClick={() => {
                 router.push(p.issueDetail(issue.id));
                 toast.dismiss(toastId);
@@ -767,23 +767,23 @@ export function ManualCreatePanel({
         if (dup) {
           toast.custom(
             (toastId) => (
-              <div className="bg-popover text-popover-foreground border rounded-lg shadow-lg p-4 w-[360px]">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center size-5 rounded-full bg-amber-500/15 text-amber-500">
+              <div className="w-[360px] rounded-lg border border-border bg-popover px-4 py-3.5 text-popover-foreground shadow-toast">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-5 items-center justify-center rounded-full bg-warning/15 text-warning">
                     <AlertTriangle className="size-3" />
                   </div>
                   <span className="text-body font-medium">
                     {t(($) => $.create_issue.toast_duplicate_title)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-body text-muted-foreground ml-7">
+                <div className="mt-1.5 ml-7 flex items-center gap-1.5 text-label text-muted-foreground">
                   <span className="truncate">{dup.issue.identifier} – {dup.issue.title}</span>
                 </div>
                 {/* See the created-issue toast above: toast content lives
                     outside NavigationProvider, so this stays a button. */}
                 <button
                   type="button"
-                  className="ml-7 mt-2 text-body text-primary hover:underline cursor-pointer"
+                  className="ml-7 mt-2 text-label font-medium text-foreground underline underline-offset-3 cursor-pointer"
                   onClick={() => {
                     router.push(p.issueDetail(dup.issue.id));
                     toast.dismiss(toastId);
@@ -924,7 +924,7 @@ export function ManualCreatePanel({
       // would otherwise stay a fully lit, pressable-looking primary button.
       // Deliberately no `pointer-events-none`: this control still has to hover
       // its tooltip and take the click that focuses the title.
-      className="justify-self-end aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:active:translate-y-0"
+      className="h-8.5 gap-2 justify-self-end pr-2 pl-4 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:active:translate-y-0"
     >
       {submitState === "submitting" ? (
         t(($) => $.create_issue.submitting)
@@ -955,8 +955,8 @@ export function ManualCreatePanel({
             <DialogTitle className="sr-only">{t(($) => $.create_issue.sr_manual)}</DialogTitle>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pt-3 pb-2 shrink-0">
-              <div className="flex items-center gap-1.5 text-caption">
+            <div className="flex items-center justify-between pt-3.5 pr-3 pb-1.5 pl-5 shrink-0">
+              <div className="flex items-center gap-1.5 text-label">
                 <span className="text-muted-foreground">{workspaceName}</span>
                 <ChevronRight className="size-3 text-faint-foreground" />
                 <span className="font-medium">{t(($) => $.create_issue.manual_breadcrumb)}</span>
@@ -969,9 +969,9 @@ export function ManualCreatePanel({
                         type="button"
                         onClick={() => setIsExpanded(!isExpanded)}
                         aria-label={isExpanded ? t(($) => $.common.collapse_tooltip) : t(($) => $.common.expand_tooltip)}
-                        className="rounded-sm p-1.5 opacity-70 hover:opacity-100 hover:bg-accent/60 transition-all cursor-pointer"
+                        className="flex size-7.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground cursor-pointer"
                       >
-                        {isExpanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                        {isExpanded ? <Minimize2 className="size-[15px]" /> : <Maximize2 className="size-[15px]" />}
                       </button>
                     }
                   />
@@ -988,9 +988,9 @@ export function ManualCreatePanel({
                         type="button"
                         onClick={onClose}
                         aria-label={t(($) => $.common.close)}
-                        className="rounded-sm p-1.5 opacity-70 hover:opacity-100 hover:bg-accent/60 transition-all cursor-pointer"
+                        className="flex size-7.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground cursor-pointer"
                       >
-                        <XIcon className="size-4" />
+                        <XIcon className="size-[15px]" />
                       </button>
                     }
                   />
@@ -1000,14 +1000,14 @@ export function ManualCreatePanel({
             </div>
 
             {/* Title */}
-            <div className="px-5 pb-2 shrink-0">
+            <div className="px-5 pt-1.5 shrink-0">
               <TitleEditor
                 key={formResetKey}
                 ref={titleEditorRef}
                 autoFocus
                 defaultValue={draft.manual.title}
                 placeholder={t(($) => $.create_issue.title_placeholder)}
-                className="text-title font-semibold"
+                className="text-[22px] leading-[1.4] font-semibold"
                 onChange={(v) => updateTitle(v)}
                 // Chord only — plain Enter still just ends title editing (#5532).
                 onSubmitShortcut={handleSubmit}
@@ -1015,7 +1015,7 @@ export function ManualCreatePanel({
             </div>
 
             {/* Description — takes remaining space */}
-            <div {...descDropZoneProps} className="relative flex flex-1 min-h-0 overflow-y-auto px-5">
+            <div {...descDropZoneProps} className="relative flex flex-1 min-h-0 overflow-y-auto px-5 pt-2 text-body-lg">
               <ContentEditor
                 ref={descEditorRef}
                 defaultValue={draft.manual.description}
@@ -1053,7 +1053,7 @@ export function ManualCreatePanel({
 
             {/* Property toolbar — each field renders per the Settings → Preferences → Issue creation
                 selection (see showField above). */}
-            <div className="flex items-center gap-1.5 px-4 py-2 shrink-0 flex-wrap">
+            <div className="flex items-center gap-1.5 px-4 pt-1.5 pb-3 shrink-0 flex-wrap">
               {/* Status */}
               {showField.status && (
                 <StatusPicker
@@ -1227,7 +1227,7 @@ export function ManualCreatePanel({
               {parentIssueId && parentIssueLocked ? (
                 <span
                   data-testid="manual-sub-issue-chip"
-                  className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground"
+                  className="inline-flex h-6 items-center gap-1 rounded-full bg-field px-2.5 text-caption text-muted-foreground"
                 >
                   {t(($) => $.create_issue.subissue_of, {
                     identifier: parentIssue?.identifier
@@ -1236,7 +1236,7 @@ export function ManualCreatePanel({
                   })}
                 </span>
               ) : parentIssueId && parentIssue ? (
-                <div className="inline-flex items-center rounded-full border text-caption transition-colors hover:bg-accent/60">
+                <div className="inline-flex h-7 items-center rounded-full border border-input text-caption transition-colors hover:bg-accent">
                   <button
                     type="button"
                     onClick={() => setParentPickerOpen(true)}
@@ -1265,7 +1265,7 @@ export function ManualCreatePanel({
               {childIssues.map((c) => (
                 <div
                   key={c.id}
-                  className="inline-flex items-center rounded-full border text-caption transition-colors hover:bg-accent/60"
+                  className="inline-flex h-7 items-center rounded-full border border-input text-caption transition-colors hover:bg-accent"
                 >
                   <div className="flex items-center gap-1.5 py-1 pl-2.5">
                     <ArrowDown className="size-3 text-muted-foreground" />
@@ -1472,7 +1472,7 @@ export function ManualCreatePanel({
                 for why (MUL-6236). TooltipProvider/Tooltip render no DOM and
                 TooltipContent is portaled, so the Create button stays a direct
                 grid child in both branches below. */}
-            <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-2.5 border-t px-4 py-3 shrink-0 sm:flex sm:flex-wrap">
+            <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2.5 border-t border-border px-4 py-3 shrink-0 sm:flex sm:flex-wrap">
               <div className="flex min-h-7 items-center gap-2 sm:mr-auto">
                 <FileUploadButton
                   size="sm"
@@ -1487,7 +1487,7 @@ export function ManualCreatePanel({
                   disabled={gate.uploading}
                   aria-disabled={gate.uploading || undefined}
                   aria-busy={gate.uploading || undefined}
-                  className="relative group flex shrink-0 items-center gap-1.5 justify-self-end text-caption px-2 py-1 rounded-sm text-muted-foreground bg-brand/5 hover:bg-brand/10 hover:text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                  className="relative group flex h-7.5 shrink-0 items-center gap-1.5 justify-self-end rounded-full border border-brand/35 bg-brand/6 px-3 text-caption text-foreground ring-3 ring-brand/5 transition-colors hover:bg-brand/10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 dark:border-brand/45 dark:bg-brand/10 dark:ring-brand/8"
                 >
                   <ArrowLeftRight className="size-3.5 text-brand transition-transform duration-300 group-hover:rotate-180" />
                   {t(($) => $.create_issue.switch_to_agent)}

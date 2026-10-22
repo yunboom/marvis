@@ -41,7 +41,7 @@ export function ReplyAnnotations({ draftKey, annotations, disabled, onEditAnnota
             <div className="min-w-0 flex-1">
               <button type="button" disabled={disabled}
                 aria-label={t(($) => $.reply.annotations.edit, { number: index + 1 })}
-                className="w-full rounded-sm p-1 text-left text-body hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+                className="w-full rounded-row p-1 text-left text-body hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
                 onClick={() => {
                   if (onEditAnnotation?.(annotation.id)) {
                     returningToSource.current = true;

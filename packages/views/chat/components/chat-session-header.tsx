@@ -127,11 +127,11 @@ export function ChatSessionHeader({
   const doUnarchive = () => setArchived.mutate({ sessionId: session.id, archived: false });
 
   return (
-    <div className="flex h-12 shrink-0 items-center gap-3 border-b px-4">
+    <div className="flex h-16 shrink-0 items-center gap-3 border-b pr-5 pl-7">
       {agent ? (
         <ActorAvatar actorType="agent" actorId={agent.id} size="lg" enableHoverCard showStatusDot />
       ) : (
-        <span className="size-[30px] shrink-0" />
+        <span className="size-8 shrink-0" />
       )}
 
       <div className="min-w-0 flex-1">
@@ -189,14 +189,14 @@ export function ChatSessionHeader({
                 setEditing(false);
               }
             }}
-            className="w-full rounded-sm bg-background px-1 py-0.5 text-body font-semibold outline-none ring-1 ring-border focus-visible:ring-brand"
+            className="w-full rounded-sm bg-background px-1 py-0.5 text-title-sm font-semibold outline-none ring-1 ring-border focus-visible:ring-brand"
           />
         ) : (
           <TooltipHint label={t(($) => $.header.rename)}>
             <button
               type="button"
               onClick={startRename}
-              className="block max-w-full truncate text-left text-body font-semibold text-foreground outline-none hover:text-foreground/80 focus-visible:text-foreground/80"
+              className="block max-w-full cursor-text truncate text-left text-title-sm font-semibold text-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:text-foreground/80 focus-visible:text-foreground/80"
             >
               {title}
             </button>
@@ -216,11 +216,12 @@ export function ChatSessionHeader({
             <IconButton
               label={tCommon(($) => $.more_actions)}
               tooltipSide="bottom"
-              className="text-muted-foreground"
+              size="icon"
+              className="size-9 text-muted-foreground"
             />
           }
         >
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreHorizontal className="size-4.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-auto">
           <DropdownMenuItem onClick={startRename}>

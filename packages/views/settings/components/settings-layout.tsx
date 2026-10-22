@@ -36,7 +36,7 @@ export type SettingsScope =
 export const SETTINGS_ANCHOR_ATTR = "data-settings-anchor";
 
 const SCOPE_BADGE_CLASS =
-  "inline-flex h-5 min-w-0 shrink-0 items-center gap-1 rounded-full bg-muted px-2 text-caption font-medium text-muted-foreground";
+  "inline-flex h-5.5 min-w-0 shrink-0 items-center gap-1.25 rounded-full bg-field px-2 text-caption text-muted-foreground";
 
 export function SettingsScopeBadge({ scope }: { scope: SettingsScope }) {
   const { t } = useT("settings");
@@ -111,17 +111,17 @@ export function SettingsTab({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <header>
         {breadcrumb ? <div className="mb-2">{breadcrumb}</div> : null}
         <div className="flex min-w-0 items-start gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h2 className="text-title-lg font-semibold tracking-tight">{title}</h2>
+              <h2 className="text-display-sm font-bold">{title}</h2>
               {scope ? <SettingsScopeBadge scope={scope} /> : null}
             </div>
             {description ? (
-              <p className="mt-1 max-w-2xl text-body leading-6 text-muted-foreground">
+              <p className="mt-1.5 max-w-2xl text-body leading-6 text-muted-foreground">
                 {description}
               </p>
             ) : null}
@@ -155,7 +155,7 @@ export function SettingsSection({
   const headingId = useId();
   return (
     <section
-      className={cn("scroll-mt-6 space-y-3", className)}
+      className={cn("scroll-mt-6 space-y-2.5", className)}
       aria-labelledby={title ? headingId : undefined}
       {...(anchor ? { [SETTINGS_ANCHOR_ATTR]: anchor } : {})}
     >
@@ -163,15 +163,15 @@ export function SettingsSection({
         <div className="flex min-w-0 items-end justify-between gap-4 px-0.5">
           <div className="min-w-0">
             {title ? (
-              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                <h3 id={headingId} className="text-body font-semibold">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+                <h3 id={headingId} className="text-body-lg font-semibold">
                   {title}
                 </h3>
                 {scope ? <SettingsScopeBadge scope={scope} /> : null}
               </div>
             ) : null}
             {description ? (
-              <p className="mt-1 text-caption leading-5 text-muted-foreground">
+              <p className="mt-1.5 text-label leading-5 text-muted-foreground">
                 {description}
               </p>
             ) : null}
@@ -245,7 +245,7 @@ export function SettingsRow({
     <div
       {...(anchor ? { [SETTINGS_ANCHOR_ATTR]: anchor } : {})}
       className={cn(
-        "flex min-h-16 scroll-mt-6 gap-4 px-4 py-3.5 transition-colors duration-700 data-[flash=true]:bg-surface-selected sm:justify-between sm:gap-8",
+        "flex min-h-14 scroll-mt-6 gap-4 px-4.5 py-3 transition-colors duration-(--motion-linger) data-[flash=true]:bg-surface-selected sm:justify-between sm:gap-6",
         size ? "flex-col sm:flex-row" : "flex-row justify-between",
         align === "center"
           ? size
@@ -260,7 +260,7 @@ export function SettingsRow({
       <div className="min-w-0 flex-1">
         <div className="text-body font-medium">{label}</div>
         {description ? (
-          <div className="mt-0.5 text-caption leading-5 text-muted-foreground">
+          <div className="mt-0.75 text-label leading-5 text-muted-foreground">
             {description}
           </div>
         ) : null}
@@ -295,7 +295,7 @@ export function SettingsViewTabs<T extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className="inline-flex w-fit items-center gap-0.5 rounded-lg bg-muted p-0.5"
+      className="inline-flex w-fit items-center gap-0.5 rounded-full bg-field p-0.75"
     >
       {items.map((item) => (
         <button
@@ -305,9 +305,9 @@ export function SettingsViewTabs<T extends string>({
           aria-selected={value === item.value}
           onClick={() => onChange(item.value)}
           className={cn(
-            "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-label font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+            "inline-flex h-6.5 items-center gap-1.5 rounded-full px-3 text-label transition-colors duration-(--motion-fast) ease-out focus-visible:outline-2 focus-visible:outline-ring",
             value === item.value
-              ? "bg-background text-foreground shadow-sm"
+              ? "bg-surface font-medium text-foreground shadow-control dark:bg-white/12"
               : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -344,7 +344,7 @@ export function SettingsReadOnlyNotice({ wsId }: { wsId: string }) {
   return (
     <div
       role="note"
-      className="flex items-start gap-3 rounded-xl border border-surface-border bg-surface px-4 py-3 text-body"
+      className="flex items-start gap-3 rounded-lg bg-field px-4 py-3 text-body"
     >
       <Eye aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">

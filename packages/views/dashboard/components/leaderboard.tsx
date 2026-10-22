@@ -46,7 +46,7 @@ const LEADERBOARD_GRID_STYLE = {
     "minmax(10rem, 1.6fr) minmax(6rem, 1fr) 5rem 5rem 5rem 4rem",
 } satisfies CSSProperties;
 
-const LEADERBOARD_GRID = "grid items-center gap-3";
+const LEADERBOARD_GRID = "grid items-center gap-4";
 
 export function Leaderboard({
   rows,
@@ -104,7 +104,7 @@ export function Leaderboard({
   // Active column gets foreground text; others stay muted. Helps the user
   // see "this is what the bar is measuring" at a glance.
   const colClass = (key: LeaderboardSort) =>
-    `text-right ${sortBy === key ? "text-foreground" : "text-muted-foreground"}`;
+    `text-right ${sortBy === key ? "font-medium text-foreground" : "text-muted-foreground"}`;
 
   const getCoverageText = (
     unreportedTaskCount: number,
@@ -123,9 +123,9 @@ export function Leaderboard({
   };
 
   return (
-    <div className="rounded-lg border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 pt-4 pb-3">
-        <h4 className="text-body font-semibold">{t(($) => $.leaderboard.title)}</h4>
+    <div className="overflow-hidden rounded-xl border bg-card">
+      <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b px-5 py-2.5">
+        <h4 className="text-body-lg font-semibold">{t(($) => $.leaderboard.title)}</h4>
         <div className="flex flex-wrap items-center justify-end gap-3">
           <Segmented
             label={t(($) => $.leaderboard.sort_label)}
@@ -133,7 +133,7 @@ export function Leaderboard({
             onChange={setSortBy}
             options={sortOptions}
           />
-          <span className="text-caption text-muted-foreground">
+          <span className="text-label text-muted-foreground">
             {deletedAgentCount > 0
               ? t(($) => $.leaderboard.caption_with_deleted, {
                   count: namedAgentCount,
@@ -149,7 +149,7 @@ export function Leaderboard({
             <button
               type="button"
               onClick={() => setShowAll((v) => !v)}
-              className="text-caption text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              className="text-label text-muted-foreground underline underline-offset-3 transition-colors duration-(--motion-fast) hover:text-foreground"
             >
               {showAll
                 ? t(($) => $.leaderboard.show_less, { count: LEADERBOARD_LIMIT })
@@ -159,7 +159,7 @@ export function Leaderboard({
         </div>
       </div>
       {sortedRows.length === 0 ? (
-        <p className="px-4 py-8 text-center text-caption text-muted-foreground">
+        <p className="px-5 py-8 text-center text-label text-muted-foreground">
           {t(($) => $.leaderboard.no_data)}
         </p>
       ) : (
@@ -171,7 +171,7 @@ export function Leaderboard({
         >
           <div>
             <div
-              className={`${LEADERBOARD_GRID} border-b px-4 py-2 text-caption font-medium text-muted-foreground`}
+              className={`${LEADERBOARD_GRID} h-9 border-b px-5 text-caption text-muted-foreground`}
               style={LEADERBOARD_GRID_STYLE}
             >
               <span>{t(($) => $.leaderboard.header_agent)}</span>
@@ -233,17 +233,17 @@ export function Leaderboard({
                 return (
                   <li
                     key={row.agentId}
-                    className={`${LEADERBOARD_GRID} px-4 py-2`}
+                    className={`${LEADERBOARD_GRID} min-h-11 px-5 py-1.5`}
                     style={LEADERBOARD_GRID_STYLE}
                   >
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       {isBucket ? (
                         <>
-                          <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                             {isDeletedBucket ? (
-                              <Trash2 className="h-3 w-3" />
+                              <Trash2 className="size-3" />
                             ) : (
-                              <EyeOff className="h-3 w-3" />
+                              <EyeOff className="size-3" />
                             )}
                           </span>
                           <span className="min-w-0">
@@ -267,7 +267,7 @@ export function Leaderboard({
                           <ActorAvatar
                             actorType="agent"
                             actorId={row.agentId}
-                            size="md"
+                            size="sm"
                             enableHoverCard
                           />
                           <span className="min-w-0">
@@ -286,31 +286,31 @@ export function Leaderboard({
                         </>
                       )}
                     </div>
-                    <div className="relative h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="relative h-1.5 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-chart-1 transition-[width] duration-300 ease-out"
+                        className="h-full rounded-full bg-foreground transition-[width] duration-300 ease-out"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
                     <div
-                      className={`text-right text-caption tabular-nums ${sortBy === "tokens" ? "font-medium text-foreground" : "text-muted-foreground"}`}
+                      className={`text-right text-label tabular-nums ${sortBy === "tokens" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
                     >
                       {tokenText}
                     </div>
                     <div
-                      className={`text-right tabular-nums ${sortBy === "cost" ? "text-body font-medium" : "text-caption text-muted-foreground"}`}
+                      className={`text-right text-label tabular-nums ${sortBy === "cost" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
                     >
                       {costText}
                     </div>
                     <div
-                      className={`text-right text-caption tabular-nums ${sortBy === "time" ? "font-medium text-foreground" : "text-muted-foreground"}`}
+                      className={`text-right text-label tabular-nums ${sortBy === "time" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
                     >
                       {isDeletedBucket
                         ? "—"
                         : formatDuration(row.seconds, lessThanMinuteLabel)}
                     </div>
                     <div
-                      className={`text-right text-caption tabular-nums ${sortBy === "tasks" ? "font-medium text-foreground" : "text-muted-foreground"}`}
+                      className={`text-right text-label tabular-nums ${sortBy === "tasks" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
                     >
                       {isDeletedBucket ? "—" : row.taskCount}
                     </div>

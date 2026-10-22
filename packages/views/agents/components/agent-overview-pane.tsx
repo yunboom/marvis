@@ -339,7 +339,7 @@ export function AgentOverviewPane({
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <div
-        className="shrink-0 overflow-x-auto border-b"
+        className="shrink-0 overflow-x-auto border-b border-border"
         role="tablist"
         aria-label={t(($) => $.tabs.page_navigation_aria)}
       >
@@ -352,7 +352,7 @@ export function AgentOverviewPane({
               aria-selected={activeSection === tab.id}
               onClick={() => requestSection(tab.id)}
               className={cn(
-                "relative shrink-0 py-3 text-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                "relative shrink-0 py-3 text-body font-medium transition-colors duration-(--motion-fast) ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                 activeSection === tab.id
                   ? "text-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -437,10 +437,10 @@ export function AgentOverviewPane({
                       aria-selected={active}
                       onClick={() => requestView(tab.id)}
                       className={cn(
-                        "flex h-8 shrink-0 items-center rounded-md px-2.5 text-left text-caption transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:w-full",
+                        "flex h-8 shrink-0 items-center rounded-row px-2.5 text-left text-label transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:w-full",
                         active
                           ? "bg-surface-selected font-medium text-surface-selected-foreground hover:bg-surface-selected"
-                          : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground",
                       )}
                     >
                       {t(($) => $.tabs[tab.labelKey])}
@@ -460,7 +460,7 @@ export function AgentOverviewPane({
                 )}
               >
                 <header>
-                  <h2 className="text-title-sm font-medium text-balance">
+                  <h2 className="text-title-sm font-semibold text-balance">
                     {t(($) => $.tabs[activeSecondaryTab.labelKey])}
                   </h2>
                 </header>

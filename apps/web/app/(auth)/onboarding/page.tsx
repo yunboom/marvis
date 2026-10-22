@@ -68,7 +68,7 @@ export default function OnboardingPage() {
   // owns the per-step width constraint internally — Welcome renders a
   // wide two-column hero, all other steps wrap themselves at max-w-xl.
   return (
-    <div className="h-full overflow-y-auto bg-background">
+    <div className="h-full overflow-y-auto bg-app-shell">
       <OnboardingFlow
         onComplete={(ws, destination) => {
           completingRef.current = true;

@@ -187,7 +187,7 @@ export function KeyboardShortcutsTab() {
       })}
 
       {visibleActions.length === 0 ? (
-        <div className="rounded-lg border border-dashed px-4 py-10 text-center text-body text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-input px-4 py-10 text-center text-body text-muted-foreground">
           {t(($) => $.shortcuts.no_results)}
         </div>
       ) : null}

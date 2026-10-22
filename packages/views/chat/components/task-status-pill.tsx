@@ -22,6 +22,31 @@ interface Stage {
   static?: boolean;
 }
 
+// 阶段文字交叉淡入的时长，与 --motion-fast 保持一致。
+const STAGE_CROSSFADE_MS = 150;
+
+/**
+ * Keeps the previous stage label for one crossfade window after the label
+ * changes, so the old text can fade out while the new one fades in.
+ * Presentation only: the stage itself is still decided by `pickStageKeys`.
+ */
+function useOutgoingLabel(label: string): string | null {
+  const currentRef = useRef(label);
+  const [outgoing, setOutgoing] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentRef.current === label) return;
+
+    setOutgoing(currentRef.current);
+    currentRef.current = label;
+    const timer = setTimeout(() => setOutgoing(null), STAGE_CROSSFADE_MS);
+
+    return () => clearTimeout(timer);
+  }, [label]);
+
+  return outgoing;
+}
+
 type StageKey =
   | "offline"
   | "reconnecting"
@@ -206,19 +231,37 @@ export function TaskStatusPill({
     availability,
     status === "waiting_local_directory" ? pendingTask.wait_reason : undefined,
   );
+  const outgoingLabel = useOutgoingLabel(stage.label);
 
   return (
     <div
-      className="flex items-center gap-1.5 px-1 text-caption text-muted-foreground"
+      className="flex items-center gap-1.5 px-1 text-label text-muted-foreground"
       aria-live="polite"
     >
       {!stage.static && (
         <UnicodeSpinner name="breathe" className="opacity-70" />
       )}
       <span className="truncate">
-        <ShimmerText active={!stage.static}>
-          {stage.label}
-        </ShimmerText>
+        {/* Stage changes crossfade over 150ms: the outgoing label fades out
+            on top while the incoming one (re-keyed) fades in underneath. */}
+        <span className="relative">
+          <span
+            key={stage.label}
+            className="animate-in fade-in-0 duration-(--motion-fast) ease-out"
+          >
+            <ShimmerText active={!stage.static}>
+              {stage.label}
+            </ShimmerText>
+          </span>
+          {outgoingLabel !== null && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute top-0 left-0 animate-out fade-out-0 fill-mode-forwards whitespace-nowrap duration-(--motion-fast) ease-in"
+            >
+              {outgoingLabel}
+            </span>
+          )}
+        </span>
         <span className="opacity-70 tabular-nums"> · {formatElapsedSecs(elapsedSecs)}</span>
       </span>
     </div>

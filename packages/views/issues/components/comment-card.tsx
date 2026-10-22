@@ -56,7 +56,7 @@ import { CommentsFoldBar } from "./resolved-thread-bar";
 import { deriveThreadResolution } from "./thread-utils";
 import { RevisionConflictCompare } from "./revision-conflict-compare";
 import { InlineCommentRun, PlacedInlineCommentRun, useInlineCommentRunState, type InlineCommentRunState } from "./inline-comment-run";
-import { EMPTY_COMMENT_RUNS, isRunFailureNotice, orderThreadWithRuns, type CommentRun, type ThreadRunSlot } from "./comment-runs";
+import { EMPTY_COMMENT_RUNS, isActiveCommentRun, isRunFailureNotice, orderThreadWithRuns, type CommentRun, type ThreadRunSlot } from "./comment-runs";
 import { descriptionPreview } from "./description-preview";
 import { useCommentAnnotations } from "./use-comment-annotations";
 import { useAttachmentVersions } from "./deliverables/attachment-versions";
@@ -691,7 +691,7 @@ function CommentRow({
           highlight state while it occludes the body scrolling underneath. */}
       <StickyHeaderShell
         highlighted={isHighlighted}
-        className="flex items-center gap-2.5 px-4 max-md:px-3 pt-3 pb-2"
+        className="flex items-center gap-2.5 pl-4 pr-2.5 max-md:px-3 pt-3 pb-1.5"
       >
         <ActorAvatar
           actorType={entry.actor_type}
@@ -699,7 +699,7 @@ function CommentRow({
           name={entry.actor_name}
           avatarUrl={entry.actor_avatar_url}
           profileRequiresDirectoryEntry
-          size="md"
+          size="lg"
           enableHoverCard
           showStatusDot
         />
@@ -818,12 +818,12 @@ function CommentRow({
           />
         </div>
       </StickyHeaderShell>
-      {replyTo && <div className="pl-12 pr-4 max-md:pl-3 max-md:pr-3 pb-1.5">{replyTo}</div>}
+      {replyTo && <div className="pl-14.5 pr-4 max-md:pl-3 max-md:pr-3 pb-1.5">{replyTo}</div>}
 
       {edit.editing ? (
         <div
           {...edit.dropZoneProps}
-          className="relative pl-12 pr-4 max-md:pl-3 max-md:pr-3 pt-1"
+          className="relative pl-14.5 pr-4 max-md:pl-3 max-md:pr-3 pt-1"
           onKeyDown={(e) => { if (e.key === "Escape") edit.cancelEdit(); }}
         >
           <div className="text-body leading-relaxed">
@@ -882,10 +882,10 @@ function CommentRow({
                 multiple
                 onSelect={(file) => edit.editorRef.current?.uploadFile(file)}
               />
-              <Button size="sm" variant="ghost" onClick={edit.cancelEdit} disabled={edit.saving}>{t(($) => $.comment.cancel_edit)}</Button>
+              <Button size="sm" variant="secondary" onClick={edit.cancelEdit} disabled={edit.saving}>{t(($) => $.comment.cancel_edit)}</Button>
               <Button
                 size="sm"
-                variant="outline"
+                variant="default"
                 onClick={edit.saveEdit}
                 disabled={edit.saving || edit.uploading}
                 aria-disabled={edit.uploading || undefined}
@@ -902,30 +902,30 @@ function CommentRow({
         <>
           <div tabIndex={currentUserId ? 0 : undefined} role="group"
             aria-label={t(($) => $.reply.annotations.source_label, { name: entry.actor_name || getActorName(entry.actor_type, entry.actor_id) })}
-            data-comment-content={entry.id} className="pl-12 pr-4 max-md:pl-3 max-md:pr-3 text-body leading-relaxed text-foreground">
+            data-comment-content={entry.id} className="pl-14.5 pr-4 max-md:pl-3 max-md:pr-3 text-body leading-relaxed text-foreground">
             <ReadonlyContent content={entry.content ?? ""} attachments={entry.attachments} />
           </div>
-          <AttachmentList attachments={entry.attachments} content={entry.content} className="mt-1.5 pl-12 pr-4 max-md:pl-3 max-md:pr-3" />
-          <div className="pl-12 pr-4 max-md:pl-3 max-md:pr-3">
+          <AttachmentList attachments={entry.attachments} content={entry.content} className="mt-1.5 pl-14.5 pr-4 max-md:pl-3 max-md:pr-3" />
+          <div className="pl-14.5 pr-4 max-md:pl-3 max-md:pr-3">
             <SteerReceipts issueId={issueId} entry={entry} />
           </div>
           {retryableAgentFailureComment(entry) && (
             <TaskCommentRetryButton
               issueId={issueId}
               taskId={entry.source_task_id}
-              className="mt-2 pl-12 pr-4 max-md:pl-3 max-md:pr-3"
+              className="mt-2 pl-14.5 pr-4 max-md:pl-3 max-md:pr-3"
             />
           )}
         </>
       )}
-      <div className="pl-12 pr-4 max-md:pl-3 max-md:pr-3">{runMetadata}</div>
+      <div className="pl-14.5 pr-4 max-md:pl-3 max-md:pr-3">{runMetadata}</div>
       {!edit.editing && <ReactionBar
         reactions={reactions}
         showPicker={false}
         currentUserId={currentUserId}
         onToggle={(emoji) => onToggleReaction(entry.id, emoji)}
         getActorName={getActorName}
-        className="mt-1.5 pl-12 pr-4 max-md:pl-3 max-md:pr-3"
+        className="mt-1.5 pl-14.5 pr-4 max-md:pl-3 max-md:pr-3"
       />}
     </div>
   );
@@ -941,7 +941,7 @@ function ReplyToQuote({ entry, onJump }: { entry: TimelineEntry; onJump?: (comme
   });
   return (
     <button type="button" disabled={!onJump} onClick={() => onJump?.(entry.id)} title={label}
-      className="flex max-w-full min-w-0 items-center gap-1.5 rounded-xs text-left text-caption text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:hover:text-muted-foreground">
+      className="flex max-w-full min-w-0 items-center gap-1.5 rounded-xs text-left text-label text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:hover:text-muted-foreground">
       <CornerUpLeft aria-hidden className="size-3 shrink-0" />
       <span className="min-w-0 truncate">{label}</span>
     </button>
@@ -978,7 +978,7 @@ export function AgentRunComment({ run, standalone = false, commentProps, enterin
     <div ref={motionRef} data-run-slot-id={run.task.id}
       data-run-comment-id={!reply ? run.task.id : undefined}
       id={!standalone && slotEntry ? `comment-${slotEntry.id}` : undefined}
-      className={cn(standalone ? !reply && "rounded-xl border bg-card" : "border-t border-border/50", !reply && "py-1.5", slotEntry && commentProps?.highlightedCommentId === slotEntry.id && highlightedCommentBackgroundClass)}>
+      className={cn(standalone ? !reply && cn("rounded-xl border border-border bg-card", isActiveCommentRun(run.task) && "border-brand/35 ring-3 ring-brand/5 dark:border-brand/45 dark:ring-brand/8") : "border-t border-border", !reply && "py-1.5", slotEntry && commentProps?.highlightedCommentId === slotEntry.id && highlightedCommentBackgroundClass)}>
       {commentProps && reply ? standalone ? (
         <CommentCard {...commentProps} runs={commentProps.runs ?? [run]} runViewState={viewState} />
       ) : (
@@ -988,7 +988,7 @@ export function AgentRunComment({ run, standalone = false, commentProps, enterin
           replyTo={replyTo}
           runHeader={<PlacedInlineCommentRun run={run} viewState={viewState} presentation="header" />}
           runMetadata={<PlacedInlineCommentRun run={run} viewState={viewState} />} />
-      ) : <div className="px-4 max-md:px-3">
+      ) : <div className={cn(standalone ? "pl-4 pr-3 max-md:px-3" : "px-4 max-md:px-3")}>
         <InlineCommentRun run={run} viewState={viewState} showIdentity replyTo={replyTo} replacesFailureNotice={!!notice} />
       </div>}
     </div>
@@ -1098,7 +1098,7 @@ function CommentCardImpl({
         <div
           id={`comment-${reply.id}`}
           className={cn(
-            "border-t border-border/50 transition-colors duration-700",
+            "border-t border-border transition-colors duration-700",
             highlightedCommentId === reply.id && highlightedCommentBackgroundClass,
           )}
         >
@@ -1171,14 +1171,14 @@ function CommentCardImpl({
     // overflow-clip (not -hidden) clips the rounded corners WITHOUT creating a
     // scroll container, so the sticky collapse affordances below resolve to the
     // timeline's scroll parent instead of this card. See PR #3623.
-    <Card ref={annotation.cardRef} {...annotation.captureProps} className="!py-0 !gap-0 overflow-clip transition-colors duration-700">
+    <Card ref={annotation.cardRef} {...annotation.captureProps} className="!py-0 !gap-0 overflow-clip border-border shadow-none transition-colors duration-700">
       {annotation.popup}
       {onCollapseResolved && (
         <button
           type="button"
           onClick={onCollapseResolved}
           data-thread-sticky-bar
-          className="sticky top-0 z-20 flex w-full items-center gap-2.5 border-b border-border/50 bg-muted px-4 max-md:px-3 py-2.5 text-left text-body text-muted-foreground transition-colors cursor-pointer hover:bg-accent hover:text-accent-foreground"
+          className="sticky top-0 z-20 flex h-10 w-full items-center gap-2.5 border-b border-border bg-surface-sunken px-4 max-md:px-3 text-left text-label text-muted-foreground transition-colors cursor-pointer hover:bg-accent hover:text-accent-foreground"
           aria-label={t(($) => $.comment.resolve.collapse)}
         >
           <ListChevronsDownUp className="h-3.5 w-3.5" />
@@ -1196,7 +1196,7 @@ function CommentCardImpl({
           <StickyHeaderShell
             sticky={stickyHeader}
             highlighted={isHighlighted}
-            className={cn("px-4 max-md:px-3", open ? "pt-3 pb-2" : "py-3")}
+            className={cn("pl-4 pr-2.5 max-md:px-3", open ? "pt-3 pb-1.5" : "py-3")}
           >
             <div className="flex items-center gap-2.5">
               {deleted ? (
@@ -1212,7 +1212,7 @@ function CommentCardImpl({
                     name={entry.actor_name}
                     avatarUrl={entry.actor_avatar_url}
                     profileRequiresDirectoryEntry
-                    size="md"
+                    size="lg"
                     enableHoverCard
                     showStatusDot
                   />
@@ -1368,7 +1368,7 @@ function CommentCardImpl({
             {edit.editing ? (
               <div
                 {...edit.dropZoneProps}
-                className="relative pl-8 max-md:pl-0"
+                className="relative pl-10.5 max-md:pl-0"
                 onKeyDown={(e) => { if (e.key === "Escape") edit.cancelEdit(); }}
               >
                 <div className="text-body leading-relaxed">
@@ -1427,10 +1427,10 @@ function CommentCardImpl({
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button size="sm" variant="ghost" onClick={edit.cancelEdit} disabled={edit.saving}>{t(($) => $.comment.cancel_edit)}</Button>
+                    <Button size="sm" variant="secondary" onClick={edit.cancelEdit} disabled={edit.saving}>{t(($) => $.comment.cancel_edit)}</Button>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="default"
                       onClick={edit.saveEdit}
                       disabled={edit.saving || edit.uploading}
                       aria-disabled={edit.uploading || undefined}
@@ -1447,30 +1447,30 @@ function CommentCardImpl({
               <>
                 <div tabIndex={currentUserId ? 0 : undefined} role="group"
             aria-label={t(($) => $.reply.annotations.source_label, { name: entry.actor_name || getActorName(entry.actor_type, entry.actor_id) })}
-            data-comment-content={entry.id} className="pl-8 max-md:pl-0 text-body leading-relaxed text-foreground">
+            data-comment-content={entry.id} className="pl-10.5 max-md:pl-0 text-body leading-relaxed text-foreground">
                   <ReadonlyContent content={entry.content ?? ""} attachments={entry.attachments} />
                 </div>
-                <AttachmentList attachments={entry.attachments} content={entry.content} className="mt-1.5 pl-8 max-md:pl-0" />
-                <div className="pl-8 max-md:pl-0">
+                <AttachmentList attachments={entry.attachments} content={entry.content} className="mt-1.5 pl-10.5 max-md:pl-0" />
+                <div className="pl-10.5 max-md:pl-0">
                   <SteerReceipts issueId={issueId} entry={entry} />
                 </div>
                 {retryableAgentFailureComment(entry) && (
                   <TaskCommentRetryButton
                     issueId={issueId}
                     taskId={entry.source_task_id}
-                    className="mt-2 pl-8 max-md:pl-0"
+                    className="mt-2 pl-10.5 max-md:pl-0"
                   />
                 )}
               </>
             )}
-            <div className="pl-8 max-md:pl-0">{renderRuns(entry.id)}</div>
+            <div className="pl-10.5 max-md:pl-0">{renderRuns(entry.id)}</div>
             {!edit.editing && <ReactionBar
               reactions={reactions}
               showPicker={false}
               currentUserId={currentUserId}
               onToggle={(emoji) => onToggleReaction(entry.id, emoji)}
               getActorName={getActorName}
-              className="mt-1.5 pl-8 max-md:pl-0"
+              className="mt-1.5 pl-10.5 max-md:pl-0"
             />}
           </div>
         )}
@@ -1485,7 +1485,7 @@ function CommentCardImpl({
             <>
               {/* reply-mode folded: other replies behind a bar, resolution pinned below */}
               {foldedReplies.length > 0 && (
-                <div className="border-t border-border/50 px-4 max-md:px-3 py-2.5">
+                <div className="border-t border-border pl-14.5 pr-4 max-md:px-3 py-3">
                   <CommentsFoldBar
                     replies={foldedReplies}
                     onExpand={() => onResolvedExpandChange?.(entry.id, true)}
@@ -1502,7 +1502,7 @@ function CommentCardImpl({
                   type="button"
                   onClick={() => onResolvedExpandChange(entry.id, false)}
                   data-thread-sticky-bar
-                  className="sticky top-0 z-20 flex w-full items-center gap-2.5 border-t border-border/50 bg-muted px-4 max-md:px-3 py-2.5 text-left text-body text-muted-foreground transition-colors cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                  className="sticky top-0 z-20 flex h-10 w-full items-center gap-2.5 border-t border-border bg-surface-sunken px-4 max-md:px-3 text-left text-label text-muted-foreground transition-colors cursor-pointer hover:bg-accent hover:text-accent-foreground"
                   aria-label={t(($) => $.comment.resolve.collapse)}
                 >
                   <ListChevronsDownUp className="h-3.5 w-3.5" />
@@ -1513,7 +1513,7 @@ function CommentCardImpl({
               {threadRows.map(renderThreadRow)}
 
               {/* Reply input */}
-              <div className="border-t border-border/50 px-4 max-md:px-3 py-2.5">
+              <div className="border-t border-border pl-14.5 pr-4 max-md:px-3 py-3">
                 <ReplyInput
                   issueId={issueId}
                   parentId={replyTargetId}

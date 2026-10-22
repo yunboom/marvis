@@ -185,8 +185,8 @@ export function PropertiesTab() {
           </p>
         )}
 
-        <div className="overflow-hidden rounded-lg border border-surface-border bg-card">
-          <div className="hidden grid-cols-[minmax(10rem,1fr)_6rem_minmax(10rem,1.4fr)_6rem_7rem_2rem] gap-4 border-b border-surface-border bg-muted/20 px-4 py-2.5 text-caption font-medium text-muted-foreground md:grid">
+        <div className="overflow-hidden rounded-xl border border-surface-border bg-card">
+          <div className="hidden h-9 grid-cols-[minmax(10rem,1fr)_6rem_minmax(10rem,1.4fr)_6rem_7rem_2rem] items-center gap-4 border-b border-surface-border bg-surface-sunken px-4.5 text-caption font-medium text-muted-foreground md:grid">
             <span>{t(($) => $.properties.columns.name)}</span>
             <span>{t(($) => $.properties.columns.type)}</span>
             <span>{t(($) => $.properties.columns.options)}</span>

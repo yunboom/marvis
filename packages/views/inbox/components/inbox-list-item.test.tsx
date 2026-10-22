@@ -145,14 +145,14 @@ describe("InboxListItem unread affordance", () => {
     const { container } = renderRow({ item: item({ read: false }), view: "inbox" });
 
     expect(unreadDot(container)).not.toBeNull();
-    expect(title(container)?.className).toContain("font-medium");
+    expect(title(container)?.className).toContain("font-semibold");
   });
 
   it("leaves a read row unmarked in the main inbox", () => {
     const { container } = renderRow({ item: item({ read: true }), view: "inbox" });
 
     expect(unreadDot(container)).toBeNull();
-    expect(title(container)?.className).not.toContain("font-medium");
+    expect(title(container)?.className).not.toContain("font-semibold");
   });
 
   it("renders an unread row as read in the archived view", () => {
@@ -164,7 +164,7 @@ describe("InboxListItem unread affordance", () => {
     });
 
     expect(unreadDot(container)).toBeNull();
-    expect(title(container)?.className).not.toContain("font-medium");
+    expect(title(container)?.className).not.toContain("font-semibold");
   });
 });
 

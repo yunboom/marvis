@@ -154,15 +154,15 @@ describe("IssueStatusesTab", () => {
     });
   });
 
-  it("aligns category and row actions with equal end padding and pointer target sizes", () => {
+  it("keeps category and row actions at their end padding and pointer target sizes", () => {
     catalog = [BUILT_IN_IN_REVIEW, entry({ key: "qa", name: "QA" })];
     render(<IssueStatusesTab />);
     const add = screen.getByLabelText(`${en.issue_statuses.add}: ${en.issue_statuses.category_labels.started}`);
-    expect(add.parentElement).toHaveClass("px-4");
+    expect(add.parentElement).toHaveClass("px-0.5");
     expect(add).toHaveClass("size-[var(--button-height-sm)]", "shrink-0", "[@media(pointer:coarse)]:size-11");
     for (const name of ["in_review", "QA"]) {
       const action = screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", name));
-      expect(action.closest(".group\\/row")).toHaveClass("pr-4");
+      expect(action.closest(".group\\/row")).toHaveClass("pr-2.5");
       expect(action).toHaveClass("size-[var(--button-height-sm)]", "shrink-0", "[@media(pointer:coarse)]:size-11");
     }
   });

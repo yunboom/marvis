@@ -13,6 +13,7 @@ import {
 } from "@marvis/ui/components/ui/chart";
 import { formatTokens, type DailyTokenData } from "../../utils";
 import { useLocale, useT } from "../../../i18n";
+import { CHART_MONO, monoBarFill } from "./chart-tones";
 
 // Four-segment stack — input / output / cache read / cache write. Unlike the
 // cost chart, cache reads ARE visible here: a typical day on Claude shows
@@ -21,15 +22,13 @@ import { useLocale, useT } from "../../../i18n";
 // chart drops them for the opposite reason (their dollar contribution is
 // two orders of magnitude smaller and would be visually invisible).
 //
-// Series → CSS chart token: stack reads bottom-up as chart-1 (deepest brand
-// blue, "input") → chart-2 (mid) → chart-4 (cache read) → chart-3 (lightest,
-// "cache write"). Cache read gets chart-4 so the two cache series are
-// visually adjacent and tonally distinct from input/output.
+// 单色方案：静止的柱子统一浅灰，悬停的那一根按 CHART_MONO 由深到浅显示
+// input → output → cache read → cache write，图例和提示框也用这组色阶。
 export const tokenStackConfig = {
-  input: { label: "Input", color: "var(--chart-1)" },
-  output: { label: "Output", color: "var(--chart-2)" },
-  cacheRead: { label: "Cache read", color: "var(--chart-4)" },
-  cacheWrite: { label: "Cache write", color: "var(--chart-3)" },
+  input: { label: "Input", color: CHART_MONO[1] },
+  output: { label: "Output", color: CHART_MONO[2] },
+  cacheRead: { label: "Cache read", color: CHART_MONO[4] },
+  cacheWrite: { label: "Cache write", color: CHART_MONO[3] },
 } satisfies ChartConfig;
 
 export function DailyTokensChart({ data }: { data: DailyTokenData[] }) {
@@ -39,7 +38,7 @@ export function DailyTokensChart({ data }: { data: DailyTokenData[] }) {
   // decides what to render when there's nothing to show.
   return (
     <ChartContainer config={tokenStackConfig} className="aspect-[3/1] w-full">
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -56,6 +55,7 @@ export function DailyTokensChart({ data }: { data: DailyTokenData[] }) {
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               formatter={(value, name) =>
@@ -86,25 +86,25 @@ export function DailyTokensChart({ data }: { data: DailyTokenData[] }) {
         <Bar
           dataKey="input"
           stackId="tokens"
-          fill="var(--color-input)"
+          {...monoBarFill("input")}
           radius={[0, 0, 0, 0]}
         />
         <Bar
           dataKey="output"
           stackId="tokens"
-          fill="var(--color-output)"
+          {...monoBarFill("output")}
           radius={[0, 0, 0, 0]}
         />
         <Bar
           dataKey="cacheRead"
           stackId="tokens"
-          fill="var(--color-cacheRead)"
+          {...monoBarFill("cacheRead")}
           radius={[0, 0, 0, 0]}
         />
         <Bar
           dataKey="cacheWrite"
           stackId="tokens"
-          fill="var(--color-cacheWrite)"
+          {...monoBarFill("cacheWrite")}
           radius={[3, 3, 0, 0]}
         />
       </BarChart>

@@ -586,16 +586,16 @@ export function InboxPage() {
   // -- Shared sub-components --------------------------------------------------
 
   const listHeader = (
-    <PageHeader>
-      <div className="flex flex-1 items-center gap-2">
-        <h1 className="text-body font-semibold">{t(($) => $.page.title)}</h1>
+    <PageHeader className="h-18 gap-0.5 border-b-0">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <h1 className="truncate text-display-sm font-bold">{t(($) => $.page.title)}</h1>
         {unreadCount > 0 && (
           <NumberFlow
             value={unreadCount}
             animated={false}
             format={{ maximumFractionDigits: 0 }}
             aria-label={String(unreadCount)}
-            className="text-caption text-muted-foreground"
+            className="text-body tabular-nums text-muted-foreground"
           />
         )}
       </div>
@@ -616,6 +616,7 @@ export function InboxPage() {
             <IconButton
               label={tCommon(($) => $.more_actions)}
               tooltipSide="bottom"
+              size="icon"
               className="text-muted-foreground"
             />
           }
@@ -653,7 +654,7 @@ export function InboxPage() {
     <button
       type="button"
       onClick={() => setView("inbox")}
-      className="flex w-full shrink-0 items-center gap-1.5 border-b px-3 py-2 text-left text-caption font-medium text-muted-foreground outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+      className="mx-3 mb-1 flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-left text-label font-medium text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring"
     >
       <ChevronLeft className="size-4 shrink-0" />
       <span className="truncate">{t(($) => $.list.archived_title)}</span>
@@ -662,8 +663,8 @@ export function InboxPage() {
 
   const list = isArchivedView && archivedError ? (
     <div className="flex-1 min-h-0 overflow-y-auto">
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <Archive className="mb-3 h-8 w-8 text-faint-foreground" />
+      <div className="flex flex-col items-center justify-center pt-16 pb-6 text-muted-foreground">
+        <Archive className="mb-3 size-8 text-faint-foreground" strokeWidth={1.5} />
         <p className="text-body">{t(($) => $.errors.archived_load_failed)}</p>
         <Button variant="outline" size="sm" className="mt-3" onClick={() => void archiveQuery.refetch()}>
           {t(($) => $.list.retry)}
@@ -714,12 +715,12 @@ export function InboxPage() {
       {listHeader}
       {isArchivedView && archivedBackRow}
       {lookupLoading && (
-        <p role="status" className="shrink-0 border-b px-3 py-2 text-caption text-muted-foreground">
+        <p role="status" className="shrink-0 px-6 py-2 text-caption text-muted-foreground">
           {t(($) => $.list.loading_selection)}
         </p>
       )}
       {lookupError && (
-        <div role="alert" className="flex shrink-0 items-center gap-2 border-b px-3 py-2">
+        <div role="alert" className="flex shrink-0 items-center gap-2 px-6 py-2">
           <p className="flex-1 text-caption text-muted-foreground">
             {t(($) => $.errors.archived_lookup_failed)}
           </p>
@@ -804,13 +805,13 @@ export function InboxPage() {
       </IssuePeekHost>
     </ErrorBoundary>
   ) : detailItem ? (
-    <div className="p-6">
-      <h2 className="text-title font-semibold">
+    <div className="max-w-170 px-10 py-9">
+      <h2 className="text-title-lg font-bold">
         {isAutopilotQuotaNotice(detailItem.type)
           ? typeLabels[detailItem.type]
           : getInboxDisplayTitle(detailItem)}
       </h2>
-      <p className="mt-1 text-body text-muted-foreground">
+      <p className="mt-1.5 text-body text-muted-foreground">
         {typeLabels[detailItem.type]} · {timeAgo(detailItem.created_at)}
       </p>
       {isAutopilotQuotaNotice(detailItem.type) ? (
@@ -819,24 +820,23 @@ export function InboxPage() {
           onOpenRecovery={showAutopilotQuotaRecoveryPrompt}
         />
       ) : detailItem.body ? (
-        <div className="mt-4 whitespace-pre-wrap text-body leading-relaxed text-foreground">
+        <div className="mt-4.5 whitespace-pre-wrap text-body leading-relaxed text-foreground">
           {detailItem.body}
         </div>
       ) : null}
       {isQuickCreateOutcome(detailItem.type) && detailItem.details?.original_prompt && (
-        <div className="mt-4 rounded-md border bg-muted/40 p-3">
+        <div className="mt-4.5 rounded-lg bg-field px-4 py-3.5">
           <p className="text-caption font-medium text-muted-foreground">
             {t(($) => $.detail.original_input)}
           </p>
-          <p className="mt-1 whitespace-pre-wrap text-body">{detailItem.details.original_prompt}</p>
+          <p className="mt-1.5 whitespace-pre-wrap text-body leading-relaxed">{detailItem.details.original_prompt}</p>
         </div>
       )}
-      <div className="mt-4 flex gap-2">
+      <div className="mt-5 flex flex-wrap gap-2">
         {detailItem.type === "quick_create_failed" &&
           detailItem.details?.source_context_id &&
           detailItem.details?.task_id && (
             <Button
-              size="sm"
               data-testid="retry-source-context"
               disabled={retrySourceContextMutation.isPending}
               onClick={async () => {
@@ -865,7 +865,7 @@ export function InboxPage() {
           )}
         {isQuickCreateOutcome(detailItem.type) && (
           <Button
-            size="sm"
+            variant="outline"
             onClick={() => {
               // Seed the legacy advanced form with the original prompt so the
               // user can recover their input in the full editor instead of
@@ -892,20 +892,18 @@ export function InboxPage() {
             render={
               isArchivedView ? (
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="secondary"
                   onClick={() => handleUnarchive(detailItem.id)}
                 >
-                  <ArchiveRestore className="mr-1.5 h-3.5 w-3.5" />
+                  <ArchiveRestore className="size-3.5" />
                   {t(($) => $.detail.unarchive)}
                 </Button>
               ) : (
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="secondary"
                   onClick={() => handleArchive(detailItem.id)}
                 >
-                  <Archive className="mr-1.5 h-3.5 w-3.5" />
+                  <Archive className="size-3.5" />
                   {t(($) => $.detail.archive)}
                 </Button>
               )
@@ -926,15 +924,15 @@ export function InboxPage() {
     if (viewLoading) {
       return (
         <div className="flex flex-1 flex-col min-h-0">
-          <div className={cn("flex h-12 shrink-0 items-center border-b", PAGE_GUTTER)}>
-            <Skeleton className="h-5 w-16" />
+          <div className={cn("flex h-18 shrink-0 items-center", PAGE_GUTTER)}>
+            <Skeleton className="h-6 w-24" />
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-1 p-2">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-1 px-3 py-1">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-2 py-2.5">
-                <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+              <div key={i} className="flex items-center gap-3 p-3">
+                <Skeleton className="size-10 shrink-0 rounded-full" />
                 <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3.5 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
                 </div>
               </div>
@@ -988,15 +986,15 @@ export function InboxPage() {
           groupResizeBehavior="preserve-pixel-size"
         >
           <div className="flex flex-col border-r h-full">
-            <div className={cn("flex h-12 shrink-0 items-center border-b", PAGE_GUTTER)}>
-              <Skeleton className="h-5 w-16" />
+            <div className={cn("flex h-18 shrink-0 items-center", PAGE_GUTTER)}>
+              <Skeleton className="h-6 w-24" />
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-1 p-2">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-1 px-3 py-1">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 px-2 py-2.5">
-                  <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+                <div key={i} className="flex items-center gap-3 p-3">
+                  <Skeleton className="size-10 shrink-0 rounded-full" />
                   <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3.5 w-3/4" />
                     <Skeleton className="h-3 w-1/2" />
                   </div>
                 </div>
@@ -1006,8 +1004,8 @@ export function InboxPage() {
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel id="detail" minSize="40%">
-          <div className="p-6">
-            <Skeleton className="h-6 w-48" />
+          <div className="p-8">
+            <Skeleton className="h-6 w-50" />
             <Skeleton className="mt-4 h-4 w-32" />
           </div>
         </ResizablePanel>
@@ -1033,7 +1031,7 @@ export function InboxPage() {
       <div className="flex flex-col min-h-0 h-full">
         {detailContent ?? (
           <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-            <Inbox className="mb-3 h-10 w-10 text-faint-foreground" />
+            <Inbox className="mb-3 size-10 text-faint-foreground" strokeWidth={1.4} />
             <p className="text-body">
               {visibleItems.length === 0
                 ? t(($) => $.detail.empty)

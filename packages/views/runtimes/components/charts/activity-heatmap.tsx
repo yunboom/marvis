@@ -19,15 +19,12 @@ const LABELED_WEEKDAY_INDICES = new Set([0, 2, 4]);
 // names up with the Monday-first `dayOfWeek` index.
 const WEEKDAY_ANCHOR = Date.UTC(2026, 0, 5);
 
-// Cells use the brand-derived chart-1 hue with descending opacity instead
-// of a neutral foreground fade, so the heatmap reads as part of the same
-// visual family as Daily cost (chart-1 stack) rather than a separate
-// monochrome surface. Level 0 stays neutral muted to clearly mean "no
-// activity" (not "very faint activity").
+// 单色方案：格子用前景色按透明度分级，和趋势图同属一套灰阶。Level 0 stays
+// neutral muted to clearly mean "no activity" (not "very faint activity").
 function getHeatmapColor(level: number): string {
   if (level === 0) return "var(--color-muted)";
   const opacities = ["20%", "45%", "70%", "100%"];
-  return `color-mix(in oklch, var(--color-chart-1) ${opacities[level - 1]}, transparent)`;
+  return `color-mix(in oklch, var(--color-foreground) ${opacities[level - 1]}, transparent)`;
 }
 
 function fmtDate(iso: string, locale: string): string {

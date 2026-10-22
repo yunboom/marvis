@@ -35,25 +35,27 @@ export function MikaIntro() {
   return (
     <div className="flex flex-col gap-5">
       <StepHeading title={t(($) => $.mika_intro.headline)} />
-      <Item variant="outline">
+      <Item variant="outline" className="items-start gap-3.5 rounded-xl border-surface-border p-4">
         <ItemMedia>
           <span
             role="img"
             aria-label={t(($) => $.mika_intro.name)}
-            className="flex size-9 shrink-0 select-none items-center justify-center rounded-full bg-muted text-title leading-none"
+            className="flex size-9 shrink-0 select-none items-center justify-center rounded-full bg-surface-sunken text-title leading-none"
           >
             {MIKA_PLACEHOLDER_EMOJI}
           </span>
         </ItemMedia>
         <ItemContent>
-          <ItemTitle>
+          <ItemTitle className="gap-0 text-body-lg">
             {t(($) => $.mika_intro.name)}
-            <span className="text-muted-foreground">
+            <span className="whitespace-pre font-normal text-muted-foreground">
               {" · "}
               {t(($) => $.mika_intro.role)}
             </span>
           </ItemTitle>
-          <ItemDescription>{t(($) => $.mika_intro.blurb)}</ItemDescription>
+          <ItemDescription className="mt-0.5 text-label leading-relaxed">
+            {t(($) => $.mika_intro.blurb)}
+          </ItemDescription>
         </ItemContent>
       </Item>
     </div>

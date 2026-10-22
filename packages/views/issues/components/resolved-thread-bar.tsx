@@ -62,14 +62,14 @@ export function ResolvedThreadBar({ entry, replies, onExpand }: ResolvedThreadBa
   const count = 1 + replies.filter((reply) => !isDeletedComment(reply)).length;
 
   return (
-    <Card className="!py-0 !gap-0 overflow-hidden">
+    <Card className="!py-0 !gap-0 overflow-hidden rounded-lg border-border bg-surface-sunken shadow-none">
       <button
         type="button"
         onClick={onExpand}
-        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors cursor-pointer hover:bg-muted/50"
+        className="flex h-10 w-full items-center justify-between px-3.5 text-left transition-colors duration-(--motion-fast) ease-out cursor-pointer hover:bg-accent"
       >
-        <span className="flex min-w-0 items-center gap-2.5 text-body text-muted-foreground">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <span className="flex min-w-0 items-center gap-2 text-label text-muted-foreground">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
           <span className="truncate">
             {t(($) => $.comment.resolve.bar, { count, authors: authorsLabel })}
           </span>
@@ -99,9 +99,9 @@ export function CommentsFoldBar({ replies, onExpand }: CommentsFoldBarProps) {
     <button
       type="button"
       onClick={onExpand}
-      className="flex w-full items-center justify-between rounded-md bg-muted/45 px-3 py-2.5 text-left transition-colors cursor-pointer hover:bg-muted"
+      className="flex h-9 w-full items-center justify-between rounded-row bg-surface-sunken px-3 text-left transition-colors duration-(--motion-fast) ease-out cursor-pointer hover:bg-accent"
     >
-      <span className="flex min-w-0 items-center gap-2.5 text-body text-muted-foreground">
+      <span className="flex min-w-0 items-center gap-2 text-label text-muted-foreground">
         <ChevronRight className="h-3.5 w-3.5 rotate-90 shrink-0" />
         <span className="truncate">
           {t(($) => $.comment.resolve.fold, { count: replies.length, authors: authorsLabel })}

@@ -36,6 +36,10 @@ const DUPLICATE_PARAM = "from";
 const TEMPLATE_PARAM = "template";
 const NEW_WORKFLOW = "new";
 
+/** 工作流列表里的一张卡片：独立描边、圆角 18，悬停浅灰。 */
+const WORKFLOW_CARD =
+  "flex w-full items-center gap-4 rounded-xl border border-surface-border bg-card py-4 pl-5 pr-4 text-left transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)";
+
 /**
  * Settings → Workflows (MUL-7420): the workflows, then the status library
  * they all draw from. `?workflow=<id>` (or `new`) opens the editor in place,
@@ -119,10 +123,10 @@ export function WorkflowsTab() {
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="outline" className="gap-1.5">
+                <Button variant="default" className="h-9 gap-1.5 pl-4 pr-3.5">
                   <Plus className="size-3.5" />
                   {t(($) => $.workflows.settings.new)}
-                  <ChevronDown className="size-3" />
+                  <ChevronDown className="size-3 opacity-70" />
                 </Button>
               }
             />
@@ -151,7 +155,7 @@ export function WorkflowsTab() {
         )
       }
     >
-      <div className="divide-y divide-surface-border overflow-hidden rounded-lg border border-surface-border bg-card">
+      <div className="-mt-3 space-y-4">
         {defaultRow ? (
           <WorkflowRow workflow={defaultRow} projects={defaultProjects} onOpen={() => openEditor(defaultRow.id)} />
         ) : (
@@ -186,15 +190,15 @@ function DefaultWorkflowRow({ projects }: { projects: Project[] }) {
   return (
     <button
       type="button"
-      className="flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-accent/40"
+      className={WORKFLOW_CARD}
       onClick={() => document.getElementById("status-library")?.scrollIntoView({ behavior: "smooth", block: "start" })}
     >
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-body font-semibold">{t(($) => $.workflows.default_name)}</span>
+      <div className="min-w-0 flex-1 space-y-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="whitespace-nowrap text-title-sm font-semibold">{t(($) => $.workflows.default_name)}</span>
         </div>
         <StepChain steps={keys.map((key) => ({ status_key: key, handler: { type: "none" }, instructions: "" }))} />
-        <p className="text-caption text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           {projects.length > 0
             ? t(($) => $.workflows.settings.used_by_default, {
                 count: projects.length,
@@ -223,17 +227,17 @@ function WorkflowRow({
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-accent/40"
+      className={WORKFLOW_CARD}
     >
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-body font-semibold">{workflow.name}</span>
+      <div className="min-w-0 flex-1 space-y-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="whitespace-nowrap text-title-sm font-semibold">{workflow.name}</span>
           {workflow.description && (
-            <span className="truncate text-caption text-muted-foreground">{workflow.description}</span>
+            <span className="truncate text-label text-muted-foreground">{workflow.description}</span>
           )}
         </div>
         <StepChain steps={workflow.steps} />
-        <p className="text-caption text-muted-foreground">
+        <p className="text-label text-muted-foreground">
           {workflow.is_default
             ? projects.length > 0
               ? t(($) => $.workflows.settings.used_by_default, {
@@ -266,13 +270,13 @@ function StepChain({ steps }: { steps: IssueWorkflowStep[] }) {
   const labelOf = useStatusLabel(wsId);
   const path = steps.filter((s) => s.status_key !== "blocked" && catalog.categoryOf(s.status_key) !== "closed");
   return (
-    <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">
       {path.map((step, index) => {
         const { type, id } = step.handler;
         return (
           <Fragment key={step.status_key}>
-            {index > 0 && <ChevronRight aria-hidden className="size-3 text-muted-foreground" />}
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border px-2 py-0.5 text-caption">
+            {index > 0 && <ChevronRight aria-hidden className="size-3 text-faint-foreground" />}
+            <span className="inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full bg-field px-2.5 text-label">
               <StatusIcon
                 status={step.status_key}
                 category={catalog.categoryOf(step.status_key)}
@@ -282,7 +286,7 @@ function StepChain({ steps }: { steps: IssueWorkflowStep[] }) {
               />
               {labelOf(step.status_key)}
               {(type === "agent" || type === "squad" || type === "member") && id && (
-                <ActorAvatar actorType={type} actorId={id} size="xs" profileLink={false} />
+                <ActorAvatar actorType={type} actorId={id} size="sm" profileLink={false} />
               )}
               {type === "project_lead" && (
                 <span className="text-muted-foreground">· {t(($) => $.workflows.handler.project_lead)}</span>

@@ -56,12 +56,12 @@ describe("ChatQueue", () => {
     const queue = container.querySelector('[data-slot="chat-queue"]');
     // Tucked stack, owned entirely by the queue: it slides under the composer
     // (negative margin + z-0) while the composer's chrome stays untouched.
-    expect(shell).toHaveClass("z-0", "-mb-3");
+    expect(shell).toHaveClass("z-0", "-mb-3.5");
     expect(queue).toHaveClass(
       "rounded-lg",
-      "border-surface-border",
-      "bg-surface",
-      "pb-4",
+      "border-border",
+      "bg-surface-sunken",
+      "pb-4.5",
     );
     expect(container.querySelectorAll('[data-slot="chat-queue-row"]')).toHaveLength(2);
     expect(container.querySelectorAll('[data-slot="chat-queue-item-icon"]')).toHaveLength(2);

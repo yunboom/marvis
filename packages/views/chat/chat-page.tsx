@@ -229,14 +229,14 @@ export function ChatPage() {
   );
 
   const listHeader = (
-    <PageHeader>
-      <h1 className="flex-1 text-body font-semibold">{t(($) => $.page.title)}</h1>
+    <PageHeader className="h-16 border-b-0">
+      <h1 className="min-w-0 flex-1 truncate text-display-sm font-bold">{t(($) => $.page.title)}</h1>
       {newChatButton}
     </PageHeader>
   );
 
   const listBody = (
-    <div className="px-2 py-1">
+    <div className="flex flex-col gap-0.5 px-2.5 pb-2.5">
       <ChatThreadList
         sessions={c.sessions}
         agents={c.agents}
@@ -421,7 +421,7 @@ export function ChatPage() {
             conversation
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-              <MessageSquare className="h-10 w-10 text-faint-foreground" />
+              <MessageSquare className="size-10 text-faint-foreground" strokeWidth={1.5} />
               <p className="text-body">{t(($) => $.page.select_prompt)}</p>
             </div>
           )}

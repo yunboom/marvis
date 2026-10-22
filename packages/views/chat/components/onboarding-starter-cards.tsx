@@ -87,14 +87,14 @@ export function OnboardingStarterCards({
                 aria-label={card.title}
                 onClick={() => void handlePick(card)}
                 className={cn(
-                  "group flex flex-col overflow-clip rounded-xl border bg-card text-left transition-colors",
-                  "hover:border-brand/40 hover:bg-accent/40",
+                  "group flex flex-col overflow-clip rounded-xl border border-border bg-card text-left transition-colors duration-(--motion-fast) ease-out",
+                  "hover:border-input hover:bg-accent/40 hover:duration-(--motion-instant)",
                   "disabled:pointer-events-none disabled:opacity-55",
                 )}
               />
             }
           >
-            <div className="flex h-26 shrink-0 items-center justify-center bg-gradient-to-b from-muted/55 to-transparent">
+            <div className="flex h-26 shrink-0 items-center justify-center bg-gradient-to-b from-surface-sunken to-transparent">
               {card.vignette}
             </div>
             <div className="flex min-h-0 flex-1 flex-col items-start px-3.5 pt-3 pb-3.5">

@@ -41,7 +41,7 @@ export default function Page() {
     wsList.length > 0 ? () => router.push(paths.root()) : undefined;
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
+    <div className="h-full overflow-y-auto bg-app-shell">
       <OnboardingFlow
         mode="new_workspace"
         onCancel={onCancel}

@@ -201,7 +201,7 @@ export function issueHighlightMementoKey(issueId: string): string {
 // stay one control visually — they occupy the same slot and only differ in
 // what a click does.
 const SUBSCRIPTION_ACTION_CLASS =
-  "text-caption text-muted-foreground hover:text-foreground transition-colors disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex h-7 items-center rounded-full px-2.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50";
 
 function SubscriberPopoverContent({
   members,
@@ -682,7 +682,7 @@ function ActivityBlock({
         <button
           type="button"
           onClick={onToggle}
-          className="flex items-center gap-1.5 text-caption text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
         >
           <ChevronRight className="h-3 w-3 shrink-0" />
           <span>{t(($) => $.activity.activity_count, { count })}</span>
@@ -704,12 +704,12 @@ function ActivityBlock({
   // fold the whole block back to a single count line.
   const showHeader = hiddenOlderCount === 0;
   return (
-    <div className="pb-3 px-4 max-md:px-3 flex flex-col gap-3">
+    <div className="pb-3 px-4 max-md:px-3 flex flex-col gap-2.5">
       {showHeader && (
         <button
           type="button"
           onClick={onToggle}
-          className="flex items-center gap-1.5 text-caption text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
         >
           <ChevronDown className="h-3 w-3 shrink-0" />
           <span>{t(($) => $.activity.activity_count, { count: entries.length })}</span>
@@ -719,7 +719,7 @@ function ActivityBlock({
         <button
           type="button"
           onClick={onToggleShowOlder}
-          className="flex items-center gap-1.5 text-caption text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
         >
           <ChevronRight className="h-3 w-3 shrink-0" />
           <span>{t(($) => $.activity.show_more_activities, { count: hiddenOlderCount })}</span>
@@ -773,13 +773,13 @@ function ActivityBlock({
 
         const handoff = isStatusChange && !!details.handoff_to_id;
         return (
-          <div key={entry.id} className="text-caption text-muted-foreground">
+          <div key={entry.id} className="text-label text-muted-foreground">
             <div className="flex items-center">
-              <div className="mr-2 flex w-4 shrink-0 justify-center">{leadIcon}</div>
+              <div className="mr-2 flex w-5 shrink-0 justify-center">{leadIcon}</div>
               <div className="flex min-w-0 flex-1 items-center gap-1">
                 {/* The platform's own entries read as a sentence without an actor. */}
                 {!(isWakeup && entry.actor_type === "system") && (
-                  <span className="shrink-0 font-medium">
+                  <span className="shrink-0 font-medium text-foreground">
                     {entry.actor_name || getActorName(entry.actor_type, entry.actor_id)}
                   </span>
                 )}
@@ -792,12 +792,12 @@ function ActivityBlock({
                   />
                 </span>
                 {chip && (
-                  <span className="ml-auto inline-flex max-w-48 shrink-0 items-center gap-1 truncate rounded-xs bg-muted px-1.5 py-0.5 text-micro text-muted-foreground">
+                  <span className="ml-auto inline-flex h-[18px] max-w-48 shrink-0 items-center gap-1 truncate rounded-full bg-field px-1.5 text-micro text-muted-foreground">
                     {chip}
                   </span>
                 )}
                 {(entry.coalesced_count ?? 1) > 1 && entry.action !== "task_completed" && entry.action !== "task_failed" && (
-                  <span className="shrink-0 rounded-xs bg-muted px-1.5 py-0.5 text-caption font-medium tabular-nums text-muted-foreground">
+                  <span className="inline-flex h-[18px] shrink-0 items-center rounded-full bg-field px-1.5 text-micro font-medium tabular-nums text-foreground">
                     {t(($) => $.activity.coalesced_badge, { count: entry.coalesced_count ?? 1 })}
                   </span>
                 )}
@@ -811,7 +811,7 @@ function ActivityBlock({
                 </Tooltip>
               </div>
             </div>
-            {handoff && <div className="ml-6"><TimelineHandoff details={details} /></div>}
+            {handoff && <div className="ml-7"><TimelineHandoff details={details} /></div>}
           </div>
         );
       })}
@@ -879,8 +879,8 @@ function SubIssueRow({
     <IssueActionsContextMenu issue={child}>
       <div
         className={cn(
-          "flex items-center gap-2.5 px-3 py-2 hover:bg-accent/50 transition-colors group/row",
-          selected && "bg-accent/30",
+          "flex h-[42px] items-center gap-2 px-3 transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant) group/row",
+          selected && "bg-surface-selected hover:bg-surface-selected",
         )}
       >
         {/* Priority ⇄ checkbox slot, mirroring the main list rows: the
@@ -931,9 +931,9 @@ function SubIssueRow({
         />
         <AppLink
           href={paths.issueDetail(child.id)}
-          className="flex min-w-0 flex-1 items-center gap-2.5"
+          className="flex min-w-0 flex-1 items-center gap-2"
         >
-          <span className="text-micro text-muted-foreground tabular-nums font-medium shrink-0">
+          <span className="min-w-11 shrink-0 text-label text-muted-foreground tabular-nums">
             {child.identifier}
           </span>
           <IssueAgentActivityIndicator issueId={child.id} />
@@ -965,7 +965,7 @@ function SubIssueRow({
                 {customPropsWithValue.slice(0, 3).map((property) => (
                   <span
                     key={property.id}
-                    className="inline-flex max-w-[120px] items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground"
+                    className="inline-flex h-5 max-w-[120px] items-center gap-1 rounded-full border border-input px-2 text-caption text-muted-foreground"
                   >
                     <PropertyIcon property={property} className="size-3 text-micro" />
                     <CustomPropertyValueDisplay
@@ -977,13 +977,13 @@ function SubIssueRow({
               </span>
             )}
             {rowProps.childProgress && childProgress && childProgress.total > 0 && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5">
+              <span className="inline-flex shrink-0 items-center gap-1">
                 <ProgressRing
                   done={childProgress.done}
                   total={childProgress.total}
                   size={11}
                 />
-                <span className="text-micro text-muted-foreground tabular-nums font-medium">
+                <span className="text-caption text-muted-foreground tabular-nums">
                   {childProgress.done}/{childProgress.total}
                 </span>
               </span>
@@ -1027,7 +1027,7 @@ function SubIssueRow({
               ) : (
                 <span
                   aria-hidden
-                  className="h-5 w-5 rounded-full border border-dashed border-muted-foreground/30 shrink-0"
+                  className="h-5 w-5 shrink-0 rounded-full border-[1.5px] border-dashed border-input"
                 />
               )
             }
@@ -1073,7 +1073,7 @@ function SubIssueDisplayPopover({
               render={
                 <button
                   type="button"
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
                   aria-label={t(($) => $.display.tooltip)}
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -1199,7 +1199,7 @@ export function IssueNotFound({
           {trailing && <div className="ml-auto flex shrink-0 items-center gap-1">{trailing}</div>}
         </div>
       )}
-      <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-3 text-body text-muted-foreground">
+      <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-4 text-body text-muted-foreground">
         <p>{t(($) => $.detail.not_found)}</p>
         {showBackLink && (
           <Button variant="outline" size="sm" onClick={() => backOrReplace(paths.issues())}>
@@ -1245,8 +1245,8 @@ export function IssueDetailSkeleton({
         <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]">
           {/* Gutters match the loaded column exactly (see its comment), so the
               skeleton doesn't reflow sideways when real content mounts. */}
-          <div className="mx-auto w-full max-w-4xl px-3 py-6 space-y-6 md:px-8 md:py-8">
-            <Skeleton className="h-8 w-3/4" />
+          <div className="mx-auto w-full max-w-190 px-3 py-6 space-y-6 md:px-10 md:py-8">
+            <Skeleton className="h-[30px] w-[62%] rounded-lg" />
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-5/6" />
@@ -1266,7 +1266,7 @@ export function IssueDetailSkeleton({
           </div>
         </div>
         {sidebar && (
-          <div className="hidden md:block w-80 border-l p-4 space-y-5">
+          <div className="hidden md:block w-80 border-l border-border px-5 py-6 space-y-3.5">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Skeleton className="h-3 w-16 shrink-0" />
@@ -2656,13 +2656,13 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
       <div>
         <button
           type="button"
-          className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors mb-2 hover:bg-accent/70 ${propertiesOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+          className={`flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors mb-1.5 hover:bg-accent ${propertiesOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setPropertiesOpen(!propertiesOpen)}
         >
           {t(($) => $.detail.section_properties)}
           <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${propertiesOpen ? "rotate-90" : ""}`} />
         </button>
-        {propertiesOpen && <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 pl-2">
+        {propertiesOpen && <div className="grid grid-cols-[minmax(76px,auto)_1fr] gap-x-2 gap-y-0.5 pl-2">
           {/* Core props — always rendered. */}
           <PropRow label={t(($) => $.detail.prop_status)}>
             <StatusPicker
@@ -2776,7 +2776,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             <div className="col-span-2 mt-1">
               <Popover open={addPropPopoverOpen} onOpenChange={setAddPropPopoverOpen}>
                 <PopoverTrigger
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 -mx-2 text-caption text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+                  className="-mx-2 flex h-7 items-center gap-1.5 rounded-row px-2 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
                 >
                   <Plus className="h-3 w-3 shrink-0" />
                   <span>{t(($) => $.detail.add_property_action)}</span>
@@ -2791,7 +2791,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                       key={k}
                       type="button"
                       onClick={() => addOptionalProp(k)}
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-caption text-foreground transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                      className="flex h-8 w-full items-center gap-2 rounded-row px-2 text-label text-foreground transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                     >
                       {k === "priority" && (
                         <PriorityIcon priority="medium" inheritColor className="text-muted-foreground" />
@@ -2833,7 +2833,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                             key={p.id}
                             type="button"
                             onClick={() => addCustomProp(p.id)}
-                            className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-caption text-foreground transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                            className="flex h-8 w-full items-center gap-2 rounded-row px-2 text-label text-foreground transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                           >
                             {p.icon ? (
                               <PropertyIcon property={p} className="size-3.5 text-caption" />
@@ -2875,17 +2875,17 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         <div>
           <button
             type="button"
-            className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors mb-2 hover:bg-accent/70 ${parentIssueOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+            className={`flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors mb-1.5 hover:bg-accent ${parentIssueOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
             onClick={() => setParentIssueOpen(!parentIssueOpen)}
           >
             {t(($) => $.detail.section_parent_issue)}
             <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${parentIssueOpen ? "rotate-90" : ""}`} />
           </button>
           {parentIssueOpen && <div className="pl-2">
-            <div className="flex items-center gap-0.5 rounded-md px-2 -mx-2 hover:bg-accent/50 transition-colors group">
+            <div className="-mx-2 flex h-[30px] items-center gap-0.5 rounded-row px-2 transition-colors hover:bg-accent group">
               <AppLink
                 href={paths.issueDetail(parentIssue.id)}
-                className="flex flex-1 min-w-0 items-center gap-1.5 py-1.5 text-caption"
+                className="flex flex-1 min-w-0 items-center gap-1.5 text-label"
               >
                 <StatusIcon
                   status={parentIssue.status}
@@ -2943,13 +2943,13 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
       <div>
         <button
           type="button"
-          className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors mb-2 hover:bg-accent/70 ${detailsOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+          className={`flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors mb-1.5 hover:bg-accent ${detailsOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setDetailsOpen(!detailsOpen)}
         >
           {t(($) => $.detail.section_details)}
           <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${detailsOpen ? "rotate-90" : ""}`} />
         </button>
-        {detailsOpen && <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 pl-2">
+        {detailsOpen && <div className="grid grid-cols-[minmax(76px,auto)_1fr] gap-x-2 gap-y-0.5 pl-2">
           <PropRow label={t(($) => $.detail.prop_created_by)}>
             <ActorAvatar actorType={issue.creator_type} actorId={issue.creator_id} size="sm" enableHoverCard />
             <span className="cursor-pointer truncate">{getActorName(issue.creator_type, issue.creator_id)}</span>
@@ -2980,7 +2980,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         <>
           <button
             type="button"
-            className="flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground"
+            className="flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             onClick={() => setMetadataOpen(true)}
           >
             {t(($) => $.detail.section_metadata)}
@@ -2993,7 +2993,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               <DialogHeader>
                 <DialogTitle>{t(($) => $.detail.section_metadata)}</DialogTitle>
               </DialogHeader>
-              <pre className="max-h-[60vh] overflow-auto rounded-md bg-muted p-3 font-mono text-caption">
+              <pre className="max-h-[60vh] overflow-auto rounded-lg bg-field p-3 font-mono text-caption">
                 {JSON.stringify(issue.metadata ?? {}, null, 2)}
               </pre>
             </DialogContent>
@@ -3118,7 +3118,10 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         ]
       : [];
 
-  const titleSizeClass = isPeek ? "text-title-lg font-semibold" : "text-display-sm font-bold";
+  // 页面版标题：30px 粗体，左右各让出 8px 给悬停底色，编辑器与静态标题共用同一套内边距避免切换时跳动。
+  const titleSizeClass = isPeek
+    ? "text-title-lg font-semibold"
+    : "-mx-2 rounded-lg px-2 py-0.5 text-[30px] leading-[1.35] font-bold tracking-[-0.01em]";
 
   const detailContent = (
     <CurrentIssueRenderContextProvider value={currentIssueRenderContext}>
@@ -3264,7 +3267,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             "mx-auto w-full",
             // The peek is already a narrow column, so it takes a tighter gutter
             // and never reaches the chat launcher's corner (see IssuePeekHost).
-            isPeek ? "px-6 py-5" : "max-w-4xl px-3 py-6 max-md:pb-chat-launcher md:px-8 md:py-8",
+            isPeek ? "px-6 py-5" : "max-w-190 px-3 py-6 max-md:pb-chat-launcher md:px-10 md:pt-7 md:pb-8",
           )}
         >
           <IssueDuplicateBanner
@@ -3311,7 +3314,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             <div
               role="button"
               tabIndex={0}
-              className={cn("w-full cursor-text leading-snug tracking-tight", titleSizeClass)}
+              className={cn("w-full cursor-text leading-snug tracking-tight", titleSizeClass, !isPeek && "transition-colors duration-(--motion-fast) ease-out hover:bg-accent")}
               onClick={(e) => {
                 // A drag-selection (copying the title) must not summon the editor.
                 const sel = window.getSelection();
@@ -3383,7 +3386,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
           {parentIssue && !issue.source_context && (
             <AppLink
               href={paths.issueDetail(parentIssue.id)}
-              className="mt-2 inline-flex max-w-full items-center gap-1.5 text-caption text-muted-foreground hover:text-foreground transition-colors group/parent"
+              className="mt-2 inline-flex max-w-full items-center gap-1.5 text-label text-muted-foreground hover:text-foreground transition-colors group/parent"
             >
               <span className="font-medium shrink-0">{t(($) => $.detail.sub_issue_of)}</span>
               <StatusIcon
@@ -3400,7 +3403,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               {parentChildIssues.length > 0 && (() => {
                 const done = parentChildIssues.filter((c) => issueBehavesAs(c, "done")).length;
                 return (
-                  <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 shrink-0">
+                  <span className="ml-1 inline-flex shrink-0 items-center gap-1 rounded-full bg-field px-2 py-0.5">
                     <ProgressRing done={done} total={parentChildIssues.length} size={11} />
                     <span className="tabular-nums text-micro font-medium">
                       {done}/{parentChildIssues.length}
@@ -3443,7 +3446,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             {...descDropZoneProps}
             {...descriptionAnnotations.captureProps}
             ref={descriptionAnnotations.cardRef}
-            className="relative mt-5 rounded-lg"
+            className="relative mt-4.5 rounded-lg"
             onFocusCapture={() => {
               if (!descriptionEditingRef.current) {
                 descriptionEditingRef.current = true;
@@ -3501,7 +3504,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               />
             </div>
 
-            <div className="flex items-center gap-1 mt-3">
+            <div className="mt-3 flex items-center gap-1.5">
               <ReactionBar
                 reactions={issueReactions}
                 currentUserId={user?.id}
@@ -3522,7 +3525,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             <div className="mt-6">
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 text-caption text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
                 onClick={() => actions.openCreateSubIssue()}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -3536,13 +3539,13 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               // Provider hosts the shared right-click actions menu the rows
               // delegate to (one singleton menu, not one per row).
               <IssueContextMenuProvider>
-              <div className="mt-10 group/sub-issues">
+              <div className="mt-9 group/sub-issues">
                 {/* Header */}
-                <div className="flex items-center gap-2 mb-2">
+                <div className="mb-2 flex h-8 items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setSubIssuesCollapsed((v) => !v)}
-                    className="flex items-center gap-1.5 text-body font-medium text-foreground hover:text-foreground/80 transition-colors"
+                    className="flex items-center gap-1.5 text-body font-semibold text-foreground hover:text-foreground/80 transition-colors"
                   >
                     <ChevronDown
                       className={cn(
@@ -3552,7 +3555,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                     />
                     <span>{t(($) => $.detail.sub_issues_label)}</span>
                   </button>
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2 py-0.5">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-field px-2 py-0.5">
                     <ProgressRing done={doneCount} total={childIssues.length} size={11} />
                     <span className="text-micro text-muted-foreground tabular-nums font-medium">
                       {doneCount}/{childIssues.length}
@@ -3583,7 +3586,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                         render={
                           <button
                             type="button"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
                             onClick={() => actions.openCreateSubIssue()}
                             aria-label={t(($) => $.detail.add_sub_issue_aria)}
                           >
@@ -3605,11 +3608,11 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                   const groups = groupSubIssuesByStage(childIssues);
                   const staged = childIssues.some((c) => c.stage != null);
                   return (
-                    <div className="overflow-hidden rounded-lg border bg-card/30 divide-y divide-border/60">
+                    <div className="overflow-hidden rounded-lg border border-border divide-y divide-border">
                       {groups.map(({ stage: groupStage, items }) => (
                         <Fragment key={groupStage ?? "unstaged"}>
                           {staged && (
-                            <div className="bg-muted/40 px-3 py-1 text-micro font-medium uppercase tracking-wider text-muted-foreground">
+                            <div className="flex h-7 items-center bg-surface-sunken px-3.5 text-caption font-medium text-muted-foreground">
                               {groupStage == null
                                 ? t(($) => $.stage.none)
                                 : t(($) => $.stage.value, { n: groupStage })}
@@ -3638,7 +3641,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
 
           {/* Activity / Comments */}
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex h-8 items-center justify-between">
               <div className="flex items-center gap-3">
                 <h2 className="text-title-sm font-semibold">{t(($) => $.detail.activity_section)}</h2>
               </div>
@@ -3653,7 +3656,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                         explaining a state, and must not read as a second
                         action sitting next to Unsubscribe. Uses the shared
                         caption role rather than an ad-hoc size (MUL-5451). */}
-                    <TooltipTrigger className="cursor-default rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">
+                    <TooltipTrigger className="inline-flex h-[22px] cursor-default items-center rounded-full bg-field px-2.5 text-caption text-muted-foreground">
                       {t(($) => $.detail.delegated_subscription_badge)}
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-64">
@@ -3739,7 +3742,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                         )}
                       </AvatarGroup>
                     ) : (
-                      <span className="flex items-center justify-center h-6 w-6 rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] border-dashed border-input text-muted-foreground">
                         <Users className="h-3 w-3" />
                       </span>
                     )}

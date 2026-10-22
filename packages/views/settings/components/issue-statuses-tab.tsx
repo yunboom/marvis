@@ -215,7 +215,7 @@ export function IssueStatusesTab({
   // Offered only once the workspace has something archived. A permanently
   // disabled "Show archived (0)" is a control that can never do anything.
   const archivedToggle = archivedCount > 0 ? (
-    <label className="flex items-center justify-end gap-2 text-caption text-muted-foreground">
+    <label className="flex items-center justify-end gap-2 text-label text-muted-foreground">
       {t(($) => $.issue_statuses.show_archived, { count: archivedCount })}
       <Switch checked={showArchived} onCheckedChange={setShowArchived} />
     </label>
@@ -224,18 +224,14 @@ export function IssueStatusesTab({
   const body = (
     <>
       {myRole && !isAdmin ? <SettingsReadOnlyNotice wsId={wsId} /> : null}
-      <div className="space-y-4">
-        {embedded && archivedToggle}
-
+      <div className="space-y-3">
         {isLoading ? (
-          <div className="rounded-lg border border-surface-border bg-card px-4 py-12 text-center text-body text-muted-foreground">
+          <div className="rounded-xl border border-surface-border bg-card px-4 py-12 text-center text-body text-muted-foreground">
             {t(($) => $.issue_statuses.loading)}
           </div>
         ) : (
-          // The four categories are sections of a single
-          // workflow, and separate borders made them read as unrelated
-          // settings.
-          <div className="overflow-hidden rounded-lg border border-surface-border bg-card">
+          // 每个分类一张独立描边卡片，分类名在卡片上方。
+          <div className="space-y-3">
             {groups.map((group) => (
               <CategorySection
                 key={`${wsId}:${group.category}`}
@@ -280,8 +276,11 @@ export function IssueStatusesTab({
   );
 
   return embedded ? (
-    <section id="status-library" className="space-y-4">
-      <h3 className="text-title-sm font-semibold">{embedded.title}</h3>
+    <section id="status-library" className="space-y-3">
+      <div className="flex min-h-7 items-center gap-2.5">
+        <h3 className="text-title font-bold">{embedded.title}</h3>
+        {archivedToggle ? <div className="ml-auto">{archivedToggle}</div> : null}
+      </div>
       {body}
     </section>
   ) : (
@@ -374,15 +373,14 @@ function CategorySection({
     <section
       aria-labelledby={`issue-status-category-${category}`}
       aria-busy={reorder.isPending}
-      className="border-b border-surface-border last:border-b-0"
     >
       {/* Label plus the one action the header owns. The category glyph is the
           same glyph the built-in row renders directly below it, so it said
           nothing the eye had not already read. */}
-      <div className="flex items-center justify-between gap-2 bg-muted/20 px-4 py-1.5">
+      <div className="flex h-7.5 items-center justify-between gap-2 px-0.5">
         <h3
           id={`issue-status-category-${category}`}
-          className="text-caption font-medium text-muted-foreground"
+          className="text-label font-normal text-muted-foreground"
         >
           {t(($) => $.issue_statuses.category_labels[category])}
         </h3>
@@ -393,7 +391,7 @@ function CategorySection({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="shrink-0 [@media(pointer:coarse)]:size-11"
+                  className="shrink-0 text-muted-foreground [@media(pointer:coarse)]:size-11"
                   aria-label={`${t(($) => $.issue_statuses.add)}: ${t(($) => $.issue_statuses.category_labels[category])}`}
                   onClick={onCreate}
                 >
@@ -406,7 +404,7 @@ function CategorySection({
         )}
       </div>
 
-      <div className="divide-y divide-surface-border">
+      <div className="divide-y divide-surface-border overflow-hidden rounded-xl border border-surface-border bg-card">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
             {order.map((entry, index) => {
@@ -492,7 +490,7 @@ function StatusRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`group/row relative flex min-h-12 items-center gap-2 bg-card py-2 pl-2 pr-4 motion-reduce:transition-none! ${isDragging ? "z-10 shadow-[var(--surface-shadow)]" : ""} ${archived ? "opacity-60" : ""}`}
+      className={`group/row relative flex min-h-12.5 items-center gap-3 bg-card py-2 pl-2 pr-2.5 motion-reduce:transition-none! ${isDragging ? "z-10 shadow-[var(--surface-shadow)]" : ""} ${archived ? "opacity-60" : ""}`}
     >
       {canReorder ? (
         <TooltipHint label={t(($) => $.issue_statuses.actions.reorder, { name: label })}>
@@ -500,39 +498,38 @@ function StatusRow({
             type="button"
             disabled={isReordering}
             aria-label={t(($) => $.issue_statuses.actions.reorder, { name: label })}
-            className="flex size-6 shrink-0 touch-none items-center justify-center rounded-md cursor-grab text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring active:cursor-grabbing [@media(pointer:coarse)]:size-11"
+            className="flex h-6 w-5.5 shrink-0 touch-none items-center justify-center rounded-sm cursor-grab text-faint-foreground focus-visible:outline-2 focus-visible:outline-ring active:cursor-grabbing [@media(pointer:coarse)]:size-11"
             {...attributes}
             {...listeners}
           >
-            <GripVertical className="size-4" />
+            <GripVertical className="size-3.5" />
           </button>
         </TooltipHint>
-      ) : <span className="size-6 shrink-0 [@media(pointer:coarse)]:size-11" />}
+      ) : <span className="h-6 w-5.5 shrink-0 [@media(pointer:coarse)]:size-11" />}
       <StatusIcon
         status={entry.key}
         category={normalizeIssueStatusCategory(entry.category) ?? "unstarted"}
         color={issueStatusColor(entry)}
         icon={entry.icon}
-        className="size-4"
+        className="size-3.5 shrink-0"
       />
       {/* Name over description, the way the row is read. The old layout pinned
           the description to the far right, which left a column of em dashes on
           every status nobody had described. */}
-      <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-body font-medium">{label}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <span className="min-w-0 truncate text-body font-medium">{label}</span>
           {showKey && entry.is_system && (
-            <span className="shrink-0 rounded-xs bg-muted px-1.5 py-0.5 text-micro text-muted-foreground">
+            <span className="shrink-0 rounded-row bg-field px-2 py-px text-caption text-muted-foreground">
               {t(($) => $.issue_statuses.builtin_badge)}
             </span>
           )}
           {showKey && (
-            <span className="shrink-0 font-mono text-caption text-muted-foreground">{entry.key}</span>
+            <span className="shrink-0 font-mono text-caption text-faint-foreground">{entry.key}</span>
           )}
           {mergeBadgeHref && (
             <AppLink
               href={mergeBadgeHref}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-info/10 px-1.5 py-0.5 text-micro font-medium text-info transition-colors hover:bg-info/15 focus-visible:outline-2 focus-visible:outline-ring"
+              className="inline-flex shrink-0 items-center gap-1 rounded-row bg-info/8 px-2 py-px text-caption text-info transition-colors hover:bg-info/14 focus-visible:outline-2 focus-visible:outline-ring"
             >
               <Zap className="size-3" aria-hidden="true" />
               {t(($) => $.issue_statuses.pr_auto_complete_badge)}
@@ -542,7 +539,7 @@ function StatusRow({
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <span className="shrink-0 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground">
+                  <span className="shrink-0 rounded-row bg-field px-2 py-px text-caption text-muted-foreground">
                     {t(($) => $.issue_statuses.archived_badge)}
                   </span>
                 }
@@ -550,19 +547,18 @@ function StatusRow({
               <TooltipContent>{t(($) => $.issue_statuses.archived_hint)}</TooltipContent>
             </Tooltip>
           )}
-        </div>
         {description && (
-          <p className="truncate text-caption text-muted-foreground">{description}</p>
+          <p className="min-w-0 flex-1 truncate text-label text-muted-foreground">{description}</p>
         )}
       </div>
       {workflowUsage !== undefined && !archived && (
-        <span className="shrink-0 text-caption text-muted-foreground">
+        <span className="shrink-0 whitespace-nowrap text-caption text-muted-foreground">
           {workflowUsage > 0
             ? t(($) => $.issue_statuses.workflow_usage, { count: workflowUsage })
             : t(($) => $.issue_statuses.workflow_usage_none)}
         </span>
       )}
-      {archived && <StatusIssuesButton variant="outline" onClick={onViewIssues} />}
+      {archived && <StatusIssuesButton variant="secondary" size="sm" onClick={onViewIssues} />}
       {canManage && !archived && (
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -882,9 +878,9 @@ function StatusIssueInspection({ status, onClose }: { status: IssueStatusEntry; 
   </>;
 }
 
-function StatusIssuesButton({ onClick, variant = "default", disabled = false }: { onClick: () => void; variant?: "default" | "outline"; disabled?: boolean }) {
+function StatusIssuesButton({ onClick, variant = "default", size = "default", disabled = false }: { onClick: () => void; variant?: "default" | "outline" | "secondary"; size?: "default" | "sm"; disabled?: boolean }) {
   const { t } = useT("settings");
-  return <Button variant={variant} disabled={disabled} onClick={onClick}>{t(($) => $.issue_statuses.archive_dialog.view_issues)}</Button>;
+  return <Button variant={variant} size={size} disabled={disabled} onClick={onClick}>{t(($) => $.issue_statuses.archive_dialog.view_issues)}</Button>;
 }
 
 function ArchiveStatusDialog({

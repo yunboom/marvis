@@ -23,8 +23,8 @@ import { useT } from "../../i18n";
 // Sizing only (like the board's card estimate): the seed's trailing spacer
 // and Virtuoso's defaultItemHeight share this value so the scroller's height
 // is truthful from the first frame and a restored offset sticks. A row is
-// two text lines (body + caption) plus py-2.5.
-const INBOX_ROW_ESTIMATED_HEIGHT = 58;
+// a 40px avatar beside two text lines, plus p-3 and the 2px gap below it.
+const INBOX_ROW_ESTIMATED_HEIGHT = 66;
 
 /**
  * Scrollable, virtualized inbox notification list.
@@ -165,9 +165,9 @@ export function InboxList({
         <button
           type="button"
           onClick={onOpenArchived}
-          className="mt-1 flex h-10 w-full items-center gap-2 rounded-md px-2 text-left text-caption text-muted-foreground outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+          className="mt-1 flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-label text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <span className="flex size-7 shrink-0 items-center justify-center">
+          <span className="flex w-10 shrink-0 items-center justify-center">
             <Archive className="size-4" />
           </span>
           <span className="min-w-0 flex-1 truncate font-medium">
@@ -191,7 +191,7 @@ export function InboxList({
       <div className="flex flex-col items-center gap-2 py-3">
         {loadMoreError && <p role="alert" className="text-caption text-destructive">{t(($) => $.errors.archived_load_failed)}</p>}
         <button type="button" disabled={loadingMore} onClick={onLoadMore}
-          className="rounded-md px-3 py-2 text-caption text-muted-foreground hover:bg-accent/50 focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50">
+          className="h-8 rounded-full px-3.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50">
           {loadingMore ? t(($) => $.list.loading_more) : loadMoreError ? t(($) => $.list.retry) : t(($) => $.list.load_more)}
         </button>
       </div>
@@ -201,8 +201,8 @@ export function InboxList({
   if (items.length === 0) {
     return (
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {!onLoadMore && <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <Inbox className="mb-3 h-8 w-8 text-faint-foreground" />
+        {!onLoadMore && <div className="flex flex-col items-center justify-center pt-16 pb-6 text-muted-foreground">
+          <Inbox className="mb-3 size-8 text-faint-foreground" strokeWidth={1.5} />
           <p className="text-body">
             {emptyLabel ??
               (isArchivedView
@@ -213,20 +213,24 @@ export function InboxList({
         </div>}
         {/* Still offer the archive when the main list is empty — that is
             exactly when a user goes looking for what they filed away. */}
-        <div className="px-2"><Footer /></div>
+        <div className="px-3"><Footer /></div>
       </div>
     );
   }
 
   const computeItemKey = (_index: number, item: InboxItem) => item.id;
+  // Virtuoso rows cannot take a flex gap, so each row carries the 2px gap
+  // below it as padding.
   const itemContent = (_index: number, item: InboxItem) => (
-    <InboxListItem
-      item={item}
-      view={view}
-      isSelected={(item.issue_id ?? item.id) === selectedKey}
-      onClick={() => selectItem(item)}
-      onAction={() => onAction(item.id)}
-    />
+    <div className="pb-0.5">
+      <InboxListItem
+        item={item}
+        view={view}
+        isSelected={(item.issue_id ?? item.id) === selectedKey}
+        onClick={() => selectItem(item)}
+        onAction={() => onAction(item.id)}
+      />
+    </div>
   );
 
   // While the callback ref hasn't handed the scroll element over yet (the first
@@ -243,7 +247,7 @@ export function InboxList({
       onKeyDown={handleKeyDown}
       className="flex-1 min-h-0 overflow-y-auto outline-none"
     >
-      <div className="px-2 py-1">
+      <div className="px-3 pb-3">
         {scrollEl ? (
           <Virtuoso
             ref={virtuosoRef}

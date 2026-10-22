@@ -7,13 +7,10 @@ export function RadioMark({ selected }: { selected: boolean }) {
     <span
       aria-hidden
       className={cn(
-        "relative inline-block h-4 w-4 shrink-0 rounded-full border-[1.5px] transition-colors",
-        selected ? "border-foreground" : "border-border",
+        "relative inline-block size-[18px] shrink-0 rounded-full transition-[border-width,border-color] duration-(--motion-fast) ease-out",
+        selected ? "border-[5px] border-foreground" : "border-[1.5px] border-input",
       )}
     >
-      {selected && (
-        <span className="absolute inset-[3px] rounded-full bg-foreground" />
-      )}
     </span>
   );
 }

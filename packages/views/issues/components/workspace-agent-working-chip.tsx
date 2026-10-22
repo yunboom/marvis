@@ -44,9 +44,16 @@ export function chipAppearance(
   value: boolean,
   activity: ChipActivity,
 ): { variant: "brand" | "brandSubtle" | "outline"; className: string } {
-  const layout = "h-8 px-2 md:h-7 md:px-2.5";
-  if (value) return { variant: "brand", className: layout };
-  if (activity === "some") return { variant: "brandSubtle", className: layout };
+  // 32px 药丸、13px 中粗；有头像时左侧收窄贴住头像
+  const layout = "h-8 gap-1.5 rounded-full px-3 text-label font-medium";
+  const withAvatars = `${layout} pl-1.5`;
+  if (value) return { variant: "brand", className: activity === "some" ? withAvatars : layout };
+  if (activity === "some") {
+    return {
+      variant: "brandSubtle",
+      className: `${withAvatars} border-transparent text-brand hover:text-brand aria-expanded:text-brand`,
+    };
+  }
   if (activity === "unknown") return { variant: "outline", className: layout };
   return { variant: "outline", className: `${layout} text-muted-foreground` };
 }

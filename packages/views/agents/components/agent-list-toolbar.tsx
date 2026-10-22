@@ -55,6 +55,12 @@ import { availabilityConfig } from "../presence";
 import { useT } from "../../i18n";
 import type { AgentListRow } from "./agents-page";
 import { PAGE_GUTTER } from "../../layout/page-header";
+import {
+  COLLECTION_SEARCH_ICON,
+  COLLECTION_SEARCH_INPUT,
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
+} from "../../layout/collection-page";
 import { cn } from "@marvis/ui/lib/utils";
 
 const COLUMN_KEYS: AgentColumnKey[] = [
@@ -205,39 +211,40 @@ export function AgentListToolbar({
   );
 
   return (
-    <div className={cn("h-12 shrink-0 overflow-x-auto [-webkit-overflow-scrolling:touch]", PAGE_GUTTER)}>
+    <div className={cn("h-12 shrink-0 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch]", PAGE_GUTTER)}>
       <div className="flex h-full w-max min-w-full items-center justify-between gap-2">
         {/* Left: local search + scope buttons + result count. Scope mixes the
           ownership lens (mine/all) with the archived lifecycle stage. Button
           styling and the <md dropdown collapse follow the issues header's
           scope buttons. */}
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center gap-3">
         <div className="relative hidden shrink-0 md:block">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className={COLLECTION_SEARCH_ICON} />
           <Input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             aria-label={t(($) => $.page.search_placeholder)}
             placeholder={t(($) => $.page.search_placeholder)}
-            className="h-8 w-56 pl-8 text-body"
+            className={cn(COLLECTION_SEARCH_INPUT, "w-56")}
           />
         </div>
 
-        <div className="hidden shrink-0 items-center gap-1 md:flex">
+        <div className="hidden shrink-0 items-center gap-0.5 rounded-full bg-field p-0.75 md:flex">
           {AGENT_SCOPES.map((s) => (
             <Button
               key={s}
-              variant="outline"
+              variant="ghost"
               size="sm"
+              aria-pressed={scope === s}
               className={
                 scope === s
-                  ? "gap-1.5 bg-accent text-accent-foreground hover:bg-accent/80"
-                  : "gap-1.5 text-muted-foreground"
+                  ? "h-6.5 gap-1.5 px-3 text-label font-medium text-foreground shadow-control bg-surface hover:bg-surface dark:bg-white/12 dark:hover:bg-white/12"
+                  : "h-6.5 gap-1.5 px-3 text-label font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
               }
               onClick={() => onScopeChange(s)}
             >
               {SCOPE_LABELS[s]}
-              <span className="tabular-nums text-caption text-muted-foreground">
+              <span className="font-normal tabular-nums text-muted-foreground">
                 {scopeCounts[s]}
               </span>
             </Button>
@@ -250,7 +257,11 @@ export function AgentListToolbar({
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 gap-1 text-muted-foreground md:hidden"
+                className={cn(
+                  COLLECTION_TOOLBAR_BUTTON,
+                  COLLECTION_TOOLBAR_BUTTON_IDLE,
+                  "shrink-0 gap-1 md:hidden",
+                )}
               >
                 <span className="truncate">{SCOPE_LABELS[scope]}</span>
                 <ChevronDown className="size-3 text-muted-foreground" />
@@ -277,26 +288,28 @@ export function AgentListToolbar({
         {(hasActiveFilters || hasSearch) && (
           <span
             title={t(($) => $.toolbar.result_count_title)}
-            className="hidden shrink-0 text-caption tabular-nums text-muted-foreground md:inline"
+            className="hidden shrink-0 text-label tabular-nums text-muted-foreground md:inline"
           >
             {visibleCount} / {allRows.length}
           </span>
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1.5">
         {/* Filter */}
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
               <Button
-                variant={hasActiveFilters ? "default" : "outline"}
+                variant={hasActiveFilters ? "brand" : "outline"}
                 size="sm"
-                className={
+                className={cn(
+                  COLLECTION_TOOLBAR_BUTTON,
+                  "w-8 px-0 md:w-auto md:px-3",
                   hasActiveFilters
-                    ? "h-8 w-8 gap-1 bg-brand px-0 text-white hover:bg-brand/90 md:w-auto md:px-2.5"
-                    : "h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
-                }
+                    ? "font-medium md:pr-2"
+                    : COLLECTION_TOOLBAR_BUTTON_IDLE,
+                )}
               >
                 <Filter className="size-3.5" />
                 {hasActiveFilters ? (
@@ -320,7 +333,7 @@ export function AgentListToolbar({
                     role="button"
                     tabIndex={-1}
                     aria-label={t(($) => $.toolbar.clear_filters)}
-                    className="-mr-1 ml-0.5 hidden rounded-sm p-0.5 hover:bg-white/20 md:inline-flex"
+                    className="hidden size-4.5 items-center justify-center rounded-full bg-white/18 transition-colors duration-(--motion-fast) ease-out hover:bg-white/28 md:inline-flex"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -328,7 +341,7 @@ export function AgentListToolbar({
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
                   >
-                    <X className="size-3" />
+                    <X className="size-2.75" />
                   </span>
                 )}
               </Button>
@@ -521,7 +534,11 @@ export function AgentListToolbar({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
+                      className={cn(
+                        COLLECTION_TOOLBAR_BUTTON,
+                        COLLECTION_TOOLBAR_BUTTON_IDLE,
+                        "w-8 px-0 md:w-auto md:px-3",
+                      )}
                     >
                       {sortDirection === "asc" ? (
                         <ArrowUp className="size-3.5" />

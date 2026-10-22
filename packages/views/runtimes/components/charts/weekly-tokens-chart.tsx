@@ -14,14 +14,15 @@ import {
 } from "@marvis/ui/components/ui/chart";
 import { formatTokens, type WeeklyTokenData } from "../../utils";
 import { useLocale, useT } from "../../../i18n";
+import { CHART_MONO, monoBarFill } from "./chart-tones";
 
 // Mirror of DailyTokensChart's four-segment stack — same series and colours
 // keep the Weekly view legible as a coarser cut of the Daily one.
 export const weeklyTokenStackConfig = {
-  input: { label: "Input", color: "var(--chart-1)" },
-  output: { label: "Output", color: "var(--chart-2)" },
-  cacheRead: { label: "Cache read", color: "var(--chart-4)" },
-  cacheWrite: { label: "Cache write", color: "var(--chart-3)" },
+  input: { label: "Input", color: CHART_MONO[1] },
+  output: { label: "Output", color: CHART_MONO[2] },
+  cacheRead: { label: "Cache read", color: CHART_MONO[4] },
+  cacheWrite: { label: "Cache write", color: CHART_MONO[3] },
 } satisfies ChartConfig;
 
 export function WeeklyTokensChart({ data }: { data: WeeklyTokenData[] }) {
@@ -29,7 +30,7 @@ export function WeeklyTokensChart({ data }: { data: WeeklyTokenData[] }) {
   const locale = useLocale();
   return (
     <ChartContainer config={weeklyTokenStackConfig} className="aspect-[3/1] w-full">
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -46,6 +47,7 @@ export function WeeklyTokensChart({ data }: { data: WeeklyTokenData[] }) {
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               labelKey="rangeLabel"
@@ -82,17 +84,17 @@ export function WeeklyTokensChart({ data }: { data: WeeklyTokenData[] }) {
             />
           }
         />
-        <Bar dataKey="input" stackId="tokens" fill="var(--color-input)">
+        <Bar dataKey="input" stackId="tokens" {...monoBarFill("input")}>
           {data.map((d) => (
             <Cell key={d.weekStart} fillOpacity={d.partial ? 0.5 : 1} />
           ))}
         </Bar>
-        <Bar dataKey="output" stackId="tokens" fill="var(--color-output)">
+        <Bar dataKey="output" stackId="tokens" {...monoBarFill("output")}>
           {data.map((d) => (
             <Cell key={d.weekStart} fillOpacity={d.partial ? 0.5 : 1} />
           ))}
         </Bar>
-        <Bar dataKey="cacheRead" stackId="tokens" fill="var(--color-cacheRead)">
+        <Bar dataKey="cacheRead" stackId="tokens" {...monoBarFill("cacheRead")}>
           {data.map((d) => (
             <Cell key={d.weekStart} fillOpacity={d.partial ? 0.5 : 1} />
           ))}
@@ -100,7 +102,7 @@ export function WeeklyTokensChart({ data }: { data: WeeklyTokenData[] }) {
         <Bar
           dataKey="cacheWrite"
           stackId="tokens"
-          fill="var(--color-cacheWrite)"
+          {...monoBarFill("cacheWrite")}
           radius={[3, 3, 0, 0]}
         >
           {data.map((d) => (

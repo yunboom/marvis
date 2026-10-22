@@ -210,7 +210,7 @@ function OverviewBody({
         style={DRAG}
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-row bg-secondary text-muted-foreground">
             <LayoutGrid className="size-4" />
           </span>
           <div className="min-w-0">
@@ -237,7 +237,7 @@ function OverviewBody({
           <TooltipHint label={t(($) => $.deliverables.overview_close)} side="bottom">
             <button
               type="button"
-              className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               aria-label={t(($) => $.deliverables.overview_close)}
               onClick={onClose}
             >
@@ -325,7 +325,7 @@ function CommentGroup({
         {onLocate && (
           <button
             type="button"
-            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-caption text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-caption text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             onClick={onLocate}
           >
             <MessageSquareText className="size-3.5" />

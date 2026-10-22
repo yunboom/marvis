@@ -222,12 +222,12 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
   return (
     <div
       {...dropZoneProps}
-      className="relative flex flex-col rounded-lg bg-card pb-8 ring-1 ring-border"
+      className="relative flex min-h-24 flex-col rounded-xl border border-input bg-background pb-11 shadow-control"
     >
-      {attachmentsBlockSteer && <div className="px-3 pt-2">
+      {attachmentsBlockSteer && <div className="px-3.5 pt-3">
         <SteerAttachmentNotice />
       </div>}
-      {annotations.length > 0 && <div className="px-3 pt-2">
+      {annotations.length > 0 && <div className="px-3.5 pt-3">
         <ReplyAnnotations draftKey={draftKey} annotations={annotations} disabled={submitting}
           onEditAnnotation={onEditAnnotation} />
       </div>}
@@ -238,7 +238,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
       {lazy.active && (
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto px-3 py-2",
+          "flex-1 min-h-0 overflow-y-auto px-3.5 pt-3 pb-1",
           // Pinned to the viewport bottom the composer grows upward; cap it
           // so a long draft can't swallow the whole timeline (the editor
           // area scrolls internally instead).
@@ -283,7 +283,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
           role="button"
           tabIndex={0}
           aria-label={t(($) => $.comment.leave_comment_placeholder)}
-          className="flex-1 min-h-0 cursor-text px-3 py-2"
+          className="flex-1 min-h-0 cursor-text px-3.5 pt-3 pb-1"
           onClick={() => lazy.activate()}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -300,7 +300,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
           </div>
         </div>
       )}
-      <div className="absolute bottom-1 left-2 right-28 min-w-0">
+      <div className="absolute bottom-2 left-2.5 right-28 min-w-0">
         <CommentTriggerChips
           recipients={recipients}
           blocked={triggerPreview.blocked}
@@ -309,7 +309,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
           onActionChange={setAction}
         />
       </div>
-      <div className="absolute bottom-1 right-1.5 flex items-center gap-1">
+      <div className="absolute bottom-2 right-2 flex items-center gap-1">
         <FileUploadButton
           size="sm"
           multiple

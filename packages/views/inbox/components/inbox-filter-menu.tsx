@@ -217,21 +217,21 @@ export function InboxFilterMenu({
       <DropdownMenuTrigger
         render={
           <IconButton
-            variant={activeCount > 0 ? "default" : "ghost"}
-            size="icon-sm"
+            variant={activeCount > 0 ? "secondary" : "ghost"}
+            size="icon"
             label={triggerLabel}
             tooltipSide="bottom"
             className={cn(
               "text-muted-foreground",
               activeCount > 0 &&
-                "w-auto gap-1 bg-brand px-2 text-white hover:bg-brand/90",
+                "w-auto gap-1 px-2.5 text-label text-foreground",
             )}
           />
         }
       >
         <Filter className="size-4" />
         {activeCount > 0 && (
-          <span className="text-caption tabular-nums">{activeCount}</span>
+          <span className="tabular-nums">{activeCount}</span>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-auto min-w-44">

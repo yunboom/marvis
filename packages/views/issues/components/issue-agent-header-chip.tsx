@@ -189,8 +189,8 @@ function ActiveChip({
               // header. Queued-only state stays calm (no beam) to reserve the
               // motion for work that is genuinely in flight.
               className={cn(
-                "flex h-9 min-w-9 max-w-[11rem] items-center justify-center gap-1.5 rounded-md px-2 text-muted-foreground outline-none transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring md:h-7 md:min-w-0 md:justify-start md:px-1.5",
-                anyRunning && "relative bg-brand/5",
+                "flex h-9 min-w-9 max-w-[13rem] items-center justify-center gap-1.5 rounded-full border border-transparent px-2 text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring md:h-7.5 md:min-w-0 md:justify-start md:pr-2.5 md:pl-[5px]",
+                anyRunning && "relative border-brand/35 bg-brand/6 ring-3 ring-brand/5 hover:bg-brand/10 dark:border-brand/45 dark:bg-brand/10 dark:ring-brand/8",
               )}
             />
           }
@@ -203,8 +203,8 @@ function ActiveChip({
           />
           <span
             className={cn(
-              "hidden min-w-0 truncate text-caption md:inline",
-              anyRunning ? "text-info" : "text-muted-foreground",
+              "hidden min-w-0 truncate text-label md:inline",
+              anyRunning ? "text-foreground" : "text-muted-foreground",
             )}
           >
             {label}
@@ -237,7 +237,7 @@ function ActiveChip({
       </Popover>
       {/* Separator from the action buttons — the chip is a status segment,
           not another button, so a hairline keeps the two groups legible. */}
-      <span className="h-4 w-px bg-border" aria-hidden="true" />
+      <span className="mx-1 h-4 w-px bg-input" aria-hidden="true" />
     </div>
   );
 }

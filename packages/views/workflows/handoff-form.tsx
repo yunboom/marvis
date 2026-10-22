@@ -314,52 +314,55 @@ export function HandoffFields({
     { mode: "agent", title: t(($) => $.workflows.handoff.mode_agent), hint: t(($) => $.workflows.handoff.mode_agent_hint) },
     { mode: "member", title: t(($) => $.workflows.handoff.mode_member), hint: t(($) => $.workflows.handoff.mode_member_hint) },
   ];
+  const currentOption = options.find((option) => option.mode === mode) ?? options[0]!;
 
   return (
-    <div className="space-y-4">
-      <div role="radiogroup" aria-label={t(($) => $.workflows.handoff.to)} className="space-y-1.5">
-        {options.map((option) => {
-          const selected = option.mode === mode;
-          return (
-            <div
-              key={option.mode}
-              className={cn(
-                "rounded-lg border transition-colors",
-                selected ? "border-brand/50 bg-brand/5" : "border-surface-border",
-              )}
-            >
+    <div className="space-y-5">
+      {/* 分段控件：三个选项横排，下方只显示当前选项的说明和处理人选择。 */}
+      <div className="space-y-2">
+        <div
+          role="radiogroup"
+          aria-label={t(($) => $.workflows.handoff.to)}
+          className="flex gap-0.5 rounded-lg bg-field p-0.75"
+        >
+          {options.map((option) => {
+            const selected = option.mode === mode;
+            return (
               <button
+                key={option.mode}
                 type="button"
                 role="radio"
                 aria-checked={selected}
                 disabled={!canEdit}
                 onClick={() => choose(option.mode)}
-                className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left disabled:cursor-default"
+                className={cn(
+                  "min-h-8 min-w-0 flex-1 rounded-md px-1.5 py-1 text-center text-label leading-tight transition-colors duration-(--motion-fast) ease-out disabled:cursor-default",
+                  selected
+                    ? "bg-surface font-medium text-foreground shadow-control dark:bg-white/12"
+                    : "text-muted-foreground enabled:hover:text-foreground",
+                )}
               >
-                <RadioDot selected={selected} />
-                <span className="min-w-0">
-                  <span className="block text-body font-medium">{option.title}</span>
-                  <span className="block text-caption text-muted-foreground">{option.hint}</span>
-                </span>
+                {option.title}
               </button>
-              {selected && option.mode !== "none" && (
-                <div className="px-3 pb-3 pl-9">
-                  <HandlerPicker
-                    kind={option.mode}
-                    value={step.handler}
-                    disabled={!canEdit}
-                    onChange={(handler) => onPatch({ handler })}
-                  />
-                  {step.handler.type === "project_lead" && (
-                    <p className="mt-1.5 text-caption leading-5 text-muted-foreground">
-                      {t(($) => $.workflows.handoff.project_lead_hint)}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        <p className="text-caption leading-5 text-muted-foreground">{currentOption.hint}</p>
+        {mode !== "none" && (
+          <>
+            <HandlerPicker
+              kind={mode}
+              value={step.handler}
+              disabled={!canEdit}
+              onChange={(handler) => onPatch({ handler })}
+            />
+            {step.handler.type === "project_lead" && (
+              <p className="text-caption leading-5 text-muted-foreground">
+                {t(($) => $.workflows.handoff.project_lead_hint)}
+              </p>
+            )}
+          </>
+        )}
       </div>
 
       {mode === "agent" && (
@@ -376,6 +379,7 @@ export function HandoffFields({
               readOnly={!canEdit}
               value={step.instructions}
               placeholder={t(($) => $.workflows.editor.instructions_placeholder)}
+              className="min-h-24 rounded-lg px-3.5 py-3"
               onChange={(e) => onPatch({ instructions: e.target.value })}
             />
           </Field>
@@ -446,13 +450,13 @@ function HandlerPicker({
           type="button"
           disabled={disabled}
           aria-label={placeholder}
-          className="flex h-8 w-full items-center gap-2 rounded-md border border-input bg-background px-2.5 text-left text-body disabled:cursor-default"
+          className="flex h-11 w-full items-center gap-2.5 rounded-lg bg-field px-3.5 text-left text-body transition-colors enabled:hover:bg-field-hover disabled:cursor-default"
         />
       }
       trigger={
         <>
           {(value.type === "agent" || value.type === "member") && value.id && (
-            <ActorAvatar actorType={value.type} actorId={value.id} size="xs" profileLink={false} />
+            <ActorAvatar actorType={value.type} actorId={value.id} size="sm" profileLink={false} />
           )}
           <span className={cn("min-w-0 flex-1 truncate", !current && "text-muted-foreground")}>{current || placeholder}</span>
           <ChevronDown aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
@@ -532,15 +536,15 @@ function NextBackFields({
               : t(($) => $.workflows.editor.none_option);
           const options = [{ value: NOT_SET, label: unsetLabel }, ...others.map((key) => ({ value: key, label: labelOf(key) }))];
           return (
-            <div key={kind} className="min-w-0 space-y-1.5">
-              <span className="block text-caption font-medium">{t(($) => $.workflows.editor[kind])}</span>
+            <div key={kind} className="min-w-0 space-y-2">
+              <span className="block text-label font-medium">{t(($) => $.workflows.editor[kind])}</span>
               <Select
                 items={options}
                 value={value ?? NOT_SET}
                 disabled={!canEdit}
                 onValueChange={(v) => onPatch({ [field]: !v || v === NOT_SET ? undefined : v })}
               >
-                <SelectTrigger aria-label={t(($) => $.workflows.editor[kind])} className="w-full">
+                <SelectTrigger aria-label={t(($) => $.workflows.editor[kind])} className="w-full px-3 data-[size=default]:h-10">
                   {value ? (
                     <span className="flex min-w-0 items-center gap-2">
                       {statusIcon(value)}
@@ -570,7 +574,7 @@ function NextBackFields({
         {onPreview && (
           <>
             {" "}
-            <button type="button" onClick={onPreview} className="text-brand hover:underline">
+            <button type="button" onClick={onPreview} className="mt-1.5 block text-foreground underline underline-offset-3 hover:text-muted-foreground">
               {t(($) => $.workflows.editor.preview_brief)}
             </button>
           </>
@@ -592,8 +596,8 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={htmlFor} className="block text-caption font-medium">
+    <div className="space-y-2">
+      <label htmlFor={htmlFor} className="block text-label font-medium">
         {label}
       </label>
       {children}

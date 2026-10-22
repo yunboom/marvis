@@ -44,7 +44,12 @@ import {
 import { ActorAvatar } from "../../common/actor-avatar";
 import { FILTER_ITEM_CLASS, HoverCheck } from "../../common/hover-check";
 import { useT } from "../../i18n";
+import { cn } from "@marvis/ui/lib/utils";
 import { PAGE_TOOLBAR } from "../../layout/page-header";
+import {
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
+} from "../../layout/collection-page";
 
 // Composite "type:id" value for polymorphic actor filter dimensions, so the
 // string[] filter store can hold agent/squad/member references alike.
@@ -193,29 +198,32 @@ export function AutopilotListToolbar({
   );
 
   return (
-    <div className={PAGE_TOOLBAR}>
+    <div className={cn(PAGE_TOOLBAR, "h-14 gap-3")}>
       {/* Left: scope buttons + result count. Scope is the promoted status
           dimension (it does NOT appear in the filter dropdown). No search
           box: scope buttons already partition the (small) set, so search
           was dropped by product call. The count only appears while filters
           narrow the list. Button styling and the <md dropdown collapse
           follow the issues header's scope buttons. */}
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="hidden shrink-0 items-center gap-1 md:flex">
+      <div className="flex min-w-0 items-center gap-3">
+        {/* 范围分段控件：灰底轨道 + 选中项白底浮起。 */}
+        <div className="hidden shrink-0 items-center gap-0.5 rounded-full bg-field p-0.75 md:flex">
           {AUTOPILOT_SCOPES.map((s) => (
             <Button
               key={s}
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className={
+              aria-pressed={scope === s}
+              className={cn(
+                "h-6.5 gap-1.5 rounded-full px-3 text-label active:scale-100",
                 scope === s
-                  ? "gap-1.5 bg-accent text-accent-foreground hover:bg-accent/80"
-                  : "gap-1.5 text-muted-foreground"
-              }
+                  ? "bg-surface font-medium text-foreground shadow-control hover:bg-surface dark:bg-white/12 dark:hover:bg-white/12"
+                  : "font-normal text-muted-foreground hover:bg-transparent hover:text-foreground",
+              )}
               onClick={() => onScopeChange(s)}
             >
               {SCOPE_LABELS[s]}
-              <span className="tabular-nums text-caption text-muted-foreground">
+              <span className="font-normal tabular-nums text-muted-foreground">
                 {scopeCounts[s]}
               </span>
             </Button>
@@ -228,7 +236,11 @@ export function AutopilotListToolbar({
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 gap-1 text-muted-foreground md:hidden"
+                className={cn(
+                  COLLECTION_TOOLBAR_BUTTON,
+                  COLLECTION_TOOLBAR_BUTTON_IDLE,
+                  "shrink-0 gap-1 md:hidden",
+                )}
               >
                 <span className="truncate">{SCOPE_LABELS[scope]}</span>
                 <ChevronDown className="size-3 text-muted-foreground" />
@@ -257,26 +269,28 @@ export function AutopilotListToolbar({
         {hasActiveFilters && (
           <span
             title={t(($) => $.toolbar.result_count_title)}
-            className="hidden shrink-0 text-caption tabular-nums text-muted-foreground md:inline"
+            className="hidden shrink-0 text-label tabular-nums text-muted-foreground md:inline"
           >
             {visibleCount} / {allRows.length}
           </span>
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1.5">
         {/* Filter */}
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
               <Button
-                variant={hasActiveFilters ? "default" : "outline"}
+                variant={hasActiveFilters ? "brand" : "outline"}
                 size="sm"
-                className={
+                className={cn(
+                  COLLECTION_TOOLBAR_BUTTON,
+                  "w-8 px-0 md:w-auto",
                   hasActiveFilters
-                    ? "h-8 w-8 gap-1 bg-brand px-0 text-white hover:bg-brand/90 md:w-auto md:px-2.5"
-                    : "h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
-                }
+                    ? "font-medium md:pr-2 md:pl-3"
+                    : cn(COLLECTION_TOOLBAR_BUTTON_IDLE, "md:px-3"),
+                )}
               >
                 <Filter className="size-3.5" />
                 {hasActiveFilters ? (
@@ -300,7 +314,7 @@ export function AutopilotListToolbar({
                     role="button"
                     tabIndex={-1}
                     aria-label={t(($) => $.toolbar.clear_filters)}
-                    className="-mr-1 ml-0.5 hidden rounded-sm p-0.5 hover:bg-white/20 md:inline-flex"
+                    className="hidden size-4.5 items-center justify-center rounded-full bg-brand-foreground/18 transition-colors hover:bg-brand-foreground/30 md:inline-flex"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -308,7 +322,7 @@ export function AutopilotListToolbar({
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
                   >
-                    <X className="size-3" />
+                    <X className="size-2.75" />
                   </span>
                 )}
               </Button>
@@ -461,7 +475,11 @@ export function AutopilotListToolbar({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
+                      className={cn(
+                        COLLECTION_TOOLBAR_BUTTON,
+                        COLLECTION_TOOLBAR_BUTTON_IDLE,
+                        "w-8 px-0 md:w-auto md:px-3",
+                      )}
                     >
                       {sortDirection === "asc" ? (
                         <ArrowUp className="size-3.5" />

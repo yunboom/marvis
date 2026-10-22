@@ -625,9 +625,9 @@ export function AgentCreatePanel({
       // Keeps the button hoverable so its tooltip can say why it is blocked.
       focusableWhenDisabled={versionBlocked}
       className={cn(
-        "justify-self-end min-w-28",
+        "h-8.5 min-w-28 gap-2 justify-self-end pr-2 pl-4",
         versionBlocked && "aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
-        justSent && "!bg-emerald-600 !text-white",
+        justSent && "!bg-success !text-white",
       )}
     >
       {submitting ? t(($) => $.create_issue.agent.sending) : gate.uploading ? t(($) => $.create_issue.agent.uploading) : justSent ? (
@@ -656,8 +656,8 @@ export function AgentCreatePanel({
         <DialogTitle className="sr-only">{t(($) => $.create_issue.sr_agent)}</DialogTitle>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-3 pb-2 shrink-0">
-          <div className="flex items-center gap-1.5 text-caption">
+        <div className="flex items-center justify-between pt-3.5 pr-3 pb-1.5 pl-5 shrink-0">
+          <div className="flex items-center gap-1.5 text-label">
             <span className="text-muted-foreground">{workspaceName}</span>
             <ChevronRight className="size-3 text-faint-foreground" />
             <span className="font-medium">{t(($) => $.create_issue.agent_breadcrumb)}</span>
@@ -675,9 +675,9 @@ export function AgentCreatePanel({
                   type="button"
                   onClick={() => setIsExpanded(!isExpanded)}
                   aria-label={isExpanded ? t(($) => $.common.collapse_tooltip) : t(($) => $.common.expand_tooltip)}
-                  className="rounded-sm p-1.5 opacity-70 hover:opacity-100 hover:bg-accent/60 transition-all cursor-pointer"
+                  className="flex size-7.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground cursor-pointer"
                 >
-                  {isExpanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                  {isExpanded ? <Minimize2 className="size-[15px]" /> : <Maximize2 className="size-[15px]" />}
                 </button>
               }
             />
@@ -689,9 +689,9 @@ export function AgentCreatePanel({
                   type="button"
                   onClick={onClose}
                   aria-label={t(($) => $.common.close)}
-                  className="rounded-sm p-1.5 opacity-70 hover:opacity-100 hover:bg-accent/60 transition-all cursor-pointer"
+                  className="flex size-7.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground cursor-pointer"
                 >
-                  <XIcon className="size-4" />
+                  <XIcon className="size-[15px]" />
                 </button>
               }
             />
@@ -719,7 +719,7 @@ export function AgentCreatePanel({
         </div>
 
         {selectedAgent && versionBlocked && (
-          <div className="mx-5 mb-2 shrink-0 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-caption text-amber-700 dark:text-amber-300">
+          <div className="mx-5 mb-2 shrink-0 rounded-lg border border-warning/45 bg-warning/5 px-3 py-2 text-caption text-foreground">
             {versionCheck.state === "missing"
               ? t(($) => $.create_issue.agent.version_missing, { min: versionCheck.min })
               : t(($) => $.create_issue.agent.version_below, {
@@ -738,7 +738,7 @@ export function AgentCreatePanel({
             editor unbounded and pushed the modal past the viewport. */}
         <div
           {...dropZoneProps}
-          className="relative px-5 pb-3 flex flex-1 min-h-[140px] overflow-y-auto"
+          className="relative px-5 pt-1 pb-3 flex flex-1 min-h-[140px] overflow-y-auto text-body-lg"
         >
           <ContentEditor
             ref={editorRef}
@@ -786,7 +786,7 @@ export function AgentCreatePanel({
             avoids "where did this end up?" surprise. We deliberately keep
             it non-editable: changing the parent is a `Set parent` action on
             the parent itself, not a knob in the quick-create flow. */}
-        <div className="flex items-center gap-1.5 px-4 pb-2 shrink-0 flex-wrap">
+        <div className="flex items-center gap-1.5 px-4 pt-1.5 pb-3 shrink-0 flex-wrap">
           {(visibleFields.includes("project") ||
             projectId !== null ||
             fieldPickerOpen === "project") && (
@@ -886,7 +886,7 @@ export function AgentCreatePanel({
           {parentIssueId && (
             <span
               data-testid="agent-sub-issue-chip"
-              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground"
+              className="inline-flex h-6 items-center gap-1 rounded-full bg-field px-2.5 text-caption text-muted-foreground"
               title={t(($) => $.create_issue.agent.sub_issue_of, {
                 identifier: parentIssueIdentifier ?? "",
               })}
@@ -908,7 +908,7 @@ export function AgentCreatePanel({
               attach group reproduces what `justify-between` did when the
               children were two wrapper divs, and `justify-self-end` goes
               inert on flex items. */}
-        <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-2.5 border-t px-4 py-3 shrink-0 sm:flex sm:flex-wrap">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2.5 border-t border-border px-4 py-3 shrink-0 sm:flex sm:flex-wrap">
           <div className="flex min-h-7 items-center gap-2 sm:mr-auto">
             {/* Deliberately NOT disabled while uploading: each file is its
                 own queue entry, so queueing a second one is safe and waiting
@@ -919,7 +919,7 @@ export function AgentCreatePanel({
               onSelect={(file) => editorRef.current?.uploadFile(file)}
             />
             {keepOpen && sentCount > 0 && (
-              <span className="text-caption text-emerald-600 dark:text-emerald-400">
+              <span className="text-caption text-success">
                 {t(($) => $.create_issue.agent.sent_count, { count: sentCount })}
               </span>
             )}
@@ -931,7 +931,7 @@ export function AgentCreatePanel({
               disabled={gate.uploading}
               aria-disabled={gate.uploading || undefined}
               aria-busy={gate.uploading || undefined}
-              className="flex shrink-0 items-center gap-1.5 justify-self-end text-caption px-2 py-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-accent/60 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-7.5 shrink-0 items-center gap-1.5 justify-self-end rounded-full bg-secondary px-3 text-caption text-foreground transition-colors hover:bg-black/10 dark:hover:bg-white/12 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             >
               <ArrowLeftRight className="size-3.5" />
               {t(($) => $.create_issue.switch_to_manual)}
@@ -1015,7 +1015,7 @@ function ActorPicker({
       searchPlaceholder={t(($) => $.create_issue.agent.search_placeholder)}
       onSearchChange={setFilter}
       trigger={
-        <span className="flex items-center gap-2 text-caption text-muted-foreground hover:text-foreground transition-colors">
+        <span className="flex h-7.5 items-center gap-2 rounded-full bg-field px-2.5 text-label text-muted-foreground transition-colors hover:bg-field-hover hover:text-foreground">
           <span>{t(($) => $.create_issue.agent.created_by)}</span>
           {displayActor && displayLabel ? (
             <span className="flex items-center gap-1.5 text-foreground">

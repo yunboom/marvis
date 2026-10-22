@@ -16,6 +16,7 @@ import {
   type DragOverEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
+import { useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import type {
   Issue,
@@ -42,7 +43,7 @@ import {
 import { WorkflowHandoffConfirmDialog } from "../../workflows/handoff-confirm-dialog";
 import { stepHandlerActor, useStepHandlerLabel } from "../../workflows/step-handler";
 import { projectListOptions } from "@marvis/core/projects/queries";
-import { BoardCardContent } from "./board-card";
+import { BoardCardContent, DragLift, issueDropAnimation } from "./board-card";
 import { InfiniteScrollSentinel } from "./infinite-scroll-sentinel";
 import { ListLoadMoreFooter } from "./list-load-more-footer";
 import type { ChildProgress } from "./list-row";
@@ -580,6 +581,8 @@ function BoardViewImpl({
   // #6700: drag empty board background with the left button to pan horizontally
   // (Trello/Linear). Card drags start on `[data-board-card]` and are ignored.
   const pan = useBoardDragPan<HTMLDivElement>();
+  const reducedMotion = useReducedMotion() ?? false;
+  const dropAnimation = useMemo(() => issueDropAnimation(reducedMotion), [reducedMotion]);
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -830,7 +833,7 @@ function BoardViewImpl({
         onLostPointerCapture={pan.onLostPointerCapture}
         data-board-scroller=""
         className={cn(
-          "flex flex-1 min-h-0 gap-4 overflow-x-auto p-2",
+          "flex flex-1 min-h-0 gap-3 overflow-x-auto px-6 pt-2 pb-4",
           // While a side peek is open, a trailing spacer as wide as the panel
           // lets every column scroll clear of it (IssuePeekHost).
           "group-data-[peek-open]/peek:after:w-(--issue-peek-width) group-data-[peek-open]/peek:after:shrink-0 group-data-[peek-open]/peek:after:content-['']",
@@ -906,18 +909,20 @@ function BoardViewImpl({
         )}
       </div>
 
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={dropAnimation}>
         {activeIssue ? (
-          <div style={{ width: BOARD_CARD_WIDTH }} className="rotate-1 cursor-grabbing opacity-90 shadow-lg shadow-black/10">
-            <BoardCardContent
-              issue={activeIssue}
-              childProgress={childProgressMap.get(activeIssue.id)}
-              project={
-                activeIssue.project_id
-                  ? projectMap?.get(activeIssue.project_id)
-                  : undefined
-              }
-            />
+          <div style={{ width: BOARD_CARD_WIDTH }}>
+            <DragLift>
+              <BoardCardContent
+                issue={activeIssue}
+                childProgress={childProgressMap.get(activeIssue.id)}
+                project={
+                  activeIssue.project_id
+                    ? projectMap?.get(activeIssue.project_id)
+                    : undefined
+                }
+              />
+            </DragLift>
           </div>
         ) : null}
       </DragOverlay>

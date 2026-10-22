@@ -200,28 +200,28 @@ export const BoardColumn = memo(function BoardColumn({
   return (
     <div
       style={{ width: BOARD_COL_WIDTH }}
-      className={`group/column relative flex shrink-0 flex-col rounded-xl bg-muted/40 p-2 ${
-        hint ? "ring-2 ring-brand/30" : ""
-      }`}
+      className={`group/column relative flex shrink-0 flex-col rounded-dialog p-2 transition-colors duration-(--motion-fast) ease-out ${
+        isOver && !sortLabel ? "bg-surface-hover" : "bg-surface-sunken"
+      } ${hint ? "ring-2 ring-brand/30" : ""}`}
     >
       {/* A dragged card whose workflow lacks this status cannot land here: the
           column is hatched over and says why. (MUL-7420) */}
       {blockedReason && (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-background/60 bg-[repeating-linear-gradient(135deg,transparent_0_8px,var(--color-border)_8px_9px)]"
+          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-dialog bg-background/60 bg-[repeating-linear-gradient(135deg,transparent_0_8px,var(--color-border)_8px_9px)]"
         >
-          <span className="flex items-center gap-1.5 rounded-md border border-surface-border bg-card px-2.5 py-1 text-caption text-muted-foreground shadow-sm">
+          <span className="flex items-center gap-1.5 rounded-full border border-border bg-popover px-2.5 py-1 text-caption text-muted-foreground shadow-control">
             <Ban className="size-3" />
             {blockedReason}
           </span>
         </div>
       )}
-      <div className="mb-2 flex items-center justify-between gap-2 px-1.5">
+      <div className="flex h-8 shrink-0 items-center justify-between gap-2 pl-2">
         <BoardGroupHeading group={group} count={totalCount ?? issueIds.length} />
 
         {/* Right: step handler + add + menu */}
-        <div className="flex min-w-0 items-center gap-1">
+        <div className="flex min-w-0 items-center gap-0.5">
           {status && <WorkflowStepHandlerBadge status={status} />}
           {/* Column-header popups mount lazily: a board/swimlane renders one
               header per column and almost none of these menus/tooltips are
@@ -235,7 +235,7 @@ export const BoardColumn = memo(function BoardColumn({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-muted-foreground"
+                  className="size-7 rounded-full text-muted-foreground"
                   aria-label={tCommon(($) => $.more_actions)}
                 >
                   <MoreHorizontal className="size-3.5" />
@@ -252,7 +252,7 @@ export const BoardColumn = memo(function BoardColumn({
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            className="rounded-full text-muted-foreground"
+                            className="size-7 rounded-full text-muted-foreground"
                             aria-label={tCommon(($) => $.more_actions)}
                           >
                             <MoreHorizontal className="size-3.5" />
@@ -282,7 +282,7 @@ export const BoardColumn = memo(function BoardColumn({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-muted-foreground"
+                  className="size-7 rounded-full text-muted-foreground"
                   aria-label={t(($) => $.board.add_issue_tooltip)}
                   onClick={() => {
                     const data = {
@@ -301,7 +301,7 @@ export const BoardColumn = memo(function BoardColumn({
       </div>
       <div className="relative min-h-[200px] flex-1 rounded-lg">
         {hint && (
-          <div className="pointer-events-none absolute inset-x-1 bottom-1 z-10 flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand/50 bg-card px-3 py-3 text-caption text-muted-foreground shadow-sm">
+          <div className="pointer-events-none absolute inset-x-1 bottom-1 z-10 flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand/50 bg-card px-3 py-3 text-caption text-muted-foreground shadow-control">
             {hint.actor && <ActorAvatar actorType={hint.actor.type} actorId={hint.actor.id} size="xs" profileLink={false} />}
             <span className="truncate">
               {hint.run
@@ -312,7 +312,7 @@ export const BoardColumn = memo(function BoardColumn({
         )}
         {isOver && sortLabel && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/40">
-            <span className="rounded-md bg-popover px-2.5 py-1 text-caption font-medium text-popover-foreground shadow-sm border border-border">
+            <span className="rounded-full border border-border bg-popover px-2.5 py-1 text-caption font-medium text-popover-foreground shadow-control">
               {sortLabel}
             </span>
           </div>
@@ -323,12 +323,8 @@ export const BoardColumn = memo(function BoardColumn({
           // (MUL-4741): the group id is the stable memento key, so every
           // column's offset survives tab switches/reloads independently.
           data-tab-scroll-root={scrollMementoKey}
-          className={`absolute inset-0 overflow-y-auto rounded-lg p-1 transition-colors ${
-            isOver && sortLabel
-              ? "ring-2 ring-brand/25 bg-accent/15"
-              : isOver
-                ? "bg-accent/60"
-                : ""
+          className={`absolute inset-0 overflow-y-auto rounded-lg p-1 transition-colors duration-(--motion-fast) ease-out ${
+            isOver && sortLabel ? "ring-2 ring-brand/25 bg-accent/15" : ""
           }`}
         >
           {resolvedIssues.length > 0 ? (
@@ -380,7 +376,7 @@ export const BoardColumn = memo(function BoardColumn({
           ) : (
             <>
               {issueIds.length === 0 && (
-                <p className="py-8 text-center text-caption text-muted-foreground">
+                <p className="py-8 text-center text-label text-muted-foreground">
                   {t(($) => $.board.empty_column)}
                 </p>
               )}
@@ -418,10 +414,10 @@ function BoardGroupHeading({
           className="size-2.5 shrink-0 rounded-full bg-muted-foreground/30"
           style={group.propertyOptionColor ? { backgroundColor: group.propertyOptionColor } : undefined}
         />
-        <span className="truncate text-body font-medium" title={group.title}>
+        <span className="truncate text-body font-semibold" title={group.title}>
           {group.title}
         </span>
-        <span className="shrink-0 rounded-full bg-background px-1.5 py-0.5 text-micro font-medium tabular-nums text-muted-foreground">
+        <span className="shrink-0 text-label tabular-nums text-muted-foreground">
           {count}
         </span>
       </div>
@@ -438,10 +434,10 @@ function BoardGroupHeading({
             <FolderMinus className="size-3.5" />
           </span>
         )}
-        <span className="truncate text-body font-medium" title={group.title}>
+        <span className="truncate text-body font-semibold" title={group.title}>
           {group.title}
         </span>
-        <span className="shrink-0 rounded-full bg-background px-1.5 py-0.5 text-micro font-medium tabular-nums text-muted-foreground">
+        <span className="shrink-0 text-label tabular-nums text-muted-foreground">
           {count}
         </span>
       </div>
@@ -465,10 +461,10 @@ function BoardGroupHeading({
   return (
     <div className="flex min-w-0 items-center gap-2">
       {actorIcon}
-      <span className="truncate text-body font-medium" title={group.title}>
+      <span className="truncate text-body font-semibold" title={group.title}>
         {group.title}
       </span>
-      <span className="shrink-0 rounded-full bg-background px-1.5 py-0.5 text-micro font-medium tabular-nums text-muted-foreground">
+      <span className="shrink-0 text-label tabular-nums text-muted-foreground">
         {count}
       </span>
     </div>

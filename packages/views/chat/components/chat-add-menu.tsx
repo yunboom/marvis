@@ -62,11 +62,11 @@ export function ChatAddMenu({
           render={
             <IconButton
               type="button"
-              variant="ghost"
-              size="icon-sm"
+              variant="secondary"
+              size="icon"
               disabled={disabled}
               label={t(($) => $.input.add_tooltip)}
-              className="rounded-full text-muted-foreground"
+              className="text-foreground"
             >
               <Plus />
             </IconButton>

@@ -20,6 +20,7 @@ import {
 import { Button } from "@marvis/ui/components/ui/button";
 import type { QuestionnaireAnswers, Role, UseCase } from "@marvis/core/onboarding";
 import {
+  STEP_FOOTER_BUTTON,
   StepFooter,
   StepHeading,
 } from "../components/step-shell";
@@ -200,10 +201,10 @@ export function StepAboutYou({
       </div>
 
       <StepFooter hint={footerHint}>
-        <Button className="w-full" disabled={!canContinue} onClick={confirmAdvance}>
+        <Button className={STEP_FOOTER_BUTTON} disabled={!canContinue} onClick={confirmAdvance}>
           {t(($) => $.common.continue)}
         </Button>
-        <Button variant="ghost" className="w-full" onClick={handleSkip}>
+        <Button variant="ghost" className={STEP_FOOTER_BUTTON} onClick={handleSkip}>
           {t(($) => $.common.skip)}
         </Button>
       </StepFooter>
@@ -247,7 +248,7 @@ function QuestionGroup({
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-label font-medium text-foreground">{question}</h2>
+      <h2 className="text-body font-medium text-foreground">{question}</h2>
       <fieldset
         role={multiSelect ? "group" : "radiogroup"}
         aria-label={question}

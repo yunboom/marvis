@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, memo } from "react";
+import { useCallback, useEffect, useState, memo, type ReactNode } from "react";
 import { AppLink } from "../../navigation";
+import type { DropAnimation } from "@dnd-kit/core";
 import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import type { AnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@marvis/ui/lib/utils";
 import type { Issue, IssueProperty, Project, UpdateIssueRequest } from "@marvis/core/types";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceId } from "@marvis/core/hooks";
@@ -39,6 +41,80 @@ import {
 } from "../surface/peek-context";
 function formatDate(date: string, locale: string): string {
   return formatDateOnly(date, { month: "short", day: "numeric" }, locale);
+}
+
+// 看板卡片：白卡 + 细描边，悬停只加深描边（进 100ms、出 150ms）
+const BOARD_CARD_SURFACE =
+  "rounded-lg border border-border bg-card p-3 shadow-control transition-colors duration-(--motion-fast) ease-out dark:shadow-none group-hover/card:border-input group-hover/card:duration-(--motion-instant) group-data-[popup-open]/card:border-input group-data-[peeked]/card:ring-2 group-data-[peeked]/card:ring-brand/50";
+
+// 卡片里的项目 / 自定义属性小标签：20px 药丸、浅灰底
+const BOARD_CARD_CHIP =
+  "inline-flex h-5 items-center gap-1 rounded-full bg-field pr-1.5 pl-1 text-micro text-muted-foreground";
+
+// 拖拽动效（Motion「看板拖拽」）：让位 200ms ease-standard；落位 200ms ease-spring。
+// 落位走 Web Animations，easing 不能写 var()，这里与 tokens.css 的 --ease-spring 保持同值。
+export const DRAG_SHIFT_TRANSITION = { duration: 200, easing: "var(--ease-standard)" };
+const DROP_DURATION_MS = 200;
+const DROP_EASE_SPRING = "cubic-bezier(0.34, 1.28, 0.64, 1)";
+const DROP_EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+const DRAG_LIFT_ATTR = "data-drag-lift";
+
+/**
+ * 看板与列表拖拽浮层共用的落位动画：浮层飞回卡片原位，同时收回抬起的放大、倾斜和阴影。
+ * 减少动态效果时保留位移，去掉回弹。
+ */
+export function issueDropAnimation(reducedMotion: boolean): DropAnimation {
+  const easing = reducedMotion ? DROP_EASE_OUT : DROP_EASE_SPRING;
+  return {
+    duration: DROP_DURATION_MS,
+    easing,
+    sideEffects: (params) => {
+      // 落位期间隐藏原位占位，避免与浮层重影；结束后恢复
+      const source = params.active.node;
+      const previousOpacity = source.style.opacity;
+      source.style.opacity = "0";
+
+      // 落位时把抬起的放大、倾斜和浮起阴影一并收回
+      const lift = params.dragOverlay.node.querySelector<HTMLElement>(`[${DRAG_LIFT_ATTR}]`);
+      if (lift) {
+        lift.style.transitionDuration = `${DROP_DURATION_MS}ms`;
+        lift.style.transitionTimingFunction = easing;
+        lift.style.scale = "1";
+        lift.style.rotate = "0deg";
+        lift.style.boxShadow = "none";
+      }
+
+      return () => {
+        source.style.opacity = previousOpacity;
+      };
+    },
+  };
+}
+
+/**
+ * DragOverlay 里被拖起的卡片外观：150ms 抬起到 scale 1.02、倾斜 1.5° 并带浮起阴影，卡片保持不透明。
+ */
+export function DragLift({ children, className }: { children: ReactNode; className?: string }) {
+  const [lifted, setLifted] = useState(false);
+
+  // 首帧以静止态挂载，下一帧再切到抬起态，过渡才会生效
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setLifted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <div
+      {...{ [DRAG_LIFT_ATTR]: "" }}
+      data-lifted={lifted ? "" : undefined}
+      className={cn(
+        "cursor-grabbing rounded-lg transition-[scale,rotate,box-shadow] duration-(--motion-fast) ease-out motion-reduce:transition-none data-[lifted]:scale-[1.02] data-[lifted]:rotate-[1.5deg] data-[lifted]:shadow-menu",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 /** Stops event from bubbling to Link/drag handlers */
@@ -138,7 +214,7 @@ export const BoardCardContent = memo(function BoardCardContent({
             <button
               type="button"
               aria-label={priorityLabel}
-              className="inline-flex size-5 shrink-0 items-center justify-center rounded-xs hover:bg-muted/60"
+              className="inline-flex size-5 shrink-0 items-center justify-center rounded-xs transition-colors duration-(--motion-fast) hover:bg-accent"
             >
               <PriorityIcon priority={issue.priority} />
             </button>
@@ -198,9 +274,9 @@ export const BoardCardContent = memo(function BoardCardContent({
   const showRightMeta = !!showStartDate || !!showDueDate || !!showChildProgress || showUpdatedHint;
 
   return (
-    <div className="rounded-lg border-[0.5px] border-surface-border bg-surface py-3 px-2.5 shadow-[var(--surface-shadow)] transition-colors group-hover/card:border-foreground/15 group-hover/card:bg-surface-hover group-data-[popup-open]/card:border-foreground/15 group-data-[popup-open]/card:bg-surface-hover group-data-[peeked]/card:ring-2 group-data-[peeked]/card:ring-brand/50">
+    <div className={BOARD_CARD_SURFACE}>
       {/* Row 1: priority + identifier (left), agent activity + assignee (right) */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex min-h-5 items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           {priorityIconNode}
           <p className="text-caption text-muted-foreground truncate">{issue.identifier}</p>
@@ -210,7 +286,7 @@ export const BoardCardContent = memo(function BoardCardContent({
       </div>
 
       {/* Row 2: Title */}
-      <p className="mt-1 text-body font-medium leading-snug line-clamp-2">
+      <p className="mt-1 text-body font-medium line-clamp-2">
         {issue.title}
       </p>
 
@@ -231,7 +307,7 @@ export const BoardCardContent = memo(function BoardCardContent({
         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
           <CustomStatusChip status={issue.status} />
           {showProject && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground max-w-[160px]">
+            <span className={`${BOARD_CARD_CHIP} max-w-40`}>
               <ProjectIcon project={project} size="sm" />
               <span className="truncate">{project!.title}</span>
             </span>
@@ -247,7 +323,7 @@ export const BoardCardContent = memo(function BoardCardContent({
           {cardCustomProperties.map((property) => (
             <span
               key={property.id}
-              className="inline-flex max-w-[160px] items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground"
+              className={`${BOARD_CARD_CHIP} max-w-40`}
             >
               <PropertyIcon property={property} className="size-3 text-micro" />
               <CustomPropertyValueDisplay property={property} value={issue.properties?.[property.id]} />
@@ -258,7 +334,7 @@ export const BoardCardContent = memo(function BoardCardContent({
 
       {/* Meta row: assignee (left), start date, due date, child progress (right) */}
       {showMetaRow && (
-        <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="mt-2.5 flex min-h-5 items-center justify-between gap-2">
           {showAssigneeSection && (
             <div className="min-w-0 flex-1">
               {assigneeNode}
@@ -375,6 +451,7 @@ export const DraggableBoardCard = memo(function DraggableBoardCard({
     id: issue.id,
     data: { status: issue.status },
     animateLayoutChanges,
+    transition: DRAG_SHIFT_TRANSITION,
     disabled: disableSorting ? { droppable: true } : undefined,
   });
 
@@ -393,7 +470,7 @@ export const DraggableBoardCard = memo(function DraggableBoardCard({
         data-peeked={peeked ? "" : undefined}
         {...attributes}
         {...listeners}
-        className={`group/card ${isDragging ? "opacity-30" : ""}`}
+        className={`group/card motion-reduce:transition-none! ${isDragging ? "opacity-30" : ""}`}
         onKeyDown={
           peek
             ? (e) => {

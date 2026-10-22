@@ -15,6 +15,10 @@ import { useT } from "../../i18n";
 import { IssueSurface } from "../surface/issue-surface";
 import { IssuesHeader } from "./issues-header";
 
+// 任务页标题行：64px、24px 粗体标题，图标放大到 20px，不画底边线
+export const ISSUES_PAGE_HEADER =
+  "h-16 gap-2.5 border-b-0 [&>span:first-of-type]:size-5 [&>span:first-of-type_svg]:size-5";
+
 function IssuesSurfaceHeader({
   issues,
   workingAgents,
@@ -36,11 +40,11 @@ function IssuesSurfaceHeader({
 
   return (
     <>
-      <PageHeader>
+      <PageHeader className={ISSUES_PAGE_HEADER}>
         <RefreshablePageIcon refreshing={isRefreshing}>
-          <ListTodo className="size-4" />
+          <ListTodo />
         </RefreshablePageIcon>
-        <h1 className="text-body font-medium">{t(($) => $.page.breadcrumb_title)}</h1>
+        <h1 className="truncate text-display-sm font-bold">{t(($) => $.page.breadcrumb_title)}</h1>
       </PageHeader>
       <IssuesHeader
         scopedIssues={issues}
@@ -76,9 +80,9 @@ export function IssuesPage() {
           />
         )}
         renderEmpty={() => (
-          <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-2 text-muted-foreground">
-            <ListTodo className="h-10 w-10 text-faint-foreground" />
-            <p className="text-body">{t(($) => $.page.empty_title)}</p>
+          <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-2 text-muted-foreground animate-content-rise">
+            <ListTodo className="size-10 text-faint-foreground" />
+            <p className="text-body-lg">{t(($) => $.page.empty_title)}</p>
           </div>
         )}
       />

@@ -13,15 +13,16 @@ import {
   type ChartConfig,
 } from "@marvis/ui/components/ui/chart";
 import { useLocale, useT } from "../../../i18n";
+import { CHART_MONO, monoBarFill } from "./chart-tones";
 
 // Weekly counterpart of DailyTasksChart — same completed/cancelled/failed
 // stacked bar, but each bar groups a Mon–Sun calendar week. Partial-week
 // bars at half opacity match WeeklyCostChart / WeeklyTokensChart so the
 // in-progress week reads as visually subordinate everywhere.
 const weeklyTasksChartConfig = {
-  completed: { label: "Completed", color: "var(--chart-1)" },
-  cancelled: { label: "Cancelled", color: "var(--chart-3)" },
-  failed: { label: "Failed", color: "var(--chart-5)" },
+  completed: { label: "Completed", color: CHART_MONO[1] },
+  cancelled: { label: "Cancelled", color: CHART_MONO[3] },
+  failed: { label: "Failed", color: CHART_MONO[5] },
 } satisfies ChartConfig;
 
 export interface WeeklyTasksData {
@@ -45,7 +46,7 @@ export function WeeklyTasksChart({ data }: { data: WeeklyTasksData[] }) {
       config={weeklyTasksChartConfig}
       className="aspect-[3/1] w-full"
     >
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -62,6 +63,7 @@ export function WeeklyTasksChart({ data }: { data: WeeklyTasksData[] }) {
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               labelKey="rangeLabel"
@@ -98,7 +100,7 @@ export function WeeklyTasksChart({ data }: { data: WeeklyTasksData[] }) {
         <Bar
           dataKey="completed"
           stackId="tasks"
-          fill="var(--color-completed)"
+          {...monoBarFill("completed")}
           radius={[0, 0, 0, 0]}
         >
           {data.map((d) => (
@@ -108,7 +110,7 @@ export function WeeklyTasksChart({ data }: { data: WeeklyTasksData[] }) {
         <Bar
           dataKey="cancelled"
           stackId="tasks"
-          fill="var(--color-cancelled)"
+          {...monoBarFill("cancelled")}
           radius={[0, 0, 0, 0]}
         >
           {data.map((d) => (
@@ -118,7 +120,7 @@ export function WeeklyTasksChart({ data }: { data: WeeklyTasksData[] }) {
         <Bar
           dataKey="failed"
           stackId="tasks"
-          fill="var(--color-failed)"
+          {...monoBarFill("failed")}
           radius={[3, 3, 0, 0]}
         >
           {data.map((d) => (

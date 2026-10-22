@@ -146,8 +146,8 @@ export function StepSidebar({
     // was left with ~87px of form. StepProgressBar carries the same
     // information — and the Back button that lives in this header — at those
     // widths.
-    <aside className="hidden w-[15rem] shrink-0 p-2 md:block md:w-[19rem] md:p-3 lg:w-[22rem] lg:p-4">
-      <div className="relative isolate flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-surface px-5 pb-5 text-foreground ring-1 ring-surface-border">
+    <aside className="hidden w-[15rem] shrink-0 md:block md:w-[19rem] lg:w-80">
+      <div className="relative isolate flex h-full w-full flex-col overflow-hidden rounded-2xl bg-surface px-5 pb-4 text-foreground ring-1 ring-surface-border">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-surface"
@@ -166,7 +166,7 @@ export function StepSidebar({
           <header className="flex min-h-9 shrink-0 items-center justify-between gap-3">
             <span className="flex min-w-0 items-center gap-2">
               <MarvisIcon className="size-5 shrink-0 text-foreground" noSpin />
-              <span className="truncate text-label font-medium text-foreground">
+              <span className="truncate text-body-lg font-medium text-foreground">
                 {t(($) => $.step_nav.wordmark)}
               </span>
             </span>
@@ -186,7 +186,7 @@ export function StepSidebar({
             ) : null}
           </header>
 
-          <div className="flex min-h-0 flex-1 items-center justify-center py-10">
+          <div className="flex min-h-0 flex-1 items-center justify-center px-1 py-10">
             <Stepper
               value={currentIndex + 1}
               orientation="vertical"
@@ -206,12 +206,12 @@ export function StepSidebar({
                     <>
                       <StepperIndicator
                         className={cn(
-                          "mt-0.5 size-4 shrink-0 border-0 bg-transparent ring-1 transition-colors",
+                          "mt-[3px] size-4 shrink-0 border-0 bg-transparent ring-1 transition-colors",
                           isDone
                             ? "bg-foreground text-background ring-foreground"
                             : isCurrent
                               ? "text-transparent ring-muted-foreground"
-                              : "text-transparent ring-border",
+                              : "text-transparent ring-input",
                         )}
                       >
                         {isDone ? (
@@ -228,7 +228,8 @@ export function StepSidebar({
                       <div className="min-w-0 flex-1 text-left">
                         <StepperTitle
                           className={cn(
-                            "transition-colors",
+                            "text-body-lg transition-colors",
+                            isCurrent ? "font-medium" : "font-normal",
                             isCurrent || isDone
                               ? "text-foreground"
                               : "text-muted-foreground",
@@ -282,7 +283,7 @@ export function StepSidebar({
                             // Same variant, so tailwind-merge drops theirs
                             // rather than us needing !important.
                             "group-data-[orientation=vertical]/stepper-nav:h-[calc(100%-1.75rem)]",
-                            isDone ? "bg-muted-foreground" : "bg-border",
+                            isDone ? "bg-muted-foreground" : "bg-input",
                           )}
                         />
                       ) : null}

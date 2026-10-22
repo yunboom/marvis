@@ -601,7 +601,7 @@ function ChipSpan({ chip }: { chip: FilterChip }) {
     // first gains a value; value changes inside it re-render without
     // re-animating. No exit animation — unmount presence isn't worth the
     // machinery for a 150ms nicety.
-    <span className="flex h-6 max-w-72 items-center gap-1.5 rounded-md bg-background pl-2 pr-1 text-caption shadow-xs animate-in fade-in-0 zoom-in-95 duration-150">
+    <span className="flex h-6.5 max-w-72 items-center gap-1.5 rounded-row bg-card pl-2 pr-1 text-caption shadow-control animate-in fade-in-0 zoom-in-95 duration-(--motion-fast) ease-out">
       <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
         {chip.icon}
         <span>{chip.label}</span>
@@ -615,7 +615,7 @@ function ChipSpan({ chip }: { chip: FilterChip }) {
           type="button"
           aria-label={removeLabel}
           onClick={chip.onRemove}
-          className="flex size-4 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="flex size-4.5 shrink-0 items-center justify-center rounded-xs text-muted-foreground transition-colors duration-(--motion-fast) hover:bg-accent hover:text-foreground"
         >
           <X className="size-3" />
         </button>
@@ -673,7 +673,7 @@ export function FilterChipsBar({
   if (!hasAny) return null;
 
   return (
-    <div className="mx-4 mb-2 flex shrink-0 flex-wrap items-center gap-1.5 rounded-lg bg-muted/50 px-2 py-1.5">
+    <div className="mx-6 my-1 flex shrink-0 flex-wrap items-center gap-1.5 rounded-lg bg-surface-sunken px-2 py-1.5">
       {chips.map((chip) => (
         <ChipSpan key={chip.key} chip={chip} />
       ))}
@@ -682,7 +682,7 @@ export function FilterChipsBar({
           variant="ghost"
           size="sm"
           onClick={clearAll}
-          className="h-6 px-2 text-caption text-muted-foreground"
+          className="h-6.5 rounded-full px-2.5 text-caption font-normal text-muted-foreground"
         >
           {t(($) => $.filters.chip_clear)}
         </Button>
@@ -691,7 +691,7 @@ export function FilterChipsBar({
             variant="outline"
             size="sm"
             onClick={onSave}
-            className="h-6 px-2 text-caption"
+            className="h-6.5 rounded-full bg-card px-3 text-caption font-medium"
           >
             {saveLabel ?? t(($) => $.filters.chip_save)}
           </Button>

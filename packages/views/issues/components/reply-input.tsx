@@ -233,14 +233,14 @@ function ReplyInput({
         actorType={avatarType}
         actorId={avatarId}
         size={avatarSize}
-        className="mt-0.5 shrink-0"
+        className="mt-2 shrink-0"
       />
       <div
         {...dropZoneProps}
         ref={composerRef}
         className={cn(
-          "relative min-w-0 flex-1 flex flex-col",
-          (!isEmpty || annotations.length > 0) && "pb-9",
+          "relative min-h-9.5 min-w-0 flex-1 flex flex-col rounded-lg bg-field py-2 pl-3.5 pr-1.5",
+          (!isEmpty || annotations.length > 0) && "pb-10",
         )}
       >
         {attachmentsBlockSteer && <SteerAttachmentNotice />}
@@ -305,7 +305,7 @@ function ReplyInput({
             <p className="text-muted-foreground">{placeholderText}</p>
           </div>
         )}
-        <div className="absolute bottom-0 left-0 right-24 min-w-0">
+        <div className="absolute bottom-1 left-3.5 right-24 min-w-0">
           <CommentTriggerChips
             recipients={recipients}
             blocked={triggerPreview.blocked}
@@ -314,7 +314,7 @@ function ReplyInput({
             onActionChange={setAction}
           />
         </div>
-        <div className="absolute bottom-0 right-0 flex items-center gap-1">
+        <div className="absolute bottom-1 right-1.5 flex items-center gap-1">
           <FileUploadButton
             size="sm"
             multiple

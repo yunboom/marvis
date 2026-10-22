@@ -16,8 +16,12 @@ import { StepProgressBar, StepSidebar } from "./step-sidebar";
  * left edge of every other step. There is now one measure. A step that needs
  * to break out of it says so locally rather than picking a different global.
  */
+/** 页脚整宽按钮：44 高、15 号字。 */
+export const STEP_FOOTER_BUTTON = "h-11 w-full text-body-lg";
+
 export const STEP_COLUMN = "mx-auto flex min-h-full w-full max-w-[28rem] flex-col";
-export const STEP_GUTTER = "px-6 py-8 sm:px-10 lg:px-14 lg:py-10";
+// 内容列上 56（各步骤自带 24 的顶距）、下 36（页脚自带 8 的底距）。
+export const STEP_GUTTER = "px-6 py-8 sm:px-10 lg:px-14 lg:pb-7";
 
 /**
  * Title + supporting line for a step.
@@ -40,11 +44,11 @@ export function StepHeading({
 }) {
   return (
     <div className="flex flex-col gap-1.5" aria-live="polite">
-      <h1 className="text-balance text-display-sm font-bold text-foreground">
+      <h1 className="text-balance text-[1.625rem] leading-tight font-bold text-foreground">
         {title}
       </h1>
       {description ? (
-        <p className="text-pretty text-body text-muted-foreground">
+        <p className="text-pretty text-body leading-relaxed text-muted-foreground">
           {description}
         </p>
       ) : null}
@@ -71,7 +75,7 @@ export function StepFooter({
   return (
     <div className="mt-auto flex flex-col gap-2 pb-2 pt-10">
       {hint ? (
-        <p aria-live="polite" className="text-caption text-muted-foreground">
+        <p aria-live="polite" className="text-label text-muted-foreground">
           {hint}
         </p>
       ) : null}
@@ -126,7 +130,8 @@ export function StepShell({
           per-pane strips used to do this job and neither was first. */}
       <DragStrip />
 
-      <div className="flex min-h-0 flex-1">
+      {/* 灰壳内留 16：左侧步骤卡 + 右侧白色主卡。窄屏只剩主区，铺满不留边。 */}
+      <div className="flex min-h-0 flex-1 md:gap-4 md:p-4">
         <StepSidebar
           currentStep={currentStep}
           onBack={onBack}
@@ -138,7 +143,10 @@ export function StepShell({
         <main
           ref={mainRef}
           style={fadeStyle}
-          className={cn("min-h-0 min-w-0 flex-1 overflow-y-auto", STEP_GUTTER)}
+          className={cn(
+            "min-h-0 min-w-0 flex-1 overflow-y-auto bg-background md:rounded-2xl md:ring-1 md:ring-surface-border",
+            STEP_GUTTER,
+          )}
         >
           <div className={STEP_COLUMN}>
             <StepProgressBar

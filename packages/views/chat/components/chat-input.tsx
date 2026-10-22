@@ -642,7 +642,7 @@ export function ChatInput({
         // user resizes or expands the window. The wrapper must be a flex
         // column for the card below to shrink into that cap instead of
         // spilling out of it.
-        "flex max-h-[50%] min-h-0 flex-col pb-3 pt-0",
+        "flex max-h-[50%] min-h-0 flex-col pb-3 pt-0 @2xl:pb-6",
         CHAT_GUTTER,
         // Static elevation, NOT queue-conditional: ChatQueue tucks its bottom
         // edge under this surface (z-0 + negative margin on its side), and the
@@ -665,7 +665,9 @@ export function ChatInput({
           // composer without a definite height (percentage max-height would
           // then resolve to none).
           CHAT_COLUMN,
-          "relative flex min-h-16 max-h-96 flex-col rounded-lg border border-surface-border bg-surface pb-9 transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-2 focus-within:ring-ring/20",
+          // Wide hosts (the chat tab) get the full 120px composer; the 360px
+          // floating window keeps the compact one.
+          "relative flex min-h-16 max-h-96 flex-col rounded-xl border border-input bg-surface pb-11 shadow-surface transition-[border-color,box-shadow] duration-(--motion-fast) ease-out focus-within:border-brand focus-within:ring-2 focus-within:ring-ring/20 @2xl:min-h-30 @2xl:pb-12",
           // Visual + interaction lock when there's no agent. We don't
           // toggle ContentEditor's editable mode (Tiptap can't switch
           // cleanly post-mount, and the prop has been removed); instead
@@ -677,7 +679,7 @@ export function ChatInput({
         aria-disabled={noAgent || undefined}
       >
         {selectedProject && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 pt-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 pt-2.5">
             <div
               className={cn(
                 "inline-flex max-w-full",
@@ -708,7 +710,7 @@ export function ChatInput({
             )}
           </div>
         )}
-        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 @2xl:px-5 @2xl:pt-3.5 @2xl:pb-0 @2xl:[&_.rich-text-editor]:text-body-lg">
           <ContentEditor
             // See the editorKey / draftKey split note above — editor identity
             // intentionally tracks neither the session nor the agent.
@@ -742,7 +744,7 @@ export function ChatInput({
           />
         </div>
         {(uploadEnabled || projectSelectionEnabled || leftAdornment) && (
-          <div className="absolute bottom-1.5 left-1.5 flex items-center gap-1">
+          <div className="absolute bottom-2.5 left-3 flex items-center gap-1">
             {(uploadEnabled || projectSelectionEnabled) && (
               <ChatAddMenu
                 onSelectFile={uploadEnabled
@@ -757,7 +759,7 @@ export function ChatInput({
             {leftAdornment}
           </div>
         )}
-        <div className="absolute bottom-1 right-1.5 flex items-center gap-1">
+        <div className="absolute right-2.5 bottom-2.5 flex items-center gap-1 [&>button]:size-9">
           <SubmitButton
             onClick={submit}
             disabled={hasNothingToSend || submitting || !!disabled || !!noAgent}

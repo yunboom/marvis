@@ -21,6 +21,7 @@ import { useConfigStore } from "@marvis/core/config";
 import { workspaceUrlHost } from "@marvis/core/workspace/workspace-url";
 import { useLogout } from "../../auth";
 import {
+  STEP_FOOTER_BUTTON,
   StepFooter,
   StepHeading,
 } from "../components/step-shell";
@@ -34,6 +35,9 @@ import {
   randomCelestialWorkspaceIdentity,
 } from "../../workspace/slug";
 import { isReservedSlug } from "@marvis/core/paths";
+
+// 引导表单输入框：44 高、14 内边距的填充式输入。
+const WS_INPUT_CLASS = "h-11 px-3.5";
 
 /**
  * Step 2 — create your first workspace, or continue with one set up in
@@ -287,7 +291,7 @@ export function StepWorkspace({
   // version had already drifted — the labels were caption-sized and muted
   // while every other form in the product labels at body weight.
   const createFields = (
-    <FieldGroup>
+    <FieldGroup className="gap-6">
       <Field>
         <FieldLabel htmlFor="ws-name">
           {t(($) => $.step_workspace.name_label)}
@@ -300,7 +304,7 @@ export function StepWorkspace({
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder={t(($) => $.step_workspace.name_placeholder)}
-            className="min-w-0"
+            className={cn(WS_INPUT_CLASS, "min-w-0 flex-1 md:text-body-lg")}
             onKeyDown={(e) => {
               if (isImeComposing(e)) return;
               if (e.key === "Enter") handleCreate();
@@ -311,9 +315,9 @@ export function StepWorkspace({
             variant="outline"
             onClick={handleRandomName}
             disabled={isCreating}
-            className="shrink-0"
+            className="h-11 shrink-0 gap-1.5 px-4"
           >
-            <Dices className="h-4 w-4" />
+            <Dices className="size-4" />
             {t(($) => $.step_workspace.random_name)}
           </Button>
         </div>
@@ -322,8 +326,8 @@ export function StepWorkspace({
         <FieldLabel htmlFor="ws-slug">
           {t(($) => $.step_workspace.url_label)}
         </FieldLabel>
-        <div className="flex items-center rounded-md border bg-muted transition-colors focus-within:border-foreground aria-invalid:border-destructive">
-          <span className="select-none pl-3 font-mono text-body text-muted-foreground">
+        <div className="flex h-11 items-center rounded-lg bg-field px-3.5 transition-colors hover:bg-field-hover focus-within:bg-field-hover in-data-[invalid=true]:shadow-[inset_0_0_0_1px_var(--color-destructive)]">
+          <span className="select-none font-mono text-body text-muted-foreground">
             {`${urlHost}/`}
           </span>
           <Input
@@ -332,14 +336,14 @@ export function StepWorkspace({
             value={slug}
             onChange={(e) => handleSlugChange(e.target.value)}
             placeholder={t(($) => $.step_workspace.slug_placeholder)}
-            className="border-0 bg-transparent font-mono shadow-none focus-visible:ring-0"
+            className="h-full rounded-none border-0 bg-transparent px-0 font-mono shadow-none hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 md:text-body"
             onKeyDown={(e) => {
               if (isImeComposing(e)) return;
               if (e.key === "Enter") handleCreate();
             }}
           />
         </div>
-        {slugError ? <FieldError>{slugError}</FieldError> : null}
+        {slugError ? <FieldError className="text-label">{slugError}</FieldError> : null}
       </Field>
       {/* Editable, pre-filled from the slug. Narrow input — the value is
           capped at 10 chars, so a full-width field would read as a mistake.
@@ -365,13 +369,13 @@ export function StepWorkspace({
           autoCapitalize="characters"
           spellCheck={false}
           maxLength={10}
-          className="w-32 font-mono uppercase"
+          className={cn(WS_INPUT_CLASS, "w-32 font-mono uppercase md:text-body")}
           onKeyDown={(e) => {
             if (isImeComposing(e)) return;
             if (e.key === "Enter") handleCreate();
           }}
         />
-        <FieldDescription>
+        <FieldDescription className="text-label leading-relaxed">
           {effectivePrefix ? (
             <>
               {t(($) => $.step_workspace.issue_prefix_prefix)}
@@ -449,7 +453,7 @@ export function StepWorkspace({
       {!(workspaceCreationDisabled && !reusing) && (
         <StepFooter hint={hint}>
           <Button
-            className="w-full"
+            className={STEP_FOOTER_BUTTON}
             disabled={continueDisabled}
             onClick={onContinue}
           >
@@ -472,7 +476,7 @@ function CreationDisabledNotice({ onLogout }: { onLogout: () => void }) {
   const { t } = useT("onboarding");
   return (
     <div className="flex flex-col gap-3">
-      <Button variant="outline" size="lg" onClick={onLogout}>
+      <Button variant="outline" className="h-11 text-body-lg" onClick={onLogout}>
         {t(($) => $.step_workspace.creation_disabled_logout)}
       </Button>
     </div>
@@ -496,15 +500,20 @@ function ExistingWorkspaceCard({
       aria-checked={selected}
       onClick={onSelect}
       className={cn(
-        "flex w-full items-center gap-4 rounded-lg border bg-card px-5 py-4 text-left transition-all",
+        "flex w-full items-center gap-4 rounded-xl border border-surface-border bg-background px-5 py-4 text-left transition-[border-color,box-shadow,background-color] duration-(--motion-fast) ease-out",
         selected
           ? "border-foreground shadow-[inset_0_0_0_1px_var(--color-foreground)]"
-          : "hover:border-foreground/20 hover:bg-accent/30",
+          : "hover:border-input hover:bg-accent",
       )}
     >
-      <WorkspaceAvatar name={workspace.name} avatarUrl={workspace.avatar_url} size="lg" />
+      <WorkspaceAvatar
+        name={workspace.name}
+        avatarUrl={workspace.avatar_url}
+        size="lg"
+        className="border-0 bg-identity-blue text-identity-blue-foreground"
+      />
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="truncate text-body font-medium text-foreground">
+        <div className="truncate text-body-lg font-medium text-foreground">
           {workspace.name}
         </div>
         <div className="truncate font-mono text-caption text-muted-foreground">
@@ -536,10 +545,10 @@ function CreateNewWorkspaceCard({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border bg-card transition-all",
+        "overflow-hidden rounded-xl border border-surface-border bg-background transition-[border-color,box-shadow] duration-(--motion-fast) ease-out",
         selected
           ? "border-foreground shadow-[inset_0_0_0_1px_var(--color-foreground)]"
-          : "hover:border-foreground/20",
+          : "hover:border-input",
       )}
     >
       <button
@@ -552,18 +561,18 @@ function CreateNewWorkspaceCard({
       >
         <div
           aria-hidden
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+          className="flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-muted-foreground"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="truncate text-body font-medium text-foreground">
+          <div className="truncate text-body-lg font-medium text-foreground">
             {t(($) => $.step_workspace.create_new_title)}
           </div>
         </div>
         <RadioMark selected={selected} />
       </button>
-      {selected && <div className="border-t px-5 py-5">{children}</div>}
+      {selected && <div className="border-t border-surface-border px-5 py-5">{children}</div>}
     </div>
   );
 }

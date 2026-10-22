@@ -48,7 +48,14 @@ import {
 import { cn } from "@marvis/ui/lib/utils";
 import { AppLink } from "../../navigation";
 import { useLocale, useT } from "../../i18n";
-import { CollectionPageState } from "../../layout/collection-page";
+import {
+  COLLECTION_SEARCH_ICON,
+  COLLECTION_SEARCH_INPUT,
+  COLLECTION_TABLE_HEAD_ROW,
+  COLLECTION_TABLE_INSET,
+  CollectionPageState,
+} from "../../layout/collection-page";
+import { PAGE_GUTTER } from "../../layout/page-header";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { TranscriptButton } from "../../common/task-transcript";
 import { useViewingTimezone } from "../../common/use-viewing-timezone";
@@ -65,7 +72,14 @@ import {
 // Per-row controls (selection, prompt editing, the last run's transcript)
 // stay out of the way until the pointer or focus is on the row.
 const rowIntent =
-  "opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100";
+  "opacity-0 transition-opacity duration-(--motion-fast) ease-out group-hover/row:opacity-100 group-hover/row:duration-(--motion-instant) group-focus-within/row:opacity-100";
+
+// 底栏按钮：30px 药丸，常规字重。
+const FOOTER_BUTTON = "h-7.5 px-3 text-label font-normal";
+
+// 表体行：48px，文字 14px；次要列统一 13px。
+const ROW_CLASS = "group/row h-12";
+const SECONDARY_CELL = "text-label";
 
 /**
  * Identifier and title on one line; the whole cell opens the issue. The column
@@ -80,7 +94,7 @@ function IssueCell({ row }: { row: WorkspaceWakeup }) {
         title={`${row.issue_identifier} ${row.issue_title}`}
         className="flex min-w-0 items-center gap-2 rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
       >
-        <span className="shrink-0 text-caption tabular-nums text-muted-foreground">{row.issue_identifier}</span>
+        <span className="shrink-0 text-label tabular-nums text-muted-foreground">{row.issue_identifier}</span>
         <span className="truncate">{row.issue_title}</span>
       </AppLink>
     </TableCell>
@@ -89,7 +103,7 @@ function IssueCell({ row }: { row: WorkspaceWakeup }) {
 
 function TriggerCell({ icon: Icon, label, detail }: { icon: typeof Bell; label: string; detail?: string }) {
   return (
-    <TableCell className="max-w-64">
+    <TableCell className={cn("max-w-64", SECONDARY_CELL)}>
       <span className="flex min-w-0 items-center gap-1.5" title={detail ? `${label} · ${detail}` : label}>
         <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <span className="truncate">{label}</span>
@@ -100,7 +114,7 @@ function TriggerCell({ icon: Icon, label, detail }: { icon: typeof Bell; label: 
 
 function AgentCell({ id, name, label }: { id: string; name: string; label?: string }) {
   return (
-    <TableCell className="max-w-44">
+    <TableCell className={cn("max-w-44", SECONDARY_CELL)}>
       <span className="flex min-w-0 items-center gap-2">
         <ActorAvatar actorType="agent" actorId={id} name={name} size="sm" />
         <span className="truncate">{label ?? name}</span>
@@ -114,7 +128,7 @@ function SourceCell({ row }: { row: WorkspaceWakeup }) {
   const { t } = useT("autopilots");
   if (row.source === "system") {
     return (
-      <span className="rounded-xs bg-muted px-1.5 py-0.5 text-caption text-muted-foreground">
+      <span className="rounded-sm bg-secondary px-1.75 py-px text-caption text-muted-foreground">
         {t(($) => $.wakeups.sources.system)}
       </span>
     );
@@ -142,12 +156,12 @@ function RunsCell({ row }: { row: WorkspaceWakeup }) {
   const active = isActiveWakeupRun(status);
   return (
     <TableCell>
-      <div className="flex items-center gap-1 tabular-nums">
+      <div className="flex items-center gap-1.5 text-label tabular-nums">
         <span>{row.runs_7d}</span>
         {row.task && active && (
           <>
             <span aria-hidden="true" className="text-muted-foreground">·</span>
-            <span className="text-primary" title={row.active_runs > 1 ? t(($) => $.wakeups.active_runs, { count: row.active_runs }) : undefined}>
+            <span className="font-medium text-foreground" title={row.active_runs > 1 ? t(($) => $.wakeups.active_runs, { count: row.active_runs }) : undefined}>
               {text.runState(status)}
             </span>
           </>
@@ -170,8 +184,8 @@ function SelectCell({ checked, visible, disabled, label, onChange }: {
   onChange: () => void;
 }) {
   return (
-    <TableCell className="w-8 pl-4 pr-0">
-      <div className={cn(rowIntent, visible && "opacity-100")}>
+    <TableCell className="w-8 pr-0 pl-3">
+      <div className={cn("flex", rowIntent, visible && "opacity-100")}>
         <Checkbox checked={checked} onCheckedChange={onChange} disabled={disabled} aria-label={label} />
       </div>
     </TableCell>
@@ -189,22 +203,22 @@ function SystemWakeupListRow({ row, busy }: { row: WorkspaceWakeup; busy: boolea
       ? ti(($) => $.wakeups.system.title_stage, { stage: row.system_stage })
       : ti(($) => $.wakeups.system.title_all);
   return (
-    <TableRow className="group/row">
-      <TableCell className="w-8 pl-4 pr-0" />
+    <TableRow className={ROW_CLASS}>
+      <TableCell className="w-8 pr-0 pl-3" />
       <IssueCell row={row} />
       <TriggerCell icon={ListChecks} label={title} />
       {row.agent_id ? (
         <AgentCell id={row.agent_id} name={row.agent_name} label={t(($) => $.wakeups.assignee_target, { name: row.agent_name })} />
       ) : (
-        <TableCell className="text-muted-foreground">{t(($) => $.wakeups.no_target)}</TableCell>
+        <TableCell className={cn("text-muted-foreground", SECONDARY_CELL)}>{t(($) => $.wakeups.no_target)}</TableCell>
       )}
-      <TableCell>
+      <TableCell className={SECONDARY_CELL}>
         <SourceCell row={row} />
       </TableCell>
-      <TableCell className="text-muted-foreground">{t(($) => $.wakeups.until_issue_ends)}</TableCell>
+      <TableCell className={SECONDARY_CELL}>{t(($) => $.wakeups.until_issue_ends)}</TableCell>
       <RunsCell row={row} />
-      <TableCell className="w-px py-0 pr-4">
-        <div className="flex min-h-11 items-center justify-end px-2">
+      <TableCell className="w-px py-0 pr-2">
+        <div className="flex min-h-11 items-center justify-end gap-1.5 pl-2">
           <Switch
             checked={row.enabled}
             disabled={busy || update.isPending}
@@ -248,7 +262,7 @@ function WakeupListRow({
     ? (text.ending(row) ?? (row.mode === "once" ? t(($) => $.wakeups.fires_once) : text.state(row)))
     : (text.paused(row) ?? text.state(row, row.issue_closed));
   return (
-    <TableRow className="group/row" data-state={selected ? "selected" : undefined}>
+    <TableRow className={ROW_CLASS} data-state={selected ? "selected" : undefined}>
       <SelectCell
         checked={selected}
         visible={selected || selecting}
@@ -259,10 +273,10 @@ function WakeupListRow({
       <IssueCell row={row} />
       <TriggerCell icon={Icon} label={text.trigger(row)} detail={row.kind === "cron" ? row.timezone : text.frequency(row)} />
       <AgentCell id={row.agent_id} name={row.agent_name} />
-      <TableCell className="max-w-40">
+      <TableCell className={cn("max-w-40", SECONDARY_CELL)}>
         <SourceCell row={row} />
       </TableCell>
-      <TableCell className="max-w-48">
+      <TableCell className={cn("max-w-48", SECONDARY_CELL)}>
         <span
           className={cn("flex min-w-0 items-center gap-1.5", row.paused_reason && "text-warning")}
           title={
@@ -281,9 +295,9 @@ function WakeupListRow({
       </TableCell>
       <RunsCell row={row} />
       {/* The controls are 44px targets, so this cell sets the row height. */}
-      <TableCell className="w-px py-0 pr-4">
+      <TableCell className="w-px py-0 pr-2">
         <div
-          className="flex items-center justify-end"
+          className="flex items-center justify-end gap-1.5"
           title={
             !row.can_manage
               ? t(($) => $.wakeups.read_only)
@@ -398,7 +412,11 @@ function FilterSelect<T extends string>({
         if (item) onChange(item.value);
       }}
     >
-      <SelectTrigger size="sm" className="max-w-44" aria-label={label}>
+      <SelectTrigger
+        size="sm"
+        className="max-w-40 border-input bg-transparent pr-2.5 pl-3 text-label hover:bg-accent data-[size=sm]:h-8 data-[size=sm]:rounded-full [&_svg]:size-3.25"
+        aria-label={label}
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -515,12 +533,12 @@ export function WorkspaceWakeups() {
   } else {
     const selecting = picked.length > 0;
     body = (
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className={cn("min-h-0 flex-1 overflow-auto", COLLECTION_TABLE_INSET)}>
         <Table className="min-w-[900px]">
-          <TableHeader>
-            <TableRow className="group/row">
-              <TableHead className="w-8 pl-4 pr-0">
-                <div className={cn(rowIntent, selecting && "opacity-100")}>
+          <TableHeader className="[&_tr]:border-b-0">
+            <TableRow className={cn("group/row", COLLECTION_TABLE_HEAD_ROW)}>
+              <TableHead className="w-8 pr-0 pl-3">
+                <div className={cn("flex", rowIntent, selecting && "opacity-100")}>
                   <Checkbox
                     disabled={!selectable.length || batch.isPending}
                     checked={picked.length > 0 && picked.length === selectable.length}
@@ -538,7 +556,7 @@ export function WorkspaceWakeups() {
               <TableHead>{t(($) => $.wakeups.source)}</TableHead>
               <TableHead>{t(($) => $.wakeups.ends)}</TableHead>
               <TableHead>{t(($) => $.wakeups.runs_7d)}</TableHead>
-              <TableHead className="w-px pr-6 text-right">{t(($) => $.wakeups.enabled)}</TableHead>
+              <TableHead className="w-px pr-3 text-right">{t(($) => $.wakeups.enabled)}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -573,7 +591,7 @@ export function WorkspaceWakeups() {
       {pausedCount > 0 && latestPaused && filters.scope !== "paused" && (
         <div
           role="status"
-          className="mx-4 mt-3 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-caption"
+          className="mx-6 mt-3 flex items-center gap-2.5 rounded-lg border border-destructive/30 bg-destructive/5 py-2 pr-2 pl-3.5 text-label dark:bg-destructive/12"
         >
           <TriangleAlert className="size-4 shrink-0 text-destructive" aria-hidden="true" />
           <span className="min-w-0 flex-1">
@@ -584,15 +602,20 @@ export function WorkspaceWakeups() {
               reason: text.pausedReason(latestPaused) ?? "",
             })}
           </span>
-          <Button size="sm" variant="outline" onClick={() => change({ scope: "paused" })}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 bg-background px-3 font-normal"
+            onClick={() => change({ scope: "paused" })}
+          >
             {t(($) => $.wakeups.banner_view)}
           </Button>
         </div>
       )}
       {/* One row: scope on the left, the narrowing filters and search on the
           right. It only wraps on narrow windows. */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 px-4 pb-2 pt-3">
-        <div role="group" aria-label={t(($) => $.wakeups.scope)} className="flex shrink-0 items-center gap-0.5 rounded-lg bg-muted p-0.5">
+      <div className={cn("flex min-h-14 shrink-0 flex-wrap items-center gap-2 py-3", PAGE_GUTTER)}>
+        <div role="group" aria-label={t(($) => $.wakeups.scope)} className="flex shrink-0 items-center gap-0.5 rounded-full bg-field p-0.75">
           {(["active", "paused", "disabled", "ended", "all"] as const).map((scope) => {
             const active = filters.scope === scope;
             return (
@@ -603,25 +626,25 @@ export function WorkspaceWakeups() {
                 disabled={batch.isPending}
                 onClick={() => change({ scope })}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-caption text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
-                  active && "bg-surface font-medium text-foreground shadow-[var(--surface-shadow)]",
+                  "inline-flex h-6.5 items-center gap-1.25 whitespace-nowrap rounded-full px-2.5 text-label text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:text-foreground hover:duration-(--motion-instant) focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
+                  active && "bg-surface font-medium text-foreground shadow-control dark:bg-white/12",
                 )}
               >
                 {t(($) => $.wakeups.scopes[scope])}
-                <span className="tabular-nums text-muted-foreground">{query.data?.counts[scope] ?? "—"}</span>
+                <span className="font-normal tabular-nums text-muted-foreground">{query.data?.counts[scope] ?? "—"}</span>
               </button>
             );
           })}
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5">
           <FilterSelect label={t(($) => $.wakeups.source)} value={filters.source} items={sources} disabled={batch.isPending} onChange={(source) => change({ source })} />
           <FilterSelect label={t(($) => $.wakeups.trigger)} value={filters.kind} items={kinds} disabled={batch.isPending} onChange={(kind) => change({ kind })} />
           <FilterSelect label={t(($) => $.wakeups.target_agent)} value={filters.agent_id} items={agents} disabled={batch.isPending} onChange={(agent_id) => change({ agent_id })} />
           <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Search className={COLLECTION_SEARCH_ICON} aria-hidden="true" />
             <Input
               type="search"
-              className="h-8 w-52 pl-8"
+              className={cn(COLLECTION_SEARCH_INPUT, "w-49")}
               value={search}
               maxLength={256}
               disabled={batch.isPending}
@@ -635,7 +658,7 @@ export function WorkspaceWakeups() {
       {batchResult && (
         <p
           role="status"
-          className={`px-4 py-2 text-caption ${batchResult.failed.length ? "text-destructive" : "text-muted-foreground"}`}
+          className={cn("py-2 text-label", PAGE_GUTTER, batchResult.failed.length ? "text-destructive" : "text-muted-foreground")}
         >
           {t(($) => (batchResult.failed.length ? $.wakeups.batch_partial : $.wakeups.batch_success), {
             count: batchResult.succeeded,
@@ -645,14 +668,14 @@ export function WorkspaceWakeups() {
         </p>
       )}
       {body}
-      <div className="mt-auto flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-2 text-caption text-muted-foreground">
+      <div className={cn("mt-auto flex min-h-13 shrink-0 flex-wrap items-center gap-2 border-t border-border py-2 text-label text-muted-foreground", PAGE_GUTTER)}>
         {picked.length > 0 && (
           <>
-            <span>{t(($) => $.wakeups.selected, { count: picked.length })}</span>
-            <Button size="sm" variant="outline" disabled={batch.isPending} onClick={() => setConfirmation(picked)}>
+            <span className="text-foreground">{t(($) => $.wakeups.selected, { count: picked.length })}</span>
+            <Button size="sm" variant="outline" className={FOOTER_BUTTON} disabled={batch.isPending} onClick={() => setConfirmation(picked)}>
               {t(($) => $.wakeups.disable_selected)}
             </Button>
-            <Button size="sm" variant="ghost" disabled={batch.isPending} onClick={() => setSelected(new Set())}>
+            <Button size="sm" variant="ghost" className={cn(FOOTER_BUTTON, "px-2.5 text-muted-foreground")} disabled={batch.isPending} onClick={() => setSelected(new Set())}>
               {t(($) => $.wakeups.clear)}
             </Button>
           </>
@@ -668,6 +691,7 @@ export function WorkspaceWakeups() {
         <Button
           size="sm"
           variant="ghost"
+          className={cn(FOOTER_BUTTON, "px-2.5")}
           disabled={batch.isPending || !filters.offset}
           onClick={() => change({ offset: Math.max(0, filters.offset - filters.limit) })}
         >
@@ -676,6 +700,7 @@ export function WorkspaceWakeups() {
         <Button
           size="sm"
           variant="ghost"
+          className={cn(FOOTER_BUTTON, "px-2.5")}
           disabled={batch.isPending || !query.data || filters.offset + filters.limit >= query.data.total}
           onClick={() => change({ offset: filters.offset + filters.limit })}
         >
