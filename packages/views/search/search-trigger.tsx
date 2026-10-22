@@ -14,7 +14,7 @@ export function SearchTrigger() {
   const shortcut = useShortcut("openSearch");
   return (
     <SidebarMenuButton
-      className="text-muted-foreground"
+      className="h-10 gap-2.5 rounded-[12px] border border-black/10 bg-transparent px-3 text-body text-muted-foreground hover:border-black/20 hover:bg-transparent hover:text-foreground dark:border-white/12 dark:hover:border-white/20 [&_svg]:size-[18px]"
       onClick={() => useSearchStore.getState().setOpen(true)}
     >
       <Search />

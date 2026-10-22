@@ -170,7 +170,7 @@ const utilityNav: { key: NavKey; labelKey: NavLabelKey }[] = [
 ];
 
 const NAV_ITEM_CLASS_NAME =
-  "text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground";
+  "h-9 gap-2.5 rounded-[10px] px-3 text-body text-foreground [&_svg]:size-[18px] hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground";
 
 function DraftDot() {
   const hasDraft = useIssueDraftStore((s) => s.hasDraft());
@@ -614,147 +614,17 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   const createIssueShortcut = useShortcut("createIssue");
 
   return (
-      <Sidebar variant="inset">
+      <Sidebar variant="floating">
         {topSlot}
         {/* Workspace Switcher */}
-        <SidebarHeader className={cn("py-3", headerClassName)} style={headerStyle}>
-          <div className="flex h-10 items-center gap-2.5 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        <SidebarHeader className={cn("gap-3 px-3 pt-5 pb-1", headerClassName)} style={headerStyle}>
+          <div className="flex h-10 items-center gap-2.5 px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
             <MarvisIcon className="size-6 shrink-0 text-foreground" />
-            <span className="text-title-lg font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
+            <span className="text-display-sm font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
               {BRAND_NAME}
             </span>
           </div>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <SidebarMenuButton>
-                      <span className="relative">
-                        <WorkspaceAvatar name={workspace?.name ?? "M"} avatarUrl={workspace?.avatar_url} size="sm" />
-                        {/* Shared brand dot: a pending invitation OR another
-                            workspace with unread inbox items. The active
-                            workspace's own unread stays on the Inbox nav count
-                            (below), so it is deliberately excluded here. */}
-                        {(myInvitations.length > 0 || otherWorkspaceUnread) && (
-                          <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand ring-1 ring-sidebar" />
-                        )}
-                      </span>
-                      <span className="flex-1 truncate font-medium">
-                        {workspace?.name ?? "Marvis"}
-                      </span>
-                      <ChevronDown className="size-3 text-muted-foreground" />
-                    </SidebarMenuButton>
-                  }
-                />
-                <DropdownMenuContent
-                  className="w-auto min-w-56"
-                  align="start"
-                  side="bottom"
-                  sideOffset={4}
-                >
-                  <div className="flex items-center gap-2.5 px-2 py-1.5">
-                    <ActorAvatar
-                      name={user?.name ?? ""}
-                      initials={(user?.name ?? "U").charAt(0).toUpperCase()}
-                      avatarUrl={resolvePublicFileUrl(user?.avatar_url)}
-                      size="lg"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-body font-medium leading-tight">
-                        {user?.name}
-                      </p>
-                      <p className="truncate text-caption text-muted-foreground leading-tight">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-caption text-muted-foreground">
-                      {t(($) => $.sidebar.workspaces_label)}
-                    </DropdownMenuLabel>
-                    {workspaces.map((ws) => (
-                      <DropdownMenuItem
-                        key={ws.id}
-                        render={
-                          <AppLink href={paths.workspace(ws.slug).issues()} />
-                        }
-                      >
-                        <WorkspaceAvatar name={ws.name} avatarUrl={ws.avatar_url} size="sm" />
-                        <span className="flex-1 truncate">{ws.name}</span>
-                        {/* Points at the specific workspace holding unread
-                            inbox items. Sits in the same right-edge slot as the
-                            active-workspace check; the active workspace is
-                            excluded (its unread is the Inbox nav count), so dot
-                            and check never collide on one row. */}
-                        {ws.id !== workspace?.id && unreadWsIds.has(ws.id) && (
-                          <span className="size-2 rounded-full bg-brand" />
-                        )}
-                        {ws.id === workspace?.id && (
-                          <Check className="h-3.5 w-3.5 text-primary" />
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                    {!workspaceCreationDisabled && (
-                      <DropdownMenuItem
-                        onClick={() => push(paths.newWorkspace())}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        {t(($) => $.sidebar.create_workspace)}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuGroup>
-                  {myInvitations.length > 0 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuGroup>
-                        <DropdownMenuLabel className="text-caption text-muted-foreground">
-                          {t(($) => $.sidebar.pending_invitations_label)}
-                        </DropdownMenuLabel>
-                        {myInvitations.map((inv) => (
-                          <div key={inv.id} className="flex items-center gap-2 px-2 py-1.5">
-                            <WorkspaceAvatar name={inv.workspace_name ?? "W"} size="sm" />
-                            <span className="flex-1 truncate text-body">{inv.workspace_name ?? t(($) => $.sidebar.invitation_workspace_fallback)}</span>
-                            <button
-                              type="button"
-                              className="text-caption px-2 py-0.5 rounded-xs bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                              disabled={acceptInvitationMut.isPending}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                acceptInvitationMut.mutate(inv.id);
-                              }}
-                            >
-                              {t(($) => $.sidebar.invitation_join)}
-                            </button>
-                            <button
-                              type="button"
-                              className="text-caption px-2 py-0.5 rounded-xs bg-muted text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
-                              disabled={declineInvitationMut.isPending}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                declineInvitationMut.mutate(inv.id);
-                              }}
-                            >
-                              {t(($) => $.sidebar.invitation_decline)}
-                            </button>
-                          </div>
-                        ))}
-                      </DropdownMenuGroup>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem variant="destructive" onClick={logout}>
-                      <LogOut className="h-3.5 w-3.5" />
-                      {t(($) => $.sidebar.log_out)}
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
-          <SidebarMenu>
+          <SidebarMenu className="gap-2">
             {searchSlot && (
               <SidebarMenuItem>
                 {searchSlot}
@@ -762,7 +632,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             )}
             <SidebarMenuItem>
               <SidebarMenuButton
-                className="text-muted-foreground"
+                className={NAV_ITEM_CLASS_NAME}
                 onClick={() => openCreateIssueWithPreference()}
               >
                 <span className="relative">
@@ -780,9 +650,9 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
 
         {/* Navigation */}
         <SidebarContent ref={sidebarScrollRef} style={sidebarFadeStyle}>
-          <SidebarGroup>
+          <SidebarGroup className="px-3 py-1.5">
             <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
+              <SidebarMenu className="gap-1">
                 {personalNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
@@ -820,10 +690,10 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
 
           {visiblePinned.length > 0 && (
             <Collapsible defaultOpen>
-              <SidebarGroup className="group/pinned">
+              <SidebarGroup className="group/pinned px-3 py-1.5">
                 <SidebarGroupLabel
                   render={<CollapsibleTrigger />}
-                  className="group/trigger cursor-pointer hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
+                  className="group/trigger cursor-pointer px-3 font-normal hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
                 >
                   <span>{t(($) => $.sidebar.pinned_label)}</span>
                   <ChevronRight className="!size-3 ml-1 stroke-[2.5] transition-transform duration-200 group-data-[panel-open]/trigger:rotate-90" />
@@ -833,7 +703,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                   <SidebarGroupContent>
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                       <SortableContext items={displayedPinned.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                        <SidebarMenu className="gap-0.5">
+                        <SidebarMenu className="gap-1">
                           {displayedPinned.map((pin: PinnedItem) => (
                             <PinRow
                               key={pin.id}
@@ -867,10 +737,10 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             </Collapsible>
           )}
 
-          <SidebarGroup>
-            <SidebarGroupLabel>{t(($) => $.sidebar.work_group)}</SidebarGroupLabel>
+          <SidebarGroup className="px-3 py-1.5">
+            <SidebarGroupLabel className="px-3 font-normal">{t(($) => $.sidebar.work_group)}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
+              <SidebarMenu className="gap-1">
                 {workNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
@@ -892,10 +762,10 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>{t(($) => $.sidebar.ai_team_group)}</SidebarGroupLabel>
+          <SidebarGroup className="px-3 py-1.5">
+            <SidebarGroupLabel className="px-3 font-normal">{t(($) => $.sidebar.ai_team_group)}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
+              <SidebarMenu className="gap-1">
                 {aiTeamNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
@@ -918,8 +788,8 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="p-2">
-          <SidebarMenu className="gap-0.5">
+        <SidebarFooter className="gap-0.5 px-3 pt-1 pb-3">
+          <SidebarMenu className="gap-1">
             {utilityNav.map((item) => {
               const href = p[item.key]();
               const Icon = routeIconForPath(href);
@@ -942,6 +812,138 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
           <div className="flex items-center gap-1">
             <JoinDiscordCard />
             <HelpLauncher />
+          </div>
+          <div className="mt-1 border-t border-sidebar-border pt-2">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <SidebarMenuButton className="h-10 gap-2.5 px-3">
+                        <span className="relative">
+                          <WorkspaceAvatar name={workspace?.name ?? "M"} avatarUrl={workspace?.avatar_url} size="sm" />
+                          {/* Shared brand dot: a pending invitation OR another
+                              workspace with unread inbox items. The active
+                              workspace's own unread stays on the Inbox nav count
+                              (below), so it is deliberately excluded here. */}
+                          {(myInvitations.length > 0 || otherWorkspaceUnread) && (
+                            <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand ring-1 ring-sidebar" />
+                          )}
+                        </span>
+                        <span className="flex-1 truncate font-medium">
+                          {workspace?.name ?? "Marvis"}
+                        </span>
+                        <ChevronDown className="size-3 text-muted-foreground" />
+                      </SidebarMenuButton>
+                    }
+                  />
+                  <DropdownMenuContent
+                    className="w-auto min-w-56"
+                    align="start"
+                    side="top"
+                    sideOffset={6}
+                  >
+                    <div className="flex items-center gap-2.5 px-2 py-1.5">
+                      <ActorAvatar
+                        name={user?.name ?? ""}
+                        initials={(user?.name ?? "U").charAt(0).toUpperCase()}
+                        avatarUrl={resolvePublicFileUrl(user?.avatar_url)}
+                        size="lg"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-body font-medium leading-tight">
+                          {user?.name}
+                        </p>
+                        <p className="truncate text-caption text-muted-foreground leading-tight">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="text-caption text-muted-foreground">
+                        {t(($) => $.sidebar.workspaces_label)}
+                      </DropdownMenuLabel>
+                      {workspaces.map((ws) => (
+                        <DropdownMenuItem
+                          key={ws.id}
+                          render={
+                            <AppLink href={paths.workspace(ws.slug).issues()} />
+                          }
+                        >
+                          <WorkspaceAvatar name={ws.name} avatarUrl={ws.avatar_url} size="sm" />
+                          <span className="flex-1 truncate">{ws.name}</span>
+                          {/* Points at the specific workspace holding unread
+                              inbox items. Sits in the same right-edge slot as the
+                              active-workspace check; the active workspace is
+                              excluded (its unread is the Inbox nav count), so dot
+                              and check never collide on one row. */}
+                          {ws.id !== workspace?.id && unreadWsIds.has(ws.id) && (
+                            <span className="size-2 rounded-full bg-brand" />
+                          )}
+                          {ws.id === workspace?.id && (
+                            <Check className="h-3.5 w-3.5 text-primary" />
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                      {!workspaceCreationDisabled && (
+                        <DropdownMenuItem
+                          onClick={() => push(paths.newWorkspace())}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          {t(($) => $.sidebar.create_workspace)}
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuGroup>
+                    {myInvitations.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                          <DropdownMenuLabel className="text-caption text-muted-foreground">
+                            {t(($) => $.sidebar.pending_invitations_label)}
+                          </DropdownMenuLabel>
+                          {myInvitations.map((inv) => (
+                            <div key={inv.id} className="flex items-center gap-2 px-2 py-1.5">
+                              <WorkspaceAvatar name={inv.workspace_name ?? "W"} size="sm" />
+                              <span className="flex-1 truncate text-body">{inv.workspace_name ?? t(($) => $.sidebar.invitation_workspace_fallback)}</span>
+                              <button
+                                type="button"
+                                className="text-caption px-2 py-0.5 rounded-xs bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                disabled={acceptInvitationMut.isPending}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  acceptInvitationMut.mutate(inv.id);
+                                }}
+                              >
+                                {t(($) => $.sidebar.invitation_join)}
+                              </button>
+                              <button
+                                type="button"
+                                className="text-caption px-2 py-0.5 rounded-xs bg-muted text-muted-foreground hover:bg-muted/80 disabled:opacity-50"
+                                disabled={declineInvitationMut.isPending}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  declineInvitationMut.mutate(inv.id);
+                                }}
+                              >
+                                {t(($) => $.sidebar.invitation_decline)}
+                              </button>
+                            </div>
+                          ))}
+                        </DropdownMenuGroup>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem variant="destructive" onClick={logout}>
+                        <LogOut className="h-3.5 w-3.5" />
+                        {t(($) => $.sidebar.log_out)}
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
           </div>
         </SidebarFooter>
         <SidebarRail />

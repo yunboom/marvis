@@ -147,10 +147,10 @@ export function StepSidebar({
     // information — and the Back button that lives in this header — at those
     // widths.
     <aside className="hidden w-[15rem] shrink-0 p-2 md:block md:w-[19rem] md:p-3 lg:w-[22rem] lg:p-4">
-      <div className="dark relative isolate flex h-full w-full flex-col overflow-hidden rounded-2xl bg-background px-5 pb-5 text-foreground ring-1 ring-border">
+      <div className="relative isolate flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-surface px-5 pb-5 text-foreground ring-1 ring-surface-border">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-background"
+          className="pointer-events-none absolute inset-0 bg-surface"
         >
           <DotSphere
             dotGap={19}

@@ -166,12 +166,12 @@
        is where lists, boards, and conversations live; surfaces are reserved
        for bounded content groups; raised surfaces are ephemeral overlays. */
     --app-shell: oklch(0.9761 0 0);
-    --page-canvas: oklch(1 0 0);
+    --page-canvas: oklch(0.9761 0 0);
     --surface: oklch(1 0 0);
     --surface-foreground: oklch(0.1684 0 0);
     --surface-raised: oklch(1 0 0);
-    --surface-hover: oklch(0.9702 0 0);
-    --surface-selected: oklch(0.9551 0 0);
+    --surface-hover: oklch(0.9551 0 0);
+    --surface-selected: oklch(0.9401 0 0);
     --surface-selected-foreground: oklch(0 0 0);
     --surface-border: oklch(0 0 0 / 8%);
     --surface-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
@@ -206,15 +206,15 @@
     --primary-foreground: oklch(1 0 0);
     --secondary: oklch(0.9612 0 0);
     --secondary-foreground: oklch(0 0 0 / 85%);
-    --muted: oklch(0.9702 0 0);
+    --muted: oklch(0.9551 0 0);
     /* Secondary text: Marvis's #666, the lightest grey of its palette that
        clears WCAG AA (4.5:1) on every light surface, worst case --sidebar-accent. */
     --muted-foreground: oklch(0.5103 0 0);
     /* The quiet step below muted, for marks that are not text: disclosure
-       chevrons, separator glyphs, empty-cell dashes, empty-state icons. #888
+       chevrons, separator glyphs, empty-cell dashes, empty-state icons. #858585
        is the lightest grey that still clears 3:1 (WCAG 1.4.11) on every
        surface; not valid for text. */
-    --faint-foreground: oklch(0.6268 0 0);
+    --faint-foreground: oklch(0.6167 0 0);
     --accent: oklch(0.9702 0 0);
     --accent-foreground: oklch(0.1684 0 0);
     --destructive: oklch(0.6613 0.2059 29.1983);
@@ -230,11 +230,11 @@
     --chart-5: oklch(0.9146 0.0155 48.5483);
     --radius: 0.75rem;
     --issue-row-height: 36px;
-    --sidebar: oklch(0.9761 0 0);
+    --sidebar: oklch(1 0 0);
     --sidebar-foreground: oklch(0 0 0);
     --sidebar-primary: oklch(0.1684 0 0);
     --sidebar-primary-foreground: oklch(1 0 0);
-    --sidebar-accent: oklch(0.9461 0 0);
+    --sidebar-accent: oklch(0.9612 0 0);
     --sidebar-accent-foreground: oklch(0 0 0);
     --sidebar-border: oklch(0 0 0 / 6%);
     --sidebar-ring: oklch(0 0 0 / 28%);
@@ -262,7 +262,7 @@
     color-scheme: dark;
     --overlay-mask: oklch(0 0 0 / 50%);
     --app-shell: oklch(0.1684 0 0);
-    --page-canvas: oklch(0.2002 0 0);
+    --page-canvas: oklch(0.1684 0 0);
     --surface: oklch(0.2178 0 0);
     --surface-foreground: oklch(1 0 0 / 92%);
     --surface-raised: oklch(0.2435 0 0);
@@ -299,11 +299,11 @@
     --chart-3: oklch(0.5135 0.0615 45.7618);
     --chart-4: oklch(0.4257 0.0504 46.0285);
     --chart-5: oklch(0.337 0.0386 46.5189);
-    --sidebar: oklch(0.1684 0 0);
+    --sidebar: oklch(0.2178 0 0);
     --sidebar-foreground: oklch(1 0 0 / 92%);
     --sidebar-primary: oklch(0.9761 0 0);
     --sidebar-primary-foreground: oklch(0.1684 0 0);
-    --sidebar-accent: oklch(0.235 0 0);
+    --sidebar-accent: oklch(0.2686 0 0);
     --sidebar-accent-foreground: oklch(1 0 0);
     --sidebar-border: oklch(1 0 0 / 7%);
     --sidebar-ring: oklch(1 0 0 / 30%);

@@ -12,6 +12,7 @@ import {
 } from "@marvis/ui/components/ui/card";
 import { Alert, AlertDescription } from "@marvis/ui/components/ui/alert";
 import { Input } from "@marvis/ui/components/ui/input";
+import { cn } from "@marvis/ui/lib/utils";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Label } from "@marvis/ui/components/ui/label";
 import {
@@ -91,6 +92,14 @@ export function validateCliCallback(cliCallback: string): boolean {
 }
 
 // Component
+
+// Marvis-style auth surface, shared by every step of the flow.
+const AUTH_SHELL_CLASS = "flex min-h-svh items-center justify-center bg-app-shell px-4";
+const AUTH_CARD_CLASS =
+  "w-full max-w-[420px] gap-6 rounded-[24px] border-0 py-8 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border";
+const AUTH_HEADER_CLASS = "gap-2 px-8 text-center";
+const AUTH_FOOTER_CLASS = "border-t-0 bg-transparent px-8 pt-0 pb-8";
+const AUTH_BUTTON_CLASS = "h-12 w-full text-body-lg";
 
 export function LoginPage({
   logo,
@@ -295,22 +304,22 @@ export function LoginPage({
 
   if (step === "cli_confirm" && existingUser) {
     return (
-      <div className="flex min-h-svh items-center justify-center">
-        <Card className="w-full max-w-sm">
-          <CardHeader className="text-center">
-            {logo && <div className="mx-auto mb-4">{logo}</div>}
-            <CardTitle className="text-display-sm">
+      <div className={AUTH_SHELL_CLASS}>
+        <Card className={AUTH_CARD_CLASS}>
+          <CardHeader className={AUTH_HEADER_CLASS}>
+            {logo && <div className="mx-auto mb-5">{logo}</div>}
+            <CardTitle className="text-display-sm font-bold">
               {t(($) => $.cli.title)}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-body-lg">
               {t(($) => $.cli.description, { email: existingUser.email })}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+          <CardContent className="flex flex-col gap-3 px-8">
             <Button
               onClick={handleCliAuthorize}
               disabled={loading}
-              className="w-full"
+              className={AUTH_BUTTON_CLASS}
               size="lg"
             >
               {loading
@@ -337,18 +346,18 @@ export function LoginPage({
 
   if (step === "code") {
     return (
-      <div className="flex min-h-svh items-center justify-center">
-        <Card className="w-full max-w-sm">
-          <CardHeader className="text-center">
-            {logo && <div className="mx-auto mb-4">{logo}</div>}
-            <CardTitle className="text-display-sm">
+      <div className={AUTH_SHELL_CLASS}>
+        <Card className={AUTH_CARD_CLASS}>
+          <CardHeader className={AUTH_HEADER_CLASS}>
+            {logo && <div className="mx-auto mb-5">{logo}</div>}
+            <CardTitle className="text-display-sm font-bold">
               {t(($) => $.verify.title)}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-body-lg">
               {t(($) => $.verify.description, { email })}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col items-center gap-4">
+          <CardContent className="flex flex-col items-center gap-4 px-8">
             <InputOTP
               autoFocus
               maxLength={6}
@@ -384,7 +393,7 @@ export function LoginPage({
               </button>
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className={AUTH_FOOTER_CLASS}>
             <Button
               type="button"
               variant="ghost"
@@ -406,18 +415,18 @@ export function LoginPage({
   // Email step
 
   return (
-    <div className="flex min-h-svh items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          {logo && <div className="mx-auto mb-4">{logo}</div>}
-          <CardTitle className="text-display-sm">
+    <div className={AUTH_SHELL_CLASS}>
+      <Card className={AUTH_CARD_CLASS}>
+        <CardHeader className={AUTH_HEADER_CLASS}>
+          {logo && <div className="mx-auto mb-5">{logo}</div>}
+          <CardTitle className="text-display-sm font-bold">
             {t(($) => $.signin.title)}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-body-lg">
             {t(($) => $.signin.description)}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-8">
           {sessionExpired && (
             <Alert>
               <AlertDescription>
@@ -436,6 +445,7 @@ export function LoginPage({
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
                 required
+                className="h-12 rounded-[14px] px-4 md:text-body-lg"
               />
             </div>
             {error && (
@@ -443,11 +453,11 @@ export function LoginPage({
             )}
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3">
+        <CardFooter className={cn(AUTH_FOOTER_CLASS, "flex flex-col gap-3")}>
           <Button
             type="submit"
             form="login-form"
-            className="w-full"
+            className={AUTH_BUTTON_CLASS}
             size="lg"
             disabled={!email || loading}
           >
@@ -459,7 +469,7 @@ export function LoginPage({
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className={AUTH_BUTTON_CLASS}
               size="lg"
               onClick={handleGoogleLogin}
               disabled={loading}

@@ -40,7 +40,7 @@ export function StepHeading({
 }) {
   return (
     <div className="flex flex-col gap-1.5" aria-live="polite">
-      <h1 className="text-balance text-title-lg font-semibold text-foreground">
+      <h1 className="text-balance text-display-sm font-bold text-foreground">
         {title}
       </h1>
       {description ? (
@@ -116,7 +116,7 @@ export function StepShell({
   const fadeStyle = useScrollFade(mainRef);
 
   return (
-    <div className="animate-onboarding-enter flex h-full min-h-0 flex-col bg-background">
+    <div className="animate-onboarding-enter flex h-full min-h-0 flex-col bg-app-shell">
       {/* One strip across the whole window, as the first flex child — the
           shape the desktop shell rule asks for, and the fix for an overlap:
           the rail is a dark inset panel that started at the window's top-left

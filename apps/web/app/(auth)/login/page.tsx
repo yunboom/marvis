@@ -24,6 +24,7 @@ import {
   CardContent,
 } from "@marvis/ui/components/ui/card";
 import { Button } from "@marvis/ui/components/ui/button";
+import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
 import { Loader2 } from "lucide-react";
 import { setLoggedInCookie } from "@/features/auth/auth-cookie";
 import Link from "next/link";
@@ -217,6 +218,7 @@ function LoginPageContent() {
 
   return (
     <LoginPage
+      logo={<MarvisIcon className="size-12 text-foreground" />}
       onSuccess={handleSuccess}
       google={
         googleClientId
