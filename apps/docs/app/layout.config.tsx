@@ -2,27 +2,19 @@ import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { ArrowUpRight } from "lucide-react";
 
 // Docs-local stateless Marvis mark — matches @marvis/ui's MarvisIcon
-// visually (same 8-pointed-asterisk clip-path), but without useState/
-// useEffect so it's safe to render from Server Components such as
-// layout.config.tsx / layout.tsx. Keep in sync with
+// visually (rounded square with a knocked-out "M"), but without hooks so it's
+// safe to render from Server Components such as layout.config.tsx /
+// layout.tsx. Keep in sync with
 // packages/ui/components/common/marvis-icon.tsx if the mark changes.
-const MARVIS_CLIP = `polygon(
-  45% 62.1%, 45% 100%, 55% 100%, 55% 62.1%,
-  81.8% 88.9%, 88.9% 81.8%, 62.1% 55%, 100% 55%,
-  100% 45%, 62.1% 45%, 88.9% 18.2%, 81.8% 11.1%,
-  55% 37.9%, 55% 0%, 45% 0%, 45% 37.9%,
-  18.2% 11.1%, 11.1% 18.2%, 37.9% 45%, 0% 45%,
-  0% 55%, 37.9% 55%, 11.1% 81.8%, 18.2% 88.9%
-)`;
-
 function MarvisMark() {
   return (
-    <span className="inline-block size-[1em]" aria-hidden="true">
-      <span
-        className="block size-full bg-current"
-        style={{ clipPath: MARVIS_CLIP }}
-      />
-    </span>
+    <svg viewBox="0 0 100 100" className="size-[1em]" aria-hidden="true">
+      <mask id="marvis-docs-mark">
+        <rect width="100" height="100" fill="white" />
+        <polygon points="27,70 27,30 39,30 50,50 61,30 73,30 73,70 63,70 63,46 54,62 46,62 37,46 37,70" fill="black" />
+      </mask>
+      <rect width="100" height="100" rx="26" fill="currentColor" mask="url(#marvis-docs-mark)" />
+    </svg>
   );
 }
 
@@ -43,7 +35,7 @@ function GitHubMark() {
 }
 
 // External links shown at the top of the sidebar (and in the top nav on
-// desktop). Leading icon = brand identity (GitHub mark / Marvis asterisk);
+// desktop). Leading icon = brand identity (GitHub mark / Marvis mark);
 // trailing ArrowUpRight = "opens externally" glyph, same pattern as
 // `packages/views/layout/help-launcher.tsx` from PR #1560.
 const externalLinkText = (label: string) => (

@@ -71,7 +71,7 @@ describe("transparent semantic colors", () => {
       "oklch(1 0 0 / 0.2)",
     );
     expect(
-      updateToken(draft, "dark", "--border", "oklch(1 0 0 / 0.06)"),
+      updateToken(draft, "dark", "--border", "oklch(1 0 0 / 0.07)"),
     ).toEqual(emptyDraft());
     for (const value of [
       "oklch(1 0 0 / 0)",

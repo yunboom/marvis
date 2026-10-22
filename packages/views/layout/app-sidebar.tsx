@@ -58,6 +58,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
+import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
 import { useAuthStore } from "@marvis/core/auth";
 import { issueViewDetailOptions } from "@marvis/core/issue-views/queries";
 import {
@@ -614,6 +615,12 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
         {topSlot}
         {/* Workspace Switcher */}
         <SidebarHeader className={cn("py-3", headerClassName)} style={headerStyle}>
+          <div className="flex h-10 items-center gap-2.5 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+            <MarvisIcon className="size-6 shrink-0 text-foreground" />
+            <span className="text-title-lg font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
+              Marvis
+            </span>
+          </div>
           <SidebarMenu>
             <SidebarMenuItem>
               <DropdownMenu>

@@ -159,12 +159,12 @@ describe("Button geometry export", () => {
       "--button-height-default",
       "40px",
     );
-    draft = updateToken(draft, "shared", "--button-padding-sm", "12px");
+    draft = updateToken(draft, "shared", "--button-padding-sm", "14px");
     draft = updateToken(draft, "shared", "--text-body", "16px");
     expect(isDraft(draft)).toBe(true);
     const css = exportCss(draft);
     expect(css).toContain(
-      ":root {\n  --button-height-default: 40px;\n  --button-padding-sm: 12px;\n}",
+      ":root {\n  --button-height-default: 40px;\n  --button-padding-sm: 14px;\n}",
     );
     expect(css).toContain("@theme {\n  --text-body: 16px;\n}");
     expect(decodeSession(encodeSession({ draft, designs: [] })).draft).toEqual(
@@ -232,9 +232,9 @@ describe("preview theme isolation", () => {
 
 describe("Dialog motion token contract", () => {
   it("preserves default timing and round trips edited motion through history, persistence and export", () => {
-    expect(baseline.shared["--dialog-enter-duration"]).toBe("100ms");
-    expect(baseline.shared["--dialog-exit-duration"]).toBe("100ms");
-    expect(baseline.shared["--dialog-enter-easing"]).toBe("ease");
+    expect(baseline.shared["--dialog-enter-duration"]).toBe("50ms");
+    expect(baseline.shared["--dialog-exit-duration"]).toBe("50ms");
+    expect(baseline.shared["--dialog-enter-easing"]).toBe("ease-out");
     let draft = updateToken(
       emptyDraft(),
       "shared",
@@ -271,7 +271,7 @@ describe("Dialog motion token contract", () => {
         .present,
     ).toEqual(draft);
     expect(
-      updateToken(draft, "shared", "--dialog-enter-duration", "100ms").shared,
+      updateToken(draft, "shared", "--dialog-enter-duration", "50ms").shared,
     ).not.toHaveProperty("--dialog-enter-duration");
   });
   it("rejects incorrect units, unbounded timings and arbitrary easing CSS", () => {

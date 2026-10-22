@@ -122,24 +122,42 @@
     --text-display--line-height: 40px;
 }
 
+/* Marvis visual language: a pure neutral (hue-free) palette built from black
+ * alpha steps on a #f7f7f7 shell, near-black #0f0f0f primary actions, pill
+ * buttons, large radii, filled inputs, and the warm #7b4835 accent. Values are
+ * taken from Marvis (written as their oklch equivalents, the format UI Lab
+ * edits) so the two products read as one family. Fills that Marvis
+ * paints as black alpha (hover 4%, selected 6%) are flattened to their opaque
+ * result on white, because sticky headers and table cells paint these tokens
+ * over scrolling content and must not let it show through. */
 :root {
-    /* Dialog motion, shared by popup and backdrop. */
-    --dialog-enter-duration: 100ms;
-    --dialog-exit-duration: 100ms;
-    --dialog-enter-easing: ease;
-    --dialog-exit-easing: ease;
+    /* Dialog motion, shared by popup and backdrop. Marvis modals fade in
+       almost instantly (--modal-animation-duration: .05s, ease-out). */
+    --dialog-enter-duration: 50ms;
+    --dialog-exit-duration: 50ms;
+    --dialog-enter-easing: ease-out;
+    --dialog-exit-easing: ease-out;
+    /* Menus unfold vertically from their trigger edge (scaleY .8 -> 1). */
+    --menu-enter-duration: 150ms;
+    --menu-enter-easing: ease-out;
+    /* Springy overshoot used by Marvis cards, popovers, and input bars. */
+    --ease-spring: cubic-bezier(0.34, 1.28, 0.64, 1);
+    --ease-pop: cubic-bezier(0.3, 1.35, 0.5, 1);
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    /* Modal backdrop. */
+    --overlay-mask: oklch(0.1684 0 0 / 20%);
 
     color-scheme: light;
     /* Button geometry. Text and icon-only buttons share the height ladder.
-       Keep the defaults aligned with the existing compact product controls. */
+       Marvis buttons are pills: radius is half the height. */
     --button-height-xs: 1.5rem;
     --button-height-sm: 1.75rem;
     --button-height-default: 2rem;
-    --button-height-lg: 2.25rem;
-    --button-padding-xs: 0.5rem;
-    --button-padding-sm: 0.625rem;
-    --button-padding-default: 0.625rem;
-    --button-padding-lg: 0.625rem;
+    --button-height-lg: 2.5rem;
+    --button-padding-xs: 0.625rem;
+    --button-padding-sm: 0.75rem;
+    --button-padding-default: 0.875rem;
+    --button-padding-lg: 1.25rem;
     --button-gap-xs: 0.25rem;
     --button-gap-sm: 0.25rem;
     --button-gap-default: 0.375rem;
@@ -147,17 +165,17 @@
     /* Surface system: the app shell is the quiet outer frame; the page canvas
        is where lists, boards, and conversations live; surfaces are reserved
        for bounded content groups; raised surfaces are ephemeral overlays. */
-    --app-shell: oklch(0.964435 0.001327 286.375);
-    --page-canvas: oklch(0.988087 0 0);
+    --app-shell: oklch(0.9761 0 0);
+    --page-canvas: oklch(1 0 0);
     --surface: oklch(1 0 0);
-    --surface-foreground: oklch(0.141 0.005 285.823);
+    --surface-foreground: oklch(0.1684 0 0);
     --surface-raised: oklch(1 0 0);
-    --surface-hover: oklch(0.967 0.001 286.375);
-    --surface-selected: oklch(0.95 0.002 286.375);
-    --surface-selected-foreground: oklch(0.141 0.005 285.823);
-    --surface-border: oklch(0.92 0.004 286.32);
-    --surface-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 1px rgb(15 23 42 / 0.03);
-    --floating-shadow: 0 16px 40px rgb(15 23 42 / 0.14), 0 3px 10px rgb(15 23 42 / 0.08);
+    --surface-hover: oklch(0.9702 0 0);
+    --surface-selected: oklch(0.9551 0 0);
+    --surface-selected-foreground: oklch(0 0 0);
+    --surface-border: oklch(0 0 0 / 8%);
+    --surface-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    --floating-shadow: 0 24px 32px rgba(0, 0, 0, 0.12);
 
     /* The chat launcher is an overlay pinned to the dashboard's bottom-right
        corner on every workspace page, so that corner is not available to page
@@ -173,79 +191,62 @@
     /* Menus (dropdown/context/select/popover) hover just above their trigger,
        so they carry a lighter shadow than window-level overlays (dialogs,
        sheets), which keep --floating-shadow. */
-    --menu-shadow: 0 8px 24px rgb(15 23 42 / 0.08), 0 2px 6px rgb(15 23 42 / 0.05);
+    --menu-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     /* Tooltips are a dark surface in both themes, so a passive label never
-       reads as one of the interactive panels above. Near-black here; in dark
-       mode it sits one step above every surface and carries a ring instead of
-       a drop shadow. */
-    --tooltip: oklch(0.21 0.006 285.885);
-    --tooltip-shadow: 0 4px 12px rgb(15 23 42 / 0.16), 0 1px 3px rgb(15 23 42 / 0.12);
+       reads as one of the interactive panels above. */
+    --tooltip: oklch(0 0 0 / 85%);
+    --tooltip-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     --background: var(--page-canvas);
-    --foreground: oklch(0.141 0.005 285.823);
+    --foreground: oklch(0.1684 0 0);
     --card: var(--surface);
-    --card-foreground: oklch(0.141 0.005 285.823);
+    --card-foreground: oklch(0.1684 0 0);
     --popover: var(--surface-raised);
-    --popover-foreground: oklch(0.141 0.005 285.823);
-    --primary: oklch(0.21 0.006 285.885);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.967 0.001 286.375);
-    /* Lightness is pinned by WCAG AA, not by taste: muted text sits on every
-       light surface we have, and the darkest of them — --sidebar-accent, the
-       nav hover state — is the binding constraint. At the old 0.552 that pair
-       was 3.98:1; 0.505 clears 4.5:1 on all of app-shell / page-canvas /
-       sidebar / sidebar-accent / muted / surface-selected / surface, with the
-       worst case at 4.88:1. Raise it and the nav labels fail again. Hue and
-       chroma are unchanged so the neutral ramp keeps its cast. */
-    --muted-foreground: oklch(0.505 0.016 285.938);
+    --popover-foreground: oklch(0.1684 0 0);
+    --primary: oklch(0.1684 0 0);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.9612 0 0);
+    --secondary-foreground: oklch(0 0 0 / 85%);
+    --muted: oklch(0.9702 0 0);
+    /* Secondary text: Marvis's #666, the lightest grey of its palette that
+       clears WCAG AA (4.5:1) on every light surface, worst case --sidebar-accent. */
+    --muted-foreground: oklch(0.5103 0 0);
     /* The quiet step below muted, for marks that are not text: disclosure
-       chevrons, separator glyphs, the em dash standing in for an empty cell,
-       the large icon in an empty state. It exists because the alternative
-       people reached for was alpha — 152 call sites of
-       text-muted-foreground/30..80 — and alpha on light surfaces lands
-       between 1.5:1 and 3.8:1, which fails even the 3:1 floor for non-text.
-       0.606 is the lightest step that still clears 3:1 (WCAG 1.4.11) on every
-       surface, worst case --sidebar-accent at 3.19:1. Deliberately NOT valid
-       for text: text has one floor, --muted-foreground, and there is no room
-       for a third readable step (AA caps a lighter text tone at L 0.523 here,
-       0.018 away from muted — a difference no one can see). */
-    --faint-foreground: oklch(0.606 0.016 285.938);
-    --accent: oklch(0.967 0.001 286.375);
-    --accent-foreground: oklch(0.21 0.006 285.885);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.945 0.003 286.32);
-    --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.705 0.015 286.067);
-    /* Brand-derived blue gradient (h=255 = brand hue). chart-1 equals brand
-       so the most important series visually anchors to the product colour;
-       chart-2..5 step lighter + less saturated so a stacked bar reads
-       "primary → secondary → tertiary" at a glance instead of fighting
-       for attention as five equally-weighted greys. */
-    --chart-1: oklch(0.55 0.16 255);
-    --chart-2: oklch(0.66 0.13 255);
-    --chart-3: oklch(0.76 0.10 255);
-    --chart-4: oklch(0.85 0.06 255);
-    --chart-5: oklch(0.92 0.03 255);
-    --radius: 0.5rem;
+       chevrons, separator glyphs, empty-cell dashes, empty-state icons. #888
+       is the lightest grey that still clears 3:1 (WCAG 1.4.11) on every
+       surface; not valid for text. */
+    --faint-foreground: oklch(0.6268 0 0);
+    --accent: oklch(0.9702 0 0);
+    --accent-foreground: oklch(0.1684 0 0);
+    --destructive: oklch(0.6613 0.2059 29.1983);
+    --border: oklch(0 0 0 / 6%);
+    --input: oklch(0 0 0 / 8%);
+    --ring: oklch(0 0 0 / 28%);
+    /* Brand-derived ramp on the Marvis accent: chart-1 equals brand and
+       trailing series step lighter so a stacked bar reads in rank order. */
+    --chart-1: oklch(0.4572 0.0762 41.0585);
+    --chart-2: oklch(0.5691 0.0694 44.4955);
+    --chart-3: oklch(0.684 0.0564 44.8612);
+    --chart-4: oklch(0.8047 0.0398 46.5306);
+    --chart-5: oklch(0.9146 0.0155 48.5483);
+    --radius: 0.75rem;
     --issue-row-height: 36px;
-    --sidebar: oklch(0.964435 0.001327 286.375);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-primary: oklch(0.21 0.006 285.885);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.935 0.003 286.375);
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: oklch(0.705 0.015 286.067);
-    --brand: oklch(0.56079497 0.19449888 256.41258418);
-    --brand-foreground: oklch(0.985 0 0);
-    --success: oklch(0.55 0.16 145);
-    --warning: oklch(0.75 0.16 85);
-    --info: oklch(0.55 0.18 250);
+    --sidebar: oklch(0.9761 0 0);
+    --sidebar-foreground: oklch(0 0 0);
+    --sidebar-primary: oklch(0.1684 0 0);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.9461 0 0);
+    --sidebar-accent-foreground: oklch(0 0 0);
+    --sidebar-border: oklch(0 0 0 / 6%);
+    --sidebar-ring: oklch(0 0 0 / 28%);
+    --brand: oklch(0.4572 0.0762 41.0585);
+    --brand-foreground: oklch(1 0 0);
+    --success: oklch(0.637 0.1551 152.2643);
+    --warning: oklch(0.7837 0.1587 72.9913);
+    --info: oklch(0.6152 0.2108 256.099);
     /* High priority sits between --destructive (urgent) and --warning (medium). */
-    --priority-high: oklch(0.68 0.18 50);
+    --priority-high: oklch(0.7243 0.1837 47.023);
     --scrollbar-thumb: oklch(0 0 0 / 10%);
-    --scrollbar-thumb-hover: oklch(0 0 0 / 18%);
+    --scrollbar-thumb-hover: oklch(0 0 0 / 20%);
     --scrollbar-track: transparent;
     /* In-page find (Cmd/Ctrl+F) match tints, painted via the CSS Custom
        Highlight API. Bright fill + dark text so matches stay legible in
@@ -255,71 +256,66 @@
     --find-match-foreground: oklch(0.22 0.03 92);
 }
 
+/* Marvis ships light only; dark mirrors the same alpha-step system on a
+ * near-black shell so both themes keep one visual grammar. */
 .dark {
     color-scheme: dark;
-    --app-shell: oklch(0.155 0.005 285.823);
-    --page-canvas: oklch(0.18 0.005 285.823);
-    --surface: oklch(0.21 0.006 285.885);
-    --surface-foreground: oklch(0.985 0 0);
-    --surface-raised: oklch(0.235 0.007 285.885);
-    --surface-hover: oklch(0.274 0.006 286.033);
-    --surface-selected: oklch(0.3 0.006 286.033);
-    --surface-selected-foreground: oklch(0.985 0 0);
-    --surface-border: oklch(1 0 0 / 10%);
-    --surface-shadow: 0 1px 2px rgb(0 0 0 / 0.2), 0 1px 1px rgb(0 0 0 / 0.16);
-    --floating-shadow: 0 20px 48px rgb(0 0 0 / 0.46), 0 4px 12px rgb(0 0 0 / 0.28);
-    --menu-shadow: 0 10px 28px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.18);
-    --tooltip: oklch(0.3 0.006 286.033);
-    --tooltip-shadow: 0 0 0 1px oklch(1 0 0 / 10%), 0 8px 24px rgb(0 0 0 / 0.4);
+    --overlay-mask: oklch(0 0 0 / 50%);
+    --app-shell: oklch(0.1684 0 0);
+    --page-canvas: oklch(0.2002 0 0);
+    --surface: oklch(0.2178 0 0);
+    --surface-foreground: oklch(1 0 0 / 92%);
+    --surface-raised: oklch(0.2435 0 0);
+    --surface-hover: oklch(0.2686 0 0);
+    --surface-selected: oklch(0.2931 0 0);
+    --surface-selected-foreground: oklch(1 0 0);
+    --surface-border: oklch(1 0 0 / 8%);
+    --surface-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    --floating-shadow: 0 24px 32px rgba(0, 0, 0, 0.45);
+    --menu-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --tooltip: oklch(0.2931 0 0);
+    --tooltip-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.4);
     --background: var(--page-canvas);
-    --foreground: oklch(0.985 0 0);
+    --foreground: oklch(1 0 0 / 92%);
     --card: var(--surface);
-    --card-foreground: oklch(0.985 0 0);
+    --card-foreground: oklch(1 0 0 / 92%);
     --popover: var(--surface-raised);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.92 0.004 286.32);
-    --primary-foreground: oklch(0.21 0.006 285.885);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
-    /* Same role as light mode, mirrored: fainter means darker here. 0.60 is
-       the darkest step still clearing 3:1 on every dark surface, worst case
-       --surface-selected at 3.45:1. The step away from muted (0.105 L) matches
-       light mode's, so a chevron reads equally quiet in both themes. */
-    --faint-foreground: oklch(0.60 0.015 286.067);
-    --accent: oklch(0.274 0.006 286.033);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 6%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.552 0.016 285.938);
-    /* Dark mode mirrors light mode's "primary → secondary" gradient on the
-       brand hue, but flips the lightness curve: the most important series
-       is the brightest (so it pops on the dark background) and trailing
-       series get progressively darker / less saturated. */
-    --chart-1: oklch(0.72 0.16 255);
-    --chart-2: oklch(0.62 0.13 255);
-    --chart-3: oklch(0.52 0.10 255);
-    --chart-4: oklch(0.42 0.06 255);
-    --chart-5: oklch(0.32 0.03 255);
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.274 0.006 286.033);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.552 0.016 285.938);
+    --popover-foreground: oklch(1 0 0 / 92%);
+    --primary: oklch(0.9761 0 0);
+    --primary-foreground: oklch(0.1684 0 0);
+    --secondary: oklch(0.285 0 0);
+    --secondary-foreground: oklch(1 0 0 / 85%);
+    --muted: oklch(0.2686 0 0);
+    --muted-foreground: oklch(0.683 0 0);
+    --faint-foreground: oklch(0.5693 0 0);
+    --accent: oklch(0.2686 0 0);
+    --accent-foreground: oklch(1 0 0 / 92%);
+    --destructive: oklch(0.7091 0.1835 28.3704);
+    --border: oklch(1 0 0 / 7%);
+    --input: oklch(1 0 0 / 10%);
+    --ring: oklch(1 0 0 / 30%);
+    --chart-1: oklch(0.6798 0.0767 47.5563);
+    --chart-2: oklch(0.5965 0.071 46.0532);
+    --chart-3: oklch(0.5135 0.0615 45.7618);
+    --chart-4: oklch(0.4257 0.0504 46.0285);
+    --chart-5: oklch(0.337 0.0386 46.5189);
+    --sidebar: oklch(0.1684 0 0);
+    --sidebar-foreground: oklch(1 0 0 / 92%);
+    --sidebar-primary: oklch(0.9761 0 0);
+    --sidebar-primary-foreground: oklch(0.1684 0 0);
+    --sidebar-accent: oklch(0.235 0 0);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(1 0 0 / 7%);
+    --sidebar-ring: oklch(1 0 0 / 30%);
     /* Brand also paints body-text links; keep it readable on dark surfaces. */
-    --brand: oklch(0.65 0.16 255);
-    --brand-foreground: oklch(0.985 0 0);
-    --success: oklch(0.65 0.15 145);
-    --warning: oklch(0.70 0.16 85);
-    --info: oklch(0.65 0.18 250);
-    --priority-high: oklch(0.72 0.17 50);
-    --scrollbar-thumb: oklch(1 0 0 / 8%);
-    --scrollbar-thumb-hover: oklch(1 0 0 / 18%);
+    --brand: oklch(0.6798 0.0767 47.5563);
+    --brand-foreground: oklch(0.1684 0 0);
+    --success: oklch(0.7297 0.1585 154.9333);
+    --warning: oklch(0.8218 0.1423 77.8895);
+    --info: oklch(0.6755 0.1765 252.2592);
+    --priority-high: oklch(0.7594 0.1573 49.1139);
+    --scrollbar-thumb: oklch(1 0 0 / 10%);
+    --scrollbar-thumb-hover: oklch(1 0 0 / 20%);
     --scrollbar-track: transparent;
     --find-match: oklch(0.82 0.16 100);
     --find-match-active: oklch(0.76 0.18 60);

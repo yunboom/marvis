@@ -53,6 +53,72 @@
   animation: entrance-spin 0.6s ease-out forwards;
 }
 
+/* Logo intro, taken from Marvis: the mark opens as a thin horizontal sliver,
+ * widens to full width, then grows to full height. */
+@keyframes logo-intro {
+  0% { transform: scale(0, 0.13); }
+  47% { transform: scale(0, 0.13); }
+  78% { transform: scale(1, 0.13); }
+  100% { transform: scale(1); }
+}
+
+.animate-logo-intro {
+  animation: logo-intro 0.566s linear;
+}
+
+/* Marvis motion vocabulary. Menus unfold vertically from the edge nearest
+ * their trigger (Base UI sets --transform-origin); context menus and
+ * floating panels pop with a slight scale; cards and input bars rise on a
+ * springy overshoot; toasts drop in from the top. */
+@keyframes menu-unfold {
+  from { opacity: 0; transform: scaleY(0.8); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes menu-fold {
+  from { opacity: 1; transform: scaleY(1); }
+  to { opacity: 0; transform: scaleY(0.8); }
+}
+
+@keyframes popover-pop-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes popover-pop-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.92); }
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes overlay-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes spring-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-drop-in {
+  from { opacity: 0.6; transform: translateY(-100%) scale(0.6); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-lift-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-120%); }
+}
+
+.animate-spring-rise {
+  animation: spring-rise 0.46s var(--ease-spring) both;
+}
+
 /* Onboarding: step / phase entry — 400ms fade.
  * Applied on mount so every new step (and intra-step phase switch, via
  * key=phase remount) plays once. `both` fill-mode commits the `from`
@@ -294,6 +360,8 @@ html[data-dnd-dragging="true"] * {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-entrance-spin,
+  .animate-logo-intro,
+  .animate-spring-rise,
   .animate-onboarding-enter,
   .animate-chat-impulse,
   .shimmer-text-window,
@@ -342,9 +410,9 @@ html[data-dnd-dragging="true"] * {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
-  *::-webkit-scrollbar { width: 6px; height: 6px; }
+  *::-webkit-scrollbar { width: 4px; height: 4px; }
   *::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-  *::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+  *::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
   *::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
   body {
     @apply bg-background text-foreground;

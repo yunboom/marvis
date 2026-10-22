@@ -20,14 +20,16 @@
   }
 }
 
-/* Font stack: Inter for Latin UI text + system CJK fonts for localized content.
+/* Font stack: follows Marvis — PingFang SC leads on macOS (Latin included),
+   Noto Sans SC elsewhere, then Inter + system CJK fonts for localized content.
    Web app uses the same stack via next/font/google in apps/web/app/layout.tsx —
    keep the CJK fallback tail in sync across both files. The Inter primary family
    differs by design: next/font produces `__Inter_xxx` (with a synthetic size-adjusted
    fallback face to prevent FOUT layout shift); desktop uses fontsource's "Inter Variable".
    Both resolve to Inter glyphs, so rendering is identical in practice.
-   Per-character fallback: Latin chars render with Inter, CJK chars render with
-   the platform-native Chinese/Korean fallback when needed. Chinese fonts must stay
+   Per-character fallback: where PingFang SC / Noto Sans SC are absent, Latin
+   chars render with Inter and CJK chars with the platform-native Chinese/Korean
+   fallback. Chinese fonts must stay
    before Korean fonts so zh users do not receive Korean Hanja glyph shapes.
 
    Mono font has no explicit CJK fallback: CJK chars in code blocks are inherently
@@ -35,8 +37,8 @@
    would falsely signal alignment guarantees. Browser default fallback handles
    the rare mixed case correctly. */
 :root {
-  --font-sans: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont,
-               "Segoe UI", "PingFang SC", "Microsoft YaHei",
+  --font-sans: "PingFang SC", "Noto Sans SC", "Inter Variable", "Inter",
+               -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
                "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic",
                "Noto Sans CJK KR", sans-serif;
   --font-serif: "Source Serif 4 Variable", "Source Serif 4", "Iowan Old Style",
