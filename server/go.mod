@@ -1,4 +1,4 @@
-module github.com/marvis-ai/marvis/server
+module github.com/yunboom/marvis/server
 
 go 1.26.9
 

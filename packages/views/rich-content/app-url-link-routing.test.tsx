@@ -109,7 +109,7 @@ describe("RichContent link routing", () => {
   });
 
   it("still hands a genuinely external link to the browser", () => {
-    const external = "https://github.com/marvis-ai/marvis/pull/1";
+    const external = "https://github.com/yunboom/marvis/pull/1";
     renderContent(`[#1](${external})`);
 
     screen.getByText("#1").click();

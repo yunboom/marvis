@@ -8,9 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 var (

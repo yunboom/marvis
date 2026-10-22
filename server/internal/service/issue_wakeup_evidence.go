@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Retain the existing 40KB prompt budget, including the <=12KB instruction.

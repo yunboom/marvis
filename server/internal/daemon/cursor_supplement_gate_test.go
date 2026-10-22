@@ -8,8 +8,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 func TestCursorSupplementHookCommandOnlyForManagedWorkdirs(t *testing.T) {

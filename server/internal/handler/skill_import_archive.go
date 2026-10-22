@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	skillpkg "github.com/marvis-ai/marvis/server/internal/skill"
+	skillpkg "github.com/yunboom/marvis/server/internal/skill"
 )
 
 // maxImportArchiveUploadSize bounds the compressed upload accepted by the

@@ -49,7 +49,7 @@ Logging out clears every tab saved on the machine, so the next person to sign in
 After sign-in, Desktop creates a dedicated CLI profile for the current Marvis service and uses it to start the daemon. The profile lives at:
 
 ```text
-~/.marvis/profiles/desktop-<host>/
+~/.marvis-studio/profiles/desktop-<host>/
 ```
 
 It never reads or overwrites the default profile you use in the terminal. If you also start another daemon manually, Marvis shows them as separate runtimes.
@@ -88,7 +88,7 @@ These are the default locations — if your home directory has been moved or red
 ```
 
 <Callout type="warning">
-This is **not** the CLI's `~/.marvis/config.json`, and the key names differ: the CLI uses `server_url`, Desktop uses `apiUrl`. Desktop never reads the CLI's config — it manages a separate daemon profile under `~/.marvis/profiles/desktop-<host>/`. Editing `config.json` does not change which server Desktop connects to.
+This is **not** the CLI's `~/.marvis-studio/config.json`, and the key names differ: the CLI uses `server_url`, Desktop uses `apiUrl`. Desktop never reads the CLI's config — it manages a separate daemon profile under `~/.marvis-studio/profiles/desktop-<host>/`. Editing `config.json` does not change which server Desktop connects to.
 </Callout>
 
 `apiUrl` is the backend's public address; it is required and must use `http` or `https`. The other two URLs can be omitted — Desktop derives them automatically:
@@ -126,13 +126,13 @@ Desktop can only connect to addresses reachable from both the browser and the ex
 
 Two Windows editor defaults silently produce a file Desktop can't use:
 
-- **Notepad appends `.txt`.** Saving as `desktop.json` can produce `desktop.json.txt`, which Desktop treats as not found. Turn on file name extensions in Explorer, or pick *All files* in the save dialog. To see the real filename, run `Get-ChildItem "$env:USERPROFILE\.marvis" -Filter "desktop.json*"` in PowerShell — the `Name` column must read exactly `desktop.json`.
+- **Notepad appends `.txt`.** Saving as `desktop.json` can produce `desktop.json.txt`, which Desktop treats as not found. Turn on file name extensions in Explorer, or pick *All files* in the save dialog. To see the real filename, run `Get-ChildItem "$env:USERPROFILE\.marvis-studio" -Filter "desktop.json*"` in PowerShell — the `Name` column must read exactly `desktop.json`.
 - **PowerShell redirection writes UTF-16 or a BOM.** `> desktop.json` and `Out-File` can produce an encoding that fails to parse, which surfaces as a configuration error.
 
 To avoid both, create the file from PowerShell in one step:
 
 ```powershell
-$dir = "$env:USERPROFILE\.marvis"
+$dir = "$env:USERPROFILE\.marvis-studio"
 New-Item -ItemType Directory -Force $dir | Out-Null
 $json = @'
 {
@@ -159,7 +159,7 @@ C:\Users\<you>\AppData\Local\Programs\@marvisdesktop\resources\app.asar.unpacked
 Get-FileHash .\marvis-cli-<version>-windows-amd64.zip -Algorithm SHA256
 ```
 
-Compare the hash with the matching line in `checksums.txt` on the [latest release](https://github.com/marvis-ai/marvis/releases/latest).
+Compare the hash with the matching line in `checksums.txt` on the [latest release](https://github.com/yunboom/marvis/releases/latest).
 
 **How to fix**:
 
@@ -172,7 +172,7 @@ Compare the hash with the matching line in `checksums.txt` on the [latest releas
 3. **Report the false positive to Microsoft** at [Microsoft Security Intelligence — submit a file](https://www.microsoft.com/en-us/wdsi/filesubmission), choosing *Software developer* and *Incorrectly detected as malware*. That is what gets the detection withdrawn for every user, usually within a few days.
 
 <Callout type="warning">
-Only add these exclusions if you installed Marvis from the [downloads page](https://marvis.ai/download) or [GitHub releases](https://github.com/marvis-ai/marvis/releases) and the checksum matches. An exclusion disables real-time protection for everything in that folder.
+Only add these exclusions if you installed Marvis from the [downloads page](https://marvis.ai/download) or [GitHub releases](https://github.com/yunboom/marvis/releases) and the checksum matches. An exclusion disables real-time protection for everything in that folder.
 </Callout>
 
 ## Next steps

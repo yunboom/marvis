@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 // TestClaudeTerminalReasonFailure covers the mapping in isolation: only the one

@@ -6,7 +6,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
-	"github.com/marvis-ai/marvis/server/internal/daemonws"
+	"github.com/yunboom/marvis/server/internal/daemonws"
 )
 
 func TestDaemonWSCollectorSeparatesRuntimeGoneDelivery(t *testing.T) {

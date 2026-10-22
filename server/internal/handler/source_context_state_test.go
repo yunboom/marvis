@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/service"
 )
 
 func sourceContextStateFixture() service.SourceContextSnapshot {

@@ -15,8 +15,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // Installation is the channel-agnostic view of one channel_installation

@@ -11,9 +11,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	sdk "github.com/marvis-ai/marvis/server/pkg/composio"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/util"
+	sdk "github.com/yunboom/marvis/server/pkg/composio"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // ---- fakes ---------------------------------------------------------------

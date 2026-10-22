@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/auth"
 )
 
 // authRequestWithAgent makes a request the server resolves as coming from an

@@ -1335,7 +1335,7 @@ func piSessionDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".marvis", "pi-sessions"), nil
+	return filepath.Join(home, ".marvis-studio", "pi-sessions"), nil
 }
 
 func newPiSessionPath() (string, error) {

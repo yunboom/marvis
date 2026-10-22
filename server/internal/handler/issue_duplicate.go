@@ -10,9 +10,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/logger"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Duplicate marks (MUL-7349). A duplicate is an ordinary cancelled issue that

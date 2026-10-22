@@ -15,8 +15,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/marvis-ai/marvis/server/internal/migrations"
-	"github.com/marvis-ai/marvis/server/internal/taskusagebackfill"
+	"github.com/yunboom/marvis/server/internal/migrations"
+	"github.com/yunboom/marvis/server/internal/taskusagebackfill"
 )
 
 // TestHook_DirectV034Upgrade simulates the path described in

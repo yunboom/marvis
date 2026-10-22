@@ -15,9 +15,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/marvis-ai/marvis/server/internal/issueproperty"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/issueproperty"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 func makePropertyDef(propType string, options []PropertyOption) db.IssueProperty {

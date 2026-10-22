@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
-	"github.com/marvis-ai/marvis/server/internal/daemon/processtree"
-	"github.com/marvis-ai/marvis/server/internal/daemon/repocache"
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/processtree"
+	"github.com/yunboom/marvis/server/internal/daemon/repocache"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
 )
 
 // reposDirName is the bare-repo cache directory inside the workspaces root.

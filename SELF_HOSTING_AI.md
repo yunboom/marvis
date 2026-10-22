@@ -12,7 +12,7 @@ This document is designed for AI agents to execute. Follow these steps exactly t
 
 ```bash
 # Install CLI + provision self-host server
-curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash -s -- --with-server
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash -s -- --with-server
 
 # Configure CLI for localhost, authenticate, and start daemon
 marvis setup self-host
@@ -28,10 +28,10 @@ Wait for the server output `✓ Marvis server is running and CLI is ready!` befo
 ## Alternative: Manual Setup
 
 ```bash
-git clone https://github.com/marvis-ai/marvis.git
+git clone https://github.com/yunboom/marvis.git
 cd marvis
 make selfhost
-brew install marvis-ai/tap/marvis
+brew install yunboom/tap/marvis
 marvis setup self-host
 ```
 

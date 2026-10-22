@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 func TestClassifyPoisonedOutput(t *testing.T) {

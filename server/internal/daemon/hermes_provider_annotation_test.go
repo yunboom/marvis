@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 // hermesProviderUnconfiguredError is the failure exactly as it reaches the

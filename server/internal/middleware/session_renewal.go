@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/auth"
 )
 
 type sessionRenewedCtxKey struct{}

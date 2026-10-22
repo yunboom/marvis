@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // TestClaimTaskByRuntime_LegacySkillRedirectFollowsTheCapability covers the

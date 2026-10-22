@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon"
+	"github.com/yunboom/marvis/server/internal/daemon"
 )
 
 const workspaceID = "11111111-1111-4111-8111-111111111111"

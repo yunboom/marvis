@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/internal/service"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 // Hook invocation from a person: a button inside a surface (`ui`) or an entry in

@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 const testManifestJSON = `{
@@ -80,7 +80,7 @@ func TestNormalizeConfigValue(t *testing.T) {
 		return got
 	}
 
-	if value, err := normalizeConfigValue(field("repo"), "marvis-ai/marvis"); err != nil || value != "marvis-ai/marvis" {
+	if value, err := normalizeConfigValue(field("repo"), "yunboom/marvis"); err != nil || value != "yunboom/marvis" {
 		t.Fatalf("string field = (%v, %v)", value, err)
 	}
 	if value, err := normalizeConfigValue(field("count"), float64(3)); err != nil || value != float64(3) {

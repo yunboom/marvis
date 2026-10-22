@@ -6,8 +6,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
 )
 
 // This file holds the translation from a DingTalk Stream callback
@@ -682,7 +682,7 @@ func normalizeDingTalkRichTextControlLayout(msg *channel.InboundMessage, items [
 // filtered. Apply this only to provider text values, not rendered quote blocks,
 // so a fallback cannot discard generated image markers and their media slots.
 // This tradeoff was accepted in the review of PR #8061:
-// https://github.com/marvis-ai/marvis/pull/8061#pullrequestreview-5130718174
+// https://github.com/yunboom/marvis/pull/8061#pullrequestreview-5130718174
 func dingTalkReadableQuotedText(value string) string {
 	if strings.Contains(value, "||") {
 		return "[quoted content unavailable]"

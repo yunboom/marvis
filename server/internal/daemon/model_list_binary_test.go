@@ -12,7 +12,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // modelListFixture stands up a Daemon whose model-list report is captured and

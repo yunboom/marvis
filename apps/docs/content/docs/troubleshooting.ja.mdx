@@ -246,9 +246,9 @@ netstat -ano | findstr :8080       # Windows
 | --- | --- |
 | バックグラウンドのデーモン | `marvis daemon logs --lines 100` |
 | デーモンログのリアルタイム追跡 | `marvis daemon logs --follow` |
-| デフォルトプロファイルのログファイル | `~/.marvis/daemon.log` |
-| デフォルトプロファイルの起動・クラッシュログ | `~/.marvis/daemon.err.log` |
-| 名前付きプロファイル | `~/.marvis/profiles/<name>/` 配下の対応するログ |
+| デフォルトプロファイルのログファイル | `~/.marvis-studio/daemon.log` |
+| デフォルトプロファイルの起動・クラッシュログ | `~/.marvis-studio/daemon.err.log` |
+| 名前付きプロファイル | `~/.marvis-studio/profiles/<name>/` 配下の対応するログ |
 | Docker backend | `docker compose -f docker-compose.selfhost.yml logs -f backend` |
 | ブラウザ | 開発者ツールの Console と Network |
 
@@ -261,7 +261,7 @@ marvis daemon stop
 marvis daemon start --foreground
 ```
 
-それでも特定できない場合は、[GitHub Issues](https://github.com/marvis-ai/marvis/issues) で既存の問題を検索するか、新しい issue を提出してください。
+それでも特定できない場合は、[GitHub Issues](https://github.com/yunboom/marvis/issues) で既存の問題を検索するか、新しい issue を提出してください。
 
 ## 次のステップ
 

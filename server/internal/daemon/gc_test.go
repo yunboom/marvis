@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
-	"github.com/marvis-ai/marvis/server/internal/daemon/repocache"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/repocache"
 )
 
 // newGCTestDaemon creates a minimal Daemon for GC testing with a mock HTTP server.

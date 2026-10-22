@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	"github.com/marvis-ai/marvis/server/pkg/eventcontract"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/pkg/eventcontract"
 )
 
 // Exercise real writes rather than calling the capture function: every advertised

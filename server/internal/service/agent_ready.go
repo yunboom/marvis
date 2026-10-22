@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/dispatch"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/dispatch"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // AgentAvailability is what a readiness check concluded, in the vocabulary the

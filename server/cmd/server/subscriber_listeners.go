@@ -5,12 +5,12 @@ import (
 	"log/slog"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/marvis-ai/marvis/server/internal/attribution"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/handler"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/attribution"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/handler"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // isAssignmentRecipientType reports whether an assignee can own a subscriber

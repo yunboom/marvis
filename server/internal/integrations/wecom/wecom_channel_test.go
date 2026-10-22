@@ -22,8 +22,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // scriptedConn is a wsConn that acks the subscribe frame it is written (echoing

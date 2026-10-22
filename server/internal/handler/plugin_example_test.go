@@ -15,10 +15,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/util/secretbox"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
 )
 
 // examples/plugins/deploy-sentinel, driven end to end.

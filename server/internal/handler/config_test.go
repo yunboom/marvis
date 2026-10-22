@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/auth"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 func TestGetConfigReportsCdnSignedMode(t *testing.T) {

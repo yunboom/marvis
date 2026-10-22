@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
 )
 
 // The normalized inputs match the DingTalk adapter's selected-reply contract.

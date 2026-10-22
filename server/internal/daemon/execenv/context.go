@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"strings"
 
-	skillpkg "github.com/marvis-ai/marvis/server/internal/skill"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	skillpkg "github.com/yunboom/marvis/server/internal/skill"
+	"github.com/yunboom/marvis/server/pkg/agent"
 	"gopkg.in/yaml.v3"
 )
 

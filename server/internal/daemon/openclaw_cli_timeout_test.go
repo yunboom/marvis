@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 // TestTaskRunFailureReasonLabelsOpenclawCLITimeout is the daemon half of the

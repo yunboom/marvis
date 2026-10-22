@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func TestChatSessionRemovalCarriesReactionTargetsAfterCommit(t *testing.T) {

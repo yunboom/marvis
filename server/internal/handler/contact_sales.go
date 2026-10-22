@@ -10,10 +10,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/logger"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Public, unauthenticated endpoint for the landing-page "Contact Sales"

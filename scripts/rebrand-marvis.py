@@ -10,6 +10,14 @@ contains the old brand, preserving case: multica -> marvis, Multica -> Marvis,
 MULTICA -> MARVIS. "multicast" is a different word and is left alone. The run
 is idempotent, so running it on an already rebranded tree changes nothing.
 
+A second pass points repository links at this fork (github.com/yunboom/marvis)
+and moves the machine-level identifiers that the installed Tencent
+Marvis.app already owns onto "marvis-studio" / "Marvis Studio": the home
+directory (~/.marvis), the desktop deep-link scheme (marvis://), and the
+packaged desktop app name (which is also its .app bundle name and userData
+directory). Task working-directory markers such as .marvis/project/ are not
+machine-level and keep the brand name.
+
 Files that must keep the old name verbatim (this script, the fork notes in
 CLAUDE.md, and the migration that renames pre-rebrand database objects) are
 listed in KEEP and skipped.
@@ -28,6 +36,49 @@ KEEP = {
     "server/migrations/589_rebrand_marvis.up.sql",
     "server/migrations/589_rebrand_marvis.down.sql",
 }
+
+
+# Machine-level identifiers moved off the names Tencent Marvis.app occupies.
+STUDIO_RULES = [
+    # Home directory, in docs, help text and shell / PowerShell scripts.
+    (re.compile(r"~/\.marvis(?![\w-])"), "~/.marvis-studio"),
+    (
+        re.compile(r"((?:\$HOME|\$\{HOME\}|%USERPROFILE%|\$env:USERPROFILE)[/\\])\.marvis(?![\w-])"),
+        r"\1.marvis-studio",
+    ),
+    # Home directory joined in Go and TypeScript code.
+    (
+        re.compile(r'((?:homedir\(\)|getPath\("home"\)|\bhome|\bhomeDir|\bownerHome|\broot|\btmp),\s*)"\.marvis"'),
+        r'\1".marvis-studio"',
+    ),
+    (re.compile(r'"\.marvis/config\.json"'), '".marvis-studio/config.json"'),
+    # Profiles only ever live under the home directory.
+    (re.compile(r'"\.marvis", "profiles"'), '".marvis-studio", "profiles"'),
+    # Desktop deep-link scheme.
+    (re.compile(r"\bmarvis://"), "marvis-studio://"),
+    (re.compile(r'const PROTOCOL = "marvis";'), 'const PROTOCOL = "marvis-studio";'),
+    (re.compile(r"(schemes:\n\s*- )marvis\n"), r"\1marvis-studio\n"),
+    # Packaged desktop app name (bundle name, userData dir, WM_CLASS).
+    (re.compile(r"^productName: Marvis$", re.M), "productName: Marvis Studio"),
+    (re.compile(r'"productName": "Marvis"'), '"productName": "Marvis Studio"'),
+    (re.compile(r'app\.setName\("Marvis"\)'), 'app.setName("Marvis Studio")'),
+    (re.compile(r"StartupWMClass: Marvis$", re.M), "StartupWMClass: Marvis Studio"),
+    (re.compile(r"(protocols:\n\s*- name: )Marvis\n"), r"\1Marvis Studio\n"),
+]
+
+# This fork lives at github.com/yunboom/marvis. Point the main repository (Go
+# module path, clone / issue / release / raw-install URLs), the images and
+# chart its CI publishes, the Homebrew tap, the release-job owner guard, and the
+# desktop update feed at it. Other upstream
+# repositories (marvis-cli, dsh-marvis-runtime) and npm packages do not exist
+# under this owner and keep their names.
+FORK_RULES = [
+    (re.compile(r"marvis-ai/marvis(?![\w-])"), "yunboom/marvis"),
+    (re.compile(r"ghcr\.io/marvis-ai/"), "ghcr.io/yunboom/"),
+    (re.compile(r"^(\s*owner: )marvis-ai$", re.M), r"\1yunboom"),
+    (re.compile(r"marvis-ai/(tap\b|homebrew-tap)"), r"yunboom/\1"),
+    (re.compile(r"repository_owner == 'marvis-ai'"), "repository_owner == 'yunboom'"),
+]
 
 
 def replace(match: re.Match) -> str:
@@ -64,6 +115,26 @@ def rewrite_contents() -> int:
     return changed
 
 
+def apply_studio_rules() -> int:
+    changed = 0
+    for path in git("grep", "-Il", "-e", "marvis", "-e", "Marvis").splitlines():
+        if path in KEEP:
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                source = f.read()
+        except UnicodeDecodeError:
+            continue
+        result = source
+        for pattern, replacement in STUDIO_RULES + FORK_RULES:
+            result = pattern.sub(replacement, result)
+        if result != source:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(result)
+            changed += 1
+    return changed
+
+
 def rename_paths() -> int:
     targets = set()
     for path in git("ls-files").splitlines():
@@ -87,7 +158,8 @@ def rename_paths() -> int:
 def main() -> None:
     files = rewrite_contents()
     paths = rename_paths()
-    print(f"rewrote {files} files, renamed {paths} paths")
+    studio = apply_studio_rules()
+    print(f"rewrote {files} files, renamed {paths} paths, applied fork-specific identifiers to {studio} files")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // newSelfHealTestDaemon builds a Daemon with just the state resolveAgentEntry

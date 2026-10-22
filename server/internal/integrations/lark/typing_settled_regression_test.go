@@ -2,9 +2,9 @@ package lark
 
 import (
 	"context"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
-	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
+	dbfx "github.com/yunboom/marvis/server/internal/testutil"
 	"testing"
 )
 

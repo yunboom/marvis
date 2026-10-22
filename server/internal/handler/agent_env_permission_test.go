@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // TestCanManageAgentEnv_Pure exercises the predicate behind the env

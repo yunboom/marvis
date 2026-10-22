@@ -9,10 +9,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/daemonws"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/daemonws"
+	"github.com/yunboom/marvis/server/internal/events"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // fakeLivenessStore lets tests drive every Available / Touch / IsAliveBatch

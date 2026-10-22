@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 func TestRunConfigSetPersistsValues(t *testing.T) {

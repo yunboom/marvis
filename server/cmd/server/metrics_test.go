@@ -5,10 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/events"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/internal/realtime"
 )
 
 func TestMainRouterDoesNotExposeDiagnostics(t *testing.T) {

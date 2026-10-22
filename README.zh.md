@@ -13,22 +13,22 @@
 Marvis 是一个源码公开的团队工作区。你像给同事派活一样，把任务交给 AI 编码智能体——它自己接手、边做边
 汇报、卡住了主动说，做完交回来给你审。可自托管，支持你已经在用的智能体 CLI，不绑定任何厂商。
 
-[![CI](https://github.com/marvis-ai/marvis/actions/workflows/ci.yml/badge.svg)](https://github.com/marvis-ai/marvis/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/marvis-ai/marvis?style=flat)](https://github.com/marvis-ai/marvis/releases)
-[![GitHub stars](https://img.shields.io/github/stars/marvis-ai/marvis?style=flat)](https://github.com/marvis-ai/marvis/stargazers)
+[![CI](https://github.com/yunboom/marvis/actions/workflows/ci.yml/badge.svg)](https://github.com/yunboom/marvis/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/yunboom/marvis?style=flat)](https://github.com/yunboom/marvis/releases)
+[![GitHub stars](https://img.shields.io/github/stars/yunboom/marvis?style=flat)](https://github.com/yunboom/marvis/stargazers)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/W8gYBn226t)
 
 <p align="center">
-  <a href="https://www.star-history.com/marvis-ai/marvis">
+  <a href="https://www.star-history.com/yunboom/marvis">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank&amp;theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank" />
-      <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=rank&amp;theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=rank" />
+      <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=rank" />
     </picture>
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending&amp;theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending" />
-      <img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=trending&amp;theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=trending" />
+      <img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=trending" />
     </picture>
   </a>
 </p>
@@ -121,12 +121,12 @@ Claude Code、Codex、Cursor 都行。Marvis 负责驱动它们，但不替你�
 <br/>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash -s -- --with-server
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash -s -- --with-server
 marvis setup self-host
 ```
 
 Windows 上先设 `$env:MARVIS_MODE="with-server"`，再跑 PowerShell 安装脚本：
-`irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex`。
+`irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex`。
 
 这会拉取 GHCR 上的官方镜像，需要 Docker。详见[自托管快速上手](https://marvis.ai/docs/zh/self-host-quickstart)。
 如果你选的 GHCR 标签还没发布，可以在代码目录里跑 `make selfhost-build` 兜底。

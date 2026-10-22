@@ -11,10 +11,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func TestClient_IdentityHeaders_PostJSON(t *testing.T) {

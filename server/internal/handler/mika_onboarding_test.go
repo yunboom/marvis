@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func TestBuildMikaOnboardingKickoffSelectsSkillWithKnownContext(t *testing.T) {

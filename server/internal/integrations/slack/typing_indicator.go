@@ -13,10 +13,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/slack-go/slack"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // typingEmoji is the Slack reaction name used as the "processing" indicator on

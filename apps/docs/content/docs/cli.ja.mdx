@@ -12,19 +12,19 @@ Marvis CLI は、ローカルのランタイムを接続する役割と、ター
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 ```
 
 Homebrew がインストールされていれば、次のコマンドでもインストールできます:
 
 ```bash
-brew install marvis-ai/tap/marvis
+brew install yunboom/tap/marvis
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex
 ```
 
 インストールを確認します:
@@ -197,7 +197,7 @@ marvis agent list --output json
 
 ## プロファイルと設定
 
-デフォルトの設定は `~/.marvis/config.json` に保存されます。`--profile <name>` を使うと、サーバーアドレス、トークン、デフォルトワークスペース、デーモン状態を別のセットとして分離できます:
+デフォルトの設定は `~/.marvis-studio/config.json` に保存されます。`--profile <name>` を使うと、サーバーアドレス、トークン、デフォルトワークスペース、デーモン状態を別のセットとして分離できます:
 
 ```bash
 marvis setup self-host --profile staging \
@@ -207,7 +207,7 @@ marvis setup self-host --profile staging \
 marvis issue list --profile staging
 ```
 
-名前付きプロファイルは `~/.marvis/profiles/<name>/config.json` に保存されます。現在の値を確認する:
+名前付きプロファイルは `~/.marvis-studio/profiles/<name>/config.json` に保存されます。現在の値を確認する:
 
 ```bash
 marvis config show

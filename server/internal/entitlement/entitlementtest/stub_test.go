@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/entitlement"
+	"github.com/yunboom/marvis/server/internal/entitlement"
 )
 
 func TestStubIsWorkspaceScopedAndDefaultsOff(t *testing.T) {

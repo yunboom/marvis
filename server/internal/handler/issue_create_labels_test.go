@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // createTestIssueLabel creates an issue-scoped label in the test workspace via

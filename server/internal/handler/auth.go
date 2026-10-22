@@ -20,11 +20,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/auth"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/logger"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // SignupError represents signup restriction errors

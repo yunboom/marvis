@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
 )
 
 const maxReplySources = 1024

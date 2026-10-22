@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // batchFixture wires a Daemon against a fake server that serves a configurable

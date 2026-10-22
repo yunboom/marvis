@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
 )
 
 // Admin approval for an mcp-transport hook.

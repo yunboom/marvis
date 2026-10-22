@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/storage"
+	"github.com/yunboom/marvis/server/internal/storage"
 )
 
 // withAvatarStorage swaps the handler's storage/config for one test and

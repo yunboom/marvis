@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // TestLockSubscriberWrites_KeyedOnUUIDValueNotSpelling covers MUL-5483 review

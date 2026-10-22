@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 // seedMarker writes a daemon marker with the given body into a fresh temp

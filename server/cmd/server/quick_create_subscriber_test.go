@@ -9,9 +9,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/service"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Subscribing the quick-create requester moved OFF the completion path in

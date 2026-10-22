@@ -20,13 +20,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/featureflags"
-	"github.com/marvis-ai/marvis/server/internal/scheduler"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/featureflag"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/internal/featureflags"
+	"github.com/yunboom/marvis/server/internal/scheduler"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/featureflag"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 type schedulePulseState struct {

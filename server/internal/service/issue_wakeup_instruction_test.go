@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 func TestIssueWakeupInstructionPreservesStateAndPendingEvents(t *testing.T) {

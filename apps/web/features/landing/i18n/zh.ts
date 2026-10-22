@@ -309,7 +309,7 @@ export function createZhDict(
   licensing: {
     title: "授权说明",
     intro: [
-      "Marvis 采用 [Marvis License](https://github.com/marvis-ai/marvis/blob/main/LICENSE) 发布：在 Apache License 2.0 的基础上附加了几项条件。源代码公开，在你自己的组织内部使用 Marvis 是免费的，包括为整个团队自托管。",
+      "Marvis 采用 [Marvis License](https://github.com/yunboom/marvis/blob/main/LICENSE) 发布：在 Apache License 2.0 的基础上附加了几项条件。源代码公开，在你自己的组织内部使用 Marvis 是免费的，包括为整个团队自托管。",
       "最主要的附加条件针对托管使用：把 Marvis 提供给组织外部的人使用，需要商业授权。这一页用大家最常问的问题，说明这条线划在哪里。这是一份通俗说明，不构成法律意见；如与 LICENSE 原文不一致，以 LICENSE 为准。",
     ],
     rule: {
@@ -370,7 +370,7 @@ export function createZhDict(
         heading: "其他条件",
         bullets: [
           "品牌：除非获得我们的书面品牌豁免，请保留 Marvis 界面中显示的 Marvis Logo、产品名称以及版权和署名信息。",
-          "署名：如果你只基于 Marvis 的后端、守护进程或 CLI 构建产品、不使用 Marvis 界面，需要保留版权和 NOTICE 信息，并在面向用户的文档中注明产品基于 Marvis 构建，附上 [GitHub 仓库](https://github.com/marvis-ai/marvis)链接。",
+          "署名：如果你只基于 Marvis 的后端、守护进程或 CLI 构建产品、不使用 Marvis 界面，需要保留版权和 NOTICE 信息，并在面向用户的文档中注明产品基于 Marvis 构建，附上 [GitHub 仓库](https://github.com/yunboom/marvis)链接。",
           "Fork：公开发布 fork 的源代码不算托管服务，不需要商业授权。但任何用这个 fork 运营托管服务的人，都需要各自获得商业授权。",
           "商业授权和品牌豁免是两项独立的授权，获得其中一项不代表获得另一项。",
         ],

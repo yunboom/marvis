@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 func TestDaemonWebSocketMissingHubIsInternalError(t *testing.T) {

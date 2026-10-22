@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/pkg/llm"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/pkg/llm"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func TestChannelChatTitle_UsesCurrentSourceForLLMAndPublishesAfterCAS(t *testing.T) {

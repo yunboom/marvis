@@ -66,32 +66,32 @@ describe("validateGitRef", () => {
 
 describe("splitGithubUrlRef", () => {
   it("splits a browse URL into clone URL and ref", () => {
-    expect(splitGithubUrlRef("https://github.com/marvis-ai/marvis/tree/main")).toEqual({
-      url: "https://github.com/marvis-ai/marvis",
+    expect(splitGithubUrlRef("https://github.com/yunboom/marvis/tree/main")).toEqual({
+      url: "https://github.com/yunboom/marvis",
       ref: "main",
     });
   });
 
   it("keeps a multi-segment branch together", () => {
     expect(
-      splitGithubUrlRef("https://github.com/marvis-ai/marvis/tree/release/2026-09"),
+      splitGithubUrlRef("https://github.com/yunboom/marvis/tree/release/2026-09"),
     ).toEqual({
-      url: "https://github.com/marvis-ai/marvis",
+      url: "https://github.com/yunboom/marvis",
       ref: "release/2026-09",
     });
   });
 
   it("drops a .git suffix before /tree and a trailing slash after the ref", () => {
     expect(
-      splitGithubUrlRef("https://github.com/marvis-ai/marvis.git/tree/main/"),
-    ).toEqual({ url: "https://github.com/marvis-ai/marvis", ref: "main" });
+      splitGithubUrlRef("https://github.com/yunboom/marvis.git/tree/main/"),
+    ).toEqual({ url: "https://github.com/yunboom/marvis", ref: "main" });
   });
 
   it("leaves a plain clone URL untouched", () => {
     for (const url of [
-      "https://github.com/marvis-ai/marvis",
-      "https://github.com/marvis-ai/marvis.git",
-      "git@github.com:marvis-ai/marvis.git",
+      "https://github.com/yunboom/marvis",
+      "https://github.com/yunboom/marvis.git",
+      "git@github.com:yunboom/marvis.git",
       "https://gitlab.com/owner/repo/tree/main",
     ]) {
       expect(splitGithubUrlRef(url)).toEqual({ url });
@@ -99,14 +99,14 @@ describe("splitGithubUrlRef", () => {
   });
 
   it("leaves /blob and /pull URLs alone — neither names a checkout baseline", () => {
-    const blob = "https://github.com/marvis-ai/marvis/blob/main/README.md";
-    const pull = "https://github.com/marvis-ai/marvis/pull/8572";
+    const blob = "https://github.com/yunboom/marvis/blob/main/README.md";
+    const pull = "https://github.com/yunboom/marvis/pull/8572";
     expect(splitGithubUrlRef(blob)).toEqual({ url: blob });
     expect(splitGithubUrlRef(pull)).toEqual({ url: pull });
   });
 
   it("does not split when the extracted ref would be invalid", () => {
-    const url = "https://github.com/marvis-ai/marvis/tree/main..dev";
+    const url = "https://github.com/yunboom/marvis/tree/main..dev";
     expect(splitGithubUrlRef(url)).toEqual({ url });
   });
 

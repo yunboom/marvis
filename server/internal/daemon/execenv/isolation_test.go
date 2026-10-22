@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 const preparationHelperTestMode = "execenv-preparation-helper"
@@ -35,7 +35,7 @@ const preparationHelperTestMode = "execenv-preparation-helper"
 // It also clears TaskConfigRootEnv, which the daemon sets for every task it
 // runs. Tests here isolate themselves by pointing HOME at a t.TempDir(), but
 // cli.ProfileDir consults that variable first and never reaches HOME while it
-// is set — so a test asserting a path under $HOME/.marvis passed in CI and
+// is set — so a test asserting a path under $HOME/.marvis-studio passed in CI and
 // failed for any agent running the suite from inside a Marvis task. Clearing
 // it once here makes the package resolve profile dirs the same way everywhere,
 // and keeps working for parallel tests, which cannot call t.Setenv. A test
@@ -107,7 +107,7 @@ func TestPreparationHelperRoundTripsReuse(t *testing.T) {
 				{
 					ID:           "resource-helper-reuse",
 					ResourceType: "github_repo",
-					ResourceRef:  json.RawMessage(`{"url":"https://github.com/marvis-ai/marvis"}`),
+					ResourceRef:  json.RawMessage(`{"url":"https://github.com/yunboom/marvis"}`),
 				},
 			},
 		},
@@ -136,7 +136,7 @@ func TestPreparationHelperRoundTripsProjectResources(t *testing.T) {
 				{
 					ID:           "resource-helper-project-resource",
 					ResourceType: "github_repo",
-					ResourceRef:  json.RawMessage(`{"url":"https://github.com/marvis-ai/marvis"}`),
+					ResourceRef:  json.RawMessage(`{"url":"https://github.com/yunboom/marvis"}`),
 					Label:        "Marvis",
 				},
 			},
@@ -169,7 +169,7 @@ func TestPreparationHelperRoundTripsProjectResources(t *testing.T) {
 	}
 	if resource.ID != "resource-helper-project-resource" ||
 		resource.ResourceType != "github_repo" ||
-		ref.URL != "https://github.com/marvis-ai/marvis" ||
+		ref.URL != "https://github.com/yunboom/marvis" ||
 		resource.Label != "Marvis" {
 		t.Fatalf("project resource = %#v, want all fields preserved", resource)
 	}

@@ -17,9 +17,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/featureflags"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/featureflags"
+	"github.com/yunboom/marvis/server/internal/logger"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Local search index sync (MUL-7754).

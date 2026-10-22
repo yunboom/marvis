@@ -3,8 +3,8 @@ package handler
 import (
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/featureflags"
-	"github.com/marvis-ai/marvis/server/pkg/featureflag"
+	"github.com/yunboom/marvis/server/internal/featureflags"
+	"github.com/yunboom/marvis/server/pkg/featureflag"
 )
 
 func withComposioMCPAppsFlag(t *testing.T, h *Handler, enabled bool) {

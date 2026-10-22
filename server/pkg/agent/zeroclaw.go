@@ -148,7 +148,7 @@ func zeroclawSessionNewErrorMessage(err error) string {
 // transport over stdin/stdout.
 //
 // ZeroClaw is a Rust-based, single-binary generic agent runtime (see
-// marvis-ai/marvis#1543). Its ACP server exposes the same protocol
+// yunboom/marvis#1543). Its ACP server exposes the same protocol
 // surface that Hermes/Kimi/Reasonix/Dim/Traecli/Grok/QwenPaw/MCode use, so
 // the backend reuses the shared hermesClient ACP transport — only the
 // binary, the session bootstrap, and the tool-name extraction differ.

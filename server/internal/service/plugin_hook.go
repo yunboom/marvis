@@ -18,9 +18,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
 )
 
 // The hook engine: the one place Marvis calls OUT to a plugin's own server.

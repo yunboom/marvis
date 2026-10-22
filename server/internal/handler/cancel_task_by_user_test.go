@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // CancelTaskByUser (POST /api/tasks/{taskId}/cancel) used to key cancellation

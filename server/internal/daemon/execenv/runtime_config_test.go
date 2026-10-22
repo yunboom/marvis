@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/runtimeapps"
+	"github.com/yunboom/marvis/server/internal/runtimeapps"
 )
 
 // Sub-issue Creation section — after MUL-2538 the platform posts the

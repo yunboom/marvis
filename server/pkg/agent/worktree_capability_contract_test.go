@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // The capability token is a cross-version protocol contract: the daemon

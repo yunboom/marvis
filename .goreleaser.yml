@@ -76,12 +76,12 @@ brews:
     ids:
       - versioned
     repository:
-      owner: marvis-ai
+      owner: yunboom
       name: homebrew-tap
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Formula
-    homepage: "https://github.com/marvis-ai/marvis"
+    homepage: "https://github.com/yunboom/marvis"
     description: "Marvis CLI — local agent runtime and management tool for the Marvis platform"
     # No license stanza: Marvis ships under the Marvis License (Apache 2.0
     # terms with additional conditions, see LICENSE), which has no SPDX

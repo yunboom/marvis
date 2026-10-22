@@ -21,7 +21,7 @@ const jsonLd = {
       "@type": "Organization",
       name: "Marvis",
       url: "https://www.marvis.ai",
-      sameAs: ["https://github.com/marvis-ai/marvis"],
+      sameAs: ["https://github.com/yunboom/marvis"],
     },
     {
       "@type": "SoftwareApplication",

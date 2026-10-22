@@ -12,10 +12,10 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/util/secretbox"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 // The reference manifest for handler tests declares only capabilities this
@@ -478,7 +478,7 @@ func TestPluginInstallConfigureAndUninstall(t *testing.T) {
 	}
 
 	params := map[string]string{"id": testWorkspaceID, "installationId": installed.ID}
-	configure, _ := json.Marshal(map[string]any{"values": map[string]any{"repo": "marvis-ai/marvis", "token": "sk-super-secret"}})
+	configure, _ := json.Marshal(map[string]any{"values": map[string]any{"repo": "yunboom/marvis", "token": "sk-super-secret"}})
 	recorder = httptest.NewRecorder()
 	testHandler.ConfigurePlugin(recorder, pluginHandlerRequest(http.MethodPut, "/plugins/config", configure, params))
 	if recorder.Code != http.StatusOK {
@@ -496,7 +496,7 @@ func TestPluginInstallConfigureAndUninstall(t *testing.T) {
 	if err := json.Unmarshal(recorder.Body.Bytes(), &configured); err != nil {
 		t.Fatalf("decode configured installation: %v", err)
 	}
-	if configured.Config["repo"] != "marvis-ai/marvis" {
+	if configured.Config["repo"] != "yunboom/marvis" {
 		t.Fatalf("plain config value was not stored: %v", configured.Config)
 	}
 	if _, present := configured.Config["token"]; present {

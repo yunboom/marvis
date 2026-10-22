@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // TestMain redirects the home environment variables to one scratch directory

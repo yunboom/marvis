@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/entitlement"
+	"github.com/yunboom/marvis/server/internal/entitlement"
 )
 
 func TestResolveAutopilotNotificationRecipientRejectsFormerMember(t *testing.T) {

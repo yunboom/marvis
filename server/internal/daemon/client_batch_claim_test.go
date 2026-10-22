@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // TestClient_ClaimTasks_PostsRuntimeSetAndParsesTasks verifies the machine-level

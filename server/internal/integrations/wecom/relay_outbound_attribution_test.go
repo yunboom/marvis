@@ -19,7 +19,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // ---------------------------------------------------------------------------

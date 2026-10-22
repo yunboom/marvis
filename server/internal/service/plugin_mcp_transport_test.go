@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
 )
 
 // The approval is the grant, not the install.

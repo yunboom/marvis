@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/handler"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/handler"
+	"github.com/yunboom/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // internalOnlyPayloadKeys lists payload keys that exist purely for in-process

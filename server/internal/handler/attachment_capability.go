@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/auth"
 )
 
 // Attachment download capabilities — MUL-5292.

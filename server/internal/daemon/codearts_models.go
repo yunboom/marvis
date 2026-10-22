@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // loadCodeArtsConfiguredModels reads OpenCode-compatible custom providers

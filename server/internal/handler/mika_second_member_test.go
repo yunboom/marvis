@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/service"
 )
 
 // addSecondWorkspaceMember creates another member of the handler test

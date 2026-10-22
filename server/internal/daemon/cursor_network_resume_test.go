@@ -3,7 +3,7 @@ package daemon
 import (
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 func TestCursorConnectionStalledDoesNotStartFreshSession(t *testing.T) {

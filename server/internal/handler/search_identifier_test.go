@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 func TestParseQueryNumber(t *testing.T) {

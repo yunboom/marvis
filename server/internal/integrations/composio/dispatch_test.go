@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/runtimeapps"
-	sdk "github.com/marvis-ai/marvis/server/pkg/composio"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/runtimeapps"
+	sdk "github.com/yunboom/marvis/server/pkg/composio"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // seedActiveConnection writes a single active row for the user/toolkit pair

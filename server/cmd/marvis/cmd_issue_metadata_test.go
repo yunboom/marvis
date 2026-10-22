@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 // Tests for `marvis issue metadata list` 404-degradation behavior, plus
@@ -19,7 +19,7 @@ import (
 // we don't lose signal when the user actually depends on the metadata
 // endpoint working.
 //
-// Background: GitHub issue marvis-ai/marvis#3711 — on self-hosted
+// Background: GitHub issue yunboom/marvis#3711 — on self-hosted
 // backends that pre-date the per-issue metadata route, agent runtime
 // bootstrap calls `marvis issue metadata list <issue> --output json`
 // best-effort and any non-zero exit was being escalated by the Hermes

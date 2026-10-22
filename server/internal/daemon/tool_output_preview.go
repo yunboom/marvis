@@ -3,7 +3,7 @@ package daemon
 import (
 	"unicode/utf8"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // toolOutputPreviewBudget keeps the existing byte budget for tool_result

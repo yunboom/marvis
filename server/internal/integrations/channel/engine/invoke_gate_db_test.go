@@ -14,10 +14,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/service"
+	dbfx "github.com/yunboom/marvis/server/internal/testutil"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // A FAILED permission lookup is not a denial, and the difference is not

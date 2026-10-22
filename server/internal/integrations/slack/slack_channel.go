@@ -13,7 +13,7 @@ import (
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
 )
 
 // slackChannel is ONE installation's Socket Mode connection. Under the

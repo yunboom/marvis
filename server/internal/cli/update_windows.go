@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/marvis-ai/marvis/server/internal/selfexec"
+	"github.com/yunboom/marvis/server/internal/selfexec"
 )
 
 // oldBinarySuffix is appended to the previous executable while a new one is

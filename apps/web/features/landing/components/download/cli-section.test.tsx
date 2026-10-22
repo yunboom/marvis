@@ -25,7 +25,7 @@ vi.mock("../../i18n", () => ({
 }));
 
 const WINDOWS_CMD =
-  "irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex";
+  "irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex";
 
 describe("CliSection", () => {
   // The switch itself is covered in @marvis/views; this checks the landing

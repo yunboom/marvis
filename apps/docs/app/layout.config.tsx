@@ -55,7 +55,7 @@ export const baseOptions: BaseLayoutProps = {
     {
       icon: <GitHubMark />,
       text: externalLinkText("GitHub"),
-      url: "https://github.com/marvis-ai/marvis",
+      url: "https://github.com/yunboom/marvis",
       external: true,
     },
     {

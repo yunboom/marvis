@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/marvis-ai/marvis/server/internal/auth"
 	"github.com/redis/go-redis/v9"
+	"github.com/yunboom/marvis/server/internal/auth"
 )
 
 const redisTestDB = 13

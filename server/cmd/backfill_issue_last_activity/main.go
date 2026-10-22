@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/marvis-ai/marvis/server/internal/issueactivitybackfill"
-	"github.com/marvis-ai/marvis/server/internal/logger"
+	"github.com/yunboom/marvis/server/internal/issueactivitybackfill"
+	"github.com/yunboom/marvis/server/internal/logger"
 )
 
 const (

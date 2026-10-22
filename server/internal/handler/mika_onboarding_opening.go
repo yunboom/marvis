@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/service"
 )
 
 // mikaOnboardingOpenings is Mika's first reply, written by the product rather

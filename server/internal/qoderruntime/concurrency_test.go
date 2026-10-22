@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon"
+	"github.com/yunboom/marvis/server/internal/daemon"
 )
 
 // multiHarness serves several tasks and sessions at once; setup() models one.

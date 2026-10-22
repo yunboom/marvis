@@ -7,12 +7,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // TestMain redirects both home environment variables to one scratch directory
 // for the whole binary before any test runs. This package owns SaveCLIConfig,
-// which resolves ~/.marvis through os.UserHomeDir — USERPROFILE on Windows,
+// which resolves ~/.marvis-studio through os.UserHomeDir — USERPROFILE on Windows,
 // HOME elsewhere. Tests that only redirect HOME therefore split the fixture's
 // write path from the code's read path on Windows: SaveCLIConfig writes test
 // fixtures over a real default-profile config.json. Process-wide redirection

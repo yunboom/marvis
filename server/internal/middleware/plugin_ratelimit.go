@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	publicapiv1 "github.com/marvis-ai/marvis/server/pkg/publicapi/v1"
 	"github.com/redis/go-redis/v9"
+	publicapiv1 "github.com/yunboom/marvis/server/pkg/publicapi/v1"
 )
 
 // PluginRateLimit applies one fixed-window budget to each opaque Plugin

@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/pkg/eventcontract"
 	"github.com/spf13/cobra"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/pkg/eventcontract"
 )
 
 func init() { issueCmd.AddCommand(newIssueWakeupCommand()) }

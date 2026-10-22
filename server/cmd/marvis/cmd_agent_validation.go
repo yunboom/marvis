@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/marvis-ai/marvis/server/internal/agentconfig"
+	"github.com/yunboom/marvis/server/internal/agentconfig"
 )
 
 func validateAgentMaxConcurrentTasksFlag(value int32) error {

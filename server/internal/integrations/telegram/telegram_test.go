@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
 )
 
 func TestParseBotID(t *testing.T) {

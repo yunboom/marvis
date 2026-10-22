@@ -20,20 +20,20 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/channelmedia"
-	"github.com/marvis-ai/marvis/server/internal/dispatch"
-	"github.com/marvis-ai/marvis/server/internal/issueguard"
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
-	"github.com/marvis-ai/marvis/server/internal/issueworkflow"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
-	"github.com/marvis-ai/marvis/server/internal/qoderruntime"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	agentpkg "github.com/marvis-ai/marvis/server/pkg/agent"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/channelmedia"
+	"github.com/yunboom/marvis/server/internal/dispatch"
+	"github.com/yunboom/marvis/server/internal/issueguard"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/issueworkflow"
+	"github.com/yunboom/marvis/server/internal/logger"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/qoderruntime"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/util"
+	agentpkg "github.com/yunboom/marvis/server/pkg/agent"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // IssueResponse is the JSON response for an issue.
@@ -4628,7 +4628,7 @@ func (h *Handler) BatchUpdateIssues(w http.ResponseWriter, r *http.Request) {
 	// real-world cases that hit this path are caller mistakes (status placed
 	// at the top level, "update" misspelled as singular). Telling the truth
 	// here — `{"updated": 0}` — keeps the wire shape stable while making the
-	// count match reality. See marvis-ai/marvis#1660.
+	// count match reality. See yunboom/marvis#1660.
 	hasMutation := req.Updates.Title != nil ||
 		req.Updates.Description != nil ||
 		req.Updates.Status != nil ||

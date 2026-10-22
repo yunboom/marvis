@@ -11,9 +11,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/service"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 const (

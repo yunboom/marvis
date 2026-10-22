@@ -27,17 +27,17 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
-	"github.com/marvis-ai/marvis/server/internal/daemon/repocache"
-	"github.com/marvis-ai/marvis/server/internal/selfexec"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/awakeclock"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
-	"github.com/marvis-ai/marvis/server/pkg/redact"
-	"github.com/marvis-ai/marvis/server/pkg/skillbundle"
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/repocache"
+	"github.com/yunboom/marvis/server/internal/selfexec"
+	"github.com/yunboom/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/awakeclock"
+	"github.com/yunboom/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/redact"
+	"github.com/yunboom/marvis/server/pkg/skillbundle"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 // ErrRepoNotConfigured is returned by ensureRepoReady when the requested repo
@@ -124,8 +124,8 @@ var pendingWorkHintMinInterval = time.Second
 // worktree's gitdir resolves into the shared cache and stays read-only even
 // when the task workdir is an explicit writable root, so `git add` /
 // `git commit` fail from inside the checkout — Linux hit this in
-// marvis-ai/marvis#2925, Codex's native Windows sandbox in
-// marvis-ai/marvis#6449.
+// yunboom/marvis#2925, Codex's native Windows sandbox in
+// yunboom/marvis#6449.
 //
 // Both platforms now default to danger-full-access (execenv's
 // codexSandboxPolicyFor), so in practice only a user who opted into
@@ -6482,7 +6482,7 @@ func providerNeedsInlineSystemPrompt(provider string) bool {
 // back to a fresh Prepare (GitHub #3854).
 //
 // Pi and OMP are the exception. Their opaque session id is an absolute JSONL
-// path under ~/.marvis/pi-sessions, and the backend passes that path directly
+// path under ~/.marvis-studio/pi-sessions, and the backend passes that path directly
 // to --session. The transcript remains resumable when only the task workdir
 // changes, so binding it to workdir reuse discards healthy conversation history
 // and forces the model to reconstruct it through `marvis chat history`.

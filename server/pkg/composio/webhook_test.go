@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/composio"
+	"github.com/yunboom/marvis/server/pkg/composio"
 )
 
 // helper: produce a valid signature for the given inputs.

@@ -84,13 +84,13 @@ if [ "$mode" = "build" ]; then
   echo "Built images locally via docker-compose.selfhost.build.yml."
   echo "Local tags: marvis-backend:dev and marvis-web:dev."
 else
-  echo "Images: ${MARVIS_BACKEND_IMAGE:-ghcr.io/marvis-ai/marvis-backend}:${MARVIS_IMAGE_TAG:-latest}"
-  echo "        ${MARVIS_WEB_IMAGE:-ghcr.io/marvis-ai/marvis-web}:${MARVIS_IMAGE_TAG:-latest}"
+  echo "Images: ${MARVIS_BACKEND_IMAGE:-ghcr.io/yunboom/marvis-backend}:${MARVIS_IMAGE_TAG:-latest}"
+  echo "        ${MARVIS_WEB_IMAGE:-ghcr.io/yunboom/marvis-web}:${MARVIS_IMAGE_TAG:-latest}"
 fi
 echo ""
 echo "Log in: configure RESEND_API_KEY in .env for email codes,"
 echo "        or read the generated code from backend logs when Resend is unset."
 echo ""
 echo "Next — install the CLI and connect your machine:"
-echo "  brew install marvis-ai/tap/marvis"
+echo "  brew install yunboom/tap/marvis"
 echo "  marvis setup self-host"

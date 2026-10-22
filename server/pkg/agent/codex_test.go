@@ -18,7 +18,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/marvis-ai/marvis/server/pkg/redact"
+	"github.com/yunboom/marvis/server/pkg/redact"
 )
 
 func newTestCodexClient(t *testing.T) (*codexClient, *fakeStdin, []Message) {

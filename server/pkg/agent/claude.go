@@ -18,7 +18,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 // claudeTerminateGraceNanos optionally overrides, in nanoseconds, how long a
@@ -1184,7 +1184,7 @@ var resumeRejectedPhrases = []string{
 	// session found with ID <id>. Run `qwen --resume` without an ID to
 	// choose from existing sessions."
 	"no saved session found",
-	// Reported verbatim in marvis-ai/marvis#5704 against Claude Code
+	// Reported verbatim in yunboom/marvis#5704 against Claude Code
 	// 2.1.207 (zh-CN): "400 此 session 已绑定另外的ai账号，请执行 /new 开启新
 	// session". This is the account-switch guardrail this signal exists for.
 	"已绑定另外",

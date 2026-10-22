@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/lark"
-	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
+	"github.com/yunboom/marvis/server/internal/integrations/lark"
+	"github.com/yunboom/marvis/server/internal/util/secretbox"
 )
 
 // Lark-handler unit tests focus on the no-config short-circuits —

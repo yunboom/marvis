@@ -23,7 +23,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/events"
 )
 
 // dropReason names why a reply did not reach the user. Closed set: see the

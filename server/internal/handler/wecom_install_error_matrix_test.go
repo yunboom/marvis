@@ -25,7 +25,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/wecom"
+	"github.com/yunboom/marvis/server/internal/integrations/wecom"
 )
 
 // TestWecomInstallErrorMatrix pins status + error + code for every error class

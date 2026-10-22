@@ -10,9 +10,9 @@ import (
 	"github.com/google/uuid"
 	dto "github.com/prometheus/client_model/go"
 
-	"github.com/marvis-ai/marvis/server/internal/daemonws"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/daemonws"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // TestAgentRuntimeLookupWSHotPathIsZeroRead drives 1,000 heartbeats through one

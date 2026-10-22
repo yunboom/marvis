@@ -16,7 +16,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
-	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/auth"
 )
 
 const testWorkspaceID = "test-workspace"

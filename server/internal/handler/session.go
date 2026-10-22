@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/auth"
-	"github.com/marvis-ai/marvis/server/internal/logger"
+	"github.com/yunboom/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/logger"
 )
 
 // RefreshSessionResponse is the body returned by RefreshSession.

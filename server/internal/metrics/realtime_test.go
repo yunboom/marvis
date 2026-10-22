@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/internal/realtime"
 )
 
 func TestRealtimeCollectorExposesCounters(t *testing.T) {

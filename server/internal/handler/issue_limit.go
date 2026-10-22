@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/marvis-ai/marvis/server/internal/entitlement"
-	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/entitlement"
+	"github.com/yunboom/marvis/server/internal/service"
 )
 
 type IssueLimitUsageResponse struct {

@@ -3,8 +3,8 @@ package engine
 import (
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/chattitle"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/chattitle"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
 )
 
 // DeriveChatTitle is the deterministic fallback shared by channel-created

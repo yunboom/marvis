@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/metrics"
 )
 
 func TestNormalizePR3LabelsCollapseUnknownValues(t *testing.T) {

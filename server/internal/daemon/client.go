@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
 )
 
 // requestError is returned by postJSON/getJSON when the server responds with an error status.

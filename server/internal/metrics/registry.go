@@ -7,8 +7,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 
-	"github.com/marvis-ai/marvis/server/internal/daemonws"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/internal/daemonws"
+	"github.com/yunboom/marvis/server/internal/realtime"
 )
 
 type RegistryOptions struct {

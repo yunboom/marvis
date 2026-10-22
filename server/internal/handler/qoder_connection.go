@@ -17,10 +17,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/marvis-ai/marvis/server/internal/auth"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
-	"github.com/marvis-ai/marvis/server/internal/qoderruntime"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/qoderruntime"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 type qoderSettings struct {

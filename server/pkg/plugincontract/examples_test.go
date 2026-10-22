@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 // The shipped examples are documentation, and documentation that does not parse

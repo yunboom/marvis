@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 func TestProjectResourceLifecycle(t *testing.T) {
@@ -38,7 +38,7 @@ func TestProjectResourceLifecycle(t *testing.T) {
 	req = newRequest("POST", "/api/projects/"+project.ID+"/resources", map[string]any{
 		"resource_type": "github_repo",
 		"resource_ref": map[string]any{
-			"url": "https://github.com/marvis-ai/marvis",
+			"url": "https://github.com/yunboom/marvis",
 			"ref": "release/v2",
 		},
 	})
@@ -61,7 +61,7 @@ func TestProjectResourceLifecycle(t *testing.T) {
 	if err := json.Unmarshal(created.ResourceRef, &ref); err != nil {
 		t.Fatalf("decode resource_ref: %v", err)
 	}
-	if ref.URL != "https://github.com/marvis-ai/marvis" {
+	if ref.URL != "https://github.com/yunboom/marvis" {
 		t.Errorf("created.ResourceRef.url = %q", ref.URL)
 	}
 	if ref.Ref != "release/v2" {
@@ -95,7 +95,7 @@ func TestProjectResourceLifecycle(t *testing.T) {
 	req = newRequest("POST", "/api/projects/"+project.ID+"/resources", map[string]any{
 		"resource_type": "github_repo",
 		"resource_ref": map[string]any{
-			"url": "https://github.com/marvis-ai/marvis",
+			"url": "https://github.com/yunboom/marvis",
 			"ref": "release/v2",
 		},
 	})
@@ -178,8 +178,8 @@ func TestProjectResourceAcceptsSSHRepoURLs(t *testing.T) {
 		name string
 		url  string
 	}{
-		{"scp-like", "git@github.com:marvis-ai/marvis.git"},
-		{"ssh-scheme", "ssh://git@github.com/marvis-ai/marvis.git"},
+		{"scp-like", "git@github.com:yunboom/marvis.git"},
+		{"ssh-scheme", "ssh://git@github.com/yunboom/marvis.git"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -212,24 +212,24 @@ func TestProjectResourceAcceptsSSHRepoURLs(t *testing.T) {
 
 func TestIsValidGitRepoURL(t *testing.T) {
 	good := []string{
-		"https://github.com/marvis-ai/marvis",
-		"https://github.com/marvis-ai/marvis.git",
+		"https://github.com/yunboom/marvis",
+		"https://github.com/yunboom/marvis.git",
 		"http://github.example.com/x/y",
-		"ssh://git@github.com/marvis-ai/marvis.git",
-		"ssh://git@github.com:22/marvis-ai/marvis.git",
-		"git@github.com:marvis-ai/marvis.git",
+		"ssh://git@github.com/yunboom/marvis.git",
+		"ssh://git@github.com:22/yunboom/marvis.git",
+		"git@github.com:yunboom/marvis.git",
 		"git@gitlab.example.com:group/sub/repo.git",
 	}
 	bad := []string{
 		"",
 		"not-a-url",
-		"github.com/marvis-ai/marvis", // no scheme, no scp-style colon
-		"https://",                    // empty host
-		"git@github.com",              // missing :path
-		"git@:foo/bar",                // missing host
-		"git@github.com:",             // missing path
-		"ftp://example.com/repo",      // unsupported scheme
-		"file:///tmp/repo",            // unsupported scheme
+		"github.com/yunboom/marvis", // no scheme, no scp-style colon
+		"https://",                  // empty host
+		"git@github.com",            // missing :path
+		"git@:foo/bar",              // missing host
+		"git@github.com:",           // missing path
+		"ftp://example.com/repo",    // unsupported scheme
+		"file:///tmp/repo",          // unsupported scheme
 		"some random text with spaces",
 		"github.com:org/repo@branch", // '@' after ':' belongs to the path, not user
 		"foo:bar@baz",                // '@' after ':' with no scheme
@@ -475,7 +475,7 @@ func TestCreateProjectAttachesResources(t *testing.T) {
 		"resources": []map[string]any{
 			{
 				"resource_type": "github_repo",
-				"resource_ref":  map[string]any{"url": "https://github.com/marvis-ai/marvis"},
+				"resource_ref":  map[string]any{"url": "https://github.com/yunboom/marvis"},
 			},
 		},
 	})
@@ -1781,7 +1781,7 @@ func TestProjectResourceRejectsInvalidCheckoutRef(t *testing.T) {
 		req := newRequest("POST", "/api/projects/"+project.ID+"/resources", map[string]any{
 			"resource_type": "github_repo",
 			"resource_ref": map[string]any{
-				"url": "https://github.com/marvis-ai/marvis",
+				"url": "https://github.com/yunboom/marvis",
 				"ref": ref,
 			},
 		})
@@ -1816,7 +1816,7 @@ func TestProjectResourceRejectsInvalidCheckoutRef(t *testing.T) {
 	w = httptest.NewRecorder()
 	req = newRequest("PUT", "/api/projects/"+project.ID+"/resources/"+created.ID, map[string]any{
 		"resource_ref": map[string]any{
-			"url": "https://github.com/marvis-ai/marvis",
+			"url": "https://github.com/yunboom/marvis",
 			"ref": "not a ref",
 		},
 	})
@@ -1852,7 +1852,7 @@ func TestProjectResourceRejectsInvalidCheckoutRef(t *testing.T) {
 	w = httptest.NewRecorder()
 	req = newRequest("PUT", "/api/projects/"+project.ID+"/resources/"+created.ID, map[string]any{
 		"resource_ref": map[string]any{
-			"url": "https://github.com/marvis-ai/marvis",
+			"url": "https://github.com/yunboom/marvis",
 			"ref": "",
 		},
 	})
@@ -1875,7 +1875,7 @@ func TestProjectResourceRejectsInvalidCheckoutRef(t *testing.T) {
 	if clearedRef.Ref != "" {
 		t.Fatalf("ref after clear = %q, want empty", clearedRef.Ref)
 	}
-	if clearedRef.URL != "https://github.com/marvis-ai/marvis" {
+	if clearedRef.URL != "https://github.com/yunboom/marvis" {
 		t.Fatalf("url after clearing the ref = %q, want it preserved", clearedRef.URL)
 	}
 }

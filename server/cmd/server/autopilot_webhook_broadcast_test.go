@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/marvis-ai/marvis/server/internal/handler"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/handler"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // TestAutopilotWebhookTokenIsNotBroadcastToTheWorkspace is the end-to-end proof

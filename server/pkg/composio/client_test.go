@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/composio"
+	"github.com/yunboom/marvis/server/pkg/composio"
 )
 
 // newTestServer wires up a httptest.Server with the provided handler and

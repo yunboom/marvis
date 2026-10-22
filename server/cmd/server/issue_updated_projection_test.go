@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // Regression tests for the second half of MUL-5492: `issue:updated` used to

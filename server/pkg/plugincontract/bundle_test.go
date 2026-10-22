@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 const bundleManifest = `{

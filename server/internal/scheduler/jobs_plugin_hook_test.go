@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/featureflags"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	"github.com/marvis-ai/marvis/server/pkg/featureflag"
+	"github.com/yunboom/marvis/server/internal/featureflags"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/pkg/featureflag"
 )
 
 func TestPluginHookSchedulePlansCollapseToLatestAndStaySerial(t *testing.T) {

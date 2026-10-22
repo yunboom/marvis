@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
+	"github.com/yunboom/marvis/server/internal/util/secretbox"
 )
 
 // CredentialsResolver mints per-call InstallationCredentials with plaintext

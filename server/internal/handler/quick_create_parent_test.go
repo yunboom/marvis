@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/entitlement"
-	"github.com/marvis-ai/marvis/server/internal/entitlement/entitlementtest"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/internal/entitlement"
+	"github.com/yunboom/marvis/server/internal/entitlement/entitlementtest"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // TestQuickCreateIssueParentTrustBoundary locks the server-side trust boundary

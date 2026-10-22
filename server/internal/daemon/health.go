@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/repocache"
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/daemon/repocache"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // HealthResponse is returned by the daemon's local health endpoint.

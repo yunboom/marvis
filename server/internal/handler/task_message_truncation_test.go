@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // The truncation flag is tri-state on purpose. `false` is a measurement an

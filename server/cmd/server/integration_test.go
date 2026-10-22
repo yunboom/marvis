@@ -17,11 +17,11 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/auth"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/realtime"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 var (

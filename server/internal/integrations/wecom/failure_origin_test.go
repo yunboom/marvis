@@ -28,7 +28,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/events"
 )
 
 // logRecorder keeps what the manager logged. A refusal writes no frame and no

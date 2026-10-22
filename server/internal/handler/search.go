@@ -13,7 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/middleware"
 )
 
 // searchStatementTimeout bounds every /search request at the Postgres level.

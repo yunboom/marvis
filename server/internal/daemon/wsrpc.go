@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // errWSRPCUnavailable is returned by wsRPCClient.Call when there is no live WS

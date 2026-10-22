@@ -365,7 +365,7 @@ function DimLogo({ className }: { className: string }) {
 }
 
 // ZeroClaw — no official brand asset has been sourced for this runtime yet
-// (marvis-ai/marvis#1543), so this is a deliberately simple placeholder
+// (yunboom/marvis#1543), so this is a deliberately simple placeholder
 // mark (three claw-scratch strokes) rather than a claimed "official" logo.
 // currentColor keeps it legible in both themes; swap for a real asset once
 // ZeroClaw ships one, following the DimLogo <img> pattern.

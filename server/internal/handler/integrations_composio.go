@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/marvis-ai/marvis/server/internal/featureflags"
-	composio "github.com/marvis-ai/marvis/server/internal/integrations/composio"
+	"github.com/yunboom/marvis/server/internal/featureflags"
+	composio "github.com/yunboom/marvis/server/internal/integrations/composio"
 )
 
 // Composio integration handlers (MUL-3720, Stage 2 MVP). A Composio connection

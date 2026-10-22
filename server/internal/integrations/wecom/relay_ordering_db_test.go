@@ -28,10 +28,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // wecomTestRedis is the same gate the rest of the repository uses for

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/internal/logger"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 )
 
 // CLI update request store

@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/auth"
 )
 
 // testSigner sets up env vars and creates a CloudFrontSigner with a throwaway RSA key.

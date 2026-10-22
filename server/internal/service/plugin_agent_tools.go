@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 // The `agent` trigger: a plugin hook offered to an agent as an MCP tool.

@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/marvis-ai/marvis/server/internal/dispatch"
+	"github.com/yunboom/marvis/server/internal/dispatch"
 )
 
 // Unified execution-admission contract (MUL-4525).

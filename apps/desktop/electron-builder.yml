@@ -1,5 +1,5 @@
 appId: ai.marvis.desktop
-productName: Marvis
+productName: Marvis Studio
 directories:
   buildResources: build
 files:
@@ -17,7 +17,7 @@ files:
   # Intel (x64) DMG until the HFS volume was full and the real
   # `Electron Framework/Versions/A/Electron Framework` binary was dropped,
   # so Intel Macs crashed on launch with a dyld missing-library error
-  # (github.com/marvis-ai/marvis/issues/5595). Excluding all of dist/**
+  # (github.com/yunboom/marvis/issues/5595). Excluding all of dist/**
   # fixes it regardless of build order; a pre-build clean alone does not,
   # because the first arch writes into dist/ mid-run before the second is
   # packaged.
@@ -30,9 +30,9 @@ extraResources:
   - from: ../../NOTICE
     to: NOTICE
 protocols:
-  - name: Marvis
+  - name: Marvis Studio
     schemes:
-      - marvis
+      - marvis-studio
 asarUnpack:
   - resources/**
 # Publishes `minimumSystemVersion` (Darwin kernel floor) into latest-mac.yml /
@@ -81,7 +81,7 @@ linux:
   # shadows the other. Hitting the Electron binary from a CLI call is the
   # worst failure mode: it exits 0 with empty stdout (its own Chromium flags
   # eat CLI args like `--output json`), which looks like a healthy CLI that
-  # returned nothing rather than "wrong binary" (github.com/marvis-ai/marvis/issues/5481).
+  # returned nothing rather than "wrong binary" (github.com/yunboom/marvis/issues/5481).
   # `StartupWMClass=Marvis` (productName-derived) is unaffected by this
   # rename — it comes from `app.getName()`, not `executableName`.
   executableName: marvis-desktop
@@ -94,7 +94,7 @@ linux:
   # `WM_CLASS=@marvis/desktop`, which broke association with this entry
   # and reproduced #2515 on Ubuntu 0.2.31. The fix lives in two places
   # outside this file — `productName: "Marvis"` on the source
-  # package.json (so the ASAR carries it) and `app.setName("Marvis")`
+  # package.json (so the ASAR carries it) and `app.setName("Marvis Studio")`
   # in the production branch of `src/main/index.ts` (belt-and-braces).
   # Keep `StartupWMClass: Marvis` pinned here so any future drift in
   # those two anchors shows up as a diff against this declaration.
@@ -102,7 +102,7 @@ linux:
   # window prints `Marvis` for both fields.
   desktop:
     entry:
-      StartupWMClass: Marvis
+      StartupWMClass: Marvis Studio
   # Point at pre-rendered hicolor sizes. electron-builder *can* generate
   # 16/24/32/48/64/128/256/512 from a single build/icon.png, but the
   # auto-generation silently shipped only the 1024×1024 source in our
@@ -129,7 +129,7 @@ win:
   artifactName: marvis-desktop-${version}-windows-${arch}.${ext}
 publish:
   provider: github
-  owner: marvis-ai
+  owner: yunboom
   repo: marvis
   # Align with our CLI release flow which pre-creates a *published* GitHub
   # Release via `gh release create`. The electron-builder default of

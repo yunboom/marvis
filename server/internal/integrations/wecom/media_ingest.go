@@ -33,9 +33,9 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // mediaFailureNotice lines. WeCom deployments are China-only, so these follow

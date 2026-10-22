@@ -9,8 +9,8 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/awakeclock"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/awakeclock"
 )
 
 // hostClock simulates a host that can suspend. Bubble time stands in for

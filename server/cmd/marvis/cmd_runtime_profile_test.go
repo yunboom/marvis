@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 // addCommonProfileFlags wires the persistent-style flags the run functions
@@ -350,7 +350,7 @@ func TestRuntimeProfilePathMutationFailsClosedInTaskContext(t *testing.T) {
 	t.Setenv("MARVIS_TASK_ID", "task-test")
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", filepath.Join(t.TempDir(), "task-marvis"))
 
-	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // appendChannelUserMessage writes an inbound channel message the way

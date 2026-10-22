@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/featureflags"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/featureflags"
 )
 
 type AppConfig struct {

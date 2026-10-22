@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 func TestDeleteWorkspace_RetainsTypingCleanupUntilAcknowledged(t *testing.T) {

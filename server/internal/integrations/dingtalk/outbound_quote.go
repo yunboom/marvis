@@ -8,7 +8,7 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/text"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // sealedInputQuote keeps the owned input as the source of attribution, including

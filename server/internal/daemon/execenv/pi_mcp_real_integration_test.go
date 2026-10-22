@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // Real-CLI acceptance for Pi MCP delivery. Opt-in twice: the agentintegration

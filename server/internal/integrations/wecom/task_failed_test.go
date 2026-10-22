@@ -16,8 +16,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // failedWithReason publishes the task:failed FailTask broadcasts for a run

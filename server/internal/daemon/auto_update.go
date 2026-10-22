@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 // Indirections over the real release / version helpers so tests can run the

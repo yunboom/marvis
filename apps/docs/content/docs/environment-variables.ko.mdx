@@ -267,11 +267,11 @@ Cursor의 검증된 백그라운드 정리에는 Linux 6.9 이상(프로세스 �
 
 확보한 Cursor 백그라운드 프로세스는 실행이 정상적으로 완료될 때도 정리됩니다. 따라서 해당 실행이 시작한 백그라운드 서버가 의도적으로 종료 처리 이후까지 살아남지는 않습니다. macOS는 보존된 원래 부모 프로세스 신원을 통해 나중에 생성된 자식 프로세스를 인식할 수 있지만, 관찰 이전에 중간 프로세스가 사라진 연결 고리는 증명할 수 없습니다. 그러한 프로세스, 추적 중인 그룹을 벗어난 작업, 그리고 지속적인 소유권 또는 시그널링 오류는 백그라운드 작업을 남길 수 있습니다. 확인되지 않은 정리는 로그로 남으며 '정리 성공'에 따른 복구 창을 부여하지 않습니다. 숫자 PID나 프로세스 그룹만을 근거로 알 수 없는 프로세스를 종료하지 않습니다.
 
-우선순위는 명령줄 flag → 환경 변수 → `~/.marvis/config.json` → 내장 기본값입니다. watchdog 동작은 [데몬과 런타임](/daemon-runtimes)을 참고하세요.
+우선순위는 명령줄 flag → 환경 변수 → `~/.marvis-studio/config.json` → 내장 기본값입니다. watchdog 동작은 [데몬과 런타임](/daemon-runtimes)을 참고하세요.
 
 ### 데몬 설정 영속화
 
-자주 사용하는 데몬 측 설정은 shell 환경 변수에 의존하지 않고 `~/.marvis/config.json`에 기록할 수도 있습니다. 이름 있는 profile의 설정 파일은 `~/.marvis/profiles/<name>/config.json`에 있습니다.
+자주 사용하는 데몬 측 설정은 shell 환경 변수에 의존하지 않고 `~/.marvis-studio/config.json`에 기록할 수도 있습니다. 이름 있는 profile의 설정 파일은 `~/.marvis-studio/profiles/<name>/config.json`에 있습니다.
 
 ```bash
 marvis config set poll_interval 10s

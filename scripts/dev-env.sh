@@ -27,12 +27,12 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-DEV_HOME="${MARVIS_DEV_HOME:-$HOME/.marvis/dev}"
+DEV_HOME="${MARVIS_DEV_HOME:-$HOME/.marvis-studio/dev}"
 ENVS_DIR="$DEV_HOME/envs"
 LOCK_DIR="$DEV_HOME/lock.d"
 DEV_WORKSPACES_PARENT="${MARVIS_DEV_WORKSPACES_PARENT:-$HOME}"
 DEV_DESKTOP_APP_DATA="${MARVIS_DEV_DESKTOP_APP_DATA:-}"
-DEV_PROFILES_HOME="${MARVIS_DEV_PROFILES_HOME:-$HOME/.marvis/profiles}"
+DEV_PROFILES_HOME="${MARVIS_DEV_PROFILES_HOME:-$HOME/.marvis-studio/profiles}"
 
 DEV_EMAIL="${MARVIS_DEV_EMAIL:-dev@localhost}"
 DEV_CODE_DEFAULT=888888
@@ -45,7 +45,7 @@ DEFAULT_COMPONENTS="api web"
 # An agent runs with TMPDIR=/tmp/marvis-task-<id>, deleted when the run ends.
 # Anything the Go toolchain builds there goes with it, so a binary started from
 # such a build stops being re-executable the moment its creator finishes.
-DEV_TMPDIR="${MARVIS_DEV_TMPDIR:-$HOME/.marvis/dev-tmp}"
+DEV_TMPDIR="${MARVIS_DEV_TMPDIR:-$HOME/.marvis-studio/dev-tmp}"
 
 # The agent runtime exports these pointing at PRODUCTION, and MARVIS_SERVER_URL
 # silently outranks server_url in a saved profile config. Every long-lived child

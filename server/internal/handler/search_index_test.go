@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/featureflags"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/featureflags"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // searchIndexWorkspace creates an isolated workspace so manifest and snapshot

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
 	"github.com/spf13/cobra"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 
 	// Redirect both home environment variables to one scratch directory for the
 	// whole binary. On Windows os.UserHomeDir reads USERPROFILE, not HOME, so a
-	// test that redirects only HOME still resolves ~/.marvis against the real
+	// test that redirects only HOME still resolves ~/.marvis-studio against the real
 	// home — which is how a full-suite run wrote SaveCLIConfig fixtures over a
 	// real default-profile config.json. Process-wide redirection isolates tests
 	// that forget their own redirect on every platform; per-test t.Setenv
@@ -397,7 +397,7 @@ func TestRunAuthStatusTaskContextRequiresTaskToken(t *testing.T) {
 	t.Setenv("MARVIS_TASK_ID", "task-test")
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", filepath.Join(t.TempDir(), "task-marvis"))
 
-	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -460,7 +460,7 @@ func TestHumanAuthCommandsFailClosedInTaskContext(t *testing.T) {
 	t.Setenv("MARVIS_SERVER_URL", "https://task.invalid")
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", filepath.Join(t.TempDir(), "task-marvis"))
 
-	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}

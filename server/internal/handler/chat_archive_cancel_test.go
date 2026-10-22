@@ -35,11 +35,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/integrations/slack"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/slack"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func TestArchivingAChannelBoundChatSessionCancelsItsQueuedTasks(t *testing.T) {

@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 func inboxPublishRouter(t *testing.T, relay *fanoutRelay, dedupe DedupeStore, cfg RelayConfig, handler *Outbound) *RelayOutbound {

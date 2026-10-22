@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 func insertChatVisibilityMessage(t *testing.T, sessionID, content, messageKind string, channelIngested bool, createdAt time.Time) {

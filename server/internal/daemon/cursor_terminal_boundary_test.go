@@ -10,8 +10,8 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/awakeclock"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/awakeclock"
 )
 
 // The ordering both tests below pin is the one that loses a completed run:

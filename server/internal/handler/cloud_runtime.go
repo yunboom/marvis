@@ -11,8 +11,8 @@ import (
 	"net/url"
 
 	chimw "github.com/go-chi/chi/v5/middleware"
-	"github.com/marvis-ai/marvis/server/internal/cloudruntime"
-	"github.com/marvis-ai/marvis/server/internal/logger"
+	"github.com/yunboom/marvis/server/internal/cloudruntime"
+	"github.com/yunboom/marvis/server/internal/logger"
 )
 
 const maxCloudRuntimeRequestBodySize = 1 << 20

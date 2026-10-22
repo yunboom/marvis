@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/marvis-ai/marvis/server/internal/daemonws"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/daemonws"
+	"github.com/yunboom/marvis/server/internal/middleware"
 )
 
 // rpcResponseCapture is a minimal in-memory http.ResponseWriter so a WS RPC can

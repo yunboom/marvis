@@ -12,8 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func localDirRef(t *testing.T, path, daemonID, mode string) json.RawMessage {

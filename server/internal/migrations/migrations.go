@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/selfexec"
+	"github.com/yunboom/marvis/server/internal/selfexec"
 )
 
 const maxSearchDepth = 4

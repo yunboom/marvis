@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 func quietLogger() *slog.Logger {

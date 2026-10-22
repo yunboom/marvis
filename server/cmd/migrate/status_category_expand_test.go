@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
 )
 
 func TestStatusCategoryExpandUpgradePaths(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/marvis-ai/marvis/server/pkg/redact"
+	"github.com/yunboom/marvis/server/pkg/redact"
 )
 
 // agentStderrTailBytes bounds the stderr tail captured for inclusion in

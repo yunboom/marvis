@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 // The two tests below are composition tests, not text-presence tests. The

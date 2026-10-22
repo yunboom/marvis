@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/marvis-ai/marvis/server/internal/agentconfig"
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/agentconfig"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 // agentCopyCmd forks an existing agent's portable configuration into a brand-new

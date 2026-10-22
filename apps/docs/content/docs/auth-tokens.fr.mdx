@@ -36,8 +36,8 @@ Ne mettez pas de PAT dans des dépôts, des tâches, des commentaires, des captu
 Lorsque vous exécutez `marvis login`, le CLI effectue la connexion via le navigateur, puis crée un PAT valable 90 jours et l'enregistre dans le fichier de configuration du profil courant :
 
 ```text
-~/.marvis/config.json
-~/.marvis/profiles/<name>/config.json
+~/.marvis-studio/config.json
+~/.marvis-studio/profiles/<name>/config.json
 ```
 
 Le daemon se connecte à Marvis avec ce même PAT. Un PAT `mul_` doté d'une date d'expiration est renouvelé automatiquement lorsqu'il lui reste moins de 7 jours, ce qui le prolonge jusqu'à 90 jours à compter de ce moment. Un renouvellement en échec laisse le jeton inchangé ; une fois un jeton expiré ou révoqué, exécutez de nouveau `marvis login`.

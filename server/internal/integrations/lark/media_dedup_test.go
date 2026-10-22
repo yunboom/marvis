@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
 )
 
 // A post referencing the same image_key twice must yield ONE resource: the

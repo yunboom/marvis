@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
-	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/internal/util/secretbox"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // The deduper is an optional field on ChannelDeps, and a missing one has no

@@ -5,11 +5,11 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
-	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/internal/util/secretbox"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // What closes the WeCom streaming bubble is a bus subscription, and it is

@@ -14,15 +14,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/integrations/dingtalk"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
-	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/internal/util/secretbox"
-	"github.com/marvis-ai/marvis/server/pkg/dbid"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/dingtalk"
+	"github.com/yunboom/marvis/server/internal/realtime"
+	dbfx "github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/util/secretbox"
+	"github.com/yunboom/marvis/server/pkg/dbid"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 type dingTalkReactionTransport func(*http.Request) (*http.Response, error)

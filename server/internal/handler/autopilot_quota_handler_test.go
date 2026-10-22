@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/entitlement"
-	"github.com/marvis-ai/marvis/server/internal/entitlement/entitlementtest"
+	"github.com/yunboom/marvis/server/internal/entitlement"
+	"github.com/yunboom/marvis/server/internal/entitlement/entitlementtest"
 )
 
 func TestAutopilotQuotaManualAndWebhookEnforcement(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon"
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/daemon"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // seededReadyAgentID returns a workspace agent that has a runtime bound (the

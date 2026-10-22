@@ -30,9 +30,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
+	dbfx "github.com/yunboom/marvis/server/internal/testutil"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // originLab is one workspace holding the task shapes the gate has to tell

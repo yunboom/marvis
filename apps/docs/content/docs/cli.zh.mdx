@@ -12,19 +12,19 @@ Marvis CLI 既负责连接本机运行时，也可以在终端中管理工作区
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 ```
 
 安装了 Homebrew 时也可以运行：
 
 ```bash
-brew install marvis-ai/tap/marvis
+brew install yunboom/tap/marvis
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex
 ```
 
 确认安装成功：
@@ -197,7 +197,7 @@ marvis agent list --output json
 
 ## Profile 与配置
 
-默认配置保存在 `~/.marvis/config.json`。使用 `--profile <name>` 可以隔离另一套服务地址、令牌、默认工作区和守护进程状态：
+默认配置保存在 `~/.marvis-studio/config.json`。使用 `--profile <name>` 可以隔离另一套服务地址、令牌、默认工作区和守护进程状态：
 
 ```bash
 marvis setup self-host --profile staging \
@@ -207,7 +207,7 @@ marvis setup self-host --profile staging \
 marvis issue list --profile staging
 ```
 
-命名 profile 保存在 `~/.marvis/profiles/<name>/config.json`。查看当前值：
+命名 profile 保存在 `~/.marvis-studio/profiles/<name>/config.json`。查看当前值：
 
 ```bash
 marvis config show

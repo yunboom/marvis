@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // TestProbeAgentCLIs_DiscoversPiAndOmpSeparately covers discovery only: it

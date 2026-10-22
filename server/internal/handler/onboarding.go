@@ -9,11 +9,11 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/logger"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/internal/middleware"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Upper bound on free-text fields. `cloudWaitlistReasonMaxLen` is a

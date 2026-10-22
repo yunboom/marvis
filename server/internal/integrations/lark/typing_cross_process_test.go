@@ -8,9 +8,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/events"
-	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	dbfx "github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // Two independent managers share the remote API and durable DB, never local state.

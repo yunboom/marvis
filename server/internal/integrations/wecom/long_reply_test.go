@@ -28,9 +28,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // capEnforcingConn is the server's own rule: a markdown body past the cap is

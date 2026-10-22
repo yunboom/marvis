@@ -1,8 +1,8 @@
 package metrics
 
 import (
-	"github.com/marvis-ai/marvis/server/internal/analytics"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/yunboom/marvis/server/internal/analytics"
 )
 
 // PR3: funnel / commercial / community counters paired with PostHog events.

@@ -174,7 +174,7 @@ export function DaemonSettingsTab() {
               size="sm"
               onClick={() =>
                 window.desktopAPI.openExternal(
-                  "https://github.com/marvis-ai/marvis#cli-installation",
+                  "https://github.com/yunboom/marvis#cli-installation",
                 )
               }
             >

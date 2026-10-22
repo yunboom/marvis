@@ -8,7 +8,7 @@ version: 0.1.0
 appVersion: "latest"
 home: https://marvis.ai
 sources:
-  - https://github.com/marvis-ai/marvis
+  - https://github.com/yunboom/marvis
 keywords:
   - marvis
   - issue-tracker

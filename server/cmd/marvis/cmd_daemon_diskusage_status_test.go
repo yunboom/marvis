@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/internal/daemon"
 	"github.com/spf13/cobra"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/daemon"
 )
 
 // newDiskUsageTestCmd mirrors the flag set registered on daemonDiskUsageCmd so
@@ -421,7 +421,7 @@ func TestRunDaemonDiskUsageTaskContextScansInjectedRootWithoutOwnerToken(t *test
 	if !strings.Contains(out, injectedRoot) {
 		t.Errorf("report did not name the injected root %q, got:\n%s", injectedRoot, out)
 	}
-	// The hint enumerates ~/.marvis/profiles, so it must stay out of a task.
+	// The hint enumerates ~/.marvis-studio/profiles, so it must stay out of a task.
 	if strings.Contains(out, "Other workspace roots") {
 		t.Errorf("report disclosed other workspace roots inside a task, got:\n%s", out)
 	}

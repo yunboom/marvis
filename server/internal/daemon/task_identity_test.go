@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 func TestRunTaskRejectsMismatchedAgentIdentityBeforePreparation(t *testing.T) {

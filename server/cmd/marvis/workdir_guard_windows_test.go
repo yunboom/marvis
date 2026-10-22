@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // createJunction makes dst a directory junction to src and reports what the Go

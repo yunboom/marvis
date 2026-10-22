@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
-	"github.com/marvis-ai/marvis/server/pkg/dbid"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/pkg/dbid"
 )
 
 func TestReplySourceRequiresLocalAcceptedInput(t *testing.T) {

@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/repocache"
+	"github.com/yunboom/marvis/server/internal/daemon/repocache"
 )
 
 func TestHealthHandlerReportsEmptyCLICommitWithoutFallback(t *testing.T) {

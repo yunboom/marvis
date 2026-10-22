@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
 )
 
 // telegramChannel is ONE installation's getUpdates long-polling loop. Telegram

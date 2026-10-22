@@ -16,10 +16,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
-	"github.com/marvis-ai/marvis/server/internal/seatcapacity"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/seatcapacity"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 const invitationTestEmail = "invitation-test@marvis.ai"

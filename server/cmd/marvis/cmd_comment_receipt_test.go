@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 // Execute the rendered reply command's flags against the real CLI handler.

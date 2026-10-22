@@ -18,7 +18,7 @@ export function CommunityLinks({
     },
     {
       label: "GitHub",
-      href: "https://github.com/marvis-ai/marvis",
+      href: "https://github.com/yunboom/marvis",
       description: githubDescription,
       Icon: GitHubMark,
     },

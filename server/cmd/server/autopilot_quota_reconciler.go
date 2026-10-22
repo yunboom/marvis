@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/service"
 )
 
 const (

@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // runtimeMarkerBegin and runtimeMarkerEnd delimit the Marvis-managed brief

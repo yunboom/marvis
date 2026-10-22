@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	publicapiv1 "github.com/marvis-ai/marvis/server/pkg/publicapi/v1"
+	publicapiv1 "github.com/yunboom/marvis/server/pkg/publicapi/v1"
 )
 
 func TestPluginBearerOnlyRejectsNonPluginCredentials(t *testing.T) {

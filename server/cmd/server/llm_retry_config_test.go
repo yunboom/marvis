@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/llm"
+	"github.com/yunboom/marvis/server/pkg/llm"
 )
 
 // TestParseLLMMaxRetriesAccepted pins the states an operator is allowed to

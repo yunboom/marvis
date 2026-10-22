@@ -7,8 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	skillpkg "github.com/marvis-ai/marvis/server/internal/skill"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	skillpkg "github.com/yunboom/marvis/server/internal/skill"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 type skillCreateInput struct {

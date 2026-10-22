@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // pendingWorkHintDaemon builds a Daemon that knows exactly one runtime and

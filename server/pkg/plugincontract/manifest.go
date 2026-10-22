@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/eventcontract"
 	"github.com/robfig/cron/v3"
+	"github.com/yunboom/marvis/server/pkg/eventcontract"
 )
 
 const (

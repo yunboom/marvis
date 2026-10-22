@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
 )
 
 // builtInStatusLine is the status bullet for workspaces without custom

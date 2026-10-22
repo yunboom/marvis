@@ -21,7 +21,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // sendersRegistry is a goroutine-safe installation_id → wsSender map.

@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 func TestCursorBackgroundUncapturedDisabledToolWatchdog(t *testing.T) {

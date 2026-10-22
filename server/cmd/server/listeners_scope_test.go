@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // fakeBroadcaster records every fanout call so tests can assert which scope a

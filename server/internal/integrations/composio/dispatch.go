@@ -7,10 +7,10 @@ import (
 	"sort"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/runtimeapps"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	sdk "github.com/marvis-ai/marvis/server/pkg/composio"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/runtimeapps"
+	"github.com/yunboom/marvis/server/internal/util"
+	sdk "github.com/yunboom/marvis/server/pkg/composio"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // mcpOverlayServerName is the deterministic key under `mcpServers` used to

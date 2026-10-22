@@ -76,7 +76,7 @@ change to SDK 57 or mobile moves to SDK 58+.
 
 `eslint-config-expo` and TypeScript are temporarily excluded from
 `expo install --check`: upgrading them enables additional compiler lint rules
-that need a focused cleanup. [#9165](https://github.com/marvis-ai/marvis/issues/9165)
+that need a focused cleanup. [#9165](https://github.com/yunboom/marvis/issues/9165)
 tracks removing the exclusions and aligning both tools with SDK 57.
 
 After updating dependencies, regenerate an existing native project once (save
@@ -90,7 +90,7 @@ APP_ENV=production pnpm exec expo prebuild --clean --platform ios
 Use `development` or `staging` instead for those variants, then run the usual
 build script. Keep normal development builds on the incremental prebuild path.
 For native validation, test a Release cold launch to sign-in, cold and warm
-`marvis://` links, background/foreground transitions, and the Debug dev-client
+`marvis-studio://` links, background/foreground transitions, and the Debug dev-client
 in each variant. Also open the image picker from profile, chat, and the issue
 editor, select an image, and confirm the upload completes. From the issue editor,
 also attach a document and confirm its picker dismisses and the upload completes.

@@ -21,11 +21,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
-	"github.com/marvis-ai/marvis/server/internal/daemon/repocache"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/repocache"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 func createDaemonTestRepo(t *testing.T) string {
@@ -194,7 +194,7 @@ func TestPrepareReasonixTaskStateHome(t *testing.T) {
 	if err != nil {
 		t.Fatalf("prepareReasonixTaskStateHome: %v", err)
 	}
-	want := filepath.Join(home, ".marvis", "profiles", "work", "reasonix-state", "runtime-1", "agent_2")
+	want := filepath.Join(home, ".marvis-studio", "profiles", "work", "reasonix-state", "runtime-1", "agent_2")
 	if got != want {
 		t.Fatalf("state home = %q, want %q", got, want)
 	}
@@ -216,7 +216,7 @@ func TestPrepareDshTaskSessionRoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("prepareDshTaskSessionRoot: %v", err)
 	}
-	want := filepath.Join(home, ".marvis", "profiles", "work", "dsh-sessions", "runtime-1", "agent_2")
+	want := filepath.Join(home, ".marvis-studio", "profiles", "work", "dsh-sessions", "runtime-1", "agent_2")
 	if got != want {
 		t.Fatalf("session root = %q, want %q", got, want)
 	}

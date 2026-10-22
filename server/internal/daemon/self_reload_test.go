@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 // newSelfReloadTestDaemon returns a Daemon wired for trySelfReload: a stubbed

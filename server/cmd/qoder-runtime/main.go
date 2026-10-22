@@ -13,7 +13,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/marvis-ai/marvis/server/internal/qoderruntime"
+	"github.com/yunboom/marvis/server/internal/qoderruntime"
 )
 
 func main() {

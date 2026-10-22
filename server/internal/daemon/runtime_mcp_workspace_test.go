@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/handler"
+	"github.com/yunboom/marvis/server/internal/handler"
 )
 
 // effectiveServerNames runs the full chain a claimed task actually goes

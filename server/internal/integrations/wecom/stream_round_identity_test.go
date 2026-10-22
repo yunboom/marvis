@@ -13,7 +13,7 @@ package wecom
 
 import (
 	"context"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
 	"testing"
 	"time"
 )

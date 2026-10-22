@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // TestWSRPCClient_CallRoundTrip: a request is framed and sent, and a matching

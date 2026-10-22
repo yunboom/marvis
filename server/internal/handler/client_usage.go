@@ -11,8 +11,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/middleware"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 const clientUsageBodyLimit = 16 * 1024

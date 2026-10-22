@@ -115,7 +115,7 @@ beforeEach(() => {
     id: "workspace-1",
     name: "Test Workspace",
     slug: "test-workspace",
-    repos: [{ url: "https://github.com/marvis-ai/marvis", description: "Main app" }],
+    repos: [{ url: "https://github.com/yunboom/marvis", description: "Main app" }],
   };
   roleRef.current = "owner";
   githubRef.current = {
@@ -141,7 +141,7 @@ describe("RepositoriesSection", () => {
   it("lists repositories as read-only rows with their description", () => {
     render(<RepositoriesSection />, { wrapper: Wrapper });
 
-    expect(screen.getByText("https://github.com/marvis-ai/marvis")).toBeInTheDocument();
+    expect(screen.getByText("https://github.com/yunboom/marvis")).toBeInTheDocument();
     expect(screen.getByText("Main app")).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).toBeNull();
   });
@@ -169,7 +169,7 @@ describe("RepositoriesSection", () => {
     await waitFor(() => {
       expect(mockUpdateWorkspace).toHaveBeenCalledWith("workspace-1", {
         repos: [
-          { url: "https://github.com/marvis-ai/marvis", description: "Main app" },
+          { url: "https://github.com/yunboom/marvis", description: "Main app" },
           { url: "git@github.com:acme/api.git", description: "Go API" },
         ],
       });
@@ -186,7 +186,7 @@ describe("RepositoriesSection", () => {
     const dialog = await screen.findByRole("dialog", { name: "Add repository" });
     await user.type(
       within(dialog).getByRole("textbox", { name: "Repository URL" }),
-      "git@github.com:marvis-ai/marvis.git",
+      "git@github.com:yunboom/marvis.git",
     );
 
     expect(within(dialog).getByText("This repository is already added.")).toBeInTheDocument();
@@ -274,7 +274,7 @@ describe("RepositoriesSection", () => {
   it("imports selected GitHub repositories and deduplicates HTTPS against SSH", async () => {
     workspaceRef.current = {
       ...workspaceRef.current,
-      repos: [{ url: "git@github.com:marvis-ai/marvis.git" }],
+      repos: [{ url: "git@github.com:yunboom/marvis.git" }],
     };
     githubRef.current = {
       ...githubRef.current,
@@ -283,9 +283,9 @@ describe("RepositoriesSection", () => {
     githubRepositoriesRef.current = [
       {
         id: 1,
-        full_name: "marvis-ai/marvis",
-        html_url: "https://github.com/marvis-ai/marvis",
-        clone_url: "https://github.com/marvis-ai/marvis.git",
+        full_name: "yunboom/marvis",
+        html_url: "https://github.com/yunboom/marvis",
+        clone_url: "https://github.com/yunboom/marvis.git",
         description: "Existing repository",
         private: false,
         archived: false,
@@ -320,7 +320,7 @@ describe("RepositoriesSection", () => {
     await waitFor(() => {
       expect(mockUpdateWorkspace).toHaveBeenCalledWith("workspace-1", {
         repos: [
-          { url: "git@github.com:marvis-ai/marvis.git" },
+          { url: "git@github.com:yunboom/marvis.git" },
           { url: "https://github.com/marvis-ai/console.git", description: "Console app" },
         ],
       });

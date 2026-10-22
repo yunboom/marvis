@@ -7,13 +7,13 @@ The `marvis` CLI connects your local machine to Marvis. It handles authenticatio
 ### Homebrew (macOS/Linux)
 
 ```bash
-brew install marvis-ai/tap/marvis
+brew install yunboom/tap/marvis
 ```
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/marvis-ai/marvis.git
+git clone https://github.com/yunboom/marvis.git
 cd marvis
 make build
 cp server/bin/marvis /usr/local/bin/marvis
@@ -22,7 +22,7 @@ cp server/bin/marvis /usr/local/bin/marvis
 ### Update
 
 ```bash
-brew upgrade marvis-ai/tap/marvis
+brew upgrade yunboom/tap/marvis
 ```
 
 For install script or manual installs, use:
@@ -44,8 +44,8 @@ export MARVIS_DAEMON_AUTO_UPDATE=true
 marvis update
 ```
 
-The metadata mirror must serve `/repos/marvis-ai/marvis/releases/latest` and
-`/repos/marvis-ai/marvis/releases/tags/<tag>`. The artifact mirror must serve
+The metadata mirror must serve `/repos/yunboom/marvis/releases/latest` and
+`/repos/yunboom/marvis/releases/tags/<tag>`. The artifact mirror must serve
 `/<tag>/<asset-name>` and preserve the published `checksums.txt` contents.
 When these variables are unset, the GitHub defaults remain unchanged.
 
@@ -118,19 +118,19 @@ marvis daemon start
 ```
 
 By default, the daemon runs in the background and writes its log into the state
-directory of the profile it was started with — **not always `~/.marvis/`**:
+directory of the profile it was started with — **not always `~/.marvis-studio/`**:
 
 | Profile | State directory |
 | --- | --- |
-| Default (no `--profile`) | `~/.marvis/` |
-| Named (`--profile <name>`) | `~/.marvis/profiles/<name>/` |
+| Default (no `--profile`) | `~/.marvis-studio/` |
+| Named (`--profile <name>`) | `~/.marvis-studio/profiles/<name>/` |
 
 That directory holds `daemon.log` (the log), `daemon.pid` (the background
 daemon's PID), and `daemon.err.log` (raw crash output; near-empty on a healthy
 daemon, since normal logging goes to `daemon.log`).
 
 The Desktop app runs its own named profile, so on a machine that has ever run
-both, `~/.marvis/daemon.log` and `~/.marvis/profiles/<name>/daemon.log` both
+both, `~/.marvis-studio/daemon.log` and `~/.marvis-studio/profiles/<name>/daemon.log` both
 exist and both read as plausible logs — only one is being written to. Don't
 guess: `marvis daemon logs` prints the absolute path it resolved (see
 [Logs](#logs)).
@@ -423,7 +423,7 @@ Agent-specific overrides:
 | `MARVIS_DSH_PATH` | Custom path to the `dsh` binary |
 | `MARVIS_DSH_MODEL` | Override the DeepSeek Harness model used (a model id from the dsh catalog, e.g. `deepseek-official/deepseek-chat`) |
 
-If a previously generated `~/.marvis/hooks` wrapper is first on `PATH` and calls the same command name again, the daemon skips that hooks directory during built-in agent discovery and records the real binary path behind it. If your interactive shell still recurses when you run `claude`, `codex`, or `hermes` manually, remove the hooks entry from your shell startup file or replace the wrapper body with an absolute `exec /path/to/real-binary "$@"`.
+If a previously generated `~/.marvis-studio/hooks` wrapper is first on `PATH` and calls the same command name again, the daemon skips that hooks directory during built-in agent discovery and records the real binary path behind it. If your interactive shell still recurses when you run `claude`, `codex`, or `hermes` manually, remove the hooks entry from your shell startup file or replace the wrapper body with an absolute `exec /path/to/real-binary "$@"`.
 
 The daemon launches Qoder and Qoder CN as `qodercli --yolo --acp` and `qoderclicn --yolo --acp`, respectively, matching their ACP “bypass permissions” mode so tool runs do not block on interactive approval in headless runs.
 The daemon launches Qwen Code as `qwen -p <prompt> --output-format stream-json`. It writes the task brief to `QWEN.md`; when an agent has managed `mcp_config`, the daemon writes a 0600 per-run JSON file and passes it through `--mcp-config <path>`, then removes it after the process exits. A null config preserves Qwen Code native MCP settings.
@@ -508,7 +508,7 @@ marvis daemon start --profile staging
 marvis daemon start
 ```
 
-Each profile gets its own config directory (`~/.marvis/profiles/<name>/`), daemon state, health port, and workspace root. Daemon state means that profile's own `daemon.log`, `daemon.err.log`, `daemon.pid`, and `daemon.port` live in that directory too — see [Start](#start) for the layout, and pass `--profile <name>` to `daemon status` / `daemon logs` to act on it. The daemon normally uses the profile-derived health port. If the OS refuses that port, it binds an available loopback port and records the actual port in `daemon.port` for lifecycle commands. The record is valid only while its daemon is alive; do not edit it to configure a port.
+Each profile gets its own config directory (`~/.marvis-studio/profiles/<name>/`), daemon state, health port, and workspace root. Daemon state means that profile's own `daemon.log`, `daemon.err.log`, `daemon.pid`, and `daemon.port` live in that directory too — see [Start](#start) for the layout, and pass `--profile <name>` to `daemon status` / `daemon logs` to act on it. The daemon normally uses the profile-derived health port. If the OS refuses that port, it binds an available loopback port and records the actual port in `daemon.port` for lifecycle commands. The record is valid only while its daemon is alive; do not edit it to configure a port.
 
 ## Workspaces
 

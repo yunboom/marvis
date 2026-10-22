@@ -23,10 +23,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // relayPublisher is the slice of the realtime relay this package needs.

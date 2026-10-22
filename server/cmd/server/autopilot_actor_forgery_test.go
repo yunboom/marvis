@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/handler"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/handler"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // Autopilot writes are judged as the human the caller acts for, and for an

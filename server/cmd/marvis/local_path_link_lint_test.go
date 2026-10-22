@@ -130,7 +130,7 @@ func TestFindLocalPathLinksAllowsLegitimateContent(t *testing.T) {
 		},
 		{
 			name: "external http link",
-			body: "the PR is at [#42](https://github.com/marvis-ai/marvis/pull/42)",
+			body: "the PR is at [#42](https://github.com/yunboom/marvis/pull/42)",
 		},
 		{
 			name: "mention link",

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
 )
 
 // This file holds the translation from a Telegram Update to the engine's

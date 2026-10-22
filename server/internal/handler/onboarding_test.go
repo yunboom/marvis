@@ -12,7 +12,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 )
 
 // newWaitlistTestUser inserts a fresh user row, returns its id, and

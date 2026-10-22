@@ -106,7 +106,7 @@ describe("LoginPage", () => {
   // Regression: MUL-1080 — if the user is already authenticated on the web
   // and the Desktop app redirects them to /login?platform=desktop, the web
   // must exchange the cookie session for a bearer token and hand it off via
-  // the marvis:// deep link, not silently redirect to the workspace page.
+  // the marvis-studio:// deep link, not silently redirect to the workspace page.
   it("mints a token and deep-links to Desktop when already logged in with platform=desktop", async () => {
     searchParamsState.params = new URLSearchParams({ platform: "desktop" });
     authStateRef.state.user = { id: "u1", email: "test@marvis.ai" };
@@ -129,7 +129,7 @@ describe("LoginPage", () => {
       });
       await waitFor(() => {
         expect(hrefSetter).toHaveBeenCalledWith(
-          "marvis://auth/callback?token=handoff-jwt",
+          "marvis-studio://auth/callback?token=handoff-jwt",
         );
       });
       expect(

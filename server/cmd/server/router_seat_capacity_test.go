@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/seatcapacity"
+	"github.com/yunboom/marvis/server/internal/seatcapacity"
 )
 
 func TestSeatCapacityAssemblyUsesCloudURLAlone(t *testing.T) {

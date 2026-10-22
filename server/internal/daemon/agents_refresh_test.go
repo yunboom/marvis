@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // The loop backs off whenever a round cannot shrink the missing-runtime set,

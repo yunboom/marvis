@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/daemonws"
-	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/internal/daemonws"
+	"github.com/yunboom/marvis/server/internal/realtime"
 )
 
 // realtimeMetricsHandler returns the HTTP handler for /health/realtime.

@@ -39,7 +39,7 @@ const wsEventState = vi.hoisted(() => ({
 }));
 
 const WINDOWS_CMD =
-  "irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex";
+  "irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex";
 
 vi.mock("@marvis/core/realtime", () => ({
   useWSEvent: (_event: string, handler: (payload: unknown) => void) => {

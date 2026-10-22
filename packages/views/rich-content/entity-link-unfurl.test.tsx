@@ -187,7 +187,7 @@ describe("bare entity URLs in readonly content", () => {
 
   it("leaves an external URL as a plain link", () => {
     const { queryByTestId, container } = renderContent(
-      `https://github.com/marvis-ai/marvis/pull/1`,
+      `https://github.com/yunboom/marvis/pull/1`,
     );
     expect(queryByTestId("project-chip")).toBeNull();
     expect(queryByTestId("issue-chip")).toBeNull();

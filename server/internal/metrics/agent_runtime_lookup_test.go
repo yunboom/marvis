@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/metrics"
 	dto "github.com/prometheus/client_model/go"
+	"github.com/yunboom/marvis/server/internal/metrics"
 )
 
 const runtimeLookupMetric = "marvis_agent_runtime_lookup_total"

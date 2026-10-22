@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp/remotemcptest"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
+	"github.com/yunboom/marvis/server/pkg/remotemcp/remotemcptest"
 )
 
 // Connection startup: the check that makes "the administrator approved these

@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/awakeclock"
+	"github.com/yunboom/marvis/server/pkg/awakeclock"
 )
 
 type cursorBackgroundTool struct {

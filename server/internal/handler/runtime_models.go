@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	obsmetrics "github.com/marvis-ai/marvis/server/internal/metrics"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/logger"
+	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // Model list request store
@@ -29,7 +29,7 @@ import (
 // (Marvis Cloud) MUST use the Redis-backed implementation, otherwise the
 // pending request is invisible to whichever replica receives the next call
 // and the picker shows "No models available" (regression: see issue
-// review on marvis-ai/marvis#2009).
+// review on yunboom/marvis#2009).
 
 // ModelListStatus represents the lifecycle of a model list request.
 type ModelListStatus string

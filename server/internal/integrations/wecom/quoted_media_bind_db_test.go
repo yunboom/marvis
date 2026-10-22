@@ -26,9 +26,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
-	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
+	dbfx "github.com/yunboom/marvis/server/internal/testutil"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // quotedBindWorld is what the wecom ResolverSet resolves against: an

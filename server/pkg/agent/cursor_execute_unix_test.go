@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 // A real cursor-agent reads the prompt from stdin to EOF (see buildCursorArgs).

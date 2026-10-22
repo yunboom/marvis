@@ -76,7 +76,7 @@ const INSTALLATION = {
     { key: "repo", type: "string", label: "Repo", required: true, options: [] },
     { key: "token", type: "secret", label: "Token", required: true, options: [] },
   ],
-  config: { repo: "marvis-ai/marvis" },
+  config: { repo: "yunboom/marvis" },
   configured_secrets: ["token"],
   surfaces: [{ key: "hello", type: "issue_panel", name: "Hello", entry: "ui/main.js", platforms: [] }],
   hooks: [],
@@ -201,7 +201,7 @@ describe("PluginsTab", () => {
     const user = userEvent.setup();
     render(<PluginsTab />, { wrapper: Wrapper });
 
-    const repo = screen.getByDisplayValue("marvis-ai/marvis");
+    const repo = screen.getByDisplayValue("yunboom/marvis");
     expect(repo).toBeInTheDocument();
 
     const secret = screen.getByPlaceholderText("Saved — enter a new value to replace it");
@@ -213,7 +213,7 @@ describe("PluginsTab", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(mockConfigure).toHaveBeenCalledWith({
       installationId: "installation-1",
-      values: { repo: "marvis-ai/marvis" },
+      values: { repo: "yunboom/marvis" },
     }));
 
     mockConfigure.mockClear();
@@ -221,7 +221,7 @@ describe("PluginsTab", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(mockConfigure).toHaveBeenCalledWith({
       installationId: "installation-1",
-      values: { repo: "marvis-ai/marvis", token: "new-token" },
+      values: { repo: "yunboom/marvis", token: "new-token" },
     }));
   });
 

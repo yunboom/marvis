@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // TestCreateComment_StripsNullBytesInsteadOf500 pins the fix for GH #5388.

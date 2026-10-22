@@ -36,8 +36,8 @@ Don't put a PAT in repositories, issues, comments, screenshots, or logs, and don
 When you run `marvis login`, the CLI completes sign-in through the browser, then creates a PAT valid for 90 days and saves it to the current profile's config file:
 
 ```text
-~/.marvis/config.json
-~/.marvis/profiles/<name>/config.json
+~/.marvis-studio/config.json
+~/.marvis-studio/profiles/<name>/config.json
 ```
 
 The daemon connects to Marvis with the same PAT. A `mul_` PAT with an expiry renews automatically when less than 7 days remain, extending it to 90 days from that moment. A failed renewal leaves the token unchanged; once a token has expired or been revoked, run `marvis login` again.

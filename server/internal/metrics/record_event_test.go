@@ -3,8 +3,8 @@ package metrics_test
 import (
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/analytics"
-	"github.com/marvis-ai/marvis/server/internal/metrics"
+	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/metrics"
 )
 
 // captureSpy records the names of every event handed to Capture so tests can

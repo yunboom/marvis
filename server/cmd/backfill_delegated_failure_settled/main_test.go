@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/delegatedrecoverybackfill"
+	"github.com/yunboom/marvis/server/internal/delegatedrecoverybackfill"
 )
 
 func cursorFor(createdAt time.Time, id string) *delegatedrecoverybackfill.Cursor {

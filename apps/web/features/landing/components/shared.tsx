@@ -1,6 +1,6 @@
 import { cn } from "@marvis/ui/lib/utils";
 
-export const githubUrl = "https://github.com/marvis-ai/marvis";
+export const githubUrl = "https://github.com/yunboom/marvis";
 export const twitterUrl = "https://x.com/MarvisAI";
 export const discordUrl = "https://discord.gg/W8gYBn226t";
 

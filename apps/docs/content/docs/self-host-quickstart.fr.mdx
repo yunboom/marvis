@@ -14,7 +14,7 @@ L'auto-hébergement de Marvis comporte deux parties :
 
 Il peut s'agir de la même machine ou de machines distinctes. L'auto-hébergement ne remplace que la partie Marvis Cloud.
 
-Ce guide utilise Docker Compose. Pour un déploiement sur Kubernetes, consultez le [guide d'auto-hébergement](https://github.com/marvis-ai/marvis/blob/main/SELF_HOSTING.md#kubernetes-deployment-alternative) dans le dépôt.
+Ce guide utilise Docker Compose. Pour un déploiement sur Kubernetes, consultez le [guide d'auto-hébergement](https://github.com/yunboom/marvis/blob/main/SELF_HOSTING.md#kubernetes-deployment-alternative) dans le dépôt.
 
 ## Avant de commencer
 
@@ -40,7 +40,7 @@ L'ordinateur doit également disposer d'au moins un [outil de codage IA](/provid
 Sur la machine qui fera tourner le service :
 
 ```bash
-git clone --depth 1 https://github.com/marvis-ai/marvis.git
+git clone --depth 1 https://github.com/yunboom/marvis.git
 cd marvis
 make selfhost
 ```
@@ -223,13 +223,13 @@ Installez d'abord le CLI Marvis :
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex
 ```
 
 Si le service Marvis tourne sur ce même ordinateur :
@@ -367,7 +367,7 @@ Toute réponse autre qu'un HTTP 200 avec les deux vérifications à `ok` signifi
 
 Helm a son propre chemin de mise à niveau : définissez `images.backend.tag` / `images.frontend.tag` sur la version souhaitée dans votre fichier de valeurs, puis lancez `helm upgrade`. Changer le tag modifie la spécification du pod : Kubernetes télécharge donc la nouvelle image et redéploie progressivement les Deployments — c'est la méthode fiable.
 
-`kubectl -n marvis rollout restart` n'est **pas** une mise à niveau en soi. Le chart est livré avec `pullPolicy: IfNotPresent` (`deploy/helm/marvis/values.yaml`) : un nœud qui a déjà ce tag en cache réutilise donc l'ancienne image, et le redémarrage ne change silencieusement rien — le même type de piège qu'un `MARVIS_IMAGE_TAG` figé. Si vous voulez suivre un tag flottant de cette manière, définissez d'abord `images.backend.pullPolicy` / `images.frontend.pullPolicy` sur `Always`. Consultez le [guide d'auto-hébergement](https://github.com/marvis-ai/marvis/blob/main/SELF_HOSTING.md#kubernetes-deployment-alternative).
+`kubectl -n marvis rollout restart` n'est **pas** une mise à niveau en soi. Le chart est livré avec `pullPolicy: IfNotPresent` (`deploy/helm/marvis/values.yaml`) : un nœud qui a déjà ce tag en cache réutilise donc l'ancienne image, et le redémarrage ne change silencieusement rien — le même type de piège qu'un `MARVIS_IMAGE_TAG` figé. Si vous voulez suivre un tag flottant de cette manière, définissez d'abord `images.backend.pullPolicy` / `images.frontend.pullPolicy` sur `Always`. Consultez le [guide d'auto-hébergement](https://github.com/yunboom/marvis/blob/main/SELF_HOSTING.md#kubernetes-deployment-alternative).
 
 <Callout type="warning">
 `docker compose down` conserve `pgdata` et `backend_uploads`. Ajouter `-v` supprime ces volumes, base de données comprise ; n'exécutez pas `docker compose down -v`, sauf si vous avez l'intention d'effacer l'instance.
@@ -389,5 +389,5 @@ Pour d'autres scénarios, consultez [Dépannage](/troubleshooting).
 
 - [Configuration de l'authentification](/auth-setup) — configurer l'e-mail, la connexion Google et le périmètre d'inscription.
 - [Variables d'environnement](/environment-variables) — la référence complète de configuration du serveur.
-- [Guide d'auto-hébergement](https://github.com/marvis-ai/marvis/blob/main/SELF_HOSTING.md) — Kubernetes, mises à niveau et déploiement manuel.
+- [Guide d'auto-hébergement](https://github.com/yunboom/marvis/blob/main/SELF_HOSTING.md) — Kubernetes, mises à niveau et déploiement manuel.
 - [Application de bureau](/desktop-app) — connecter l'application de bureau à un service auto-hébergé.

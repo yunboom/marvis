@@ -2074,10 +2074,10 @@ describe("Plugin schemas", () => {
     // state where a component could render it.
     const parsed = PluginInstallationSchema.parse({
       id: "installation-1",
-      config: { repo: "marvis-ai/marvis" },
+      config: { repo: "yunboom/marvis" },
       configured_secrets: ["token"],
     });
-    expect(parsed.config).toEqual({ repo: "marvis-ai/marvis" });
+    expect(parsed.config).toEqual({ repo: "yunboom/marvis" });
     expect(parsed.configured_secrets).toEqual(["token"]);
     expect(Object.keys(parsed)).not.toContain("secrets");
   });

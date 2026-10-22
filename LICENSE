@@ -58,7 +58,7 @@ https://www.marvis.ai/contact-sales.
         `apps/web/`, `apps/desktop/`, `apps/mobile/`, `packages/views/`,
         and `packages/ui/` directories when running Marvis from the raw
         source code, the frontend container image (published as
-        `ghcr.io/marvis-ai/marvis-web`) when running Marvis with
+        `ghcr.io/yunboom/marvis-web`) when running Marvis with
         Docker, and any compiled desktop or mobile application built from
         that code. That enumeration is illustrative rather than
         exhaustive: user interface code remains covered when it is
@@ -76,7 +76,7 @@ https://www.marvis.ai/contact-sales.
       patent, trademark, and attribution notices present in the source
       code and in the NOTICE file, and state in your user-facing
       documentation that the product is built on Marvis, including a link
-      to https://github.com/marvis-ai/marvis.
+      to https://github.com/yunboom/marvis.
 
    d. Relationship between grants: A branding waiver is not a commercial
       license and does not permit any use restricted by condition (a). A

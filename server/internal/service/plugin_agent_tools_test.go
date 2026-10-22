@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 // Two plugins may both contribute a hook called "summarize". The agent sees one

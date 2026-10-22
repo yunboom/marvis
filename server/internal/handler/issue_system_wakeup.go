@@ -10,9 +10,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/service"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // The child_done system rule is an issue_wakeup row owned by the platform (see

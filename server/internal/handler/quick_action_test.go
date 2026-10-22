@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // TestValidateQuickActionPromptRejectsTemplateTokens locks the guard that

@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Mixed-version contract for subtree unsubscribe (MUL-5483 review round 6,

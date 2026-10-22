@@ -19,7 +19,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
 )
 
 const (

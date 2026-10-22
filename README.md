@@ -14,22 +14,22 @@ Marvis is a source-available workspace where you assign work to AI coding agents
 assign it to a teammate — they pick up the issue, report progress, raise blockers, and hand it
 back for review. Self-hostable, works with the agent CLIs you already use, no lock-in.
 
-[![CI](https://github.com/marvis-ai/marvis/actions/workflows/ci.yml/badge.svg)](https://github.com/marvis-ai/marvis/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/marvis-ai/marvis?style=flat)](https://github.com/marvis-ai/marvis/releases)
-[![GitHub stars](https://img.shields.io/github/stars/marvis-ai/marvis?style=flat)](https://github.com/marvis-ai/marvis/stargazers)
+[![CI](https://github.com/yunboom/marvis/actions/workflows/ci.yml/badge.svg)](https://github.com/yunboom/marvis/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/yunboom/marvis?style=flat)](https://github.com/yunboom/marvis/releases)
+[![GitHub stars](https://img.shields.io/github/stars/yunboom/marvis?style=flat)](https://github.com/yunboom/marvis/stargazers)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/W8gYBn226t)
 
 <p align="center">
-  <a href="https://www.star-history.com/marvis-ai/marvis">
+  <a href="https://www.star-history.com/yunboom/marvis">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank&amp;theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank" />
-      <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=rank" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=rank&amp;theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=rank" />
+      <img alt="Star History Rank" src="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=rank" />
     </picture>
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending&amp;theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending" />
-      <img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=marvis-ai/marvis&amp;type=trending" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=trending&amp;theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=trending" />
+      <img alt="GitHub Trending Repository of the Day" src="https://api.star-history.com/badge?repo=yunboom/marvis&amp;type=trending" />
     </picture>
   </a>
 </p>
@@ -125,12 +125,12 @@ friends. Marvis drives them; it doesn't ship them.
 <br/>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash -s -- --with-server
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash -s -- --with-server
 marvis setup self-host
 ```
 
 On Windows, set `$env:MARVIS_MODE="with-server"`, then run the PowerShell installer:
-`irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex`.
+`irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex`.
 
 This pulls the official images from GHCR and requires Docker. See the
 [Self-Hosting Guide](SELF_HOSTING.md); if the selected GHCR tag has not been published yet,

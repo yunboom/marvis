@@ -7,7 +7,7 @@
 Give this instruction to your AI agent:
 
 ```
-Fetch https://github.com/marvis-ai/marvis/blob/main/CLI_INSTALL.md and follow the instructions to install Marvis CLI, log in, and start the daemon on this machine.
+Fetch https://github.com/yunboom/marvis/blob/main/CLI_INSTALL.md and follow the instructions to install Marvis CLI, log in, and start the daemon on this machine.
 ```
 
 ---
@@ -40,7 +40,7 @@ which brew
 If `brew` is found, install via Homebrew:
 
 ```bash
-brew install marvis-ai/tap/marvis
+brew install yunboom/tap/marvis
 ```
 
 Then verify:
@@ -54,7 +54,7 @@ If the version prints successfully, skip to **Step 3**.
 To upgrade later, run:
 
 ```bash
-brew upgrade marvis-ai/tap/marvis
+brew upgrade yunboom/tap/marvis
 ```
 
 ### Option B: Download from GitHub Releases (macOS/Linux, no Homebrew)
@@ -73,11 +73,11 @@ if [ "$ARCH" = "x86_64" ]; then
 fi
 
 # Get the latest release tag from GitHub
-LATEST=$(curl -sI https://github.com/marvis-ai/marvis/releases/latest | grep -i '^location:' | sed 's/.*tag\///' | tr -d '\r\n')
+LATEST=$(curl -sI https://github.com/yunboom/marvis/releases/latest | grep -i '^location:' | sed 's/.*tag\///' | tr -d '\r\n')
 
 # Download and extract
 VERSION="${LATEST#v}"
-curl -sL "https://github.com/marvis-ai/marvis/releases/download/${LATEST}/marvis-cli-${VERSION}-${OS}-${ARCH}.tar.gz" -o /tmp/marvis.tar.gz
+curl -sL "https://github.com/yunboom/marvis/releases/download/${LATEST}/marvis-cli-${VERSION}-${OS}-${ARCH}.tar.gz" -o /tmp/marvis.tar.gz
 tar -xzf /tmp/marvis.tar.gz -C /tmp marvis
 sudo mv /tmp/marvis /usr/local/bin/marvis
 rm /tmp/marvis.tar.gz
@@ -99,10 +99,10 @@ marvis version
 Run in PowerShell (no admin required):
 
 ```powershell
-irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex
 ```
 
-This downloads the latest Windows binary from GitHub Releases, installs it to `%USERPROFILE%\.marvis\bin\`, and adds it to your user PATH.
+This downloads the latest Windows binary from GitHub Releases, installs it to `%USERPROFILE%\.marvis-studio\bin\`, and adds it to your user PATH.
 
 Verify:
 

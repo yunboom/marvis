@@ -9,15 +9,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
-	"github.com/marvis-ai/marvis/server/internal/integrations/dingtalk"
-	"github.com/marvis-ai/marvis/server/internal/integrations/lark"
-	"github.com/marvis-ai/marvis/server/internal/integrations/slack"
-	"github.com/marvis-ai/marvis/server/internal/integrations/telegram"
-	"github.com/marvis-ai/marvis/server/internal/integrations/wecom"
-	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/integrations/dingtalk"
+	"github.com/yunboom/marvis/server/internal/integrations/lark"
+	"github.com/yunboom/marvis/server/internal/integrations/slack"
+	"github.com/yunboom/marvis/server/internal/integrations/telegram"
+	"github.com/yunboom/marvis/server/internal/integrations/wecom"
+	dbfx "github.com/yunboom/marvis/server/internal/testutil"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Every adapter must forward the current instruction on the /new path. Testing

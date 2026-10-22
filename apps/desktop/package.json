@@ -1,13 +1,13 @@
 {
   "name": "@marvis/desktop",
-  "productName": "Marvis",
+  "productName": "Marvis Studio",
   "version": "0.6.5",
   "private": true,
   "description": "Marvis Desktop — native desktop client for the Marvis platform.",
   "homepage": "https://marvis.ai",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marvis-ai/marvis.git",
+    "url": "https://github.com/yunboom/marvis.git",
     "directory": "apps/desktop"
   },
   "author": {

@@ -20,7 +20,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/redact"
+	"github.com/yunboom/marvis/server/pkg/redact"
 )
 
 // codexBlockedArgs are flags hardcoded by the daemon that must not be

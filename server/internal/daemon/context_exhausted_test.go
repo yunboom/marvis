@@ -3,8 +3,8 @@ package daemon
 import (
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 // TestContextExhaustionNeverReplaysTheTask pins the boundary between the two

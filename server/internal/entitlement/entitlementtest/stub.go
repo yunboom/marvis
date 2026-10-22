@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/entitlement"
+	"github.com/yunboom/marvis/server/internal/entitlement"
 )
 
 type Call struct {

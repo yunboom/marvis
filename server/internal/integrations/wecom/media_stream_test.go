@@ -28,7 +28,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
 )
 
 // sealMedia builds ciphertext the way WeCom does: PKCS#7 to a 32-byte block,

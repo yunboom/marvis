@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 var taskDurationBuckets = []float64{1, 2.5, 5, 10, 30, 60, 120, 300, 600, 1200, 3600, 7200}

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // enqueueMentionedAgentTasksForTest mirrors the production comment path for

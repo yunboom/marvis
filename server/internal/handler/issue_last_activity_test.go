@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 func TestUpdateIssueActivityExcludesPositionOnlyWrites(t *testing.T) {

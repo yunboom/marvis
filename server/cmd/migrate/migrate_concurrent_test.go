@@ -20,7 +20,7 @@ import (
 
 // MUL-2956 — concurrent migration race test.
 //
-// PR marvis-ai/marvis#3658 (MUL-2923) added a Postgres advisory lock
+// PR yunboom/marvis#3658 (MUL-2923) added a Postgres advisory lock
 // around the migration loop to serialize concurrent runners. This file
 // is the live-Postgres test that proves the lock is actually doing its
 // job. We run N goroutines that all call runMigrations against the same

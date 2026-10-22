@@ -6,15 +6,26 @@
 
 ## 远程
 
-- `origin` = `git@github.com:yunboom/marvis.git`（本 fork，提交和推送到这里）
+- `origin` = `git@github.com:yunboom/marvis.git`（本 fork，https://github.com/yunboom/marvis ，提交和推送到这里）
 - `upstream` = `https://github.com/multica-ai/multica.git`（上游，只拉取）
 
 ## 决策一：品牌全量改名 Multica → Marvis
 
-- 范围是全部被 git 跟踪的文本和路径：代码标识符、注释、文案、文档、CLI 命令（`marvis`）、Go module（`github.com/marvis-ai/marvis/server`）、npm scope（`@marvis/*`）、环境变量（`MARVIS_*`）、配置目录、docker compose 项目名、外部域名和仓库地址（`multica.ai` → `marvis.ai`，`github.com/multica-ai` → `github.com/marvis-ai`）。
+- 范围是全部被 git 跟踪的文本和路径：代码标识符、注释、文案、文档、CLI 命令（`marvis`）、Go module（`github.com/yunboom/marvis/server`）、npm scope（`@marvis/*`）、环境变量（`MARVIS_*`）、docker compose 项目名、外部域名（`multica.ai` → `marvis.ai`）。本地项目目录也叫 `marvis`。
+- 仓库地址指向本 fork：主仓库 `multica-ai/multica` → `yunboom/marvis`（clone / issue / release / raw 安装脚本 / Releases API），本仓库 CI 发布的 ghcr 镜像与 Helm chart、Homebrew tap、桌面端更新源、release 工作流的 owner 判断都改为 `yunboom`。上游的其他仓库（`marvis-cli`、`dsh-marvis-runtime`）、npm 包 `@marvis-ai/*` 和测试夹具里的仓库名保持改名后的 `marvis-ai`，它们在 yunboom 下不存在。
 - 规则：大小写保持替换（`multica`/`Multica`/`MULTICA` → `marvis`/`Marvis`/`MARVIS`），`multicast` 不替换。
 - 改名由 `scripts/rebrand-marvis.py` 完成，脚本幂等，只保留以下文件里的旧名：脚本本身、本文件、`server/migrations/589_rebrand_marvis.*.sql`。新增必须保留旧名的文件时，同步加进脚本的 `KEEP`。
-- 外部地址已替换，`marvis.ai` 等域名与 `ghcr.io/marvis-ai` 镜像需自行持有，否则对应链接、镜像拉取、自动更新会失效。
+- `marvis.ai` 等域名需自行持有，否则对应链接失效。
+
+## 决策一补充：避开本机腾讯 Marvis.app 已占用的标识（marvis-studio）
+
+腾讯 Marvis.app 占用了 `~/.marvis`（软链到它的用户数据目录）、`marvis://` URL scheme 和 `/Applications/Marvis.app` / `Application Support/Marvis`。本 fork 的机器级标识改用 marvis-studio，品牌展示仍是 Marvis：
+
+- 家目录：`~/.marvis-studio`（CLI 配置、daemon、profiles、开发环境注册表 `~/.marvis-studio/dev`）。
+- 桌面端深链 scheme：`marvis-studio://`。
+- 桌面端打包名 / userData / WM_CLASS：`Marvis Studio`（即 `/Applications/Marvis Studio.app`），开发模式仍是 `Marvis Canary`。
+- 任务工作目录内的 `.marvis/`（如 `.marvis/project/resources.json`）不在家目录，不冲突，保持不变。
+- 以上规则在 `scripts/rebrand-marvis.py` 的 `STUDIO_RULES`，仓库地址规则在 `FORK_RULES`；上游新增类似写法（新的家目录拼接方式等）时补规则，不手改。
 
 ## 决策二：视觉与交互照搬 Marvis.app
 
@@ -30,6 +41,7 @@
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。
 2. 冲突处理：
    - 上游新增/修改内容里的 `multica`：先接受上游版本解决冲突，再统一跑 `python3 scripts/rebrand-marvis.py`，不要手改。
+   - 跑完脚本后执行 `(cd server && gofmt -l . | xargs gofmt -w)`：模块路径改名会改变 import 排序和对齐。
    - 上游新增路径（含 `multica`）由脚本 `git mv`，跑完检查 `git status`。
    - 上表列出的样式文件冲突：保留本 fork 的 Marvis 取值，只合入上游新增的 token / 组件 / 变体，并按上面的规则改成 Marvis 风格。
 3. 数据库迁移：
@@ -37,4 +49,5 @@
    - 上游若也新增了 `589_*` 或之后编号，把 `589_rebrand_marvis` 改到当前最大编号之后（版本号按完整文件名记录，改名后会再执行一次，因为幂等所以安全）。
    - 上游新迁移若引入新的旧名数据库对象（列、函数体里的 `multica.*` 设置等），重新执行 589 的改名逻辑（可复制为新编号迁移）。
 4. 依赖与校验：`pnpm install`（工作区包名已变），`make sqlc`，然后 `pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`。
-5. 本地环境：compose 项目名变为 `marvis`，数据卷为 `marvis_pgdata`；改名前创建的 `multica_pgdata` 数据不会自动迁移。`.env` 里的变量名需从 `MULTICA_*` 改为 `MARVIS_*`。
+5. 本地环境：compose 项目名变为 `marvis`，数据卷为 `marvis_pgdata`；改名前创建的 `multica_pgdata` 数据不会自动迁移。`.env` 里的变量名需从 `MULTICA_*` 改为 `MARVIS_*`。旧的 `~/.multica` 里的开发环境与 profile 不会被读取。
+6. 改名会改变字符串长度：依赖固定字节数、哈希或校验和的测试夹具（如 `cursor_stdin_unix_test.go` 的 payload、`worktree-dev-env.test.mjs` 的 cksum 路径）需要重新调整。

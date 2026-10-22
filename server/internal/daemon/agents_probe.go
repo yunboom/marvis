@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/processtree"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/internal/daemon/processtree"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // shellResolveTTL bounds how long one login-shell PATH resolution is reused

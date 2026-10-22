@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	dbfx "github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	dbfx "github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // attachmentsFromMemory is the real *db.Queries with the one lookup that would

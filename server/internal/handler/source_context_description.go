@@ -3,8 +3,8 @@ package handler
 import (
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 type sourceContextDescriptionAttachmentReference struct {

@@ -9,10 +9,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/entitlement"
-	"github.com/marvis-ai/marvis/server/internal/entitlement/entitlementtest"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/entitlement"
+	"github.com/yunboom/marvis/server/internal/entitlement/entitlementtest"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 type issueLimitProviderFunc func(context.Context, uuid.UUID, entitlement.GateName) entitlement.Decision

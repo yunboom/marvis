@@ -14,9 +14,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/processtree"
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/redact"
+	"github.com/yunboom/marvis/server/internal/daemon/processtree"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/redact"
 )
 
 // The DSH backend drives `dsh --profile marvis --stdio`, and that profile is

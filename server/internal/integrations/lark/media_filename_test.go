@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
 )
 
 func TestCleanFilenameRejectsDotOnlyNames(t *testing.T) {

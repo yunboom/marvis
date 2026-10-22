@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/marvis-ai/marvis/server/pkg/skillbundle"
+	"github.com/yunboom/marvis/server/pkg/skillbundle"
 )
 
 type SkillBundleCache struct {

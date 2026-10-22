@@ -3,7 +3,7 @@ package metrics
 import (
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/marvis-ai/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/internal/realtime"
 )
 
 type RealtimeCollector struct {

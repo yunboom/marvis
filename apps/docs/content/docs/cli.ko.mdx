@@ -12,19 +12,19 @@ Marvis CLI는 로컬 런타임을 연결할 뿐 아니라 터미널에서 워크
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 ```
 
 Homebrew가 설치되어 있다면 다음 명령도 사용할 수 있습니다.
 
 ```bash
-brew install marvis-ai/tap/marvis
+brew install yunboom/tap/marvis
 ```
 
 **Windows PowerShell**
 
 ```powershell
-irm https://raw.githubusercontent.com/marvis-ai/marvis/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex
 ```
 
 설치 성공 여부를 확인합니다.
@@ -197,7 +197,7 @@ marvis agent list --output json
 
 ## Profile과 설정
 
-기본 설정은 `~/.marvis/config.json`에 저장됩니다. `--profile <name>`을 사용하면 별도의 서비스 주소, token, 기본 워크스페이스, 데몬 상태를 격리할 수 있습니다.
+기본 설정은 `~/.marvis-studio/config.json`에 저장됩니다. `--profile <name>`을 사용하면 별도의 서비스 주소, token, 기본 워크스페이스, 데몬 상태를 격리할 수 있습니다.
 
 ```bash
 marvis setup self-host --profile staging \
@@ -207,7 +207,7 @@ marvis setup self-host --profile staging \
 marvis issue list --profile staging
 ```
 
-이름 있는 profile은 `~/.marvis/profiles/<name>/config.json`에 저장됩니다. 현재 값을 확인합니다.
+이름 있는 profile은 `~/.marvis-studio/profiles/<name>/config.json`에 저장됩니다. 현재 값을 확인합니다.
 
 ```bash
 marvis config show

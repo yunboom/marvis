@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // TestPRMergeStatusMigration runs migration 551 against workspaces with each

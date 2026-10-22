@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // startMikaOnboarding drives the endpoint the way the router does: session id

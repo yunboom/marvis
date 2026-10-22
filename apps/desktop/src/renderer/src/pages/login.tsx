@@ -16,7 +16,7 @@ export function DesktopLoginPage() {
   const webUrl = requireRuntimeAppUrl();
   const handleGoogleLogin = () => {
     // Open web login page in the default browser with platform=desktop flag.
-    // The web callback will redirect back via marvis:// deep link with the token.
+    // The web callback will redirect back via marvis-studio:// deep link with the token.
     window.desktopAPI.openExternal(
       `${webUrl}/login?platform=desktop`,
     );

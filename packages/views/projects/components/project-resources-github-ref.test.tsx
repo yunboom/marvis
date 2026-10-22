@@ -13,7 +13,7 @@ const PINNED = {
   workspace_id: "workspace-1",
   resource_type: "github_repo",
   resource_ref: {
-    url: "https://github.com/marvis-ai/marvis",
+    url: "https://github.com/yunboom/marvis",
     ref: "release/2026-09",
   },
   // A custom name, which is what used to hide the ref: the row rendered
@@ -36,7 +36,7 @@ const ATTACHABLE_REPO = {
 };
 
 const PINNED_REPO = {
-  url: "https://github.com/marvis-ai/marvis",
+  url: "https://github.com/yunboom/marvis",
   description: "The main monorepo",
 };
 
@@ -146,7 +146,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
     // deep-merging, so an edit that sends only `ref` is a 400 at best and
     // drops the repository at worst.
     expect(payload.data.resource_ref).toEqual({
-      url: "https://github.com/marvis-ai/marvis",
+      url: "https://github.com/yunboom/marvis",
       ref: "release/2026-10",
     });
   });
@@ -165,7 +165,7 @@ describe("ProjectResourcesSection — github_repo checkout ref", () => {
       data: { resource_ref: Record<string, unknown> };
     };
     expect(payload.data.resource_ref).toEqual({
-      url: "https://github.com/marvis-ai/marvis",
+      url: "https://github.com/yunboom/marvis",
       ref: undefined,
     });
   });

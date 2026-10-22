@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // fetchTimeline issues a GET /timeline request and returns the decoded entries

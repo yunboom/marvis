@@ -27,10 +27,10 @@ case "${1:-}" in
       exit 2
     fi
     printf '%s\n' \
-      github.com/marvis-ai/marvis/server \
-      github.com/marvis-ai/marvis/server/internal/daemon \
-      github.com/marvis-ai/marvis/server/pkg/agent \
-      github.com/marvis-ai/marvis/server/pkg/agent/internal/testutil
+      github.com/yunboom/marvis/server \
+      github.com/yunboom/marvis/server/internal/daemon \
+      github.com/yunboom/marvis/server/pkg/agent \
+      github.com/yunboom/marvis/server/pkg/agent/internal/testutil
     ;;
   test)
     printf '%s\n' "$*" >>"$MARVIS_TEST_GO_CALLS"
@@ -43,7 +43,7 @@ esac
 FAKE
 chmod 755 "$BIN_DIR/go"
 
-regular_call='test -race github.com/marvis-ai/marvis/server github.com/marvis-ai/marvis/server/internal/daemon'
+regular_call='test -race github.com/yunboom/marvis/server github.com/yunboom/marvis/server/internal/daemon'
 agent_call='test -race -p 2 -parallel 2 ./pkg/agent/...'
 
 # $1: case label; $2: expected go calls, one per line. Clears the log after.

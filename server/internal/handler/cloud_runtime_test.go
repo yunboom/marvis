@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/cloudruntime"
+	"github.com/yunboom/marvis/server/internal/cloudruntime"
 )
 
 type fakeCloudRuntimeProxy struct {

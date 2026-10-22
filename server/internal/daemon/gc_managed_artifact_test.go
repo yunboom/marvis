@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 // The managed Codex cache (codex-home/.sandbox-bin, a ~285 MiB copy of the

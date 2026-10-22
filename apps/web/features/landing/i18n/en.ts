@@ -317,7 +317,7 @@ export function createEnDict(
   licensing: {
     title: "Licensing",
     intro: [
-      "Marvis is released under the [Marvis License](https://github.com/marvis-ai/marvis/blob/main/LICENSE): the Apache License 2.0 with a few additional conditions. The source code is public, and using Marvis inside your own organization is free, including self-hosting it for your whole team.",
+      "Marvis is released under the [Marvis License](https://github.com/yunboom/marvis/blob/main/LICENSE): the Apache License 2.0 with a few additional conditions. The source code is public, and using Marvis inside your own organization is free, including self-hosting it for your whole team.",
       "The main additional condition covers hosted use: offering Marvis to people outside your organization requires a commercial license. This page shows where that line falls, using the questions we hear most often. It is a plain-language guide, not legal advice. If anything here differs from the LICENSE, the LICENSE controls.",
     ],
     rule: {
@@ -386,7 +386,7 @@ export function createEnDict(
         heading: "Other conditions",
         bullets: [
           "Branding: keep the Marvis logo, product name, and the copyright and attribution information shown in the Marvis interface, unless we have given you a written branding waiver.",
-          "Attribution: if you build on Marvis\u2019s backend, daemon, or CLI without the Marvis interface, keep the copyright and NOTICE information, and state in your user-facing documentation that your product is built on Marvis, with a link to the [GitHub repository](https://github.com/marvis-ai/marvis).",
+          "Attribution: if you build on Marvis\u2019s backend, daemon, or CLI without the Marvis interface, keep the copyright and NOTICE information, and state in your user-facing documentation that your product is built on Marvis, with a link to the [GitHub repository](https://github.com/yunboom/marvis).",
           "Forks: publishing the source code of a fork is not a hosted service and needs no commercial license. Anyone who operates a hosted service from that fork needs their own.",
           "A commercial license and a branding waiver are separate grants. One does not include the other.",
         ],

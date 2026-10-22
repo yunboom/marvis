@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/marvis-ai/marvis/server/internal/chatoriginbackfill"
+	"github.com/yunboom/marvis/server/internal/chatoriginbackfill"
 )
 
 func TestChatOriginHookBackfillsOnlyFirstPartySessionsInShortPages(t *testing.T) {

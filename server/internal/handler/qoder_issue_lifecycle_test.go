@@ -2,11 +2,11 @@ package handler
 
 import (
 	"context"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 func TestQoderIssueLifecycle(t *testing.T) {

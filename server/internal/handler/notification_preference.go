@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/logger"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // validNotifGroups is the set of notification preference group keys that the

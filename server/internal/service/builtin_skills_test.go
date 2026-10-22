@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 	"gopkg.in/yaml.v3"
 )
 

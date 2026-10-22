@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/skillbundle"
+	"github.com/yunboom/marvis/server/pkg/skillbundle"
 )
 
 func TestSkillBundleResolveTimeout(t *testing.T) {

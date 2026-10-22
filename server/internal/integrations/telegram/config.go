@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
 )
 
 // TypeTelegram is the channel discriminator for the Telegram adapter. Defined

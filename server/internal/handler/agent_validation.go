@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/marvis-ai/marvis/server/internal/agentconfig"
+	"github.com/yunboom/marvis/server/internal/agentconfig"
 )
 
 func validateAgentMaxConcurrentTasks(value int32) error {

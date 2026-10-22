@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // Migration 467 fills a legacy trigger's missing creator from its autopilot's

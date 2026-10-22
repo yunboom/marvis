@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 func createStagedChild(t *testing.T, parentID string, stage int, status string) IssueResponse {

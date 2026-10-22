@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 func TestCodexGuardianRateLimitCircuitCountsDistinctParentReviews(t *testing.T) {

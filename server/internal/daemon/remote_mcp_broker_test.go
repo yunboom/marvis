@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp/remotemcptest"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
+	"github.com/yunboom/marvis/server/pkg/remotemcp/remotemcptest"
 )
 
 func TestRemoteMCPProxyFiltersToolsAndInjectsCredential(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 // OpenClaw config discovery costs two serial CLI round-trips per task
@@ -35,7 +35,7 @@ import (
 // about, and one fewer copy of the user's configuration anywhere.
 const (
 	// openclawDiscoveryCacheFile is the per-profile cache file name. It sits
-	// in the profile directory (~/.marvis[/profiles/<name>]) so every task on
+	// in the profile directory (~/.marvis-studio[/profiles/<name>]) so every task on
 	// this daemon shares one entry.
 	openclawDiscoveryCacheFile = "openclaw-discovery-cache.json"
 
@@ -149,7 +149,7 @@ func resolveOpenclawBinPath(bin string) string {
 }
 
 // openclawProfileCacheDir resolves the directory this daemon profile shares
-// across tasks (~/.marvis, or ~/.marvis/profiles/<name>). A resolution
+// across tasks (~/.marvis-studio, or ~/.marvis-studio/profiles/<name>). A resolution
 // failure only disables caching — preparation still works, it just pays the
 // CLI cost every time.
 func openclawProfileCacheDir(profile string, logger *slog.Logger) string {

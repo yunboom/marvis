@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 // sessionContinuityNoticeFor picks the notice matching what this surface

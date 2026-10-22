@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // These tests pin the authorization contract of RecordSquadLeaderEvaluation

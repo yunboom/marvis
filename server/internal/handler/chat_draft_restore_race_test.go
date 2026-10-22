@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/marvis-ai/marvis/server/internal/middleware"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/middleware"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // chat_draft_restore has no FK to chat_session (MUL-3515), so an INSERT into it

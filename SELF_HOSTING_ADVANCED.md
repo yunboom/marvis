@@ -223,7 +223,7 @@ SSL_CERT_DIR=/etc/ssl/certs:/etc/marvis/ca-certs
 
 ```bash
 kubectl -n marvis create configmap marvis-extra-ca --from-file=internal-ca.crt
-helm upgrade marvis oci://ghcr.io/marvis-ai/charts/marvis \
+helm upgrade marvis oci://ghcr.io/yunboom/charts/marvis \
   --version <chart-version> -n marvis --reuse-values \
   --set backend.extraCACerts.configMap=marvis-extra-ca
 ```

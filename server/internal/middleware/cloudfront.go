@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/auth"
+	"github.com/yunboom/marvis/server/internal/auth"
 )
 
 // RefreshCloudFrontCookies is middleware that refreshes CloudFront signed cookies

@@ -17,9 +17,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/internal/issueproperty"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/issueproperty"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // marvis property {list|get|create|update|archive|unarchive} — workspace

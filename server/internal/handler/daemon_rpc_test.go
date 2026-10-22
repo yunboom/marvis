@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemonws"
+	"github.com/yunboom/marvis/server/internal/daemonws"
 )
 
 // TestDaemonRPCHandler_TasksClaim pins the WS-first claim binding (MUL-4257):

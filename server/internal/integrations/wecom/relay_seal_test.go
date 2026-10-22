@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // ---- every ending reaches the bubble, including the ones with no words ----

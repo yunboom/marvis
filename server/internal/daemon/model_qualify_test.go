@@ -11,7 +11,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/agent"
 )
 
 // stubModelDiscovery replaces the daemon's listModels indirection with a

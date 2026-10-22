@@ -53,7 +53,7 @@ services:
       retries: 5
 
   backend:
-    image: ${MARVIS_BACKEND_IMAGE:-ghcr.io/marvis-ai/marvis-backend}:${MARVIS_IMAGE_TAG:-latest}
+    image: ${MARVIS_BACKEND_IMAGE:-ghcr.io/yunboom/marvis-backend}:${MARVIS_IMAGE_TAG:-latest}
     depends_on:
       postgres:
         condition: service_healthy
@@ -220,7 +220,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ${MARVIS_WEB_IMAGE:-ghcr.io/marvis-ai/marvis-web}:${MARVIS_IMAGE_TAG:-latest}
+    image: ${MARVIS_WEB_IMAGE:-ghcr.io/yunboom/marvis-web}:${MARVIS_IMAGE_TAG:-latest}
     depends_on:
       - backend
     ports:

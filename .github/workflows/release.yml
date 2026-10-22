@@ -84,10 +84,10 @@ jobs:
     needs: verify
     # Only run on the canonical upstream repo. Forks don't have the
     # HOMEBREW_TAP_GITHUB_TOKEN secret and should not be publishing to
-    # `marvis-ai/homebrew-tap` anyway. Without this guard, every fork's
+    # `yunboom/homebrew-tap` anyway. Without this guard, every fork's
     # tag push fails this job (401 against the upstream tap), which makes
     # downstream CI go red without affecting the actual artifact pipeline.
-    if: github.repository_owner == 'marvis-ai'
+    if: github.repository_owner == 'yunboom'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -356,7 +356,7 @@ jobs:
 
   helm-chart:
     needs: [verify, docker-backend-merge, docker-web-merge]
-    if: github.repository_owner == 'marvis-ai'
+    if: github.repository_owner == 'yunboom'
     runs-on: ubuntu-latest
     concurrency:
       group: release-helm-chart-${{ github.ref }}

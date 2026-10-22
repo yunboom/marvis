@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/cli"
 )
 
 var updateDownloadTimeout time.Duration = cli.DefaultUpdateDownloadTimeout
@@ -50,7 +50,7 @@ func runUpdate(_ *cobra.Command, _ []string) error {
 		output, err := cli.UpdateViaBrew()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", output)
-			return fmt.Errorf("brew upgrade failed: %w\nYou can try manually: brew upgrade marvis-ai/tap/marvis", err)
+			return fmt.Errorf("brew upgrade failed: %w\nYou can try manually: brew upgrade yunboom/tap/marvis", err)
 		}
 		fmt.Fprintln(os.Stderr, "Update complete.")
 		return nil

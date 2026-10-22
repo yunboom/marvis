@@ -8,8 +8,8 @@ package wecom
 import (
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel/engine"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	"github.com/yunboom/marvis/server/internal/integrations/channel/engine"
 )
 
 func TestChannelMessageFromCallback_GroupKeepsSenderDistinctFromChat(t *testing.T) {

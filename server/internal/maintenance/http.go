@@ -14,7 +14,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgconn"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // NewServer is a separate listener; never mount its handler on the public router.

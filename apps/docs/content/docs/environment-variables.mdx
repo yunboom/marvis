@@ -267,11 +267,11 @@ Cursor's verified background cleanup requires Linux 6.9 or newer (process-group 
 
 Owned Cursor background processes are also stopped when the run completes normally, so a background server started by that run does not intentionally survive finalization. macOS can recognize late children through retained original-parent identities, but cannot prove a chain whose intermediate processes disappeared before observation. Such processes, work that leaves the tracked group, or persistent ownership/signalling errors can leave background work behind. Unconfirmed cleanup is logged and never grants a successful-cleanup recovery window; unknown processes are not killed based only on their numeric PID or process group.
 
-Precedence is command-line flag → environment variable → `~/.marvis/config.json` → built-in default. For watchdog behavior, see [Daemon and runtimes](/daemon-runtimes).
+Precedence is command-line flag → environment variable → `~/.marvis-studio/config.json` → built-in default. For watchdog behavior, see [Daemon and runtimes](/daemon-runtimes).
 
 ### Persisting daemon configuration
 
-Common daemon-side settings can also be written to `~/.marvis/config.json` instead of relying on shell environment variables; named profiles keep theirs at `~/.marvis/profiles/<name>/config.json`:
+Common daemon-side settings can also be written to `~/.marvis-studio/config.json` instead of relying on shell environment variables; named profiles keep theirs at `~/.marvis-studio/profiles/<name>/config.json`:
 
 ```bash
 marvis config set poll_interval 10s

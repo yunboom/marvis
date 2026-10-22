@@ -267,11 +267,11 @@ Cursor 已验证的后台清理需要 Linux 6.9 及以上（进程组 pidfd）�
 
 运行正常结束时，被认领的 Cursor 后台进程同样会被停止，因此该次运行启动的后台服务不会有意地在收尾之后继续存活。macOS 可以通过保留的原始父进程身份识别后期产生的子进程，但无法证明中间进程在被观察到之前就已消失的那条链路。这类进程、离开被追踪进程组的工作，以及持续的归属或发信号错误，都可能留下残余的后台工作。未确认的清理会被记录下来，且永远不会换取一次「清理成功」的恢复窗口；不会仅凭数字 PID 或进程组就去杀掉未知进程。
 
-优先级为命令行 flag → 环境变量 → `~/.marvis/config.json` → 内置默认。watchdog 的行为见[守护进程与运行时](/daemon-runtimes)。
+优先级为命令行 flag → 环境变量 → `~/.marvis-studio/config.json` → 内置默认。watchdog 的行为见[守护进程与运行时](/daemon-runtimes)。
 
 ### 守护进程配置的持久化
 
-守护进程侧的常用配置也可以写入 `~/.marvis/config.json`，不必依赖 shell 环境变量；命名 profile 的配置文件在 `~/.marvis/profiles/<name>/config.json`：
+守护进程侧的常用配置也可以写入 `~/.marvis-studio/config.json`，不必依赖 shell 环境变量；命名 profile 的配置文件在 `~/.marvis-studio/profiles/<name>/config.json`：
 
 ```bash
 marvis config set poll_interval 10s

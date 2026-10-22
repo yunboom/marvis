@@ -32,7 +32,7 @@ import (
     "context"
     "os"
 
-    "github.com/marvis-ai/marvis/server/pkg/composio"
+    "github.com/yunboom/marvis/server/pkg/composio"
 )
 
 client, err := composio.NewClient(composio.Options{

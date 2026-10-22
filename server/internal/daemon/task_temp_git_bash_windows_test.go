@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 // This is an opt-in test of real Git for Windows, not an agent CLI or account.

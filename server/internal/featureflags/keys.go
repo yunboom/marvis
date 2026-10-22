@@ -3,7 +3,7 @@ package featureflags
 import (
 	"context"
 
-	"github.com/marvis-ai/marvis/server/pkg/featureflag"
+	"github.com/yunboom/marvis/server/pkg/featureflag"
 )
 
 const (

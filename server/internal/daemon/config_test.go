@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 func TestResolveAgentExecutablePath_PreservesDispatchShimName(t *testing.T) {
@@ -519,7 +519,7 @@ func TestLoadConfig_SkipsMarvisHooksShadowingAgentBinaries(t *testing.T) {
 
 	home := t.TempDir()
 	redirectTestHome(t, home)
-	hooksDir := filepath.Join(home, ".marvis", "hooks")
+	hooksDir := filepath.Join(home, ".marvis-studio", "hooks")
 	if err := os.MkdirAll(hooksDir, 0o755); err != nil {
 		t.Fatalf("create hooks dir: %v", err)
 	}
@@ -579,7 +579,7 @@ func TestLoadConfig_SkipsMarvisHooksFromLoginShellFallback(t *testing.T) {
 
 	home := t.TempDir()
 	redirectTestHome(t, home)
-	hooksDir := filepath.Join(home, ".marvis", "hooks")
+	hooksDir := filepath.Join(home, ".marvis-studio", "hooks")
 	if err := os.MkdirAll(hooksDir, 0o755); err != nil {
 		t.Fatalf("create hooks dir: %v", err)
 	}
@@ -1856,7 +1856,7 @@ func TestLoadConfig_BackendOverrides_MalformedConfigFileNonFatal(t *testing.T) {
 	redirectTestHome(t, homeDir)
 
 	// Write malformed JSON.
-	cfgDir := filepath.Join(homeDir, ".marvis")
+	cfgDir := filepath.Join(homeDir, ".marvis-studio")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatal(err)
 	}

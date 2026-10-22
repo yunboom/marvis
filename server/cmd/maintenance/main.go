@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/maintenance"
+	"github.com/yunboom/marvis/server/internal/maintenance"
 )
 
 var errIncomplete = errors.New("incomplete: run budget exhausted; inspect the persisted job before continuing")

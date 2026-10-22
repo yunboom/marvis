@@ -10,14 +10,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/marvis-ai/marvis/server/internal/middleware"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/dbid"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
-	publicapiv1 "github.com/marvis-ai/marvis/server/pkg/publicapi/v1"
+	"github.com/yunboom/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/dbid"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
+	"github.com/yunboom/marvis/server/pkg/protocol"
+	publicapiv1 "github.com/yunboom/marvis/server/pkg/publicapi/v1"
 )
 
 // The Action API is what a plugin surface reaches through the host bridge.

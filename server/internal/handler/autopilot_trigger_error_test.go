@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/marvis-ai/marvis/server/internal/entitlement"
-	"github.com/marvis-ai/marvis/server/internal/entitlement/entitlementtest"
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/entitlement"
+	"github.com/yunboom/marvis/server/internal/entitlement/entitlementtest"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // TestTriggerAutopilot_InternalFailureDoesNotEchoError pins MUL-6472: an

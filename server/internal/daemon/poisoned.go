@@ -3,8 +3,8 @@ package daemon
 import (
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/taskfailure"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/taskfailure"
 )
 
 // FailureReason values for tasks whose session is "poisoned" — i.e.

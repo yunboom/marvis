@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/testutil"
 )
 
 // TestClaimTaskByRuntime_PopulatesIssueStatusCatalog verifies the claim

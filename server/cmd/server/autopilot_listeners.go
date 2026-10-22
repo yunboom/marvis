@@ -4,11 +4,11 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/marvis-ai/marvis/server/internal/events"
-	"github.com/marvis-ai/marvis/server/internal/handler"
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
-	"github.com/marvis-ai/marvis/server/internal/service"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/handler"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/service"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // registerAutopilotListeners hooks into issue and task events to keep

@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon"
+	"github.com/yunboom/marvis/server/internal/daemon"
 )
 
 func TestDaemonRuntimeProbeFromAgents(t *testing.T) {

@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 func TestCreateWorkspace_RejectsReservedSlug(t *testing.T) {
@@ -246,7 +246,7 @@ VALUES ($1, 123456789, 'marvis-ai', 'marvis', 3366, 987654321, 'abc123', 15368, 
 		"pr_number":       5265,
 		"title":           "Workspace cleanup snapshot",
 		"state":           "open",
-		"html_url":        "https://github.com/marvis-ai/marvis/pull/5265",
+		"html_url":        "https://github.com/yunboom/marvis/pull/5265",
 		"pr_created_at":   testutil.Raw("now()"),
 		"pr_updated_at":   testutil.Raw("now()"),
 		"head_sha":        "head-a",
@@ -848,11 +848,11 @@ VALUES ($1, $2, 'owner')
 		req := newRequest("PATCH", "/api/workspaces/"+wsID, map[string]any{
 			"repos": []map[string]any{
 				{
-					"url":         "  https://github.com/marvis-ai/marvis.git  ",
+					"url":         "  https://github.com/yunboom/marvis.git  ",
 					"description": "  main monorepo  ",
 				},
 				{
-					"url": "https://github.com/marvis-ai/marvis.git",
+					"url": "https://github.com/yunboom/marvis.git",
 				},
 				{
 					"url": "git@github.com:marvis-ai/marvis-cloud.git",
@@ -871,7 +871,7 @@ VALUES ($1, $2, 'owner')
 		if len(repos) != 2 {
 			t.Fatalf("expected duplicate URL to be deduped, got %d repos: %s", len(repos), raw)
 		}
-		if repos[0].URL != "https://github.com/marvis-ai/marvis.git" || repos[0].Description != "main monorepo" {
+		if repos[0].URL != "https://github.com/yunboom/marvis.git" || repos[0].Description != "main monorepo" {
 			t.Fatalf("first repo not normalized: %+v", repos[0])
 		}
 		if repos[1].URL != "git@github.com:marvis-ai/marvis-cloud.git" {

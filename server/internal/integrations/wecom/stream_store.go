@@ -24,7 +24,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/util"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // streamMaxAge is how long a handle is worth keeping: ten minutes, measured

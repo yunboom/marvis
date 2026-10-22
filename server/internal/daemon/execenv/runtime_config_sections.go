@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
-	"github.com/marvis-ai/marvis/server/internal/runtimeapps"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/runtimeapps"
 )
 
 // This file holds the runtime brief assembler — the post-MUL-3560 path

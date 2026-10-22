@@ -15,7 +15,7 @@ import { selectPlatformReleaseAssetName } from "./cli-release-asset";
 // userData on first launch when the bundled binary is missing or unusable.
 
 const GITHUB_LATEST_BASE =
-  "https://github.com/marvis-ai/marvis/releases/latest/download";
+  "https://github.com/yunboom/marvis/releases/latest/download";
 
 function binaryName(): string {
   return process.platform === "win32" ? "marvis.exe" : "marvis";

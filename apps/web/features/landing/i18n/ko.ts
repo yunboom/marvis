@@ -3342,7 +3342,7 @@ export function createKoDict(
     licensing: {
       title: "라이선스",
       intro: [
-        "Marvis는 [Marvis License](https://github.com/marvis-ai/marvis/blob/main/LICENSE)로 배포됩니다. Apache License 2.0에 몇 가지 추가 조건을 더한 라이선스입니다. 소스 코드는 공개되어 있으며, 조직 내부에서 Marvis를 사용하는 것은 무료입니다. 팀 전체를 위해 셀프 호스팅하는 경우도 마찬가지입니다.",
+        "Marvis는 [Marvis License](https://github.com/yunboom/marvis/blob/main/LICENSE)로 배포됩니다. Apache License 2.0에 몇 가지 추가 조건을 더한 라이선스입니다. 소스 코드는 공개되어 있으며, 조직 내부에서 Marvis를 사용하는 것은 무료입니다. 팀 전체를 위해 셀프 호스팅하는 경우도 마찬가지입니다.",
         "가장 중요한 추가 조건은 호스팅 방식의 이용에 관한 것입니다. 조직 외부 사람들에게 Marvis를 제공하려면 상용 라이선스가 필요합니다. 이 페이지에서는 자주 받는 질문을 바탕으로 그 기준을 설명합니다. 이해를 돕기 위한 안내일 뿐 법률 자문이 아니며, LICENSE 원문과 다른 부분이 있다면 LICENSE가 우선합니다.",
       ],
       rule: {
@@ -3403,7 +3403,7 @@ export function createKoDict(
           heading: "기타 조건",
           bullets: [
             "브랜딩: 서면으로 브랜딩 면제를 받지 않았다면, Marvis 인터페이스에 표시되는 Marvis 로고, 제품명, 저작권 및 출처 표시를 제거하거나 변경하지 마세요.",
-            "출처 표시: Marvis 인터페이스 없이 백엔드, 데몬, CLI를 기반으로 제품을 만든다면 저작권 및 NOTICE 정보를 유지하고, 사용자용 문서에 Marvis를 기반으로 만들었다는 사실을 [GitHub 저장소](https://github.com/marvis-ai/marvis) 링크와 함께 밝혀 주세요.",
+            "출처 표시: Marvis 인터페이스 없이 백엔드, 데몬, CLI를 기반으로 제품을 만든다면 저작권 및 NOTICE 정보를 유지하고, 사용자용 문서에 Marvis를 기반으로 만들었다는 사실을 [GitHub 저장소](https://github.com/yunboom/marvis) 링크와 함께 밝혀 주세요.",
             "포크: 포크의 소스 코드를 공개하는 것 자체는 호스팅 서비스가 아니므로 상용 라이선스가 필요하지 않습니다. 다만 그 포크로 호스팅 서비스를 운영하는 사람은 각자 상용 라이선스를 받아야 합니다.",
             "상용 라이선스와 브랜딩 면제는 별개의 허가입니다. 하나를 받았다고 다른 하나가 포함되지는 않습니다.",
           ],

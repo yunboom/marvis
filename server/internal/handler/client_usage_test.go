@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/marvis-ai/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/middleware"
 )
 
 func ptrInt32(value int32) *int32 { return &value }

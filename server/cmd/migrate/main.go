@@ -13,12 +13,12 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/marvis-ai/marvis/server/internal/attributionbackfill"
-	"github.com/marvis-ai/marvis/server/internal/chatoriginbackfill"
-	"github.com/marvis-ai/marvis/server/internal/dbstartup"
-	"github.com/marvis-ai/marvis/server/internal/logger"
-	"github.com/marvis-ai/marvis/server/internal/migrations"
-	"github.com/marvis-ai/marvis/server/internal/taskusagebackfill"
+	"github.com/yunboom/marvis/server/internal/attributionbackfill"
+	"github.com/yunboom/marvis/server/internal/chatoriginbackfill"
+	"github.com/yunboom/marvis/server/internal/dbstartup"
+	"github.com/yunboom/marvis/server/internal/logger"
+	"github.com/yunboom/marvis/server/internal/migrations"
+	"github.com/yunboom/marvis/server/internal/taskusagebackfill"
 )
 
 // preMigrationHook runs work that must happen before a specific migration is
@@ -747,7 +747,7 @@ func runAttributionStrictHook(ctx context.Context, pool *pgxpool.Pool) error {
 // runners (multi-replica backend Deployment, scale-up, or a manual
 // `migrate up` overlapping with pod startup). The exact value is
 // arbitrary — it just needs to be stable across every process that runs
-// migrations against the same database. See GitHub marvis-ai/marvis#3647.
+// migrations against the same database. See GitHub yunboom/marvis#3647.
 const migrationAdvisoryLockKey int64 = 7244554146635925501
 
 // defaultSchemaMigrationsTable is the unqualified name of the bookkeeping
@@ -917,7 +917,7 @@ func logMigrationNotice(_ *pgconn.PgConn, notice *pgconn.Notice) {
 // processes against the same database with the same options: every
 // caller blocks on pg_advisory_lock, and once it is their turn the
 // already-applied EXISTS check turns each finished migration into a
-// no-op skip. See GitHub marvis-ai/marvis#3647 / MUL-2923.
+// no-op skip. See GitHub yunboom/marvis#3647 / MUL-2923.
 func runMigrations(ctx context.Context, pool *pgxpool.Pool, opts runOptions) error {
 	switch opts.Direction {
 	case "up", "down":

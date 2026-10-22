@@ -843,7 +843,7 @@ func TestResumeWasRejected(t *testing.T) {
 		want      bool
 	}{
 		{
-			// Verbatim from marvis-ai/marvis#5704 (Claude Code 2.1.207,
+			// Verbatim from yunboom/marvis#5704 (Claude Code 2.1.207,
 			// zh-CN). This is the failure the whole signal exists for: the
 			// session belongs to the account the user switched away from, and
 			// claude echoes the requested id back rather than a fresh one.

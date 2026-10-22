@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultCLIConfigPath = ".marvis/config.json"
+	defaultCLIConfigPath = ".marvis-studio/config.json"
 
 	// TaskConfigRootEnv points daemon-managed CLI invocations at a private,
 	// per-task Marvis config directory. It is deliberately Marvis-specific:
@@ -226,8 +226,8 @@ func CLIConfigPath() (string, error) {
 }
 
 // CLIConfigPathForProfile returns the config file path for the given profile.
-// An empty profile returns the default path (~/.marvis/config.json).
-// A named profile returns ~/.marvis/profiles/<name>/config.json.
+// An empty profile returns the default path (~/.marvis-studio/config.json).
+// A named profile returns ~/.marvis-studio/profiles/<name>/config.json.
 // When TaskConfigRootEnv is set by the daemon, the same profile layout is
 // rooted directly below that private task directory instead of the user's home.
 func CLIConfigPathForProfile(profile string) (string, error) {
@@ -249,11 +249,11 @@ func CLIConfigPathForProfile(profile string) (string, error) {
 	if taskLocal {
 		return filepath.Join(root, "profiles", profile, "config.json"), nil
 	}
-	return filepath.Join(root, ".marvis", "profiles", profile, "config.json"), nil
+	return filepath.Join(root, ".marvis-studio", "profiles", profile, "config.json"), nil
 }
 
 // ProfileDir returns the base directory for a profile's state files (pid, log).
-// An empty profile returns ~/.marvis/. A named profile returns ~/.marvis/profiles/<name>/.
+// An empty profile returns ~/.marvis-studio/. A named profile returns ~/.marvis-studio/profiles/<name>/.
 // Task invocations resolve the equivalent paths below TaskConfigRootEnv.
 func ProfileDir(profile string) (string, error) {
 	root, taskLocal, err := marvisConfigRoot()
@@ -269,12 +269,12 @@ func ProfileDir(profile string) (string, error) {
 		if taskLocal {
 			return root, nil
 		}
-		return filepath.Join(root, ".marvis"), nil
+		return filepath.Join(root, ".marvis-studio"), nil
 	}
 	if taskLocal {
 		return filepath.Join(root, "profiles", profile), nil
 	}
-	return filepath.Join(root, ".marvis", "profiles", profile), nil
+	return filepath.Join(root, ".marvis-studio", "profiles", profile), nil
 }
 
 func marvisConfigRoot() (root string, taskLocal bool, err error) {

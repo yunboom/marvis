@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
-	"github.com/marvis-ai/marvis/server/pkg/plugincontract"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/plugincontract"
 )
 
 // These exercise the real outbound path — a live HTTPS server, a real request,

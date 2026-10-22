@@ -5,8 +5,8 @@ import (
 
 	"github.com/oklog/ulid/v2"
 
-	"github.com/marvis-ai/marvis/server/internal/realtime"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/internal/realtime"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // RelayNotifier sends daemon wakeup hints to the local daemon hub and, when

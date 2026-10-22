@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/daemon/processtree"
+	"github.com/yunboom/marvis/server/internal/daemon/processtree"
 )
 
 // gitEnv returns an environment for git subprocesses that contact remotes.
@@ -752,8 +752,8 @@ type WorktreeParams struct {
 	// inside WorkDir instead of a linked worktree whose gitdir lives under the
 	// shared cache. Codex tasks need this because workspace-write keeps a
 	// resolved external worktree gitdir read-only even when it is explicitly
-	// listed as a writable root — on Linux (marvis-ai/marvis#2925) and on the
-	// Windows native sandbox (marvis-ai/marvis#6449).
+	// listed as a writable root — on Linux (yunboom/marvis#2925) and on the
+	// Windows native sandbox (yunboom/marvis#6449).
 	IsolatedGitMetadata bool
 	// Fresh discards what an existing checkout at the target path holds —
 	// uncommitted changes, untracked files, its branch position — and starts

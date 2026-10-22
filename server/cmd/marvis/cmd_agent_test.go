@@ -14,8 +14,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/internal/daemon/execenv"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/daemon/execenv"
 )
 
 // freshAgentEnvSetCmd returns a standalone cobra.Command with the three
@@ -326,7 +326,7 @@ func TestNewAPIClient_LeftoverMarkerActionableError(t *testing.T) {
 // TestResolveWorkspaceID_AgentContextSkipsConfig is a regression test for
 // the cross-workspace contamination bug (#1235). Inside a daemon-spawned
 // agent task (MARVIS_AGENT_ID / MARVIS_TASK_ID set), the CLI must NOT
-// silently read the user-global ~/.marvis/config.json to recover a missing
+// silently read the user-global ~/.marvis-studio/config.json to recover a missing
 // workspace — that fallback is how agent operations leaked into an
 // unrelated workspace when the daemon failed to inject the right value.
 //

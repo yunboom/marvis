@@ -19,8 +19,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/integrations/channel"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/integrations/channel"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // TypeWecom is the channel discriminator for the WeCom smart-bot adapter.

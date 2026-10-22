@@ -30,7 +30,7 @@ func TestCursorRealSupplementReachesTheTurn(t *testing.T) {
 		t.Skipf("cursor-agent %q predates hook additional_context", strings.TrimSpace(string(version)))
 	}
 	relay := filepath.Join(t.TempDir(), "marvis")
-	if out, err := exec.Command("go", "build", "-o", relay, "github.com/marvis-ai/marvis/server/cmd/marvis").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "build", "-o", relay, "github.com/yunboom/marvis/server/cmd/marvis").CombinedOutput(); err != nil {
 		t.Fatalf("build marvis relay: %v\n%s", err, out)
 	}
 

@@ -3,8 +3,8 @@ package daemon
 import (
 	"encoding/json"
 
-	"github.com/marvis-ai/marvis/server/internal/runtimeapps"
-	"github.com/marvis-ai/marvis/server/pkg/remotemcp"
+	"github.com/yunboom/marvis/server/internal/runtimeapps"
+	"github.com/yunboom/marvis/server/pkg/remotemcp"
 )
 
 // AgentEntry describes a single available agent CLI.

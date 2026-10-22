@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/internal/issuestatus"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/issuestatus"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // Pin the legacy category grouping API retained for installed clients.

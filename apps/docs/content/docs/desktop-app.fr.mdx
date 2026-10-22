@@ -49,7 +49,7 @@ La déconnexion efface tous les onglets enregistrés sur la machine : la personn
 Après la connexion, Desktop crée un profil CLI dédié au service Marvis courant et l'utilise pour démarrer le daemon. Le profil se trouve ici :
 
 ```text
-~/.marvis/profiles/desktop-<host>/
+~/.marvis-studio/profiles/desktop-<host>/
 ```
 
 Il ne lit ni n'écrase jamais le profil par défaut que vous utilisez dans le terminal. Si vous démarrez aussi manuellement un autre daemon, Marvis les affiche comme des runtimes distincts.
@@ -88,7 +88,7 @@ Ce sont les emplacements par défaut — si votre répertoire personnel a été 
 ```
 
 <Callout type="warning">
-Il ne s'agit **pas** du `~/.marvis/config.json` du CLI, et les noms de clés diffèrent : le CLI utilise `server_url`, Desktop utilise `apiUrl`. Desktop ne lit jamais la configuration du CLI — il gère un profil de daemon distinct dans `~/.marvis/profiles/desktop-<host>/`. Modifier `config.json` ne change pas le serveur auquel Desktop se connecte.
+Il ne s'agit **pas** du `~/.marvis-studio/config.json` du CLI, et les noms de clés diffèrent : le CLI utilise `server_url`, Desktop utilise `apiUrl`. Desktop ne lit jamais la configuration du CLI — il gère un profil de daemon distinct dans `~/.marvis-studio/profiles/desktop-<host>/`. Modifier `config.json` ne change pas le serveur auquel Desktop se connecte.
 </Callout>
 
 `apiUrl` est l'adresse publique du backend ; elle est obligatoire et doit utiliser `http` ou `https`. Les deux autres URL peuvent être omises — Desktop les déduit automatiquement :
@@ -126,13 +126,13 @@ Desktop ne peut se connecter qu'à des adresses joignables à la fois depuis le 
 
 Deux comportements par défaut des éditeurs Windows produisent silencieusement un fichier que Desktop ne peut pas utiliser :
 
-- **Le Bloc-notes ajoute `.txt`.** Enregistrer sous `desktop.json` peut produire `desktop.json.txt`, que Desktop considère comme introuvable. Activez l'affichage des extensions de noms de fichiers dans l'Explorateur de fichiers, ou choisissez *Tous les fichiers* dans la boîte de dialogue d'enregistrement. Pour voir le vrai nom du fichier, exécutez `Get-ChildItem "$env:USERPROFILE\.marvis" -Filter "desktop.json*"` dans PowerShell — la colonne `Name` doit indiquer exactement `desktop.json`.
+- **Le Bloc-notes ajoute `.txt`.** Enregistrer sous `desktop.json` peut produire `desktop.json.txt`, que Desktop considère comme introuvable. Activez l'affichage des extensions de noms de fichiers dans l'Explorateur de fichiers, ou choisissez *Tous les fichiers* dans la boîte de dialogue d'enregistrement. Pour voir le vrai nom du fichier, exécutez `Get-ChildItem "$env:USERPROFILE\.marvis-studio" -Filter "desktop.json*"` dans PowerShell — la colonne `Name` doit indiquer exactement `desktop.json`.
 - **La redirection PowerShell écrit en UTF-16 ou avec un BOM.** `> desktop.json` et `Out-File` peuvent produire un encodage impossible à analyser, qui se traduit par une erreur de configuration.
 
 Pour éviter ces deux problèmes, créez le fichier depuis PowerShell en une seule étape :
 
 ```powershell
-$dir = "$env:USERPROFILE\.marvis"
+$dir = "$env:USERPROFILE\.marvis-studio"
 New-Item -ItemType Directory -Force $dir | Out-Null
 $json = @'
 {
@@ -159,7 +159,7 @@ C:\Users\<you>\AppData\Local\Programs\@marvisdesktop\resources\app.asar.unpacked
 Get-FileHash .\marvis-cli-<version>-windows-amd64.zip -Algorithm SHA256
 ```
 
-Comparez l'empreinte obtenue avec la ligne correspondante de `checksums.txt` dans la [dernière release](https://github.com/marvis-ai/marvis/releases/latest).
+Comparez l'empreinte obtenue avec la ligne correspondante de `checksums.txt` dans la [dernière release](https://github.com/yunboom/marvis/releases/latest).
 
 **Comment corriger** :
 
@@ -172,7 +172,7 @@ Comparez l'empreinte obtenue avec la ligne correspondante de `checksums.txt` dan
 3. **Signalez le faux positif à Microsoft** sur [Microsoft Security Intelligence — soumettre un fichier](https://www.microsoft.com/en-us/wdsi/filesubmission), en choisissant *Software developer* et *Incorrectly detected as malware*. C'est ce qui permet de retirer la détection pour tous les utilisateurs, généralement en quelques jours.
 
 <Callout type="warning">
-N'ajoutez ces exclusions que si vous avez installé Marvis depuis la [page de téléchargement](https://marvis.ai/download) ou les [releases GitHub](https://github.com/marvis-ai/marvis/releases) et que la somme de contrôle correspond. Une exclusion désactive la protection en temps réel pour tout le contenu de ce dossier.
+N'ajoutez ces exclusions que si vous avez installé Marvis depuis la [page de téléchargement](https://marvis.ai/download) ou les [releases GitHub](https://github.com/yunboom/marvis/releases) et que la somme de contrôle correspond. Une exclusion désactive la protection en temps réel pour tout le contenu de ce dossier.
 </Callout>
 
 ## Étapes suivantes

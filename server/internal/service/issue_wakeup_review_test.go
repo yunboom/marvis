@@ -7,9 +7,9 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/marvis-ai/marvis/server/internal/testutil"
-	"github.com/marvis-ai/marvis/server/internal/util"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/internal/util"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 func TestIssueWakeupLargeSingleFactPreservesReferences(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // insertRuntimeProfileFixture creates a runtime_profile in testWorkspaceID and

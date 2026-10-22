@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marvis-ai/marvis/server/pkg/agent"
-	"github.com/marvis-ai/marvis/server/pkg/protocol"
+	"github.com/yunboom/marvis/server/pkg/agent"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func taskSupplementTestDaemon(t *testing.T, handler http.HandlerFunc) *Daemon {

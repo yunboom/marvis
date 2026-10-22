@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/marvis-ai/marvis/server/internal/metrics"
-	db "github.com/marvis-ai/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/internal/metrics"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
 // The channel-media intent ledger's reconciler settings are fixed constants,

@@ -17,8 +17,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/marvis-ai/marvis/server/internal/cli"
-	"github.com/marvis-ai/marvis/server/internal/daemon"
+	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/daemon"
 )
 
 // TestDaemonAlive locks in the liveness predicate the lifecycle commands rely
@@ -790,7 +790,7 @@ func TestEnumerateDiskUsageRoots(t *testing.T) {
 	redirectTestHome(t, home)
 	t.Setenv("MARVIS_WORKSPACES_ROOT", "")
 
-	// Two profiles configured under ~/.marvis/profiles, but only one has its
+	// Two profiles configured under ~/.marvis-studio/profiles, but only one has its
 	// workspaces root created on disk; the other (never-run) profile is skipped.
 	mkdirProfile(t, home, "desktop-host")
 	mkdirProfile(t, home, "never-ran")
@@ -868,7 +868,7 @@ func valueColumn(t *testing.T, line string) int {
 
 func mkdirProfile(t *testing.T, home, profile string) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Join(home, ".marvis", "profiles", profile), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(home, ".marvis-studio", "profiles", profile), 0o755); err != nil {
 		t.Fatal(err)
 	}
 }
