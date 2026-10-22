@@ -35,7 +35,6 @@ import {
 } from "@marvis/ui/components/ui/context-menu";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { useScrollFade } from "@marvis/ui/hooks/use-scroll-fade";
-import { SIDEBAR_WRAPPER_FILL_CLASS } from "@marvis/ui/components/ui/sidebar";
 import { cn } from "@marvis/ui/lib/utils";
 import { useTabStore, useActiveGroup, type Tab } from "@/stores/tab-store";
 import { paths } from "@marvis/core/paths";
@@ -48,33 +47,6 @@ import { parseIssueWindowPath } from "../../../shared/issue-window";
 
 const TAB_SCROLL_FADE_SIZE = 24;
 const TAB_ENTRY_EASE = [0.22, 1, 0.36, 1] as const;
-
-// Concave tab flares need an opaque backing beneath translucent border arcs
-// to avoid compositing a second keyline over the content ring. Read that backdrop
-// from SIDEBAR_WRAPPER_FILL_CLASS rather than duplicating the wrapper's fill rule.
-// Mask the transparent notch so the backing cannot paint over a neighboring hover
-// pill, while retaining backing beneath the arc's antialiasing.
-const TAB_FLARE_RADIUS = 10;
-const tabFlareGradient = (side: "left" | "right") => {
-  const r = TAB_FLARE_RADIUS;
-  return `radial-gradient(circle at top ${side}, transparent ${r - 1.2}px, var(--surface-border) ${r - 0.8}px, var(--surface-border) ${r - 0.2}px, var(--page-canvas) ${r + 0.2}px)`;
-};
-const tabFlareNotchMask = (side: "left" | "right") => {
-  const r = TAB_FLARE_RADIUS;
-  return `radial-gradient(circle at top ${side}, transparent ${r - 1.6}px, black ${r - 1.2}px)`;
-};
-// The flares are mirror images: the offset overlaps the tab edge by 1px so arc
-// and side border meet, and gradient and mask share the corner the offset picks.
-const tabFlareStyle = (side: "left" | "right"): React.CSSProperties => {
-  const overhang = -TAB_FLARE_RADIUS + 1;
-  const mask = tabFlareNotchMask(side);
-  return {
-    ...(side === "left" ? { left: overhang } : { right: overhang }),
-    backgroundImage: tabFlareGradient(side),
-    maskImage: mask,
-    WebkitMaskImage: mask,
-  };
-};
 
 type TabSnapshot = {
   workspaceSlug: string | null;
@@ -296,14 +268,12 @@ function SortableTabItem({
       data-tab-entering={isEntering ? "true" : undefined}
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
       className={cn(
-        // The 36px frame contains a centered 32px content row and a 4px
-        // bottom connector. Keep the connector clickable without letting it
-        // shift the icon, title, or hover actions below the toolbar center.
-        "group relative flex size-full min-w-0 items-center gap-1.5 px-2.5 pb-1 text-caption transition-colors",
+        // 28px 药丸：图标、标题、悬停操作在顶部条里垂直居中。
+        "group relative flex size-full min-w-0 items-center gap-1.5 rounded-full px-3 text-caption transition-colors duration-(--motion-fast) ease-out",
         "select-none cursor-default",
         isActive
           ? "font-medium text-foreground"
-          : "text-muted-foreground hover:text-sidebar-accent-foreground",
+          : "text-muted-foreground hover:text-foreground",
         isDragging && "opacity-60",
       )}
     >
@@ -323,9 +293,9 @@ function SortableTabItem({
         role="button"
         aria-label={pinLabel}
         title={pinLabel}
-        className="hidden size-3.5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors group-hover:flex hover:bg-muted-foreground/20 hover:text-foreground"
+        className="hidden size-4 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out group-hover:flex hover:bg-surface-selected hover:text-foreground"
       >
-        {tab.pinned ? <PinOff className="size-2.5" /> : <Pin className="size-2.5" />}
+        {tab.pinned ? <PinOff className="size-3" /> : <Pin className="size-3" />}
       </span>
       {showCloseButton && (
         <span
@@ -333,9 +303,9 @@ function SortableTabItem({
           onPointerDown={stopDragOnAction}
           role="button"
           aria-label={closeLabel}
-          className="hidden size-3.5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors group-hover:flex hover:bg-muted-foreground/20 hover:text-foreground"
+          className="hidden size-4 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out group-hover:flex hover:bg-surface-selected hover:text-foreground"
         >
-          <X className="size-2.5" />
+          <X className="size-3" />
         </span>
       )}
     </button>
@@ -347,7 +317,7 @@ function SortableTabItem({
       style={style}
       data-tab-frame
       data-tab-id={tab.id}
-      className={cn("h-9 w-40 min-w-32", isActive && "z-10")}
+      className={cn("h-7 w-40 min-w-32", isActive && "z-10")}
     >
       <motion.div
         className="group/tab relative size-full"
@@ -357,34 +327,20 @@ function SortableTabItem({
         onAnimationComplete={() => setIsEntering(false)}
       >
         {isActive ? (
-          // Merged-tab chrome: a bordered cap, a borderless base whose fill
-          // runs into the content card below (covering its top ring), and two
-          // flares whose arcs hand the keyline over to the card's ring. The
-          // flares overlap the tab edge by 1px so arc and side border meet.
+          // 选中标签：白底药丸 + 控件阴影，浮在灰色外壳上，与 web 分段控件选中项一致。
           <span
             aria-hidden
+            data-tab-pill="active"
             className={cn(
-              "pointer-events-none absolute inset-0",
+              "pointer-events-none absolute inset-x-0.5 inset-y-0 rounded-full bg-background shadow-control",
               isDragging && "opacity-60",
             )}
-          >
-            {/* Keep the fill inside the translucent keyline so it matches the
-                flare arcs and content card ring. */}
-            <span className="absolute inset-x-0 top-0 bottom-2.5 rounded-t-lg border border-b-0 border-surface-border bg-page-canvas bg-clip-padding" />
-            <span className="absolute inset-x-0 bottom-0 h-2.5 bg-page-canvas" />
-            <span
-              className={cn("absolute bottom-0 size-2.5", SIDEBAR_WRAPPER_FILL_CLASS)}
-              style={tabFlareStyle("left")}
-            />
-            <span
-              className={cn("absolute bottom-0 size-2.5", SIDEBAR_WRAPPER_FILL_CLASS)}
-              style={tabFlareStyle("right")}
-            />
-          </span>
+          />
         ) : (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-x-0.5 top-0 bottom-1 rounded-lg bg-sidebar-accent opacity-0 transition-opacity group-hover/tab:opacity-100"
+            data-tab-pill="hover"
+            className="pointer-events-none absolute inset-x-0.5 inset-y-0 rounded-full bg-surface-hover opacity-0 transition-opacity duration-(--motion-fast) ease-out group-hover/tab:opacity-100 group-hover/tab:duration-(--motion-instant)"
           />
         )}
         {showSeparator && (
@@ -393,7 +349,7 @@ function SortableTabItem({
           // arrives rather than lingering 2px off its rounded edge.
           <span
             aria-hidden
-            className="pointer-events-none absolute left-0 top-2 h-4 w-px bg-surface-border transition-opacity group-hover/tab:opacity-0 prev-tab-hover:opacity-0"
+            className="pointer-events-none absolute left-0 top-1.5 h-4 w-px bg-surface-border transition-opacity duration-(--motion-fast) ease-out group-hover/tab:opacity-0 group-hover/tab:duration-(--motion-instant) prev-tab-hover:opacity-0 prev-tab-hover:duration-(--motion-instant)"
           />
         )}
         <ContextMenu>
@@ -445,7 +401,7 @@ function SortableTabItem({
         {showAddedHighlight && (
           <motion.span
             aria-hidden
-            className="pointer-events-none absolute inset-x-0.5 top-0 bottom-1 rounded-lg bg-primary/10 ring-1 ring-inset ring-primary/20"
+            className="pointer-events-none absolute inset-x-0.5 inset-y-0 rounded-full bg-primary/10 ring-1 ring-inset ring-primary/20"
             initial={{ opacity: shouldReduceMotion ? 0.25 : 0.65 }}
             animate={{ opacity: 0 }}
             transition={{ duration: shouldReduceMotion ? 0.16 : 0.42 }}
@@ -491,7 +447,7 @@ function NewTabEdgeFeedback({
       key={`${signal.tabId}-${signal.sequence}`}
       aria-hidden
       data-new-tab-edge-feedback="true"
-      className="pointer-events-none absolute top-1 bottom-1 right-0 z-20 w-8 rounded-r-lg bg-gradient-to-l from-primary/35 via-primary/10 to-transparent"
+      className="pointer-events-none absolute top-1.5 bottom-1.5 right-0 z-20 w-8 rounded-r-full bg-gradient-to-l from-primary/35 via-primary/10 to-transparent"
       initial={{
         opacity: shouldReduceMotion ? 0.45 : 0,
         x: shouldReduceMotion ? 0 : 4,
@@ -543,9 +499,9 @@ function NewTabButton() {
         onClick={handleClick}
         aria-label={newTabLabel}
         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-        className="flex size-7 shrink-0 items-center justify-center self-center rounded-md text-faint-foreground transition-colors hover:bg-muted/50 hover:text-muted-foreground"
+        className="flex size-7 shrink-0 items-center justify-center self-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-surface-hover hover:text-foreground hover:duration-(--motion-instant)"
       >
-        <Plus className="size-3.5" />
+        <Plus className="size-4" />
       </button>
     </TooltipHint>
   );
@@ -646,7 +602,7 @@ export function TabBar() {
   };
 
   return (
-    <div className="flex h-full w-full min-w-0 max-w-full items-center justify-start gap-0.5 px-2">
+    <div className="flex h-full w-full min-w-0 max-w-full items-center justify-start gap-1 px-3.5">
       <div className="relative flex h-full min-w-0 flex-1 items-center">
         <DndContext
           sensors={sensors}
@@ -654,13 +610,12 @@ export function TabBar() {
           modifiers={[restrictToHorizontalAxis, restrictToParentElement]}
           onDragEnd={handleDragEnd}
         >
-          {/* px-4 keeps the active tab's flares inside the scroller's clip
-              (overflow clips at the padding box) and clears the content
-              card's rounded top-left corner below the first tab. */}
+          {/* 药丸从顶部条左缘起排，首个标签与下方主区白卡左缘对齐；py-1 给选中
+              药丸的阴影留出位置，避免被 overflow 裁掉。 */}
           <div
             ref={tabScrollRef}
             data-tab-scroll-container
-            className="no-scrollbar flex h-full min-w-0 flex-1 items-end overflow-x-auto overflow-y-hidden overscroll-x-contain px-4"
+            className="no-scrollbar flex h-full min-w-0 flex-1 items-center overflow-x-auto overflow-y-hidden overscroll-x-contain py-1"
             style={tabFadeStyle}
           >
             <SortableContext items={tabIds} strategy={horizontalListSortingStrategy}>
@@ -690,7 +645,7 @@ export function TabBar() {
                       unpinnedCount > 0 && (
                         <div
                           aria-hidden
-                          className="mx-1 mb-3 h-4 w-px shrink-0 self-end bg-surface-border"
+                          className="mx-1 h-4 w-px shrink-0 self-center bg-surface-border"
                         />
                       )}
                   </Fragment>

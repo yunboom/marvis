@@ -1,5 +1,4 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { motion } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@marvis/ui/lib/utils";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
@@ -37,17 +36,10 @@ import { TabContent } from "./tab-content";
 import { WindowOverlay } from "./window-overlay";
 import { WindowToolbar, WINDOW_TOOLBAR_CLEARANCE } from "./window-toolbar";
 
+// 顶部条高度：红绿灯（trafficLightPosition y=13）、前进后退和标签栏都在这一条里
+// 垂直居中；侧栏浮卡与主区白卡从它下方开始，顶边对齐（globals.css 里侧栏容器的
+// padding-top 与此保持一致）。
 const TOP_BAR_HEIGHT_CLASS = "h-10";
-const toolbarMotion = {
-  type: "spring",
-  stiffness: 420,
-  damping: 38,
-  mass: 0.8,
-} as const;
-
-function SidebarTopSpacer() {
-  return <div className={cn("shrink-0", TOP_BAR_HEIGHT_CLASS)} />;
-}
 
 function useNativeNavigationGestures() {
   const { goBack, goForward } = useTabHistory();
@@ -81,7 +73,7 @@ function MainTopBar({ sidebarMounted }: { sidebarMounted: boolean }) {
       data-slot="main-top-bar"
       data-sidebar-resize-consumer
       className={cn(
-        "relative shrink-0 flex items-center gap-2 transition-[padding-left] duration-200 ease-out motion-reduce:transition-none",
+        "relative shrink-0 flex items-center gap-2 transition-[padding-left] duration-(--motion-base) ease-standard motion-reduce:transition-none",
         TOP_BAR_HEIGHT_CLASS,
       )}
       style={{ paddingLeft: toolbarClearance }}
@@ -106,9 +98,8 @@ function MainTopBar({ sidebarMounted }: { sidebarMounted: boolean }) {
   );
 }
 
-// The canvas hugs the expanded sidebar with a hairline gap. When the sidebar
-// leaves the main flow, the left margin must grow to mirror the fixed mr-2 so
-// the floating canvas sits symmetrically inside the window frame.
+// 主区白卡：与侧栏浮卡同样的 16px 外壳留白、24 圆角、细描边。侧栏的 sidebar-gap
+// 已把 16px 外壳留白放在浮卡左侧，所以无论侧栏展开还是收起，白卡左侧都是 16px。
 function MainCanvas({
   children,
   showWorkspaceLoading,
@@ -116,17 +107,13 @@ function MainCanvas({
   children: React.ReactNode;
   showWorkspaceLoading: boolean;
 }) {
-  const { state, isCompact } = useSidebar();
   const { t } = useT("layout");
-  const sidebarHidden = state === "collapsed" || isCompact;
   const loadingLabel = t(($) => $.workspace_loader.loading_workspace);
 
   return (
-    <motion.div
-      animate={{ marginLeft: sidebarHidden ? 8 : 2 }}
-      className="relative flex flex-1 min-h-0 flex-col overflow-hidden mr-2 mb-2 rounded-xl bg-page-canvas ring-1 ring-surface-border shadow-[var(--surface-shadow)]"
-      initial={false}
-      transition={toolbarMotion}
+    <div
+      data-slot="main-canvas"
+      className="relative mx-4 mb-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-page-canvas"
     >
       {children}
       {showWorkspaceLoading && (
@@ -142,7 +129,7 @@ function MainCanvas({
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -271,7 +258,7 @@ export function DesktopShell() {
           >
             {slug && <GlobalShortcuts />}
             {slug && <WindowToolbar />}
-            {slug && <AppSidebar topSlot={<SidebarTopSpacer />} searchSlot={<SearchTrigger />} />}
+            {slug && <AppSidebar searchSlot={<SearchTrigger />} />}
             {/* Right side: header + content container */}
             <div className="flex flex-1 min-w-0 flex-col">
               <MainTopBar sidebarMounted={Boolean(slug)} />

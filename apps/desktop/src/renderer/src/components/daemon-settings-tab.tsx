@@ -31,7 +31,7 @@ function DiagnosticsRow({
   mono?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[140px_minmax(0,1fr)] items-baseline gap-3 py-1.5">
+    <div className="grid grid-cols-[140px_minmax(0,1fr)] items-baseline gap-3 py-2">
       <span className="text-caption text-muted-foreground">{label}</span>
       <span
         className={cn(
@@ -101,7 +101,7 @@ export function DaemonSettingsTab() {
     >
 
       {status.state === "auth_expired" && (
-        <div className="mt-4 flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3">
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3.5">
           <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
           <div className="min-w-0 flex-1">
             <p className="text-body font-medium text-destructive">
@@ -117,19 +117,19 @@ export function DaemonSettingsTab() {
             onClick={handleReauth}
             disabled={reauthLoading}
           >
-            <LogIn className="size-3.5 mr-1.5" />
+            <LogIn className="size-3.5" />
             {t(($) => $.desktop.daemon.signin_again)}
           </Button>
         </div>
       )}
 
       {externallyManaged && (
-        <div className="mt-4 flex items-start gap-3 rounded-lg border bg-muted/30 px-4 py-3">
+        <div className="mt-4 flex items-start gap-3 rounded-xl bg-surface-sunken px-4 py-3.5">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <p className="min-w-0 text-body text-muted-foreground">
             {t(($) => $.desktop.daemon.external_description_before)}{" "}
-            <code className="font-mono text-caption">marvis daemon start</code> /{" "}
-            <code className="font-mono text-caption">marvis daemon stop</code>
+            <code className="rounded-xs bg-field px-1 font-mono text-caption">marvis daemon start</code> /{" "}
+            <code className="rounded-xs bg-field px-1 font-mono text-caption">marvis daemon stop</code>
             {t(($) => $.desktop.daemon.external_description_after)}
           </p>
         </div>
