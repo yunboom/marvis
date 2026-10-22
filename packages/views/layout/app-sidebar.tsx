@@ -433,6 +433,9 @@ interface AppSidebarProps {
   headerStyle?: React.CSSProperties;
 }
 
+// Product wordmark beside the logo; a brand name, so it is not translated.
+const BRAND_NAME = "Marvis";
+
 export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }: AppSidebarProps = {}) {
   const { t } = useT("layout");
   const { pathname, push } = useNavigation();
@@ -618,7 +621,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
           <div className="flex h-10 items-center gap-2.5 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
             <MarvisIcon className="size-6 shrink-0 text-foreground" />
             <span className="text-title-lg font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
-              Marvis
+              {BRAND_NAME}
             </span>
           </div>
           <SidebarMenu>
