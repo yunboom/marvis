@@ -49,7 +49,7 @@ Desktop はワークスペースごとにタブを保存します。たとえば
 サインイン後、Desktop は現在の Marvis サービス専用の CLI プロファイルを作成し、それを使ってデーモンを起動します。プロファイルの場所:
 
 ```text
-~/.marvis-studio/profiles/desktop-<host>/
+~/.marvis/profiles/desktop-<host>/
 ```
 
 このプロファイルが、ターミナルで使っているデフォルトのプロファイルを読み取ったり上書きしたりすることはありません。別のデーモンを手動で起動した場合、Marvis はそれらを別々のランタイムとして表示します。
@@ -88,7 +88,7 @@ Desktop はデフォルトで Marvis Cloud に接続します。セルフホス�
 ```
 
 <Callout type="warning">
-これは CLI の `~/.marvis-studio/config.json` と**別のファイル**で、キー名も異なります: CLI は `server_url`、Desktop は `apiUrl` を使います。Desktop は CLI の設定を読みません。`~/.marvis-studio/profiles/desktop-<host>/` の下に専用の daemon プロファイルを管理します。`config.json` を編集しても、Desktop の接続先は変わりません。
+これは CLI の `~/.marvis/config.json` と**別のファイル**で、キー名も異なります: CLI は `server_url`、Desktop は `apiUrl` を使います。Desktop は CLI の設定を読みません。`~/.marvis/profiles/desktop-<host>/` の下に専用の daemon プロファイルを管理します。`config.json` を編集しても、Desktop の接続先は変わりません。
 </Callout>
 
 `apiUrl` はバックエンドの公開アドレスです。必須で、`http` または `https` を使う必要があります。残りの 2 つのアドレスは省略でき、Desktop が自動で導出します:
@@ -126,13 +126,13 @@ Desktop が接続できるのは、ブラウザと実行マシンの両方から
 
 Windows では、エディタの 2 つのデフォルト動作が Desktop の読めないファイルを気づかないうちに作ってしまいます:
 
-- **メモ帳は `.txt` を付け足します。** `desktop.json` として保存したつもりでも実際には `desktop.json.txt` になることがあり、Desktop はファイルが見つからないものとして扱います。エクスプローラーでファイル名拡張子の表示を有効にするか、保存ダイアログで*すべてのファイル*を選んでください。実際のファイル名を確認するには、PowerShell で `Get-ChildItem "$env:USERPROFILE\.marvis-studio" -Filter "desktop.json*"` を実行します。`Name` 列がちょうど `desktop.json` になっている必要があります。
+- **メモ帳は `.txt` を付け足します。** `desktop.json` として保存したつもりでも実際には `desktop.json.txt` になることがあり、Desktop はファイルが見つからないものとして扱います。エクスプローラーでファイル名拡張子の表示を有効にするか、保存ダイアログで*すべてのファイル*を選んでください。実際のファイル名を確認するには、PowerShell で `Get-ChildItem "$env:USERPROFILE\.marvis" -Filter "desktop.json*"` を実行します。`Name` 列がちょうど `desktop.json` になっている必要があります。
 - **PowerShell のリダイレクトは UTF-16 や BOM 付きで書き込みます。** `> desktop.json` や `Out-File` はパースできないエンコーディングを生成することがあり、設定エラーとして現れます。
 
 どちらも避けるには、PowerShell で一度に作成します:
 
 ```powershell
-$dir = "$env:USERPROFILE\.marvis-studio"
+$dir = "$env:USERPROFILE\.marvis"
 New-Item -ItemType Directory -Force $dir | Out-Null
 $json = @'
 {

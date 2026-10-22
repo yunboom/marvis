@@ -1,6 +1,6 @@
 {
   "name": "@marvis/desktop",
-  "productName": "Marvis Studio",
+  "productName": "Marvis",
   "version": "0.6.5",
   "private": true,
   "description": "Marvis Desktop — native desktop client for the Marvis platform.",

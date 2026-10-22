@@ -197,7 +197,7 @@ Les scripts doivent utiliser la sortie JSON plutôt que d'analyser les tableaux 
 
 ## Profils et configuration
 
-La configuration par défaut se trouve dans `~/.marvis-studio/config.json`. Utilisez `--profile <name>` pour isoler un ensemble distinct d'adresse de serveur, de jeton, d'espace de travail par défaut et d'état du daemon :
+La configuration par défaut se trouve dans `~/.marvis/config.json`. Utilisez `--profile <name>` pour isoler un ensemble distinct d'adresse de serveur, de jeton, d'espace de travail par défaut et d'état du daemon :
 
 ```bash
 marvis setup self-host --profile staging \
@@ -207,7 +207,7 @@ marvis setup self-host --profile staging \
 marvis issue list --profile staging
 ```
 
-Les profils nommés se trouvent dans `~/.marvis-studio/profiles/<name>/config.json`. Inspectez les valeurs actuelles :
+Les profils nommés se trouvent dans `~/.marvis/profiles/<name>/config.json`. Inspectez les valeurs actuelles :
 
 ```bash
 marvis config show

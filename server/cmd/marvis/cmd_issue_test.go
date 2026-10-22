@@ -4183,7 +4183,7 @@ func TestIssueReadCommandsUseInjectedTaskToken(t *testing.T) {
 	t.Setenv("MARVIS_WORKSPACE_ID", "ws-task")
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", t.TempDir())
 
-	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -4250,7 +4250,7 @@ func TestIssueReadCommandsFailClosedWithoutTaskToken(t *testing.T) {
 	t.Setenv("MARVIS_WORKSPACE_ID", "ws-task")
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", t.TempDir())
 
-	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}

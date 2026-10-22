@@ -197,7 +197,7 @@ marvis agent list --output json
 
 ## Profile 与配置
 
-默认配置保存在 `~/.marvis-studio/config.json`。使用 `--profile <name>` 可以隔离另一套服务地址、令牌、默认工作区和守护进程状态：
+默认配置保存在 `~/.marvis/config.json`。使用 `--profile <name>` 可以隔离另一套服务地址、令牌、默认工作区和守护进程状态：
 
 ```bash
 marvis setup self-host --profile staging \
@@ -207,7 +207,7 @@ marvis setup self-host --profile staging \
 marvis issue list --profile staging
 ```
 
-命名 profile 保存在 `~/.marvis-studio/profiles/<name>/config.json`。查看当前值：
+命名 profile 保存在 `~/.marvis/profiles/<name>/config.json`。查看当前值：
 
 ```bash
 marvis config show

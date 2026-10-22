@@ -506,7 +506,7 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	legacyDaemonIDs := LegacyDaemonIDs(host, profile)
 	// Pre-change (#1220) daemon identity was stored per profile, which means
 	// the same machine could end up with multiple leftover daemon.id files
-	// — e.g. ~/.marvis-studio/daemon.id (default) plus ~/.marvis-studio/profiles/<x>/
+	// — e.g. ~/.marvis/daemon.id (default) plus ~/.marvis/profiles/<x>/
 	// daemon.id. Surface those UUIDs so the server can merge their runtime
 	// rows into the canonical machine UUID. Fatal-free: a broken profiles
 	// dir shouldn't block startup.
@@ -830,7 +830,7 @@ func shellArgsFromEnv(name string) ([]string, error) {
 // On Windows this deliberately keeps the stable discovered junction path;
 // resolveAgentEntryWithHeal follows it for each launch so installer upgrades
 // that retarget a still-live junction take effect without a daemon restart.
-// When ~/.marvis-studio/hooks shadows a real agent binary, skip that hooks directory:
+// When ~/.marvis/hooks shadows a real agent binary, skip that hooks directory:
 // previously generated hook wrappers can execute the same command name and
 // recurse forever if the daemon records or launches the wrapper.
 func resolveAgentExecutablePath(cmd string) (string, error) {
@@ -864,7 +864,7 @@ func agentExecutablePresent(path string) bool {
 
 // reresolveAgentCommand re-runs the startup resolution for a single agent
 // command name, returning the freshly resolved absolute path. It mirrors the
-// probe() order in LoadConfig: exec.LookPath (with the ~/.marvis-studio/hooks
+// probe() order in LoadConfig: exec.LookPath (with the ~/.marvis/hooks
 // exclusion preserved via resolveAgentExecutablePath) first, then the login
 // shell fallback for a bare command name a GUI-launched daemon can't see on
 // its own PATH. It is only called on the miss path — when a previously pinned
@@ -918,7 +918,7 @@ func isMarvisHooksDir(dir string) bool {
 	if err != nil || home == "" {
 		return false
 	}
-	return samePathDir(dir, filepath.Join(home, ".marvis-studio", "hooks"))
+	return samePathDir(dir, filepath.Join(home, ".marvis", "hooks"))
 }
 
 func samePathDir(a, b string) bool {
@@ -1392,7 +1392,7 @@ var resolveAgentsViaLoginShell = func(names []string) map[string]string {
 //  5. canonicalises the directory via `cd ... && pwd -P` so symlinked prefix
 //     dirs (fnm/nvm/volta) collapse to stable paths while the invoked command
 //     name is kept,
-//  6. if the resolved path lives in ~/.marvis-studio/hooks, searches the same
+//  6. if the resolved path lives in ~/.marvis/hooks, searches the same
 //     shell-expanded PATH for the first executable outside that hooks dir,
 //  7. prints `<name>\t<canonical_path>` one entry per line for the caller.
 //
@@ -1424,7 +1424,7 @@ func buildLoginShellResolveScript(names []string) string {
 	b.WriteString("  case \"$p\" in /*) ;; *) continue ;; esac\n")
 	b.WriteString("  d=$(dirname \"$p\") && f=$(basename \"$p\") && c=$(cd \"$d\" 2>/dev/null && pwd -P) || continue\n")
 	b.WriteString("  hc=\"\"\n")
-	b.WriteString("  if [ -n \"${HOME:-}\" ]; then hd=\"$HOME/.marvis-studio/hooks\"; hc=$(cd \"$hd\" 2>/dev/null && pwd -P) || hc=\"\"; fi\n")
+	b.WriteString("  if [ -n \"${HOME:-}\" ]; then hd=\"$HOME/.marvis/hooks\"; hc=$(cd \"$hd\" 2>/dev/null && pwd -P) || hc=\"\"; fi\n")
 	b.WriteString("  if [ -n \"$hc\" ] && [ \"$c\" = \"$hc\" ]; then\n")
 	b.WriteString("    oldIFS=$IFS; IFS=:\n")
 	b.WriteString("    for d2 in $PATH; do\n")

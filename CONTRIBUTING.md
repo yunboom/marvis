@@ -134,7 +134,7 @@ Three properties are worth knowing because the old flow lacked them:
 - **API, Web and Desktop renderer ports, database names and profiles are allocated, not recomputed.** The
   allocator starts from this directory's path hash, so a checkout keeps the
   numbers it has always had, and moves only when the registry or a live
-  listener says the slot is taken. The registry lives in `~/.marvis-studio/dev/`;
+  listener says the slot is taken. The registry lives in `~/.marvis/dev/`;
   deleting it and re-running `make up` is a supported recovery.
 - **Nothing reports success for something it has not reached.** The database is
   created and verified through `DATABASE_URL` — the same string the backend
@@ -470,15 +470,15 @@ Log in with `dev@localhost` and `888888`.
 ### Isolation Guarantee
 
 Nothing in this flow touches the system-installed `marvis` or the default
-`~/.marvis-studio/config.json`:
+`~/.marvis/config.json`:
 
 | Resource | System / Production | Local Dev (per environment) |
 |---|---|---|
-| Config | `~/.marvis-studio/config.json` | `~/.marvis-studio/profiles/dev-<slug>-<offset>/config.json` |
-| Daemon PID | `~/.marvis-studio/daemon.pid` | `~/.marvis-studio/profiles/dev-<slug>-<offset>/daemon.pid` |
+| Config | `~/.marvis/config.json` | `~/.marvis/profiles/dev-<slug>-<offset>/config.json` |
+| Daemon PID | `~/.marvis/daemon.pid` | `~/.marvis/profiles/dev-<slug>-<offset>/daemon.pid` |
 | Workspaces dir | `~/marvis_workspaces/` | `~/marvis_workspaces_dev-<slug>-<offset>/` |
 | Database | remote / production | local: `marvis_<slug>_<offset>` |
-| Registry | — | `~/.marvis-studio/dev/envs/<name>/` |
+| Registry | — | `~/.marvis/dev/envs/<name>/` |
 | Desktop profile | `desktop-api.marvis.ai` | `desktop-localhost-<port>` |
 
 Multiple environments run simultaneously without conflict; `make list` shows

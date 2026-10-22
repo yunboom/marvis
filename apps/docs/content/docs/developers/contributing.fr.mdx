@@ -82,7 +82,7 @@ make build            # Compile les binaires server, CLI et migrate
 ```
 
 `make up` traite un environnement comme un objet nommé : il alloue sous verrou les ports de l'API, de Web et du renderer Desktop,
-le nom de la base de données et le profil CLI, puis les enregistre dans `~/.marvis-studio/dev/`,
+le nom de la base de données et le profil CLI, puis les enregistre dans `~/.marvis/dev/`,
 de sorte que deux checkouts ne peuvent pas occuper le même emplacement sans que l'un d'eux en soit averti.
 Il vérifie la base de données via `DATABASE_URL` et le backend via
 `GET /health`, qui renvoie `pid`, `commit` et `started_at` — une simple réponse 200

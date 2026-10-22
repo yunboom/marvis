@@ -41,7 +41,7 @@ export async function loadRuntimeConfig(options: {
 }
 
 export function desktopConfigPath(): string {
-  return join(app.getPath("home"), ".marvis-studio", "desktop.json");
+  return join(app.getPath("home"), ".marvis", "desktop.json");
 }
 
 function isMissingFileError(err: unknown): boolean {

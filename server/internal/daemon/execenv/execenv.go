@@ -281,7 +281,7 @@ type Environment struct {
 	LocalDirectory bool
 	// MarvisConfigRoot is the private per-task config directory exported to
 	// child CLI invocations. It prevents implicit discovery of the daemon
-	// owner's ~/.marvis-studio profile without changing the provider-facing HOME.
+	// owner's ~/.marvis profile without changing the provider-facing HOME.
 	MarvisConfigRoot string
 	// LocalWorktree is set when the task runs in worktree mode against a
 	// local_directory resource. The daemon calls Finalize on it after the

@@ -38,34 +38,6 @@ KEEP = {
 }
 
 
-# Machine-level identifiers moved off the names Tencent Marvis.app occupies.
-STUDIO_RULES = [
-    # Home directory, in docs, help text and shell / PowerShell scripts.
-    (re.compile(r"~/\.marvis(?![\w-])"), "~/.marvis-studio"),
-    (
-        re.compile(r"((?:\$HOME|\$\{HOME\}|%USERPROFILE%|\$env:USERPROFILE)[/\\])\.marvis(?![\w-])"),
-        r"\1.marvis-studio",
-    ),
-    # Home directory joined in Go and TypeScript code.
-    (
-        re.compile(r'((?:homedir\(\)|getPath\("home"\)|\bhome|\bhomeDir|\bownerHome|\broot|\btmp),\s*)"\.marvis"'),
-        r'\1".marvis-studio"',
-    ),
-    (re.compile(r'"\.marvis/config\.json"'), '".marvis-studio/config.json"'),
-    # Profiles only ever live under the home directory.
-    (re.compile(r'"\.marvis", "profiles"'), '".marvis-studio", "profiles"'),
-    # Desktop deep-link scheme.
-    (re.compile(r"\bmarvis://"), "marvis-studio://"),
-    (re.compile(r'const PROTOCOL = "marvis";'), 'const PROTOCOL = "marvis-studio";'),
-    (re.compile(r"(schemes:\n\s*- )marvis\n"), r"\1marvis-studio\n"),
-    # Packaged desktop app name (bundle name, userData dir, WM_CLASS).
-    (re.compile(r"^productName: Marvis$", re.M), "productName: Marvis Studio"),
-    (re.compile(r'"productName": "Marvis"'), '"productName": "Marvis Studio"'),
-    (re.compile(r'app\.setName\("Marvis"\)'), 'app.setName("Marvis Studio")'),
-    (re.compile(r"StartupWMClass: Marvis$", re.M), "StartupWMClass: Marvis Studio"),
-    (re.compile(r"(protocols:\n\s*- name: )Marvis\n"), r"\1Marvis Studio\n"),
-]
-
 # This fork lives at github.com/yunboom/marvis. Point the main repository (Go
 # module path, clone / issue / release / raw-install URLs), the images and
 # chart its CI publishes, the Homebrew tap, the release-job owner guard, and the
@@ -128,7 +100,7 @@ def apply_studio_rules() -> int:
         except UnicodeDecodeError:
             continue
         result = source
-        for pattern, replacement in STUDIO_RULES + FORK_RULES:
+        for pattern, replacement in FORK_RULES:
             result = pattern.sub(replacement, result)
         if result != source:
             with open(path, "w", encoding="utf-8") as f:

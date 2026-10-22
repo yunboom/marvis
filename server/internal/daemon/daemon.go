@@ -6482,7 +6482,7 @@ func providerNeedsInlineSystemPrompt(provider string) bool {
 // back to a fresh Prepare (GitHub #3854).
 //
 // Pi and OMP are the exception. Their opaque session id is an absolute JSONL
-// path under ~/.marvis-studio/pi-sessions, and the backend passes that path directly
+// path under ~/.marvis/pi-sessions, and the backend passes that path directly
 // to --session. The transcript remains resumable when only the task workdir
 // changes, so binding it to workdir reuse discards healthy conversation history
 // and forces the model to reconstruct it through `marvis chat history`.

@@ -519,7 +519,7 @@ func TestLoadConfig_SkipsMarvisHooksShadowingAgentBinaries(t *testing.T) {
 
 	home := t.TempDir()
 	redirectTestHome(t, home)
-	hooksDir := filepath.Join(home, ".marvis-studio", "hooks")
+	hooksDir := filepath.Join(home, ".marvis", "hooks")
 	if err := os.MkdirAll(hooksDir, 0o755); err != nil {
 		t.Fatalf("create hooks dir: %v", err)
 	}
@@ -579,7 +579,7 @@ func TestLoadConfig_SkipsMarvisHooksFromLoginShellFallback(t *testing.T) {
 
 	home := t.TempDir()
 	redirectTestHome(t, home)
-	hooksDir := filepath.Join(home, ".marvis-studio", "hooks")
+	hooksDir := filepath.Join(home, ".marvis", "hooks")
 	if err := os.MkdirAll(hooksDir, 0o755); err != nil {
 		t.Fatalf("create hooks dir: %v", err)
 	}
@@ -1856,7 +1856,7 @@ func TestLoadConfig_BackendOverrides_MalformedConfigFileNonFatal(t *testing.T) {
 	redirectTestHome(t, homeDir)
 
 	// Write malformed JSON.
-	cfgDir := filepath.Join(homeDir, ".marvis-studio")
+	cfgDir := filepath.Join(homeDir, ".marvis")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatal(err)
 	}

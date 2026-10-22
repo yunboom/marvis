@@ -23,7 +23,7 @@ func TestEnsureDaemonID_Persists(t *testing.T) {
 		t.Fatalf("EnsureDaemonID returned non-UUID: %q", first)
 	}
 
-	path := filepath.Join(home, ".marvis-studio", "daemon.id")
+	path := filepath.Join(home, ".marvis", "daemon.id")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("daemon.id not written: %v", err)
@@ -58,8 +58,8 @@ func TestEnsureDaemonID_SharedAcrossProfiles(t *testing.T) {
 	}
 
 	// Profile-scoped file must not be created under the new layout — the
-	// only source of truth is ~/.marvis-studio/daemon.id.
-	profileFile := filepath.Join(home, ".marvis-studio", "profiles", "staging", "daemon.id")
+	// only source of truth is ~/.marvis/daemon.id.
+	profileFile := filepath.Join(home, ".marvis", "profiles", "staging", "daemon.id")
 	if _, err := os.Stat(profileFile); !os.IsNotExist(err) {
 		t.Fatalf("profile-scoped daemon.id should not be created, stat err: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestEnsureDaemonID_PromotesPreChangeProfileFile(t *testing.T) {
 
 	// Seed a per-profile daemon.id the way pre-#1220 daemons laid it out.
 	legacyID := uuid.Must(uuid.NewV7()).String()
-	profileDir := filepath.Join(home, ".marvis-studio", "profiles", "staging")
+	profileDir := filepath.Join(home, ".marvis", "profiles", "staging")
 	if err := os.MkdirAll(profileDir, 0o755); err != nil {
 		t.Fatalf("mkdir profile: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestEnsureDaemonID_PromotesPreChangeProfileFile(t *testing.T) {
 	}
 
 	// The canonical file now holds that same UUID.
-	data, err := os.ReadFile(filepath.Join(home, ".marvis-studio", "daemon.id"))
+	data, err := os.ReadFile(filepath.Join(home, ".marvis", "daemon.id"))
 	if err != nil {
 		t.Fatalf("read canonical file: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestEnsureDaemonID_RegeneratesCorruptFile(t *testing.T) {
 	home := t.TempDir()
 	redirectTestHome(t, home)
 
-	dir := filepath.Join(home, ".marvis-studio")
+	dir := filepath.Join(home, ".marvis")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestLegacyDaemonUUIDs_ScansProfileDirs(t *testing.T) {
 	uuidA := uuid.Must(uuid.NewV7()).String()
 	uuidB := uuid.Must(uuid.NewV7()).String()
 	for name, id := range map[string]string{"prod": uuidA, "desktop-marvis": uuidB} {
-		dir := filepath.Join(home, ".marvis-studio", "profiles", name)
+		dir := filepath.Join(home, ".marvis", "profiles", name)
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			t.Fatalf("mkdir %s: %v", name, err)
 		}
@@ -144,7 +144,7 @@ func TestLegacyDaemonUUIDs_ScansProfileDirs(t *testing.T) {
 	}
 
 	// A profile directory with a corrupt file must be skipped, not fail.
-	corruptDir := filepath.Join(home, ".marvis-studio", "profiles", "corrupt")
+	corruptDir := filepath.Join(home, ".marvis", "profiles", "corrupt")
 	if err := os.MkdirAll(corruptDir, 0o755); err != nil {
 		t.Fatalf("mkdir corrupt: %v", err)
 	}

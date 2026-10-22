@@ -36,8 +36,8 @@ import { Callout } from "fumadocs-ui/components/callout";
 运行 `marvis login` 时，CLI 会通过浏览器完成登录，再创建一个有效期为 90 天的 PAT，保存到当前 profile 的配置文件：
 
 ```text
-~/.marvis-studio/config.json
-~/.marvis-studio/profiles/<name>/config.json
+~/.marvis/config.json
+~/.marvis/profiles/<name>/config.json
 ```
 
 守护进程使用同一个 PAT 连接 Marvis。带过期时间的 `mul_` PAT 在剩余有效期不足 7 天时自动续期，延长到当时起 90 天后。续期失败不会改变令牌本身；令牌已经过期或被吊销时，需要重新运行 `marvis login`。

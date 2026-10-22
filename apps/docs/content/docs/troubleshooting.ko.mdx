@@ -246,9 +246,9 @@ netstat -ano | findstr :8080       # Windows
 | --- | --- |
 | 백그라운드 데몬 | `marvis daemon logs --lines 100` |
 | 데몬 로그 실시간 확인 | `marvis daemon logs --follow` |
-| 기본 profile 로그 파일 | `~/.marvis-studio/daemon.log` |
-| 기본 profile 시작 또는 crash 로그 | `~/.marvis-studio/daemon.err.log` |
-| 이름 있는 profile | `~/.marvis-studio/profiles/<name>/` 아래의 해당 로그 |
+| 기본 profile 로그 파일 | `~/.marvis/daemon.log` |
+| 기본 profile 시작 또는 crash 로그 | `~/.marvis/daemon.err.log` |
+| 이름 있는 profile | `~/.marvis/profiles/<name>/` 아래의 해당 로그 |
 | Docker backend | `docker compose -f docker-compose.selfhost.yml logs -f backend` |
 | 브라우저 | 개발자 도구의 Console과 Network |
 

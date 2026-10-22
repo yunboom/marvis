@@ -124,7 +124,7 @@ if (process.platform !== "win32") {
   ]);
 }
 
-const PROTOCOL = "marvis-studio";
+const PROTOCOL = "marvis";
 const devLog = is.dev ? createBestEffortDevLog() : undefined;
 
 // Where the main process parks a freeze/crash breadcrumb until the next
@@ -193,14 +193,14 @@ function handleDeepLink(url: string): void {
     const parsed = new URL(url);
     if (parsed.protocol !== `${PROTOCOL}:`) return;
 
-    // marvis-studio://auth/callback?token=<jwt>
+    // marvis://auth/callback?token=<jwt>
     if (parsed.hostname === "auth" && parsed.pathname === "/callback") {
       const token = parsed.searchParams.get("token");
       if (token) dispatchToMainRenderer("auth:token", token);
       return;
     }
 
-    // marvis-studio://invite/<invitationId>
+    // marvis://invite/<invitationId>
     // Dispatched from the web invite page when the user chooses "Open in
     // desktop app". The renderer opens the invite overlay — no tab, no
     // route persistence, so deep-linking the same invite twice stays safe.
@@ -574,7 +574,7 @@ if (is.dev) {
   // to "Marvis", but anchoring it here makes WM_CLASS ↔ StartupWMClass
   // (declared in electron-builder.yml) survive a regression in
   // productName / the build pipeline. Must run before requestSingleInstanceLock().
-  app.setName("Marvis Studio");
+  app.setName("Marvis");
 }
 
 // --- Protocol registration -----------------------------------------------

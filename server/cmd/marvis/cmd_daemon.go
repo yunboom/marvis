@@ -81,7 +81,7 @@ var daemonDiskUsageCmd = &cobra.Command{
 		"Default view is per-run, sorted by size descending. --by-workspace switches to a per-workspace summary;\n" +
 		"--top N keeps only the largest N entries.\n\n" +
 		"By default only the current profile's root is scanned. --all-profiles aggregates across every workspace\n" +
-		"root — the default root plus each ~/.marvis-studio/profiles/* root, including the Desktop app's dedicated\n" +
+		"root — the default root plus each ~/.marvis/profiles/* root, including the Desktop app's dedicated\n" +
 		"`desktop-<host>` root — and prints a per-root breakdown with a combined grand total. In that mode --top\n" +
 		"applies within each root and --workspaces-root is not allowed.\n\n" +
 		"Bytes are split into total and the artifact-cleanable subset (node_modules, .next, .turbo by default,\n" +
@@ -142,7 +142,7 @@ func init() {
 	df.Int("top", 0, "Keep only the largest N entries (per root in --all-profiles mode)")
 	df.String("output", "table", "Output format: table or json")
 	df.String("workspaces-root", "", "Override the workspaces root path (default: same as the daemon)")
-	df.Bool("all-profiles", false, "Scan every workspace root (default root + all ~/.marvis-studio/profiles/* roots, incl. the Desktop app's) and report a combined total")
+	df.Bool("all-profiles", false, "Scan every workspace root (default root + all ~/.marvis/profiles/* roots, incl. the Desktop app's) and report a combined total")
 
 	daemonCmd.AddCommand(daemonStartCmd)
 	daemonCmd.AddCommand(daemonStopCmd)
@@ -187,7 +187,7 @@ func daemonRuntimeProbeFromAgents(agents map[string]daemon.AgentEntry) daemonRun
 }
 
 // daemonDirForProfile returns the state directory for the given profile.
-// Empty profile → ~/.marvis-studio/, named profile → ~/.marvis-studio/profiles/<name>/.
+// Empty profile → ~/.marvis/, named profile → ~/.marvis/profiles/<name>/.
 func daemonDirForProfile(profile string) string {
 	dir, err := cli.ProfileDir(profile)
 	if err != nil {
@@ -380,7 +380,7 @@ func daemonIdentityMismatch(health map[string]any, profile string, port int) err
 }
 
 // unknownProfileError reports an explicitly named --profile that has no
-// directory under ~/.marvis-studio/profiles. It carries the known profile names so
+// directory under ~/.marvis/profiles. It carries the known profile names so
 // both the text and JSON renderings can list them without re-reading the disk.
 type unknownProfileError struct {
 	Profile string
@@ -420,7 +420,7 @@ const profileConfigFileName = "config.json"
 // The name is resolved through the same path logic the config layer uses
 // rather than matched against a flat directory listing, because a profile name
 // may contain separators: `marvis --profile team/dev config set ...` creates
-// ~/.marvis-studio/profiles/team/dev. Matching against top-level entries would
+// ~/.marvis/profiles/team/dev. Matching against top-level entries would
 // reject that profile while offering its parent "team" as a suggestion.
 func profileExists(profile string) (bool, error) {
 	dir, err := cli.ProfileDir(profile)
@@ -489,7 +489,7 @@ func knownProfiles() ([]string, error) {
 // port (#6694). Failing loudly with the known names turns that dead end into a
 // one-glance fix.
 //
-// The default profile is never validated: it owns ~/.marvis-studio directly, has no
+// The default profile is never validated: it owns ~/.marvis directly, has no
 // entry under profiles/, and is always legitimate.
 //
 // Callers must invoke this AFTER their daemon-managed-task guard
@@ -1610,8 +1610,8 @@ func profileLabel(profile string) string {
 }
 
 // daemonLogSourcePath resolves the daemon.log path for a profile —
-// ~/.marvis-studio/daemon.log for the default profile,
-// ~/.marvis-studio/profiles/<name>/daemon.log for a named one — and guarantees it is
+// ~/.marvis/daemon.log for the default profile,
+// ~/.marvis/profiles/<name>/daemon.log for a named one — and guarantees it is
 // absolute, because this path is shown to the user to paste into an editor or
 // another shell.
 //
@@ -1923,7 +1923,7 @@ func runDaemonDiskUsage(cmd *cobra.Command, _ []string) error {
 
 // checkTaskDiskUsageScope keeps a managed task's disk-usage view inside the
 // daemon root that hosts it. Each rejected input widens the report past that
-// boundary: --all-profiles enumerates ~/.marvis-studio/profiles and discloses the
+// boundary: --all-profiles enumerates ~/.marvis/profiles and discloses the
 // Owner's profile names, while --workspaces-root and --profile aim the scan at
 // a directory this daemon does not manage.
 func checkTaskDiskUsageScope(profile, rootOverride string, allProfiles bool) error {
@@ -2026,7 +2026,7 @@ func newParentStatusFetcher(cmd *cobra.Command, profile string) daemon.ParentSta
 }
 
 // runDaemonDiskUsageAggregate scans every workspace root (the default root plus
-// each ~/.marvis-studio/profiles/* root) and renders a per-root breakdown with a
+// each ~/.marvis/profiles/* root) and renders a per-root breakdown with a
 // combined grand total. This is the path that surfaces the Desktop app's
 // `desktop-<host>` root, which the default single-root scan never sees.
 func runDaemonDiskUsageAggregate(cmd *cobra.Command, byWorkspace bool, top int, output string) error {
@@ -2072,7 +2072,7 @@ func runDaemonDiskUsageAggregate(cmd *cobra.Command, byWorkspace bool, top int, 
 
 // enumerateDiskUsageRoots returns the ordered, de-duplicated set of workspace
 // roots to scan in --all-profiles mode: the default root first (always, for
-// orientation even when empty), then each ~/.marvis-studio/profiles/* root that
+// orientation even when empty), then each ~/.marvis/profiles/* root that
 // exists on disk, sorted by profile name. Roots that resolve to the same path
 // (e.g. when MARVIS_WORKSPACES_ROOT pins every profile to one directory) are
 // collapsed to a single entry.
@@ -2245,7 +2245,7 @@ func printDiskUsageOtherRootsHint(w io.Writer, report daemon.DiskUsageReport, pr
 	if rootOverride != "" {
 		return
 	}
-	// The suggestions are built by listing ~/.marvis-studio/profiles, so printing
+	// The suggestions are built by listing ~/.marvis/profiles, so printing
 	// them inside a task would disclose the Owner's profile names — exactly
 	// what rejecting --all-profiles prevents — and every command they suggest
 	// is rejected there anyway.
@@ -2374,7 +2374,7 @@ func profilesRootDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".marvis-studio", "profiles"), nil
+	return filepath.Join(home, ".marvis", "profiles"), nil
 }
 
 func samePath(a, b string) bool {

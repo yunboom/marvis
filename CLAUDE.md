@@ -17,15 +17,12 @@
 - 改名由 `scripts/rebrand-marvis.py` 完成，脚本幂等，只保留以下文件里的旧名：脚本本身、本文件、`server/migrations/589_rebrand_marvis.*.sql`。新增必须保留旧名的文件时，同步加进脚本的 `KEEP`。
 - `marvis.ai` 等域名需自行持有，否则对应链接失效。
 
-## 决策一补充：避开本机腾讯 Marvis.app 已占用的标识（marvis-studio）
+## 决策一补充：机器级标识统一用 marvis（2026-10-23 撤回 marvis-studio）
 
-腾讯 Marvis.app 占用了 `~/.marvis`（软链到它的用户数据目录）、`marvis://` URL scheme 和 `/Applications/Marvis.app` / `Application Support/Marvis`。本 fork 的机器级标识改用 marvis-studio，品牌展示仍是 Marvis：
+家目录 `~/.marvis`、桌面端深链 `marvis://`、桌面端打包名 / userData / WM_CLASS `Marvis`，与品牌名一致。
 
-- 家目录：`~/.marvis-studio`（CLI 配置、daemon、profiles、开发环境注册表 `~/.marvis-studio/dev`）。
-- 桌面端深链 scheme：`marvis-studio://`。
-- 桌面端打包名 / userData / WM_CLASS：`Marvis Studio`（即 `/Applications/Marvis Studio.app`），开发模式仍是 `Marvis Canary`。
-- 任务工作目录内的 `.marvis/`（如 `.marvis/project/resources.json`）不在家目录，不冲突，保持不变。
-- 以上规则在 `scripts/rebrand-marvis.py` 的 `STUDIO_RULES`，仓库地址规则在 `FORK_RULES`；上游新增类似写法（新的家目录拼接方式等）时补规则，不手改。
+- 曾因本机腾讯 Marvis.app 占用 `~/.marvis`、`marvis://`、`/Applications/Marvis.app` 而改用 marvis-studio，后决定不再规避：与腾讯 Marvis 同机安装时，深链可能被它接管、`~/.marvis` 会写进它的数据目录，需先卸载腾讯 Marvis。
+- `scripts/rebrand-marvis.py` 不再有 `STUDIO_RULES`，上游同步后只跑改名和 `FORK_RULES`。
 
 ## 决策二：视觉与交互照搬 Marvis.app
 

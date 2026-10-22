@@ -16,7 +16,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 REPO_URL="https://github.com/yunboom/marvis.git"
 REPO_WEB_URL="https://github.com/yunboom/marvis"  # without .git, for GitHub web APIs
-INSTALL_DIR="${MARVIS_INSTALL_DIR:-$HOME/.marvis-studio/server}"
+INSTALL_DIR="${MARVIS_INSTALL_DIR:-$HOME/.marvis/server}"
 BREW_PACKAGE="yunboom/tap/marvis"
 
 # Host ports Compose reported after `up -d`; set by setup_server and reused by
@@ -528,7 +528,7 @@ main() {
         echo ""
         echo "Environment variables:"
         echo "  MARVIS_INSTALL_DIR   Self-host server install directory"
-        echo "                        (default: \$HOME/.marvis-studio/server)"
+        echo "                        (default: \$HOME/.marvis/server)"
         echo "  MARVIS_BIN_DIR       Target directory for the CLI binary when"
         echo "                        installing from GitHub Releases"
         echo "                        (default: /usr/local/bin, then \$HOME/.local/bin)"

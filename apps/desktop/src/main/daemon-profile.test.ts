@@ -15,7 +15,7 @@ import {
   profileUserIdPath,
 } from "./daemon-profile";
 
-const MARVIS_DIR = join(homedir(), ".marvis-studio");
+const MARVIS_DIR = join(homedir(), ".marvis");
 const DEFAULT_CLI_CONFIG = join(MARVIS_DIR, "config.json");
 
 describe("deriveProfileName", () => {
@@ -54,7 +54,7 @@ describe("profile paths", () => {
     );
   });
 
-  // Regression: an unresolved profile used to resolve to ~/.marvis-studio, so Desktop
+  // Regression: an unresolved profile used to resolve to ~/.marvis, so Desktop
   // could overwrite server_url and token in the user's own CLI config. #6399.
   it("refuses to build a path for an unresolved profile", () => {
     expect(() => profileDir("")).toThrow(/unresolved/);

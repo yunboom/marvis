@@ -379,7 +379,7 @@ func inAgentExecutionContext() bool {
 // a defense-in-depth marker for subprocesses that lose MARVIS_AGENT_ID or
 // MARVIS_TASK_ID but still run under the daemon environment. In this context
 // workspace and token must come from daemon-provided env; falling back to
-// user-global ~/.marvis-studio/config.json can make agent writes land as a member.
+// user-global ~/.marvis/config.json can make agent writes land as a member.
 func inDaemonManagedExecutionContext() bool {
 	return inAgentExecutionContext() || os.Getenv("MARVIS_DAEMON_PORT") != "" || hasDaemonTaskContextMarker()
 }

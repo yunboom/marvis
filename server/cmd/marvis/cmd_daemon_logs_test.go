@@ -69,7 +69,7 @@ func seedDaemonLog(t *testing.T, path string) {
 
 // The default profile and a named one resolve to different files, and only the
 // named-profile layout was missing from the docs — a Desktop install logs to
-// ~/.marvis-studio/profiles/<name>/daemon.log while ~/.marvis-studio/daemon.log may still
+// ~/.marvis/profiles/<name>/daemon.log while ~/.marvis/daemon.log may still
 // hold a readable, stale log from an earlier default-profile daemon (#6038).
 func TestDaemonLogSourcePathResolvesPerProfile(t *testing.T) {
 	t.Run("default profile", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestDaemonLogSourcePathResolvesPerProfile(t *testing.T) {
 		if err != nil {
 			t.Fatalf("daemonLogSourcePath(\"\") = %v, want nil", err)
 		}
-		want := filepath.Join(home, ".marvis-studio", "daemon.log")
+		want := filepath.Join(home, ".marvis", "daemon.log")
 		if got != want {
 			t.Fatalf("daemonLogSourcePath(\"\") = %q, want %q", got, want)
 		}
@@ -92,7 +92,7 @@ func TestDaemonLogSourcePathResolvesPerProfile(t *testing.T) {
 		if err != nil {
 			t.Fatalf("daemonLogSourcePath = %v, want nil", err)
 		}
-		want := filepath.Join(home, ".marvis-studio", "profiles", "desktop-api.marvis.ai", "daemon.log")
+		want := filepath.Join(home, ".marvis", "profiles", "desktop-api.marvis.ai", "daemon.log")
 		if got != want {
 			t.Fatalf("daemonLogSourcePath = %q, want %q", got, want)
 		}
@@ -206,7 +206,7 @@ func TestRunDaemonLogsMissingFileNamesProfilePath(t *testing.T) {
 
 	// A readable log for the DEFAULT profile exists — the exact trap from
 	// #6038. The error must still point at the requested profile's path.
-	seedDaemonLog(t, filepath.Join(home, ".marvis-studio", "daemon.log"))
+	seedDaemonLog(t, filepath.Join(home, ".marvis", "daemon.log"))
 
 	cmd, errOut := daemonLogsCmdFor(t, "desktop-api.marvis.ai", 50, false)
 	rec := stubTailLog(t, errOut)
@@ -215,7 +215,7 @@ func TestRunDaemonLogsMissingFileNamesProfilePath(t *testing.T) {
 	if err == nil {
 		t.Fatal("runDaemonLogs = nil, want the missing-log-file error")
 	}
-	want := filepath.Join(home, ".marvis-studio", "profiles", "desktop-api.marvis.ai", "daemon.log")
+	want := filepath.Join(home, ".marvis", "profiles", "desktop-api.marvis.ai", "daemon.log")
 	if !strings.Contains(err.Error(), want) {
 		t.Errorf("error = %q, want it to name %q", err, want)
 	}

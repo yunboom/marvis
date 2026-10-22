@@ -116,7 +116,7 @@ function LoginPageContent() {
         .issueCliToken()
         .then(({ token }) => {
           setDesktopToken(token);
-          window.location.href = `marvis-studio://auth/callback?token=${encodeURIComponent(token)}`;
+          window.location.href = `marvis://auth/callback?token=${encodeURIComponent(token)}`;
         })
         .catch((err) => {
           setDesktopError(
@@ -219,7 +219,7 @@ function LoginPageContent() {
                 variant="outline"
                 className="h-11 px-5.5 text-body-lg"
                 onClick={() => {
-                  window.location.href = `marvis-studio://auth/callback?token=${encodeURIComponent(desktopToken)}`;
+                  window.location.href = `marvis://auth/callback?token=${encodeURIComponent(desktopToken)}`;
                 }}
               >
                 {t(($) => $.web.desktop_handoff.open_button)}

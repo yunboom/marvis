@@ -22,7 +22,7 @@ func TestHermesSessionStorePathLayout(t *testing.T) {
 	issue := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 	got := HermesSessionStorePath("", agent, filepath.Join(platformDefaultHermesHome(), "profiles", "research"),
 		TaskContextForEnv{AgentID: agent, IssueID: issue})
-	want := filepath.Join(home, ".marvis-studio", hermesSessionStoreRoot, agent, "research", issue)
+	want := filepath.Join(home, ".marvis", hermesSessionStoreRoot, agent, "research", issue)
 	if got != want {
 		t.Fatalf("store path = %q, want %q", got, want)
 	}
@@ -309,7 +309,7 @@ func TestPruneHermesSessionStores(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
 
-	root := filepath.Join(home, ".marvis-studio", hermesSessionStoreRoot)
+	root := filepath.Join(home, ".marvis", hermesSessionStoreRoot)
 	idle := filepath.Join(root, "agent-1", "default", "issue-idle")
 	fresh := filepath.Join(root, "agent-1", "default", "issue-fresh")
 	held := filepath.Join(root, "agent-2", "default", "issue-held")
@@ -358,7 +358,7 @@ func TestPruneHermesSessionStoresDisabled(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
 
-	store := filepath.Join(home, ".marvis-studio", hermesSessionStoreRoot, "agent-1", "default", "issue-1")
+	store := filepath.Join(home, ".marvis", hermesSessionStoreRoot, "agent-1", "default", "issue-1")
 	mustWrite(t, filepath.Join(store, "state.db"), "transcript")
 	old := time.Now().Add(-365 * 24 * time.Hour)
 	if err := os.Chtimes(store, old, old); err != nil {

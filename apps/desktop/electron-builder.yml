@@ -1,5 +1,5 @@
 appId: ai.marvis.desktop
-productName: Marvis Studio
+productName: Marvis
 directories:
   buildResources: build
 files:
@@ -30,9 +30,9 @@ extraResources:
   - from: ../../NOTICE
     to: NOTICE
 protocols:
-  - name: Marvis Studio
+  - name: Marvis
     schemes:
-      - marvis-studio
+      - marvis
 asarUnpack:
   - resources/**
 # Publishes `minimumSystemVersion` (Darwin kernel floor) into latest-mac.yml /
@@ -94,7 +94,7 @@ linux:
   # `WM_CLASS=@marvis/desktop`, which broke association with this entry
   # and reproduced #2515 on Ubuntu 0.2.31. The fix lives in two places
   # outside this file — `productName: "Marvis"` on the source
-  # package.json (so the ASAR carries it) and `app.setName("Marvis Studio")`
+  # package.json (so the ASAR carries it) and `app.setName("Marvis")`
   # in the production branch of `src/main/index.ts` (belt-and-braces).
   # Keep `StartupWMClass: Marvis` pinned here so any future drift in
   # those two anchors shows up as a diff against this declaration.
@@ -102,7 +102,7 @@ linux:
   # window prints `Marvis` for both fields.
   desktop:
     entry:
-      StartupWMClass: Marvis Studio
+      StartupWMClass: Marvis
   # Point at pre-rendered hicolor sizes. electron-builder *can* generate
   # 16/24/32/48/64/128/256/512 from a single build/icon.png, but the
   # auto-generation silently shipped only the 1024×1024 source in our

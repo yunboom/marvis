@@ -212,7 +212,7 @@ Scripts should use JSON output rather than parsing the terminal-oriented tables.
 
 ## Profiles and configuration
 
-The default configuration lives in `~/.marvis-studio/config.json`. Use `--profile <name>` to isolate a separate set of server address, token, default workspace, and daemon state:
+The default configuration lives in `~/.marvis/config.json`. Use `--profile <name>` to isolate a separate set of server address, token, default workspace, and daemon state:
 
 ```bash
 marvis setup self-host --profile staging \
@@ -222,7 +222,7 @@ marvis setup self-host --profile staging \
 marvis issue list --profile staging
 ```
 
-Named profiles live in `~/.marvis-studio/profiles/<name>/config.json`. Inspect the current values:
+Named profiles live in `~/.marvis/profiles/<name>/config.json`. Inspect the current values:
 
 ```bash
 marvis config show

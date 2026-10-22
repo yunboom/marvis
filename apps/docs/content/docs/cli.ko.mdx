@@ -197,7 +197,7 @@ marvis agent list --output json
 
 ## Profile과 설정
 
-기본 설정은 `~/.marvis-studio/config.json`에 저장됩니다. `--profile <name>`을 사용하면 별도의 서비스 주소, token, 기본 워크스페이스, 데몬 상태를 격리할 수 있습니다.
+기본 설정은 `~/.marvis/config.json`에 저장됩니다. `--profile <name>`을 사용하면 별도의 서비스 주소, token, 기본 워크스페이스, 데몬 상태를 격리할 수 있습니다.
 
 ```bash
 marvis setup self-host --profile staging \
@@ -207,7 +207,7 @@ marvis setup self-host --profile staging \
 marvis issue list --profile staging
 ```
 
-이름 있는 profile은 `~/.marvis-studio/profiles/<name>/config.json`에 저장됩니다. 현재 값을 확인합니다.
+이름 있는 profile은 `~/.marvis/profiles/<name>/config.json`에 저장됩니다. 현재 값을 확인합니다.
 
 ```bash
 marvis config show
