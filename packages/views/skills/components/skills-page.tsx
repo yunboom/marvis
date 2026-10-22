@@ -172,7 +172,6 @@ function PageHeaderBar({
       icon={SkillIcon}
       title={t(($) => $.page.title)}
       count={totalCount}
-      description={t(($) => $.page.tagline)}
       learnMore={{
         href: `https://marvis.ai/docs${docsLocalePrefix(i18n.language)}/skills`,
         label: t(($) => $.page.learn_more),
