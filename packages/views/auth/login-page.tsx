@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { CircleAlert, Loader2 } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -25,6 +26,7 @@ import { workspaceKeys } from "@marvis/core/workspace/queries";
 import { api } from "@marvis/core/api";
 import type { User } from "@marvis/core/types";
 import { useT } from "../i18n";
+import { LARK_LOGIN_SCOPE, useLarkClientLogin } from "./use-lark-client-login";
 
 // Types
 
@@ -34,6 +36,19 @@ interface GoogleAuthConfig {
   /** Opaque state passed through Google OAuth (e.g. "platform:desktop"). */
   state?: string;
 }
+
+interface LarkAuthConfig {
+  appId: string;
+  redirectUri: string;
+  /** 透传给飞书授权回调的 state，在 Google state 基础上多带 provider:lark。 */
+  state?: string;
+}
+
+// 飞书授权 state 中标记登录方式的片段，回调页据此改调飞书登录接口。
+export const LARK_PROVIDER_STATE = "provider:lark";
+
+// 飞书网页授权地址（国内飞书）。
+const LARK_AUTHORIZE_URL = "https://accounts.feishu.cn/open-apis/authen/v1/authorize";
 
 interface CliCallbackConfig {
   /** Validated localhost callback URL */
@@ -56,6 +71,10 @@ interface LoginPageProps {
   onTokenObtained?: () => void;
   /** Override Google login handler (e.g. desktop opens browser externally). When provided, renders the Google button even if `google` config is omitted. */
   onGoogleLogin?: () => void;
+  /** 飞书登录配置，省略则不显示飞书按钮；提供时在飞书客户端内自动免登。 */
+  lark?: LarkAuthConfig;
+  /** 覆盖飞书登录点击行为（如桌面端打开浏览器），提供时即使没有 `lark` 也显示飞书按钮。 */
+  onLarkLogin?: () => void;
   /** Slot rendered at the bottom of the sign-in card, below the
    *  Google button. The web shell uses it for a "Prefer the desktop
    *  app?" prompt; desktop omits it (a download prompt inside the app
@@ -91,15 +110,44 @@ export function validateCliCallback(cliCallback: string): boolean {
   }
 }
 
+// 飞书品牌图标（多色），与 Google 图标同样内联。
+function LarkIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" aria-hidden>
+      <path
+        d="M12.9 11.2 15.5 8.6c.9-.9 1.9-1.6 3-2.1-.6-1.9-1.6-3.3-1.6-3.3s-.5-.2-1.1-.2H5.3c-.3 0-.4.3-.2.5 3.1 2.3 5.6 5.2 7.8 7.7z"
+        fill="#00D6B9"
+      />
+      <path
+        d="M23 9.5c-1.5-.7-3.2-.9-4.8-.5-1.1.3-2 .8-2.8 1.6l-1.6 1.6c-.7.7-1.4 1.3-2.2 1.9 0 0 1.6 1.6 4.3 1.6 1.7 0 2.8-.8 3.5-1.9L23 9.5z"
+        fill="#133C9A"
+      />
+      <path
+        d="M1 9.4v8.7c0 .1.1.3.2.3 1.8 1 3.9 1.6 6.1 1.6 3.4 0 6.5-1.3 8.8-3.6.2-.2-.1-.5-.3-.5-2.8.3-5.6-.8-8.2-2.8C5.6 12 3.3 10.5 1.4 9.1 1.2 9 1 9.2 1 9.4z"
+        fill="#3370FF"
+      />
+    </svg>
+  );
+}
+
 // Component
 
 // Marvis-style auth surface, shared by every step of the flow.
 const AUTH_SHELL_CLASS = "flex min-h-svh items-center justify-center bg-app-shell px-4";
+// 卡片 420 宽、40 内边距、24 圆角；暗色去掉投影只留描边。
 const AUTH_CARD_CLASS =
-  "w-full max-w-[420px] gap-6 rounded-[24px] border-0 py-8 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border";
-const AUTH_HEADER_CLASS = "gap-2 px-8 text-center";
-const AUTH_FOOTER_CLASS = "border-t-0 bg-transparent px-8 pt-0 pb-8";
+  "w-full max-w-[420px] gap-0 rounded-2xl border-0 p-10 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border has-data-[slot=card-footer]:pb-10 dark:shadow-none";
+const AUTH_LOGO_CLASS = "mx-auto mb-4";
+const AUTH_HEADER_CLASS = "gap-2 px-0 text-center";
+const AUTH_TITLE_CLASS = "text-display-sm font-bold";
+const AUTH_DESCRIPTION_CLASS = "text-body-lg";
+const AUTH_FOOTER_CLASS = "border-t-0 bg-transparent p-0";
 const AUTH_BUTTON_CLASS = "h-12 w-full text-body-lg";
+// 弱按钮：浅灰底，44 高。
+const AUTH_WEAK_BUTTON_CLASS = "h-11 w-full text-body-lg font-normal";
+// 验证码格：48×56 填充底，聚焦位用主色描边。
+const OTP_SLOT_CLASS =
+  "h-14 w-12 rounded-lg border border-transparent bg-field text-title-lg font-semibold first:rounded-l-lg first:border-l last:rounded-r-lg data-[active=true]:border-foreground data-[active=true]:ring-0 dark:bg-field";
 
 export function LoginPage({
   logo,
@@ -108,6 +156,8 @@ export function LoginPage({
   cliCallback,
   onTokenObtained,
   onGoogleLogin,
+  lark,
+  onLarkLogin,
   extra,
 }: LoginPageProps) {
   const { t } = useT("auth");
@@ -126,6 +176,7 @@ export function LoginPage({
   // because the user asked to leave. Without saying so, landing here reads as
   // the app having lost their work for no reason.
   const sessionExpired = useAuthStore((state) => state.expired);
+  const authStatus = useAuthStore((state) => state.status);
 
   // Check for existing session when CLI callback is present.
   // Prioritises cookie auth (= current browser session) to avoid authorising
@@ -203,6 +254,32 @@ export function LoginPage({
     [email, t],
   );
 
+  // Normal path: seed the workspace list into the Query cache so the
+  // caller's onSuccess can read it synchronously to compute a destination
+  // URL (first workspace's slug, or /workspaces/new for zero-workspace
+  // users). 验证码登录与飞书免登共用。
+  const finishLogin = useCallback(async () => {
+    const wsList = await api.listWorkspaces();
+    qc.setQueryData(workspaceKeys.list(), wsList);
+    onTokenObtained?.();
+    onSuccess();
+  }, [onSuccess, onTokenObtained, qc]);
+
+  const handleLarkClientCode = useCallback(
+    async (larkCode: string) => {
+      await useAuthStore.getState().loginWithLark(larkCode, "", "client");
+      await finishLogin();
+    },
+    [finishLogin],
+  );
+
+  // 飞书客户端内免登：只在未登录、非 CLI 授权时尝试。
+  const larkClientPending = useLarkClientLogin({
+    appId: lark?.appId,
+    enabled: !cliCallback && authStatus === "unauthenticated",
+    onCode: handleLarkClientCode,
+  });
+
   const handleVerify = useCallback(
     async (value: string) => {
       if (value.length !== 6) return;
@@ -219,15 +296,8 @@ export function LoginPage({
           return;
         }
 
-        // Normal path: seed the workspace list into the Query cache so the
-        // caller's onSuccess can read it synchronously to compute a destination
-        // URL (first workspace's slug, or /workspaces/new for zero-workspace
-        // users).
         await useAuthStore.getState().verifyCode(email, value);
-        const wsList = await api.listWorkspaces();
-        qc.setQueryData(workspaceKeys.list(), wsList);
-        onTokenObtained?.();
-        onSuccess();
+        await finishLogin();
       } catch (err) {
         setError(
           err instanceof Error
@@ -238,7 +308,7 @@ export function LoginPage({
         setLoading(false);
       }
     },
-    [email, onSuccess, cliCallback, onTokenObtained, qc, t],
+    [email, cliCallback, onTokenObtained, finishLogin, t],
   );
 
   const handleResend = async () => {
@@ -300,6 +370,44 @@ export function LoginPage({
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   };
 
+  const handleLarkLogin = () => {
+    if (onLarkLogin) {
+      onLarkLogin();
+      return;
+    }
+    if (!lark) return;
+    const params = new URLSearchParams({
+      client_id: lark.appId,
+      redirect_uri: lark.redirectUri,
+      scope: LARK_LOGIN_SCOPE,
+    });
+    if (lark.state) params.set("state", lark.state);
+    window.location.href = `${LARK_AUTHORIZE_URL}?${params}`;
+  };
+
+  // 飞书客户端免登进行中
+
+  if (larkClientPending) {
+    return (
+      <div className={AUTH_SHELL_CLASS}>
+        <Card className={AUTH_CARD_CLASS}>
+          <CardHeader className={AUTH_HEADER_CLASS}>
+            {logo && <div className={AUTH_LOGO_CLASS}>{logo}</div>}
+            <CardTitle className={AUTH_TITLE_CLASS}>
+              {t(($) => $.signin.lark_client_signing_in)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="mt-8 flex justify-center px-0">
+            <Loader2
+              aria-hidden
+              className="size-6 animate-spin text-muted-foreground"
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // CLI confirm step
 
   if (step === "cli_confirm" && existingUser) {
@@ -307,15 +415,15 @@ export function LoginPage({
       <div className={AUTH_SHELL_CLASS}>
         <Card className={AUTH_CARD_CLASS}>
           <CardHeader className={AUTH_HEADER_CLASS}>
-            {logo && <div className="mx-auto mb-5">{logo}</div>}
-            <CardTitle className="text-display-sm font-bold">
+            {logo && <div className={AUTH_LOGO_CLASS}>{logo}</div>}
+            <CardTitle className={AUTH_TITLE_CLASS}>
               {t(($) => $.cli.title)}
             </CardTitle>
-            <CardDescription className="text-body-lg">
+            <CardDescription className={cn(AUTH_DESCRIPTION_CLASS, "leading-relaxed")}>
               {t(($) => $.cli.description, { email: existingUser.email })}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 px-8">
+          <CardContent className="mt-8 flex flex-col gap-3 px-0">
             <Button
               onClick={handleCliAuthorize}
               disabled={loading}
@@ -327,8 +435,8 @@ export function LoginPage({
                 : t(($) => $.cli.authorize)}
             </Button>
             <Button
-              variant="ghost"
-              className="w-full"
+              variant="secondary"
+              className={AUTH_WEAK_BUTTON_CLASS}
               onClick={() => {
                 setExistingUser(null);
                 setStep("email");
@@ -349,15 +457,15 @@ export function LoginPage({
       <div className={AUTH_SHELL_CLASS}>
         <Card className={AUTH_CARD_CLASS}>
           <CardHeader className={AUTH_HEADER_CLASS}>
-            {logo && <div className="mx-auto mb-5">{logo}</div>}
-            <CardTitle className="text-display-sm font-bold">
+            {logo && <div className={AUTH_LOGO_CLASS}>{logo}</div>}
+            <CardTitle className={AUTH_TITLE_CLASS}>
               {t(($) => $.verify.title)}
             </CardTitle>
-            <CardDescription className="text-body-lg">
+            <CardDescription className={AUTH_DESCRIPTION_CLASS}>
               {t(($) => $.verify.description, { email })}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col items-center gap-4 px-8">
+          <CardContent className="mt-8 flex flex-col items-center gap-4 px-0">
             <InputOTP
               autoFocus
               maxLength={6}
@@ -368,24 +476,24 @@ export function LoginPage({
               }}
               disabled={loading}
             >
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-                <InputOTPSlot index={5} />
+              <InputOTPGroup className="gap-2.5">
+                <InputOTPSlot index={0} className={OTP_SLOT_CLASS} />
+                <InputOTPSlot index={1} className={OTP_SLOT_CLASS} />
+                <InputOTPSlot index={2} className={OTP_SLOT_CLASS} />
+                <InputOTPSlot index={3} className={OTP_SLOT_CLASS} />
+                <InputOTPSlot index={4} className={OTP_SLOT_CLASS} />
+                <InputOTPSlot index={5} className={OTP_SLOT_CLASS} />
               </InputOTPGroup>
             </InputOTP>
             {error && (
-              <p className="text-body text-destructive">{error}</p>
+              <p className="text-center text-body text-destructive">{error}</p>
             )}
             <div className="flex items-center gap-2 text-body text-muted-foreground">
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={cooldown > 0}
-                className="text-primary underline-offset-4 hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
+                className="text-foreground underline underline-offset-4 disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
               >
                 {cooldown > 0
                   ? t(($) => $.verify.resend_cooldown, { seconds: cooldown })
@@ -393,11 +501,11 @@ export function LoginPage({
               </button>
             </div>
           </CardContent>
-          <CardFooter className={AUTH_FOOTER_CLASS}>
+          <CardFooter className={cn(AUTH_FOOTER_CLASS, "mt-7")}>
             <Button
               type="button"
-              variant="ghost"
-              className="w-full"
+              variant="secondary"
+              className={AUTH_WEAK_BUTTON_CLASS}
               onClick={() => {
                 setStep("email");
                 setCode("");
@@ -418,25 +526,31 @@ export function LoginPage({
     <div className={AUTH_SHELL_CLASS}>
       <Card className={AUTH_CARD_CLASS}>
         <CardHeader className={AUTH_HEADER_CLASS}>
-          {logo && <div className="mx-auto mb-5">{logo}</div>}
-          <CardTitle className="text-display-sm font-bold">
+          {logo && <div className={AUTH_LOGO_CLASS}>{logo}</div>}
+          <CardTitle className={AUTH_TITLE_CLASS}>
             {t(($) => $.signin.title)}
           </CardTitle>
-          <CardDescription className="text-body-lg">
+          <CardDescription className={AUTH_DESCRIPTION_CLASS}>
             {t(($) => $.signin.description)}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 px-8">
+        <CardContent
+          className={cn("px-0", sessionExpired ? "mt-6 space-y-5" : "mt-8")}
+        >
           {sessionExpired && (
-            <Alert>
-              <AlertDescription>
+            <Alert className="flex items-center gap-2.5 rounded-lg border-input bg-transparent px-3.5 py-3">
+              <CircleAlert
+                aria-hidden
+                className="text-muted-foreground"
+              />
+              <AlertDescription className="text-body text-foreground">
                 {t(($) => $.errors.session_expired)}
               </AlertDescription>
             </Alert>
           )}
-          <form id="login-form" onSubmit={handleSendCode} className="space-y-4">
+          <form id="login-form" onSubmit={handleSendCode} className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="login-email">{t(($) => $.common.email)}</Label>
+              <Label htmlFor="login-email" className="text-body">{t(($) => $.common.email)}</Label>
               <Input
                 id="login-email"
                 type="email"
@@ -445,7 +559,7 @@ export function LoginPage({
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
                 required
-                className="h-12 rounded-[14px] px-4 md:text-body-lg"
+                className="h-12 rounded-lg px-4 md:text-body-lg"
               />
             </div>
             {error && (
@@ -453,7 +567,7 @@ export function LoginPage({
             )}
           </form>
         </CardContent>
-        <CardFooter className={cn(AUTH_FOOTER_CLASS, "flex flex-col gap-3")}>
+        <CardFooter className={cn(AUTH_FOOTER_CLASS, "mt-5 flex flex-col gap-3")}>
           <Button
             type="submit"
             form="login-form"
@@ -469,12 +583,12 @@ export function LoginPage({
             <Button
               type="button"
               variant="outline"
-              className={AUTH_BUTTON_CLASS}
+              className={cn(AUTH_BUTTON_CLASS, "gap-2.5")}
               size="lg"
               onClick={handleGoogleLogin}
               disabled={loading}
             >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+              <svg className="size-4" viewBox="0 0 24 24" aria-hidden>
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                   fill="#4285F4"
@@ -495,7 +609,20 @@ export function LoginPage({
               {t(($) => $.signin.google)}
             </Button>
           )}
-          {extra && <div className="w-full pt-1 text-center">{extra}</div>}
+          {(lark || onLarkLogin) && (
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(AUTH_BUTTON_CLASS, "gap-2.5")}
+              size="lg"
+              onClick={handleLarkLogin}
+              disabled={loading}
+            >
+              <LarkIcon />
+              {t(($) => $.signin.lark)}
+            </Button>
+          )}
+          {extra && <div className="w-full pt-2 text-center">{extra}</div>}
         </CardFooter>
       </Card>
     </div>

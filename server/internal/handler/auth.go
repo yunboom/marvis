@@ -47,6 +47,12 @@ const (
 	googleLoginCodeInvalidOAuthCode    = "oauth_code_invalid"
 )
 
+// 第三方登录方式，写入 analytics 的 auth_method 与日志。
+const (
+	authMethodGoogle = "google"
+	authMethodLark   = "lark"
+)
+
 const devVerificationCodeEnv = "MARVIS_DEV_VERIFICATION_CODE"
 
 // supportedLanguages mirrors `SUPPORTED_LOCALES` in packages/core/i18n/types.ts.
@@ -527,6 +533,7 @@ type googleUserInfo struct {
 	Picture string `json:"picture"`
 }
 
+// writeGoogleLoginActionableError 由 Google 与飞书登录共用，把注册限制类错误映射为可操作的错误码。
 func writeGoogleLoginActionableError(w http.ResponseWriter, err error) bool {
 	switch {
 	case errors.Is(err, auth.ErrTemporarilyDisabledUser):
@@ -669,6 +676,25 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.completeOAuthLogin(w, r, oauthLoginProfile{
+		Email:     email,
+		Name:      gUser.Name,
+		AvatarURL: gUser.Picture,
+	}, authMethodGoogle)
+}
+
+// oauthLoginProfile 是第三方登录（Google / 飞书）换取到的用户资料，邮箱已归一化为小写。
+type oauthLoginProfile struct {
+	Email     string
+	Name      string
+	AvatarURL string
+}
+
+// completeOAuthLogin 是第三方登录拿到邮箱、名字、头像之后的共用尾段：
+// 查找或创建用户、补全名字头像、签发 JWT、写 cookie 并返回登录结果。
+func (h *Handler) completeOAuthLogin(w http.ResponseWriter, r *http.Request, profile oauthLoginProfile, authMethod string) {
+	email := profile.Email
+
 	if auth.IsTemporarilyDisabledUserEmail(email) {
 		writeErrorCode(w, http.StatusForbidden, googleLoginCodeAccountDisabled, auth.TemporarilyDisabledUserError)
 		return
@@ -685,22 +711,22 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	if isNew {
 		evt := analytics.Signup(uuidToString(user.ID), user.Email, signupSourceFromRequest(r))
-		evt.Properties["auth_method"] = "google"
+		evt.Properties["auth_method"] = authMethod
 		obsmetrics.RecordEvent(h.Analytics, h.Metrics, evt)
 	}
 
-	// Update name and avatar from Google profile if the user was just created
+	// Update name and avatar from the provider profile if the user was just created
 	// (default name is email prefix) or has no avatar yet.
 	needsUpdate := false
 	newName := user.Name
 	newAvatar := user.AvatarUrl
 
-	if gUser.Name != "" && user.Name == strings.Split(email, "@")[0] {
-		newName = gUser.Name
+	if profile.Name != "" && user.Name == strings.Split(email, "@")[0] {
+		newName = profile.Name
 		needsUpdate = true
 	}
-	if gUser.Picture != "" && !user.AvatarUrl.Valid {
-		newAvatar = pgtype.Text{String: gUser.Picture, Valid: true}
+	if profile.AvatarURL != "" && !user.AvatarUrl.Valid {
+		newAvatar = pgtype.Text{String: profile.AvatarURL, Valid: true}
 		needsUpdate = true
 	}
 
@@ -720,7 +746,7 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		if writeGoogleLoginActionableError(w, err) {
 			return
 		}
-		slog.Warn("google login failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
+		slog.Warn(authMethod+" login failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
 		writeError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
@@ -735,7 +761,7 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	slog.Info("user logged in via google", append(logger.RequestAttrs(r), "user_id", uuidToString(user.ID), "email", user.Email)...)
+	slog.Info("user logged in via "+authMethod, append(logger.RequestAttrs(r), "user_id", uuidToString(user.ID), "email", user.Email)...)
 	writeJSON(w, http.StatusOK, LoginResponse{
 		Token: tokenString,
 		User:  h.userToResponse(user),

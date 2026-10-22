@@ -3171,3 +3171,24 @@ describe("ApiClient shared credential across windows", () => {
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("ApiClient larkLogin", () => {
+  it("posts the code, redirect uri and source to /auth/lark", async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ token: "t", user: { id: "u1" } }), {
+      status: 200, headers: { "Content-Type": "application/json" },
+    })));
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new ApiClient("https://api.example.test");
+
+    await client.larkLogin("code-1", "https://app.example.test/auth/callback");
+    await client.larkLogin("code-2", "", "client");
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe("https://api.example.test/auth/lark");
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+      code: "code-1", redirect_uri: "https://app.example.test/auth/callback", source: "oauth",
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({
+      code: "code-2", redirect_uri: "", source: "client",
+    });
+  });
+});

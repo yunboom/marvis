@@ -544,6 +544,9 @@ export interface LoginResponse {
   user: User;
 }
 
+/** 飞书授权码来源：网页 OAuth 授权，或飞书客户端内 JSSDK 免登。 */
+export type LarkLoginSource = "oauth" | "client";
+
 function parseSearchIndexResponse<T>(raw: unknown, schema: ZodType, endpoint: string): T {
   const parsed = parseWithFallback<T | null>(raw, schema, null, { endpoint });
   if (parsed === null) throw new Error(`Malformed response from ${endpoint}`);
@@ -1005,6 +1008,17 @@ export class ApiClient {
     return this.fetch("/auth/google", {
       method: "POST",
       body: JSON.stringify({ code, redirect_uri: redirectUri }),
+    });
+  }
+
+  async larkLogin(
+    code: string,
+    redirectUri: string,
+    source: LarkLoginSource = "oauth",
+  ): Promise<LoginResponse> {
+    return this.fetch("/auth/lark", {
+      method: "POST",
+      body: JSON.stringify({ code, redirect_uri: redirectUri, source }),
     });
   }
 

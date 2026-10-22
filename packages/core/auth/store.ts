@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { User, StorageAdapter } from "../types";
 import { identify as identifyAnalytics, resetAnalytics } from "../analytics";
-import type { ApiClient } from "../api/client";
+import type { ApiClient, LarkLoginSource } from "../api/client";
 import { setCurrentWorkspace } from "../platform/workspace-storage";
 
 export interface AuthStoreOptions {
@@ -42,6 +42,11 @@ export interface AuthState {
   sendCode: (email: string) => Promise<void>;
   verifyCode: (email: string, code: string) => Promise<User>;
   loginWithGoogle: (code: string, redirectUri: string) => Promise<User>;
+  loginWithLark: (
+    code: string,
+    redirectUri: string,
+    source?: LarkLoginSource,
+  ) => Promise<User>;
   loginWithToken: (token: string) => Promise<User>;
   logout: () => void;
   sessionExpired: () => void;
@@ -87,6 +92,22 @@ export function createAuthStore(options: AuthStoreOptions) {
 
     loginWithGoogle: async (code: string, redirectUri: string) => {
       const { token, user } = await api.googleLogin(code, redirectUri);
+      if (!cookieAuth) {
+        storage.setItem("marvis_token", token);
+        api.setToken(token);
+      }
+      onLogin?.();
+      identifyAnalytics(user.id, { email: user.email, name: user.name });
+      set({ user, isLoading: false, status: "authenticated", expired: false });
+      return user;
+    },
+
+    loginWithLark: async (
+      code: string,
+      redirectUri: string,
+      source: LarkLoginSource = "oauth",
+    ) => {
+      const { token, user } = await api.larkLogin(code, redirectUri, source);
       if (!cookieAuth) {
         storage.setItem("marvis_token", token);
         api.setToken(token);

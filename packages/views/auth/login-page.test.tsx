@@ -29,6 +29,7 @@ function renderWithI18n(ui: ReactElement) {
 
 const mockSendCode = vi.hoisted(() => vi.fn());
 const mockVerifyCode = vi.hoisted(() => vi.fn());
+const mockLoginWithLark = vi.hoisted(() => vi.fn());
 const mockApiListWorkspaces = vi.hoisted(() => vi.fn());
 const mockApiVerifyCode = vi.hoisted(() => vi.fn());
 const mockApiSetToken = vi.hoisted(() => vi.fn());
@@ -36,7 +37,10 @@ const mockApiGetMe = vi.hoisted(() => vi.fn());
 const mockApiIssueCliToken = vi.hoisted(() => vi.fn());
 const mockSetQueryData = vi.hoisted(() => vi.fn());
 // Mutable slice of auth state the component subscribes to.
-const mockAuthState = vi.hoisted(() => ({ expired: false }));
+const mockAuthState = vi.hoisted(() => ({
+  expired: false,
+  status: "authenticating" as string,
+}));
 
 vi.mock("@tanstack/react-query", async () => {
   const actual = await vi.importActual<typeof import("@tanstack/react-query")>(
@@ -53,6 +57,7 @@ vi.mock("@marvis/core/auth", () => ({
         sendCode: mockSendCode,
         verifyCode: mockVerifyCode,
         expired: mockAuthState.expired,
+        status: mockAuthState.status,
       };
       return selector ? selector(state) : state;
     },
@@ -60,6 +65,7 @@ vi.mock("@marvis/core/auth", () => ({
       getState: () => ({
         sendCode: mockSendCode,
         verifyCode: mockVerifyCode,
+        loginWithLark: mockLoginWithLark,
       }),
     },
   ),
@@ -103,6 +109,7 @@ describe("LoginPage", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.clearAllMocks();
     mockAuthState.expired = false;
+    mockAuthState.status = "authenticating";
     // Default: no existing session (getMe rejects when no auth)
     mockApiGetMe.mockRejectedValue(new Error("unauthorized"));
     localStorage.clear();
@@ -408,6 +415,103 @@ describe("LoginPage", () => {
     expect(
       screen.queryByRole("button", { name: /continue with google/i }),
     ).not.toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // Feishu login
+  // -------------------------------------------------------------------------
+
+  it("renders the Feishu button and opens the Feishu authorize page", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderWithI18n(
+      <LoginPage
+        onSuccess={onSuccess}
+        lark={{ appId: "cli_lark", redirectUri: "http://localhost/cb", state: "provider:lark" }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /continue with feishu/i }));
+
+    const url = new URL(window.location.href);
+    expect(url.origin + url.pathname).toBe("https://accounts.feishu.cn/open-apis/authen/v1/authorize");
+    expect(url.searchParams.get("client_id")).toBe("cli_lark");
+    expect(url.searchParams.get("redirect_uri")).toBe("http://localhost/cb");
+    expect(url.searchParams.get("state")).toBe("provider:lark");
+  });
+
+  it("delegates the Feishu button to onLarkLogin when provided", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const onLarkLogin = vi.fn();
+    renderWithI18n(<LoginPage onSuccess={onSuccess} onLarkLogin={onLarkLogin} />);
+
+    await user.click(screen.getByRole("button", { name: /continue with feishu/i }));
+
+    expect(onLarkLogin).toHaveBeenCalledOnce();
+  });
+
+  it("hides the Feishu button when Feishu login is not configured", () => {
+    renderWithI18n(<LoginPage onSuccess={onSuccess} />);
+    expect(
+      screen.queryByRole("button", { name: /continue with feishu/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("signs in silently inside the Feishu client through the shared success path", async () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 Lark/7.20.0");
+    const larkWindow = window as Window & { h5sdk?: unknown; tt?: unknown };
+    larkWindow.h5sdk = { ready: (cb: () => void) => cb() };
+    larkWindow.tt = {
+      requestAccess: (opts: { success: (r: { code: string }) => void }) =>
+        opts.success({ code: "client-code" }),
+    };
+    mockAuthState.status = "unauthenticated";
+    mockLoginWithLark.mockResolvedValue({ id: "u1" });
+    mockApiListWorkspaces.mockResolvedValue([{ id: "ws1" }]);
+    const onTokenObtained = vi.fn();
+
+    try {
+      renderWithI18n(
+        <LoginPage
+          onSuccess={onSuccess}
+          onTokenObtained={onTokenObtained}
+          lark={{ appId: "cli_lark", redirectUri: "http://localhost/cb" }}
+        />,
+      );
+
+      expect(screen.getByText("Signing in with Feishu...")).toBeInTheDocument();
+      await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce());
+      expect(mockLoginWithLark).toHaveBeenCalledWith("client-code", "", "client");
+      expect(mockSetQueryData).toHaveBeenCalledWith(expect.anything(), [{ id: "ws1" }]);
+      expect(onTokenObtained).toHaveBeenCalledOnce();
+    } finally {
+      vi.restoreAllMocks();
+      delete larkWindow.h5sdk;
+      delete larkWindow.tt;
+    }
+  });
+
+  it("falls back to the login form when Feishu client sign-in fails", async () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Mozilla/5.0 Feishu/7.20.0");
+    const larkWindow = window as Window & { h5sdk?: unknown; tt?: unknown };
+    larkWindow.h5sdk = { ready: (cb: () => void) => cb() };
+    larkWindow.tt = {
+      requestAccess: (opts: { fail: (e: { errno: number }) => void }) => opts.fail({ errno: 2 }),
+    };
+    mockAuthState.status = "unauthenticated";
+
+    try {
+      renderWithI18n(
+        <LoginPage onSuccess={onSuccess} lark={{ appId: "cli_lark", redirectUri: "http://localhost/cb" }} />,
+      );
+
+      expect(await screen.findByText(/sign in to marvis/i)).toBeInTheDocument();
+      expect(mockLoginWithLark).not.toHaveBeenCalled();
+      expect(onSuccess).not.toHaveBeenCalled();
+    } finally {
+      vi.restoreAllMocks();
+      delete larkWindow.h5sdk;
+      delete larkWindow.tt;
+    }
   });
 
   // -------------------------------------------------------------------------

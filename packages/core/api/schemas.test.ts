@@ -2355,3 +2355,13 @@ describe("AgentActivityBucketListSchema duration", () => {
     expect(parsed[0]?.duration_count).toBeUndefined();
   });
 });
+
+describe("AppConfigSchema lark_login_app_id", () => {
+  it.each([
+    [undefined, undefined],
+    [42, undefined],
+    ["cli_test", "cli_test"],
+  ])("%j parses as %j", (value, expected) => {
+    expect(AppConfigSchema.parse({ lark_login_app_id: value }).lark_login_app_id).toBe(expected);
+  });
+});

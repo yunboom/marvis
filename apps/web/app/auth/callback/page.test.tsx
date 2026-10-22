@@ -11,6 +11,7 @@ const {
   mockRouter,
   mockSearchParams,
   mockLoginWithGoogle,
+  mockLoginWithLark,
   mockListWorkspaces,
   mockListMyInvitations,
   mockSetQueryData,
@@ -23,6 +24,7 @@ const {
     mockRouter: { push: mockPush },
     mockSearchParams: new URLSearchParams(),
     mockLoginWithGoogle: vi.fn(),
+    mockLoginWithLark: vi.fn(),
     mockListWorkspaces: vi.fn(),
     mockListMyInvitations: vi.fn(),
     mockSetQueryData,
@@ -82,7 +84,7 @@ vi.mock("@marvis/core/auth", async () => {
   return {
     ...actual,
     useAuthStore: (selector: (s: unknown) => unknown) =>
-      selector({ loginWithGoogle: mockLoginWithGoogle }),
+      selector({ loginWithGoogle: mockLoginWithGoogle, loginWithLark: mockLoginWithLark }),
   };
 });
 
@@ -103,6 +105,7 @@ vi.mock("@marvis/core/api", async () => {
       listWorkspaces: mockListWorkspaces,
       listMyInvitations: mockListMyInvitations,
       googleLogin: vi.fn(),
+      larkLogin: vi.fn(),
     },
   };
 });
@@ -136,8 +139,63 @@ describe("CallbackPage", () => {
     );
     mockSearchParams.set("code", "test-code");
     mockLoginWithGoogle.mockResolvedValue(makeUser());
+    mockLoginWithLark.mockResolvedValue(makeUser());
     mockListWorkspaces.mockResolvedValue([]);
     mockListMyInvitations.mockResolvedValue([]);
+  });
+
+  it("logs in through Feishu when the state carries provider:lark", async () => {
+    mockSearchParams.set("state", "provider:lark,next:/invite/abc123");
+
+    renderCallback();
+
+    await waitFor(() => {
+      expect(mockLoginWithLark).toHaveBeenCalledWith(
+        "test-code",
+        expect.stringContaining("/auth/callback"),
+        "oauth",
+      );
+    });
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/invite/abc123");
+    });
+    expect(mockLoginWithGoogle).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["Desktop", "provider:lark,platform:desktop"],
+    ["CLI", "provider:lark,cli_callback:http://127.0.0.1:46233/callback,cli_state:test"],
+  ])("exchanges the Feishu code for the %s callback", async (_flow, state) => {
+    const { api: mockedApi } = await import("@marvis/core/api");
+    vi.mocked(mockedApi.larkLogin).mockRejectedValue(
+      new ApiError("English fallback", 403, "Forbidden", { code: "lark_tenant_not_allowed" }),
+    );
+    mockSearchParams.set("state", state);
+
+    renderCallback("zh-Hans");
+
+    expect(await screen.findByText("该飞书组织不允许登录此实例。")).toBeInTheDocument();
+    expect(mockedApi.larkLogin).toHaveBeenCalledWith(
+      "test-code",
+      expect.stringContaining("/auth/callback"),
+      "oauth",
+    );
+    expect(mockedApi.googleLogin).not.toHaveBeenCalled();
+    expect(mockLoginWithLark).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["lark_account_no_email", 400, "飞书未提供本次登录所需的邮箱地址。"],
+    ["oauth_code_invalid", 400, "飞书授权码无效、已过期或已被使用，请重新登录。"],
+  ])("localizes the Feishu %s error", async (code, status, text) => {
+    mockSearchParams.set("state", "provider:lark");
+    mockLoginWithLark.mockRejectedValue(
+      new ApiError("English fallback", status, "Bad Request", { code }),
+    );
+
+    renderCallback("zh-Hans");
+
+    expect(await screen.findByText(text)).toBeInTheDocument();
   });
 
   it("renders callback errors in the selected locale", async () => {

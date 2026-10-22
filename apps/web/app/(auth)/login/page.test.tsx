@@ -87,6 +87,7 @@ vi.mock("@marvis/core/api", () => ({
   },
 }));
 
+import { configStore } from "@marvis/core/config";
 import LoginPage from "./page";
 
 describe("LoginPage", () => {
@@ -200,5 +201,45 @@ describe("LoginPage", () => {
       });
       expect(mockListWorkspaces).not.toHaveBeenCalled();
     });
+  });
+  it("sends Feishu sign-in through the authorize URL with provider:lark in state", async () => {
+    configStore.getState().setAuthConfig({ allowSignup: true, larkLoginAppId: "cli_lark" });
+    searchParamsState.params = new URLSearchParams({ next: "/invite/abc" });
+    const hrefSetter = vi.fn();
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: {
+        ...originalLocation,
+        origin: "https://app.example.test",
+        set href(value: string) {
+          hrefSetter(value);
+        },
+      },
+    });
+
+    try {
+      render(<LoginPage />, { wrapper: createWrapper() });
+      act(() => {
+        screen.getByRole("button", { name: "Continue with Feishu" }).click();
+      });
+
+      const url = new URL(hrefSetter.mock.calls[0]?.[0] as string);
+      expect(url.origin + url.pathname).toBe(
+        "https://accounts.feishu.cn/open-apis/authen/v1/authorize",
+      );
+      expect(url.searchParams.get("client_id")).toBe("cli_lark");
+      expect(url.searchParams.get("redirect_uri")).toBe(
+        "https://app.example.test/auth/callback",
+      );
+      expect(url.searchParams.get("state")).toBe("provider:lark,next:/invite/abc");
+    } finally {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+      configStore.getState().setAuthConfig({ allowSignup: true });
+    }
   });
 });

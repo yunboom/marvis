@@ -280,6 +280,9 @@ type Handler struct {
 	CloudRuntime                 cloudRuntimeProxy
 	// Test-only HTTP override; nil uses the default client in production.
 	googleOAuthHTTPClient *http.Client
+	// 飞书登录的测试注入点：nil / 空串时分别使用默认 HTTP client 与 https://open.feishu.cn。
+	larkLoginHTTPClient *http.Client
+	larkLoginAPIBaseURL string
 	// Lark integration. All three are nil when the Lark master key
 	// (MARVIS_LARK_SECRET_KEY) is unset; the corresponding HTTP
 	// handlers return 403 in that case so a misconfigured self-host

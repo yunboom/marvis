@@ -36,6 +36,14 @@
 - 字体栈 PingFang SC / Noto Sans SC 优先（`apps/web/app/globals.css`、`apps/desktop/src/renderer/src/globals.css`）。
 - Logo：`packages/ui/components/common/marvis-icon.tsx`（圆角方块 + 镂空 "M"），docs 站、移动端、favicon、桌面/PWA/移动端图标已同步；应用侧栏顶部显示 logo + "Marvis" 字标。
 
+## 决策三：飞书登录（fork 独有）
+
+- 国内飞书网页 OAuth 登录 + 飞书客户端内免登，按邮箱匹配账号，与 Google 登录同构。
+- 服务端：`server/internal/handler/auth_lark.go`（`POST /auth/lark`，路由在 `cmd/server/router.go`）；`auth.go` 的 GoogleLogin 尾段抽成 `completeOAuthLogin` 两者共用；`config.go` 下发 `lark_login_app_id`。
+- 环境变量：`MARVIS_LARK_LOGIN_APP_ID`、`MARVIS_LARK_LOGIN_APP_SECRET`、`MARVIS_LARK_LOGIN_TENANT_KEYS`（`.env.example`、`docker-compose.selfhost.yml`）。
+- 前端：`packages/views/auth/login-page.tsx`（飞书按钮、`lark` / `onLarkLogin`）、`use-lark-client-login.ts`（客户端免登）、`apps/web/app/(auth)/login/page.tsx`、`apps/web/app/auth/callback/page.tsx`（state 带 `provider:lark` 时走飞书）、`callback-error.ts`、桌面端 `pages/login.tsx`、core 的 `larkLogin` / `loginWithLark` / `larkLoginAppId`、auth 语言包。
+- 同步上游时 `auth.go`、`login-page.tsx`、`callback/page.tsx` 易冲突：保留上游改动后重新接回飞书分支，并跑 `Lark|Google` 相关测试。
+
 ## 同步上游流程
 
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。

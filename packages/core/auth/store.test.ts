@@ -188,4 +188,35 @@ describe("authStore", () => {
     expect(store.getState().status).toBe("authenticated");
     expect(store.getState().expired).toBe(false);
   });
+  it("logs in with a Feishu code and persists the token in token mode", async () => {
+    const storage = makeStorage();
+    const api = makeApi();
+    const larkLogin = vi.fn().mockResolvedValue({ token: "lark-token", user: fakeUser });
+    Object.assign(api, { larkLogin });
+    const onLogin = vi.fn();
+    const store = createAuthStore({ api, storage, onLogin });
+
+    const user = await store.getState().loginWithLark("code-1", "", "client");
+
+    expect(larkLogin).toHaveBeenCalledWith("code-1", "", "client");
+    expect(user).toBe(fakeUser);
+    expect(storage.snapshot().marvis_token).toBe("lark-token");
+    expect(api.setToken).toHaveBeenCalledWith("lark-token");
+    expect(onLogin).toHaveBeenCalledOnce();
+    expect(store.getState().status).toBe("authenticated");
+  });
+
+  it("defaults the Feishu code source to oauth and keeps cookie mode token-free", async () => {
+    const storage = makeStorage();
+    const api = makeApi();
+    const larkLogin = vi.fn().mockResolvedValue({ token: "lark-token", user: fakeUser });
+    Object.assign(api, { larkLogin });
+    const store = createAuthStore({ api, storage, cookieAuth: true });
+
+    await store.getState().loginWithLark("code-1", "https://app.example.test/auth/callback");
+
+    expect(larkLogin).toHaveBeenCalledWith("code-1", "https://app.example.test/auth/callback", "oauth");
+    expect(storage.snapshot().marvis_token).toBeUndefined();
+    expect(store.getState().user).toBe(fakeUser);
+  });
 });

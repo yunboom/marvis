@@ -114,6 +114,32 @@ func TestGetConfigIncludesRuntimeAuthConfig(t *testing.T) {
 	}
 }
 
+func TestGetConfigLarkLoginAppID(t *testing.T) {
+	tests := []struct {
+		name   string
+		secret string
+		want   string
+	}{
+		{name: "configured", secret: "lark-secret", want: "cli_lark_app"},
+		{name: "secret missing", secret: "", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(larkLoginAppIDEnv, "cli_lark_app")
+			t.Setenv(larkLoginAppSecretEnv, tt.secret)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+			var cfg AppConfig
+			testutil.Call(t, testHandler.GetConfig, req).Want(http.StatusOK).JSON(&cfg)
+
+			if cfg.LarkLoginAppID != tt.want {
+				t.Fatalf("lark_login_app_id = %q, want %q", cfg.LarkLoginAppID, tt.want)
+			}
+		})
+	}
+}
+
 func TestGetConfigUsesDaemonServerURLOverride(t *testing.T) {
 	t.Setenv("MARVIS_DAEMON_SERVER_URL", " https://api.internal.example/// ")
 	t.Setenv("MARVIS_PUBLIC_URL", "https://hooks.example.com/")

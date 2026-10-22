@@ -10,7 +10,9 @@ export type CallbackError =
         | "signup_prohibited"
         | "email_not_allowed"
         | "google_account_no_email"
-        | "oauth_code_invalid";
+        | "oauth_code_invalid"
+        | "lark_account_no_email"
+        | "lark_tenant_not_allowed";
     }
   | { kind: "raw"; text: string };
 
@@ -32,6 +34,10 @@ export function callbackErrorFrom(err: unknown): CallbackError {
       return { kind: "google_account_no_email" };
     case "oauth_code_invalid":
       return { kind: "oauth_code_invalid" };
+    case "lark_account_no_email":
+      return { kind: "lark_account_no_email" };
+    case "lark_tenant_not_allowed":
+      return { kind: "lark_tenant_not_allowed" };
     default:
       break;
   }
