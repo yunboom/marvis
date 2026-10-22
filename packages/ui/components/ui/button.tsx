@@ -6,13 +6,13 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@marvis/ui/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-body font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,opacity] duration-150 ease-out outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-body font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,opacity,scale] duration-(--motion-fast) ease-out hover:duration-(--motion-instant) active:scale-[0.98] active:duration-(--motion-instant) outline-none select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/85",
         outline:
-          "border-black/15 bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-input bg-transparent hover:bg-accent hover:text-foreground active:bg-surface-selected aria-expanded:bg-accent aria-expanded:text-foreground",
         // Brand-filled state for a control that is currently ON (an active
         // filter, a selected toggle). Self-contained on purpose: passing
         // brand classes through `className` on top of `outline` does NOT
@@ -35,11 +35,11 @@ const buttonVariants = cva(
         brandSubtle:
           "border-brand/28 bg-brand/7 text-foreground hover:bg-brand/12 hover:text-foreground active:bg-brand/16 aria-expanded:bg-brand/12 aria-expanded:text-foreground dark:border-brand/45 dark:bg-brand/12 dark:hover:bg-brand/18 dark:active:bg-brand/24 dark:aria-expanded:bg-brand/18",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-black/10 aria-expanded:bg-black/10 aria-expanded:text-secondary-foreground dark:hover:bg-white/12 dark:aria-expanded:bg-white/12",
+          "bg-secondary text-secondary-foreground hover:bg-black/10 active:bg-black/14 aria-expanded:bg-black/10 aria-expanded:text-secondary-foreground dark:hover:bg-white/12 dark:active:bg-white/16 dark:aria-expanded:bg-white/12",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "hover:bg-accent hover:text-foreground active:bg-surface-selected aria-expanded:bg-accent aria-expanded:text-foreground",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+          "bg-destructive text-white hover:bg-destructive/90 active:bg-destructive/85 focus-visible:outline-destructive/60",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

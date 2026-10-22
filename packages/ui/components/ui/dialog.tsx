@@ -31,7 +31,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-(--overlay-mask) data-open:duration-[var(--dialog-enter-duration)] data-closed:duration-[var(--dialog-exit-duration)] data-open:ease-[var(--dialog-enter-easing)] data-closed:ease-[var(--dialog-exit-easing)] motion-reduce:animate-none! data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-(--overlay-mask) data-open:animate-[overlay-fade-in_var(--dialog-mask-enter-duration)_var(--ease-out)] data-closed:animate-[overlay-fade-out_var(--dialog-mask-exit-duration)_var(--ease-in)_forwards]",
         className
       )}
       {...props}
@@ -61,7 +61,7 @@ function DialogContent({
           // fits is unaffected. `overflow-auto` shares tailwind-merge's
           // conflict group with `overflow-hidden`, so a dialog that manages
           // its own scrolling still opts out by passing that.
-          "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-auto rounded-[20px] bg-surface-raised p-6 text-body text-popover-foreground shadow-[var(--floating-shadow)] ring-1 ring-surface-border data-open:duration-[var(--dialog-enter-duration)] data-closed:duration-[var(--dialog-exit-duration)] data-open:ease-[var(--dialog-enter-easing)] data-closed:ease-[var(--dialog-exit-easing)] motion-reduce:animate-none! outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+          "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-auto rounded-dialog bg-surface-raised p-6 text-body text-popover-foreground shadow-floating ring-1 ring-surface-border outline-none sm:max-w-sm data-open:animate-[dialog-card-in_var(--dialog-enter-duration)_var(--dialog-enter-easing)] data-closed:animate-[dialog-card-out_var(--dialog-exit-duration)_var(--dialog-exit-easing)_forwards]",
           className
         )}
         {...props}

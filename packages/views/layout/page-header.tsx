@@ -14,7 +14,7 @@ import { ActionShortcutKeycaps } from "../common/shortcut-keycaps";
  * anywhere that edge matters instead of writing the class again; a page that
  * spells its own gutter is the bug coming back.
  */
-export const PAGE_GUTTER = "px-4";
+export const PAGE_GUTTER = "px-6";
 
 /**
  * The centred column a detail page reads inside: `runtimes`, and the agent and

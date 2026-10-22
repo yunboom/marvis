@@ -7,7 +7,6 @@ import { cn } from "@marvis/ui/lib/utils";
 import { useScrollFade } from "@marvis/ui/hooks/use-scroll-fade";
 import { AppLink, useNavigation } from "../navigation";
 import { HelpLauncher } from "./help-launcher";
-import { JoinDiscordCard } from "./join-discord-card";
 import {
   DndContext,
   PointerSensor,
@@ -109,6 +108,13 @@ const EMPTY_INVITATIONS: Awaited<ReturnType<typeof api.listMyInvitations>> = [];
 const EMPTY_INBOX_SUMMARY: Awaited<ReturnType<typeof api.getInboxUnreadSummary>> = [];
 const PINNED_PREVIEW_LIMIT = 5;
 
+// Pinned rows make way for a dragged row over 150ms on the standard curve
+// (Marvis motion spec: drag reflow).
+const PIN_REFLOW_TRANSITION = {
+  duration: 150,
+  easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+};
+
 // Nav items reference WorkspacePaths method names so they can be resolved
 // against the current workspace slug at render time (see AppSidebar body).
 // Only parameterless paths are valid nav destinations.
@@ -170,7 +176,7 @@ const utilityNav: { key: NavKey; labelKey: NavLabelKey }[] = [
 ];
 
 const NAV_ITEM_CLASS_NAME =
-  "h-9 gap-2.5 rounded-[10px] px-3 text-body text-foreground [&_svg]:size-[18px] hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground";
+  "h-[34px] gap-2.5 rounded-md px-3 text-body text-foreground [&_svg]:size-[18px] hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground";
 
 function DraftDot() {
   const hasDraft = useIssueDraftStore((s) => s.hasDraft());
@@ -206,7 +212,10 @@ function SortablePinItem({
   isActiveOverride?: boolean;
 }) {
   const { t } = useT("layout");
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: pin.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: pin.id,
+    transition: PIN_REFLOW_TRANSITION,
+  });
   const wasDragged = useRef(false);
 
   useEffect(() => {
@@ -220,7 +229,11 @@ function SortablePinItem({
     <SidebarMenuItem
       ref={setNodeRef}
       style={style}
-      className={cn("group/pin", isDragging && "opacity-30")}
+      // The dragged row lifts as an opaque floating row instead of a ghost.
+      className={cn(
+        "group/pin",
+        isDragging && "relative z-10 rounded-row bg-surface-raised shadow-menu",
+      )}
       {...attributes}
       {...listeners}
     >
@@ -237,7 +250,7 @@ function SortablePinItem({
           onNavigate?.();
         }}
         className={cn(
-          "text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground",
+          "h-7 gap-2 pr-2 pl-3.5 text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 hover:text-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground",
           isDragging && "pointer-events-none",
         )}
       >
@@ -617,14 +630,14 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
       <Sidebar variant="floating">
         {topSlot}
         {/* Workspace Switcher */}
-        <SidebarHeader className={cn("gap-3 px-3 pt-5 pb-1", headerClassName)} style={headerStyle}>
-          <div className="flex h-10 items-center gap-2.5 px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        <SidebarHeader className={cn("gap-2.5 px-3 pt-3.5 pb-1", headerClassName)} style={headerStyle}>
+          <div className="flex h-9 items-center gap-2.5 px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
             <MarvisIcon className="size-6 shrink-0 text-foreground" />
             <span className="text-display-sm font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
               {BRAND_NAME}
             </span>
           </div>
-          <SidebarMenu className="gap-2">
+          <SidebarMenu className="gap-1.5">
             {searchSlot && (
               <SidebarMenuItem>
                 {searchSlot}
@@ -650,9 +663,9 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
 
         {/* Navigation */}
         <SidebarContent ref={sidebarScrollRef} style={sidebarFadeStyle}>
-          <SidebarGroup className="px-3 py-1.5">
+          <SidebarGroup className="px-3 py-1">
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
+              <SidebarMenu className="gap-0.5">
                 {personalNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
@@ -690,20 +703,20 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
 
           {visiblePinned.length > 0 && (
             <Collapsible defaultOpen>
-              <SidebarGroup className="group/pinned px-3 py-1.5">
+              <SidebarGroup className="group/pinned px-3 py-1">
                 <SidebarGroupLabel
                   render={<CollapsibleTrigger />}
-                  className="group/trigger cursor-pointer px-3 font-normal hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
+                  className="group/trigger cursor-pointer gap-1 px-3 font-normal transition-colors duration-150 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground hover:duration-100"
                 >
                   <span>{t(($) => $.sidebar.pinned_label)}</span>
-                  <ChevronRight className="!size-3 ml-1 stroke-[2.5] transition-transform duration-200 group-data-[panel-open]/trigger:rotate-90" />
-                  <span className="ml-auto text-micro text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100">{visiblePinned.length}</span>
+                  <ChevronRight className="!size-3 stroke-[2.5] transition-transform duration-150 ease-out motion-reduce:transition-none group-data-[panel-open]/trigger:rotate-90" />
+                  <span className="ml-auto text-micro text-muted-foreground opacity-0 transition-opacity duration-100 group-hover/pinned:opacity-100">{visiblePinned.length}</span>
                 </SidebarGroupLabel>
                 <CollapsibleContent>
-                  <SidebarGroupContent>
+                  <SidebarGroupContent className="mt-0.5">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                       <SortableContext items={displayedPinned.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                        <SidebarMenu className="gap-1">
+                        <SidebarMenu className="gap-0.5">
                           {displayedPinned.map((pin: PinnedItem) => (
                             <PinRow
                               key={pin.id}
@@ -721,7 +734,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                       <SidebarMenuButton
                         size="sm"
                         aria-expanded={pinsExpanded}
-                        className="mt-0.5 pl-7 text-muted-foreground"
+                        className="mt-0.5 h-7 pl-9 text-muted-foreground"
                         onClick={() => setExpandedPinsWorkspaceId(pinsExpanded ? null : wsId ?? null)}
                       >
                         <span>
@@ -737,10 +750,10 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             </Collapsible>
           )}
 
-          <SidebarGroup className="px-3 py-1.5">
+          <SidebarGroup className="px-3 py-1">
             <SidebarGroupLabel className="px-3 font-normal">{t(($) => $.sidebar.work_group)}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
+              <SidebarMenu className="gap-0.5">
                 {workNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
@@ -762,10 +775,10 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup className="px-3 py-1.5">
+          <SidebarGroup className="px-3 py-1">
             <SidebarGroupLabel className="px-3 font-normal">{t(($) => $.sidebar.ai_team_group)}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
+              <SidebarMenu className="gap-0.5">
                 {aiTeamNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
@@ -788,8 +801,8 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="gap-0.5 px-3 pt-1 pb-3">
-          <SidebarMenu className="gap-1">
+        <SidebarFooter className="gap-0.5 px-3 pt-1 pb-2.5">
+          <SidebarMenu className="gap-0.5">
             {utilityNav.map((item) => {
               const href = p[item.key]();
               const Icon = routeIconForPath(href);
@@ -807,10 +820,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
               );
             })}
           </SidebarMenu>
-          {/* Discord fills the strip while visible; once dismissed, help
-              aligns with the navigation icons above. */}
-          <div className="flex items-center gap-1">
-            <JoinDiscordCard />
+          <div className="flex items-center gap-1 pl-[5px]">
             <HelpLauncher />
           </div>
           <div className="mt-1 border-t border-sidebar-border pt-2">
@@ -819,7 +829,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
-                      <SidebarMenuButton className="h-10 gap-2.5 px-3">
+                      <SidebarMenuButton className="h-10 gap-2.5 rounded-md px-3 font-medium">
                         <span className="relative">
                           <WorkspaceAvatar name={workspace?.name ?? "M"} avatarUrl={workspace?.avatar_url} size="sm" />
                           {/* Shared brand dot: a pending invitation OR another

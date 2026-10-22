@@ -14,6 +14,32 @@
     --color-surface-selected: var(--surface-selected);
     --color-surface-selected-foreground: var(--surface-selected-foreground);
     --color-surface-border: var(--surface-border);
+    --color-surface-sunken: var(--surface-sunken);
+    --color-field: var(--field);
+    --color-field-hover: var(--field-hover);
+    --color-skeleton: var(--skeleton);
+    --color-tooltip: var(--tooltip);
+    --color-tooltip-foreground: var(--tooltip-foreground);
+    --color-identity-brown: var(--identity-brown);
+    --color-identity-brown-foreground: var(--identity-brown-foreground);
+    --color-identity-blue: var(--identity-blue);
+    --color-identity-blue-foreground: var(--identity-blue-foreground);
+    --color-identity-green: var(--identity-green);
+    --color-identity-green-foreground: var(--identity-green-foreground);
+    --color-identity-yellow: var(--identity-yellow);
+    --color-identity-yellow-foreground: var(--identity-yellow-foreground);
+    --color-identity-purple: var(--identity-purple);
+    --color-identity-purple-foreground: var(--identity-purple-foreground);
+    --color-identity-gray: var(--identity-gray);
+    --color-identity-gray-foreground: var(--identity-gray-foreground);
+    /* Elevation steps as utilities: shadow-control (segmented thumb),
+       shadow-surface (content cards), shadow-menu (menus, popovers),
+       shadow-toast, shadow-floating (dialogs, sheets). */
+    --shadow-control: var(--control-shadow);
+    --shadow-surface: var(--surface-shadow);
+    --shadow-menu: var(--menu-shadow);
+    --shadow-toast: var(--toast-shadow);
+    --shadow-floating: var(--floating-shadow);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -63,6 +89,23 @@
     --radius-2xl: calc(var(--radius) * 2);
     --radius-3xl: calc(var(--radius) * 2.5);
     --radius-4xl: calc(var(--radius) * 3);
+    /* Role radii that sit off the ladder: rounded-row is a row inside a
+       menu, list, tooltip, or segmented control (8px); rounded-dialog is a
+       modal card (20px). Shell cards use rounded-2xl (24px). */
+    --radius-row: 0.5rem;
+    --radius-dialog: 1.25rem;
+}
+
+/* Motion: durations and curves (Marvis motion spec). Leaving is faster than
+ * entering, roughly two thirds of it: 150 -> 100, 240 -> 150. Only transform
+ * and opacity animate; size transitions are reserved for the sidebar and the
+ * right panel. Curves are theme tokens so Tailwind's ease-out / ease-in /
+ * ease-standard / ease-spring utilities resolve to them. */
+@theme {
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.28, 0.64, 1);
 }
 
 /* Type scale — the only font sizes product UI may use.
@@ -131,19 +174,31 @@
  * result on white, because sticky headers and table cells paint these tokens
  * over scrolling content and must not let it show through. */
 :root {
-    /* Dialog motion, shared by popup and backdrop. Marvis modals fade in
-       almost instantly (--modal-animation-duration: .05s, ease-out). */
-    --dialog-enter-duration: 50ms;
-    --dialog-exit-duration: 50ms;
-    --dialog-enter-easing: ease-out;
-    --dialog-exit-easing: ease-out;
-    /* Menus unfold vertically from their trigger edge (scaleY .8 -> 1). */
-    --menu-enter-duration: 150ms;
-    --menu-enter-easing: ease-out;
-    /* Springy overshoot used by Marvis cards, popovers, and input bars. */
-    --ease-spring: cubic-bezier(0.34, 1.28, 0.64, 1);
+    /* Duration steps.
+       instant: hover in, press, menus and popovers leaving.
+       fast: menus and popovers entering, masks, hover out, tooltips leaving.
+       base: dialog cards, sidebar collapse, new content, drag reflow and drop.
+       slow: right panel, sheets, toasts entering.
+       linger: located-highlight fade, colour only. */
+    --motion-instant: 100ms;
+    --motion-fast: 150ms;
+    --motion-base: 200ms;
+    --motion-slow: 240ms;
+    --motion-linger: 700ms;
+    /* Dialogs: the mask and the card are timed separately; the card scales
+       96% -> 100% while it fades in, and leaves at 100% -> 98%. */
+    --dialog-mask-enter-duration: var(--motion-fast);
+    --dialog-mask-exit-duration: var(--motion-instant);
+    --dialog-enter-duration: var(--motion-base);
+    --dialog-exit-duration: var(--motion-instant);
+    --dialog-enter-easing: var(--ease-out);
+    --dialog-exit-easing: var(--ease-in);
+    /* Menus unfold vertically from their trigger edge (scaleY .9 -> 1). */
+    --menu-enter-duration: var(--motion-fast);
+    --menu-enter-easing: var(--ease-out);
+    --menu-exit-duration: var(--motion-instant);
+    --menu-exit-easing: var(--ease-in);
     --ease-pop: cubic-bezier(0.3, 1.35, 0.5, 1);
-    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
     /* Modal backdrop. */
     --overlay-mask: oklch(0.1684 0 0 / 20%);
 
@@ -166,7 +221,8 @@
        is where lists, boards, and conversations live; surfaces are reserved
        for bounded content groups; raised surfaces are ephemeral overlays. */
     --app-shell: oklch(0.9761 0 0);
-    --page-canvas: oklch(0.9761 0 0);
+    /* The main area is a white card floating on the grey shell. */
+    --page-canvas: oklch(1 0 0);
     --surface: oklch(1 0 0);
     --surface-foreground: oklch(0.1684 0 0);
     --surface-raised: oklch(1 0 0);
@@ -174,8 +230,34 @@
     --surface-selected: oklch(0.9401 0 0);
     --surface-selected-foreground: oklch(0 0 0);
     --surface-border: oklch(0 0 0 / 8%);
+    /* Grouped ground inside the white main card: board columns, table
+       headers, card-grid wells. */
+    --surface-sunken: oklch(0.9761 0 0);
+    /* Filled inputs: a light grey well with no border. */
+    --field: oklch(0.9702 0 0);
+    --field-hover: oklch(0.9551 0 0);
+    /* Skeleton placeholder and the band that sweeps across it. */
+    --skeleton: oklch(0.9551 0 0);
+    --skeleton-highlight: oklch(0.9851 0 0);
     --surface-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
     --floating-shadow: 0 24px 32px rgba(0, 0, 0, 0.12);
+    /* Selected thumb of a segmented control. */
+    --control-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    /* Identity tones for initial avatars: a low-chroma tint with a deep
+       same-hue glyph. Status colours stay reserved for status. */
+    --identity-brown: oklch(0.9449 0.011 54.4941);
+    --identity-brown-foreground: oklch(0.4572 0.0762 41.0585);
+    --identity-blue: oklch(0.9448 0.0118 239.9094);
+    --identity-blue-foreground: oklch(0.4426 0.0642 239.3012);
+    --identity-green: oklch(0.9463 0.0158 139.4397);
+    --identity-green-foreground: oklch(0.483 0.088 142.7008);
+    --identity-yellow: oklch(0.9497 0.0209 88.7209);
+    --identity-yellow-foreground: oklch(0.4656 0.0777 82.3738);
+    --identity-purple: oklch(0.9452 0.0201 289.0764);
+    --identity-purple-foreground: oklch(0.4683 0.1584 278.3641);
+    --identity-gray: oklch(0.9431 0 0);
+    --identity-gray-foreground: oklch(0.3211 0 0);
 
     /* The chat launcher is an overlay pinned to the dashboard's bottom-right
        corner on every workspace page, so that corner is not available to page
@@ -192,9 +274,10 @@
        so they carry a lighter shadow than window-level overlays (dialogs,
        sheets), which keep --floating-shadow. */
     --menu-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    /* Tooltips are a dark surface in both themes, so a passive label never
-       reads as one of the interactive panels above. */
-    --tooltip: oklch(0 0 0 / 85%);
+    /* Tooltips invert the theme (near-black on light, near-white on dark),
+       so a passive label never reads as one of the interactive panels. */
+    --tooltip: oklch(0.1684 0 0 / 90%);
+    --tooltip-foreground: oklch(1 0 0);
     --tooltip-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     --background: var(--page-canvas);
     --foreground: oklch(0.1684 0 0);
@@ -219,7 +302,8 @@
     --accent-foreground: oklch(0.1684 0 0);
     --destructive: oklch(0.6613 0.2059 29.1983);
     --border: oklch(0 0 0 / 6%);
-    --input: oklch(0 0 0 / 8%);
+    /* Control outline (outline buttons, chips, checkboxes). */
+    --input: oklch(0 0 0 / 10%);
     --ring: oklch(0 0 0 / 28%);
     /* Brand-derived ramp on the Marvis accent: chart-1 equals brand and
        trailing series step lighter so a stacked bar reads in rank order. */
@@ -262,25 +346,45 @@
     color-scheme: dark;
     --overlay-mask: oklch(0 0 0 / 50%);
     --app-shell: oklch(0.1684 0 0);
-    --page-canvas: oklch(0.1684 0 0);
+    --page-canvas: oklch(0.2178 0 0);
     --surface: oklch(0.2178 0 0);
-    --surface-foreground: oklch(1 0 0 / 92%);
+    --surface-foreground: oklch(0.9612 0 0);
     --surface-raised: oklch(0.2435 0 0);
     --surface-hover: oklch(0.2686 0 0);
     --surface-selected: oklch(0.2931 0 0);
     --surface-selected-foreground: oklch(1 0 0);
     --surface-border: oklch(1 0 0 / 8%);
+    --surface-sunken: oklch(0.1913 0 0);
+    --field: oklch(1 0 0 / 6%);
+    --field-hover: oklch(1 0 0 / 9%);
+    --skeleton: oklch(0.252 0 0);
+    --skeleton-highlight: oklch(0.3012 0 0);
     --surface-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     --floating-shadow: 0 24px 32px rgba(0, 0, 0, 0.45);
     --menu-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --tooltip: oklch(0.2931 0 0);
-    --tooltip-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.4);
+    --control-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    --identity-brown: oklch(0.2816 0.0234 49.685);
+    --identity-brown-foreground: oklch(0.8143 0.0543 51.0585);
+    --identity-blue: oklch(0.2808 0.0231 235.6899);
+    --identity-blue-foreground: oklch(0.7949 0.054 237.1878);
+    --identity-green: oklch(0.2758 0.0243 142.5107);
+    --identity-green-foreground: oklch(0.8137 0.0752 141.945);
+    --identity-yellow: oklch(0.276 0.0276 85.6275);
+    --identity-yellow-foreground: oklch(0.8264 0.0714 84.3284);
+    --identity-purple: oklch(0.2753 0.0494 284.3531);
+    --identity-purple-foreground: oklch(0.8037 0.0815 285.2005);
+    --identity-gray: oklch(0.285 0 0);
+    --identity-gray-foreground: oklch(0.8853 0 0);
+    --tooltip: oklch(0.9612 0 0);
+    --tooltip-foreground: oklch(0.1684 0 0);
+    --tooltip-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     --background: var(--page-canvas);
-    --foreground: oklch(1 0 0 / 92%);
+    --foreground: oklch(0.9612 0 0);
     --card: var(--surface);
-    --card-foreground: oklch(1 0 0 / 92%);
+    --card-foreground: oklch(0.9612 0 0);
     --popover: var(--surface-raised);
-    --popover-foreground: oklch(1 0 0 / 92%);
+    --popover-foreground: oklch(0.9612 0 0);
     --primary: oklch(0.9761 0 0);
     --primary-foreground: oklch(0.1684 0 0);
     --secondary: oklch(0.285 0 0);
@@ -289,10 +393,10 @@
     --muted-foreground: oklch(0.683 0 0);
     --faint-foreground: oklch(0.5693 0 0);
     --accent: oklch(0.2686 0 0);
-    --accent-foreground: oklch(1 0 0 / 92%);
+    --accent-foreground: oklch(0.9612 0 0);
     --destructive: oklch(0.7091 0.1835 28.3704);
-    --border: oklch(1 0 0 / 7%);
-    --input: oklch(1 0 0 / 10%);
+    --border: oklch(1 0 0 / 8%);
+    --input: oklch(1 0 0 / 14%);
     --ring: oklch(1 0 0 / 30%);
     --chart-1: oklch(0.6798 0.0767 47.5563);
     --chart-2: oklch(0.5965 0.071 46.0532);
@@ -300,12 +404,12 @@
     --chart-4: oklch(0.4257 0.0504 46.0285);
     --chart-5: oklch(0.337 0.0386 46.5189);
     --sidebar: oklch(0.2178 0 0);
-    --sidebar-foreground: oklch(1 0 0 / 92%);
+    --sidebar-foreground: oklch(0.9612 0 0);
     --sidebar-primary: oklch(0.9761 0 0);
     --sidebar-primary-foreground: oklch(0.1684 0 0);
     --sidebar-accent: oklch(0.2686 0 0);
     --sidebar-accent-foreground: oklch(1 0 0);
-    --sidebar-border: oklch(1 0 0 / 7%);
+    --sidebar-border: oklch(1 0 0 / 8%);
     --sidebar-ring: oklch(1 0 0 / 30%);
     /* Brand also paints body-text links; keep it readable on dark surfaces. */
     --brand: oklch(0.6798 0.0767 47.5563);
@@ -320,4 +424,22 @@
     --find-match: oklch(0.82 0.16 100);
     --find-match-active: oklch(0.76 0.18 60);
     --find-match-foreground: oklch(0.18 0.02 92);
+}
+
+/* Tooltips invert the page theme. On a light page the popup is a `.dark`
+ * scope; on a dark page it sits on a near-white fill, so its contents take the
+ * light values again. Keep this copy in sync with the light tokens above. */
+.dark [data-slot="tooltip-content"] {
+    color-scheme: light;
+    --foreground: oklch(0.1684 0 0);
+    --muted: oklch(0.9551 0 0);
+    --muted-foreground: oklch(0.5103 0 0);
+    --faint-foreground: oklch(0.6167 0 0);
+    --border: oklch(0 0 0 / 6%);
+    --destructive: oklch(0.6613 0.2059 29.1983);
+    --brand: oklch(0.4572 0.0762 41.0585);
+    --success: oklch(0.637 0.1551 152.2643);
+    --warning: oklch(0.7837 0.1587 72.9913);
+    --info: oklch(0.6152 0.2108 256.099);
+    --priority-high: oklch(0.7243 0.1837 47.023);
 }

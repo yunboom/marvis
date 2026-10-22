@@ -64,7 +64,7 @@ function HoverCardContent({
           onAuxClick={stop(onAuxClick)}
           onDoubleClick={stop(onDoubleClick)}
           className={cn(
-            "z-50 w-64 origin-(--transform-origin) rounded-lg bg-popover p-2.5 text-body text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden data-open:animate-[popover-pop-in_var(--menu-enter-duration)_var(--menu-enter-easing)] data-closed:animate-[popover-pop-out_100ms_ease-in_forwards]",
+            "z-50 w-64 origin-(--transform-origin) rounded-lg bg-surface-raised p-2.5 text-body text-popover-foreground shadow-menu ring-1 ring-surface-border outline-hidden data-open:animate-[popover-pop-in_var(--menu-enter-duration)_var(--menu-enter-easing)] data-closed:animate-[popover-pop-out_var(--menu-exit-duration)_var(--menu-exit-easing)_forwards]",
             className
           )}
           {...props}

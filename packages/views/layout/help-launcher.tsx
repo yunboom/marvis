@@ -73,7 +73,7 @@ export function HelpLauncher() {
                 />
               }
             >
-              <Download className="h-3.5 w-3.5" />
+              <Download className="size-4" />
               {t(($) => $.help.download_desktop)}
               <ArrowUpRight className="size-3 translate-y-px text-faint-foreground" />
             </DropdownMenuItem>
@@ -89,7 +89,7 @@ export function HelpLauncher() {
             />
           }
         >
-          <BookOpen className="h-3.5 w-3.5" />
+          <BookOpen className="size-4" />
           {t(($) => $.help.docs)}
           <ArrowUpRight className="size-3 translate-y-px text-faint-foreground" />
         </DropdownMenuItem>
@@ -102,7 +102,7 @@ export function HelpLauncher() {
             />
           }
         >
-          <History className="h-3.5 w-3.5" />
+          <History className="size-4" />
           {t(($) => $.help.changelog)}
           <ArrowUpRight className="size-3 translate-y-px text-faint-foreground" />
         </DropdownMenuItem>
@@ -111,14 +111,14 @@ export function HelpLauncher() {
             <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" />
           }
         >
-          <DiscordIcon className="h-3.5 w-3.5" />
+          <DiscordIcon className="size-4" />
           {t(($) => $.help.discord)}
           <ArrowUpRight className="size-3 translate-y-px text-faint-foreground" />
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => useModalStore.getState().open("feedback")}
         >
-          <MessageCircle className="h-3.5 w-3.5" />
+          <MessageCircle className="size-4" />
           {t(($) => $.help.feedback)}
         </DropdownMenuItem>
         {serverVersion && (

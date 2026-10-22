@@ -48,11 +48,11 @@ A role alone does not supply an accessible name, focus management or dismissal b
 
 ## Motion
 
-Popup and backdrop consume `--dialog-enter-duration`, `--dialog-exit-duration`, `--dialog-enter-easing` and `--dialog-exit-easing` from `packages/ui/styles/tokens.css`. The defaults preserve the existing 100ms/ease animation. The popup also fades and scales between 95% and 100%.
+The popup consumes `--dialog-enter-duration`, `--dialog-exit-duration`, `--dialog-enter-easing` and `--dialog-exit-easing` from `packages/ui/styles/tokens.css`; the backdrop consumes `--dialog-mask-enter-duration` and `--dialog-mask-exit-duration`. Defaults: the backdrop fades in over 150ms and out over 100ms; the popup fades in over 200ms ease-out while scaling from 96% to 100%, and leaves over 100ms ease-in toward 98%.
 
-Changes affect shared Dialog instances on web and desktop, including compositions that use DialogContent, unless callers override the animation. They do not change Popover, Tooltip, AlertDialog or JavaScript motion constants.
+Changes affect shared Dialog instances on web and desktop, including compositions that use DialogContent, unless callers override the animation. AlertDialog shares the same tokens. They do not change Popover, Tooltip or JavaScript motion constants.
 
-Respect `prefers-reduced-motion`: popup and backdrop animations are disabled. UI Lab playback speed is preview-only and never exported. Open, close and replay the real component; also interrupt it with rapid open/close actions.
+Respect `prefers-reduced-motion`: popup and backdrop keep the fade and drop the scale. UI Lab playback speed is preview-only and never exported. Open, close and replay the real component; also interrupt it with rapid open/close actions.
 
 ## Application
 

@@ -13,9 +13,20 @@ import { extendTailwindMerge } from "tailwind-merge"
  * Registering the steps as font-size restores the real conflict groups: size
  * beats size, colour beats colour, and the two coexist. Keep this list in sync
  * with the `--text-*` steps in `packages/ui/styles/tokens.css`.
+ *
+ * The role radii (`rounded-row`, `rounded-dialog`), elevation steps
+ * (`shadow-menu`, ...) and motion curves (`ease-standard`, `ease-spring`) are
+ * registered for the same reason: unknown names would otherwise fall into a
+ * colour group or no group, and a call-site `rounded-lg` would not replace a
+ * base `rounded-row`.
  */
 const twMerge = extendTailwindMerge({
   extend: {
+    theme: {
+      radius: ["row", "dialog"],
+      shadow: ["control", "surface", "menu", "toast", "floating"],
+      ease: ["standard", "spring"],
+    },
     classGroups: {
       "font-size": [
         {

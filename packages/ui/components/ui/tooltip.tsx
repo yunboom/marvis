@@ -39,10 +39,11 @@ function TooltipContent({
     TooltipPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "anchor"
   >) {
-  // The popup is a `.dark` scope, so the text, status colors, and keycaps
-  // inside it take dark-theme values against the dark tooltip surface in both
-  // page themes. Its own fill and shadow are resolved on the positioner, which
-  // is still in the page theme.
+  // The tooltip inverts the page theme. The popup is a `.dark` scope, so on
+  // a light page its text, status colors, and keycaps take dark-theme values
+  // against the near-black surface; on a dark page base.css re-scopes it to
+  // the light values against the near-white surface. Its own fill and shadow
+  // are resolved on the positioner, which is still in the page theme.
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Positioner
@@ -56,7 +57,7 @@ function TooltipContent({
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(
-            "dark z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-[8px] bg-(--tooltip-fill) px-3 py-1.5 text-caption font-medium text-foreground shadow-(--tooltip-elevation) has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[state=delayed-open]:animate-[overlay-fade-in_200ms_ease] data-open:animate-[overlay-fade-in_200ms_ease] data-closed:animate-[overlay-fade-out_150ms_ease_forwards]",
+            "dark z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-row bg-(--tooltip-fill) px-2.5 py-1.5 text-caption font-medium text-foreground shadow-(--tooltip-elevation) has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[side=top]:[--tooltip-nudge-y:-2px] data-[side=bottom]:[--tooltip-nudge-y:2px] data-[side=left]:[--tooltip-nudge-x:-2px] data-[side=right]:[--tooltip-nudge-x:2px] data-[state=delayed-open]:animate-[tooltip-in_var(--motion-fast)_var(--ease-out)] data-open:animate-[tooltip-in_var(--motion-fast)_var(--ease-out)] data-closed:animate-[overlay-fade-out_var(--motion-instant)_var(--ease-in)_forwards]",
             className
           )}
           {...props}

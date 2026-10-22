@@ -11,6 +11,29 @@ import {
 import { parseAvatarEmoji } from "@marvis/ui/lib/avatar-emoji";
 import { MarvisIcon } from "./marvis-icon";
 
+/** Soft identity tones for avatars without a picture: a low-chroma tint with
+ *  a deep same-hue glyph. Status colours are never used for identity. */
+const IDENTITY_TONES = [
+  "bg-identity-brown text-identity-brown-foreground",
+  "bg-identity-blue text-identity-blue-foreground",
+  "bg-identity-green text-identity-green-foreground",
+  "bg-identity-yellow text-identity-yellow-foreground",
+  "bg-identity-purple text-identity-purple-foreground",
+] as const;
+
+const NEUTRAL_TONE = "bg-identity-gray text-identity-gray-foreground";
+
+/** Picks a stable tone from the name, so one actor keeps one colour on every
+ *  surface and across sessions. */
+function identityTone(name: string): string {
+  let hash = 0;
+  for (const char of name) {
+    hash = (hash * 31 + (char.codePointAt(0) ?? 0)) | 0;
+  }
+
+  return IDENTITY_TONES[Math.abs(hash) % IDENTITY_TONES.length] ?? NEUTRAL_TONE;
+}
+
 interface ActorAvatarProps {
   name: string;
   initials: string;
@@ -52,8 +75,10 @@ function ActorAvatar({
     <div
       data-slot="avatar"
       className={cn(
-        "inline-flex shrink-0 items-center justify-center font-medium overflow-hidden",
-        (!avatarUrl || emoji || imgError) && "bg-muted text-muted-foreground",
+        "inline-flex shrink-0 items-center justify-center font-semibold overflow-hidden",
+        emoji && "bg-muted text-muted-foreground",
+        !emoji && (!avatarUrl || imgError) &&
+          (isSystem ? NEUTRAL_TONE : identityTone(name)),
         className,
         // rounded-full stays last so a call-site `className` can never override
         // the circle — avatar shape is a hard invariant, not a per-site choice.
