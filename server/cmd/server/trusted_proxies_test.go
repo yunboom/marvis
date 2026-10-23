@@ -104,3 +104,37 @@ func sliceEq(a, b []string) bool {
 	}
 	return true
 }
+
+func TestTrustedProxySets(t *testing.T) {
+	t.Parallel()
+
+	loopback := []string{"127.0.0.1/32", "::1/128"}
+	cases := []struct {
+		name         string
+		raw          string
+		lanEnabled   bool
+		wantHTTP     []string
+		wantRealtime []string
+	}{
+		{"LAN default only reaches the websocket origin check", "", true, nil, loopback},
+		{"nothing trusted when LAN is off", "", false, nil, nil},
+		{"explicit list is used by both", "10.0.0.0/8", true, []string{"10.0.0.0/8"}, []string{"10.0.0.0/8"}},
+		{"explicit list is used by both when LAN is off", "10.0.0.0/8", false, []string{"10.0.0.0/8"}, []string{"10.0.0.0/8"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			httpProxies, realtimeProxies := trustedProxySets(tc.raw, tc.lanEnabled)
+
+			var gotHTTP, gotRealtime []string
+			for _, p := range httpProxies {
+				gotHTTP = append(gotHTTP, p.String())
+			}
+			for _, p := range realtimeProxies {
+				gotRealtime = append(gotRealtime, p.String())
+			}
+			if !sliceEq(gotHTTP, tc.wantHTTP) || !sliceEq(gotRealtime, tc.wantRealtime) {
+				t.Fatalf("trustedProxySets(%q, %v) = %v, %v, want %v, %v", tc.raw, tc.lanEnabled, gotHTTP, gotRealtime, tc.wantHTTP, tc.wantRealtime)
+			}
+		})
+	}
+}

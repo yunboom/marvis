@@ -41,6 +41,11 @@ COPY LICENSE NOTICE ./
 COPY docker/entrypoint.sh .
 RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
+# LAN discovery (mDNS) cannot reach the LAN from a container network and would
+# advertise container addresses, so the image keeps it off. Compose, Helm and
+# `docker run` all inherit this; pass MARVIS_LAN_DISCOVERY=true to override.
+ENV MARVIS_LAN_DISCOVERY=false
+
 EXPOSE 13840
 
 ENTRYPOINT ["./entrypoint.sh"]
