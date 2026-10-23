@@ -1315,16 +1315,13 @@
     "server": {
       "connect": {
         "title": "Marvis サーバーに接続",
-        "subtitle": "ローカルネットワーク上のサーバーを選択するか、アドレスを入力します",
-        "subtitle_none": "サーバーのアドレスを入力します",
+        "subtitle": "このコンピュータで使うか、ローカルネットワーク上の既存のサーバーに接続します。あとで設定から変更できます。",
         "lan_heading": "ローカルネットワーク上のサーバー",
         "scanning": "検索中",
         "rescan": "再検索",
         "local_badge": "このコンピュータ",
         "none": "ローカルネットワーク上にサーバーが見つかりません。コンピュータとサーバーは同じネットワークに接続されている必要があります。",
         "or_address": "またはアドレスを入力",
-        "summary_scanning": "検索中…",
-        "summary_scanning_hint": "ネットワーク上の Marvis サーバーがここに表示されます",
         "summary_manual": "手動で入力したアドレス",
         "summary_manual_hint": "先に接続をテストしてください"
       },
@@ -1374,6 +1371,210 @@
         "switch": "サーバーを切り替える"
       },
       "tab_label": "サーバー"
+    },
+    "standalone": {
+      "pick": {
+        "heading": "このコンピュータ",
+        "option": "このコンピュータで使う",
+        "badge": "スタンドアロンモード",
+        "not_installed": "初回は約 40 MB のリソースをダウンロードします",
+        "ready": "準備完了 · v{{version}}",
+        "summary_setup": "次へ：設定を完了",
+        "next": "次へ",
+        "continue": "続ける",
+        "entering": "開いています..."
+      },
+      "setup": {
+        "title": "スタンドアロンモードの設定",
+        "subtitle": "管理者のメールアドレスを入力すれば始められます。その他はデフォルト値を使います。",
+        "resources": "リソース",
+        "resources_size": "約 40 MB",
+        "location": "保存先",
+        "access": "アクセス",
+        "access_local": "このコンピュータのみ",
+        "access_lan": "このコンピュータとローカルネットワーク",
+        "errors_count_other": "{{count}} 件の設定を修正してください",
+        "download": "リソースをダウンロード",
+        "submitting": "保存しています...",
+        "back": "戻る",
+        "submit_failed": "設定を保存できませんでした。もう一度お試しください。"
+      },
+      "form": {
+        "help": "{{label}}の説明",
+        "random": "ランダム",
+        "random_label": "{{label}}をランダムに生成",
+        "defaults": "デフォルト設定",
+        "optional": "任意",
+        "needs_fix_other": "{{count}} 件を修正",
+        "not_configured": "未設定",
+        "configured": "設定済み",
+        "saved_secret": "保存済み。空欄のままなら変更しません",
+        "lan_login_warning": "ローカルネットワークでのログインには、ログインコード、Feishu ログイン、メールサービスのいずれかが必要です",
+        "admin_email": {
+          "label": "管理者メールアドレス",
+          "help": "最初のアカウントで、ワークスペースのオーナーになります。Marvis はこのコンピュータでの自動ログインに使います。",
+          "placeholder": "name@company.com"
+        },
+        "general": {
+          "title": "一般",
+          "summary": "{{name}} · ポート {{port}} · {{access}}"
+        },
+        "name": {
+          "label": "名前",
+          "help": "ローカルネットワークに表示される名前です。"
+        },
+        "port": {
+          "label": "ポート",
+          "help": "ローカルネットワークの接続に使うポートです。デフォルトは 13840。"
+        },
+        "lan": {
+          "label": "ローカルネットワークからの接続を許可",
+          "help": "オンにすると、ローカルネットワーク上のデバイスがこのコンピュータを見つけて接続できます。オフのときはこのコンピュータだけが使えます。"
+        },
+        "keys": {
+          "title": "セキュリティキー",
+          "summary": "8 個をランダムに生成済み",
+          "summary_locked": "ロック済み"
+        },
+        "jwt": {
+          "label": "ログイン署名キー",
+          "help": "ログイン資格情報に署名します。32 文字以上で、初回起動後は変更できません。"
+        },
+        "key_help": "連携の資格情報を暗号化して保存します。base64 でエンコードした 32 バイトが必要です。初回起動後は変更できず、変更すると保存済みの資格情報を復号できなくなります。",
+        "key_names": {
+          "lark": "Feishu 資格情報の暗号化キー",
+          "vcs": "コードリポジトリ資格情報の暗号化キー",
+          "slack": "Slack 資格情報の暗号化キー",
+          "dingtalk": "DingTalk 資格情報の暗号化キー",
+          "wecom": "WeCom 資格情報の暗号化キー",
+          "telegram": "Telegram 資格情報の暗号化キー",
+          "plugin": "プラグイン資格情報の暗号化キー"
+        },
+        "other_keys": {
+          "label": "その他 5 個の連携キーをランダムに生成済み",
+          "help": "Slack、DingTalk、WeCom、Telegram、プラグインの資格情報の暗号化キーです。ルールは上と同じです。"
+        },
+        "login_code": {
+          "title": "ログインコード",
+          "summary_on": "オン · {{code}}",
+          "summary_off": "オフ",
+          "switch_label": "固定ログインコードを使う",
+          "switch_help": "ローカルネットワークのメンバーはこのコードでログインでき、メールサービスは不要です。オフにすると Feishu ログインかメールのコードでログインします。",
+          "label": "ログインコード",
+          "help": "ローカルネットワークのメンバーがログイン時に入力する 6 桁の数字です。ワークスペースのオーナーと管理者はこのコードでログインできません。信頼できるネットワークでのみ使ってください。",
+          "placeholder": "6 桁の数字"
+        },
+        "lark": {
+          "title": "Feishu ログイン",
+          "summary_on": "設定済み · {{appId}}",
+          "app_id_label": "App ID",
+          "app_id_help": "Feishu オープンプラットフォーム › アプリの資格情報にある App ID で、cli_ で始まります。",
+          "app_secret_label": "App Secret",
+          "app_secret_help": "同じページにある App Secret です。",
+          "tenants_label": "許可するテナント",
+          "tenants_help": "これらのテナントのメンバーだけがログインできます。複数ある場合は半角カンマで区切ります。空欄なら制限しません。",
+          "tenants_placeholder": "制限なし"
+        },
+        "smtp": {
+          "title": "メールサービス",
+          "summary_on": "設定済み · {{host}}",
+          "host_label": "SMTP ホスト",
+          "host_help": "ログインコードのメールを送る SMTP ホストです（例：smtp.example.com）。",
+          "port_label": "ポート",
+          "port_help": "通常は 465 か 587 です。",
+          "username_label": "ユーザー名",
+          "username_help": "メールサービスのアカウントです。",
+          "password_label": "パスワード",
+          "password_help": "メールサービスのパスワードまたはアプリパスワードです。",
+          "from_label": "送信者",
+          "from_help": "メールに表示される送信者のアドレスです。"
+        },
+        "llm": {
+          "title": "補助モデル",
+          "summary_on": "設定済み · {{model}}",
+          "base_url_label": "API URL",
+          "base_url_help": "OpenAI 互換のモデルサービスのアドレスです。空欄なら OpenAI のデフォルトを使います。",
+          "api_key_label": "API Key",
+          "api_key_help": "チャットのタイトルとフォローアップの提案を生成します。チャットの内容がこのモデルサービスに送られます。",
+          "model_label": "モデル",
+          "model_help": "空欄なら組み込みのデフォルトモデルを使います。"
+        },
+        "validation": {
+          "required": "{{label}}を入力してください",
+          "email": "メールアドレスの形式が正しくありません",
+          "port_range": "ポートは {{min}}–{{max}} の範囲です",
+          "jwt_length": "{{min}} 文字以上必要です",
+          "key_format": "base64 でエンコードした 32 バイトのキーが必要です",
+          "login_code": "6 桁の数字が必要です",
+          "lark_app_id": "App ID は cli_ で始まります",
+          "lark_secret_required": "App ID を入力したら App Secret も必要です",
+          "tenant_keys": "テナントは半角カンマで区切ります",
+          "url": "http:// または https:// で始めてください"
+        }
+      },
+      "prepare": {
+        "label": "スタンドアロンモードを準備",
+        "steps": "ステップ",
+        "step_download": "ダウンロード",
+        "step_verify": "検証",
+        "step_install": "インストール",
+        "progress": "リソースの準備状況",
+        "phase_downloading": "リソースをダウンロードしています",
+        "phase_paused": "一時停止中",
+        "phase_verifying": "リソースを検証しています",
+        "phase_installing": "リソースをインストールしています",
+        "phase_starting": "起動しています",
+        "phase_failed": "完了しませんでした",
+        "phase_stopped": "停止中",
+        "title_preparing": "スタンドアロンモードを準備しています",
+        "title_paused": "ダウンロードを一時停止しました",
+        "title_failed": "リソースをインストールできませんでした",
+        "title_unavailable": "スタンドアロンモードを使えません",
+        "title_stopped": "スタンドアロンモードは停止しています",
+        "title_done": "スタンドアロンモードの準備ができました",
+        "subtitle_downloading": "初回はリソースのダウンロードが必要です。ウィンドウを閉じてもバックグラウンドで続きます。",
+        "subtitle_paused": "ダウンロード済みの部分は保持され、再開すると続きから始まります。",
+        "subtitle_verifying": "ダウンロードが完了しました。ファイルを確認しています。",
+        "subtitle_installing": "初回のインストールには少し時間がかかります。Marvis を開いたままにしてください。",
+        "subtitle_starting": "スタンドアロンモードを起動しています。Marvis を開いたままにしてください。",
+        "subtitle_stopped": "再試行すると再び実行します。",
+        "subtitle_done_lan": "ローカルネットワーク上のデバイスがこのコンピュータを自動で見つけられます。Marvis を終了すると接続が切れます。",
+        "subtitle_done_local": "このコンピュータだけで使っています。設定 › サーバー でローカルネットワークからの接続を許可できます。",
+        "size": "{{received}} / {{total}} MB",
+        "speed": "{{speed}} MB/s",
+        "speed_eta": "{{speed}} MB/s · 残り約 {{eta}}",
+        "eta_seconds_other": "{{count}} 秒",
+        "eta_minutes_other": "{{count}} 分",
+        "paused_hint": "ネットワークが戻ると自動で再開します",
+        "install_hint": "初回のインストールは約 1 分です",
+        "done_heading": "リソースの準備完了",
+        "done_version": "バージョン v{{version}}",
+        "pause": "ダウンロードを一時停止",
+        "resume": "ダウンロードを再開",
+        "cancel": "キャンセル",
+        "retry": "再試行",
+        "edit_settings": "設定を変更",
+        "view_logs": "ログを表示",
+        "enter": "Marvis を開く",
+        "entering": "開いています...",
+        "enter_failed": "スタンドアロンモードを開けませんでした",
+        "action_failed": "完了しませんでした。もう一度お試しください。",
+        "errors": {
+          "port_in_use": "ネットワークポート {{port}} は別のアプリが使っています。ポートを変更して再試行してください。ダウンロード済みのリソースは保持されます。",
+          "port_in_use_running": "ネットワークポート {{port}} は別のアプリが使っています。そのアプリを終了して再試行してください。",
+          "network": "ネットワーク接続が切れました。復旧したら再試行してください。ダウンロード済みのリソースは保持されます。",
+          "checksum": "リソースファイルの検証に失敗しました。再試行すると再ダウンロードします。",
+          "disk": "ディスクの空き容量が足りないか、書き込み権限がありません。",
+          "unsupported_platform": "このコンピュータのシステムはスタンドアロンモードにまだ対応していません。",
+          "manifest": "リソースの情報を取得できません。しばらくしてから再試行してください。",
+          "start_failed": "リソースは準備できましたが、実行を開始できませんでした。"
+        }
+      },
+      "login": {
+        "admin": "管理者として開く",
+        "admin_busy": "開いています...",
+        "admin_failed": "管理者として開けませんでした"
+      }
     }
   },
   "members": {

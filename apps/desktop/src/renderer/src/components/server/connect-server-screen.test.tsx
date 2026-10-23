@@ -9,6 +9,7 @@ import {
   type DiscoveredServer,
   type ProbeResult,
 } from "../../../../shared/server-discovery";
+import type { StandaloneStatus } from "../../../../shared/standalone";
 import { ConnectServerScreen } from "./connect-server-screen";
 import { PROBE_MIN_DISPLAY_MS } from "./server-address-field";
 import { LAN_SCAN_WINDOW_MS } from "./use-lan-servers";
@@ -52,7 +53,28 @@ const mocks = vi.hoisted(() => ({
   probe: vi.fn(),
   select: vi.fn(),
   unsubscribe: vi.fn(),
+  standaloneOnStatus: vi.fn(),
+  standaloneEnter: vi.fn(),
+  standaloneDefaults: vi.fn(),
 }));
+
+// 单机模式的状态：默认未安装。
+function standaloneStatus(overrides: Partial<StandaloneStatus> = {}): StandaloneStatus {
+  return {
+    phase: "not_installed",
+    version: null,
+    progress: null,
+    error: null,
+    lanUrl: null,
+    localUrl: null,
+    startedAt: null,
+    update: { state: "latest", availableVersion: null, sizeBytes: null, progress: null, checkedAt: null },
+    ...overrides,
+  };
+}
+
+// 主进程订阅时立即推送的单机模式状态。
+let initialStandaloneStatus: StandaloneStatus = standaloneStatus();
 
 // 触发主进程推送的发现列表。
 let pushServers: (list: DiscoveredServer[]) => void = () => {};
@@ -66,15 +88,27 @@ function installDesktopAPI() {
   mocks.probe.mockReset();
   mocks.select.mockReset().mockResolvedValue(undefined);
   mocks.unsubscribe.mockReset();
+  mocks.standaloneOnStatus.mockReset().mockImplementation((callback: (status: StandaloneStatus) => void) => {
+    callback(initialStandaloneStatus);
+    return () => {};
+  });
+  mocks.standaloneEnter.mockReset().mockResolvedValue(undefined);
+  mocks.standaloneDefaults.mockReset().mockReturnValue(new Promise(() => {}));
 
   Object.defineProperty(window, "desktopAPI", {
     configurable: true,
     value: {
+      appInfo: { os: "macos", version: "0.6.5" },
       server: {
         discover: mocks.discover,
         rescan: mocks.rescan,
         probe: mocks.probe,
         select: mocks.select,
+      },
+      standalone: {
+        onStatus: mocks.standaloneOnStatus,
+        enter: mocks.standaloneEnter,
+        defaults: mocks.standaloneDefaults,
       },
     },
   });
@@ -116,6 +150,7 @@ async function runProbe(result: ProbeResult) {
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  initialStandaloneStatus = standaloneStatus();
   installDesktopAPI();
 });
 
@@ -128,8 +163,8 @@ describe("ConnectServerScreen", () => {
     renderScreen();
     settleDiscovery([designServer, devServer, oldServer]);
 
-    // radio 只有三个服务器行，地址栏不是 radio。
-    expect(screen.getAllByRole("radio")).toHaveLength(3);
+    // radio 是「在这台电脑上使用」和三个服务器行，地址栏不是 radio。
+    expect(screen.getAllByRole("radio")).toHaveLength(4);
 
     const design = screen.getByRole("radio", { name: /设计部 Marvis/ });
     const dev = screen.getByRole("radio", { name: /marvis-dev/ });
@@ -143,7 +178,11 @@ describe("ConnectServerScreen", () => {
     expect(old).toHaveTextContent("服务器版本过旧");
     expect(design).toHaveTextContent("192.168.1.20:13840 · v0.6.5");
 
-    // 默认选中第一行。
+    // 默认选中这台电脑，服务器行都不选中。
+    expect(screen.getByRole("radio", { name: /在这台电脑上使用/ })).toHaveAttribute("aria-checked", "true");
+    expect(design).toHaveAttribute("aria-checked", "false");
+
+    fireEvent.click(design);
     expect(design).toHaveAttribute("aria-checked", "true");
     expect(dev).toHaveAttribute("aria-checked", "false");
 
@@ -164,13 +203,12 @@ describe("ConnectServerScreen", () => {
     await act(async () => resolveSelect());
   });
 
-  it("keeps connect disabled while scanning unless the user picked a row", () => {
+  it("lets the user pick a server while scanning is still running", () => {
     renderScreen();
     act(() => pushServers([designServer, devServer]));
 
-    // 查找窗口内默认选中的行还可能变化，先不让连接。
     expect(screen.getByText("正在查找")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "连接" })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: /在这台电脑上使用/ })).toHaveAttribute("aria-checked", "true");
 
     fireEvent.click(screen.getByRole("radio", { name: /marvis-dev/ }));
     expect(screen.getByRole("button", { name: "连接" })).toBeEnabled();
@@ -239,7 +277,7 @@ describe("ConnectServerScreen", () => {
     renderScreen();
     settleDiscovery([designServer]);
 
-    // 默认选中第一个服务器行：地址栏的 group 不带 aria-current。
+    // 默认选中这台电脑：地址栏的 group 不带 aria-current。
     expect(addressGroup()).not.toHaveAttribute("aria-current");
 
     fireEvent.focus(addressInput());
@@ -256,7 +294,9 @@ describe("ConnectServerScreen", () => {
     for (const element of [group, input, testButton, status]) {
       expect(element.closest('[role="radio"]')).toBeNull();
     }
-    expect(within(screen.getByRole("radiogroup")).queryByRole("textbox")).toBeNull();
+    for (const radiogroup of screen.getAllByRole("radiogroup")) {
+      expect(within(radiogroup).queryByRole("textbox")).toBeNull();
+    }
 
     // 名称只来自可见标签，不再重复写 aria-label。
     expect(group).not.toHaveAttribute("aria-label");
@@ -269,16 +309,16 @@ describe("ConnectServerScreen", () => {
     expect(screen.getByRole("radio", { name: /设计部 Marvis/ })).toHaveAttribute("aria-checked", "true");
   });
 
-  it("shows the not-found note and selects the address field when nothing is discovered", () => {
+  it("shows the not-found note and keeps this computer selected when nothing is discovered", () => {
     renderScreen();
     settleDiscovery([]);
 
     expect(
       screen.getByText("局域网中没有找到服务器。电脑和服务器需要连在同一个局域网。"),
     ).toBeInTheDocument();
-    expect(screen.getByText("输入服务器地址")).toBeInTheDocument();
     expect(screen.queryByText("局域网中的服务器")).not.toBeInTheDocument();
-    expect(addressGroup()).toHaveAttribute("aria-current", "true");
+    expect(addressGroup()).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("radio", { name: /在这台电脑上使用/ })).toHaveAttribute("aria-checked", "true");
 
     // 重新查找按钮会重新扫描。
     fireEvent.click(screen.getByRole("button", { name: "重新查找" }));
@@ -341,7 +381,11 @@ describe("ConnectServerScreen", () => {
     renderScreen();
     settleDiscovery([designServer]);
 
+    // 默认是这台电脑：摘要提示下一步完成设置。
+    expect(screen.getByText("下一步：完成设置")).toBeInTheDocument();
+
     // 选中的服务器：摘要和行里各出现一次地址 · 版本。
+    fireEvent.click(screen.getByRole("radio", { name: /设计部 Marvis/ }));
     expect(screen.getAllByText("192.168.1.20:13840 · v0.6.5")).toHaveLength(2);
 
     // 选中地址栏、还没测试：摘要提示先测试。
@@ -358,5 +402,82 @@ describe("ConnectServerScreen", () => {
     unmount();
 
     expect(mocks.unsubscribe).toHaveBeenCalledOnce();
+  });
+});
+
+describe("ConnectServerScreen standalone option", () => {
+  it("offers first-time setup when standalone mode is not installed", () => {
+    renderScreen();
+    settleDiscovery([designServer]);
+
+    const local = screen.getByRole("radio", { name: /在这台电脑上使用/ });
+    expect(local).toHaveTextContent("单机模式");
+    expect(local).toHaveTextContent("首次使用需下载约 40 MB 资源");
+    expect(
+      screen.getByText("在这台电脑上使用，或连接局域网中已有的服务器。之后可以在设置里更换。"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "下一步" }));
+
+    expect(screen.getByRole("heading", { name: "完成单机模式设置" })).toBeInTheDocument();
+    expect(mocks.standaloneDefaults).toHaveBeenCalledOnce();
+    expect(mocks.select).not.toHaveBeenCalled();
+  });
+
+  it("continues straight into standalone mode once it is installed", async () => {
+    initialStandaloneStatus = standaloneStatus({ phase: "stopped", version: "0.6.6" });
+    let resolveEnter: () => void = () => {};
+    mocks.standaloneEnter.mockReturnValueOnce(new Promise<void>((resolve) => (resolveEnter = resolve)));
+    renderScreen();
+    settleDiscovery([]);
+
+    expect(screen.getByRole("radio", { name: /在这台电脑上使用/ })).toHaveTextContent("已就绪 · v0.6.6");
+
+    fireEvent.click(screen.getByRole("button", { name: "继续" }));
+
+    expect(mocks.standaloneEnter).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "正在进入..." })).toBeDisabled();
+
+    await act(async () => resolveEnter());
+  });
+
+  it("switches back to the connect button when a server is picked", () => {
+    renderScreen();
+    settleDiscovery([designServer]);
+
+    expect(screen.queryByRole("button", { name: "连接" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /设计部 Marvis/ }));
+
+    expect(screen.getByRole("button", { name: "连接" })).toBeEnabled();
+  });
+
+  it("hides this computer's own standalone server from the LAN list", () => {
+    initialStandaloneStatus = standaloneStatus({
+      phase: "running",
+      version: "0.6.6",
+      lanUrl: designServer.url,
+    });
+    renderScreen();
+    settleDiscovery([designServer, devServer]);
+
+    expect(screen.queryByRole("radio", { name: /设计部 Marvis/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /marvis-dev/ })).toBeInTheDocument();
+  });
+
+  it("reopens the prepare screen when the last install was interrupted", () => {
+    initialStandaloneStatus = standaloneStatus({
+      phase: "paused",
+      progress: {
+        percent: 40,
+        receivedBytes: 20 * 1024 * 1024,
+        totalBytes: 40 * 1024 * 1024,
+        bytesPerSecond: 0,
+        etaSeconds: null,
+      },
+    });
+    renderScreen();
+
+    expect(screen.getByRole("heading", { name: "下载已暂停" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   });
 });

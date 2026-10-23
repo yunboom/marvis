@@ -16,6 +16,7 @@ import { DesktopLoginPage } from "./pages/login";
 import { DesktopAuthRecoveryPage } from "./pages/auth-recovery";
 import { DesktopShell } from "./components/desktop-layout";
 import { ConnectServerScreen } from "./components/server/connect-server-screen";
+import { StandaloneGate } from "./components/standalone/standalone-gate";
 import { UpdateNotification } from "./components/update-notification";
 import { IssueWindow } from "./components/issue-window";
 import { useTabStore } from "./stores/tab-store";
@@ -459,7 +460,10 @@ export default function App() {
           {windowContext.kind === "issue" ? (
             <IssueWindowContent />
           ) : (
-            <AppContent />
+            // 选的是单机模式且本机服务还没运行时，先显示启动状态页。
+            <StandaloneGate>
+              <AppContent />
+            </StandaloneGate>
           )}
         </CoreProvider>
       ) : "unconfigured" in runtimeConfigResult ? (

@@ -1325,16 +1325,13 @@
     "server": {
       "connect": {
         "title": "Se connecter à un serveur Marvis",
-        "subtitle": "Choisissez un serveur du réseau local ou saisissez une adresse",
-        "subtitle_none": "Saisissez l'adresse du serveur",
+        "subtitle": "Utilisez Marvis sur cet ordinateur ou connectez-vous à un serveur du réseau local. Vous pourrez changer plus tard dans les réglages.",
         "lan_heading": "Serveurs du réseau local",
         "scanning": "Recherche en cours",
         "rescan": "Rechercher à nouveau",
         "local_badge": "Cet ordinateur",
         "none": "Aucun serveur trouvé sur le réseau local. L'ordinateur et le serveur doivent être sur le même réseau.",
         "or_address": "ou saisissez une adresse",
-        "summary_scanning": "Recherche…",
-        "summary_scanning_hint": "Les serveurs Marvis du réseau apparaissent ici",
         "summary_manual": "Adresse saisie manuellement",
         "summary_manual_hint": "Testez d'abord la connexion"
       },
@@ -1384,6 +1381,214 @@
         "switch": "Changer de serveur"
       },
       "tab_label": "Serveur"
+    },
+    "standalone": {
+      "pick": {
+        "heading": "Cet ordinateur",
+        "option": "Utiliser sur cet ordinateur",
+        "badge": "Mode autonome",
+        "not_installed": "La première utilisation télécharge environ 40 Mo de ressources",
+        "ready": "Prêt · v{{version}}",
+        "summary_setup": "Étape suivante : terminer la configuration",
+        "next": "Suivant",
+        "continue": "Continuer",
+        "entering": "Ouverture..."
+      },
+      "setup": {
+        "title": "Configurer le mode autonome",
+        "subtitle": "Saisissez l'e-mail de l'administrateur pour commencer. Le reste utilise les valeurs par défaut.",
+        "resources": "Ressources",
+        "resources_size": "Environ 40 Mo",
+        "location": "Emplacement",
+        "access": "Accès",
+        "access_local": "Cet ordinateur uniquement",
+        "access_lan": "Cet ordinateur et le réseau local",
+        "errors_count_one": "{{count}} réglage à corriger",
+        "errors_count_other": "{{count}} réglages à corriger",
+        "download": "Télécharger les ressources",
+        "submitting": "Enregistrement...",
+        "back": "Retour",
+        "submit_failed": "Les réglages n'ont pas été enregistrés. Réessayez."
+      },
+      "form": {
+        "help": "À propos de {{label}}",
+        "random": "Aléatoire",
+        "random_label": "Générer {{label}} au hasard",
+        "defaults": "Réglages par défaut",
+        "optional": "Facultatif",
+        "needs_fix_one": "{{count}} élément à corriger",
+        "needs_fix_other": "{{count}} éléments à corriger",
+        "not_configured": "Non configuré",
+        "configured": "Configuré",
+        "saved_secret": "Enregistré. Laissez vide pour le conserver",
+        "lan_login_warning": "La connexion sur le réseau local nécessite un code de connexion, la connexion Feishu ou un service d'e-mail",
+        "admin_email": {
+          "label": "E-mail de l'administrateur",
+          "help": "Le premier compte, propriétaire de l'espace de travail. Marvis l'utilise pour vous connecter sur cet ordinateur.",
+          "placeholder": "nom@entreprise.com"
+        },
+        "general": {
+          "title": "Général",
+          "summary": "{{name}} · port {{port}} · {{access}}"
+        },
+        "name": {
+          "label": "Nom",
+          "help": "Le nom affiché sur le réseau local."
+        },
+        "port": {
+          "label": "Port",
+          "help": "Le port des connexions sur le réseau local. Par défaut 13840."
+        },
+        "lan": {
+          "label": "Autoriser les connexions du réseau local",
+          "help": "Activé, les appareils du réseau local peuvent trouver cet ordinateur et s'y connecter. Désactivé, seul cet ordinateur peut l'utiliser."
+        },
+        "keys": {
+          "title": "Clés de sécurité",
+          "summary": "8 générées au hasard",
+          "summary_locked": "Verrouillées"
+        },
+        "jwt": {
+          "label": "Clé de signature des connexions",
+          "help": "Signe les identifiants de connexion. Au moins 32 caractères. Non modifiable après le premier démarrage."
+        },
+        "key_help": "Chiffre les identifiants d'intégration enregistrés. 32 octets encodés en base64. Non modifiable après le premier démarrage : la modifier rend les identifiants enregistrés illisibles.",
+        "key_names": {
+          "lark": "Clé des identifiants Feishu",
+          "vcs": "Clé des identifiants de dépôt de code",
+          "slack": "Clé des identifiants Slack",
+          "dingtalk": "Clé des identifiants DingTalk",
+          "wecom": "Clé des identifiants WeCom",
+          "telegram": "Clé des identifiants Telegram",
+          "plugin": "Clé des identifiants de plugin"
+        },
+        "other_keys": {
+          "label": "5 autres clés d'intégration générées au hasard",
+          "help": "Clés des identifiants Slack, DingTalk, WeCom, Telegram et des plugins. Mêmes règles que ci-dessus."
+        },
+        "login_code": {
+          "title": "Code de connexion",
+          "summary_on": "Activé · {{code}}",
+          "summary_off": "Désactivé",
+          "switch_label": "Utiliser un code de connexion fixe",
+          "switch_help": "Les membres du réseau local saisissent ce code pour se connecter, sans service d'e-mail. Désactivé, ils se connectent avec Feishu ou un code par e-mail.",
+          "label": "Code de connexion",
+          "help": "Le code à 6 chiffres que saisissent les membres du réseau local. Il ne permet pas de connecter les propriétaires ni les administrateurs. À utiliser uniquement sur un réseau de confiance.",
+          "placeholder": "6 chiffres"
+        },
+        "lark": {
+          "title": "Connexion Feishu",
+          "summary_on": "Configuré · {{appId}}",
+          "app_id_label": "App ID",
+          "app_id_help": "L'App ID dans Feishu Open Platform › Identifiants de l'application. Commence par cli_.",
+          "app_secret_label": "App Secret",
+          "app_secret_help": "L'App Secret de la même page.",
+          "tenants_label": "Tenants autorisés",
+          "tenants_help": "Seuls les membres de ces tenants peuvent se connecter. Séparez-les par des virgules. Laissez vide pour ne pas limiter.",
+          "tenants_placeholder": "Aucune limite"
+        },
+        "smtp": {
+          "title": "Service d'e-mail",
+          "summary_on": "Configuré · {{host}}",
+          "host_label": "Hôte SMTP",
+          "host_help": "L'hôte SMTP qui envoie les e-mails de code de connexion, par exemple smtp.example.com.",
+          "port_label": "Port",
+          "port_help": "En général 465 ou 587.",
+          "username_label": "Nom d'utilisateur",
+          "username_help": "Le compte du service d'e-mail.",
+          "password_label": "Mot de passe",
+          "password_help": "Le mot de passe ou mot de passe d'application du service d'e-mail.",
+          "from_label": "Expéditeur",
+          "from_help": "L'adresse d'expéditeur affichée dans les e-mails."
+        },
+        "llm": {
+          "title": "Modèle d'assistance",
+          "summary_on": "Configuré · {{model}}",
+          "base_url_label": "URL de l'API",
+          "base_url_help": "Un service de modèle compatible OpenAI. Laissez vide pour utiliser l'adresse par défaut d'OpenAI.",
+          "api_key_label": "API Key",
+          "api_key_help": "Génère les titres de discussion et les suggestions de suivi. Le contenu des discussions est envoyé à ce service.",
+          "model_label": "Modèle",
+          "model_help": "Laissez vide pour utiliser le modèle intégré par défaut."
+        },
+        "validation": {
+          "required": "Saisissez {{label}}",
+          "email": "Adresse e-mail non valide",
+          "port_range": "Le port doit être entre {{min}} et {{max}}",
+          "jwt_length": "Au moins {{min}} caractères",
+          "key_format": "Clé de 32 octets en base64 requise",
+          "login_code": "6 chiffres requis",
+          "lark_app_id": "L'App ID commence par cli_",
+          "lark_secret_required": "Saisissez l'App Secret de cet App ID",
+          "tenant_keys": "Séparez les tenants par des virgules",
+          "url": "Doit commencer par http:// ou https://"
+        }
+      },
+      "prepare": {
+        "label": "Préparation du mode autonome",
+        "steps": "Étapes",
+        "step_download": "Télécharger",
+        "step_verify": "Vérifier",
+        "step_install": "Installer",
+        "progress": "Progression des ressources",
+        "phase_downloading": "Téléchargement des ressources",
+        "phase_paused": "En pause",
+        "phase_verifying": "Vérification des ressources",
+        "phase_installing": "Installation des ressources",
+        "phase_starting": "Démarrage",
+        "phase_failed": "Non terminé",
+        "phase_stopped": "À l'arrêt",
+        "title_preparing": "Préparation du mode autonome",
+        "title_paused": "Téléchargement en pause",
+        "title_failed": "Échec de l'installation des ressources",
+        "title_unavailable": "Mode autonome indisponible",
+        "title_stopped": "Le mode autonome est à l'arrêt",
+        "title_done": "Le mode autonome est prêt",
+        "subtitle_downloading": "La première utilisation télécharge des ressources. Le téléchargement continue en arrière-plan si vous fermez la fenêtre.",
+        "subtitle_paused": "Les parties téléchargées sont conservées. La reprise repart de là.",
+        "subtitle_verifying": "Téléchargement terminé. Vérification des fichiers.",
+        "subtitle_installing": "La première installation prend un moment. Gardez Marvis ouvert.",
+        "subtitle_starting": "Le mode autonome démarre. Gardez Marvis ouvert.",
+        "subtitle_stopped": "Réessayez pour le relancer.",
+        "subtitle_done_lan": "Les appareils du réseau local peuvent trouver cet ordinateur. Ils sont déconnectés quand vous quittez Marvis.",
+        "subtitle_done_local": "Seul cet ordinateur l'utilise. Vous pouvez autoriser le réseau local dans Réglages › Serveur.",
+        "size": "{{received}} / {{total}} Mo",
+        "speed": "{{speed}} Mo/s",
+        "speed_eta": "{{speed}} Mo/s · environ {{eta}} restantes",
+        "eta_seconds_one": "{{count}} seconde",
+        "eta_seconds_other": "{{count}} secondes",
+        "eta_minutes_one": "{{count}} minute",
+        "eta_minutes_other": "{{count}} minutes",
+        "paused_hint": "Reprend quand le réseau revient",
+        "install_hint": "La première installation prend environ 1 minute",
+        "done_heading": "Ressources prêtes",
+        "done_version": "Version v{{version}}",
+        "pause": "Mettre le téléchargement en pause",
+        "resume": "Reprendre le téléchargement",
+        "cancel": "Annuler",
+        "retry": "Réessayer",
+        "edit_settings": "Modifier les réglages",
+        "view_logs": "Voir les journaux",
+        "enter": "Ouvrir Marvis",
+        "entering": "Ouverture...",
+        "enter_failed": "Impossible d'ouvrir le mode autonome",
+        "action_failed": "L'opération n'a pas abouti. Réessayez.",
+        "errors": {
+          "port_in_use": "Le port réseau {{port}} est utilisé par une autre application. Changez de port puis réessayez. Les ressources téléchargées sont conservées.",
+          "port_in_use_running": "Le port réseau {{port}} est utilisé par une autre application. Quittez-la puis réessayez.",
+          "network": "La connexion réseau a été interrompue. Réessayez quand elle revient. Les ressources téléchargées sont conservées.",
+          "checksum": "La vérification des fichiers a échoué. Réessayer les télécharge à nouveau.",
+          "disk": "Espace disque insuffisant ou pas d'autorisation d'écriture.",
+          "unsupported_platform": "Le mode autonome ne prend pas encore en charge le système de cet ordinateur.",
+          "manifest": "Les informations sur les ressources sont indisponibles. Réessayez plus tard.",
+          "start_failed": "Les ressources sont prêtes mais n'ont pas pu démarrer."
+        }
+      },
+      "login": {
+        "admin": "Continuer en tant qu'administrateur",
+        "admin_busy": "Ouverture...",
+        "admin_failed": "Impossible de continuer en tant qu'administrateur"
+      }
     }
   },
   "members": {

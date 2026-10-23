@@ -1315,16 +1315,13 @@
     "server": {
       "connect": {
         "title": "连接到 Marvis 服务器",
-        "subtitle": "选择局域网中的服务器，或输入地址",
-        "subtitle_none": "输入服务器地址",
+        "subtitle": "在这台电脑上使用，或连接局域网中已有的服务器。之后可以在设置里更换。",
         "lan_heading": "局域网中的服务器",
         "scanning": "正在查找",
         "rescan": "重新查找",
         "local_badge": "本机",
         "none": "局域网中没有找到服务器。电脑和服务器需要连在同一个局域网。",
         "or_address": "或输入地址",
-        "summary_scanning": "正在查找…",
-        "summary_scanning_hint": "局域网中的 Marvis 服务器会自动出现",
         "summary_manual": "手动输入的地址",
         "summary_manual_hint": "先测试连接"
       },
@@ -1374,6 +1371,210 @@
         "switch": "切换服务器"
       },
       "tab_label": "服务器"
+    },
+    "standalone": {
+      "pick": {
+        "heading": "这台电脑",
+        "option": "在这台电脑上使用",
+        "badge": "单机模式",
+        "not_installed": "首次使用需下载约 40 MB 资源",
+        "ready": "已就绪 · v{{version}}",
+        "summary_setup": "下一步：完成设置",
+        "next": "下一步",
+        "continue": "继续",
+        "entering": "正在进入..."
+      },
+      "setup": {
+        "title": "完成单机模式设置",
+        "subtitle": "填写管理员邮箱即可开始，其余设置已使用默认值。",
+        "resources": "资源",
+        "resources_size": "约 40 MB",
+        "location": "位置",
+        "access": "访问",
+        "access_local": "仅本机",
+        "access_lan": "本机和局域网",
+        "errors_count_other": "{{count}} 项配置需要修改",
+        "download": "下载资源",
+        "submitting": "正在保存...",
+        "back": "返回",
+        "submit_failed": "设置未能保存，请重试。"
+      },
+      "form": {
+        "help": "{{label}}说明",
+        "random": "随机",
+        "random_label": "随机生成{{label}}",
+        "defaults": "默认配置",
+        "optional": "可选",
+        "needs_fix_other": "{{count}} 项需要修改",
+        "not_configured": "未配置",
+        "configured": "已配置",
+        "saved_secret": "已保存，留空则不修改",
+        "lan_login_warning": "局域网登录需要配置登录验证码、飞书登录或邮件服务中的一种",
+        "admin_email": {
+          "label": "管理员邮箱",
+          "help": "第一个账号，也是工作区所有者。Marvis 用它在这台电脑上自动登录。",
+          "placeholder": "name@company.com"
+        },
+        "general": {
+          "title": "常规",
+          "summary": "{{name}} · 端口 {{port}} · {{access}}"
+        },
+        "name": {
+          "label": "名称",
+          "help": "在局域网中显示的名字。"
+        },
+        "port": {
+          "label": "端口",
+          "help": "局域网连接使用的端口，默认 13840。"
+        },
+        "lan": {
+          "label": "允许局域网连接",
+          "help": "开启后局域网中的设备可以发现并连接这台电脑；关闭时只有这台电脑能使用。"
+        },
+        "keys": {
+          "title": "安全密钥",
+          "summary": "8 个已随机生成",
+          "summary_locked": "已锁定，不能修改"
+        },
+        "jwt": {
+          "label": "登录签名密钥",
+          "help": "签发登录凭证。至少 32 个字符，首次启动后不能修改。"
+        },
+        "key_help": "加密保存集成凭证。需要 base64 编码的 32 字节，首次启动后不能修改，修改会导致已保存的凭证无法解密。",
+        "key_names": {
+          "lark": "飞书凭证加密密钥",
+          "vcs": "代码仓库凭证加密密钥",
+          "slack": "Slack 凭证加密密钥",
+          "dingtalk": "钉钉凭证加密密钥",
+          "wecom": "企业微信凭证加密密钥",
+          "telegram": "Telegram 凭证加密密钥",
+          "plugin": "插件凭证加密密钥"
+        },
+        "other_keys": {
+          "label": "其他 5 个集成密钥已随机生成",
+          "help": "Slack、钉钉、企业微信、Telegram、插件的凭证加密密钥，规则同上。"
+        },
+        "login_code": {
+          "title": "登录验证码",
+          "summary_on": "已开启 · {{code}}",
+          "summary_off": "已关闭",
+          "switch_label": "启用固定验证码",
+          "switch_help": "局域网中的成员登录时输入这个验证码，不需要邮件服务。关闭后需要用飞书登录或邮件验证码登录。",
+          "label": "登录验证码",
+          "help": "局域网中的成员登录时输入的 6 位数字。不能用来登录工作区所有者和管理员，只在可信的局域网中使用。",
+          "placeholder": "6 位数字"
+        },
+        "lark": {
+          "title": "飞书登录",
+          "summary_on": "已配置 · {{appId}}",
+          "app_id_label": "App ID",
+          "app_id_help": "飞书开放平台 › 应用凭证中的 App ID，以 cli_ 开头。",
+          "app_secret_label": "App Secret",
+          "app_secret_help": "同一页面中的 App Secret。",
+          "tenants_label": "允许的租户",
+          "tenants_help": "只允许这些租户的成员登录，多个用英文逗号分隔。不填则不限制。",
+          "tenants_placeholder": "不限制"
+        },
+        "smtp": {
+          "title": "邮件服务",
+          "summary_on": "已配置 · {{host}}",
+          "host_label": "发信地址",
+          "host_help": "发送登录验证码邮件的 SMTP 地址，例如 smtp.example.com。",
+          "port_label": "端口",
+          "port_help": "常用 465 或 587。",
+          "username_label": "用户名",
+          "username_help": "登录邮件服务的账号。",
+          "password_label": "密码",
+          "password_help": "登录邮件服务的密码或授权码。",
+          "from_label": "发件人",
+          "from_help": "邮件中显示的发件人地址。"
+        },
+        "llm": {
+          "title": "辅助模型",
+          "summary_on": "已配置 · {{model}}",
+          "base_url_label": "接口地址",
+          "base_url_help": "兼容 OpenAI 接口的模型服务地址。不填时使用 OpenAI 的默认地址。",
+          "api_key_label": "API Key",
+          "api_key_help": "为对话生成标题和追问建议。对话内容会发送到这个模型服务。",
+          "model_label": "模型",
+          "model_help": "不填时使用内置的默认模型。"
+        },
+        "validation": {
+          "required": "请填写{{label}}",
+          "email": "邮箱格式不正确",
+          "port_range": "端口范围 {{min}}–{{max}}",
+          "jwt_length": "至少 {{min}} 个字符",
+          "key_format": "需要 base64 编码的 32 字节密钥",
+          "login_code": "需要 6 位数字",
+          "lark_app_id": "App ID 以 cli_ 开头",
+          "lark_secret_required": "填写 App ID 后需要填写 App Secret",
+          "tenant_keys": "多个租户用英文逗号分隔",
+          "url": "需要以 http:// 或 https:// 开头"
+        }
+      },
+      "prepare": {
+        "label": "准备单机模式",
+        "steps": "阶段",
+        "step_download": "下载",
+        "step_verify": "校验",
+        "step_install": "安装",
+        "progress": "资源准备进度",
+        "phase_downloading": "正在下载资源",
+        "phase_paused": "已暂停",
+        "phase_verifying": "正在校验资源",
+        "phase_installing": "正在安装资源",
+        "phase_starting": "正在启动",
+        "phase_failed": "安装未完成",
+        "phase_stopped": "未运行",
+        "title_preparing": "正在准备单机模式",
+        "title_paused": "下载已暂停",
+        "title_failed": "资源安装失败",
+        "title_unavailable": "单机模式暂时无法使用",
+        "title_stopped": "单机模式未运行",
+        "title_done": "单机模式已就绪",
+        "subtitle_downloading": "首次使用需要下载资源。关闭窗口后在后台继续。",
+        "subtitle_paused": "已下载的部分会保留，继续后从断点开始。",
+        "subtitle_verifying": "资源下载完成，正在确认完整性。",
+        "subtitle_installing": "首次安装需要一点时间，请保持 Marvis 打开。",
+        "subtitle_starting": "单机模式正在启动，请保持 Marvis 打开。",
+        "subtitle_stopped": "重试后重新开始运行。",
+        "subtitle_done_lan": "局域网中的设备可以自动发现这台电脑，退出 Marvis 后连接断开。",
+        "subtitle_done_local": "当前只在这台电脑上使用，可在 设置 › 服务器 中允许局域网连接。",
+        "size": "{{received}} / {{total}} MB",
+        "speed": "{{speed}} MB/s",
+        "speed_eta": "{{speed}} MB/s · 剩余约 {{eta}}",
+        "eta_seconds_other": "{{count}} 秒",
+        "eta_minutes_other": "{{count}} 分钟",
+        "paused_hint": "网络恢复后自动继续",
+        "install_hint": "首次安装约需 1 分钟",
+        "done_heading": "资源已就绪",
+        "done_version": "版本 v{{version}}",
+        "pause": "暂停下载",
+        "resume": "继续下载",
+        "cancel": "取消",
+        "retry": "重试",
+        "edit_settings": "修改设置",
+        "view_logs": "查看日志",
+        "enter": "进入 Marvis",
+        "entering": "正在进入...",
+        "enter_failed": "未能进入单机模式",
+        "action_failed": "操作未完成，请重试。",
+        "errors": {
+          "port_in_use": "网络端口 {{port}} 被其他程序占用。修改端口后重试，已下载的资源会保留。",
+          "port_in_use_running": "网络端口 {{port}} 被其他程序占用。关闭占用端口的程序后重试。",
+          "network": "网络连接中断。网络恢复后重试，已下载的资源会保留。",
+          "checksum": "资源文件校验失败，重试会重新下载。",
+          "disk": "磁盘空间不足或没有写入权限。",
+          "unsupported_platform": "这台电脑的系统暂不支持单机模式。",
+          "manifest": "暂时无法获取资源信息，请稍后重试。",
+          "start_failed": "资源已就绪，但未能开始运行。"
+        }
+      },
+      "login": {
+        "admin": "以管理员身份进入",
+        "admin_busy": "正在进入...",
+        "admin_failed": "未能以管理员身份进入"
+      }
     }
   },
   "members": {

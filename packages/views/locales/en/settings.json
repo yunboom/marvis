@@ -1325,16 +1325,13 @@
     "server": {
       "connect": {
         "title": "Connect to a Marvis server",
-        "subtitle": "Choose a server on your local network, or enter an address",
-        "subtitle_none": "Enter a server address",
+        "subtitle": "Use Marvis on this computer, or connect to a server on your local network. You can change this later in Settings.",
         "lan_heading": "Servers on your local network",
         "scanning": "Searching",
         "rescan": "Search again",
         "local_badge": "This computer",
         "none": "No servers found on your local network. The computer and the server must be on the same network.",
         "or_address": "or enter an address",
-        "summary_scanning": "Searching…",
-        "summary_scanning_hint": "Marvis servers on your network appear here",
         "summary_manual": "Address entered manually",
         "summary_manual_hint": "Test the connection first"
       },
@@ -1384,6 +1381,214 @@
         "switch": "Switch server"
       },
       "tab_label": "Server"
+    },
+    "standalone": {
+      "pick": {
+        "heading": "This computer",
+        "option": "Use on this computer",
+        "badge": "Standalone mode",
+        "not_installed": "First use downloads about 40 MB of resources",
+        "ready": "Ready · v{{version}}",
+        "summary_setup": "Next: finish setup",
+        "next": "Next",
+        "continue": "Continue",
+        "entering": "Opening..."
+      },
+      "setup": {
+        "title": "Finish standalone setup",
+        "subtitle": "Enter an admin email to start. Everything else uses defaults.",
+        "resources": "Resources",
+        "resources_size": "About 40 MB",
+        "location": "Location",
+        "access": "Access",
+        "access_local": "This computer only",
+        "access_lan": "This computer and local network",
+        "errors_count_one": "{{count}} setting needs changes",
+        "errors_count_other": "{{count}} settings need changes",
+        "download": "Download resources",
+        "submitting": "Saving...",
+        "back": "Back",
+        "submit_failed": "Settings weren't saved. Try again."
+      },
+      "form": {
+        "help": "About {{label}}",
+        "random": "Random",
+        "random_label": "Generate random {{label}}",
+        "defaults": "Defaults",
+        "optional": "Optional",
+        "needs_fix_one": "{{count}} item needs changes",
+        "needs_fix_other": "{{count}} items need changes",
+        "not_configured": "Not set up",
+        "configured": "Set up",
+        "saved_secret": "Saved. Leave empty to keep it.",
+        "lan_login_warning": "Signing in over the local network needs a login code, Feishu login, or email service",
+        "admin_email": {
+          "label": "Admin email",
+          "help": "The first account and the workspace owner. Marvis uses it to sign you in on this computer.",
+          "placeholder": "name@company.com"
+        },
+        "general": {
+          "title": "General",
+          "summary": "{{name}} · port {{port}} · {{access}}"
+        },
+        "name": {
+          "label": "Name",
+          "help": "The name shown on the local network."
+        },
+        "port": {
+          "label": "Port",
+          "help": "The port for local network connections. Default 13840."
+        },
+        "lan": {
+          "label": "Allow local network connections",
+          "help": "When on, devices on the local network can find and connect to this computer. When off, only this computer can use it."
+        },
+        "keys": {
+          "title": "Security keys",
+          "summary": "8 generated at random",
+          "summary_locked": "Locked"
+        },
+        "jwt": {
+          "label": "Sign-in signing key",
+          "help": "Signs sign-in credentials. At least 32 characters. Can't be changed after the first start."
+        },
+        "key_help": "Encrypts saved integration credentials. Needs 32 bytes in base64. Can't be changed after the first start; changing it makes saved credentials unreadable.",
+        "key_names": {
+          "lark": "Feishu credential key",
+          "vcs": "Code repository credential key",
+          "slack": "Slack credential key",
+          "dingtalk": "DingTalk credential key",
+          "wecom": "WeCom credential key",
+          "telegram": "Telegram credential key",
+          "plugin": "Plugin credential key"
+        },
+        "other_keys": {
+          "label": "5 more integration keys generated at random",
+          "help": "Credential keys for Slack, DingTalk, WeCom, Telegram, and plugins. Same rules as above."
+        },
+        "login_code": {
+          "title": "Login code",
+          "summary_on": "On · {{code}}",
+          "summary_off": "Off",
+          "switch_label": "Use a fixed login code",
+          "switch_help": "Members on the local network enter this code to sign in, without an email service. When off, they sign in with Feishu or an email code.",
+          "label": "Login code",
+          "help": "The 6-digit code members on the local network enter to sign in. It can't sign in workspace owners or admins. Use it only on a trusted network.",
+          "placeholder": "6 digits"
+        },
+        "lark": {
+          "title": "Feishu login",
+          "summary_on": "Set up · {{appId}}",
+          "app_id_label": "App ID",
+          "app_id_help": "The App ID under Feishu Open Platform › Credentials. Starts with cli_.",
+          "app_secret_label": "App Secret",
+          "app_secret_help": "The App Secret on the same page.",
+          "tenants_label": "Allowed tenants",
+          "tenants_help": "Only members of these tenants can sign in. Separate with commas. Leave empty for no limit.",
+          "tenants_placeholder": "No limit"
+        },
+        "smtp": {
+          "title": "Email service",
+          "summary_on": "Set up · {{host}}",
+          "host_label": "SMTP host",
+          "host_help": "The SMTP host that sends login code emails, such as smtp.example.com.",
+          "port_label": "Port",
+          "port_help": "Usually 465 or 587.",
+          "username_label": "Username",
+          "username_help": "The account for the email service.",
+          "password_label": "Password",
+          "password_help": "The password or app password for the email service.",
+          "from_label": "Sender",
+          "from_help": "The sender address shown in emails."
+        },
+        "llm": {
+          "title": "Assist model",
+          "summary_on": "Set up · {{model}}",
+          "base_url_label": "API URL",
+          "base_url_help": "An OpenAI-compatible model service. Leave empty to use OpenAI's default.",
+          "api_key_label": "API Key",
+          "api_key_help": "Generates chat titles and follow-up suggestions. Chat content is sent to this model service.",
+          "model_label": "Model",
+          "model_help": "Leave empty to use the built-in default."
+        },
+        "validation": {
+          "required": "Enter {{label}}",
+          "email": "Enter a valid email",
+          "port_range": "Port must be {{min}}–{{max}}",
+          "jwt_length": "At least {{min}} characters",
+          "key_format": "Needs a 32-byte key in base64",
+          "login_code": "Needs 6 digits",
+          "lark_app_id": "App ID starts with cli_",
+          "lark_secret_required": "Enter the App Secret for this App ID",
+          "tenant_keys": "Separate tenants with commas",
+          "url": "Must start with http:// or https://"
+        }
+      },
+      "prepare": {
+        "label": "Preparing standalone mode",
+        "steps": "Steps",
+        "step_download": "Download",
+        "step_verify": "Verify",
+        "step_install": "Install",
+        "progress": "Resource progress",
+        "phase_downloading": "Downloading resources",
+        "phase_paused": "Paused",
+        "phase_verifying": "Verifying resources",
+        "phase_installing": "Installing resources",
+        "phase_starting": "Starting",
+        "phase_failed": "Not finished",
+        "phase_stopped": "Not running",
+        "title_preparing": "Preparing standalone mode",
+        "title_paused": "Download paused",
+        "title_failed": "Resources failed to install",
+        "title_unavailable": "Standalone mode is unavailable",
+        "title_stopped": "Standalone mode isn't running",
+        "title_done": "Standalone mode is ready",
+        "subtitle_downloading": "First use downloads resources. Closing the window keeps it going in the background.",
+        "subtitle_paused": "Downloaded parts are kept. Resuming picks up where it stopped.",
+        "subtitle_verifying": "Download finished. Checking the files.",
+        "subtitle_installing": "The first install takes a moment. Keep Marvis open.",
+        "subtitle_starting": "Standalone mode is starting. Keep Marvis open.",
+        "subtitle_stopped": "Retry to run it again.",
+        "subtitle_done_lan": "Devices on the local network can find this computer. They disconnect when you quit Marvis.",
+        "subtitle_done_local": "Only this computer uses it. You can allow local network connections in Settings › Server.",
+        "size": "{{received}} / {{total}} MB",
+        "speed": "{{speed}} MB/s",
+        "speed_eta": "{{speed}} MB/s · about {{eta}} left",
+        "eta_seconds_one": "{{count}} second",
+        "eta_seconds_other": "{{count}} seconds",
+        "eta_minutes_one": "{{count}} minute",
+        "eta_minutes_other": "{{count}} minutes",
+        "paused_hint": "Resumes when the network is back",
+        "install_hint": "First install takes about 1 minute",
+        "done_heading": "Resources ready",
+        "done_version": "Version v{{version}}",
+        "pause": "Pause download",
+        "resume": "Resume download",
+        "cancel": "Cancel",
+        "retry": "Retry",
+        "edit_settings": "Change settings",
+        "view_logs": "View logs",
+        "enter": "Open Marvis",
+        "entering": "Opening...",
+        "enter_failed": "Couldn't open standalone mode",
+        "action_failed": "That didn't finish. Try again.",
+        "errors": {
+          "port_in_use": "Network port {{port}} is used by another app. Change the port and retry. Downloaded resources are kept.",
+          "port_in_use_running": "Network port {{port}} is used by another app. Quit that app and retry.",
+          "network": "The network connection dropped. Retry when it's back. Downloaded resources are kept.",
+          "checksum": "Resource files failed verification. Retrying downloads them again.",
+          "disk": "Not enough disk space, or no write permission.",
+          "unsupported_platform": "Standalone mode doesn't support this computer's system yet.",
+          "manifest": "Resource info isn't available right now. Try again later.",
+          "start_failed": "Resources are ready but didn't start running."
+        }
+      },
+      "login": {
+        "admin": "Continue as admin",
+        "admin_busy": "Opening...",
+        "admin_failed": "Couldn't continue as admin"
+      }
     }
   },
   "members": {
