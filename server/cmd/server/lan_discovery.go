@@ -48,8 +48,8 @@ type lanAdvertising struct {
 }
 
 // startLANAdvertising 在后台开始广播。关闭广播或没有实例 ID 时返回 nil；
-// 广播出错只记警告，不影响服务端。
-func startLANAdvertising(cfg landiscovery.Config, serverVersion, instanceID string) *lanAdvertising {
+// 广播出错只记警告，不影响服务端。status 随广播启停更新为实际使用的主机名。
+func startLANAdvertising(cfg landiscovery.Config, serverVersion, instanceID string, status *landiscovery.Status) *lanAdvertising {
 	if !cfg.Enabled || instanceID == "" {
 		return nil
 	}
@@ -60,7 +60,7 @@ func startLANAdvertising(cfg landiscovery.Config, serverVersion, instanceID stri
 	go func() {
 		defer close(lan.done)
 
-		if err := landiscovery.Run(ctx, cfg, serverVersion, instanceID); err != nil {
+		if err := landiscovery.Run(ctx, cfg, serverVersion, instanceID, status); err != nil {
 			slog.Warn("lan discovery unavailable", "error", err)
 		}
 	}()

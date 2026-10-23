@@ -690,24 +690,40 @@ type oauthLoginProfile struct {
 	AvatarURL string
 }
 
-// completeOAuthLogin 是第三方登录拿到邮箱、名字、头像之后的共用尾段：
-// 查找或创建用户、补全名字头像、签发 JWT、写 cookie 并返回登录结果。
-func (h *Handler) completeOAuthLogin(w http.ResponseWriter, r *http.Request, profile oauthLoginProfile, authMethod string) {
+// 第三方登录尾段的步骤，用于区分失败发生在哪一步。
+const (
+	oauthLoginStepUser  = "find or create user"
+	oauthLoginStepToken = "issue token"
+)
+
+// oauthLoginStepError 标记第三方登录尾段失败的步骤，调用方据此记录日志、给出对应的响应。
+// 错误信息与原错误一致，errors.Is / errors.As 可以识别原错误。
+type oauthLoginStepError struct {
+	step string
+	err  error
+}
+
+func (e *oauthLoginStepError) Error() string {
+	return e.err.Error()
+}
+
+func (e *oauthLoginStepError) Unwrap() error {
+	return e.err
+}
+
+// issueOAuthLogin 是第三方登录拿到邮箱、名字、头像之后的共用尾段：
+// 查找或创建用户、补全名字头像、签发 JWT，返回用户与登录凭证。
+// 账号停用、注册限制等错误可用 errors.Is / errors.As 识别；错误都包在 oauthLoginStepError 里，标明失败的步骤。
+func (h *Handler) issueOAuthLogin(r *http.Request, profile oauthLoginProfile, authMethod string) (db.User, string, error) {
 	email := profile.Email
 
 	if auth.IsTemporarilyDisabledUserEmail(email) {
-		writeErrorCode(w, http.StatusForbidden, googleLoginCodeAccountDisabled, auth.TemporarilyDisabledUserError)
-		return
+		return db.User{}, "", &oauthLoginStepError{step: oauthLoginStepUser, err: auth.ErrTemporarilyDisabledUser}
 	}
 
 	user, isNew, err := h.findOrCreateUser(r.Context(), email)
 	if err != nil {
-		if writeGoogleLoginActionableError(w, err) {
-			return
-		}
-		slog.Warn("login user lookup or creation failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
-		writeError(w, http.StatusInternalServerError, "failed to create user")
-		return
+		return db.User{}, "", &oauthLoginStepError{step: oauthLoginStepUser, err: err}
 	}
 	if isNew {
 		evt := analytics.Signup(uuidToString(user.ID), user.Email, signupSourceFromRequest(r))
@@ -743,11 +759,31 @@ func (h *Handler) completeOAuthLogin(w http.ResponseWriter, r *http.Request, pro
 
 	tokenString, err := h.issueJWT(user)
 	if err != nil {
+		return db.User{}, "", &oauthLoginStepError{step: oauthLoginStepToken, err: err}
+	}
+
+	return user, tokenString, nil
+}
+
+// completeOAuthLogin 在 issueOAuthLogin 之后写 cookie 并以 JSON 返回登录结果，供网页端与桌面端经网页登录使用。
+func (h *Handler) completeOAuthLogin(w http.ResponseWriter, r *http.Request, profile oauthLoginProfile, authMethod string) {
+	email := profile.Email
+
+	user, tokenString, err := h.issueOAuthLogin(r, profile, authMethod)
+	if err != nil {
 		if writeGoogleLoginActionableError(w, err) {
 			return
 		}
-		slog.Warn(authMethod+" login failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
-		writeError(w, http.StatusInternalServerError, "failed to generate token")
+
+		var stepErr *oauthLoginStepError
+		if errors.As(err, &stepErr) && stepErr.step == oauthLoginStepToken {
+			slog.Warn(authMethod+" login failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
+			writeError(w, http.StatusInternalServerError, "failed to generate token")
+			return
+		}
+
+		slog.Warn("login user lookup or creation failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
+		writeError(w, http.StatusInternalServerError, "failed to create user")
 		return
 	}
 

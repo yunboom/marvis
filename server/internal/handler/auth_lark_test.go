@@ -47,7 +47,7 @@ func newLarkStubHandler(t *testing.T, cfg Config, responses map[string]larkStubR
 	srv := httptest.NewServer(http.HandlerFunc(stub.serve))
 	t.Cleanup(srv.Close)
 
-	h := newTestHandler(cfg)
+	h := newLarkDesktopTestHandler(cfg)
 	h.larkLoginHTTPClient = srv.Client()
 	h.larkLoginAPIBaseURL = srv.URL
 

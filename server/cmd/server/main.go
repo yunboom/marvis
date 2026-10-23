@@ -683,6 +683,8 @@ func main() {
 	// 局域网广播的配置和实例 ID：/api/config 对外核实用，与是否广播无关，所以总是读取。
 	lanConfig := lanConfigForListenPort(landiscovery.ConfigFromEnv(os.Getenv, os.Hostname), port)
 	instanceID := loadLANInstanceID(context.Background(), pool)
+	// 广播实际使用的主机名，桌面端飞书登录据此推导回调地址；不广播时一直为空。
+	lanStatus := &landiscovery.Status{}
 
 	r, h := NewRouterWithOptions(pool, hub, bus, analyticsClient, storeRedis, RouterOptions{
 		HTTPMetrics:         httpMetrics,
@@ -699,6 +701,7 @@ func main() {
 		LLMMaxRetries:       llmMaxRetries,
 		LLMDisableThinking:  llmDisableThinking,
 		LAN:                 lanConfig,
+		LANHostname:         lanStatus.Hostname,
 		InstanceID:          instanceID,
 	})
 	var replicaQueries *db.Queries
@@ -892,7 +895,7 @@ func main() {
 	}()
 
 	// 监听已启动，开始局域网广播；失败只记警告，不影响服务端。
-	lan := startLANAdvertising(lanConfig, normalizeServerVersion(version), instanceID)
+	lan := startLANAdvertising(lanConfig, normalizeServerVersion(version), instanceID, lanStatus)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

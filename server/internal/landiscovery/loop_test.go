@@ -12,10 +12,15 @@ import (
 // fakeAdvert 记录是否被撤销。
 type fakeAdvert struct {
 	stopped bool
+	host    string
 }
 
 func (f *fakeAdvert) Stop() {
 	f.stopped = true
+}
+
+func (f *fakeAdvert) Hostname() string {
+	return f.host
 }
 
 // loopHarness 让测试逐步给出网卡扫描结果，并记录每次启动的广播。
@@ -25,6 +30,10 @@ type loopHarness struct {
 	starts  [][]lanIface
 	adverts []*fakeAdvert
 	failing bool
+	// hosts 是每次启动依次选中的主机名，用完后沿用最后一个；为空时用 marvis.local。
+	hosts []string
+	// status 记录广播当前使用的主机名，为 nil 时不记录。
+	status *Status
 }
 
 func (h *loopHarness) loop() *advertLoop {
@@ -41,18 +50,33 @@ func (h *loopHarness) loop() *advertLoop {
 
 			return next, nil
 		},
-		start: func(_ context.Context, ifaces []lanIface) (stopper, error) {
+		start: func(_ context.Context, ifaces []lanIface) (advertisement, error) {
 			h.starts = append(h.starts, ifaces)
 			if h.failing {
 				return nil, errors.New("listen mdns port=5353: address in use")
 			}
 
-			advert := &fakeAdvert{}
+			advert := &fakeAdvert{host: h.nextHost()}
 			h.adverts = append(h.adverts, advert)
 
 			return advert, nil
 		},
+		status: h.status,
 	}
+}
+
+// nextHost 返回本次启动选中的主机名。
+func (h *loopHarness) nextHost() string {
+	if len(h.hosts) == 0 {
+		return DefaultHostname + hostSuffix
+	}
+
+	next := h.hosts[0]
+	if len(h.hosts) > 1 {
+		h.hosts = h.hosts[1:]
+	}
+
+	return next
 }
 
 func lan(name string, index int, ips ...string) lanIface {
@@ -176,6 +200,46 @@ func TestAdvertLoopRunStopsOnCancel(t *testing.T) {
 	}
 }
 
+func TestAdvertLoopPublishesTheAdvertisedHostname(t *testing.T) {
+	status := &Status{}
+	h := &loopHarness{
+		scans: [][]lanIface{
+			{lan("en0", 2, "192.168.1.20")},
+			nil,
+			{lan("en0", 2, "192.168.1.31")},
+		},
+		hosts:  []string{"marvis.local", "marvis-2.local"},
+		status: status,
+	}
+	loop := h.loop()
+
+	if got := status.Hostname(); got != "" {
+		t.Fatalf("hostname before advertising = %q, want empty", got)
+	}
+
+	loop.reconcile(context.Background())
+	if got := status.Hostname(); got != "marvis.local" {
+		t.Fatalf("hostname while advertising = %q, want marvis.local", got)
+	}
+
+	loop.reconcile(context.Background())
+	if got := status.Hostname(); got != "" {
+		t.Fatalf("hostname after the address disappeared = %q, want empty", got)
+	}
+
+	loop.reconcile(context.Background())
+	if got := status.Hostname(); got != "marvis-2.local" {
+		t.Fatalf("hostname after re-advertising = %q, want marvis-2.local", got)
+	}
+}
+
+func TestStatusHostnameOnNilStatus(t *testing.T) {
+	var status *Status
+	if got := status.Hostname(); got != "" {
+		t.Fatalf("nil status hostname = %q, want empty", got)
+	}
+}
+
 func TestAddressKeyIgnoresInterfaceOrder(t *testing.T) {
 	a := addressKey([]lanIface{lan("en0", 2, "192.168.1.20"), lan("en1", 3, "10.0.0.5")})
 	b := addressKey([]lanIface{lan("en1", 3, "10.0.0.5"), lan("en0", 2, "192.168.1.20")})
@@ -190,7 +254,7 @@ func TestAddressKeyIgnoresInterfaceOrder(t *testing.T) {
 
 func TestRunRejectsInvalidPort(t *testing.T) {
 	for _, port := range []int{0, -1, 70000} {
-		if err := Run(context.Background(), Config{Enabled: true, Name: "studio", Port: port}, "", "7f3a"); err == nil {
+		if err := Run(context.Background(), Config{Enabled: true, Name: "studio", Port: port}, "", "7f3a", &Status{}); err == nil {
 			t.Fatalf("Run(port=%d) error = nil, want an error", port)
 		}
 	}

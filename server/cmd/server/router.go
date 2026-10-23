@@ -294,6 +294,9 @@ type RouterOptions struct {
 	// LAN 是局域网广播的配置，由 main 从环境变量读取：Name 经 /api/config 下发，
 	// Enabled 为 true 且未配置 MARVIS_TRUSTED_PROXIES 时信任本机转发的请求头。
 	LAN landiscovery.Config
+	// LANHostname 返回局域网广播实际使用的主机名（如 marvis.local），没有在广播时返回空串；
+	// nil 表示不广播。桌面端飞书登录用它和 LAN.Port 推导回调地址。
+	LANHostname func() string
 	// InstanceID 是本部署的实例 ID，经 /api/config 下发；读取失败时为空，响应里不带该字段。
 	InstanceID string
 }
@@ -484,6 +487,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		ServerVersion:                  normalizeServerVersion(version),
 		ServerName:                     opts.LAN.Name,
 		InstanceID:                     opts.InstanceID,
+		LANHostname:                    opts.LANHostname,
+		LANPort:                        opts.LAN.Port,
 		GitExtraCACerts:                gitca.Load(slog.Default()),
 	}
 	h := handler.New(queries, pool, hub, bus, emailSvc, store, cfSigner, analyticsClient, signupConfig, daemonHub)
@@ -1553,6 +1558,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	r.With(authVerifyRL).Post("/auth/verify-code", h.VerifyCode)
 	r.With(authRL).Post("/auth/google", h.GoogleLogin)
 	r.With(authRL).Post("/auth/lark", h.LarkLogin)
+	// 桌面端没有网页端时的飞书登录：浏览器打开 desktop-start，飞书回调 desktop-callback。
+	r.With(authRL).Get(handler.LarkDesktopStartPath, h.LarkDesktopStart)
+	r.With(authRL).Get(handler.LarkDesktopCallbackPath, h.LarkDesktopCallback)
 	r.Post("/auth/logout", h.Logout)
 
 	// Public API

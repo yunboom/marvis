@@ -133,6 +133,36 @@ func larkAllowedTenantKeys() map[string]struct{} {
 	return allowed
 }
 
+// larkTenantAllowed 判断租户能否登录；未配置白名单时不限制。
+func larkTenantAllowed(tenantKey string) bool {
+	allowed := larkAllowedTenantKeys()
+	if len(allowed) == 0 {
+		return true
+	}
+
+	_, ok := allowed[tenantKey]
+
+	return ok
+}
+
+// larkLoginCredentials 读取飞书登录应用的 App ID 与 App Secret，任一为空时 ok 为 false。
+func larkLoginCredentials() (appID, appSecret string, ok bool) {
+	appID = os.Getenv(larkLoginAppIDEnv)
+	appSecret = os.Getenv(larkLoginAppSecretEnv)
+
+	return appID, appSecret, appID != "" && appSecret != ""
+}
+
+// larkUserEmail 返回飞书用户的登录邮箱：优先 email，没有时取 enterprise_email，去掉空白并转小写；都没有时返回空串。
+func larkUserEmail(user *larkUserInfo) string {
+	email := strings.ToLower(strings.TrimSpace(user.Email))
+	if email == "" {
+		email = strings.ToLower(strings.TrimSpace(user.EnterpriseEmail))
+	}
+
+	return email
+}
+
 // LarkLogin 用飞书授权码登录：换取 user_access_token、读取用户信息，按邮箱匹配或创建账号。
 func (h *Handler) LarkLogin(w http.ResponseWriter, r *http.Request) {
 	var req LarkLoginRequest
@@ -155,9 +185,8 @@ func (h *Handler) LarkLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appID := os.Getenv(larkLoginAppIDEnv)
-	appSecret := os.Getenv(larkLoginAppSecretEnv)
-	if appID == "" || appSecret == "" {
+	appID, appSecret, configured := larkLoginCredentials()
+	if !configured {
 		writeFeatureDisabled(w, larkLoginCodeNotConfigured, "Lark login is not configured")
 		return
 	}
@@ -188,18 +217,13 @@ func (h *Handler) LarkLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 租户白名单先于邮箱检查，避免向白名单外的租户暴露账号细节。
-	if allowed := larkAllowedTenantKeys(); len(allowed) > 0 {
-		if _, ok := allowed[larkUser.TenantKey]; !ok {
-			slog.Warn("lark login tenant not allowed", append(logger.RequestAttrs(r), "tenant_key", larkUser.TenantKey, "open_id", larkUser.OpenID)...)
-			writeErrorCode(w, http.StatusForbidden, larkLoginCodeTenantNotAllowed, "this Lark tenant is not allowed to sign in")
-			return
-		}
+	if !larkTenantAllowed(larkUser.TenantKey) {
+		slog.Warn("lark login tenant not allowed", append(logger.RequestAttrs(r), "tenant_key", larkUser.TenantKey, "open_id", larkUser.OpenID)...)
+		writeErrorCode(w, http.StatusForbidden, larkLoginCodeTenantNotAllowed, "this Lark tenant is not allowed to sign in")
+		return
 	}
 
-	email := strings.ToLower(strings.TrimSpace(larkUser.Email))
-	if email == "" {
-		email = strings.ToLower(strings.TrimSpace(larkUser.EnterpriseEmail))
-	}
+	email := larkUserEmail(larkUser)
 	if email == "" {
 		writeErrorCode(w, http.StatusBadRequest, larkLoginCodeAccountNoEmail, "Lark did not provide an email address for this sign-in")
 		return

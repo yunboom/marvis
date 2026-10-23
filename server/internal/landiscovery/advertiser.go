@@ -7,6 +7,7 @@ import (
 	"net"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -26,9 +27,40 @@ const (
 // errNoLANAddress 表示没有可广播的局域网地址。
 var errNoLANAddress = errors.New("no private IPv4 address on any active interface")
 
-// stopper 是可以撤销的广播，测试里用桩替代。
-type stopper interface {
+// advertisement 是正在运行、可以撤销的广播，测试里用桩替代。
+type advertisement interface {
 	Stop()
+	Hostname() string
+}
+
+// Status 记录局域网广播当前使用的主机名，供其他模块推导局域网地址。并发安全，零值可用。
+type Status struct {
+	mu       sync.RWMutex
+	hostname string
+}
+
+// Hostname 返回正在广播的主机名，带 .local 后缀，如 marvis.local；没有在广播或 s 为 nil 时返回空串。
+func (s *Status) Hostname() string {
+	if s == nil {
+		return ""
+	}
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.hostname
+}
+
+// setHostname 更新正在广播的主机名，s 为 nil 时什么也不做。
+func (s *Status) setHostname(hostname string) {
+	if s == nil {
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.hostname = hostname
 }
 
 // Advertiser 是正在运行的局域网广播。
@@ -40,7 +72,8 @@ type Advertiser struct {
 // Run 在局域网内广播 Marvis 服务器，直到 ctx 结束后撤销广播再返回。
 // 每隔 rescanInterval 重新检查网卡：广播的地址变化时先撤销旧广播（发送 goodbye）再按新地址重新注册；
 // 没有局域网地址或启动失败时记一次警告，按同样的间隔重试。只有配置不合法时返回错误。
-func Run(ctx context.Context, cfg Config, serverVersion, instanceID string) error {
+// status 随广播的启停更新为实际使用的主机名，可为 nil。
+func Run(ctx context.Context, cfg Config, serverVersion, instanceID string, status *Status) error {
 	if cfg.Port <= 0 || cfg.Port > maxPort {
 		return errors.Errorf("invalid lan discovery port=%d", cfg.Port)
 	}
@@ -50,9 +83,10 @@ func Run(ctx context.Context, cfg Config, serverVersion, instanceID string) erro
 
 	loop := &advertLoop{
 		scan: scanLANInterfaces,
-		start: func(ctx context.Context, ifaces []lanIface) (stopper, error) {
+		start: func(ctx context.Context, ifaces []lanIface) (advertisement, error) {
 			return start(ctx, cfg, serverVersion, instanceID, ifaces)
 		},
+		status: status,
 	}
 	loop.run(ctx, ticker.C)
 
@@ -64,10 +98,12 @@ type advertLoop struct {
 	// scan 返回当前可广播的网卡和地址。
 	scan func() ([]lanIface, error)
 	// start 在给定网卡上开始广播。
-	start func(ctx context.Context, ifaces []lanIface) (stopper, error)
+	start func(ctx context.Context, ifaces []lanIface) (advertisement, error)
+	// status 记录正在广播的主机名，可为 nil。
+	status *Status
 
 	// current 是正在运行的广播，key 是它使用的地址集合。
-	current stopper
+	current advertisement
 	key     string
 	// problem 是最近一次记录的警告，同一个问题只记一次。
 	problem string
@@ -124,6 +160,7 @@ func (l *advertLoop) reconcile(ctx context.Context) {
 	}
 
 	l.current, l.key, l.problem = advert, key, ""
+	l.status.setHostname(advert.Hostname())
 }
 
 // stopCurrent 撤销正在运行的广播。
@@ -134,6 +171,7 @@ func (l *advertLoop) stopCurrent() {
 
 	l.current.Stop()
 	l.current, l.key = nil, ""
+	l.status.setHostname("")
 }
 
 // warn 记录警告；与上一次相同的问题不重复记录，避免每次重试都刷日志。
