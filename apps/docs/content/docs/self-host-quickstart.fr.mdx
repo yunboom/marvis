@@ -296,7 +296,7 @@ Desktop n'a besoin que du backend. L'application web est facultative. Pour la se
 
 Sans adresse web, ou avec une adresse `localhost`, les clients considèrent que le serveur n'a pas d'application web, et Desktop masque le bouton Google. La CLI de l'ordinateur qui héberge le serveur fait exception : une adresse web `localhost` y fonctionne. Voir [Application de bureau](/desktop-app#se-connecter-à-un-serveur).
 
-La connexion Feishu de Desktop fonctionne sans l'application web. Dans la console développeur Feishu, enregistrez aussi `http://marvis.local:13840/auth/lark/desktop-callback` comme URL de redirection. Le backend traite lui-même ce rappel, donc Desktop garde le bouton Feishu quand seul le backend tourne. Le backend construit cette adresse à partir du nom d'hôte qu'il annonce et de son port : pour un serveur annoncé comme `marvis-2.local`, ou sur un autre port, enregistrez l'adresse correspondante. Quand la découverte sur le réseau local est désactivée, comme avec Docker, indiquez l'adresse enregistrée dans `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` dans `.env`.
+La connexion Feishu de Desktop fonctionne sans l'application web. Dans la console développeur Feishu, enregistrez aussi `http://marvis.local:13840/auth/lark/desktop-callback` comme URL de redirection. Le backend traite lui-même ce rappel, donc Desktop garde le bouton Feishu quand seul le backend tourne. Le backend construit cette adresse à partir du nom d'hôte qu'il annonce et de son port : pour un serveur annoncé comme `marvis-2.local`, ou sur un autre port, enregistrez l'adresse correspondante. Quand la découverte sur le réseau local est désactivée, ce qui est le cas par défaut, indiquez l'adresse enregistrée dans `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` dans `.env`.
 
 ### CLI
 

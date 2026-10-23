@@ -23,6 +23,12 @@
 | 五 | 界面：38 选择服务器、39 完成设置、40 准备资源、41 设置 · 服务器、42 设置 · 更新、五语言文案 | 首次启动全流程可用 |
 | 六 | 资源更新与回滚、切换到远程服务器 | 41/42 号画板的全部状态 |
 
+后续阶段必须遵守的约束（来自阶段一审查）：
+
+- 阶段二：下载包文件名里的 `<version>` 与 CLI 资产、manifest 用同一套写法（是否带 `v` 前缀统一后再定）。
+- 阶段四：每次启动服务端都生成新的随机 `MARVIS_BOOTSTRAP_TOKEN`（≥ 32 字符，服务端短于此值不注册 `/auth/bootstrap`），不持久化；局域网关闭时传 `MARVIS_LISTEN_HOST=127.0.0.1`；单机模式下飞书桌面登录要显式设置 `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI`，因为局域网发现默认关闭，服务端拿不到广播主机名。
+- 阶段四：单机模式不配 Redis，登录接口靠服务端进程内限流（`middleware.MemoryRateLimit`），桌面端不要再配 `REDIS_URL`。
+
 ## Global Constraints
 
 - 新增环境变量名：`MARVIS_LISTEN_HOST`、`MARVIS_STANDALONE`、`MARVIS_BOOTSTRAP_TOKEN`；不新增其他变量。

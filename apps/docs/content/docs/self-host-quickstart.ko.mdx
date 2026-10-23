@@ -295,7 +295,7 @@ Desktop에는 backend만 필요합니다. Web 앱은 선택 사항입니다. 같
 
 Web 주소가 없거나 `localhost`이면 클라이언트는 Web 앱이 없는 것으로 처리하고, Desktop은 Google 버튼을 숨깁니다. 단, 서버가 실행 중인 컴퓨터의 CLI에서는 `localhost` Web 주소를 사용할 수 있습니다. 자세한 내용은 [데스크톱 앱](/desktop-app#서버-연결)을 참고하세요.
 
-Desktop의 Feishu 로그인은 Web 앱 없이도 동작합니다. Feishu 개발자 콘솔에 리디렉션 URL로 `http://marvis.local:13840/auth/lark/desktop-callback`도 등록합니다. 이 콜백은 backend가 직접 처리하므로 backend만 실행 중일 때도 Desktop에 Feishu 버튼이 남습니다. 이 주소는 서버가 알리는 호스트 이름과 backend 포트로 만들어집니다. 서버가 `marvis-2.local`로 알려지거나 다른 포트를 쓰면 그에 맞는 주소를 등록합니다. Docker처럼 로컬 네트워크 검색이 꺼져 있으면 등록한 주소를 `.env`의 `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI`에 설정합니다.
+Desktop의 Feishu 로그인은 Web 앱 없이도 동작합니다. Feishu 개발자 콘솔에 리디렉션 URL로 `http://marvis.local:13840/auth/lark/desktop-callback`도 등록합니다. 이 콜백은 backend가 직접 처리하므로 backend만 실행 중일 때도 Desktop에 Feishu 버튼이 남습니다. 이 주소는 서버가 알리는 호스트 이름과 backend 포트로 만들어집니다. 서버가 `marvis-2.local`로 알려지거나 다른 포트를 쓰면 그에 맞는 주소를 등록합니다. 로컬 네트워크 검색이 꺼져 있으면(기본값) 등록한 주소를 `.env`의 `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI`에 설정합니다.
 
 ### CLI
 
