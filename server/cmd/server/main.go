@@ -360,10 +360,11 @@ func main() {
 		slog.Warn("no email backend configured (RESEND_API_KEY and SMTP_HOST both empty) — verification codes will be printed to the log instead of emailed.")
 	}
 	if os.Getenv("MARVIS_DEV_VERIFICATION_CODE") != "" {
-		if strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production") {
+		standalone := handler.IsStandaloneMode()
+		if strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production") && !standalone {
 			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is set but ignored because APP_ENV=production.")
 		} else {
-			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is enabled. Use it only for local development or private test instances.")
+			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is enabled. Use it only for local development or private test instances.", "standalone", standalone)
 		}
 	}
 

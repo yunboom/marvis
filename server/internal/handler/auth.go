@@ -135,7 +135,9 @@ func generateCode() (string, error) {
 }
 
 func isDevVerificationCode(code string) bool {
-	if isProductionEnv() {
+	// Standalone mode runs as production but uses the fixed code as its
+	// zero-setup login for the LAN, so only it may lift the production guard.
+	if isProductionEnv() && !IsStandaloneMode() {
 		return false
 	}
 
