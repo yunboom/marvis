@@ -355,6 +355,8 @@ type Handler struct {
 	LarkInviteCreds lark.InstallationCredentials
 	// LarkInviteDownloadURL 是卡片上“下载 Marvis”按钮的链接，为空时不显示该按钮。
 	LarkInviteDownloadURL string
+	// LarkInviteConn 是飞书登录应用的卡片回调长连接，由 main 在 sweepCtx 下启动；nil 表示飞书邀请不可用。
+	LarkInviteConn *lark.InviteConnection
 	// SlackInstall owns the bring-your-own-app Slack install lifecycle (register
 	// pasted tokens / list / revoke) and the at-rest encryption of each app's bot
 	// + app tokens (MUL-3666). Nil unless MARVIS_SLACK_SECRET_KEY is set.
