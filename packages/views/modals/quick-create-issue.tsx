@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Check,
   FolderKanban,
-  MoreHorizontal,
   Settings2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -77,7 +76,7 @@ import {
 import { useIssueCreateUploads } from "./use-issue-create-uploads";
 import { FileUploadButton } from "@marvis/ui/components/common/file-upload-button";
 import { BorderBeam } from "@marvis/ui/components/common/border-beam";
-import { CreateIssueHeader, SendShortcutHint } from "./create-issue-header";
+import { CreateIssueHeader, MoreFieldsIcon, SendShortcutHint } from "./create-issue-header";
 import { useT } from "../i18n";
 import { matchesPinyin } from "../editor/extensions/pinyin-match";
 import { SourceContextPreviewCard, useSourceContextFailureMessage } from "./source-context-preview";
@@ -793,7 +792,7 @@ export function AgentCreatePanel({
               <DropdownMenuTrigger
                 render={
                   <PillButton variant="ghost" iconOnly aria-label={t(($) => $.create_issue.agent.more_fields_aria)}>
-                    <MoreHorizontal className="size-3.5" />
+                    <MoreFieldsIcon />
                   </PillButton>
                 }
               />

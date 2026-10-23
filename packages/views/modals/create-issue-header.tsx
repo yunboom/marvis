@@ -1,7 +1,7 @@
 "use client";
 
 import type { KeyboardEvent } from "react";
-import { Maximize2, Minimize2, Sparkle, X as XIcon } from "lucide-react";
+import { Maximize2, Minimize2, MoreHorizontal, Sparkle, X as XIcon } from "lucide-react";
 import type { CreateMode } from "@marvis/core/issues/stores/create-mode-store";
 import { useShortcut } from "@marvis/core/shortcuts";
 import { BorderBeam } from "@marvis/ui/components/common/border-beam";
@@ -145,6 +145,17 @@ export function CreateIssueHeader({
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * Icon for the property row's ⋯ overflow in both panels. Filled dots rather
+ * than lucide's hairline ones, which all but vanish at 14px; colour comes
+ * from the ghost pill, so it rests as muted as the other icon-only pills.
+ */
+export function MoreFieldsIcon() {
+  return (
+    <MoreHorizontal aria-hidden="true" className="size-3.5 fill-current" strokeWidth={2.4} />
   );
 }
 

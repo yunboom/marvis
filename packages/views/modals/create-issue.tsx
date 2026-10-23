@@ -13,7 +13,6 @@ import {
   Check,
   CircleUser,
   FolderKanban,
-  MoreHorizontal,
   Settings2,
   Shapes,
   Tag,
@@ -85,7 +84,7 @@ import {
 import { FileUploadButton } from "@marvis/ui/components/common/file-upload-button";
 import { BreathingDot } from "@marvis/ui/components/common/breathing-dot";
 import { ClearablePillButton, PillButton } from "../common/pill-button";
-import { CreateIssueHeader, SendShortcutHint } from "./create-issue-header";
+import { CreateIssueHeader, MoreFieldsIcon, SendShortcutHint } from "./create-issue-header";
 import { ActorAvatar } from "../common/actor-avatar";
 import { PropertyIcon } from "../common/property-icon";
 import {
@@ -1251,7 +1250,7 @@ export function ManualCreatePanel({
                   <DropdownMenuTrigger
                     render={
                       <PillButton variant="ghost" iconOnly aria-label={t(($) => $.create_issue.more_options_aria)}>
-                        <MoreHorizontal className="size-3.5" />
+                        <MoreFieldsIcon />
                       </PillButton>
                     }
                   />
