@@ -1708,6 +1708,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		r.Patch("/api/me/onboarding", h.PatchOnboarding)
 		r.Post("/api/me/onboarding/complete", h.CompleteOnboarding)
 		r.Post("/api/me/onboarding/cloud-waitlist", h.JoinCloudWaitlist)
+		// 飞书邀请是否可用，成员页据此决定显示列表还是未配置提示；所有已登录用户可读。
+		r.Get("/api/lark/status", h.GetLarkInviteStatus)
 		// Credential minting is human-only (MUL-8154): an agent task token
 		// (mat_) or cloud-node PAT (mcn_) authenticates as its owner, so
 		// without this guard a prompt-injected agent could trade its scoped,
@@ -1785,6 +1787,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					// because opening an issue is what asks for it; executable
 					// bytes stay off the authenticated app/API origin.
 					r.Get("/plugins/{installationId}/surfaces/{surfaceKey}/launch", h.GetPluginSurfaceLaunch)
+					// 通过飞书邀请卡片加入后的首次进入提示，只针对当前用户，成员可读。
+					r.Get("/lark-invites/welcome", h.GetLarkInviteWelcome)
+					r.Post("/lark-invites/welcome/ack", h.AckLarkInviteWelcome)
 				})
 				// Admin-level access
 				r.Group(func(r chi.Router) {
@@ -1806,6 +1811,13 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Post("/share-links", h.CreateShareLink)
 					r.Delete("/share-links/{linkId}", h.RevokeShareLink)
 					r.Get("/share-links", h.ListShareLinks)
+					// 飞书邀请卡片（管理员或所有者）。智能体代发时，处理函数再校验任务发起人。
+					r.Post("/lark-invites", h.SendLarkInvites)
+					r.Get("/lark-invites", h.ListLarkInvites)
+					r.Get("/lark-invites/{inviteId}", h.GetLarkInvite)
+					r.Delete("/lark-invites/{inviteId}", h.RevokeLarkInvite)
+					r.Get("/lark/chats", h.ListLarkChats)
+					r.Get("/lark/users/lookup", h.LookupLarkUser)
 					// Custom runtime profile mutations (admin-only).
 					r.Post("/runtime-profiles", h.CreateRuntimeProfile)
 					r.Patch("/runtime-profiles/{profileId}", h.UpdateRuntimeProfile)

@@ -1,0 +1,1059 @@
+package handler
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+
+	"github.com/yunboom/marvis/server/internal/integrations/lark"
+	"github.com/yunboom/marvis/server/internal/seatcapacity"
+	"github.com/yunboom/marvis/server/internal/testutil"
+	db "github.com/yunboom/marvis/server/pkg/db/generated"
+)
+
+// 测试里用到的飞书业务错误码，取值与 lark 包里的映射一致。
+const (
+	fakeLarkCodeBotNotInChat  = 230002
+	fakeLarkCodeUserIDInvalid = 99992360
+)
+
+// fakeInviteSend 记录一次发卡片调用。
+type fakeInviteSend struct {
+	IDType    lark.InviteReceiveIDType
+	ReceiveID string
+	CardJSON  string
+	DedupeKey string
+}
+
+// fakeInvitePatch 记录一次更新卡片调用。
+type fakeInvitePatch struct {
+	MessageID string
+	CardJSON  string
+}
+
+// fakeInviteAPI 是测试用的飞书邀请接口桩：按 ID 返回预设结果或错误，并记录调用。
+// 发送在 goroutine 池里并发执行，所有字段的读写都在 mu 保护下。
+type fakeInviteAPI struct {
+	mu sync.Mutex
+
+	chats    map[string]lark.InviteChat
+	users    map[string]lark.InviteUser
+	emails   map[string]string
+	sendErrs map[string]error // 按 receive_id 命中的发送错误
+	patchErr error
+	botChats []lark.InviteChat
+
+	calls   int
+	sends   []fakeInviteSend
+	patches []fakeInvitePatch
+	lookups []string
+	msgSeq  int
+}
+
+var _ lark.InviteAPIClient = (*fakeInviteAPI)(nil)
+
+func newFakeInviteAPI() *fakeInviteAPI {
+	return &fakeInviteAPI{
+		chats:    map[string]lark.InviteChat{},
+		users:    map[string]lark.InviteUser{},
+		emails:   map[string]string{},
+		sendErrs: map[string]error{},
+	}
+}
+
+func (f *fakeInviteAPI) GetChat(_ context.Context, _ lark.InstallationCredentials, chatID string) (lark.InviteChat, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.calls++
+	chat, ok := f.chats[chatID]
+	if !ok {
+		return lark.InviteChat{}, &lark.APIError{Op: "get chat", Code: fakeLarkCodeBotNotInChat, Msg: "bot not in chat"}
+	}
+
+	return chat, nil
+}
+
+func (f *fakeInviteAPI) ListBotChats(_ context.Context, _ lark.InstallationCredentials) ([]lark.InviteChat, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.calls++
+
+	return f.botChats, nil
+}
+
+func (f *fakeInviteAPI) GetUser(_ context.Context, _ lark.InstallationCredentials, openID string) (lark.InviteUser, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.calls++
+	user, ok := f.users[openID]
+	if !ok {
+		return lark.InviteUser{}, &lark.APIError{Op: "get user", Code: fakeLarkCodeUserIDInvalid, Msg: "invalid user id"}
+	}
+
+	return user, nil
+}
+
+func (f *fakeInviteAPI) LookupOpenIDByEmail(_ context.Context, _ lark.InstallationCredentials, email string) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.calls++
+	f.lookups = append(f.lookups, email)
+	openID, ok := f.emails[email]
+	if !ok {
+		return "", &lark.APIError{Op: "lookup open id by email", Code: fakeLarkCodeUserIDInvalid, Msg: "user not found"}
+	}
+
+	return openID, nil
+}
+
+func (f *fakeInviteAPI) SendInviteCard(_ context.Context, _ lark.InstallationCredentials, idType lark.InviteReceiveIDType, receiveID, cardJSON, dedupeKey string) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.calls++
+	if err := f.sendErrs[receiveID]; err != nil {
+		return "", err
+	}
+
+	f.msgSeq++
+	f.sends = append(f.sends, fakeInviteSend{IDType: idType, ReceiveID: receiveID, CardJSON: cardJSON, DedupeKey: dedupeKey})
+
+	return fmt.Sprintf("om_fake_%d", f.msgSeq), nil
+}
+
+func (f *fakeInviteAPI) PatchInviteCard(_ context.Context, _ lark.InstallationCredentials, messageID, cardJSON string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.calls++
+	f.patches = append(f.patches, fakeInvitePatch{MessageID: messageID, CardJSON: cardJSON})
+
+	return f.patchErr
+}
+
+// snapshot 返回调用记录的副本，避免断言时与仍在运行的 goroutine 竞争。
+func (f *fakeInviteAPI) snapshot() (calls int, sends []fakeInviteSend, patches []fakeInvitePatch, lookups []string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.calls, append([]fakeInviteSend(nil), f.sends...), append([]fakeInvitePatch(nil), f.patches...), append([]string(nil), f.lookups...)
+}
+
+// useFakeInviteAPI 把 testHandler 的飞书邀请接口换成 api（可为 nil），测试结束时还原。
+func useFakeInviteAPI(t *testing.T, api lark.InviteAPIClient) {
+	t.Helper()
+
+	prevAPI, prevCreds := testHandler.LarkInviteAPI, testHandler.LarkInviteCreds
+	testHandler.LarkInviteAPI = api
+	testHandler.LarkInviteCreds = lark.InstallationCredentials{AppID: "cli_lark_invite_test", AppSecret: "secret"}
+	t.Cleanup(func() {
+		testHandler.LarkInviteAPI = prevAPI
+		testHandler.LarkInviteCreds = prevCreds
+	})
+}
+
+// uniqueLarkID 生成带前缀的测试 ID，避免和其他测试的行冲突。
+func uniqueLarkID(prefix string) string {
+	return fmt.Sprintf("%s%d_%d", prefix, time.Now().UnixNano(), testSeq.Add(1))
+}
+
+// uniqueLarkEmail 生成测试邮箱，全小写，与服务端规范化后的形式一致。
+func uniqueLarkEmail(name string) string {
+	return fmt.Sprintf("%s-%d-%d@lark-invite.test", name, time.Now().UnixNano(), testSeq.Add(1))
+}
+
+// cleanupLarkInvitesByTarget 在测试结束时删除这些接收方的邀请及其加入记录。
+func cleanupLarkInvitesByTarget(t *testing.T, targetIDs ...string) {
+	t.Helper()
+
+	t.Cleanup(func() {
+		ctx := context.Background()
+		_, _ = testPool.Exec(ctx, `
+			DELETE FROM lark_invite_join
+			WHERE invite_id IN (SELECT id FROM lark_invite WHERE workspace_id = $1 AND target_id = ANY($2::text[]))
+		`, testWorkspaceID, targetIDs)
+		_, _ = testPool.Exec(ctx, `DELETE FROM lark_invite WHERE workspace_id = $1 AND target_id = ANY($2::text[])`, testWorkspaceID, targetIDs)
+	})
+}
+
+// postLarkInvites 以 testUserID 的身份调用发送接口，headers 追加额外请求头。
+func postLarkInvites(t *testing.T, body any, headers map[string]string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := newRequest(http.MethodPost, "/api/workspaces/"+testWorkspaceID+"/lark-invites", body)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	req = withURLParam(req, "id", testWorkspaceID)
+
+	w := httptest.NewRecorder()
+	testHandler.SendLarkInvites(w, req)
+
+	return w
+}
+
+// decodeLarkInviteResults 断言 200 并解析 {"results":[...]}。
+func decodeLarkInviteResults(t *testing.T, w *httptest.ResponseRecorder) []LarkInviteSendResult {
+	t.Helper()
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
+	}
+
+	var resp struct {
+		Results []LarkInviteSendResult `json:"results"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode send results: %v, body = %s", err, w.Body.String())
+	}
+
+	return resp.Results
+}
+
+// assertLarkInviteError 断言响应的状态码和错误码。
+func assertLarkInviteError(t *testing.T, w *httptest.ResponseRecorder, status int, code string) {
+	t.Helper()
+
+	if w.Code != status {
+		t.Fatalf("status = %d, want %d, body = %s", w.Code, status, w.Body.String())
+	}
+
+	var body map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode error body: %v, body = %s", err, w.Body.String())
+	}
+	if body["code"] != code {
+		t.Fatalf("code = %q, want %q, body = %s", body["code"], code, w.Body.String())
+	}
+}
+
+// larkInviteRow 是断言用的 lark_invite 行。
+type larkInviteRow struct {
+	ID            string
+	TargetIDType  string
+	TargetOpenID  *string
+	MaxUses       *int32
+	LarkMessageID *string
+	SentByUserID  string
+	SentByAgentID *string
+}
+
+// loadLarkInviteRow 读取某个接收方的邀请行，没有时返回 false。
+func loadLarkInviteRow(t *testing.T, targetID string) (larkInviteRow, bool) {
+	t.Helper()
+
+	var row larkInviteRow
+	err := testPool.QueryRow(context.Background(), `
+		SELECT id::text, target_id_type, target_open_id, max_uses, lark_message_id, sent_by_user_id::text, sent_by_agent_id::text
+		FROM lark_invite
+		WHERE workspace_id = $1 AND target_id = $2
+	`, testWorkspaceID, targetID).Scan(&row.ID, &row.TargetIDType, &row.TargetOpenID, &row.MaxUses, &row.LarkMessageID, &row.SentByUserID, &row.SentByAgentID)
+	if isNotFound(err) {
+		return larkInviteRow{}, false
+	}
+	if err != nil {
+		t.Fatalf("load lark invite row target_id=%s: %v", targetID, err)
+	}
+
+	return row, true
+}
+
+func TestSendLarkInvites_ChatAndUser(t *testing.T) {
+	api := newFakeInviteAPI()
+	chatID := uniqueLarkID("oc_")
+	openID := uniqueLarkID("ou_")
+	api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "产品群", AvatarURL: "https://example.com/chat.png", MemberCount: 12}
+	api.users[openID] = lark.InviteUser{OpenID: openID, Name: "张三", AvatarURL: "https://example.com/user.png"}
+	useFakeInviteAPI(t, api)
+	cleanupLarkInvitesByTarget(t, chatID, openID)
+
+	w := postLarkInvites(t, map[string]any{
+		"chat_ids":         []string{chatID},
+		"user_open_ids":    []string{openID},
+		"role":             "member",
+		"expires_in_hours": 168,
+		"max_uses":         0,
+		"note":             "欢迎加入",
+	}, nil)
+	results := decodeLarkInviteResults(t, w)
+
+	if len(results) != 2 {
+		t.Fatalf("results = %d, want 2: %s", len(results), w.Body.String())
+	}
+	byTarget := map[string]LarkInviteSendResult{}
+	for _, res := range results {
+		if res.Status != larkInviteSendStatusSent || res.ID == nil || res.Error != nil {
+			t.Fatalf("result not sent: %+v", res)
+		}
+		byTarget[res.Target.ID] = res
+	}
+
+	chat := byTarget[chatID]
+	if chat.Target.Type != larkInviteTargetChat || chat.Target.IDType != larkInviteIDTypeChatID || chat.Target.Name != "产品群" {
+		t.Fatalf("chat target = %+v", chat.Target)
+	}
+	if chat.MaxUses != nil {
+		t.Fatalf("chat max_uses = %d, want null", *chat.MaxUses)
+	}
+	if chat.ExpiresAt == nil || chat.Role != larkInviteRoleMember {
+		t.Fatalf("chat result = %+v", chat)
+	}
+
+	user := byTarget[openID]
+	if user.Target.Type != larkInviteTargetUser || user.Target.IDType != larkInviteIDTypeOpenID || user.Target.Name != "张三" {
+		t.Fatalf("user target = %+v", user.Target)
+	}
+	if user.MaxUses == nil || *user.MaxUses != 1 {
+		t.Fatalf("user max_uses = %v, want 1", user.MaxUses)
+	}
+
+	chatRow, ok := loadLarkInviteRow(t, chatID)
+	if !ok {
+		t.Fatal("chat invite row missing")
+	}
+	if chatRow.LarkMessageID == nil || *chatRow.LarkMessageID == "" {
+		t.Fatal("chat invite lark_message_id not stored")
+	}
+	if chatRow.MaxUses != nil {
+		t.Fatalf("chat invite max_uses = %d, want NULL", *chatRow.MaxUses)
+	}
+	if chatRow.ID != *chat.ID {
+		t.Fatalf("chat invite id = %s, result id = %s", chatRow.ID, *chat.ID)
+	}
+
+	userRow, ok := loadLarkInviteRow(t, openID)
+	if !ok {
+		t.Fatal("user invite row missing")
+	}
+	if userRow.LarkMessageID == nil || *userRow.LarkMessageID == "" {
+		t.Fatal("user invite lark_message_id not stored")
+	}
+	if userRow.MaxUses == nil || *userRow.MaxUses != 1 {
+		t.Fatalf("user invite max_uses = %v, want 1", userRow.MaxUses)
+	}
+	if userRow.TargetOpenID == nil || *userRow.TargetOpenID != openID {
+		t.Fatalf("user invite target_open_id = %v, want %s", userRow.TargetOpenID, openID)
+	}
+	if userRow.SentByUserID != testUserID || userRow.SentByAgentID != nil {
+		t.Fatalf("sent_by = %s / %v, want %s / nil", userRow.SentByUserID, userRow.SentByAgentID, testUserID)
+	}
+
+	_, sends, _, _ := api.snapshot()
+	if len(sends) != 2 {
+		t.Fatalf("sends = %d, want 2", len(sends))
+	}
+	for _, s := range sends {
+		switch s.ReceiveID {
+		case chatID:
+			if s.IDType != lark.InviteReceiveChatID {
+				t.Fatalf("chat send id type = %s", s.IDType)
+			}
+			if !strings.Contains(s.CardJSON, *chat.ID) || !strings.Contains(s.CardJSON, handlerTestName) {
+				t.Fatalf("chat card missing invite id or inviter: %s", s.CardJSON)
+			}
+		case openID:
+			if s.IDType != lark.InviteReceiveOpenID {
+				t.Fatalf("user send id type = %s", s.IDType)
+			}
+		default:
+			t.Fatalf("unexpected receive id %s", s.ReceiveID)
+		}
+		if s.DedupeKey != "" {
+			t.Fatalf("dedupe key = %q, want empty without idempotency key", s.DedupeKey)
+		}
+	}
+}
+
+func TestSendLarkInvites_EmailResolvedToOpenID(t *testing.T) {
+	api := newFakeInviteAPI()
+	email := uniqueLarkEmail("lisi")
+	openID := uniqueLarkID("ou_")
+	api.emails[email] = openID
+	api.users[openID] = lark.InviteUser{OpenID: openID, Name: "李四"}
+	useFakeInviteAPI(t, api)
+	cleanupLarkInvitesByTarget(t, email)
+
+	w := postLarkInvites(t, map[string]any{
+		"user_emails":      []string{email},
+		"role":             "admin",
+		"expires_in_hours": 24,
+	}, nil)
+	results := decodeLarkInviteResults(t, w)
+
+	if len(results) != 1 || results[0].Status != larkInviteSendStatusSent {
+		t.Fatalf("results = %s", w.Body.String())
+	}
+	got := results[0]
+	if got.Target.ID != email || got.Target.IDType != larkInviteIDTypeEmail || got.Target.Type != larkInviteTargetUser || got.Target.Name != "李四" {
+		t.Fatalf("target = %+v", got.Target)
+	}
+	if got.Role != larkInviteRoleAdmin {
+		t.Fatalf("role = %s, want admin", got.Role)
+	}
+
+	_, sends, _, lookups := api.snapshot()
+	if len(lookups) != 1 || lookups[0] != email {
+		t.Fatalf("lookups = %v, want [%s]", lookups, email)
+	}
+	if len(sends) != 1 || sends[0].ReceiveID != openID || sends[0].IDType != lark.InviteReceiveOpenID {
+		t.Fatalf("sends = %+v, want one open_id send to %s", sends, openID)
+	}
+
+	row, ok := loadLarkInviteRow(t, email)
+	if !ok {
+		t.Fatal("invite row missing")
+	}
+	if row.TargetIDType != larkInviteIDTypeEmail || row.TargetOpenID == nil || *row.TargetOpenID != openID {
+		t.Fatalf("row = %+v, want email target resolved to %s", row, openID)
+	}
+}
+
+func TestSendLarkInvites_PartialFailure(t *testing.T) {
+	api := newFakeInviteAPI()
+	good := uniqueLarkID("oc_good_")
+	bad := uniqueLarkID("oc_bad_")
+	api.chats[good] = lark.InviteChat{ChatID: good, Name: "好群"}
+	api.chats[bad] = lark.InviteChat{ChatID: bad, Name: "坏群"}
+	api.sendErrs[bad] = &lark.APIError{Op: "send invite card", Code: fakeLarkCodeBotNotInChat, Msg: "bot not in chat"}
+	useFakeInviteAPI(t, api)
+	cleanupLarkInvitesByTarget(t, good, bad)
+
+	w := postLarkInvites(t, map[string]any{
+		"chat_ids":         []string{good, bad},
+		"expires_in_hours": 72,
+	}, nil)
+	results := decodeLarkInviteResults(t, w)
+
+	if len(results) != 2 {
+		t.Fatalf("results = %s", w.Body.String())
+	}
+	byTarget := map[string]LarkInviteSendResult{}
+	for _, res := range results {
+		byTarget[res.Target.ID] = res
+	}
+
+	if byTarget[good].Status != larkInviteSendStatusSent {
+		t.Fatalf("good result = %+v", byTarget[good])
+	}
+	failed := byTarget[bad]
+	if failed.Status != larkInviteSendStatusFailed || failed.Error == nil || failed.Error.Code != lark.InviteErrBotNotInChat {
+		t.Fatalf("bad result = %+v", failed)
+	}
+	if failed.ID != nil {
+		t.Fatalf("failed result id = %s, want null", *failed.ID)
+	}
+
+	if _, ok := loadLarkInviteRow(t, bad); ok {
+		t.Fatal("failed target still has an invite row")
+	}
+	if _, ok := loadLarkInviteRow(t, good); !ok {
+		t.Fatal("successful target has no invite row")
+	}
+}
+
+func TestSendLarkInvites_Validation(t *testing.T) {
+	api := newFakeInviteAPI()
+	useFakeInviteAPI(t, api)
+
+	validChat := []string{"oc_validation_chat"}
+	cases := []struct {
+		name string
+		body map[string]any
+		code string
+	}{
+		{name: "no receivers", body: map[string]any{"expires_in_hours": 168}, code: larkInviteCodeInvalidTarget},
+		{name: "chat id without oc_", body: map[string]any{"chat_ids": []string{"ou_wrong"}, "expires_in_hours": 168}, code: larkInviteCodeInvalidTarget},
+		{name: "open id without ou_", body: map[string]any{"user_open_ids": []string{"oc_wrong"}, "expires_in_hours": 168}, code: larkInviteCodeInvalidTarget},
+		{name: "malformed email", body: map[string]any{"user_emails": []string{"not-an-email"}, "expires_in_hours": 168}, code: larkInviteCodeInvalidTarget},
+		{name: "owner role", body: map[string]any{"chat_ids": validChat, "role": "owner", "expires_in_hours": 168}, code: larkInviteCodeInvalidRequest},
+		{name: "zero expiry", body: map[string]any{"chat_ids": validChat, "expires_in_hours": 0}, code: larkInviteCodeInvalidRequest},
+		{name: "expiry over 30 days", body: map[string]any{"chat_ids": validChat, "expires_in_hours": 721}, code: larkInviteCodeInvalidRequest},
+		{name: "negative max uses", body: map[string]any{"chat_ids": validChat, "expires_in_hours": 168, "max_uses": -1}, code: larkInviteCodeInvalidRequest},
+		{name: "note over 200 characters", body: map[string]any{"chat_ids": validChat, "expires_in_hours": 168, "note": strings.Repeat("字", 201)}, code: larkInviteCodeInvalidRequest},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := postLarkInvites(t, tc.body, nil)
+			assertLarkInviteError(t, w, http.StatusBadRequest, tc.code)
+		})
+	}
+
+	if calls, _, _, _ := api.snapshot(); calls != 0 {
+		t.Fatalf("Feishu calls = %d, want 0 for invalid requests", calls)
+	}
+}
+
+func TestSendLarkInvites_IdempotencyKey(t *testing.T) {
+	api := newFakeInviteAPI()
+	chatID := uniqueLarkID("oc_")
+	api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "幂等群"}
+	useFakeInviteAPI(t, api)
+	cleanupLarkInvitesByTarget(t, chatID)
+
+	key := uniqueLarkID("retry-")
+	body := map[string]any{"chat_ids": []string{chatID}, "expires_in_hours": 168, "idempotency_key": key}
+
+	first := decodeLarkInviteResults(t, postLarkInvites(t, body, nil))
+	second := decodeLarkInviteResults(t, postLarkInvites(t, body, nil))
+
+	if len(first) != 1 || len(second) != 1 || first[0].ID == nil || second[0].ID == nil {
+		t.Fatalf("first = %+v, second = %+v", first, second)
+	}
+	if *first[0].ID != *second[0].ID || second[0].Status != larkInviteSendStatusSent {
+		t.Fatalf("second result = %+v, want the first invite %s", second[0], *first[0].ID)
+	}
+
+	_, sends, _, _ := api.snapshot()
+	if len(sends) != 1 {
+		t.Fatalf("sends = %d, want 1", len(sends))
+	}
+	sum := sha256.Sum256([]byte(key + "\x00" + chatID))
+	if want := hex.EncodeToString(sum[:])[:32]; sends[0].DedupeKey != want {
+		t.Fatalf("dedupe key = %q, want %q", sends[0].DedupeKey, want)
+	}
+}
+
+func TestSendLarkInvites_NotConfigured(t *testing.T) {
+	body := map[string]any{"chat_ids": []string{"oc_not_configured"}, "expires_in_hours": 168}
+
+	t.Run("no invite api", func(t *testing.T) {
+		useFakeInviteAPI(t, nil)
+
+		assertLarkInviteError(t, postLarkInvites(t, body, nil), http.StatusForbidden, larkInviteCodeNotConfigured)
+	})
+
+	t.Run("seat capacity enabled", func(t *testing.T) {
+		api := newFakeInviteAPI()
+		useFakeInviteAPI(t, api)
+		useSeatCapacity(t, seatcapacity.NewUnavailable(errors.New("seat capacity in test")))
+
+		assertLarkInviteError(t, postLarkInvites(t, body, nil), http.StatusForbidden, larkInviteCodeNotConfigured)
+		if calls, _, _, _ := api.snapshot(); calls != 0 {
+			t.Fatalf("Feishu calls = %d, want 0", calls)
+		}
+	})
+}
+
+func TestGetLarkInviteStatus(t *testing.T) {
+	status := func(t *testing.T) bool {
+		t.Helper()
+
+		w := httptest.NewRecorder()
+		testHandler.GetLarkInviteStatus(w, newRequest(http.MethodGet, "/api/lark/status", nil))
+		if w.Code != http.StatusOK {
+			t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
+		}
+
+		var resp struct {
+			Enabled bool `json:"enabled"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+
+		return resp.Enabled
+	}
+
+	t.Run("configured", func(t *testing.T) {
+		useFakeInviteAPI(t, newFakeInviteAPI())
+		if !status(t) {
+			t.Fatal("enabled = false, want true")
+		}
+	})
+
+	t.Run("no invite api", func(t *testing.T) {
+		useFakeInviteAPI(t, nil)
+		if status(t) {
+			t.Fatal("enabled = true, want false")
+		}
+	})
+
+	t.Run("seat capacity enabled", func(t *testing.T) {
+		useFakeInviteAPI(t, newFakeInviteAPI())
+		useSeatCapacity(t, seatcapacity.NewUnavailable(errors.New("seat capacity in test")))
+		if status(t) {
+			t.Fatal("enabled = true, want false")
+		}
+	})
+}
+
+func TestSendLarkInvites_AgentRequiresAdminOriginator(t *testing.T) {
+	api := newFakeInviteAPI()
+	useFakeInviteAPI(t, api)
+
+	agentID := createHandlerTestAgent(t, "Lark Invite Agent", nil)
+	plainUser := dbfx.User(t, "Lark Plain Member", uniqueLarkEmail("plain"))
+	dbfx.Member(t, testWorkspaceID, plainUser, "member")
+	adminUser := dbfx.User(t, "Lark Admin Originator", uniqueLarkEmail("admin"))
+	dbfx.Member(t, testWorkspaceID, adminUser, "admin")
+
+	// 表约束要求 accountable_user_id 与 originator_user_id 一致。
+	newTask := func(originator any) string {
+		return dbfx.Task(t, agentID, testutil.Cols{
+			"runtime_id":          handlerTestRuntimeID(t),
+			"status":              "running",
+			"started_at":          testutil.Raw("now()"),
+			"originator_user_id":  originator,
+			"accountable_user_id": originator,
+		})
+	}
+	agentHeaders := func(taskID string) map[string]string {
+		return map[string]string{"X-Agent-ID": agentID, "X-Task-ID": taskID}
+	}
+
+	t.Run("plain member originator", func(t *testing.T) {
+		chatID := uniqueLarkID("oc_")
+		api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "群"}
+		cleanupLarkInvitesByTarget(t, chatID)
+
+		headers := agentHeaders(newTask(plainUser))
+		w := postLarkInvites(t, map[string]any{"chat_ids": []string{chatID}, "expires_in_hours": 168}, headers)
+		assertLarkInviteError(t, w, http.StatusForbidden, larkInviteCodePermissionDenied)
+
+		req := withURLParam(newRequest(http.MethodGet, "/api/workspaces/"+testWorkspaceID+"/lark-invites", nil), "id", testWorkspaceID)
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+		lw := httptest.NewRecorder()
+		testHandler.ListLarkInvites(lw, req)
+		assertLarkInviteError(t, lw, http.StatusForbidden, larkInviteCodePermissionDenied)
+	})
+
+	t.Run("no originator", func(t *testing.T) {
+		chatID := uniqueLarkID("oc_")
+		api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "群"}
+		cleanupLarkInvitesByTarget(t, chatID)
+
+		w := postLarkInvites(t, map[string]any{"chat_ids": []string{chatID}, "expires_in_hours": 168}, agentHeaders(newTask(nil)))
+		assertLarkInviteError(t, w, http.StatusForbidden, larkInviteCodePermissionDenied)
+	})
+
+	t.Run("admin originator", func(t *testing.T) {
+		chatID := uniqueLarkID("oc_")
+		api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "群"}
+		cleanupLarkInvitesByTarget(t, chatID)
+
+		w := postLarkInvites(t, map[string]any{"chat_ids": []string{chatID}, "expires_in_hours": 168}, agentHeaders(newTask(adminUser)))
+		results := decodeLarkInviteResults(t, w)
+		if len(results) != 1 || results[0].Status != larkInviteSendStatusSent {
+			t.Fatalf("results = %s", w.Body.String())
+		}
+
+		row, ok := loadLarkInviteRow(t, chatID)
+		if !ok {
+			t.Fatal("invite row missing")
+		}
+		if row.SentByUserID != adminUser {
+			t.Fatalf("sent_by_user_id = %s, want originator %s", row.SentByUserID, adminUser)
+		}
+		if row.SentByAgentID == nil || *row.SentByAgentID != agentID {
+			t.Fatalf("sent_by_agent_id = %v, want %s", row.SentByAgentID, agentID)
+		}
+
+		_, sends, _, _ := api.snapshot()
+		var card string
+		for _, s := range sends {
+			if s.ReceiveID == chatID {
+				card = s.CardJSON
+			}
+		}
+		if !strings.Contains(card, "Lark Invite Agent") || !strings.Contains(card, "Lark Admin Originator") {
+			t.Fatalf("card does not name agent and originator: %s", card)
+		}
+	})
+}
+
+// listLarkInvitesForTest 调用列表接口，query 为空时不带 status。
+func listLarkInvitesForTest(t *testing.T, query string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	path := "/api/workspaces/" + testWorkspaceID + "/lark-invites"
+	if query != "" {
+		path += "?" + query
+	}
+	req := withURLParam(newRequest(http.MethodGet, path, nil), "id", testWorkspaceID)
+
+	w := httptest.NewRecorder()
+	testHandler.ListLarkInvites(w, req)
+
+	return w
+}
+
+// decodeLarkInviteList 断言 200 并只保留 ids 里的邀请，保持响应顺序。
+func decodeLarkInviteList(t *testing.T, w *httptest.ResponseRecorder, ids map[string]bool) []LarkInviteResponse {
+	t.Helper()
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
+	}
+
+	var all []LarkInviteResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &all); err != nil {
+		t.Fatalf("decode list: %v, body = %s", err, w.Body.String())
+	}
+
+	var mine []LarkInviteResponse
+	for _, inv := range all {
+		if ids[inv.ID] {
+			mine = append(mine, inv)
+		}
+	}
+
+	return mine
+}
+
+func TestListLarkInvites_StatusFilter(t *testing.T) {
+	useFakeInviteAPI(t, newFakeInviteAPI())
+	ctx := context.Background()
+	now := time.Now()
+
+	active := createTestLarkInvite(t, newLarkInviteParams())
+
+	completedParams := newLarkInviteParams()
+	completedParams.MaxUses = pgtype.Int4{Int32: 1, Valid: true}
+	completed := createTestLarkInvite(t, completedParams)
+	dbfx.Exec(t, `UPDATE lark_invite SET use_count = 1 WHERE id = $1`, completed.ID)
+
+	expiredParams := newLarkInviteParams()
+	expiredParams.ExpiresAt = pgtype.Timestamptz{Time: now.Add(-time.Hour), Valid: true}
+	expired := createTestLarkInvite(t, expiredParams)
+
+	revoked := createTestLarkInvite(t, newLarkInviteParams())
+	if _, err := testHandler.Queries.RevokeLarkInvite(ctx, db.RevokeLarkInviteParams{ID: revoked.ID, WorkspaceID: revoked.WorkspaceID}); err != nil {
+		t.Fatalf("revoke: %v", err)
+	}
+
+	// 固定创建时间，倒序应为 revoked、expired、completed、active。
+	for i, inv := range []db.LarkInvite{active, completed, expired, revoked} {
+		dbfx.Exec(t, `UPDATE lark_invite SET created_at = $2 WHERE id = $1`, inv.ID, now.Add(time.Duration(i-10)*time.Minute))
+	}
+
+	if err := testHandler.Queries.CreateLarkInviteJoin(ctx, db.CreateLarkInviteJoinParams{
+		InviteID:    active.ID,
+		WorkspaceID: active.WorkspaceID,
+		UserID:      parseUUID(testUserID),
+		LarkOpenID:  "ou_list_join",
+	}); err != nil {
+		t.Fatalf("create join: %v", err)
+	}
+
+	ids := map[string]bool{}
+	for _, inv := range []db.LarkInvite{active, completed, expired, revoked} {
+		ids[uuidToString(inv.ID)] = true
+	}
+
+	t.Run("default is active only", func(t *testing.T) {
+		w := listLarkInvitesForTest(t, "")
+		var all []LarkInviteResponse
+		if err := json.Unmarshal(w.Body.Bytes(), &all); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+		for _, inv := range all {
+			if inv.Status != larkInviteStatusActive {
+				t.Fatalf("default list contains status %s", inv.Status)
+			}
+		}
+
+		mine := decodeLarkInviteList(t, w, ids)
+		if len(mine) != 1 || mine[0].ID != uuidToString(active.ID) {
+			t.Fatalf("default list = %+v, want only the active invite", mine)
+		}
+		if mine[0].SentBy.ID != testUserID || mine[0].SentBy.Name != handlerTestName || mine[0].SentByAgent != nil {
+			t.Fatalf("sent_by = %+v / %+v", mine[0].SentBy, mine[0].SentByAgent)
+		}
+		if len(mine[0].Joined) != 1 || mine[0].Joined[0].UserID != testUserID || mine[0].Joined[0].Email != handlerTestEmail {
+			t.Fatalf("joined = %+v", mine[0].Joined)
+		}
+	})
+
+	t.Run("all newest first", func(t *testing.T) {
+		mine := decodeLarkInviteList(t, listLarkInvitesForTest(t, "status=all"), ids)
+
+		want := []struct {
+			id     pgtype.UUID
+			status string
+		}{
+			{revoked.ID, larkInviteStatusRevoked},
+			{expired.ID, larkInviteStatusExpired},
+			{completed.ID, larkInviteStatusCompleted},
+			{active.ID, larkInviteStatusActive},
+		}
+		if len(mine) != len(want) {
+			t.Fatalf("all list = %+v", mine)
+		}
+		for i, wnt := range want {
+			if mine[i].ID != uuidToString(wnt.id) || mine[i].Status != wnt.status {
+				t.Fatalf("item %d = %s/%s, want %s/%s", i, mine[i].ID, mine[i].Status, uuidToString(wnt.id), wnt.status)
+			}
+		}
+		if mine[0].RevokedAt == nil {
+			t.Fatal("revoked invite has no revoked_at")
+		}
+	})
+
+	t.Run("single status", func(t *testing.T) {
+		mine := decodeLarkInviteList(t, listLarkInvitesForTest(t, "status=expired"), ids)
+		if len(mine) != 1 || mine[0].ID != uuidToString(expired.ID) {
+			t.Fatalf("expired list = %+v", mine)
+		}
+	})
+
+	t.Run("unknown status", func(t *testing.T) {
+		assertLarkInviteError(t, listLarkInvitesForTest(t, "status=bogus"), http.StatusBadRequest, larkInviteCodeInvalidRequest)
+	})
+}
+
+func TestGetLarkInvite_ReturnsAllJoined(t *testing.T) {
+	useFakeInviteAPI(t, newFakeInviteAPI())
+	ctx := context.Background()
+
+	inv := createTestLarkInvite(t, newLarkInviteParams())
+	joinUsers := make([]string, 0, larkInviteListJoinedLimit+1)
+	for i := 0; i <= larkInviteListJoinedLimit; i++ {
+		joinUsers = append(joinUsers, dbfx.User(t, fmt.Sprintf("Joined %d", i), uniqueLarkEmail("joined")))
+	}
+	// 测试数据准备：每个用户一条加入记录。
+	for _, userID := range joinUsers {
+		if err := testHandler.Queries.CreateLarkInviteJoin(ctx, db.CreateLarkInviteJoinParams{
+			InviteID:    inv.ID,
+			WorkspaceID: inv.WorkspaceID,
+			UserID:      parseUUID(userID),
+			LarkOpenID:  "ou_" + userID,
+		}); err != nil {
+			t.Fatalf("create join: %v", err)
+		}
+	}
+
+	ids := map[string]bool{uuidToString(inv.ID): true}
+	listed := decodeLarkInviteList(t, listLarkInvitesForTest(t, ""), ids)
+	if len(listed) != 1 || len(listed[0].Joined) != larkInviteListJoinedLimit {
+		t.Fatalf("list joined = %+v, want %d", listed, larkInviteListJoinedLimit)
+	}
+
+	req := withURLParams(newRequest(http.MethodGet, "/", nil), "id", testWorkspaceID, "inviteId", uuidToString(inv.ID))
+	w := httptest.NewRecorder()
+	testHandler.GetLarkInvite(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
+	}
+	var detail LarkInviteResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &detail); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(detail.Joined) != len(joinUsers) {
+		t.Fatalf("detail joined = %d, want %d", len(detail.Joined), len(joinUsers))
+	}
+
+	missing := withURLParams(newRequest(http.MethodGet, "/", nil), "id", testWorkspaceID, "inviteId", "00000000-0000-0000-0000-000000000001")
+	mw := httptest.NewRecorder()
+	testHandler.GetLarkInvite(mw, missing)
+	assertLarkInviteError(t, mw, http.StatusNotFound, larkInviteCodeInviteNotFound)
+}
+
+// revokeLarkInviteForTest 调用撤销接口。
+func revokeLarkInviteForTest(t *testing.T, inviteID string) *httptest.ResponseRecorder {
+	t.Helper()
+
+	req := withURLParams(newRequest(http.MethodDelete, "/", nil), "id", testWorkspaceID, "inviteId", inviteID)
+	w := httptest.NewRecorder()
+	testHandler.RevokeLarkInvite(w, req)
+
+	return w
+}
+
+func TestRevokeLarkInvite_PatchesCardAndIgnoresPatchError(t *testing.T) {
+	api := newFakeInviteAPI()
+	api.patchErr = errors.New("patch failed in test")
+	useFakeInviteAPI(t, api)
+
+	inv := createTestLarkInvite(t, newLarkInviteParams())
+	messageID := uniqueLarkID("om_revoke_")
+	if err := testHandler.Queries.SetLarkInviteMessageID(context.Background(), db.SetLarkInviteMessageIDParams{ID: inv.ID, LarkMessageID: strToText(messageID)}); err != nil {
+		t.Fatalf("set message id: %v", err)
+	}
+
+	w := revokeLarkInviteForTest(t, uuidToString(inv.ID))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
+	}
+	var resp LarkInviteResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Status != larkInviteStatusRevoked || resp.RevokedAt == nil {
+		t.Fatalf("response = %+v, want revoked", resp)
+	}
+
+	var revokedAt pgtype.Timestamptz
+	dbfx.QueryRow(t, `SELECT revoked_at FROM lark_invite WHERE id = $1`, inv.ID).Scan(&revokedAt)
+	if !revokedAt.Valid {
+		t.Fatal("revoked_at not written")
+	}
+
+	_, _, patches, _ := api.snapshot()
+	if len(patches) != 1 || patches[0].MessageID != messageID {
+		t.Fatalf("patches = %+v, want one patch of %s", patches, messageID)
+	}
+	if !strings.Contains(patches[0].CardJSON, larkInviteReasonRevoked) || !strings.Contains(patches[0].CardJSON, larkInviteTitleInvalid) {
+		t.Fatalf("patched card is not the revoked state: %s", patches[0].CardJSON)
+	}
+
+	// 再次撤销仍返回 200，不改写撤销时间，也不再更新卡片。
+	again := revokeLarkInviteForTest(t, uuidToString(inv.ID))
+	if again.Code != http.StatusOK {
+		t.Fatalf("second revoke status = %d, body = %s", again.Code, again.Body.String())
+	}
+	if _, _, patches, _ := api.snapshot(); len(patches) != 1 {
+		t.Fatalf("patches after second revoke = %d, want 1", len(patches))
+	}
+
+	assertLarkInviteError(t, revokeLarkInviteForTest(t, "00000000-0000-0000-0000-000000000002"), http.StatusNotFound, larkInviteCodeInviteNotFound)
+}
+
+func TestLarkInviteWelcome_OnceAndAck(t *testing.T) {
+	inv := createTestLarkInvite(t, newLarkInviteParams())
+	if err := testHandler.Queries.CreateLarkInviteJoin(context.Background(), db.CreateLarkInviteJoinParams{
+		InviteID:    inv.ID,
+		WorkspaceID: inv.WorkspaceID,
+		UserID:      parseUUID(testUserID),
+		LarkOpenID:  "ou_welcome_test",
+	}); err != nil {
+		t.Fatalf("create join: %v", err)
+	}
+
+	get := func(t *testing.T) *httptest.ResponseRecorder {
+		t.Helper()
+
+		w := httptest.NewRecorder()
+		testHandler.GetLarkInviteWelcome(w, withURLParam(newRequest(http.MethodGet, "/", nil), "id", testWorkspaceID))
+
+		return w
+	}
+
+	first := get(t)
+	if first.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", first.Code, first.Body.String())
+	}
+	var welcome struct {
+		InviteID    string `json:"invite_id"`
+		InviterName string `json:"inviter_name"`
+		Role        string `json:"role"`
+	}
+	if err := json.Unmarshal(first.Body.Bytes(), &welcome); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if welcome.InviteID != uuidToString(inv.ID) || welcome.InviterName != handlerTestName || welcome.Role != larkInviteRoleMember {
+		t.Fatalf("welcome = %+v", welcome)
+	}
+
+	ack := httptest.NewRecorder()
+	testHandler.AckLarkInviteWelcome(ack, withURLParam(newRequest(http.MethodPost, "/", nil), "id", testWorkspaceID))
+	if ack.Code != http.StatusNoContent {
+		t.Fatalf("ack status = %d, body = %s", ack.Code, ack.Body.String())
+	}
+
+	if again := get(t); again.Code != http.StatusNoContent {
+		t.Fatalf("status after ack = %d, body = %s", again.Code, again.Body.String())
+	}
+}
+
+func TestLookupLarkUser(t *testing.T) {
+	api := newFakeInviteAPI()
+	email := uniqueLarkEmail("lookup")
+	openID := uniqueLarkID("ou_")
+	api.emails[email] = openID
+	api.users[openID] = lark.InviteUser{OpenID: openID, Name: "王五", AvatarURL: "https://example.com/w.png"}
+	useFakeInviteAPI(t, api)
+
+	lookup := func(t *testing.T, query string) *httptest.ResponseRecorder {
+		t.Helper()
+
+		req := withURLParam(newRequest(http.MethodGet, "/api/workspaces/"+testWorkspaceID+"/lark/users/lookup?"+query, nil), "id", testWorkspaceID)
+		w := httptest.NewRecorder()
+		testHandler.LookupLarkUser(w, req)
+
+		return w
+	}
+
+	t.Run("found", func(t *testing.T) {
+		w := lookup(t, "email="+email)
+		if w.Code != http.StatusOK {
+			t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
+		}
+		assertJSONEqual(t, w.Body.Bytes(), fmt.Sprintf(`{"open_id":%q,"name":"王五","avatar_url":"https://example.com/w.png","email":%q}`, openID, email))
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		assertLarkInviteError(t, lookup(t, "email="+uniqueLarkEmail("missing")), http.StatusNotFound, lark.InviteErrUserNotFound)
+	})
+
+	t.Run("malformed email", func(t *testing.T) {
+		assertLarkInviteError(t, lookup(t, "email=nope"), http.StatusBadRequest, larkInviteCodeInvalidTarget)
+	})
+}
+
+func TestListLarkChats(t *testing.T) {
+	api := newFakeInviteAPI()
+	api.botChats = []lark.InviteChat{
+		{ChatID: "oc_list_1", Name: "群一", AvatarURL: "https://example.com/1.png"},
+		{ChatID: "oc_list_2", Name: "群二"},
+	}
+	useFakeInviteAPI(t, api)
+
+	req := withURLParam(newRequest(http.MethodGet, "/api/workspaces/"+testWorkspaceID+"/lark/chats", nil), "id", testWorkspaceID)
+	w := httptest.NewRecorder()
+	testHandler.ListLarkChats(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
+	}
+	assertJSONEqual(t, w.Body.Bytes(), `[
+		{"chat_id":"oc_list_1","name":"群一","avatar_url":"https://example.com/1.png","member_count":0},
+		{"chat_id":"oc_list_2","name":"群二","avatar_url":null,"member_count":0}
+	]`)
+}
+
+func TestLarkInviteStatusAndInvalidReason(t *testing.T) {
+	now := time.Date(2026, 10, 23, 12, 0, 0, 0, time.Local)
+	future := pgtype.Timestamptz{Time: now.Add(time.Hour), Valid: true}
+	past := pgtype.Timestamptz{Time: time.Date(2026, 10, 20, 9, 0, 0, 0, time.Local), Valid: true}
+
+	cases := []struct {
+		name   string
+		inv    db.LarkInvite
+		status string
+		reason string
+	}{
+		{name: "active", inv: db.LarkInvite{ExpiresAt: future}, status: larkInviteStatusActive, reason: ""},
+		{name: "completed", inv: db.LarkInvite{ExpiresAt: future, MaxUses: pgtype.Int4{Int32: 2, Valid: true}, UseCount: 2}, status: larkInviteStatusCompleted, reason: ""},
+		{name: "expired beats completed", inv: db.LarkInvite{ExpiresAt: past, MaxUses: pgtype.Int4{Int32: 1, Valid: true}, UseCount: 1}, status: larkInviteStatusExpired, reason: "10 月 20 日 已过期"},
+		{name: "revoked beats expired", inv: db.LarkInvite{ExpiresAt: past, RevokedAt: pgtype.Timestamptz{Time: now, Valid: true}}, status: larkInviteStatusRevoked, reason: larkInviteReasonRevoked},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := larkInviteStatus(tc.inv, now); got != tc.status {
+				t.Fatalf("status = %s, want %s", got, tc.status)
+			}
+			if got := larkInviteInvalidReason(tc.inv, now); got != tc.reason {
+				t.Fatalf("reason = %q, want %q", got, tc.reason)
+			}
+		})
+	}
+}
