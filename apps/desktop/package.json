@@ -45,6 +45,7 @@
     "@marvis/core": "workspace:*",
     "@marvis/ui": "workspace:*",
     "@marvis/views": "workspace:*",
+    "@phosphor-icons/react": "catalog:",
     "@tanstack/react-query": "catalog:",
     "bonjour-service": "1.3.0",
     "electron-updater": "^6.8.3",

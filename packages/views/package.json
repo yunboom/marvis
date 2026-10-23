@@ -127,6 +127,7 @@
     "yaml": "catalog:"
   },
   "peerDependencies": {
+    "@phosphor-icons/react": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-table": "catalog:",
     "i18next": "catalog:",
