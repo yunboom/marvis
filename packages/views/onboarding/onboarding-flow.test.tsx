@@ -1,0 +1,99 @@
+import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { I18nProvider } from "@marvis/core/i18n/react";
+import enCommon from "../locales/en/common.json";
+import enOnboarding from "../locales/en/onboarding.json";
+import enWorkspace from "../locales/en/workspace.json";
+
+const TEST_RESOURCES = {
+  en: { common: enCommon, onboarding: enOnboarding, workspace: enWorkspace },
+};
+
+const NEW_WORKSPACE = { id: "ws-new", slug: "new-ws", name: "New" };
+
+vi.mock("../auth", () => ({ useLogout: () => vi.fn() }));
+
+vi.mock("@marvis/core/auth", () => ({
+  useAuthStore: Object.assign(
+    (selector: (s: { user: unknown }) => unknown) =>
+      selector({ user: { id: "u-1" } }),
+    { getState: () => ({ user: { id: "u-1" } }) },
+  ),
+}));
+
+vi.mock("@marvis/core/onboarding", async () => {
+  const actual = await vi.importActual<Record<string, unknown>>(
+    "@marvis/core/onboarding",
+  );
+  return { ...actual, useBootstrapMika: () => ({ mutateAsync: vi.fn() }) };
+});
+
+vi.mock("../workspace/new-workspace-page", () => ({
+  NewWorkspacePage: ({
+    onCreated,
+    onCancel,
+  }: {
+    onCreated: (ws: unknown) => void;
+    onCancel?: () => void;
+  }) => (
+    <div>
+      <button type="button" onClick={() => onCreated(NEW_WORKSPACE)}>
+        create workspace
+      </button>
+      {onCancel ? (
+        <button type="button" onClick={onCancel}>
+          cancel
+        </button>
+      ) : null}
+    </div>
+  ),
+}));
+
+vi.mock("./steps/step-runtime-connect", () => ({
+  StepRuntimeConnect: ({ wsSlug }: { wsSlug: string }) => (
+    <p>runtime step for {wsSlug}</p>
+  ),
+}));
+
+import { OnboardingFlow } from "./onboarding-flow";
+
+function renderFlow(props: { onCancel?: () => void } = {}) {
+  return render(
+    <I18nProvider locale="en" resources={TEST_RESOURCES}>
+      <OnboardingFlow onComplete={vi.fn()} {...props} />
+    </I18nProvider>,
+  );
+}
+
+describe("OnboardingFlow", () => {
+  it("opens on the create-workspace page, then connects a runtime to it", () => {
+    renderFlow();
+
+    expect(screen.queryByText(/runtime step/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "create workspace" }));
+
+    expect(screen.getByText("runtime step for new-ws")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "create workspace" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("passes cancel through to the create page", () => {
+    const onCancel = vi.fn();
+    renderFlow({ onCancel });
+
+    fireEvent.click(screen.getByRole("button", { name: "cancel" }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it("offers no way back once the workspace exists", () => {
+    renderFlow({ onCancel: vi.fn() });
+
+    fireEvent.click(screen.getByRole("button", { name: "create workspace" }));
+
+    expect(screen.queryByRole("button", { name: "cancel" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
+  });
+});

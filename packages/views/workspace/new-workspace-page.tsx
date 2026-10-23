@@ -1,0 +1,356 @@
+"use client";
+
+import { type KeyboardEvent, type ReactNode, useRef, useState } from "react";
+import { Dices } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@marvis/ui/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@marvis/ui/components/ui/card";
+import { Input } from "@marvis/ui/components/ui/input";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@marvis/ui/components/ui/field";
+import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
+import { cn } from "@marvis/ui/lib/utils";
+import { useCreateWorkspace } from "@marvis/core/workspace/mutations";
+import type { Workspace } from "@marvis/core/types";
+import { isImeComposing } from "@marvis/core/utils";
+import { matchLocale } from "@marvis/core/i18n";
+import { useConfigStore } from "@marvis/core/config";
+import { workspaceUrlHost } from "@marvis/core/workspace/workspace-url";
+import { isReservedSlug } from "@marvis/core/paths";
+import { useLogout } from "../auth";
+import { DragStrip } from "../platform";
+import { useT } from "../i18n";
+import {
+  WORKSPACE_SLUG_REGEX,
+  isWorkspaceSlugConflict,
+  nameToWorkspaceSlug,
+  randomCelestialWorkspaceIdentity,
+} from "./slug";
+
+// Same card as the auth pages, 440 wide to fit the slug row.
+const CARD_CLASS =
+  "w-full max-w-[440px] gap-0 rounded-2xl border-0 p-10 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border dark:shadow-none";
+const FIELD_INPUT_CLASS = "h-12 px-4";
+
+function issuePrefix(slug: string): string {
+  // Mirrors the server's default prefix derivation
+  // (handler.defaultIssuePrefixFromSlug): alphanumerics of the lowercased
+  // slug, first 4 chars, uppercased.
+  return slug
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 4)
+    .toUpperCase();
+}
+
+// Same shape the server validates (`^[A-Z0-9]{1,10}$`).
+function normalizePrefix(raw: string): string {
+  return raw.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+}
+
+/**
+ * Standalone create-workspace page, shared by the web `/workspaces/new` route
+ * and the desktop new-workspace overlay. Users reach it right after login when
+ * they have no workspace yet, or from the workspace switcher.
+ *
+ * `onCancel` is only passed when the user has a workspace to return to; a user
+ * with none gets Log out as the way out instead.
+ */
+export function NewWorkspacePage({
+  onCreated,
+  onCancel,
+}: {
+  onCreated: (workspace: Workspace) => void;
+  onCancel?: () => void;
+}) {
+  const { t } = useT("workspace");
+  const logout = useLogout();
+  const workspaceCreationDisabled = useConfigStore(
+    (s) => s.workspaceCreationDisabled,
+  );
+
+  if (workspaceCreationDisabled) {
+    return (
+      <PageShell>
+        <CardHeader className="gap-2 px-0 text-center">
+          <CardTitle className="text-display-sm font-bold">
+            {t(($) => $.create_page.disabled_title)}
+          </CardTitle>
+          <CardDescription className="text-body-lg leading-relaxed">
+            {t(($) => $.create_page.disabled_description)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="mt-8 px-0">
+          <Button
+            variant="outline"
+            className="h-12 w-full text-body-lg"
+            onClick={logout}
+          >
+            {t(($) => $.create_page.log_out)}
+          </Button>
+        </CardContent>
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell>
+      <CardHeader className="px-0 text-center">
+        <CardTitle className="text-display-sm font-bold">
+          {t(($) => $.create_page.title)}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="mt-8 px-0">
+        <CreateWorkspaceForm
+          onCreated={onCreated}
+          onCancel={onCancel}
+          onLogout={logout}
+        />
+      </CardContent>
+    </PageShell>
+  );
+}
+
+function PageShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-svh flex-col bg-app-shell">
+      <DragStrip />
+      <div className="flex flex-1 items-center justify-center px-4 py-12">
+        <Card className={CARD_CLASS}>
+          <MarvisIcon className="mx-auto mb-6 size-12" />
+          {children}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function CreateWorkspaceForm({
+  onCreated,
+  onCancel,
+  onLogout,
+}: {
+  onCreated: (workspace: Workspace) => void;
+  onCancel?: () => void;
+  onLogout: () => void;
+}) {
+  const { t, i18n } = useT("workspace");
+  const locale = matchLocale([i18n.resolvedLanguage ?? i18n.language]);
+  const urlHost = workspaceUrlHost(useConfigStore((s) => s.daemonAppUrl));
+
+  // The slug follows the name and the prefix follows the slug, each until the
+  // user edits it by hand.
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugServerError, setSlugServerError] = useState<string | null>(null);
+  const slugTouched = useRef(false);
+  const [prefix, setPrefix] = useState("");
+  const prefixTouched = useRef(false);
+
+  const slugError =
+    slug.length > 0 && !WORKSPACE_SLUG_REGEX.test(slug)
+      ? t(($) => $.create_page.errors.slug_format)
+      : slug.length > 0 && isReservedSlug(slug)
+        ? t(($) => $.create_page.errors.slug_reserved)
+        : slugServerError;
+
+  // An empty prefix field falls back to the slug-derived default, which the
+  // placeholder shows.
+  const derivedPrefix = issuePrefix(slug);
+  const effectivePrefix = prefix || derivedPrefix;
+
+  const createWorkspace = useCreateWorkspace();
+  const isCreating = createWorkspace.isPending;
+  const canCreate =
+    name.trim().length > 0 && slug.trim().length > 0 && !slugError;
+
+  const applySlug = (value: string) => {
+    setSlug(value);
+    setSlugServerError(null);
+    if (!prefixTouched.current) setPrefix(issuePrefix(value));
+  };
+
+  const handleNameChange = (value: string) => {
+    setName(value);
+    if (!slugTouched.current) applySlug(nameToWorkspaceSlug(value, locale));
+  };
+
+  const handleSlugChange = (value: string) => {
+    slugTouched.current = true;
+    applySlug(value);
+  };
+
+  const handlePrefixChange = (value: string) => {
+    prefixTouched.current = true;
+    setPrefix(normalizePrefix(value));
+  };
+
+  const handleRandomName = () => {
+    const identity = randomCelestialWorkspaceIdentity(locale);
+    slugTouched.current = true;
+    setName(identity.name);
+    applySlug(identity.slug);
+  };
+
+  const handleCreate = () => {
+    if (!canCreate || isCreating) return;
+
+    createWorkspace.mutate(
+      {
+        name: name.trim(),
+        slug: slug.trim(),
+        issue_prefix: effectivePrefix,
+      },
+      {
+        onSuccess: onCreated,
+        onError: (error) => {
+          if (isWorkspaceSlugConflict(error)) {
+            setSlugServerError(t(($) => $.create_page.errors.slug_taken));
+            toast.error(t(($) => $.create_page.errors.slug_conflict_toast));
+            return;
+          }
+          toast.error(
+            error instanceof Error && error.message
+              ? error.message
+              : t(($) => $.create_page.errors.create_failed),
+          );
+        },
+      },
+    );
+  };
+
+  const submitOnEnter = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (isImeComposing(e)) return;
+    if (e.key === "Enter") handleCreate();
+  };
+
+  return (
+    <div className="flex flex-col">
+      <FieldGroup className="gap-5">
+        <Field>
+          <FieldLabel htmlFor="new-ws-name">
+            {t(($) => $.create_page.name_label)}
+          </FieldLabel>
+          <div className="flex items-center gap-2">
+            <Input
+              id="new-ws-name"
+              autoFocus
+              type="text"
+              value={name}
+              disabled={isCreating}
+              onChange={(e) => handleNameChange(e.target.value)}
+              onKeyDown={submitOnEnter}
+              placeholder={t(($) => $.create_page.name_placeholder)}
+              className={cn(FIELD_INPUT_CLASS, "min-w-0 flex-1 md:text-body-lg")}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleRandomName}
+              disabled={isCreating}
+              className="h-12 shrink-0 gap-1.5 px-[18px]"
+            >
+              <Dices className="size-4" />
+              {t(($) => $.create_page.random_name)}
+            </Button>
+          </div>
+        </Field>
+
+        <Field data-invalid={slugError ? true : undefined}>
+          <FieldLabel htmlFor="new-ws-slug">
+            {t(($) => $.create_page.url_label)}
+          </FieldLabel>
+          <div className="flex h-12 items-center rounded-lg bg-field px-4 transition-colors hover:bg-field-hover focus-within:bg-field-hover in-data-[invalid=true]:shadow-[inset_0_0_0_1px_var(--color-destructive)]">
+            <span className="select-none font-mono text-body text-muted-foreground">
+              {`${urlHost}/`}
+            </span>
+            <Input
+              id="new-ws-slug"
+              type="text"
+              value={slug}
+              disabled={isCreating}
+              onChange={(e) => handleSlugChange(e.target.value)}
+              onKeyDown={submitOnEnter}
+              placeholder={t(($) => $.create_page.slug_placeholder)}
+              className="h-full rounded-none border-0 bg-transparent px-0 font-mono shadow-none hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 md:text-body"
+            />
+          </div>
+          {slugError ? (
+            <FieldError className="text-label">{slugError}</FieldError>
+          ) : null}
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="new-ws-prefix">
+            {t(($) => $.create_page.issue_prefix_label)}
+          </FieldLabel>
+          <div className="flex items-center gap-3">
+            <Input
+              id="new-ws-prefix"
+              type="text"
+              value={prefix}
+              disabled={isCreating}
+              onChange={(e) => handlePrefixChange(e.target.value)}
+              onKeyDown={submitOnEnter}
+              placeholder={derivedPrefix}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={10}
+              className={cn(FIELD_INPUT_CLASS, "w-32 font-mono uppercase md:text-body")}
+            />
+            {effectivePrefix ? (
+              <span className="text-label text-muted-foreground">
+                {t(($) => $.create_page.issue_prefix_example)}{" "}
+                <span className="font-mono text-foreground">
+                  {effectivePrefix}-123
+                </span>
+              </span>
+            ) : null}
+          </div>
+        </Field>
+      </FieldGroup>
+
+      <Button
+        className="mt-8 h-12 w-full text-body-lg"
+        disabled={!canCreate || isCreating}
+        onClick={handleCreate}
+      >
+        {isCreating
+          ? t(($) => $.create_page.submitting)
+          : t(($) => $.create_page.submit)}
+      </Button>
+
+      {onCancel ? (
+        <Button
+          variant="secondary"
+          className="mt-3 h-11 w-full text-body-lg font-normal"
+          disabled={isCreating}
+          onClick={onCancel}
+        >
+          {t(($) => $.create_page.cancel)}
+        </Button>
+      ) : (
+        <Button
+          variant="link"
+          className="mx-auto mt-5 h-auto p-0 text-label font-normal text-muted-foreground"
+          disabled={isCreating}
+          onClick={onLogout}
+        >
+          {t(($) => $.create_page.log_out)}
+        </Button>
+      )}
+    </div>
+  );
+}

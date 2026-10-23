@@ -58,27 +58,6 @@ function WindowOverlayInner() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col overflow-auto bg-background">
-      {/* Creating a workspace is the onboarding flow entered at the
-          workspace step: a second workspace still needs its own runtime and
-          its own Mika, so running one flow keeps the two from drifting. */}
-      {overlay.type === "new-workspace" && (
-        <OnboardingFlow
-          mode="new_workspace"
-          onCancel={onBack}
-          onRuntimeRefresh={restartDaemon}
-          runtimesPending={runtimesPending}
-          onComplete={(ws, destination) => {
-            close();
-            if (ws && destination?.kind === "chat") {
-              push(paths.workspace(ws.slug).chatSession(destination.sessionId));
-            } else if (ws && destination?.kind === "issue") {
-              push(paths.workspace(ws.slug).issueDetail(destination.issueId));
-            } else if (ws) {
-              push(paths.workspace(ws.slug).issues());
-            }
-          }}
-        />
-      )}
       {overlay.type === "invite" && (
         <InvitePage
           invitationId={overlay.invitationId}
@@ -86,8 +65,9 @@ function WindowOverlayInner() {
         />
       )}
       {overlay.type === "invitations" && <InvitationsPage />}
-      {overlay.type === "onboarding" && (
+      {(overlay.type === "new-workspace" || overlay.type === "onboarding") && (
         <OnboardingFlow
+          onCancel={overlay.type === "new-workspace" ? onBack : undefined}
           onComplete={(ws, destination) => {
             close();
             if (ws && destination?.kind === "chat") {
@@ -104,7 +84,6 @@ function WindowOverlayInner() {
               push(paths.root());
             }
           }}
-          // Restart the bundled daemon when the user hits Refresh on
           onRuntimeRefresh={restartDaemon}
           runtimesPending={runtimesPending}
         />

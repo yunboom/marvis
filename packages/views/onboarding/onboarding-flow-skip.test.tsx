@@ -49,10 +49,6 @@ vi.mock("@marvis/core/auth", () => ({
   ),
 }));
 
-vi.mock("@marvis/core/workspace", () => ({
-  useWorkspaceList: () => ({ workspaces: [], ready: true }),
-}));
-
 vi.mock("@marvis/core/onboarding", async () => {
   const actual = await vi.importActual<Record<string, unknown>>(
     "@marvis/core/onboarding",
@@ -66,8 +62,8 @@ vi.mock("@marvis/core/onboarding", async () => {
 
 const NEW_WORKSPACE = { id: "ws-new", slug: "new-ws", name: "New" };
 
-vi.mock("./steps/step-workspace", () => ({
-  StepWorkspace: ({ onCreated }: { onCreated: (ws: unknown) => void }) => (
+vi.mock("../workspace/new-workspace-page", () => ({
+  NewWorkspacePage: ({ onCreated }: { onCreated: (ws: unknown) => void }) => (
     <button type="button" onClick={() => onCreated(NEW_WORKSPACE)}>
       create workspace
     </button>
@@ -92,11 +88,7 @@ function renderAtRuntimeStep() {
   const onComplete = vi.fn();
   render(
     <I18nProvider locale="en" resources={TEST_RESOURCES}>
-      <OnboardingFlow
-        mode="new_workspace"
-        onCancel={vi.fn()}
-        onComplete={onComplete}
-      />
+      <OnboardingFlow onCancel={vi.fn()} onComplete={onComplete} />
     </I18nProvider>,
   );
   fireEvent.click(screen.getByRole("button", { name: "create workspace" }));

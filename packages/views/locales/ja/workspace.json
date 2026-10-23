@@ -1,29 +1,26 @@
 {
-  "create_form": {
+  "create_page": {
+    "title": "ワークスペースを作成",
     "name_label": "ワークスペース名",
-    "name_placeholder": "マイワークスペース",
-    "url_label": "ワークスペースURL",
-    "url_placeholder": "my-workspace",
+    "name_placeholder": "Acme Inc",
+    "random_name": "ランダム",
+    "url_label": "URL",
+    "slug_placeholder": "acme",
+    "issue_prefix_label": "タスクプレフィックス",
+    "issue_prefix_example": "タスク番号の例",
     "submit": "ワークスペースを作成",
-    "submitting": "作成中...",
+    "submitting": "作成中…",
+    "cancel": "キャンセル",
+    "log_out": "ログアウト",
+    "disabled_title": "ワークスペースの作成が無効になっています",
+    "disabled_description": "このMarvis instanceでは新しいワークスペースを作成できません。既存のワークスペースへの招待を管理者に依頼してください。",
     "errors": {
-      "slug_format": "小文字、数字、ハイフンのみ使用できます",
-      "slug_taken": "このワークスペースURLはすでに使用されています。",
-      "slug_reserved": "このワークスペースURLは予約されているため使用できません。",
-      "slug_conflict_toast": "別のワークスペースURLを選択してください",
+      "slug_format": "使用できるのは小文字、数字、ハイフンのみです",
+      "slug_taken": "そのワークスペース URL はすでに使われています。",
+      "slug_reserved": "そのワークスペース URL は予約済みのため使用できません。",
+      "slug_conflict_toast": "別のワークスペース URL を選んでください",
       "create_failed": "ワークスペースを作成できませんでした"
     }
-  },
-  "new_page": {
-    "back": "戻る",
-    "log_out": "ログアウト",
-    "title": "Marvisへようこそ",
-    "description": "あなたとAIの仲間が同じコンテキストを共有しながら、タスクを引き受け、コメントを残し、隣り合って作業する1つのワークスペースです。",
-    "invite_hint": "ワークスペースの準備ができたら、仲間を招待できます。"
-  },
-  "creation_disabled": {
-    "title": "ワークスペースの作成が無効になっています",
-    "description": "このMarvis instanceでは新しいワークスペースを作成できません。既存のワークスペースへの招待を管理者に依頼してください。"
   },
   "no_access": {
     "title": "ワークスペースを利用できません",
