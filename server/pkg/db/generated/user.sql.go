@@ -12,8 +12,8 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO "user" (name, email, avatar_url, onboarded_at)
-VALUES ($1, $2, $3, now())
+INSERT INTO "user" (name, email, avatar_url)
+VALUES ($1, $2, $3)
 RETURNING id, name, email, avatar_url, created_at, updated_at, onboarded_at, onboarding_questionnaire, cloud_waitlist_email, cloud_waitlist_reason, starter_content_state, language, profile_description, timezone
 `
 
@@ -23,8 +23,6 @@ type CreateUserParams struct {
 	AvatarUrl pgtype.Text `json:"avatar_url"`
 }
 
-// Users skip the onboarding flow: they are onboarded from the moment they
-// exist, so clients route them straight to a workspace (or to creating one).
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Email, arg.AvatarUrl)
 	var i User
