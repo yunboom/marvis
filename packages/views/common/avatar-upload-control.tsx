@@ -40,7 +40,7 @@ interface AvatarUploadControlProps {
   variant: AvatarUploadVariant;
   /** Name used for initials / first-letter fallback and the image alt. */
   name?: string;
-  /** Pixel diameter of the circle. Defaults to 64. */
+  /** Pixel size of the avatar. Defaults to 64. */
   size?: number;
   disabled?: boolean;
   /**
@@ -243,8 +243,10 @@ export function AvatarUploadControl({
         "flex items-center justify-center",
         "focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-60",
-        "rounded-full",
         className,
+        // Mirrors ActorAvatar's shape rule: agents and squads are rounded
+        // squares, everything else a circle.
+        variant === "agent" || variant === "squad" ? "rounded-[28%]" : "rounded-full",
       )}
       style={{ width: size, height: size }}
     >

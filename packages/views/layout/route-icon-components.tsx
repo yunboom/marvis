@@ -35,7 +35,7 @@ export type RouteIcon = ComponentType<{
  * Route icons use the solid glyph style of Marvis.app: a filled shape in
  * currentColor with the details knocked out.
  */
-function filled(Glyph: PhosphorIcon): RouteIcon {
+export function filled(Glyph: PhosphorIcon): RouteIcon {
   function FilledIcon({
     className,
     "aria-hidden": ariaHidden = true,

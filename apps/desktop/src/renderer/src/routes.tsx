@@ -32,7 +32,8 @@ import { InboxPage } from "@marvis/views/inbox";
 import { ChatPage } from "@marvis/views/chat";
 import { SettingsPage } from "@marvis/views/settings";
 import { useT } from "@marvis/views/i18n";
-import { Cpu, Download, Server } from "lucide-react";
+import { Cpu, DownloadSimple, HardDrives } from "@phosphor-icons/react/ssr";
+import { filled } from "@marvis/views/layout/route-icon-components";
 import { DaemonSettingsTab } from "./components/daemon-settings-tab";
 import { ServerSettingsTab } from "./components/server/server-settings-tab";
 import { UpdatesSettingsTab } from "./components/updates-settings-tab";
@@ -44,6 +45,11 @@ import { DesktopRouteErrorPage } from "./components/route-error-page";
  * from i18n. The route element has to be a component (not a literal JSX
  * value) for `useT` to run.
  */
+// Device tabs share the settings nav's solid glyph style.
+const SERVER_ICON = filled(HardDrives);
+const DAEMON_ICON = filled(Cpu);
+const UPDATES_ICON = filled(DownloadSimple);
+
 function DesktopSettingsRoute() {
   const { t } = useT("settings");
   return (
@@ -52,19 +58,19 @@ function DesktopSettingsRoute() {
         {
           value: "server",
           label: t(($) => $.desktop.server.tab_label),
-          icon: Server,
+          icon: SERVER_ICON,
           content: <ServerSettingsTab />,
         },
         {
           value: "daemon",
           label: t(($) => $.desktop.daemon.title),
-          icon: Cpu,
+          icon: DAEMON_ICON,
           content: <DaemonSettingsTab />,
         },
         {
           value: "updates",
           label: t(($) => $.desktop.tabs.updates),
-          icon: Download,
+          icon: UPDATES_ICON,
           content: <UpdatesSettingsTab />,
         },
       ]}

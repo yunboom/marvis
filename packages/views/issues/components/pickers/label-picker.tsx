@@ -15,6 +15,7 @@ import {
   useCreateLabel,
 } from "@marvis/core/labels";
 import { LabelChip } from "../../../labels/label-chip";
+import { COLOR_PICKER_PRESETS } from "../../../common/color-picker";
 import { useNavigation } from "../../../navigation";
 import {
   PropertyPicker,
@@ -52,21 +53,16 @@ interface LabelPickerProps {
 }
 
 /**
- * Palette of colors used when creating a label inline from the picker.
- * We cycle by hash(name) so the same name always gets the same color,
- * and a color can still be changed afterwards from the Manage dialog.
+ * Color for a label created inline from the picker: the shared preset palette,
+ * cycled by hash(name) so the same name always gets the same color. It can
+ * still be changed afterwards from the Manage dialog.
  */
-const INLINE_COLORS = [
-  "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6",
-  "#3b82f6", "#6366f1", "#a855f7", "#ec4899", "#64748b",
-] as const;
-
 function pickInlineColor(name: string): string {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   }
-  return INLINE_COLORS[hash % INLINE_COLORS.length] ?? INLINE_COLORS[0]!;
+  return COLOR_PICKER_PRESETS[hash % COLOR_PICKER_PRESETS.length] ?? COLOR_PICKER_PRESETS[0];
 }
 
 /**

@@ -60,7 +60,16 @@
     --color-success: var(--success);
     --color-warning: var(--warning);
     --color-info: var(--info);
+    --color-status-idle: var(--status-idle);
+    --color-status-todo: var(--status-todo);
+    --color-status-progress: var(--status-progress);
+    --color-status-review: var(--status-review);
+    --color-status-done: var(--status-done);
+    --color-status-blocked: var(--status-blocked);
+    --color-priority-urgent: var(--priority-urgent);
     --color-priority-high: var(--priority-high);
+    --color-priority-medium: var(--priority-medium);
+    --color-priority-low: var(--priority-low);
     --color-brand: var(--brand);
     --color-brand-foreground: var(--brand-foreground);
     --color-accent-foreground: var(--accent-foreground);
@@ -244,8 +253,9 @@
     /* Selected thumb of a segmented control. */
     --control-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    /* Identity tones for initial avatars: a low-chroma tint with a deep
-       same-hue glyph. Status colours stay reserved for status. */
+    /* Identity tones: a low-chroma tint with a deep same-hue glyph. Initial
+       avatars all use the gray pair; the hued pairs remain for onboarding.
+       Status colours stay reserved for status. */
     --identity-brown: oklch(0.9449 0.011 54.4941);
     --identity-brown-foreground: oklch(0.4572 0.0762 41.0585);
     --identity-blue: oklch(0.9448 0.0118 239.9094);
@@ -256,8 +266,8 @@
     --identity-yellow-foreground: oklch(0.4656 0.0777 82.3738);
     --identity-purple: oklch(0.9452 0.0201 289.0764);
     --identity-purple-foreground: oklch(0.4683 0.1584 278.3641);
-    --identity-gray: oklch(0.9431 0 0);
-    --identity-gray-foreground: oklch(0.3211 0 0);
+    --identity-gray: oklch(0.9461 0 0);
+    --identity-gray-foreground: oklch(0.1684 0 0);
 
     /* The chat launcher is an overlay pinned to the dashboard's bottom-right
        corner on every workspace page, so that corner is not available to page
@@ -327,8 +337,22 @@
     --success: oklch(0.637 0.1551 152.2643);
     --warning: oklch(0.7837 0.1587 72.9913);
     --info: oklch(0.6152 0.2108 256.099);
-    /* High priority sits between --destructive (urgent) and --warning (medium). */
-    --priority-high: oklch(0.7243 0.1837 47.023);
+    /* Workflow status glyphs, mixed from Chinese painting pigments so they
+       sit quietly on the ink theme: idle grey (backlog, cancelled), todo grey,
+       gamboge (in progress), indigo (in review), malachite (done) and
+       cinnabar (blocked). Light values hold 3:1 against the white card and
+       the #f7f7f7 shell. */
+    --status-idle: oklch(0.65 0 0);
+    --status-todo: oklch(0.5795 0 0);
+    --status-progress: oklch(0.6417 0.12 73.4877);
+    --status-review: oklch(0.5249 0.06 240.9916);
+    --status-done: oklch(0.5445 0.0838 160.0164);
+    --status-blocked: oklch(0.5445 0.1535 32.8212);
+    /* Priority dots, warm severity ramp: urgent -> high -> medium, low grey. */
+    --priority-urgent: oklch(0.5246 0.1503 32.3245);
+    --priority-high: oklch(0.6411 0.128 52.8178);
+    --priority-medium: oklch(0.6442 0.1162 90.8521);
+    --priority-low: oklch(0.65 0 0);
     --scrollbar-thumb: oklch(0 0 0 / 10%);
     --scrollbar-thumb-hover: oklch(0 0 0 / 20%);
     --scrollbar-track: transparent;
@@ -374,8 +398,8 @@
     --identity-yellow-foreground: oklch(0.8264 0.0714 84.3284);
     --identity-purple: oklch(0.2753 0.0494 284.3531);
     --identity-purple-foreground: oklch(0.8037 0.0815 285.2005);
-    --identity-gray: oklch(0.285 0 0);
-    --identity-gray-foreground: oklch(0.8853 0 0);
+    --identity-gray: oklch(0.3012 0 0);
+    --identity-gray-foreground: oklch(0.9612 0 0);
     --tooltip: oklch(0.9612 0 0);
     --tooltip-foreground: oklch(0.1684 0 0);
     --tooltip-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -417,7 +441,16 @@
     --success: oklch(0.7297 0.1585 154.9333);
     --warning: oklch(0.8218 0.1423 77.8895);
     --info: oklch(0.6755 0.1765 252.2592);
-    --priority-high: oklch(0.7594 0.1573 49.1139);
+    --status-idle: oklch(0.5278 0 0);
+    --status-todo: oklch(0.6334 0 0);
+    --status-progress: oklch(0.7879 0.1187 81.7632);
+    --status-review: oklch(0.7162 0.0555 243.4655);
+    --status-done: oklch(0.7375 0.07 158.8092);
+    --status-blocked: oklch(0.6887 0.1315 33.2691);
+    --priority-urgent: oklch(0.6887 0.1315 33.2691);
+    --priority-high: oklch(0.7375 0.1138 57.3188);
+    --priority-medium: oklch(0.7944 0.1083 87.954);
+    --priority-low: oklch(0.5795 0 0);
     --scrollbar-thumb: oklch(1 0 0 / 10%);
     --scrollbar-thumb-hover: oklch(1 0 0 / 20%);
     --scrollbar-track: transparent;
@@ -441,5 +474,14 @@
     --success: oklch(0.637 0.1551 152.2643);
     --warning: oklch(0.7837 0.1587 72.9913);
     --info: oklch(0.6152 0.2108 256.099);
-    --priority-high: oklch(0.7243 0.1837 47.023);
+    --status-idle: oklch(0.65 0 0);
+    --status-todo: oklch(0.5795 0 0);
+    --status-progress: oklch(0.6417 0.12 73.4877);
+    --status-review: oklch(0.5249 0.06 240.9916);
+    --status-done: oklch(0.5445 0.0838 160.0164);
+    --status-blocked: oklch(0.5445 0.1535 32.8212);
+    --priority-urgent: oklch(0.5246 0.1503 32.3245);
+    --priority-high: oklch(0.6411 0.128 52.8178);
+    --priority-medium: oklch(0.6442 0.1162 90.8521);
+    --priority-low: oklch(0.65 0 0);
 }

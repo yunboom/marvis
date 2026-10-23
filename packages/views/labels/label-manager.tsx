@@ -60,7 +60,7 @@ interface LabelDraft {
 const EMPTY_DRAFT: LabelDraft = {
   name: "",
   description: "",
-  color: COLOR_PICKER_PRESETS[6],
+  color: COLOR_PICKER_PRESETS[0],
 };
 
 /**

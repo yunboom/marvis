@@ -29,7 +29,19 @@
     "hex": "Couleur hexadécimale",
     "eyedropper": "Prélever une couleur à l'écran",
     "presets": "Préréglages",
-    "random": "Aléatoire"
+    "random": "Aléatoire",
+    "swatches": {
+      "ink": "Lavis d'encre",
+      "ochre": "Ocre",
+      "gamboge": "Gomme-gutte",
+      "malachite": "Malachite",
+      "celadon": "Céladon",
+      "slate_blue": "Bleu ardoise",
+      "indigo": "Indigo",
+      "lotus": "Mauve lotus",
+      "cinnabar": "Cinabre",
+      "brand_brown": "Brun de marque"
+    }
   },
   "save": "Enregistrer",
   "cancel": "Annuler",

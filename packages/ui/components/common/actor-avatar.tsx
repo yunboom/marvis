@@ -11,28 +11,9 @@ import {
 import { parseAvatarEmoji } from "@marvis/ui/lib/avatar-emoji";
 import { MarvisIcon } from "./marvis-icon";
 
-/** Soft identity tones for avatars without a picture: a low-chroma tint with
- *  a deep same-hue glyph. Status colours are never used for identity. */
-const IDENTITY_TONES = [
-  "bg-identity-brown text-identity-brown-foreground",
-  "bg-identity-blue text-identity-blue-foreground",
-  "bg-identity-green text-identity-green-foreground",
-  "bg-identity-yellow text-identity-yellow-foreground",
-  "bg-identity-purple text-identity-purple-foreground",
-] as const;
-
+/** One monochrome tone for every avatar without a picture, so identity reads
+ *  from the name and the shape, never from colour. */
 const NEUTRAL_TONE = "bg-identity-gray text-identity-gray-foreground";
-
-/** Picks a stable tone from the name, so one actor keeps one colour on every
- *  surface and across sessions. */
-function identityTone(name: string): string {
-  let hash = 0;
-  for (const char of name) {
-    hash = (hash * 31 + (char.codePointAt(0) ?? 0)) | 0;
-  }
-
-  return IDENTITY_TONES[Math.abs(hash) % IDENTITY_TONES.length] ?? NEUTRAL_TONE;
-}
 
 interface ActorAvatarProps {
   name: string;
@@ -68,21 +49,24 @@ function ActorAvatar({
     setImgError(false);
   }, [avatarUrl]);
 
-  // Every actor — member, agent, squad, or system — renders as a circle. This
-  // is the single source of truth for avatar shape; the upload editors mirror
-  // it (packages/views/common/avatar-upload-control.tsx).
+  // Members render as a circle; agents and squads as a rounded square (radius
+  // 28% of the size); the system actor keeps the circle. This is the single
+  // source of truth for avatar shape; the upload editors mirror it
+  // (packages/views/common/avatar-upload-control.tsx).
+  const square = !isSystem && (isAgent || isSquad);
+
   return (
     <div
       data-slot="avatar"
+      data-shape={square ? "square" : "circle"}
       className={cn(
         "inline-flex shrink-0 items-center justify-center font-semibold overflow-hidden",
         emoji && "bg-muted text-muted-foreground",
-        !emoji && (!avatarUrl || imgError) &&
-          (isSystem ? NEUTRAL_TONE : identityTone(name)),
+        !emoji && (!avatarUrl || imgError) && NEUTRAL_TONE,
         className,
-        // rounded-full stays last so a call-site `className` can never override
-        // the circle — avatar shape is a hard invariant, not a per-site choice.
-        "rounded-full"
+        // The shape class stays last so a call-site `className` can never
+        // override it — avatar shape is a hard invariant, not a per-site choice.
+        square ? "rounded-[28%]" : "rounded-full"
       )}
       style={{ width: diameter, height: diameter, fontSize: scaled(0.45) }}
     >

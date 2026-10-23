@@ -144,7 +144,7 @@ const EMPTY_DRAFT: StatusDraft = {
   name: "",
   description: "",
   category: "unstarted",
-  color: COLOR_PICKER_PRESETS[6]!,
+  color: COLOR_PICKER_PRESETS[0],
   icon: "",
 };
 
@@ -518,18 +518,13 @@ function StatusRow({
           every status nobody had described. */}
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <span className="min-w-0 truncate text-body font-medium">{label}</span>
-          {showKey && entry.is_system && (
-            <span className="shrink-0 rounded-row bg-field px-2 py-px text-caption text-muted-foreground">
-              {t(($) => $.issue_statuses.builtin_badge)}
-            </span>
-          )}
           {showKey && (
             <span className="shrink-0 font-mono text-caption text-faint-foreground">{entry.key}</span>
           )}
           {mergeBadgeHref && (
             <AppLink
               href={mergeBadgeHref}
-              className="inline-flex shrink-0 items-center gap-1 rounded-row bg-info/8 px-2 py-px text-caption text-info transition-colors hover:bg-info/14 focus-visible:outline-2 focus-visible:outline-ring"
+              className="inline-flex shrink-0 items-center gap-1 rounded-row bg-muted px-2 py-px text-caption text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
             >
               <Zap className="size-3" aria-hidden="true" />
               {t(($) => $.issue_statuses.pr_auto_complete_badge)}
@@ -551,6 +546,12 @@ function StatusRow({
           <p className="min-w-0 flex-1 truncate text-label text-muted-foreground">{description}</p>
         )}
       </div>
+      {/* Built-in is a quiet fact about the row, not a tag on the name. */}
+      {showKey && entry.is_system && (
+        <span className="shrink-0 whitespace-nowrap text-caption text-muted-foreground">
+          {t(($) => $.issue_statuses.builtin_badge)}
+        </span>
+      )}
       {workflowUsage !== undefined && !archived && (
         <span className="shrink-0 whitespace-nowrap text-caption text-muted-foreground">
           {workflowUsage > 0
