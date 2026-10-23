@@ -1,6 +1,7 @@
 package lark
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -378,6 +379,28 @@ func NewAckFrame(inbound *Frame, codeOK bool) *Frame {
 		code = 500
 	}
 	payload := fmt.Sprintf(`{"code":%d,"headers":null,"data":null}`, code)
+	return &Frame{
+		Method:  inbound.Method,
+		Service: inbound.Service,
+		Headers: inbound.Headers,
+		Payload: []byte(payload),
+	}
+}
+
+// NewCardResponseFrame 构造卡片回调的回应帧。和 ACK 一样复用入帧的 Method / Service /
+// Headers，让飞书按 message_id 对上这次回调；payload 是 SDK 的 Response 结构：
+// {"code":200,"headers":null,"data":<回应 JSON 的 base64>}。
+//
+// response 为空时 data 为 null，飞书不展示任何反馈。base64 标准字符集不含需要转义的
+// JSON 字符，可以直接拼接。回应格式只在这里定义，联调后如需调整只改这一处。
+func NewCardResponseFrame(inbound *Frame, response []byte) *Frame {
+	data := "null"
+	if len(response) > 0 {
+		data = `"` + base64.StdEncoding.EncodeToString(response) + `"`
+	}
+
+	payload := fmt.Sprintf(`{"code":200,"headers":null,"data":%s}`, data)
+
 	return &Frame{
 		Method:  inbound.Method,
 		Service: inbound.Service,

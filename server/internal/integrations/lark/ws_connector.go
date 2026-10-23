@@ -2,7 +2,6 @@ package lark
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 )
 
 // WSLongConnConnector bootstraps and maintains the Lark WebSocket connection.
@@ -25,6 +25,13 @@ import (
 type WSLongConnConnector struct {
 	cfg WSConnectorConfig
 }
+
+// defaultCardHandlerTimeout 是单次卡片回调的默认处理时长，留出余量给回写帧。
+const defaultCardHandlerTimeout = 2500 * time.Millisecond
+
+// CardActionHandler 处理一次卡片回调，返回要回给飞书的回应 JSON（toast / card）。
+// payload 是（分片重组后的）回调原文；返回 error 时连接不会断开，飞书收到空回应。
+type CardActionHandler func(ctx context.Context, payload []byte) ([]byte, error)
 
 // WSConnectorConfig wires the connector's dependencies. All injected
 // interfaces are required; nil dependencies cause NewWSLongConnConnector
@@ -65,6 +72,14 @@ type WSConnectorConfig struct {
 	// ACK window, since enrichment runs before the frame is ACKed.
 	// Zero defaults to 2 seconds.
 	EnrichTimeout time.Duration
+
+	// CardHandler 处理 type=card 的卡片回调帧，返回值作为回应 JSON 回给飞书。
+	// 为 nil 时卡片帧与其他数据帧一样交给 FrameDecoder 后 ACK。
+	CardHandler CardActionHandler
+
+	// CardHandlerTimeout 限制单次卡片回调的处理时长。回调在读循环里同步处理，
+	// 必须小于飞书卡片回调要求的约 3 秒响应窗口。为 0 时默认 2500ms。
+	CardHandlerTimeout time.Duration
 
 	// CredentialsProvider returns the InstallationCredentials the
 	// EndpointFetcher needs. Typically wraps
@@ -118,6 +133,9 @@ func (c WSConnectorConfig) withDefaults() WSConnectorConfig {
 	}
 	if c.EnrichTimeout == 0 {
 		c.EnrichTimeout = 2 * time.Second
+	}
+	if c.CardHandlerTimeout == 0 {
+		c.CardHandlerTimeout = defaultCardHandlerTimeout
 	}
 	if c.Now == nil {
 		c.Now = time.Now
@@ -322,6 +340,16 @@ func (c *WSLongConnConnector) Run(ctx context.Context, inst Installation, emit E
 			)
 		}
 
+		// 卡片回调帧：由 CardHandler 处理，回应 JSON 随回写帧带回。必须在分片重组之后、
+		// 事件解码之前处理，且不能因为 handler 出错而断开连接。
+		if frame.HeaderValue(FrameHeaderTypeKey) == FrameHeaderTypeCard && c.cfg.CardHandler != nil {
+			if err := c.handleCardFrame(ctx, &writeMu, conn, frame, payload, log); err != nil {
+				return err
+			}
+
+			continue
+		}
+
 		// Data frames: hand the (possibly reassembled) JSON payload to
 		// the decoder, emit if it resolved to a message, and ACK back.
 		msg, ok, derr := c.cfg.FrameDecoder.Decode(payload, inst)
@@ -397,6 +425,29 @@ func (c *WSLongConnConnector) Run(ctx context.Context, inst Installation, emit E
 			return fmt.Errorf("write ack: %w", werr)
 		}
 	}
+}
+
+// handleCardFrame 调用 CardHandler 处理一次卡片回调，并把回应写回。
+// handler 在读循环里同步运行，受 CardHandlerTimeout 约束；运行期间不持有 writeMu，
+// 后台 ping 不会被阻塞。handler 出错只记 warn 并回空回应，写回失败才返回错误让连接重连。
+func (c *WSLongConnConnector) handleCardFrame(ctx context.Context, mu *sync.Mutex, conn WSConn, frame *Frame, payload []byte, log *slog.Logger) error {
+	cardCtx, cancel := context.WithTimeout(ctx, c.cfg.CardHandlerTimeout)
+	response, err := c.cfg.CardHandler(cardCtx, payload)
+	cancel()
+
+	if err != nil {
+		log.Warn("lark ws connector: card handler failed",
+			"message_id", frame.HeaderValue(FrameHeaderMessageIDKey),
+			"err", err.Error(),
+		)
+		response = nil
+	}
+
+	if werr := c.writeFrame(mu, conn, NewCardResponseFrame(frame, response)); werr != nil {
+		return errors.Wrapf(werr, "write card response message_id=%q", frame.HeaderValue(FrameHeaderMessageIDKey))
+	}
+
+	return nil
 }
 
 // writeFrame serializes a Frame and writes it as a binary WebSocket

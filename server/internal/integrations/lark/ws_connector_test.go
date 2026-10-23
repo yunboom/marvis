@@ -3,6 +3,7 @@ package lark
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -878,4 +879,346 @@ func TestGorillaDialerProxyURLApplied(t *testing.T) {
 	}
 	// The error should be about the proxy connection (refused / timeout),
 	// not about the URL parsing.
+}
+
+// cardConnector 构造带 CardHandler 的 connector。tweak 用来覆盖个别配置项，例如超时和 ping 间隔。
+func cardConnector(t *testing.T, conn *fakeWSConn, decoder FrameDecoder, handler CardActionHandler, logger *slog.Logger, tweak ...func(*WSConnectorConfig)) *WSLongConnConnector {
+	t.Helper()
+
+	cfg := WSConnectorConfig{
+		Dialer: &fakeWSDialer{conn: conn},
+		EndpointFetcher: EndpointFetcherFunc(func(context.Context, InstallationCredentials) (WSEndpoint, error) {
+			return WSEndpoint{URL: "wss://test/ignored", ServiceID: 7, PingInterval: time.Hour}, nil
+		}),
+		FrameDecoder: decoder,
+		CredentialsProvider: CredentialsProviderFunc(func(context.Context, Installation) (InstallationCredentials, error) {
+			return InstallationCredentials{AppID: "test_app", AppSecret: "secret"}, nil
+		}),
+		PingInterval: time.Hour,
+		ReadDeadline: time.Second,
+		WriteTimeout: time.Second,
+		CardHandler:  handler,
+		Logger:       logger,
+	}
+	for _, fn := range tweak {
+		fn(&cfg)
+	}
+
+	c, err := NewWSLongConnConnector(cfg)
+	if err != nil {
+		t.Fatalf("NewWSLongConnConnector: %v", err)
+	}
+
+	return c
+}
+
+// runCardConnector 在后台跑 connector，返回取消函数；取消后等待 Run 退出。
+func runCardConnector(t *testing.T, c *WSLongConnConnector) (stop func()) {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		done <- c.Run(ctx, Installation{AppID: "test_app"}, func(context.Context, InboundMessage) (DispatchResult, error) {
+			return DispatchResult{}, nil
+		})
+	}()
+
+	return func() {
+		cancel()
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+			t.Fatal("Run did not return after cancel")
+		}
+	}
+}
+
+// cardTestMessageID 是测试里卡片帧的 message_id。
+const cardTestMessageID = "mc1"
+
+// pushCardFrame 下发一个 type=card 的数据帧，返回下发的帧，便于断言回写帧的 headers。
+func pushCardFrame(conn *fakeWSConn, payload []byte) *Frame {
+	f := &Frame{
+		Method:  FrameMethodData,
+		Service: 7,
+		Headers: []FrameHeader{
+			{Key: FrameHeaderTypeKey, Value: FrameHeaderTypeCard},
+			{Key: FrameHeaderMessageIDKey, Value: cardTestMessageID},
+			{Key: "trace_id", Value: "trace-" + cardTestMessageID},
+		},
+		Payload: payload,
+	}
+	conn.Push(f.Marshal())
+
+	return f
+}
+
+// cardResponseEnvelope 是回写帧 payload 的 JSON 结构，Data 保留原始 JSON 以区分 null 与空串。
+type cardResponseEnvelope struct {
+	Code    int             `json:"code"`
+	Headers json.RawMessage `json:"headers"`
+	Data    json.RawMessage `json:"data"`
+}
+
+// readCardResponse 读取 connector 写出的第一个帧，解出 payload 外壳。
+func readCardResponse(t *testing.T, conn *fakeWSConn) (*Frame, cardResponseEnvelope) {
+	t.Helper()
+
+	writes := conn.snapshot()
+	if len(writes) == 0 {
+		t.Fatal("connector wrote no frames")
+	}
+
+	f, err := UnmarshalFrame(writes[0])
+	if err != nil {
+		t.Fatalf("first write unmarshal: %v", err)
+	}
+
+	var env cardResponseEnvelope
+	if err := json.Unmarshal(f.Payload, &env); err != nil {
+		t.Fatalf("first write payload is not JSON: %v; payload=%s", err, f.Payload)
+	}
+
+	return f, env
+}
+
+func TestWSConnector_CardFrameCallsHandlerAndRespondsWithData(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+
+	var decodeCalls atomic.Int32
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		decodeCalls.Add(1)
+		return InboundMessage{}, false, nil
+	})
+
+	const toast = `{"toast":{"type":"success","content":"ok"}}`
+	type handlerCall struct {
+		payload     []byte
+		hasDeadline bool
+	}
+	calls := make(chan handlerCall, 1)
+	handler := func(ctx context.Context, payload []byte) ([]byte, error) {
+		_, hasDeadline := ctx.Deadline()
+		calls <- handlerCall{payload: append([]byte(nil), payload...), hasDeadline: hasDeadline}
+
+		return []byte(toast), nil
+	}
+
+	stop := runCardConnector(t, cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(io.Discard, nil))))
+	defer stop()
+
+	const cardPayload = `{"schema":"2.0","header":{"event_type":"card.action.trigger"},"event":{"action":{"value":{"action":"join"}}}}`
+	inbound := pushCardFrame(conn, []byte(cardPayload))
+
+	waitForWrites(t, conn, 1)
+
+	select {
+	case call := <-calls:
+		if string(call.payload) != cardPayload {
+			t.Errorf("handler payload = %s; want %s", call.payload, cardPayload)
+		}
+		if !call.hasDeadline {
+			t.Error("handler ctx has no deadline; want the card handler timeout")
+		}
+	default:
+		t.Fatal("handler was not called")
+	}
+
+	resp, env := readCardResponse(t, conn)
+	if resp.Method != inbound.Method || resp.Service != inbound.Service {
+		t.Errorf("response method/service = %d/%d; want %d/%d", resp.Method, resp.Service, inbound.Method, inbound.Service)
+	}
+	if len(resp.Headers) != len(inbound.Headers) {
+		t.Fatalf("response headers = %+v; want %+v", resp.Headers, inbound.Headers)
+	}
+	for i, h := range inbound.Headers {
+		if resp.Headers[i] != h {
+			t.Errorf("response header[%d] = %+v; want %+v", i, resp.Headers[i], h)
+		}
+	}
+
+	if env.Code != 200 {
+		t.Errorf("code = %d; want 200", env.Code)
+	}
+	if string(env.Headers) != "null" {
+		t.Errorf("headers = %s; want null", env.Headers)
+	}
+
+	var data []byte
+	if err := json.Unmarshal(env.Data, &data); err != nil {
+		t.Fatalf("data is not a base64 string: %v; data=%s", err, env.Data)
+	}
+	if string(data) != toast {
+		t.Errorf("decoded data = %s; want %s", data, toast)
+	}
+
+	if got := decodeCalls.Load(); got != 0 {
+		t.Errorf("event decoder called %d times for a card frame; want 0", got)
+	}
+}
+
+func TestWSConnector_CardFrameHandlerErrorStillAcks(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+	logs := &syncBuffer{}
+
+	var decodeCalls atomic.Int32
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		decodeCalls.Add(1)
+		return InboundMessage{}, false, nil
+	})
+	handler := func(context.Context, []byte) ([]byte, error) {
+		return []byte(`{"toast":{"type":"error","content":"ignored"}}`), errors.New("handler blew up")
+	}
+
+	stop := runCardConnector(t, cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(logs, nil))))
+	defer stop()
+
+	pushCardFrame(conn, []byte(`{"event":{}}`))
+	waitForWrites(t, conn, 1)
+
+	_, env := readCardResponse(t, conn)
+	if env.Code != 200 {
+		t.Errorf("code = %d; want 200", env.Code)
+	}
+	if string(env.Data) != "null" {
+		t.Errorf("data = %s; want null", env.Data)
+	}
+	if got := logs.String(); !strings.Contains(got, "card handler failed") || !strings.Contains(got, "handler blew up") {
+		t.Errorf("handler error not logged; log was:\n%s", got)
+	}
+
+	// 连接没有因为 handler 出错而断开：后续的事件帧照常被 ACK。
+	pushDataFrame(conn, []byte(`{}`), "m2")
+	waitForWrites(t, conn, 2)
+
+	if got := decodeCalls.Load(); got != 1 {
+		t.Errorf("event decoder calls = %d; want 1 (only the event frame)", got)
+	}
+}
+
+func TestWSConnector_CardFrameWithoutHandlerAcks(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+
+	var decodeCalls atomic.Int32
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		decodeCalls.Add(1)
+		return InboundMessage{}, false, nil
+	})
+
+	stop := runCardConnector(t, cardConnector(t, conn, decoder, nil, slog.New(slog.NewTextHandler(io.Discard, nil))))
+	defer stop()
+
+	pushCardFrame(conn, []byte(`{"event":{}}`))
+	waitForWrites(t, conn, 1)
+
+	_, env := readCardResponse(t, conn)
+	if env.Code != 200 {
+		t.Errorf("code = %d; want 200", env.Code)
+	}
+	if string(env.Data) != "null" {
+		t.Errorf("data = %s; want null", env.Data)
+	}
+
+	// 没有 handler 时卡片帧走原有逻辑，交给事件解码器后 ACK。
+	if got := decodeCalls.Load(); got != 1 {
+		t.Errorf("event decoder calls = %d; want 1", got)
+	}
+}
+
+func TestWSConnector_CardFrameHandlerTimeoutStillAcks(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		return InboundMessage{}, false, nil
+	})
+	// handler 一直阻塞到 ctx 超时，模拟下游迟迟不返回。
+	ctxErrs := make(chan error, 1)
+	handler := func(ctx context.Context, _ []byte) ([]byte, error) {
+		<-ctx.Done()
+		ctxErrs <- ctx.Err()
+
+		return nil, ctx.Err()
+	}
+
+	c := cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(io.Discard, nil)), func(cfg *WSConnectorConfig) {
+		cfg.CardHandlerTimeout = 20 * time.Millisecond
+	})
+	stop := runCardConnector(t, c)
+	defer stop()
+
+	pushCardFrame(conn, []byte(`{"event":{}}`))
+	waitForWrites(t, conn, 1)
+
+	select {
+	case err := <-ctxErrs:
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Errorf("handler ctx ended with %v; want deadline exceeded", err)
+		}
+	default:
+		t.Fatal("handler was not called")
+	}
+
+	_, env := readCardResponse(t, conn)
+	if env.Code != 200 {
+		t.Errorf("code = %d; want 200", env.Code)
+	}
+	if string(env.Data) != "null" {
+		t.Errorf("data = %s; want null", env.Data)
+	}
+}
+
+// TestWSConnector_CardFrameHandlerDoesNotBlockPing 确认 handler 运行期间不占着写锁：
+// handler 等到后台 ping 写出后才返回；若写锁被占住，ping 写不出去，handler 会一直等到超时。
+func TestWSConnector_CardFrameHandlerDoesNotBlockPing(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		return InboundMessage{}, false, nil
+	})
+
+	sawPing := make(chan bool, 1)
+	handler := func(ctx context.Context, _ []byte) ([]byte, error) {
+		for {
+			if len(conn.snapshot()) > 0 {
+				sawPing <- true
+
+				return nil, nil
+			}
+
+			select {
+			case <-ctx.Done():
+				sawPing <- false
+
+				return nil, ctx.Err()
+			case <-time.After(5 * time.Millisecond):
+			}
+		}
+	}
+
+	c := cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(io.Discard, nil)), func(cfg *WSConnectorConfig) {
+		cfg.CardHandlerTimeout = time.Second
+		cfg.PingInterval = 10 * time.Millisecond
+		cfg.EndpointFetcher = EndpointFetcherFunc(func(context.Context, InstallationCredentials) (WSEndpoint, error) {
+			return WSEndpoint{URL: "wss://test/ignored", ServiceID: 7, PingInterval: 10 * time.Millisecond}, nil
+		})
+	})
+	stop := runCardConnector(t, c)
+	defer stop()
+
+	pushCardFrame(conn, []byte(`{"event":{}}`))
+
+	select {
+	case ok := <-sawPing:
+		if !ok {
+			t.Fatal("no ping was written while the card handler was running; writeMu is held across the handler")
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("card handler did not finish")
+	}
 }
