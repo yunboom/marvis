@@ -1,17 +1,19 @@
+import type { AriaAttributes, ComponentType } from "react";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import {
-  Inbox,
-  MessageSquare,
-  CircleUser,
-  ListTodo,
-  FolderKanban,
-  Zap,
-  Bot,
-  Users,
-  BarChart3,
+  Tray,
+  ChatCircleDots,
+  UserCircle,
+  ListChecks,
+  FolderSimple,
+  Lightning,
+  Robot,
+  UsersThree,
+  ChartBar,
   Monitor,
-  Server,
+  HardDrives,
   BookOpenText,
-  Settings,
+  GearSix,
   File,
   FileText,
   FileImage,
@@ -19,10 +21,33 @@ import {
   FileArchive,
   FileAudio,
   FileVideo,
-  FileQuestion,
-  type LucideIcon,
-} from "lucide-react";
+  FileDashed,
+} from "@phosphor-icons/react/ssr";
 import { resolveRouteIconName, type RouteIconName } from "@marvis/core/paths";
+
+/** A navigation icon; callers size and colour it through `className`. */
+export type RouteIcon = ComponentType<{
+  className?: string;
+  "aria-hidden"?: AriaAttributes["aria-hidden"];
+}>;
+
+/**
+ * Route icons use the solid glyph style of Marvis.app: a filled shape in
+ * currentColor with the details knocked out.
+ */
+function filled(Glyph: PhosphorIcon): RouteIcon {
+  function FilledIcon({
+    className,
+    "aria-hidden": ariaHidden = true,
+  }: {
+    className?: string;
+    "aria-hidden"?: AriaAttributes["aria-hidden"];
+  }) {
+    return <Glyph weight="fill" className={className} aria-hidden={ariaHidden} />;
+  }
+  FilledIcon.displayName = `Filled${Glyph.displayName ?? ""}`;
+  return FilledIcon;
+}
 
 /**
  * Icon name → component registry: the rendering half of the route icon
@@ -31,28 +56,28 @@ import { resolveRouteIconName, type RouteIconName } from "@marvis/core/paths";
  * Every {@link RouteIconName} must have an entry — the `Record` type makes a
  * missing key a compile error.
  */
-export const ROUTE_ICON_COMPONENTS: Record<RouteIconName, LucideIcon> = {
-  Inbox,
-  MessageSquare,
-  CircleUser,
-  ListTodo,
-  FolderKanban,
-  Zap,
-  Bot,
-  Users,
-  BarChart3,
-  Monitor,
-  Server,
-  BookOpenText,
-  Settings,
-  File,
-  FileText,
-  FileImage,
-  FileCode,
-  FileArchive,
-  FileAudio,
-  FileVideo,
-  FileQuestion,
+export const ROUTE_ICON_COMPONENTS: Record<RouteIconName, RouteIcon> = {
+  Inbox: filled(Tray),
+  MessageSquare: filled(ChatCircleDots),
+  CircleUser: filled(UserCircle),
+  ListTodo: filled(ListChecks),
+  FolderKanban: filled(FolderSimple),
+  Zap: filled(Lightning),
+  Bot: filled(Robot),
+  Users: filled(UsersThree),
+  BarChart3: filled(ChartBar),
+  Monitor: filled(Monitor),
+  Server: filled(HardDrives),
+  BookOpenText: filled(BookOpenText),
+  Settings: filled(GearSix),
+  File: filled(File),
+  FileText: filled(FileText),
+  FileImage: filled(FileImage),
+  FileCode: filled(FileCode),
+  FileArchive: filled(FileArchive),
+  FileAudio: filled(FileAudio),
+  FileVideo: filled(FileVideo),
+  FileQuestion: filled(FileDashed),
 };
 
 /**
@@ -67,6 +92,6 @@ export const ROUTE_ICON_COMPONENTS: Record<RouteIconName, LucideIcon> = {
  * The sidebar nav and the desktop tab bar both call this, which is what keeps
  * a route's icon identical in both places.
  */
-export function routeIconForPath(path: string): LucideIcon {
+export function routeIconForPath(path: string): RouteIcon {
   return ROUTE_ICON_COMPONENTS[resolveRouteIconName(path)];
 }

@@ -17,6 +17,7 @@
     "@marvis/core": "workspace:*",
     "@marvis/ui": "workspace:*",
     "@marvis/views": "workspace:*",
+    "@phosphor-icons/react": "catalog:",
     "@tanstack/react-query": "catalog:",
     "dotenv": "^17.4.1",
     "fumadocs-core": "^15.5.2",
