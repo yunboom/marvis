@@ -20,10 +20,10 @@ import { toast } from "sonner";
 import { useAuthStore } from "@marvis/core/auth";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import {
+  MIKA_PLACEHOLDER_EMOJI,
   memberNeedsMikaSetup,
   useBootstrapMika,
 } from "@marvis/core/onboarding";
-import { MIKA_PLACEHOLDER_EMOJI } from "../../onboarding/components/mika-intro";
 import {
   useRequiredWorkspaceSlug,
   useWorkspacePaths,
@@ -73,10 +73,11 @@ import {
   type MikaRuntimeSelection,
 } from "./mika-runtime-choice";
 import { Skeleton } from "@marvis/ui/components/ui/skeleton";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import {
+  COLLECTION_SEARCH_ICON,
+  COLLECTION_SEARCH_INPUT,
   COLLECTION_TABLE_INSET,
-  COLLECTION_TOOLBAR_BUTTON,
-  COLLECTION_TOOLBAR_BUTTON_IDLE,
   CollectionPageHeader,
 } from "../../layout/collection-page";
 import { PAGE_RAIL, PageHeader } from "../../layout/page-header";
@@ -97,7 +98,7 @@ import { ProviderLogo } from "./provider-logo";
 import { RuntimeList, buildWorkloadIndex } from "./runtime-list";
 import { pendingRuntimeFromProfile } from "./pending-runtime";
 import { buildRuntimeMachines, type RuntimeMachine } from "./runtime-machines";
-import { HealthDot, HealthIcon, useHealthLabel } from "./shared";
+import { HealthDot, useHealthLabel } from "./shared";
 import { useT, useTimeAgo } from "../../i18n";
 import { daemonRuntimesDocsHref } from "./runtime-docs";
 
@@ -117,6 +118,9 @@ export interface RuntimesPageProps {
 type StatusFilter = "all" | "online" | "offline";
 const STATUS_FILTERS: StatusFilter[] = ["all", "online", "offline"];
 
+type OwnerScope = "mine" | "all";
+const OWNER_SCOPES: OwnerScope[] = ["mine", "all"];
+
 const COMING_SOON_SERVICES = [
   { provider: "cursor", name: "Cursor Cloud Agents", vendor: "Cursor" },
   { provider: "claude", name: "Claude Managed Agents", vendor: "Anthropic" },
@@ -133,11 +137,11 @@ const GRID_COLS =
 const OPTIONAL_CELL = "hidden @2xl:flex";
 
 // 表头单元格：13px 次要文字。
-const HEAD_CELL = "text-label";
+const HEAD_CELL = "text-label font-normal";
 
-// 机器 / 云服务行：60px 高，细分隔线，悬停整行变浅灰。
+// 机器 / 云服务行：64px 高，细分隔线，悬停整行变浅灰。
 const ROW =
-  "h-auto min-h-15 border-b duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)";
+  "h-auto min-h-16 border-b duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)";
 
 // 行图标角上的状态点、Harness 叠放图标的描边：跟随行底色，悬停时一起变色。
 const DOT_RING =
@@ -145,6 +149,18 @@ const DOT_RING =
 
 // 引导行右侧的描边按钮：32px 药丸。
 const ROW_ACTION_BUTTON = "h-8 gap-1.5 px-3.5 text-label font-normal";
+
+// 分段控件：浅灰槽里放药丸按钮，选中项白底加阴影（同智能体页的范围切换）。
+const SEGMENT_GROUP =
+  "flex shrink-0 items-center gap-0.5 rounded-full bg-field p-0.75";
+const SEGMENT_ON =
+  "h-6.5 gap-1.5 px-3 text-label font-medium text-foreground shadow-control bg-surface hover:bg-surface dark:bg-white/12 dark:hover:bg-white/12";
+const SEGMENT_OFF =
+  "h-6.5 gap-1.5 px-3 text-label font-normal text-muted-foreground hover:bg-transparent hover:text-foreground";
+
+// 名称旁的小标签（本机、即将推出），同智能体页的「你」。
+const ROW_TAG =
+  "shrink-0 rounded-xs bg-muted px-1 text-micro font-medium text-muted-foreground";
 
 function useNowTick(intervalMs = 30_000): number {
   const [now, setNow] = useState(() => Date.now());
@@ -183,6 +199,7 @@ export function RuntimesPage({
   const [showCloudRuntimeDialog, setShowCloudRuntimeDialog] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [scope, setScope] = useState<OwnerScope>("all");
 
   const { data: runtimes = [], isLoading: runtimesLoading } = useQuery(
     runtimeListOptions(wsId),
@@ -276,15 +293,30 @@ export function RuntimesPage({
     ),
   ).length;
   const localMachine = machineList.find((machine) => machine.isCurrent);
+  // "Mine" keeps this computer and machines the member owns. Cloud services
+  // are shared by the workspace, so they show under either scope.
+  const scopedMachines =
+    scope === "mine"
+      ? machineList.filter(
+          (machine) =>
+            machine.isCurrent ||
+            machine.runtimes.some((runtime) => runtime.owner_id === currentUserId),
+        )
+      : machineList;
 
   const needle = query.trim().toLowerCase();
-  const filtering = needle.length > 0 || statusFilter !== "all";
+  const filtering = needle.length > 0 || statusFilter !== "all" || scope !== "all";
   const matchesQuery = (...fields: (string | null | undefined)[]) =>
     !needle || fields.some((field) => field?.toLowerCase().includes(needle));
   const matchesStatus = (online: boolean) =>
     statusFilter === "all" || (statusFilter === "online") === online;
+  const clearFilters = () => {
+    setQuery("");
+    setStatusFilter("all");
+    setScope("all");
+  };
 
-  const visibleMachines = machineList.filter(
+  const visibleMachines = scopedMachines.filter(
     (machine) =>
       matchesStatus(machine.health === "online") &&
       matchesQuery(machine.title, machine.subtitle, ...machine.providerNames),
@@ -312,14 +344,21 @@ export function RuntimesPage({
 
   const configuredCloudCount = qoderConfigured ? 1 : 0;
   const totalCount = machineList.length + configuredCloudCount;
+  // Status counts follow the owner scope; search does not change them.
+  const scopedCount = scopedMachines.length + configuredCloudCount;
   const onlineCount =
-    machineList.filter((machine) => machine.health === "online").length +
+    scopedMachines.filter((machine) => machine.health === "online").length +
     (qoder && qoderIsOnline(qoder) ? 1 : 0);
   const statusCounts: Record<StatusFilter, number> = {
-    all: totalCount,
+    all: scopedCount,
     online: onlineCount,
-    offline: totalCount - onlineCount,
+    offline: scopedCount - onlineCount,
   };
+  const showMikaSetup =
+    !agentsLoading &&
+    !chatSessionsLoading &&
+    memberNeedsMikaSetup(agents, chatSessions) &&
+    runtimes.some((runtime) => runtime.provider !== "qoder_cloud");
 
   const openQoder = () =>
     qoderConfigured ? navigation.push(qoderHref) : setQoderDialogOpen(true);
@@ -352,14 +391,26 @@ export function RuntimesPage({
           <RuntimesToolbar
             query={query}
             onQueryChange={setQuery}
+            scope={scope}
+            onScopeChange={setScope}
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             counts={statusCounts}
           />
 
-          <div className="@container overflow-hidden rounded-xl border bg-card">
-            <ListGrid className={cn(GRID_COLS, "[&>[role=row]:last-child]:border-b-0")}>
-              <ListGridHeader className="static h-10 border-b bg-card after:hidden">
+          {showMikaSetup && (
+            <MikaSetupCard
+              workspaceId={wsId}
+              runtimes={runtimes.filter(
+                (runtime) => runtime.provider !== "qoder_cloud",
+              )}
+              runtimesLoading={runtimesLoading}
+            />
+          )}
+
+          <div className="@container">
+            <ListGrid className={GRID_COLS}>
+              <ListGridHeader className="static h-10 rounded-lg border-0 bg-surface-sunken text-muted-foreground after:hidden">
                 <ListGridHeaderCell className={HEAD_CELL}>
                   {t(($) => $.page.columns.name)}
                 </ListGridHeaderCell>
@@ -381,15 +432,36 @@ export function RuntimesPage({
               {nothingMatches ? (
                 <div
                   role="row"
-                  className="col-span-full px-4 py-10 text-center text-caption text-muted-foreground"
+                  className="col-span-full flex flex-col items-center gap-1.5 px-4 py-16 text-center"
                 >
-                  {t(($) => $.page.rows.no_matches)}
+                  <p className="text-body-lg font-medium">
+                    {needle
+                      ? t(($) => $.page.no_matches.with_query, {
+                          query: query.trim(),
+                          filterSuffix:
+                            statusFilter !== "all" || scope !== "all"
+                              ? t(($) => $.page.no_matches.with_query_filter_suffix)
+                              : "",
+                        })
+                      : t(($) => $.page.no_matches.no_query)}
+                  </p>
+                  <p className="text-label text-muted-foreground">
+                    {t(($) => $.page.no_matches.try_widening)}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(ROW_ACTION_BUTTON, "mt-2.5")}
+                    onClick={clearFilters}
+                  >
+                    {t(($) => $.page.no_matches.clear)}
+                  </Button>
                 </div>
               ) : (
                 <>
                   <GroupHeader
                     title={t(($) => $.page.groups.machines.title)}
-                    count={machineList.length}
+                    count={scopedMachines.length}
                   />
                   {visibleMachines.map((machine) => (
                     <MachineRow
@@ -464,19 +536,6 @@ export function RuntimesPage({
             </ListGrid>
           </div>
 
-          {!agentsLoading &&
-            !chatSessionsLoading &&
-            memberNeedsMikaSetup(agents, chatSessions) &&
-            runtimes.some((runtime) => runtime.provider !== "qoder_cloud") && (
-              <MikaSetupCard
-                workspaceId={wsId}
-                runtimes={runtimes.filter(
-                  (runtime) => runtime.provider !== "qoder_cloud",
-                )}
-                runtimesLoading={runtimesLoading}
-                currentUserId={currentUserId ?? null}
-              />
-            )}
           {orphanProfileRuntimes.length > 0 && (
             <OrphanRuntimeProfiles
               runtimes={orphanProfileRuntimes}
@@ -644,56 +703,90 @@ function AddMenuItem({
 function RuntimesToolbar({
   query,
   onQueryChange,
+  scope,
+  onScopeChange,
   statusFilter,
   onStatusFilterChange,
   counts,
 }: {
   query: string;
   onQueryChange: (query: string) => void;
+  scope: OwnerScope;
+  onScopeChange: (scope: OwnerScope) => void;
   statusFilter: StatusFilter;
   onStatusFilterChange: (filter: StatusFilter) => void;
   counts: Record<StatusFilter, number>;
 }) {
   const { t } = useT("runtimes");
-  const labels: Record<StatusFilter, string> = {
+  const statusLabels: Record<StatusFilter, string> = {
     all: t(($) => $.page.filters.all),
     online: t(($) => $.page.filters.online),
     offline: t(($) => $.page.filters.offline),
   };
+  const scopeLabels: Record<OwnerScope, string> = {
+    mine: t(($) => $.page.scope_mine),
+    all: t(($) => $.page.scope_all),
+  };
+
   return (
-    <div className="flex h-14 min-w-0 items-center gap-2 px-2">
-      <div className="relative min-w-0 flex-1 sm:flex-none">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          aria-label={t(($) => $.page.search_placeholder)}
-          placeholder={t(($) => $.page.search_placeholder)}
-          className="h-9 w-full rounded-lg border-0 bg-field pl-9 text-body hover:bg-field-hover focus-visible:bg-field-hover sm:w-66"
-        />
+    <div className="flex h-12 min-w-0 items-center justify-between gap-3 px-2 pb-2">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="relative min-w-0 flex-1 sm:flex-none">
+          <Search className={COLLECTION_SEARCH_ICON} />
+          <Input
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            aria-label={t(($) => $.page.search_placeholder)}
+            placeholder={t(($) => $.page.search_placeholder)}
+            className={cn(COLLECTION_SEARCH_INPUT, "w-full sm:w-56")}
+          />
+        </div>
+        <div
+          role="group"
+          aria-label={t(($) => $.page.scope_label)}
+          className={cn(SEGMENT_GROUP, "hidden md:flex")}
+        >
+          {OWNER_SCOPES.map((value) => (
+            <Button
+              key={value}
+              variant="ghost"
+              size="sm"
+              aria-pressed={scope === value}
+              className={scope === value ? SEGMENT_ON : SEGMENT_OFF}
+              onClick={() => onScopeChange(value)}
+            >
+              {scopeLabels[value]}
+            </Button>
+          ))}
+        </div>
+        <div
+          role="group"
+          aria-label={t(($) => $.page.columns.status)}
+          className={SEGMENT_GROUP}
+        >
+          {STATUS_FILTERS.map((filter) => (
+            <Button
+              key={filter}
+              variant="ghost"
+              size="sm"
+              aria-pressed={statusFilter === filter}
+              className={statusFilter === filter ? SEGMENT_ON : SEGMENT_OFF}
+              onClick={() => onStatusFilterChange(filter)}
+            >
+              {statusLabels[filter]}
+              <span className="font-normal tabular-nums text-muted-foreground">
+                {counts[filter]}
+              </span>
+            </Button>
+          ))}
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
-        {STATUS_FILTERS.map((filter) => (
-          <Button
-            key={filter}
-            variant="outline"
-            size="sm"
-            aria-pressed={statusFilter === filter}
-            className={cn(
-              COLLECTION_TOOLBAR_BUTTON,
-              statusFilter === filter
-                ? "bg-accent font-medium text-foreground hover:bg-accent"
-                : COLLECTION_TOOLBAR_BUTTON_IDLE,
-            )}
-            onClick={() => onStatusFilterChange(filter)}
-          >
-            {labels[filter]}
-            <span className="font-normal tabular-nums text-muted-foreground">
-              {counts[filter]}
-            </span>
-          </Button>
-        ))}
-      </div>
+      <TooltipHint label={t(($) => $.page.live_tooltip)}>
+        <span className="hidden shrink-0 items-center gap-1.5 text-label text-muted-foreground sm:inline-flex">
+          <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-success" />
+          {t(($) => $.page.live)}
+        </span>
+      </TooltipHint>
     </div>
   );
 }
@@ -702,7 +795,7 @@ function GroupHeader({ title, count }: { title: string; count: number }) {
   return (
     <div
       role="row"
-      className="col-span-full flex h-9 min-w-0 items-center gap-2 border-b bg-surface-sunken px-4 text-label"
+      className="col-span-full flex h-10 min-w-0 items-end gap-1.5 px-4 pb-1.5 text-label"
     >
       <span className="font-semibold text-foreground">{title}</span>
       <span className="tabular-nums text-muted-foreground">{count}</span>
@@ -724,14 +817,14 @@ function ActionRow({
   return (
     <div
       role="row"
-      className="col-span-full flex min-h-15 items-center gap-3 border-b px-4 py-2.5"
+      className="col-span-full flex min-h-16 items-center gap-3 border-b px-4 py-2.5"
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-dashed border-input text-muted-foreground">
-        <Icon aria-hidden="true" className="size-4" />
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-dashed border-input text-muted-foreground">
+        <Icon aria-hidden="true" className="size-4.5" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="block truncate text-body font-medium">{title}</span>
-        <span className="block truncate text-caption text-muted-foreground">
+        <span className="block truncate text-label text-muted-foreground">
           {description}
         </span>
       </span>
@@ -748,7 +841,7 @@ function RowTile({
   dot?: ReactNode;
 }) {
   return (
-    <span className="relative flex size-8 shrink-0 items-center justify-center rounded-md border bg-card">
+    <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-field">
       {children}
       {dot}
     </span>
@@ -795,7 +888,7 @@ function NameCell({
           )}
           {badge}
         </span>
-        <span className="block truncate text-caption text-muted-foreground">
+        <span className="block truncate text-label text-muted-foreground">
           {subtitle}
         </span>
       </span>
@@ -893,20 +986,18 @@ function MachineRow({
             dot={
               <HealthDot
                 health={machine.health}
-                className={cn("absolute -right-0.75 -bottom-0.75", DOT_RING)}
+                className={cn("absolute -right-px -bottom-px size-2.5", DOT_RING)}
               />
             }
           >
-            <Icon aria-hidden="true" className="size-4 text-muted-foreground" />
+            <Icon aria-hidden="true" className="size-4.5 text-muted-foreground" />
           </RowTile>
         }
         title={machine.title}
         href={href}
         badge={
           machine.isCurrent ? (
-            <Badge variant="secondary" className="shrink-0">
-              {t(($) => $.machine.this_machine)}
-            </Badge>
+            <span className={ROW_TAG}>{t(($) => $.machine.this_machine)}</span>
           ) : undefined
         }
         subtitle={subtitle}
@@ -936,15 +1027,19 @@ function MachineRow({
             </span>
           </>
         ) : (
-          <>
-            <HealthIcon health={machine.health} className="size-3.5 shrink-0" />
-            <span className={cn("truncate", !online && "text-muted-foreground")}>
-              {healthLabel(machine.health)}
-              {!online && machine.lastSeenAt
-                ? ` · ${timeAgo(machine.lastSeenAt)}`
-                : ""}
+          <TooltipHint label={t(($) => $.health[machine.health].description)}>
+            <span className="flex min-w-0 items-center gap-1.5">
+              <HealthDot health={machine.health} className="size-1.5 shrink-0" />
+              <span className={cn("truncate", !online && "text-muted-foreground")}>
+                {healthLabel(machine.health)}
+                {!online && machine.lastSeenAt ? (
+                  <span className="text-muted-foreground">
+                    {` · ${timeAgo(machine.lastSeenAt)}`}
+                  </span>
+                ) : null}
+              </span>
             </span>
-          </>
+          </TooltipHint>
         )}
       </ListGridCell>
       <RowChevron />
@@ -978,7 +1073,7 @@ function QoderRow({
               dot={
                 <span
                   className={cn(
-                    "absolute -right-0.75 -bottom-0.75 size-2 rounded-full bg-warning",
+                    "absolute -right-px -bottom-px size-2.5 rounded-full bg-warning",
                     DOT_RING,
                   )}
                 />
@@ -1043,7 +1138,7 @@ function QoderRow({
             dot={
               <span
                 className={cn(
-                  "absolute -right-0.75 -bottom-0.75 size-2 rounded-full",
+                  "absolute -right-px -bottom-px size-2.5 rounded-full",
                   DOT_RING,
                   dotTone,
                 )}
@@ -1116,7 +1211,7 @@ function ComingSoonRow({
       <EmptyCell />
       <EmptyCell />
       <ListGridCell>
-        <Badge variant="secondary">{t(($) => $.page.groups.cloud.coming_soon)}</Badge>
+        <span className={ROW_TAG}>{t(($) => $.page.groups.cloud.coming_soon)}</span>
       </ListGridCell>
       <ListGridCell aria-hidden="true" />
     </ListGridRow>
@@ -1139,12 +1234,10 @@ function MikaSetupCard({
   workspaceId,
   runtimes,
   runtimesLoading,
-  currentUserId,
 }: {
   workspaceId: string;
   runtimes: AgentRuntime[];
   runtimesLoading?: boolean;
-  currentUserId: string | null;
 }) {
   const { t, i18n } = useT("runtimes");
   const navigation = useNavigation();
@@ -1188,11 +1281,11 @@ function MikaSetupCard({
 
   return (
     <>
-      <div className="flex animate-content-rise flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center">
+      <div className="flex animate-content-rise flex-col gap-3.5 rounded-xl bg-surface-sunken p-3.5 sm:flex-row sm:items-center sm:pr-4">
         <span
           role="img"
           aria-label={t(($) => $.mika_setup.title)}
-          className="flex size-10 shrink-0 select-none items-center justify-center rounded-full bg-muted text-title-lg leading-none"
+          className="flex size-10 shrink-0 select-none items-center justify-center rounded-full border border-surface-border bg-card text-title-lg leading-none"
         >
           {MIKA_PLACEHOLDER_EMOJI}
         </span>
@@ -1200,7 +1293,7 @@ function MikaSetupCard({
           <h2 className="text-body-lg font-semibold">
             {t(($) => $.mika_setup.title)}
           </h2>
-          <p className="mt-1 text-body leading-relaxed text-muted-foreground">
+          <p className="mt-0.5 text-label text-muted-foreground">
             {t(($) => $.mika_setup.description)}
           </p>
         </div>
@@ -1215,14 +1308,20 @@ function MikaSetupCard({
             <DialogTitle>{t(($) => $.mika_setup.dialog_title)}</DialogTitle>
           </DialogHeader>
 
-          <MikaRuntimeChoice
-            runtimes={runtimes}
-            runtimesLoading={runtimesLoading}
-            currentUserId={currentUserId}
-            value={value}
-            onChange={setChoice}
-            disabled={bootstrapMika.isPending}
-          />
+          <div className="flex flex-col gap-2">
+            <span className="text-body font-medium">
+              {t(($) => $.mika_setup.runtime_label)}
+            </span>
+            <MikaRuntimeChoice
+              layout="list"
+              runtimes={runtimes}
+              runtimesLoading={runtimesLoading}
+              value={value}
+              onChange={setChoice}
+              disabled={bootstrapMika.isPending}
+              modelLabel={t(($) => $.mika_setup.model_label)}
+            />
+          </div>
 
           <DialogFooter>
             <Button
@@ -1259,16 +1358,16 @@ function OrphanRuntimeProfiles({
 }) {
   const { t } = useT("runtimes");
   return (
-    <section className={hasMachines ? "mt-6" : undefined}>
-      <div className="mb-3">
+    <section className={cn("px-2", hasMachines && "mt-4")}>
+      <div className="mb-2">
         <h2 className="text-body font-semibold">
           {t(($) => $.profiles.unassigned_title)}
         </h2>
-        <p className="mt-1 text-caption text-muted-foreground">
+        <p className="mt-1 text-label text-muted-foreground">
           {t(($) => $.profiles.unassigned_description)}
         </p>
       </div>
-      <div className="overflow-hidden rounded-xl border bg-card">
+      <div className="border-t">
         <RuntimeList runtimes={runtimes} now={now} />
       </div>
     </section>
@@ -1285,7 +1384,7 @@ function ProviderIconStack({ providers }: { providers: string[] }) {
         <span
           key={provider}
           className={cn(
-            "inline-flex size-6 items-center justify-center rounded-sm bg-muted",
+            "inline-flex size-6 items-center justify-center rounded-md bg-field",
             DOT_RING,
           )}
         >
@@ -1295,7 +1394,7 @@ function ProviderIconStack({ providers }: { providers: string[] }) {
       {extra > 0 && (
         <span
           className={cn(
-            "inline-flex h-6 min-w-6 items-center justify-center rounded-sm bg-muted px-1 text-micro font-semibold text-muted-foreground",
+            "inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-field px-1 text-micro font-semibold text-muted-foreground",
             DOT_RING,
           )}
         >
@@ -1312,14 +1411,15 @@ function RuntimesPageSkeleton() {
       <PageHeader className="h-18 border-b-0">
         <Skeleton className="h-4.5 w-30 rounded-full" />
       </PageHeader>
-      <div className={cn(PAGE_RAIL, COLLECTION_TABLE_INSET, "pt-3")}>
-        <div className="overflow-hidden rounded-xl border">
+      <div className={cn(PAGE_RAIL, COLLECTION_TABLE_INSET, "pt-14")}>
+        <div className="h-10 rounded-lg bg-surface-sunken" />
+        <div>
           {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
-              className="flex h-18 items-center gap-3 border-b px-4 last:border-b-0"
+              className="flex h-16 items-center gap-3 border-b px-4"
             >
-              <Skeleton className="size-10 rounded-lg" />
+              <Skeleton className="size-10 rounded-xl" />
               <div className="flex-1">
                 <Skeleton className="h-3.5 w-44 rounded-full" />
                 <Skeleton className="mt-2 h-3 w-28 rounded-full" />

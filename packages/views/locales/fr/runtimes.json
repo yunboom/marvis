@@ -19,7 +19,8 @@
       "with_query": "Aucun runtime ne correspond à « {{query}} »{{filterSuffix}}.",
       "with_query_filter_suffix": " dans ce filtre",
       "no_query": "Aucun runtime ne correspond à ce filtre.",
-      "try_widening": " Essayez d'élargir la portée ou d'effacer les filtres."
+      "try_widening": " Essayez d'élargir la portée ou d'effacer les filtres.",
+      "clear": "Effacer les filtres"
     },
     "bootstrapping": {
       "title": "Démarrage du runtime local…",
@@ -70,7 +71,8 @@
       "all": "Tous",
       "online": "En ligne",
       "offline": "Hors ligne"
-    }
+    },
+    "scope_label": "Portée"
   },
   "mika_setup": {
     "title": "Votre runtime est prêt. Commencez avec Mika.",
@@ -78,7 +80,9 @@
     "action": "Commencer avec Mika",
     "failed": "Impossible de démarrer Mika",
     "dialog_title": "Où Mika doit-il s'exécuter ?",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "runtime_label": "Runtime",
+    "model_label": "Modèle"
   },
   "machine": {
     "search_placeholder": "Rechercher des machines…",

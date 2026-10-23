@@ -33,6 +33,7 @@ export function MikaRuntimeChoice({
   onChange,
   disabled = false,
   layout = "dropdown",
+  modelLabel,
 }: {
   runtimes: AgentRuntime[];
   runtimesLoading?: boolean;
@@ -42,6 +43,8 @@ export function MikaRuntimeChoice({
   onChange: (next: MikaRuntimeSelection) => void;
   disabled?: boolean;
   layout?: "dropdown" | "list";
+  /** Heading above the model dropdown; omitted where the context names it. */
+  modelLabel?: string;
 }) {
   const selected = runtimes.find((rt) => rt.id === value.runtimeId) ?? null;
 
@@ -59,7 +62,7 @@ export function MikaRuntimeChoice({
       {layout === "list" ? (
         // Capped at ~4 rows so the install commands above stay reachable when
         // a member has many machines registered.
-        <div className="flex max-h-[240px] flex-col gap-2 overflow-y-auto">
+        <div className="flex max-h-[280px] flex-col gap-2 overflow-y-auto">
           {runtimes.map((rt) => (
             <CompactRuntimeRow
               key={rt.id}
@@ -81,13 +84,18 @@ export function MikaRuntimeChoice({
           disabled={disabled}
         />
       )}
-      <ModelDropdown
-        runtimeId={value.runtimeId || null}
-        runtimeOnline={selected?.status === "online"}
-        value={value.model}
-        onChange={(model) => onChange({ ...value, model })}
-        disabled={!value.runtimeId || disabled}
-      />
+      <div className="flex flex-col gap-2">
+        {modelLabel ? (
+          <span className="mt-2 text-body font-medium">{modelLabel}</span>
+        ) : null}
+        <ModelDropdown
+          runtimeId={value.runtimeId || null}
+          runtimeOnline={selected?.status === "online"}
+          value={value.model}
+          onChange={(model) => onChange({ ...value, model })}
+          disabled={!value.runtimeId || disabled}
+        />
+      </div>
     </div>
   );
 }

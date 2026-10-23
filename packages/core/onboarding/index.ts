@@ -20,6 +20,7 @@ export {
   type MikaOnboardingLanguage,
 } from "./use-bootstrap-mika";
 export {
+  MIKA_PLACEHOLDER_EMOJI,
   MIKA_SYSTEM_KEY,
   isMikaAgent,
   memberNeedsMikaSetup,

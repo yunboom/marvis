@@ -19,7 +19,8 @@
       "with_query": "No runtimes match \"{{query}}\"{{filterSuffix}}.",
       "with_query_filter_suffix": " in this filter",
       "no_query": "No runtimes match this filter.",
-      "try_widening": " Try widening the scope or clearing filters."
+      "try_widening": " Try widening the scope or clearing filters.",
+      "clear": "Clear filters"
     },
     "bootstrapping": {
       "title": "Starting local runtime…",
@@ -70,7 +71,8 @@
       "all": "All",
       "online": "Online",
       "offline": "Offline"
-    }
+    },
+    "scope_label": "Scope"
   },
   "mika_setup": {
     "title": "Your runtime is ready. Start with Mika.",
@@ -78,7 +80,9 @@
     "action": "Start with Mika",
     "failed": "Couldn't start Mika",
     "dialog_title": "Where should Mika run?",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "runtime_label": "Runtime",
+    "model_label": "Model"
   },
   "machine": {
     "search_placeholder": "Search machines…",

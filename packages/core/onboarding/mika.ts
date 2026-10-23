@@ -7,6 +7,12 @@ import type { Agent, ChatSession } from "../types";
  */
 export const MIKA_SYSTEM_KEY = "mika";
 
+/** Mirrors `mikaAgentAvatarURL` in server/internal/handler/mika_agent.go.
+ *  Shown before Mika exists (onboarding, the Runtimes page entry), so it
+ *  cannot read her stored avatar; the two must move together or those
+ *  surfaces show one face and the created agent another. */
+export const MIKA_PLACEHOLDER_EMOJI = "🦄";
+
 export function isMikaAgent(agent: Pick<Agent, "system_key">): boolean {
   return agent.system_key === MIKA_SYSTEM_KEY;
 }

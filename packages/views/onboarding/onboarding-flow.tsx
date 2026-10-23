@@ -17,10 +17,7 @@ import {
 } from "@marvis/core/onboarding";
 import { useWorkspaceList } from "@marvis/core/workspace";
 import type { AgentRuntime, Workspace } from "@marvis/core/types";
-import { StepShell } from "./components/step-shell";
-import { StepRuntimeConnect } from "./steps/step-runtime-connect";
-import { StepPlatformFork } from "./steps/step-platform-fork";
-import { OnboardingLogoutButton } from "./components/onboarding-logout-button";
+import { StepConnectRuntime } from "./steps/step-connect-runtime";
 import { NewWorkspacePage } from "../workspace/new-workspace-page";
 import {
   getMikaOnboarding,
@@ -210,35 +207,18 @@ export function OnboardingFlow({
     );
   }
 
-  // No back affordance and no rail navigation on the runtime step: once the
-  // workspace exists there is nothing left to cancel, and walking back would
-  // strand a workspace with no runtime, no Mika, and no guidance. Skip runs
-  // the runtime-skipped path instead. Log out lives at the foot of the rail.
+  // No way back from the runtime step: once the workspace exists there is
+  // nothing left to cancel, and walking back would strand a workspace with no
+  // runtime, no Mika, and no guidance. Skip runs the runtime-skipped path.
   return (
-    <StepShell
-      currentStep="runtime"
-      chromeFooter={<OnboardingLogoutButton inline />}
-    >
-      {/* Desktop (no cliInstructions slot) drives the local daemon's runtime
-          list directly; web offers Download / CLI / Cloud and embeds the live
-          probe under the CLI path. */}
-      {!runtimeInstructions ? (
-        <StepRuntimeConnect
-          wsId={workspace.id}
-          wsSlug={workspace.slug}
-          onNext={handleRuntimeNext}
-          onRefresh={onRuntimeRefresh}
-          runtimesPending={runtimesPending}
-        />
-      ) : (
-        <StepPlatformFork
-          wsId={workspace.id}
-          wsSlug={workspace.slug}
-          onNext={handleRuntimeNext}
-          cliInstructions={runtimeInstructions}
-        />
-      )}
-    </StepShell>
+    <StepConnectRuntime
+      wsId={workspace.id}
+      wsSlug={workspace.slug}
+      onNext={handleRuntimeNext}
+      onRefresh={onRuntimeRefresh}
+      runtimesPending={runtimesPending}
+      cliInstructions={runtimeInstructions}
+    />
   );
 }
 

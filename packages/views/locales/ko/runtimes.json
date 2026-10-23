@@ -19,7 +19,8 @@
       "with_query": "\"{{query}}\"와 일치하는 런타임이 없습니다{{filterSuffix}}.",
       "with_query_filter_suffix": " (이 필터 기준)",
       "no_query": "이 필터와 일치하는 런타임이 없습니다.",
-      "try_widening": " 범위를 넓히거나 필터를 지워보세요."
+      "try_widening": " 범위를 넓히거나 필터를 지워보세요.",
+      "clear": "필터 지우기"
     },
     "bootstrapping": {
       "title": "로컬 런타임 시작 중...",
@@ -70,7 +71,8 @@
       "all": "전체",
       "online": "온라인",
       "offline": "오프라인"
-    }
+    },
+    "scope_label": "범위"
   },
   "mika_setup": {
     "title": "런타임이 준비되었습니다. Mika와 시작하세요.",
@@ -78,7 +80,9 @@
     "action": "Mika와 시작",
     "failed": "Mika를 시작하지 못했습니다",
     "dialog_title": "Mika를 어디에서 실행할까요?",
-    "cancel": "취소"
+    "cancel": "취소",
+    "runtime_label": "런타임",
+    "model_label": "모델"
   },
   "machine": {
     "search_placeholder": "기기 검색...",

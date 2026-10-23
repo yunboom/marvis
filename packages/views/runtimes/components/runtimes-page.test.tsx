@@ -184,16 +184,45 @@ describe("RuntimesPage", () => {
       connection: qoder({ configured: true, enabled: true, status: "online" }),
     });
 
-    await user.click(screen.getByRole("button", { name: /^Offline/ }));
+    const status = within(screen.getByRole("group", { name: "Status" }));
+    await user.click(status.getByRole("button", { name: /^Offline/ }));
     expect(screen.getByText("build-server")).toBeInTheDocument();
     expect(screen.queryByText("dev-machine.local")).not.toBeInTheDocument();
     expect(screen.queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /^All/ }));
+    await user.click(status.getByRole("button", { name: /^All/ }));
     await user.type(screen.getByRole("textbox"), "zzz");
-    expect(
-      screen.getByText("No machines or cloud services match"),
-    ).toBeInTheDocument();
+    expect(screen.getByText('No runtimes match "zzz".')).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.getByText("dev-machine.local")).toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("");
+  });
+
+  it("narrows to the member's own machines under Mine", async () => {
+    const user = userEvent.setup();
+    renderPage({
+      runtimes: [
+        makeRuntime(),
+        makeRuntime({
+          id: "rt-other",
+          daemon_id: "daemon-other",
+          name: "Codex (build-server)",
+          provider: "codex",
+          device_info: "build-server · codex 0.5.0",
+          owner_id: "someone-else",
+        }),
+      ],
+    });
+
+    await user.click(
+      within(screen.getByRole("group", { name: "Scope" })).getByRole("button", {
+        name: "Mine",
+      }),
+    );
+
+    expect(screen.getByText("dev-machine.local")).toBeInTheDocument();
+    expect(screen.queryByText("build-server")).not.toBeInTheDocument();
   });
 
   it("never lists the Qoder runtime as a machine", () => {
@@ -217,7 +246,11 @@ describe("RuntimesPage", () => {
       expect(screen.queryAllByText("Qoder Cloud Agents")).toHaveLength(
         connection.available ? 1 : 0,
       );
-      expect(screen.getByRole("button", { name: /^All/ })).toHaveTextContent(
+      expect(
+        within(screen.getByRole("group", { name: "Status" })).getByRole("button", {
+          name: /^All/,
+        }),
+      ).toHaveTextContent(
         connection.available ? "2" : "1",
       );
       unmount();

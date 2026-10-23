@@ -57,8 +57,8 @@ vi.mock("../workspace/new-workspace-page", () => ({
   ),
 }));
 
-vi.mock("./steps/step-runtime-connect", () => ({
-  StepRuntimeConnect: ({ wsSlug }: { wsSlug: string }) => (
+vi.mock("./steps/step-connect-runtime", () => ({
+  StepConnectRuntime: ({ wsSlug }: { wsSlug: string }) => (
     <p>runtime step for {wsSlug}</p>
   ),
 }));

@@ -19,7 +19,8 @@
       "with_query": "没有运行时匹配 \"{{query}}\"{{filterSuffix}}。",
       "with_query_filter_suffix": "（在当前筛选下）",
       "no_query": "当前筛选下没有匹配的运行时。",
-      "try_widening": "试试放宽筛选或清除条件。"
+      "try_widening": "试试放宽筛选或清除条件。",
+      "clear": "清除筛选"
     },
     "bootstrapping": {
       "title": "正在启动本地运行时...",
@@ -70,7 +71,8 @@
       "all": "全部",
       "online": "在线",
       "offline": "离线"
-    }
+    },
+    "scope_label": "范围"
   },
   "mika_setup": {
     "title": "运行时已准备好，和 Mika 开始。",
@@ -78,7 +80,9 @@
     "action": "和 Mika 开始",
     "failed": "无法启动 Mika",
     "dialog_title": "让 Mika 在哪台机器上运行？",
-    "cancel": "取消"
+    "cancel": "取消",
+    "runtime_label": "运行时",
+    "model_label": "模型"
   },
   "machine": {
     "search_placeholder": "搜索机器...",
