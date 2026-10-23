@@ -4,7 +4,7 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { execFileRunner } from "./server-process";
+import { execFileRunner, noPipeRunner, tailFile } from "./server-process";
 
 // 执行外部命令；退出码非 0 时 reject，Error 上带 stdout / stderr / code。
 export type CommandRunner = (
@@ -34,6 +34,7 @@ const INITDB_TIMEOUT_MS = 120_000;
 const PG_CTL_START_WAIT_S = 60;
 const PG_CTL_STOP_WAIT_S = 30;
 const PG_CTL_EXTRA_TIMEOUT_MS = 15_000;
+const PG_LOG_TAIL_BYTES = 4 * 1024;
 
 // pg_ctl stop 在服务未运行时的输出，视为已停止。
 const NOT_RUNNING_PATTERNS = [/is server running\?/i, /no server running/i, /does not exist/i];
@@ -129,24 +130,30 @@ export async function startPostgres(
   paths: PostgresPaths,
   opts: { port: number; run?: CommandRunner },
 ): Promise<void> {
-  const run = opts.run ?? execFileRunner;
+  const run = opts.run ?? noPipeRunner;
 
-  await run(
-    postgresBinary(paths.binDir, "pg_ctl"),
-    [
-      "-D",
-      paths.dataDir,
-      "-l",
-      paths.logFile,
-      "-w",
-      "-t",
-      String(PG_CTL_START_WAIT_S),
-      "-o",
-      `-p ${opts.port} -c listen_addresses=${LOOPBACK_HOST}`,
-      "start",
-    ],
-    { timeoutMs: PG_CTL_START_WAIT_S * 1000 + PG_CTL_EXTRA_TIMEOUT_MS },
-  );
+  try {
+    await run(
+      postgresBinary(paths.binDir, "pg_ctl"),
+      [
+        "-D",
+        paths.dataDir,
+        "-l",
+        paths.logFile,
+        "-w",
+        "-t",
+        String(PG_CTL_START_WAIT_S),
+        "-o",
+        `-p ${opts.port} -c listen_addresses=${LOOPBACK_HOST}`,
+        "start",
+      ],
+      { timeoutMs: PG_CTL_START_WAIT_S * 1000 + PG_CTL_EXTRA_TIMEOUT_MS },
+    );
+  } catch (err) {
+    // pg_ctl 的输出不经管道，失败原因在数据库日志里。
+    const log = await tailFile(paths.logFile, PG_LOG_TAIL_BYTES).catch(() => "");
+    throw new Error(`${err instanceof Error ? err.message : String(err)}\n${log}`.trim(), { cause: err });
+  }
 }
 
 function isNotRunningError(err: unknown): boolean {

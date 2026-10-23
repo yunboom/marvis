@@ -2,7 +2,7 @@
 import { execFile, spawn } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import { appendFile, open, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { promisify } from "node:util";
 
 import type { CommandRunner } from "./postgres";
@@ -24,6 +24,7 @@ export interface ServerHandle {
 const WINDOWS_PLATFORM: NodeJS.Platform = "win32";
 const EXEC_MAX_BUFFER = 16 * 1024 * 1024;
 const MIGRATE_UP_ARG = "up";
+const SERVER_BINARY = "server";
 const MIGRATE_TIMEOUT_MS = 10 * 60 * 1000;
 const STOP_TIMEOUT_MS = 10_000;
 const READY_PATH = "/readyz";
@@ -53,6 +54,24 @@ export const execFileRunner: CommandRunner = async (file, args, options = {}) =>
 
   return { stdout, stderr };
 };
+
+// 不接管输出的 CommandRunner：子进程的标准输入输出都指向空设备，退出码非 0 时 reject。
+// pg_ctl start 在 Windows 上会把继承的句柄交给常驻的 postmaster，用管道的话要等到超时才返回。
+export const noPipeRunner: CommandRunner = (file, args, options = {}) =>
+  new Promise((resolve, reject) => {
+    const child = spawn(file, args, { env: options.env, cwd: options.cwd, stdio: "ignore", windowsHide: true });
+    const timer = options.timeoutMs ? setTimeout(() => child.kill(SIGNAL_KILL), options.timeoutMs) : undefined;
+
+    child.once("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+    child.once("exit", (code, signal) => {
+      clearTimeout(timer);
+      if (code === 0) resolve({ stdout: "", stderr: "" });
+      else reject(Object.assign(new Error(`${file} exited with ${code ?? signal}`), { code }));
+    });
+  });
 
 // 资源包内可执行文件的路径；Windows 带 .exe 后缀。
 export function bundleBinary(
@@ -246,10 +265,30 @@ async function waitForExit(
   return !isAlive(pid, kill);
 }
 
+// pid 对应的进程是否是资源包里的服务端：崩溃后 pid 可能已被其他程序复用，不能只凭 pid 结束进程。
+export async function isServerProcess(
+  pid: number,
+  run: CommandRunner = execFileRunner,
+  platform: NodeJS.Platform = process.platform,
+): Promise<boolean> {
+  const image = platform === WINDOWS_PLATFORM ? `${SERVER_BINARY}.exe` : SERVER_BINARY;
+  try {
+    if (platform === WINDOWS_PLATFORM) {
+      const { stdout } = await run("tasklist", ["/FI", `PID eq ${pid}`, "/FO", "CSV", "/NH"]);
+      return stdout.toLowerCase().includes(`"${image}"`);
+    }
+    const { stdout } = await run("ps", ["-p", String(pid), "-o", "comm="]);
+    return basename(stdout.trim()) === image;
+  } catch {
+    return false;
+  }
+}
+
 // 清理上次崩溃残留的服务端进程：存活则先 SIGTERM，超时再 SIGKILL；返回是否结束了进程。
 export async function killStaleProcess(
   pidFile: string,
   kill: (pid: number, signal?: NodeJS.Signals | 0) => void = process.kill.bind(process),
+  isOurs: (pid: number) => Promise<boolean> = (pid) => isServerProcess(pid),
 ): Promise<boolean> {
   let content: string;
   try {
@@ -261,7 +300,7 @@ export async function killStaleProcess(
 
   const pid = Number.parseInt(content.trim(), 10);
   let killed = false;
-  if (Number.isInteger(pid) && pid > 0 && pid !== process.pid && isAlive(pid, kill)) {
+  if (Number.isInteger(pid) && pid > 0 && pid !== process.pid && isAlive(pid, kill) && (await isOurs(pid))) {
     kill(pid, SIGNAL_TERM);
     if (!(await waitForExit(pid, kill, STALE_KILL_TIMEOUT_MS))) {
       kill(pid, SIGNAL_KILL);

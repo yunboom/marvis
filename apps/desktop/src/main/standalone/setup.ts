@@ -22,6 +22,8 @@ import { standaloneLayout, standaloneRoot } from "./paths";
 
 // 资源更新的检查间隔。
 const UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+// 退出时等待正常停止的上限，超过后强制停掉服务端和数据库。
+const QUIT_STOP_TIMEOUT_MS = 15_000;
 const LOCAL_SUFFIX = /\.local\.?$/i;
 
 // 用系统钥匙串（safeStorage）加解密单机模式的敏感配置。
@@ -100,12 +102,13 @@ export async function setupStandalone(deps: StandaloneSetupDeps): Promise<Standa
   timer.unref();
 
   // 服务端随 App 退出：先同步阻止退出，停完服务端和数据库再真正退出。
+  // 不只看「运行中」：启动、迁移、安装、重启间隙里数据库可能已经起来了，退出时一律走一遍停止。
   let stopped = false;
   app.on("before-quit", (event) => {
-    if (stopped || !manager.isRunning()) return;
+    if (stopped || !manager.hasLocalResources()) return;
     event.preventDefault();
     void manager
-      .stop()
+      .shutdown(QUIT_STOP_TIMEOUT_MS)
       .catch((err) => log("stop on quit failed", { error: String(err) }))
       .finally(() => {
         stopped = true;

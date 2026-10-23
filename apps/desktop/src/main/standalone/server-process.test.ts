@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   bundleBinary,
+  isServerProcess,
   killStaleProcess,
   runMigrations,
   startServerProcess,
@@ -163,7 +164,7 @@ describe("server process", () => {
     const gone = new Promise((resolve) => child.once("exit", resolve));
     await writeFile(paths.pidFile, String(child.pid));
 
-    expect(await killStaleProcess(paths.pidFile)).toBe(true);
+    expect(await killStaleProcess(paths.pidFile, undefined, async () => true)).toBe(true);
 
     await gone;
     expect(existsSync(paths.pidFile)).toBe(false);
@@ -178,6 +179,26 @@ describe("server process", () => {
     };
     expect(await killStaleProcess(paths.pidFile, dead)).toBe(false);
     expect(existsSync(paths.pidFile)).toBe(false);
+  });
+
+  it.skipIf(isWindows)("leaves a reused pid that is not the server alone", async () => {
+    const child = spawn("sleep", ["30"], { stdio: "ignore" });
+    await writeFile(paths.pidFile, String(child.pid));
+
+    expect(await killStaleProcess(paths.pidFile)).toBe(false);
+    expect(child.exitCode).toBeNull();
+    expect(existsSync(paths.pidFile)).toBe(false);
+    child.kill();
+  });
+
+  it("recognises the server process by its image name", async () => {
+    const ps = (stdout: string) => async () => ({ stdout, stderr: "" });
+    expect(await isServerProcess(1, ps("/data/server/versions/0.6.6/server\n"), "darwin")).toBe(true);
+    expect(await isServerProcess(1, ps("/usr/bin/sleep\n"), "linux")).toBe(false);
+    expect(await isServerProcess(1, ps('"server.exe","1","Console","1","20 K"\r\n'), "win32")).toBe(true);
+    expect(
+      await isServerProcess(1, async () => Promise.reject(new Error("no such process")), "darwin"),
+    ).toBe(false);
   });
 
   it("tails the end of a log file", async () => {

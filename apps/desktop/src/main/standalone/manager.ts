@@ -235,6 +235,10 @@ export class StandaloneManager {
   private stopping = false;
   private pendingManifest: StandaloneManifest | null = null;
   private updateDownloaded = false;
+  private updateAbort: AbortController | null = null;
+  // 启动中、尚未就绪的服务端进程：退出时也要能停掉。
+  private startingHandle: ServerHandle | null = null;
+  private shuttingDown = false;
 
   constructor(private readonly deps: StandaloneManagerDeps) {
     this.ops = { ...DEFAULT_OPS, ...deps.ops };
@@ -259,6 +263,11 @@ export class StandaloneManager {
 
   isRunning(): boolean {
     return this.running !== null;
+  }
+
+  // 设置过单机模式：本机可能有服务端或数据库进程需要随 App 退出。
+  hasLocalResources(): boolean {
+    return this.state !== null;
   }
 
   isInstalled(): boolean {
@@ -287,6 +296,7 @@ export class StandaloneManager {
 
   // 读取状态文件，决定初始阶段。应用启动时调用一次。
   async init(): Promise<void> {
+    await this.recoverInterruptedRestore();
     this.state = await readStateFile(this.deps.layout.stateFile);
     if (this.isInstalled()) {
       this.setPhase(STANDALONE_PHASE_STOPPED, { version: this.state?.serverVersion ?? null });
@@ -375,10 +385,16 @@ export class StandaloneManager {
   // 「设置」页保存配置：校验、保存，运行中则重启生效。
   saveSettings(input: StandaloneSetupInput): Promise<void> {
     return this.serial(async () => {
+      const previousPort = this.state?.settings.port;
       await this.persistSetup(input);
-      if (this.running) {
-        await this.stopInternal();
-        await this.startInternal();
+      if (!this.running) return;
+
+      await this.stopInternal();
+      await this.startInternal();
+      // 端口变了：客户端还连着旧地址，重新选定本机服务器。
+      const running = this.running as RunningServer | null;
+      if (running && previousPort !== input.settings.port) {
+        await this.deps.selectStandaloneServer(running.localUrl, input.settings.name);
       }
     });
   }
@@ -414,6 +430,8 @@ export class StandaloneManager {
 
   // 继续下载（暂停后或上次退出时下到一半）。
   resume(): void {
+    // 断网等待时也显示「已暂停」，但安装仍在进行，网络恢复后自动续传，不再排一次安装。
+    if (this.installAbort) return;
     if (this.current.phase === STANDALONE_PHASE_PAUSED || this.current.phase === STANDALONE_PHASE_FAILED) {
       void this.runInstall();
     }
@@ -449,6 +467,7 @@ export class StandaloneManager {
 
   private runInstall(): Promise<void> {
     return this.serial(async () => {
+      if (this.shuttingDown) return;
       const platform = this.deps.platformKey;
       if (!platform) {
         this.setPhase(STANDALONE_PHASE_FAILED, {
@@ -557,21 +576,45 @@ export class StandaloneManager {
       assets.reduce((sum, a) => sum + a.size, 0),
       onProgress,
     );
-    await Promise.all(
-      assets.map((asset) =>
-        this.ops.download({
-          urls: asset.urls,
-          destPath: this.deps.layout.download(asset.name),
-          expectedSize: asset.size,
-          sha256: asset.sha256,
-          signal,
-          onProgress: (p) => tracker.update(asset.name, p.receivedBytes, p.bytesPerSecond),
-          // 断网时显示「已暂停」，网络恢复后下载器自动续传。
-          onWaitingForNetwork: (waiting) =>
-            this.set({ phase: waiting ? STANDALONE_PHASE_PAUSED : STANDALONE_PHASE_DOWNLOADING }),
-        }),
-      ),
-    );
+
+    // 一个下载失败就中止其余的，并等它们都结束：否则重试时会有两个写入者同时追加同一个 .part 文件。
+    const local = new AbortController();
+    const forwardAbort = () => local.abort();
+    signal.addEventListener("abort", forwardAbort, { once: true });
+    if (signal.aborted) local.abort();
+    let firstError: unknown = null;
+    try {
+      await Promise.allSettled(
+        assets.map((asset) =>
+          this.ops
+            .download({
+              urls: asset.urls,
+              destPath: this.deps.layout.download(asset.name),
+              expectedSize: asset.size,
+              sha256: asset.sha256,
+              signal: local.signal,
+              onProgress: (p) => tracker.update(asset.name, p.receivedBytes, p.bytesPerSecond),
+              // 断网时显示「已暂停」，网络恢复后下载器自动续传。
+              onWaitingForNetwork: (waiting) =>
+                this.set({ phase: waiting ? STANDALONE_PHASE_PAUSED : STANDALONE_PHASE_DOWNLOADING }),
+            })
+            .catch((err: unknown) => {
+              firstError ??= err;
+              local.abort();
+            }),
+        ),
+      );
+    } finally {
+      signal.removeEventListener("abort", forwardAbort);
+    }
+
+    if (firstError !== null) throw firstError;
+  }
+
+  // 服务端可能在等待期间意外退出（watchExit 不排队），这时给出可读的错误。
+  private requireRunning(): RunningServer {
+    if (!this.running) throw new StandaloneOperationError(STANDALONE_ERROR_START_FAILED, "standalone server is not running");
+    return this.running;
   }
 
   private requireState(): StandaloneStateFile {
@@ -660,8 +703,10 @@ export class StandaloneManager {
       });
       const localUrl = `http://${LOOPBACK}:${settings.port}`;
       handle = this.ops.startServerProcess(this.serverPaths(), env);
+      this.startingHandle = handle;
       await this.ops.waitForReady(localUrl, { exited: handle.exited });
 
+      this.startingHandle = null;
       this.running = { handle, bootstrapToken, bootstrapUsed: false, localUrl };
       this.watchExit(handle);
 
@@ -681,6 +726,7 @@ export class StandaloneManager {
       });
     } catch (err) {
       this.deps.log("standalone start failed", { error: errorDetail(err) });
+      this.startingHandle = null;
       if (handle) await handle.stop().catch(() => undefined);
       if (postgresStarted) await this.ops.stopPostgres(this.postgresPaths()).catch(() => undefined);
       this.running = null;
@@ -709,13 +755,18 @@ export class StandaloneManager {
     });
   }
 
-  private async stopInternal(): Promise<void> {
+  // strict：要动数据目录（备份、恢复、更新）时，数据库停不下来必须报错，不能在运行中的数据上操作。
+  private async stopInternal(opts: { strict?: boolean } = {}): Promise<void> {
     this.stopping = true;
     try {
       const running = this.running;
       this.running = null;
       if (running) await running.handle.stop();
-      if (this.state?.postgresVersion) await this.ops.stopPostgres(this.postgresPaths()).catch(() => undefined);
+      if (this.state?.postgresVersion) {
+        const stopped = this.ops.stopPostgres(this.postgresPaths());
+        if (opts.strict) await stopped;
+        else await stopped.catch(() => undefined);
+      }
       if (this.isInstalled()) {
         this.setPhase(STANDALONE_PHASE_STOPPED, { localUrl: null, lanUrl: null, startedAt: null });
       }
@@ -732,13 +783,13 @@ export class StandaloneManager {
     return this.serial(async () => {
       if (!this.running) await this.startInternal();
       const state = this.requireState();
-      await this.deps.selectStandaloneServer(this.running!.localUrl, state.settings.name);
+      await this.deps.selectStandaloneServer(this.requireRunning().localUrl, state.settings.name);
 
-      if (this.running!.bootstrapUsed) {
+      if (this.requireRunning().bootstrapUsed) {
         await this.stopInternal();
         await this.startInternal();
       }
-      const running = this.running!;
+      const running = this.requireRunning();
       let token: string;
       try {
         token = await this.ops.bootstrapLogin(running.localUrl, running.bootstrapToken, state.settings.adminEmail);
@@ -746,7 +797,7 @@ export class StandaloneManager {
         if (!(err instanceof BootstrapLoginError) || !err.tokenUsed) throw err;
         await this.stopInternal();
         await this.startInternal();
-        const fresh = this.running!;
+        const fresh = this.requireRunning();
         token = await this.ops.bootstrapLogin(fresh.localUrl, fresh.bootstrapToken, state.settings.adminEmail);
         fresh.bootstrapUsed = true;
         this.deps.deliverToken(token);
@@ -803,9 +854,12 @@ export class StandaloneManager {
       if (!manifest || !platform || this.updateDownloaded) return;
       const asset = manifest.server[platform];
       if (!asset) return;
+      if (this.shuttingDown) return;
       this.setUpdate({ state: STANDALONE_UPDATE_DOWNLOADING });
+      const abort = new AbortController();
+      this.updateAbort = abort;
       try {
-        await this.downloadAssets([asset], new AbortController().signal, (progress) =>
+        await this.downloadAssets([asset], abort.signal, (progress) =>
           this.setUpdate({ progress: { ...progress, percent: Math.round((progress.percent / DOWNLOAD_WEIGHT) * 100) } }),
         );
         this.updateDownloaded = true;
@@ -813,6 +867,8 @@ export class StandaloneManager {
       } catch (err) {
         this.deps.log("standalone update download failed", { error: errorDetail(err) });
         this.setUpdate({ state: STANDALONE_UPDATE_AVAILABLE, progress: null });
+      } finally {
+        this.updateAbort = null;
       }
     });
   }
@@ -830,8 +886,17 @@ export class StandaloneManager {
         const wasRunning = this.running !== null;
 
         this.setUpdate({ state: STANDALONE_UPDATE_INSTALLING, progress: null });
-        await this.stopInternal();
-        const backup = await this.createBackup(previous ?? "unknown", BACKUP_REASON_UPDATE);
+        let backup: string;
+        try {
+          await this.stopInternal({ strict: true });
+          backup = await this.createBackup(previous ?? "unknown", BACKUP_REASON_UPDATE);
+        } catch (err) {
+          // 备份不成功就不更新：保持旧版本，按原状态恢复运行。
+          this.deps.log("standalone update backup failed", { error: errorDetail(err) });
+          this.setUpdate({ state: STANDALONE_UPDATE_AVAILABLE, progress: null });
+          if (wasRunning) await this.startInternal().catch(() => undefined);
+          throw err;
+        }
 
         try {
           await this.ops.installArchive(this.deps.layout.download(asset.name), this.deps.layout.serverDir(manifest.version));
@@ -852,13 +917,16 @@ export class StandaloneManager {
           if (!wasRunning) await this.stopInternal();
         } catch (err) {
           this.deps.log("standalone update failed, rolling back", { error: errorDetail(err) });
-          await this.stopInternal();
-          state.serverVersion = previous;
-          state.previousServerVersion = null;
-          await this.saveState();
-          await this.restoreBackupData(backup);
-          this.setUpdate({ state: STANDALONE_UPDATE_ROLLED_BACK, progress: null });
-          if (wasRunning) await this.startInternal().catch(() => undefined);
+          try {
+            await this.stopInternal({ strict: true });
+            state.serverVersion = previous;
+            state.previousServerVersion = null;
+            await this.saveState();
+            await this.restoreBackupData(backup);
+          } finally {
+            this.setUpdate({ state: STANDALONE_UPDATE_ROLLED_BACK, progress: null });
+            if (wasRunning) await this.startInternal().catch(() => undefined);
+          }
         }
       }),
     );
@@ -895,8 +963,8 @@ export class StandaloneManager {
   backupNow(): Promise<void> {
     return this.serial(async () => {
       const wasRunning = this.running !== null;
-      await this.stopInternal();
       try {
+        await this.stopInternal({ strict: true });
         await this.createBackup(this.state?.serverVersion ?? "unknown", BACKUP_REASON_MANUAL);
       } finally {
         if (wasRunning) await this.startInternal();
@@ -908,9 +976,12 @@ export class StandaloneManager {
   restoreBackup(fileName: string): Promise<void> {
     return this.serial(async () => {
       const wasRunning = this.running !== null;
-      await this.stopInternal();
-      await this.restoreBackupData(this.deps.layout.backup(fileName));
-      if (wasRunning) await this.startInternal();
+      try {
+        await this.stopInternal({ strict: true });
+        await this.restoreBackupData(this.deps.layout.backup(fileName));
+      } finally {
+        if (wasRunning) await this.startInternal();
+      }
     });
   }
 
@@ -919,13 +990,19 @@ export class StandaloneManager {
     const createdAt = this.now().toISOString();
     const name = `${createdAt.replace(/[:.]/g, "-")}_${reason}`;
     const dir = this.deps.layout.backup(name);
-    await mkdir(dir, { recursive: true });
-    if (existsSync(this.deps.layout.pgData)) {
-      await cp(this.deps.layout.pgData, join(dir, BACKUP_DATA), { recursive: true });
+    try {
+      await mkdir(dir, { recursive: true });
+      if (existsSync(this.deps.layout.pgData)) {
+        await cp(this.deps.layout.pgData, join(dir, BACKUP_DATA), { recursive: true });
+      }
+      const sizeBytes = await directorySize(join(dir, BACKUP_DATA));
+      const meta: StandaloneBackup = { fileName: name, createdAt, version, sizeBytes, reason };
+      await writeFile(join(dir, BACKUP_META), `${JSON.stringify(meta, null, 2)}\n`, "utf-8");
+    } catch (err) {
+      // 半成品备份没有 backup.json，不会被列出也不会被清理，失败时当场删掉。
+      await rm(dir, { recursive: true, force: true });
+      throw err;
     }
-    const sizeBytes = await directorySize(join(dir, BACKUP_DATA));
-    const meta: StandaloneBackup = { fileName: name, createdAt, version, sizeBytes, reason };
-    await writeFile(join(dir, BACKUP_META), `${JSON.stringify(meta, null, 2)}\n`, "utf-8");
 
     const backups = await this.listBackups();
     await Promise.all(
@@ -934,21 +1011,43 @@ export class StandaloneManager {
     return dir;
   }
 
-  // 数据库已停止时调用：先把当前数据挪开，复制成功后再删除，失败则挪回。
+  // 数据库已停止时调用：先把备份完整复制到临时目录，再用两次改名替换数据目录，
+  // 任何时刻崩溃都不会丢掉原数据（见 recoverInterruptedRestore）。
   private async restoreBackupData(backupDir: string): Promise<void> {
     const source = join(backupDir, BACKUP_DATA);
     if (!existsSync(source)) return;
-    const aside = `${this.deps.layout.pgData}.before-restore`;
-    await rm(aside, { recursive: true, force: true });
-    if (existsSync(this.deps.layout.pgData)) await rename(this.deps.layout.pgData, aside);
+    await this.recoverInterruptedRestore();
+
+    const { restoring, aside } = this.restorePaths();
+    await rm(restoring, { recursive: true, force: true });
     try {
-      await cp(source, this.deps.layout.pgData, { recursive: true });
+      await cp(source, restoring, { recursive: true });
     } catch (err) {
-      await rm(this.deps.layout.pgData, { recursive: true, force: true });
-      if (existsSync(aside)) await rename(aside, this.deps.layout.pgData);
+      await rm(restoring, { recursive: true, force: true });
       throw err;
     }
+
+    if (existsSync(this.deps.layout.pgData)) await rename(this.deps.layout.pgData, aside);
+    await rename(restoring, this.deps.layout.pgData);
     await rm(aside, { recursive: true, force: true });
+  }
+
+  private restorePaths(): { restoring: string; aside: string } {
+    return {
+      restoring: `${this.deps.layout.pgData}.restoring`,
+      aside: `${this.deps.layout.pgData}.before-restore`,
+    };
+  }
+
+  // 上次恢复在两次改名之间中断：数据目录不在而原数据还在一旁，就把原数据挪回；
+  // 数据目录已换好，一旁的旧数据和没复制完的临时目录直接删掉。
+  private async recoverInterruptedRestore(): Promise<void> {
+    const { restoring, aside } = this.restorePaths();
+    if (existsSync(aside)) {
+      if (existsSync(this.deps.layout.pgData)) await rm(aside, { recursive: true, force: true });
+      else await rename(aside, this.deps.layout.pgData);
+    }
+    await rm(restoring, { recursive: true, force: true });
   }
 
   // ---------- 切换 ----------
@@ -956,6 +1055,36 @@ export class StandaloneManager {
   // 已连上远程服务器后调用：停止单机模式，数据保留。
   stopForRemote(): Promise<void> {
     return this.stop();
+  }
+
+  // ---------- 退出 ----------
+
+  // App 退出：中止下载，排队正常停止；队列被迁移、备份等长操作占住超过 timeoutMs 时，
+  // 不再等待，直接停掉服务端进程（含启动中的）和数据库。
+  async shutdown(timeoutMs: number): Promise<void> {
+    this.shuttingDown = true;
+    this.installAbort?.abort();
+    this.updateAbort?.abort();
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => resolve(true), timeoutMs);
+    });
+    const graceful = this.serial(() => this.stopInternal()).then(
+      () => false,
+      () => false,
+    );
+    const forced = await Promise.race([graceful, timedOut]);
+    clearTimeout(timer);
+    if (!forced) return;
+
+    this.deps.log("standalone graceful stop timed out, forcing");
+    this.stopping = true;
+    const handles = [this.running?.handle, this.startingHandle].filter((h): h is ServerHandle => Boolean(h));
+    this.running = null;
+    this.startingHandle = null;
+    await Promise.all(handles.map((h) => h.stop().catch(() => undefined)));
+    if (this.state?.postgresVersion) await this.ops.stopPostgres(this.postgresPaths()).catch(() => undefined);
   }
 }
 

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rename, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -214,10 +214,11 @@ describe("StandaloneManager install", () => {
     const download = vi.fn(async (o: DownloadOptions) => {
       calls++;
       if (o.signal?.aborted) throw new DownloadAbortedError();
-      if (calls === 1) {
-        await new Promise((_, reject) => o.signal?.addEventListener("abort", () => reject(new DownloadAbortedError())));
-      }
-      await gate;
+      const aborted = new Promise((_, reject) =>
+        o.signal?.addEventListener("abort", () => reject(new DownloadAbortedError())),
+      );
+      if (calls === 1) await aborted;
+      await Promise.race([gate, aborted]);
       await writeFile(o.destPath, "bundle");
     });
     const h = await harness({ download });
@@ -230,6 +231,47 @@ describe("StandaloneManager install", () => {
     release();
     h.manager.resume();
     await settle(h, "running");
+  });
+
+  it("ignores resume while the download waits for the network", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const download = vi.fn(async (o: DownloadOptions) => {
+      o.onWaitingForNetwork?.(true);
+      await gate;
+      o.onWaitingForNetwork?.(false);
+      await writeFile(o.destPath, "bundle");
+    });
+    const h = await harness({ download });
+
+    await h.manager.install(setupInput());
+    await settle(h, "paused");
+    h.manager.resume();
+    release();
+    await settle(h, "running");
+
+    expect(h.ops.fetchManifest).toHaveBeenCalledTimes(1);
+    expect(download).toHaveBeenCalledTimes(2);
+  });
+
+  it("aborts the other download and waits for it when one fails", async () => {
+    let otherAborted = false;
+    const download = vi.fn(async (o: DownloadOptions) => {
+      if (o.destPath.includes("server")) throw new DownloadChecksumError("mismatch");
+      await new Promise((_, reject) =>
+        o.signal?.addEventListener("abort", () => {
+          otherAborted = true;
+          reject(new DownloadAbortedError());
+        }),
+      );
+    });
+    const h = await harness({ download });
+
+    await h.manager.install(setupInput());
+    await settle(h, "failed");
+
+    expect(otherAborted).toBe(true);
+    expect(h.last().error?.code).toBe(STANDALONE_ERROR_CHECKSUM);
   });
 
   it("fails with a checksum error", async () => {
@@ -314,6 +356,28 @@ describe("StandaloneManager running", () => {
     expect(h.ops.isPortFree).toHaveBeenLastCalledWith(13840, "0.0.0.0");
   });
 
+  it("reselects the local server when the port changes", async () => {
+    const edit = setupInput();
+    edit.settings.port = 13841;
+
+    await h.manager.saveSettings(edit);
+
+    expect(h.last()).toMatchObject({ phase: "running", localUrl: "http://127.0.0.1:13841" });
+    expect(h.selected).toEqual(["http://127.0.0.1:13841"]);
+  });
+
+  it("forces the server and database down on quit when the queue is busy", async () => {
+    vi.mocked(h.ops.runMigrations).mockImplementationOnce(() => new Promise(() => undefined));
+    void h.manager.restart();
+    await settle(h, "starting");
+    const stopsBefore = vi.mocked(h.ops.stopPostgres).mock.calls.length;
+
+    await h.manager.shutdown(20);
+
+    expect(vi.mocked(h.ops.stopPostgres).mock.calls.length).toBeGreaterThan(stopsBefore);
+    expect(h.manager.isRunning()).toBe(false);
+  });
+
   it("saves settings with locked keys and saved secrets left empty", async () => {
     const before = await readSecrets(standaloneLayout(h.root).secretsFile, codec);
     const first = setupInput();
@@ -381,6 +445,29 @@ describe("StandaloneManager updates and backups", () => {
 
     expect(h.last()).toMatchObject({ phase: "running", version: "0.6.6", update: { state: "rolled_back" } });
     expect(await readFile(join(h.root, "pgdata", "data.txt"), "utf-8")).toBe("before-update");
+  });
+
+  it("keeps the old version running when the backup before an update fails", async () => {
+    h.setManifest(manifest("0.6.7"));
+    await h.manager.checkForUpdate();
+    vi.mocked(h.ops.stopPostgres).mockRejectedValueOnce(new Error("pg_ctl stop timed out"));
+
+    await expect(h.manager.installUpdate()).rejects.toThrow(/timed out/);
+
+    expect(h.last()).toMatchObject({ phase: "running", version: "0.6.6", update: { state: "available" } });
+    expect(await h.manager.listBackups()).toHaveLength(0);
+  });
+
+  it("puts the original data back after a restore was interrupted", async () => {
+    await h.manager.stop();
+    await rename(join(h.root, "pgdata"), join(h.root, "pgdata.before-restore"));
+    await mkdir(join(h.root, "pgdata.restoring"), { recursive: true });
+
+    await h.manager.init();
+
+    expect(await readFile(join(h.root, "pgdata", "data.txt"), "utf-8")).toBe("before-update");
+    expect(existsSync(join(h.root, "pgdata.before-restore"))).toBe(false);
+    expect(existsSync(join(h.root, "pgdata.restoring"))).toBe(false);
   });
 
   it("stays latest when the manifest is not newer", async () => {
