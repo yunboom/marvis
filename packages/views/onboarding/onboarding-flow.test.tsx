@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../locales/en/common.json";
 import enOnboarding from "../locales/en/onboarding.json";
@@ -77,9 +78,11 @@ function renderFlow(
   props: { onCancel?: () => void; firstRun?: boolean } = {},
 ) {
   return render(
-    <I18nProvider locale="en" resources={TEST_RESOURCES}>
-      <OnboardingFlow onComplete={vi.fn()} {...props} />
-    </I18nProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <I18nProvider locale="en" resources={TEST_RESOURCES}>
+        <OnboardingFlow onComplete={vi.fn()} {...props} />
+      </I18nProvider>
+    </QueryClientProvider>,
   );
 }
 

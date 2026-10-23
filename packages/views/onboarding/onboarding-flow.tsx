@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   api,
@@ -10,6 +11,7 @@ import {
   parseWithFallback,
 } from "@marvis/core/api";
 import { useAuthStore } from "@marvis/core/auth";
+import { issueKeys } from "@marvis/core/issues/queries";
 import {
   completeOnboarding,
   useBootstrapMika,
@@ -81,6 +83,7 @@ export function OnboardingFlow({
   runtimesPending,
 }: OnboardingFlowProps) {
   const { t, i18n } = useT("onboarding");
+  const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   if (!user) {
     throw new Error("OnboardingFlow requires an authenticated user");
@@ -180,6 +183,11 @@ export function OnboardingFlow({
           issueId = duplicate.issue.id;
         }
         guideIssueRef.current = { workspaceId: workspace.id, issueId };
+        // Desktop mounts the new workspace's issues page under the overlay,
+        // caching its lists before the guide exists. The issue:created event
+        // cannot clear them: it is routed by the current workspace, which this
+        // flow deliberately leaves alone (see handleWorkspaceCreated).
+        void qc.invalidateQueries({ queryKey: issueKeys.all(workspace.id) });
       }
 
       try {
@@ -193,7 +201,7 @@ export function OnboardingFlow({
 
       onComplete(workspace, { kind: "issue", issueId });
     },
-    [bootstrapMika, i18n.language, workspace, onComplete, t, user.id],
+    [bootstrapMika, i18n.language, qc, workspace, onComplete, t, user.id],
   );
 
   // Wait for the list before choosing a step, so a resumable member never

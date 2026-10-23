@@ -6,7 +6,9 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ApiError } from "@marvis/core/api";
+import { issueKeys } from "@marvis/core/issues/queries";
 import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../locales/en/common.json";
 import enOnboarding from "../locales/en/onboarding.json";
@@ -88,12 +90,14 @@ vi.mock("./steps/step-connect-runtime", () => ({
 
 import { OnboardingFlow } from "./onboarding-flow";
 
-function renderAtRuntimeStep() {
+function renderAtRuntimeStep(queryClient = new QueryClient()) {
   const onComplete = vi.fn();
   render(
-    <I18nProvider locale="en" resources={TEST_RESOURCES}>
-      <OnboardingFlow onCancel={vi.fn()} onComplete={onComplete} />
-    </I18nProvider>,
+    <QueryClientProvider client={queryClient}>
+      <I18nProvider locale="en" resources={TEST_RESOURCES}>
+        <OnboardingFlow onCancel={vi.fn()} onComplete={onComplete} />
+      </I18nProvider>
+    </QueryClientProvider>,
   );
   fireEvent.click(screen.getByRole("button", { name: "create workspace" }));
   return { onComplete, skip: screen.getByRole("button", { name: "skip runtime" }) };
@@ -153,6 +157,46 @@ describe("OnboardingFlow — skipping runtime setup", () => {
     expect(mockCreateIssue.mock.invocationCallOrder[0]).toBeLessThan(
       mockCompleteOnboarding.mock.invocationCallOrder[0]!,
     );
+  });
+
+  // Desktop mounts the new workspace's issues page under the onboarding
+  // overlay, so its lists are cached empty before the guide exists. The
+  // issue:created event cannot be relied on to clear them: onboarding never
+  // makes the new workspace current.
+  it("invalidates the new workspace's issue queries once the guide exists", async () => {
+    const queryClient = new QueryClient();
+    const facetsKey = issueKeys.tableFacets("ws-new", {
+      query: {
+        scope: { kind: "workspace" },
+        filters: { include_sub_issues: false },
+        sort: { field: "position", direction: "asc" },
+      },
+      facets: [{ kind: "status" }],
+      include_total: true,
+    });
+    queryClient.setQueryData(facetsKey, { total: 0, facets: [] });
+    mockCreateIssue.mockResolvedValueOnce({ id: "issue-guide" });
+    mockCompleteOnboarding.mockResolvedValueOnce(undefined);
+    const { onComplete, skip } = renderAtRuntimeStep(queryClient);
+
+    fireEvent.click(skip);
+
+    await waitFor(() => expect(onComplete).toHaveBeenCalled());
+    expect(queryClient.getQueryState(facetsKey)?.isInvalidated).toBe(true);
+  });
+
+  it("invalidates the new workspace's issue queries when reusing an existing guide", async () => {
+    const queryClient = new QueryClient();
+    const listKey = issueKeys.all("ws-new");
+    queryClient.setQueryData(listKey, []);
+    mockCreateIssue.mockRejectedValueOnce(duplicateGuideConflict());
+    mockCompleteOnboarding.mockResolvedValueOnce(undefined);
+    const { onComplete, skip } = renderAtRuntimeStep(queryClient);
+
+    fireEvent.click(skip);
+
+    await waitFor(() => expect(onComplete).toHaveBeenCalled());
+    expect(queryClient.getQueryState(listKey)?.isInvalidated).toBe(true);
   });
 
   it("stays on the step when the guide cannot be created", async () => {
