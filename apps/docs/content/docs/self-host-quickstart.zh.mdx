@@ -269,7 +269,7 @@ marvis daemon status
 
 局域网发现让同一网络里的 Desktop 和 CLI 不用输入地址就能找到 Marvis 服务。它适合团队共用一台机器的场景，例如办公室里的一台 Mac。
 
-用 `make start` 或 `make server` 从源码启动服务端时，局域网发现会运行。服务端广播：
+局域网发现默认关闭。在 `.env` 中设置 `MARVIS_LAN_DISCOVERY=true`，再用 `make start` 或 `make server` 从源码启动服务端。服务端广播：
 
 - 服务 `_marvis._tcp`，端口为后端端口，默认 `13840`；
 - 主机名 `marvis.local`。网络里已有另一台 Marvis 服务端占用这个名字时，本机改用 `marvis-2.local`，后端日志会写明实际使用的名字。
@@ -278,7 +278,7 @@ marvis daemon status
 
 | 变量 | 作用 |
 | --- | --- |
-| `MARVIS_LAN_DISCOVERY` | 设为 `false` 时不广播。默认开启。 |
+| `MARVIS_LAN_DISCOVERY` | 设为 `true` 时广播。默认关闭。 |
 | `MARVIS_LAN_NAME` | 客户端里显示的服务器名称。默认取电脑名。 |
 
 客户端只列出找到的服务器，确认之前不会连接，也不会登录。没有找到时，输入地址 `http://marvis.local:13840`。

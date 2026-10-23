@@ -52,6 +52,12 @@
 - 不改的 8080：与后端无关的示例（任意测试域名、CLI 登录回调地址）。worktree 开发环境端口 `18080 + offset` 不是默认端口，保持原样。
 - 同步上游时：合并后执行 `git grep -n -w 8080`，凡是指后端的新增出现处一律改成 13840，无关的保留。
 
+## 决策五：局域网广播默认关闭
+
+`MARVIS_LAN_DISCOVERY` 默认关闭（`server/internal/landiscovery/config.go`），设为 true 才广播，所有部署方式一致；上游默认开启。
+
+- 同步上游时 `config.go`、`config_test.go`、`.env.example` 和 `self-host-quickstart*.mdx` 的局域网发现段落冲突：保留默认关闭，只合入上游新增的行为。
+
 ## 同步上游流程
 
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。

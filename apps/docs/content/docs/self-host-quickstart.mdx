@@ -270,7 +270,7 @@ When the run shows as completed and the agent's reply appears in the timeline, t
 
 LAN discovery lets Desktop and the CLI on the same network find the Marvis server without an address. It fits a team that shares one machine, such as a Mac in the office.
 
-Discovery runs when the server is started from source with `make start` or `make server`. The server advertises:
+Discovery is off by default. Set `MARVIS_LAN_DISCOVERY=true` in `.env`, then start the server from source with `make start` or `make server`. The server advertises:
 
 - the service `_marvis._tcp` on the backend port, `13840` by default;
 - the host name `marvis.local`. When another Marvis server on the network already uses it, this server becomes `marvis-2.local`, and the backend log shows the name in use.
@@ -279,7 +279,7 @@ Two optional variables in `.env` control it:
 
 | Variable | Effect |
 | --- | --- |
-| `MARVIS_LAN_DISCOVERY` | `false` turns advertising off. On by default. |
+| `MARVIS_LAN_DISCOVERY` | `true` turns advertising on. Off by default. |
 | `MARVIS_LAN_NAME` | The server name shown in clients. Defaults to the computer name. |
 
 Clients only list what they find. Nothing connects or signs in until you confirm. When nothing is found, enter `http://marvis.local:13840` as the address.

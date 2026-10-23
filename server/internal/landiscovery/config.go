@@ -60,12 +60,12 @@ type Config struct {
 }
 
 // ConfigFromEnv 从环境变量读取广播配置。
-// MARVIS_LAN_DISCOVERY 为 false 时关闭广播，默认开启；
+// MARVIS_LAN_DISCOVERY 为 true 时才广播，未设置或取值非法时关闭；
 // MARVIS_LAN_NAME 为空时取电脑名并去掉 .local 后缀；
 // 端口取 PORT（服务端的监听端口），缺失或非法时用 DefaultServerPort。
 func ConfigFromEnv(getenv func(string) string, hostname func() (string, error)) Config {
 	cfg := Config{
-		Enabled: true,
+		Enabled: false,
 		Name:    strings.TrimSpace(getenv(envName)),
 		Port:    DefaultServerPort,
 	}
