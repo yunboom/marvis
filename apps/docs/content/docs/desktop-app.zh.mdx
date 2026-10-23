@@ -1,6 +1,6 @@
 ---
 title: 桌面应用
-description: 安装 Marvis Desktop，使用桌面标签页和内置守护进程，并连接自托管实例。
+description: 安装 Marvis Desktop，连接 Marvis 服务器，并使用桌面标签页和内置守护进程。
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -30,7 +30,7 @@ Marvis Desktop 提供 macOS、Windows 和 Linux 版本。它和 Web 版使用相
 | Windows | `.exe` |
 | Linux | `.AppImage`、`.deb` 或 `.rpm` |
 
-安装后使用和 Web 版相同的邮箱登录。登录后，Desktop 会启动自己内置的 Marvis CLI，并检测本机已有的 AI 编程工具。
+安装后，[把 Desktop 连接到 Marvis 服务器](#连接服务器)并登录。登录后，Desktop 会启动自己内置的 Marvis CLI，并检测本机已有的 AI 编程工具。
 
 <Callout type="info">
 Desktop 内置的 CLI 只供应用管理运行时使用。如果你还要在终端中运行 `marvis issue` 等命令，按[快速上手第 2 步](/cloud-quickstart#2-连接一台电脑)单独安装 CLI。
@@ -68,9 +68,62 @@ Desktop 会为每个工作区单独保存标签页。例如，你在工作区 A 
 - Linux 上自动更新只对 `.AppImage` 生效，`.deb` 和 `.rpm` 通过下载新安装包覆盖安装；
 - 自动更新失败时，同样从下载页获取对应安装包覆盖安装。
 
-## 连接自托管实例
+## 连接服务器
 
-Desktop 默认连接 Marvis Cloud。连接自托管实例时，在用户目录的 `.marvis` 下创建 `desktop.json`：
+Desktop 只连接 Marvis 服务器，也就是后端。网页端可选。
+
+### 首次启动
+
+没有配置服务器时，Desktop 显示**连接到 Marvis 服务器**。
+
+1. 在**局域网中的服务器**里选一台，或输入地址。默认地址是 `http://marvis.local:13840`。
+2. 输入地址时，点**测试连接**。Desktop 显示服务器名称和版本，或无法连接的原因。
+3. 点**继续**，在确认页核对地址，再点**连接**。
+4. 登录。
+
+列表随服务器上线、下线实时更新，点**重新查找**可再次查找。电脑和服务器需要在同一个局域网。运行在本机的服务器标有**本机**。版本过旧的服务器会显示，但不能选择。
+
+确认之前 Desktop 不会连接，也不会自动登录。使用 HTTP 的服务器不加密，确认页会提示这一点。
+
+选定的服务器以 `server.json` 保存在 Desktop 的应用数据目录：
+
+| 平台 | 路径 |
+| --- | --- |
+| macOS | `~/Library/Application Support/Marvis/` |
+| Linux | `~/.config/Marvis/` |
+| Windows | `%APPDATA%\Marvis\` |
+
+### 切换服务器
+
+打开**设置 → 本设备 → 服务器**。页面包含：
+
+- 当前服务器的名称、地址和连接状态；
+- 局域网中找到的其他服务器，每台带**切换**；
+- **其他地址**输入框，带**测试连接**和**切换**。
+
+切换会退出当前账号。Desktop 先请你确认，再保存新服务器并进入登录页。内置守护进程自动改用新服务器对应的 profile。
+
+这项设置只影响这台电脑。
+
+### 连接中断
+
+- 服务器停止响应时，主区顶部出现横幅，提示连接已断开，正在重新连接。
+- 多次失败后，横幅提示无法连接服务器，并提供**重试**和**切换服务器**。Desktop 继续检查，服务器恢复后自动回到在线。
+- 从局域网列表选的服务器按 IP 地址保存。这个地址不再应答，而局域网里同一台服务器（按实例 ID 识别）出现在新 IP 时，Desktop 改用新地址，并提示已重新连接。
+- 保存的地址上换了另一台服务器时，Desktop 弹出**这个地址上换了一台服务器**，不会自动切换。选择**继续等待**或**切换服务器**。
+
+### 没有网页端
+
+服务器没有网页地址，或网页地址是 `localhost` 时，Desktop 按没有网页端处理：
+
+- 登录页隐藏 Google 按钮。服务器配置了飞书登录，并在飞书开发者后台登记了桌面端回调地址时，保留飞书按钮，见[Desktop 与网页端](/self-host-quickstart#desktop-与网页端)。点击后在浏览器里完成飞书登录，再回到 Desktop。否则只保留邮箱验证码登录；
+- **复制链接**生成 `marvis://open?...` 链接，在装有 Desktop 且连接同一台服务器的电脑上，链接会在 Desktop 里打开。
+
+## 用 desktop.json 预置服务器
+
+运维人员可以为一台电脑预置服务器。Desktop 只在应用里还没有选定服务器时读取预置，直接连接，不显示连接页，也不会写入这个文件。
+
+在用户目录的 `.marvis` 下创建 `desktop.json`：
 
 | 平台 | 路径 |
 | --- | --- |
@@ -96,6 +149,8 @@ Desktop 默认连接 Marvis Cloud。连接自托管实例时，在用户目录�
 - `wsUrl`：把 `apiUrl` 的协议换成 `ws` 或 `wss`，并在路径后追加 `/ws`；
 - `appUrl`：域名以 `api.` 开头且至少三段时去掉 `api.` 前缀（`api.example.com` → `example.com`），否则保持与 `apiUrl` 相同。
 
+预置的配置一定带网页地址，省略 `appUrl` 时由 Desktop 推导。要在没有网页端的情况下使用 Desktop，请在应用里选择服务器。
+
 通常只写 `apiUrl` 即可。推导不符合预期时再显式覆盖，常见情况有三类：
 
 - Web 与 API 不同域；
@@ -113,10 +168,10 @@ Desktop 默认连接 Marvis Cloud。连接自托管实例时，在用户目录�
 
 保存后重启 Desktop，配置只在启动时读取一次。两种失败的表现不同，据此可以快速区分：
 
-- **文件没找到**（目录不对，或文件名不是 `desktop.json`）：Desktop 使用默认的 Cloud 配置，不报错。所以如果 Desktop 仍然显示 Cloud 地址且没有任何配置错误，说明文件不在 Desktop 查找的位置。
-- **文件找到但无效**（JSON、版本或 URL 有问题）：Desktop 显示配置错误，不会自动回退到 Cloud。
+- **文件没找到**（目录不对，或文件名不是 `desktop.json`）：Desktop 显示连接页，不报错。所以如果 Desktop 仍然要求连接服务器且没有任何配置错误，说明文件不在 Desktop 查找的位置。
+- **文件找到但无效**（JSON、版本或 URL 有问题）：Desktop 显示配置错误。
 
-删除该文件并重启即可恢复默认的 Cloud 配置。
+删除该文件并重启即可回到连接页。如果已在应用里选过服务器，还需要删除应用数据目录里的 `server.json`。
 
 <Callout type="warning">
 Desktop 只能连接浏览器和执行电脑都能访问的地址。远程自托管实例未使用 HTTPS 或未代理 WebSocket 时，Desktop 无法建立连接；完整配置见[自托管快速上手](/self-host-quickstart#3-选择访问方式)。
@@ -179,4 +234,5 @@ Get-FileHash .\marvis-cli-<version>-windows-amd64.zip -Algorithm SHA256
 
 - [快速上手](/cloud-quickstart) — 首次连接流程。
 - [守护进程与运行时](/daemon-runtimes) — 内置守护进程的机制。
+- [自托管快速上手](/self-host-quickstart#局域网发现) — 在局域网中广播服务器。
 - [故障排查](/troubleshooting) — 连接问题排查。

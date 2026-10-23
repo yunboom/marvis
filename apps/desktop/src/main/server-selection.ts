@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, writeFile } from "fs/promises";
 import { join } from "path";
 import {
   normalizeServerAddress,
+  sanitizeDisplayText,
   SERVER_SOURCE_LAN,
   SERVER_SOURCE_MANUAL,
   type SelectedServer,
@@ -56,7 +57,7 @@ export async function writeSelectedServer(
 }
 
 // 把未知输入收窄为 SelectedServer，字段缺失或不合法时返回 null。
-// 读盘和校验界面传来的选择共用这一份规则。
+// 读盘和校验界面传来的选择共用这一份规则；名称会去掉控制字符和方向控制符，再交给界面显示。
 export function toSelectedServer(value: unknown): SelectedServer | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
 
@@ -68,7 +69,7 @@ export function toSelectedServer(value: unknown): SelectedServer | null {
   if (source !== SERVER_SOURCE_LAN && source !== SERVER_SOURCE_MANUAL) return null;
   if (typeof appUrl !== "string") return null;
 
-  return { url, name, instanceId, source, appUrl };
+  return { url, name: sanitizeDisplayText(name), instanceId, source, appUrl };
 }
 
 function isMissingFileError(err: unknown): boolean {

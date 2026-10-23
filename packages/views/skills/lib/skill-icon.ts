@@ -1,6 +1,5 @@
-import type { LucideIcon } from "lucide-react";
 import { WORKSPACE_PAGES } from "@marvis/core/paths";
-import { ROUTE_ICON_COMPONENTS } from "../../layout/route-icon-components";
+import { ROUTE_ICON_COMPONENTS, type RouteIcon } from "../../layout/route-icon-components";
 
 /**
  * The icon that means "a skill", anywhere one is rendered as an entity: list
@@ -14,5 +13,5 @@ import { ROUTE_ICON_COMPONENTS } from "../../layout/route-icon-components";
  * This is for the skill *entity*. A file inside a skill is not a skill; those
  * keep the file-type icons in `file-tree.tsx`.
  */
-export const SkillIcon: LucideIcon =
+export const SkillIcon: RouteIcon =
   ROUTE_ICON_COMPONENTS[WORKSPACE_PAGES.skills.icon];

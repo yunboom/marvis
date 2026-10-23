@@ -170,8 +170,10 @@ spec:
 {{- if .Values.frontend.compatibility.backendAlias }}
 ---
 # DNS alias for legacy marvis-web images that baked
-# REMOTE_API_URL=http://backend:13840 at build time. Current images resolve
+# REMOTE_API_URL=http://backend:8080 at build time. Current images resolve
 # frontend.config.remoteApiUrl at runtime and do not need this Service.
+# The alias only maps the host name: the backend Service now listens on 13840,
+# so those images still call port 8080 and cannot reach it.
 #
 # The name is intentionally unprefixed ("backend", not "{{ .Release.Name }}-backend")
 # because the baked-in host has no release prefix. As a result only ONE release

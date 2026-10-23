@@ -573,6 +573,30 @@ git commit -m "feat(cli): pick a LAN server in setup self-host"
 
 ---
 
+---
+
+### Task 11: 桌面端飞书登录不依赖网页端
+
+见 spec 末尾“补充：桌面端飞书登录不依赖网页端”。
+
+**Files:**
+- Server: Create `server/internal/handler/auth_lark_desktop.go`（两个地址、state 存储、错误页）；Modify `server/internal/handler/auth.go`（把 `completeOAuthLogin` 拆出“签发凭证、返回用户”的部分，网页端 JSON 流程行为不变）、`server/internal/handler/config.go`（`lark_desktop_login`）、`server/cmd/server/router.go`（注册路由、走 authRL）、`server/cmd/server` 启动处（把广播实际使用的主机名和端口交给回调地址计算）、`.env.example`（`MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI`）。
+- Desktop: `apps/desktop/src/main`（生成并保存 nonce、打开浏览器、深链校验 nonce）、preload（`startLarkDesktopLogin()`）、`apps/desktop/src/renderer/src/pages/login.tsx`、`packages/core` 配置读取 `lark_desktop_login`。
+- Docs: `apps/docs/content/docs/desktop-app*.mdx`、`self-host-quickstart*.mdx` 的飞书登录说明（飞书后台登记桌面端回调地址）。
+
+**Interfaces:**
+- 常量 `larkDesktopStartPath = "/auth/lark/desktop-start"`、`larkDesktopCallbackPath = "/auth/lark/desktop-callback"`；state 有效期 10 分钟；nonce 只允许 `[A-Za-z0-9_-]`，长度 32–128。
+- `/api/config` 字段 `lark_desktop_login`（bool，omitempty）。
+- preload `window.desktopAPI.startLarkDesktopLogin(): Promise<void>`。
+
+- [ ] **Step 1: 写失败的测试**
+  - 服务端：start 对非法 nonce 返回 400 页面；合法 nonce 时 302 到飞书授权地址，`redirect_uri` 为配置或推导的回调地址、带 state 与 scope；callback 的 state 只能用一次、过期作废、未知 state 显示过期页；`error=access_denied` 显示“已取消飞书登录”；成功时（飞书接口用 httptest 模拟）响应跳转到 `marvis://auth/callback?token=…&nonce=…`；租户不允许、无邮箱分别显示对应错误页；未配置飞书时 `lark_desktop_login` 缺省、start 显示未配置页。
+  - 桌面端：没有网页端且 `larkDesktopLogin` 为 true 时显示飞书按钮并调用 `startLarkDesktopLogin`；有网页端时走原流程；深链 nonce 一致才派发 token，不一致或过期丢弃，不带 nonce 的旧流程照常派发。
+- [ ] **Step 2–4:** 运行失败 → 实现 → 运行通过（Go 相关包测试与 golangci-lint、desktop vitest 与 typecheck、core 测试、locale parity）
+- [ ] **Step 5: Commit**（server、desktop、docs 分开提交）
+
+---
+
 ### Task 9: 文档与端到端手工验证
 
 **Files:**

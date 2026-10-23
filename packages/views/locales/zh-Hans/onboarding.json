@@ -24,7 +24,7 @@
   "errors": {
     "skip_failed": "完成上手引导失败",
     "guide_failed": "运行时引导任务没有创建成功，请重试。",
-    "mika_setup_failed": "无法启动 Mika 工作区"
+    "mika_setup_failed": "无法启动 Marvis 工作区"
   },
   "step_connect": {
     "progress_workspace": "创建工作区",
@@ -40,7 +40,7 @@
     "waiting": "正在等待你的电脑连接",
     "download_prompt": "不想用终端？",
     "download_link": "下载桌面端",
-    "starting": "正在启动 Mika...",
+    "starting": "正在启动 Marvis...",
     "skip_note": "跳过后智能体无法运行，可稍后在「运行时」页面连接。",
     "stage_normal_prefix": "运行上面的命令。当 ",
     "stage_normal_suffix": " 完成浏览器登录后，你的电脑会自动出现在这里（通常 10–30 秒）。",
@@ -51,10 +51,10 @@
     "stage_stalled_prefix": "目前还没有收到连接。如果你不太习惯终端，",
     "stage_stalled_term": "桌面端",
     "stage_stalled_suffix": " 更顺手——一键搞定，这台电脑就连接好了。用下方链接下载，或点跳过继续。",
-    "start": "开始使用 Mika",
+    "start": "开始使用 Marvis",
     "skip": "暂时跳过",
     "refresh": "刷新",
     "refreshing": "正在刷新...",
-    "mika_name": "Mika"
+    "mika_name": "Marvis"
   }
 }

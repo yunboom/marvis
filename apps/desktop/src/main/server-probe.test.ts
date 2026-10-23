@@ -160,4 +160,69 @@ describe("probeServer", () => {
 
     expect(await pending).toEqual({ kind: "unreachable" });
   });
+
+  it("waits up to 6000 ms for a .local host", async () => {
+    vi.useFakeTimers();
+    const hang = (_input: RequestInfo | URL, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+      });
+
+    const pending = probeServer("http://marvis.local:13840", hang as unknown as typeof fetch);
+    let settled = false;
+    void pending.then(() => {
+      settled = true;
+    });
+
+    await vi.advanceTimersByTimeAsync(5999);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(await pending).toEqual({ kind: "unreachable" });
+  });
+
+  it("not_marvis when the body is larger than 1 MiB", async () => {
+    const big = JSON.stringify({ instance_id: "b", pad: "x".repeat(1024 * 1024) });
+
+    expect(
+      (await probeServer("http://m:13840", async () => new Response(big))).kind,
+    ).toBe("not_marvis");
+  });
+
+  it("not_marvis when the declared length is larger than 1 MiB, without reading the body", async () => {
+    // 这个响应体永远读不完：只要去读它，测试就会超时。
+    const body = new ReadableStream<Uint8Array>({ pull: () => new Promise<void>(() => {}) });
+
+    expect(
+      (
+        await probeServer(
+          "http://m:13840",
+          async () => new Response(body, { headers: { "content-length": String(2 * 1024 * 1024) } }),
+        )
+      ).kind,
+    ).toBe("not_marvis");
+  });
+
+  it("reads a body that fits within 1 MiB", async () => {
+    const fits = JSON.stringify({ instance_id: "b", pad: "x".repeat(1024 * 1024 - 64) });
+
+    expect((await probeServer("http://m:13840", async () => new Response(fits))).kind).toBe("ok");
+  });
+
+  it("strips control and bidi characters from the server identity", async () => {
+    expect(
+      await probeServer(
+        "http://m:13840",
+        json({
+          server_name: "evil\u001b[2Jname\u202e",
+          server_version: "0.6.5\n",
+          instance_id: "inst\u0007-a",
+        }),
+      ),
+    ).toMatchObject({
+      kind: "ok",
+      server: { name: "evil[2Jname", version: "0.6.5", instanceId: "inst-a" },
+    });
+  });
 });

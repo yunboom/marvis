@@ -10,6 +10,7 @@ import {
 } from "@marvis/ui/components/ui/tooltip";
 import type { ChatQuickAction } from "@marvis/core/types";
 import { useT } from "../../i18n";
+import { MIKA_AVATAR_SRC } from "../../onboarding/components/mika-avatar";
 
 /**
  * Product-fixed starter cards rendered under Mika's onboarding opening (the
@@ -169,9 +170,7 @@ function BoardVignette() {
         <MiniCard className="border-brand/45">
           <Bar className="w-3/4" />
           <div className="flex items-center gap-1">
-            <span className="flex size-3.5 items-center justify-center rounded-full bg-muted text-micro leading-none">
-              🦄
-            </span>
+            <img src={MIKA_AVATAR_SRC} alt="" className="size-3.5 rounded-full object-cover" />
             <Bar className="w-6 bg-brand/55" />
           </div>
         </MiniCard>
@@ -194,9 +193,7 @@ function DelegateVignette() {
   return (
     <div aria-hidden="true" className="flex w-45 flex-col gap-1.5">
       <MiniCard className="flex-row items-center gap-1.5 px-2 py-1.5">
-        <span className="flex size-4.5 shrink-0 items-center justify-center rounded-full bg-muted text-micro leading-none">
-          🦄
-        </span>
+        <img src={MIKA_AVATAR_SRC} alt="" className="size-4.5 shrink-0 rounded-full object-cover" />
         <div className="flex flex-1 flex-col gap-1">
           <Bar className="w-5/6" />
           <Bar className="w-1/2" />

@@ -71,6 +71,12 @@ fi
 require_config "$config" 'MARVIS_LAN_DISCOVERY: "false"'
 lan_config="$(MARVIS_LAN_DISCOVERY=true docker compose --env-file "$tmp_env" -f docker-compose.selfhost.yml config)"
 require_config "$lan_config" 'MARVIS_LAN_DISCOVERY: "true"'
+# The backend image itself defaults discovery to off, which also covers Helm
+# and plain `docker run`; an explicit -e MARVIS_LAN_DISCOVERY=true still wins.
+if ! grep -Fxq 'ENV MARVIS_LAN_DISCOVERY=false' Dockerfile; then
+  echo "Dockerfile must default MARVIS_LAN_DISCOVERY to false"
+  exit 1
+fi
 require_config "$config" 'DATABASE_REPLICA_URL: postgres://reader:secret@replica.example.com:5432/marvis?sslmode=require'
 require_config "$config" 'DATABASE_REPLICA_MAX_CONNS: "12"'
 require_config "$config" 'DATABASE_REPLICA_MIN_CONNS: "1"'

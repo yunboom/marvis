@@ -16,6 +16,9 @@ import (
 	"github.com/yunboom/marvis/server/internal/cli"
 )
 
+// healthProbeTimeout 是 setup 探测服务器 /health 的超时，.local 地址用 mdnsProbeTimeout。
+const healthProbeTimeout = 2 * time.Second
+
 var setupCmd = &cobra.Command{
 	Use:   "setup",
 	Short: "Configure the CLI, authenticate, and start the daemon",
@@ -60,8 +63,9 @@ Use --server-url and --app-url to specify a custom server (e.g. an on-premise de
 
 When run in a terminal without --server-url, MARVIS_SERVER_URL or an existing
 server_url, it looks for Marvis servers on the local network and lets you pick
-one. The server Marvis Desktop is using is listed first. The web app address is
-read from the selected server; without one, log in with 'marvis login --token'.
+one. A server running on this computer (localhost:<port>) is listed first, then
+the server Marvis Desktop is using. The web app address is read from the
+selected server; without one, log in with 'marvis login --token'.
 
 If you run this command from a different machine than the server, also pass
 --callback-host <host-or-ip-the-browser-can-reach-back-to-this-machine-on> so
@@ -203,45 +207,48 @@ func runSetupSelfHost(cmd *cobra.Command, args []string) error {
 	// error (GitHub #3912).
 	existing, _ := cli.LoadCLIConfigForProfile(profile)
 	serverURL, userProvidedServerURL := resolveSelfHostServerURL(cmd, existing)
-	appURL := resolveSelfHostAppURL(cmd, existing)
 	frontendPort, _ := cmd.Flags().GetInt("frontend-port")
+	backendPort, _ := cmd.Flags().GetInt("port")
 
-	// 在终端里没有指定服务器时，先在局域网内查找并让用户选择，
-	// 网页端地址取所选服务器 /api/config 里的 daemon_app_url（没有则为空）。
-	// --app-url / MARVIS_APP_URL 仍然优先。
-	discovered := false
+	loginInput := selfHostLoginInput{
+		ExplicitAppURL:        cli.FlagOrEnv(cmd, "app-url", "MARVIS_APP_URL", ""),
+		ConfiguredAppURL:      resolveSelfHostAppURL(cmd, existing),
+		UserProvidedServerURL: userProvidedServerURL,
+		FrontendPort:          frontendPort,
+	}
+
+	// 在终端里没有指定服务器时，先在局域网内查找并让用户选择；本机 localhost 上的服务器排在最前。
+	// 网页端地址取所选服务器 /api/config 里的 daemon_app_url，--app-url / MARVIS_APP_URL 仍然优先。
 	if shouldDiscoverSelfHostServer(cmd, userProvidedServerURL, stdinIsTerminal()) {
-		picked, err := discoverSelfHostServer(context.Background(), newDiscoverDeps(), os.Stdin, os.Stderr)
+		localURL := fmt.Sprintf("http://%s:%d", hostnameLocalhost, backendPort)
+
+		picked, err := discoverSelfHostServer(context.Background(), newDiscoverDeps(), localURL, os.Stdin, os.Stderr)
 		if err != nil {
 			return err
 		}
 
-		discovered = true
 		serverURL = picked.URL
-
-		appURL = cli.FlagOrEnv(cmd, "app-url", "MARVIS_APP_URL", "")
-		if appURL == "" {
-			appURL = picked.AppURL
-		}
+		loginInput.Picked = &picked
 	}
 
-	if appURL == "" && !discovered {
-		if userProvidedServerURL && !serverHostIsLocal(serverURL) {
-			// We can't guess the frontend URL for a remote server: api.x.co
-			// and app.x.co, or an https-fronted deployment, would silently
-			// produce a broken login URL. Ask the user instead.
-			entered, err := promptAppURL(serverURL)
-			if err != nil {
-				return err
-			}
-			if entered == "" {
-				return fmt.Errorf("--app-url is required when --server-url points at a remote host (e.g. --app-url https://app.internal.co)")
-			}
-			appURL = entered
-		} else {
-			appURL = fmt.Sprintf("http://localhost:%d", frontendPort)
+	loginInput.ServerURL = serverURL
+	login := resolveSelfHostLogin(loginInput)
+
+	if login.AskAppURL {
+		// We can't guess the frontend URL for a remote server: api.x.co
+		// and app.x.co, or an https-fronted deployment, would silently
+		// produce a broken login URL. Ask the user instead.
+		entered, err := promptAppURL(serverURL)
+		if err != nil {
+			return err
 		}
+		if entered == "" {
+			return fmt.Errorf("--app-url is required when --server-url points at a remote host (e.g. --app-url https://app.internal.co)")
+		}
+		login.AppURL = entered
 	}
+
+	appURL := login.AppURL
 
 	ok, err := confirmOverwrite(profile, serverURL, appURL)
 	if err != nil {
@@ -274,7 +281,7 @@ func runSetupSelfHost(cmd *cobra.Command, args []string) error {
 	printConfigLocation(profile)
 
 	// 选中的服务器没有网页端时无法走浏览器登录，提示改用令牌登录。
-	if appURL == "" {
+	if !login.BrowserLogin() {
 		fmt.Fprintln(os.Stderr, "")
 		printNoWebAppGuidance(os.Stderr)
 
@@ -471,9 +478,12 @@ func promptAppURL(serverURL string) (string, error) {
 }
 
 // probeServer checks whether a Marvis backend is reachable at the given URL.
+// .local 地址要靠组播解析，超时放宽到 mdnsProbeTimeout。
 func probeServer(baseURL string) bool {
 	url := strings.TrimRight(baseURL, "/") + "/health"
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	timeout := probeTimeoutFor(baseURL, healthProbeTimeout)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -481,7 +491,7 @@ func probeServer(baseURL string) bool {
 		return false
 	}
 
-	resp, err := (&http.Client{Timeout: 2 * time.Second}).Do(req)
+	resp, err := (&http.Client{Timeout: timeout}).Do(req)
 	if err != nil {
 		return false
 	}

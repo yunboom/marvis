@@ -157,3 +157,19 @@
 - 发现列表的去重（同一实例多块网卡、多个地址）与超时时间。
 - 重连的间隔与“多次失败”的判定次数。
 - 同源判断在经过网页端转发时如何取到原始来源地址（例如 `X-Forwarded-Host`），以及只信任来自本机网页端转发的这类请求头。
+
+## 补充：桌面端飞书登录不依赖网页端（2026-10-23 追加）
+
+只部署服务端时，桌面端仍显示“使用飞书登录”，由后端直接完成飞书授权回调。
+
+- **飞书后台**：重定向 URL 已登记 `http://marvis.local:13840/auth/lark/desktop-callback`（用户已配置）。
+- **后端新增两个浏览器访问的地址**（走登录限流）：
+  - `GET /auth/lark/desktop-start?nonce=<桌面端生成的一次性随机串>`：校验 nonce 格式，生成一次性 `state`（有效 10 分钟，只能用一次，存在后端内存里，单实例部署），跳转到飞书授权页（`client_id`、`redirect_uri`、`state`、`scope=contact:user.email:readonly`，与网页端一致）。
+  - `GET /auth/lark/desktop-callback?code&state`：校验并作废 `state`；用户取消或出错时显示简短的错误页；成功时沿用现有飞书登录的换码、取用户信息、租户白名单、邮箱、找人或建号逻辑，签发登录凭证，然后跳回 `marvis://auth/callback?token=<凭证>&nonce=<nonce>`。跳转页同时给一个“打开 Marvis”按钮，防止浏览器拦截自定义协议跳转。
+- **回调地址的确定**：环境变量 `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` 优先；未配置且局域网发现开启时，用实际广播的主机名和后端端口拼出 `http://<主机名>.local:<端口>/auth/lark/desktop-callback`；都没有时桌面端不显示飞书按钮。
+- **`/api/config`** 新增 `lark_desktop_login`（布尔）：飞书登录已配置且回调地址可用时为 true。
+- **桌面端**：
+  - 有网页端时沿用现有流程；没有网页端且 `lark_desktop_login` 为 true 时，飞书按钮改走新流程：主进程生成 nonce（10 分钟有效），用浏览器打开 `<服务器地址>/auth/lark/desktop-start?nonce=…`。
+  - 深链 `marvis://auth/callback` 带 `nonce` 时，只有与待完成的 nonce 一致才接受凭证，用后作废；不带 `nonce` 的旧网页端跳转流程保持不变。
+- **Google 登录**：Google 不允许局域网地址作为回调，没有网页端时仍隐藏。
+- **错误页文案**（中文，简短）：标题“飞书登录失败”，正文按原因给出“登录已过期，请回到 Marvis 重新点击飞书登录”“这个飞书企业不允许登录”“飞书账号没有邮箱”“服务器未配置飞书登录”；用户在飞书页取消时显示“已取消飞书登录”。

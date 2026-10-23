@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useState } from "react";
-import { Loader2, RefreshCw, Server } from "lucide-react";
+import { Loader2, RefreshCw, Server, TriangleAlert } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthStore } from "@marvis/core/auth";
@@ -34,6 +34,7 @@ import { ServerAddressField } from "./server-address-field";
 import { useLanServers } from "./use-lan-servers";
 
 const DETAIL_SEPARATOR = " · ";
+const HTTP_PROTOCOL = "http:";
 
 // 当前服务器的连接状态：打开设置页时探测一次，探测结束前不显示任何状态。
 const CONNECTION_CHECKING = "checking";
@@ -52,10 +53,12 @@ interface CurrentServer {
   instanceId: string;
 }
 
-// 用户点了“切换”、等待确认的目标。address 是对话框里展示的主机和端口。
+// 用户点了“切换”、等待确认的目标。address 是对话框里展示的完整地址（带协议），
+// insecure 表示使用 HTTP 连接，对话框要像连接页的确认步骤一样提示不加密。
 interface SwitchTarget {
   selected: SelectedServer;
   address: string;
+  insecure: boolean;
 }
 
 function hostOf(url: string): string {
@@ -71,7 +74,8 @@ function toSwitchTarget(server: ServerIdentity, source: ServerSource): SwitchTar
       source,
       appUrl: server.appUrl,
     },
-    address: hostOf(server.url),
+    address: normalizeServerAddress(server.url) ?? server.url,
+    insecure: new URL(server.url).protocol === HTTP_PROTOCOL,
   };
 }
 
@@ -281,6 +285,15 @@ export function ServerSettingsTab() {
                   })}
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              {target.insecure && (
+                <div
+                  role="note"
+                  className="flex gap-2.5 rounded-xl bg-warning/10 px-3.5 py-3 text-label leading-relaxed"
+                >
+                  <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
+                  <span>{t(($) => $.desktop.server.confirm.http_warning)}</span>
+                </div>
+              )}
               <AlertDialogFooter>
                 <AlertDialogCancel variant="secondary" disabled={switching}>
                   {t(($) => $.desktop.server.settings.cancel)}

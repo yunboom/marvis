@@ -168,6 +168,11 @@ type Config struct {
 	// InstanceID 是本部署的实例 ID（instance_telemetry_state.instance_id）。
 	// 经 /api/config 下发，客户端用它判断服务器版本是否支持局域网发现并去重；空时不下发。
 	InstanceID string
+	// LANHostname 返回局域网广播当前使用的主机名（如 marvis.local），没有在广播时返回空串；
+	// nil 表示不广播。桌面端飞书登录用它和 LANPort 推导回调地址。
+	LANHostname func() string
+	// LANPort 是局域网广播的端口，即服务端监听端口。
+	LANPort int
 	// GitExtraCACerts is the PEM of the private CAs the operator added to the
 	// backend's trust store through SSL_CERT_DIR (see internal/gitca). It is
 	// handed to daemons with the workspace repos so their git can reach a
@@ -289,6 +294,8 @@ type Handler struct {
 	// 飞书登录的测试注入点：nil / 空串时分别使用默认 HTTP client 与 https://open.feishu.cn。
 	larkLoginHTTPClient *http.Client
 	larkLoginAPIBaseURL string
+	// larkDesktopStates 保存桌面端飞书登录的一次性 state，由 New 创建；为 nil 时桌面端飞书登录不可用。
+	larkDesktopStates *larkDesktopStateStore
 	// Lark integration. All three are nil when the Lark master key
 	// (MARVIS_LARK_SECRET_KEY) is unset; the corresponding HTTP
 	// handlers return 403 in that case so a misconfigured self-host
@@ -539,8 +546,9 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 			BaseURL: cfg.CloudURL,
 			Timeout: cfg.CloudTimeout,
 		}),
-		LLM: llmClient,
-		cfg: cfg,
+		LLM:               llmClient,
+		cfg:               cfg,
+		larkDesktopStates: &larkDesktopStateStore{},
 	}
 	h.WebhookDeliveryWorker = NewWebhookDeliveryWorker(h)
 	// The default passthrough scheduler reports sweeper-race recoveries so the

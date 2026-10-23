@@ -75,11 +75,11 @@
     "scope_label": "Portée"
   },
   "mika_setup": {
-    "title": "Votre runtime est prêt. Commencez avec Mika.",
-    "description": "Laissez Mika organiser les tâches et coordonner les agents.",
-    "action": "Commencer avec Mika",
-    "failed": "Impossible de démarrer Mika",
-    "dialog_title": "Où Mika doit-il s'exécuter ?",
+    "title": "Votre runtime est prêt. Commencez avec Marvis.",
+    "description": "Laissez Marvis organiser les tâches et coordonner les agents.",
+    "action": "Commencer avec Marvis",
+    "failed": "Impossible de démarrer Marvis",
+    "dialog_title": "Où Marvis doit-il s'exécuter ?",
     "cancel": "Annuler",
     "runtime_label": "Runtime",
     "model_label": "Modèle"

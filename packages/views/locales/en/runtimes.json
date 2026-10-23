@@ -75,11 +75,11 @@
     "scope_label": "Scope"
   },
   "mika_setup": {
-    "title": "Your runtime is ready. Start with Mika.",
-    "description": "Let Mika organize work and coordinate agents.",
-    "action": "Start with Mika",
-    "failed": "Couldn't start Mika",
-    "dialog_title": "Where should Mika run?",
+    "title": "Your runtime is ready. Start with Marvis.",
+    "description": "Let Marvis organize work and coordinate agents.",
+    "action": "Start with Marvis",
+    "failed": "Couldn't start Marvis",
+    "dialog_title": "Where should Marvis run?",
     "cancel": "Cancel",
     "runtime_label": "Runtime",
     "model_label": "Model"

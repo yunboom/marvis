@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps, ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { RouteIcon } from "./route-icon-components";
 import { Button } from "@marvis/ui/components/ui/button";
 import {
   Empty,
@@ -88,7 +88,7 @@ export const COLLECTION_BATCH_DIVIDER = "mx-1.5 h-5 w-px shrink-0 bg-border";
 export const COLLECTION_BATCH_ACTION = "h-8 rounded-full px-3 text-label font-normal";
 
 interface CollectionPageHeaderProps {
-  icon: LucideIcon;
+  icon: RouteIcon;
   title: ReactNode;
   count?: number;
   description?: ReactNode;
@@ -156,7 +156,7 @@ export function CollectionPageHeader({
 
 interface CollectionPageHeaderActionProps
   extends Omit<ComponentProps<typeof Button>, "children"> {
-  icon: LucideIcon;
+  icon: RouteIcon;
   label: string;
 }
 
@@ -193,7 +193,7 @@ export function CollectionPageHeaderAction({
 type PageStateTone = "muted" | "destructive" | "warning";
 
 interface CollectionPageStateProps {
-  icon: LucideIcon;
+  icon: RouteIcon;
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;

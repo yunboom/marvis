@@ -1331,6 +1331,7 @@
       },
       "probe": {
         "ok": "接続できます · {{name}} · {{version}}",
+        "ok_no_version": "接続できます · {{name}}",
         "unreachable": "このアドレスに接続できません",
         "not_marvis": "このアドレスは Marvis サーバーではありません",
         "too_old": "サーバーのバージョンが古すぎます"

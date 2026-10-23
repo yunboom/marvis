@@ -24,13 +24,13 @@
   "errors": {
     "skip_failed": "Échec de la finalisation de la prise en main",
     "guide_failed": "Le guide de runtime n'a pas été créé. Veuillez réessayer.",
-    "mika_setup_failed": "Impossible de démarrer votre espace de travail Mika"
+    "mika_setup_failed": "Impossible de démarrer votre espace de travail Marvis"
   },
   "step_connect": {
     "progress_workspace": "Créer l'espace de travail",
     "progress_runtime": "Connecter un runtime",
     "title": "Connecter un runtime",
-    "mika_blurb": " s'exécute sur l'ordinateur que vous connectez. Elle reçoit vos demandes, les transforme en tâches et les confie aux bons agents.",
+    "mika_blurb": " s'exécute sur l'ordinateur que vous connectez. Il reçoit vos demandes, les transforme en tâches et les confie aux bons agents.",
     "runtime_label": "Runtime",
     "model_label": "Modèle",
     "scanning": "Recherche des outils de code IA sur cet ordinateur...",
@@ -40,7 +40,7 @@
     "waiting": "En attente de la connexion de votre ordinateur",
     "download_prompt": "Vous préférez éviter le terminal ?",
     "download_link": "Télécharger l'application de bureau",
-    "starting": "Démarrage de Mika...",
+    "starting": "Démarrage de Marvis...",
     "skip_note": "Les agents ne peuvent pas s'exécuter sans runtime. Vous pourrez en connecter un plus tard depuis la page Runtimes.",
     "stage_normal_prefix": "Exécutez la commande ci-dessus. Dès que ",
     "stage_normal_suffix": " aura terminé la connexion via le navigateur, votre ordinateur apparaîtra ici automatiquement (généralement en 10 à 30 secondes).",
@@ -51,10 +51,10 @@
     "stage_stalled_prefix": "Rien ne remonte pour l'instant. Si le terminal ne vous met pas à l'aise, ",
     "stage_stalled_term": "l'application de bureau",
     "stage_stalled_suffix": " est la voie la plus simple — un clic et cet ordinateur est connecté. Utilisez le lien de téléchargement ci-dessous, ou ignorez pour l'instant.",
-    "start": "Commencer avec Mika",
+    "start": "Commencer avec Marvis",
     "skip": "Passer pour l'instant",
     "refresh": "Actualiser",
     "refreshing": "Actualisation…",
-    "mika_name": "Mika"
+    "mika_name": "Marvis"
   }
 }

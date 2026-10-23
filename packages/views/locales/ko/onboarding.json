@@ -24,7 +24,7 @@
   "errors": {
     "skip_failed": "온보딩을 마치지 못했습니다",
     "guide_failed": "런타임 안내 태스크를 만들지 못했습니다. 다시 시도해 주세요.",
-    "mika_setup_failed": "Mika 워크스페이스를 시작하지 못했습니다"
+    "mika_setup_failed": "Marvis 워크스페이스를 시작하지 못했습니다"
   },
   "step_connect": {
     "progress_workspace": "워크스페이스 만들기",
@@ -40,7 +40,7 @@
     "waiting": "컴퓨터 연결을 기다리는 중",
     "download_prompt": "터미널을 쓰지 않으려면",
     "download_link": "데스크톱 앱 다운로드",
-    "starting": "Mika를 시작하는 중...",
+    "starting": "Marvis를 시작하는 중...",
     "skip_note": "런타임을 연결하기 전에는 에이전트가 실행되지 않습니다. 나중에 '런타임' 페이지에서 연결할 수 있습니다.",
     "stage_normal_prefix": "위 명령을 실행하세요. ",
     "stage_normal_suffix": "의 브라우저 로그인이 끝나면 컴퓨터가 자동으로 여기에 표시됩니다(보통 10-30초).",
@@ -51,10 +51,10 @@
     "stage_stalled_prefix": "아직 아무 것도 들어오지 않습니다. 터미널이 익숙하지 않다면 ",
     "stage_stalled_term": "데스크톱",
     "stage_stalled_suffix": "이 더 부드러운 경로입니다. 한 번 클릭하면 이 컴퓨터가 연결됩니다. 아래 링크에서 다운로드하거나 건너뛰기를 눌러 계속하세요.",
-    "start": "Mika와 시작",
+    "start": "Marvis와 시작",
     "skip": "지금은 건너뛰기",
     "refresh": "새로고침",
     "refreshing": "새로고침 중...",
-    "mika_name": "Mika"
+    "mika_name": "Marvis"
   }
 }

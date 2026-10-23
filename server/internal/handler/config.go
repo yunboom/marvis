@@ -30,6 +30,8 @@ type AppConfig struct {
 	GoogleClientID string `json:"google_client_id,omitempty"`
 	// LarkLoginAppID 是飞书登录应用的 App ID，app id 与 secret 都配置时才下发。
 	LarkLoginAppID string `json:"lark_login_app_id,omitempty"`
+	// LarkDesktopLogin 表示桌面端没有网页端时也能用飞书登录：飞书登录已配置且有桌面端回调地址。
+	LarkDesktopLogin bool `json:"lark_desktop_login,omitempty"`
 	// WorkspaceCreationDisabled mirrors the server-side
 	// DISABLE_WORKSPACE_CREATION env var so the UI can hide every
 	// "Create workspace" affordance on self-hosted instances. Omitted
@@ -132,6 +134,7 @@ func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
 	if os.Getenv(larkLoginAppSecretEnv) != "" {
 		config.LarkLoginAppID = os.Getenv(larkLoginAppIDEnv)
 	}
+	config.LarkDesktopLogin = h.larkDesktopLoginAvailable()
 	if h.Storage != nil {
 		config.CdnDomain = h.Storage.CdnDomain()
 	}

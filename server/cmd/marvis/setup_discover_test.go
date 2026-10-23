@@ -40,7 +40,7 @@ func TestMergeCandidates(t *testing.T) {
 		{Name: testDesktopName, Host: "marvis.local.", Port: 13840, InstanceID: "a"},
 	}
 
-	got := mergeCandidates(desktop, found)
+	got := mergeCandidates(nil, desktop, found)
 	if len(got) != 2 {
 		t.Fatalf("len: got %d (%+v), want 2", len(got), got)
 	}
@@ -55,22 +55,26 @@ func TestMergeCandidates(t *testing.T) {
 	}
 }
 
-func TestMergeCandidatesBuildsURLFromHost(t *testing.T) {
+func TestMergeCandidatesBuildsURLFromIPv4(t *testing.T) {
 	found := []landiscovery.Entry{
 		{
 			Name: "v6 first", Host: "marvis.local.", Port: 13840, InstanceID: "a",
 			IPs: []net.IP{net.ParseIP("fe80::1"), net.ParseIP("192.168.1.20")},
 		},
 		{Name: "no host", Host: "", Port: 13840, InstanceID: "b", IPs: []net.IP{net.ParseIP("192.168.1.21")}},
-		{Name: "no port", Host: "marvis-3.local.", Port: 0, InstanceID: "c"},
+		{Name: "no port", Host: "marvis-3.local.", Port: 0, InstanceID: "c", IPs: []net.IP{net.ParseIP("192.168.1.22")}},
+		{Name: "nothing to connect to", Host: "", Port: 13840, InstanceID: "d"},
 	}
 
-	got := mergeCandidates(nil, found)
-	if len(got) != 1 {
-		t.Fatalf("len: got %d (%+v), want 1", len(got), got)
+	got := mergeCandidates(nil, nil, found)
+	if len(got) != 2 {
+		t.Fatalf("len: got %d (%+v), want 2", len(got), got)
 	}
-	if got[0].URL != defaultServerAddress {
-		t.Fatalf("url: got %q", got[0].URL)
+	if got[0].URL != "http://192.168.1.21:13840" || got[0].Host != "" {
+		t.Fatalf("no host entry: got %+v", got[0])
+	}
+	if got[1].URL != testLANURL || got[1].Host != testMarvisHost {
+		t.Fatalf("v6 first entry: got %+v", got[1])
 	}
 }
 
@@ -81,7 +85,7 @@ func TestMergeCandidatesWithoutDesktopIsSortedByName(t *testing.T) {
 		{Name: "beta", Host: "marvis-2.local.", Port: 13840, InstanceID: "b"},
 	}
 
-	got := mergeCandidates(nil, found)
+	got := mergeCandidates(nil, nil, found)
 	names := make([]string, 0, len(got))
 	for _, c := range got {
 		names = append(names, c.Name)
@@ -104,7 +108,7 @@ func TestMergeCandidatesMatchesDesktopByInstanceID(t *testing.T) {
 		{Name: testDesktopName, Host: "marvis.local.", Port: 13840, InstanceID: "a", ServerVersion: "0.6.5"},
 	}
 
-	got := mergeCandidates(desktop, found)
+	got := mergeCandidates(nil, desktop, found)
 	if len(got) != 1 {
 		t.Fatalf("len: got %d (%+v), want 1", len(got), got)
 	}
@@ -119,7 +123,7 @@ func TestMergeCandidatesMatchesDesktopByInstanceID(t *testing.T) {
 func TestMergeCandidatesDesktopOnlyFallsBackToHostName(t *testing.T) {
 	desktop := &cli.DesktopServer{URL: "http://192.168.1.20:13840"}
 
-	got := mergeCandidates(desktop, nil)
+	got := mergeCandidates(nil, desktop, nil)
 	if len(got) != 1 || got[0].Name != "192.168.1.20:13840" {
 		t.Fatalf("got %+v", got)
 	}
@@ -326,14 +330,10 @@ func TestDisplayWidthCountsWideCharacters(t *testing.T) {
 	}
 }
 
-func TestWebAppURLFromConfig(t *testing.T) {
+func TestNormalizeWebAppURL(t *testing.T) {
 	for in, want := range map[string]string{
 		"":                           "",
-		"http://localhost:3000":      "",
-		"http://LOCALHOST:3000":      "",
-		"http://127.0.0.1:3000":      "",
-		"http://[::1]:3000":          "",
-		"https://localhost":          "",
+		"http://localhost:3000":      "http://localhost:3000",
 		"https://app.internal.co":    "https://app.internal.co",
 		"https://app.internal.co/":   "https://app.internal.co",
 		"http://192.168.1.20:3000":   "http://192.168.1.20:3000",
@@ -344,8 +344,8 @@ func TestWebAppURLFromConfig(t *testing.T) {
 		"http://":                    "",
 		"  https://app.internal.co ": "https://app.internal.co",
 	} {
-		if got := webAppURLFromConfig(in); got != want {
-			t.Fatalf("webAppURLFromConfig(%q): got %q, want %q", in, got, want)
+		if got := normalizeWebAppURL(in); got != want {
+			t.Fatalf("normalizeWebAppURL(%q): got %q, want %q", in, got, want)
 		}
 	}
 }
@@ -387,15 +387,15 @@ func TestFetchServerIdentity(t *testing.T) {
 		}
 	})
 
-	t.Run("loopback app url means no web app", func(t *testing.T) {
+	t.Run("loopback app url is kept for the local server check", func(t *testing.T) {
 		srv := newConfigServer(t, http.StatusOK, `{"instance_id": "inst-a", "daemon_app_url": "http://localhost:3000"}`)
 
 		got, err := fetchServerIdentity(context.Background(), srv.URL)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if got.AppURL != "" {
-			t.Fatalf("app url: want empty, got %q", got.AppURL)
+		if got.AppURL != "http://localhost:3000" {
+			t.Fatalf("app url: want the loopback address, got %q", got.AppURL)
 		}
 	})
 
@@ -458,7 +458,7 @@ func TestVerifyCandidates(t *testing.T) {
 		}
 	}
 
-	got, identities := verifyCandidates(context.Background(), cands, fetch)
+	got, identities := verifyCandidates(context.Background(), cands, nil, fetch)
 	if len(got) != 2 {
 		t.Fatalf("len: got %d (%+v), want 2", len(got), got)
 	}
@@ -482,7 +482,7 @@ func TestVerifyCandidatesKeepsUnreachableDesktopServer(t *testing.T) {
 		return serverIdentity{}, errors.New("connection refused")
 	}
 
-	got, identities := verifyCandidates(context.Background(), cands, fetch)
+	got, identities := verifyCandidates(context.Background(), cands, nil, fetch)
 	if len(got) != 1 || got[0].Name != testDesktopName || !got[0].FromDesktop {
 		t.Fatalf("the server the desktop uses stays selectable: %+v", got)
 	}
@@ -516,7 +516,7 @@ func TestVerifyCandidatesProbesConcurrently(t *testing.T) {
 		}
 	}
 
-	got, _ := verifyCandidates(context.Background(), cands, fetch)
+	got, _ := verifyCandidates(context.Background(), cands, nil, fetch)
 	if len(got) != count {
 		t.Fatalf("all probes must succeed together, got %d", len(got))
 	}
@@ -557,7 +557,9 @@ func newDiscoverFakes(desktop *cli.DesktopServer, found []landiscovery.Entry, id
 			}
 			return serverIdentity{}, errors.New("connection refused")
 		},
-		probe: func(u string) bool { _, ok := identities[u]; return ok },
+		probe:      func(u string) bool { _, ok := identities[u]; return ok },
+		localAddrs: func() []net.IP { return nil },
+		lookupHost: func(context.Context, string) ([]net.IP, error) { return nil, errors.New("no such host") },
 	}
 }
 
@@ -573,7 +575,7 @@ func TestDiscoverSelfHostServerPicksDesktopServer(t *testing.T) {
 	})
 	var out strings.Builder
 
-	got, err := discoverSelfHostServer(context.Background(), deps, strings.NewReader("\n"), &out)
+	got, err := discoverSelfHostServer(context.Background(), deps, testLocalURL, strings.NewReader("\n"), &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -600,7 +602,7 @@ func TestDiscoverSelfHostServerPickedServerWithoutWebApp(t *testing.T) {
 	})
 	var out strings.Builder
 
-	got, err := discoverSelfHostServer(context.Background(), deps, strings.NewReader("1\n"), &out)
+	got, err := discoverSelfHostServer(context.Background(), deps, testLocalURL, strings.NewReader("1\n"), &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -618,7 +620,7 @@ func TestDiscoverSelfHostServerNothingFound(t *testing.T) {
 	})
 	var out strings.Builder
 
-	got, err := discoverSelfHostServer(context.Background(), deps, strings.NewReader("\n"), &out)
+	got, err := discoverSelfHostServer(context.Background(), deps, testLocalURL, strings.NewReader("\n"), &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -643,7 +645,7 @@ func TestDiscoverSelfHostServerNothingFoundKeepsDesktopServer(t *testing.T) {
 	})
 	var out strings.Builder
 
-	got, err := discoverSelfHostServer(context.Background(), deps, strings.NewReader("\n"), &out)
+	got, err := discoverSelfHostServer(context.Background(), deps, testLocalURL, strings.NewReader("\n"), &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -668,7 +670,7 @@ func TestDiscoverSelfHostServerDropsUnverifiedAnnouncements(t *testing.T) {
 	})
 	var out strings.Builder
 
-	got, err := discoverSelfHostServer(context.Background(), deps, strings.NewReader("\n"), &out)
+	got, err := discoverSelfHostServer(context.Background(), deps, testLocalURL, strings.NewReader("\n"), &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -689,7 +691,7 @@ func TestDiscoverSelfHostServerBrowseFailureFallsBackToManualEntry(t *testing.T)
 	}
 	var out strings.Builder
 
-	got, err := discoverSelfHostServer(context.Background(), deps, strings.NewReader("http://10.0.0.2:13840\n"), &out)
+	got, err := discoverSelfHostServer(context.Background(), deps, testLocalURL, strings.NewReader("http://10.0.0.2:13840\n"), &out)
 	if err != nil {
 		t.Fatalf("a failed search must not stop manual entry: %v", err)
 	}
@@ -706,7 +708,7 @@ func TestDiscoverSelfHostServerManualServerWithUnreadableConfig(t *testing.T) {
 	deps.probe = func(string) bool { return true }
 	var out strings.Builder
 
-	got, err := discoverSelfHostServer(context.Background(), deps, strings.NewReader("http://10.0.0.2:13840\n"), &out)
+	got, err := discoverSelfHostServer(context.Background(), deps, testLocalURL, strings.NewReader("http://10.0.0.2:13840\n"), &out)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -718,7 +720,7 @@ func TestDiscoverSelfHostServerManualServerWithUnreadableConfig(t *testing.T) {
 func TestDiscoverSelfHostServerClosedInput(t *testing.T) {
 	deps := newDiscoverFakes(nil, nil, nil)
 
-	if _, err := discoverSelfHostServer(context.Background(), deps, strings.NewReader(""), io.Discard); err == nil {
+	if _, err := discoverSelfHostServer(context.Background(), deps, testLocalURL, strings.NewReader(""), io.Discard); err == nil {
 		t.Fatalf("want an error when no server is chosen")
 	}
 }

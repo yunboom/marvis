@@ -135,6 +135,32 @@ describe("AuthInitializer recovery", () => {
     });
   });
 
+  it("publishes whether Feishu login works on desktop without a web app", async () => {
+    const api = makeApi({
+      getConfig: vi.fn().mockResolvedValue({
+        lark_login_app_id: "cli_lark",
+        lark_desktop_login: true,
+      }),
+    });
+    renderInitializer({ api });
+
+    await waitFor(() => {
+      expect(configStore.getState().larkDesktopLogin).toBe(true);
+    });
+    expect(configStore.getState().larkLoginAppId).toBe("cli_lark");
+  });
+
+  it("treats a server without the desktop Feishu flag as unavailable", async () => {
+    configStore.getState().setAuthConfig({ allowSignup: true, larkDesktopLogin: true });
+    const getConfig = vi.fn().mockResolvedValue({ lark_login_app_id: "cli_lark" });
+    renderInitializer({ api: makeApi({ getConfig }) });
+
+    await waitFor(() => {
+      expect(getConfig).toHaveBeenCalled();
+      expect(configStore.getState().larkDesktopLogin).toBe(false);
+    });
+  });
+
   it("keeps the token and recovers on the online event after a network failure", async () => {
     const storage = makeStorage({ marvis_token: "token-1" });
     const getMe = vi

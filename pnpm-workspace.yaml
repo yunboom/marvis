@@ -4,6 +4,7 @@ packages:
 
 catalog:
   '@formatjs/intl-localematcher': ^0.8.4
+  '@phosphor-icons/react': ^2.1.10
   '@tailwindcss/postcss': ^4
   '@tailwindcss/vite': ^4
   '@tanstack/react-query': ^5.96.2

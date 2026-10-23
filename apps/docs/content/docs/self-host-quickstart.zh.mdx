@@ -92,7 +92,7 @@ Backend 容器每次启动时都会先运行数据库 migration，再启动服�
 
 ### 本机访问
 
-直接打开 [http://localhost:3000P172。后面运行 `marvis setup self-host` 时也不需要传 URL。
+直接打开 [http://localhost:3000](http://localhost:3000)。后面运行 `marvis setup self-host` 时也不需要传 URL。
 
 ### 远程访问
 
@@ -264,6 +264,46 @@ marvis daemon status
 回到 Marvis。运行时列表中出现在线的运行时后，创建一个智能体，并把第一个任务分配给它。
 
 执行日志变为"已完成"、时间线中出现智能体的回复，说明自托管服务、执行电脑和 AI 编程工具已经连通。详细步骤见[快速上手](/cloud-quickstart)第 3-5 步。
+
+## 局域网发现
+
+局域网发现让同一网络里的 Desktop 和 CLI 不用输入地址就能找到 Marvis 服务。它适合团队共用一台机器的场景，例如办公室里的一台 Mac。
+
+用 `make start` 或 `make server` 从源码启动服务端时，局域网发现会运行。服务端广播：
+
+- 服务 `_marvis._tcp`，端口为后端端口，默认 `13840`；
+- 主机名 `marvis.local`。网络里已有另一台 Marvis 服务端占用这个名字时，本机改用 `marvis-2.local`，后端日志会写明实际使用的名字。
+
+`.env` 里有两个可选变量：
+
+| 变量 | 作用 |
+| --- | --- |
+| `MARVIS_LAN_DISCOVERY` | 设为 `false` 时不广播。默认开启。 |
+| `MARVIS_LAN_NAME` | 客户端里显示的服务器名称。默认取电脑名。 |
+
+客户端只列出找到的服务器，确认之前不会连接，也不会登录。没有找到时，输入地址 `http://marvis.local:13840`。
+
+<Callout type="warning">
+Docker 部署不支持局域网发现。Docker Desktop 无法向局域网发送组播，所以后端镜像默认把 `MARVIS_LAN_DISCOVERY` 设为 `false`，`docker-compose.selfhost.yml` 和 Helm 部署同样适用。Docker 部署的服务仍可通过输入地址连接。需要发现功能时，从源码运行服务端。
+</Callout>
+
+macOS 第一次使用时会在服务端和每台客户端上请求本地网络权限，选择允许。
+
+### Desktop 与网页端
+
+Desktop 只需要后端，网页端可选。要在同一网络里提供网页端，在 `.env` 里设置 `MARVIS_APP_URL=http://marvis.local:3000`，并把 `http://marvis.local:3000/auth/callback` 登记为 Google 和飞书登录的回调地址。
+
+没有网页地址，或网页地址是 `localhost` 时，客户端按没有网页端处理，Desktop 隐藏 Google 按钮。服务器所在电脑上的命令行除外，在那里 `localhost` 的网页地址可以使用。详见[桌面应用](/desktop-app#连接服务器)。
+
+Desktop 的飞书登录不依赖网页端。在飞书开发者后台再登记一个重定向 URL：`http://marvis.local:13840/auth/lark/desktop-callback`。后端直接处理这个回调，只运行后端时 Desktop 也保留飞书按钮。这个地址由服务器广播的主机名和后端端口拼成：服务器广播的是 `marvis-2.local`，或改了端口时，改为登记对应的地址。关闭局域网发现时（如 Docker 部署），在 `.env` 里把登记的地址设为 `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI`。
+
+### CLI
+
+在终端里不带 `--server-url` 执行 `marvis setup self-host`，命令会在网络里查找约 3 秒，并列出找到的服务器。运行在本机的服务器（`http://localhost:13840`）排第一并默认选中，Desktop 正在使用的服务器排在它后面。最后一项可以手动输入地址。
+
+所选服务器没有网页端时，命令不会打开浏览器。在 Desktop 的**设置 → API Token** 里创建令牌，再执行 `marvis login --token`。
+
+传了 `--server-url`、设置了 `MARVIS_SERVER_URL`、CLI 配置里已有服务器地址，或不在终端里运行时，命令的行为与之前一致。
 
 ## 常用管理命令
 

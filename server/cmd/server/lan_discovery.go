@@ -40,18 +40,16 @@ func loadLANInstanceID(ctx context.Context, pool *pgxpool.Pool) string {
 	return instanceID
 }
 
-// lanAdvertising 管理在后台启动的局域网广播。
-// 启动阶段要探测局域网内已占用的主机名，耗时数秒，放在后台以免拖慢服务端启动。
+// lanAdvertising 管理在后台运行的局域网广播。
+// 启动阶段要探测局域网内已占用的主机名，耗时数秒，之后还要跟随网卡地址的变化，所以放在后台运行。
 type lanAdvertising struct {
 	cancel context.CancelFunc
 	done   chan struct{}
-	// advertiser 在 done 关闭之后才能读取，启动失败时为 nil。
-	advertiser *landiscovery.Advertiser
 }
 
-// startLANAdvertising 在后台开始广播。关闭广播或没有实例 ID 时返回 nil，
-// 启动失败只记警告，不影响服务端。
-func startLANAdvertising(cfg landiscovery.Config, serverVersion, instanceID string) *lanAdvertising {
+// startLANAdvertising 在后台开始广播。关闭广播或没有实例 ID 时返回 nil；
+// 广播出错只记警告，不影响服务端。status 随广播启停更新为实际使用的主机名。
+func startLANAdvertising(cfg landiscovery.Config, serverVersion, instanceID string, status *landiscovery.Status) *lanAdvertising {
 	if !cfg.Enabled || instanceID == "" {
 		return nil
 	}
@@ -62,20 +60,15 @@ func startLANAdvertising(cfg landiscovery.Config, serverVersion, instanceID stri
 	go func() {
 		defer close(lan.done)
 
-		advertiser, err := landiscovery.Start(ctx, cfg, serverVersion, instanceID)
-		if err != nil {
+		if err := landiscovery.Run(ctx, cfg, serverVersion, instanceID, status); err != nil {
 			slog.Warn("lan discovery unavailable", "error", err)
-
-			return
 		}
-
-		lan.advertiser = advertiser
 	}()
 
 	return lan
 }
 
-// Stop 中止仍在进行的启动并撤销广播，lan 为 nil 时什么也不做。
+// Stop 撤销广播并等待后台协程退出，lan 为 nil 时什么也不做。
 func (lan *lanAdvertising) Stop() {
 	if lan == nil {
 		return
@@ -83,5 +76,4 @@ func (lan *lanAdvertising) Stop() {
 
 	lan.cancel()
 	<-lan.done
-	lan.advertiser.Stop()
 }

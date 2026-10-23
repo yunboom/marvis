@@ -86,3 +86,67 @@ export function normalizeServerAddress(input: string): string | null {
 
   return url.origin;
 }
+
+// 控制字符（C0、DEL、C1）和会改变文字显示顺序的方向控制符。React 会转义 HTML，但不会去掉这些字符，
+// 局域网里的任何设备都能在名称里放进它们来伪装显示内容。
+// eslint-disable-next-line no-control-regex
+const UNSAFE_DISPLAY_CHARS = /[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g;
+
+// 清理局域网广播、/api/config 或 server.json 给出的显示文本：去掉控制字符和方向控制符，再去掉首尾空白。
+export function sanitizeDisplayText(value: string): string {
+  return value.replace(UNSAFE_DISPLAY_CHARS, "").trim();
+}
+
+// mDNS 主机名的后缀。
+const MDNS_HOST_SUFFIX = ".local";
+// 能放进地址的主机名：小写字母、数字、点和连字符，不以点开头。
+const URL_HOSTNAME = /^[a-z0-9-][a-z0-9.-]*$/;
+
+// 把广播的主机名规整为可以放进地址的形式：去掉末尾的点并转小写。含有其他字符时返回 null。
+export function mdnsHostname(host: string): string | null {
+  const normalized = host.trim().replace(/\.$/, "").toLowerCase();
+
+  return URL_HOSTNAME.test(normalized) ? normalized : null;
+}
+
+// 主机名是否是 mDNS 的 .local 名字；这类名字要靠组播解析，耗时可能比普通请求长。
+export function isMdnsHostname(hostname: string): boolean {
+  const normalized = hostname.replace(/\.$/, "").toLowerCase();
+
+  return normalized.endsWith(MDNS_HOST_SUFFIX) && normalized.length > MDNS_HOST_SUFFIX.length;
+}
+
+const IPV4_PATTERN = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+const MAX_OCTET = 255;
+
+// 解析 IPv4 字符串，不是合法 IPv4 时返回 null。
+function ipv4Octets(address: string): number[] | null {
+  const match = IPV4_PATTERN.exec(address.trim());
+  if (!match) return null;
+
+  const octets = match.slice(1).map(Number);
+
+  return octets.every((octet) => octet <= MAX_OCTET) ? octets : null;
+}
+
+// 是否是私有网段（10/8、172.16/12、192.168/16）的 IPv4。
+function isPrivateIPv4([a, b]: number[]): boolean {
+  return a === 10 || (a === 172 && b! >= 16 && b! <= 31) || (a === 192 && b === 168);
+}
+
+// 从通告的地址里挑一个 IPv4：优先私有网段，其次第一个 IPv4；没有 IPv4 时返回 null。
+export function preferredIPv4(addresses: string[]): string | null {
+  let fallback: string | null = null;
+
+  for (const address of addresses) {
+    const octets = ipv4Octets(address);
+    if (!octets) continue;
+
+    const normalized = octets.join(".");
+    if (isPrivateIPv4(octets)) return normalized;
+
+    fallback ??= normalized;
+  }
+
+  return fallback;
+}

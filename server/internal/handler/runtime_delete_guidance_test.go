@@ -436,7 +436,7 @@ func TestDeleteRuntimeProfile_MixedBlockersGiveEachItsOwnRemedy(t *testing.T) {
 	for _, want := range []string{
 		"not marked as built into Marvis can be reassigned or archived",
 		"Agent Builder session",
-		"Mika is built into Marvis, so it cannot be archived",
+		"The default agent Marvis is built in, so it cannot be archived",
 	} {
 		if !strings.Contains(msg, want) {
 			t.Fatalf("mixed refusal missing %q, got: %s", want, msg)
@@ -560,7 +560,7 @@ func TestDeleteRuntimeProfile_RemedyCoversBlockersBeyondTheSample(t *testing.T) 
 	body := deleteProfileExpectingConflict(t, ctx, profileID)
 	msg := conflictMessage(t, body)
 
-	if !strings.Contains(msg, "Mika is built into Marvis") {
+	if !strings.Contains(msg, "The default agent Marvis is built in") {
 		t.Fatalf("Mika is blocker #21 and must still be reported, got: %s", msg)
 	}
 	if !strings.Contains(msg, "a runtime that this profile does not provide") {
@@ -929,7 +929,7 @@ func TestMikaRemedyMatchesWhatMikaCanDo(t *testing.T) {
 	if got, _ := body["active_agent_count"].(float64); int(got) != 0 {
 		t.Fatalf("after the rebind the source should hold no agents, got %v", got)
 	}
-	if msg := conflictMessage(t, body); strings.Contains(msg, "Mika is built into Marvis") {
+	if msg := conflictMessage(t, body); strings.Contains(msg, "The default agent Marvis is built in") {
 		t.Fatalf("Mika moved away but is still named as a blocker: %s", msg)
 	}
 }

@@ -2365,3 +2365,15 @@ describe("AppConfigSchema lark_login_app_id", () => {
     expect(AppConfigSchema.parse({ lark_login_app_id: value }).lark_login_app_id).toBe(expected);
   });
 });
+
+describe("AppConfigSchema lark_desktop_login", () => {
+  it.each([
+    [undefined, false],
+    ["true", false],
+    [1, false],
+    [false, false],
+    [true, true],
+  ])("%j parses as %j", (value, expected) => {
+    expect(AppConfigSchema.parse({ lark_desktop_login: value }).lark_desktop_login).toBe(expected);
+  });
+});

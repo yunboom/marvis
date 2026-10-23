@@ -19,7 +19,7 @@ func TestStartLANAdvertisingSkipsWhenNotApplicable(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			lan := startLANAdvertising(tc.cfg, "v0.6.5", tc.instanceID)
+			lan := startLANAdvertising(tc.cfg, "v0.6.5", tc.instanceID, &landiscovery.Status{})
 			if lan != nil {
 				lan.Stop()
 				t.Fatal("startLANAdvertising() started advertising, want nil")

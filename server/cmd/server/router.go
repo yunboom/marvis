@@ -192,7 +192,15 @@ func parseTrustedProxies(raw string) []netip.Prefix {
 	return out
 }
 
-// effectiveTrustedProxies 返回实际生效的可信代理网段。
+// trustedProxySets 返回两组可信代理网段：httpProxies 给 handler（限流、Webhook 来源判断），
+// 只认 MARVIS_TRUSTED_PROXIES；realtimeProxies 给 WebSocket 的同源检查，
+// 在没有配置且开启局域网广播时额外信任回环地址（见 effectiveTrustedProxies）。
+// 回环默认值不进 handler：否则同机反向代理转发来的客户端 IP 头都会被采信。
+func trustedProxySets(raw string, lanEnabled bool) (httpProxies, realtimeProxies []netip.Prefix) {
+	return parseTrustedProxies(raw), effectiveTrustedProxies(raw, lanEnabled)
+}
+
+// effectiveTrustedProxies 返回 WebSocket 同源检查实际生效的可信代理网段。
 // raw（MARVIS_TRUSTED_PROXIES）非空时按 parseTrustedProxies 解析，以运维配置为准；
 // 为空且开启了局域网广播时只信任回环地址：用户经 marvis.local 访问时，
 // 本机网页端把原始 Host 放进 X-Forwarded-Host 转发过来，WebSocket 的同源检查需要采纳它。
@@ -286,6 +294,9 @@ type RouterOptions struct {
 	// LAN 是局域网广播的配置，由 main 从环境变量读取：Name 经 /api/config 下发，
 	// Enabled 为 true 且未配置 MARVIS_TRUSTED_PROXIES 时信任本机转发的请求头。
 	LAN landiscovery.Config
+	// LANHostname 返回局域网广播实际使用的主机名（如 marvis.local），没有在广播时返回空串；
+	// nil 表示不广播。桌面端飞书登录用它和 LAN.Port 推导回调地址。
+	LANHostname func() string
 	// InstanceID 是本部署的实例 ID，经 /api/config 下发；读取失败时为空，响应里不带该字段。
 	InstanceID string
 }
@@ -450,6 +461,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 
 	cfSigner := auth.NewCloudFrontSignerFromEnv()
 	origins := allowedOrigins()
+	httpTrustedProxies, realtimeTrustedProxies := trustedProxySets(os.Getenv("MARVIS_TRUSTED_PROXIES"), opts.LAN.Enabled)
 
 	signupConfig := handler.Config{
 		AllowSignup:                    os.Getenv("ALLOW_SIGNUP") != "false",
@@ -460,7 +472,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		VCSIntegrationEnabled:          os.Getenv("MARVIS_VCS_INTEGRATION_ENABLED") == "true",
 		PublicURL:                      strings.TrimRight(strings.TrimSpace(os.Getenv("MARVIS_PUBLIC_URL")), "/"),
 		AppURL:                         appURLFromEnv(),
-		TrustedProxies:                 effectiveTrustedProxies(os.Getenv("MARVIS_TRUSTED_PROXIES"), opts.LAN.Enabled),
+		TrustedProxies:                 httpTrustedProxies,
 		CloudURL:                       strings.TrimSpace(os.Getenv("MARVIS_CLOUD_URL")),
 		CloudTimeout:                   35 * time.Second,
 		AttachmentDownloadMode:         os.Getenv("ATTACHMENT_DOWNLOAD_MODE"),
@@ -475,6 +487,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		ServerVersion:                  normalizeServerVersion(version),
 		ServerName:                     opts.LAN.Name,
 		InstanceID:                     opts.InstanceID,
+		LANHostname:                    opts.LANHostname,
+		LANPort:                        opts.LAN.Port,
 		GitExtraCACerts:                gitca.Load(slog.Default()),
 	}
 	h := handler.New(queries, pool, hub, bus, emailSvc, store, cfSigner, analyticsClient, signupConfig, daemonHub)
@@ -1453,7 +1467,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	// Share the same trusted-proxy CIDRs (MARVIS_TRUSTED_PROXIES) so the
 	// WebSocket origin check honors X-Forwarded-Host only from trusted proxies,
 	// using one config source instead of a parallel one.
-	realtime.SetTrustedProxies(signupConfig.TrustedProxies)
+	// 局域网广播开启且未配置时，这里额外信任回环地址（只用于 WebSocket 同源检查）。
+	realtime.SetTrustedProxies(realtimeTrustedProxies)
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   origins,
@@ -1543,6 +1558,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	r.With(authVerifyRL).Post("/auth/verify-code", h.VerifyCode)
 	r.With(authRL).Post("/auth/google", h.GoogleLogin)
 	r.With(authRL).Post("/auth/lark", h.LarkLogin)
+	// 桌面端没有网页端时的飞书登录：浏览器打开 desktop-start，飞书回调 desktop-callback。
+	r.With(authRL).Get(handler.LarkDesktopStartPath, h.LarkDesktopStart)
+	r.With(authRL).Get(handler.LarkDesktopCallbackPath, h.LarkDesktopCallback)
 	r.Post("/auth/logout", h.Logout)
 
 	// Public API
@@ -1971,7 +1989,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 
 		// Cloud Billing proxy. Same upstream service / port as
 		// cloud-runtime — marvis-cloud's Fleet and Billing share
-		// :13840 and the same chi router. All routes here forward
+		// :8080 and the same chi router. All routes here forward
 		// to /api/v1/billing/* with X-User-ID stamped from the
 		// authenticated context.
 		//

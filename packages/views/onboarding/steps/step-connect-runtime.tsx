@@ -6,11 +6,11 @@ import { Check, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Card } from "@marvis/ui/components/ui/card";
 import { cn } from "@marvis/ui/lib/utils";
-import { MIKA_PLACEHOLDER_EMOJI } from "@marvis/core/onboarding";
 import { runtimeKeys } from "@marvis/core/runtimes/queries";
 import type { AgentRuntime } from "@marvis/core/types";
 import { DragStrip } from "../../platform";
 import { MikaRuntimeChoice } from "../../runtimes/components/mika-runtime-choice";
+import { MIKA_AVATAR_SRC } from "../components/mika-avatar";
 import { useRuntimePicker } from "../components/use-runtime-picker";
 import { useT } from "../../i18n";
 
@@ -161,13 +161,11 @@ export function StepConnectRuntime({
           </h1>
 
           <div className="mt-4 flex items-center gap-3 rounded-xl bg-surface-sunken px-4 py-3.5">
-            <span
-              role="img"
-              aria-label={t(($) => $.step_connect.mika_name)}
-              className="flex size-9 shrink-0 select-none items-center justify-center rounded-full border border-surface-border bg-card text-title leading-none"
-            >
-              {MIKA_PLACEHOLDER_EMOJI}
-            </span>
+            <img
+              src={MIKA_AVATAR_SRC}
+              alt={t(($) => $.step_connect.mika_name)}
+              className="size-9 shrink-0 select-none rounded-full object-cover"
+            />
             <p className="text-body leading-relaxed">
               <span className="font-semibold">{t(($) => $.step_connect.mika_name)}</span>
               <span className="text-muted-foreground">

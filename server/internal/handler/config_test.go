@@ -216,6 +216,47 @@ func TestGetConfigLarkLoginAppID(t *testing.T) {
 	}
 }
 
+func TestGetConfigLarkDesktopLogin(t *testing.T) {
+	origCfg := testHandler.cfg
+	t.Cleanup(func() { testHandler.cfg = origCfg })
+
+	advertising := func() string { return "marvis.local" }
+	tests := []struct {
+		name        string
+		secret      string
+		redirectURI string
+		lanHostname func() string
+		want        bool
+	}{
+		{name: "configured callback address", secret: "lark-secret", redirectURI: "http://studio.example:13840/auth/lark/desktop-callback", want: true},
+		{name: "advertised host", secret: "lark-secret", lanHostname: advertising, want: true},
+		{name: "no callback address", secret: "lark-secret", want: false},
+		{name: "feishu login not configured", secret: "", redirectURI: "http://studio.example:13840/auth/lark/desktop-callback", lanHostname: advertising, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(larkLoginAppIDEnv, "cli_lark_app")
+			t.Setenv(larkLoginAppSecretEnv, tt.secret)
+			t.Setenv(larkLoginDesktopRedirectURIEnv, tt.redirectURI)
+			testHandler.cfg.LANHostname = tt.lanHostname
+			testHandler.cfg.LANPort = 13840
+
+			req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+			var body map[string]any
+			testutil.Call(t, testHandler.GetConfig, req).Want(http.StatusOK).JSON(&body)
+
+			got, present := body["lark_desktop_login"]
+			if tt.want && got != true {
+				t.Fatalf("lark_desktop_login = %v, want true", got)
+			}
+			if !tt.want && present {
+				t.Fatalf("lark_desktop_login = %v, want the field omitted", got)
+			}
+		})
+	}
+}
+
 func TestGetConfigUsesDaemonServerURLOverride(t *testing.T) {
 	t.Setenv("MARVIS_DAEMON_SERVER_URL", " https://api.internal.example/// ")
 	t.Setenv("MARVIS_PUBLIC_URL", "https://hooks.example.com/")

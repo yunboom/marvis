@@ -46,7 +46,7 @@ func TestMikaOnboardingOpeningUsesTheCurrentDisplayName(t *testing.T) {
 // the default rather than emit "I'm , your Chief of Staff".
 func TestMikaOnboardingOpeningFallsBackToTheDefaultName(t *testing.T) {
 	opening := buildMikaOnboardingOpening("en", "   ", "Venus")
-	if !strings.Contains(opening, "I'm Mika,") {
+	if !strings.Contains(opening, "I'm Marvis,") {
 		t.Fatalf("blank name did not fall back to the product default:\n%s", opening)
 	}
 }

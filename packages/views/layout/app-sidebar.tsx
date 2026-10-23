@@ -23,9 +23,9 @@ import { Layers,
   LogOut,
   Plus,
   Check,
-  SquarePen,
   X,
 } from "lucide-react";
+import { NotePencil } from "@phosphor-icons/react/ssr";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
 import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
@@ -649,7 +649,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                 onClick={() => openCreateIssueWithPreference()}
               >
                 <span className="relative">
-                  <SquarePen />
+                  <NotePencil weight="fill" />
                   <DraftDot />
                 </span>
                 <span>{t(($) => $.sidebar.new_issue)}</span>

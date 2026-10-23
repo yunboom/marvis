@@ -178,10 +178,14 @@ function ProbeResultLine({ result }: { result: ProbeResult }) {
   let text: string;
   switch (result.kind) {
     case "ok":
-      text = t(($) => $.desktop.server.probe.ok, {
-        name: result.server.name,
-        version: result.server.version,
-      });
+      // 服务器没有报版本时不显示版本，避免末尾多出一个分隔符。
+      text =
+        result.server.version === ""
+          ? t(($) => $.desktop.server.probe.ok_no_version, { name: result.server.name })
+          : t(($) => $.desktop.server.probe.ok, {
+              name: result.server.name,
+              version: result.server.version,
+            });
       break;
     case "not_marvis":
       text = t(($) => $.desktop.server.probe.not_marvis);

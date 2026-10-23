@@ -24,7 +24,7 @@
   "errors": {
     "skip_failed": "Failed to finish onboarding",
     "guide_failed": "The runtime guide didn't get created. Please try again.",
-    "mika_setup_failed": "Couldn't start your Mika workspace"
+    "mika_setup_failed": "Couldn't start your Marvis workspace"
   },
   "step_connect": {
     "progress_workspace": "Create workspace",
@@ -40,7 +40,7 @@
     "waiting": "Waiting for your computer to connect",
     "download_prompt": "Prefer not to use a terminal?",
     "download_link": "Download the desktop app",
-    "starting": "Starting Mika...",
+    "starting": "Starting Marvis...",
     "skip_note": "Agents can't run until a runtime is connected. You can connect one later on the Runtimes page.",
     "stage_normal_prefix": "Run the command above. As soon as ",
     "stage_normal_suffix": " finishes browser sign-in, your computer will appear here automatically (usually 10–30 seconds).",
@@ -51,10 +51,10 @@
     "stage_stalled_prefix": "Nothing coming through yet. If you're not comfortable with the terminal, ",
     "stage_stalled_term": "Desktop",
     "stage_stalled_suffix": " is the smoother path — one click and this computer is connected. Use the download link below, or skip for now.",
-    "start": "Start with Mika",
+    "start": "Start with Marvis",
     "skip": "Skip for now",
     "refresh": "Refresh",
     "refreshing": "Refreshing…",
-    "mika_name": "Mika"
+    "mika_name": "Marvis"
   }
 }

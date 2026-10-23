@@ -276,7 +276,9 @@ describe("ServerSettingsTab", () => {
     fireEvent.click(within(lanRows()[0]!).getByRole("button", { name: "切换" }));
 
     const dialog = await screen.findByRole("alertdialog", { name: "切换到 marvis-dev？" });
-    expect(dialog).toHaveTextContent("会退出当前账号，连接到 192.168.1.37:13840 后重新登录。");
+    // 对话框给出带协议的完整地址；HTTP 连接时与连接页一样提示不加密。
+    expect(dialog).toHaveTextContent("会退出当前账号，连接到 http://192.168.1.37:13840 后重新登录。");
+    expect(dialog).toHaveTextContent(HTTP_WARNING);
     // 确认之前什么都不会发生。
     expect(mocks.calls).toEqual([]);
 
@@ -411,7 +413,7 @@ describe("ServerSettingsTab", () => {
     fireEvent.click(manualSwitchButton());
 
     const dialog = await screen.findByRole("alertdialog", { name: "切换到 测试环境？" });
-    expect(dialog).toHaveTextContent("会退出当前账号，连接到 192.168.1.58:13840 后重新登录。");
+    expect(dialog).toHaveTextContent("会退出当前账号，连接到 http://192.168.1.58:13840 后重新登录。");
 
     await act(async () => {
       fireEvent.click(within(dialog).getByRole("button", { name: "切换" }));
@@ -496,3 +498,27 @@ function installRuntimeConfig(runtimeConfig: unknown) {
     value: { ...window.desktopAPI, runtimeConfig },
   });
 }
+
+const HTTP_WARNING = "这个服务器使用 HTTP 连接，同一网络中的设备可能看到传输的内容。";
+
+describe("ServerSettingsTab switch confirmation", () => {
+  it("shows the https address without the HTTP warning", async () => {
+    await openTab([]);
+
+    await runProbe({ kind: "ok", server: { ...testedServer(), url: "https://marvis.example.com" } });
+    fireEvent.click(manualSwitchButton());
+
+    const dialog = await screen.findByRole("alertdialog", { name: "切换到 测试环境？" });
+    expect(dialog).toHaveTextContent("会退出当前账号，连接到 https://marvis.example.com 后重新登录。");
+    expect(dialog).not.toHaveTextContent(HTTP_WARNING);
+  });
+
+  it("shows the probe result without a dangling separator when the version is empty", async () => {
+    await openTab([]);
+
+    await runProbe({ kind: "ok", server: { ...testedServer(), version: "" } });
+
+    const address = screen.getByRole("group", { name: "服务器地址" });
+    expect(within(address).getByRole("status")).toHaveTextContent(/^可以连接 · 测试环境$/);
+  });
+});

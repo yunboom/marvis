@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-const config = vi.hoisted(() => ({ larkLoginAppId: "" }));
+const config = vi.hoisted(() => ({ larkLoginAppId: "", larkDesktopLogin: false }));
 
 vi.mock("@marvis/core/config", () => ({
   useConfigStore: (selector: (state: typeof config) => unknown) =>
@@ -42,6 +42,7 @@ vi.mock("@marvis/views/auth", () => ({
 import { DesktopLoginPage } from "./login";
 
 const openExternal = vi.fn();
+const startLarkDesktopLogin = vi.fn().mockResolvedValue(undefined);
 
 function setAppUrl(appUrl: string) {
   Object.defineProperty(window, "desktopAPI", {
@@ -49,13 +50,16 @@ function setAppUrl(appUrl: string) {
     value: {
       runtimeConfig: { ok: true, config: { appUrl } },
       openExternal,
+      startLarkDesktopLogin,
     },
   });
 }
 
 beforeEach(() => {
   openExternal.mockReset();
+  startLarkDesktopLogin.mockClear();
   config.larkLoginAppId = "cli_lark";
+  config.larkDesktopLogin = false;
 });
 
 describe("DesktopLoginPage", () => {
@@ -87,6 +91,18 @@ describe("DesktopLoginPage", () => {
         "https://app.example/login?platform=desktop",
       );
     });
+
+    it("keeps Feishu login on the web login page even when the server can host it", () => {
+      config.larkDesktopLogin = true;
+
+      render(<DesktopLoginPage />);
+      fireEvent.click(screen.getByRole("button", { name: "lark" }));
+
+      expect(openExternal).toHaveBeenCalledWith(
+        "https://app.example/login?platform=desktop",
+      );
+      expect(startLarkDesktopLogin).not.toHaveBeenCalled();
+    });
   });
 
   describe("without a web app", () => {
@@ -98,6 +114,25 @@ describe("DesktopLoginPage", () => {
       expect(screen.getByText("email-code")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "google" })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "lark" })).not.toBeInTheDocument();
+    });
+
+    it("shows Feishu login when the server hosts the Feishu callback", () => {
+      config.larkDesktopLogin = true;
+
+      render(<DesktopLoginPage />);
+
+      expect(screen.getByRole("button", { name: "lark" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "google" })).not.toBeInTheDocument();
+    });
+
+    it("starts Feishu login through the main process", () => {
+      config.larkDesktopLogin = true;
+
+      render(<DesktopLoginPage />);
+      fireEvent.click(screen.getByRole("button", { name: "lark" }));
+
+      expect(startLarkDesktopLogin).toHaveBeenCalledTimes(1);
+      expect(openExternal).not.toHaveBeenCalled();
     });
   });
 });

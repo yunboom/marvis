@@ -1341,6 +1341,7 @@
       },
       "probe": {
         "ok": "Reachable · {{name}} · {{version}}",
+        "ok_no_version": "Reachable · {{name}}",
         "unreachable": "Can't reach this address",
         "not_marvis": "This address is not a Marvis server",
         "too_old": "Server version is too old"

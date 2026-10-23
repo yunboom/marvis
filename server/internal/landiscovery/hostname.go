@@ -20,13 +20,34 @@ type Iface struct {
 	Addrs []net.IP
 }
 
-// AdvertiseIPs 返回应当广播的局域网地址：已启用、非回环、非点对点网卡上的私有网段 IPv4。
+// virtualInterfacePrefixes 是虚拟网卡的名字前缀：网桥、虚拟机、容器、VPN 隧道和苹果的点对点无线网卡。
+// 这些网卡上的地址其他电脑连不上，不广播。比较时忽略大小写。
+var virtualInterfacePrefixes = []string{
+	"bridge",
+	"vmnet",
+	"vboxnet",
+	"docker",
+	"br-",
+	"virbr",
+	"veth",
+	"utun",
+	"tun",
+	"tap",
+	"awdl",
+	"llw",
+	"anpi",
+	"wg",
+	"tailscale",
+	"zt",
+}
+
+// AdvertiseIPs 返回应当广播的局域网地址：已启用、非回环、非点对点、非虚拟网卡上的私有网段 IPv4。
 // 链路本地（169.254.x.x）、公网和 IPv6 地址都会被排除。
 func AdvertiseIPs(ifaces []Iface) []net.IP {
 	var ips []net.IP
 
 	for _, iface := range ifaces {
-		if !iface.Up || iface.Loopback || iface.PointToPoint {
+		if !iface.Up || iface.Loopback || iface.PointToPoint || isVirtualInterface(iface.Name) {
 			continue
 		}
 
@@ -40,6 +61,19 @@ func AdvertiseIPs(ifaces []Iface) []net.IP {
 	}
 
 	return ips
+}
+
+// isVirtualInterface 按名字前缀判断是否为虚拟网卡。
+func isVirtualInterface(name string) bool {
+	name = strings.ToLower(name)
+
+	for _, prefix := range virtualInterfacePrefixes {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ChooseHostname 在已被占用的主机名之外选出 DefaultHostname 或 DefaultHostname-N。

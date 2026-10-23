@@ -1071,6 +1071,7 @@
       },
       "probe": {
         "ok": "연결할 수 있습니다 · {{name}} · {{version}}",
+        "ok_no_version": "연결할 수 있습니다 · {{name}}",
         "unreachable": "이 주소에 연결할 수 없습니다",
         "not_marvis": "이 주소는 Marvis 서버가 아닙니다",
         "too_old": "서버 버전이 너무 오래되었습니다"

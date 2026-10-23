@@ -60,6 +60,9 @@ func TestCreateMikaAgent_ServerOwnsTheDefinition(t *testing.T) {
 	if resp.Name != service.MikaDefaultName {
 		t.Fatalf("name = %q, want %q", resp.Name, service.MikaDefaultName)
 	}
+	if resp.AvatarURL == nil || *resp.AvatarURL != mikaAgentAvatarURL {
+		t.Fatalf("avatar_url = %v, want the embedded artwork data URI", resp.AvatarURL)
+	}
 	if resp.PermissionMode != mikaAgentPermissionMode {
 		t.Fatalf("permission_mode = %q, want %q", resp.PermissionMode, mikaAgentPermissionMode)
 	}
@@ -68,7 +71,7 @@ func TestCreateMikaAgent_ServerOwnsTheDefinition(t *testing.T) {
 	if resp.Instructions != "" {
 		t.Fatalf("instructions must start empty, got %q", resp.Instructions)
 	}
-	if !strings.Contains(resp.SystemInstructions, "You are Mika") {
+	if !strings.Contains(resp.SystemInstructions, "You are Marvis") {
 		t.Fatalf("system_instructions should carry the product prompt, got %q", resp.SystemInstructions)
 	}
 
@@ -166,11 +169,11 @@ func TestMikaSystemInstructionsUsesTheCurrentDisplayName(t *testing.T) {
 		t.Fatal("the name placeholder must be substituted")
 	}
 	// The product identity is still stated, just not as the display name.
-	if !strings.Contains(renamed, "built-in system agent (Mika)") {
+	if !strings.Contains(renamed, "Marvis's built-in system agent.") {
 		t.Fatal("prompt should still identify itself as Marvis's built-in agent")
 	}
 
-	if blank := service.MikaSystemInstructions("   "); !strings.HasPrefix(blank, "You are Mika,") {
+	if blank := service.MikaSystemInstructions("   "); !strings.HasPrefix(blank, "You are Marvis,") {
 		t.Fatalf("a blank name should fall back to the default:\n%s", blank[:120])
 	}
 }

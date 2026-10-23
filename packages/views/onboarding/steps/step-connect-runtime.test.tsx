@@ -102,10 +102,10 @@ describe("StepConnectRuntime", () => {
     vi.useRealTimers();
   });
 
-  it("keeps Start with Mika disabled until a runtime is found", () => {
+  it("keeps Start with Marvis disabled until a runtime is found", () => {
     renderStep();
 
-    expect(screen.getByRole("button", { name: "Start with Mika" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Start with Marvis" })).toBeDisabled();
   });
 
   it("flips to the empty state after the idle timeout when no pending signal is given", () => {
@@ -145,7 +145,7 @@ describe("StepConnectRuntime", () => {
 
     expect(screen.getByText("Claude (dev-box)")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "pick opus" }));
-    fireEvent.click(screen.getByRole("button", { name: "Start with Mika" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start with Marvis" }));
 
     expect(onNext).toHaveBeenCalledWith(mocks.pickerState.selected, "opus");
   });

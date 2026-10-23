@@ -24,7 +24,7 @@
   "errors": {
     "skip_failed": "オンボーディングを完了できませんでした",
     "guide_failed": "ランタイム案内のタスクを作成できませんでした。もう一度お試しください。",
-    "mika_setup_failed": "Mika ワークスペースを開始できませんでした"
+    "mika_setup_failed": "Marvis ワークスペースを開始できませんでした"
   },
   "step_connect": {
     "progress_workspace": "ワークスペースを作成",
@@ -40,7 +40,7 @@
     "waiting": "コンピューターの接続を待っています",
     "download_prompt": "ターミナルを使わない場合は",
     "download_link": "デスクトップアプリをダウンロード",
-    "starting": "Mika を起動しています...",
+    "starting": "Marvis を起動しています...",
     "skip_note": "ランタイムを接続するまでエージェントは実行できません。あとから「ランタイム」ページで接続できます。",
     "stage_normal_prefix": "上のコマンドを実行してください。 ",
     "stage_normal_suffix": " のブラウザでのサインインが終わると、コンピュータが自動でここに表示されます(通常 10〜30 秒)。",
@@ -51,10 +51,10 @@
     "stage_stalled_prefix": "まだ何も届いていません。ターミナルに不慣れな場合は、",
     "stage_stalled_term": "デスクトップ",
     "stage_stalled_suffix": "のほうがスムーズです — ワンクリックでこのコンピュータが接続されます。下のリンクからダウンロードするか、スキップして続けてください。",
-    "start": "Mika と始める",
+    "start": "Marvis と始める",
     "skip": "今はスキップ",
     "refresh": "更新",
     "refreshing": "更新中…",
-    "mika_name": "Mika"
+    "mika_name": "Marvis"
   }
 }

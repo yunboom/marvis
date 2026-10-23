@@ -3,11 +3,11 @@
 import {
   ArrowUpRight,
   BookOpen,
-  CircleHelp,
   Download,
   History,
   MessageCircle,
 } from "lucide-react";
+import { Question } from "@phosphor-icons/react/ssr";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +53,7 @@ export function HelpLauncher() {
           aria-label={t(($) => $.help.trigger)}
           className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors cursor-pointer hover:bg-accent hover:text-foreground data-popup-open:bg-accent data-popup-open:text-foreground"
         >
-          <CircleHelp className="size-4" />
+          <Question weight="fill" className="size-[18px]" />
         </DropdownMenuTrigger>
       </TooltipHint>
       <DropdownMenuContent

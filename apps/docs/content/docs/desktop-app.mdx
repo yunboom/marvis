@@ -1,6 +1,6 @@
 ---
 title: Desktop app
-description: Install Marvis Desktop, use desktop tabs and the built-in daemon, and connect to a self-hosted instance.
+description: Install Marvis Desktop, connect it to a Marvis server, and use desktop tabs and the built-in daemon.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -30,7 +30,7 @@ Pick the installer that matches your OS and CPU architecture from the [Marvis do
 | Windows | `.exe` |
 | Linux | `.AppImage`, `.deb`, or `.rpm` |
 
-After installing, sign in with the same email you use on the web. Once signed in, Desktop starts its own bundled Marvis CLI and detects the AI coding tools already installed on the machine.
+After installing, [connect Desktop to a Marvis server](#connecting-to-a-server) and sign in. Once signed in, Desktop starts its own bundled Marvis CLI and detects the AI coding tools already installed on the machine.
 
 <Callout type="info">
 The CLI bundled with Desktop only serves the app's managed runtime. If you also want to run commands like `marvis issue` in a terminal, install the CLI separately following [step 2 of the quickstart](/cloud-quickstart#2-connect-a-computer).
@@ -68,9 +68,62 @@ Updates are distributed per OS and CPU architecture:
 - on Linux, auto-update only works for `.AppImage`; update `.deb` and `.rpm` by installing a new package over the old one;
 - if auto-update fails, likewise install over the top with the matching installer from the downloads page.
 
-## Connecting to a self-hosted instance
+## Connecting to a server
 
-Desktop connects to Marvis Cloud by default. To connect to a self-hosted instance, create `desktop.json` inside the `.marvis` directory of your home directory:
+Desktop connects to the Marvis server, which is the backend. The web app is optional.
+
+### First launch
+
+Without a configured server, Desktop shows **Connect to a Marvis server**.
+
+1. Pick a server under **Servers on your local network**, or enter an address. The default address is `http://marvis.local:13840`.
+2. For an address, click **Test connection**. Desktop shows the server name and version, or the reason it can't connect.
+3. Click **Continue**, check the address on the confirmation page, then click **Connect**.
+4. Sign in.
+
+The list updates as servers appear and disappear. **Search again** rescans the network. The computer and the server must be on the same network. A server that runs on this computer is marked **This computer**. A server whose version is too old is listed but can't be selected.
+
+Desktop waits for your confirmation before connecting and never signs in on its own. A server that uses HTTP is not encrypted, and the confirmation page says so.
+
+Desktop saves the chosen server as `server.json` in its app-data folder:
+
+| Platform | Path |
+| --- | --- |
+| macOS | `~/Library/Application Support/Marvis/` |
+| Linux | `~/.config/Marvis/` |
+| Windows | `%APPDATA%\Marvis\` |
+
+### Switching servers
+
+Open **Settings → This device → Server**. The page shows:
+
+- the current server with its name, address, and connection status;
+- the other servers found on the local network, each with **Switch**;
+- an **Other address** field with **Test connection** and **Switch**.
+
+Switching signs you out of the current account. Desktop asks you to confirm, saves the new server, and opens the sign-in page. The built-in daemon uses the profile of the new server automatically.
+
+The setting applies to this computer only.
+
+### When the connection drops
+
+- When the server stops responding, a banner at the top of the main area says the connection is lost and Desktop is reconnecting.
+- After repeated failures, the banner says the server can't be reached and offers **Retry** and **Switch server**. Desktop keeps checking and goes back online by itself when the server returns.
+- A server picked from the local network list is saved by its IP address. When that address stops answering and the same server, matched by its instance ID, appears on the local network at a new IP, Desktop switches to the new address and says it reconnected.
+- When a different server answers at the saved address, Desktop shows **A different server is at this address** and does not switch on its own. Choose **Keep waiting** or **Switch server**.
+
+### Without a web app
+
+When the server has no web address, or the address is `localhost`, Desktop treats it as having no web app:
+
+- the sign-in page hides the Google button. The Feishu button stays when Feishu login is set up on the server and its desktop callback address is registered in the Feishu developer console, see [Desktop and the web app](/self-host-quickstart#desktop-and-the-web-app). Desktop then opens Feishu sign-in in the browser and returns to the app when it finishes. Otherwise only email-code login remains;
+- **Copy link** produces a `marvis://open?...` link, which opens in Desktop on any computer where Desktop is installed and connected to the same server.
+
+## Presetting the server with desktop.json
+
+An operator can preset the server for a computer. Desktop reads the preset only while no server has been chosen in the app. It connects without showing the connection page and never writes the file.
+
+Create `desktop.json` inside the `.marvis` directory of your home directory:
 
 | Platform | Path |
 | --- | --- |
@@ -96,6 +149,8 @@ This is **not** the CLI's `~/.marvis/config.json`, and the key names differ: the
 - `wsUrl`: swaps the `apiUrl` scheme to `ws` or `wss` and appends `/ws` to the path;
 - `appUrl`: strips the `api.` prefix when the host starts with `api.` and has at least three labels (`api.example.com` → `example.com`); otherwise it stays the same as `apiUrl`.
 
+A preset always has a web app address, derived when `appUrl` is omitted. To use Desktop without a web app, choose the server in the app instead.
+
 Usually `apiUrl` alone is enough. Override explicitly only when the derivation doesn't match your deployment; the three common cases:
 
 - the web app and the API are on different domains;
@@ -113,10 +168,10 @@ Usually `apiUrl` alone is enough. Override explicitly only when the derivation d
 
 Restart Desktop after saving — the file is read once at startup. The two failure modes look different, which is the fastest way to tell them apart:
 
-- **File not found** (wrong directory, or a filename that isn't exactly `desktop.json`) — Desktop uses the default Cloud configuration and shows no error. So if Desktop still reports a Cloud address and no configuration error, the file is not where Desktop is looking.
-- **File found but invalid** JSON, version, or URLs — Desktop shows a configuration error and does not fall back to Cloud.
+- **File not found** (wrong directory, or a filename that isn't exactly `desktop.json`) — Desktop shows the connection page and no error. So if Desktop still asks you to connect to a server and shows no configuration error, the file is not where Desktop is looking.
+- **File found but invalid** JSON, version, or URLs — Desktop shows a configuration error.
 
-Delete the file and restart to return to the default Cloud configuration.
+Delete the file and restart to return to the connection page. If a server was chosen in the app, also delete `server.json` from the app-data folder.
 
 <Callout type="warning">
 Desktop can only connect to addresses reachable from both the browser and the executing machine. If a remote self-hosted instance doesn't use HTTPS or doesn't proxy WebSocket, Desktop can't establish a connection; see the [self-host quickstart](/self-host-quickstart#3-choose-how-to-access) for the full configuration.
@@ -179,4 +234,5 @@ Only add these exclusions if you installed Marvis from the [downloads page](http
 
 - [Quickstart](/cloud-quickstart) — the first-connection flow.
 - [Daemon and runtimes](/daemon-runtimes) — how the built-in daemon works.
+- [Self-host quickstart](/self-host-quickstart#lan-discovery) — advertise the server on the local network.
 - [Troubleshooting](/troubleshooting) — diagnosing connection issues.

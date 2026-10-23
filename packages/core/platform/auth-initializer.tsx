@@ -71,6 +71,8 @@ export function AuthInitializer({
           allowSignup: cfg.allow_signup,
           googleClientId: cfg.google_client_id,
           larkLoginAppId: cfg.lark_login_app_id,
+          // 旧服务端不下发这个字段，按“不可用”处理。
+          larkDesktopLogin: cfg.lark_desktop_login === true,
           // Old servers omit this field — treat that as "creation allowed"
           // (the managed-cloud default) rather than blocking the UI.
           workspaceCreationDisabled: cfg.workspace_creation_disabled === true,

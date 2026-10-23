@@ -146,6 +146,14 @@ function buildShareLinkUrl(
   return `${typeof window !== "undefined" ? window.location.origin : ""}${joinPath}`;
 }
 
+// 分享链接要能在浏览器里打开才有用。桌面端没有网页端时 getShareableUrl 给出的是 marvis:// 深链，
+// 拿到链接的人打开后没有加入页面，此时不提供分享链接邀请，只保留邮件邀请。
+const WEB_URL_PATTERN = /^https?:\/\//i;
+
+function canShareJoinLinks(navigation: ReturnType<typeof useOptionalNavigation>): boolean {
+  return WEB_URL_PATTERN.test(buildShareLinkUrl(navigation, ""));
+}
+
 function useRoleLabels() {
   const { t } = useT("settings");
   return {
@@ -882,7 +890,7 @@ export function MembersTab() {
   const views: { value: MembersView; label: string; count: number }[] = [
     { value: "members", label: t(($) => $.members.members_label), count: members.length },
     { value: "invitations", label: t(($) => $.members.pending_label), count: invitations.length },
-    ...(canManageWorkspace
+    ...(canManageWorkspace && canShareJoinLinks(navigation)
       ? [{ value: "links" as const, label: t(($) => $.members.share_links_label), count: shareLinks.length }]
       : []),
   ];

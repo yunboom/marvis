@@ -123,43 +123,52 @@ func TestLANInterfaces(t *testing.T) {
 		{Index: 3, Name: "utun3", Flags: net.FlagUp | net.FlagPointToPoint | net.FlagMulticast},
 		{Index: 4, Name: "en1", Flags: net.FlagMulticast},
 		{Index: 5, Name: "en2", Flags: net.FlagUp | net.FlagMulticast},
+		{Index: 6, Name: "bridge100", Flags: net.FlagUp | net.FlagMulticast},
+		{Index: 7, Name: "en3", Flags: net.FlagUp},
 	}
 	addrs := map[string][]net.Addr{
-		"lo0":   {&net.IPNet{IP: net.ParseIP("127.0.0.1"), Mask: net.CIDRMask(8, 32)}},
-		"en0":   {&net.IPNet{IP: net.ParseIP("192.168.1.20"), Mask: net.CIDRMask(24, 32)}, &net.IPNet{IP: net.ParseIP("fe80::1"), Mask: net.CIDRMask(64, 128)}},
-		"utun3": {&net.IPNet{IP: net.ParseIP("10.8.0.2"), Mask: net.CIDRMask(32, 32)}},
-		"en1":   {&net.IPNet{IP: net.ParseIP("192.168.2.9"), Mask: net.CIDRMask(24, 32)}},
-		"en2":   {&net.IPAddr{IP: net.ParseIP("10.1.2.3")}, &net.UnixAddr{Name: "ignored"}},
+		"lo0":       {&net.IPNet{IP: net.ParseIP("127.0.0.1"), Mask: net.CIDRMask(8, 32)}},
+		"en0":       {&net.IPNet{IP: net.ParseIP("192.168.1.20"), Mask: net.CIDRMask(24, 32)}, &net.IPNet{IP: net.ParseIP("fe80::1"), Mask: net.CIDRMask(64, 128)}},
+		"utun3":     {&net.IPNet{IP: net.ParseIP("10.8.0.2"), Mask: net.CIDRMask(32, 32)}},
+		"en1":       {&net.IPNet{IP: net.ParseIP("192.168.2.9"), Mask: net.CIDRMask(24, 32)}},
+		"en2":       {&net.IPAddr{IP: net.ParseIP("10.1.2.3")}, &net.UnixAddr{Name: "ignored"}},
+		"bridge100": {&net.IPNet{IP: net.ParseIP("192.168.64.1"), Mask: net.CIDRMask(24, 32)}},
+		"en3":       {&net.IPNet{IP: net.ParseIP("192.168.3.4"), Mask: net.CIDRMask(24, 32)}},
 	}
 
-	gotIfaces, gotIPs, err := lanInterfaces(ifaces, func(iface net.Interface) ([]net.Addr, error) {
+	got, err := lanInterfaces(ifaces, func(iface net.Interface) ([]net.Addr, error) {
 		return addrs[iface.Name], nil
 	})
 	if err != nil {
 		t.Fatalf("lanInterfaces() error = %v", err)
 	}
 
-	var names []string
-	for _, iface := range gotIfaces {
-		names = append(names, iface.Name)
+	// 每块网卡只带自己的地址；虚拟网卡和不支持组播的网卡被排除。
+	want := map[string][]string{"en0": {"192.168.1.20"}, "en2": {"10.1.2.3"}}
+	if summary := lanIfaceSummary(got); !reflect.DeepEqual(summary, want) {
+		t.Fatalf("lanInterfaces() = %v, want %v", summary, want)
 	}
-	if want := []string{"en0", "en2"}; !reflect.DeepEqual(names, want) {
-		t.Fatalf("interfaces = %v, want %v", names, want)
-	}
-
-	var ips []string
-	for _, ip := range gotIPs {
-		ips = append(ips, ip.String())
-	}
-	if want := []string{"192.168.1.20", "10.1.2.3"}; !reflect.DeepEqual(ips, want) {
-		t.Fatalf("ips = %v, want %v", ips, want)
+	if got[0].iface.Index != 2 || got[1].iface.Index != 5 {
+		t.Fatalf("interface indexes = %d, %d, want 2, 5", got[0].iface.Index, got[1].iface.Index)
 	}
 }
 
-func TestLANInterfacesPropagatesAddrError(t *testing.T) {
-	ifaces := []net.Interface{{Index: 2, Name: "en0", Flags: net.FlagUp}}
+// lanIfaceSummary 把网卡列表压成“网卡名 -> 地址”的形式，便于比较。
+func lanIfaceSummary(ifaces []lanIface) map[string][]string {
+	summary := make(map[string][]string, len(ifaces))
+	for _, li := range ifaces {
+		for _, ip := range li.ips {
+			summary[li.iface.Name] = append(summary[li.iface.Name], ip.String())
+		}
+	}
 
-	_, _, err := lanInterfaces(ifaces, func(net.Interface) ([]net.Addr, error) {
+	return summary
+}
+
+func TestLANInterfacesPropagatesAddrError(t *testing.T) {
+	ifaces := []net.Interface{{Index: 2, Name: "en0", Flags: net.FlagUp | net.FlagMulticast}}
+
+	_, err := lanInterfaces(ifaces, func(net.Interface) ([]net.Addr, error) {
 		return nil, net.ErrClosed
 	})
 	if err == nil || !strings.Contains(err.Error(), "en0") {
