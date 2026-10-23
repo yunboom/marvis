@@ -7,7 +7,6 @@
     "url_label": "URL",
     "slug_placeholder": "acme",
     "issue_prefix_label": "Préfixe des tâches",
-    "issue_prefix_example": "Exemple de tâche",
     "submit": "Créer l'espace de travail",
     "submitting": "Création…",
     "cancel": "Annuler",
@@ -20,6 +19,39 @@
       "slug_reserved": "Cette URL d'espace de travail est réservée et ne peut pas être utilisée.",
       "slug_conflict_toast": "Choisissez une autre URL d'espace de travail",
       "create_failed": "Échec de la création de l'espace de travail"
+    },
+    "about": {
+      "label": "À propos de vous",
+      "edit": "Modifier",
+      "dialog_hint": "Marvis s'en sert pour préparer votre première conversation.",
+      "multi": "Plusieurs choix possibles",
+      "done": "Terminé",
+      "uses_more": "{{first}} +{{rest}}",
+      "uses_none": "Aucun usage sélectionné",
+      "role": {
+        "question": "Qu'est-ce qui vous décrit le mieux ?",
+        "engineer": "Ingénieur / développeur",
+        "product": "Chef de produit",
+        "designer": "Designer",
+        "founder": "Fondateur / dirigeant",
+        "marketing": "Marketing / croissance",
+        "writer": "Rédacteur / contenu",
+        "research": "Chercheur / analyste",
+        "ops": "Opérations / gestion de projet",
+        "student": "Étudiant / usage personnel",
+        "other": "Autre"
+      },
+      "use_case": {
+        "question": "Pour quoi voulez-vous utiliser Marvis ?",
+        "ship_code": "Livrer du code avec des agents IA",
+        "manage_team": "Gérer les tâches de mon équipe",
+        "personal_tasks": "Organiser mes propres tâches",
+        "plan_research": "Planifier, réfléchir, faire des recherches",
+        "write_publish": "Écrire, réviser, publier",
+        "automate_ops": "Automatiser les opérations et les processus",
+        "evaluate": "Je découvre simplement",
+        "other": "Autre"
+      }
     }
   },
   "no_access": {

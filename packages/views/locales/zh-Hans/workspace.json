@@ -7,7 +7,6 @@
     "url_label": "URL",
     "slug_placeholder": "acme",
     "issue_prefix_label": "任务前缀",
-    "issue_prefix_example": "任务编号示例",
     "submit": "创建工作区",
     "submitting": "创建中...",
     "cancel": "取消",
@@ -20,6 +19,39 @@
       "slug_reserved": "该工作区 URL 是系统保留的，无法使用。",
       "slug_conflict_toast": "请换一个工作区 URL",
       "create_failed": "创建工作区失败"
+    },
+    "about": {
+      "label": "关于你",
+      "edit": "修改",
+      "dialog_hint": "Marvis 会据此安排第一次对话",
+      "multi": "可多选",
+      "done": "完成",
+      "uses_more": "{{first}} 等 {{count}} 项",
+      "uses_none": "未选择用途",
+      "role": {
+        "question": "哪一项最符合你？",
+        "engineer": "工程师 / 开发者",
+        "product": "产品经理",
+        "designer": "设计师",
+        "founder": "创始人 / 高管",
+        "marketing": "市场 / 增长",
+        "writer": "写作 / 内容",
+        "research": "研究员 / 分析师",
+        "ops": "运营 / 项目管理",
+        "student": "学生 / 个人使用",
+        "other": "其他"
+      },
+      "use_case": {
+        "question": "你打算用 Marvis 做什么？",
+        "ship_code": "让 AI 智能体帮我写代码",
+        "manage_team": "给团队做任务管理",
+        "personal_tasks": "管理我自己的任务",
+        "plan_research": "计划、头脑风暴、调研",
+        "write_publish": "写作、编辑、发布",
+        "automate_ops": "自动化日常运营",
+        "evaluate": "只是随便看看",
+        "other": "其他"
+      }
     }
   },
   "no_access": {

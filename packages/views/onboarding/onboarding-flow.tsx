@@ -34,8 +34,8 @@ import { useT } from "../i18n";
  *
  * Onboarding stays incomplete until the runtime step finishes, so a member who
  * leaves after creating the workspace — to install the CLI, or the desktop app
- * — comes back to onboarding; `resumeExistingWorkspace` then picks up at the
- * runtime step for that workspace instead of asking for another one.
+ * — comes back to onboarding; `firstRun` then picks up at the runtime step for
+ * that workspace instead of asking for another one.
  *
  * Two exit shapes feed onComplete:
  *   - Runtime-skipped (no runtime picked): create one install-runtime guide
@@ -55,10 +55,11 @@ interface OnboardingFlowProps {
   /** Only passed when the user has a workspace to return to; without one the
    *  create page offers Log out instead. */
   onCancel?: () => void;
-  /** First-run onboarding only: a workspace that already exists was created
-   *  by an earlier, unfinished pass, so the flow resumes at its runtime step.
-   *  Creating an additional workspace never resumes. */
-  resumeExistingWorkspace?: boolean;
+  /** First-run onboarding, as opposed to creating an additional workspace.
+   *  The create page asks about the member's role and use cases, and a
+   *  workspace that already exists — from an earlier, unfinished pass — resumes
+   *  at its runtime step. */
+  firstRun?: boolean;
   runtimeInstructions?: React.ReactNode;
   /** Desktop wires this to restart the bundled daemon so a freshly
    *  installed agent CLI gets picked up on the runtime step. Web omits
@@ -74,7 +75,7 @@ interface OnboardingFlowProps {
 export function OnboardingFlow({
   onComplete,
   onCancel,
-  resumeExistingWorkspace = false,
+  firstRun = false,
   runtimeInstructions,
   onRuntimeRefresh,
   runtimesPending,
@@ -87,11 +88,11 @@ export function OnboardingFlow({
 
   const [createdWorkspace, setWorkspace] = useState<Workspace | null>(null);
   const { workspaces, ready: workspacesReady } = useWorkspaceList({
-    enabled: resumeExistingWorkspace,
+    enabled: firstRun,
   });
   const workspace =
     createdWorkspace ??
-    (resumeExistingWorkspace ? (workspaces[0] ?? null) : null);
+    (firstRun ? (workspaces[0] ?? null) : null);
   const bootstrapMika = useBootstrapMika(workspace?.id ?? "");
   // Keyed by workspace so retrying Skip after completeOnboarding failed reuses
   // the guide issue instead of creating a second one.
@@ -197,13 +198,17 @@ export function OnboardingFlow({
 
   // Wait for the list before choosing a step, so a resumable member never
   // sees the create page flash first.
-  if (resumeExistingWorkspace && !workspacesReady && !createdWorkspace) {
+  if (firstRun && !workspacesReady && !createdWorkspace) {
     return null;
   }
 
   if (!workspace) {
     return (
-      <NewWorkspacePage onCreated={handleWorkspaceCreated} onCancel={onCancel} />
+      <NewWorkspacePage
+        onCreated={handleWorkspaceCreated}
+        onCancel={onCancel}
+        askAboutYou={firstRun}
+      />
     );
   }
 
