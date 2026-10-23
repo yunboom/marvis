@@ -506,7 +506,7 @@ describe("AgentCreatePanel", () => {
     mockQuickCreateStore.lastActorId = "agent-1";
     mockSquadsData.list = [{ id: "squad-1", name: "Cloud Squad", leader_id: "agent-1", archived_at: null }];
     renderPanel({ onClose: vi.fn(), isExpanded: false, setIsExpanded: vi.fn() });
-    expect(screen.getByRole("button", { name: /^Create$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^Generate issue$/i })).toBeDisabled();
     expect(screen.queryByText(/daemon.*version/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Bohan")).not.toBeInTheDocument();
     expect(screen.queryByText("Cloud Squad")).not.toBeInTheDocument();
@@ -567,7 +567,7 @@ describe("AgentCreatePanel", () => {
 
     expect(
       screen.getByPlaceholderText(
-        'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+        "Describe the work; the agent will write it up as an issue",
       ),
     ).toHaveValue("Persisted draft prompt");
   });
@@ -621,14 +621,14 @@ describe("AgentCreatePanel", () => {
     renderPanel({ onClose, isExpanded: false, setIsExpanded: vi.fn() });
 
     const editor = screen.getByPlaceholderText(
-      'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+      "Describe the work; the agent will write it up as an issue",
     );
 
     await user.clear(editor);
     await user.type(editor, "New agent prompt");
     expect(mockSetAgent).toHaveBeenLastCalledWith({ prompt: "New agent prompt" });
 
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
     await waitFor(() => {
       expect(mockQuickCreateIssue).toHaveBeenCalledWith({
@@ -657,7 +657,7 @@ describe("AgentCreatePanel", () => {
     );
 
     renderPanel({ onClose, isExpanded: false, setIsExpanded: vi.fn() });
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
     await waitFor(() => {
       expect(mockShowIssueLimitUpgradePrompt).toHaveBeenCalledTimes(1);
@@ -675,7 +675,7 @@ describe("AgentCreatePanel", () => {
     expect(screen.queryByTestId("priority-picker")).not.toBeInTheDocument();
     await user.click(screen.getByText("Set priority..."));
     await user.click(screen.getByTestId("priority-picker"));
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
     await waitFor(() => {
       expect(mockQuickCreateIssue).toHaveBeenCalledWith(
@@ -694,7 +694,7 @@ describe("AgentCreatePanel", () => {
     renderPanel({ onClose, isExpanded: false, setIsExpanded: vi.fn() });
 
     const editor = screen.getByPlaceholderText(
-      'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+      "Describe the work; the agent will write it up as an issue",
     );
     fireEvent.change(editor, { target: { value: "Half-typed request" } });
     await user.click(screen.getByRole("button", { name: "Customize fields..." }));
@@ -724,7 +724,7 @@ describe("AgentCreatePanel", () => {
       data: { priority: "urgent", due_date: "2026-08-01" },
     });
 
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
     await waitFor(() => {
       expect(mockQuickCreateIssue).toHaveBeenCalledWith(
@@ -746,10 +746,10 @@ describe("AgentCreatePanel", () => {
     const onClose = vi.fn();
     renderPanel({ onClose, isExpanded: false, setIsExpanded: vi.fn() });
     const editor = screen.getByPlaceholderText(
-      'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+      "Describe the work; the agent will write it up as an issue",
     );
     fireEvent.change(editor, { target: { value: "Draft A prompt" } });
-    fireEvent.click(screen.getByRole("button", { name: /^Create$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Generate issue$/i }));
     await waitFor(() => expect(mockQuickCreateIssue).toHaveBeenCalled());
 
     // Mid-flight edit replaces the singleton draft's object identity.
@@ -777,10 +777,10 @@ describe("AgentCreatePanel", () => {
     );
     const view = renderPanel({ onClose: vi.fn(), isExpanded: false, setIsExpanded: vi.fn() });
     const editor = screen.getByPlaceholderText(
-      'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+      "Describe the work; the agent will write it up as an issue",
     );
     fireEvent.change(editor, { target: { value: "Draft A prompt" } });
-    fireEvent.click(screen.getByRole("button", { name: /^Create$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Generate issue$/i }));
     await waitFor(() => expect(mockQuickCreateIssue).toHaveBeenCalled());
 
     view.unmount();
@@ -805,10 +805,10 @@ describe("AgentCreatePanel", () => {
     );
     const view = renderPanel({ onClose: vi.fn(), isExpanded: false, setIsExpanded: vi.fn() });
     const editor = screen.getByPlaceholderText(
-      'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+      "Describe the work; the agent will write it up as an issue",
     );
     fireEvent.change(editor, { target: { value: "Draft A prompt" } });
-    fireEvent.click(screen.getByRole("button", { name: /^Create$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Generate issue$/i }));
     await waitFor(() => expect(mockQuickCreateIssue).toHaveBeenCalled());
 
     view.unmount();
@@ -830,7 +830,7 @@ describe("AgentCreatePanel", () => {
     await waitFor(() => expect(mockApiUploadFile).toHaveBeenCalled());
 
     const editor = screen.getByPlaceholderText(
-      'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+      "Describe the work; the agent will write it up as an issue",
     );
     await user.clear(editor);
     fireEvent.change(editor, {
@@ -839,7 +839,7 @@ describe("AgentCreatePanel", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
     await waitFor(() => {
       expect(mockQuickCreateIssue).toHaveBeenCalledWith({
@@ -870,12 +870,12 @@ describe("AgentCreatePanel", () => {
     await user.click(screen.getByRole("button", { name: /Frontend Squad/ }));
 
     const editor = screen.getByPlaceholderText(
-      'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+      "Describe the work; the agent will write it up as an issue",
     );
     await user.clear(editor);
     await user.type(editor, "Investigate the regression");
 
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
     await waitFor(() => {
       expect(mockQuickCreateIssue).toHaveBeenCalledWith({
@@ -932,11 +932,11 @@ describe("AgentCreatePanel", () => {
       await user.click(screen.getByTestId("project-picker"));
       await user.type(
         screen.getByPlaceholderText(
-          'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+          "Describe the work; the agent will write it up as an issue",
         ),
         "Ship it",
       );
-      await user.click(screen.getByRole("button", { name: /^Create$/i }));
+      await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
       await waitFor(() => {
         expect(mockQuickCreateIssue).toHaveBeenCalledWith(
@@ -1036,12 +1036,12 @@ describe("AgentCreatePanel", () => {
     expect(screen.getByTestId("agent-sub-issue-chip")).toBeInTheDocument();
 
     const editor = screen.getByPlaceholderText(
-      'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+      "Describe the work; the agent will write it up as an issue",
     );
     await user.clear(editor);
     await user.type(editor, "Investigate the regression");
 
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
     await waitFor(() => {
       expect(mockQuickCreateIssue).toHaveBeenCalledWith({
@@ -1075,7 +1075,7 @@ describe("AgentCreatePanel", () => {
     ).parentElement;
     const sourceContext = document.querySelector<HTMLElement>('[data-slot="source-context-preview"]');
 
-    expect(prompt).toHaveClass("flex-1", "min-h-[140px]", "overflow-y-auto");
+    expect(prompt).toHaveClass("flex-1", "min-h-[180px]", "overflow-y-auto");
     expect(sourceContext).toHaveClass("shrink-0");
     expect(prompt?.parentElement).toBe(sourceContext?.parentElement);
     expect(prompt?.nextElementSibling).toBe(sourceContext);
@@ -1100,7 +1100,7 @@ describe("AgentCreatePanel", () => {
     );
     await user.clear(editor);
     await user.type(editor, "Investigate with captured context");
-    await user.click(screen.getByRole("button", { name: /^Create$/i }));
+    await user.click(screen.getByRole("button", { name: /^Generate issue$/i }));
 
     await waitFor(() => expect(mockCreateCommentSubIssue).toHaveBeenCalledWith(
       "comment-source",
@@ -1129,7 +1129,7 @@ describe("AgentCreatePanel", () => {
       return { release: (result: unknown) => release(result) };
     }
 
-    it("blocks Switch to Manual while an upload is in flight", async () => {
+    it("blocks the Manual tab while an upload is in flight", async () => {
       const onSwitchMode = vi.fn();
       renderPanel({ onClose: vi.fn(), onSwitchMode, isExpanded: false, setIsExpanded: vi.fn() });
 
@@ -1137,7 +1137,7 @@ describe("AgentCreatePanel", () => {
 
       // The switch hands the serialized prompt to the manual panel — mid-upload
       // that prompt has already lost the pending image.
-      const switchButton = screen.getByRole("button", { name: /Switch to Manual/i });
+      const switchButton = screen.getByRole("tab", { name: /^Manual$/i });
       await waitFor(() => expect(switchButton).toBeDisabled());
       fireEvent.click(switchButton);
       expect(onSwitchMode).not.toHaveBeenCalled();
@@ -1184,11 +1184,11 @@ describe("AgentCreatePanel", () => {
       // ...and Create is reachable (gated only by prompt content, as usual).
       await user.type(
         screen.getByPlaceholderText(
-          'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+          "Describe the work; the agent will write it up as an issue",
         ),
         "Ship it",
       );
-      const create = screen.getByRole("button", { name: /^Create$/i });
+      const create = screen.getByRole("button", { name: /^Generate issue$/i });
       expect(create).not.toBeDisabled();
 
       await user.click(create);
@@ -1208,12 +1208,12 @@ describe("AgentCreatePanel", () => {
       expect(screen.getByText(/Create with agent needs ≥/i)).toBeInTheDocument();
       await user.type(
         screen.getByPlaceholderText(
-          'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+          "Describe the work; the agent will write it up as an issue",
         ),
         "Ship it",
       );
       // Blocked but still hoverable so its tooltip can explain why.
-      const create = screen.getByRole("button", { name: /^Create$/i });
+      const create = screen.getByRole("button", { name: /^Generate issue$/i });
       expect(create).toHaveAttribute("aria-disabled", "true");
       await user.click(create);
       expect(mockQuickCreateIssue).not.toHaveBeenCalled();
@@ -1233,7 +1233,7 @@ describe("AgentCreatePanel", () => {
       renderPanel({ onClose: vi.fn(), isExpanded: false, setIsExpanded: vi.fn() });
 
       const editor = screen.getByPlaceholderText(
-        'Tell the agent what to do, e.g. "let Bohan fix the inbox loading slowness in the Web project"',
+        "Describe the work; the agent will write it up as an issue",
       );
 
       // Both presses inside ONE act: React cannot re-render between them, so
@@ -1254,32 +1254,34 @@ describe("AgentCreatePanel", () => {
     });
   });
 
-  // MUL-6236 — the footer reflows to a 2x2 grid on phones. jsdom has no
-  // layout, so these pin the two structural preconditions the grid depends
-  // on rather than the rendered geometry.
-  describe("phone footer layout", () => {
+  // MUL-6236 — the footer must fit a phone row. With the mode switch moved
+  // to the header tabs it is two groups. jsdom has no layout, so this pins
+  // the structure rather than the rendered geometry.
+  describe("mode tabs and footer", () => {
     beforeEach(() => {
       renderPanel({ onClose: vi.fn(), isExpanded: false, setIsExpanded: vi.fn() });
     });
 
-    it("keeps every footer control a direct child of the grid container", () => {
-      const switchToManual = screen.getByRole("button", { name: /Switch to Manual/i });
-      const create = screen.getByRole("button", { name: /^Create$/i });
+    it("selects the agent tab and draws the ink stroke around the dialog", () => {
+      const agentTab = screen.getByRole("tab", { name: /Create with agent/i });
+      expect(agentTab).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: /^Manual$/i })).toHaveAttribute("aria-selected", "false");
+      // In agent mode the stroke leaves the tab and circles the dialog edge.
+      expect(agentTab.querySelector(".border-beam-ring")).toBeNull();
+      expect(document.querySelector(".border-beam-ring[data-variant='ink']")).not.toBeNull();
+    });
+
+    it("groups attach and keep-open apart from Create", () => {
+      const create = screen.getByRole("button", { name: /^Generate issue$/i });
       const keepOpen = screen.getByRole("checkbox");
       const attach = screen.getByRole("button", { name: "Upload file" });
+      const footer = document.querySelector("[data-slot='create-issue-footer']");
 
-      const footer = switchToManual.parentElement;
-      expect(footer?.className).toContain("grid-cols-[auto_1fr]");
-      // From `sm` up the same children lay out as the original single row.
-      expect(footer?.className).toContain("sm:flex");
-
-      // Grid placement only sees direct children: re-wrapping any of these in
-      // a <div> collapses the 2x2 back to the jammed single row the bug
-      // report showed. The attach button keeps its own wrapper because it can
-      // gain a "N sent" badge — that wrapper is itself the first grid cell.
-      expect(create.parentElement).toBe(footer);
-      expect(keepOpen.parentElement?.parentElement).toBe(footer);
+      expect(footer).not.toBeNull();
+      expect(create.parentElement?.parentElement).toBe(footer);
       expect(attach.parentElement?.parentElement).toBe(footer);
+      expect(keepOpen.closest("label")?.parentElement).toBe(attach.parentElement);
+      expect(attach.parentElement).not.toBe(create.parentElement);
       expect(attach).toHaveAttribute("data-size", "sm");
     });
   });

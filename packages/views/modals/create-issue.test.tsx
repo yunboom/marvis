@@ -1500,7 +1500,7 @@ describe("CreateIssueModal", () => {
     );
 
     await user.type(screen.getByPlaceholderText("Issue title"), "Refactor auth");
-    await user.click(screen.getByRole("button", { name: /Switch to Agent/i }));
+    await user.click(screen.getByRole("tab", { name: /Create with agent/i }));
 
     expect(onSwitchMode).toHaveBeenCalledTimes(1);
     // Prompt assist-init + squad actor land in the unified agent draft.
@@ -1643,7 +1643,7 @@ describe("CreateIssueModal", () => {
 
     await user.type(screen.getByPlaceholderText("Issue title"), "Refactor auth");
 
-    await user.click(screen.getByRole("button", { name: /Switch to Agent/i }));
+    await user.click(screen.getByRole("tab", { name: /Create with agent/i }));
 
     expect(onSwitchMode).toHaveBeenCalledTimes(1);
     expect(mockSetShared).toHaveBeenCalledWith(
@@ -1697,7 +1697,7 @@ describe("CreateIssueModal", () => {
     );
 
     await user.type(screen.getByPlaceholderText("Issue title"), "Refactor auth");
-    await user.click(screen.getByRole("button", { name: /Switch to Agent/i }));
+    await user.click(screen.getByRole("tab", { name: /Create with agent/i }));
 
     expect(onSwitchMode).toHaveBeenCalledTimes(1);
     // The parent context is not persisted (a per-invocation intent), so it
@@ -1729,7 +1729,7 @@ describe("CreateIssueModal", () => {
       "flex-1",
       "min-h-0",
       "overflow-y-auto",
-      "px-5",
+      "px-7",
     );
     expect(sourceContext).toHaveClass("shrink-0");
     expect(description?.parentElement).toBe(sourceContext?.parentElement);
@@ -1929,7 +1929,7 @@ describe("CreateIssueModal", () => {
 
     mockSetManual.mockClear();
     mockSetAgent.mockClear();
-    await user.click(screen.getByRole("button", { name: /Switch to Agent/i }));
+    await user.click(screen.getByRole("tab", { name: /Create with agent/i }));
 
     // Agent prompt seeded from the manual content...
     expect(mockSetAgent).toHaveBeenCalledWith({ prompt: "Update\n\nSome body" });
@@ -1943,7 +1943,7 @@ describe("CreateIssueModal", () => {
   });
 
   // MUL-4808 — manual create had no upload gate at all: Create, Enter on the
-  // title, and Switch to Agent would each fix the draft while an image was
+  // title, and the agent tab would each fix the draft while an image was
   // still uploading, dropping it from the description with no warning.
   // MUL-5181 P0: the issue draft is a SINGLETON store. A submit that outlives
   // its dialog may only consume the draft it submitted — never one the user
@@ -2117,7 +2117,7 @@ describe("CreateIssueModal", () => {
       expect(mockCreateIssue).not.toHaveBeenCalled();
     });
 
-    it("blocks Switch to Agent while an upload is in flight", async () => {
+    it("blocks the agent tab while an upload is in flight", async () => {
       const user = userEvent.setup();
       const onSwitchMode = vi.fn();
       renderManual(onSwitchMode);
@@ -2127,7 +2127,7 @@ describe("CreateIssueModal", () => {
 
       // The switch packs the description into an agent prompt and clears the
       // manual draft — doing that mid-upload loses the image for good.
-      const switchButton = screen.getByRole("button", { name: /Switch to Agent/i });
+      const switchButton = screen.getByRole("tab", { name: /Create with agent/i });
       await waitFor(() => expect(switchButton).toBeDisabled());
       fireEvent.click(switchButton);
       expect(onSwitchMode).not.toHaveBeenCalled();
@@ -2235,13 +2235,16 @@ describe("CreateIssueModal", () => {
       expect(mockCreateIssue).toHaveBeenCalledTimes(1);
     });
 
-    it("renders the send keycaps on Create without renaming the button", async () => {
+    it("renders the send keycaps beside Create, outside the button", async () => {
       const user = userEvent.setup();
       renderManual();
 
-      // Accessible name must stay the label alone — the keycaps are decorative.
-      expect(screen.getByRole("button", { name: "Create Issue" })).toBeInTheDocument();
-      expect(document.querySelector("[data-slot='shortcut-keycaps']")).toBeInTheDocument();
+      // Accessible name must stay the label alone — the keycaps are a
+      // decorative hint next to the button, not inside it.
+      const create = screen.getByRole("button", { name: "Create Issue" });
+      const keycaps = document.querySelector("[data-slot='shortcut-keycaps']");
+      expect(keycaps).toBeInTheDocument();
+      expect(create.contains(keycaps)).toBe(false);
 
       // And the affordance survives the empty → filled transition.
       await user.type(screen.getByPlaceholderText("Issue title"), "Now valid");
@@ -2262,23 +2265,43 @@ describe("CreateIssueModal", () => {
     });
   });
 
-  // MUL-6236 — the manual panel shares the agent panel's phone treatment; it
-  // is one tap away behind "Switch to Manual", so it hit the same bugs.
-  describe("phone layout", () => {
+  describe("mode tabs and footer", () => {
+    it("selects the Manual tab and switches through the agent tab", async () => {
+      const user = userEvent.setup();
+      const onSwitchMode = vi.fn();
+      renderModal(
+        <ManualCreatePanel
+          onClose={vi.fn()}
+          onSwitchMode={onSwitchMode}
+          isExpanded={false}
+          setIsExpanded={vi.fn()}
+        />,
+      );
 
-    it("keeps every footer control a direct child of the grid container", () => {
+      expect(screen.getByRole("tablist")).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /^Manual$/i })).toHaveAttribute("aria-selected", "true");
+      const agentTab = screen.getByRole("tab", { name: /Create with agent/i });
+      expect(agentTab).toHaveAttribute("aria-selected", "false");
+      // The ink stroke invites the switch from the unselected agent tab.
+      expect(agentTab.querySelector(".border-beam-ring[data-variant='ink']")).not.toBeNull();
+
+      await user.click(agentTab);
+      expect(onSwitchMode).toHaveBeenCalledTimes(1);
+    });
+
+    // MUL-6236 — the footer must fit a phone row. With the mode switch moved
+    // to the header it is two groups: attach + keep-open, then Create.
+    it("groups attach and keep-open apart from Create", () => {
       renderModal(<CreateIssueModal onClose={vi.fn()} />);
 
-      const switchToAgent = screen.getByRole("button", { name: /Switch to Agent/i });
       const create = screen.getByRole("button", { name: "Create Issue" });
+      const keepOpen = screen.getByRole("checkbox", { name: "Create another" });
+      const footer = document.querySelector("[data-slot='create-issue-footer']");
 
-      // Grid placement only sees direct children — re-wrapping either control
-      // collapses the 2x2 phone footer back to one jammed row.
-      const footer = switchToAgent.parentElement;
-      expect(footer?.className).toContain("grid-cols-[auto_1fr]");
-      expect(footer?.className).toContain("sm:flex");
-      expect(create.parentElement).toBe(footer);
-      expect(create.className).toContain("justify-self-end");
+      expect(footer).not.toBeNull();
+      expect(create.parentElement?.parentElement).toBe(footer);
+      expect(keepOpen.closest("label")?.parentElement?.parentElement).toBe(footer);
+      expect(keepOpen.closest("label")?.parentElement).not.toBe(create.parentElement);
     });
   });
 });

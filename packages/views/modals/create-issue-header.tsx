@@ -1,0 +1,158 @@
+"use client";
+
+import type { KeyboardEvent } from "react";
+import { Maximize2, Minimize2, Sparkle, X as XIcon } from "lucide-react";
+import type { CreateMode } from "@marvis/core/issues/stores/create-mode-store";
+import { useShortcut } from "@marvis/core/shortcuts";
+import { BorderBeam } from "@marvis/ui/components/common/border-beam";
+import { cn } from "@marvis/ui/lib/utils";
+import { DeferredTooltip } from "../common/deferred-tooltip";
+import { ShortcutKeycaps } from "../common/shortcut-keycaps";
+import { useT } from "../i18n";
+
+const ICON_BUTTON_CLASS =
+  "flex size-7.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground cursor-pointer";
+
+const TAB_CLASS =
+  "relative flex h-7.5 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-body transition-colors duration-(--motion-fast) ease-out outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
+
+/**
+ * Header shared by both create-issue panels: the manual / agent mode tabs on
+ * the left, expand and close on the right.
+ *
+ * Each panel owns its own switch logic (draft hand-off, upload gate), so the
+ * header only reports which way to go through `onSwitch`. Only the
+ * unselected tab is interactive; arrow keys on the selected tab switch too,
+ * following the tablist pattern. Tooltips use DeferredTooltip so the dialog's
+ * initial focus never pops one open.
+ */
+export function CreateIssueHeader({
+  mode,
+  onSwitch,
+  switchDisabled,
+  isExpanded,
+  setIsExpanded,
+  onClose,
+}: {
+  mode: CreateMode;
+  onSwitch: () => void;
+  /** Blocks the switch while an upload is in flight. */
+  switchDisabled: boolean;
+  isExpanded: boolean;
+  setIsExpanded: (v: boolean) => void;
+  onClose: () => void;
+}) {
+  const { t } = useT("modals");
+  const expandLabel = isExpanded
+    ? t(($) => $.common.collapse_tooltip)
+    : t(($) => $.common.expand_tooltip);
+
+  const onTabKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    if (!switchDisabled) onSwitch();
+  };
+
+  const tab = (tabMode: CreateMode) => {
+    const selected = mode === tabMode;
+    const isAgent = tabMode === "agent";
+    const button = (
+      <button
+        type="button"
+        role="tab"
+        aria-selected={selected}
+        tabIndex={selected ? 0 : -1}
+        disabled={!selected && switchDisabled}
+        aria-busy={(!selected && switchDisabled) || undefined}
+        onClick={selected ? undefined : onSwitch}
+        onKeyDown={selected ? onTabKeyDown : undefined}
+        className={cn(
+          TAB_CLASS,
+          selected
+            ? "font-semibold text-foreground"
+            : "text-muted-foreground hover:text-foreground cursor-pointer",
+        )}
+      >
+        {isAgent && <Sparkle className="size-3.5" aria-hidden="true" />}
+        {isAgent ? t(($) => $.create_issue.tab_agent) : t(($) => $.create_issue.tab_manual)}
+        {/* In manual mode the ink stroke circles the agent tab as an
+            invitation; in agent mode the agent panel draws it around the
+            whole dialog instead. */}
+        {isAgent && !selected && <BorderBeam variant="ink" />}
+      </button>
+    );
+    if (selected) return button;
+    return (
+      <DeferredTooltip
+        side="bottom"
+        content={
+          isAgent
+            ? t(($) => $.create_issue.switch_to_agent_tooltip)
+            : t(($) => $.create_issue.switch_to_manual_tooltip)
+        }
+        trigger={button}
+      />
+    );
+  };
+
+  return (
+    <div className="flex shrink-0 items-center justify-between gap-3 pt-5 pr-4 pb-1 pl-[1.125rem]">
+      <div
+        role="tablist"
+        aria-label={t(($) => $.create_issue.mode_tabs_aria)}
+        className="flex min-w-0 items-center gap-1"
+      >
+        {tab("manual")}
+        {tab("agent")}
+      </div>
+      <div className="flex items-center gap-1">
+        <DeferredTooltip
+          side="bottom"
+          content={expandLabel}
+          trigger={
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-label={expandLabel}
+              className={ICON_BUTTON_CLASS}
+            >
+              {isExpanded ? <Minimize2 className="size-[15px]" /> : <Maximize2 className="size-[15px]" />}
+            </button>
+          }
+        />
+        <DeferredTooltip
+          side="bottom"
+          content={t(($) => $.common.close)}
+          trigger={
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t(($) => $.common.close)}
+              className={ICON_BUTTON_CLASS}
+            >
+              <XIcon className="size-[15px]" />
+            </button>
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Muted send-chord hint ("⌘ ↵") beside the primary create button, outside it,
+ * so the button's accessible name stays its label. Decorative, absent when
+ * `send` is unbound, and hidden on phones, which have no ⌘ key.
+ */
+export function SendShortcutHint() {
+  const sendShortcut = useShortcut("send");
+  if (!sendShortcut) return null;
+  return (
+    <ShortcutKeycaps
+      shortcut={sendShortcut}
+      decorative
+      className="gap-0.5 max-sm:hidden"
+      keyClassName="h-auto min-w-0 border-0 bg-transparent px-0 shadow-none text-caption text-muted-foreground"
+    />
+  );
+}
