@@ -55,7 +55,7 @@
 **Interfaces:**
 - Produces: `func mainListenAddr(host, port string) string`（`cmd/server/main.go`），空 host 返回 `":"+port`，否则 `net.JoinHostPort(host, port)`。阶段四桌面端在局域网关闭时传 `MARVIS_LISTEN_HOST=127.0.0.1`。
 
-- [ ] **Step 1: 写失败测试 `TestMainListenAddr`**
+- [x] **Step 1: 写失败测试 `TestMainListenAddr`**
 
 ```go
 func TestMainListenAddr(t *testing.T) {
@@ -74,19 +74,19 @@ func TestMainListenAddr(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `cd server && go test ./cmd/server -run TestMainListenAddr -count=1`
 Expected: FAIL（`undefined: mainListenAddr`）
 
-- [ ] **Step 3: 实现 `mainListenAddr`，main 中改为 `newMainHTTPServer(mainListenAddr(os.Getenv("MARVIS_LISTEN_HOST"), port), r)`**；host 先 `strings.TrimSpace`。`.env.example` 补一行注释：留空监听所有网卡，单机模式关闭局域网时由桌面端设为 `127.0.0.1`。
+- [x] **Step 3: 实现 `mainListenAddr`，main 中改为 `newMainHTTPServer(mainListenAddr(os.Getenv("MARVIS_LISTEN_HOST"), port), r)`**；host 先 `strings.TrimSpace`。`.env.example` 补一行注释：留空监听所有网卡，单机模式关闭局域网时由桌面端设为 `127.0.0.1`。
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `cd server && go test ./cmd/server -run 'TestMainListenAddr|TestNewMainHTTPServerTimeouts' -count=1`
 Expected: PASS
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add server/cmd/server/main.go server/cmd/server/main_test.go .env.example
@@ -105,21 +105,21 @@ git commit -m "feat(server): make the listen host configurable"
 **Interfaces:**
 - Produces: `landiscovery.ConfigFromEnv` 在未设 `MARVIS_LAN_DISCOVERY` 时返回 `Enabled == false`。
 
-- [ ] **Step 1: 改测试**：`TestConfigFromEnv` 只设 `PORT` 时期望 `Config{Enabled: false, Name: "design-mac-mini", Port: 13900}`；新增 `TestConfigFromEnvEnabledExplicitly`：`MARVIS_LAN_DISCOVERY=true` → `Enabled: true`；`MARVIS_LAN_DISCOVERY=garbage` → `Enabled: false`。
+- [x] **Step 1: 改测试**：`TestConfigFromEnv` 只设 `PORT` 时期望 `Config{Enabled: false, Name: "design-mac-mini", Port: 13900}`；新增 `TestConfigFromEnvEnabledExplicitly`：`MARVIS_LAN_DISCOVERY=true` → `Enabled: true`；`MARVIS_LAN_DISCOVERY=garbage` → `Enabled: false`。
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `cd server && go test ./internal/landiscovery -count=1`
 Expected: FAIL（默认值仍为 true）
 
-- [ ] **Step 3: 把默认值改为 false**，`strconv.ParseBool` 解析失败时保持 false；同步 `.env.example`、六个 mdx、`CLAUDE.md`。
+- [x] **Step 3: 把默认值改为 false**，`strconv.ParseBool` 解析失败时保持 false；同步 `.env.example`、六个 mdx、`CLAUDE.md`。
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `cd server && go test ./internal/landiscovery ./cmd/server -run 'TestConfigFromEnv|TestStartLANAdvertising|TestLANConfigForListenPort' -count=1`
 Expected: PASS
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add server/internal/landiscovery .env.example apps/docs/content/docs CLAUDE.md
@@ -138,23 +138,23 @@ git commit -m "feat(server): turn LAN discovery off by default"
 **Interfaces:**
 - Produces: `const StandaloneEnv = "MARVIS_STANDALONE"`；`func IsStandaloneMode() bool`（`strconv.ParseBool` 为 true 才返回 true，解析失败返回 false）。阶段四桌面端启动单机服务端时设 `MARVIS_STANDALONE=1`；Task 4 的路由注册也读它。
 
-- [ ] **Step 1: 写失败测试 `TestIsStandaloneMode`**（表驱动：`"1"`、`"true"`、`"TRUE"` → true；`""`、`"0"`、`"false"`、`"yes"`、`"garbage"` → false，用 `t.Setenv(StandaloneEnv, v)`）。
+- [x] **Step 1: 写失败测试 `TestIsStandaloneMode`**（表驱动：`"1"`、`"true"`、`"TRUE"` → true；`""`、`"0"`、`"false"`、`"yes"`、`"garbage"` → false，用 `t.Setenv(StandaloneEnv, v)`）。
 
-- [ ] **Step 2: 在 `handler_test.go` 写失败测试 `TestVerifyCodeAcceptsConfiguredDevCodeInStandaloneProduction`**：照 `TestVerifyCodeAcceptsConfiguredDevCodeOutsideProduction` 的写法，额外 `t.Setenv("APP_ENV", "production")`、`t.Setenv(StandaloneEnv, "1")`，断言返回 200 且响应含 token。
+- [x] **Step 2: 在 `handler_test.go` 写失败测试 `TestVerifyCodeAcceptsConfiguredDevCodeInStandaloneProduction`**：照 `TestVerifyCodeAcceptsConfiguredDevCodeOutsideProduction` 的写法，额外 `t.Setenv("APP_ENV", "production")`、`t.Setenv(StandaloneEnv, "1")`，断言返回 200 且响应含 token。
 
-- [ ] **Step 3: 运行确认失败**
+- [x] **Step 3: 运行确认失败**
 
 Run: `cd server && go test ./internal/handler -run 'TestIsStandaloneMode|TestVerifyCode.*DevCode' -count=1`
 Expected: FAIL（`undefined: IsStandaloneMode`）
 
-- [ ] **Step 4: 实现**：`isDevVerificationCode` 改为 `isProductionEnv() && !IsStandaloneMode()` 时返回 false；`main.go` 警告：production 且非单机时打 "ignored"，否则打 "enabled"（单机时消息带上 `standalone=true` 字段）。
+- [x] **Step 4: 实现**：`isDevVerificationCode` 改为 `isProductionEnv() && !IsStandaloneMode()` 时返回 false；`main.go` 警告：production 且非单机时打 "ignored"，否则打 "enabled"（单机时消息带上 `standalone=true` 字段）。
 
-- [ ] **Step 5: 运行确认通过（含原有的拒绝用例）**
+- [x] **Step 5: 运行确认通过（含原有的拒绝用例）**
 
 Run: `cd server && go test ./internal/handler -run 'TestIsStandaloneMode|TestVerifyCode' -count=1`
 Expected: PASS，`TestVerifyCodeRejectsConfiguredDevCodeInProduction` 仍通过
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add server/internal/handler/standalone.go server/internal/handler/standalone_test.go server/internal/handler/auth.go server/internal/handler/handler_test.go server/cmd/server/main.go
@@ -185,7 +185,7 @@ git commit -m "feat(server): honor the fixed login code in standalone mode"
 | token 已用过 | 410 |
 | 成功 | 200 |
 
-- [ ] **Step 1: 写失败测试**（`auth_bootstrap_test.go`，复用 `handler_test.go` 的 `TestMain`/`testHandler` 方式，各用例新建带 `Config{BootstrapToken: "tok"}` 的 handler，`t.Cleanup` 删除创建的用户）：
+- [x] **Step 1: 写失败测试**（`auth_bootstrap_test.go`，复用 `handler_test.go` 的 `TestMain`/`testHandler` 方式，各用例新建带 `Config{BootstrapToken: "tok"}` 的 handler，`t.Cleanup` 删除创建的用户）：
   - `TestBootstrapLoginCreatesUserAndSession`：`RemoteAddr="127.0.0.1:50000"`，返回 200，响应 `token` 非空，`Set-Cookie` 含登录 cookie，库中存在该邮箱用户
   - `TestBootstrapLoginIsSingleUse`：第二次同参数请求返回 410；另起两个 goroutine 并发调用新 handler，恰好一个 200
   - `TestBootstrapLoginRejectsNonLoopback`：`RemoteAddr="192.168.1.37:50000"` 且带 `X-Forwarded-For: 127.0.0.1` → 403
@@ -193,19 +193,19 @@ git commit -m "feat(server): honor the fixed login code in standalone mode"
   - `TestBootstrapLoginNotConfigured`：`BootstrapToken` 为空 → 404
   - `TestBootstrapLoginAcceptsIPv6Loopback`：`RemoteAddr="[::1]:50000"` → 200
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `cd server && go test ./internal/handler -run TestBootstrapLogin -count=1`
 Expected: FAIL（`undefined: BootstrapLoginRequest` 等）
 
-- [ ] **Step 3: 实现 `func (h *Handler) BootstrapLogin(w http.ResponseWriter, r *http.Request)`**：顺序为 配置 → 回环 → 解析 → token → `bootstrapUsed.CompareAndSwap(false, true)` → `findOrCreateUser` → `issueJWT` → cookie + JSON；后续步骤出错时 `bootstrapUsed.Store(false)` 允许重试，错误用 `errors.Wrapf(err, "bootstrap login email=%s", email)` 记录。路由与 main 接线同上。
+- [x] **Step 3: 实现 `func (h *Handler) BootstrapLogin(w http.ResponseWriter, r *http.Request)`**：顺序为 配置 → 回环 → 解析 → token → `bootstrapUsed.CompareAndSwap(false, true)` → `findOrCreateUser` → `issueJWT` → cookie + JSON；后续步骤出错时 `bootstrapUsed.Store(false)` 允许重试，错误用 `errors.Wrapf(err, "bootstrap login email=%s", email)` 记录。路由与 main 接线同上。
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `cd server && go test ./internal/handler -run 'TestBootstrapLogin|TestVerifyCode' -count=1 && go test ./cmd/server -count=1`
 Expected: PASS
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add server/internal/handler/auth_bootstrap.go server/internal/handler/auth_bootstrap_test.go server/internal/handler/handler.go server/cmd/server/router.go server/cmd/server/main.go
@@ -221,19 +221,19 @@ git commit -m "feat(server): add one-time loopback bootstrap login for standalon
 **Interfaces:**
 - Produces: `scripts/build-standalone-bundle.sh <goos> <goarch> <version> <outdir>`，产出 `<outdir>/marvis-server-<version>-<os>-<arch>.tar.xz` 与同名 `.sha256`；包内根目录为 `server`、`migrate`（Windows 为 `.exe`）、`migrations/`。`<os>` 用 darwin/linux/windows，`<arch>` 用 amd64/arm64（与 `cli-release-asset.ts` 命名一致）。阶段二的发布流水线调用此脚本。
 
-- [ ] **Step 1: 写脚本**：`set -euo pipefail`；两个二进制都用 `CGO_ENABLED=0 GOOS GOARCH go build -trimpath -ldflags "-s -w -X main.version=<version>"`（`migrate` 不带 version）；复制 `server/migrations/*.sql`；`tar -cf - -C <staging> . | xz -9 -T0 > <outfile>`；`shasum -a 256` 写 `.sha256`；参数不全时打印用法并退出 2。
+- [x] **Step 1: 写脚本**：`set -euo pipefail`；两个二进制都用 `CGO_ENABLED=0 GOOS GOARCH go build -trimpath -ldflags "-s -w -X main.version=<version>"`（`migrate` 不带 version）；复制 `server/migrations/*.sql`；`tar -cf - -C <staging> . | xz -9 -T0 > <outfile>`；`shasum -a 256` 写 `.sha256`；参数不全时打印用法并退出 2。
 
-- [ ] **Step 2: 本机打包并检查内容**
+- [x] **Step 2: 本机打包并检查内容**
 
 Run: `make standalone-bundle VERSION=0.0.0-dev && tar -tJf server/dist/marvis-server-0.0.0-dev-$(go env GOOS)-$(go env GOARCH).tar.xz | grep -E '^\./(server|migrate|migrations/001_init.up.sql)$'`
 Expected: 三行全部命中；记录包大小写入阶段二计划
 
-- [ ] **Step 3: 冒烟：解压后在空库上跑迁移并启动**
+- [x] **Step 3: 冒烟：解压后在空库上跑迁移并启动**
 
 Run（本机 PostgreSQL 来自 `make up` 的环境，库名用一次性的 `standalone_smoke`）：解压到临时目录，`DATABASE_URL=<smoke 库> ./migrate up`，再 `APP_ENV=production MARVIS_STANDALONE=1 MARVIS_LISTEN_HOST=127.0.0.1 PORT=13999 JWT_SECRET=<64 位随机十六进制> DATABASE_URL=<smoke 库> ./server &`，`curl -s 127.0.0.1:13999/readyz`
 Expected: `migrate` 输出 `Done.`，`/readyz` 返回 200；结束后删除 smoke 库
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add scripts/build-standalone-bundle.sh Makefile
@@ -245,9 +245,9 @@ git commit -m "build: add standalone server bundle script"
 **Files:**
 - 技术方案文档（Claude Docs）：「下载产物与体积」改为下载包含 `server`、`migrate`、`migrations/`，去掉 go:embed 与 `MARVIS_AUTO_MIGRATE`，体积用 Task 5 实测值；「改动清单」服务端一行同步
 
-- [ ] **Step 1: 全量跑本阶段相关包测试与格式检查**
+- [x] **Step 1: 全量跑本阶段相关包测试与格式检查**
 
 Run: `cd server && gofmt -l ./cmd/server ./internal/handler ./internal/landiscovery && go vet ./cmd/server ./internal/handler ./internal/landiscovery && go test ./cmd/server ./internal/handler ./internal/landiscovery -count=1`
 Expected: `gofmt -l` 无输出，vet 与测试全部通过
 
-- [ ] **Step 2: 更新技术方案文档对应段落**（通过 Claude Docs 连接器按段落替换）
+- [x] **Step 2: 更新技术方案文档对应段落**（通过 Claude Docs 连接器按段落替换）
