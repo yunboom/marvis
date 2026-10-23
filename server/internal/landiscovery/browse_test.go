@@ -35,7 +35,7 @@ func serviceEntry(instance string, text []string) *zeroconf.ServiceEntry {
 	return &zeroconf.ServiceEntry{
 		ServiceRecord: zeroconf.ServiceRecord{Instance: instance},
 		HostName:      "marvis.local.",
-		Port:          3000,
+		Port:          13840,
 		Text:          text,
 		AddrIPv4:      []net.IP{net.ParseIP("192.168.1.20")},
 		AddrIPv6:      []net.IP{net.ParseIP("fe80::1")},
@@ -61,7 +61,7 @@ func TestEntryFromService(t *testing.T) {
 		ServerVersion: "v0.6.5",
 		InstanceID:    "7f3a",
 		Host:          "marvis.local.",
-		Port:          3000,
+		Port:          13840,
 		IPs:           []net.IP{net.ParseIP("192.168.1.20"), net.ParseIP("fe80::1")},
 	}
 	if !reflect.DeepEqual(got, want) {

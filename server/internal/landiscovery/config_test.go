@@ -19,8 +19,8 @@ func envGetter(env map[string]string) func(string) string {
 func TestConfigFromEnv(t *testing.T) {
 	host := func() (string, error) { return "design-mac-mini.local", nil }
 
-	cfg := ConfigFromEnv(envGetter(map[string]string{"FRONTEND_PORT": "3100"}), host)
-	want := Config{Enabled: true, Name: "design-mac-mini", Port: 3100}
+	cfg := ConfigFromEnv(envGetter(map[string]string{"PORT": "13900"}), host)
+	want := Config{Enabled: true, Name: "design-mac-mini", Port: 13900}
 	if !reflect.DeepEqual(cfg, want) {
 		t.Fatalf("ConfigFromEnv() = %#v, want %#v", cfg, want)
 	}
@@ -29,9 +29,16 @@ func TestConfigFromEnv(t *testing.T) {
 		"MARVIS_LAN_DISCOVERY": "false",
 		"MARVIS_LAN_NAME":      "设计部 Marvis",
 	}), host)
-	want = Config{Enabled: false, Name: "设计部 Marvis", Port: 3000}
+	want = Config{Enabled: false, Name: "设计部 Marvis", Port: 13840}
 	if !reflect.DeepEqual(cfg, want) {
 		t.Fatalf("ConfigFromEnv() = %#v, want %#v", cfg, want)
+	}
+}
+
+func TestDefaultServerPort(t *testing.T) {
+	// 与 cmd/server 的默认监听端口保持一致。
+	if DefaultServerPort != 13840 {
+		t.Fatalf("DefaultServerPort = %d, want 13840", DefaultServerPort)
 	}
 }
 
@@ -45,42 +52,48 @@ func TestConfigFromEnvFallbacks(t *testing.T) {
 		{
 			name: "hostname lookup fails",
 			host: func() (string, error) { return "", errors.New("no hostname") },
-			want: Config{Enabled: true, Name: DefaultHostname, Port: DefaultFrontendPort},
+			want: Config{Enabled: true, Name: DefaultHostname, Port: DefaultServerPort},
 		},
 		{
 			name: "hostname without local suffix and with trailing dot",
 			host: func() (string, error) { return "Studio-Mac.LOCAL.", nil },
-			want: Config{Enabled: true, Name: "Studio-Mac", Port: DefaultFrontendPort},
+			want: Config{Enabled: true, Name: "Studio-Mac", Port: DefaultServerPort},
 		},
 		{
 			name: "blank custom name falls back to hostname",
 			env:  map[string]string{"MARVIS_LAN_NAME": "   "},
 			host: func() (string, error) { return testMiniHost, nil },
-			want: Config{Enabled: true, Name: "mini", Port: DefaultFrontendPort},
+			want: Config{Enabled: true, Name: "mini", Port: DefaultServerPort},
 		},
 		{
 			name: "custom name is trimmed",
 			env:  map[string]string{"MARVIS_LAN_NAME": "  设计部  "},
 			host: func() (string, error) { return testMiniHost, nil },
-			want: Config{Enabled: true, Name: "设计部", Port: DefaultFrontendPort},
+			want: Config{Enabled: true, Name: "设计部", Port: DefaultServerPort},
 		},
 		{
 			name: "invalid discovery flag keeps advertising",
 			env:  map[string]string{"MARVIS_LAN_DISCOVERY": "maybe"},
 			host: func() (string, error) { return testMiniHost, nil },
-			want: Config{Enabled: true, Name: "mini", Port: DefaultFrontendPort},
+			want: Config{Enabled: true, Name: "mini", Port: DefaultServerPort},
 		},
 		{
 			name: "invalid port falls back to default",
-			env:  map[string]string{"FRONTEND_PORT": "abc"},
+			env:  map[string]string{"PORT": "abc"},
 			host: func() (string, error) { return testMiniHost, nil },
-			want: Config{Enabled: true, Name: "mini", Port: DefaultFrontendPort},
+			want: Config{Enabled: true, Name: "mini", Port: DefaultServerPort},
+		},
+		{
+			name: "web port variable is ignored",
+			env:  map[string]string{"FRONTEND_PORT": "3100"},
+			host: func() (string, error) { return testMiniHost, nil },
+			want: Config{Enabled: true, Name: "mini", Port: DefaultServerPort},
 		},
 		{
 			name: "out of range port falls back to default",
-			env:  map[string]string{"FRONTEND_PORT": "70000"},
+			env:  map[string]string{"PORT": "70000"},
 			host: func() (string, error) { return testMiniHost, nil },
-			want: Config{Enabled: true, Name: "mini", Port: DefaultFrontendPort},
+			want: Config{Enabled: true, Name: "mini", Port: DefaultServerPort},
 		},
 	}
 

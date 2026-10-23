@@ -23,7 +23,7 @@ type Entry struct {
 	InstanceID string
 	// Host 是广播的主机名，形如 marvis.local.。
 	Host string
-	// Port 是网页端口。
+	// Port 是服务端口。
 	Port int
 	// IPs 是主机的地址，IPv4 在前。
 	IPs []net.IP

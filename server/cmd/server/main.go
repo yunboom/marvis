@@ -681,7 +681,7 @@ func main() {
 	}
 
 	// 局域网广播的配置和实例 ID：/api/config 对外核实用，与是否广播无关，所以总是读取。
-	lanConfig := landiscovery.ConfigFromEnv(os.Getenv, os.Hostname)
+	lanConfig := lanConfigForListenPort(landiscovery.ConfigFromEnv(os.Getenv, os.Hostname), port)
 	instanceID := loadLANInstanceID(context.Background(), pool)
 
 	r, h := NewRouterWithOptions(pool, hub, bus, analyticsClient, storeRedis, RouterOptions{

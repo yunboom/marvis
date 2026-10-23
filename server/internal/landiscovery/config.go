@@ -17,8 +17,8 @@ const (
 	ProtocolVersion = "1"
 	// DefaultHostname 是广播的主机名，冲突时由 ChooseHostname 追加序号。
 	DefaultHostname = "marvis"
-	// DefaultFrontendPort 是 FRONTEND_PORT 未设置时的网页端口。
-	DefaultFrontendPort = 3000
+	// DefaultServerPort 是 PORT 未设置时的服务端监听端口，与 cmd/server 的默认值一致。
+	DefaultServerPort = 13840
 )
 
 // TXT 记录的键。
@@ -35,9 +35,9 @@ const (
 
 // 服务端读取的环境变量名。
 const (
-	envDiscovery    = "MARVIS_LAN_DISCOVERY"
-	envName         = "MARVIS_LAN_NAME"
-	envFrontendPort = "FRONTEND_PORT"
+	envDiscovery  = "MARVIS_LAN_DISCOVERY"
+	envName       = "MARVIS_LAN_NAME"
+	envServerPort = "PORT"
 )
 
 const (
@@ -55,19 +55,19 @@ type Config struct {
 	Enabled bool
 	// Name 是展示给用户的服务器名称。
 	Name string
-	// Port 是网页端口。
+	// Port 是服务端监听端口。
 	Port int
 }
 
 // ConfigFromEnv 从环境变量读取广播配置。
 // MARVIS_LAN_DISCOVERY 为 false 时关闭广播，默认开启；
 // MARVIS_LAN_NAME 为空时取电脑名并去掉 .local 后缀；
-// 端口取 FRONTEND_PORT，缺失或非法时用 DefaultFrontendPort。
+// 端口取 PORT（服务端的监听端口），缺失或非法时用 DefaultServerPort。
 func ConfigFromEnv(getenv func(string) string, hostname func() (string, error)) Config {
 	cfg := Config{
 		Enabled: true,
 		Name:    strings.TrimSpace(getenv(envName)),
-		Port:    DefaultFrontendPort,
+		Port:    DefaultServerPort,
 	}
 
 	if enabled, err := strconv.ParseBool(strings.TrimSpace(getenv(envDiscovery))); err == nil {
@@ -78,7 +78,7 @@ func ConfigFromEnv(getenv func(string) string, hostname func() (string, error)) 
 		cfg.Name = defaultName(hostname)
 	}
 
-	if port, err := strconv.Atoi(strings.TrimSpace(getenv(envFrontendPort))); err == nil && port > 0 && port <= maxPort {
+	if port, err := strconv.Atoi(strings.TrimSpace(getenv(envServerPort))); err == nil && port > 0 && port <= maxPort {
 		cfg.Port = port
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -12,6 +13,16 @@ import (
 
 // lanInstanceIDTimeout 是读取实例 ID 的超时，数据库刚就绪，正常几毫秒即可返回。
 const lanInstanceIDTimeout = 5 * time.Second
+
+// lanConfigForListenPort 把广播端口设为服务端实际监听的端口，两者来自同一个值，不会分叉。
+// port 无法解析时保留 cfg 里的端口，此时服务端自己也无法监听，会在启动时退出。
+func lanConfigForListenPort(cfg landiscovery.Config, port string) landiscovery.Config {
+	if listenPort, err := strconv.Atoi(port); err == nil {
+		cfg.Port = listenPort
+	}
+
+	return cfg
+}
 
 // loadLANInstanceID 读取本部署的实例 ID。
 // 读取失败只记警告并返回空串：/api/config 不下发 instance_id，也不广播，服务端照常启动。
