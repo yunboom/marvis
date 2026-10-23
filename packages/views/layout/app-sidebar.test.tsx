@@ -408,15 +408,10 @@ describe("navigation item presentation", () => {
     }
   });
 
-  it("puts Help in the Settings row", () => {
-    const { container } = render(<AppSidebar />);
-    // SidebarMenuItem is mocked as a fragment, so the row's next element is
-    // whatever shares the Settings menu item.
-    const besideSettings = container.querySelector(
-      'button[data-href="/acme/settings"]',
-    )?.nextElementSibling;
+  it("keeps Help out of the sidebar", () => {
+    render(<AppSidebar />);
 
-    expect(besideSettings?.querySelector('[data-testid="help-launcher"]')).toBeTruthy();
+    expect(screen.queryByTestId("help-launcher")).toBeNull();
   });
 });
 

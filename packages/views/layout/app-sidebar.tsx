@@ -6,7 +6,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@marvis/ui/lib/utils";
 import { useScrollFade } from "@marvis/ui/hooks/use-scroll-fade";
 import { AppLink, useNavigation } from "../navigation";
-import { HelpLauncher } from "./help-launcher";
 import {
   DndContext,
   PointerSensor,
@@ -806,9 +805,6 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             {utilityNav.map((item) => {
               const href = p[item.key]();
               const Icon = routeIconForPath(href);
-              // Help shares the Settings row, pinned right; it sits beside the
-              // link rather than inside it so its menu never navigates.
-              const withHelp = item.key === "settings";
               return (
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
@@ -819,11 +815,6 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                     <Icon />
                     <span>{t(($) => $.nav[item.labelKey])}</span>
                   </SidebarMenuButton>
-                  {withHelp && (
-                    <div className="absolute top-1/2 right-0.5 -translate-y-1/2">
-                      <HelpLauncher />
-                    </div>
-                  )}
                 </SidebarMenuItem>
               );
             })}
