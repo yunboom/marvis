@@ -284,7 +284,7 @@ marvis daemon status
 客户端只列出找到的服务器，确认之前不会连接，也不会登录。没有找到时，输入地址 `http://marvis.local:13840`。
 
 <Callout type="warning">
-Docker 部署不支持局域网发现。Docker Desktop 无法向局域网发送组播，所以 `docker-compose.selfhost.yml` 默认把 `MARVIS_LAN_DISCOVERY` 设为 `false`。Docker 部署的服务仍可通过输入地址连接。需要发现功能时，从源码运行服务端。
+Docker 部署不支持局域网发现。Docker Desktop 无法向局域网发送组播，所以后端镜像默认把 `MARVIS_LAN_DISCOVERY` 设为 `false`，`docker-compose.selfhost.yml` 和 Helm 部署同样适用。Docker 部署的服务仍可通过输入地址连接。需要发现功能时，从源码运行服务端。
 </Callout>
 
 macOS 第一次使用时会在服务端和每台客户端上请求本地网络权限，选择允许。
@@ -293,11 +293,11 @@ macOS 第一次使用时会在服务端和每台客户端上请求本地网络�
 
 Desktop 只需要后端，网页端可选。要在同一网络里提供网页端，在 `.env` 里设置 `MARVIS_APP_URL=http://marvis.local:3000`，并把 `http://marvis.local:3000/auth/callback` 登记为 Google 和飞书登录的回调地址。
 
-没有网页地址，或网页地址是 `localhost` 时，客户端按没有网页端处理。此时 Desktop 隐藏 Google 和飞书按钮，只保留邮箱验证码登录。详见[桌面应用](/desktop-app#连接服务器)。
+没有网页地址，或网页地址是 `localhost` 时，客户端按没有网页端处理。服务器所在电脑上的命令行除外，在那里 `localhost` 的网页地址可以使用。此时 Desktop 隐藏 Google 和飞书按钮，只保留邮箱验证码登录。详见[桌面应用](/desktop-app#连接服务器)。
 
 ### CLI
 
-在终端里不带 `--server-url` 执行 `marvis setup self-host`，命令会在网络里查找约 3 秒，并列出找到的服务器。Desktop 正在使用的服务器排第一并默认选中。最后一项可以手动输入地址。
+在终端里不带 `--server-url` 执行 `marvis setup self-host`，命令会在网络里查找约 3 秒，并列出找到的服务器。运行在本机的服务器（`http://localhost:13840`）排第一并默认选中，Desktop 正在使用的服务器排在它后面。最后一项可以手动输入地址。
 
 所选服务器没有网页端时，命令不会打开浏览器。在 Desktop 的**设置 → API Token** 里创建令牌，再执行 `marvis login --token`。
 

@@ -109,7 +109,7 @@ The setting applies to this computer only.
 
 - When the server stops responding, a banner at the top of the main area says the connection is lost and Desktop is reconnecting.
 - After repeated failures, the banner says the server can't be reached and offers **Retry** and **Switch server**. Desktop keeps checking and goes back online by itself when the server returns.
-- When the server's IP address changes, Desktop finds it again by its instance ID, updates the saved address, and says it reconnected.
+- A server picked from the local network list is saved by its IP address. When that address stops answering and the same server, matched by its instance ID, appears on the local network at a new IP, Desktop switches to the new address and says it reconnected.
 - When a different server answers at the saved address, Desktop shows **A different server is at this address** and does not switch on its own. Choose **Keep waiting** or **Switch server**.
 
 ### Without a web app

@@ -1981,7 +1981,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 
 		// Cloud Billing proxy. Same upstream service / port as
 		// cloud-runtime — marvis-cloud's Fleet and Billing share
-		// :13840 and the same chi router. All routes here forward
+		// :8080 and the same chi router. All routes here forward
 		// to /api/v1/billing/* with X-User-ID stamped from the
 		// authenticated context.
 		//

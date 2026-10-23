@@ -285,7 +285,7 @@ Deux variables facultatives de `.env` la contrôlent :
 Les clients se contentent de lister ce qu'ils trouvent. Rien ne se connecte ni n'ouvre de session avant votre confirmation. Si rien n'est trouvé, saisissez l'adresse `http://marvis.local:13840`.
 
 <Callout type="warning">
-La découverte ne fonctionne pas depuis Docker. Docker Desktop ne peut pas envoyer de multicast sur le réseau local ; `docker-compose.selfhost.yml` définit donc `MARVIS_LAN_DISCOVERY` à `false` par défaut. Un déploiement Docker reste joignable en saisissant son adresse. Pour utiliser la découverte, lancez le serveur depuis les sources.
+La découverte ne fonctionne pas depuis Docker. Docker Desktop ne peut pas envoyer de multicast sur le réseau local ; l'image du backend définit donc `MARVIS_LAN_DISCOVERY` à `false` par défaut, ce qui vaut aussi pour `docker-compose.selfhost.yml` et Helm. Un déploiement Docker reste joignable en saisissant son adresse. Pour utiliser la découverte, lancez le serveur depuis les sources.
 </Callout>
 
 macOS demande l'autorisation d'accès au réseau local la première fois, sur le serveur et sur chaque client. Autorisez-la.
@@ -294,11 +294,11 @@ macOS demande l'autorisation d'accès au réseau local la première fois, sur le
 
 Desktop n'a besoin que du backend. L'application web est facultative. Pour la servir sur le même réseau, définissez `MARVIS_APP_URL=http://marvis.local:3000` dans `.env`, et enregistrez `http://marvis.local:3000/auth/callback` comme adresse de rappel pour la connexion Google et Feishu.
 
-Sans adresse web, ou avec une adresse `localhost`, les clients considèrent que le serveur n'a pas d'application web. Desktop masque alors les boutons Google et Feishu et ne garde que la connexion par code e-mail. Voir [Application de bureau](/desktop-app#se-connecter-à-un-serveur).
+Sans adresse web, ou avec une adresse `localhost`, les clients considèrent que le serveur n'a pas d'application web. La CLI de l'ordinateur qui héberge le serveur fait exception : une adresse web `localhost` y fonctionne. Desktop masque alors les boutons Google et Feishu et ne garde que la connexion par code e-mail. Voir [Application de bureau](/desktop-app#se-connecter-à-un-serveur).
 
 ### CLI
 
-Dans un terminal, `marvis setup self-host` sans `--server-url` cherche sur le réseau pendant environ 3 secondes et liste les serveurs trouvés. Le serveur utilisé par Desktop apparaît en premier et est présélectionné. La dernière entrée permet de saisir une adresse.
+Dans un terminal, `marvis setup self-host` sans `--server-url` cherche sur le réseau pendant environ 3 secondes et liste les serveurs trouvés. Un serveur qui tourne sur cet ordinateur (`http://localhost:13840`) apparaît en premier et est présélectionné, suivi du serveur utilisé par Desktop. La dernière entrée permet de saisir une adresse.
 
 Si le serveur choisi n'a pas d'application web, la commande n'ouvre pas de navigateur. Créez un jeton dans **Paramètres → Jetons d'API** de Desktop, puis exécutez `marvis login --token`.
 
