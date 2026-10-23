@@ -13,11 +13,12 @@
 ## Global Constraints
 
 - 服务类型 `_marvis._tcp`；TXT 键固定为 `v`（值 `1`）、`name`、`ver`、`id`。
-- 端口沿用 `FRONTEND_PORT`，默认 `3000`；不新增端口配置。
+- 广播后端实际监听的端口（默认 `13840`，已由端口迁移提交改好）；桌面端和命令行只连后端地址；网页端可选。
 - 主机名固定 `marvis`，冲突时依次 `marvis-2`、`marvis-3`…；不提供主机名配置项。
 - 服务端配置只有两个可选环境变量：`MARVIS_LAN_DISCOVERY`（为 `false` 时不广播，默认广播）、`MARVIS_LAN_NAME`（默认电脑名去掉 `.local`）。
-- 输入框默认地址 `http://marvis.local:3000`。
+- 输入框默认地址 `http://marvis.local:13840`。
 - 实例 ID 复用 `instance_telemetry_state.instance_id`，不加迁移。
+- 网页地址可选：取 `/api/config` 的 `daemon_app_url`，仅当其主机不是回环地址（localhost、127.0.0.1、::1）时采用；没有时 `appUrl` 为空字符串。
 - “版本过旧”的判定：`/api/config` 响应里没有 `instance_id`。
 - 桌面端已选服务器存 `<userData>/server.json`（macOS 为 `~/Library/Application Support/Marvis/server.json`）；`~/.marvis/desktop.json` 只读、只作初始值。
 - 桌面端永不读写 `~/.marvis/config.json`；命令行永不写桌面端数据（#6399）。
@@ -223,7 +224,7 @@ Expected: FAIL
 Run: 同 Step 2，加 `cd server && golangci-lint run --new-from-rev=HEAD ./internal/landiscovery/ ./internal/handler/ ./cmd/server/`
 Expected: PASS，0 issues
 
-手工：`make start` 启动后执行 `dns-sd -B _marvis._tcp local`，应在 5 秒内看到一条 `Add`，实例名是服务器名称；`dns-sd -G v4 marvis.local` 返回本机局域网 IP；`curl -s http://marvis.local:3000/api/config | jq '.server_name,.instance_id'` 有值。
+手工：`make start` 启动后执行 `dns-sd -B _marvis._tcp local`，应在 5 秒内看到一条 `Add`，实例名是服务器名称；`dns-sd -G v4 marvis.local` 返回本机局域网 IP；`curl -s http://marvis.local:13840/api/config | jq '.server_name,.instance_id'` 有值（端口为后端端口）。
 
 - [ ] **Step 5: Commit**
 
@@ -245,20 +246,20 @@ git commit -m "feat(server): advertise on the LAN and expose server identity"
 - Produces（`shared/server-discovery.ts`）：
 
 ```ts
-export const DEFAULT_SERVER_ADDRESS = "http://marvis.local:3000";
-export interface ServerIdentity { url: string; name: string; version: string; instanceId: string; host: string }
+export const DEFAULT_SERVER_ADDRESS = "http://marvis.local:13840";
+export interface ServerIdentity { url: string; name: string; version: string; instanceId: string; host: string; appUrl: string }  // appUrl 为空串表示没有网页端
 export type ProbeResult =
   | { kind: "ok"; server: ServerIdentity }
   | { kind: "unreachable" }
   | { kind: "not_marvis" }
   | { kind: "too_old" };
-export interface SelectedServer { url: string; name: string; instanceId: string; source: "lan" | "manual" }
+export interface SelectedServer { url: string; name: string; instanceId: string; source: "lan" | "manual"; appUrl: string }
 export function normalizeServerAddress(input: string): string | null;
 ```
 
 - `main/server-probe.ts`：`probeServer(url: string, fetchImpl?: typeof fetch): Promise<ProbeResult>`（超时 3000ms）
 - `main/server-selection.ts`：`readSelectedServer(userDataDir: string): Promise<SelectedServer | null>`、`writeSelectedServer(userDataDir: string, s: SelectedServer): Promise<void>`
-- `RuntimeConfigResult` 增加 `{ ok: false; unconfigured: true }`；`runtimeConfigFromServerUrl(url: string): RuntimeConfig`（`apiUrl = appUrl = url`，`wsUrl` 由 `deriveWsUrl` 得出）
+- `RuntimeConfigResult` 增加 `{ ok: false; unconfigured: true }`；`runtimeConfigFromServer(s: SelectedServer): RuntimeConfig`（`apiUrl = s.url`，`appUrl = s.appUrl`（可为空串），`wsUrl` 由 `deriveWsUrl` 得出）
 - `loadRuntimeConfig` 增参 `userDataDir: string`；顺序：开发模式且设置了 `VITE_API_URL` → 环境变量；`server.json` → 用它；`~/.marvis/desktop.json` → 用它；否则未配置。
 
 - [ ] **Step 1: 写失败的测试**
@@ -276,7 +277,8 @@ describe("normalizeServerAddress", () => {
 
 describe("probeServer", () => {
   const json = (body: unknown) => async () => new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } });
-  it("ok", async () => expect(await probeServer("http://m:3000", json({ server_name: "设计部 Marvis", server_version: "v0.6.5", instance_id: "7f3a" }))).toEqual({ kind: "ok", server: { url: "http://m:3000", name: "设计部 Marvis", version: "v0.6.5", instanceId: "7f3a", host: "m" } }));
+  it("ok", async () => expect(await probeServer("http://m:3000", json({ server_name: "设计部 Marvis", server_version: "v0.6.5", instance_id: "7f3a", daemon_app_url: "http://localhost:3000" }))).toEqual({ kind: "ok", server: { url: "http://m:3000", name: "设计部 Marvis", version: "v0.6.5", instanceId: "7f3a", host: "m", appUrl: "" } }));
+  it("keeps a non-loopback app url", async () => expect((await probeServer("http://m:13840", json({ server_name: "a", instance_id: "b", daemon_app_url: "http://marvis.local:3000" }))) ).toMatchObject({ kind: "ok", server: { appUrl: "http://marvis.local:3000" } }));
   it("too_old", async () => expect((await probeServer("http://m:3000", json({ allow_signup: true }))).kind).toBe("too_old"));
   it("not_marvis on html", async () => expect((await probeServer("http://m:3000", async () => new Response("<html>", { headers: { "content-type": "text/html" } }))).kind).toBe("not_marvis"));
   it("not_marvis on 404", async () => expect((await probeServer("http://m:3000", async () => new Response("", { status: 404 }))).kind).toBe("not_marvis"));
@@ -317,7 +319,7 @@ git commit -m "feat(desktop): probe, save, and load the selected server"
 - Test: `apps/desktop/src/main/lan-browser.test.ts`、`apps/desktop/src/main/server-ipc.test.ts`
 
 **Interfaces:**
-- Consumes: Task 3 的 `probeServer`、`ServerIdentity`、`SelectedServer`、`writeSelectedServer`、`runtimeConfigFromServerUrl`。
+- Consumes: Task 3 的 `probeServer`、`ServerIdentity`、`SelectedServer`、`writeSelectedServer`、`runtimeConfigFromServer`。
 - Produces:
   - `interface DiscoveredServer extends ServerIdentity { isLocal: boolean; compatible: boolean }`（放 `shared/server-discovery.ts`）
   - `createLanBrowser(deps: { browse: (onUp: (svc: MdnsService) => void, onDown: (svc: MdnsService) => void) => () => void; probe: typeof probeServer; localAddresses: () => string[] }): { start(onChange: (list: DiscoveredServer[]) => void): void; stop(): void; rescan(): void }`
@@ -487,6 +489,31 @@ git commit -m "feat(desktop): detect server outages and follow moved servers"
 
 ---
 
+### Task 10: 没有网页端时的桌面端
+
+**Files:**
+- Modify: `apps/desktop/src/renderer/src/pages/login.tsx`（`appUrl` 为空时不传 `onGoogleLogin`、`onLarkLogin`，登录页只剩邮箱验证码）、`apps/desktop/src/renderer/src/platform/navigation.tsx`（`appUrl` 为空时 `getShareableUrl(path)` 返回 `marvis://open?path=<encodeURIComponent(path)>`）、`apps/desktop/src/renderer/src/platform/issue-window-navigation.tsx`（打开网页端的入口在 `appUrl` 为空时不显示或不执行）、`apps/desktop/src/main/index.ts`（`handleDeepLink` 支持 `marvis://open?path=...`，只接受以 `/` 开头的站内路径，派发给主窗口导航）、对应渲染进程监听
+- Test: 上述文件同目录的测试
+
+**Interfaces:**
+- Consumes: Task 3 的 `RuntimeConfig.appUrl`（空串表示没有网页端）。
+- Produces: 深链格式 `marvis://open?path=<站内路径>`。
+
+- [ ] **Step 1: 写失败的测试**
+  - `getShareableUrl("/dev/issues/DEV-1")` 在 `appUrl` 为空时返回 `marvis://open?path=%2Fdev%2Fissues%2FDEV-1`，有 `appUrl` 时返回 `${appUrl}/dev/issues/DEV-1`。
+  - 深链解析：`marvis://open?path=%2Fdev%2Fissues%2FDEV-1` 派发路径 `/dev/issues/DEV-1`；`path` 不以 `/` 开头、或为 `//evil.com` 这类协议相对地址时忽略。
+  - 登录页：`appUrl` 为空时不渲染 Google、飞书按钮；有 `appUrl` 时与现在一致。
+  - 依赖 `getShareableUrl` 的站内行为（如在新标签打开、`app-link` 的 `openInNewTab`）在桌面端仍走站内导航，不被深链影响（为它们各写一条断言）。
+- [ ] **Step 2–4:** 运行失败 → 实现（不改 `packages/views` 里的 13 处调用方）→ 运行通过（desktop vitest、typecheck）
+- [ ] **Step 5: Commit**
+
+```bash
+git add apps/desktop/src
+git commit -m "feat(desktop): work without a web app"
+```
+
+---
+
 ### Task 8: 命令行选择服务器（设计稿 22）
 
 **Files:**
@@ -506,28 +533,28 @@ git commit -m "feat(desktop): detect server outages and follow moved servers"
 
 ```go
 func TestMergeCandidates(t *testing.T) {
-	desktop := &cli.DesktopServer{URL: "http://marvis.local:3000", Name: "设计部 Marvis", InstanceID: "a"}
+	desktop := &cli.DesktopServer{URL: "http://marvis.local:13840", Name: "设计部 Marvis", InstanceID: "a"}
 	found := []landiscovery.Entry{
-		{Name: "marvis-dev", Host: "marvis-2.local.", Port: 3000, InstanceID: "b"},
-		{Name: "设计部 Marvis", Host: "marvis.local.", Port: 3000, InstanceID: "a"},
-		{Name: "设计部 Marvis", Host: "marvis.local.", Port: 3000, InstanceID: "a"},
+		{Name: "marvis-dev", Host: "marvis-2.local.", Port: 13840, InstanceID: "b"},
+		{Name: "设计部 Marvis", Host: "marvis.local.", Port: 13840, InstanceID: "a"},
+		{Name: "设计部 Marvis", Host: "marvis.local.", Port: 13840, InstanceID: "a"},
 	}
 	got := mergeCandidates(desktop, found)
 	require.Len(t, got, 2)
 	require.True(t, got[0].FromDesktop)
-	require.Equal(t, "http://marvis.local:3000", got[0].URL)
-	require.Equal(t, "http://marvis-2.local:3000", got[1].URL)
+	require.Equal(t, "http://marvis.local:13840", got[0].URL)
+	require.Equal(t, "http://marvis-2.local:13840", got[1].URL)
 }
 
 func TestPickServerDefaultsToFirstAndAcceptsManualAddress(t *testing.T) {
-	cands := []candidate{{URL: "http://marvis.local:3000", Name: "设计部 Marvis", FromDesktop: true}}
+	cands := []candidate{{URL: "http://marvis.local:13840", Name: "设计部 Marvis", FromDesktop: true}}
 	url, err := pickServer(strings.NewReader("\n"), io.Discard, cands, func(string) bool { return true })
 	require.NoError(t, err)
-	require.Equal(t, "http://marvis.local:3000", url)
+	require.Equal(t, "http://marvis.local:13840", url)
 
-	url, err = pickServer(strings.NewReader("2\nhttp://192.168.1.58:3000\n"), io.Discard, cands, func(string) bool { return true })
+	url, err = pickServer(strings.NewReader("2\nhttp://192.168.1.58:13840\n"), io.Discard, cands, func(string) bool { return true })
 	require.NoError(t, err)
-	require.Equal(t, "http://192.168.1.58:3000", url)
+	require.Equal(t, "http://192.168.1.58:13840", url)
 }
 
 func TestReadDesktopSelectedServer(t *testing.T) { /* 临时目录写 Marvis/server.json，读出相同字段；不存在时 ok=false */ }
@@ -535,7 +562,7 @@ func TestReadDesktopSelectedServer(t *testing.T) { /* 临时目录写 Marvis/ser
 
 - [ ] **Step 2–4:** 运行失败（`cd server && go test ./cmd/marvis/ -run 'MergeCandidates|PickServer' ./internal/cli/ -run ReadDesktop`）→ 实现 → 运行通过并 `golangci-lint run --new-from-rev=HEAD ./cmd/marvis/ ./internal/cli/` 零告警
 
-实现要点：列表用数字序号，最后一项为 “Enter an address manually”，默认值 `http://marvis.local:3000`；手动地址先 `probeServer` 再接受；选中后 `serverURL` 与 `appURL` 都设为该地址，继续走现有的确认覆盖、可达性探测与浏览器登录流程。非终端或已传 `--server-url` / `MARVIS_SERVER_URL` 时不进入此流程。输出文字用英文，与现有命令行一致，例如 “Desktop is using: 设计部 Marvis”、“Looking for Marvis servers on the local network… found 2”。
+实现要点：列表用数字序号，最后一项为 “Enter an address manually”，默认值 `http://marvis.local:13840`；手动地址先 `probeServer` 再接受；选中后 `serverURL` 设为该地址；`appURL` 取该服务器 `/api/config` 的 `daemon_app_url`（非回环才用）。有网页地址时继续走现有的确认覆盖、可达性探测与浏览器登录流程；没有时保存配置后提示 “No web app is configured for this server. Log in with `marvis login --token` using a token from Marvis Desktop → Settings → API Token.”，不打开浏览器。非终端或已传 `--server-url` / `MARVIS_SERVER_URL` 时不进入此流程。输出文字用英文，与现有命令行一致，例如 “Desktop is using: 设计部 Marvis”、“Looking for Marvis servers on the local network… found 2”。
 
 - [ ] **Step 5: Commit**
 
@@ -553,7 +580,8 @@ git commit -m "feat(cli): pick a LAN server in setup self-host"
 
 - [ ] **Step 1: 改文档**
 - [ ] **Step 2: 手工验证**（服务器 Mac `make start`；另一台电脑同一 Wi-Fi）
-  - 浏览器打开 `http://marvis.local:3000` 并完成登录，页面实时更新正常（WebSocket 已连上）。
+  - 只启动后端和数据库（不启动网页端）：桌面端发现并连上，邮箱验证码登录，不显示 Google/飞书按钮；“复制链接”得到 `marvis://open?...`，在另一台装了桌面端的电脑上能打开。
+  - 再启动网页端并配置 `MARVIS_APP_URL=http://marvis.local:3000`：浏览器打开它并完成登录，页面实时更新正常（WebSocket 已连上）；桌面端重新连接后出现 Google/飞书按钮。
   - 新装桌面端打开即出现连接页，列表中有该服务器；连接、登录后本地守护进程在线。
   - 设置 · 服务器切到另一台再切回，均需重新登录。
   - 停止服务端：桌面端 10 秒内出现“正在重新连接”，约 20 秒后变为“无法连接”；重启服务端后自动回到在线。
