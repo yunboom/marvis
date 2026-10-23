@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/yunboom/marvis/server/internal/testutil"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
@@ -228,5 +230,53 @@ func TestLarkInviteJoin_WelcomeFlow(t *testing.T) {
 		WorkspaceID: invite.WorkspaceID,
 	}); !errors.Is(err, pgx.ErrNoRows) {
 		t.Fatalf("pending welcome after ack err = %v, want pgx.ErrNoRows", err)
+	}
+}
+
+func TestDeleteWorkspace_RemovesLarkInvites(t *testing.T) {
+	ctx := context.Background()
+
+	wsID := dbfx.Insert(t, "workspace", testutil.Cols{
+		"name": "Lark invite cleanup", "slug": "handler-delete-lark-invite",
+	})
+	dbfx.Exec(t, `INSERT INTO member (workspace_id, user_id, role) VALUES ($1, $2, 'owner')`, wsID, testUserID)
+
+	params := newLarkInviteParams()
+	params.WorkspaceID = parseUUID(wsID)
+	invite := createTestLarkInvite(t, params)
+	if err := testHandler.Queries.CreateLarkInviteJoin(ctx, db.CreateLarkInviteJoinParams{
+		InviteID:    invite.ID,
+		WorkspaceID: invite.WorkspaceID,
+		UserID:      parseUUID(testUserID),
+		LarkOpenID:  "ou_delete_test",
+	}); err != nil {
+		t.Fatalf("create join: %v", err)
+	}
+
+	// 其他工作区的邀请和加入记录不能被连带删除。
+	other := createTestLarkInvite(t, newLarkInviteParams())
+	if err := testHandler.Queries.CreateLarkInviteJoin(ctx, db.CreateLarkInviteJoinParams{
+		InviteID:    other.ID,
+		WorkspaceID: other.WorkspaceID,
+		UserID:      parseUUID(testUserID),
+		LarkOpenID:  "ou_delete_test_other",
+	}); err != nil {
+		t.Fatalf("create other join: %v", err)
+	}
+
+	req := withURLParam(newRequest(http.MethodDelete, "/api/workspaces/"+wsID, nil), "id", wsID)
+	testutil.Call(t, testHandler.DeleteWorkspace, req).Want(http.StatusNoContent)
+
+	if n := dbfx.Count(t, `SELECT count(*) FROM lark_invite WHERE workspace_id = $1`, wsID); n != 0 {
+		t.Fatalf("lark_invite rows after workspace deletion = %d, want 0", n)
+	}
+	if n := dbfx.Count(t, `SELECT count(*) FROM lark_invite_join WHERE workspace_id = $1`, wsID); n != 0 {
+		t.Fatalf("lark_invite_join rows after workspace deletion = %d, want 0", n)
+	}
+	if n := dbfx.Count(t, `SELECT count(*) FROM lark_invite WHERE id = $1`, other.ID); n != 1 {
+		t.Fatalf("other workspace invite rows = %d, want 1", n)
+	}
+	if n := dbfx.Count(t, `SELECT count(*) FROM lark_invite_join WHERE invite_id = $1`, other.ID); n != 1 {
+		t.Fatalf("other workspace join rows = %d, want 1", n)
 	}
 }
