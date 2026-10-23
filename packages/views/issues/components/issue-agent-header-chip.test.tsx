@@ -220,7 +220,7 @@ describe("IssueAgentHeaderChip", () => {
     const { unmount } = renderWithI18n(<IssueAgentHeaderChip issueId="issue-1" />);
 
     const running = screen.getByRole("button", { name: "Walt is working" });
-    const ring = running.querySelector(".border-beam-ring");
+    const ring = running.querySelector(".border-beam-ring[data-variant='ink']");
     expect(running).toHaveClass("relative");
     expect(ring).toHaveAttribute("aria-hidden", "true");
     expect(ring?.querySelector(".border-beam-light")).not.toBeNull();

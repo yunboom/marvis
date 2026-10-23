@@ -183,14 +183,14 @@ function ActiveChip({
             <button
               type="button"
               aria-label={label}
-              // While an agent is actively running, the chip wears the
-              // brand border beam — a highlight sweeping around its rounded
-              // edge — so a triggered run is unmistakably "alive" in the
-              // header. Queued-only state stays calm (no beam) to reserve the
-              // motion for work that is genuinely in flight.
+              // While an agent is actively running, the chip wears the ink
+              // border beam — the same brush stroke as agent create — so a
+              // triggered run is unmistakably "alive" in the header.
+              // Queued-only state stays calm (no beam) to reserve the motion
+              // for work that is genuinely in flight.
               className={cn(
                 "flex h-9 min-w-9 max-w-[13rem] items-center justify-center gap-1.5 rounded-full border border-transparent px-2 text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring md:h-7.5 md:min-w-0 md:justify-start md:pr-2.5 md:pl-[5px]",
-                anyRunning && "relative border-brand/35 bg-brand/6 ring-3 ring-brand/5 hover:bg-brand/10 dark:border-brand/45 dark:bg-brand/10 dark:ring-brand/8",
+                anyRunning && "relative border-border bg-background",
               )}
             />
           }
@@ -209,7 +209,7 @@ function ActiveChip({
           >
             {label}
           </span>
-          {anyRunning && <BorderBeam />}
+          {anyRunning && <BorderBeam variant="ink" />}
         </PopoverTrigger>
         <PopoverContent align="end" keepMounted className="w-80">
           <div className="text-caption font-medium text-muted-foreground">
