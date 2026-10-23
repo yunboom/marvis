@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CoreProvider } from "@marvis/core/platform";
 import { pickLocale, type SupportedLocale } from "@marvis/core/i18n";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import { useAuthStore } from "@marvis/core/auth";
 import { workspaceKeys } from "@marvis/core/workspace/queries";
 import { useWorkspaceList } from "@marvis/core/workspace";
@@ -14,6 +15,7 @@ import { Toaster } from "@marvis/ui/components/ui/sonner";
 import { DesktopLoginPage } from "./pages/login";
 import { DesktopAuthRecoveryPage } from "./pages/auth-recovery";
 import { DesktopShell } from "./components/desktop-layout";
+import { ConnectServerScreen } from "./components/server/connect-server-screen";
 import { UpdateNotification } from "./components/update-notification";
 import { IssueWindow } from "./components/issue-window";
 import { useTabStore } from "./stores/tab-store";
@@ -482,8 +484,11 @@ export default function App() {
           )}
         </CoreProvider>
       ) : "unconfigured" in runtimeConfigResult ? (
-        // 还没有选择服务器；连接界面由后续任务接入，这里先不渲染内容。
-        null
+        // 还没有选择服务器：这个分支没有挂 CoreProvider，单独提供 i18n。
+        // 选定服务器后主进程会重载窗口，随后进入登录页。
+        <I18nProvider locale={locale} resources={resources}>
+          <ConnectServerScreen />
+        </I18nProvider>
       ) : (
         <BlockingRuntimeConfigError message={runtimeConfigResult.error.message} />
       )}

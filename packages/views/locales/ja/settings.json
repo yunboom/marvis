@@ -1311,6 +1311,41 @@
       "reconnect_failed": "デーモンに再接続できませんでした",
       "try_again_moment": "しばらくしてからもう一度お試しください。",
       "try_again": "もう一度お試しください。"
+    },
+    "server": {
+      "connect": {
+        "title": "Marvis サーバーに接続",
+        "subtitle": "ローカルネットワーク上のサーバーを選択するか、アドレスを入力します",
+        "subtitle_none": "サーバーのアドレスを入力します",
+        "lan_heading": "ローカルネットワーク上のサーバー",
+        "scanning": "検索中",
+        "rescan": "再検索",
+        "local_badge": "このコンピュータ",
+        "none": "ローカルネットワーク上にサーバーが見つかりません。コンピュータとサーバーは同じネットワークに接続されている必要があります。",
+        "continue": "続ける"
+      },
+      "address": {
+        "label": "サーバーのアドレス",
+        "test": "接続をテスト",
+        "testing": "テスト中"
+      },
+      "probe": {
+        "ok": "接続できます · {{name}} · {{version}}",
+        "unreachable": "このアドレスに接続できません",
+        "not_marvis": "このアドレスは Marvis サーバーではありません",
+        "too_old": "サーバーのバージョンが古すぎます"
+      },
+      "confirm": {
+        "title": "{{name}} に接続しますか？",
+        "subtitle": "アドレスを確認し、使用するサーバーであることを確かめてください",
+        "address": "アドレス",
+        "version": "バージョン",
+        "host": "ホスト名",
+        "http_warning": "このサーバーは HTTP で接続します。同じネットワーク上の他のデバイスに通信内容が見える可能性があります。",
+        "back": "戻る",
+        "connect": "接続",
+        "connecting": "接続中…"
+      }
     }
   },
   "members": {

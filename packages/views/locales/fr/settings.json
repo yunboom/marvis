@@ -1321,6 +1321,41 @@
       "reconnect_failed": "Impossible de reconnecter le démon",
       "try_again_moment": "Veuillez réessayer dans un instant.",
       "try_again": "Veuillez réessayer."
+    },
+    "server": {
+      "connect": {
+        "title": "Se connecter à un serveur Marvis",
+        "subtitle": "Choisissez un serveur du réseau local ou saisissez une adresse",
+        "subtitle_none": "Saisissez l'adresse du serveur",
+        "lan_heading": "Serveurs du réseau local",
+        "scanning": "Recherche en cours",
+        "rescan": "Rechercher à nouveau",
+        "local_badge": "Cet ordinateur",
+        "none": "Aucun serveur trouvé sur le réseau local. L'ordinateur et le serveur doivent être sur le même réseau.",
+        "continue": "Continuer"
+      },
+      "address": {
+        "label": "Adresse du serveur",
+        "test": "Tester la connexion",
+        "testing": "Test en cours"
+      },
+      "probe": {
+        "ok": "Connexion possible · {{name}} · {{version}}",
+        "unreachable": "Impossible de se connecter à cette adresse",
+        "not_marvis": "Cette adresse n'est pas un serveur Marvis",
+        "too_old": "La version du serveur est trop ancienne"
+      },
+      "confirm": {
+        "title": "Se connecter à {{name}} ?",
+        "subtitle": "Vérifiez l'adresse pour confirmer qu'il s'agit du bon serveur",
+        "address": "Adresse",
+        "version": "Version",
+        "host": "Nom d'hôte",
+        "http_warning": "Ce serveur utilise HTTP. Les autres appareils du même réseau peuvent voir les données transmises.",
+        "back": "Retour",
+        "connect": "Se connecter",
+        "connecting": "Connexion en cours..."
+      }
     }
   },
   "members": {

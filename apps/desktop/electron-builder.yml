@@ -43,6 +43,12 @@ mac:
   # Electron 44 requires macOS 13 Ventura; declare it on every mac bundle.
   minimumSystemVersion: "13.0.0"
   entitlementsInherit: build/entitlements.mac.plist
+  # 局域网发现：macOS 15 起浏览本地网络需要声明用途和要查找的 Bonjour 服务，
+  # 否则系统不会弹出授权，mDNS 查找得不到结果。服务类型与服务端广播的 _marvis._tcp 一致。
+  extendInfo:
+    NSLocalNetworkUsageDescription: "Marvis looks for Marvis servers on your local network."
+    NSBonjourServices:
+      - "_marvis._tcp"
   target:
     - dmg
     - zip
