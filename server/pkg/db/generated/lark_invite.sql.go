@@ -52,15 +52,21 @@ func (q *Queries) ClaimLarkInviteUse(ctx context.Context, id pgtype.UUID) (LarkI
 
 const createLarkInvite = `-- name: CreateLarkInvite :one
 INSERT INTO lark_invite (
-    workspace_id, target_type, target_id, target_id_type, target_open_id,
+    id, workspace_id, target_type, target_id, target_id_type, target_open_id,
     target_name, target_avatar_url, role, max_uses, expires_at, note,
     idempotency_key, sent_by_user_id, sent_by_agent_id
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+VALUES (
+    COALESCE($1::uuid, gen_random_uuid()),
+    $2, $3, $4, $5, $6,
+    $7, $8, $9, $10, $11, $12,
+    $13, $14, $15
+)
 RETURNING id, workspace_id, target_type, target_id, target_id_type, target_open_id, target_name, target_avatar_url, role, max_uses, use_count, expires_at, revoked_at, note, idempotency_key, lark_message_id, sent_by_user_id, sent_by_agent_id, created_at
 `
 
 type CreateLarkInviteParams struct {
+	ID              pgtype.UUID        `json:"id"`
 	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
 	TargetType      string             `json:"target_type"`
 	TargetID        string             `json:"target_id"`
@@ -77,8 +83,10 @@ type CreateLarkInviteParams struct {
 	SentByAgentID   pgtype.UUID        `json:"sent_by_agent_id"`
 }
 
+// id 为 NULL 时由数据库生成；带幂等键的邀请由调用方从幂等键派生固定 id，重试时卡片里的 invite_id 不变。
 func (q *Queries) CreateLarkInvite(ctx context.Context, arg CreateLarkInviteParams) (LarkInvite, error) {
 	row := q.db.QueryRow(ctx, createLarkInvite,
+		arg.ID,
 		arg.WorkspaceID,
 		arg.TargetType,
 		arg.TargetID,

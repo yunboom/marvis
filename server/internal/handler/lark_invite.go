@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -106,7 +107,13 @@ const (
 
 	// larkInviteListJoinedLimit 是列表里每条邀请最多带的已加入用户数，详情返回全部。
 	larkInviteListJoinedLimit = 5
+
+	// larkInviteSendTimeout 是单次发卡片的超时。发送不跟随请求取消，靠它兜底。
+	larkInviteSendTimeout = 15 * time.Second
 )
+
+// larkInviteIDNamespace 是从幂等键派生邀请 id 的 UUIDv5 命名空间。取值固定，改动后进行中的重试会拿到不同的 id。
+var larkInviteIDNamespace = uuid.MustParse("d4a2c2e7-bdae-47ae-964f-d162526e23eb")
 
 // 失效卡片底部的说明。
 const (
@@ -794,6 +801,14 @@ func larkInviteInvalidReason(inv db.LarkInvite, now time.Time) string {
 	return ""
 }
 
+// larkInviteKeyedID 由工作区、幂等键和接收方 ID 派生邀请 id（UUIDv5）：同一请求重试得到同一个 id，
+// 已经发出的卡片里的 invite_id 因此始终指向这一行。
+func larkInviteKeyedID(workspaceID pgtype.UUID, key, targetID string) pgtype.UUID {
+	name := uuidToString(workspaceID) + "\x00" + key + "\x00" + targetID
+
+	return uuidToPG(uuid.NewSHA1(larkInviteIDNamespace, []byte(name)))
+}
+
 // larkInviteDedupeKey 由调用方的幂等键和接收方 ID 派生飞书 uuid：同一个键发给不同接收方互不影响，
 // 长度固定在飞书 50 字符的上限之内。幂等键为空时返回空串，不做去重。
 func larkInviteDedupeKey(idempotencyKey, targetID string) string {
@@ -827,20 +842,16 @@ func (h *Handler) sendLarkInviteCards(ctx context.Context, sc larkInviteSendCont
 	return results
 }
 
-// sendLarkInviteCard 处理一个接收方：幂等键命中时直接返回已有邀请；否则查接收方资料、写邀请、发卡片、记下消息 ID。
-// 发送失败时删除这条邀请，返回归类后的错误码。
+// sendLarkInviteCard 处理一个接收方：带幂等键且已有邀请时按 resumeKeyedLarkInvite 处理；
+// 否则查接收方资料、写邀请，再交给 deliverLarkInvite 发卡片。
 func (h *Handler) sendLarkInviteCard(ctx context.Context, sc larkInviteSendContext, target larkInviteSendTarget) LarkInviteSendResult {
 	shown := LarkInviteTarget{Type: target.Type, ID: target.ID, IDType: target.IDType}
 	key := sc.Input.IdempotencyKey
 
 	if key != "" {
-		existing, err := h.Queries.GetLarkInviteByIdempotencyKey(ctx, db.GetLarkInviteByIdempotencyKeyParams{
-			WorkspaceID:    sc.WorkspaceID,
-			TargetID:       target.ID,
-			IdempotencyKey: strToText(key),
-		})
+		existing, err := h.getKeyedLarkInvite(ctx, sc, target.ID)
 		if err == nil {
-			return larkInviteSentResult(existing)
+			return h.resumeKeyedLarkInvite(ctx, sc, existing)
 		}
 		if !isNotFound(err) {
 			return larkInviteFailedResult(sc, shown, errors.Wrapf(err, "get lark invite by idempotency key target_id=%s", target.ID))
@@ -856,35 +867,110 @@ func (h *Handler) sendLarkInviteCard(ctx context.Context, sc larkInviteSendConte
 
 	invite, err := h.Queries.CreateLarkInvite(ctx, h.larkInviteCreateParams(sc, target, resolved))
 	if err != nil && key != "" && isUniqueViolation(err) {
-		// 带同一个幂等键的并发请求先写入了，返回那一条，不再发卡片。
-		existing, getErr := h.Queries.GetLarkInviteByIdempotencyKey(ctx, db.GetLarkInviteByIdempotencyKeyParams{
-			WorkspaceID:    sc.WorkspaceID,
-			TargetID:       target.ID,
-			IdempotencyKey: strToText(key),
-		})
+		// 带同一个幂等键的并发请求先写入了，按已有邀请处理。
+		existing, getErr := h.getKeyedLarkInvite(ctx, sc, target.ID)
 		if getErr != nil {
 			return larkInviteFailedResult(sc, shown, errors.Wrapf(getErr, "get lark invite by idempotency key target_id=%s", target.ID))
 		}
-		return larkInviteSentResult(existing)
+		return h.resumeKeyedLarkInvite(ctx, sc, existing)
 	}
 	if err != nil {
 		return larkInviteFailedResult(sc, shown, errors.Wrapf(err, "create lark invite target_id=%s", target.ID))
 	}
 
-	messageID, err := h.deliverLarkInviteCard(ctx, sc, invite, resolved)
+	return h.deliverLarkInvite(ctx, sc, invite, resolved.ReceiveIDType, resolved.ReceiveID, sc.Names)
+}
+
+// getKeyedLarkInvite 按幂等键读取同一接收方的邀请。错误不包装，调用方据此区分没找到，再自行包装。
+func (h *Handler) getKeyedLarkInvite(ctx context.Context, sc larkInviteSendContext, targetID string) (db.LarkInvite, error) {
+	return h.Queries.GetLarkInviteByIdempotencyKey(ctx, db.GetLarkInviteByIdempotencyKeyParams{
+		WorkspaceID:    sc.WorkspaceID,
+		TargetID:       targetID,
+		IdempotencyKey: strToText(sc.Input.IdempotencyKey),
+	})
+}
+
+// resumeKeyedLarkInvite 处理幂等键命中的已有邀请：已有消息 ID 时直接返回；还没有消息 ID 时（上次发送结果不明，
+// 或并发请求正在发送）用同一个 invite_id 和去重键补发，飞书按去重键保证至多送达一张。
+func (h *Handler) resumeKeyedLarkInvite(ctx context.Context, sc larkInviteSendContext, inv db.LarkInvite) LarkInviteSendResult {
+	if inv.LarkMessageID.Valid {
+		return larkInviteSentResult(inv)
+	}
+
+	idType, receiveID := larkInviteReceiver(inv)
+	if receiveID == "" {
+		return larkInviteFailedResult(sc, larkInviteTargetOf(inv), errors.Errorf("lark invite has no receiver invite_id=%s", uuidToString(inv.ID)))
+	}
+
+	names, err := h.larkInviteNamesFor(ctx, sc, inv)
 	if err != nil {
-		h.deleteUnsentLarkInvite(ctx, sc, invite.ID)
+		return larkInviteFailedResult(sc, larkInviteTargetOf(inv), err)
+	}
+
+	return h.deliverLarkInvite(ctx, sc, inv, idType, receiveID, names)
+}
+
+// larkInviteReceiver 返回邀请卡片的接收方：群卡片发到群，个人卡片发到写入时解析出的 open_id。
+func larkInviteReceiver(inv db.LarkInvite) (lark.InviteReceiveIDType, string) {
+	if inv.TargetType == larkInviteTargetChat {
+		return lark.InviteReceiveChatID, inv.TargetID
+	}
+
+	return lark.InviteReceiveOpenID, inv.TargetOpenID.String
+}
+
+// larkInviteNamesFor 返回卡片上要显示的名字：邀请的发送人与本次请求相同时复用已读取的名字，否则按邀请记录读取。
+func (h *Handler) larkInviteNamesFor(ctx context.Context, sc larkInviteSendContext, inv db.LarkInvite) (larkInviteCardNames, error) {
+	if inv.SentByUserID == sc.Sender.UserID && inv.SentByAgentID == sc.Sender.AgentID {
+		return sc.Names, nil
+	}
+
+	return h.loadLarkInviteCardNames(ctx, inv.WorkspaceID, inv.SentByUserID, inv.SentByAgentID)
+}
+
+// deliverLarkInvite 生成邀请中状态的卡片发给接收方，并记下消息 ID。
+// 发送失败时：没有幂等键，或飞书明确拒绝（归进业务错误码）时删除这条邀请；有幂等键而失败原因不明
+// （超时、网络、5xx）时保留，卡片可能其实已经送达，重试时用同一个 invite_id 和去重键补发。
+func (h *Handler) deliverLarkInvite(ctx context.Context, sc larkInviteSendContext, inv db.LarkInvite, idType lark.InviteReceiveIDType, receiveID string, names larkInviteCardNames) LarkInviteSendResult {
+	shown := larkInviteTargetOf(inv)
+
+	card, err := buildLarkInviteCard(h.larkInviteCardViewOf(inv, names, larkInviteCardActive))
+	if err != nil {
+		h.deleteUnsentLarkInvite(ctx, sc, inv.ID)
+		return larkInviteFailedResult(sc, shown, err)
+	}
+
+	messageID, err := h.sendLarkInviteMessage(ctx, sc, inv, idType, receiveID, card)
+	if err != nil {
+		if sc.Input.IdempotencyKey == "" || lark.ClassifyInviteError(err) != "" {
+			h.deleteUnsentLarkInvite(ctx, sc, inv.ID)
+		}
 		return larkInviteFailedResult(sc, shown, err)
 	}
 
 	// 卡片已经发出，消息 ID 必须记下，不跟随请求取消。
-	if err := h.Queries.SetLarkInviteMessageID(context.WithoutCancel(ctx), db.SetLarkInviteMessageIDParams{ID: invite.ID, LarkMessageID: strToText(messageID)}); err != nil {
-		// 返回失败会让调用方重试而重复发卡，所以这里只记日志；代价是撤销时无法更新这张卡片。
-		err = errors.Wrapf(err, "set lark invite message id invite_id=%s", uuidToString(invite.ID))
+	if err := h.Queries.SetLarkInviteMessageID(context.WithoutCancel(ctx), db.SetLarkInviteMessageIDParams{ID: inv.ID, LarkMessageID: strToText(messageID)}); err != nil {
+		// 返回失败会让调用方重试，这里只记日志；有幂等键时重试会按去重键补发，不会多出一张卡片。
+		err = errors.Wrapf(err, "set lark invite message id invite_id=%s", uuidToString(inv.ID))
 		slog.Error("store lark invite message id failed", append(sc.LogAttrs, "error", fmt.Sprintf("%+v", err))...)
 	}
 
-	return larkInviteSentResult(invite)
+	return larkInviteSentResult(inv)
+}
+
+// sendLarkInviteMessage 调飞书发卡片。发送不跟随请求取消、单独限时 larkInviteSendTimeout：
+// 客户端断开时正在进行的发送照常完成，不会把已送达的卡片当成失败处理。
+func (h *Handler) sendLarkInviteMessage(ctx context.Context, sc larkInviteSendContext, inv db.LarkInvite, idType lark.InviteReceiveIDType, receiveID, card string) (string, error) {
+	sendCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), larkInviteSendTimeout)
+	defer cancel()
+
+	dedupeKey := larkInviteDedupeKey(sc.Input.IdempotencyKey, inv.TargetID)
+	messageID, err := h.LarkInviteAPI.SendInviteCard(sendCtx, h.LarkInviteCreds, idType, receiveID, card, dedupeKey)
+	if err != nil {
+		return "", errors.Wrapf(err, "send lark invite card invite_id=%s", uuidToString(inv.ID))
+	}
+
+	return messageID, nil
 }
 
 // resolveLarkInviteTarget 向飞书查接收方资料：群查群名和头像；个人先把邮箱换成 open_id，再查姓名和头像。
@@ -933,7 +1019,8 @@ func (h *Handler) resolveLarkInviteUser(ctx context.Context, openID string) (lar
 	}, nil
 }
 
-// larkInviteCreateParams 组装写入 lark_invite 的参数：群卡片按请求设人数上限，个人卡片固定为 1。
+// larkInviteCreateParams 组装写入 lark_invite 的参数：群卡片按请求设人数上限，个人卡片固定为 1；
+// 带幂等键时邀请 id 由幂等键派生，不带时由数据库生成。
 func (h *Handler) larkInviteCreateParams(sc larkInviteSendContext, target larkInviteSendTarget, resolved larkInviteResolvedTarget) db.CreateLarkInviteParams {
 	var maxUses pgtype.Int4
 	switch {
@@ -943,7 +1030,7 @@ func (h *Handler) larkInviteCreateParams(sc larkInviteSendContext, target larkIn
 		maxUses = pgtype.Int4{Int32: int32(sc.Input.MaxUses), Valid: true}
 	}
 
-	return db.CreateLarkInviteParams{
+	params := db.CreateLarkInviteParams{
 		WorkspaceID:     sc.WorkspaceID,
 		TargetType:      target.Type,
 		TargetID:        target.ID,
@@ -959,22 +1046,11 @@ func (h *Handler) larkInviteCreateParams(sc larkInviteSendContext, target larkIn
 		SentByUserID:    sc.Sender.UserID,
 		SentByAgentID:   sc.Sender.AgentID,
 	}
-}
-
-// deliverLarkInviteCard 生成邀请中状态的卡片并发给接收方，返回飞书消息 ID。
-func (h *Handler) deliverLarkInviteCard(ctx context.Context, sc larkInviteSendContext, invite db.LarkInvite, resolved larkInviteResolvedTarget) (string, error) {
-	card, err := buildLarkInviteCard(h.larkInviteCardViewOf(invite, sc.Names, larkInviteCardActive))
-	if err != nil {
-		return "", err
+	if sc.Input.IdempotencyKey != "" {
+		params.ID = larkInviteKeyedID(sc.WorkspaceID, sc.Input.IdempotencyKey, target.ID)
 	}
 
-	dedupeKey := larkInviteDedupeKey(sc.Input.IdempotencyKey, invite.TargetID)
-	messageID, err := h.LarkInviteAPI.SendInviteCard(ctx, h.LarkInviteCreds, resolved.ReceiveIDType, resolved.ReceiveID, card, dedupeKey)
-	if err != nil {
-		return "", errors.Wrapf(err, "send lark invite card invite_id=%s", uuidToString(invite.ID))
-	}
-
-	return messageID, nil
+	return params
 }
 
 // deleteUnsentLarkInvite 删除没发出去的邀请。请求可能已经结束，删除不跟随请求取消；删除失败只记日志，

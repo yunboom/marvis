@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/yunboom/marvis/server/internal/integrations/lark"
@@ -34,6 +35,10 @@ type fakeInviteSend struct {
 	ReceiveID string
 	CardJSON  string
 	DedupeKey string
+	// HasDeadline 表示发送时的 context 带超时。
+	HasDeadline bool
+	// CtxErr 是发送时 context 的错误，请求取消不应影响发送。
+	CtxErr error
 }
 
 // fakeInvitePatch 记录一次更新卡片调用。
@@ -54,11 +59,12 @@ type fakeInviteAPI struct {
 	patchErr error
 	botChats []lark.InviteChat
 
-	calls   int
-	sends   []fakeInviteSend
-	patches []fakeInvitePatch
-	lookups []string
-	msgSeq  int
+	calls        int
+	sends        []fakeInviteSend // 成功的发送
+	sendAttempts []fakeInviteSend // 全部发送尝试，含失败
+	patches      []fakeInvitePatch
+	lookups      []string
+	msgSeq       int
 }
 
 var _ lark.InviteAPIClient = (*fakeInviteAPI)(nil)
@@ -121,19 +127,42 @@ func (f *fakeInviteAPI) LookupOpenIDByEmail(_ context.Context, _ lark.Installati
 	return openID, nil
 }
 
-func (f *fakeInviteAPI) SendInviteCard(_ context.Context, _ lark.InstallationCredentials, idType lark.InviteReceiveIDType, receiveID, cardJSON, dedupeKey string) (string, error) {
+func (f *fakeInviteAPI) SendInviteCard(ctx context.Context, _ lark.InstallationCredentials, idType lark.InviteReceiveIDType, receiveID, cardJSON, dedupeKey string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	f.calls++
+	_, hasDeadline := ctx.Deadline()
+	send := fakeInviteSend{IDType: idType, ReceiveID: receiveID, CardJSON: cardJSON, DedupeKey: dedupeKey, HasDeadline: hasDeadline, CtxErr: ctx.Err()}
+	f.sendAttempts = append(f.sendAttempts, send)
 	if err := f.sendErrs[receiveID]; err != nil {
 		return "", err
 	}
 
 	f.msgSeq++
-	f.sends = append(f.sends, fakeInviteSend{IDType: idType, ReceiveID: receiveID, CardJSON: cardJSON, DedupeKey: dedupeKey})
+	f.sends = append(f.sends, send)
 
 	return fmt.Sprintf("om_fake_%d", f.msgSeq), nil
+}
+
+// setSendErr 设置或清除（err 为 nil）对某个 receive_id 的发送错误。
+func (f *fakeInviteAPI) setSendErr(receiveID string, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if err == nil {
+		delete(f.sendErrs, receiveID)
+		return
+	}
+	f.sendErrs[receiveID] = err
+}
+
+// attempts 返回全部发送尝试的副本。
+func (f *fakeInviteAPI) attempts() []fakeInviteSend {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return append([]fakeInviteSend(nil), f.sendAttempts...)
 }
 
 func (f *fakeInviteAPI) PatchInviteCard(_ context.Context, _ lark.InstallationCredentials, messageID, cardJSON string) error {
@@ -526,6 +555,124 @@ func TestSendLarkInvites_IdempotencyKey(t *testing.T) {
 	sum := sha256.Sum256([]byte(key + "\x00" + chatID))
 	if want := hex.EncodeToString(sum[:])[:32]; sends[0].DedupeKey != want {
 		t.Fatalf("dedupe key = %q, want %q", sends[0].DedupeKey, want)
+	}
+	if want := expectedKeyedInviteID(key, chatID); *first[0].ID != want {
+		t.Fatalf("invite id = %s, want derived %s", *first[0].ID, want)
+	}
+}
+
+// expectedKeyedInviteID 按 Ruling 12 独立计算带幂等键的邀请 id。
+func expectedKeyedInviteID(key, targetID string) string {
+	return uuid.NewSHA1(uuid.MustParse("d4a2c2e7-bdae-47ae-964f-d162526e23eb"), []byte(testWorkspaceID+"\x00"+key+"\x00"+targetID)).String()
+}
+
+func TestSendLarkInvites_KeyedAmbiguousFailureKeepsRowAndRetries(t *testing.T) {
+	api := newFakeInviteAPI()
+	chatID := uniqueLarkID("oc_ambiguous_")
+	api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "超时群"}
+	api.setSendErr(chatID, errors.New("context deadline exceeded"))
+	useFakeInviteAPI(t, api)
+	cleanupLarkInvitesByTarget(t, chatID)
+
+	key := uniqueLarkID("ambiguous-")
+	body := map[string]any{"chat_ids": []string{chatID}, "expires_in_hours": 168, "idempotency_key": key}
+
+	first := decodeLarkInviteResults(t, postLarkInvites(t, body, nil))
+	if len(first) != 1 || first[0].Status != larkInviteSendStatusFailed || first[0].Error == nil || first[0].Error.Code != larkInviteCodeSendFailed {
+		t.Fatalf("first result = %+v, want failed/send_failed", first)
+	}
+
+	row, ok := loadLarkInviteRow(t, chatID)
+	if !ok {
+		t.Fatal("ambiguous failure with a key deleted the invite row")
+	}
+	if row.LarkMessageID != nil {
+		t.Fatalf("lark_message_id = %s, want NULL after failed send", *row.LarkMessageID)
+	}
+	if want := expectedKeyedInviteID(key, chatID); row.ID != want {
+		t.Fatalf("invite id = %s, want derived %s", row.ID, want)
+	}
+
+	api.setSendErr(chatID, nil)
+	second := decodeLarkInviteResults(t, postLarkInvites(t, body, nil))
+	if len(second) != 1 || second[0].Status != larkInviteSendStatusSent || second[0].ID == nil || *second[0].ID != row.ID {
+		t.Fatalf("retry result = %+v, want sent with invite %s", second, row.ID)
+	}
+
+	stored, ok := loadLarkInviteRow(t, chatID)
+	if !ok || stored.LarkMessageID == nil || *stored.LarkMessageID == "" {
+		t.Fatalf("retry did not store lark_message_id: %+v", stored)
+	}
+
+	attempts := api.attempts()
+	if len(attempts) != 2 {
+		t.Fatalf("send attempts = %d, want 2", len(attempts))
+	}
+	for i, a := range attempts {
+		if a.DedupeKey != attempts[0].DedupeKey || !strings.Contains(a.CardJSON, row.ID) {
+			t.Fatalf("attempt %d dedupe key %q / card does not carry invite %s", i, a.DedupeKey, row.ID)
+		}
+		if !a.HasDeadline || a.CtxErr != nil {
+			t.Fatalf("attempt %d context: deadline=%v err=%v, want bounded and live", i, a.HasDeadline, a.CtxErr)
+		}
+	}
+}
+
+func TestSendLarkInvites_KeyedClassifiedFailureDeletesRow(t *testing.T) {
+	api := newFakeInviteAPI()
+	chatID := uniqueLarkID("oc_rejected_")
+	api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "拒绝群"}
+	api.setSendErr(chatID, &lark.APIError{Op: "send invite card", Code: fakeLarkCodeBotNotInChat, Msg: "bot not in chat"})
+	useFakeInviteAPI(t, api)
+	cleanupLarkInvitesByTarget(t, chatID)
+
+	body := map[string]any{"chat_ids": []string{chatID}, "expires_in_hours": 168, "idempotency_key": uniqueLarkID("rejected-")}
+	results := decodeLarkInviteResults(t, postLarkInvites(t, body, nil))
+
+	if len(results) != 1 || results[0].Status != larkInviteSendStatusFailed || results[0].Error == nil || results[0].Error.Code != lark.InviteErrBotNotInChat {
+		t.Fatalf("result = %+v, want failed/bot_not_in_chat", results)
+	}
+	if _, ok := loadLarkInviteRow(t, chatID); ok {
+		t.Fatal("classified failure with a key kept the invite row")
+	}
+}
+
+func TestSendLarkInvites_KeyedDistinctTargets(t *testing.T) {
+	api := newFakeInviteAPI()
+	chatA := uniqueLarkID("oc_keyed_a_")
+	chatB := uniqueLarkID("oc_keyed_b_")
+	api.chats[chatA] = lark.InviteChat{ChatID: chatA, Name: "群 A"}
+	api.chats[chatB] = lark.InviteChat{ChatID: chatB, Name: "群 B"}
+	useFakeInviteAPI(t, api)
+	cleanupLarkInvitesByTarget(t, chatA, chatB)
+
+	key := uniqueLarkID("shared-")
+	results := decodeLarkInviteResults(t, postLarkInvites(t, map[string]any{
+		"chat_ids":         []string{chatA, chatB},
+		"expires_in_hours": 168,
+		"idempotency_key":  key,
+	}, nil))
+
+	if len(results) != 2 {
+		t.Fatalf("results = %+v", results)
+	}
+	ids := map[string]string{}
+	for _, res := range results {
+		if res.Status != larkInviteSendStatusSent || res.ID == nil {
+			t.Fatalf("result = %+v, want sent", res)
+		}
+		ids[res.Target.ID] = *res.ID
+	}
+	if ids[chatA] == ids[chatB] {
+		t.Fatalf("two targets share invite id %s", ids[chatA])
+	}
+	if ids[chatA] != expectedKeyedInviteID(key, chatA) || ids[chatB] != expectedKeyedInviteID(key, chatB) {
+		t.Fatalf("invite ids = %v, want derived per target", ids)
+	}
+
+	_, sends, _, _ := api.snapshot()
+	if len(sends) != 2 || sends[0].DedupeKey == sends[1].DedupeKey {
+		t.Fatalf("sends = %+v, want two sends with different dedupe keys", sends)
 	}
 }
 

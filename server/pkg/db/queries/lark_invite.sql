@@ -1,10 +1,16 @@
 -- name: CreateLarkInvite :one
+-- id 为 NULL 时由数据库生成；带幂等键的邀请由调用方从幂等键派生固定 id，重试时卡片里的 invite_id 不变。
 INSERT INTO lark_invite (
-    workspace_id, target_type, target_id, target_id_type, target_open_id,
+    id, workspace_id, target_type, target_id, target_id_type, target_open_id,
     target_name, target_avatar_url, role, max_uses, expires_at, note,
     idempotency_key, sent_by_user_id, sent_by_agent_id
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+VALUES (
+    COALESCE(sqlc.narg(id)::uuid, gen_random_uuid()),
+    sqlc.arg(workspace_id), sqlc.arg(target_type), sqlc.arg(target_id), sqlc.arg(target_id_type), sqlc.narg(target_open_id),
+    sqlc.arg(target_name), sqlc.narg(target_avatar_url), sqlc.arg(role), sqlc.narg(max_uses), sqlc.arg(expires_at), sqlc.arg(note),
+    sqlc.narg(idempotency_key), sqlc.arg(sent_by_user_id), sqlc.narg(sent_by_agent_id)
+)
 RETURNING *;
 
 -- name: GetLarkInviteInWorkspace :one
