@@ -126,6 +126,22 @@ func (q *Queries) GetRealtimeMemberships(ctx context.Context, arg GetRealtimeMem
 	return items, nil
 }
 
+const isWorkspaceManagerEmail = `-- name: IsWorkspaceManagerEmail :one
+SELECT EXISTS (
+    SELECT 1 FROM member m
+    JOIN "user" u ON u.id = m.user_id
+    WHERE u.email = $1 AND m.role IN ('owner', 'admin')
+)::bool AS is_manager
+`
+
+// Whether the user with this email is an owner or admin of any workspace.
+func (q *Queries) IsWorkspaceManagerEmail(ctx context.Context, email string) (bool, error) {
+	row := q.db.QueryRow(ctx, isWorkspaceManagerEmail, email)
+	var is_manager bool
+	err := row.Scan(&is_manager)
+	return is_manager, err
+}
+
 const listMembers = `-- name: ListMembers :many
 SELECT id, workspace_id, user_id, role, created_at FROM member
 WHERE workspace_id = $1

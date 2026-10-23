@@ -428,6 +428,17 @@ func (h *Handler) VerifyCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isDevCode := isDevVerificationCode(code)
+	if isDevCode && IsStandaloneMode() {
+		// 单机模式的固定验证码是局域网里共享的口令，不能用来登录工作区所有者或管理员；
+		// 这类邮箱按普通验证码校验，失败时与输错验证码的响应一致，不暴露谁是管理员。
+		isManager, err := h.Queries.IsWorkspaceManagerEmail(r.Context(), email)
+		if err != nil {
+			slog.Warn("workspace manager lookup failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
+			writeError(w, http.StatusInternalServerError, "failed to verify code")
+			return
+		}
+		isDevCode = !isManager
+	}
 	if !isDevCode && subtle.ConstantTimeCompare([]byte(code), []byte(dbCode.Code)) != 1 {
 		_ = h.Queries.IncrementVerificationCodeAttempts(r.Context(), dbCode.ID)
 		writeError(w, http.StatusBadRequest, "invalid or expired code")

@@ -8,6 +8,14 @@ SELECT user_id FROM member
 WHERE workspace_id = $1 AND role IN ('owner', 'admin')
 ORDER BY created_at ASC;
 
+-- name: IsWorkspaceManagerEmail :one
+-- Whether the user with this email is an owner or admin of any workspace.
+SELECT EXISTS (
+    SELECT 1 FROM member m
+    JOIN "user" u ON u.id = m.user_id
+    WHERE u.email = $1 AND m.role IN ('owner', 'admin')
+)::bool AS is_manager;
+
 -- name: GetMember :one
 SELECT * FROM member
 WHERE id = $1;
