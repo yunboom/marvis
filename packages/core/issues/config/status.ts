@@ -52,6 +52,11 @@ export const BUILT_IN_STATUS_LABEL: Record<BuiltInIssueStatus, string> = {
   cancelled: "Cancelled",
 };
 
+/**
+ * Category fallbacks for statuses without their own colour. Built-in statuses
+ * take their pigment from StatusIcon; these mirror the representative
+ * built-in of each category (todo, in progress, done, cancelled).
+ */
 export const STATUS_CONFIG: Record<
   IssueStatusCategory,
   {
@@ -62,8 +67,8 @@ export const STATUS_CONFIG: Record<
     columnBg: string;
   }
 > = {
-  unstarted: { label: "Unstarted", iconColor: "text-muted-foreground", hoverBg: "hover:bg-accent", dividerColor: "bg-muted-foreground/40", columnBg: "bg-muted/40" },
-  started: { label: "Started", iconColor: "text-warning", hoverBg: "hover:bg-warning/10", dividerColor: "bg-warning", columnBg: "bg-muted/40" },
-  done: { label: "Done", iconColor: "text-info", hoverBg: "hover:bg-info/10", dividerColor: "bg-info", columnBg: "bg-muted/40" },
-  closed: { label: "Closed", iconColor: "text-muted-foreground", hoverBg: "hover:bg-accent", dividerColor: "bg-muted-foreground/40", columnBg: "bg-muted/40" },
+  unstarted: { label: "Unstarted", iconColor: "text-status-todo", hoverBg: "hover:bg-accent", dividerColor: "bg-muted-foreground/40", columnBg: "bg-muted/40" },
+  started: { label: "Started", iconColor: "text-status-progress", hoverBg: "hover:bg-status-progress/10", dividerColor: "bg-status-progress", columnBg: "bg-muted/40" },
+  done: { label: "Done", iconColor: "text-status-done", hoverBg: "hover:bg-status-done/10", dividerColor: "bg-status-done", columnBg: "bg-muted/40" },
+  closed: { label: "Closed", iconColor: "text-status-idle", hoverBg: "hover:bg-accent", dividerColor: "bg-muted-foreground/40", columnBg: "bg-muted/40" },
 };

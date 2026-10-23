@@ -239,7 +239,7 @@ function MembersCell({ squad }: { squad: Squad }) {
         {visible.map((m) => (
           <span
             key={`${m.member_type}-${m.member_id}`}
-            className="inline-flex rounded-full ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent"
+            className={`inline-flex ${m.member_type === "member" ? "rounded-full" : "rounded-[28%]"} ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent`}
           >
             <ActorAvatar
               actorType={m.member_type}

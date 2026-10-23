@@ -2185,7 +2185,7 @@ describe("IssueDetail (shared)", () => {
     });
     const icon = statusChangeIcon("In Review");
     expect(icon.style.color).toBe("");
-    expect(icon.getAttribute("class")).toContain("text-success");
+    expect(icon.getAttribute("class")).toContain("text-status-review");
   });
 
   it("truncates the trailing activity block to the most recent 8 entries with a show-more toggle", async () => {

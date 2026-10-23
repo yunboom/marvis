@@ -460,7 +460,7 @@ describe("keep-open continuation cleanup", () => {
     expect(draftState().draft.manual.status).toBe("in_progress");
 
     // Only a mode switch — no manual field was touched.
-    await user.click(screen.getByRole("button", { name: "Switch to Agent" }));
+    await user.click(screen.getByRole("tab", { name: /Create with agent/i }));
 
     // The continuation is gone, so the batch status must not reach the next
     // fresh manual create.
@@ -523,7 +523,7 @@ describe("keep-open continuation cleanup", () => {
     // A real selection for the next issue, made before the switch and
     // re-committed by it.
     await user.click(screen.getByTestId("priority-picker"));
-    await user.click(screen.getByRole("button", { name: "Switch to Agent" }));
+    await user.click(screen.getByRole("tab", { name: /Create with agent/i }));
 
     expect(draftState().draft.shared.priority).toBe("high");
     // The selection is the user's, so the continuation closes as it is.
@@ -544,7 +544,7 @@ describe("keep-open continuation cleanup", () => {
     // The next issue of the batch was started: a title is real content, and the
     // switch seeds the agent prompt from it.
     await user.type(screen.getByPlaceholderText("Issue title"), "Second batch issue");
-    await user.click(screen.getByRole("button", { name: "Switch to Agent" }));
+    await user.click(screen.getByRole("tab", { name: /Create with agent/i }));
 
     const state = draftState();
     expect(state.draft.agent.prompt).toBe("Second batch issue");

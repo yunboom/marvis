@@ -167,14 +167,15 @@ const ICON_RENDERERS: Record<IssueStatusIcon, () => React.ReactNode> = {
   cross: CancelledIcon,
 };
 
+// Pigment tokens: idle grey, todo grey, gamboge, indigo, malachite, cinnabar.
 const BUILT_IN_ICON_COLOR: Record<BuiltInIssueStatus, string> = {
-  backlog: "text-muted-foreground",
-  todo: "text-muted-foreground",
-  in_progress: "text-warning",
-  in_review: "text-success",
-  done: "text-info",
-  blocked: "text-destructive",
-  cancelled: "text-muted-foreground",
+  backlog: "text-status-idle",
+  todo: "text-status-todo",
+  in_progress: "text-status-progress",
+  in_review: "text-status-review",
+  done: "text-status-done",
+  blocked: "text-status-blocked",
+  cancelled: "text-status-idle",
 };
 
 // Public component

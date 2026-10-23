@@ -29,7 +29,19 @@
     "hex": "16진수 색상",
     "eyedropper": "화면에서 색상 선택",
     "presets": "프리셋",
-    "random": "무작위"
+    "random": "무작위",
+    "swatches": {
+      "ink": "담묵",
+      "ochre": "자석",
+      "gamboge": "등황",
+      "malachite": "석록",
+      "celadon": "청자",
+      "slate_blue": "화청",
+      "indigo": "쪽빛",
+      "lotus": "연보라",
+      "cinnabar": "주사",
+      "brand_brown": "브랜드 브라운"
+    }
   },
   "save": "저장",
   "cancel": "취소",

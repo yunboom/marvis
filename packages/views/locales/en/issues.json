@@ -371,7 +371,21 @@
     "empty_grouping": "No matching issues",
     "no_value": "No value",
     "ordered_by": "Board ordered by {{field}}",
-    "manual_reorder_hint": "Switch to Manual ordering to rearrange issues within a column."
+    "manual_reorder_hint": "Switch to Manual ordering to rearrange issues within a column.",
+    "status_column": {
+      "not_started": "Not started",
+      "started": "Started",
+      "needs_attention": "Needs attention",
+      "ended": "Ended"
+    },
+    "lane_more_one": "{{count}} more",
+    "lane_more_other": "{{count}} more",
+    "lane_collapse": "Collapse",
+    "lane_focus": "Focus {{status}}",
+    "focusing": "Focused",
+    "exit_focus": "Exit focus",
+    "below_fold_one": "{{count}} more below",
+    "below_fold_other": "{{count}} more below"
   },
   "peek": {
     "panel_label": "Issue preview",
@@ -688,6 +702,7 @@
     "hover_header_queued_other": "{{count}} queued agents",
     "status_running": "Working",
     "status_queued": "Queued",
+    "status_working": "Working",
     "empty_hover": "No agents working right now",
     "unknown_hover": "Agents working: not loaded yet",
     "filter_active_label": "Viewing issues with agents working",
@@ -865,7 +880,9 @@
   },
   "card": {
     "update_failed": "Failed to update issue",
-    "updated_ago": "Updated {{time}}"
+    "updated_ago": "Updated {{time}}",
+    "overdue_days_one": "{{count}} day overdue",
+    "overdue_days_other": "{{count}} days overdue"
   },
   "actions": {
     "rename_issue": "Rename issue",

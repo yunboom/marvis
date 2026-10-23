@@ -1,31 +1,29 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Lock, Search, X } from "lucide-react";
 import {
-  AlarmClock,
+  Alarm,
   Bell,
-  Blocks,
-  CircleDot,
+  ChatCircleDots,
+  CircleDashed,
   CreditCard,
-  FolderGit2,
+  FlowArrow,
+  GearSix,
+  GitBranch,
+  HardDrives,
+  Key,
   Keyboard,
-  KeyRound,
   Laptop,
+  Lightning,
   ListPlus,
-  Lock,
-  MessagesSquare,
-  Plug,
-  Search,
-  Server,
-  Settings,
+  PlugsConnected,
+  PuzzlePiece,
   SlidersHorizontal,
-  Tags,
-  User,
-  Users,
-  X,
-  Workflow,
-  Zap,
-} from "lucide-react";
+  Tag,
+  UserCircle,
+  UsersThree,
+} from "@phosphor-icons/react/ssr";
 import { useAuthStore } from "@marvis/core/auth";
 import { useCurrentWorkspace } from "@marvis/core/paths";
 import { useFeatureEnabled } from "@marvis/core/config";
@@ -66,6 +64,7 @@ import { HighlightText } from "../../search/highlight-text";
 import { useSettingsSearchIndex } from "./use-settings-search-index";
 import { WakeupsTab } from "./wakeups-tab";
 import { CollapsedNavTrigger } from "../../layout/page-header";
+import { filled } from "../../layout/route-icon-components";
 import { useT } from "../../i18n";
 
 export interface ExtraSettingsTab {
@@ -101,6 +100,29 @@ interface SettingsScopeGroup {
   tag?: string;
   subgroups: SettingsSubgroup[];
 }
+
+/** Nav icons share the sidebar's solid glyph style. */
+const ICONS = {
+  profile: filled(UserCircle),
+  preferences: filled(SlidersHorizontal),
+  notifications: filled(Bell),
+  keyboard: filled(Keyboard),
+  apps: filled(PlugsConnected),
+  tokens: filled(Key),
+  workspace: filled(GearSix),
+  members: filled(UsersThree),
+  billing: filled(CreditCard),
+  workflows: filled(FlowArrow),
+  statuses: filled(CircleDashed),
+  wakeups: filled(Alarm),
+  labels: filled(Tag),
+  properties: filled(ListPlus),
+  autopilot: filled(Lightning),
+  code: filled(GitBranch),
+  chat: filled(ChatCircleDots),
+  mcp: filled(HardDrives),
+  plugins: filled(PuzzlePiece),
+};
 
 const FLASH_MS = 1600;
 const ANCHOR_WAIT_MS = 1500;
@@ -145,29 +167,29 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         {
           key: "personal",
           entries: [
-            entry("profile", t(($) => $.page.tabs.profile), User, <AccountTab />),
+            entry("profile", t(($) => $.page.tabs.profile), ICONS.profile, <AccountTab />),
             entry(
               "preferences",
               t(($) => $.page.tabs.preferences),
-              SlidersHorizontal,
+              ICONS.preferences,
               <PreferencesTab />,
             ),
             entry(
               "notifications",
               t(($) => $.page.tabs.notifications),
-              Bell,
+              ICONS.notifications,
               <NotificationsTab />,
             ),
             entry(
               "shortcuts",
               t(($) => $.page.tabs.shortcuts),
-              Keyboard,
+              ICONS.keyboard,
               <KeyboardShortcutsTab />,
             ),
             ...(appsAvailable
-              ? [entry("apps", t(($) => $.page.tabs.apps), Plug, <ConnectedAppsTab />)]
+              ? [entry("apps", t(($) => $.page.tabs.apps), ICONS.apps, <ConnectedAppsTab />)]
               : []),
-            entry("tokens", t(($) => $.page.tabs.tokens), KeyRound, <TokensTab />),
+            entry("tokens", t(($) => $.page.tabs.tokens), ICONS.tokens, <TokensTab />),
           ],
         },
       ],
@@ -188,10 +210,10 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         {
           key: "workspace",
           entries: [
-            entry("workspace", t(($) => $.page.tabs.general), Settings, <WorkspaceTab />, {
+            entry("workspace", t(($) => $.page.tabs.general), ICONS.workspace, <WorkspaceTab />, {
               adminOnly: true,
             }),
-            entry("members", t(($) => $.page.tabs.members), Users, <MembersTab />, {
+            entry("members", t(($) => $.page.tabs.members), ICONS.members, <MembersTab />, {
               adminOnly: true,
             }),
             ...(billingEnabled
@@ -199,7 +221,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                   entry(
                     "billing",
                     t(($) => $.page.tabs.billing),
-                    CreditCard,
+                    ICONS.billing,
                     <BillingTab />,
                   ),
                 ]
@@ -211,31 +233,31 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
           label: t(($) => $.page.groups.issues),
           entries: [
             ...(workflowsEnabled
-              ? [entry("workflows", t(($) => $.page.tabs.workflows), Workflow, <WorkflowsTab />, {
+              ? [entry("workflows", t(($) => $.page.tabs.workflows), ICONS.workflows, <WorkflowsTab />, {
                   wide: true,
                 })]
-              : [entry("issue-statuses", t(($) => $.page.tabs.issue_statuses), CircleDot, <IssueStatusesTab />, {
+              : [entry("issue-statuses", t(($) => $.page.tabs.issue_statuses), ICONS.statuses, <IssueStatusesTab />, {
                   wide: true,
                   adminOnly: true,
                 })]),
-            entry("wakeups", t(($) => $.page.tabs.wakeups), AlarmClock, <WakeupsTab />, {
+            entry("wakeups", t(($) => $.page.tabs.wakeups), ICONS.wakeups, <WakeupsTab />, {
               wide: true,
               adminOnly: true,
             }),
-            entry("labels", t(($) => $.page.tabs.labels), Tags, <LabelsTab />, {
+            entry("labels", t(($) => $.page.tabs.labels), ICONS.labels, <LabelsTab />, {
               wide: true,
             }),
             entry(
               "properties",
               t(($) => $.page.tabs.properties),
-              ListPlus,
+              ICONS.properties,
               <PropertiesTab />,
               { wide: true, adminOnly: true },
             ),
             entry(
               "quick-actions",
               t(($) => $.page.tabs.quick_actions),
-              Zap,
+              ICONS.autopilot,
               <QuickActionsTab />,
               { wide: true },
             ),
@@ -245,21 +267,21 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
           key: "connections",
           label: t(($) => $.page.groups.connections),
           entries: [
-            entry("code", t(($) => $.page.tabs.code), FolderGit2, <CodeTab />, {
+            entry("code", t(($) => $.page.tabs.code), ICONS.code, <CodeTab />, {
               adminOnly: true,
             }),
             entry(
               "channels",
               t(($) => $.page.tabs.channels),
-              MessagesSquare,
+              ICONS.chat,
               <ChannelsTab />,
             ),
-            entry("mcp", t(($) => $.page.tabs.mcp), Server, <McpTab />, {
+            entry("mcp", t(($) => $.page.tabs.mcp), ICONS.mcp, <McpTab />, {
               adminOnly: true,
             }),
             ...(pluginsEnabled
               ? [
-                  entry("plugins", t(($) => $.page.tabs.plugins), Blocks, <PluginsTab />, {
+                  entry("plugins", t(($) => $.page.tabs.plugins), ICONS.plugins, <PluginsTab />, {
                     adminOnly: true,
                   }),
                 ]
@@ -273,7 +295,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
           {
             key: "device" as const,
             label: t(($) => $.page.groups.device),
-            mark: <Laptop aria-hidden="true" className="size-4 text-muted-foreground" />,
+            mark: <Laptop weight="fill" aria-hidden="true" className="size-4 text-foreground" />,
             subgroups: [{ key: "device", entries: extraDeviceTabs as SettingsEntry[] }],
           },
         ]
@@ -371,7 +393,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
             : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
         )}
       >
-        <item.icon className="size-4 shrink-0" aria-hidden="true" />
+        <item.icon className="size-4 shrink-0 text-foreground" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         {isMember && item.adminOnly ? (
           <Lock

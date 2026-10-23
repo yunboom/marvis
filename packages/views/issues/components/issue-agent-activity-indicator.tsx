@@ -1,8 +1,9 @@
 "use client";
 
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
 import { Bell, Clock3, TriangleAlert } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { BreathingDot } from "@marvis/ui/components/common/breathing-dot";
 import { ShimmerText } from "@marvis/ui/components/common/shimmer-text";
 import {
   HoverCard,
@@ -51,6 +52,11 @@ interface IssueAgentActivityIndicatorProps {
   // Whether hovering opens the activity card. Opt OUT where the card's only
   // incremental information is not worth a popup (Inbox — see below).
   hoverCard?: boolean;
+  // `badge` (default): avatar stack + shimmering label. `status`: a breathing
+  // dot + short label, no avatars — the board card footer's compact cue.
+  variant?: "badge" | "status";
+  // Rendered in place of nothing when there is no task or wakeup to show.
+  fallback?: ReactNode;
 }
 
 /**
@@ -95,6 +101,8 @@ export const IssueAgentActivityIndicator = memo(
     issueId,
     size = "xs",
     hoverCard = true,
+    variant = "badge",
+    fallback = null,
   }: IssueAgentActivityIndicatorProps) {
     const { t } = useT("issues");
     const wsId = useWorkspaceId();
@@ -145,8 +153,9 @@ export const IssueAgentActivityIndicator = memo(
     const hasTasks = agentIds.length > 0;
     const hoverTasks = [...groups.running, ...groups.queued];
     const wakeupTriggered = hoverTasks.some((task) => !!task.wakeup_id);
-    if (!hasTasks && !wakeupCount && !paused) return null;
+    if (!hasTasks && !wakeupCount && !paused) return fallback;
     const isRunning = opacity === "full";
+    const compact = variant === "status";
     // One sentence of what the issue waits for; a paused rule speaks up only
     // when nothing else is waiting, because it needs someone to look.
     const waitingLabel = wakeups[0]
@@ -156,11 +165,22 @@ export const IssueAgentActivityIndicator = memo(
         : "";
     const label = hasTasks
       ? isRunning
-        ? t(($) => $.agent_activity.status_running)
+        ? compact
+          ? t(($) => $.agent_activity.status_working)
+          : t(($) => $.agent_activity.status_running)
         : t(($) => $.agent_activity.status_queued)
       : waitingLabel;
 
-    const badge = hasTasks ? (
+    const badge = hasTasks && compact ? (
+      <>
+        <BreathingDot active={isRunning} />
+        <span className="text-caption text-muted-foreground">
+          {isRunning
+            ? t(($) => $.agent_activity.status_working)
+            : t(($) => $.agent_activity.status_queued)}
+        </span>
+      </>
+    ) : hasTasks ? (
       <>
         <AgentAvatarStack
           agentIds={agentIds}

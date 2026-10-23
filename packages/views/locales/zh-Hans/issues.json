@@ -367,7 +367,19 @@
     "empty_grouping": "没有匹配的任务",
     "no_value": "未设置",
     "ordered_by": "按{{field}}排序",
-    "manual_reorder_hint": "切换到“手动”排序后，才能调整同一列内的顺序。"
+    "manual_reorder_hint": "切换到“手动”排序后，才能调整同一列内的顺序。",
+    "status_column": {
+      "not_started": "未开始",
+      "started": "已开始",
+      "needs_attention": "需介入",
+      "ended": "已结束"
+    },
+    "lane_more_other": "还有 {{count}} 张",
+    "lane_collapse": "收起",
+    "lane_focus": "聚焦 {{status}}",
+    "focusing": "聚焦中",
+    "exit_focus": "退出聚焦",
+    "below_fold_other": "还有 {{count}} 张"
   },
   "peek": {
     "panel_label": "任务预览",
@@ -664,6 +676,7 @@
     "hover_header_queued_other": "{{count}} 个智能体排队中",
     "status_running": "正在工作",
     "status_queued": "排队中",
+    "status_working": "工作中",
     "empty_hover": "当前没有智能体在工作",
     "unknown_hover": "工作中的智能体：尚未加载",
     "filter_active_label": "正在查看有智能体在工作的任务",
@@ -823,7 +836,8 @@
   },
   "card": {
     "update_failed": "更新任务失败",
-    "updated_ago": "更新于 {{time}}"
+    "updated_ago": "更新于 {{time}}",
+    "overdue_days_other": "逾期 {{count}} 天"
   },
   "actions": {
     "rename_issue": "重命名任务",

@@ -5,24 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { WorkingAgentSummary } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 
-const mockState = vi.hoisted(() => ({
-  avatarAgentIds: undefined as readonly string[] | undefined,
-  buttonVariant: undefined as string | undefined,
-}));
-
 vi.mock("@marvis/core/workspace/hooks", () => ({
   useActorName: () => ({
     getActorName: (_type: string, id: string) => `Agent ${id}`,
     getActorInitials: () => "AG",
     getActorAvatarUrl: () => null,
   }),
-}));
-
-vi.mock("../../agents/components/agent-avatar-stack", () => ({
-  AgentAvatarStack: ({ agentIds }: { agentIds: readonly string[] }) => {
-    mockState.avatarAgentIds = agentIds;
-    return <div data-testid="agent-avatar-stack">{agentIds.length}</div>;
-  },
 }));
 
 // The real hover card renders its body only while open. Render it inline so the
@@ -35,20 +23,6 @@ vi.mock("@marvis/ui/components/ui/hover-card", () => ({
     <div data-testid="hover-content">{children}</div>
   ),
 }));
-
-vi.mock("@marvis/ui/components/ui/button", async () => {
-  const actual =
-    await vi.importActual<typeof import("@marvis/ui/components/ui/button")>(
-      "@marvis/ui/components/ui/button",
-    );
-  return {
-    ...actual,
-    Button: (props: React.ComponentProps<typeof actual.Button>) => {
-      mockState.buttonVariant = props.variant ?? undefined;
-      return <actual.Button {...props} />;
-    },
-  };
-});
 
 import {
   WorkingAgentsHoverContent,
@@ -67,8 +41,6 @@ const EMPTY_HOVER = "No agents working right now";
 beforeEach(() => {
   cleanup();
   vi.clearAllMocks();
-  mockState.avatarAgentIds = undefined;
-  mockState.buttonVariant = undefined;
 });
 
 describe("WorkspaceAgentWorkingChip", () => {
@@ -81,15 +53,12 @@ describe("WorkspaceAgentWorkingChip", () => {
       />,
     );
 
+    const button = screen.getByRole("button", { name: "3 agents working" });
+    expect(button.getAttribute("aria-pressed")).toBe("false");
+    // Running agents breathe; the dot carries the activity cue.
     expect(
-      screen.getByRole("button", { name: "3 agents working" }),
+      screen.getByTestId("agent-working-dot").querySelector(".animate-breathe"),
     ).toBeTruthy();
-    expect(mockState.avatarAgentIds).toEqual([
-      "agent-1",
-      "agent-2",
-      "agent-3",
-    ]);
-    expect(mockState.buttonVariant).toBe("brandSubtle");
   });
 
   // The whole point of MUL-5525: the chip must not invent a count of its own.
@@ -103,8 +72,9 @@ describe("WorkspaceAgentWorkingChip", () => {
     expect(
       screen.getByRole("button", { name: "0 agents working" }),
     ).toBeTruthy();
-    expect(screen.queryByTestId("agent-avatar-stack")).toBeNull();
-    expect(mockState.buttonVariant).toBe("outline");
+    expect(
+      screen.getByTestId("agent-working-dot").querySelector(".animate-breathe"),
+    ).toBeNull();
     expect(screen.getByText(EMPTY_HOVER)).toBeTruthy();
   });
 
@@ -120,7 +90,8 @@ describe("WorkspaceAgentWorkingChip", () => {
     expect(
       screen.getByRole("button", { name: "Agents working: —" }),
     ).toBeTruthy();
-    expect(screen.queryByTestId("agent-avatar-stack")).toBeNull();
+    // No dot: neither "running" nor "idle" is known yet.
+    expect(screen.queryByTestId("agent-working-dot")).toBeNull();
   });
 
   // Regression: the chip passed `agents ?? []` to the hover body, so an
@@ -139,28 +110,14 @@ describe("WorkspaceAgentWorkingChip", () => {
     expect(screen.queryByText(EMPTY_HOVER)).toBeNull();
   });
 
-  // The neutral tier's muted text is what reads as "idle", so it must not be
-  // worn while the answer is still unknown.
-  it("does not dim the chip while the projection is unresolved", () => {
-    renderWithI18n(
-      <WorkspaceAgentWorkingChip
-        value={false}
-        onToggle={() => {}}
-        agents={undefined}
-      />,
-    );
-
-    const button = screen.getByRole("button", { name: "Agents working: —" });
-    expect(mockState.buttonVariant).toBe("outline");
-    expect(button.className).not.toContain("text-muted-foreground");
-  });
-
   it("keeps the active filter visually selected after the final agent stops", () => {
     renderWithI18n(
       <WorkspaceAgentWorkingChip value onToggle={() => {}} agents={[]} />,
     );
 
-    expect(mockState.buttonVariant).toBe("brand");
+    const button = screen.getByRole("button", { name: "0 agents working" });
+    expect(button.getAttribute("aria-pressed")).toBe("true");
+    expect(button.className).toContain("bg-surface-selected");
   });
 });
 
@@ -205,29 +162,14 @@ describe("chipActivity", () => {
 });
 
 describe("chipAppearance", () => {
-  it("wears the filled brand tier while the filter is on", () => {
-    expect(chipAppearance(true, "some").variant).toBe("brand");
+  it("wears a selected fill with foreground text while the filter is on", () => {
+    const className = chipAppearance(true);
+    expect(className).toContain("bg-surface-selected");
+    expect(className).toContain("text-foreground");
+    expect(className).not.toContain("text-muted-foreground");
   });
 
-  it("wears the tint tier for activity without the filter", () => {
-    expect(chipAppearance(false, "some").variant).toBe("brandSubtle");
-  });
-
-  it("wears the plain tier with muted text when nothing is running", () => {
-    const appearance = chipAppearance(false, "none");
-    expect(appearance.variant).toBe("outline");
-    expect(appearance.className).toContain("text-muted-foreground");
-  });
-
-  it("stays neutral but undimmed while the projection is unknown", () => {
-    const appearance = chipAppearance(false, "unknown");
-    expect(appearance.variant).toBe("outline");
-    expect(appearance.className).not.toContain("text-muted-foreground");
-  });
-
-  it("does not mute the active zero state", () => {
-    const appearance = chipAppearance(true, "none");
-    expect(appearance.variant).toBe("brand");
-    expect(appearance.className).not.toContain("text-muted-foreground");
+  it("stays muted while the filter is off", () => {
+    expect(chipAppearance(false)).toContain("text-muted-foreground");
   });
 });

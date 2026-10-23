@@ -294,8 +294,8 @@ function BackgroundLayer({
 // (MUL-6243)
 const STATUS_BAR_BG: Record<IssueStatusCategory, string> = {
   unstarted: "bg-muted-foreground/70",
-  started: "bg-warning",
-  done: "bg-info",
+  started: "bg-status-progress",
+  done: "bg-status-done",
   closed: "bg-muted-foreground/40",
 };
 

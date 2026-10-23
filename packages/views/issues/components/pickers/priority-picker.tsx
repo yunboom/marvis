@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { IssuePriority, UpdateIssueRequest } from "@marvis/core/types";
-import { PRIORITY_DISPLAY_ORDER, PRIORITY_CONFIG } from "@marvis/core/issues/config";
+import { PRIORITY_DISPLAY_ORDER } from "@marvis/core/issues/config";
 import { PriorityIcon } from "../priority-icon";
 import { DeferredPopup } from "../../../common/deferred-popup";
 import { PropertyPicker, PickerItem, PICKER_TRIGGER_CLASS } from "./property-picker";
@@ -94,24 +94,21 @@ function PriorityPickerImpl({
       }
     >
       {/* "No priority" leads — see PRIORITY_DISPLAY_ORDER. */}
-      {PRIORITY_DISPLAY_ORDER.map((p) => {
-        const c = PRIORITY_CONFIG[p];
-        return (
-          <PickerItem
-            key={p}
-            selected={p === priority}
-            onClick={() => {
-              onUpdate({ priority: p });
-              setOpen(false);
-            }}
-          >
-            <span className={`inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-caption font-medium ${c.badgeBg} ${c.badgeText}`}>
-              <PriorityIcon priority={p} className="h-3 w-3" inheritColor />
-              {t(($) => $.priority[p])}
-            </span>
-          </PickerItem>
-        );
-      })}
+      {PRIORITY_DISPLAY_ORDER.map((p) => (
+        <PickerItem
+          key={p}
+          selected={p === priority}
+          onClick={() => {
+            onUpdate({ priority: p });
+            setOpen(false);
+          }}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <PriorityIcon priority={p} />
+            <span className="truncate">{t(($) => $.priority[p])}</span>
+          </span>
+        </PickerItem>
+      ))}
     </PropertyPicker>
   );
 }

@@ -29,7 +29,19 @@
     "hex": "Hex color",
     "eyedropper": "Pick a color from the screen",
     "presets": "Presets",
-    "random": "Random"
+    "random": "Random",
+    "swatches": {
+      "ink": "Ink wash",
+      "ochre": "Ochre",
+      "gamboge": "Gamboge",
+      "malachite": "Malachite",
+      "celadon": "Celadon",
+      "slate_blue": "Slate blue",
+      "indigo": "Indigo",
+      "lotus": "Lotus purple",
+      "cinnabar": "Cinnabar",
+      "brand_brown": "Brand brown"
+    }
   },
   "save": "Save",
   "cancel": "Cancel",

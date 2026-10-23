@@ -304,6 +304,9 @@ export interface IssueViewState {
    *  `swimlaneOrders`, plus the sentinel `"none"` for the pinned
    *  no-X lane and `"__orphans__"` for the parent-grouping fallback. */
   collapsedSwimlanes: Record<SwimlaneGrouping, string[]>;
+  /** Status-board lanes the user collapsed (true) or expanded (false), keyed
+   *  by status key. A missing key falls back to the lane's default. */
+  boardLaneCollapsed: Record<string, boolean>;
   /** Ordered table columns. Title is mandatory and normalized to the front. */
   tableColumns: TableColumnConfig[];
   tableGrouping: TableGrouping;
@@ -351,6 +354,7 @@ export interface IssueViewState {
   setSwimlaneOrder: (order: string[]) => void;
   /** Toggle a lane key in the currently active swimlane grouping. */
   toggleSwimlaneCollapsed: (key: string) => void;
+  setBoardLaneCollapsed: (status: IssueStatus, collapsed: boolean) => void;
   toggleTableColumn: (key: TableColumnKey) => void;
   reorderTableColumn: (active: TableColumnKey, over: TableColumnKey) => void;
   setTableColumnWidth: (key: TableColumnKey, width?: number) => void;
@@ -389,6 +393,7 @@ export const viewStoreSlice = (set: StoreApi<IssueViewState>["setState"]): Issue
   swimlaneGrouping: "assignee",
   swimlaneOrders: { parent: [], project: [], assignee: [] },
   collapsedSwimlanes: { parent: [], project: [], assignee: [] },
+  boardLaneCollapsed: {},
   tableColumns: DEFAULT_TABLE_COLUMNS.map((column) => ({ ...column })),
   tableGrouping: "none",
   tableCollapsedGroups: [],
@@ -607,6 +612,10 @@ export const viewStoreSlice = (set: StoreApi<IssueViewState>["setState"]): Issue
         collapsedSwimlanes: { ...state.collapsedSwimlanes, [grouping]: next },
       };
     }),
+  setBoardLaneCollapsed: (status, collapsed) =>
+    set((state) => ({
+      boardLaneCollapsed: { ...state.boardLaneCollapsed, [status]: collapsed },
+    })),
   toggleTableColumn: (key) =>
     set((state) => {
       if (key === "title") return state;
@@ -690,6 +699,7 @@ export const viewStorePersistOptions = (name: string) => ({
     swimlaneGrouping: state.swimlaneGrouping,
     swimlaneOrders: state.swimlaneOrders,
     collapsedSwimlanes: state.collapsedSwimlanes,
+    boardLaneCollapsed: state.boardLaneCollapsed,
     tableColumns: state.tableColumns,
     tableGrouping: state.tableGrouping,
     tableCollapsedGroups: state.tableCollapsedGroups,
@@ -778,6 +788,13 @@ export function mergeViewStatePersisted<T extends IssueViewState>(
     collapsedSwimlanes: isRecord(p.collapsedSwimlanes)
       ? { ...current.collapsedSwimlanes, ...p.collapsedSwimlanes }
       : current.collapsedSwimlanes,
+    boardLaneCollapsed: isRecord(p.boardLaneCollapsed)
+      ? Object.fromEntries(
+          Object.entries(p.boardLaneCollapsed).filter(
+            (entry): entry is [string, boolean] => typeof entry[1] === "boolean",
+          ),
+        )
+      : current.boardLaneCollapsed,
     tableColumns: [
       persistedTitle ?? current.tableColumns[0] ?? { key: "title" },
       ...dedupedTableColumns,

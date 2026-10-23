@@ -101,7 +101,7 @@ const EMPTY_DRAFT: PropertyDraft = {
   type: "select",
   description: "",
   icon: "",
-  options: [{ name: "", color: COLOR_PICKER_PRESETS[6] }],
+  options: [{ name: "", color: COLOR_PICKER_PRESETS[0] }],
 };
 
 function typeHasOptions(type: string): boolean {
@@ -547,7 +547,7 @@ function PropertyEditorDialog({
                       type: value as IssuePropertyType,
                       options:
                         typeHasOptions(value) && current.options.length === 0
-                          ? [{ name: "", color: COLOR_PICKER_PRESETS[6] }]
+                          ? [{ name: "", color: COLOR_PICKER_PRESETS[0] }]
                           : current.options,
                     }))
                   }
@@ -634,7 +634,7 @@ function PropertyEditorDialog({
                       ...current.options,
                       {
                         name: "",
-                        color: COLOR_PICKER_PRESETS[current.options.length % COLOR_PICKER_PRESETS.length] ?? COLOR_PICKER_PRESETS[6],
+                        color: COLOR_PICKER_PRESETS[current.options.length % COLOR_PICKER_PRESETS.length] ?? COLOR_PICKER_PRESETS[0],
                       },
                     ],
                   }))

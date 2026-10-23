@@ -9,9 +9,9 @@ afterEach(cleanup);
 
 describe("ColorPickerPanel", () => {
   it("shows the current color in the hex input and marks the matching preset", () => {
-    renderWithI18n(<ColorPickerPanel value="#3b82f6" onChange={() => {}} />);
-    expect(screen.getByLabelText("Hex color")).toHaveValue("#3B82F6");
-    expect(screen.getByLabelText("#3b82f6")).toHaveAttribute(
+    renderWithI18n(<ColorPickerPanel value="#4a6f8a" onChange={() => {}} />);
+    expect(screen.getByLabelText("Hex color")).toHaveValue("#4A6F8A");
+    expect(screen.getByLabelText("Slate blue")).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -20,8 +20,8 @@ describe("ColorPickerPanel", () => {
   it("emits the preset color when a palette swatch is clicked", () => {
     const onChange = vi.fn();
     renderWithI18n(<ColorPickerPanel value="#3b82f6" onChange={onChange} />);
-    fireEvent.click(screen.getByLabelText("#ec4899"));
-    expect(onChange).toHaveBeenCalledWith("#ec4899");
+    fireEvent.click(screen.getByLabelText("Cinnabar"));
+    expect(onChange).toHaveBeenCalledWith("#b8452f");
   });
 
   it("emits a valid random color different from the current one", () => {
@@ -45,9 +45,14 @@ describe("ColorPickerPanel", () => {
 
   it("renders every default preset exactly once", () => {
     renderWithI18n(<ColorPickerPanel value="#3b82f6" onChange={() => {}} />);
-    for (const preset of COLOR_PICKER_PRESETS) {
-      expect(screen.getAllByLabelText(preset)).toHaveLength(1);
-    }
+    const swatches = screen
+      .getAllByRole("button")
+      .filter((button) => button.hasAttribute("aria-pressed"));
+    expect(swatches).toHaveLength(COLOR_PICKER_PRESETS.length);
+    expect(new Set(swatches.map((swatch) => swatch.getAttribute("aria-label"))).size).toBe(
+      COLOR_PICKER_PRESETS.length,
+    );
+    expect(swatches[0]).toHaveAccessibleName("Ink wash");
   });
 
   it("uses localized labels", () => {

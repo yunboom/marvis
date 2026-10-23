@@ -29,7 +29,19 @@
     "hex": "16進カラー",
     "eyedropper": "画面から色を取得",
     "presets": "プリセット",
-    "random": "ランダム"
+    "random": "ランダム",
+    "swatches": {
+      "ink": "薄墨",
+      "ochre": "代赭",
+      "gamboge": "藤黄",
+      "malachite": "石緑",
+      "celadon": "青磁",
+      "slate_blue": "花青",
+      "indigo": "藍",
+      "lotus": "藕紫",
+      "cinnabar": "辰砂",
+      "brand_brown": "ブランドブラウン"
+    }
   },
   "save": "保存",
   "cancel": "キャンセル",

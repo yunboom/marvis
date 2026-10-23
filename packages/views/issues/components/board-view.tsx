@@ -46,6 +46,7 @@ import { projectListOptions } from "@marvis/core/projects/queries";
 import { BoardCardContent, DragLift, issueDropAnimation } from "./board-card";
 import { InfiniteScrollSentinel } from "./infinite-scroll-sentinel";
 import { ListLoadMoreFooter } from "./list-load-more-footer";
+import { StatusLaneBoard } from "./status-lane-board";
 import type { ChildProgress } from "./list-row";
 import type { IssueCreateDefaults } from "../surface/types";
 import type {
@@ -468,6 +469,10 @@ function BoardViewImpl({
     },
     [hydratedAssigneeGroups, hydratedProjectGroups, issues, visibleStatuses, grouping, getActorName, groupingProperty, projectMap, projectColumnLabels, groupPagination, t],
   );
+  const statusGroups = useMemo(
+    () => groups.filter((group): group is typeof group & { status: IssueStatus } => isStatusGroup(group)),
+    [groups],
+  );
   const groupIds = useMemo(
     () => new Set(groups.map((group) => group.id)),
     [groups],
@@ -839,7 +844,22 @@ function BoardViewImpl({
           "group-data-[peek-open]/peek:after:w-(--issue-peek-width) group-data-[peek-open]/peek:after:shrink-0 group-data-[peek-open]/peek:after:content-['']",
         )}
       >
-        {groups.length === 0 ? (
+        {grouping === "status" ? (
+          // Status board: four fixed columns of per-status lanes. Lanes keep
+          // the status droppable ids, so the drag handlers above apply as-is.
+          <StatusLaneBoard
+            groups={statusGroups}
+            columns={columns}
+            issueMap={issueMapRef.current}
+            childProgressMap={childProgressMap}
+            projectMap={projectMap}
+            statusPagination={statusPagination}
+            projectId={projectId}
+            onCreateIssue={onCreateIssue}
+            sortLabel={sortLabel}
+            activeIssueId={activeIssue?.id ?? null}
+          />
+        ) : groups.length === 0 ? (
           groupBranches?.isError ? (
             <button
               type="button"
@@ -855,7 +875,7 @@ function BoardViewImpl({
           )
         ) : (
           groups.map((group) =>
-            isStatusGroup(group) ? (
+            groupPagination?.[group.id] ? (
               <ServerPaginatedBoardColumn
                 key={group.id}
                 group={group}
@@ -863,39 +883,24 @@ function BoardViewImpl({
                 issueMap={issueMapRef.current}
                 childProgressMap={childProgressMap}
                 projectMap={projectMap}
-                page={statusPagination?.[group.status]}
+                page={groupPagination[group.id]!}
                 projectId={projectId}
                 onCreateIssue={onCreateIssue}
                 sortLabel={sortLabel}
               />
             ) : (
-              groupPagination?.[group.id] ? (
-                <ServerPaginatedBoardColumn
-                  key={group.id}
-                  group={group}
-                  issueIds={columns[group.id] ?? EMPTY_IDS}
-                  issueMap={issueMapRef.current}
-                  childProgressMap={childProgressMap}
-                  projectMap={projectMap}
-                  page={groupPagination[group.id]!}
-                  projectId={projectId}
-                  onCreateIssue={onCreateIssue}
-                  sortLabel={sortLabel}
-                />
-              ) : (
-                <BoardColumn
-                  key={group.id}
-                  group={group}
-                  issueIds={columns[group.id] ?? EMPTY_IDS}
-                  issueMap={issueMapRef.current}
-                  childProgressMap={childProgressMap}
-                  projectMap={projectMap}
-                  projectId={projectId}
-                  onCreateIssue={onCreateIssue}
-                  totalCount={group.totalCount}
-                  sortLabel={sortLabel}
-                />
-              )
+              <BoardColumn
+                key={group.id}
+                group={group}
+                issueIds={columns[group.id] ?? EMPTY_IDS}
+                issueMap={issueMapRef.current}
+                childProgressMap={childProgressMap}
+                projectMap={projectMap}
+                projectId={projectId}
+                onCreateIssue={onCreateIssue}
+                totalCount={group.totalCount}
+                sortLabel={sortLabel}
+              />
             ),
           )
         )}

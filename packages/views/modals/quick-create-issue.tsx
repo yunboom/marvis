@@ -2,16 +2,11 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeftRight,
   CalendarDays,
   Check,
-  ChevronRight,
   FolderKanban,
-  Maximize2,
-  Minimize2,
   MoreHorizontal,
   Settings2,
-  X as XIcon,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -30,7 +25,7 @@ import { Switch } from "@marvis/ui/components/ui/switch";
 import { cn } from "@marvis/ui/lib/utils";
 import { api, ApiError } from "@marvis/core/api";
 import { useWorkspaceId } from "@marvis/core/hooks";
-import { useCurrentWorkspace, useWorkspacePaths } from "@marvis/core/paths";
+import { useWorkspacePaths } from "@marvis/core/paths";
 import { AppLink, resolveClickIntent } from "../navigation";
 import { agentListOptions, squadListOptions } from "@marvis/core/workspace/queries";
 import { projectListOptions } from "@marvis/core/projects/queries";
@@ -50,9 +45,6 @@ import {
   checkQuickCreateFieldsCliVersion,
   readRuntimeCliVersion,
 } from "@marvis/core/runtimes";
-import { useShortcut } from "@marvis/core/shortcuts";
-import { ShortcutKeycaps } from "../common/shortcut-keycaps";
-import { DeferredTooltip } from "../common/deferred-tooltip";
 import {
   contentReferencesAttachment,
   type Agent,
@@ -84,6 +76,8 @@ import {
 } from "../editor";
 import { useIssueCreateUploads } from "./use-issue-create-uploads";
 import { FileUploadButton } from "@marvis/ui/components/common/file-upload-button";
+import { BorderBeam } from "@marvis/ui/components/common/border-beam";
+import { CreateIssueHeader, SendShortcutHint } from "./create-issue-header";
 import { useT } from "../i18n";
 import { matchesPinyin } from "../editor/extensions/pinyin-match";
 import { SourceContextPreviewCard, useSourceContextFailureMessage } from "./source-context-preview";
@@ -124,8 +118,6 @@ export function AgentCreatePanel({
   const { t } = useT("modals");
   const { t: tIssues } = useT("issues");
   const { t: tProjects } = useT("projects");
-  const sendShortcut = useShortcut("send");
-  const workspaceName = useCurrentWorkspace()?.name;
   const workspacePaths = useWorkspacePaths();
   const wsId = useWorkspaceId();
   const anchorCommentId = typeof data?.anchor_comment_id === "string" ? data.anchor_comment_id : null;
@@ -625,7 +617,7 @@ export function AgentCreatePanel({
       // Keeps the button hoverable so its tooltip can say why it is blocked.
       focusableWhenDisabled={versionBlocked}
       className={cn(
-        "h-8.5 min-w-28 gap-2 justify-self-end pr-2 pl-4",
+        "h-8.5 min-w-28 px-4",
         versionBlocked && "aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
         justSent && "!bg-success !text-white",
       )}
@@ -633,20 +625,7 @@ export function AgentCreatePanel({
       {submitting ? t(($) => $.create_issue.agent.sending) : gate.uploading ? t(($) => $.create_issue.agent.uploading) : justSent ? (
         <span className="flex items-center gap-1"><Check className="size-3.5" />{t(($) => $.create_issue.agent.sent_label)}</span>
       ) : (
-        <>
-          {t(($) => $.create_issue.agent.submit)}
-          {sendShortcut ? (
-            // Touch phones have no ⌘ key and the narrowest footer row
-            // to spare — drop the hint at the same breakpoint the
-            // footer reflows at.
-            <ShortcutKeycaps
-              shortcut={sendShortcut}
-              decorative
-              className="ml-1 max-sm:hidden"
-              keyClassName="border-background/30 bg-background/15 text-primary-foreground shadow-none"
-            />
-          ) : null}
-        </>
+        t(($) => $.create_issue.agent.submit)
       )}
     </Button>
   );
@@ -655,54 +634,20 @@ export function AgentCreatePanel({
     <>
         <DialogTitle className="sr-only">{t(($) => $.create_issue.sr_agent)}</DialogTitle>
 
-        {/* Header */}
-        <div className="flex items-center justify-between pt-3.5 pr-3 pb-1.5 pl-5 shrink-0">
-          <div className="flex items-center gap-1.5 text-label">
-            <span className="text-muted-foreground">{workspaceName}</span>
-            <ChevronRight className="size-3 text-faint-foreground" />
-            <span className="font-medium">{t(($) => $.create_issue.agent_breadcrumb)}</span>
-          </div>
-          {/* DeferredTooltip instead of Base UI Tooltip — Tooltip opens on
-              keyboard focus, and the dialog's focus trap briefly lands focus
-              on the first focusable element on mount, causing the tooltip to
-              auto-pop every open. DeferredTooltip opens on pointer hover only. */}
-          <div className="flex items-center gap-1">
-            <DeferredTooltip
-              side="bottom"
-              content={isExpanded ? t(($) => $.common.collapse_tooltip) : t(($) => $.common.expand_tooltip)}
-              trigger={
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  aria-label={isExpanded ? t(($) => $.common.collapse_tooltip) : t(($) => $.common.expand_tooltip)}
-                  className="flex size-7.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground cursor-pointer"
-                >
-                  {isExpanded ? <Minimize2 className="size-[15px]" /> : <Maximize2 className="size-[15px]" />}
-                </button>
-              }
-            />
-            <DeferredTooltip
-              side="bottom"
-              content={t(($) => $.common.close)}
-              trigger={
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label={t(($) => $.common.close)}
-                  className="flex size-7.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground cursor-pointer"
-                >
-                  <XIcon className="size-[15px]" />
-                </button>
-              }
-            />
-          </div>
-        </div>
+        <CreateIssueHeader
+          mode="agent"
+          onSwitch={switchToManual}
+          switchDisabled={gate.uploading}
+          isExpanded={isExpanded}
+          setIsExpanded={setIsExpanded}
+          onClose={onClose}
+        />
 
         {/* Actor picker — agents and squads in one searchable list. Squads
             route to their leader agent on the backend; the leader runs the
             quick-create flow with the squad's Operating Protocol layered
             on top, so a squad pick is "ask this squad to file the issue". */}
-        <div className="px-5 pt-1 pb-2 shrink-0">
+        <div className="px-6 pt-3 pb-1 shrink-0">
           <ActorPicker
             actor={actor}
             visibleAgents={visibleAgents}
@@ -719,7 +664,7 @@ export function AgentCreatePanel({
         </div>
 
         {selectedAgent && versionBlocked && (
-          <div className="mx-5 mb-2 shrink-0 rounded-lg border border-warning/45 bg-warning/5 px-3 py-2 text-caption text-foreground">
+          <div className="mx-7 mb-2 shrink-0 rounded-lg border border-warning/45 bg-warning/5 px-3 py-2 text-caption text-foreground">
             {versionCheck.state === "missing"
               ? t(($) => $.create_issue.agent.version_missing, { min: versionCheck.min })
               : t(($) => $.create_issue.agent.version_below, {
@@ -738,7 +683,7 @@ export function AgentCreatePanel({
             editor unbounded and pushed the modal past the viewport. */}
         <div
           {...dropZoneProps}
-          className="relative px-5 pt-1 pb-3 flex flex-1 min-h-[140px] overflow-y-auto text-body-lg"
+          className="relative px-7 pt-3 pb-3 flex flex-1 min-h-[180px] overflow-y-auto text-title leading-[1.55] [&_.ProseMirror]:leading-[1.55] [&_.is-editor-empty:first-child]:before:!text-faint-foreground"
         >
           <ContentEditor
             ref={editorRef}
@@ -773,7 +718,7 @@ export function AgentCreatePanel({
         )}
 
         {error && (
-          <div className="px-5 pb-2 text-caption text-destructive">{error}</div>
+          <div className="px-7 pb-2 text-caption text-destructive">{error}</div>
         )}
 
         {/* Property toolbar — the project is visible by default; priority and
@@ -786,7 +731,7 @@ export function AgentCreatePanel({
             avoids "where did this end up?" surprise. We deliberately keep
             it non-editable: changing the parent is a `Set parent` action on
             the parent itself, not a knob in the quick-create flow. */}
-        <div className="flex items-center gap-1.5 px-4 pt-1.5 pb-3 shrink-0 flex-wrap">
+        <div className="flex items-center gap-1 px-6 pt-2 pb-2 shrink-0 flex-wrap">
           {(visibleFields.includes("project") ||
             projectId !== null ||
             fieldPickerOpen === "project") && (
@@ -795,6 +740,8 @@ export function AgentCreatePanel({
               onUpdate={(u) => commitProject(u.project_id ?? null)}
               triggerRender={
                 <ClearablePillButton
+                  variant="ghost"
+                  iconOnly={projectId === null}
                   onClear={projectId !== null ? () => commitProject(null) : undefined}
                   clearLabel={tProjects(($) => $.picker.clear_aria)}
                 />
@@ -816,7 +763,7 @@ export function AgentCreatePanel({
                   setShared({ priority: updates.priority });
                 }
               }}
-              triggerRender={<PillButton />}
+              triggerRender={<PillButton variant="ghost" />}
               tooltip={tIssues(($) => $.detail.prop_priority)}
               align="start"
               open={fieldPickerOpen === "priority" ? true : undefined}
@@ -833,7 +780,7 @@ export function AgentCreatePanel({
                 setDueDate(next);
                 setShared({ dueDate: next });
               }}
-              triggerRender={<PillButton />}
+              triggerRender={<PillButton variant="ghost" iconOnly={dueDate === null} />}
               tooltip={tIssues(($) => $.detail.prop_due_date)}
               align="start"
               open={fieldPickerOpen === "due_date" ? true : undefined}
@@ -844,7 +791,7 @@ export function AgentCreatePanel({
             <TooltipHint label={t(($) => $.create_issue.agent.more_fields_aria)}>
               <DropdownMenuTrigger
                 render={
-                  <PillButton aria-label={t(($) => $.create_issue.agent.more_fields_aria)}>
+                  <PillButton variant="ghost" iconOnly aria-label={t(($) => $.create_issue.agent.more_fields_aria)}>
                     <MoreHorizontal className="size-3.5" />
                   </PillButton>
                 }
@@ -886,7 +833,7 @@ export function AgentCreatePanel({
           {parentIssueId && (
             <span
               data-testid="agent-sub-issue-chip"
-              className="inline-flex h-6 items-center gap-1 rounded-full bg-field px-2.5 text-caption text-muted-foreground"
+              className="inline-flex h-[30px] items-center gap-1 rounded-full px-2.5 text-label text-muted-foreground"
               title={t(($) => $.create_issue.agent.sub_issue_of, {
                 identifier: parentIssueIdentifier ?? "",
               })}
@@ -898,18 +845,14 @@ export function AgentCreatePanel({
           )}
         </div>
 
-        {/* Footer. Two layouts, one flat child list:
-            - Phones get a 2x2 grid — attach / switch on the top row, keep-open
-              toggle / Create on the bottom one. Laid out as a single row the
-              four controls need ~383px of the 398px a 430px phone has left
-              after padding, which reads as jammed and wraps outright below
-              ~410px (MUL-6236).
-            - From `sm` up it is the original single flex row: `mr-auto` on the
-              attach group reproduces what `justify-between` did when the
-              children were two wrapper divs, and `justify-self-end` goes
-              inert on flex items. */}
-        <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2.5 border-t border-border px-4 py-3 shrink-0 sm:flex sm:flex-wrap">
-          <div className="flex min-h-7 items-center gap-2 sm:mr-auto">
+        {/* Footer — two groups: attach, sent count and keep-open on the
+            left, the send hint and Create on the right. Two groups fit a
+            phone row without the old 2x2 grid (MUL-6236). */}
+        <div
+          data-slot="create-issue-footer"
+          className="flex items-center justify-between gap-3 px-6 pt-2 pb-5 shrink-0"
+        >
+          <div className="flex min-h-7 items-center gap-3">
             {/* Deliberately NOT disabled while uploading: each file is its
                 own queue entry, so queueing a second one is safe and waiting
                 for the first to land just to attach the next is busywork. */}
@@ -918,44 +861,37 @@ export function AgentCreatePanel({
               multiple
               onSelect={(file) => editorRef.current?.uploadFile(file)}
             />
+            <label className="flex shrink-0 items-center gap-1.5 text-caption text-muted-foreground cursor-pointer select-none">
+              <Switch
+                size="sm"
+                checked={keepOpen}
+                onCheckedChange={setKeepOpen}
+              />
+              {t(($) => $.create_issue.create_another)}
+            </label>
             {keepOpen && sentCount > 0 && (
               <span className="text-caption text-success">
                 {t(($) => $.create_issue.agent.sent_count, { count: sentCount })}
               </span>
             )}
           </div>
-          <TooltipHint label={t(($) => $.create_issue.switch_to_manual_tooltip)}>
-            <button
-              type="button"
-              onClick={switchToManual}
-              disabled={gate.uploading}
-              aria-disabled={gate.uploading || undefined}
-              aria-busy={gate.uploading || undefined}
-              className="flex h-7.5 shrink-0 items-center gap-1.5 justify-self-end rounded-full bg-secondary px-3 text-caption text-foreground transition-colors hover:bg-black/10 dark:hover:bg-white/12 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <ArrowLeftRight className="size-3.5" />
-              {t(($) => $.create_issue.switch_to_manual)}
-            </button>
-          </TooltipHint>
-          <label className="flex shrink-0 items-center gap-1.5 text-caption text-muted-foreground cursor-pointer select-none">
-            <Switch
-              size="sm"
-              checked={keepOpen}
-              onCheckedChange={setKeepOpen}
-            />
-            {t(($) => $.create_issue.create_another)}
-          </label>
-          {versionBlocked ? (
-            <Tooltip>
-              <TooltipTrigger render={createButton} />
-              <TooltipContent side="top">
-                {t(($) => $.create_issue.agent.version_blocked_tooltip, { min: versionCheck.min })}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            createButton
-          )}
+          <div className="flex items-center gap-3">
+            <SendShortcutHint />
+            {versionBlocked ? (
+              <Tooltip>
+                <TooltipTrigger render={createButton} />
+                <TooltipContent side="top">
+                  {t(($) => $.create_issue.agent.version_blocked_tooltip, { min: versionCheck.min })}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              createButton
+            )}
+          </div>
         </div>
+
+        {/* Agent mode: the ink stroke circles the whole dialog edge. */}
+        <BorderBeam variant="ink" />
     </>
   );
 }

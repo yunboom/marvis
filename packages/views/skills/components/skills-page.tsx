@@ -298,7 +298,7 @@ function UsedByCell({ agents }: { agents: Agent[] }) {
           <Tooltip key={a.id}>
             <TooltipTrigger
               render={
-                <span className="inline-flex rounded-full ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent">
+                <span className="inline-flex rounded-[28%] ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent">
                   <ActorAvatar
                     name={a.name}
                     initials={a.name.slice(0, 2).toUpperCase()}
@@ -313,7 +313,7 @@ function UsedByCell({ agents }: { agents: Agent[] }) {
           </Tooltip>
         ))}
         {extra > 0 && (
-          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-muted px-1.5 text-caption font-medium tabular-nums text-muted-foreground ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent">
+          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-[28%] bg-muted px-1.5 text-caption font-medium tabular-nums text-muted-foreground ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent">
             +{extra}
           </span>
         )}

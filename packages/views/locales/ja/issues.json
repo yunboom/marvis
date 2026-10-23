@@ -367,7 +367,19 @@
     "empty_grouping": "一致するタスクがありません",
     "no_value": "値なし",
     "ordered_by": "{{field}} 順に並べたボード",
-    "manual_reorder_hint": "列内の順序を変更するには、並び順を「手動」に切り替えてください。"
+    "manual_reorder_hint": "列内の順序を変更するには、並び順を「手動」に切り替えてください。",
+    "status_column": {
+      "not_started": "未着手",
+      "started": "着手済み",
+      "needs_attention": "要対応",
+      "ended": "終了"
+    },
+    "lane_more_other": "他 {{count}} 件",
+    "lane_collapse": "折りたたむ",
+    "lane_focus": "{{status}} にフォーカス",
+    "focusing": "フォーカス中",
+    "exit_focus": "フォーカスを終了",
+    "below_fold_other": "下に {{count}} 件"
   },
   "peek": {
     "panel_label": "タスクのプレビュー",
@@ -664,6 +676,7 @@
     "hover_header_queued_other": "待機中のエージェント {{count}} 件",
     "status_running": "作業中",
     "status_queued": "待機中",
+    "status_working": "作業中",
     "empty_hover": "現在作業中のエージェントはありません",
     "unknown_hover": "作業中のエージェント: まだ読み込まれていません",
     "filter_active_label": "エージェントが作業中のタスクを表示中",
@@ -823,7 +836,8 @@
   },
   "card": {
     "update_failed": "タスクを更新できませんでした",
-    "updated_ago": "{{time}} に更新"
+    "updated_ago": "{{time}} に更新",
+    "overdue_days_other": "{{count}}日超過"
   },
   "actions": {
     "rename_issue": "タスク名を変更",

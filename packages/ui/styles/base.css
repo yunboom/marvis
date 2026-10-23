@@ -317,6 +317,24 @@
   animation: border-beam-rotate 3.2s linear infinite;
 }
 
+/* Ink variant: a monochrome stroke for the black-and-white theme. A single
+ * foreground-colored head with a fading tail circles the host, like a brush
+ * tracing its edge. */
+.border-beam-ring[data-variant="ink"] {
+  padding: 1.5px;
+}
+
+.border-beam-ring[data-variant="ink"] .border-beam-light {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 250deg,
+    color-mix(in oklab, var(--foreground) 25%, transparent) 300deg,
+    var(--foreground) 345deg,
+    transparent 360deg
+  );
+  animation-duration: 3.6s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .border-beam-ring {
     background: linear-gradient(
@@ -327,6 +345,10 @@
       #a07cfe,
       #5b9dff
     );
+  }
+
+  .border-beam-ring[data-variant="ink"] {
+    background: color-mix(in oklab, var(--foreground) 35%, transparent);
   }
 
   .border-beam-light {
@@ -600,4 +622,45 @@ html[data-dnd-dragging="true"] * {
 ::highlight(marvis-find-active) {
   background-color: var(--find-match-active);
   color: var(--find-match-foreground);
+}
+
+/* Agent-running "breathing" dot (board cards, agents-working chip). The core
+ * fades 1 -> .45 -> 1 while a halo ring scales out and fades, both on a 1.8s
+ * loop. Reduced motion keeps a static dot and hides the halo. */
+:root {
+  --agent-running: #2f9e6a;
+}
+
+.dark {
+  --agent-running: #3fb57f;
+}
+
+@keyframes breathe {
+  0%,
+  100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes breathe-halo {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+.animate-breathe {
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+.animate-breathe-halo {
+  animation: breathe-halo 1.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-breathe {
+    animation: none;
+  }
+
+  .animate-breathe-halo {
+    animation: none;
+    opacity: 0;
+  }
 }
