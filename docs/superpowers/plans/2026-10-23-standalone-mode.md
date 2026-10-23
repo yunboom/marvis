@@ -257,3 +257,29 @@ Run: `cd server && gofmt -l ./cmd/server ./internal/handler ./internal/landiscov
 Expected: `gofmt -l` 无输出，vet 与测试全部通过
 
 - [x] **Step 2: 更新技术方案文档对应段落**（通过 Claude Docs 连接器按段落替换）
+
+---
+
+# 阶段二：发布流水线
+
+**Goal:** 每个版本 tag 自动发布 6 个平台的服务端下载包与 `server-manifest.json`；PostgreSQL 包由手动触发的工作流从 Maven Central 拉 zonky 固定版本、去重重打包后发布到 `pg-<版本>` Release。
+
+**manifest 格式（阶段三桌面端按此解析）：**
+
+```json
+{
+  "schemaVersion": 1,
+  "version": "0.6.6",
+  "minAppVersion": "0.0.0",
+  "server": { "darwin-arm64": { "name": "marvis-server-0.6.6-darwin-arm64.tar.xz", "size": 15170324, "sha256": "…", "urls": ["https://github.com/yunboom/marvis/releases/download/v0.6.6/…", "<镜像>/v0.6.6/…"] } },
+  "postgres": { "version": "17.11.0", "assets": { "darwin-arm64": { "name": "…", "size": 0, "sha256": "…", "urls": ["…"] } } }
+}
+```
+
+平台键为 `<os>-<arch>`，os ∈ darwin/linux/windows，arch ∈ amd64/arm64；zonky 没有 windows arm64，`postgres.assets["windows-arm64"]` 复用 windows-amd64 的包。镜像前缀取仓库变量 `STANDALONE_MIRROR_BASE_URL`（可空），`minAppVersion` 取仓库变量 `STANDALONE_MIN_APP_VERSION`（默认 `0.0.0`）。
+
+| 任务 | 文件 | 测试 |
+| --- | --- | --- |
+| 1 PostgreSQL 重打包 | `scripts/repack-postgres.sh`：`<zonky 平台> <pg 版本> <os-arch> <outdir>`，下载 jar 并比对 Maven `.sha1`，解出 txz，非 Windows 平台把内容相同的文件换成相对软链接，xz -9 重打包，输出 `.sha256` | `scripts/repack-postgres.test.sh`：`ZONKY_JAR` 指向伪造的 jar，断言去重后的软链接、包内无 `./` 条目、sha256 正确 |
+| 2 manifest 生成 | `scripts/build-standalone-manifest.mjs`：导出 `buildManifest(opts)`、`readAssetsDir(dir, prefix)`，命令行写出 JSON | `scripts/build-standalone-manifest.test.mjs`（`node --test`）：平台键、URL 拼接、镜像、windows-arm64 复用、缺平台报错 |
+| 3 工作流 | `.github/workflows/postgres-bundle.yml`（workflow_dispatch，输入 pg 版本）；`release.yml` 新增 `standalone-bundles` job（needs release，交叉编译 6 个平台、上传、生成并上传 manifest）；`ci.yml` 接入两个测试；`.github/RELEASING.md` 补说明 | CI 跑上面两个测试；工作流本身在下次打 tag 时验证 |
