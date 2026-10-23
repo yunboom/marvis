@@ -47,6 +47,9 @@ describe("NewWorkspacePage", () => {
   it("derives the URL and issue prefix from the name and creates with them", () => {
     const { onCreated } = renderPage();
 
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Create a workspace" }),
+    ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Workspace name"), {
       target: { value: "Acme Inc" },
     });

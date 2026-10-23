@@ -9,7 +9,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@marvis/ui/components/ui/card";
 import { Input } from "@marvis/ui/components/ui/input";
 import {
@@ -84,9 +83,9 @@ export function NewWorkspacePage({
     return (
       <PageShell>
         <CardHeader className="gap-2 px-0 text-center">
-          <CardTitle className="text-display-sm font-bold">
+          <h1 className="text-display-sm font-bold">
             {t(($) => $.create_page.disabled_title)}
-          </CardTitle>
+          </h1>
           <CardDescription className="text-body-lg leading-relaxed">
             {t(($) => $.create_page.disabled_description)}
           </CardDescription>
@@ -107,9 +106,9 @@ export function NewWorkspacePage({
   return (
     <PageShell>
       <CardHeader className="px-0 text-center">
-        <CardTitle className="text-display-sm font-bold">
+        <h1 className="text-display-sm font-bold">
           {t(($) => $.create_page.title)}
-        </CardTitle>
+        </h1>
       </CardHeader>
       <CardContent className="mt-8 px-0">
         <CreateWorkspaceForm
