@@ -939,19 +939,45 @@ const cardTestMessageID = "mc1"
 
 // pushCardFrame 下发一个 type=card 的数据帧，返回下发的帧，便于断言回写帧的 headers。
 func pushCardFrame(conn *fakeWSConn, payload []byte) *Frame {
+	return pushCallbackFrame(conn, FrameHeaderTypeCard, cardTestMessageID, payload)
+}
+
+// pushCallbackFrame 下发一个指定 type 和 message_id 的数据帧，返回下发的帧。
+func pushCallbackFrame(conn *fakeWSConn, frameType, messageID string, payload []byte) *Frame {
 	f := &Frame{
 		Method:  FrameMethodData,
 		Service: 7,
 		Headers: []FrameHeader{
-			{Key: FrameHeaderTypeKey, Value: FrameHeaderTypeCard},
-			{Key: FrameHeaderMessageIDKey, Value: cardTestMessageID},
-			{Key: "trace_id", Value: "trace-" + cardTestMessageID},
+			{Key: FrameHeaderTypeKey, Value: frameType},
+			{Key: FrameHeaderMessageIDKey, Value: messageID},
+			{Key: "trace_id", Value: "trace-" + messageID},
 		},
 		Payload: payload,
 	}
 	conn.Push(f.Marshal())
 
 	return f
+}
+
+// cardActionPayload 是 card.action.trigger 回调的最小载荷，tag 用来区分不同的点击。
+func cardActionPayload(tag string) []byte {
+	return []byte(`{"schema":"2.0","header":{"event_type":"card.action.trigger"},"event":{"action":{"value":{"tag":"` + tag + `"}}}}`)
+}
+
+// cardResponseMessageIDs 解出 connector 写出的每个帧的 message_id，按写出顺序排列。
+func cardResponseMessageIDs(t *testing.T, conn *fakeWSConn) []string {
+	t.Helper()
+
+	var ids []string
+	for i, raw := range conn.snapshot() {
+		f, err := UnmarshalFrame(raw)
+		if err != nil {
+			t.Fatalf("write %d unmarshal: %v", i, err)
+		}
+		ids = append(ids, f.HeaderValue(FrameHeaderMessageIDKey))
+	}
+
+	return ids
 }
 
 // cardResponseEnvelope 是回写帧 payload 的 JSON 结构，Data 保留原始 JSON 以区分 null 与空串。
@@ -1286,4 +1312,238 @@ func TestWSConnector_CardFrameHandlerDoesNotBlockPing(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("card handler did not finish")
 	}
+}
+
+// TestWSConnector_EventFrameCardActionCallsHandler 覆盖官方 SDK 的推送形式：卡片回调走 type=event 帧，
+// 载荷 header.event_type 为 card.action.trigger。这种帧交给 CardHandler，回应随回写帧带回，不进事件解码器。
+func TestWSConnector_EventFrameCardActionCallsHandler(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+
+	var decodeCalls atomic.Int32
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		decodeCalls.Add(1)
+		return InboundMessage{}, false, nil
+	})
+
+	const toast = `{"toast":{"type":"success","content":"ok"}}`
+	calls := make(chan []byte, 1)
+	handler := func(_ context.Context, payload []byte) ([]byte, error) {
+		calls <- append([]byte(nil), payload...)
+
+		return []byte(toast), nil
+	}
+
+	stop := runCardConnector(t, cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(io.Discard, nil))))
+	defer stop()
+
+	payload := cardActionPayload("event-frame")
+	inbound := pushCallbackFrame(conn, FrameHeaderTypeEvent, "me1", payload)
+	waitForWrites(t, conn, 1)
+
+	select {
+	case got := <-calls:
+		if string(got) != string(payload) {
+			t.Errorf("handler payload = %s; want %s", got, payload)
+		}
+	default:
+		t.Fatal("handler was not called for an event frame carrying card.action.trigger")
+	}
+
+	resp, env := readCardResponse(t, conn)
+	if len(resp.Headers) != len(inbound.Headers) || resp.HeaderValue(FrameHeaderMessageIDKey) != "me1" {
+		t.Fatalf("response headers = %+v; want the inbound headers %+v", resp.Headers, inbound.Headers)
+	}
+
+	var data []byte
+	if err := json.Unmarshal(env.Data, &data); err != nil {
+		t.Fatalf("data is not a base64 string: %v; data=%s", err, env.Data)
+	}
+	if string(data) != toast {
+		t.Errorf("decoded data = %s; want %s", data, toast)
+	}
+
+	if got := decodeCalls.Load(); got != 0 {
+		t.Errorf("event decoder called %d times for a card action; want 0", got)
+	}
+}
+
+// TestWSConnector_EventFrameOtherTypeSkipsCardHandler 确认配了 CardHandler 时，其他事件类型的 event 帧仍走事件解码器。
+func TestWSConnector_EventFrameOtherTypeSkipsCardHandler(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+
+	var decodeCalls atomic.Int32
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		decodeCalls.Add(1)
+		return InboundMessage{}, false, nil
+	})
+
+	var handlerCalls atomic.Int32
+	handler := func(context.Context, []byte) ([]byte, error) {
+		handlerCalls.Add(1)
+		return nil, nil
+	}
+
+	stop := runCardConnector(t, cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(io.Discard, nil))))
+	defer stop()
+
+	pushCallbackFrame(conn, FrameHeaderTypeEvent, "me2", []byte(`{"schema":"2.0","header":{"event_type":"im.message.receive_v1"},"event":{}}`))
+	waitForWrites(t, conn, 1)
+
+	if got := handlerCalls.Load(); got != 0 {
+		t.Errorf("card handler called %d times for a message event; want 0", got)
+	}
+	if got := decodeCalls.Load(); got != 1 {
+		t.Errorf("event decoder calls = %d; want 1", got)
+	}
+}
+
+// TestWSConnector_SlowCardHandlerDoesNotBlockNextCard 确认卡片回调不在读循环里串行处理：
+// 第一次点击的处理器一直不返回，第二次点击照样先拿到回应。
+func TestWSConnector_SlowCardHandlerDoesNotBlockNextCard(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		return InboundMessage{}, false, nil
+	})
+
+	release := make(chan struct{})
+	handler := func(ctx context.Context, payload []byte) ([]byte, error) {
+		if strings.Contains(string(payload), `"slow"`) {
+			select {
+			case <-release:
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+		}
+
+		return []byte(`{"toast":{"type":"info","content":"ok"}}`), nil
+	}
+
+	c := cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(io.Discard, nil)), func(cfg *WSConnectorConfig) {
+		cfg.CardHandlerTimeout = 5 * time.Second
+	})
+	stop := runCardConnector(t, c)
+	defer stop()
+
+	pushCallbackFrame(conn, FrameHeaderTypeCard, "slow", cardActionPayload("slow"))
+	pushCallbackFrame(conn, FrameHeaderTypeEvent, "fast", cardActionPayload("fast"))
+
+	waitForWrites(t, conn, 1)
+	if ids := cardResponseMessageIDs(t, conn); ids[0] != "fast" {
+		t.Fatalf("first response message_id = %q; want the fast click answered while the slow one is still running (writes %v)", ids[0], ids)
+	}
+
+	close(release)
+	waitForWrites(t, conn, 2)
+	if ids := cardResponseMessageIDs(t, conn); ids[1] != "slow" {
+		t.Fatalf("second response message_id = %q; want slow (writes %v)", ids[1], ids)
+	}
+}
+
+// TestWSConnector_RunWaitsForInFlightCardHandlers 确认连接退出前等正在处理的卡片回调结束，不留下后台 goroutine。
+func TestWSConnector_RunWaitsForInFlightCardHandlers(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		return InboundMessage{}, false, nil
+	})
+
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var finished atomic.Bool
+	handler := func(context.Context, []byte) ([]byte, error) {
+		close(started)
+		<-release
+		finished.Store(true)
+
+		return nil, nil
+	}
+
+	c := cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() {
+		done <- c.Run(ctx, Installation{AppID: "test_app"}, func(context.Context, InboundMessage) (DispatchResult, error) {
+			return DispatchResult{}, nil
+		})
+	}()
+
+	pushCardFrame(conn, cardActionPayload("in-flight"))
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("card handler did not start")
+	}
+
+	cancel()
+	select {
+	case err := <-done:
+		t.Fatalf("Run returned (%v) while a card handler was still running", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	close(release)
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return after the card handler finished")
+	}
+	if !finished.Load() {
+		t.Fatal("Run returned before the card handler finished")
+	}
+}
+
+// TestWSConnector_CardHandlerPoolFullAnswersWithinTimeout 确认池满时超时从收到帧时开始计：
+// 处理器全被占住，新来的回调等不到空位，到时限就回空回应，不等前面的回调结束。
+func TestWSConnector_CardHandlerPoolFullAnswersWithinTimeout(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+	logs := &syncBuffer{}
+
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		return InboundMessage{}, false, nil
+	})
+
+	release := make(chan struct{})
+	var running atomic.Int32
+	handler := func(context.Context, []byte) ([]byte, error) {
+		running.Add(1)
+		<-release
+
+		return nil, nil
+	}
+
+	c := cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(logs, nil)), func(cfg *WSConnectorConfig) {
+		cfg.CardHandlerTimeout = 100 * time.Millisecond
+	})
+	stop := runCardConnector(t, c)
+	defer stop()
+
+	for i := range cardHandlerConcurrency {
+		pushCallbackFrame(conn, FrameHeaderTypeCard, fmt.Sprintf("busy-%d", i), cardActionPayload("busy"))
+	}
+	pushCallbackFrame(conn, FrameHeaderTypeCard, "overflow", cardActionPayload("overflow"))
+
+	waitForWrites(t, conn, 1)
+	if ids := cardResponseMessageIDs(t, conn); ids[0] != "overflow" {
+		t.Fatalf("first response message_id = %q; want the overflow click answered at its deadline (writes %v)", ids[0], ids)
+	}
+	_, env := readCardResponse(t, conn)
+	if string(env.Data) != "null" {
+		t.Errorf("overflow data = %s; want null", env.Data)
+	}
+	if got := running.Load(); got != cardHandlerConcurrency {
+		t.Errorf("running handlers = %d; want %d", got, cardHandlerConcurrency)
+	}
+	if got := logs.String(); !strings.Contains(got, "card handler pool exhausted") {
+		t.Errorf("pool exhaustion not logged; log was:\n%s", got)
+	}
+
+	close(release)
+	waitForWrites(t, conn, cardHandlerConcurrency+1)
 }

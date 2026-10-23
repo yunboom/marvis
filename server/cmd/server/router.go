@@ -2749,16 +2749,7 @@ func buildLarkInviteConnection(h *handler.Handler, creds lark.InstallationCreden
 		dialer.ProxyURL = proxyURL
 	}
 
-	connector, err := lark.NewWSLongConnConnector(lark.WSConnectorConfig{
-		Dialer:          dialer,
-		EndpointFetcher: endpointFetcher,
-		FrameDecoder:    lark.NewDropAllFrameDecoder(),
-		CredentialsProvider: lark.CredentialsProviderFunc(func(context.Context, lark.Installation) (lark.InstallationCredentials, error) {
-			return creds, nil
-		}),
-		Logger:      slog.Default(),
-		CardHandler: h.HandleLarkInviteCardAction,
-	})
+	connector, err := lark.NewWSLongConnConnector(larkInviteConnectorConfig(h, creds, endpointFetcher, dialer))
 	if err != nil {
 		return nil, pkgerrors.Wrap(err, "build lark invite ws connector")
 	}
@@ -2768,6 +2759,21 @@ func buildLarkInviteConnection(h *handler.Handler, creds lark.InstallationCreden
 		AppID:     creds.AppID,
 		Logger:    slog.Default(),
 	}), nil
+}
+
+// larkInviteConnectorConfig 组装邀请长连接的配置：凭据固定取登录应用，事件帧一律丢弃，
+// 卡片回调交给 h.HandleLarkInviteCardAction。
+func larkInviteConnectorConfig(h *handler.Handler, creds lark.InstallationCredentials, endpointFetcher lark.EndpointFetcher, dialer lark.WSDialer) lark.WSConnectorConfig {
+	return lark.WSConnectorConfig{
+		Dialer:          dialer,
+		EndpointFetcher: endpointFetcher,
+		FrameDecoder:    lark.NewDropAllFrameDecoder(),
+		CredentialsProvider: lark.CredentialsProviderFunc(func(context.Context, lark.Installation) (lark.InstallationCredentials, error) {
+			return creds, nil
+		}),
+		Logger:      slog.Default(),
+		CardHandler: h.HandleLarkInviteCardAction,
+	}
 }
 
 // membershipChecker implements realtime.MembershipChecker using database queries.

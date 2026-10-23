@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -159,4 +160,34 @@ func TestConfigureLarkInvite(t *testing.T) {
 			t.Errorf("LarkInviteDownloadURL = %q, want empty", h.LarkInviteDownloadURL)
 		}
 	})
+}
+
+// TestLarkInviteConnectorConfigWiresCardHandler 确认邀请长连接把卡片回调交给 HandleLarkInviteCardAction：
+// 少了 CardHandler 时点击回调会被当成普通事件丢弃，整条加入链路不会触发。
+func TestLarkInviteConnectorConfigWiresCardHandler(t *testing.T) {
+	creds := lark.InstallationCredentials{AppID: testLarkInviteAppID, AppSecret: testLarkInviteAppSecret, Region: lark.RegionFeishu}
+	fetcher := lark.EndpointFetcherFunc(func(context.Context, lark.InstallationCredentials) (lark.WSEndpoint, error) {
+		return lark.WSEndpoint{}, nil
+	})
+
+	cfg := larkInviteConnectorConfig(&handler.Handler{}, creds, fetcher, lark.NewGorillaDialer())
+
+	if cfg.CardHandler == nil {
+		t.Fatal("invite connector has no CardHandler; card clicks would be dropped")
+	}
+
+	// 不是“加入工作区”按钮的回调，邀请处理函数回空回应 {}：据此确认接上的正是它。
+	resp, err := cfg.CardHandler(context.Background(), []byte(`{"event":{"action":{"value":{"action":"other"}}}}`))
+	if err != nil || string(resp) != "{}" {
+		t.Fatalf("CardHandler response = %s, %v; want {} from HandleLarkInviteCardAction", resp, err)
+	}
+
+	if _, ok, err := cfg.FrameDecoder.Decode([]byte(`{"schema":"2.0","header":{"event_type":"im.message.receive_v1"},"event":{}}`), lark.Installation{}); ok || err != nil {
+		t.Fatalf("invite connector decoded a message event (ok=%v err=%v); events must be dropped", ok, err)
+	}
+
+	gotCreds, err := cfg.CredentialsProvider.Credentials(context.Background(), lark.Installation{})
+	if err != nil || gotCreds != creds {
+		t.Fatalf("credentials = %+v, %v; want the login app %+v", gotCreds, err, creds)
+	}
 }

@@ -30,6 +30,14 @@ type WSLongConnConnector struct {
 // defaultCardHandlerTimeout 是单次卡片回调的默认处理时长，留出余量给回写帧。
 const defaultCardHandlerTimeout = 2500 * time.Millisecond
 
+// cardActionEventType 是卡片回调的事件类型。飞书官方 SDK 经 type=event 的数据帧推送卡片回调，
+// 按载荷 header.event_type 识别。
+const cardActionEventType = "card.action.trigger"
+
+// cardHandlerConcurrency 是一条连接上同时处理的卡片回调上限。群卡片刚发出时常有一批人同时点击，
+// 回调不能在读循环里排队；池满时读循环等空位，等待时间计入 CardHandlerTimeout。
+const cardHandlerConcurrency = 16
+
 // CardActionHandler 处理一次卡片回调，返回要回给飞书的回应 JSON（toast / card）。
 // payload 是（分片重组后的）回调原文；返回 error 时连接不会断开，飞书收到空回应。
 type CardActionHandler func(ctx context.Context, payload []byte) ([]byte, error)
@@ -74,12 +82,14 @@ type WSConnectorConfig struct {
 	// Zero defaults to 2 seconds.
 	EnrichTimeout time.Duration
 
-	// CardHandler 处理 type=card 的卡片回调帧，返回值作为回应 JSON 回给飞书。
-	// 为 nil 时卡片帧与其他数据帧一样交给 FrameDecoder 后 ACK。
+	// CardHandler 处理卡片回调帧，返回值作为回应 JSON 回给飞书。卡片回调帧指 type=card 的帧，
+	// 以及 type=event 且事件类型为 card.action.trigger 的帧。为 nil 时这些帧与其他数据帧一样
+	// 交给 FrameDecoder 后 ACK。
 	CardHandler CardActionHandler
 
-	// CardHandlerTimeout 限制单次卡片回调的处理时长。回调在读循环里同步处理，
-	// 必须小于飞书卡片回调要求的约 3 秒响应窗口。为 0 时默认 2500ms。
+	// CardHandlerTimeout 限制单次卡片回调从收到帧到回应的时长，含在池满时等空位的时间。
+	// 回调在有上限的 goroutine 池里并发处理，必须小于飞书卡片回调要求的约 3 秒响应窗口。
+	// 为 0 时默认 2500ms。
 	CardHandlerTimeout time.Duration
 
 	// CredentialsProvider returns the InstallationCredentials the
@@ -243,11 +253,16 @@ func (c *WSLongConnConnector) Run(ctx context.Context, inst Installation, emit E
 	// no lock, and a reconnect re-reports.
 	reportedDrops := make(map[string]struct{})
 
+	// 卡片回调交给有上限的 goroutine 池处理，读循环不等处理结果。
+	cardPool := &cardHandlerPool{slots: make(chan struct{}, cardHandlerConcurrency)}
+
 	// Ping loop: app-layer binary ping frames at the server's PingInterval.
 	pingDone := make(chan struct{})
 	go c.pingLoop(runCtx, conn, &writeMu, endpoint.ServiceID, pingInterval, log, pingDone)
 
 	defer func() {
+		// 先等正在处理的卡片回调写完回应，再关连接。ctx 取消时看门狗已经关了连接，回调随 ctx 一起结束。
+		cardPool.wg.Wait()
 		runCancel()
 		closeConn()
 		close(done)
@@ -343,10 +358,8 @@ func (c *WSLongConnConnector) Run(ctx context.Context, inst Installation, emit E
 
 		// 卡片回调帧：由 CardHandler 处理，回应 JSON 随回写帧带回。必须在分片重组之后、
 		// 事件解码之前处理，且不能因为 handler 出错而断开连接。
-		if frame.HeaderValue(FrameHeaderTypeKey) == FrameHeaderTypeCard && c.cfg.CardHandler != nil {
-			if err := c.handleCardFrame(ctx, &writeMu, conn, frame, payload, log); err != nil {
-				return err
-			}
+		if c.isCardCallback(frame, payload) {
+			c.dispatchCardFrame(ctx, cardPool, &writeMu, conn, frame, payload, closeConn, log)
 
 			continue
 		}
@@ -428,35 +441,83 @@ func (c *WSLongConnConnector) Run(ctx context.Context, inst Installation, emit E
 	}
 }
 
-// handleCardFrame 调用 CardHandler 处理一次卡片回调，并把回应写回。
-// handler 在读循环里同步运行，受 CardHandlerTimeout 约束；运行期间不持有 writeMu，
-// 后台 ping 不会被阻塞。handler 出错或 panic 只记日志并回空回应，写回失败才返回错误让连接重连。
-func (c *WSLongConnConnector) handleCardFrame(ctx context.Context, mu *sync.Mutex, conn WSConn, frame *Frame, payload []byte, log *slog.Logger) error {
-	messageID := frame.HeaderValue(FrameHeaderMessageIDKey)
-
-	response, err := c.callCardHandler(ctx, payload, messageID, log)
-	if err != nil {
-		log.Warn("lark ws connector: card handler failed",
-			"message_id", messageID,
-			"err", err.Error(),
-		)
-		response = nil
-	}
-
-	if werr := c.writeFrame(mu, conn, NewCardResponseFrame(frame, response)); werr != nil {
-		return errors.Wrapf(werr, "write card response message_id=%q", messageID)
-	}
-
-	return nil
+// cardHandlerPool 是一条连接上处理卡片回调的 goroutine 池：slots 限制并发数，wg 让 Run 返回前等回调结束。
+type cardHandlerPool struct {
+	slots chan struct{}
+	wg    sync.WaitGroup
 }
 
-// callCardHandler 在 CardHandlerTimeout 内调用 CardHandler，并把 handler 的 panic 转成错误。
-// 读循环跑在没有中间件兜底的 goroutine 上，回调载荷来自外部，handler 里的 panic
+// isCardCallback 判断数据帧是不是卡片回调：type=card 的帧，或 type=event 且事件类型为 card.action.trigger 的帧。
+// 两种形式都保留，等飞书实测确认后再收敛；没有配置 CardHandler 时都不算。
+func (c *WSLongConnConnector) isCardCallback(frame *Frame, payload []byte) bool {
+	if c.cfg.CardHandler == nil {
+		return false
+	}
+
+	switch frame.HeaderValue(FrameHeaderTypeKey) {
+	case FrameHeaderTypeCard:
+		return true
+	case FrameHeaderTypeEvent:
+		return PeekEventType(payload) == cardActionEventType
+	default:
+		return false
+	}
+}
+
+// dispatchCardFrame 把一次卡片回调交给 goroutine 池处理，读循环不等处理结果。CardHandlerTimeout 从收到帧时开始计，
+// 池满时在读循环里等空位，等到超时就直接回空回应。handler 运行期间不持有写锁，后台 ping 和其他回应不会被阻塞。
+func (c *WSLongConnConnector) dispatchCardFrame(ctx context.Context, pool *cardHandlerPool, mu *sync.Mutex, conn WSConn, frame *Frame, payload []byte, closeConn func(), log *slog.Logger) {
+	messageID := frame.HeaderValue(FrameHeaderMessageIDKey)
+	cardCtx, cancel := context.WithTimeout(ctx, c.cfg.CardHandlerTimeout)
+
+	select {
+	case pool.slots <- struct{}{}:
+	case <-cardCtx.Done():
+		cancel()
+		log.Warn("lark ws connector: card handler pool exhausted",
+			"message_id", messageID,
+			"err", cardCtx.Err().Error(),
+		)
+		c.writeCardResponse(mu, conn, frame, nil, closeConn, log)
+
+		return
+	}
+
+	pool.wg.Add(1)
+	go func() {
+		defer pool.wg.Done()
+		defer func() { <-pool.slots }()
+		defer cancel()
+
+		response, err := c.callCardHandler(cardCtx, payload, messageID, log)
+		if err != nil {
+			log.Warn("lark ws connector: card handler failed",
+				"message_id", messageID,
+				"err", err.Error(),
+			)
+			response = nil
+		}
+
+		c.writeCardResponse(mu, conn, frame, response, closeConn, log)
+	}()
+}
+
+// writeCardResponse 写回卡片回调的回应。writeFrame 持有写锁，可以在多个 goroutine 里并发调用。
+// 写回失败说明连接已坏：关闭连接让读循环报错退出，交给上层按退避重连。
+func (c *WSLongConnConnector) writeCardResponse(mu *sync.Mutex, conn WSConn, frame *Frame, response []byte, closeConn func(), log *slog.Logger) {
+	if err := c.writeFrame(mu, conn, NewCardResponseFrame(frame, response)); err != nil {
+		log.Warn("lark ws connector: card response write failed",
+			"message_id", frame.HeaderValue(FrameHeaderMessageIDKey),
+			"err", err.Error(),
+		)
+		closeConn()
+	}
+}
+
+// callCardHandler 调用 CardHandler，并把 handler 的 panic 转成错误。ctx 已带 CardHandlerTimeout。
+// 回调跑在没有中间件兜底的 goroutine 上，回调载荷来自外部，handler 里的 panic
 // 不能带崩进程；堆栈在这里记下，之后走和普通错误一样的空回应路径。
 func (c *WSLongConnConnector) callCardHandler(ctx context.Context, payload []byte, messageID string, log *slog.Logger) (response []byte, err error) {
-	cardCtx, cancel := context.WithTimeout(ctx, c.cfg.CardHandlerTimeout)
-	defer cancel()
-
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			log.Error("lark ws connector: card handler panicked",
@@ -469,7 +530,7 @@ func (c *WSLongConnConnector) callCardHandler(ctx context.Context, payload []byt
 		}
 	}()
 
-	return c.cfg.CardHandler(cardCtx, payload)
+	return c.cfg.CardHandler(ctx, payload)
 }
 
 // writeFrame serializes a Frame and writes it as a binary WebSocket
