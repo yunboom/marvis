@@ -23,6 +23,10 @@ const url = vi.hoisted(() => {
     },
   };
 });
+// 导航适配器的 getShareableUrl；undefined 表示网页端（取 window.location.origin）。
+const shareable = vi.hoisted(() => ({
+  url: undefined as ((path: string) => string) | undefined,
+}));
 const data = vi.hoisted(() => ({
   members: [] as Array<Record<string, unknown>>,
   invitations: [] as Array<Record<string, unknown>>,
@@ -82,6 +86,7 @@ vi.mock("../../navigation", () => ({
       searchParams: new URLSearchParams(search),
       push: go,
       replace: go,
+      getShareableUrl: shareable.url,
     };
   },
 }));
@@ -124,6 +129,7 @@ beforeEach(() => {
   ];
   data.shareLinks = [];
   data.summary = null;
+  shareable.url = undefined;
   configStore.getState().setFeatureFlags({});
 });
 
@@ -254,5 +260,29 @@ describe("MembersTab", () => {
     expect(screen.queryByRole("button", { name: "Invite member" })).toBeNull();
     expect(screen.queryByRole("tab", { name: /Share links/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
+  });
+
+  it("hides share-link invites when the shareable URL cannot open in a browser", () => {
+    // 没有网页端的桌面端只能给出 marvis:// 深链，对方打开后没有加入页面。
+    shareable.url = (path) => `marvis://open?path=${encodeURIComponent(path)}`;
+    url.set("tab=members&section=links");
+    renderWithI18n(<MembersTab />);
+
+    expect(screen.queryByRole("tab", { name: /Share links/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Create share link" })).toBeNull();
+    // 邮件邀请不受影响，深链指向的分享链接页回到成员列表。
+    expect(screen.getByRole("button", { name: "Invite member" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Members\s*3/ })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("keeps share-link invites when the shareable URL is a web address", () => {
+    shareable.url = (path) => `https://app.example.com${path}`;
+    url.set("tab=members&section=links");
+    renderWithI18n(<MembersTab />);
+
+    expect(screen.getByRole("tab", { name: /Share links\s*0/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 });
