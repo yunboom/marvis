@@ -717,6 +717,8 @@ func main() {
 		LAN:                 lanConfig,
 		LANHostname:         lanStatus.Hostname,
 		InstanceID:          instanceID,
+		Standalone:          handler.IsStandaloneMode(),
+		BootstrapToken:      strings.TrimSpace(os.Getenv("MARVIS_BOOTSTRAP_TOKEN")),
 	})
 	var replicaQueries *db.Queries
 	if replicaPool != nil {

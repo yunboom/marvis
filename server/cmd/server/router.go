@@ -299,6 +299,11 @@ type RouterOptions struct {
 	LANHostname func() string
 	// InstanceID 是本部署的实例 ID，经 /api/config 下发；读取失败时为空，响应里不带该字段。
 	InstanceID string
+	// Standalone 表示桌面端在用户电脑上运行的单机模式（MARVIS_STANDALONE）。
+	Standalone bool
+	// BootstrapToken 是单机模式主机管理员一次性登录的 token（MARVIS_BOOTSTRAP_TOKEN）；
+	// 只有 Standalone 为 true 且非空时才注册 POST /auth/bootstrap。
+	BootstrapToken string
 }
 
 func buildChannelSupervisor(
@@ -490,6 +495,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		LANHostname:                    opts.LANHostname,
 		LANPort:                        opts.LAN.Port,
 		GitExtraCACerts:                gitca.Load(slog.Default()),
+	}
+	if opts.Standalone {
+		signupConfig.BootstrapToken = opts.BootstrapToken
 	}
 	h := handler.New(queries, pool, hub, bus, emailSvc, store, cfSigner, analyticsClient, signupConfig, daemonHub)
 	invitationRateLimits := handler.DefaultInvitationRateLimits()
@@ -1556,6 +1564,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	contactSalesRL := middleware.RateLimit(rdb, envPositiveInt("RATE_LIMIT_CONTACT_SALES", 5), time.Hour, trustedProxies)
 	r.With(authRL).Post("/auth/send-code", h.SendCode)
 	r.With(authVerifyRL).Post("/auth/verify-code", h.VerifyCode)
+	if opts.Standalone && opts.BootstrapToken != "" {
+		r.With(authVerifyRL).Post("/auth/bootstrap", h.BootstrapLogin)
+	}
 	r.With(authRL).Post("/auth/google", h.GoogleLogin)
 	r.With(authRL).Post("/auth/lark", h.LarkLogin)
 	// 桌面端没有网页端时的飞书登录：浏览器打开 desktop-start，飞书回调 desktop-callback。

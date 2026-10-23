@@ -789,6 +789,11 @@ func (h *Handler) completeOAuthLogin(w http.ResponseWriter, r *http.Request, pro
 		return
 	}
 
+	h.writeLoginSession(w, r, user, tokenString, authMethod)
+}
+
+// writeLoginSession 写登录 cookie 并以 JSON 返回登录结果，第三方登录与单机模式 bootstrap 登录共用。
+func (h *Handler) writeLoginSession(w http.ResponseWriter, r *http.Request, user db.User, tokenString, authMethod string) {
 	if err := auth.SetAuthCookies(w, tokenString); err != nil {
 		slog.Warn("failed to set auth cookies", "error", err)
 	}

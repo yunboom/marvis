@@ -12,6 +12,7 @@ import (
 	"net/netip"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -178,6 +179,10 @@ type Config struct {
 	// handed to daemons with the workspace repos so their git can reach a
 	// repository host the backend already trusts. Empty when none are set.
 	GitExtraCACerts []byte
+	// BootstrapToken is the one-time token (MARVIS_BOOTSTRAP_TOKEN) the desktop
+	// app passes to a standalone server it starts, so it can sign the host's
+	// admin in through POST /auth/bootstrap. Empty disables that endpoint.
+	BootstrapToken string
 }
 
 type cloudRuntimeProxy interface {
@@ -446,6 +451,9 @@ type Handler struct {
 	// Wired in cmd/server/router.go after New.
 	PRRefresh *ghsnapshot.Manager
 	cfg       Config
+	// bootstrapUsed flips once the bootstrap token has signed someone in. A
+	// pointer because Handler is copied by value; copies share the flag.
+	bootstrapUsed *atomic.Bool
 }
 
 func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *events.Bus, emailService *service.EmailService, store storage.Storage, cfSigner *auth.CloudFrontSigner, analyticsClient analytics.Client, cfg Config, daemonHubs ...*daemonws.Hub) *Handler {
@@ -548,6 +556,7 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 		}),
 		LLM:               llmClient,
 		cfg:               cfg,
+		bootstrapUsed:     &atomic.Bool{},
 		larkDesktopStates: &larkDesktopStateStore{},
 	}
 	h.WebhookDeliveryWorker = NewWebhookDeliveryWorker(h)
