@@ -39,7 +39,7 @@ You also need to pick an email service, otherwise verification codes and invitat
 | `DATABASE_REPLICA_MIN_CONNS` | `0` | Minimum replica connections each API process keeps |
 | `MARVIS_DATABASE_STARTUP_TIMEOUT` | `3m` | Container-level retry budget shared by migration and API startup; set to `0` for one fail-fast attempt per phase |
 | `MARVIS_DATABASE_CONNECT_TIMEOUT` | `5s` | Fallback timeout for each startup connection attempt; native pgx `connect_timeout`, `PGCONNECT_TIMEOUT`, or service settings take precedence |
-| `PORT` | `8080` | API listen port |
+| `PORT` | `13840` | API listen port |
 | `JWT_SECRET` | required in production | Secret for sign-in JWTs and some signing flows; production refuses to boot on empty or known placeholders |
 | `APP_ENV` | empty | Set to `production` in production |
 | `AUTH_TOKEN_TTL` | `720h` (30 days) | Lifetime of browser JWTs and cookies; accepts a Go duration or a positive integer of seconds. Sessions slide: one in continuous use is re-issued rather than expiring, from the halfway point of its lifetime onward. Values below `60s` are clamped to `60s` |
@@ -230,7 +230,7 @@ The variables below are read on the computer that runs your agents, not in the A
 
 | Variable | Default | Description |
 |---|---|---|
-| `MARVIS_SERVER_URL` | `ws://localhost:8080/ws` | Marvis API / WebSocket URL; also accepts `http(s)` |
+| `MARVIS_SERVER_URL` | `ws://localhost:13840/ws` | Marvis API / WebSocket URL; also accepts `http(s)` |
 | `MARVIS_DAEMON_DEVICE_NAME` | hostname | Device name shown in the runtime list |
 | `MARVIS_AGENT_RUNTIME_NAME` | `Local Agent` | Runtime display name |
 | `MARVIS_DAEMON_POLL_INTERVAL` | `30s` | Run polling interval when no wake event arrives |
@@ -282,7 +282,7 @@ Supported keys:
 
 | Key | Default | Description |
 |---|---|---|
-| `server_url` | `ws://localhost:8080/ws` | Marvis API / WebSocket URL |
+| `server_url` | `ws://localhost:13840/ws` | Marvis API / WebSocket URL |
 | `app_url` | empty | Web URL used for browser sign-in |
 | `workspace_id` | empty | Default workspace |
 | `device_name` | hostname | Device name shown in the runtime list |

@@ -39,7 +39,7 @@ Vous devez aussi choisir un service d'e-mail ; sinon, les codes de vérification
 | `DATABASE_REPLICA_MIN_CONNS` | `0` | Nombre minimal de connexions au réplica conservées par chaque processus API |
 | `MARVIS_DATABASE_STARTUP_TIMEOUT` | `3m` | Budget de nouvelles tentatives, au niveau du conteneur, partagé par la migration et le démarrage de l'API ; définissez `0` pour une seule tentative par phase, avec échec immédiat |
 | `MARVIS_DATABASE_CONNECT_TIMEOUT` | `5s` | Délai de repli pour chaque tentative de connexion au démarrage ; le `connect_timeout` natif de pgx, `PGCONNECT_TIMEOUT` ou les paramètres de service sont prioritaires |
-| `PORT` | `8080` | Port d'écoute de l'API |
+| `PORT` | `13840` | Port d'écoute de l'API |
 | `JWT_SECRET` | obligatoire en production | Secret des JWT de connexion et de certains flux de signature ; en production, le démarrage est refusé si la valeur est vide ou correspond à une valeur d'exemple connue |
 | `APP_ENV` | vide | Définissez `production` en production |
 | `AUTH_TOKEN_TTL` | `720h` (30 jours) | Durée de vie des JWT et des cookies du navigateur ; accepte une durée Go ou un nombre entier positif de secondes. Les sessions sont glissantes : une session utilisée en continu est réémise au lieu d'expirer, à partir de la moitié de sa durée de vie. Les valeurs inférieures à `60s` sont ramenées à `60s` |
@@ -227,7 +227,7 @@ Les variables ci-dessous sont lues sur l'ordinateur qui exécute vos agents, et 
 
 | Variable | Valeur par défaut | Description |
 |---|---|---|
-| `MARVIS_SERVER_URL` | `ws://localhost:8080/ws` | URL de l'API / WebSocket Marvis ; accepte aussi `http(s)` |
+| `MARVIS_SERVER_URL` | `ws://localhost:13840/ws` | URL de l'API / WebSocket Marvis ; accepte aussi `http(s)` |
 | `MARVIS_DAEMON_DEVICE_NAME` | nom d'hôte | Nom de l'appareil affiché dans la liste des runtimes |
 | `MARVIS_AGENT_RUNTIME_NAME` | `Local Agent` | Nom d'affichage du runtime |
 | `MARVIS_DAEMON_POLL_INTERVAL` | `30s` | Intervalle d'interrogation des exécutions lorsqu'aucun événement de réveil n'arrive |
@@ -279,7 +279,7 @@ Clés prises en charge :
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
-| `server_url` | `ws://localhost:8080/ws` | URL de l'API / WebSocket Marvis |
+| `server_url` | `ws://localhost:13840/ws` | URL de l'API / WebSocket Marvis |
 | `app_url` | vide | URL web utilisée pour la connexion dans le navigateur |
 | `workspace_id` | vide | Espace de travail par défaut |
 | `device_name` | nom d'hôte | Nom de l'appareil affiché dans la liste des runtimes |

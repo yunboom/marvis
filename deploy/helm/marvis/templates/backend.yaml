@@ -67,7 +67,7 @@ spec:
           image: "{{ .Values.images.backend.repository }}:{{ $backendImageTag }}"
           imagePullPolicy: {{ .Values.images.backend.pullPolicy }}
           ports:
-            - containerPort: 8080
+            - containerPort: 13840
               name: http
           envFrom:
             - configMapRef:
@@ -109,13 +109,13 @@ spec:
           startupProbe:
             httpGet:
               path: /healthz
-              port: 8080
+              port: 13840
             failureThreshold: 60
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /healthz
-              port: 8080
+              port: 13840
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
@@ -123,7 +123,7 @@ spec:
               # Liveness must not depend on PostgreSQL. A database outage makes
               # the pod NotReady, but should not restart an otherwise live API.
               path: /health
-              port: 8080
+              port: 13840
             initialDelaySeconds: 30
             periodSeconds: 30
           resources:
@@ -164,13 +164,13 @@ spec:
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/component: backend
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 13840
+      targetPort: 13840
       name: http
 {{- if .Values.frontend.compatibility.backendAlias }}
 ---
 # DNS alias for legacy marvis-web images that baked
-# REMOTE_API_URL=http://backend:8080 at build time. Current images resolve
+# REMOTE_API_URL=http://backend:13840 at build time. Current images resolve
 # frontend.config.remoteApiUrl at runtime and do not need this Service.
 #
 # The name is intentionally unprefixed ("backend", not "{{ .Release.Name }}-backend")

@@ -482,7 +482,7 @@ Or configure manually:
 
 ```bash
 # Set URLs individually
-marvis config set server_url http://localhost:8080
+marvis config set server_url http://localhost:13840
 marvis config set app_url http://localhost:3000
 
 # For production with TLS:

@@ -34,7 +34,7 @@ const WSContext = createContext<WSContextValue | null>(null);
 
 export interface WSProviderProps {
   children: ReactNode;
-  /** WebSocket server URL (e.g. "ws://localhost:8080/ws") */
+  /** WebSocket server URL (e.g. "ws://localhost:13840/ws") */
   wsUrl: string;
   /** Platform-created auth store instance */
   authStore: UseBoundStore<StoreApi<AuthState>>;

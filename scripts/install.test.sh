@@ -261,10 +261,10 @@ _setup_server_sandbox() {
 
   # Minimal self-host assets: only the port mapping matters here.
   cat >"$server_dir/.env.example" <<'ENVFILE'
-PORT=8080
-# BACKEND_PORT=8080
-# API_PORT=8080
-# SERVER_PORT=8080
+PORT=13840
+# BACKEND_PORT=13840
+# API_PORT=13840
+# SERVER_PORT=13840
 FRONTEND_PORT=3000
 JWT_SECRET=change-me-in-production
 POSTGRES_PASSWORD=marvis
@@ -304,7 +304,7 @@ _published_backend_port() {
       return
     fi
   done
-  printf '8080'
+  printf '13840'
 }
 
 _published_frontend_port() {
@@ -429,19 +429,19 @@ test_with_server_uses_compose_published_ports() {
   trap 'rm -rf "$tmp"' RETURN
 
   # label | .env mutation (sed) | ambient env | expected backend | expected frontend
-  local cases='defaults|||8080|3000
-env-file PORT|s/^PORT=8080/PORT=9100/||9100|3000
-env-file BACKEND_PORT|s/^# BACKEND_PORT=8080/BACKEND_PORT=9200/||9200|3000
-env-file API_PORT|s/^# API_PORT=8080/API_PORT=9300/||9300|3000
-env-file SERVER_PORT|s/^# SERVER_PORT=8080/SERVER_PORT=9400/||9400|3000
-env-file FRONTEND_PORT|s/^FRONTEND_PORT=3000/FRONTEND_PORT=3100/||8080|3100
-ambient PORT beats .env|s/^PORT=8080/PORT=9100/|PORT=9500|9500|3000
-ambient BACKEND_PORT beats .env|s/^PORT=8080/PORT=9100/|BACKEND_PORT=9600|9600|3000
-ambient API_PORT beats .env|s/^PORT=8080/PORT=9100/|API_PORT=9700|9700|3000
-ambient SERVER_PORT beats .env|s/^PORT=8080/PORT=9100/|SERVER_PORT=9800|9800|3000
-ambient FRONTEND_PORT beats .env|s/^FRONTEND_PORT=3000/FRONTEND_PORT=3100/|FRONTEND_PORT=3200|8080|3200
-empty ambient BACKEND_PORT falls through|s/^PORT=8080/PORT=9100/|BACKEND_PORT=|9100|3000
-empty env-file BACKEND_PORT falls through|s/^PORT=8080/PORT=9100/;s/^# BACKEND_PORT=8080/BACKEND_PORT=/||9100|3000'
+  local cases='defaults|||13840|3000
+env-file PORT|s/^PORT=13840/PORT=9100/||9100|3000
+env-file BACKEND_PORT|s/^# BACKEND_PORT=13840/BACKEND_PORT=9200/||9200|3000
+env-file API_PORT|s/^# API_PORT=13840/API_PORT=9300/||9300|3000
+env-file SERVER_PORT|s/^# SERVER_PORT=13840/SERVER_PORT=9400/||9400|3000
+env-file FRONTEND_PORT|s/^FRONTEND_PORT=3000/FRONTEND_PORT=3100/||13840|3100
+ambient PORT beats .env|s/^PORT=13840/PORT=9100/|PORT=9500|9500|3000
+ambient BACKEND_PORT beats .env|s/^PORT=13840/PORT=9100/|BACKEND_PORT=9600|9600|3000
+ambient API_PORT beats .env|s/^PORT=13840/PORT=9100/|API_PORT=9700|9700|3000
+ambient SERVER_PORT beats .env|s/^PORT=13840/PORT=9100/|SERVER_PORT=9800|9800|3000
+ambient FRONTEND_PORT beats .env|s/^FRONTEND_PORT=3000/FRONTEND_PORT=3100/|FRONTEND_PORT=3200|13840|3200
+empty ambient BACKEND_PORT falls through|s/^PORT=13840/PORT=9100/|BACKEND_PORT=|9100|3000
+empty env-file BACKEND_PORT falls through|s/^PORT=13840/PORT=9100/;s/^# BACKEND_PORT=13840/BACKEND_PORT=/||9100|3000'
 
   local label mutation ambient expect_backend expect_frontend
   while IFS='|' read -r label mutation ambient expect_backend expect_frontend; do

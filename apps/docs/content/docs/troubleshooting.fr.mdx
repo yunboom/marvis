@@ -138,7 +138,7 @@ Pour un exemple complet de proxy inverse, consultez le [démarrage rapide de l'a
 
 La sonde d'accessibilité du CLI envoie une requête GET à `<server-url>/health` et attend un 200. C'est le backend qui sert ce chemin. Les versions actuelles de l'application web transmettent `/health` au backend, mais pas les plus anciennes — un proxy inverse qui transmet tout à un tel frontend ancien renvoie 404, et le CLI en conclut que le serveur est hors service alors que la pile fonctionne correctement.
 
-Router explicitement `/health` vers le backend (port 8080) dans votre proxy fonctionne avec toutes les versions — les deux exemples Caddy du [démarrage rapide de l'auto-hébergement](/self-host-quickstart#3-choisir-le-mode-daccès) le font. Vérifiez avec :
+Router explicitement `/health` vers le backend (port 13840) dans votre proxy fonctionne avec toutes les versions — les deux exemples Caddy du [démarrage rapide de l'auto-hébergement](/self-host-quickstart#3-choisir-le-mode-daccès) le font. Vérifiez avec :
 
 ```bash
 curl -fsS <server-url>/health
@@ -231,11 +231,11 @@ Options utiles : `--dry-run` affiche un aperçu sans rien écrire ; `--sleep-bet
 
 ## Port déjà utilisé
 
-Les ports locaux courants sont `8080` pour l'API, `3000` pour l'application web, et le port de vérification d'état du daemon. Identifiez d'abord le processus qui occupe le port :
+Les ports locaux courants sont `13840` pour l'API, `3000` pour l'application web, et le port de vérification d'état du daemon. Identifiez d'abord le processus qui occupe le port :
 
 ```bash
-lsof -nP -iTCP:8080 -sTCP:LISTEN   # macOS / Linux
-netstat -ano | findstr :8080       # Windows
+lsof -nP -iTCP:13840 -sTCP:LISTEN   # macOS / Linux
+netstat -ano | findstr :13840       # Windows
 ```
 
 S'il s'agit d'une autre copie de travail (checkout) de Marvis, exécutez d'abord `make stop` dans ce répertoire. Sinon, arrêtez normalement le programme en cause, ou changez le port du service actuel. Les ports publics 80/443 sont écoutés par un proxy inverse tel que Caddy ou Nginx.

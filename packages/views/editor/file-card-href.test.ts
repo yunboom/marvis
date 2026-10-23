@@ -13,7 +13,7 @@ const allowedClickHrefs = [
   "/uploads/ok",
   "/uploads/workspaces/abc/file.png",
   "https://cdn.example.com/x",
-  "http://localhost:8080/uploads/x.png",
+  "http://localhost:13840/uploads/x.png",
   "HTTPS://CDN.EXAMPLE.COM/x",
   ATTACHMENT_DOWNLOAD,
 ];
@@ -22,7 +22,7 @@ const parsedAllowedFileCardHrefs = [
   "/uploads/x.md",
   "/uploads/workspaces/abc/019e.md",
   "https://cdn.example.com/x.md",
-  "http://localhost:8080/uploads/x.md",
+  "http://localhost:13840/uploads/x.md",
   ATTACHMENT_DOWNLOAD,
 ];
 

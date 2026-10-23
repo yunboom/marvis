@@ -102,7 +102,7 @@ Unit tests do not replace this device validation.
 
 ```bash
 cp apps/mobile/.env.example apps/mobile/.env.development.local
-# then edit EXPO_PUBLIC_API_URL inside it to your Mac's LAN IP, e.g. http://192.168.1.42:8080
+# then edit EXPO_PUBLIC_API_URL inside it to your Mac's LAN IP, e.g. http://192.168.1.42:13840
 ```
 
 If your Apple ID isn't on the Marvis Apple Developer team yet, also set `EXPO_BUNDLE_IDENTIFIER_DEV` to a reverse-domain you own (e.g. `com.yourname.marvis.dev`). For a personal production build, set `EXPO_BUNDLE_IDENTIFIER_PROD` in `.env.production.local`.

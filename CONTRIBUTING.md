@@ -74,7 +74,7 @@ By default, `.env` points to:
 POSTGRES_DB=marvis
 POSTGRES_PORT=5432
 DATABASE_URL=postgres://marvis:marvis@localhost:5432/marvis?sslmode=disable
-PORT=8080
+PORT=13840
 FRONTEND_PORT=3000
 ```
 
@@ -299,7 +299,7 @@ Example:
 
 - main checkout
   - database: `marvis`
-  - backend: `8080`
+  - backend: `13840`
   - frontend: `3000`
 - worktree checkout
   - database: `marvis_my_feature_702`

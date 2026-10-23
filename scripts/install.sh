@@ -390,7 +390,7 @@ setup_server() {
 
   # Read the ports Compose actually published, once, and reuse them for both the
   # health check and the summary so the two can never disagree.
-  if ! SELFHOST_BACKEND_PORT="$(compose_published_port backend 8080)"; then
+  if ! SELFHOST_BACKEND_PORT="$(compose_published_port backend 13840)"; then
     fail "Started the stack but could not read the backend host port from Docker Compose.
   Check it with: cd $INSTALL_DIR && docker compose -f docker-compose.selfhost.yml ps"
   fi

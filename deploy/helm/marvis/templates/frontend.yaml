@@ -1,5 +1,5 @@
 {{- $frontendImageTag := default .Chart.AppVersion .Values.images.frontend.tag -}}
-{{- $remoteApiUrl := default (printf "http://%s:8080" (include "marvis.backend.fullname" .)) .Values.frontend.config.remoteApiUrl -}}
+{{- $remoteApiUrl := default (printf "http://%s:13840" (include "marvis.backend.fullname" .)) .Values.frontend.config.remoteApiUrl -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

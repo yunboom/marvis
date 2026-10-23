@@ -22,7 +22,7 @@ Marvis 서비스를 실행할 컴퓨터에는 다음 항목이 필요합니다.
 
 - Docker Engine 또는 Docker Desktop, 실행 가능한 `docker compose`
 - Git, Make, curl, OpenSSL
-- 로컬 `3000`, `8080` port가 사용 중이지 않음
+- 로컬 `3000`, `13840` port가 사용 중이지 않음
 
 먼저 Docker와 Compose를 사용할 수 있는지 확인합니다.
 
@@ -77,7 +77,7 @@ docker compose -f docker-compose.selfhost.yml ps
 `postgres`는 `healthy`, `backend`와 `frontend`는 실행 중으로 표시되어야 합니다. 그런 다음 backend, 데이터베이스, migration을 확인합니다.
 
 ```bash
-curl -fsS http://localhost:8080/readyz
+curl -fsS http://localhost:13840/readyz
 ```
 
 정상 응답:
@@ -96,7 +96,7 @@ Backend 컨테이너는 시작할 때마다 데이터베이스 migration을 먼�
 
 ### 원격에서 접근
 
-Docker Compose는 기본적으로 `3000`과 `8080`을 `127.0.0.1`에만 bind합니다. `0.0.0.0`으로 바꿔 공개 인터넷에 직접 노출하지 말고 HTTPS reverse proxy를 사용하세요.
+Docker Compose는 기본적으로 `3000`과 `13840`을 `127.0.0.1`에만 bind합니다. `0.0.0.0`으로 바꿔 공개 인터넷에 직접 노출하지 말고 HTTPS reverse proxy를 사용하세요.
 
 다음 두 도메인을 예로 사용합니다.
 
@@ -120,7 +120,7 @@ app.example.com {
     # 브라우저 WebSocket을 backend로 직접 전달
     @ws path /ws /ws/*
     handle @ws {
-        reverse_proxy 127.0.0.1:8080 {
+        reverse_proxy 127.0.0.1:13840 {
             flush_interval -1
         }
     }
@@ -132,7 +132,7 @@ app.example.com {
 }
 
 api.example.com {
-    reverse_proxy 127.0.0.1:8080 {
+    reverse_proxy 127.0.0.1:13840 {
         flush_interval -1
     }
 }
@@ -145,12 +145,12 @@ marvis.example.com {
     # CLI 도달 확인: `marvis setup`이 <server-url>/health에 GET을 보내 200을 기대합니다.
     # 구버전 frontend는 이 경로를 전달하지 않으므로 backend로 직접 라우팅합니다
     handle /health {
-        reverse_proxy 127.0.0.1:8080
+        reverse_proxy 127.0.0.1:13840
     }
 
     # 브라우저 realtime WebSocket — web 이미지는 WS 업그레이드를 proxy할 수 없어 backend로 직접
     handle /ws {
-        reverse_proxy 127.0.0.1:8080 {
+        reverse_proxy 127.0.0.1:13840 {
             flush_interval -1
         }
     }
@@ -158,7 +158,7 @@ marvis.example.com {
     # 데몬 긴 연결: {server-url}/api/daemon/ws로 다이얼합니다(/ws가 아님).
     # 이 라우트가 없으면 핸드셰이크가 실패하고 데몬은 조용히 폴링으로 폴백합니다
     handle /api/daemon/ws {
-        reverse_proxy 127.0.0.1:8080 {
+        reverse_proxy 127.0.0.1:13840 {
             flush_interval -1
         }
     }
@@ -289,7 +289,7 @@ docker compose -f docker-compose.selfhost.yml down
 git pull --ff-only
 docker compose -f docker-compose.selfhost.yml pull
 docker compose -f docker-compose.selfhost.yml up -d
-curl -fsS http://localhost:8080/readyz
+curl -fsS http://localhost:13840/readyz
 ```
 
 Docker Compose 설치를 업그레이드하는 방법은 두 가지이며, 기존 설치에서는 **결과가 같습니다** — `Makefile`의 `selfhost` 타깃이 동일한 `docker compose pull` + `up -d`를 실행하고, 여기에 더해 `.env`가 없으면 생성하고 `/health`를 기다린 뒤 상태 요약을 출력합니다. 편한 쪽을 쓰세요.
@@ -356,7 +356,7 @@ Migration은 backend 시작 시 자동으로 실행됩니다. migration 103처�
 `/health`는 **liveness** 프로브라서 프로세스가 살아 있기만 하면 `{"status":"ok"}`를 반환합니다 — migration이 실패했더라도 마찬가지입니다. `/readyz`(`server/cmd/server/router.go`에 등록된 `readyHandler`, `/healthz`는 별칭)는 데이터베이스와 적용된 migration 집합을 확인하므로, 잘못된 업그레이드를 잡아내는 것은 이쪽입니다.
 
 ```bash
-curl -s localhost:8080/readyz
+curl -s localhost:13840/readyz
 # {"status":"ok","checks":{"db":"ok","migrations":"ok"}}
 ```
 

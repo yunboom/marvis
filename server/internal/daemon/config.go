@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	DefaultServerURL    = "ws://localhost:8080/ws"
+	DefaultServerURL    = "ws://localhost:13840/ws"
 	DefaultPollInterval = 30 * time.Second
 	// DefaultWSClaimPollInterval is the upper bound for missed-event safety
 	// polls while task availability and claims use a healthy WebSocket. The

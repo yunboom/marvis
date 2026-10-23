@@ -90,7 +90,7 @@ If the selected GHCR tag has not been published yet, `make selfhost` now tells y
 Once ready:
 
 - **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8080
+- **Backend API:** http://localhost:13840
 
 > **Note:** If you prefer to run the Docker Compose steps manually, see [Manual Docker Compose Setup](#manual-docker-compose-setup) below.
 
@@ -151,7 +151,7 @@ marvis setup self-host
 ```
 
 This automatically:
-1. Configures the CLI to connect to `localhost` (ports 8080/3000)
+1. Configures the CLI to connect to `localhost` (ports 13840/3000)
 2. Opens your browser for authentication
 3. Discovers your workspaces
 4. Starts the daemon in the background
@@ -193,7 +193,7 @@ The chart creates the following resources in the target namespace:
 
 The `marvis-secrets` Secret is **not** managed by the chart — you create it once with `kubectl` so real values never need to land in git.
 
-> **Runtime frontend upstreams:** current `marvis-web` images read `REMOTE_API_URL` and `DOCS_URL` when the Next.js server runs, so API/docs upstream changes do not require a web rebuild. The chart defaults `REMOTE_API_URL` to this release's backend Service. `frontend.compatibility.backendAlias` exists only for legacy images that still baked `REMOTE_API_URL=http://backend:8080` at build time.
+> **Runtime frontend upstreams:** current `marvis-web` images read `REMOTE_API_URL` and `DOCS_URL` when the Next.js server runs, so API/docs upstream changes do not require a web rebuild. The chart defaults `REMOTE_API_URL` to this release's backend Service. `frontend.compatibility.backendAlias` exists only for legacy images that still baked `REMOTE_API_URL=http://backend:13840` at build time.
 
 > **Prerequisites:** `kubectl` and `helm` (v3.13+ for `--take-ownership`, or v4+) configured for the target cluster, an Ingress controller (Traefik / NGINX), and a default StorageClass.
 
@@ -513,7 +513,7 @@ If you prefer configuring the CLI step by step instead of `marvis setup`:
 
 ```bash
 # Point CLI to your local server
-marvis config set server_url http://localhost:8080
+marvis config set server_url http://localhost:13840
 marvis config set app_url http://localhost:3000
 
 # Login (opens browser)

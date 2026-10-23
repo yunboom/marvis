@@ -34,7 +34,7 @@ test.describe("HTML preview fullscreen", () => {
     const local = (url: string) =>
       ["localhost", "127.0.0.1", "[::1]"].includes(new URL(url).hostname);
     test.skip(
-      !local(baseURL!) || !local(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"),
+      !local(baseURL!) || !local(process.env.NEXT_PUBLIC_API_URL || "http://localhost:13840"),
       "Local fixtures only",
     );
     await page.setViewportSize({ width: 1440, height: 1080 });

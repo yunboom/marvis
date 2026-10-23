@@ -234,7 +234,7 @@ func TestDefaultGCCompletedTaskTTLOnlyBoundsOfficialCloudHost(t *testing.T) {
 		// officialCloudHost excludes them from the auto-update default.
 		{"staging", "https://api-staging.marvis.ai", DefaultGCCompletedTaskTTLSelfHost},
 		{"self-host", "https://marvis.example.com", DefaultGCCompletedTaskTTLSelfHost},
-		{"localhost", "http://localhost:8080", DefaultGCCompletedTaskTTLSelfHost},
+		{"localhost", "http://localhost:13840", DefaultGCCompletedTaskTTLSelfHost},
 		{"unparseable", "://nope", DefaultGCCompletedTaskTTLSelfHost},
 	}
 	for _, tc := range cases {
@@ -431,9 +431,9 @@ func TestIsOfficialCloudServer(t *testing.T) {
 		{"canonical cloud with trailing slash stripped", "https://api.marvis.ai/", true},
 		{"canonical cloud case-insensitive", "https://API.Marvis.AI", true},
 		{"cloud over plain http (unusual but match host)", "http://api.marvis.ai", true},
-		{"localhost is self-host", "http://localhost:8080", false},
-		{"loopback ip is self-host", "http://127.0.0.1:8080", false},
-		{"lan ip is self-host", "http://192.168.0.28:8080", false},
+		{"localhost is self-host", "http://localhost:13840", false},
+		{"loopback ip is self-host", "http://127.0.0.1:13840", false},
+		{"lan ip is self-host", "http://192.168.0.28:13840", false},
 		{"third-party host is self-host", "https://marvis.example.com", false},
 		// Staging / preview / future subdomains deliberately follow the
 		// safer self-host default until explicitly opted in.
@@ -637,7 +637,7 @@ func TestLoadConfig_SkipsMarvisHooksFromLoginShellFallback(t *testing.T) {
 func TestLoadConfig_AutoUpdateDefault_SelfHostOff(t *testing.T) {
 	stageFakeAgent(t)
 	cfg, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -653,7 +653,7 @@ func TestLoadConfig_CodexHandshakeTimeout(t *testing.T) {
 	t.Setenv("MARVIS_CODEX_HANDSHAKE_TIMEOUT", "")
 
 	cfg, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -669,7 +669,7 @@ func TestLoadConfig_CodexHandshakeTimeout(t *testing.T) {
 	t.Setenv("MARVIS_CODEX_HANDSHAKE_TIMEOUT", "47s")
 
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -684,7 +684,7 @@ func TestLoadConfig_CodexHandshakeTimeout(t *testing.T) {
 
 	t.Setenv("MARVIS_CODEX_HANDSHAKE_TIMEOUT", "1d")
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -699,7 +699,7 @@ func TestLoadConfig_CodexHandshakeTimeout(t *testing.T) {
 
 	t.Setenv("MARVIS_CODEX_HANDSHAKE_TIMEOUT", "0")
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -713,7 +713,7 @@ func TestLoadConfig_CodexHandshakeTimeout(t *testing.T) {
 	}
 
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:             "http://localhost:8080",
+		ServerURL:             "http://localhost:13840",
 		WorkspacesRoot:        t.TempDir(),
 		CodexHandshakeTimeout: 12 * time.Second,
 	})
@@ -733,7 +733,7 @@ func TestLoadConfig_CodexTurnInterruptTimeout(t *testing.T) {
 	t.Setenv("MARVIS_CODEX_TURN_INTERRUPT_TIMEOUT", "750ms")
 
 	cfg, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -745,7 +745,7 @@ func TestLoadConfig_CodexTurnInterruptTimeout(t *testing.T) {
 
 	t.Setenv("MARVIS_CODEX_TURN_INTERRUPT_TIMEOUT", "0")
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -766,7 +766,7 @@ func TestLoadConfig_CodexFirstTurnNoProgressTimeout(t *testing.T) {
 	t.Setenv("MARVIS_CODEX_FIRST_TURN_TIMEOUT", "")
 
 	cfg, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -778,7 +778,7 @@ func TestLoadConfig_CodexFirstTurnNoProgressTimeout(t *testing.T) {
 
 	t.Setenv("MARVIS_CODEX_FIRST_TURN_TIMEOUT", "30m")
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -790,7 +790,7 @@ func TestLoadConfig_CodexFirstTurnNoProgressTimeout(t *testing.T) {
 
 	t.Setenv("MARVIS_CODEX_FIRST_TURN_TIMEOUT", "0")
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -822,7 +822,7 @@ func TestLoadConfig_CodexFirstTurnTimeoutEqualToSemanticWarns(t *testing.T) {
 		t.Setenv("MARVIS_CODEX_SEMANTIC_INACTIVITY_TIMEOUT", semantic)
 		t.Setenv("MARVIS_CODEX_FIRST_TURN_TIMEOUT", firstTurn)
 		if _, err := LoadConfig(Overrides{
-			ServerURL:      "http://localhost:8080",
+			ServerURL:      "http://localhost:13840",
 			WorkspacesRoot: t.TempDir(),
 		}); err != nil {
 			t.Fatalf("LoadConfig: %v", err)
@@ -861,7 +861,7 @@ func TestLoadConfig_ToolWatchdogDefaultsToIdleWatchdog(t *testing.T) {
 	load := func(t *testing.T) Config {
 		t.Helper()
 		cfg, err := LoadConfig(Overrides{
-			ServerURL:      "http://localhost:8080",
+			ServerURL:      "http://localhost:13840",
 			WorkspacesRoot: t.TempDir(),
 		})
 		if err != nil {
@@ -931,7 +931,7 @@ func TestLoadConfig_CodexSemanticInactivityDerivesFromWatchdog(t *testing.T) {
 	load := func(t *testing.T) Config {
 		t.Helper()
 		cfg, err := LoadConfig(Overrides{
-			ServerURL:      "http://localhost:8080",
+			ServerURL:      "http://localhost:13840",
 			WorkspacesRoot: t.TempDir(),
 		})
 		if err != nil {
@@ -988,7 +988,7 @@ func TestLoadConfig_OpenCodeIdleWatchdog(t *testing.T) {
 	t.Setenv("MARVIS_OPENCODE_IDLE_WATCHDOG", "")
 
 	cfg, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -1000,7 +1000,7 @@ func TestLoadConfig_OpenCodeIdleWatchdog(t *testing.T) {
 
 	t.Setenv("MARVIS_OPENCODE_IDLE_WATCHDOG", "7m")
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -1014,7 +1014,7 @@ func TestLoadConfig_OpenCodeIdleWatchdog(t *testing.T) {
 	// AgentIdleWatchdog as the fallback for OpenCode runs.
 	t.Setenv("MARVIS_OPENCODE_IDLE_WATCHDOG", "0")
 	cfg, err = LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -1050,7 +1050,7 @@ func TestLoadConfig_AutoUpdateEnv_ForcesOnForSelfHost(t *testing.T) {
 	stageFakeAgent(t)
 	t.Setenv("MARVIS_DAEMON_AUTO_UPDATE", "true")
 	cfg, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -1108,7 +1108,7 @@ func TestLoadConfig_AutoReload_DefaultsOnEvenForSelfHost(t *testing.T) {
 	t.Setenv("MARVIS_DAEMON_AUTO_UPDATE", "")
 	t.Setenv("MARVIS_DAEMON_AUTO_RELOAD", "")
 	cfg, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -1784,7 +1784,7 @@ func TestLoadConfig_AppliesBackendOverridesFromConfigFile(t *testing.T) {
 	homeForCLIConfig := t.TempDir()
 	redirectTestHome(t, homeForCLIConfig)
 	cfg := cli.CLIConfig{
-		ServerURL: "http://localhost:8080",
+		ServerURL: "http://localhost:13840",
 		Backends: &cli.BackendOverrides{
 			OpenClaw: &cli.OpenClawOverride{
 				BinaryPath: customOpenclaw,
@@ -1797,7 +1797,7 @@ func TestLoadConfig_AppliesBackendOverridesFromConfigFile(t *testing.T) {
 	}
 
 	loaded, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -1833,7 +1833,7 @@ func TestLoadConfig_BackendOverrides_BackwardCompat_NoConfigFile(t *testing.T) {
 	})
 
 	_, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {
@@ -1865,7 +1865,7 @@ func TestLoadConfig_BackendOverrides_MalformedConfigFileNonFatal(t *testing.T) {
 	}
 
 	_, err := LoadConfig(Overrides{
-		ServerURL:      "http://localhost:8080",
+		ServerURL:      "http://localhost:13840",
 		WorkspacesRoot: t.TempDir(),
 	})
 	if err != nil {

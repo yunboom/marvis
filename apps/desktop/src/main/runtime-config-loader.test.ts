@@ -19,8 +19,8 @@ describe("loadRuntimeConfig", () => {
         isDev: true,
         configPath,
         env: {
-          apiUrl: "http://localhost:8080",
-          wsUrl: "ws://localhost:8080/ws",
+          apiUrl: "http://localhost:13840",
+          wsUrl: "ws://localhost:13840/ws",
           appUrl: "http://localhost:3000",
         },
       }),
@@ -28,8 +28,8 @@ describe("loadRuntimeConfig", () => {
       ok: true,
       config: {
         schemaVersion: 1,
-        apiUrl: "http://localhost:8080",
-        wsUrl: "ws://localhost:8080/ws",
+        apiUrl: "http://localhost:13840",
+        wsUrl: "ws://localhost:13840/ws",
         appUrl: "http://localhost:3000",
       },
     });

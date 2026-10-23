@@ -173,13 +173,13 @@ describe("proxy runtime upstream rewrites", () => {
 
   it("rewrites API requests to the runtime API origin", () => {
     const previous = process.env.REMOTE_API_URL;
-    process.env.REMOTE_API_URL = "http://backend:8080";
+    process.env.REMOTE_API_URL = "http://backend:13840";
     try {
       const res = proxy(makeRequest("/api/config?x=1"));
 
       expect(res.status).toBe(200);
       expect(res.headers.get("x-middleware-rewrite")).toBe(
-        "http://backend:8080/api/config?x=1",
+        "http://backend:13840/api/config?x=1",
       );
     } finally {
       restoreEnv("REMOTE_API_URL", previous);
@@ -188,13 +188,13 @@ describe("proxy runtime upstream rewrites", () => {
 
   it("rewrites the CLI health probe to the runtime API origin", () => {
     const previous = process.env.REMOTE_API_URL;
-    process.env.REMOTE_API_URL = "http://backend:8080";
+    process.env.REMOTE_API_URL = "http://backend:13840";
     try {
       const res = proxy(makeRequest("/health"));
 
       expect(res.status).toBe(200);
       expect(res.headers.get("x-middleware-rewrite")).toBe(
-        "http://backend:8080/health",
+        "http://backend:13840/health",
       );
     } finally {
       restoreEnv("REMOTE_API_URL", previous);
@@ -203,13 +203,13 @@ describe("proxy runtime upstream rewrites", () => {
 
   it("rewrites Plugin API requests to the runtime API origin", () => {
     const previous = process.env.REMOTE_API_URL;
-    process.env.REMOTE_API_URL = "http://backend:8080";
+    process.env.REMOTE_API_URL = "http://backend:13840";
     try {
       const res = proxy(makeRequest("/v1/issues/MUL-6581?x=1"));
 
       expect(res.status).toBe(200);
       expect(res.headers.get("x-middleware-rewrite")).toBe(
-        "http://backend:8080/v1/issues/MUL-6581?x=1",
+        "http://backend:13840/v1/issues/MUL-6581?x=1",
       );
     } finally {
       restoreEnv("REMOTE_API_URL", previous);
@@ -233,13 +233,13 @@ describe("proxy runtime upstream rewrites", () => {
 
   it("rewrites websocket requests to the runtime API origin", () => {
     const previous = process.env.REMOTE_API_URL;
-    process.env.REMOTE_API_URL = "http://backend:8080";
+    process.env.REMOTE_API_URL = "http://backend:13840";
     try {
       const res = proxy(makeRequest("/ws"));
 
       expect(res.status).toBe(200);
       expect(res.headers.get("x-middleware-rewrite")).toBe(
-        "http://backend:8080/ws",
+        "http://backend:13840/ws",
       );
     } finally {
       restoreEnv("REMOTE_API_URL", previous);
@@ -248,7 +248,7 @@ describe("proxy runtime upstream rewrites", () => {
 
   it("forwards the client host to the backend so same-origin checks see marvis.local", () => {
     const previous = process.env.REMOTE_API_URL;
-    process.env.REMOTE_API_URL = "http://localhost:8080";
+    process.env.REMOTE_API_URL = "http://localhost:13840";
     try {
       const res = proxy(
         new NextRequest("http://marvis.local:3000/api/me", {
@@ -257,7 +257,7 @@ describe("proxy runtime upstream rewrites", () => {
       );
 
       expect(res.headers.get("x-middleware-rewrite")).toBe(
-        "http://localhost:8080/api/me",
+        "http://localhost:13840/api/me",
       );
       expect(res.headers.get("x-middleware-request-x-forwarded-host")).toBe(
         "marvis.local:3000",
@@ -269,7 +269,7 @@ describe("proxy runtime upstream rewrites", () => {
 
   it("keeps an x-forwarded-host set by an upstream proxy", () => {
     const previous = process.env.REMOTE_API_URL;
-    process.env.REMOTE_API_URL = "http://localhost:8080";
+    process.env.REMOTE_API_URL = "http://localhost:13840";
     try {
       const res = proxy(
         new NextRequest("http://127.0.0.1:3000/ws", {
@@ -290,7 +290,7 @@ describe("proxy runtime upstream rewrites", () => {
 
   it("does not rewrite frontend auth callback pages", () => {
     const previous = process.env.REMOTE_API_URL;
-    process.env.REMOTE_API_URL = "http://backend:8080";
+    process.env.REMOTE_API_URL = "http://backend:13840";
     try {
       const res = proxy(makeRequest("/auth/callback"));
 

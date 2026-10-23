@@ -22,7 +22,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 - Docker Engine 或 Docker Desktop，并且 `docker compose` 可以运行
 - Git、Make、curl 和 OpenSSL
-- 本机的 `3000`、`8080` 端口未被占用
+- 本机的 `3000`、`13840` 端口未被占用
 
 先确认 Docker 和 Compose 可用：
 
@@ -77,7 +77,7 @@ docker compose -f docker-compose.selfhost.yml ps
 `postgres` 显示为 `healthy`，`backend` 和 `frontend` 应处于运行状态。然后检查 backend、数据库和 migration：
 
 ```bash
-curl -fsS http://localhost:8080/readyz
+curl -fsS http://localhost:13840/readyz
 ```
 
 正常响应是：
@@ -96,7 +96,7 @@ Backend 容器每次启动时都会先运行数据库 migration，再启动服�
 
 ### 远程访问
 
-Docker Compose 默认只把 `3000` 和 `8080` 绑定到 `127.0.0.1`。不要直接改成 `0.0.0.0` 暴露到公网；使用带 HTTPS 的反向代理。
+Docker Compose 默认只把 `3000` 和 `13840` 绑定到 `127.0.0.1`。不要直接改成 `0.0.0.0` 暴露到公网；使用带 HTTPS 的反向代理。
 
 下面以两个域名为例：
 
@@ -120,7 +120,7 @@ app.example.com {
  # 浏览器的 WebSocket 直接交给 backend
  @ws path /ws /ws/*
  handle @ws {
- reverse_proxy 127.0.0.1:8080 {
+ reverse_proxy 127.0.0.1:13840 {
  flush_interval -1
  }
  }
@@ -132,7 +132,7 @@ app.example.com {
 }
 
 api.example.com {
- reverse_proxy 127.0.0.1:8080 {
+ reverse_proxy 127.0.0.1:13840 {
  flush_interval -1
  }
 }
@@ -145,12 +145,12 @@ marvis.example.com {
  # CLI 可达性探测：`marvis setup` 会 GET <server-url>/health 并要求 200，
  # 旧版 frontend 不转发这个路径，直接路由到 backend
  handle /health {
- reverse_proxy 127.0.0.1:8080
+ reverse_proxy 127.0.0.1:13840
  }
 
  # 网页端 realtime WebSocket——前端镜像代理不了 WS 升级，直通 backend
  handle /ws {
- reverse_proxy 127.0.0.1:8080 {
+ reverse_proxy 127.0.0.1:13840 {
  flush_interval -1
  }
  }
@@ -158,7 +158,7 @@ marvis.example.com {
  # daemon 长连接：拨的是 {server-url}/api/daemon/ws（不是 /ws）。
  # 缺了这条，握手失败后 daemon 会静默回退到轮询
  handle /api/daemon/ws {
- reverse_proxy 127.0.0.1:8080 {
+ reverse_proxy 127.0.0.1:13840 {
  flush_interval -1
  }
  }
@@ -289,7 +289,7 @@ docker compose -f docker-compose.selfhost.yml down
 git pull --ff-only
 docker compose -f docker-compose.selfhost.yml pull
 docker compose -f docker-compose.selfhost.yml up -d
-curl -fsS http://localhost:8080/readyz
+curl -fsS http://localhost:13840/readyz
 ```
 
 Docker Compose 部署有两种升级写法。在已有部署上两者**结果相同**——`Makefile` 里的 `selfhost` target 跑的就是同一套 `docker compose pull` + `up -d`，只是额外多做了两件事：`.env` 缺失时生成一份，以及等 `/health` 就绪后打印一段状态汇总。用哪个都行：
@@ -356,7 +356,7 @@ Migration 在 backend 启动时自动运行；需要回填历史数据的 migrat
 `/health` 是 **liveness** 探针，只要进程还活着就返回 `{"status":"ok"}`，migration 失败了它照样是 ok。`/readyz`（`server/cmd/server/router.go` 中注册的 `readyHandler`，`/healthz` 是它的别名）会真正检查数据库和已应用的 migration 集合，升级出问题能被它拦下来：
 
 ```bash
-curl -s localhost:8080/readyz
+curl -s localhost:13840/readyz
 # {"status":"ok","checks":{"db":"ok","migrations":"ok"}}
 ```
 

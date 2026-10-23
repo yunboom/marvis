@@ -39,7 +39,7 @@ MARVIS_PUBLIC_URL=https://api.marvis.example.com
 | `DATABASE_REPLICA_MIN_CONNS` | `0` | API 프로세스가 유지하는 최소 복제본 연결 수 |
 | `MARVIS_DATABASE_STARTUP_TIMEOUT` | `3m` | 컨테이너 시작 중 migration과 API가 공유하는 일시적인 데이터베이스 장애 재시도 시간. `0`으로 설정하면 각 단계에서 한 번만 시도 |
 | `MARVIS_DATABASE_CONNECT_TIMEOUT` | `5s` | 시작 중 각 연결 시도의 폴백 제한 시간. pgx 기본 `connect_timeout`, `PGCONNECT_TIMEOUT` 또는 service 설정이 우선 적용됨 |
-| `PORT` | `8080` | API listen port |
+| `PORT` | `13840` | API listen port |
 | `JWT_SECRET` | 프로덕션에서 필수 | 로그인 JWT와 일부 서명 절차에서 사용하는 키. 프로덕션에서는 비어 있거나 알려진 자리표시자 값으로 부팅 거부 |
 | `APP_ENV` | 비어 있음 | 프로덕션 환경에서는 `production`으로 설정 |
 | `AUTH_TOKEN_TTL` | `720h`(30일) | 브라우저 JWT와 cookie 유효 기간. Go duration 또는 양의 정수 초 허용. 세션은 유효 기간의 절반이 지나면 슬라이딩 갱신되어, 계속 사용하는 동안에는 만료되지 않습니다. `60s` 미만은 `60s`로 조정됩니다 |
@@ -230,7 +230,7 @@ API key와 base URL이 모두 비어 있으면 이 레이어가 꺼지고 업스
 
 | 변수 | 기본값 | 설명 |
 |---|---|---|
-| `MARVIS_SERVER_URL` | `ws://localhost:8080/ws` | Marvis API / WebSocket 주소. `http(s)`도 허용 |
+| `MARVIS_SERVER_URL` | `ws://localhost:13840/ws` | Marvis API / WebSocket 주소. `http(s)`도 허용 |
 | `MARVIS_DAEMON_DEVICE_NAME` | host 이름 | 런타임 목록의 기기 이름 |
 | `MARVIS_AGENT_RUNTIME_NAME` | `Local Agent` | 런타임 표시 이름 |
 | `MARVIS_DAEMON_POLL_INTERVAL` | `30s` | wakeup 이벤트가 없을 때 실행 polling 간격 |
@@ -282,7 +282,7 @@ marvis config show
 
 | key | 기본값 | 설명 |
 |---|---|---|
-| `server_url` | `ws://localhost:8080/ws` | Marvis API / WebSocket 주소 |
+| `server_url` | `ws://localhost:13840/ws` | Marvis API / WebSocket 주소 |
 | `app_url` | 비어 있음 | 브라우저 로그인에 사용할 Web 주소 |
 | `workspace_id` | 비어 있음 | 기본 워크스페이스 |
 | `device_name` | host 이름 | 런타임 목록의 기기 이름 |

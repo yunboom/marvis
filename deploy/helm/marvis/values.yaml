@@ -201,7 +201,7 @@ frontend:
   # URL rewrites. New images do not need this unprefixed Service.
   compatibility:
     # When true the chart creates an ExternalName Service literally named
-    # "backend" for old images that baked REMOTE_API_URL=http://backend:8080.
+    # "backend" for old images that baked REMOTE_API_URL=http://backend:13840.
     # Because that name is unprefixed, only ONE such release can run per
     # namespace. Keep false for current images.
     backendAlias: false

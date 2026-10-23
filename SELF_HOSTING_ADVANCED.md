@@ -121,7 +121,7 @@ use S3-compatible object storage instead.
 | Variable | Description |
 |----------|-------------|
 | `LOCAL_UPLOAD_DIR` | Directory attachments are written to (default: `./data/uploads`). The default is **relative to the backend's working directory** — `/app` in the bundled image, where the compose file mounts the `backend_uploads` volume. When running the binary manually it resolves against whatever directory you launched from, so set an absolute path; otherwise uploads land somewhere new each time the launch directory changes, and existing `attachment` rows point at files the server no longer looks for |
-| `LOCAL_UPLOAD_BASE_URL` | Optional absolute base for attachment URLs (e.g. `http://localhost:8080`). Leave empty to store `/uploads/...` paths that stay relative to the API origin |
+| `LOCAL_UPLOAD_BASE_URL` | Optional absolute base for attachment URLs (e.g. `http://localhost:13840`). Leave empty to store `/uploads/...` paths that stay relative to the API origin |
 
 #### S3 / CloudFront
 
@@ -175,8 +175,8 @@ If the frontend and backend are served from different hostnames, `COOKIE_DOMAIN`
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `8080` | Backend port — the one to edit. It is the port the backend process listens on for a local/bare run, and the host port the Compose self-host stack publishes. In Compose the container always listens on `8080` internally, so changing this needs no rebuild. |
-| `BACKEND_PORT` | Value of `PORT` | Optional alias that overrides `PORT` for the backend. `API_PORT` and `SERVER_PORT` are further aliases; the **alias order** is `BACKEND_PORT` → `API_PORT` → `SERVER_PORT` → `PORT` → `8080`, and it is the same in `Makefile`, `scripts/local-env.sh` and `docker-compose.selfhost.yml`. Leave them unset unless the host port must differ from the port the process listens on. |
+| `PORT` | `13840` | Backend port — the one to edit. It is the port the backend process listens on for a local/bare run, and the host port the Compose self-host stack publishes. In Compose the container always listens on `13840` internally, so changing this needs no rebuild. |
+| `BACKEND_PORT` | Value of `PORT` | Optional alias that overrides `PORT` for the backend. `API_PORT` and `SERVER_PORT` are further aliases; the **alias order** is `BACKEND_PORT` → `API_PORT` → `SERVER_PORT` → `PORT` → `13840`, and it is the same in `Makefile`, `scripts/local-env.sh` and `docker-compose.selfhost.yml`. Leave them unset unless the host port must differ from the port the process listens on. |
 | `METRICS_ADDR` | empty | Optional Prometheus metrics listener, for example `127.0.0.1:9090` |
 | `FRONTEND_PORT` | `3000` | Frontend port. Host port in Compose; the container always listens on `3000` internally. |
 | `CORS_ALLOWED_ORIGINS` | Value of `FRONTEND_ORIGIN` | Comma-separated list of allowed origins. Governs **both** the HTTP CORS allowlist **and** the WebSocket `Origin` check. A browser origin that isn't listed here (and isn't `localhost`) has its real-time WebSocket upgrade rejected with `403`, so live updates stop working until a manual refresh. |
@@ -196,7 +196,7 @@ If the frontend and backend are served from different hostnames, `COOKIE_DOMAIN`
 The web development server is one intentional exception to the generic `PORT`
 fallback: Next uses `PORT` for its own frontend listener before it evaluates the
 rewrite configuration. Its backend fallback therefore accepts
-`BACKEND_PORT` → `API_PORT` → `SERVER_PORT` → `8080`, while an explicit
+`BACKEND_PORT` → `API_PORT` → `SERVER_PORT` → `13840`, while an explicit
 `REMOTE_API_URL` or `NEXT_PUBLIC_API_URL` still takes priority.
 
 ### Private CA Certificates (Optional)
@@ -321,7 +321,7 @@ These are configured on each user's machine, not on the server:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MARVIS_SERVER_URL` | `ws://localhost:8080/ws` | WebSocket URL for daemon → server connection |
+| `MARVIS_SERVER_URL` | `ws://localhost:13840/ws` | WebSocket URL for daemon → server connection |
 | `MARVIS_APP_URL` | `http://localhost:3000` | Frontend URL for CLI login flow |
 | `MARVIS_DAEMON_POLL_INTERVAL` | `30s` | Catch-up poll for tasks; WebSocket wake signals normally deliver work sooner |
 | `MARVIS_DAEMON_WS_CLAIM_POLL_INTERVAL` | `3m` | Upper bound for healthy WebSocket claim safety polls, configured independently of `MARVIS_DAEMON_POLL_INTERVAL`; downward jitter keeps normal polls at `2m30s`–`2m45s`, while old servers and uncertain claims retain the ordinary poll interval |
@@ -489,7 +489,7 @@ make build
 DATABASE_URL="your-database-url" ./server/bin/migrate up
 
 # Start the backend server
-DATABASE_URL="your-database-url" PORT=8080 JWT_SECRET="your-secret" ./server/bin/server
+DATABASE_URL="your-database-url" PORT=13840 JWT_SECRET="your-secret" ./server/bin/server
 ```
 
 For the frontend:
@@ -500,7 +500,7 @@ pnpm build
 
 # Start the frontend (production mode)
 cd apps/web
-REMOTE_API_URL=http://localhost:8080 pnpm start
+REMOTE_API_URL=http://localhost:13840 pnpm start
 ```
 
 ## Reverse Proxy
@@ -516,7 +516,7 @@ marvis.example.com {
     # WebSocket route — must come before the catch-all
     @marvis_ws path /ws /ws/*
     handle @marvis_ws {
-        reverse_proxy localhost:8080 {
+        reverse_proxy localhost:13840 {
             flush_interval -1
         }
     }
@@ -538,12 +538,12 @@ app.example.com {
 api.example.com {
     @marvis_ws path /ws /ws/*
     handle @marvis_ws {
-        reverse_proxy localhost:8080 {
+        reverse_proxy localhost:13840 {
             flush_interval -1
         }
     }
 
-    reverse_proxy localhost:8080
+    reverse_proxy localhost:13840
 }
 ```
 
@@ -581,7 +581,7 @@ server {
     ssl_certificate_key /path/to/key.pem;
 
     location / {
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:13840;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -590,7 +590,7 @@ server {
 
     # WebSocket support
     location /ws {
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:13840;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -644,7 +644,7 @@ COOKIE_DOMAIN=                       # empty: cookies are host-only on app.examp
 # Frontend
 NEXT_PUBLIC_API_URL=                 # empty: the client uses relative /api paths on the page origin
 NEXT_PUBLIC_WS_URL=                  # empty
-REMOTE_API_URL=http://backend:8080   # target the Next.js rewrites proxy /v1, /api, /auth and /uploads to
+REMOTE_API_URL=http://backend:13840   # target the Next.js rewrites proxy /v1, /api, /auth and /uploads to
 ```
 
 Serve everything from the single `app.example.com` vhost. HTTP works out of the box, because Next.js rewrites forward `/v1`, `/api`, `/auth` and `/uploads` to `REMOTE_API_URL`. WebSockets do **not** go through those rewrites, so add a `/ws` block to the frontend vhost that reaches the backend directly:
@@ -652,7 +652,7 @@ Serve everything from the single `app.example.com` vhost. HTTP works out of the 
 ```nginx
 # Add to the app.example.com server block above
 location /ws {
-    proxy_pass http://localhost:8080;
+    proxy_pass http://localhost:13840;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
@@ -685,13 +685,13 @@ docker compose -f docker-compose.selfhost.yml up -d
 
 HTTP requests (Plugin API, issues, comments, uploads) work on LAN out of the box — Next.js rewrites proxy `/v1`, `/api`, `/auth`, and `/uploads` to the backend. **WebSockets do not**: Next.js rewrites only forward HTTP requests, not the `Upgrade` handshake a WebSocket needs. If you open the app on `http://<lan-ip>:3000`, real-time features (chat streaming, live issue updates, notifications) will fail to connect until you do one of the following:
 
-1. **Put a reverse proxy in front of the stack (recommended).** Nginx or Caddy terminates the WebSocket upgrade and forwards it to the backend on port 8080. See the [Reverse Proxy](#reverse-proxy) section above — the Nginx example already includes a `location /ws { ... }` block with the correct `Upgrade` / `Connection` headers. Once a proxy is in place the browser connects directly through it, so no frontend rebuild is needed.
+1. **Put a reverse proxy in front of the stack (recommended).** Nginx or Caddy terminates the WebSocket upgrade and forwards it to the backend on port 13840. See the [Reverse Proxy](#reverse-proxy) section above — the Nginx example already includes a `location /ws { ... }` block with the correct `Upgrade` / `Connection` headers. Once a proxy is in place the browser connects directly through it, so no frontend rebuild is needed.
 
-2. **Bake a WebSocket URL into the web image.** If you are not running a reverse proxy, rebuild the web image with `NEXT_PUBLIC_WS_URL` pointing straight at the backend (port 8080 must be reachable from the browser):
+2. **Bake a WebSocket URL into the web image.** If you are not running a reverse proxy, rebuild the web image with `NEXT_PUBLIC_WS_URL` pointing straight at the backend (port 13840 must be reachable from the browser):
 
    ```bash
    # In .env
-   NEXT_PUBLIC_WS_URL=ws://<lan-ip>:8080/ws
+   NEXT_PUBLIC_WS_URL=ws://<lan-ip>:13840/ws
 
    # Rebuild the web image so the build-time value is baked in
    docker compose -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml up -d --build

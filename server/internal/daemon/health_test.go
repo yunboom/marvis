@@ -118,7 +118,7 @@ func TestHealthHandlerReportsCLIVersionAndTaskCounts(t *testing.T) {
 			CLIVersion:    "v9.9.9",
 			DaemonID:      "daemon-test",
 			DeviceName:    "dev",
-			ServerBaseURL: "http://localhost:8080",
+			ServerBaseURL: "http://localhost:13840",
 		},
 		workspaces: map[string]*workspaceState{},
 		logger:     slog.Default(),

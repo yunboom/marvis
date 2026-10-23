@@ -138,7 +138,7 @@ docker compose -f docker-compose.selfhost.yml up -d
 
 CLI の到達確認は `<server-url>/health` に GET を送り、200 を要求します。backend はこのパスを提供します。現在の web リリースは `/health` を backend へ転送しますが、古いリリースはそうではないため、すべてのトラフィックを古い frontend へ転送するリバースプロキシでは 404 が返り、CLI は稼働中のサーバーを到達不能と誤判定します。
 
-プロキシで `/health` を backend（ポート 8080）へ明示的に転送すれば、すべてのリリースで動作します。[セルフホストクイックスタート](/self-host-quickstart#3-アクセス方法を選ぶ)の 2 つの Caddy 例に含まれています。確認方法:
+プロキシで `/health` を backend（ポート 13840）へ明示的に転送すれば、すべてのリリースで動作します。[セルフホストクイックスタート](/self-host-quickstart#3-アクセス方法を選ぶ)の 2 つの Caddy 例に含まれています。確認方法:
 
 ```bash
 curl -fsS <server-url>/health
@@ -231,11 +231,11 @@ DATABASE_URL='postgres://...' go run ./cmd/backfill_task_usage_hourly
 
 ## ポートが使用中
 
-ローカルでよく使うポートは、API の `8080`、Web の `3000`、デーモンのヘルスチェックポートです。まず占有しているプロセスを特定します:
+ローカルでよく使うポートは、API の `13840`、Web の `3000`、デーモンのヘルスチェックポートです。まず占有しているプロセスを特定します:
 
 ```bash
-lsof -nP -iTCP:8080 -sTCP:LISTEN   # macOS / Linux
-netstat -ano | findstr :8080       # Windows
+lsof -nP -iTCP:13840 -sTCP:LISTEN   # macOS / Linux
+netstat -ano | findstr :13840       # Windows
 ```
 
 それが別の Marvis チェックアウトであれば、まずそのディレクトリで `make stop` を実行してください。そうでなければ、占有しているプログラムを通常の方法で停止するか、現在のサービスのポートを変更します。公開ポートの 80/443 は、Caddy や Nginx などのリバースプロキシがリッスンします。

@@ -39,7 +39,7 @@ MARVIS_PUBLIC_URL=https://api.marvis.example.com
 | `DATABASE_REPLICA_MIN_CONNS` | `0` | API プロセスが保持する最小レプリカ接続数 |
 | `MARVIS_DATABASE_STARTUP_TIMEOUT` | `3m` | コンテナ起動時に migration と API が共有する、一時的なデータベース障害への再試行時間。`0` にすると各フェーズで 1 回だけ試行します |
 | `MARVIS_DATABASE_CONNECT_TIMEOUT` | `5s` | 起動時の接続試行ごとのフォールバックタイムアウト。pgx ネイティブの `connect_timeout`、`PGCONNECT_TIMEOUT`、service 設定が優先されます |
-| `PORT` | `8080` | API のリッスンポート |
+| `PORT` | `13840` | API のリッスンポート |
 | `JWT_SECRET` | 本番環境で必須 | ログイン JWT と一部の署名フローに使うシークレット。本番では空または既知のプレースホルダーだと起動を拒否 |
 | `APP_ENV` | 空 | プロダクションでは `production` を設定 |
 | `AUTH_TOKEN_TTL` | `720h`（30 日） | ブラウザ JWT と cookie の有効期間。Go duration または正の整数秒を受け付けます。セッションは有効期間の半分を過ぎるとスライド更新され、使い続けている限り失効しません。`60s` 未満は `60s` に補正されます |
@@ -230,7 +230,7 @@ API key と base URL の両方が空の場合、このレイヤーは無効に�
 
 | 変数 | デフォルト | 説明 |
 |---|---|---|
-| `MARVIS_SERVER_URL` | `ws://localhost:8080/ws` | Marvis API / WebSocket アドレス。`http(s)` も受け付けます |
+| `MARVIS_SERVER_URL` | `ws://localhost:13840/ws` | Marvis API / WebSocket アドレス。`http(s)` も受け付けます |
 | `MARVIS_DAEMON_DEVICE_NAME` | ホスト名 | ランタイム一覧に表示されるデバイス名 |
 | `MARVIS_AGENT_RUNTIME_NAME` | `Local Agent` | ランタイムの表示名 |
 | `MARVIS_DAEMON_POLL_INTERVAL` | `30s` | ウェイクイベントがないときの実行ポーリング間隔 |
@@ -282,7 +282,7 @@ marvis config show
 
 | キー | デフォルト | 説明 |
 |---|---|---|
-| `server_url` | `ws://localhost:8080/ws` | Marvis API / WebSocket アドレス |
+| `server_url` | `ws://localhost:13840/ws` | Marvis API / WebSocket アドレス |
 | `app_url` | 空 | ブラウザログインに使う Web アドレス |
 | `workspace_id` | 空 | デフォルトのワークスペース |
 | `device_name` | ホスト名 | ランタイム一覧に表示されるデバイス名 |

@@ -138,7 +138,7 @@ docker compose -f docker-compose.selfhost.yml up -d
 
 CLI 的可达性探测会 GET `<server-url>/health` 并要求 200。backend 提供这个路径。新版 web 前端会把 `/health` 转发给 backend，旧版不会——把所有流量都转给旧版 frontend 的反向代理会返回 404，于是 CLI 误判服务不可用，而服务实际是健康的。
 
-在代理里把 `/health` 显式转给 backend（8080 端口），对所有版本都适用——[自托管快速上手](/self-host-quickstart#3-选择访问方式)里的两个 Caddy 示例都包含这条。确认方法：
+在代理里把 `/health` 显式转给 backend（13840 端口），对所有版本都适用——[自托管快速上手](/self-host-quickstart#3-选择访问方式)里的两个 Caddy 示例都包含这条。确认方法：
 
 ```bash
 curl -fsS <server-url>/health
@@ -231,11 +231,11 @@ DATABASE_URL='postgres://...' go run ./cmd/backfill_task_usage_hourly
 
 ## 端口占用
 
-本地常用端口包括 API 的 `8080`、Web 的 `3000` 和守护进程健康检查端口。先找出占用者：
+本地常用端口包括 API 的 `13840`、Web 的 `3000` 和守护进程健康检查端口。先找出占用者：
 
 ```bash
-lsof -nP -iTCP:8080 -sTCP:LISTEN # macOS / Linux
-netstat -ano | findstr :8080 # Windows
+lsof -nP -iTCP:13840 -sTCP:LISTEN # macOS / Linux
+netstat -ano | findstr :13840 # Windows
 ```
 
 如果它是另一个 Marvis checkout，先在那个目录运行 `make stop`。否则正常停止占用端口的程序，或修改当前服务端口。公网 80/443 由 Caddy、Nginx 等反向代理监听。

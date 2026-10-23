@@ -3,11 +3,11 @@
 # Shared by `make selfhost` and `make selfhost-build`.
 #
 # Why the host port is read back from Compose instead of re-derived here: the
-# recipes used to probe `${PORT:-8080}` while Compose published `${BACKEND_PORT:-8080}`.
+# recipes used to probe `${PORT:-13840}` while Compose published `${BACKEND_PORT:-13840}`.
 # Two different variables as the source of truth means any config where they
 # disagree breaks — `.env` setting PORT with BACKEND_PORT unset probed the custom
-# port while the stack sat on 8080, and `make selfhost PORT=8080` over a .env
-# with BACKEND_PORT=9100 probed 8080 while the stack sat on 9100, hammering the
+# port while the stack sat on 13840, and `make selfhost PORT=13840` over a .env
+# with BACKEND_PORT=9100 probed 13840 while the stack sat on 9100, hammering the
 # wrong port for 60s and then reporting "Services are still starting" on a
 # healthy install. `docker compose port` is the only authority on what Compose
 # actually published, so ask it rather than re-deriving the answer.
@@ -50,7 +50,7 @@ compose_host_port() {
   esac
 }
 
-backend_port=$(compose_host_port backend 8080 "${BACKEND_PORT:-${API_PORT:-${SERVER_PORT:-${PORT:-8080}}}}")
+backend_port=$(compose_host_port backend 13840 "${BACKEND_PORT:-${API_PORT:-${SERVER_PORT:-${PORT:-13840}}}}")
 frontend_port=$(compose_host_port frontend 3000 "${FRONTEND_PORT:-3000}")
 
 backend_url="http://localhost:${backend_port}"

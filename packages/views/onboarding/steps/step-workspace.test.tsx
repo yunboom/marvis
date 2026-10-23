@@ -43,7 +43,7 @@ vi.mock("@marvis/core/workspace/mutations", () => ({
 }));
 
 vi.mock("@marvis/core/api", () => ({
-  api: { getBaseUrl: () => "http://127.0.0.1:8080" },
+  api: { getBaseUrl: () => "http://127.0.0.1:13840" },
 }));
 
 import { StepWorkspace } from "./step-workspace";

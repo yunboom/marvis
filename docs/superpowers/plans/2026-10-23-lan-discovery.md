@@ -197,7 +197,7 @@ func TestEffectiveTrustedProxies(t *testing.T) {
 ```ts
 // proxy.test.ts
 it("forwards the client host to the backend so same-origin checks see marvis.local", () => {
-  process.env.REMOTE_API_URL = "http://localhost:8080";
+  process.env.REMOTE_API_URL = "http://localhost:13840";
   const res = proxy(new NextRequest("http://marvis.local:3000/api/me", { headers: { host: "marvis.local:3000" } }));
   expect(res.headers.get("x-middleware-request-x-forwarded-host")).toBe("marvis.local:3000");
 });

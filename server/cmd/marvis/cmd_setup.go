@@ -55,7 +55,7 @@ var setupSelfHostCmd = &cobra.Command{
 	Short: "Configure the CLI for a self-hosted Marvis server",
 	Long: `Configures the CLI to connect to a self-hosted Marvis server.
 
-By default, connects to http://localhost:8080 (backend) and http://localhost:3000 (frontend).
+By default, connects to http://localhost:13840 (backend) and http://localhost:3000 (frontend).
 Use --server-url and --app-url to specify a custom server (e.g. an on-premise deployment).
 
 If you run this command from a different machine than the server, also pass
@@ -75,7 +75,7 @@ func init() {
 
 	setupSelfHostCmd.Flags().String("server-url", "", "Backend server URL (e.g. https://api.internal.co) (env: MARVIS_SERVER_URL)")
 	setupSelfHostCmd.Flags().String("app-url", "", "Frontend app URL (e.g. https://app.internal.co) (env: MARVIS_APP_URL)")
-	setupSelfHostCmd.Flags().Int("port", 8080, "Backend server port (used when --server-url is not set)")
+	setupSelfHostCmd.Flags().Int("port", 13840, "Backend server port (used when --server-url is not set)")
 	setupSelfHostCmd.Flags().Int("frontend-port", 3000, "Frontend port (used when --app-url is not set)")
 	setupSelfHostCmd.Flags().String(callbackHostFlag, "", callbackHostFlagHelp)
 
@@ -361,12 +361,12 @@ func persistSelfHostConfigIfReachable(serverURL, appURL, profile string, probe f
 //
 // Falling back to existing.ServerURL means re-running setup self-host (e.g. to
 // re-login or restart the daemon) keeps a configured remote deployment instead
-// of silently resetting it to http://localhost:8080. An explicit --port opts
+// of silently resetting it to http://localhost:13840. An explicit --port opts
 // back into the localhost path for the local-dev case.
 //
 // A user-supplied URL is run through normalizeAPIBaseURL, the same path
 // resolveServerURL uses: MARVIS_SERVER_URL is documented as a ws:// daemon
-// address (e.g. ws://localhost:8080/ws), so the ws/wss form and a trailing /ws
+// address (e.g. ws://localhost:13840/ws), so the ws/wss form and a trailing /ws
 // are accepted and converted to the http(s) base that the reachability probe
 // and the stored server_url expect.
 func resolveSelfHostServerURL(cmd *cobra.Command, existing cli.CLIConfig) (serverURL string, userProvided bool) {

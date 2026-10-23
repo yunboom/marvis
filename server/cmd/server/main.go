@@ -356,7 +356,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "13840"
 	}
 	shutdownHoldDuration := envNonNegativeDuration("MARVIS_SHUTDOWN_HOLD_DURATION", 0)
 

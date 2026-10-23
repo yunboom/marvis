@@ -2,7 +2,7 @@
 #
 # Services bind to 127.0.0.1 only. For cross-machine or public access, front
 # them with a reverse proxy (Caddy / nginx / Cloudflare Tunnel) that terminates
-# TLS and forwards to 127.0.0.1:8080 (backend) and 127.0.0.1:3000 (frontend).
+# TLS and forwards to 127.0.0.1:13840 (backend) and 127.0.0.1:3000 (frontend).
 # Do NOT change these bindings to 0.0.0.0 — Docker bypasses host firewalls
 # (UFW/iptables) by default, so the raw ports would be exposed to the internet
 # while any deployment credentials remain weak. See:
@@ -14,10 +14,10 @@
 #   docker compose -f docker-compose.selfhost.yml up -d
 #
 # Frontend: http://localhost:${FRONTEND_PORT:-3000}
-# Backend:  http://localhost:${BACKEND_PORT:-${API_PORT:-${SERVER_PORT:-${PORT:-8080}}}}
+# Backend:  http://localhost:${BACKEND_PORT:-${API_PORT:-${SERVER_PORT:-${PORT:-13840}}}}
 #
 # The published values above are HOST ports; the containers always listen on
-# 8080 / 3000 internally, so changing them never needs a rebuild. PORT is the
+# 13840 / 3000 internally, so changing them never needs a rebuild. PORT is the
 # variable to edit; BACKEND_PORT, API_PORT and SERVER_PORT are optional aliases
 # that override it in that order. Keep this alias order identical to Makefile
 # and scripts/local-env.sh. The web dev fallback intentionally omits PORT
@@ -58,7 +58,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "127.0.0.1:${BACKEND_PORT:-${API_PORT:-${SERVER_PORT:-${PORT:-8080}}}}:8080"
+      - "127.0.0.1:${BACKEND_PORT:-${API_PORT:-${SERVER_PORT:-${PORT:-13840}}}}:13840"
     volumes:
       - backend_uploads:/app/data/uploads
     environment:
@@ -69,7 +69,7 @@ services:
       DATABASE_REPLICA_MIN_CONNS: ${DATABASE_REPLICA_MIN_CONNS:-}
       REDIS_URL: ${REDIS_URL:-}
       REDIS_CLUSTER_MODE: ${REDIS_CLUSTER_MODE:-false}
-      PORT: "8080"
+      PORT: "13840"
       MAINTENANCE_PORT: ${MAINTENANCE_PORT:-}
       METRICS_ADDR: ${METRICS_ADDR:-}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set to a strong random value — generate one with 'openssl rand -hex 32'}
@@ -232,7 +232,7 @@ services:
       - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
     environment:
       HOSTNAME: "0.0.0.0"
-      REMOTE_API_URL: ${REMOTE_API_URL:-http://backend:8080}
+      REMOTE_API_URL: ${REMOTE_API_URL:-http://backend:13840}
       DOCS_URL: ${DOCS_URL:-}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
       NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-}

@@ -22,7 +22,7 @@ Wait for the server output `✓ Marvis server is running and CLI is ready!` befo
 
 **Expected result:**
 - Frontend at http://localhost:3000
-- Backend at http://localhost:8080
+- Backend at http://localhost:13840
 - `marvis` CLI installed and configured for localhost
 
 ## Alternative: Manual Setup
@@ -36,7 +36,7 @@ marvis setup self-host
 ```
 
 The `marvis setup self-host` command will:
-1. Configure CLI to connect to localhost:8080 / localhost:3000
+1. Configure CLI to connect to localhost:13840 / localhost:3000
 2. Open a browser for login — use the emailed code, or the generated code printed in backend logs when Resend is unset
 3. Discover workspaces automatically
 4. Start the daemon in the background
@@ -62,10 +62,10 @@ make selfhost-stop
 
 ## Custom Ports
 
-If the default ports (8080/3000) are in use:
+If the default ports (13840/3000) are in use:
 
 1. Edit `.env` and change `PORT` and `FRONTEND_PORT`. These are host ports; the
-   containers keep listening on 8080/3000 internally, so no rebuild is needed.
+   containers keep listening on 13840/3000 internally, so no rebuild is needed.
 2. Run `make selfhost`
 3. Run `marvis setup self-host --port <PORT> --frontend-port <FRONTEND_PORT>`
 
@@ -85,4 +85,4 @@ one the stack is actually published on.
 - **Backend not ready:** `docker compose -f docker-compose.selfhost.yml logs backend`
 - **Frontend not ready:** `docker compose -f docker-compose.selfhost.yml logs frontend`
 - **Daemon issues:** `marvis daemon logs`
-- **Health checks:** `curl http://localhost:8080/health` for liveness, `curl http://localhost:8080/readyz` for dependency-aware readiness
+- **Health checks:** `curl http://localhost:13840/health` for liveness, `curl http://localhost:13840/readyz` for dependency-aware readiness

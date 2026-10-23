@@ -82,7 +82,7 @@ export function resolveDevRemoteApiUrl(env: RuntimeEnv): string {
     env.BACKEND_PORT?.trim() ||
     env.API_PORT?.trim() ||
     env.SERVER_PORT?.trim() ||
-    "8080";
+    "13840";
   return `http://localhost:${backendPort}`;
 }
 

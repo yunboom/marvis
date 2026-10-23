@@ -50,12 +50,12 @@ func createDaemonTestRepo(t *testing.T) string {
 func TestNormalizeServerBaseURL(t *testing.T) {
 	t.Parallel()
 
-	got, err := NormalizeServerBaseURL("ws://localhost:8080/ws")
+	got, err := NormalizeServerBaseURL("ws://localhost:13840/ws")
 	if err != nil {
 		t.Fatalf("NormalizeServerBaseURL returned error: %v", err)
 	}
-	if got != "http://localhost:8080" {
-		t.Fatalf("expected http://localhost:8080, got %s", got)
+	if got != "http://localhost:13840" {
+		t.Fatalf("expected http://localhost:13840, got %s", got)
 	}
 }
 

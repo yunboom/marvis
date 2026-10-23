@@ -41,6 +41,14 @@
 - 前端：`packages/views/auth/login-page.tsx`（飞书按钮、`lark` / `onLarkLogin`）、`use-lark-client-login.ts`（客户端免登）、`apps/web/app/(auth)/login/page.tsx`、`apps/web/app/auth/callback/page.tsx`（state 带 `provider:lark` 时走飞书）、`callback-error.ts`、桌面端 `pages/login.tsx`、core 的 `larkLogin` / `loginWithLark` / `larkLoginAppId`、auth 语言包。
 - 同步上游时 `auth.go`、`login-page.tsx`、`callback/page.tsx` 易冲突：保留上游改动后重新接回飞书分支，并跑 `Lark|Google` 相关测试。
 
+## 决策五：后端默认端口 13840
+
+后端（API 服务）默认端口是 13840，不用上游的 8080，避免与本机其他服务冲突。
+
+- 范围：服务端 `PORT` 缺省值、CLI `setup self-host --port` 与各处默认服务器地址、daemon 默认 `ws://localhost:13840/ws`、`Makefile`、`scripts/`、`.env.example`、`Dockerfile`（EXPOSE）、`docker-compose.selfhost.yml`（宿主机端口缺省值、容器内端口、`PORT`、`REMOTE_API_URL`）、Helm chart、release 工作流、web / desktop / core / views 的默认地址、e2e、文档与测试夹具。
+- 不改的 8080：与后端无关的示例（任意测试域名、CLI 登录回调地址）。worktree 开发环境端口 `18080 + offset` 不是默认端口，保持原样。
+- 同步上游时：合并后执行 `git grep -n -w 8080`，凡是指后端的新增出现处一律改成 13840，无关的保留。
+
 ## 同步上游流程
 
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。

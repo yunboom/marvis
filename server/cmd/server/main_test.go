@@ -349,7 +349,7 @@ func TestJWTSecretBootError(t *testing.T) {
 // long-lived WebSocket connections mid-stream — none of which the rest of the
 // suite would catch.
 func TestNewMainHTTPServerTimeouts(t *testing.T) {
-	srv := newMainHTTPServer(":8080", nil)
+	srv := newMainHTTPServer(":13840", nil)
 
 	if got, want := srv.ReadHeaderTimeout, 5*time.Second; got != want {
 		t.Errorf("ReadHeaderTimeout = %v, want %v", got, want)

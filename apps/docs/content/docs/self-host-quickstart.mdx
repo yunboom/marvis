@@ -22,7 +22,7 @@ The machine running the Marvis service needs:
 
 - Docker Engine or Docker Desktop, with `docker compose` working
 - Git, Make, curl, and OpenSSL
-- Ports `3000` and `8080` free on the machine
+- Ports `3000` and `13840` free on the machine
 
 Confirm Docker and Compose are available first:
 
@@ -77,7 +77,7 @@ docker compose -f docker-compose.selfhost.yml ps
 `postgres` should show `healthy`, and `backend` and `frontend` should be running. Then check the backend, the database, and migrations:
 
 ```bash
-curl -fsS http://localhost:8080/readyz
+curl -fsS http://localhost:13840/readyz
 ```
 
 The expected response is:
@@ -96,7 +96,7 @@ Open [http://localhost:3000](http://localhost:3000) directly. You also won't nee
 
 ### Remote access
 
-Docker Compose binds `3000` and `8080` to `127.0.0.1` only. Do not switch this to `0.0.0.0` to expose the ports to the public internet; use a reverse proxy with HTTPS instead.
+Docker Compose binds `3000` and `13840` to `127.0.0.1` only. Do not switch this to `0.0.0.0` to expose the ports to the public internet; use a reverse proxy with HTTPS instead.
 
 The example below uses two domains:
 
@@ -120,7 +120,7 @@ app.example.com {
     # Hand browser WebSockets straight to the backend
     @ws path /ws /ws/*
     handle @ws {
-        reverse_proxy 127.0.0.1:8080 {
+        reverse_proxy 127.0.0.1:13840 {
             flush_interval -1
         }
     }
@@ -132,7 +132,7 @@ app.example.com {
 }
 
 api.example.com {
-    reverse_proxy 127.0.0.1:8080 {
+    reverse_proxy 127.0.0.1:13840 {
         flush_interval -1
     }
 }
@@ -145,12 +145,12 @@ marvis.example.com {
     # CLI reachability probe: `marvis setup` GETs <server-url>/health and
     # needs a 200 — older web releases don't forward it, so route it directly
     handle /health {
-        reverse_proxy 127.0.0.1:8080
+        reverse_proxy 127.0.0.1:13840
     }
 
     # Browser realtime WebSocket — the web image cannot proxy WS upgrades
     handle /ws {
-        reverse_proxy 127.0.0.1:8080 {
+        reverse_proxy 127.0.0.1:13840 {
             flush_interval -1
         }
     }
@@ -159,7 +159,7 @@ marvis.example.com {
     # (not /ws). Without this route the handshake fails and the daemon silently
     # falls back to polling
     handle /api/daemon/ws {
-        reverse_proxy 127.0.0.1:8080 {
+        reverse_proxy 127.0.0.1:13840 {
             flush_interval -1
         }
     }
@@ -290,7 +290,7 @@ To upgrade to the latest published images:
 git pull --ff-only
 docker compose -f docker-compose.selfhost.yml pull
 docker compose -f docker-compose.selfhost.yml up -d
-curl -fsS http://localhost:8080/readyz
+curl -fsS http://localhost:13840/readyz
 ```
 
 Two ways to upgrade a Docker Compose install. On an existing install they produce the **same result** — the `selfhost` target in the `Makefile` runs the same `docker compose pull` + `up -d`, and additionally creates `.env` when it is missing and waits on `/health` before printing a status summary. Pick whichever you prefer:
@@ -357,7 +357,7 @@ Migrations run automatically when the backend starts; migrations that backfill h
 `/health` is a **liveness** probe — it returns `{"status":"ok"}` as long as the process is up, including when migrations failed. `/readyz` (`readyHandler`, registered in `server/cmd/server/router.go`; `/healthz` is an alias) checks the database and the applied migration set, so it is the one that catches a bad upgrade:
 
 ```bash
-curl -s localhost:8080/readyz
+curl -s localhost:13840/readyz
 # {"status":"ok","checks":{"db":"ok","migrations":"ok"}}
 ```
 

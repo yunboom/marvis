@@ -37,7 +37,7 @@ describe("runtime config", () => {
   });
 
   it("derives ws for http api URLs", () => {
-    expect(deriveWsUrl("http://localhost:8080")).toBe("ws://localhost:8080/ws");
+    expect(deriveWsUrl("http://localhost:13840")).toBe("ws://localhost:13840/ws");
   });
 
   it("accepts explicit appUrl and wsUrl", () => {
@@ -102,10 +102,10 @@ describe("runtime config", () => {
   });
 
   it("falls back to local web URL when dev apiUrl is localhost", () => {
-    expect(runtimeConfigFromDevEnv({ apiUrl: "http://localhost:8080" })).toEqual({
+    expect(runtimeConfigFromDevEnv({ apiUrl: "http://localhost:13840" })).toEqual({
       schemaVersion: 1,
-      apiUrl: "http://localhost:8080",
-      wsUrl: "ws://localhost:8080/ws",
+      apiUrl: "http://localhost:13840",
+      wsUrl: "ws://localhost:13840/ws",
       appUrl: "http://localhost:3000",
     });
   });

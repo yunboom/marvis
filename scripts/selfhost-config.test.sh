@@ -216,8 +216,8 @@ require_env \
 # Host port consistency (regression for #6145)
 #
 # The health check and the success message must use the port Compose actually
-# published. The recipes used to probe ${PORT:-8080} while Compose published
-# ${BACKEND_PORT:-8080} — two sources of truth, so any config where they
+# published. The recipes used to probe ${PORT:-13840} while Compose published
+# ${BACKEND_PORT:-13840} — two sources of truth, so any config where they
 # disagreed hammered the wrong port for 60s and then reported "Services are
 # still starting" on a healthy stack.
 #
@@ -359,18 +359,18 @@ require_consistent() {
 
 # PORT is the value to edit, so editing it must move the published port and the
 # probe together. Fails on the old recipe, which probed 9100 while Compose
-# published 8080.
-run_recipe selfhost 's/^PORT=8080/PORT=9100/' '' '' >/dev/null
+# published 13840.
+run_recipe selfhost 's/^PORT=13840/PORT=9100/' '' '' >/dev/null
 require_consistent 'PORT edited in .env' 9100
 
 # BACKEND_PORT remains an alias that overrides PORT.
-run_recipe selfhost 's/^# BACKEND_PORT=8080/BACKEND_PORT=9200/' '' '' >/dev/null
+run_recipe selfhost 's/^# BACKEND_PORT=13840/BACKEND_PORT=9200/' '' '' >/dev/null
 require_consistent 'BACKEND_PORT alias in .env' 9200
 
 # A make command-line override must not desync the probe from Compose. Fails on
-# the old recipe, which probed 8080 while Compose published 9100.
-run_recipe selfhost 's/^# BACKEND_PORT=8080/BACKEND_PORT=9100/' '' 'PORT=8080' >/dev/null
-require_consistent 'make PORT=8080 over BACKEND_PORT=9100' 9100
+# the old recipe, which probed 13840 while Compose published 9100.
+run_recipe selfhost 's/^# BACKEND_PORT=13840/BACKEND_PORT=9100/' '' 'PORT=13840' >/dev/null
+require_consistent 'make PORT=13840 over BACKEND_PORT=9100' 9100
 
 # With no alias pinned in .env, an alias from the environment survives make's
 # include and takes effect end to end.
@@ -380,30 +380,30 @@ require_consistent 'BACKEND_PORT from the environment' 9300
 # The env file stays authoritative for values it does set, so an environment
 # PORT loses to it — and the probe must follow whatever Compose then published.
 run_recipe selfhost '' 'PORT=9500' '' >/dev/null
-require_consistent 'PORT from the environment is overridden by .env' 8080
+require_consistent 'PORT from the environment is overridden by .env' 13840
 
-# Defaults stay 8080/3000.
+# Defaults stay 13840/3000.
 run_recipe selfhost '' '' '' >/dev/null
-require_consistent 'defaults' 8080
+require_consistent 'defaults' 13840
 if [ "$(published_port frontend)" != "3000" ]; then
   echo "default frontend host port should be 3000, got $(published_port frontend)"
   exit 1
 fi
 
 # selfhost-build resolves the port the same way.
-run_recipe selfhost-build 's/^PORT=8080/PORT=9400/' '' '' >/dev/null
+run_recipe selfhost-build 's/^PORT=13840/PORT=9400/' '' '' >/dev/null
 require_consistent 'selfhost-build with PORT edited' 9400
 
 # Every alias at once: BACKEND_PORT wins, and the probe follows it.
 run_recipe selfhost \
-  's/^PORT=8080/PORT=9000/;s/^# BACKEND_PORT=8080/BACKEND_PORT=8000/;s/^# API_PORT=8080/API_PORT=7000/;s/^# SERVER_PORT=8080/SERVER_PORT=6000/' \
+  's/^PORT=13840/PORT=9000/;s/^# BACKEND_PORT=13840/BACKEND_PORT=8000/;s/^# API_PORT=13840/API_PORT=7000/;s/^# SERVER_PORT=13840/SERVER_PORT=6000/' \
   '' '' >/dev/null
 require_consistent 'every alias set at once' 8000
 
 # A higher-priority alias in the env file beats a lower-priority one from the
 # shell.
 run_recipe selfhost \
-  's/^PORT=8080/PORT=8000/;s/^# BACKEND_PORT=8080/BACKEND_PORT=8000/' \
+  's/^PORT=13840/PORT=8000/;s/^# BACKEND_PORT=13840/BACKEND_PORT=8000/' \
   'API_PORT=7000' '' >/dev/null
 require_consistent 'env-file BACKEND_PORT over shell API_PORT' 8000
 
@@ -416,16 +416,16 @@ require_consistent 'env-file BACKEND_PORT over shell API_PORT' 8000
 # ---------------------------------------------------------------------------
 
 # Command-line high-priority alias over a low-priority alias in the env file.
-run_recipe selfhost 's/^# API_PORT=8080/API_PORT=7000/' '' 'BACKEND_PORT=9000' >/dev/null
+run_recipe selfhost 's/^# API_PORT=13840/API_PORT=7000/' '' 'BACKEND_PORT=9000' >/dev/null
 require_consistent 'command-line BACKEND_PORT over env-file API_PORT' 9000
 
 # Env-file high-priority alias over a low-priority alias on the command line.
-run_recipe selfhost 's/^# BACKEND_PORT=8080/BACKEND_PORT=9100/' '' 'SERVER_PORT=6000' >/dev/null
+run_recipe selfhost 's/^# BACKEND_PORT=13840/BACKEND_PORT=9100/' '' 'SERVER_PORT=6000' >/dev/null
 require_consistent 'env-file BACKEND_PORT over command-line SERVER_PORT' 9100
 
 # An explicit empty value on the command line drops out of the chain.
 run_recipe selfhost '' '' 'BACKEND_PORT=' >/dev/null
-require_consistent 'command-line BACKEND_PORT= falls through to PORT' 8080
+require_consistent 'command-line BACKEND_PORT= falls through to PORT' 13840
 
 # ---------------------------------------------------------------------------
 # Explicit empty assignments in the env file
@@ -436,11 +436,11 @@ require_consistent 'command-line BACKEND_PORT= falls through to PORT' 8080
 # way, so the two agree.
 # ---------------------------------------------------------------------------
 
-run_recipe selfhost 's/^# BACKEND_PORT=8080/BACKEND_PORT=/' 'BACKEND_PORT=9000' '' >/dev/null
-require_consistent 'empty BACKEND_PORT in .env over shell BACKEND_PORT' 8080
+run_recipe selfhost 's/^# BACKEND_PORT=13840/BACKEND_PORT=/' 'BACKEND_PORT=9000' '' >/dev/null
+require_consistent 'empty BACKEND_PORT in .env over shell BACKEND_PORT' 13840
 
-run_recipe selfhost 's/^PORT=8080/PORT=/;s/^# BACKEND_PORT=8080/BACKEND_PORT=/' 'PORT=9000' '' >/dev/null
-require_consistent 'every chain variable emptied in .env' 8080
+run_recipe selfhost 's/^PORT=13840/PORT=/;s/^# BACKEND_PORT=13840/BACKEND_PORT=/' 'PORT=9000' '' >/dev/null
+require_consistent 'every chain variable emptied in .env' 13840
 
 run_recipe selfhost 's/^FRONTEND_PORT=3000/FRONTEND_PORT=/' 'FRONTEND_PORT=3100' '' >/dev/null
 if [ "$(published_port frontend)" != "3000" ]; then
@@ -464,7 +464,7 @@ fi
 # ---------------------------------------------------------------------------
 # The backend port alias chain, and Compose's own source precedence
 #
-#   BACKEND_PORT -> API_PORT -> SERVER_PORT -> PORT -> 8080
+#   BACKEND_PORT -> API_PORT -> SERVER_PORT -> PORT -> 13840
 #
 # Exercised through the direct Compose path, because the Makefile normalises all
 # four into PORT before a recipe ever runs — so a recipe-only test cannot see a
@@ -487,7 +487,7 @@ for installer in scripts/install.sh scripts/install.ps1; do
   fi
 done
 for installer_call in \
-  'compose_published_port backend 8080' \
+  'compose_published_port backend 13840' \
   'compose_published_port frontend 3000'; do
   if ! grep -Fq "$installer_call" scripts/install.sh; then
     echo "scripts/install.sh must read the published port from Compose: $installer_call"
@@ -495,7 +495,7 @@ for installer_call in \
   fi
 done
 for installer_call in \
-  'Get-ComposePublishedPort -Service "backend" -ContainerPort 8080' \
+  'Get-ComposePublishedPort -Service "backend" -ContainerPort 13840' \
   'Get-ComposePublishedPort -Service "frontend" -ContainerPort 3000'; do
   if ! grep -Fq "$installer_call" scripts/install.ps1; then
     echo "scripts/install.ps1 must read the published port from Compose: $installer_call"
@@ -518,7 +518,7 @@ process.stdin.on("end", () => {
 }
 
 # Each case: label, sed applied to .env.example, ambient env, expected backend,
-# expected frontend. .env.example ships PORT=8080 with every alias commented out.
+# expected frontend. .env.example ships PORT=13840 with every alias commented out.
 while IFS='|' read -r case_label case_mutation case_ambient case_backend case_frontend; do
   [ -n "$case_label" ] || continue
 
@@ -543,22 +543,22 @@ while IFS='|' read -r case_label case_mutation case_ambient case_backend case_fr
     exit 1
   fi
 done <<'CASES'
-defaults|||8080|3000
-PORT only|s/^PORT=8080/PORT=9100/||9100|3000
-SERVER_PORT overrides PORT|s/^# SERVER_PORT=8080/SERVER_PORT=9200/||9200|3000
-API_PORT overrides SERVER_PORT|s/^# API_PORT=8080/API_PORT=9300/;s/^# SERVER_PORT=8080/SERVER_PORT=9200/||9300|3000
-BACKEND_PORT overrides all|s/^# BACKEND_PORT=8080/BACKEND_PORT=9400/;s/^# API_PORT=8080/API_PORT=9300/;s/^# SERVER_PORT=8080/SERVER_PORT=9200/||9400|3000
-ambient PORT beats the env file|s/^PORT=8080/PORT=9100/|PORT=9500|9500|3000
-ambient BACKEND_PORT beats the env file|s/^PORT=8080/PORT=9100/|BACKEND_PORT=9600|9600|3000
-ambient API_PORT beats the env file|s/^PORT=8080/PORT=9100/|API_PORT=9700|9700|3000
-ambient SERVER_PORT beats the env file|s/^PORT=8080/PORT=9100/|SERVER_PORT=9800|9800|3000
-ambient FRONTEND_PORT beats the env file|s/^FRONTEND_PORT=3000/FRONTEND_PORT=3100/|FRONTEND_PORT=3200|8080|3200
+defaults|||13840|3000
+PORT only|s/^PORT=13840/PORT=9100/||9100|3000
+SERVER_PORT overrides PORT|s/^# SERVER_PORT=13840/SERVER_PORT=9200/||9200|3000
+API_PORT overrides SERVER_PORT|s/^# API_PORT=13840/API_PORT=9300/;s/^# SERVER_PORT=13840/SERVER_PORT=9200/||9300|3000
+BACKEND_PORT overrides all|s/^# BACKEND_PORT=13840/BACKEND_PORT=9400/;s/^# API_PORT=13840/API_PORT=9300/;s/^# SERVER_PORT=13840/SERVER_PORT=9200/||9400|3000
+ambient PORT beats the env file|s/^PORT=13840/PORT=9100/|PORT=9500|9500|3000
+ambient BACKEND_PORT beats the env file|s/^PORT=13840/PORT=9100/|BACKEND_PORT=9600|9600|3000
+ambient API_PORT beats the env file|s/^PORT=13840/PORT=9100/|API_PORT=9700|9700|3000
+ambient SERVER_PORT beats the env file|s/^PORT=13840/PORT=9100/|SERVER_PORT=9800|9800|3000
+ambient FRONTEND_PORT beats the env file|s/^FRONTEND_PORT=3000/FRONTEND_PORT=3100/|FRONTEND_PORT=3200|13840|3200
 CASES
 
 # An env-file alias beats the same alias from the environment, and the probe
 # follows whatever Compose published either way.
 for shadowed_alias in BACKEND_PORT API_PORT SERVER_PORT; do
-  run_recipe selfhost "s/^# ${shadowed_alias}=8080/${shadowed_alias}=9700/" \
+  run_recipe selfhost "s/^# ${shadowed_alias}=13840/${shadowed_alias}=9700/" \
     "${shadowed_alias}=9600" '' >/dev/null
   require_consistent "env-file ${shadowed_alias} over the same shell variable" 9700
 done

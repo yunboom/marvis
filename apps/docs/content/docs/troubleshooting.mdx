@@ -138,7 +138,7 @@ For a complete reverse-proxy example, see the [self-host quickstart](/self-host-
 
 The CLI reachability probe GETs `<server-url>/health` and needs a 200. The backend serves this path. Current web releases forward `/health` to the backend, but older ones do not — a reverse proxy that forwards everything to such an older frontend returns 404, and the CLI concludes the server is down while the stack is healthy.
 
-Routing `/health` to the backend (port 8080) explicitly in your proxy works across all releases — both Caddy examples in the [self-host quickstart](/self-host-quickstart#3-choose-how-to-access) do this. Confirm with:
+Routing `/health` to the backend (port 13840) explicitly in your proxy works across all releases — both Caddy examples in the [self-host quickstart](/self-host-quickstart#3-choose-how-to-access) do this. Confirm with:
 
 ```bash
 curl -fsS <server-url>/health
@@ -231,11 +231,11 @@ Useful flags: `--dry-run` previews without writing; `--sleep-between-slices` add
 
 ## Port already in use
 
-Common local ports are `8080` for the API, `3000` for the web app, and the daemon health-check port. Find the process holding the port first:
+Common local ports are `13840` for the API, `3000` for the web app, and the daemon health-check port. Find the process holding the port first:
 
 ```bash
-lsof -nP -iTCP:8080 -sTCP:LISTEN   # macOS / Linux
-netstat -ano | findstr :8080       # Windows
+lsof -nP -iTCP:13840 -sTCP:LISTEN   # macOS / Linux
+netstat -ano | findstr :13840       # Windows
 ```
 
 If it is another Marvis checkout, run `make stop` in that directory first. Otherwise stop the offending program normally, or change the current service's port. Public ports 80/443 are listened on by a reverse proxy such as Caddy or Nginx.

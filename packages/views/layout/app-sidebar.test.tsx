@@ -158,7 +158,7 @@ vi.mock("@marvis/core/api", async (importOriginal) => {
     ...actual,
     api: {
       ...actual.api,
-      getBaseUrl: () => "http://127.0.0.1:8080",
+      getBaseUrl: () => "http://127.0.0.1:13840",
       acceptInvitation: invitationApi.accept,
       declineInvitation: invitationApi.decline,
     },

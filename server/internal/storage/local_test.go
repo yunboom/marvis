@@ -49,7 +49,7 @@ func TestLocalStorage_Upload(t *testing.T) {
 func TestLocalStorage_Upload_WithBaseURL(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("LOCAL_UPLOAD_DIR", tmpDir)
-	t.Setenv("LOCAL_UPLOAD_BASE_URL", "http://localhost:8080")
+	t.Setenv("LOCAL_UPLOAD_BASE_URL", "http://localhost:13840")
 
 	store := NewLocalStorageFromEnv()
 	if store == nil {
@@ -67,7 +67,7 @@ func TestLocalStorage_Upload_WithBaseURL(t *testing.T) {
 	}
 
 	// When LOCAL_UPLOAD_BASE_URL is set, should return full URL
-	expectedLink := "http://localhost:8080/uploads/test-key.txt"
+	expectedLink := "http://localhost:13840/uploads/test-key.txt"
 	if link != expectedLink {
 		t.Errorf("link = %q, want %q", link, expectedLink)
 	}
@@ -146,7 +146,7 @@ func TestLocalStorage_KeyFromURL(t *testing.T) {
 func TestLocalStorage_KeyFromURL_WithBaseURL(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("LOCAL_UPLOAD_DIR", tmpDir)
-	t.Setenv("LOCAL_UPLOAD_BASE_URL", "http://localhost:8080")
+	t.Setenv("LOCAL_UPLOAD_BASE_URL", "http://localhost:13840")
 
 	store := NewLocalStorageFromEnv()
 	if store == nil {
@@ -158,8 +158,8 @@ func TestLocalStorage_KeyFromURL_WithBaseURL(t *testing.T) {
 		rawURL   string
 		expected string
 	}{
-		{"full URL format", "http://localhost:8080/uploads/abc123.png", "abc123.png"},
-		{"full URL with subdir", "http://localhost:8080/uploads/2024/01/image.jpg", "2024/01/image.jpg"},
+		{"full URL format", "http://localhost:13840/uploads/abc123.png", "abc123.png"},
+		{"full URL with subdir", "http://localhost:13840/uploads/2024/01/image.jpg", "2024/01/image.jpg"},
 		{"local URL format still works", "/uploads/abc123.png", "abc123.png"},
 	}
 

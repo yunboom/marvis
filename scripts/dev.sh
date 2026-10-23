@@ -58,7 +58,7 @@ echo "==> Running migrations..."
 # ---------- Start services ----------
 echo ""
 echo "✓ Ready. Starting services..."
-echo "  Backend:  http://localhost:${PORT:-8080}"
+echo "  Backend:  http://localhost:${PORT:-13840}"
 echo "  Frontend: http://localhost:${FRONTEND_PORT:-3000}"
 echo ""
 

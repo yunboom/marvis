@@ -26,8 +26,8 @@ describe("deriveProfileName", () => {
   });
 
   it("replaces the port colon so the name is path-safe", () => {
-    expect(deriveProfileName("http://localhost:8080")).toBe(
-      "desktop-localhost-8080",
+    expect(deriveProfileName("http://localhost:13840")).toBe(
+      "desktop-localhost-13840",
     );
   });
 

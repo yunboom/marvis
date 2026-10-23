@@ -258,7 +258,7 @@ const mockListSquads = vi.hoisted(() =>
 );
 vi.mock("@marvis/core/api", () => ({
   api: {
-    getBaseUrl: () => "http://127.0.0.1:8080",
+    getBaseUrl: () => "http://127.0.0.1:13840",
     listIssues: (...args: any[]) => mockListIssues(...args),
     listGroupedIssues: (...args: any[]) => mockListGroupedIssues(...args),
     listIssueTableGroups: (request: any) => mockListIssueTableGroups(request),

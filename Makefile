@@ -12,7 +12,7 @@ POSTGRES_DB ?= marvis
 POSTGRES_USER ?= marvis
 POSTGRES_PASSWORD ?= marvis
 POSTGRES_PORT ?= 5432
-PORT := $(or $(BACKEND_PORT),$(API_PORT),$(SERVER_PORT),$(PORT),8080)
+PORT := $(or $(BACKEND_PORT),$(API_PORT),$(SERVER_PORT),$(PORT),13840)
 ifeq ($(origin MARVIS_PUBLIC_URL), undefined)
 MARVIS_PUBLIC_URL := http://localhost:$(PORT)
 endif
