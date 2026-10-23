@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -323,6 +324,18 @@ func newMainHTTPServer(addr string, handler http.Handler) *http.Server {
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
+}
+
+// mainListenAddr joins MARVIS_LISTEN_HOST and PORT into the public listen
+// address. An empty host keeps the all-interfaces bind; standalone mode passes
+// 127.0.0.1 so the server is unreachable from the LAN while LAN access is off.
+func mainListenAddr(host, port string) string {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return ":" + port
+	}
+
+	return net.JoinHostPort(host, port)
 }
 
 func main() {
@@ -718,7 +731,7 @@ func main() {
 	// the scheduler's Run goroutine starts so the field write is race-free.
 	heartbeatScheduler.RecoveryNotifier = h
 
-	srv := newMainHTTPServer(":"+port, r)
+	srv := newMainHTTPServer(mainListenAddr(os.Getenv("MARVIS_LISTEN_HOST"), port), r)
 	profilingServer := profiling.NewServer()
 	maintenanceServer, maintenanceErr := maintenance.NewServer(os.Getenv("MAINTENANCE_PORT"), maintenance.NewService(pool, maintenance.StatusCategory{}))
 	if maintenanceErr != nil {

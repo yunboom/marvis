@@ -366,3 +366,20 @@ func TestNewMainHTTPServerTimeouts(t *testing.T) {
 		t.Errorf("WriteTimeout = %v, want 0", got)
 	}
 }
+
+// TestMainListenAddr pins how MARVIS_LISTEN_HOST and PORT combine: an empty
+// host keeps the historical all-interfaces bind, and IPv6 hosts get brackets.
+func TestMainListenAddr(t *testing.T) {
+	cases := []struct{ host, port, want string }{
+		{"", "13840", ":13840"},
+		{"  ", "13840", ":13840"},
+		{"127.0.0.1", "13840", "127.0.0.1:13840"},
+		{"::1", "13840", "[::1]:13840"},
+		{"0.0.0.0", "18080", "0.0.0.0:18080"},
+	}
+	for _, c := range cases {
+		if got := mainListenAddr(c.host, c.port); got != c.want {
+			t.Errorf("mainListenAddr(%q, %q) = %q, want %q", c.host, c.port, got, c.want)
+		}
+	}
+}
