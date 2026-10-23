@@ -37,6 +37,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/integrations/slack"
 	"github.com/yunboom/marvis/server/internal/integrations/telegram"
 	"github.com/yunboom/marvis/server/internal/integrations/wecom"
+	"github.com/yunboom/marvis/server/internal/landiscovery"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 	"github.com/yunboom/marvis/server/internal/middleware"
 	"github.com/yunboom/marvis/server/internal/realtime"
@@ -191,6 +192,25 @@ func parseTrustedProxies(raw string) []netip.Prefix {
 	return out
 }
 
+// effectiveTrustedProxies 返回实际生效的可信代理网段。
+// raw（MARVIS_TRUSTED_PROXIES）非空时按 parseTrustedProxies 解析，以运维配置为准；
+// 为空且开启了局域网广播时只信任回环地址：用户经 marvis.local 访问时，
+// 本机网页端把原始 Host 放进 X-Forwarded-Host 转发过来，WebSocket 的同源检查需要采纳它。
+func effectiveTrustedProxies(raw string, lanEnabled bool) []netip.Prefix {
+	if strings.TrimSpace(raw) != "" {
+		return parseTrustedProxies(raw)
+	}
+
+	if !lanEnabled {
+		return nil
+	}
+
+	return []netip.Prefix{
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{127, 0, 0, 1}), 32),
+		netip.PrefixFrom(netip.IPv6Loopback(), 128),
+	}
+}
+
 // normalizeServerVersion maps the unstamped "dev" default (main.go's
 // `version` var, unchanged when the binary wasn't built with
 // -X main.version=<tag>) to an empty string. handler.Config.ServerVersion
@@ -263,6 +283,11 @@ type RouterOptions struct {
 	// than read here, for the same fail-the-boot-in-main-only reason: the raw
 	// value is validated by parseLLMDisableThinking before the router exists.
 	LLMDisableThinking bool
+	// LAN 是局域网广播的配置，由 main 从环境变量读取：Name 经 /api/config 下发，
+	// Enabled 为 true 且未配置 MARVIS_TRUSTED_PROXIES 时信任本机转发的请求头。
+	LAN landiscovery.Config
+	// InstanceID 是本部署的实例 ID，经 /api/config 下发；读取失败时为空，响应里不带该字段。
+	InstanceID string
 }
 
 func buildChannelSupervisor(
@@ -435,7 +460,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		VCSIntegrationEnabled:          os.Getenv("MARVIS_VCS_INTEGRATION_ENABLED") == "true",
 		PublicURL:                      strings.TrimRight(strings.TrimSpace(os.Getenv("MARVIS_PUBLIC_URL")), "/"),
 		AppURL:                         appURLFromEnv(),
-		TrustedProxies:                 parseTrustedProxies(os.Getenv("MARVIS_TRUSTED_PROXIES")),
+		TrustedProxies:                 effectiveTrustedProxies(os.Getenv("MARVIS_TRUSTED_PROXIES"), opts.LAN.Enabled),
 		CloudURL:                       strings.TrimSpace(os.Getenv("MARVIS_CLOUD_URL")),
 		CloudTimeout:                   35 * time.Second,
 		AttachmentDownloadMode:         os.Getenv("ATTACHMENT_DOWNLOAD_MODE"),
@@ -448,6 +473,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		LLMMaxRetries:                  opts.LLMMaxRetries,
 		LLMDisableThinking:             opts.LLMDisableThinking,
 		ServerVersion:                  normalizeServerVersion(version),
+		ServerName:                     opts.LAN.Name,
+		InstanceID:                     opts.InstanceID,
 		GitExtraCACerts:                gitca.Load(slog.Default()),
 	}
 	h := handler.New(queries, pool, hub, bus, emailSvc, store, cfSigner, analyticsClient, signupConfig, daemonHub)

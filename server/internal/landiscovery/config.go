@@ -2,9 +2,9 @@
 package landiscovery
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 // 广播协议的固定取值。
@@ -45,6 +45,8 @@ const (
 	localSuffix = ".local"
 	// maxPort 是 TCP 端口号上限。
 	maxPort = 65535
+	// maxTXTStringBytes 是单条 TXT 记录（key=value）的字节上限，由 DNS-SD 规定。
+	maxTXTStringBytes = 255
 )
 
 // Config 是服务端广播的配置。
@@ -109,6 +111,7 @@ func trimLocal(name string) string {
 }
 
 // TXTRecords 返回 key=value 形式的 TXT 记录，顺序为 v、name、ver、id。
+// 单条记录不超过 255 字节，超出的值在字符边界截断。
 func TXTRecords(name, serverVersion, instanceID string) []string {
 	return []string{
 		txtRecord(TXTKeyVersion, ProtocolVersion),
@@ -118,7 +121,23 @@ func TXTRecords(name, serverVersion, instanceID string) []string {
 	}
 }
 
-// txtRecord 拼出一条 key=value 记录。
+// txtRecord 拼出一条 key=value 记录，值按 maxTXTStringBytes 截断。
 func txtRecord(key, value string) string {
-	return fmt.Sprintf("%s=%s", key, value)
+	prefix := key + "="
+
+	return prefix + truncateUTF8(value, maxTXTStringBytes-len(prefix))
+}
+
+// truncateUTF8 把 s 截到不超过 maxBytes 字节，并保证不切断多字节字符。
+func truncateUTF8(s string, maxBytes int) string {
+	if len(s) <= maxBytes {
+		return s
+	}
+
+	cut := maxBytes
+	for cut > 0 && !utf8.RuneStart(s[cut]) {
+		cut--
+	}
+
+	return s[:cut]
 }

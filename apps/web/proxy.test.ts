@@ -246,6 +246,48 @@ describe("proxy runtime upstream rewrites", () => {
     }
   });
 
+  it("forwards the client host to the backend so same-origin checks see marvis.local", () => {
+    const previous = process.env.REMOTE_API_URL;
+    process.env.REMOTE_API_URL = "http://localhost:8080";
+    try {
+      const res = proxy(
+        new NextRequest("http://marvis.local:3000/api/me", {
+          headers: { host: "marvis.local:3000" },
+        }),
+      );
+
+      expect(res.headers.get("x-middleware-rewrite")).toBe(
+        "http://localhost:8080/api/me",
+      );
+      expect(res.headers.get("x-middleware-request-x-forwarded-host")).toBe(
+        "marvis.local:3000",
+      );
+    } finally {
+      restoreEnv("REMOTE_API_URL", previous);
+    }
+  });
+
+  it("keeps an x-forwarded-host set by an upstream proxy", () => {
+    const previous = process.env.REMOTE_API_URL;
+    process.env.REMOTE_API_URL = "http://localhost:8080";
+    try {
+      const res = proxy(
+        new NextRequest("http://127.0.0.1:3000/ws", {
+          headers: {
+            host: "127.0.0.1:3000",
+            "x-forwarded-host": "app.marvis.test",
+          },
+        }),
+      );
+
+      expect(res.headers.get("x-middleware-request-x-forwarded-host")).toBe(
+        "app.marvis.test",
+      );
+    } finally {
+      restoreEnv("REMOTE_API_URL", previous);
+    }
+  });
+
   it("does not rewrite frontend auth callback pages", () => {
     const previous = process.env.REMOTE_API_URL;
     process.env.REMOTE_API_URL = "http://backend:8080";

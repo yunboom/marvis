@@ -52,7 +52,15 @@ export function proxy(req: NextRequest) {
   if (runtimeDestination) {
     const url = new URL(runtimeDestination);
     url.search = req.nextUrl.search;
-    return NextResponse.rewrite(url);
+    // 改写后后端只能看到自己的地址，看不到浏览器访问的 Host。
+    // 带上 x-forwarded-host，后端的同源检查（WebSocket Origin）才认 marvis.local 这类局域网名字；
+    // 上游代理已经设置过的值保持不变。
+    const headers = new Headers(req.headers);
+    if (!headers.has("x-forwarded-host")) {
+      const host = req.headers.get("host");
+      if (host) headers.set("x-forwarded-host", host);
+    }
+    return NextResponse.rewrite(url, { request: { headers } });
   }
 
   const hasSession = req.cookies.has("marvis_logged_in");

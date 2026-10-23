@@ -24,6 +24,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/events"
 	"github.com/yunboom/marvis/server/internal/handler"
 	"github.com/yunboom/marvis/server/internal/integrations/wecom"
+	"github.com/yunboom/marvis/server/internal/landiscovery"
 	"github.com/yunboom/marvis/server/internal/logger"
 	"github.com/yunboom/marvis/server/internal/maintenance"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
@@ -679,6 +680,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 局域网广播的配置和实例 ID：/api/config 对外核实用，与是否广播无关，所以总是读取。
+	lanConfig := landiscovery.ConfigFromEnv(os.Getenv, os.Hostname)
+	instanceID := loadLANInstanceID(context.Background(), pool)
+
 	r, h := NewRouterWithOptions(pool, hub, bus, analyticsClient, storeRedis, RouterOptions{
 		HTTPMetrics:         httpMetrics,
 		BusinessMetrics:     businessMetrics,
@@ -693,6 +698,8 @@ func main() {
 		HeartbeatScheduler:  heartbeatScheduler,
 		LLMMaxRetries:       llmMaxRetries,
 		LLMDisableThinking:  llmDisableThinking,
+		LAN:                 lanConfig,
+		InstanceID:          instanceID,
 	})
 	var replicaQueries *db.Queries
 	if replicaPool != nil {
@@ -884,6 +891,9 @@ func main() {
 		}
 	}()
 
+	// 监听已启动，开始局域网广播；失败只记警告，不影响服务端。
+	lan := startLANAdvertising(lanConfig, normalizeServerVersion(version), instanceID)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
@@ -893,6 +903,9 @@ func main() {
 	signal.Stop(quit)
 
 	slog.Info("shutting down server")
+
+	// 先撤销局域网广播，再关闭 HTTP 服务，让其他设备尽快不再发现这台服务器。
+	lan.Stop()
 
 	// The order below is the contract, and shutdown.go is where it is stated
 	// and pinned. The one that is not self-evident: the WeCom dispatcher must

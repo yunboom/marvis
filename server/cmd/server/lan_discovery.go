@@ -1,0 +1,76 @@
+package main
+
+import (
+	"context"
+	"log/slog"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/yunboom/marvis/server/internal/landiscovery"
+)
+
+// lanInstanceIDTimeout 是读取实例 ID 的超时，数据库刚就绪，正常几毫秒即可返回。
+const lanInstanceIDTimeout = 5 * time.Second
+
+// loadLANInstanceID 读取本部署的实例 ID。
+// 读取失败只记警告并返回空串：/api/config 不下发 instance_id，也不广播，服务端照常启动。
+func loadLANInstanceID(ctx context.Context, pool *pgxpool.Pool) string {
+	ctx, cancel := context.WithTimeout(ctx, lanInstanceIDTimeout)
+	defer cancel()
+
+	instanceID, err := landiscovery.LoadInstanceID(ctx, pool)
+	if err != nil {
+		slog.Warn("lan discovery: unable to load instance id", "error", err)
+
+		return ""
+	}
+
+	return instanceID
+}
+
+// lanAdvertising 管理在后台启动的局域网广播。
+// 启动阶段要探测局域网内已占用的主机名，耗时数秒，放在后台以免拖慢服务端启动。
+type lanAdvertising struct {
+	cancel context.CancelFunc
+	done   chan struct{}
+	// advertiser 在 done 关闭之后才能读取，启动失败时为 nil。
+	advertiser *landiscovery.Advertiser
+}
+
+// startLANAdvertising 在后台开始广播。关闭广播或没有实例 ID 时返回 nil，
+// 启动失败只记警告，不影响服务端。
+func startLANAdvertising(cfg landiscovery.Config, serverVersion, instanceID string) *lanAdvertising {
+	if !cfg.Enabled || instanceID == "" {
+		return nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	lan := &lanAdvertising{cancel: cancel, done: make(chan struct{})}
+
+	go func() {
+		defer close(lan.done)
+
+		advertiser, err := landiscovery.Start(ctx, cfg, serverVersion, instanceID)
+		if err != nil {
+			slog.Warn("lan discovery unavailable", "error", err)
+
+			return
+		}
+
+		lan.advertiser = advertiser
+	}()
+
+	return lan
+}
+
+// Stop 中止仍在进行的启动并撤销广播，lan 为 nil 时什么也不做。
+func (lan *lanAdvertising) Stop() {
+	if lan == nil {
+		return
+	}
+
+	lan.cancel()
+	<-lan.done
+	lan.advertiser.Stop()
+}

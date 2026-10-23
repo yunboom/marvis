@@ -105,6 +105,11 @@ type AppConfig struct {
 	// which is continuously deployed so its users can't act on the version —
 	// and empty for dev builds that aren't stamped via -X main.version.
 	ServerVersion string `json:"server_version,omitempty"`
+
+	// ServerName 和 InstanceID 让局域网内发现的候选服务器能被核实：
+	// 客户端据此确认这是 Marvis、是哪一台。响应里没有 instance_id 的服务端视为版本过旧。
+	ServerName string `json:"server_name,omitempty"`
+	InstanceID string `json:"instance_id,omitempty"`
 }
 
 // GetConfig is mounted on the public (unauthenticated) route group because
@@ -133,6 +138,8 @@ func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
 	config.CdnSigned = h.CFSigner != nil
 	config.DaemonServerURL, config.DaemonAppURL = daemonSetupURLsFromEnv()
 	config.VCSIntegrationAvailable = h.cfg.VCSIntegrationEnabled
+	config.ServerName = h.cfg.ServerName
+	config.InstanceID = h.cfg.InstanceID
 	config.FeatureFlags = featureflags.EvaluateFrontendPublicFlags(r.Context(), h.FeatureFlags)
 	// Only surface the build version on self-hosted deployments. The managed
 	// cloud is continuously deployed and its users can't choose the build, so

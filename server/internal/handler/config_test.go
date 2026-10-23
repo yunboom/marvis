@@ -114,6 +114,39 @@ func TestGetConfigIncludesRuntimeAuthConfig(t *testing.T) {
 	}
 }
 
+func TestGetConfigIncludesLANIdentity(t *testing.T) {
+	origCfg := testHandler.cfg
+	t.Cleanup(func() { testHandler.cfg = origCfg })
+
+	fetch := func() map[string]any {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+		var body map[string]any
+		testutil.Call(t, testHandler.GetConfig, req).Want(http.StatusOK).JSON(&body)
+		return body
+	}
+
+	testHandler.cfg.ServerName = "设计部 Marvis"
+	testHandler.cfg.InstanceID = "7f3a0c52-9d1e-4b6a-8f20-3c5d7e9a1b44"
+	body := fetch()
+	if body["server_name"] != "设计部 Marvis" {
+		t.Fatalf("server_name = %v, want 设计部 Marvis", body["server_name"])
+	}
+	if body["instance_id"] != "7f3a0c52-9d1e-4b6a-8f20-3c5d7e9a1b44" {
+		t.Fatalf("instance_id = %v, want the configured instance id", body["instance_id"])
+	}
+
+	// 未配置时两个字段都不出现，旧客户端看到的响应形状不变。
+	testHandler.cfg.ServerName = ""
+	testHandler.cfg.InstanceID = ""
+	body = fetch()
+	for _, key := range []string{"server_name", "instance_id"} {
+		if _, ok := body[key]; ok {
+			t.Fatalf("%s must be omitted when empty", key)
+		}
+	}
+}
+
 func TestGetConfigLarkLoginAppID(t *testing.T) {
 	tests := []struct {
 		name   string

@@ -63,6 +63,36 @@ func TestParseTrustedProxies_PrefixesAreUsable(t *testing.T) {
 	}
 }
 
+func TestEffectiveTrustedProxies(t *testing.T) {
+	t.Parallel()
+
+	loopback := []string{"127.0.0.1/32", "::1/128"}
+	cases := []struct {
+		name       string
+		raw        string
+		lanEnabled bool
+		want       []string
+	}{
+		{"empty and LAN off trusts nothing", "", false, nil},
+		{"empty and LAN on trusts loopback", "", true, loopback},
+		{"whitespace only and LAN on trusts loopback", "  \t ", true, loopback},
+		{"explicit list wins over LAN default", "10.0.0.0/8", true, []string{"10.0.0.0/8"}},
+		{"explicit list is used when LAN is off", "10.0.0.0/8", false, []string{"10.0.0.0/8"}},
+		{"all-invalid list is not replaced by the LAN default", "garbage", true, nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var got []string
+			for _, p := range effectiveTrustedProxies(tc.raw, tc.lanEnabled) {
+				got = append(got, p.String())
+			}
+			if !sliceEq(got, tc.want) {
+				t.Fatalf("effectiveTrustedProxies(%q, %v) = %v, want %v", tc.raw, tc.lanEnabled, got, tc.want)
+			}
+		})
+	}
+}
+
 func sliceEq(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

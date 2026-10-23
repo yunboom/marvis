@@ -162,6 +162,12 @@ type Config struct {
 	// Surfaced through /api/config so self-hosted operators can confirm which
 	// server build is deployed. Empty in dev builds.
 	ServerVersion string
+	// ServerName 是展示给局域网用户的服务器名称，对应 MARVIS_LAN_NAME。
+	// 经 /api/config 下发，客户端用它核实"这是哪一台服务器"；空时不下发。
+	ServerName string
+	// InstanceID 是本部署的实例 ID（instance_telemetry_state.instance_id）。
+	// 经 /api/config 下发，客户端用它判断服务器版本是否支持局域网发现并去重；空时不下发。
+	InstanceID string
 	// GitExtraCACerts is the PEM of the private CAs the operator added to the
 	// backend's trust store through SSL_CERT_DIR (see internal/gitca). It is
 	// handed to daemons with the workspace repos so their git can reach a
