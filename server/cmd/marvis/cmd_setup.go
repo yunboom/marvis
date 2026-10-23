@@ -58,6 +58,11 @@ var setupSelfHostCmd = &cobra.Command{
 By default, connects to http://localhost:13840 (backend) and http://localhost:3000 (frontend).
 Use --server-url and --app-url to specify a custom server (e.g. an on-premise deployment).
 
+When run in a terminal without --server-url, MARVIS_SERVER_URL or an existing
+server_url, it looks for Marvis servers on the local network and lets you pick
+one. The server Marvis Desktop is using is listed first. The web app address is
+read from the selected server; without one, log in with 'marvis login --token'.
+
 If you run this command from a different machine than the server, also pass
 --callback-host <host-or-ip-the-browser-can-reach-back-to-this-machine-on> so
 the OAuth login flow can return the token to the CLI.
@@ -201,7 +206,26 @@ func runSetupSelfHost(cmd *cobra.Command, args []string) error {
 	appURL := resolveSelfHostAppURL(cmd, existing)
 	frontendPort, _ := cmd.Flags().GetInt("frontend-port")
 
-	if appURL == "" {
+	// 在终端里没有指定服务器时，先在局域网内查找并让用户选择，
+	// 网页端地址取所选服务器 /api/config 里的 daemon_app_url（没有则为空）。
+	// --app-url / MARVIS_APP_URL 仍然优先。
+	discovered := false
+	if shouldDiscoverSelfHostServer(cmd, userProvidedServerURL, stdinIsTerminal()) {
+		picked, err := discoverSelfHostServer(context.Background(), newDiscoverDeps(), os.Stdin, os.Stderr)
+		if err != nil {
+			return err
+		}
+
+		discovered = true
+		serverURL = picked.URL
+
+		appURL = cli.FlagOrEnv(cmd, "app-url", "MARVIS_APP_URL", "")
+		if appURL == "" {
+			appURL = picked.AppURL
+		}
+	}
+
+	if appURL == "" && !discovered {
 		if userProvidedServerURL && !serverHostIsLocal(serverURL) {
 			// We can't guess the frontend URL for a remote server: api.x.co
 			// and app.x.co, or an https-fronted deployment, would silently
@@ -244,8 +268,18 @@ func runSetupSelfHost(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintln(os.Stderr, "Configured for self-hosted server.")
 	fmt.Fprintf(os.Stderr, "  server_url: %s\n", serverURL)
-	fmt.Fprintf(os.Stderr, "  app_url:    %s\n", appURL)
+	if appURL != "" {
+		fmt.Fprintf(os.Stderr, "  app_url:    %s\n", appURL)
+	}
 	printConfigLocation(profile)
+
+	// 选中的服务器没有网页端时无法走浏览器登录，提示改用令牌登录。
+	if appURL == "" {
+		fmt.Fprintln(os.Stderr, "")
+		printNoWebAppGuidance(os.Stderr)
+
+		return nil
+	}
 
 	// Authenticate.
 	fmt.Fprintln(os.Stderr, "")
