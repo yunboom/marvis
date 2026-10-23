@@ -367,7 +367,19 @@
     "empty_grouping": "일치하는 태스크가 없습니다",
     "no_value": "값 없음",
     "ordered_by": "{{field}} 기준으로 정렬된 보드",
-    "manual_reorder_hint": "열 안의 순서를 바꾸려면 정렬을 '수동'으로 전환하세요."
+    "manual_reorder_hint": "열 안의 순서를 바꾸려면 정렬을 '수동'으로 전환하세요.",
+    "status_column": {
+      "not_started": "시작 전",
+      "started": "시작됨",
+      "needs_attention": "확인 필요",
+      "ended": "종료"
+    },
+    "lane_more_other": "{{count}}개 더 보기",
+    "lane_collapse": "접기",
+    "lane_focus": "{{status}}에 집중",
+    "focusing": "집중 중",
+    "exit_focus": "집중 종료",
+    "below_fold_other": "아래에 {{count}}개 더"
   },
   "peek": {
     "panel_label": "태스크 미리보기",
@@ -664,6 +676,7 @@
     "hover_header_queued_other": "대기 중인 에이전트 {{count}}개",
     "status_running": "작업 중",
     "status_queued": "대기 중",
+    "status_working": "작업 중",
     "empty_hover": "현재 작업 중인 에이전트가 없습니다",
     "unknown_hover": "작업 중인 에이전트: 아직 불러오지 않았습니다",
     "filter_active_label": "에이전트가 작업 중인 태스크만 보는 중",
@@ -823,7 +836,8 @@
   },
   "card": {
     "update_failed": "태스크를 업데이트하지 못했습니다",
-    "updated_ago": "{{time}} 수정됨"
+    "updated_ago": "{{time}} 수정됨",
+    "overdue_days_other": "{{count}}일 지남"
   },
   "actions": {
     "rename_issue": "태스크 이름 변경",

@@ -4,6 +4,7 @@ import { cloneElement, useCallback, useEffect, useMemo, useRef, useState } from 
 import {
   CalendarDays,
   ChartGantt,
+  Check,
   ChevronDown,
   CircleDashed,
   CircleDot,
@@ -1893,6 +1894,10 @@ export function IssueFilterMenu({
   );
 }
 
+// Card-property toggle chip: ink fill with a check when on, muted fill when off.
+const CARD_PROPERTY_CHIP_CLASS =
+  "h-6 gap-1 rounded-full bg-muted px-2.5 text-caption text-muted-foreground hover:bg-muted hover:text-foreground aria-pressed:bg-foreground aria-pressed:text-background aria-pressed:hover:bg-foreground/85 aria-pressed:hover:text-background";
+
 export function IssueDisplayControls({
   scopedIssues,
   hideViewToggle = false,
@@ -2418,18 +2423,18 @@ export function IssueDisplayControls({
                   <span className="text-caption font-medium text-muted-foreground">
                     {t(($) => $.display.card_properties_section)}
                   </span>
-                  {/* Chip toggles (pressed = shown on cards). Unpressed chips
-                      dim so the active set reads at a glance. */}
+                  {/* Chip toggles (pressed = shown on cards): ink fill plus a
+                      check when on, muted fill when off. */}
                   <div className="mt-2 flex flex-wrap gap-1">
                     {availableCardPropertyOptions.map((opt) => (
                       <Toggle
                         key={opt.key}
                         size="sm"
-                        variant="outline"
                         pressed={cardProperties[opt.key]}
                         onPressedChange={() => act.toggleCardProperty(opt.key)}
-                        className="h-6 rounded-md px-2 text-caption text-muted-foreground hover:bg-muted/60 aria-pressed:border-transparent aria-pressed:bg-accent aria-pressed:text-accent-foreground aria-pressed:hover:bg-accent/80"
+                        className={CARD_PROPERTY_CHIP_CLASS}
                       >
+                        <Check aria-hidden="true" className="hidden size-3 group-aria-pressed/toggle:block" />
                         {t(($) => $.display[CARD_PROPERTY_LABEL_KEY[opt.key]])}
                       </Toggle>
                     ))}
@@ -2437,11 +2442,11 @@ export function IssueDisplayControls({
                       <Toggle
                         key={property.id}
                         size="sm"
-                        variant="outline"
                         pressed={cardPropertyIds.includes(property.id)}
                         onPressedChange={() => act.toggleCardPropertyId(property.id)}
-                        className="h-6 max-w-40 rounded-md px-2 text-caption text-muted-foreground hover:bg-muted/60 aria-pressed:border-transparent aria-pressed:bg-accent aria-pressed:text-accent-foreground aria-pressed:hover:bg-accent/80"
+                        className={cn(CARD_PROPERTY_CHIP_CLASS, "max-w-40")}
                       >
+                        <Check aria-hidden="true" className="hidden size-3 group-aria-pressed/toggle:block" />
                         <span className="truncate">{property.name}</span>
                       </Toggle>
                     ))}

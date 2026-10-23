@@ -1,6 +1,7 @@
 "use client";
 
 import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
+import { BreathingDot } from "@marvis/ui/components/common/breathing-dot";
 import { Button } from "@marvis/ui/components/ui/button";
 import {
   HoverCard,
@@ -9,7 +10,6 @@ import {
 } from "@marvis/ui/components/ui/hover-card";
 import { useActorName } from "@marvis/core/workspace/hooks";
 import type { WorkingAgentSummary } from "@marvis/core/types";
-import { AgentAvatarStack } from "../../agents/components/agent-avatar-stack";
 import { useT } from "../../i18n";
 
 interface WorkspaceAgentWorkingChipProps {
@@ -32,30 +32,18 @@ export function chipActivity(
 }
 
 /**
- * Which colour tier the chip wears, and the only classes allowed alongside
- * it. Activity uses a tint, the active filter uses the filled brand tier,
- * and an idle surface stays neutral.
- *
- * The muted text on the neutral tier is what reads as "nothing is happening
- * here", so an unresolved projection gets the neutral tier WITHOUT it: we do
- * not yet know whether the surface is idle, and dimming it would claim so.
+ * Classes for the chip's ghost button. The chip stays neutral in every state:
+ * activity is carried by the breathing dot rather than a colour tier, and the
+ * active filter reads as a selected fill with foreground text.
  */
-export function chipAppearance(
-  value: boolean,
-  activity: ChipActivity,
-): { variant: "brand" | "brandSubtle" | "outline"; className: string } {
-  // 32px 药丸、13px 中粗；有头像时左侧收窄贴住头像
+export function chipAppearance(value: boolean): string {
+  // 32px pill, 13px medium
   const layout = "h-8 gap-1.5 rounded-full px-3 text-label font-medium";
-  const withAvatars = `${layout} pl-1.5`;
-  if (value) return { variant: "brand", className: activity === "some" ? withAvatars : layout };
-  if (activity === "some") {
-    return {
-      variant: "brandSubtle",
-      className: `${withAvatars} border-transparent text-brand hover:text-brand aria-expanded:text-brand`,
-    };
+  if (value) {
+    return `${layout} bg-surface-selected text-foreground hover:bg-surface-selected hover:text-foreground aria-expanded:bg-surface-selected`;
   }
-  if (activity === "unknown") return { variant: "outline", className: layout };
-  return { variant: "outline", className: `${layout} text-muted-foreground` };
+
+  return `${layout} text-muted-foreground`;
 }
 
 /**
@@ -140,7 +128,7 @@ export function WorkingAgentsHoverContent({
  * advertise agents working nowhere near that project and open an empty list.
  *
  * `agents === undefined` means the projection has not resolved. Every surface of
- * the chip then stays indeterminate — label, compact number, colour tier and
+ * the chip then stays indeterminate — label, compact number, activity dot and
  * hover body alike — because "0" and "not known yet" are different claims and
  * the reader cannot tell them apart once one of them is rendered as the other.
  *
@@ -154,27 +142,28 @@ export function WorkspaceAgentWorkingChip({
 }: WorkspaceAgentWorkingChipProps) {
   const { t } = useT("issues");
   const activity = chipActivity(agents);
-  const agentIds = agents?.map((agent) => agent.id) ?? [];
+  const agentCount = agents?.length ?? 0;
   const label =
     activity === "unknown"
       ? t(($) => $.agent_activity.chip_agents_working_unknown)
-      : t(($) => $.agent_activity.chip_agents_working, { count: agentIds.length });
-  const appearance = chipAppearance(value, activity);
+      : t(($) => $.agent_activity.chip_agents_working, { count: agentCount });
 
+  // The dot is the only activity cue: breathing while agents run, static grey
+  // for a known zero, absent while the projection is unresolved.
   const trigger = (
     <Button
-      variant={appearance.variant}
+      variant="ghost"
       size="sm"
-      className={appearance.className}
+      className={chipAppearance(value)}
       onClick={onToggle}
       aria-pressed={value}
       aria-label={label}
     >
-      {activity === "some" && (
-        <AgentAvatarStack agentIds={agentIds} size="sm" max={3} />
+      {activity !== "unknown" && (
+        <BreathingDot active={activity === "some"} data-testid="agent-working-dot" />
       )}
       <span className="tabular-nums md:hidden">
-        {activity === "unknown" ? "—" : agentIds.length}
+        {activity === "unknown" ? "—" : agentCount}
       </span>
       <span className="hidden tabular-nums md:inline">{label}</span>
     </Button>

@@ -371,7 +371,21 @@
     "empty_grouping": "Aucune tâche correspondante",
     "no_value": "Aucune valeur",
     "ordered_by": "Tableau trié par {{field}}",
-    "manual_reorder_hint": "Passez au tri Manuel pour réorganiser les tâches dans une colonne."
+    "manual_reorder_hint": "Passez au tri Manuel pour réorganiser les tâches dans une colonne.",
+    "status_column": {
+      "not_started": "Non commencé",
+      "started": "Commencé",
+      "needs_attention": "À traiter",
+      "ended": "Terminé"
+    },
+    "lane_more_one": "{{count}} de plus",
+    "lane_more_other": "{{count}} de plus",
+    "lane_collapse": "Réduire",
+    "lane_focus": "Se concentrer sur {{status}}",
+    "focusing": "Mode focus",
+    "exit_focus": "Quitter le focus",
+    "below_fold_one": "{{count}} de plus en dessous",
+    "below_fold_other": "{{count}} de plus en dessous"
   },
   "peek": {
     "panel_label": "Aperçu de la tâche",
@@ -688,6 +702,7 @@
     "hover_header_queued_other": "{{count}} agents en attente",
     "status_running": "Au travail",
     "status_queued": "En file d'attente",
+    "status_working": "Au travail",
     "empty_hover": "Aucun agent au travail pour l'instant",
     "unknown_hover": "Agents au travail : pas encore chargé",
     "filter_active_label": "Affichage des tâches avec des agents au travail",
@@ -865,7 +880,9 @@
   },
   "card": {
     "update_failed": "Échec de la mise à jour de la tâche",
-    "updated_ago": "Mis à jour {{time}}"
+    "updated_ago": "Mis à jour {{time}}",
+    "overdue_days_one": "En retard de {{count}} jour",
+    "overdue_days_other": "En retard de {{count}} jours"
   },
   "actions": {
     "rename_issue": "Renommer la tâche",
