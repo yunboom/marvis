@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FAFAFA"/>
-      <stop offset="1" stop-color="#EDEDED"/>
+      <stop offset="0" stop-color="#E2E2E2"/>
+      <stop offset="1" stop-color="#D0D0D0"/>
     </linearGradient>
     <pattern id="stripes" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(24)">
-      <rect width="22" height="22" fill="#FFFFFF"/>
-      <rect width="2" height="22" fill="#B5B5B5"/>
+      <rect width="22" height="22" fill="#F2F2F2"/>
+      <rect width="2.5" height="22" fill="#7E8696"/>
     </pattern>
     <linearGradient id="lens" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#2A2A2A"/>
@@ -29,26 +29,26 @@
 
   <!-- Wall + curtain (same layout as the original photo) -->
   <rect width="512" height="512" fill="url(#wall)"/>
-  <rect width="116" height="512" fill="#E2E2E2"/>
-  <g stroke="#CFCFCF" stroke-width="3">
+  <rect width="116" height="512" fill="#C2C2C2"/>
+  <g stroke="#B0B0B0" stroke-width="3">
     <path d="M20 0V512M86 0V512M104 0V512"/>
   </g>
   <rect x="48" y="0" width="14" height="512" fill="#111111"/>
   <!-- Subtle digital grid on the wall -->
-  <g stroke="#000000" stroke-opacity="0.05" stroke-width="1">
+  <g stroke="#000000" stroke-opacity="0.06" stroke-width="1">
     <path d="M116 64H512M116 128H512M116 192H512M116 256H512M116 320H512M116 384H512M116 448H512"/>
     <path d="M160 0V512M224 0V512M288 0V512M352 0V512M416 0V512M480 0V512"/>
   </g>
 
   <!-- Wall lettering, echoing the photo, with a cyan "digital" ghost -->
   <g font-family="'DIN Condensed','Bebas Neue','Arial Narrow','Helvetica Neue',Arial,sans-serif" font-weight="700" font-size="84" lengthAdjust="spacingAndGlyphs">
-    <g fill="#F0F0F0" transform="translate(4 -3)">
+    <g fill="#EDEDED" transform="translate(3 -2)">
       <text x="120" y="98" textLength="410" lengthAdjust="spacingAndGlyphs">YOU DO NOT</text>
       <text x="120" y="190" textLength="240" lengthAdjust="spacingAndGlyphs">TYPE A</text>
       <text x="228" y="262" textLength="300" lengthAdjust="spacingAndGlyphs">PROMPT</text>
       <text x="300" y="392" textLength="230" lengthAdjust="spacingAndGlyphs">MAKE IT</text>
     </g>
-    <g fill="#D2D2D2">
+    <g fill="#A6A6A6">
       <text x="120" y="98" textLength="410" lengthAdjust="spacingAndGlyphs">YOU DO NOT</text>
       <text x="120" y="190" textLength="240" lengthAdjust="spacingAndGlyphs">TYPE A</text>
       <text x="228" y="262" textLength="300" lengthAdjust="spacingAndGlyphs">PROMPT</text>
@@ -102,7 +102,7 @@
   <g filter="url(#shadow)">
     <path d="M152 126 C128 140 112 176 104 216 C92 276 62 330 42 380 C30 420 34 470 48 512 L284 512 L296 462 L330 352 L354 332 C322 322 292 318 266 318 C236 316 210 304 192 284 C170 262 160 238 158 210 C156 180 160 150 170 132 Z" fill="url(#stripes)"/>
     <!-- knot flap -->
-    <path d="M300 320 L356 330 L334 354 Z" fill="#EDEDED"/>
+    <path d="M300 320 L356 330 L334 354 Z" fill="#E6E6E6"/>
   </g>
   <!-- Smart sunglasses (same shape, slight tilt like the photo) -->
   <g transform="rotate(3 256 220)">
@@ -139,7 +139,7 @@
   </g>
 
   <!-- Big AI chip -->
-  <g transform="translate(428 440)" filter="url(#glow)">
+  <g transform="translate(384 392) scale(0.8)" filter="url(#glow)">
     <g stroke="#111111" stroke-width="6" stroke-linecap="round">
       <path d="M-26 -66 V-52 M0 -66 V-52 M26 -66 V-52 M-26 52 V66 M0 52 V66 M26 52 V66"/>
       <path d="M-66 -26 H-52 M-66 0 H-52 M-66 26 H-52 M52 -26 H66 M52 0 H66 M52 26 H66"/>
