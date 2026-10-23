@@ -26,9 +26,15 @@ import { matchLocale } from "@marvis/core/i18n";
 import { useConfigStore } from "@marvis/core/config";
 import { workspaceUrlHost } from "@marvis/core/workspace/workspace-url";
 import { isReservedSlug } from "@marvis/core/paths";
+import {
+  saveQuestionnaire,
+  type Role,
+  type UseCase,
+} from "@marvis/core/onboarding";
 import { useLogout } from "../auth";
 import { DragStrip } from "../platform";
 import { useT } from "../i18n";
+import { AboutYouSummary, DEFAULT_ROLE, DEFAULT_USE_CASES } from "./about-you";
 import {
   WORKSPACE_SLUG_REGEX,
   isWorkspaceSlugConflict,
@@ -40,6 +46,12 @@ import {
 const CARD_CLASS =
   "w-full max-w-[440px] gap-0 rounded-2xl border-0 p-10 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border dark:shadow-none";
 const FIELD_INPUT_CLASS = "h-12 px-4";
+// Filled field holding a borderless input beside a muted affix (URL host,
+// sample issue number).
+const AFFIX_FIELD =
+  "flex h-12 items-center rounded-lg bg-field px-4 transition-colors hover:bg-field-hover focus-within:bg-field-hover in-data-[invalid=true]:shadow-[inset_0_0_0_1px_var(--color-destructive)]";
+const AFFIX_INPUT =
+  "h-full rounded-none border-0 bg-transparent px-0 font-mono shadow-none hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 md:text-body";
 
 function issuePrefix(slug: string): string {
   // Mirrors the server's default prefix derivation
@@ -64,14 +76,18 @@ function normalizePrefix(raw: string): string {
  * they have no workspace yet, or from the workspace switcher.
  *
  * `onCancel` is only passed when the user has a workspace to return to; a user
- * with none gets Log out as the way out instead.
+ * with none gets Log out as the way out instead. `askAboutYou` adds the role
+ * and use-case summary during first-run onboarding; the answers are per
+ * member, so creating another workspace does not ask again.
  */
 export function NewWorkspacePage({
   onCreated,
   onCancel,
+  askAboutYou = false,
 }: {
   onCreated: (workspace: Workspace) => void;
   onCancel?: () => void;
+  askAboutYou?: boolean;
 }) {
   const { t } = useT("workspace");
   const logout = useLogout();
@@ -115,6 +131,7 @@ export function NewWorkspacePage({
           onCreated={onCreated}
           onCancel={onCancel}
           onLogout={logout}
+          askAboutYou={askAboutYou}
         />
       </CardContent>
     </PageShell>
@@ -139,10 +156,12 @@ function CreateWorkspaceForm({
   onCreated,
   onCancel,
   onLogout,
+  askAboutYou,
 }: {
   onCreated: (workspace: Workspace) => void;
   onCancel?: () => void;
   onLogout: () => void;
+  askAboutYou: boolean;
 }) {
   const { t, i18n } = useT("workspace");
   const locale = matchLocale([i18n.resolvedLanguage ?? i18n.language]);
@@ -156,6 +175,8 @@ function CreateWorkspaceForm({
   const slugTouched = useRef(false);
   const [prefix, setPrefix] = useState("");
   const prefixTouched = useRef(false);
+  const [role, setRole] = useState<Role>(DEFAULT_ROLE);
+  const [useCases, setUseCases] = useState<UseCase[]>(DEFAULT_USE_CASES);
 
   const slugError =
     slug.length > 0 && !WORKSPACE_SLUG_REGEX.test(slug)
@@ -204,6 +225,20 @@ function CreateWorkspaceForm({
 
   const handleCreate = () => {
     if (!canCreate || isCreating) return;
+
+    // Fire-and-forget: the answers only shape the opening chat, which starts
+    // after the runtime step, so a slow save never holds up the workspace.
+    if (askAboutYou) {
+      void saveQuestionnaire({
+        role,
+        role_skipped: false,
+        use_case: useCases,
+        use_case_skipped: useCases.length === 0,
+        version: 2,
+      }).catch((err) => {
+        if (err instanceof Error) toast.error(err.message);
+      });
+    }
 
     createWorkspace.mutate(
       {
@@ -266,59 +301,79 @@ function CreateWorkspaceForm({
           </div>
         </Field>
 
-        <Field data-invalid={slugError ? true : undefined}>
-          <FieldLabel htmlFor="new-ws-slug">
-            {t(($) => $.create_page.url_label)}
-          </FieldLabel>
-          <div className="flex h-12 items-center rounded-lg bg-field px-4 transition-colors hover:bg-field-hover focus-within:bg-field-hover in-data-[invalid=true]:shadow-[inset_0_0_0_1px_var(--color-destructive)]">
-            <span className="select-none font-mono text-body text-muted-foreground">
-              {`${urlHost}/`}
-            </span>
-            <Input
-              id="new-ws-slug"
-              type="text"
-              value={slug}
-              disabled={isCreating}
-              onChange={(e) => handleSlugChange(e.target.value)}
-              onKeyDown={submitOnEnter}
-              placeholder={t(($) => $.create_page.slug_placeholder)}
-              className="h-full rounded-none border-0 bg-transparent px-0 font-mono shadow-none hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 md:text-body"
-            />
+        {/* The prefix sits left of the URL it is derived from; its example
+            issue number rides inside the field the way the host does in the
+            URL, so neither needs a line of its own. */}
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-2">
+            <Field>
+              <FieldLabel htmlFor="new-ws-prefix">
+                {t(($) => $.create_page.issue_prefix_label)}
+              </FieldLabel>
+              <div className={AFFIX_FIELD}>
+                <Input
+                  id="new-ws-prefix"
+                  type="text"
+                  value={prefix}
+                  disabled={isCreating}
+                  onChange={(e) => handlePrefixChange(e.target.value)}
+                  onKeyDown={submitOnEnter}
+                  placeholder={derivedPrefix}
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  maxLength={10}
+                  aria-describedby="new-ws-prefix-sample"
+                  className={cn(AFFIX_INPUT, "min-w-[1ch] max-w-full flex-none field-sizing-content uppercase")}
+                />
+                {effectivePrefix ? (
+                  <span
+                    id="new-ws-prefix-sample"
+                    className="select-none font-mono text-body text-muted-foreground"
+                  >
+                    -123
+                  </span>
+                ) : null}
+              </div>
+            </Field>
+
+            <Field data-invalid={slugError ? true : undefined}>
+              <FieldLabel htmlFor="new-ws-slug">
+                {t(($) => $.create_page.url_label)}
+              </FieldLabel>
+              <div className={AFFIX_FIELD}>
+                <span className="select-none font-mono text-body text-muted-foreground">
+                  {`${urlHost}/`}
+                </span>
+                <Input
+                  id="new-ws-slug"
+                  type="text"
+                  value={slug}
+                  disabled={isCreating}
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  onKeyDown={submitOnEnter}
+                  placeholder={t(($) => $.create_page.slug_placeholder)}
+                  className={AFFIX_INPUT}
+                />
+              </div>
+            </Field>
           </div>
           {slugError ? (
             <FieldError className="text-label">{slugError}</FieldError>
           ) : null}
-        </Field>
+        </div>
 
-        <Field>
-          <FieldLabel htmlFor="new-ws-prefix">
-            {t(($) => $.create_page.issue_prefix_label)}
-          </FieldLabel>
-          <div className="flex items-center gap-3">
-            <Input
-              id="new-ws-prefix"
-              type="text"
-              value={prefix}
-              disabled={isCreating}
-              onChange={(e) => handlePrefixChange(e.target.value)}
-              onKeyDown={submitOnEnter}
-              placeholder={derivedPrefix}
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              maxLength={10}
-              className={cn(FIELD_INPUT_CLASS, "w-32 font-mono uppercase md:text-body")}
-            />
-            {effectivePrefix ? (
-              <span className="text-label text-muted-foreground">
-                {t(($) => $.create_page.issue_prefix_example)}{" "}
-                <span className="font-mono text-foreground">
-                  {effectivePrefix}-123
-                </span>
-              </span>
-            ) : null}
-          </div>
-        </Field>
+        {askAboutYou ? (
+          <AboutYouSummary
+            role={role}
+            useCases={useCases}
+            disabled={isCreating}
+            onChange={(next) => {
+              setRole(next.role);
+              setUseCases(next.useCases);
+            }}
+          />
+        ) : null}
       </FieldGroup>
 
       <Button

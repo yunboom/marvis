@@ -23,6 +23,18 @@ test("onboarding — create a workspace, then connect a runtime", async ({ page 
     timeout: 15000,
   });
   await expect(page.getByText("Tell us a bit about you.")).toHaveCount(0);
+  // About you rides along as a one-line summary, defaulted to shipping code.
+  await expect(page.getByText("Engineer / developer")).toBeVisible();
+  await page.getByRole("button", { name: "Edit" }).click();
+  await expect(page.getByRole("radio", { name: "Engineer / developer" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${SHOTS_DIR}/01b-about-you-dialog.png` });
+  await page.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.waitForTimeout(400);
   await page.screenshot({ path: `${SHOTS_DIR}/01-create-workspace.png` });
 
   await page.getByLabel("Workspace name").fill(`Smoke ${Date.now()}`);

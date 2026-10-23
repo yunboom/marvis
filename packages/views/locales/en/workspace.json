@@ -7,7 +7,6 @@
     "url_label": "URL",
     "slug_placeholder": "acme",
     "issue_prefix_label": "Issue prefix",
-    "issue_prefix_example": "Issue IDs look like",
     "submit": "Create workspace",
     "submitting": "Creating…",
     "cancel": "Cancel",
@@ -20,6 +19,39 @@
       "slug_reserved": "That workspace URL is reserved and cannot be used.",
       "slug_conflict_toast": "Choose a different workspace URL",
       "create_failed": "Failed to create workspace"
+    },
+    "about": {
+      "label": "About you",
+      "edit": "Edit",
+      "dialog_hint": "Marvis uses this to plan your first conversation.",
+      "multi": "Select all that apply",
+      "done": "Done",
+      "uses_more": "{{first}} +{{rest}}",
+      "uses_none": "No use selected",
+      "role": {
+        "question": "Which best describes you?",
+        "engineer": "Engineer / developer",
+        "product": "Product manager",
+        "designer": "Designer",
+        "founder": "Founder / exec",
+        "marketing": "Marketing / growth",
+        "writer": "Writer / content",
+        "research": "Researcher / analyst",
+        "ops": "Operations / project mgmt",
+        "student": "Student / personal use",
+        "other": "Other"
+      },
+      "use_case": {
+        "question": "What do you want to use Marvis for?",
+        "ship_code": "Ship code with AI agents",
+        "manage_team": "Manage tasks for my team",
+        "personal_tasks": "Organize my own tasks",
+        "plan_research": "Plan, brainstorm, research",
+        "write_publish": "Write, edit, publish",
+        "automate_ops": "Automate ops & workflows",
+        "evaluate": "Just exploring",
+        "other": "Other"
+      }
     }
   },
   "no_access": {

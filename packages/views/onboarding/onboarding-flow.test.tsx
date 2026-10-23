@@ -40,11 +40,14 @@ vi.mock("../workspace/new-workspace-page", () => ({
   NewWorkspacePage: ({
     onCreated,
     onCancel,
+    askAboutYou,
   }: {
     onCreated: (ws: unknown) => void;
     onCancel?: () => void;
+    askAboutYou?: boolean;
   }) => (
     <div>
+      {askAboutYou ? <p>asks about you</p> : null}
       <button type="button" onClick={() => onCreated(NEW_WORKSPACE)}>
         create workspace
       </button>
@@ -71,7 +74,7 @@ beforeEach(() => {
 });
 
 function renderFlow(
-  props: { onCancel?: () => void; resumeExistingWorkspace?: boolean } = {},
+  props: { onCancel?: () => void; firstRun?: boolean } = {},
 ) {
   return render(
     <I18nProvider locale="en" resources={TEST_RESOURCES}>
@@ -108,7 +111,7 @@ describe("OnboardingFlow", () => {
   // up for that workspace.
   it("resumes at the runtime step for a workspace from an unfinished pass", () => {
     workspaceList.workspaces = [{ id: "ws-old", slug: "old-ws", name: "Old" }];
-    renderFlow({ resumeExistingWorkspace: true });
+    renderFlow({ firstRun: true });
 
     expect(screen.getByText("runtime step for old-ws")).toBeInTheDocument();
     expect(
@@ -118,7 +121,7 @@ describe("OnboardingFlow", () => {
 
   it("waits for the workspace list before choosing a step when resuming", () => {
     workspaceList.ready = false;
-    renderFlow({ resumeExistingWorkspace: true });
+    renderFlow({ firstRun: true });
 
     expect(
       screen.queryByRole("button", { name: "create workspace" }),
@@ -133,6 +136,16 @@ describe("OnboardingFlow", () => {
     expect(
       screen.getByRole("button", { name: "create workspace" }),
     ).toBeInTheDocument();
+  });
+
+  // Role and use case are per member, so only first-run onboarding asks.
+  it("asks about the member only during first-run onboarding", () => {
+    const { unmount } = renderFlow({ firstRun: true });
+    expect(screen.getByText("asks about you")).toBeInTheDocument();
+    unmount();
+
+    renderFlow();
+    expect(screen.queryByText("asks about you")).not.toBeInTheDocument();
   });
 
   it("offers no way back once the workspace exists", () => {
