@@ -399,6 +399,9 @@ jobs:
       - name: Verify Go test wrapper
         run: bash scripts/test-go.test.sh
 
+      - name: Verify standalone server bundle
+        run: bash scripts/build-standalone-bundle.test.sh
+
       - name: Test
         # pkg/agent runs on its own runner: backend-agent-tests below.
         run: bash scripts/test-go.sh --race --only regular

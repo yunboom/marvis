@@ -35,8 +35,15 @@ archive="$out_dir/marvis-server-${version}-${goos}-${goarch}.tar.xz"
 [ -f "${archive}.sha256" ] || fail "expected ${archive}.sha256"
 
 expected_sha="$(awk '{print $1}' "${archive}.sha256")"
-actual_sha="$(shasum -a 256 "$archive" | awk '{print $1}')"
+actual_sha="$( (command -v sha256sum >/dev/null && sha256sum "$archive" || shasum -a 256 "$archive") | awk '{print $1}')"
 [ "$expected_sha" = "$actual_sha" ] || fail "checksum file does not match the archive"
+
+if tar -tJf "$archive" | grep -Eq '^\./|(^|/)\._'; then
+  fail "archive carries ./ or macOS ._* entries"
+fi
+if tar --numeric-owner -tvJf "$archive" | grep -Evq ' 0[ /]+0 '; then
+  fail "archive entries are not owned by uid/gid 0"
+fi
 
 tar -xJf "$archive" -C "$extract_dir"
 exe=""
