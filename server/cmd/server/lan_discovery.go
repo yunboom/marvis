@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,6 +21,23 @@ const lanInstanceIDTimeout = 5 * time.Second
 func lanConfigForListenPort(cfg landiscovery.Config, port string) landiscovery.Config {
 	if listenPort, err := strconv.Atoi(port); err == nil {
 		cfg.Port = listenPort
+	}
+
+	return cfg
+}
+
+// lanConfigForListenHost 在服务端只监听本机地址（MARVIS_LISTEN_HOST 为回环地址或 localhost）时关闭广播：
+// 局域网里的设备连不上本机地址，广播出去只会让它们看到一台连不上的服务器。
+func lanConfigForListenHost(cfg landiscovery.Config, host string) landiscovery.Config {
+	host = strings.TrimSpace(host)
+	if !cfg.Enabled || host == "" {
+		return cfg
+	}
+
+	ip := net.ParseIP(host)
+	if strings.EqualFold(host, "localhost") || (ip != nil && ip.IsLoopback()) {
+		slog.Warn("lan discovery: listen host is loopback, not advertising", "listen_host", host)
+		cfg.Enabled = false
 	}
 
 	return cfg

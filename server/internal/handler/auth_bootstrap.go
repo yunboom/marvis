@@ -13,6 +13,14 @@ import (
 // bootstrapAuthMethod tags the login in logs and the signup analytics event.
 const bootstrapAuthMethod = "bootstrap"
 
+// MinBootstrapTokenLength is the shortest MARVIS_BOOTSTRAP_TOKEN the server
+// accepts; the desktop app generates a fresh random token on every start.
+const MinBootstrapTokenLength = 32
+
+// forwardingHeaders mark a request relayed by a proxy. A proxy on the same
+// machine makes LAN requests look like loopback, so bootstrap refuses them.
+var forwardingHeaders = []string{"Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Real-IP"}
+
 // BootstrapLoginRequest is the body of POST /auth/bootstrap.
 type BootstrapLoginRequest struct {
 	Token string `json:"token"`
@@ -23,16 +31,16 @@ type BootstrapLoginRequest struct {
 // starts the server with MARVIS_BOOTSTRAP_TOKEN and calls this from the same
 // machine right after the server is ready, so the admin never needs a code.
 //
-// Only the TCP peer address counts as "the same machine": proxy headers are
-// ignored, because with LAN access on anyone on the network can reach this
-// route. A wrong token does not spend the one-time token; a successful login
+// Only the TCP peer address counts as "the same machine", and a request that
+// carries proxy forwarding headers is refused, because with LAN access on
+// anyone on the network can reach this route, directly or through a proxy. A wrong token does not spend the one-time token; a successful login
 // does, and a failure after the token matched gives it back.
 func (h *Handler) BootstrapLogin(w http.ResponseWriter, r *http.Request) {
 	if h.cfg.BootstrapToken == "" {
 		writeError(w, http.StatusNotFound, "not found")
 		return
 	}
-	if !isLoopbackPeer(r.RemoteAddr) {
+	if !isLoopbackPeer(r.RemoteAddr) || hasForwardingHeader(r) {
 		writeError(w, http.StatusForbidden, "bootstrap login is only available on this machine")
 		return
 	}
@@ -69,6 +77,17 @@ func (h *Handler) BootstrapLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.writeLoginSession(w, r, user, tokenString, bootstrapAuthMethod)
+}
+
+// hasForwardingHeader reports whether any proxy forwarding header is present.
+func hasForwardingHeader(r *http.Request) bool {
+	for _, name := range forwardingHeaders {
+		if r.Header.Get(name) != "" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // isLoopbackPeer reports whether a RemoteAddr ("host:port") is a loopback IP.

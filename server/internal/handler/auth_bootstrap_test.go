@@ -134,6 +134,24 @@ func TestBootstrapLoginRejectsNonLoopback(t *testing.T) {
 	}
 }
 
+// A reverse proxy on the same machine (the web app, nginx) makes LAN requests
+// arrive from 127.0.0.1, so any forwarding header disqualifies the request.
+func TestBootstrapLoginRejectsForwardedRequest(t *testing.T) {
+	for _, header := range []string{"X-Forwarded-For", "X-Forwarded-Host", "X-Real-IP", "Forwarded"} {
+		t.Run(header, func(t *testing.T) {
+			h := newBootstrapHandler(t, bootstrapTestToken)
+			req := bootstrapRequest(t, "127.0.0.1:50000", bootstrapTestToken, "bootstrap-proxied@marvis.ai")
+			req.Header.Set(header, "192.168.1.37")
+
+			w := httptest.NewRecorder()
+			h.BootstrapLogin(w, req)
+			if w.Code != http.StatusForbidden {
+				t.Fatalf("BootstrapLogin with %s: expected 403, got %d: %s", header, w.Code, w.Body.String())
+			}
+		})
+	}
+}
+
 func TestBootstrapLoginRejectsWrongToken(t *testing.T) {
 	const email = "bootstrap-wrong@marvis.ai"
 	cleanupBootstrapUser(t, email)

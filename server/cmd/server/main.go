@@ -361,17 +361,25 @@ func main() {
 	}
 	if os.Getenv("MARVIS_DEV_VERIFICATION_CODE") != "" {
 		standalone := handler.IsStandaloneMode()
-		if strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production") && !standalone {
+		switch {
+		case standalone:
+			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is enabled for standalone mode: anyone who can reach this server and knows the code can sign in as any email.")
+		case strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production"):
 			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is set but ignored because APP_ENV=production.")
-		} else {
-			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is enabled. Use it only for local development or private test instances.", "standalone", standalone)
+		default:
+			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is enabled. Use it only for local development or private test instances.")
 		}
+	}
+	bootstrapToken := strings.TrimSpace(os.Getenv("MARVIS_BOOTSTRAP_TOKEN"))
+	if bootstrapToken != "" && len(bootstrapToken) < handler.MinBootstrapTokenLength {
+		slog.Warn("MARVIS_BOOTSTRAP_TOKEN is too short; /auth/bootstrap stays disabled", "min_length", handler.MinBootstrapTokenLength)
 	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "13840"
 	}
+	listenHost := os.Getenv("MARVIS_LISTEN_HOST")
 	shutdownHoldDuration := envNonNegativeDuration("MARVIS_SHUTDOWN_HOLD_DURATION", 0)
 
 	// Feature flags: loaded once at startup from MARVIS_FEATURE_FLAGS_FILE
@@ -695,7 +703,7 @@ func main() {
 	}
 
 	// 局域网广播的配置和实例 ID：/api/config 对外核实用，与是否广播无关，所以总是读取。
-	lanConfig := lanConfigForListenPort(landiscovery.ConfigFromEnv(os.Getenv, os.Hostname), port)
+	lanConfig := lanConfigForListenHost(lanConfigForListenPort(landiscovery.ConfigFromEnv(os.Getenv, os.Hostname), port), listenHost)
 	instanceID := loadLANInstanceID(context.Background(), pool)
 	// 广播实际使用的主机名，桌面端飞书登录据此推导回调地址；不广播时一直为空。
 	lanStatus := &landiscovery.Status{}
@@ -718,7 +726,7 @@ func main() {
 		LANHostname:         lanStatus.Hostname,
 		InstanceID:          instanceID,
 		Standalone:          handler.IsStandaloneMode(),
-		BootstrapToken:      strings.TrimSpace(os.Getenv("MARVIS_BOOTSTRAP_TOKEN")),
+		BootstrapToken:      bootstrapToken,
 	})
 	var replicaQueries *db.Queries
 	if replicaPool != nil {
@@ -734,7 +742,7 @@ func main() {
 	// the scheduler's Run goroutine starts so the field write is race-free.
 	heartbeatScheduler.RecoveryNotifier = h
 
-	srv := newMainHTTPServer(mainListenAddr(os.Getenv("MARVIS_LISTEN_HOST"), port), r)
+	srv := newMainHTTPServer(mainListenAddr(listenHost, port), r)
 	profilingServer := profiling.NewServer()
 	maintenanceServer, maintenanceErr := maintenance.NewServer(os.Getenv("MAINTENANCE_PORT"), maintenance.NewService(pool, maintenance.StatusCategory{}))
 	if maintenanceErr != nil {

@@ -54,3 +54,33 @@ func TestLANConfigForListenPort(t *testing.T) {
 		})
 	}
 }
+
+// 只监听本机地址时局域网里的设备连不上，广播出去也没用，所以关闭广播。
+func TestLANConfigForListenHost(t *testing.T) {
+	t.Parallel()
+
+	base := landiscovery.Config{Enabled: true, Name: "studio", Port: landiscovery.DefaultServerPort}
+	tests := []struct {
+		host string
+		want bool
+	}{
+		{"", true},
+		{"0.0.0.0", true},
+		{"192.168.1.20", true},
+		{"127.0.0.1", false},
+		{"::1", false},
+		{"localhost", false},
+		{" LocalHost ", false},
+	}
+	for _, tc := range tests {
+		if got := lanConfigForListenHost(base, tc.host); got.Enabled != tc.want || got.Name != base.Name || got.Port != base.Port {
+			t.Errorf("lanConfigForListenHost(%q) = %#v, want Enabled=%v and the other fields unchanged", tc.host, got, tc.want)
+		}
+	}
+
+	off := base
+	off.Enabled = false
+	if got := lanConfigForListenHost(off, ""); got.Enabled {
+		t.Errorf("lanConfigForListenHost turned a disabled config on = %#v", got)
+	}
+}

@@ -302,7 +302,7 @@ type RouterOptions struct {
 	// Standalone 表示桌面端在用户电脑上运行的单机模式（MARVIS_STANDALONE）。
 	Standalone bool
 	// BootstrapToken 是单机模式主机管理员一次性登录的 token（MARVIS_BOOTSTRAP_TOKEN）；
-	// 只有 Standalone 为 true 且非空时才注册 POST /auth/bootstrap。
+	// 只有 Standalone 为 true 且长度不少于 handler.MinBootstrapTokenLength 时才注册 POST /auth/bootstrap。
 	BootstrapToken string
 }
 
@@ -496,7 +496,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		LANPort:                        opts.LAN.Port,
 		GitExtraCACerts:                gitca.Load(slog.Default()),
 	}
-	if opts.Standalone {
+	if opts.Standalone && len(opts.BootstrapToken) >= handler.MinBootstrapTokenLength {
 		signupConfig.BootstrapToken = opts.BootstrapToken
 	}
 	h := handler.New(queries, pool, hub, bus, emailSvc, store, cfSigner, analyticsClient, signupConfig, daemonHub)
@@ -1559,12 +1559,20 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		slog.Warn("auth rate limiting disabled: REDIS_URL not configured")
 	}
 	trustedProxies := middleware.ParseTrustedProxies(os.Getenv("RATE_LIMIT_TRUSTED_PROXIES"))
-	authRL := middleware.RateLimit(rdb, envPositiveInt("RATE_LIMIT_AUTH", 5), time.Minute, trustedProxies)
-	authVerifyRL := middleware.RateLimit(rdb, envPositiveInt("RATE_LIMIT_AUTH_VERIFY", 20), time.Minute, trustedProxies)
+	// 单机模式通常不配 Redis，Redis 限流此时直接放行；固定验证码对所有邮箱有效，
+	// 必须限流，所以单机模式无 Redis 时改用进程内限流。
+	authRateLimit := func(limit int) func(http.Handler) http.Handler {
+		if rdb == nil && opts.Standalone {
+			return middleware.MemoryRateLimit(limit, time.Minute, trustedProxies)
+		}
+		return middleware.RateLimit(rdb, limit, time.Minute, trustedProxies)
+	}
+	authRL := authRateLimit(envPositiveInt("RATE_LIMIT_AUTH", 5))
+	authVerifyRL := authRateLimit(envPositiveInt("RATE_LIMIT_AUTH_VERIFY", 20))
 	contactSalesRL := middleware.RateLimit(rdb, envPositiveInt("RATE_LIMIT_CONTACT_SALES", 5), time.Hour, trustedProxies)
 	r.With(authRL).Post("/auth/send-code", h.SendCode)
 	r.With(authVerifyRL).Post("/auth/verify-code", h.VerifyCode)
-	if opts.Standalone && opts.BootstrapToken != "" {
+	if opts.Standalone && len(opts.BootstrapToken) >= handler.MinBootstrapTokenLength {
 		r.With(authVerifyRL).Post("/auth/bootstrap", h.BootstrapLogin)
 	}
 	r.With(authRL).Post("/auth/google", h.GoogleLogin)

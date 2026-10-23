@@ -74,16 +74,21 @@ func RateLimit(rdb redis.UniversalClient, limit int, window time.Duration, trust
 				return
 			}
 			if count > int64(limit) {
-				w.Header().Set("Retry-After", fmt.Sprintf("%d", int(window.Seconds())))
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusTooManyRequests)
-				json.NewEncoder(w).Encode(map[string]string{"error": "too many requests"})
+				writeTooManyRequests(w, window)
 				return
 			}
 
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// writeTooManyRequests writes the shared 429 response of the rate limiters.
+func writeTooManyRequests(w http.ResponseWriter, window time.Duration) {
+	w.Header().Set("Retry-After", fmt.Sprintf("%d", int(window.Seconds())))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusTooManyRequests)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": "too many requests"})
 }
 
 // extractIP determines the client IP for rate limiting purposes.
