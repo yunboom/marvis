@@ -2,7 +2,7 @@
 
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, Check, Loader2, RefreshCw } from "lucide-react";
+import { ArrowDown, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Card } from "@marvis/ui/components/ui/card";
 import { cn } from "@marvis/ui/lib/utils";
@@ -12,6 +12,7 @@ import type { AgentRuntime } from "@marvis/core/types";
 import { DragStrip } from "../../platform";
 import { MikaRuntimeChoice } from "../../runtimes/components/mika-runtime-choice";
 import { MIKA_AVATAR_SRC } from "../components/mika-avatar";
+import { SetupProgress } from "../components/setup-progress";
 import { useRuntimePicker } from "../components/use-runtime-picker";
 import { useT } from "../../i18n";
 
@@ -177,7 +178,7 @@ export function StepConnectRuntime({
       <div className="flex flex-1 items-center justify-center px-4 py-12">
         <Card className="w-full max-w-[960px] gap-0 overflow-hidden rounded-[28px] border-0 p-0 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border md:grid md:h-[600px] md:grid-cols-[380px_minmax(0,1fr)] dark:shadow-none">
           <div className="flex flex-col p-10">
-            <Progress />
+            <SetupProgress current="runtime" />
 
             <h1 className="mt-10 text-display-sm font-bold">
               {t(($) => $.step_connect.title)}
@@ -360,34 +361,6 @@ function ChoicePanel({
         </>
       ) : null}
     </div>
-  );
-}
-
-/** The two steps of first-run setup, with the workspace already behind. */
-function Progress() {
-  const { t } = useT("onboarding");
-  return (
-    <ol className="flex items-center gap-2.5 text-label">
-      <li className="flex items-center gap-1.5 text-muted-foreground">
-        <span
-          aria-hidden
-          className="flex size-4 items-center justify-center rounded-full bg-foreground text-background"
-        >
-          <Check className="size-2.5" strokeWidth={3} />
-        </span>
-        {t(($) => $.step_connect.progress_workspace)}
-      </li>
-      <li aria-hidden className="h-px w-6 bg-input" />
-      <li aria-current="step" className="flex items-center gap-1.5 font-medium">
-        <span
-          aria-hidden
-          className="flex size-4 items-center justify-center rounded-full border-[1.5px] border-foreground"
-        >
-          <span className="size-1.5 rounded-full bg-foreground" />
-        </span>
-        {t(($) => $.step_connect.progress_runtime)}
-      </li>
-    </ol>
   );
 }
 

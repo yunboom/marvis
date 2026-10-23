@@ -1,6 +1,9 @@
 {
   "create_page": {
     "title": "ワークスペースを作成",
+    "subtitle": "メンバー、課題、エージェントはワークスペースで協働します。",
+    "preview_empty_name": "新しいワークスペース",
+    "preview_empty_hint": "名前を入力すると URL と課題番号が決まります",
     "name_label": "ワークスペース名",
     "name_placeholder": "Acme Inc",
     "random_name": "ランダム",

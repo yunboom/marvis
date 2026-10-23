@@ -1,6 +1,9 @@
 {
   "create_page": {
     "title": "워크스페이스 만들기",
+    "subtitle": "멤버, 이슈, 에이전트가 워크스페이스에서 함께 일합니다.",
+    "preview_empty_name": "새 워크스페이스",
+    "preview_empty_hint": "이름을 입력하면 URL과 이슈 번호가 정해집니다",
     "name_label": "워크스페이스 이름",
     "name_placeholder": "Acme Inc",
     "random_name": "무작위",

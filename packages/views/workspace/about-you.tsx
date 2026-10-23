@@ -131,11 +131,11 @@ export function AboutYouSummary({
       <div
         role="group"
         aria-labelledby="about-you-label"
-        className="flex h-14 items-center gap-3 rounded-lg bg-field pr-2 pl-3.5"
+        className="flex h-15 items-center gap-3 rounded-lg bg-surface pr-2 pl-3.5 ring-1 ring-surface-border"
       >
         <span
           aria-hidden
-          className="flex size-7 shrink-0 items-center justify-center rounded-md bg-card [&_svg]:size-3.5"
+          className="flex size-7.5 shrink-0 items-center justify-center rounded-md bg-surface-sunken [&_svg]:size-3.5"
         >
           {ROLE_ICONS[role]}
         </span>
@@ -149,9 +149,9 @@ export function AboutYouSummary({
           <DialogTrigger
             render={
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
-                className="h-8 shrink-0 bg-card px-3.5 text-label font-normal"
+                className="h-8 shrink-0 px-3.5 text-label font-normal"
                 disabled={disabled}
               />
             }

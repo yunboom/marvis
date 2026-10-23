@@ -1,6 +1,9 @@
 {
   "create_page": {
     "title": "Create a workspace",
+    "subtitle": "Members, issues, and agents work together in a workspace.",
+    "preview_empty_name": "New workspace",
+    "preview_empty_hint": "Enter a name to get the URL and issue numbers",
     "name_label": "Workspace name",
     "name_placeholder": "Acme Inc",
     "random_name": "Random",

@@ -1,6 +1,9 @@
 {
   "create_page": {
     "title": "创建工作区",
+    "subtitle": "成员、任务和智能体都在工作区里协作。",
+    "preview_empty_name": "新工作区",
+    "preview_empty_hint": "填写名称后生成 URL 和任务编号",
     "name_label": "工作区名称",
     "name_placeholder": "Acme Inc",
     "random_name": "随机",

@@ -3,9 +3,12 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { ApiError } from "@marvis/core/api";
 import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../locales/en/common.json";
+import enOnboarding from "../locales/en/onboarding.json";
 import enWorkspace from "../locales/en/workspace.json";
 
-const TEST_RESOURCES = { en: { common: enCommon, workspace: enWorkspace } };
+const TEST_RESOURCES = {
+  en: { common: enCommon, onboarding: enOnboarding, workspace: enWorkspace },
+};
 
 const { mockMutate, mockLogout, mockSaveQuestionnaire, config } = vi.hoisted(() => ({
   mockMutate: vi.fn(),
@@ -148,6 +151,24 @@ describe("NewWorkspacePage", () => {
     renderPage();
 
     expect(screen.getByRole("button", { name: "Create workspace" })).toBeDisabled();
+    expect(screen.getByText("New workspace")).toBeInTheDocument();
+  });
+
+  it("previews the workspace URL and issue numbers as the name is typed", () => {
+    renderPage();
+
+    fillName();
+
+    expect(screen.getByText("Acme Inc", { selector: "p" })).toBeInTheDocument();
+    expect(screen.getByText("/acme-inc · ACME-123", { exact: false })).toBeInTheDocument();
+  });
+
+  it("marks creating the workspace as the current setup step", () => {
+    renderPage();
+
+    const steps = screen.getAllByRole("listitem");
+    expect(steps.find((step) => step.getAttribute("aria-current") === "step"))
+      .toHaveTextContent("Create workspace");
   });
 
   it("shows a taken URL inline", () => {

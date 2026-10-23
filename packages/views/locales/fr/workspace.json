@@ -1,6 +1,9 @@
 {
   "create_page": {
     "title": "Créer un espace de travail",
+    "subtitle": "Les membres, les tickets et les agents collaborent dans un espace de travail.",
+    "preview_empty_name": "Nouvel espace de travail",
+    "preview_empty_hint": "Saisissez un nom pour obtenir l’URL et les numéros de ticket",
     "name_label": "Nom de l'espace de travail",
     "name_placeholder": "Acme Inc",
     "random_name": "Aléatoire",
