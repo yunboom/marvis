@@ -363,7 +363,7 @@ func writeShareJoinAdmitError(w http.ResponseWriter, r *http.Request, err error)
 
 	// 名额被拒是预期结果，其余都是意外错误，在这里记录一次。
 	if !errors.Is(err, errAdmitClaimRejected) {
-		slog.Warn("join share link failed", append(logger.RequestAttrs(r), "error", err)...)
+		slog.Warn("join share link failed", append(logger.RequestAttrs(r), "error", fmt.Sprintf("%+v", err))...)
 	}
 
 	switch admitFailedStep(err) {

@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"time"
@@ -110,6 +111,18 @@ const (
 
 	// larkInviteSendTimeout 是单次发卡片的超时。发送不跟随请求取消，靠它兜底。
 	larkInviteSendTimeout = 15 * time.Second
+
+	// larkInviteReplayWindow 是幂等键的重放窗口，与飞书消息 uuid 的去重窗口（1 小时）一致。
+	// 超过窗口，或已有邀请已撤销、过期、用满时，同一个键不再重放，也不再补发。
+	larkInviteReplayWindow = time.Hour
+)
+
+// 单个接收方失败时返回的固定说明。
+const (
+	// larkInviteMsgKeyNotReplayable 是幂等键命中不可重放的邀请时的说明。
+	larkInviteMsgKeyNotReplayable = "idempotency_key was already used for an invite that is no longer replayable; use a new key"
+	// larkInviteMsgSendPanicked 是发送这个接收方时发生 panic 的说明，细节只记在日志里。
+	larkInviteMsgSendPanicked = "unexpected error while sending the invite"
 )
 
 // larkInviteIDNamespace 是从幂等键派生邀请 id 的 UUIDv5 命名空间。取值固定，改动后进行中的重试会拿到不同的 id。
@@ -118,7 +131,7 @@ var larkInviteIDNamespace = uuid.MustParse("d4a2c2e7-bdae-47ae-964f-d162526e23eb
 // 失效卡片底部的说明。
 const (
 	larkInviteReasonRevoked = "已撤销"
-	// larkInviteReasonExpiredFormat 的参数是 formatLarkInviteDate 格式化的过期日期。
+	// larkInviteReasonExpiredFormat 的参数是 formatLarkInviteDate 格式化的过期时间。
 	larkInviteReasonExpiredFormat = "%s 已过期"
 )
 
@@ -518,9 +531,7 @@ func (h *Handler) RevokeLarkInvite(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if revoked.LarkMessageID.Valid {
-		if err := h.patchLarkInviteInvalidCard(r.Context(), revoked, time.Now()); err != nil {
-			slog.Warn("patch revoked lark invite card failed", append(logger.RequestAttrs(r), "invite_id", uuidToString(revoked.ID), "error", fmt.Sprintf("%+v", err))...)
-		}
+		h.patchRevokedLarkInviteCard(r, revoked)
 	}
 
 	h.writeLarkInvite(w, r, revoked)
@@ -789,7 +800,7 @@ func larkInviteStatus(inv db.LarkInvite, now time.Time) string {
 	}
 }
 
-// larkInviteInvalidReason 返回失效卡片底部的说明：撤销时为“已撤销”，过期时为“{M 月 D 日} 已过期”，仍有效时为空串。
+// larkInviteInvalidReason 返回失效卡片底部的说明：撤销时为“已撤销”，过期时为“{M 月 D 日 HH:mm} 已过期”（北京时间），仍有效时为空串。
 func larkInviteInvalidReason(inv db.LarkInvite, now time.Time) string {
 	if inv.RevokedAt.Valid {
 		return larkInviteReasonRevoked
@@ -832,7 +843,7 @@ func (h *Handler) sendLarkInviteCards(ctx context.Context, sc larkInviteSendCont
 	g.SetLimit(larkInviteSendConcurrency)
 	for i, target := range sc.Input.Targets {
 		g.Go(func() error {
-			results[i] = h.sendLarkInviteCard(ctx, sc, target)
+			results[i] = h.sendLarkInviteCardRecovered(ctx, sc, target)
 			return nil
 		})
 	}
@@ -840,6 +851,20 @@ func (h *Handler) sendLarkInviteCards(ctx context.Context, sc larkInviteSendCont
 	_ = g.Wait()
 
 	return results
+}
+
+// sendLarkInviteCardRecovered 调用 sendLarkInviteCard，并把 panic 转成这个接收方的 send_failed 结果。
+// 发送池的 goroutine 不在 HTTP 中间件的兜底范围内，panic 会带崩整个进程；堆栈在这里记下。
+func (h *Handler) sendLarkInviteCardRecovered(ctx context.Context, sc larkInviteSendContext, target larkInviteSendTarget) (result LarkInviteSendResult) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			slog.Error("send lark invite panicked", append(sc.LogAttrs, "target_id_type", target.IDType, "recovered", recovered, "stack", string(debug.Stack()))...)
+			result = larkInviteRejectedResult(sc, LarkInviteTarget{Type: target.Type, ID: target.ID, IDType: target.IDType},
+				&LarkInviteError{Code: larkInviteCodeSendFailed, Message: larkInviteMsgSendPanicked})
+		}
+	}()
+
+	return h.sendLarkInviteCard(ctx, sc, target)
 }
 
 // sendLarkInviteCard 处理一个接收方：带幂等键且已有邀请时按 resumeKeyedLarkInvite 处理；
@@ -890,9 +915,15 @@ func (h *Handler) getKeyedLarkInvite(ctx context.Context, sc larkInviteSendConte
 	})
 }
 
-// resumeKeyedLarkInvite 处理幂等键命中的已有邀请：已有消息 ID 时直接返回；还没有消息 ID 时（上次发送结果不明，
-// 或并发请求正在发送）用同一个 invite_id 和去重键补发，飞书按去重键保证至多送达一张。
+// resumeKeyedLarkInvite 处理幂等键命中的已有邀请。只有邀请仍有效、且创建不到 larkInviteReplayWindow 时才重放：
+// 已有消息 ID 时直接返回；还没有消息 ID 时（上次发送结果不明，或并发请求正在发送）用同一个 invite_id 和去重键补发，
+// 飞书按去重键保证至多送达一张。其余情况返回 invalid_request、不再发卡片：过了窗口飞书不再按去重键去重，
+// 已撤销或已过期的邀请补发出去会是一张看起来有效的卡片。
 func (h *Handler) resumeKeyedLarkInvite(ctx context.Context, sc larkInviteSendContext, inv db.LarkInvite) LarkInviteSendResult {
+	if !larkInviteReplayable(inv, time.Now()) {
+		return larkInviteRejectedResult(sc, larkInviteTargetOf(inv), larkInviteInvalidRequest(larkInviteMsgKeyNotReplayable))
+	}
+
 	if inv.LarkMessageID.Valid {
 		return larkInviteSentResult(inv)
 	}
@@ -908,6 +939,11 @@ func (h *Handler) resumeKeyedLarkInvite(ctx context.Context, sc larkInviteSendCo
 	}
 
 	return h.deliverLarkInvite(ctx, sc, inv, idType, receiveID, names)
+}
+
+// larkInviteReplayable 报告带幂等键的已有邀请能否重放：仍有效（未撤销、未过期、未用满），且创建不到 larkInviteReplayWindow。
+func larkInviteReplayable(inv db.LarkInvite, now time.Time) bool {
+	return larkInviteStatus(inv, now) == larkInviteStatusActive && now.Sub(inv.CreatedAt.Time) < larkInviteReplayWindow
 }
 
 // larkInviteReceiver 返回邀请卡片的接收方：群卡片发到群，个人卡片发到写入时解析出的 open_id。
@@ -1064,6 +1100,11 @@ func (h *Handler) deleteUnsentLarkInvite(ctx context.Context, sc larkInviteSendC
 
 // larkInviteCardViewOf 由邀请行和名字构造卡片数据；群卡片带已加入人数。
 func (h *Handler) larkInviteCardViewOf(inv db.LarkInvite, names larkInviteCardNames, state larkInviteCardState) larkInviteCardView {
+	return newLarkInviteCardView(inv, names, state, h.LarkInviteDownloadURL)
+}
+
+// newLarkInviteCardView 由邀请行、名字和下载地址构造卡片数据；群卡片带已加入人数。
+func newLarkInviteCardView(inv db.LarkInvite, names larkInviteCardNames, state larkInviteCardState, downloadURL string) larkInviteCardView {
 	view := larkInviteCardView{
 		State:         state,
 		InviteID:      uuidToString(inv.ID),
@@ -1073,7 +1114,7 @@ func (h *Handler) larkInviteCardViewOf(inv db.LarkInvite, names larkInviteCardNa
 		Role:          inv.Role,
 		Note:          inv.Note,
 		ExpiresAt:     inv.ExpiresAt.Time,
-		DownloadURL:   h.LarkInviteDownloadURL,
+		DownloadURL:   downloadURL,
 	}
 	if inv.TargetType == larkInviteTargetChat {
 		view.JoinedCount = int(inv.UseCount)
@@ -1084,10 +1125,36 @@ func (h *Handler) larkInviteCardViewOf(inv db.LarkInvite, names larkInviteCardNa
 
 // larkInviteInvalidCardView 构造失效状态的卡片数据，底部说明按撤销或过期生成。
 func (h *Handler) larkInviteInvalidCardView(inv db.LarkInvite, names larkInviteCardNames, now time.Time) larkInviteCardView {
-	view := h.larkInviteCardViewOf(inv, names, larkInviteCardInvalid)
+	return newLarkInviteInvalidCardView(inv, names, h.LarkInviteDownloadURL, now)
+}
+
+// newLarkInviteInvalidCardView 构造失效状态的卡片数据，底部说明按撤销或过期生成。
+func newLarkInviteInvalidCardView(inv db.LarkInvite, names larkInviteCardNames, downloadURL string, now time.Time) larkInviteCardView {
+	view := newLarkInviteCardView(inv, names, larkInviteCardInvalid, downloadURL)
 	view.InvalidReason = larkInviteInvalidReason(inv, now)
 
 	return view
+}
+
+// larkInviteLatestCardView 按邀请的当前状态构造群卡片数据：撤销或过期时为失效卡片，否则为邀请中卡片。
+func larkInviteLatestCardView(inv db.LarkInvite, names larkInviteCardNames, downloadURL string, now time.Time) larkInviteCardView {
+	switch larkInviteStatus(inv, now) {
+	case larkInviteStatusRevoked, larkInviteStatusExpired:
+		return newLarkInviteInvalidCardView(inv, names, downloadURL, now)
+	default:
+		return newLarkInviteCardView(inv, names, larkInviteCardActive, downloadURL)
+	}
+}
+
+// patchRevokedLarkInviteCard 把刚撤销的邀请卡片改成失效状态。撤销已经写入，卡片更新不跟随请求取消、单独限时
+// larkInvitePatchTimeout：客户端断开时卡片照样改成失效。更新失败不回滚撤销，只记日志。
+func (h *Handler) patchRevokedLarkInviteCard(r *http.Request, revoked db.LarkInvite) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), larkInvitePatchTimeout)
+	defer cancel()
+
+	if err := h.patchLarkInviteInvalidCard(ctx, revoked, time.Now()); err != nil {
+		slog.Warn("patch revoked lark invite card failed", append(logger.RequestAttrs(r), "invite_id", uuidToString(revoked.ID), "error", fmt.Sprintf("%+v", err))...)
+	}
 }
 
 // patchLarkInviteInvalidCard 把邀请卡片更新为失效状态，底部说明按撤销或过期生成。
@@ -1334,6 +1401,16 @@ func larkInviteFailedResult(sc larkInviteSendContext, target LarkInviteTarget, e
 		Role:   sc.Input.Role,
 		Status: larkInviteSendStatusFailed,
 		Error:  &LarkInviteError{Code: code, Message: msg},
+	}
+}
+
+// larkInviteRejectedResult 把可预期的单个接收方拒绝（参数类错误）转成失败结果，不记日志。
+func larkInviteRejectedResult(sc larkInviteSendContext, target LarkInviteTarget, rejection *LarkInviteError) LarkInviteSendResult {
+	return LarkInviteSendResult{
+		Target: target,
+		Role:   sc.Input.Role,
+		Status: larkInviteSendStatusFailed,
+		Error:  rejection,
 	}
 }
 

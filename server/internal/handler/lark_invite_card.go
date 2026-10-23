@@ -10,8 +10,8 @@ import (
 )
 
 // 本文件集中构造飞书邀请卡片（卡片 JSON 2.0）和卡片回调响应。
-// 卡片 JSON 一律用结构体序列化，不拼字符串；用户提供的文本放进 plain_text 元素，
-// 固定句式里需要加粗的插入值经 escapeLarkInviteMarkdown 转义后才进入 markdown 元素。
+// 卡片 JSON 一律用结构体序列化，不拼字符串；用户提供的文本（附言、发送人名、智能体名、工作区名）
+// 只放进 plain_text 元素。markdown 元素只承载固定文案，插入的角色名经 escapeLarkInviteMarkdown 转义。
 
 // larkInviteActionJoin 是“加入工作区”按钮回传值里的 action。
 const larkInviteActionJoin = "join_workspace"
@@ -74,10 +74,10 @@ const (
 	// larkInviteTitleJoinedFormat 的参数是工作区名。
 	larkInviteTitleJoinedFormat = "已加入 %s"
 
-	// larkInviteSentenceFormat 的参数依次是发送人、工作区名。
-	larkInviteSentenceFormat = "**%s** 邀请你加入工作区 **%s**"
+	// larkInviteSentenceFormat 的参数依次是发送人、工作区名。正文句子以 plain_text 渲染，名字不加粗。
+	larkInviteSentenceFormat = "%s 邀请你加入工作区 %s"
 	// larkInviteAgentSentenceFormat 的参数依次是智能体名、发送人、工作区名。
-	larkInviteAgentSentenceFormat = "**%s** 代 **%s** 邀请你加入工作区 **%s**"
+	larkInviteAgentSentenceFormat = "%s 代 %s 邀请你加入工作区 %s"
 	larkInviteJoinedBody          = "打开 Marvis，用飞书登录即可使用。"
 
 	// larkInviteNoteFormat 的参数是附言，前后加中文引号。
@@ -98,8 +98,19 @@ const (
 	larkInviteJoinedCountFormat = "%d 人已加入"
 )
 
-// larkInviteDateLayout 是“有效期至”的日期格式，例如“1 月 2 日”。
-const larkInviteDateLayout = "1 月 2 日"
+// 卡片日期的格式和时区。卡片只有中文，按北京时间显示到时分；自托管容器常跑在 UTC，不能用服务器本地时区。
+const (
+	// larkInviteDateLayout 是卡片日期的格式，例如“1 月 2 日 15:04”。
+	larkInviteDateLayout = "1 月 2 日 15:04"
+	// larkInviteTimeZone 是卡片日期的时区。
+	larkInviteTimeZone = "Asia/Shanghai"
+	// larkInviteFallbackZoneName、larkInviteFallbackZoneOffset 是加载不到时区数据时使用的固定东八区。
+	larkInviteFallbackZoneName   = "CST"
+	larkInviteFallbackZoneOffset = 8 * 60 * 60
+)
+
+// larkInviteCardLocation 是卡片日期的时区，进程启动时加载一次。
+var larkInviteCardLocation = larkInviteLocation(time.LoadLocation)
 
 // larkInviteCardView 是渲染邀请卡片所需的数据。
 type larkInviteCardView struct {
@@ -271,7 +282,10 @@ func larkInviteHeader(title, template string) larkCardHeader {
 
 // larkInviteOpenElements 构造邀请中和已失效状态的正文，两者结构一致，失效时主按钮禁用并显示失效说明。
 func larkInviteOpenElements(v larkInviteCardView, invalid bool) []any {
-	elements := []any{larkCardMarkdown{Tag: larkCardTagMarkdown, Content: larkInviteSentence(v)}}
+	elements := []any{larkCardDiv{
+		Tag:  larkCardTagDiv,
+		Text: larkCardText{Tag: larkCardTagPlainText, Content: larkInviteSentence(v)},
+	}}
 
 	if v.Note != "" {
 		elements = append(elements, larkCardDiv{
@@ -354,16 +368,19 @@ func appendLarkInviteFooter(elements []any, notes []string, joinedCount int) []a
 	return elements
 }
 
-// larkInviteSentence 生成正文句式，智能体代发时带上智能体名。插入值转义后才进入 markdown。
+// larkInviteSentence 生成正文句子（plain_text，名字原样插入），智能体代发时带上智能体名。
+// 发送人已删除、名字为空时：有智能体就以智能体为发送人，都没有就只剩“邀请你加入工作区 {工作区}”。
 func larkInviteSentence(v larkInviteCardView) string {
-	inviter := escapeLarkInviteMarkdown(v.InviterName)
-	workspace := escapeLarkInviteMarkdown(v.WorkspaceName)
-
-	if v.AgentName != "" {
-		return fmt.Sprintf(larkInviteAgentSentenceFormat, escapeLarkInviteMarkdown(v.AgentName), inviter, workspace)
+	if v.AgentName != "" && v.InviterName != "" {
+		return fmt.Sprintf(larkInviteAgentSentenceFormat, v.AgentName, v.InviterName, v.WorkspaceName)
 	}
 
-	return fmt.Sprintf(larkInviteSentenceFormat, inviter, workspace)
+	sender := v.InviterName
+	if sender == "" {
+		sender = v.AgentName
+	}
+
+	return strings.TrimSpace(fmt.Sprintf(larkInviteSentenceFormat, sender, v.WorkspaceName))
 }
 
 // larkInviteRoleLabel 把角色取值转成展示文案，未知角色原样返回。
@@ -378,25 +395,30 @@ func larkInviteRoleLabel(role string) string {
 	}
 }
 
-// formatLarkInviteDate 按服务器本地时区格式化“有效期至”，例如“1 月 2 日”。
+// formatLarkInviteDate 按北京时间格式化卡片日期（有效期、过期说明），例如“1 月 2 日 15:04”。
 func formatLarkInviteDate(t time.Time) string {
-	return t.In(time.Local).Format(larkInviteDateLayout)
+	return t.In(larkInviteCardLocation).Format(larkInviteDateLayout)
 }
 
-// larkInviteMarkdownEscaper 给飞书 markdown 的特殊字符加反斜杠。反斜杠本身也要转义，
-// 否则以反斜杠结尾的值会转义掉后面的 ** 加粗收尾符。
+// larkInviteLocation 用 load 加载卡片时区；加载失败（容器里没有时区数据）时退回固定的东八区。
+func larkInviteLocation(load func(name string) (*time.Location, error)) *time.Location {
+	loc, err := load(larkInviteTimeZone)
+	if err != nil {
+		return time.FixedZone(larkInviteFallbackZoneName, larkInviteFallbackZoneOffset)
+	}
+
+	return loc
+}
+
+// larkInviteMarkdownEscaper 把飞书 markdown 的 HTML 特殊字符换成实体，飞书卡片文档记载的转义写法即实体。
 var larkInviteMarkdownEscaper = strings.NewReplacer(
-	`\`, `\\`,
-	`*`, `\*`,
-	`_`, `\_`,
-	`[`, `\[`,
-	`]`, `\]`,
-	`<`, `\<`,
-	`>`, `\>`,
-	"`", "\\`",
+	`&`, `&amp;`,
+	`<`, `&lt;`,
+	`>`, `&gt;`,
 )
 
-// escapeLarkInviteMarkdown 转义要插入 markdown 元素的值，避免用户文本被当成格式、链接或 @ 提及。
+// escapeLarkInviteMarkdown 转义要插入 markdown 元素的值，避免被当成标签或 @ 提及。
+// 用户文本不进 markdown，这里只处理固定文案里插入的角色名。
 func escapeLarkInviteMarkdown(s string) string {
 	return larkInviteMarkdownEscaper.Replace(s)
 }

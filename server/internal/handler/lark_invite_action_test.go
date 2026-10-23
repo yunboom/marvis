@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -297,7 +300,7 @@ func assertNoInvitePatches(t *testing.T, api *fakeInviteAPI) {
 	}
 }
 
-// decodeLarkInviteCardJSON 解析卡片 JSON，返回标题和全部 plain_text / markdown 文本拼接。
+// decodeLarkInviteCardJSON 解析卡片 JSON，返回标题和卡片原始 JSON 文本，调用方用子串断言正文内容。
 func decodeLarkInviteCardJSON(t *testing.T, raw []byte) (title, text string) {
 	t.Helper()
 
@@ -358,6 +361,76 @@ func TestLarkInviteAction_JoinsChatCard(t *testing.T) {
 	title, text := decodeLarkInviteCardJSON(t, []byte(patches[0].CardJSON))
 	if title != larkInviteTitleActive || !strings.Contains(text, fmt.Sprintf(larkInviteJoinedCountFormat, 1)) {
 		t.Fatalf("patched card title = %q, want active card with joined count: %s", title, patches[0].CardJSON)
+	}
+}
+
+// TestLarkInviteAction_RevokeDuringCountPatchEndsInvalid 覆盖撤销与点击的竞争：点击加入后异步改人数的更新
+// 还在途中时管理员撤销了邀请，撤销的失效更新先到、人数更新后到。最终卡片必须是失效状态，不能被改回有效。
+func TestLarkInviteAction_RevokeDuringCountPatchEndsInvalid(t *testing.T) {
+	api := newFakeInviteAPI()
+	useFakeInviteAPI(t, api)
+	wsID := newLarkInviteActionWorkspace(t)
+	inv := newLarkInviteActionInvite(t, wsID, nil)
+	openID, _ := addLarkInviteClicker(t, api, "race")
+
+	// 只在第一次更新（点击后的人数更新）时插入撤销；撤销自己的卡片更新会再次进入这里，不能重入。
+	var revoked atomic.Bool
+	revokeStatus := make(chan int, 1)
+	api.onPatch = func() {
+		if !revoked.CompareAndSwap(false, true) {
+			return
+		}
+
+		req := withURLParams(newRequest(http.MethodDelete, "/", nil), "id", uuidToString(wsID), "inviteId", uuidToString(inv.ID))
+		w := httptest.NewRecorder()
+		testHandler.RevokeLarkInvite(w, req)
+		revokeStatus <- w.Code
+	}
+
+	assertLarkInviteToast(t, clickLarkInvite(t, uuidToString(inv.ID), openID, larkInviteActionTenant), larkInviteToastSuccess, larkInviteActionJoinedToast)
+
+	select {
+	case code := <-revokeStatus:
+		if code != http.StatusOK {
+			t.Fatalf("revoke status = %d, want 200", code)
+		}
+	case <-time.After(larkInviteActionPatchWait):
+		t.Fatal("count patch never started")
+	}
+
+	deadline := time.Now().Add(larkInviteActionPatchWait)
+	for {
+		_, _, patches, _ := api.snapshot()
+		last := patches[len(patches)-1]
+		title, _ := decodeLarkInviteCardJSON(t, []byte(last.CardJSON))
+		if title == larkInviteTitleInvalid && strings.Contains(last.CardJSON, larkInviteReasonRevoked) {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("last patch title = %q after a revoke, want the revoked card; patches = %d", title, len(patches))
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// TestLarkInviteAction_CountPatchReadsLatestState 确认人数更新按邀请的最新状态生成卡片：点击回应之后、
+// 更新开始之前邀请已被撤销，更新出去的是失效卡片，不会先出现一张有效卡片。
+func TestLarkInviteAction_CountPatchReadsLatestState(t *testing.T) {
+	api := newFakeInviteAPI()
+	useFakeInviteAPI(t, api)
+	wsID := newLarkInviteActionWorkspace(t)
+	inv := newLarkInviteActionInvite(t, wsID, nil)
+	dbfx.Exec(t, `UPDATE lark_invite SET use_count = 1 WHERE id = $1`, inv.ID)
+	if _, err := testHandler.Queries.RevokeLarkInvite(context.Background(), db.RevokeLarkInviteParams{ID: inv.ID, WorkspaceID: wsID}); err != nil {
+		t.Fatalf("revoke: %v", err)
+	}
+
+	testHandler.patchLarkInviteCardAsync(context.Background(), inv.ID, inv.LarkMessageID.String, larkInviteCardNames{Workspace: larkInviteActionWorkspaceName})
+
+	patches := waitForInvitePatches(t, api, 1)
+	title, _ := decodeLarkInviteCardJSON(t, []byte(patches[0].CardJSON))
+	if len(patches) != 1 || title != larkInviteTitleInvalid || !strings.Contains(patches[0].CardJSON, larkInviteReasonRevoked) {
+		t.Fatalf("patches = %+v, want a single revoked card", patches)
 	}
 }
 
@@ -692,6 +765,71 @@ func TestLarkInviteAction_TenantNotAllowed(t *testing.T) {
 	// 同一个人从允许的组织点击可以加入。
 	assertLarkInviteToast(t, clickLarkInvite(t, uuidToString(inv.ID), openID, larkInviteActionTenant), larkInviteToastSuccess, larkInviteActionJoinedToast)
 	waitForInvitePatches(t, api, 1)
+}
+
+// larkInviteActionDisabledEmail 在临时停用账号名单里（auth.IsTemporarilyDisabledUserEmail）。
+const larkInviteActionDisabledEmail = "pdzzer68@embassybase.com"
+
+// TestLarkInviteAction_ContactRejections 覆盖点击人的通讯录资料取不到或账号已停用：这些是确定性的拒绝，
+// 回明确的提示而不是“稍后重试”，按 Warn 记日志，不占用名额。
+func TestLarkInviteAction_ContactRejections(t *testing.T) {
+	cases := []struct {
+		name string
+		// register 在接口桩里登记点击人，返回点击人的 open_id。
+		register func(api *fakeInviteAPI) string
+		want     string
+	}{
+		{
+			name: "outside the app availability scope",
+			register: func(api *fakeInviteAPI) string {
+				api.getUserErr = &lark.APIError{Op: "get user", Code: fakeLarkCodeUserNotInScope, Msg: "no availability"}
+				return uniqueLarkID("ou_scope_")
+			},
+			want: larkInviteMsgNotInAppScope,
+		},
+		{
+			name: "user not found",
+			register: func(*fakeInviteAPI) string {
+				return uniqueLarkID("ou_missing_")
+			},
+			want: larkInviteMsgUserNotFound,
+		},
+		{
+			name: "account disabled",
+			register: func(api *fakeInviteAPI) string {
+				openID := uniqueLarkID("ou_disabled_")
+				api.users[openID] = lark.InviteUser{OpenID: openID, Name: "停用账号", Email: larkInviteActionDisabledEmail}
+				return openID
+			},
+			want: larkInviteMsgAccountDisabled,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			api := newFakeInviteAPI()
+			useFakeInviteAPI(t, api)
+			wsID := newLarkInviteActionWorkspace(t)
+			inv := newLarkInviteActionInvite(t, wsID, nil)
+			openID := tc.register(api)
+			logs := captureLarkInviteLogs(t)
+
+			resp := clickLarkInvite(t, uuidToString(inv.ID), openID, larkInviteActionTenant)
+
+			assertLarkInviteToast(t, resp, larkInviteToastError, tc.want)
+			if n := larkInviteUseCount(t, inv.ID); n != 0 {
+				t.Fatalf("use_count = %d, want 0", n)
+			}
+
+			got := logs.String()
+			if !strings.Contains(got, "level=WARN") || !strings.Contains(got, "lark invite card action rejected") {
+				t.Fatalf("rejection not logged at warn; log was:\n%s", got)
+			}
+			if strings.Contains(got, "level=ERROR") {
+				t.Fatalf("deterministic rejection logged as an error; log was:\n%s", got)
+			}
+		})
+	}
 }
 
 func TestLarkInviteAction_NoEmail(t *testing.T) {

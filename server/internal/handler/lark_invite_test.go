@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -25,8 +27,9 @@ import (
 
 // 测试里用到的飞书业务错误码，取值与 lark 包里的映射一致。
 const (
-	fakeLarkCodeBotNotInChat  = 230002
-	fakeLarkCodeUserIDInvalid = 99992360
+	fakeLarkCodeBotNotInChat   = 230002
+	fakeLarkCodeUserNotInScope = 230013
+	fakeLarkCodeUserIDInvalid  = 99992360
 )
 
 // fakeInviteSend 记录一次发卡片调用。
@@ -64,6 +67,10 @@ type fakeInviteAPI struct {
 	botChats []lark.InviteChat
 	// blockGetUser 为 true 时 GetUser 一直阻塞到调用方的 context 结束，模拟通讯录接口无响应。
 	blockGetUser bool
+	// getUserErr 非空时 GetUser 一律返回它，模拟通讯录接口的业务错误。
+	getUserErr error
+	// onPatch 非空时在每次更新卡片、记录调用之前执行（不持有 mu），用来在更新途中插入撤销或断开请求。
+	onPatch func()
 
 	calls        int
 	sends        []fakeInviteSend // 成功的发送
@@ -110,12 +117,16 @@ func (f *fakeInviteAPI) GetUser(ctx context.Context, _ lark.InstallationCredenti
 	f.mu.Lock()
 	f.calls++
 	block := f.blockGetUser
+	getUserErr := f.getUserErr
 	user, ok := f.users[openID]
 	f.mu.Unlock()
 
 	if block {
 		<-ctx.Done()
 		return lark.InviteUser{}, ctx.Err()
+	}
+	if getUserErr != nil {
+		return lark.InviteUser{}, getUserErr
 	}
 	if !ok {
 		return lark.InviteUser{}, &lark.APIError{Op: "get user", Code: fakeLarkCodeUserIDInvalid, Msg: "invalid user id"}
@@ -178,6 +189,14 @@ func (f *fakeInviteAPI) attempts() []fakeInviteSend {
 
 func (f *fakeInviteAPI) PatchInviteCard(ctx context.Context, _ lark.InstallationCredentials, messageID, cardJSON string) error {
 	f.mu.Lock()
+	hook := f.onPatch
+	f.mu.Unlock()
+
+	if hook != nil {
+		hook()
+	}
+
+	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	f.calls++
@@ -206,6 +225,52 @@ func useFakeInviteAPI(t *testing.T, api lark.InviteAPIClient) {
 		testHandler.LarkInviteAPI = prevAPI
 		testHandler.LarkInviteCreds = prevCreds
 	})
+}
+
+// larkInviteLogBuffer 是并发安全的日志缓冲，被测代码可能在后台 goroutine 里写日志。
+type larkInviteLogBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *larkInviteLogBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return b.buf.Write(p)
+}
+
+func (b *larkInviteLogBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return b.buf.String()
+}
+
+// captureLarkInviteLogs 把默认 logger 换成写入缓冲的文本 logger，测试结束时还原。
+func captureLarkInviteLogs(t *testing.T) *larkInviteLogBuffer {
+	t.Helper()
+
+	logs := &larkInviteLogBuffer{}
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+
+	return logs
+}
+
+// panickingInviteAPI 在查某个群时 panic，模拟发送链路里的意外 panic。
+type panickingInviteAPI struct {
+	*fakeInviteAPI
+	panicChatID string
+}
+
+func (p *panickingInviteAPI) GetChat(ctx context.Context, creds lark.InstallationCredentials, chatID string) (lark.InviteChat, error) {
+	if chatID == p.panicChatID {
+		panic("get chat blew up in test")
+	}
+
+	return p.fakeInviteAPI.GetChat(ctx, creds, chatID)
 }
 
 // uniqueLarkID 生成带前缀的测试 ID，避免和其他测试的行冲突。
@@ -507,6 +572,43 @@ func TestSendLarkInvites_PartialFailure(t *testing.T) {
 	}
 }
 
+// TestSendLarkInvites_PanicFailsOnlyThatTarget 确认发送池里的 panic 不会带崩进程：出 panic 的接收方记为 send_failed，
+// 日志带堆栈，其他接收方照常发送。
+func TestSendLarkInvites_PanicFailsOnlyThatTarget(t *testing.T) {
+	logs := captureLarkInviteLogs(t)
+	fake := newFakeInviteAPI()
+	good := uniqueLarkID("oc_good_")
+	boom := uniqueLarkID("oc_boom_")
+	fake.chats[good] = lark.InviteChat{ChatID: good, Name: "好群"}
+	useFakeInviteAPI(t, &panickingInviteAPI{fakeInviteAPI: fake, panicChatID: boom})
+	cleanupLarkInvitesByTarget(t, good, boom)
+
+	results := decodeLarkInviteResults(t, postLarkInvites(t, map[string]any{
+		"chat_ids":         []string{good, boom},
+		"expires_in_hours": 72,
+	}, nil))
+
+	if len(results) != 2 {
+		t.Fatalf("results = %+v, want two", results)
+	}
+	if results[0].Status != larkInviteSendStatusSent || results[0].Target.ID != good {
+		t.Fatalf("good result = %+v, want sent", results[0])
+	}
+
+	panicked := results[1]
+	if panicked.Target.ID != boom || panicked.Status != larkInviteSendStatusFailed || panicked.Error == nil || panicked.Error.Code != larkInviteCodeSendFailed {
+		t.Fatalf("panicked result = %+v, want failed/%s for %s", panicked, larkInviteCodeSendFailed, boom)
+	}
+	if panicked.ID != nil {
+		t.Fatalf("panicked result id = %s, want null", *panicked.ID)
+	}
+
+	got := logs.String()
+	if !strings.Contains(got, "send lark invite panicked") || !strings.Contains(got, "get chat blew up in test") || !strings.Contains(got, "panickingInviteAPI") {
+		t.Fatalf("panic not logged with its stack; log was:\n%s", got)
+	}
+}
+
 func TestSendLarkInvites_Validation(t *testing.T) {
 	api := newFakeInviteAPI()
 	useFakeInviteAPI(t, api)
@@ -627,6 +729,93 @@ func TestSendLarkInvites_KeyedAmbiguousFailureKeepsRowAndRetries(t *testing.T) {
 		if !a.HasDeadline || a.CtxErr != nil {
 			t.Fatalf("attempt %d context: deadline=%v err=%v, want bounded and live", i, a.HasDeadline, a.CtxErr)
 		}
+	}
+}
+
+// 改写已有邀请行的 SQL，模拟重试前邀请已过窗口、已撤销、已过期或已用满。
+const (
+	larkInviteSQLAgeRow    = `UPDATE lark_invite SET created_at = now() - interval '61 minutes' WHERE id = $1`
+	larkInviteSQLRevokeRow = `UPDATE lark_invite SET revoked_at = now() WHERE id = $1`
+	larkInviteSQLExpireRow = `UPDATE lark_invite SET expires_at = now() - interval '1 minute' WHERE id = $1`
+	larkInviteSQLFillRow   = `UPDATE lark_invite SET max_uses = 1, use_count = 1 WHERE id = $1`
+)
+
+// TestSendLarkInvites_KeyedReplayWindow 覆盖 Ruling 20：幂等键命中的已有邀请只在仍有效、且创建不到 1 小时时重放；
+// 没有消息 ID 的行也只在同样条件下补发；其余情况这个接收方返回 invalid_request，不再发卡片。
+func TestSendLarkInvites_KeyedReplayWindow(t *testing.T) {
+	cases := []struct {
+		name string
+		// unsent 为 true 时第一次发送以结果不明失败，留下没有消息 ID 的行。
+		unsent bool
+		// mutate 在重试前改写邀请行，为空时不改。
+		mutate string
+		// wantReplay 为 true 时重试返回同一张邀请；否则返回 invalid_request，且不再尝试发送。
+		wantReplay bool
+	}{
+		{name: "active within the window replays", wantReplay: true},
+		{name: "active older than the window", mutate: larkInviteSQLAgeRow},
+		{name: "revoked", mutate: larkInviteSQLRevokeRow},
+		{name: "expired", mutate: larkInviteSQLExpireRow},
+		{name: "full", mutate: larkInviteSQLFillRow},
+		{name: "unsent within the window re-sends", unsent: true, wantReplay: true},
+		{name: "unsent and revoked", unsent: true, mutate: larkInviteSQLRevokeRow},
+		{name: "unsent older than the window", unsent: true, mutate: larkInviteSQLAgeRow},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			api := newFakeInviteAPI()
+			chatID := uniqueLarkID("oc_replay_")
+			api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "重放群"}
+			if tc.unsent {
+				api.setSendErr(chatID, errors.New("context deadline exceeded"))
+			}
+			useFakeInviteAPI(t, api)
+			cleanupLarkInvitesByTarget(t, chatID)
+
+			body := map[string]any{"chat_ids": []string{chatID}, "expires_in_hours": 168, "idempotency_key": uniqueLarkID("replay-")}
+			decodeLarkInviteResults(t, postLarkInvites(t, body, nil))
+
+			row, ok := loadLarkInviteRow(t, chatID)
+			if !ok {
+				t.Fatal("first send left no invite row")
+			}
+			if tc.mutate != "" {
+				dbfx.Exec(t, tc.mutate, row.ID)
+			}
+			api.setSendErr(chatID, nil)
+			attemptsBefore := len(api.attempts())
+
+			results := decodeLarkInviteResults(t, postLarkInvites(t, body, nil))
+			if len(results) != 1 {
+				t.Fatalf("results = %+v, want one", results)
+			}
+			got := results[0]
+
+			if tc.wantReplay {
+				if got.Status != larkInviteSendStatusSent || got.ID == nil || *got.ID != row.ID {
+					t.Fatalf("retry result = %+v, want sent with invite %s", got, row.ID)
+				}
+				_, sends, _, _ := api.snapshot()
+				if len(sends) != 1 {
+					t.Fatalf("delivered cards = %d, want exactly 1", len(sends))
+				}
+				return
+			}
+
+			if got.Status != larkInviteSendStatusFailed || got.Error == nil || got.Error.Code != larkInviteCodeInvalidRequest {
+				t.Fatalf("retry result = %+v, want failed/%s", got, larkInviteCodeInvalidRequest)
+			}
+			if got.Error.Message != larkInviteMsgKeyNotReplayable {
+				t.Fatalf("error message = %q, want %q", got.Error.Message, larkInviteMsgKeyNotReplayable)
+			}
+			if got.ID != nil {
+				t.Fatalf("rejected retry returned invite id %s", *got.ID)
+			}
+			if n := len(api.attempts()); n != attemptsBefore {
+				t.Fatalf("send attempts after retry = %d, want %d (no new card)", n, attemptsBefore)
+			}
+		})
 	}
 }
 
@@ -1085,6 +1274,39 @@ func TestRevokeLarkInvite_PatchesCardAndIgnoresPatchError(t *testing.T) {
 	assertLarkInviteError(t, revokeLarkInviteForTest(t, "00000000-0000-0000-0000-000000000002"), http.StatusNotFound, larkInviteCodeInviteNotFound)
 }
 
+// TestRevokeLarkInvite_PatchOutlivesRequest 确认撤销后的卡片更新不跟随请求取消：客户端在更新前断开，
+// 更新照常带着自己的时限完成，卡片不会停在有效状态。
+func TestRevokeLarkInvite_PatchOutlivesRequest(t *testing.T) {
+	api := newFakeInviteAPI()
+	useFakeInviteAPI(t, api)
+
+	inv := createTestLarkInvite(t, newLarkInviteParams())
+	messageID := uniqueLarkID("om_revoke_cancel_")
+	if err := testHandler.Queries.SetLarkInviteMessageID(context.Background(), db.SetLarkInviteMessageIDParams{ID: inv.ID, LarkMessageID: strToText(messageID)}); err != nil {
+		t.Fatalf("set message id: %v", err)
+	}
+
+	// 撤销已写入、卡片更新发出之前，客户端断开。
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	api.onPatch = cancel
+
+	req := newRequest(http.MethodDelete, "/", nil).WithContext(ctx)
+	req = withURLParams(req, "id", testWorkspaceID, "inviteId", uuidToString(inv.ID))
+	testHandler.RevokeLarkInvite(httptest.NewRecorder(), req)
+
+	_, _, patches, _ := api.snapshot()
+	if len(patches) != 1 || patches[0].MessageID != messageID {
+		t.Fatalf("patches = %+v, want one patch of %s", patches, messageID)
+	}
+	if patches[0].CtxErr != nil || !patches[0].HasDeadline {
+		t.Fatalf("patch ctx err=%v deadline=%v, want a live context with its own timeout", patches[0].CtxErr, patches[0].HasDeadline)
+	}
+	if !strings.Contains(patches[0].CardJSON, larkInviteReasonRevoked) {
+		t.Fatalf("patched card is not the revoked state: %s", patches[0].CardJSON)
+	}
+}
+
 func TestLarkInviteWelcome_OnceAndAck(t *testing.T) {
 	inv := createTestLarkInvite(t, newLarkInviteParams())
 	if err := testHandler.Queries.CreateLarkInviteJoin(context.Background(), db.CreateLarkInviteJoinParams{
@@ -1189,9 +1411,10 @@ func TestListLarkChats(t *testing.T) {
 }
 
 func TestLarkInviteStatusAndInvalidReason(t *testing.T) {
-	now := time.Date(2026, 10, 23, 12, 0, 0, 0, time.Local)
+	now := time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC)
 	future := pgtype.Timestamptz{Time: now.Add(time.Hour), Valid: true}
-	past := pgtype.Timestamptz{Time: time.Date(2026, 10, 20, 9, 0, 0, 0, time.Local), Valid: true}
+	// 北京时间 10 月 20 日 09:00。
+	past := pgtype.Timestamptz{Time: time.Date(2026, 10, 20, 1, 0, 0, 0, time.UTC), Valid: true}
 
 	cases := []struct {
 		name   string
@@ -1201,7 +1424,7 @@ func TestLarkInviteStatusAndInvalidReason(t *testing.T) {
 	}{
 		{name: "active", inv: db.LarkInvite{ExpiresAt: future}, status: larkInviteStatusActive, reason: ""},
 		{name: "completed", inv: db.LarkInvite{ExpiresAt: future, MaxUses: pgtype.Int4{Int32: 2, Valid: true}, UseCount: 2}, status: larkInviteStatusCompleted, reason: ""},
-		{name: "expired beats completed", inv: db.LarkInvite{ExpiresAt: past, MaxUses: pgtype.Int4{Int32: 1, Valid: true}, UseCount: 1}, status: larkInviteStatusExpired, reason: "10 月 20 日 已过期"},
+		{name: "expired beats completed", inv: db.LarkInvite{ExpiresAt: past, MaxUses: pgtype.Int4{Int32: 1, Valid: true}, UseCount: 1}, status: larkInviteStatusExpired, reason: "10 月 20 日 09:00 已过期"},
 		{name: "revoked beats expired", inv: db.LarkInvite{ExpiresAt: past, RevokedAt: pgtype.Timestamptz{Time: now, Valid: true}}, status: larkInviteStatusRevoked, reason: larkInviteReasonRevoked},
 	}
 

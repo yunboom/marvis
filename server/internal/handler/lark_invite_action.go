@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/yunboom/marvis/server/internal/analytics"
+	"github.com/yunboom/marvis/server/internal/auth"
 	"github.com/yunboom/marvis/server/internal/integrations/lark"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 	"github.com/yunboom/marvis/server/internal/util"
@@ -39,6 +40,9 @@ const (
 	larkInviteMsgNotInvitee          = "此邀请仅限受邀人使用"
 	larkInviteMsgNoEmail             = "飞书账号没有邮箱，无法加入"
 	larkInviteMsgSignupProhibited    = "当前服务器不允许注册新账号"
+	larkInviteMsgNotInAppScope       = "你不在 Marvis 应用的可用范围内，请联系管理员"
+	larkInviteMsgUserNotFound        = "未找到你的飞书账号信息，请联系管理员"
+	larkInviteMsgAccountDisabled     = "账号已停用，请联系管理员"
 	larkInviteMsgFailed              = "加入失败，请稍后重试"
 )
 
@@ -47,7 +51,8 @@ const (
 	// larkInviteContactTimeout 是查点击人通讯录资料的时限。长连接给回调 2.5 秒，
 	// 通讯录接口超时后还要留出写库和回应的时间。
 	larkInviteContactTimeout = 1500 * time.Millisecond
-	// larkInvitePatchTimeout 是回应之后异步更新卡片的时限。
+	// larkInvitePatchTimeout 是更新卡片的时限：点击回应之后的异步更新，以及撤销之后的更新。
+	// 两者都不跟随调用方的 ctx 取消，靠它兜底。
 	larkInvitePatchTimeout = 10 * time.Second
 )
 
@@ -165,6 +170,10 @@ func (h *Handler) answerLarkInviteClick(ctx context.Context, click larkInviteCli
 	}
 
 	profile, err := h.lookupLarkInviteClicker(ctx, click.OpenID)
+	if reply, rejected := larkInviteContactRejection(err); rejected {
+		logLarkInviteRejection(click, err)
+		return reply, nil
+	}
 	if err != nil {
 		return larkInviteReply{}, err
 	}
@@ -178,6 +187,10 @@ func (h *Handler) answerLarkInviteClick(ctx context.Context, click larkInviteCli
 	var signupErr SignupError
 	if errors.As(err, &signupErr) {
 		return larkInviteToastReply(larkInviteToastError, larkInviteMsgSignupProhibited), nil
+	}
+	if errors.Is(err, auth.ErrTemporarilyDisabledUser) {
+		logLarkInviteRejection(click, err)
+		return larkInviteToastReply(larkInviteToastError, larkInviteMsgAccountDisabled), nil
 	}
 	if err != nil {
 		return larkInviteReply{}, err
@@ -258,7 +271,7 @@ func (h *Handler) larkInviteStatusReply(ctx context.Context, inv db.LarkInvite, 
 func (h *Handler) larkInviteUnavailableReply(ctx context.Context, inv db.LarkInvite, names larkInviteCardNames, click larkInviteClick, now time.Time) (reply larkInviteReply, unavailable bool) {
 	switch larkInviteStatus(inv, now) {
 	case larkInviteStatusRevoked, larkInviteStatusExpired:
-		h.patchLarkInviteCardAsync(ctx, inv.ID, larkInviteMessageID(inv, click), h.larkInviteInvalidCardView(inv, names, now))
+		h.patchLarkInviteCardAsync(ctx, inv.ID, larkInviteMessageID(inv, click), names)
 		return larkInviteInvalidReply(), true
 	case larkInviteStatusCompleted:
 		return larkInviteToastReply(larkInviteToastWarning, larkInviteMsgFull), true
@@ -312,8 +325,8 @@ func (h *Handler) larkInviteClaimRejectedReply(ctx context.Context, inv db.LarkI
 	return larkInviteInvalidReply(), nil
 }
 
-// larkInviteJoinedReply 生成加入成功的回应。个人卡片在回应里换成“已加入”状态；群卡片在回应之后异步更新
-// 已加入人数，人数取占用名额后的 use_count。
+// larkInviteJoinedReply 生成加入成功的回应。个人卡片在回应里换成“已加入”状态；群卡片在回应之后异步更新，
+// 更新时重新读取邀请，人数和状态都取最新值。
 func (h *Handler) larkInviteJoinedReply(ctx context.Context, claimed db.LarkInvite, names larkInviteCardNames, click larkInviteClick) larkInviteReply {
 	reply := larkInviteToastReply(larkInviteToastSuccess, fmt.Sprintf(larkInviteMsgJoinedFormat, names.Workspace))
 
@@ -324,7 +337,7 @@ func (h *Handler) larkInviteJoinedReply(ctx context.Context, claimed db.LarkInvi
 		return reply
 	}
 
-	h.patchLarkInviteCardAsync(ctx, claimed.ID, larkInviteMessageID(claimed, click), h.larkInviteCardViewOf(claimed, names, larkInviteCardActive))
+	h.patchLarkInviteCardAsync(ctx, claimed.ID, larkInviteMessageID(claimed, click), names)
 
 	return reply
 }
@@ -340,6 +353,28 @@ func (h *Handler) lookupLarkInviteClicker(ctx context.Context, openID string) (l
 	}
 
 	return user, nil
+}
+
+// larkInviteContactMessages 是查点击人通讯录资料时确定性的拒绝及其提示，键是 lark.ClassifyInviteError 的错误码。
+// 点击人不在应用通讯录范围内（含外部组织成员）时，飞书按错误码归到这两类，重试也不会成功。
+var larkInviteContactMessages = map[string]string{
+	lark.InviteErrUserNotInScope: larkInviteMsgNotInAppScope,
+	lark.InviteErrUserNotFound:   larkInviteMsgUserNotFound,
+}
+
+// larkInviteContactRejection 把查通讯录资料的错误归成提示；err 为空或不是确定性的拒绝时 rejected 为 false。
+func larkInviteContactRejection(err error) (reply larkInviteReply, rejected bool) {
+	msg, ok := larkInviteContactMessages[lark.ClassifyInviteError(err)]
+	if !ok {
+		return larkInviteReply{}, false
+	}
+
+	return larkInviteToastReply(larkInviteToastError, msg), true
+}
+
+// logLarkInviteRejection 按 Warn 记录确定性的拒绝：需要管理员调整应用范围或账号，不是服务端故障。
+func logLarkInviteRejection(click larkInviteClick, err error) {
+	slog.Warn("lark invite card action rejected", "invite_id", click.InviteID, "open_id", click.OpenID, "error", err.Error())
 }
 
 // larkInviteUserEmail 返回点击人的邮箱，取法与飞书登录一致：优先 email，没有时取 enterprise_email，去掉空白并转小写。
@@ -471,15 +506,20 @@ func (h *Handler) admitLarkInviteMemberOnce(ctx context.Context, inv db.LarkInvi
 	return claimed, nil
 }
 
-// patchLarkInviteCardAsync 在回应之后把卡片更新为 view，不占用飞书 3 秒的回应时间。更新不跟随回调的 ctx 取消，
+// patchLarkInviteCardAsync 在回应之后按邀请的最新状态更新卡片，不占用飞书 3 秒的回应时间。更新不跟随回调的 ctx 取消，
 // 单独限时 larkInvitePatchTimeout，失败只记日志。长连接只兜住回调本身的 panic，后台 goroutine 自己恢复。
-// 飞书接口和凭据在当前 goroutine 取出，后台 goroutine 不读 Handler 的字段。
-func (h *Handler) patchLarkInviteCardAsync(ctx context.Context, inviteID pgtype.UUID, messageID string, view larkInviteCardView) {
+// 飞书接口、凭据和查询在当前 goroutine 取出，后台 goroutine 不读 Handler 的字段。
+func (h *Handler) patchLarkInviteCardAsync(ctx context.Context, inviteID pgtype.UUID, messageID string, names larkInviteCardNames) {
 	if messageID == "" {
 		return
 	}
 
-	api, creds := h.LarkInviteAPI, h.LarkInviteCreds
+	patcher := larkInviteCardPatcher{
+		api:         h.LarkInviteAPI,
+		creds:       h.LarkInviteCreds,
+		queries:     h.Queries,
+		downloadURL: h.LarkInviteDownloadURL,
+	}
 	patchCtx := context.WithoutCancel(ctx)
 
 	go func() {
@@ -492,10 +532,61 @@ func (h *Handler) patchLarkInviteCardAsync(ctx context.Context, inviteID pgtype.
 		callCtx, cancel := context.WithTimeout(patchCtx, larkInvitePatchTimeout)
 		defer cancel()
 
-		if err := patchLarkInviteCard(callCtx, api, creds, inviteID, messageID, view); err != nil {
+		if err := patcher.patchLatest(callCtx, inviteID, messageID, names); err != nil {
 			slog.Warn("patch lark invite card failed", "invite_id", uuidToString(inviteID), "message_id", messageID, "error", fmt.Sprintf("%+v", err))
 		}
 	}()
+}
+
+// larkInviteCardPatcher 是异步更新卡片用到的依赖，在回调的 goroutine 里从 Handler 取出。
+type larkInviteCardPatcher struct {
+	api         lark.InviteAPIClient
+	creds       lark.InstallationCredentials
+	queries     *db.Queries
+	downloadURL string
+}
+
+// patchLatest 重新读取邀请，按最新状态更新卡片：撤销或过期时改成失效卡片，否则改成邀请中卡片和当前的已加入人数。
+// 改成邀请中卡片后再读一次：撤销接口的失效更新可能先一步到达，被这次更新盖掉，这时再改回失效卡片，
+// 迟到的更新不会让已撤销的卡片看起来仍然有效。邀请已删除（工作区已删除）时不改卡片。
+func (p larkInviteCardPatcher) patchLatest(ctx context.Context, inviteID pgtype.UUID, messageID string, names larkInviteCardNames) error {
+	inv, found, err := p.reload(ctx, inviteID)
+	if err != nil || !found {
+		return err
+	}
+
+	view := larkInviteLatestCardView(inv, names, p.downloadURL, time.Now())
+	if err := patchLarkInviteCard(ctx, p.api, p.creds, inviteID, messageID, view); err != nil {
+		return err
+	}
+	if view.State == larkInviteCardInvalid {
+		return nil
+	}
+
+	latest, found, err := p.reload(ctx, inviteID)
+	if err != nil || !found {
+		return err
+	}
+
+	recheck := larkInviteLatestCardView(latest, names, p.downloadURL, time.Now())
+	if recheck.State != larkInviteCardInvalid {
+		return nil
+	}
+
+	return patchLarkInviteCard(ctx, p.api, p.creds, inviteID, messageID, recheck)
+}
+
+// reload 读取邀请的最新状态，邀请已不存在时 found 为 false。
+func (p larkInviteCardPatcher) reload(ctx context.Context, inviteID pgtype.UUID) (db.LarkInvite, bool, error) {
+	inv, err := p.queries.GetLarkInvite(ctx, inviteID)
+	if isNotFound(err) {
+		return db.LarkInvite{}, false, nil
+	}
+	if err != nil {
+		return db.LarkInvite{}, false, errors.Wrapf(err, "reload lark invite for card patch invite_id=%s", uuidToString(inviteID))
+	}
+
+	return inv, true, nil
 }
 
 // larkInviteMessageID 返回卡片更新要发往的消息：优先用发送时记下的消息 ID，没有记下时用回调里被点击的消息。
