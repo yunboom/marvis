@@ -481,6 +481,9 @@ export default function App() {
             <AppContent />
           )}
         </CoreProvider>
+      ) : "unconfigured" in runtimeConfigResult ? (
+        // 还没有选择服务器；连接界面由后续任务接入，这里先不渲染内容。
+        null
       ) : (
         <BlockingRuntimeConfigError message={runtimeConfigResult.error.message} />
       )}

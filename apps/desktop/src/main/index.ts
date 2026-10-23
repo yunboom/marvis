@@ -630,6 +630,7 @@ if (!gotTheLock) {
 
     runtimeConfigResult = await loadRuntimeConfig({
       isDev: is.dev,
+      userDataDir: app.getPath("userData"),
       // electron-vite exposes VITE_* on import.meta.env for the main process;
       // keep dev URL overrides on the same source the renderer used before
       // runtime config moved endpoint resolution into main/preload.
@@ -720,8 +721,9 @@ if (!gotTheLock) {
     });
 
     // Sync IPC: preload exposes the validated runtime config before renderer
-    // boot. If desktop.json exists but is invalid, renderer receives the
-    // blocking error and must not silently fall back to the cloud defaults.
+    // boot. If server.json / desktop.json exists but is invalid, renderer
+    // receives the blocking error; if no server was selected yet, it receives
+    // the unconfigured branch instead of any built-in default server.
     ipcMain.on("runtime-config:get", (event) => {
       event.returnValue = runtimeConfigResult;
     });

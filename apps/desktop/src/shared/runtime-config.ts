@@ -1,7 +1,10 @@
+import type { SelectedServer } from "./server-discovery";
+
 export interface RuntimeConfig {
   schemaVersion: 1;
   apiUrl: string;
   wsUrl: string;
+  // 网页端地址；空串表示服务器没有网页端。
   appUrl: string;
 }
 
@@ -9,16 +12,12 @@ export interface RuntimeConfigError {
   message: string;
 }
 
+// unconfigured：还没有选择服务器（既没有 server.json 也没有 desktop.json），
+// 由界面引导用户连接；error：配置存在但不合法，必须阻断而不是静默回退。
 export type RuntimeConfigResult =
   | { ok: true; config: RuntimeConfig }
-  | { ok: false; error: RuntimeConfigError };
-
-export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
-  schemaVersion: 1,
-  apiUrl: "https://api.marvis.ai",
-  wsUrl: "wss://api.marvis.ai/ws",
-  appUrl: "https://marvis.ai",
-});
+  | { ok: false; error: RuntimeConfigError }
+  | { ok: false; unconfigured: true };
 
 const LOCAL_DEV_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
   schemaVersion: 1,
@@ -47,6 +46,16 @@ export function runtimeConfigFromDevEnv(env: RuntimeConfigEnv): RuntimeConfig {
     appUrl: env.appUrl
       ? normalizeHttpUrl(env.appUrl, "VITE_APP_URL")
       : deriveDevAppUrl(apiUrl),
+  };
+}
+
+// 由用户选定的服务器生成启动配置：只连后端，网页地址可为空串。
+export function runtimeConfigFromServer(server: SelectedServer): RuntimeConfig {
+  return {
+    schemaVersion: 1,
+    apiUrl: server.url,
+    wsUrl: deriveWsUrl(server.url),
+    appUrl: server.appUrl,
   };
 }
 

@@ -4,6 +4,7 @@ import {
   deriveWsUrl,
   parseRuntimeConfig,
   runtimeConfigFromDevEnv,
+  runtimeConfigFromServer,
 } from "./runtime-config";
 
 describe("runtime config", () => {
@@ -137,6 +138,23 @@ describe("runtime config", () => {
       apiUrl: "https://api.test.marvis.ai",
       wsUrl: "wss://api.test.marvis.ai/ws",
       appUrl: "https://staging.marvis.ai",
+    });
+  });
+
+  it("builds a config from the selected server", () => {
+    expect(
+      runtimeConfigFromServer({
+        url: "https://m.example.com:8443",
+        name: "设计部 Marvis",
+        instanceId: "7f3a",
+        source: "manual",
+        appUrl: "",
+      }),
+    ).toEqual({
+      schemaVersion: 1,
+      apiUrl: "https://m.example.com:8443",
+      wsUrl: "wss://m.example.com:8443/ws",
+      appUrl: "",
     });
   });
 });
