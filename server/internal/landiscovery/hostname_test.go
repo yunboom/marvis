@@ -65,3 +65,44 @@ func TestChooseHostname(t *testing.T) {
 		})
 	}
 }
+
+func TestAdvertiseIPsSkipsVirtualInterfaces(t *testing.T) {
+	tests := []struct {
+		name    string
+		iface   string
+		wantIPs []string
+	}{
+		{name: "wired or wifi", iface: "en0", wantIPs: []string{"192.168.1.20"}},
+		{name: "linux ethernet", iface: "eth0", wantIPs: []string{"192.168.1.20"}},
+		{name: "linux wifi", iface: "wlan0", wantIPs: []string{"192.168.1.20"}},
+		{name: "macos bridge", iface: "bridge100", wantIPs: nil},
+		{name: "vmware", iface: "vmnet8", wantIPs: nil},
+		{name: "virtualbox", iface: "vboxnet0", wantIPs: nil},
+		{name: "docker bridge", iface: "docker0", wantIPs: nil},
+		{name: "docker network bridge", iface: "br-3f2a1c", wantIPs: nil},
+		{name: "libvirt bridge", iface: "virbr0", wantIPs: nil},
+		{name: "container veth", iface: "veth12ab", wantIPs: nil},
+		{name: "vpn utun", iface: "utun4", wantIPs: nil},
+		{name: "vpn tun", iface: "tun0", wantIPs: nil},
+		{name: "airdrop", iface: "awdl0", wantIPs: nil},
+		{name: "low latency wlan", iface: "llw0", wantIPs: nil},
+		{name: "apple silicon internal", iface: "anpi1", wantIPs: nil},
+		{name: "wireguard", iface: "wg0", wantIPs: nil},
+		{name: "tailscale", iface: "tailscale0", wantIPs: nil},
+		{name: "prefix match ignores case", iface: "Bridge0", wantIPs: nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ifaces := []Iface{{Name: tt.iface, Up: true, Addrs: []net.IP{net.ParseIP("192.168.1.20")}}}
+
+			var got []string
+			for _, ip := range AdvertiseIPs(ifaces) {
+				got = append(got, ip.String())
+			}
+			if !reflect.DeepEqual(got, tt.wantIPs) {
+				t.Fatalf("AdvertiseIPs(%s) = %v, want %v", tt.iface, got, tt.wantIPs)
+			}
+		})
+	}
+}
