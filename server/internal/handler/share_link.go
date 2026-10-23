@@ -1,10 +1,10 @@
 package handler
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"math"
@@ -16,10 +16,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/pkg/errors"
+
 	"github.com/yunboom/marvis/server/internal/logger"
 	"github.com/yunboom/marvis/server/internal/seatcapacity"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
-	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // expiresInMaxHours is the largest hour count that can be multiplied by
@@ -309,151 +310,73 @@ func (h *Handler) JoinByShareLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Open the transaction first, then atomically claim the link. The claim is
-	// a conditional UPDATE that revalidates active/not-expired/below-max_uses
-	// and increments use_count in one statement, so concurrent joins cannot
-	// exceed max_uses and a join cannot race past a revocation/expiry.
-	tx, err := h.TxStarter.Begin(r.Context())
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to join workspace")
-		return
-	}
-	defer tx.Rollback(r.Context())
-
-	qtx := h.Queries.WithTx(tx)
-
-	link, err := qtx.ClaimShareLinkByID(r.Context(), linkPreview.ID)
-	if err != nil {
-		writeError(w, http.StatusNotFound, "share link not found or expired")
-		return
-	}
-
-	// Check if already a member — if so, roll back the claimed use count.
-	_, memberErr := qtx.GetMemberByUserAndWorkspace(r.Context(), db.GetMemberByUserAndWorkspaceParams{
-		UserID:      user.ID,
-		WorkspaceID: link.WorkspaceID,
-	})
-	if memberErr == nil {
-		writeError(w, http.StatusConflict, "you are already a member of this workspace")
-		return
-	}
-
-	// Settle a matching pending email invitation in the same transaction
-	// (#8432). A user invited by email who joins through the share link
-	// instead would leave that row pending forever: it keeps its seat
-	// reservation, keeps showing in their pending list, and a later Accept
-	// on it dies on the CreateMember 409. The link's role wins — the user
-	// chose this entry point, so the member is created with link.Role below
-	// and the invitation row is only settled, its role left untouched.
-	// idx_invitation_unique_pending guarantees at most one pending row per
-	// (workspace, email).
-	var settledInvitationID pgtype.UUID
-	pendingInv, pendingErr := qtx.GetPendingInvitationByEmail(r.Context(), db.GetPendingInvitationByEmailParams{
-		WorkspaceID:  link.WorkspaceID,
-		InviteeEmail: strings.ToLower(user.Email),
-	})
-	switch {
-	case pendingErr == nil:
-		// AcceptInvitation re-checks status='pending' under the row lock, so
-		// a decline concluded concurrently leaves nothing to settle and the
-		// join still proceeds.
-		settled, settleErr := qtx.AcceptInvitation(r.Context(), pendingInv.ID)
-		switch {
-		case settleErr == nil:
-			settledInvitationID = settled.ID
-		case errors.Is(settleErr, pgx.ErrNoRows):
-			// Concluded elsewhere in between; its own path released the seat.
-		default:
-			writeError(w, http.StatusInternalServerError, "failed to join workspace")
-			return
-		}
-	case errors.Is(pendingErr, pgx.ErrNoRows):
-		// No pending invitation for this email — the common case.
-	default:
-		writeError(w, http.StatusInternalServerError, "failed to join workspace")
-		return
-	}
-
-	member, err := qtx.CreateMember(r.Context(), db.CreateMemberParams{
-		WorkspaceID: link.WorkspaceID,
-		UserID:      user.ID,
-		Role:        link.Role,
+	// 分享链接的 workspace_id 和 role 创建后不再变化，预览行与事务内认领到的行取值一致。
+	member, err := h.admitWorkspaceMember(r.Context(), admitMemberInput{
+		WorkspaceID:    linkPreview.WorkspaceID,
+		User:           user,
+		Role:           linkPreview.Role,
+		CapacityToken:  capacityToken,
+		CapacityAction: seatcapacity.ActionClaimShareJoin,
+		Claim:          claimShareLink(linkPreview.ID),
+		Source:         admitSourceShareLink,
 	})
 	if err != nil {
-		if isUniqueViolation(err) {
-			h.compensateCapacityIntent(r.Context(), capacityToken)
-			writeError(w, http.StatusConflict, "you are already a member of this workspace")
-			return
-		}
-		writeError(w, http.StatusInternalServerError, "failed to create membership")
+		writeShareJoinAdmitError(w, r, err)
 		return
 	}
 
-	// Mark onboarded. A failure here must roll the whole join back, otherwise a
-	// first-time user could become a member while still blocked by onboarding.
-	if _, err := qtx.MarkUserOnboarded(r.Context(), user.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to finalize onboarding")
-		return
-	}
-	if capacityToken != uuid.Nil {
-		if err := transitionCapacityIntentToConfirm(r.Context(), qtx, capacityToken, uuid.UUID(member.ID.Bytes), seatcapacity.ActionClaimShareJoin); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to join workspace")
-			return
-		}
-	}
-	if settledInvitationID.Valid && h.seatCapacityEnabled() {
-		// The settled invitation was holding a seat reservation (managed
-		// mode); the share join's own confirmed claim now covers the seat,
-		// so release the invitation's reservation instead of double-charging
-		// the workspace for one joining user.
-		if err := enqueueCapacityRelease(r.Context(), qtx, uuid.UUID(link.WorkspaceID.Bytes), uuid.UUID(settledInvitationID.Bytes)); err != nil {
-			writeError(w, http.StatusInternalServerError, "failed to join workspace")
-			return
-		}
-	}
-
-	if err := tx.Commit(r.Context()); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to join workspace")
-		return
-	}
-	if capacityToken != uuid.Nil {
-		h.confirmCapacityIntent(r.Context(), uuid.UUID(link.WorkspaceID.Bytes), capacityToken, uuid.UUID(member.ID.Bytes))
-	}
-	if settledInvitationID.Valid && h.seatCapacityEnabled() {
-		// Best-effort immediate release of the settled invitation's
-		// reservation; if the capacity service is unavailable the enqueued
-		// release above is retried by the outbox worker.
-		h.compensateCapacityIntent(r.Context(), uuid.UUID(settledInvitationID.Bytes))
-	}
-
-	wsID := uuidToString(link.WorkspaceID)
-	slog.Info("user joined via share link", "user_id", userID, "workspace_id", wsID)
-
-	ws, err := h.Queries.GetWorkspace(r.Context(), link.WorkspaceID)
+	ws, err := h.Queries.GetWorkspace(r.Context(), linkPreview.WorkspaceID)
 	wsSlug := ""
 	if err == nil {
 		wsSlug = ws.Slug
 	}
 
-	memberResp := h.memberWithUserResponse(member, user)
-	h.publish(protocol.EventMemberAdded, wsID, "member", userID, map[string]any{
-		"member": memberResp,
-	})
-	if settledInvitationID.Valid {
-		// Same signal the accept path sends: workspace admins refresh their
-		// pending-invitation list, and the joiner's own clients converge.
-		h.publish(protocol.EventInvitationAccepted, wsID, "member", userID, map[string]any{
-			"invitation_id": uuidToString(settledInvitationID),
-			"member":        memberResp,
-		})
-	}
-	h.notifyDaemonWorkspacesChanged(userID)
-
 	writeJSON(w, http.StatusOK, map[string]any{
-		"member":         memberResp,
-		"workspace_id":   wsID,
+		"member":         h.memberWithUserResponse(member, user),
+		"workspace_id":   uuidToString(linkPreview.WorkspaceID),
 		"workspace_slug": wsSlug,
 	})
+}
+
+// claimShareLink 返回分享链接加入用的 Claim：在事务里用带条件的原子更新复核链接有效、
+// 未过期、未用完，并占用一次名额；不满足时返回 errAdmitClaimRejected。
+func claimShareLink(linkID pgtype.UUID) func(ctx context.Context, qtx *db.Queries) error {
+	return func(ctx context.Context, qtx *db.Queries) error {
+		_, err := qtx.ClaimShareLinkByID(ctx, linkID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return errAdmitClaimRejected
+		}
+		if err != nil {
+			return errors.Wrapf(err, "claim share link share_link_id=%s", uuidToString(linkID))
+		}
+
+		return nil
+	}
+}
+
+// writeShareJoinAdmitError 把成员写入失败映射回分享链接加入接口原有的状态码和文案。
+func writeShareJoinAdmitError(w http.ResponseWriter, r *http.Request, err error) {
+	if errors.Is(err, errAdmitAlreadyMember) {
+		writeError(w, http.StatusConflict, "you are already a member of this workspace")
+		return
+	}
+
+	// 名额被拒是预期结果，其余都是意外错误，在这里记录一次。
+	if !errors.Is(err, errAdmitClaimRejected) {
+		slog.Warn("join share link failed", append(logger.RequestAttrs(r), "error", err)...)
+	}
+
+	switch admitFailedStep(err) {
+	case admitStepClaim:
+		// 认领失败一律按链接失效处理，errAdmitClaimRejected 也带这个步骤标记。
+		writeError(w, http.StatusNotFound, "share link not found or expired")
+	case admitStepCreateMember:
+		writeError(w, http.StatusInternalServerError, "failed to create membership")
+	case admitStepMarkOnboarded:
+		writeError(w, http.StatusInternalServerError, "failed to finalize onboarding")
+	default:
+		writeError(w, http.StatusInternalServerError, "failed to join workspace")
+	}
 }
 
 func shareLinkToResponse(link db.WorkspaceShareLink) ShareLinkResponse {
