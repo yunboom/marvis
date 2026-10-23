@@ -18,6 +18,24 @@ When raising the security floor, update all Go workflows and the pinned
 Go builder image in `Dockerfile` together so shipped binaries also receive
 the fixes.
 
+## Standalone-mode resources
+
+The desktop app's standalone mode downloads a server bundle and a PostgreSQL
+bundle, both listed in `server-manifest.json` on the latest release.
+
+- **Server bundles** are built by the Release workflow's `standalone-bundles`
+  job for every tag (`scripts/build-standalone-bundle.sh`, six platforms) and
+  uploaded with `server-manifest.json`.
+- **PostgreSQL bundles** change only when PostgreSQL is upgraded. Run the
+  **PostgreSQL bundle** workflow once with the zonky version (e.g. `17.11.0`);
+  it publishes `pg-<version>` with the repacked bundles and
+  `postgres-manifest.json`. Then set the repository variable
+  `STANDALONE_POSTGRES_VERSION` to that version before the next tag.
+- Optional repository variables: `STANDALONE_MIRROR_BASE_URL` adds a mirror
+  URL after each GitHub URL (the mirror must serve the same `<tag>/<file>`
+  paths), and `STANDALONE_MIN_APP_VERSION` sets the oldest desktop app a
+  release's bundles support (default `0.0.0`).
+
 ## Emergency vulnerability-scan bypass
 
 Use the bypass only when `govulncheck` itself or its live vulnerability database

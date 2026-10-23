@@ -41,7 +41,7 @@ jobs:
           node-version: 22
 
       - name: Test CI selection and gates
-        run: node --test scripts/ci-scope.test.mjs scripts/check-image-budget.test.mjs
+        run: node --test scripts/ci-scope.test.mjs scripts/check-image-budget.test.mjs scripts/build-standalone-manifest.test.mjs
 
       - name: Filter paths
         id: filter
@@ -401,6 +401,9 @@ jobs:
 
       - name: Verify standalone server bundle
         run: bash scripts/build-standalone-bundle.test.sh
+
+      - name: Verify PostgreSQL bundle repack
+        run: bash scripts/repack-postgres.test.sh
 
       - name: Test
         # pkg/agent runs on its own runner: backend-agent-tests below.
