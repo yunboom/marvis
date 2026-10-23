@@ -59,10 +59,16 @@ import {
 import {
   MAIN_RENDERER_CHANNEL_STATE_CHANNEL,
   MainRendererMessageQueue,
+  OPEN_PATH_CHANNEL,
   parseMainRendererChannelState,
   TAB_SELECTION_SHORTCUT_CHANNEL,
   type MainRendererMessageChannel,
 } from "../shared/main-renderer-messages";
+import {
+  DEEP_LINK_PROTOCOL,
+  OPEN_LINK_HOST,
+  parseOpenLinkPath,
+} from "../shared/open-link";
 import { AuthSessionCoordinator } from "./auth-session-coordinator";
 import {
   NotificationGate,
@@ -129,7 +135,7 @@ if (process.platform !== "win32") {
   ]);
 }
 
-const PROTOCOL = "marvis";
+const PROTOCOL = DEEP_LINK_PROTOCOL;
 const devLog = is.dev ? createBestEffortDevLog() : undefined;
 
 // Where the main process parks a freeze/crash breadcrumb until the next
@@ -202,6 +208,15 @@ function handleDeepLink(url: string): void {
     if (parsed.hostname === "auth" && parsed.pathname === "/callback") {
       const token = parsed.searchParams.get("token");
       if (token) dispatchToMainRenderer("auth:token", token);
+      return;
+    }
+
+    // marvis://open?path=<站内路径>
+    // 没有网页端时的分享链接。只放行站内路径，其余一律忽略；路径经队列交给
+    // 主窗口，渲染进程就绪前到达的链接不会丢。
+    if (parsed.hostname === OPEN_LINK_HOST) {
+      const path = parseOpenLinkPath(parsed);
+      if (path) dispatchToMainRenderer(OPEN_PATH_CHANNEL, path);
       return;
     }
 

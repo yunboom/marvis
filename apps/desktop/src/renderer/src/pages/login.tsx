@@ -16,6 +16,8 @@ function requireRuntimeAppUrl(): string {
 export function DesktopLoginPage() {
   const webUrl = requireRuntimeAppUrl();
   const larkLoginAppId = useConfigStore((state) => state.larkLoginAppId);
+  // 没有网页端时浏览器里没有登录页可去，只保留邮箱验证码登录。
+  const hasWebApp = webUrl !== "";
   const handleGoogleLogin = () => {
     // Open web login page in the default browser with platform=desktop flag.
     // The web callback will redirect back via marvis:// deep link with the token.
@@ -25,7 +27,8 @@ export function DesktopLoginPage() {
   };
 
   // 飞书登录同样在浏览器里完成，再经深链回到桌面端；未配置时不显示按钮。
-  const handleLarkLogin = larkLoginAppId ? handleGoogleLogin : undefined;
+  const handleLarkLogin =
+    hasWebApp && larkLoginAppId ? handleGoogleLogin : undefined;
 
   return (
     <div className="flex h-screen flex-col">
@@ -36,7 +39,7 @@ export function DesktopLoginPage() {
           // Auth store update triggers AppContent re-render → shows DesktopShell.
           // Initial workspace navigation happens in routes.tsx via IndexRedirect.
         }}
-        onGoogleLogin={handleGoogleLogin}
+        onGoogleLogin={hasWebApp ? handleGoogleLogin : undefined}
         onLarkLogin={handleLarkLogin}
       />
     </div>

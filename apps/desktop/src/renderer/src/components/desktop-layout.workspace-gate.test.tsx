@@ -122,6 +122,7 @@ function renderShell() {
   ).desktopAPI = {
     onNavigationGesture: () => () => {},
     onInboxOpen: () => () => {},
+    onOpenPath: () => () => {},
   };
 
   const qc = new QueryClient({

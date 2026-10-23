@@ -32,6 +32,7 @@ import {
   DesktopNavigationProvider,
   routeContentLinkPath,
 } from "@/platform/navigation";
+import { OpenPathBridge } from "@/platform/open-path-bridge";
 import {
   ServerReplacedDialog,
   ServerStatusBanner,
@@ -262,6 +263,7 @@ export function DesktopShell() {
           IndexRedirect, not a route. */}
       <WorkspaceSlugProvider slug={slug}>
         <DesktopInboxBridge />
+        <OpenPathBridge />
         <div className="flex h-screen bg-app-shell">
           {/* bg-app-shell is the wrapper's non-inset fill, so it also owns the
               non-inset half of --sidebar-wrapper-fill. sidebar.tsx supplies the

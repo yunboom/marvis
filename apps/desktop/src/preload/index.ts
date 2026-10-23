@@ -41,6 +41,7 @@ import type {
 } from "../shared/daemon-types";
 import {
   MAIN_RENDERER_CHANNEL_STATE_CHANNEL,
+  OPEN_PATH_CHANNEL,
   parseTabSelectionShortcutKey,
   TAB_SELECTION_SHORTCUT_CHANNEL,
   type MainRendererMessageChannel,
@@ -217,6 +218,9 @@ const desktopAPI = {
   /** Listen for invitation IDs delivered via deep link */
   onInviteOpen: (callback: (invitationId: string) => void) =>
     subscribeToMainRendererChannel("invite:open", callback),
+  /** 监听深链 marvis://open 解出的站内路径，由主进程校验后下发。返回取消订阅函数。 */
+  onOpenPath: (callback: (path: string) => void) =>
+    subscribeToMainRendererChannel(OPEN_PATH_CHANNEL, callback),
   /** Open a URL in the default browser */
   openExternal: (url: string) => ipcRenderer.invoke("shell:openExternal", url),
   /** Download a file by URL through Electron's native download system.

@@ -114,6 +114,7 @@ function renderShell(server?: Record<string, unknown>) {
   ).desktopAPI = {
     onNavigationGesture: () => () => {},
     onInboxOpen: () => () => {},
+    onOpenPath: () => () => {},
     ...(server ? { server } : {}),
   };
 

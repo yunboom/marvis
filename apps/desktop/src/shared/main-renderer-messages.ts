@@ -8,6 +8,9 @@ export const MAIN_RENDERER_CHANNEL_STATE_CHANNEL =
 
 export const TAB_SELECTION_SHORTCUT_CHANNEL = "tab:select-by-shortcut";
 
+/** 深链 marvis://open 解出的站内路径，主窗口收到后在当前标签组里导航。 */
+export const OPEN_PATH_CHANNEL = "path:open";
+
 export const TAB_SELECTION_SHORTCUT_KEYS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 export type TabSelectionShortcutKey =
@@ -28,6 +31,7 @@ export const MAIN_RENDERER_MESSAGE_CHANNELS = [
   "inbox:open",
   "settings:open",
   TAB_SELECTION_SHORTCUT_CHANNEL,
+  OPEN_PATH_CHANNEL,
 ] as const;
 
 export type MainRendererMessageChannel =
