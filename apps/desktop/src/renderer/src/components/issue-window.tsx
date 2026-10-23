@@ -67,7 +67,7 @@ function IssueWindowRoute() {
     return (
       <IssueWindowFrame>
         <div className="flex min-h-0 flex-1 items-center justify-center">
-          <MarvisIcon className="size-6 animate-pulse" />
+          <MarvisIcon className="size-12 animate-pulse" />
         </div>
       </IssueWindowFrame>
     );

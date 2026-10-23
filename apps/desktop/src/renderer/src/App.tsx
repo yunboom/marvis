@@ -96,7 +96,7 @@ function IssueWindowContent() {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <MarvisIcon className="size-6 animate-pulse" />
+        <MarvisIcon className="size-12 animate-pulse" />
       </div>
     );
   }
@@ -321,7 +321,7 @@ function AppContent() {
   if (isLoading || bootstrapping) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <MarvisIcon className="size-6 animate-pulse" />
+        <MarvisIcon className="size-12 animate-pulse" />
       </div>
     );
   }

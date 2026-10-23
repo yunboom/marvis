@@ -22,7 +22,7 @@ export function WorkspaceLoader({ name }: { name?: string | null }) {
       role="status"
     >
       <div className="flex flex-col items-center gap-4">
-        <MarvisIcon className="size-8 animate-pulse" />
+        <MarvisIcon className="size-12 animate-pulse" />
         {name ? (
           <p className="text-body text-muted-foreground">
             {t(($) => $.workspace_loader.loading_named_prefix)}{" "}
