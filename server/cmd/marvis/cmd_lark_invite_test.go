@@ -839,6 +839,30 @@ func TestLarkInviteSendHelpTextIsVerbatim(t *testing.T) {
 	}
 }
 
+// TestLarkInviteHelpListsErrorCodes 确认 get、revoke 的帮助写明失败时的错误码，含 invite_not_found。
+func TestLarkInviteHelpListsErrorCodes(t *testing.T) {
+	for _, cmd := range []*cobra.Command{newLarkInviteGetCmd(), newLarkInviteRevokeCmd()} {
+		for _, code := range []string{"lark_not_configured", "permission_denied", "invite_not_found"} {
+			if !strings.Contains(cmd.Long, code) {
+				t.Errorf("%s help does not list %s:\n%s", cmd.Name(), code, cmd.Long)
+			}
+		}
+	}
+}
+
+// TestLarkInviteIdempotencyKeyHelpStatesWindow 确认 --idempotency-key 的帮助写明 1 小时的重放窗口和之后的失败码。
+func TestLarkInviteIdempotencyKeyHelpStatesWindow(t *testing.T) {
+	flag := newLarkInviteSendCmd().Flags().Lookup(larkInviteFlagIdempotencyKey)
+	if flag == nil {
+		t.Fatal("--idempotency-key not registered")
+	}
+	for _, want := range []string{"1 hour", "invalid_request", "50 characters"} {
+		if !strings.Contains(flag.Usage, want) {
+			t.Errorf("--idempotency-key usage %q does not mention %q", flag.Usage, want)
+		}
+	}
+}
+
 func equalStrings(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

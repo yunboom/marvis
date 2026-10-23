@@ -301,7 +301,9 @@ func newLarkInviteSendCmd() *cobra.Command {
 	flags.Var(&larkInviteExpiresValue{d: larkInviteDefaultExpires}, larkInviteFlagExpiresIn, "Invite validity, 1h to 720h; a day suffix such as 7d is accepted")
 	flags.Int(larkInviteFlagMaxUses, 0, "Maximum number of people who can join through a chat card, 0 for no limit (ignored for a user)")
 	flags.String(larkInviteFlagNote, "", "Note shown on the card, at most 200 characters")
-	flags.String(larkInviteFlagIdempotencyKey, "", "Key that makes a retried send deliver only once, at most 50 characters")
+	flags.String(larkInviteFlagIdempotencyKey, "", "Key that makes a retried send deliver only once, at most 50 characters. "+
+		"A retry with the same key within 1 hour returns the original invite while it is still active; "+
+		"after 1 hour, or once that invite is revoked, expired or full, the key fails with invalid_request")
 	flags.String(larkInviteFlagOutput, larkInviteOutputTable, "Output format: table or json")
 
 	return cmd
@@ -329,6 +331,10 @@ func newLarkInviteListCmd() *cobra.Command {
 	return cmd
 }
 
+// larkInviteLookupErrorsHelp 是 get、revoke 帮助里的失败说明和错误码。
+const larkInviteLookupErrorsHelp = "On failure it prints 'Error: <code>: <message>' and exits non-zero. Codes: " +
+	"lark_not_configured, permission_denied, invite_not_found."
+
 // newLarkInviteGetCmd 创建 get 子命令。
 func newLarkInviteGetCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -337,7 +343,8 @@ func newLarkInviteGetCmd() *cobra.Command {
 		Long: "Shows one invite with the full list of people who joined. The argument is " +
 			"the invite UUID or the short ID (≥4 hex chars) from 'lark-invite list'. " +
 			"The workspace comes from --workspace-id, MARVIS_WORKSPACE_ID or the " +
-			"profile default.",
+			"profile default.\n\n" +
+			larkInviteLookupErrorsHelp,
 		Args: cobra.ExactArgs(1),
 		RunE: runLarkInviteGet,
 	}
@@ -355,7 +362,8 @@ func newLarkInviteRevokeCmd() *cobra.Command {
 			"People who already joined stay in the workspace. Revoking an invite that " +
 			"is already revoked is not an error. Each argument is an invite UUID or " +
 			"the short ID (≥4 hex chars) from 'lark-invite list'; the workspace comes " +
-			"from --workspace-id, MARVIS_WORKSPACE_ID or the profile default.",
+			"from --workspace-id, MARVIS_WORKSPACE_ID or the profile default.\n\n" +
+			larkInviteLookupErrorsHelp,
 		Args: cobra.MinimumNArgs(1),
 		RunE: runLarkInviteRevoke,
 	}
