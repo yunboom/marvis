@@ -80,6 +80,8 @@ import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@marvis/core/feature-flags
 import { useCurrentWorkspace } from "@marvis/core/paths";
 import {
   invitationListOptions,
+  larkInviteListOptions,
+  larkInviteStatusOptions,
   memberListOptions,
   shareLinkListOptions,
   workspaceKeys,
@@ -102,10 +104,12 @@ import {
   seatPurchaseCanRetryWithSameQuote,
   seatPurchaseMatchesPreview,
 } from "./seat-invite-purchase";
+import { LarkInvitesView } from "./lark-invites-view";
+import { LarkInviteSendDialog } from "./lark-invite-send-dialog";
 
 const SEAT_PURCHASE_CONFIRM_TIMEOUT_MS = 2 * 60_000;
 
-type MembersView = "members" | "invitations" | "links";
+type MembersView = "members" | "invitations" | "links" | "lark";
 
 type InviteSeatPurchase = {
   workspaceId: string;
@@ -427,11 +431,12 @@ export function MembersTab() {
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [shareLinkOpen, setShareLinkOpen] = useState(false);
+  const [larkSendOpen, setLarkSendOpen] = useState(false);
   const requestedView = resolveSettingsLocation(
     navigation?.searchParams ?? new URLSearchParams(),
   ).section;
   const urlView: MembersView =
-    requestedView === "invitations" || requestedView === "links"
+    requestedView === "invitations" || requestedView === "links" || requestedView === "lark"
       ? requestedView
       : "members";
   const [localView, setLocalView] = useState<MembersView>(urlView);
@@ -487,6 +492,12 @@ export function MembersTab() {
   // Only owners/admins may list share links; skip the request for plain
   // members (the server would 403) once the current member's role is known.
   const { data: shareLinks = [] } = useQuery(shareLinkListOptions(wsId, canManageWorkspace));
+  // Feishu invites are for owners/admins on servers that have the bot; the list
+  // is only requested once both hold.
+  const larkEnabled =
+    useQuery({ ...larkInviteStatusOptions(), enabled: canManageWorkspace }).data?.enabled === true;
+  const showLarkInvites = canManageWorkspace && larkEnabled;
+  const { data: larkInvites = [] } = useQuery(larkInviteListOptions(wsId, showLarkInvites));
   const billingEnabled = useFeatureEnabled(BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG, false);
   const seats = useQuery({
     ...workspaceSubscriptionSummaryOptions(wsId),
@@ -893,6 +904,15 @@ export function MembersTab() {
     ...(canManageWorkspace && canShareJoinLinks(navigation)
       ? [{ value: "links" as const, label: t(($) => $.members.share_links_label), count: shareLinks.length }]
       : []),
+    ...(showLarkInvites
+      ? [
+          {
+            value: "lark" as const,
+            label: t(($) => $.members.lark.tab),
+            count: larkInvites.filter((invite) => invite.status === "active").length,
+          },
+        ]
+      : []),
   ];
   const activeView = views.some((item) => item.value === view) ? view : "members";
 
@@ -960,6 +980,11 @@ export function MembersTab() {
                 <Plus />
                 {t(($) => $.members.share_links_create_title)}
               </Button>
+            ) : activeView === "lark" ? (
+              <Button variant="outline" size="sm" onClick={() => setLarkSendOpen(true)}>
+                <Plus />
+                {t(($) => $.members.lark.send)}
+              </Button>
             ) : null}
           </div>
         </div>
@@ -1004,6 +1029,8 @@ export function MembersTab() {
           ) : (
             <EmptyList>{t(($) => $.members.no_invitations)}</EmptyList>
           )
+        ) : activeView === "lark" ? (
+          <LarkInvitesView wsId={wsId} />
         ) : shareLinks.length > 0 ? (
           <SettingsCard>
             {shareLinks.map((link) => (
@@ -1174,6 +1201,10 @@ export function MembersTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {showLarkInvites ? (
+        <LarkInviteSendDialog wsId={wsId} open={larkSendOpen} onOpenChange={setLarkSendOpen} />
+      ) : null}
 
       <AlertDialog
         open={inviteSeatPurchase !== null}

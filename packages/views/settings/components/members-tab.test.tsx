@@ -31,6 +31,8 @@ const data = vi.hoisted(() => ({
   members: [] as Array<Record<string, unknown>>,
   invitations: [] as Array<Record<string, unknown>>,
   shareLinks: [] as Array<Record<string, unknown>>,
+  larkEnabled: false,
+  larkInvites: [] as Array<Record<string, unknown>>,
   summary: null as Record<string, unknown> | null,
 }));
 
@@ -38,6 +40,9 @@ vi.mock("@tanstack/react-query", () => ({
   queryOptions: <T,>(opts: T) => opts,
   useQuery: (opts: { queryKey: unknown[] }) => {
     const key = JSON.stringify(opts.queryKey);
+    if (key.includes("invite-status")) return { data: { enabled: data.larkEnabled } };
+    if (key.includes("lark-invites")) return { data: data.larkInvites };
+    if (key.includes("lark-chats")) return { data: [] };
     if (key.includes("invitations")) return { data: data.invitations };
     if (key.includes("share-links")) return { data: data.shareLinks };
     if (key.includes("members")) return { data: data.members };
@@ -90,7 +95,7 @@ vi.mock("../../navigation", () => ({
     };
   },
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 import { MembersTab } from "./members-tab";
 
@@ -128,6 +133,8 @@ beforeEach(() => {
     },
   ];
   data.shareLinks = [];
+  data.larkEnabled = false;
+  data.larkInvites = [];
   data.summary = null;
   shareable.url = undefined;
   configStore.getState().setFeatureFlags({});
@@ -284,5 +291,101 @@ describe("MembersTab", () => {
       "aria-selected",
       "true",
     );
+  });
+
+  describe("Feishu invites", () => {
+    const larkInvite = (id: string, status: string) => ({
+      id,
+      target: { type: "chat", id: `oc_${id}`, id_type: "chat_id", name: `Group ${id}`, avatar_url: null },
+      role: "member",
+      status,
+      use_count: 0,
+      max_uses: null,
+      expires_at: "2026-11-01T00:00:00Z",
+      revoked_at: null,
+      note: "",
+      sent_by: { id: "user-1", name: "Ada Lovelace", avatar_url: null },
+      sent_by_agent: null,
+      created_at: "2026-10-20T00:00:00Z",
+      joined: [],
+    });
+
+    it("shows the tab with the number of active invites to admins when the server has the bot", () => {
+      data.larkEnabled = true;
+      data.larkInvites = [larkInvite("a", "active"), larkInvite("b", "active"), larkInvite("c", "expired")];
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.getByRole("tab", { name: /Feishu invites\s*2/ })).toHaveAttribute(
+        "aria-selected",
+        "false",
+      );
+    });
+
+    it("hides the tab from plain members", () => {
+      data.larkEnabled = true;
+      data.members = [
+        member("user-1", "Ada Lovelace", "member"),
+        member("user-2", "Grace Hopper", "owner"),
+      ];
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("tab", { name: /Feishu invites/ })).toBeNull();
+    });
+
+    it("hides the tab when the server has no Feishu bot", () => {
+      data.larkEnabled = false;
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("tab", { name: /Feishu invites/ })).toBeNull();
+    });
+
+    it("keeps the tab when share links are unavailable on this client", () => {
+      data.larkEnabled = true;
+      shareable.url = (path) => `marvis://open?path=${encodeURIComponent(path)}`;
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("tab", { name: /Share links/ })).toBeNull();
+      expect(screen.getByRole("tab", { name: /Feishu invites/ })).toBeInTheDocument();
+    });
+
+    it("lists the invites under the tab, keeps it in the URL and offers the send button there only", async () => {
+      data.larkEnabled = true;
+      data.larkInvites = [larkInvite("a", "active")];
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("button", { name: "Send Feishu invite" })).toBeNull();
+      await user.click(screen.getByRole("tab", { name: /Feishu invites/ }));
+
+      expect(url.get()).toBe("tab=members&section=lark");
+      expect(await screen.findByText("Group a")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Send Feishu invite" })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("tab", { name: /Members\s*3/ }));
+      expect(screen.queryByRole("button", { name: "Send Feishu invite" })).toBeNull();
+    });
+
+    it("opens the send dialog from the toolbar button", async () => {
+      data.larkEnabled = true;
+      url.set("tab=members&section=lark");
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      await user.click(screen.getByRole("button", { name: "Send Feishu invite" }));
+
+      expect(await screen.findByRole("dialog", { name: "Send Feishu invite" })).toBeInTheDocument();
+    });
+
+    it("opens the tab a deep link names when it is available, and falls back otherwise", () => {
+      data.larkEnabled = true;
+      url.set("tab=members&section=lark");
+      const { unmount } = renderWithI18n(<MembersTab />);
+      expect(screen.getByRole("tab", { name: /Feishu invites/ })).toHaveAttribute("aria-selected", "true");
+      unmount();
+
+      data.larkEnabled = false;
+      renderWithI18n(<MembersTab />);
+      expect(screen.getByRole("tab", { name: /Members\s*3/ })).toHaveAttribute("aria-selected", "true");
+    });
   });
 });
