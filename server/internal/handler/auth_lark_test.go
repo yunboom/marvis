@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -346,5 +347,57 @@ func TestLarkLoginClientSuccess(t *testing.T) {
 	}
 	if stub.requests[larkPathUserInfo].authorization != "Bearer "+larkTestUserToken {
 		t.Fatal("user info request did not use the user access token")
+	}
+}
+
+// TestLarkLogin_AvatarSync 覆盖飞书登录对头像的覆盖规则：
+// 头像为空或来自第三方 URL 时跟随飞书，用户在 Marvis 上传的头像与 emoji 头像保持不变。
+func TestLarkLogin_AvatarSync(t *testing.T) {
+	const larkAvatar = "https://example.com/lark-avatar.png"
+
+	tests := []struct {
+		name string
+		// current 是登录前用户的头像，空串表示 NULL。
+		current string
+		// noStorage 为 true 时 Handler 没有配置对象存储。
+		noStorage bool
+		want      string
+	}{
+		{name: "empty", current: "", want: larkAvatar},
+		{name: "third-party url", current: "https://s1-imfile.feishucdn.com/old", want: larkAvatar},
+		{name: "third-party url without storage", current: "https://s1-imfile.feishucdn.com/old", noStorage: true, want: larkAvatar},
+		{name: "uploaded", current: "https://cdn.example.com/" + testAvatarKey, want: "https://cdn.example.com/" + testAvatarKey},
+		{name: "uploaded served url", current: "https://api.example.test" + avatarURLPath(testAvatarKey), want: "https://api.example.test" + avatarURLPath(testAvatarKey)},
+		{name: "emoji", current: "emoji:🦊", want: "emoji:🦊"},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setLarkLoginEnv(t, "")
+			email := fmt.Sprintf("lark-avatar-sync-%d@example.com", i)
+			cols := testutil.Cols{}
+			if tt.current != "" {
+				cols["avatar_url"] = tt.current
+			}
+			userID := dbfx.User(t, "Lark Avatar User", email, cols)
+
+			h, _ := newLarkStubHandler(t, Config{AllowSignup: false}, larkOAuthSuccessResponses(
+				larkUserInfoBody(email, "", larkTestTenantKey),
+			))
+			h.Queries = testHandler.Queries
+			if !tt.noStorage {
+				h.Storage = &mockStorage{}
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/auth/lark", strings.NewReader(`{"code":"test-code","redirect_uri":"http://localhost/auth/callback","source":"oauth"}`))
+			var got LoginResponse
+			testutil.Call(t, h.LarkLogin, req).Want(http.StatusOK).JSON(&got)
+
+			var stored string
+			dbfx.QueryRow(t, `SELECT COALESCE(avatar_url, '') FROM "user" WHERE id = $1`, userID).Scan(&stored)
+			if stored != tt.want {
+				t.Fatalf("stored avatar_url = %q, want %q", stored, tt.want)
+			}
+		})
 	}
 }

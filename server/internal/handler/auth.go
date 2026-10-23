@@ -731,8 +731,8 @@ func (h *Handler) issueOAuthLogin(r *http.Request, profile oauthLoginProfile, au
 		obsmetrics.RecordEvent(h.Analytics, h.Metrics, evt)
 	}
 
-	// Update name and avatar from the provider profile if the user was just created
-	// (default name is email prefix) or has no avatar yet.
+	// 名字：用户刚创建（默认名是邮箱前缀）时用第三方资料补全。
+	// 头像：Google 只在用户没有头像时写入；飞书每次登录都跟随飞书头像，用户自己选的头像除外。
 	needsUpdate := false
 	newName := user.Name
 	newAvatar := user.AvatarUrl
@@ -741,7 +741,12 @@ func (h *Handler) issueOAuthLogin(r *http.Request, profile oauthLoginProfile, au
 		newName = profile.Name
 		needsUpdate = true
 	}
-	if profile.AvatarURL != "" && !user.AvatarUrl.Valid {
+
+	replaceAvatar := !user.AvatarUrl.Valid
+	if authMethod == authMethodLark {
+		replaceAvatar = h.shouldReplaceAvatarFromProvider(user.AvatarUrl)
+	}
+	if profile.AvatarURL != "" && replaceAvatar && profile.AvatarURL != user.AvatarUrl.String {
 		newAvatar = pgtype.Text{String: profile.AvatarURL, Valid: true}
 		needsUpdate = true
 	}
@@ -763,6 +768,34 @@ func (h *Handler) issueOAuthLogin(r *http.Request, profile oauthLoginProfile, au
 	}
 
 	return user, tokenString, nil
+}
+
+// shouldReplaceAvatarFromProvider 判断登录时能否用第三方头像覆盖用户当前头像。
+// 当前头像为空，或是第三方的 http(s) 地址时可以覆盖；
+// emoji 头像、本服务存储里的上传头像是用户自己选的，不覆盖。
+func (h *Handler) shouldReplaceAvatarFromProvider(current pgtype.Text) bool {
+	if !current.Valid || current.String == "" {
+		return true
+	}
+
+	value := current.String
+	if strings.HasPrefix(value, agentEmojiAvatarPrefix) {
+		return false
+	}
+	if !strings.HasPrefix(value, "http://") && !strings.HasPrefix(value, "https://") {
+		return false
+	}
+
+	// 没有配置对象存储时不存在上传头像；配置了就要排除本服务存储生成的地址，
+	// 包括客户端回传后落库的、带签名的本服务头像地址。
+	if h.Storage == nil {
+		return true
+	}
+	if _, ok := avatarKeyFromServedURL(value); ok {
+		return false
+	}
+
+	return h.ownedStorageKey(value) == ""
 }
 
 // completeOAuthLogin 在 issueOAuthLogin 之后写 cookie 并以 JSON 返回登录结果，供网页端与桌面端经网页登录使用。
