@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { Loader2, RefreshCw, Server } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuthStore } from "@marvis/core/auth";
 import { clearClientSessionData } from "@marvis/core/platform";
 import {
@@ -205,9 +206,12 @@ export function ServerSettingsTab() {
       await logoutBeforeSwitch();
       // 保存后主进程会重载所有窗口，页面随即回到登录页。
       await window.desktopAPI.server.select(target.selected);
-    } catch (err) {
+    } catch {
+      // 退出登录会把整个设置页卸载（标签页被重置、认证状态清空后回到登录页），
+      // 所以失败提示必须走全局 toast：Toaster 挂在 App 根部，登录页下仍然存在。
+      toast.error(t(($) => $.desktop.server.settings.switch_failed));
+      // 页面还没被卸载时（例如退出登录本身失败），让按钮恢复可用。
       setSwitching(false);
-      throw err;
     }
   };
 

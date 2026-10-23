@@ -1355,6 +1355,7 @@
         "switch": "切り替え",
         "switch_title": "{{name}} に切り替えますか？",
         "switch_body": "現在のアカウントからログアウトし、{{address}} に接続したあと、あらためてログインします。",
+        "switch_failed": "サーバーを切り替えられませんでした",
         "cancel": "キャンセル"
       },
       "tab_label": "サーバー"

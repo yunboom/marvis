@@ -1095,6 +1095,7 @@
         "switch": "전환",
         "switch_title": "{{name}}(으)로 전환할까요?",
         "switch_body": "현재 계정에서 로그아웃하고 {{address}}에 연결한 뒤 다시 로그인합니다.",
+        "switch_failed": "서버를 전환하지 못했습니다",
         "cancel": "취소"
       },
       "tab_label": "서버"

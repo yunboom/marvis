@@ -1365,6 +1365,7 @@
         "switch": "Switch",
         "switch_title": "Switch to {{name}}?",
         "switch_body": "This signs you out of the current account. After connecting to {{address}}, you will need to sign in again.",
+        "switch_failed": "Couldn't switch server",
         "cancel": "Cancel"
       },
       "tab_label": "Server"

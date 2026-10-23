@@ -25,6 +25,11 @@ const mocks = vi.hoisted(() => ({
   authLogout: vi.fn(),
   // 记录退出登录与保存选择的先后顺序。
   calls: [] as string[],
+  toastError: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: mocks.toastError },
 }));
 
 vi.mock("../../platform/desktop-session-teardown", () => ({
@@ -115,6 +120,7 @@ function installDesktopAPI(runtimeConfig: unknown) {
   mocks.authLogout.mockReset().mockImplementation(() => {
     mocks.calls.push("logout");
   });
+  mocks.toastError.mockReset();
 
   Object.defineProperty(window, "desktopAPI", {
     configurable: true,
@@ -328,6 +334,41 @@ describe("ServerSettingsTab", () => {
     await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
     expect(mocks.calls).toEqual([]);
     expect(mocks.daemonLogout).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed select with a toast instead of an unhandled rejection", async () => {
+    mocks.select.mockRejectedValueOnce(new Error("write failed"));
+
+    await openTab([devServer]);
+    fireEvent.click(within(lanRows()[0]!).getByRole("button", { name: "切换" }));
+    const dialog = await screen.findByRole("alertdialog");
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: "切换" }));
+    });
+
+    // 此时已经退出登录；提示走全局 toast，不依赖这个标签页是否还挂载。
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("切换服务器失败"));
+    expect(mocks.calls).toEqual(["teardown", "clear", "logout"]);
+    // 标签页仍挂载时（本用例的桩不会卸载它），按钮恢复可用。
+    expect(within(dialog).getByRole("button", { name: "取消" })).toBeEnabled();
+    expect(within(dialog).getByRole("button", { name: "切换" })).toBeEnabled();
+  });
+
+  it("reports a failed logout with a toast and does not select", async () => {
+    mocks.daemonLogout.mockRejectedValueOnce(new Error("ipc closed"));
+
+    await openTab([devServer]);
+    fireEvent.click(within(lanRows()[0]!).getByRole("button", { name: "切换" }));
+    const dialog = await screen.findByRole("alertdialog");
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: "切换" }));
+    });
+
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("切换服务器失败"));
+    expect(mocks.select).not.toHaveBeenCalled();
+    expect(within(dialog).getByRole("button", { name: "切换" })).toBeEnabled();
   });
 
   it("disables incompatible servers and says why", async () => {

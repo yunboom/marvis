@@ -1355,6 +1355,7 @@
         "switch": "切换",
         "switch_title": "切换到 {{name}}？",
         "switch_body": "会退出当前账号，连接到 {{address}} 后重新登录。",
+        "switch_failed": "切换服务器失败",
         "cancel": "取消"
       },
       "tab_label": "服务器"
