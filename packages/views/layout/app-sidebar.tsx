@@ -806,6 +806,9 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             {utilityNav.map((item) => {
               const href = p[item.key]();
               const Icon = routeIconForPath(href);
+              // Help shares the Settings row, pinned right; it sits beside the
+              // link rather than inside it so its menu never navigates.
+              const withHelp = item.key === "settings";
               return (
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
@@ -816,13 +819,15 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                     <Icon />
                     <span>{t(($) => $.nav[item.labelKey])}</span>
                   </SidebarMenuButton>
+                  {withHelp && (
+                    <div className="absolute top-1/2 right-0.5 -translate-y-1/2">
+                      <HelpLauncher />
+                    </div>
+                  )}
                 </SidebarMenuItem>
               );
             })}
           </SidebarMenu>
-          <div className="flex items-center gap-1 pl-[5px]">
-            <HelpLauncher />
-          </div>
           <div className="mt-1 border-t border-sidebar-border pt-2">
             <SidebarMenu>
               <SidebarMenuItem>
