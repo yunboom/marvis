@@ -1332,12 +1332,11 @@
         "rescan": "Search again",
         "local_badge": "This computer",
         "none": "No servers found on your local network. The computer and the server must be on the same network.",
-        "continue": "Continue",
         "or_address": "or enter an address",
         "summary_scanning": "Searching…",
         "summary_scanning_hint": "Marvis servers on your network appear here",
         "summary_manual": "Address entered manually",
-        "summary_manual_hint": "Test the connection to continue"
+        "summary_manual_hint": "Test the connection first"
       },
       "address": {
         "label": "Server address",
@@ -1352,13 +1351,7 @@
         "too_old": "Server version is too old"
       },
       "confirm": {
-        "title": "Connect to {{name}}?",
-        "subtitle": "Check the address to make sure this is the server you want",
-        "address": "Address",
-        "version": "Version",
-        "host": "Hostname",
         "http_warning": "This server uses HTTP. Other devices on the same network may see what is sent.",
-        "back": "Back",
         "connect": "Connect",
         "connecting": "Connecting..."
       },

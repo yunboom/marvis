@@ -1322,12 +1322,11 @@
         "rescan": "再検索",
         "local_badge": "このコンピュータ",
         "none": "ローカルネットワーク上にサーバーが見つかりません。コンピュータとサーバーは同じネットワークに接続されている必要があります。",
-        "continue": "続ける",
         "or_address": "またはアドレスを入力",
         "summary_scanning": "検索中…",
         "summary_scanning_hint": "ネットワーク上の Marvis サーバーがここに表示されます",
         "summary_manual": "手動で入力したアドレス",
-        "summary_manual_hint": "接続テストに成功すると続行できます"
+        "summary_manual_hint": "先に接続をテストしてください"
       },
       "address": {
         "label": "サーバーのアドレス",
@@ -1342,13 +1341,7 @@
         "too_old": "サーバーのバージョンが古すぎます"
       },
       "confirm": {
-        "title": "{{name}} に接続しますか？",
-        "subtitle": "アドレスを確認し、使用するサーバーであることを確かめてください",
-        "address": "アドレス",
-        "version": "バージョン",
-        "host": "ホスト名",
         "http_warning": "このサーバーは HTTP で接続します。同じネットワーク上の他のデバイスに通信内容が見える可能性があります。",
-        "back": "戻る",
         "connect": "接続",
         "connecting": "接続中…"
       },

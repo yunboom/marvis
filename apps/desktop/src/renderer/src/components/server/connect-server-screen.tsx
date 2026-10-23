@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { Loader2, RefreshCw, Server, TriangleAlert, Wifi, WifiOff } from "lucide-react";
+import { Loader2, RefreshCw, Server, Wifi, WifiOff } from "lucide-react";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
 import { Button } from "@marvis/ui/components/ui/button";
 import {
@@ -22,7 +22,6 @@ import {
 import { ServerAddressField } from "./server-address-field";
 import { useLanServers } from "./use-lan-servers";
 
-const HTTP_PROTOCOL = "http:";
 const DETAIL_SEPARATOR = " · ";
 
 const PRIMARY_BUTTON_CLASS = "h-12 w-full text-body-lg";
@@ -36,11 +35,10 @@ type Selection =
   | { kind: typeof SERVER_SOURCE_MANUAL }
   | { kind: "none" };
 
-// 确认步骤要展示、并在“连接”时落盘的服务器。
+// 点“连接”时落盘的服务器，以及左栏摘要要展示的版本。
 interface ConnectTarget {
   selected: SelectedServer;
   version: string;
-  host: string;
 }
 
 function resolveSelection(
@@ -79,7 +77,6 @@ function toConnectTarget(
         appUrl: server.appUrl,
       },
       version: server.version,
-      host: server.host,
     };
   }
 
@@ -95,7 +92,6 @@ function toConnectTarget(
         appUrl: server.appUrl,
       },
       version: server.version,
-      host: server.host,
     };
   }
 
@@ -107,8 +103,8 @@ function serverSummaryLine(url: string, version: string): string {
   return [new URL(url).host, version].filter((part) => part !== "").join(DETAIL_SEPARATOR);
 }
 
-// 桌面端首次启动（还没有选择服务器）时的连接页：先选服务器，再确认，最后保存并重载。
-// 两栏布局与引导页一致：左栏标题、已选服务器摘要和按钮，右栏是选择或确认详情。
+// 桌面端首次启动（还没有选择服务器）时的连接页：选好服务器后点“连接”直接保存并重载。
+// 两栏布局与引导页一致：左栏标题、已选服务器摘要和按钮，右栏是服务器列表和地址栏。
 export function ConnectServerScreen({
   suggestedAddress,
 }: {
@@ -116,7 +112,6 @@ export function ConnectServerScreen({
   suggestedAddress?: string;
 }) {
   const { t } = useT("settings");
-  const [target, setTarget] = useState<ConnectTarget | null>(null);
   const [pick, setPick] = useState<UserPick | null>(null);
   const [address, setAddress] = useState(suggestedAddress ?? DEFAULT_SERVER_ADDRESS);
   const [probe, setProbe] = useState<ProbeResult | null>(null);
@@ -126,17 +121,17 @@ export function ConnectServerScreen({
   const selection = resolveSelection(pick, servers, scanning);
   const noneFound = !scanning && servers.length === 0;
 
-  let continueDisabled: boolean;
+  let connectDisabled: boolean;
   if (selection.kind === SERVER_SOURCE_LAN) {
-    // 查找窗口内默认选中的项还可能变化，用户明确点选过才能继续。
-    continueDisabled = scanning && pick === null;
+    // 查找窗口内默认选中的项还可能变化，用户明确点选过才能连接。
+    connectDisabled = scanning && pick === null;
   } else if (selection.kind === SERVER_SOURCE_MANUAL) {
-    continueDisabled = probe?.kind !== "ok";
+    connectDisabled = probe?.kind !== "ok";
   } else {
-    continueDisabled = true;
+    connectDisabled = true;
   }
 
-  const summaryTarget = target ?? toConnectTarget(selection, probe);
+  const summaryTarget = toConnectTarget(selection, probe);
   let summary: { name: string; line: string; picked: boolean };
   if (summaryTarget) {
     summary = {
@@ -159,29 +154,21 @@ export function ConnectServerScreen({
   }
 
   const handleConnect = async () => {
-    if (!target) return;
+    if (!summaryTarget) return;
 
     setConnecting(true);
     try {
       // 保存后主进程会重载所有窗口，页面随即回到登录页。
-      await window.desktopAPI.server.select(target.selected);
+      await window.desktopAPI.server.select(summaryTarget.selected);
     } catch (err) {
       setConnecting(false);
       throw err;
     }
   };
 
-  let title: string;
-  let subtitle: string;
-  if (target) {
-    title = t(($) => $.desktop.server.confirm.title, { name: target.selected.name });
-    subtitle = t(($) => $.desktop.server.confirm.subtitle);
-  } else {
-    title = t(($) => $.desktop.server.connect.title);
-    subtitle = noneFound
-      ? t(($) => $.desktop.server.connect.subtitle_none)
-      : t(($) => $.desktop.server.connect.subtitle);
-  }
+  const subtitle = noneFound
+    ? t(($) => $.desktop.server.connect.subtitle_none)
+    : t(($) => $.desktop.server.connect.subtitle);
 
   return (
     <div className="flex h-screen flex-col bg-app-shell text-foreground">
@@ -191,7 +178,7 @@ export function ConnectServerScreen({
           <SplitCardIntro>
             <MarvisIcon className="size-9 text-foreground" />
 
-            <h1 className="mt-8 text-display-sm font-bold [@media(max-height:760px)]:mt-5">{title}</h1>
+            <h1 className="mt-8 text-display-sm font-bold [@media(max-height:760px)]:mt-5">{t(($) => $.desktop.server.connect.title)}</h1>
             <p className="mt-3 text-body leading-relaxed text-muted-foreground">{subtitle}</p>
 
             <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3 [@media(max-height:760px)]:mt-5">
@@ -222,60 +209,34 @@ export function ConnectServerScreen({
 
           <SplitCardPane>
             <div className="flex min-h-[320px] flex-1 flex-col overflow-y-auto rounded-[20px] bg-surface-sunken md:min-h-0">
-              {target ? (
-                <ConfirmDetails target={target} />
-              ) : (
-                <PickPane
-                  servers={servers}
-                  scanning={scanning}
-                  noneFound={noneFound}
-                  selection={selection}
-                  address={address}
-                  probe={probe}
-                  onRescan={rescan}
-                  onPickServer={(server) => setPick({ kind: SERVER_SOURCE_LAN, url: server.url })}
-                  onPickAddress={() => setPick({ kind: SERVER_SOURCE_MANUAL })}
-                  onAddressChange={setAddress}
-                  onProbeResult={setProbe}
-                />
-              )}
+              <PickPane
+                servers={servers}
+                scanning={scanning}
+                noneFound={noneFound}
+                selection={selection}
+                address={address}
+                probe={probe}
+                onRescan={rescan}
+                onPickServer={(server) => setPick({ kind: SERVER_SOURCE_LAN, url: server.url })}
+                onPickAddress={() => setPick({ kind: SERVER_SOURCE_MANUAL })}
+                onAddressChange={setAddress}
+                onProbeResult={setProbe}
+              />
             </div>
           </SplitCardPane>
 
           <SplitCardActions>
-            {target ? (
-              <>
-                <Button
-                  size="lg"
-                  className={PRIMARY_BUTTON_CLASS}
-                  disabled={connecting}
-                  onClick={() => void handleConnect()}
-                >
-                  {connecting && <Loader2 className="size-4 animate-spin" aria-hidden />}
-                  {connecting
-                    ? t(($) => $.desktop.server.confirm.connecting)
-                    : t(($) => $.desktop.server.confirm.connect)}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className={cn(PRIMARY_BUTTON_CLASS, "mt-2 h-11 font-normal")}
-                  disabled={connecting}
-                  onClick={() => setTarget(null)}
-                >
-                  {t(($) => $.desktop.server.confirm.back)}
-                </Button>
-              </>
-            ) : (
-              <Button
-                size="lg"
-                className={PRIMARY_BUTTON_CLASS}
-                disabled={continueDisabled}
-                onClick={() => setTarget(toConnectTarget(selection, probe))}
-              >
-                {t(($) => $.desktop.server.connect.continue)}
-              </Button>
-            )}
+            <Button
+              size="lg"
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={connectDisabled || connecting}
+              onClick={() => void handleConnect()}
+            >
+              {connecting && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              {connecting
+                ? t(($) => $.desktop.server.confirm.connecting)
+                : t(($) => $.desktop.server.confirm.connect)}
+            </Button>
           </SplitCardActions>
         </SplitCard>
       </div>
@@ -456,48 +417,6 @@ function ScanningPlaceholder() {
         <span className="h-2.5 w-30 rounded-full bg-skeleton" />
         <span className="h-2 w-45 rounded-full bg-skeleton" />
       </span>
-    </div>
-  );
-}
-
-// 确认步骤的右栏：地址、版本、主机名，HTTP 时附提醒。
-function ConfirmDetails({ target }: { target: ConnectTarget }) {
-  const { t } = useT("settings");
-
-  const { selected } = target;
-  const insecure = new URL(selected.url).protocol === HTTP_PROTOCOL;
-  const details = [
-    { label: t(($) => $.desktop.server.confirm.address), value: selected.url },
-    { label: t(($) => $.desktop.server.confirm.version), value: target.version },
-    { label: t(($) => $.desktop.server.confirm.host), value: target.host },
-  ].filter((detail) => detail.value !== "");
-
-  return (
-    <div className="flex flex-1 flex-col justify-center p-7">
-      <dl className="flex flex-col rounded-2xl bg-surface px-4.5 py-1 ring-1 ring-surface-border">
-        {details.map((detail, index) => (
-          <div
-            key={detail.label}
-            className={cn(
-              "flex min-h-12 items-center gap-3",
-              index > 0 && "border-t border-surface-border",
-            )}
-          >
-            <dt className="w-18 shrink-0 text-label text-muted-foreground">{detail.label}</dt>
-            <dd className="min-w-0 flex-1 truncate text-body tabular-nums">{detail.value}</dd>
-          </div>
-        ))}
-      </dl>
-
-      {insecure && (
-        <div
-          role="note"
-          className="mt-3 flex gap-2.5 rounded-xl bg-warning/10 px-3.5 py-3 text-label leading-relaxed"
-        >
-          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
-          <span>{t(($) => $.desktop.server.confirm.http_warning)}</span>
-        </div>
-      )}
     </div>
   );
 }

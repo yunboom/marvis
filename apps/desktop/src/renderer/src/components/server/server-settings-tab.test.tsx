@@ -11,6 +11,7 @@ import {
   type ProbeResult,
   type SelectedServer,
 } from "../../../../shared/server-discovery";
+import { PROBE_MIN_DISPLAY_MS } from "./server-address-field";
 import { LAN_SCAN_WINDOW_MS } from "./use-lan-servers";
 
 const mocks = vi.hoisted(() => ({
@@ -171,7 +172,8 @@ function manualSwitchButton(): HTMLElement {
 async function runProbe(result: ProbeResult) {
   mocks.probe.mockResolvedValueOnce(result);
   fireEvent.click(screen.getByRole("button", { name: "测试连接" }));
-  await act(async () => {});
+  // 等“正在测试”的最短显示时长过去，结果才会落地。
+  await act(() => new Promise((resolve) => setTimeout(resolve, PROBE_MIN_DISPLAY_MS)));
 }
 
 beforeEach(() => {
