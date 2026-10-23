@@ -43,7 +43,7 @@ function invite(overrides: Partial<LarkInvite> & Pick<LarkInvite, "id">): LarkIn
     status: "active",
     use_count: 0,
     max_uses: null,
-    expires_at: "2026-11-01T00:00:00Z",
+    expires_at: "2099-01-01T00:00:00Z",
     revoked_at: null,
     note: "",
     sent_by: sentBy,
@@ -122,6 +122,29 @@ describe("LarkInvitesView", () => {
       "Group mid-done",
       "Group old-expired",
     ]);
+  });
+
+  it("shows an active invite whose expiry has passed as expired, without revoke", async () => {
+    mockApi.listLarkInvites.mockResolvedValue([
+      // 服务端状态是推导出来的，但客户端缓存可能比到期时间旧，到期的有效邀请按已过期显示。
+      invite({
+        id: "lapsed",
+        status: "active",
+        expires_at: "2020-01-01T00:00:00Z",
+        created_at: "2026-10-22T00:00:00Z",
+      }),
+      invite({ id: "live", status: "active", created_at: "2026-10-01T00:00:00Z" }),
+    ]);
+    mount();
+
+    const rows = await screen.findAllByRole("listitem");
+    expect(within(rows[0]!).getByText("Group live")).toBeInTheDocument();
+    expect(within(rows[0]!).getByText("Active")).toBeInTheDocument();
+    expect(within(rows[1]!).getByText("Group lapsed")).toBeInTheDocument();
+    expect(within(rows[1]!).getByText("Expired")).toBeInTheDocument();
+    expect(within(rows[1]!).queryByText("Active")).toBeNull();
+    expect(within(rows[1]!).queryByRole("button", { name: "Revoke" })).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Revoke" })).toHaveLength(1);
   });
 
   it("describes the receiver, role, joined people, expiry and sender", async () => {

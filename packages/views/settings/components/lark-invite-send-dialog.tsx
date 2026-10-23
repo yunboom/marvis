@@ -171,7 +171,8 @@ function SendForm({
   const idPrefix = useId();
   const inviter = useAuthStore((s) => s.user);
   const workspace = useCurrentWorkspace();
-  const chats = useQuery(larkChatListOptions(wsId));
+  // 机器人加进新群后要能在下次打开弹窗时看到，全局 staleTime 是 Infinity，所以每次挂载都重新拉取。
+  const chats = useQuery({ ...larkChatListOptions(wsId), refetchOnMount: "always" });
 
   const [tab, setTab] = useState<TargetTab>(TARGET_TAB.chat);
   const [chatQuery, setChatQuery] = useState("");

@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@marvis/ui/lib/utils";
-import { LARK_INVITE_ERROR_CODES, type LarkInviteErrorCode } from "@marvis/core/types";
+import {
+  LARK_INVITE_ERROR_CODES,
+  type LarkInvite,
+  type LarkInviteErrorCode,
+  type LarkInviteStatus,
+} from "@marvis/core/types";
 import { useT } from "../../i18n";
 
 /** ActorAvatar 的身份类型：成员圆形，智能体方形。 */
@@ -10,6 +15,29 @@ export const ACTOR_TYPE = {
   member: "member",
   agent: "agent",
 } as const;
+
+/** 邀请状态的取值，与服务端 JSON 一致。 */
+export const INVITE_STATUS = {
+  active: "active",
+  completed: "completed",
+  expired: "expired",
+  revoked: "revoked",
+} as const satisfies Record<LarkInviteStatus, LarkInviteStatus>;
+
+/**
+ * effectiveInviteStatus 返回界面应显示的状态。服务端的状态是按字段推导的，
+ * 客户端缓存可能比到期时间旧，所以到期时间已过的有效邀请按已过期处理。
+ */
+export function effectiveInviteStatus(
+  invite: Pick<LarkInvite, "status" | "expires_at">,
+  now: number = Date.now(),
+): LarkInviteStatus {
+  if (invite.status === INVITE_STATUS.active && Date.parse(invite.expires_at) <= now) {
+    return INVITE_STATUS.expired;
+  }
+
+  return invite.status;
+}
 
 /** isLarkInviteErrorCode 判断服务端返回的错误码是否在界面已知的列表里。 */
 export function isLarkInviteErrorCode(code: string | undefined): code is LarkInviteErrorCode {

@@ -1528,7 +1528,7 @@
       "preview_note": "「{{note}}」",
       "preview_join": "ワークスペースに参加",
       "sent_toast_other": "{{count}} 件のカードを送信しました",
-      "submitted_toast": "送信しました。結果は少し後に反映されます",
+      "submitted_toast": "リクエストを受け付けました。結果は少し後に反映されます",
       "errors": {
         "lark_not_configured": "サーバーに Feishu ボットが設定されていません",
         "permission_denied": "オーナーまたは管理者の権限が必要です",

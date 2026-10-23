@@ -1543,7 +1543,7 @@
       "preview_join": "Rejoindre l’espace de travail",
       "sent_toast_one": "{{count}} carte envoyée",
       "sent_toast_other": "{{count}} cartes envoyées",
-      "submitted_toast": "Envoyé, les résultats seront mis à jour sous peu",
+      "submitted_toast": "Demande prise en compte, les résultats seront mis à jour sous peu",
       "errors": {
         "lark_not_configured": "Aucun bot Feishu n’est configuré sur le serveur",
         "permission_denied": "Rôle propriétaire ou administrateur requis",

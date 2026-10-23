@@ -811,7 +811,12 @@ export function useRealtimeSync(
       },
       member: () => {
         const wsId = getCurrentWsId();
-        if (wsId) qc.invalidateQueries({ queryKey: workspaceKeys.members(wsId) });
+        if (!wsId) return;
+
+        qc.invalidateQueries({ queryKey: workspaceKeys.members(wsId) });
+        // 通过飞书邀请卡片加入会产生 member:added，邀请列表里的已加入人数和状态要跟着刷新；
+        // 没有打开过飞书邀请列表的客户端没有这条查询，失效是空操作。
+        qc.invalidateQueries({ queryKey: workspaceKeys.larkInvites(wsId) });
       },
       // workspace:updated is handled by the specific handler below
       // (compares prefixes to decide whether to also invalidate issues).

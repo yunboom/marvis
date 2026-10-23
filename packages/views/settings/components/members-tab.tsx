@@ -106,6 +106,7 @@ import {
 } from "./seat-invite-purchase";
 import { LarkInvitesView } from "./lark-invites-view";
 import { LarkInviteSendDialog } from "./lark-invite-send-dialog";
+import { INVITE_STATUS, effectiveInviteStatus } from "./lark-invite-shared";
 
 const SEAT_PURCHASE_CONFIRM_TIMEOUT_MS = 2 * 60_000;
 
@@ -492,12 +493,13 @@ export function MembersTab() {
   // Only owners/admins may list share links; skip the request for plain
   // members (the server would 403) once the current member's role is known.
   const { data: shareLinks = [] } = useQuery(shareLinkListOptions(wsId, canManageWorkspace));
-  // Feishu invites are for owners/admins on servers that have the bot; the list
-  // is only requested once both hold.
-  const larkEnabled =
-    useQuery({ ...larkInviteStatusOptions(), enabled: canManageWorkspace }).data?.enabled === true;
-  const showLarkInvites = canManageWorkspace && larkEnabled;
-  const { data: larkInvites = [] } = useQuery(larkInviteListOptions(wsId, showLarkInvites));
+  // Owners/admins see the Feishu invites tab once the server's bot status is
+  // known; without the bot it shows the not-configured panel instead of the
+  // list. The list is only requested when the bot is available.
+  const larkStatus = useQuery({ ...larkInviteStatusOptions(), enabled: canManageWorkspace }).data;
+  const showLarkTab = canManageWorkspace && larkStatus !== undefined;
+  const larkEnabled = showLarkTab && larkStatus.enabled;
+  const { data: larkInvites = [] } = useQuery(larkInviteListOptions(wsId, larkEnabled));
   const billingEnabled = useFeatureEnabled(BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG, false);
   const seats = useQuery({
     ...workspaceSubscriptionSummaryOptions(wsId),
@@ -898,18 +900,22 @@ export function MembersTab() {
     { value: "720", label: t(($) => $.members.expiry_30d) },
     { value: "0", label: t(($) => $.members.expiry_never) },
   ];
-  const views: { value: MembersView; label: string; count: number }[] = [
+  const views: { value: MembersView; label: string; count?: number }[] = [
     { value: "members", label: t(($) => $.members.members_label), count: members.length },
     { value: "invitations", label: t(($) => $.members.pending_label), count: invitations.length },
     ...(canManageWorkspace && canShareJoinLinks(navigation)
       ? [{ value: "links" as const, label: t(($) => $.members.share_links_label), count: shareLinks.length }]
       : []),
-    ...(showLarkInvites
+    ...(showLarkTab
       ? [
           {
             value: "lark" as const,
             label: t(($) => $.members.lark.tab),
-            count: larkInvites.filter((invite) => invite.status === "active").length,
+            count: larkEnabled
+              ? larkInvites.filter(
+                  (invite) => effectiveInviteStatus(invite) === INVITE_STATUS.active,
+                ).length
+              : undefined,
           },
         ]
       : []),
@@ -980,7 +986,7 @@ export function MembersTab() {
                 <Plus />
                 {t(($) => $.members.share_links_create_title)}
               </Button>
-            ) : activeView === "lark" ? (
+            ) : activeView === "lark" && larkEnabled ? (
               <Button variant="outline" size="sm" onClick={() => setLarkSendOpen(true)}>
                 <Plus />
                 {t(($) => $.members.lark.send)}
@@ -1202,7 +1208,7 @@ export function MembersTab() {
         </DialogContent>
       </Dialog>
 
-      {showLarkInvites ? (
+      {larkEnabled ? (
         <LarkInviteSendDialog wsId={wsId} open={larkSendOpen} onOpenChange={setLarkSendOpen} />
       ) : null}
 

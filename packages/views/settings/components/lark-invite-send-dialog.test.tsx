@@ -78,10 +78,12 @@ const notFound = () =>
     code: "user_not_found",
   });
 
-function mount(onOpenChange: (open: boolean) => void = vi.fn()) {
-  const client = new QueryClient({
+function mount(
+  onOpenChange: (open: boolean) => void = vi.fn(),
+  client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
+  }),
+) {
   const invalidate = vi.spyOn(client, "invalidateQueries");
   const view = renderWithI18n(
     <QueryClientProvider client={client}>
@@ -137,6 +139,25 @@ describe("LarkInviteSendDialog groups", () => {
     expect(toast.success).toHaveBeenCalledWith("2 cards sent");
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["workspaces", "ws-1", "lark-invites"] });
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("refetches the group list every time the dialog opens", async () => {
+    // 生产环境的全局 staleTime 是 Infinity，不显式重新拉取的话，刚加进群的机器人要等刷新页面才能看到。
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    });
+    mockApi.listLarkChats.mockResolvedValueOnce([chat(1)]);
+    const first = mount(vi.fn(), client);
+    await screen.findByRole("checkbox", { name: /^Group 1/ });
+    expect(mockApi.listLarkChats).toHaveBeenCalledTimes(1);
+    first.unmount();
+
+    // 关闭期间机器人被加进了新群。
+    mockApi.listLarkChats.mockResolvedValueOnce([chat(1), chat(2, "Newly added")]);
+    mount(vi.fn(), client);
+
+    expect(await screen.findByRole("checkbox", { name: /^Newly added/ })).toBeInTheDocument();
+    expect(mockApi.listLarkChats).toHaveBeenCalledTimes(2);
   });
 
   it("filters the group list by the search box", async () => {

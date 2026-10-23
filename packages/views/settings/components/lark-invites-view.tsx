@@ -17,19 +17,14 @@ import { useLocale, useT } from "../../i18n";
 import { SettingsCard } from "./settings-layout";
 import {
   ACTOR_TYPE,
+  INVITE_STATUS,
   LarkChatAvatar,
+  effectiveInviteStatus,
   isLarkInviteErrorCode,
   useLarkInviteErrorText,
 } from "./lark-invite-shared";
 
-// 邀请状态与接收方类型的取值，与服务端 JSON 一致。
-const INVITE_STATUS = {
-  active: "active",
-  completed: "completed",
-  expired: "expired",
-  revoked: "revoked",
-} as const satisfies Record<LarkInviteStatus, LarkInviteStatus>;
-
+// 接收方类型的取值，与服务端 JSON 一致。
 const TARGET_TYPE = {
   chat: "chat",
   user: "user",
@@ -50,7 +45,9 @@ const COLUMN_ACTION = "w-14";
 
 /** 有效的排在前面，其余按创建时间从新到旧。 */
 function sortInvites(invites: LarkInvite[]): LarkInvite[] {
-  const rank = (invite: LarkInvite) => (invite.status === INVITE_STATUS.active ? 0 : 1);
+  const now = Date.now();
+  const rank = (invite: LarkInvite) =>
+    effectiveInviteStatus(invite, now) === INVITE_STATUS.active ? 0 : 1;
   const createdAt = (invite: LarkInvite) => Date.parse(invite.created_at) || 0;
 
   return [...invites].sort((a, b) => rank(a) - rank(b) || createdAt(b) - createdAt(a));
@@ -143,10 +140,10 @@ function InviteRow({ wsId, invite }: { wsId: string; invite: LarkInvite }) {
   const [revoking, setRevoking] = useState(false);
 
   const { target } = invite;
-  const isActive = invite.status === INVITE_STATUS.active;
+  const status = effectiveInviteStatus(invite);
+  const isActive = status === INVITE_STATUS.active;
   // 已过期、已撤销的邀请淡化显示，已完成的仍是正常的历史记录。
-  const isDimmed =
-    invite.status === INVITE_STATUS.expired || invite.status === INVITE_STATUS.revoked;
+  const isDimmed = status === INVITE_STATUS.expired || status === INVITE_STATUS.revoked;
   const displayName = target.name || target.id;
   const sender = invite.sent_by_agent ?? invite.sent_by;
 
@@ -169,7 +166,7 @@ function InviteRow({ wsId, invite }: { wsId: string; invite: LarkInvite }) {
   };
 
   return (
-    <li data-status={invite.status} className="flex items-center gap-3 px-4 py-3">
+    <li data-status={status} className="flex items-center gap-3 px-4 py-3">
       <TargetAvatar target={target} dimmed={isDimmed} />
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
@@ -179,7 +176,7 @@ function InviteRow({ wsId, invite }: { wsId: string; invite: LarkInvite }) {
           >
             {displayName}
           </span>
-          <StatusChip status={invite.status} />
+          <StatusChip status={status} />
         </div>
         <div className="truncate text-caption text-muted-foreground">
           {target.type === TARGET_TYPE.user && target.id_type === TARGET_ID_TYPE_EMAIL
