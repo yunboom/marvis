@@ -2453,7 +2453,7 @@ func TestVerifyCodeBruteForceProtection(t *testing.T) {
 	}
 }
 
-func TestVerifyCodeNewUserHasNoWorkspace(t *testing.T) {
+func TestVerifyCodeNewUserIsOnboardedWithoutWorkspace(t *testing.T) {
 	const email = "workspace-verify-test@marvis.ai"
 	ctx := context.Background()
 
@@ -2490,6 +2490,11 @@ func TestVerifyCodeNewUserHasNoWorkspace(t *testing.T) {
 	user, err := testHandler.Queries.GetUserByEmail(ctx, email)
 	if err != nil {
 		t.Fatalf("GetUserByEmail: %v", err)
+	}
+
+	// New users skip onboarding: clients route them straight to a workspace.
+	if !user.OnboardedAt.Valid {
+		t.Fatal("new user onboarded_at: expected set, got NULL")
 	}
 
 	// New users should have no workspaces (/workspaces/new creates one)

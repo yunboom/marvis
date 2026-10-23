@@ -14,8 +14,10 @@ SELECT id, name, email, avatar_url FROM "user"
 WHERE id = ANY(@ids::uuid[]);
 
 -- name: CreateUser :one
-INSERT INTO "user" (name, email, avatar_url)
-VALUES ($1, $2, $3)
+-- Users skip the onboarding flow: they are onboarded from the moment they
+-- exist, so clients route them straight to a workspace (or to creating one).
+INSERT INTO "user" (name, email, avatar_url, onboarded_at)
+VALUES ($1, $2, $3, now())
 RETURNING *;
 
 -- name: UpdateUser :one
