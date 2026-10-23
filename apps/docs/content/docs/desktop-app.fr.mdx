@@ -116,7 +116,7 @@ Ce réglage ne concerne que cet ordinateur.
 
 Quand le serveur n'a pas d'adresse web, ou que cette adresse est `localhost`, Desktop le traite comme un serveur sans application web :
 
-- la page de connexion ne garde que la connexion par code e-mail, et les boutons Google et Feishu sont masqués ;
+- la page de connexion masque le bouton Google. Le bouton Feishu reste affiché quand la connexion Feishu est configurée sur le serveur et que son adresse de rappel pour Desktop est enregistrée dans la console développeur Feishu, voir [Desktop et application web](/self-host-quickstart#desktop-et-application-web). Desktop ouvre alors la connexion Feishu dans le navigateur et revient dans l'application à la fin. Sinon, seule la connexion par code e-mail reste ;
 - **Copier le lien** produit un lien `marvis://open?...`, qui s'ouvre dans Desktop sur tout ordinateur où Desktop est installé et connecté au même serveur.
 
 ## Préconfigurer le serveur avec desktop.json

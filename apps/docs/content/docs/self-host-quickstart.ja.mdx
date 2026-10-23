@@ -293,7 +293,9 @@ macOS は初回に、サーバー側と各クライアント側でローカル�
 
 Desktop に必要なのはバックエンドだけです。Web アプリは必須ではありません。同じネットワークで Web アプリも提供するには、`.env` に `MARVIS_APP_URL=http://marvis.local:3000` を設定し、Google と Feishu のログインのコールバックアドレスとして `http://marvis.local:3000/auth/callback` を登録します。
 
-Web アドレスがない場合、または `localhost` の場合、クライアントは Web アプリがないものとして扱います。ただし、サーバーが動いているコンピュータ上の CLI では `localhost` の Web アドレスを使えます。このとき Desktop は Google と Feishu のボタンを非表示にし、メール認証コードでのサインインだけを残します。詳しくは[デスクトップアプリ](/desktop-app#サーバーへの接続)を参照してください。
+Web アドレスがない場合、または `localhost` の場合、クライアントは Web アプリがないものとして扱い、Desktop は Google のボタンを非表示にします。ただし、サーバーが動いているコンピュータ上の CLI では `localhost` の Web アドレスを使えます。詳しくは[デスクトップアプリ](/desktop-app#サーバーへの接続)を参照してください。
+
+Desktop の Feishu ログインは Web アプリがなくても使えます。Feishu 開発者コンソールで、リダイレクト URL として `http://marvis.local:13840/auth/lark/desktop-callback` も登録します。このコールバックはバックエンドが直接処理するため、バックエンドだけを動かしている場合も Desktop に Feishu のボタンが残ります。このアドレスは、サーバーが広告するホスト名とバックエンドのポートから組み立てられます。サーバーが `marvis-2.local` として広告されている場合や別のポートを使う場合は、対応するアドレスを登録します。Docker のようにローカルネットワーク検出がオフの場合は、登録したアドレスを `.env` の `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` に設定します。
 
 ### CLI
 

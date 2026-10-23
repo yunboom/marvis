@@ -294,7 +294,9 @@ macOS demande l'autorisation d'accès au réseau local la première fois, sur le
 
 Desktop n'a besoin que du backend. L'application web est facultative. Pour la servir sur le même réseau, définissez `MARVIS_APP_URL=http://marvis.local:3000` dans `.env`, et enregistrez `http://marvis.local:3000/auth/callback` comme adresse de rappel pour la connexion Google et Feishu.
 
-Sans adresse web, ou avec une adresse `localhost`, les clients considèrent que le serveur n'a pas d'application web. La CLI de l'ordinateur qui héberge le serveur fait exception : une adresse web `localhost` y fonctionne. Desktop masque alors les boutons Google et Feishu et ne garde que la connexion par code e-mail. Voir [Application de bureau](/desktop-app#se-connecter-à-un-serveur).
+Sans adresse web, ou avec une adresse `localhost`, les clients considèrent que le serveur n'a pas d'application web, et Desktop masque le bouton Google. La CLI de l'ordinateur qui héberge le serveur fait exception : une adresse web `localhost` y fonctionne. Voir [Application de bureau](/desktop-app#se-connecter-à-un-serveur).
+
+La connexion Feishu de Desktop fonctionne sans l'application web. Dans la console développeur Feishu, enregistrez aussi `http://marvis.local:13840/auth/lark/desktop-callback` comme URL de redirection. Le backend traite lui-même ce rappel, donc Desktop garde le bouton Feishu quand seul le backend tourne. Le backend construit cette adresse à partir du nom d'hôte qu'il annonce et de son port : pour un serveur annoncé comme `marvis-2.local`, ou sur un autre port, enregistrez l'adresse correspondante. Quand la découverte sur le réseau local est désactivée, comme avec Docker, indiquez l'adresse enregistrée dans `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` dans `.env`.
 
 ### CLI
 

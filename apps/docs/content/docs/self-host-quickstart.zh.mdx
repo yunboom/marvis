@@ -293,7 +293,9 @@ macOS 第一次使用时会在服务端和每台客户端上请求本地网络�
 
 Desktop 只需要后端，网页端可选。要在同一网络里提供网页端，在 `.env` 里设置 `MARVIS_APP_URL=http://marvis.local:3000`，并把 `http://marvis.local:3000/auth/callback` 登记为 Google 和飞书登录的回调地址。
 
-没有网页地址，或网页地址是 `localhost` 时，客户端按没有网页端处理。服务器所在电脑上的命令行除外，在那里 `localhost` 的网页地址可以使用。此时 Desktop 隐藏 Google 和飞书按钮，只保留邮箱验证码登录。详见[桌面应用](/desktop-app#连接服务器)。
+没有网页地址，或网页地址是 `localhost` 时，客户端按没有网页端处理，Desktop 隐藏 Google 按钮。服务器所在电脑上的命令行除外，在那里 `localhost` 的网页地址可以使用。详见[桌面应用](/desktop-app#连接服务器)。
+
+Desktop 的飞书登录不依赖网页端。在飞书开发者后台再登记一个重定向 URL：`http://marvis.local:13840/auth/lark/desktop-callback`。后端直接处理这个回调，只运行后端时 Desktop 也保留飞书按钮。这个地址由服务器广播的主机名和后端端口拼成：服务器广播的是 `marvis-2.local`，或改了端口时，改为登记对应的地址。关闭局域网发现时（如 Docker 部署），在 `.env` 里把登记的地址设为 `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI`。
 
 ### CLI
 

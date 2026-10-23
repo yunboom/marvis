@@ -116,7 +116,7 @@ Desktop 只连接 Marvis 服务器，也就是后端。网页端可选。
 
 服务器没有网页地址，或网页地址是 `localhost` 时，Desktop 按没有网页端处理：
 
-- 登录页只保留邮箱验证码登录，隐藏 Google 和飞书按钮；
+- 登录页隐藏 Google 按钮。服务器配置了飞书登录，并在飞书开发者后台登记了桌面端回调地址时，保留飞书按钮，见[Desktop 与网页端](/self-host-quickstart#desktop-与网页端)。点击后在浏览器里完成飞书登录，再回到 Desktop。否则只保留邮箱验证码登录；
 - **复制链接**生成 `marvis://open?...` 链接，在装有 Desktop 且连接同一台服务器的电脑上，链接会在 Desktop 里打开。
 
 ## 用 desktop.json 预置服务器
