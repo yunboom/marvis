@@ -20,7 +20,6 @@ import {
 } from "@marvis/core/onboarding";
 import { useWorkspaceList } from "@marvis/core/workspace";
 import type { AgentRuntime, Workspace } from "@marvis/core/types";
-import { StepWelcome } from "./steps/step-welcome";
 import { StepShell } from "./components/step-shell";
 import { StepAboutYou } from "./steps/step-about-you";
 import { StepWorkspace } from "./steps/step-workspace";
@@ -94,11 +93,9 @@ function mergeQuestionnaire(
  * Shell's onComplete contract carries the workspace plus an optional
  * destination. Runtime-connected onboarding opens the real Mika conversation
  * started by the final step; runtime-skipped onboarding opens the guide issue
- * it created; the Welcome skip lands on the workspace issue list.
+ * it created.
  *
- * Three exit shapes feed onComplete:
- *   - Skip-existing (Welcome): completeOnboarding marks onboarded; navigate
- *     to the existing workspace's issue list.
+ * Two exit shapes feed onComplete:
  *   - Runtime-skipped (no runtime on Step 3): create one install-runtime guide
  *     issue assigned to the member, mark onboarding complete, and open that
  *     issue. Once a runtime appears, the Runtimes page offers the same Mika
@@ -154,13 +151,13 @@ export function OnboardingFlow({
   // Questionnaire answers are server-persisted and pre-fill the per-
   // question steps on re-entry. That's the only piece of onboarding
   // state persisted across sessions — which step the user is on is
-  // deliberately not saved, so every entry starts at Welcome.
+  // deliberately not saved, so every entry starts at the first step.
   const storedQuestionnaire = mergeQuestionnaire(user.onboarding_questionnaire);
   const [answers, setAnswers] = useState<QuestionnaireAnswers>(storedQuestionnaire);
 
   const isNewWorkspace = mode === "new_workspace";
   const [step, setStep] = useState<OnboardingStep>(
-    isNewWorkspace ? "workspace" : "welcome",
+    isNewWorkspace ? "workspace" : ONBOARDING_STEP_ORDER[0]!,
   );
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   // Raised by whichever step has a request in flight; locks Back and the
@@ -173,26 +170,16 @@ export function OnboardingFlow({
     null,
   );
 
-  // Fetched at Step 0 + Step 2. Step 2 uses it to detect a pre-existing
-  // workspace from an earlier abandoned onboarding (so StepWorkspace shows
-  // "Continue with {name}" instead of CreateWorkspaceForm — avoiding the
-  // slug conflict that creation would hit). Step 0 uses it to decide
-  // whether to render the "I've done this before" skip button — only
-  // shown when the user already has at least one workspace, otherwise
-  // skipping would land them in limbo.
-  const { workspaces, ready: workspacesReady } = useWorkspaceList({
-    enabled: step === "welcome" || step === "workspace",
+  // Fetched at the workspace step to detect a pre-existing workspace from an
+  // earlier abandoned onboarding (so StepWorkspace shows "Continue with
+  // {name}" instead of CreateWorkspaceForm — avoiding the slug conflict that
+  // creation would hit).
+  const { workspaces } = useWorkspaceList({
+    enabled: step === "workspace",
   });
   const existingWorkspace = isNewWorkspace
     ? workspace
     : (workspace ?? workspaces[0] ?? null);
-  const canSkipWelcome = workspacesReady && workspaces.length > 0;
-
-  // The `runtimeInstructions` slot is only plumbed by the web shell
-  // (desktop bundles a daemon, so a CLI install card would be noise
-  // there). We reuse its presence as the web signal rather than
-  // introducing a redundant prop.
-  const isWeb = !!runtimeInstructions;
 
   // Derive "what comes after `from`" from ONBOARDING_STEP_ORDER so
   // inserting/reordering a persisted step only requires editing the
@@ -212,13 +199,6 @@ export function OnboardingFlow({
     [nextStep],
   );
 
-  const handleWelcomeNext = useCallback(() => {
-    // Welcome is intentionally not in ONBOARDING_STEP_ORDER (it's a
-    // product intro, not a persisted step), so the first persisted
-    // step is hard-coded as the entry point.
-    setStep(ONBOARDING_STEP_ORDER[0]!);
-  }, []);
-
   // Apply an in-memory patch and fire-and-forget a PATCH to persist
   // it. We never block UI on the request — the next step's render is
   // what matters; a transient save failure surfaces as a toast but
@@ -235,22 +215,6 @@ export function OnboardingFlow({
     },
     [],
   );
-
-  // "I've done this before" path — returning user who already has a
-  // workspace and just wants to land there. Marks onboarding complete
-  // server-side (idempotent via COALESCE on onboarded_at) and navigates
-  // without creating new workspace content.
-  const handleWelcomeSkip = useCallback(async () => {
-    try {
-      await completeOnboarding("skip_existing", workspaces[0]?.id);
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : t(($) => $.errors.skip_failed),
-      );
-      return;
-    }
-    onComplete(workspaces[0] ?? undefined);
-  }, [workspaces, onComplete]);
 
   const handleWorkspaceCreated = useCallback(
     (ws: Workspace) => {
@@ -364,11 +328,7 @@ export function OnboardingFlow({
       return;
     }
     const idx = ONBOARDING_STEP_ORDER.indexOf(from);
-    if (idx <= 0) {
-      // About you (the first persisted step) returns to Welcome.
-      setStep("welcome");
-      return;
-    }
+    if (idx <= 0) return;
     const prev = ONBOARDING_STEP_ORDER[idx - 1]!;
     setStep(prev);
   }, [isNewWorkspace, onCancel]);
@@ -403,23 +363,9 @@ export function OnboardingFlow({
   // and replaying the shell's fade from opacity 0. That full-window re-fade is
   // the flash. Hoisting the shell makes the rail actually persistent and leaves
   // only the step body swapping.
-  if (step === "welcome") {
-    // Welcome has no rail, so the escape hatch stays pinned there.
-    return (
-      <>
-        <OnboardingLogoutButton />
-        <StepWelcome
-          onNext={handleWelcomeNext}
-          onSkip={canSkipWelcome ? handleWelcomeSkip : undefined}
-          isWeb={isWeb}
-        />
-      </>
-    );
-  }
-
   const stepBack =
     step === "about_you"
-      ? () => handleBack("about_you")
+      ? undefined
       : step === "workspace"
         ? () => handleBack("workspace")
         : runtimeStepBack;

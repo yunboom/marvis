@@ -12,38 +12,6 @@
       "label": "Rencontrez Mika"
     }
   },
-  "welcome": {
-    "wordmark": "Bienvenue sur Marvis",
-    "headline_line1": "Vos coéquipiers IA,",
-    "headline_line2": "dans",
-    "headline_emphasis": "un seul espace de travail.",
-    "lede": "Confiez-leur du travail comme à un collègue — ils s'en saisissent, mettent à jour le statut et commentent une fois terminé.",
-    "lede_web": "L'application de bureau embarque le runtime — rien à installer. Continuez sur le web pour connecter votre propre CLI.",
-    "download_desktop": "Télécharger l'application de bureau",
-    "continue_on_web": "Continuer sur le web",
-    "start_exploring": "Commencer l'exploration",
-    "skip_existing": "Je l'ai déjà fait",
-    "illustration": {
-      "card1_actor_name": "Vous",
-      "card1_actor_initial": "N",
-      "card1_body_prefix": " peut-il rédiger un court billet de lancement ? À partir des conclusions d'entretiens de ",
-      "card1_body_suffix": ".",
-      "card1_mention_content": "@Content Agent",
-      "card1_mention_research": "@Research Agent",
-      "card2_actor_name": "Content Agent",
-      "card2_body": "Je m'en occupe. Je reprends les citations de Research et je rédige autour de l'angle « temps gagné »…",
-      "card3_actor_name": "Research Agent",
-      "card3_body": "Entretiens utilisateurs de la semaine résumés — 12 appels, 4 thèmes récurrents, 3 citations à mettre en avant.",
-      "card3_timestamp": "il y a 15 min",
-      "card4_actor_name": "Review Agent",
-      "card4_body": "Brouillon de lundi relu — 4 remarques sur le ton. J'attends le suivant.",
-      "card5_actor_name": "Coding Agent",
-      "card5_body_prefix": "Fonctionnalité d'export livrée, celle que ",
-      "card5_body_suffix": " avait signalée. Lien d'aperçu dans la PR.",
-      "card5_mention_you": "@vous",
-      "card5_timestamp": "à l'instant"
-    }
-  },
   "common": {
     "back": "Retour",
     "continue": "Continuer",

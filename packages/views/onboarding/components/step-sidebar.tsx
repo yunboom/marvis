@@ -69,15 +69,12 @@ export function StepProgressBar({
   backDisabled?: boolean;
   /** Same slot the rail's footer takes — the Log out escape hatch. It has to
    *  be repeated here rather than left to the rail: the rail is hidden at
-   *  these widths, which stranded every step but Welcome with no way out. */
+   *  these widths, which stranded every step with no way out. */
   footer?: ReactNode;
 }) {
   const { t } = useT("onboarding");
   const currentIndex = Math.max(0, ONBOARDING_STEP_ORDER.indexOf(currentStep));
-  const key = ONBOARDING_STEP_ORDER[currentIndex] as Exclude<
-    OnboardingStep,
-    "welcome"
-  >;
+  const key = ONBOARDING_STEP_ORDER[currentIndex]!;
 
   return (
     <div className="mb-6 flex items-center gap-3 md:hidden">
@@ -200,7 +197,7 @@ export function StepSidebar({
                   const isCurrent = index === currentIndex;
                   const isLast = index === ONBOARDING_STEP_ORDER.length - 1;
                   const canReturn = isDone && !!onStepChange && !backDisabled;
-                  const key = stepId as Exclude<OnboardingStep, "welcome">;
+                  const key = stepId;
 
                   const body = (
                     <>

@@ -62,11 +62,9 @@ function renderFlow(props: Record<string, unknown>) {
 }
 
 describe("OnboardingFlow — new-workspace mode", () => {
-  it("starts at the workspace step instead of the product intro", () => {
+  it("starts at the workspace step instead of the questionnaire", () => {
     renderFlow({ mode: "new_workspace", onCancel: vi.fn() });
 
-    // The welcome screen teaches what Marvis is; someone creating a second
-    // workspace already knows, so the flow opens on naming it.
     expect(
       screen.getByRole("heading", { name: /Name your workspace/i }),
     ).toBeInTheDocument();
@@ -81,11 +79,15 @@ describe("OnboardingFlow — new-workspace mode", () => {
     expect(screen.getByLabelText("Workspace name")).toBeInTheDocument();
   });
 
-  it("still opens on the product intro in first-run mode", () => {
+  it("opens on the about-you step with no way back in first-run mode", () => {
     renderFlow({});
 
+    expect(screen.getByText("Tell us a bit about you.")).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: /Name your workspace/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Back" }),
     ).not.toBeInTheDocument();
   });
 });
