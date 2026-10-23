@@ -9,7 +9,7 @@
       "label": "Workspace"
     },
     "runtime": {
-      "label": "Meet Mika"
+      "label": "Meet Marvis"
     }
   },
   "welcome": {
@@ -171,7 +171,7 @@
     "scanning_headline": "Connecting this computer…",
     "scanning_lede_prefix": "Your agent works through an AI coding tool you already have — like ",
     "scanning_lede_suffix": ", and others. We're checking this computer for ones you've installed.",
-    "found_headline": "Where should Mika run?",
+    "found_headline": "Where should Marvis run?",
     "runtime_count_one": "{{count}} agent runtime",
     "runtime_count_other": "{{count}} agent runtimes",
     "status_all_online": "all online",
@@ -190,13 +190,13 @@
     "refresh": "Refresh",
     "refreshing": "Refreshing…",
     "hint_selected": "Selected: {{name}}",
-    "hint_pick": "Pick an agent runtime above to start with Mika.",
+    "hint_pick": "Pick an agent runtime above to start with Marvis.",
     "hint_waiting": "Waiting for the first result…",
-    "continue": "Start with Mika"
+    "continue": "Start with Marvis"
   },
   "step_platform": {
     "headline": "Connect a computer to run your agent.",
-    "lede": "Connect a computer so Mika can start working.",
+    "lede": "Connect a computer so Marvis can start working.",
     "hint_default": "You can connect later.",
     "download_title": "Use this computer",
     "download_subtitle": "Install Desktop to connect this computer.",
@@ -225,12 +225,12 @@
   "errors": {
     "skip_failed": "Failed to finish onboarding",
     "guide_failed": "The runtime guide didn't get created. Please try again.",
-    "mika_setup_failed": "Couldn't start your Mika workspace"
+    "mika_setup_failed": "Couldn't start your Marvis workspace"
   },
   "mika_intro": {
-    "headline": "Meet Mika, your first agent teammate.",
-    "name": "Mika",
+    "headline": "Meet Marvis, your first agent teammate.",
+    "name": "Marvis",
     "role": "Chief of Staff",
-    "blurb": "Tell Mika what you want done. It becomes an issue, with the right agent on it."
+    "blurb": "Tell Marvis what you want done. It becomes an issue, with the right agent on it."
   }
 }

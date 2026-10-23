@@ -154,7 +154,7 @@ func blockingAgentRemedies(classes map[blockingAgentClass]bool, scope blockingAg
 			target = "a runtime that this profile does not provide"
 		}
 		out = append(out, fmt.Sprintf(
-			"Mika is built into Marvis, so it cannot be archived — but it can be moved: open Mika's agent page and bind it to %s.",
+			"The default agent Marvis is built in, so it cannot be archived — but it can be moved: open its agent page and bind it to %s.",
 			target,
 		))
 	}

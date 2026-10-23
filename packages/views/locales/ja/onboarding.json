@@ -9,7 +9,7 @@
       "label": "ワークスペース"
     },
     "runtime": {
-      "label": "Mika を知る"
+      "label": "Marvis を知る"
     }
   },
   "welcome": {
@@ -171,7 +171,7 @@
     "scanning_headline": "このコンピュータを接続中…",
     "scanning_lede_prefix": "エージェントは、あなたがすでに持っている AI コーディングツールを通じて作業します — たとえば ",
     "scanning_lede_suffix": " など。このコンピュータにインストール済みのものを確認しています。",
-    "found_headline": "Mika はどこで動かしますか？",
+    "found_headline": "Marvis はどこで動かしますか？",
     "runtime_count_other": "エージェントランタイム {{count}} 個",
     "status_all_online": "すべてオンライン",
     "status_none_online": "オンラインなし",
@@ -189,13 +189,13 @@
     "refresh": "更新",
     "refreshing": "更新中…",
     "hint_selected": "選択中: {{name}}",
-    "hint_pick": "Mika と始めるには、上でエージェントランタイムを選んでください。",
+    "hint_pick": "Marvis と始めるには、上でエージェントランタイムを選んでください。",
     "hint_waiting": "最初の結果を待っています…",
-    "continue": "Mika と始める"
+    "continue": "Marvis と始める"
   },
   "step_platform": {
     "headline": "エージェントを実行するコンピュータを接続しましょう。",
-    "lede": "コンピュータに接続して Mika を使い始めましょう。",
+    "lede": "コンピュータに接続して Marvis を使い始めましょう。",
     "hint_default": "後から接続できます。",
     "download_title": "このコンピュータを使う",
     "download_subtitle": "デスクトップ版をインストールして、このコンピュータを接続します。",
@@ -223,12 +223,12 @@
   "errors": {
     "skip_failed": "オンボーディングを完了できませんでした",
     "guide_failed": "ランタイム案内のタスクを作成できませんでした。もう一度お試しください。",
-    "mika_setup_failed": "Mika ワークスペースを開始できませんでした"
+    "mika_setup_failed": "Marvis ワークスペースを開始できませんでした"
   },
   "mika_intro": {
-    "headline": "最初のエージェント仲間、Mika を紹介します。",
-    "name": "Mika",
+    "headline": "最初のエージェント仲間、Marvis を紹介します。",
+    "name": "Marvis",
     "role": "参謀長",
-    "blurb": "やりたいことを Mika に伝えると、タスクになり、適したエージェントが担当します。"
+    "blurb": "やりたいことを Marvis に伝えると、タスクになり、適したエージェントが担当します。"
   }
 }

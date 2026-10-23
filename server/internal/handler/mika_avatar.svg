@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FAFAFA"/>
+      <stop offset="1" stop-color="#EDEDED"/>
+    </linearGradient>
+    <pattern id="stripes" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(24)">
+      <rect width="22" height="22" fill="#FFFFFF"/>
+      <rect width="2" height="22" fill="#B5B5B5"/>
+    </pattern>
+    <linearGradient id="lens" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A2A2A"/>
+      <stop offset="1" stop-color="#000000"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+    <clipPath id="head">
+      <path d="M160 150 C175 120 205 106 236 106 C272 106 302 122 318 146 C332 170 334 206 326 236 C318 262 302 290 290 306 L240 322 L168 300 Z"/>
+    </clipPath>
+    <clipPath id="rightHead"><rect x="240" y="100" width="120" height="100"/></clipPath>
+    <clipPath id="lensL"><rect x="175" y="196" width="78" height="44" rx="10"/></clipPath>
+    <clipPath id="lensR"><rect x="262" y="198" width="76" height="44" rx="10"/></clipPath>
+  </defs>
+
+  <!-- Wall + curtain (same layout as the original photo) -->
+  <rect width="512" height="512" fill="url(#wall)"/>
+  <rect width="116" height="512" fill="#E2E2E2"/>
+  <g stroke="#CFCFCF" stroke-width="3">
+    <path d="M20 0V512M86 0V512M104 0V512"/>
+  </g>
+  <rect x="48" y="0" width="14" height="512" fill="#111111"/>
+  <!-- Subtle digital grid on the wall -->
+  <g stroke="#000000" stroke-opacity="0.05" stroke-width="1">
+    <path d="M116 64H512M116 128H512M116 192H512M116 256H512M116 320H512M116 384H512M116 448H512"/>
+    <path d="M160 0V512M224 0V512M288 0V512M352 0V512M416 0V512M480 0V512"/>
+  </g>
+
+  <!-- Wall lettering, echoing the photo, with a cyan "digital" ghost -->
+  <g font-family="'DIN Condensed','Bebas Neue','Arial Narrow','Helvetica Neue',Arial,sans-serif" font-weight="700" font-size="84" lengthAdjust="spacingAndGlyphs">
+    <g fill="#F0F0F0" transform="translate(4 -3)">
+      <text x="120" y="98" textLength="410" lengthAdjust="spacingAndGlyphs">YOU DO NOT</text>
+      <text x="120" y="190" textLength="240" lengthAdjust="spacingAndGlyphs">TYPE A</text>
+      <text x="228" y="262" textLength="300" lengthAdjust="spacingAndGlyphs">PROMPT</text>
+      <text x="300" y="392" textLength="230" lengthAdjust="spacingAndGlyphs">MAKE IT</text>
+    </g>
+    <g fill="#D2D2D2">
+      <text x="120" y="98" textLength="410" lengthAdjust="spacingAndGlyphs">YOU DO NOT</text>
+      <text x="120" y="190" textLength="240" lengthAdjust="spacingAndGlyphs">TYPE A</text>
+      <text x="228" y="262" textLength="300" lengthAdjust="spacingAndGlyphs">PROMPT</text>
+      <text x="300" y="392" textLength="230" lengthAdjust="spacingAndGlyphs">MAKE IT</text>
+    </g>
+  </g>
+
+  <!-- Dark fur, bottom left -->
+  <path d="M0 336 C50 330 110 350 136 390 L140 512 H0 Z" fill="#161616"/>
+  <g stroke="#333333" stroke-width="2" fill="none">
+    <path d="M10 360 L30 400 M40 352 L58 396 M70 356 L84 400 M14 430 L30 470 M60 420 L74 466"/>
+  </g>
+
+  <!-- Head -->
+  <g filter="url(#shadow)">
+    <g clip-path="url(#head)">
+      <rect x="150" y="100" width="200" height="230" fill="#FFFFFF"/>
+      <!-- husky mask with white center stripe -->
+      <path d="M150 100 H232 C233 140 228 168 220 194 L172 202 L150 200 Z" fill="#111111"/>
+      <path d="M242 100 H350 V214 C336 196 318 182 300 176 C290 172 274 174 264 182 C252 160 246 136 242 100 Z" fill="#111111"/>
+      <ellipse cx="204" cy="180" rx="11" ry="6" fill="#FFFFFF"/>
+      <!-- Circuit traces on the right side of the head -->
+      <g clip-path="url(#rightHead)">
+        <g fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+          <path d="M248 116 H274 L290 132 H330"/>
+          <path d="M252 148 H278 L292 162"/>
+          <path d="M304 148 L322 166 V190"/>
+        </g>
+        <g fill="#FFFFFF" filter="url(#glow)">
+          <circle cx="292" cy="162" r="6"/><circle cx="322" cy="190" r="6"/>
+        </g>
+      </g>
+      <!-- Peeking eye above the glasses (glowing, AI) -->
+      <g filter="url(#glow)">
+        <circle cx="283" cy="190" r="12" fill="#FFFFFF"/>
+        <circle cx="283" cy="191" r="9" fill="#111111"/>
+        <circle cx="283" cy="192" r="4" fill="#000000"/>
+        <circle cx="286" cy="188" r="2" fill="#FFFFFF"/>
+      </g>
+      <!-- Muzzle -->
+      <ellipse cx="264" cy="282" rx="48" ry="36" fill="#F2F2F5"/>
+    </g>
+  </g>
+
+  <!-- Nose -->
+  <path d="M242 272 C242 260 290 260 290 272 C290 290 276 300 266 300 C256 300 242 290 242 272 Z" fill="#0A0A0A"/>
+  <ellipse cx="256" cy="268" rx="7" ry="3.5" fill="#FFFFFF" opacity="0.35"/>
+  <circle cx="278" cy="274" r="2.5" fill="#FFFFFF" filter="url(#glow)"/>
+
+  <!-- Towel hood wrapping the left side and under the chin -->
+  <g filter="url(#shadow)">
+    <path d="M152 126 C128 140 112 176 104 216 C92 276 62 330 42 380 C30 420 34 470 48 512 L284 512 L296 462 L330 352 L354 332 C322 322 292 318 266 318 C236 316 210 304 192 284 C170 262 160 238 158 210 C156 180 160 150 170 132 Z" fill="url(#stripes)"/>
+    <!-- knot flap -->
+    <path d="M300 320 L356 330 L334 354 Z" fill="#EDEDED"/>
+  </g>
+  <!-- Smart sunglasses (same shape, slight tilt like the photo) -->
+  <g transform="rotate(3 256 220)">
+    <path d="M168 212 L150 206" stroke="#0A0A0A" stroke-width="7" stroke-linecap="round"/>
+    <rect x="168" y="189" width="92" height="58" rx="14" fill="#0A0A0A"/>
+    <rect x="255" y="191" width="90" height="58" rx="14" fill="#0A0A0A"/>
+    <rect x="175" y="196" width="78" height="44" rx="10" fill="url(#lens)"/>
+    <rect x="262" y="198" width="76" height="44" rx="10" fill="url(#lens)"/>
+    <!-- HUD left: data bars -->
+    <g clip-path="url(#lensL)" fill="#FFFFFF" filter="url(#glow)">
+      <rect x="186" y="208" width="6" height="22" rx="3"/>
+      <rect x="197" y="213" width="6" height="12" rx="3"/>
+      <rect x="208" y="204" width="6" height="30" rx="3"/>
+      <rect x="219" y="211" width="6" height="16" rx="3"/>
+      <rect x="230" y="207" width="6" height="24" rx="3"/>
+    </g>
+    <!-- HUD right: target reticle -->
+    <g clip-path="url(#lensR)" fill="none" stroke="#FFFFFF" stroke-width="2.5" filter="url(#glow)">
+      <circle cx="300" cy="220" r="11"/>
+      <path d="M300 202 V211 M300 229 V238 M282 220 H291 M309 220 H318"/>
+    </g>
+    <circle cx="300" cy="220" r="3.5" fill="#FFFFFF" filter="url(#glow)"/>
+    <!-- glowing frame edge -->
+    <rect x="168" y="189" width="92" height="58" rx="14" fill="none" stroke="#FFFFFF" stroke-width="4" filter="url(#glow)"/>
+    <rect x="255" y="191" width="90" height="58" rx="14" fill="none" stroke="#FFFFFF" stroke-width="4" filter="url(#glow)"/>
+  </g>
+
+  <!-- Face-tracking frame: the AI "sees" its owner -->
+  <g fill="none" stroke="#111111" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <path d="M124 128 V80 H172"/>
+    <path d="M328 80 H376 V128"/>
+    <path d="M124 300 V348 H172"/>
+    <path d="M328 348 H376 V300"/>
+  </g>
+
+  <!-- Big AI chip -->
+  <g transform="translate(428 440)" filter="url(#glow)">
+    <g stroke="#111111" stroke-width="6" stroke-linecap="round">
+      <path d="M-26 -66 V-52 M0 -66 V-52 M26 -66 V-52 M-26 52 V66 M0 52 V66 M26 52 V66"/>
+      <path d="M-66 -26 H-52 M-66 0 H-52 M-66 26 H-52 M52 -26 H66 M52 0 H66 M52 26 H66"/>
+    </g>
+    <rect x="-52" y="-52" width="104" height="104" rx="14" fill="#111111" stroke="#111111" stroke-width="6"/>
+    <text x="0" y="18" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="52" fill="#FFFFFF">AI</text>
+  </g>
+
+  <!-- Antenna with signal waves -->
+  <g filter="url(#glow)">
+    <path d="M300 116 L336 50" stroke="#111111" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="338" cy="44" r="15" fill="#111111"/>
+    <g fill="none" stroke="#111111" stroke-width="6" stroke-linecap="round">
+      <path d="M364 22 A34 34 0 0 1 368 70"/>
+      <path d="M382 6 A56 56 0 0 1 388 88"/>
+    </g>
+  </g>
+</svg>
