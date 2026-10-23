@@ -82,6 +82,9 @@ vi.mock("@marvis/views/layout", () => ({
   AppSidebar: () => <div data-testid="app-sidebar" />,
   GlobalShortcuts: () => <div data-testid="global-shortcuts" />,
   NavigationProgress: () => <div data-testid="navigation-progress" />,
+  CurrentWorkspaceLarkInviteWelcome: () => (
+    <div data-testid="lark-invite-welcome" />
+  ),
 }));
 
 vi.mock("@marvis/views/modals/registry", () => ({
@@ -156,6 +159,7 @@ describe("DesktopShell workspace gating", () => {
     expect(queryByTestId("app-sidebar")).not.toBeNull();
     expect(queryByTestId("search-command")).not.toBeNull();
     expect(queryByTestId("global-shortcuts")).not.toBeNull();
+    expect(queryByTestId("lark-invite-welcome")).not.toBeNull();
     expect(queryByTestId("modal-registry")).not.toBeNull();
     expect(queryByTestId("floating-chat")).not.toBeNull();
     expect(queryByRole("status", { name: /loading workspace/i })).toBeNull();
@@ -167,6 +171,7 @@ describe("DesktopShell workspace gating", () => {
     const { container, getByRole, getByTestId, queryByTestId } = renderShell();
 
     expect(queryByTestId("app-sidebar")).toBeNull();
+    expect(queryByTestId("lark-invite-welcome")).toBeNull();
     expect(
       container.querySelectorAll("[data-slot='sidebar-trigger']"),
     ).toHaveLength(0);
@@ -189,6 +194,7 @@ describe("DesktopShell workspace gating", () => {
     expect(queryByTestId("app-sidebar")).toBeNull();
     expect(queryByTestId("search-command")).toBeNull();
     expect(queryByTestId("global-shortcuts")).toBeNull();
+    expect(queryByTestId("lark-invite-welcome")).toBeNull();
     expect(queryByTestId("modal-registry")).toBeNull();
     expect(queryByTestId("floating-chat")).toBeNull();
     expect(queryByTestId("tab-content")).not.toBeNull();

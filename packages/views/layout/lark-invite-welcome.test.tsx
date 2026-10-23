@@ -19,7 +19,19 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
-import { LarkInviteWelcome } from "./lark-invite-welcome";
+// 当前工作区由测试控制，null 表示工作区还没解析出来。
+const currentWorkspace = vi.hoisted(() => ({
+  value: null as { id: string; name: string } | null,
+}));
+vi.mock("@marvis/core/paths", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/paths")>()),
+  useCurrentWorkspace: () => currentWorkspace.value,
+}));
+
+import {
+  CurrentWorkspaceLarkInviteWelcome,
+  LarkInviteWelcome,
+} from "./lark-invite-welcome";
 
 const welcome = (role: WelcomeRecord["role"] = "member"): WelcomeRecord => ({
   invite_id: "inv-1",
@@ -164,5 +176,44 @@ describe("LarkInviteWelcome", () => {
       description: "Joined through Ada’s Feishu invite as Admin.",
     });
     expect(mockApi.ackLarkInviteWelcome).toHaveBeenLastCalledWith("ws-2");
+  });
+});
+
+describe("CurrentWorkspaceLarkInviteWelcome", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockApi.ackLarkInviteWelcome.mockResolvedValue(undefined);
+    currentWorkspace.value = { id: "ws-1", name: "Acme" };
+  });
+
+  function mountCurrent() {
+    return renderWithI18n(
+      <QueryClientProvider client={makeClient()}>
+        <CurrentWorkspaceLarkInviteWelcome />
+      </QueryClientProvider>,
+    );
+  }
+
+  it("resolves the current workspace id and name for the toast", async () => {
+    mockApi.getLarkInviteWelcome.mockResolvedValue(welcome("member"));
+
+    mountCurrent();
+
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    expect(toast.success).toHaveBeenCalledWith("Joined Acme", {
+      description: "Joined through Ada’s Feishu invite as Member.",
+    });
+    expect(mockApi.getLarkInviteWelcome).toHaveBeenCalledWith("ws-1");
+    await waitFor(() => expect(mockApi.ackLarkInviteWelcome).toHaveBeenCalledWith("ws-1"));
+  });
+
+  it("renders nothing and does not fetch while the workspace is unresolved", async () => {
+    currentWorkspace.value = null;
+
+    mountCurrent();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(mockApi.getLarkInviteWelcome).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 });

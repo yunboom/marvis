@@ -14,6 +14,7 @@ import {
 import { ModalRegistry } from "@marvis/views/modals/registry";
 import {
   AppSidebar,
+  CurrentWorkspaceLarkInviteWelcome,
   GlobalShortcuts,
   NavigationProgress,
 } from "@marvis/views/layout";
@@ -281,6 +282,10 @@ export function DesktopShell() {
             className="flex-1 bg-app-shell [--sidebar-wrapper-fill:var(--app-shell)]"
           >
             {slug && <GlobalShortcuts />}
+            {/* One-time "joined via Feishu invite" toast. The shell outlives tab
+                switches, so mounting it here (not per tab) shows it once per
+                session; web mounts the same component in DashboardLayout. */}
+            {slug && <CurrentWorkspaceLarkInviteWelcome />}
             {slug && <WindowToolbar />}
             {slug && <AppSidebar searchSlot={<SearchTrigger />} />}
             {/* Right side: header + content container */}

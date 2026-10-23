@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "@marvis/core/api";
+import { useCurrentWorkspace } from "@marvis/core/paths";
 import {
   larkInviteWelcomeOptions,
   workspaceKeys,
@@ -59,4 +60,17 @@ export function LarkInviteWelcome({
   }, [welcome, wsId, workspaceName, t, tMembers, qc]);
 
   return null;
+}
+
+/**
+ * CurrentWorkspaceLarkInviteWelcome 自己取当前工作区的 id 和名称再渲染 LarkInviteWelcome。
+ *
+ * web 的 DashboardLayout 和桌面端的 DesktopShell 各挂一次，和 WorkspacePresencePrefetch
+ * 一样要放在已经确认工作区存在的子树里；工作区还没解析出来时什么都不渲染。
+ */
+export function CurrentWorkspaceLarkInviteWelcome() {
+  const workspace = useCurrentWorkspace();
+  if (!workspace) return null;
+
+  return <LarkInviteWelcome wsId={workspace.id} workspaceName={workspace.name} />;
 }
