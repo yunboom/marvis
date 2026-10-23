@@ -51,7 +51,7 @@ const FIELD_INPUT_CLASS = "h-12 px-4";
 const AFFIX_FIELD =
   "flex h-12 items-center rounded-lg bg-field px-4 transition-colors hover:bg-field-hover focus-within:bg-field-hover in-data-[invalid=true]:shadow-[inset_0_0_0_1px_var(--color-destructive)]";
 const AFFIX_INPUT =
-  "h-full rounded-none border-0 bg-transparent px-0 font-mono shadow-none hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 md:text-body";
+  "h-full rounded-none border-0 bg-transparent px-0 tabular-nums shadow-none hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 md:text-body";
 
 function issuePrefix(slug: string): string {
   // Mirrors the server's default prefix derivation
@@ -305,7 +305,7 @@ function CreateWorkspaceForm({
             issue number rides inside the field the way the host does in the
             URL, so neither needs a line of its own. */}
         <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-2">
+          <div className="grid grid-cols-[128px_minmax(0,1fr)] gap-2">
             <Field>
               <FieldLabel htmlFor="new-ws-prefix">
                 {t(($) => $.create_page.issue_prefix_label)}
@@ -324,12 +324,14 @@ function CreateWorkspaceForm({
                   spellCheck={false}
                   maxLength={10}
                   aria-describedby="new-ws-prefix-sample"
-                  className={cn(AFFIX_INPUT, "min-w-[1ch] max-w-full flex-none field-sizing-content uppercase")}
+                  // w-auto overrides the Input's w-full so the field sizes to
+                  // its content and the sample number sits right after it.
+                  className={cn(AFFIX_INPUT, "w-auto min-w-[1ch] max-w-full flex-none field-sizing-content uppercase")}
                 />
                 {effectivePrefix ? (
                   <span
                     id="new-ws-prefix-sample"
-                    className="select-none font-mono text-body text-muted-foreground"
+                    className="shrink-0 select-none text-body tabular-nums text-muted-foreground"
                   >
                     -123
                   </span>
@@ -342,7 +344,7 @@ function CreateWorkspaceForm({
                 {t(($) => $.create_page.url_label)}
               </FieldLabel>
               <div className={AFFIX_FIELD}>
-                <span className="select-none font-mono text-body text-muted-foreground">
+                <span className="shrink-0 select-none text-body text-muted-foreground">
                   {`${urlHost}/`}
                 </span>
                 <Input
