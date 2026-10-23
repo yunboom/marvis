@@ -10,6 +10,12 @@ import {
   CardDescription,
   CardHeader,
 } from "@marvis/ui/components/ui/card";
+import {
+  SplitCard,
+  SplitCardActions,
+  SplitCardIntro,
+  SplitCardPane,
+} from "@marvis/ui/components/common/split-card";
 import { Input } from "@marvis/ui/components/ui/input";
 import {
   Field,
@@ -270,24 +276,23 @@ function CreateWorkspaceForm({
     : t(($) => $.create_page.preview_empty_hint);
 
   // Two panes like the runtime step that follows: context and actions on the
-  // left, the form on the right. Three grid children rather than two columns
-  // so a phone stacks them intro → form → actions, with the button last.
+  // left, the form on the right.
   return (
     <div className="flex min-h-svh flex-col bg-app-shell">
       <DragStrip />
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-[960px] gap-0 overflow-hidden rounded-[28px] border-0 p-0 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border md:grid md:h-[600px] md:grid-cols-[380px_minmax(0,1fr)] md:grid-rows-[1fr_auto] dark:shadow-none">
-          <div className="flex flex-col px-10 pt-10 md:col-start-1 md:row-start-1">
+      <div className="flex flex-1 items-center justify-center px-4 py-8">
+        <SplitCard>
+          <SplitCardIntro>
             <SetupProgress current="workspace" />
 
-            <h1 className="mt-10 text-display-sm font-bold">
+            <h1 className="mt-10 text-display-sm font-bold [@media(max-height:760px)]:mt-6">
               {t(($) => $.create_page.title)}
             </h1>
             <p className="mt-3 text-body leading-relaxed text-muted-foreground">
               {t(($) => $.create_page.subtitle)}
             </p>
 
-            <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3">
+            <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3 [@media(max-height:760px)]:mt-5">
               <span
                 aria-hidden
                 className={cn(
@@ -311,10 +316,10 @@ function CreateWorkspaceForm({
                 </p>
               </div>
             </div>
-          </div>
+          </SplitCardIntro>
 
-          <div className="flex min-h-0 flex-col px-6 pt-8 md:col-start-2 md:row-span-2 md:row-start-1 md:py-8 md:pr-8 md:pl-2">
-            <div className="flex flex-1 flex-col rounded-[20px] bg-surface-sunken p-7">
+          <SplitCardPane>
+            <div className="flex flex-1 flex-col overflow-y-auto rounded-[20px] bg-surface-sunken p-7 [@media(max-height:760px)]:p-6">
               <FieldGroup className="gap-6">
                 <Field>
                   <FieldLabel htmlFor="new-ws-name">
@@ -422,9 +427,9 @@ function CreateWorkspaceForm({
                 ) : null}
               </FieldGroup>
             </div>
-          </div>
+          </SplitCardPane>
 
-          <div className="flex flex-col px-10 pt-8 pb-9 md:col-start-1 md:row-start-2">
+          <SplitCardActions>
             <Button
               className="h-12 w-full text-body-lg"
               disabled={!canCreate || isCreating}
@@ -455,8 +460,8 @@ function CreateWorkspaceForm({
                 {t(($) => $.create_page.log_out)}
               </Button>
             )}
-          </div>
-        </Card>
+          </SplitCardActions>
+        </SplitCard>
       </div>
     </div>
   );

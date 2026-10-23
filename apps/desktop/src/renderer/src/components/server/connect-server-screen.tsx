@@ -2,7 +2,12 @@ import { useId, useState } from "react";
 import { Loader2, RefreshCw, Server, TriangleAlert, Wifi, WifiOff } from "lucide-react";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
 import { Button } from "@marvis/ui/components/ui/button";
-import { Card } from "@marvis/ui/components/ui/card";
+import {
+  SplitCard,
+  SplitCardActions,
+  SplitCardIntro,
+  SplitCardPane,
+} from "@marvis/ui/components/common/split-card";
 import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "@marvis/views/i18n";
 import { DragStrip } from "@marvis/views/platform";
@@ -20,9 +25,6 @@ import { useLanServers } from "./use-lan-servers";
 const HTTP_PROTOCOL = "http:";
 const DETAIL_SEPARATOR = " · ";
 
-// 两栏卡片与引导页一致：左栏说明和按钮，右栏浅灰面板放选择。
-const CARD_CLASS =
-  "w-full max-w-[960px] gap-0 overflow-hidden rounded-[28px] border-0 p-0 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border md:grid md:h-[600px] md:grid-cols-[380px_minmax(0,1fr)] md:grid-rows-[1fr_auto] dark:shadow-none";
 const PRIMARY_BUTTON_CLASS = "h-12 w-full text-body-lg";
 
 // 用户在选择步骤里明确点选过的项；null 表示还没有操作，走默认选中。
@@ -107,7 +109,6 @@ function serverSummaryLine(url: string, version: string): string {
 
 // 桌面端首次启动（还没有选择服务器）时的连接页：先选服务器，再确认，最后保存并重载。
 // 两栏布局与引导页一致：左栏标题、已选服务器摘要和按钮，右栏是选择或确认详情。
-// 三个网格子元素而不是两列，窄窗口里按 说明 → 选择 → 按钮 的顺序竖排。
 export function ConnectServerScreen({
   suggestedAddress,
 }: {
@@ -185,15 +186,15 @@ export function ConnectServerScreen({
   return (
     <div className="flex h-screen flex-col bg-app-shell text-foreground">
       <DragStrip />
-      <div className="flex flex-1 items-center justify-center overflow-auto px-4 pb-12">
-        <Card className={CARD_CLASS}>
-          <div className="flex flex-col px-10 pt-10 md:col-start-1 md:row-start-1">
+      <div className="flex flex-1 items-center justify-center overflow-auto px-4 py-8">
+        <SplitCard>
+          <SplitCardIntro>
             <MarvisIcon className="size-9 text-foreground" />
 
-            <h1 className="mt-8 text-display-sm font-bold">{title}</h1>
+            <h1 className="mt-8 text-display-sm font-bold [@media(max-height:760px)]:mt-5">{title}</h1>
             <p className="mt-3 text-body leading-relaxed text-muted-foreground">{subtitle}</p>
 
-            <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3">
+            <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3 [@media(max-height:760px)]:mt-5">
               <span
                 aria-hidden
                 className={cn(
@@ -217,10 +218,10 @@ export function ConnectServerScreen({
                 </p>
               </div>
             </div>
-          </div>
+          </SplitCardIntro>
 
-          <div className="flex min-h-0 flex-col px-6 pt-8 md:col-start-2 md:row-span-2 md:row-start-1 md:py-8 md:pr-8 md:pl-2">
-            <div className="flex min-h-[320px] flex-1 flex-col overflow-y-auto rounded-[20px] bg-surface-sunken">
+          <SplitCardPane>
+            <div className="flex min-h-[320px] flex-1 flex-col overflow-y-auto rounded-[20px] bg-surface-sunken md:min-h-0">
               {target ? (
                 <ConfirmDetails target={target} />
               ) : (
@@ -239,9 +240,9 @@ export function ConnectServerScreen({
                 />
               )}
             </div>
-          </div>
+          </SplitCardPane>
 
-          <div className="flex flex-col px-10 pt-8 pb-9 md:col-start-1 md:row-start-2">
+          <SplitCardActions>
             {target ? (
               <>
                 <Button
@@ -275,8 +276,8 @@ export function ConnectServerScreen({
                 {t(($) => $.desktop.server.connect.continue)}
               </Button>
             )}
-          </div>
-        </Card>
+          </SplitCardActions>
+        </SplitCard>
       </div>
     </div>
   );

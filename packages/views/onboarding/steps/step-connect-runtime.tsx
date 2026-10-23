@@ -4,7 +4,12 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@marvis/ui/components/ui/button";
-import { Card } from "@marvis/ui/components/ui/card";
+import {
+  SplitCard,
+  SplitCardActions,
+  SplitCardIntro,
+  SplitCardPane,
+} from "@marvis/ui/components/common/split-card";
 import { cn } from "@marvis/ui/lib/utils";
 import { groupRuntimesByMachine, splitRuntimeDeviceInfo } from "@marvis/core/runtimes";
 import { runtimeKeys } from "@marvis/core/runtimes/queries";
@@ -175,19 +180,19 @@ export function StepConnectRuntime({
   return (
     <div className="flex min-h-svh flex-col bg-app-shell">
       <DragStrip />
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-[960px] gap-0 overflow-hidden rounded-[28px] border-0 p-0 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border md:grid md:h-[600px] md:grid-cols-[380px_minmax(0,1fr)] dark:shadow-none">
-          <div className="flex flex-col p-10">
+      <div className="flex flex-1 items-center justify-center px-4 py-8">
+        <SplitCard>
+          <SplitCardIntro>
             <SetupProgress current="runtime" />
 
-            <h1 className="mt-10 text-display-sm font-bold">
+            <h1 className="mt-10 text-display-sm font-bold [@media(max-height:760px)]:mt-6">
               {t(($) => $.step_connect.title)}
             </h1>
             <p className="mt-3 text-body leading-relaxed text-muted-foreground">
               {t(($) => $.step_connect.subtitle)}
             </p>
 
-            <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3">
+            <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3 [@media(max-height:760px)]:mt-5">
               <img
                 src={MIKA_AVATAR_SRC}
                 alt=""
@@ -202,34 +207,9 @@ export function StepConnectRuntime({
                 </p>
               </div>
             </div>
+          </SplitCardIntro>
 
-            <div className="mt-auto flex flex-col pt-8">
-              <Button
-                className="h-12 w-full text-body-lg"
-                disabled={!canStart || busy}
-                onClick={handleStart}
-              >
-                {starting && <Loader2 className="size-4 animate-spin" />}
-                {starting
-                  ? t(($) => $.step_connect.starting)
-                  : t(($) => $.step_connect.start)}
-              </Button>
-              <Button
-                variant="ghost"
-                className="mt-2 h-11 w-full text-body-lg font-normal"
-                disabled={busy}
-                onClick={handleSkip}
-              >
-                {skipping && <Loader2 className="size-4 animate-spin" />}
-                {t(($) => $.step_connect.skip)}
-              </Button>
-              <p className="mt-1 text-center text-label text-muted-foreground">
-                {t(($) => $.step_connect.skip_note)}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex min-h-0 flex-col px-6 pb-6 md:py-8 md:pr-8 md:pl-2">
+          <SplitCardPane>
             <ChoicePanel scrollKey={`${phase}:${runtimes.length}`}>
               <div key={phase} className="animate-onboarding-enter">
                 {phase === "found" && (
@@ -283,8 +263,33 @@ export function StepConnectRuntime({
                 )}
               </div>
             </ChoicePanel>
-          </div>
-        </Card>
+          </SplitCardPane>
+
+          <SplitCardActions>
+            <Button
+              className="h-12 w-full text-body-lg"
+              disabled={!canStart || busy}
+              onClick={handleStart}
+            >
+              {starting && <Loader2 className="size-4 animate-spin" />}
+              {starting
+                ? t(($) => $.step_connect.starting)
+                : t(($) => $.step_connect.start)}
+            </Button>
+            <Button
+              variant="ghost"
+              className="mt-2 h-11 w-full text-body-lg font-normal"
+              disabled={busy}
+              onClick={handleSkip}
+            >
+              {skipping && <Loader2 className="size-4 animate-spin" />}
+              {t(($) => $.step_connect.skip)}
+            </Button>
+            <p className="mt-1 text-center text-label text-muted-foreground">
+              {t(($) => $.step_connect.skip_note)}
+            </p>
+          </SplitCardActions>
+        </SplitCard>
       </div>
     </div>
   );
@@ -340,7 +345,7 @@ function ChoicePanel({
   };
 
   return (
-    <div className="relative flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[20px] bg-surface-sunken">
+    <div className="relative flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[20px] bg-surface-sunken md:min-h-0">
       <div ref={ref} onScroll={recount} className="relative min-h-0 flex-1 overflow-y-auto p-2">
         {children}
       </div>
