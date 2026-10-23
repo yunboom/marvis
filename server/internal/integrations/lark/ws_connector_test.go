@@ -1099,6 +1099,71 @@ func TestWSConnector_CardFrameHandlerErrorStillAcks(t *testing.T) {
 	}
 }
 
+func TestWSConnector_CardFrameHandlerPanicStillAcks(t *testing.T) {
+	t.Parallel()
+	conn := newFakeWSConn()
+	logs := &syncBuffer{}
+
+	var decodeCalls atomic.Int32
+	decoder := FrameDecoderFunc(func([]byte, Installation) (InboundMessage, bool, error) {
+		decodeCalls.Add(1)
+		return InboundMessage{}, false, nil
+	})
+	handler := func(context.Context, []byte) ([]byte, error) {
+		panic("handler blew up")
+	}
+
+	done := make(chan error, 1)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	c := cardConnector(t, conn, decoder, handler, slog.New(slog.NewTextHandler(logs, nil)))
+	go func() {
+		done <- c.Run(ctx, Installation{AppID: "test_app"}, func(context.Context, InboundMessage) (DispatchResult, error) {
+			return DispatchResult{}, nil
+		})
+	}()
+
+	pushCardFrame(conn, []byte(`{"event":{}}`))
+	waitForWrites(t, conn, 1)
+
+	_, env := readCardResponse(t, conn)
+	if env.Code != 200 {
+		t.Errorf("code = %d; want 200", env.Code)
+	}
+	if string(env.Data) != "null" {
+		t.Errorf("data = %s; want null", env.Data)
+	}
+
+	got := logs.String()
+	if !strings.Contains(got, "card handler panicked") || !strings.Contains(got, "handler blew up") {
+		t.Errorf("panic not logged; log was:\n%s", got)
+	}
+	if !strings.Contains(got, "TestWSConnector_CardFrameHandlerPanicStillAcks") {
+		t.Errorf("panic log has no stack pointing at the handler; log was:\n%s", got)
+	}
+
+	// 连接没有因为 handler panic 而退出：Run 仍在运行，后续的事件帧照常被 ACK。
+	select {
+	case err := <-done:
+		t.Fatalf("Run returned after a handler panic: %v", err)
+	default:
+	}
+
+	pushDataFrame(conn, []byte(`{}`), "m2")
+	waitForWrites(t, conn, 2)
+
+	if got := decodeCalls.Load(); got != 1 {
+		t.Errorf("event decoder calls = %d; want 1 (only the event frame)", got)
+	}
+
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return after cancel")
+	}
+}
+
 func TestWSConnector_CardFrameWithoutHandlerAcks(t *testing.T) {
 	t.Parallel()
 	conn := newFakeWSConn()

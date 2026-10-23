@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -429,25 +430,46 @@ func (c *WSLongConnConnector) Run(ctx context.Context, inst Installation, emit E
 
 // handleCardFrame 调用 CardHandler 处理一次卡片回调，并把回应写回。
 // handler 在读循环里同步运行，受 CardHandlerTimeout 约束；运行期间不持有 writeMu，
-// 后台 ping 不会被阻塞。handler 出错只记 warn 并回空回应，写回失败才返回错误让连接重连。
+// 后台 ping 不会被阻塞。handler 出错或 panic 只记日志并回空回应，写回失败才返回错误让连接重连。
 func (c *WSLongConnConnector) handleCardFrame(ctx context.Context, mu *sync.Mutex, conn WSConn, frame *Frame, payload []byte, log *slog.Logger) error {
-	cardCtx, cancel := context.WithTimeout(ctx, c.cfg.CardHandlerTimeout)
-	response, err := c.cfg.CardHandler(cardCtx, payload)
-	cancel()
+	messageID := frame.HeaderValue(FrameHeaderMessageIDKey)
 
+	response, err := c.callCardHandler(ctx, payload, messageID, log)
 	if err != nil {
 		log.Warn("lark ws connector: card handler failed",
-			"message_id", frame.HeaderValue(FrameHeaderMessageIDKey),
+			"message_id", messageID,
 			"err", err.Error(),
 		)
 		response = nil
 	}
 
 	if werr := c.writeFrame(mu, conn, NewCardResponseFrame(frame, response)); werr != nil {
-		return errors.Wrapf(werr, "write card response message_id=%q", frame.HeaderValue(FrameHeaderMessageIDKey))
+		return errors.Wrapf(werr, "write card response message_id=%q", messageID)
 	}
 
 	return nil
+}
+
+// callCardHandler 在 CardHandlerTimeout 内调用 CardHandler，并把 handler 的 panic 转成错误。
+// 读循环跑在没有中间件兜底的 goroutine 上，回调载荷来自外部，handler 里的 panic
+// 不能带崩进程；堆栈在这里记下，之后走和普通错误一样的空回应路径。
+func (c *WSLongConnConnector) callCardHandler(ctx context.Context, payload []byte, messageID string, log *slog.Logger) (response []byte, err error) {
+	cardCtx, cancel := context.WithTimeout(ctx, c.cfg.CardHandlerTimeout)
+	defer cancel()
+
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			log.Error("lark ws connector: card handler panicked",
+				"message_id", messageID,
+				"recovered", recovered,
+				"stack", string(debug.Stack()),
+			)
+			response = nil
+			err = errors.Errorf("card handler panic: %v", recovered)
+		}
+	}()
+
+	return c.cfg.CardHandler(cardCtx, payload)
 }
 
 // writeFrame serializes a Frame and writes it as a binary WebSocket
