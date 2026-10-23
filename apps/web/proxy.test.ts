@@ -119,6 +119,23 @@ describe("proxy legacy workspace route redirects", () => {
     );
   });
 
+  it("sends logged-out app-host root URLs to login", () => {
+    expect(redirectLocation("/")).toBe("https://app.marvis.test/login");
+  });
+
+  it("sends logged-in app-host root URLs without a last workspace cookie to login", () => {
+    expect(redirectLocation("/", { marvis_logged_in: "1" })).toBe(
+      "https://app.marvis.test/login",
+    );
+  });
+
+  it.each(["marvis.ai", "www.marvis.ai"])(
+    "does not redirect logged-out public marketing root on %s",
+    (host) => {
+      expect(redirectLocation("/", {}, host)).toBeNull();
+    },
+  );
+
   it.each(["marvis.ai", "www.marvis.ai"])(
     "does not redirect public marketing root on %s",
     (host) => {
