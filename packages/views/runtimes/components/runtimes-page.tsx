@@ -23,7 +23,7 @@ import {
   memberNeedsMikaSetup,
   useBootstrapMika,
 } from "@marvis/core/onboarding";
-import { MIKA_PLACEHOLDER_EMOJI } from "../../onboarding/components/mika-intro";
+import { MIKA_AVATAR_SRC } from "../../onboarding/components/mika-intro";
 import {
   useRequiredWorkspaceSlug,
   useWorkspacePaths,
@@ -1189,13 +1189,11 @@ function MikaSetupCard({
   return (
     <>
       <div className="flex animate-content-rise flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center">
-        <span
-          role="img"
-          aria-label={t(($) => $.mika_setup.title)}
-          className="flex size-10 shrink-0 select-none items-center justify-center rounded-full bg-muted text-title-lg leading-none"
-        >
-          {MIKA_PLACEHOLDER_EMOJI}
-        </span>
+        <img
+          src={MIKA_AVATAR_SRC}
+          alt={t(($) => $.mika_setup.title)}
+          className="size-10 shrink-0 select-none rounded-full object-cover"
+        />
         <div className="min-w-0 flex-1">
           <h2 className="text-body-lg font-semibold">
             {t(($) => $.mika_setup.title)}

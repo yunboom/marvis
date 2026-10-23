@@ -8,12 +8,15 @@ import {
   ItemTitle,
 } from "@marvis/ui/components/ui/item";
 import { useT } from "../../i18n";
-
-/** Mirrors `mikaAgentAvatarURL` in server/internal/handler/mika_agent.go.
- *  Placeholder until Mika has real artwork — these two must move together or
- *  onboarding shows one face and the created agent another. */
-export const MIKA_PLACEHOLDER_EMOJI = "🦄";
+import mikaAvatar from "./mika-avatar.svg";
 import { StepHeading } from "./step-shell";
+
+/** Mirrors server/internal/handler/mika_avatar.svg, the artwork stored on the
+ *  created agent — these two must move together or onboarding shows one face
+ *  and the created agent another. Next.js exposes static imports as objects
+ *  while Vite exposes URL strings. */
+export const MIKA_AVATAR_SRC =
+  typeof mikaAvatar === "string" ? mikaAvatar : mikaAvatar.src;
 
 /**
  * The subject of step 3, stated as an object rather than a footnote.
@@ -37,13 +40,11 @@ export function MikaIntro() {
       <StepHeading title={t(($) => $.mika_intro.headline)} />
       <Item variant="outline" className="items-start gap-3.5 rounded-xl border-surface-border p-4">
         <ItemMedia>
-          <span
-            role="img"
-            aria-label={t(($) => $.mika_intro.name)}
-            className="flex size-9 shrink-0 select-none items-center justify-center rounded-full bg-surface-sunken text-title leading-none"
-          >
-            {MIKA_PLACEHOLDER_EMOJI}
-          </span>
+          <img
+            src={MIKA_AVATAR_SRC}
+            alt={t(($) => $.mika_intro.name)}
+            className="size-9 shrink-0 select-none rounded-full object-cover"
+          />
         </ItemMedia>
         <ItemContent>
           <ItemTitle className="gap-0 text-body-lg">

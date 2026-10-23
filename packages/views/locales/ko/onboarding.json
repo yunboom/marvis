@@ -9,7 +9,7 @@
       "label": "워크스페이스"
     },
     "runtime": {
-      "label": "Mika 소개"
+      "label": "Marvis 소개"
     }
   },
   "welcome": {
@@ -171,7 +171,7 @@
     "scanning_headline": "이 컴퓨터 연결 중...",
     "scanning_lede_prefix": "에이전트는 이미 사용하는 AI 코딩 도구를 통해 작업합니다. 예: ",
     "scanning_lede_suffix": " 등. 이 컴퓨터에 설치된 도구를 확인하는 중입니다.",
-    "found_headline": "Mika를 어디서 실행할까요?",
+    "found_headline": "Marvis를 어디서 실행할까요?",
     "runtime_count_other": "에이전트 런타임 {{count}}개",
     "status_all_online": "모두 온라인",
     "status_none_online": "온라인 없음",
@@ -189,13 +189,13 @@
     "refresh": "새로고침",
     "refreshing": "새로고침 중...",
     "hint_selected": "선택됨: {{name}}",
-    "hint_pick": "Mika와 시작하려면 위에서 에이전트 런타임을 선택하세요.",
+    "hint_pick": "Marvis와 시작하려면 위에서 에이전트 런타임을 선택하세요.",
     "hint_waiting": "첫 결과를 기다리는 중...",
-    "continue": "Mika와 시작"
+    "continue": "Marvis와 시작"
   },
   "step_platform": {
     "headline": "에이전트를 실행할 컴퓨터를 연결하세요.",
-    "lede": "컴퓨터를 연결해 Mika가 작업을 시작하게 하세요.",
+    "lede": "컴퓨터를 연결해 Marvis가 작업을 시작하게 하세요.",
     "hint_default": "나중에 연결할 수 있습니다.",
     "download_title": "이 컴퓨터 사용",
     "download_subtitle": "데스크톱 앱을 설치해 이 컴퓨터를 연결하세요.",
@@ -223,12 +223,12 @@
   "errors": {
     "skip_failed": "온보딩을 마치지 못했습니다",
     "guide_failed": "런타임 안내 태스크를 만들지 못했습니다. 다시 시도해 주세요.",
-    "mika_setup_failed": "Mika 워크스페이스를 시작하지 못했습니다"
+    "mika_setup_failed": "Marvis 워크스페이스를 시작하지 못했습니다"
   },
   "mika_intro": {
-    "headline": "첫 번째 에이전트 팀원 Mika를 소개합니다.",
-    "name": "Mika",
+    "headline": "첫 번째 에이전트 팀원 Marvis를 소개합니다.",
+    "name": "Marvis",
     "role": "참모장",
-    "blurb": "하고 싶은 일을 Mika에게 알려주면 태스크가 되고, 알맞은 에이전트가 맡습니다."
+    "blurb": "하고 싶은 일을 Marvis에게 알려주면 태스크가 되고, 알맞은 에이전트가 맡습니다."
   }
 }

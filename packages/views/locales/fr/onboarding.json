@@ -9,7 +9,7 @@
       "label": "Espace de travail"
     },
     "runtime": {
-      "label": "Rencontrez Mika"
+      "label": "Rencontrez Marvis"
     }
   },
   "welcome": {
@@ -171,7 +171,7 @@
     "scanning_headline": "Connexion de cet ordinateur…",
     "scanning_lede_prefix": "Votre agent passe par un outil de codage IA que vous possédez déjà — comme ",
     "scanning_lede_suffix": ", et d'autres. Nous vérifions lesquels sont installés sur cet ordinateur.",
-    "found_headline": "Où Mika doit-il s'exécuter ?",
+    "found_headline": "Où Marvis doit-il s'exécuter ?",
     "runtime_count_one": "{{count}} runtime d'agent",
     "runtime_count_other": "{{count}} runtimes d'agent",
     "status_all_online": "tous en ligne",
@@ -190,13 +190,13 @@
     "refresh": "Actualiser",
     "refreshing": "Actualisation…",
     "hint_selected": "Sélectionné : {{name}}",
-    "hint_pick": "Choisissez un runtime d'agent ci-dessus pour commencer avec Mika.",
+    "hint_pick": "Choisissez un runtime d'agent ci-dessus pour commencer avec Marvis.",
     "hint_waiting": "En attente du premier résultat…",
-    "continue": "Commencer avec Mika"
+    "continue": "Commencer avec Marvis"
   },
   "step_platform": {
     "headline": "Connectez un ordinateur pour exécuter votre agent.",
-    "lede": "Connectez un ordinateur pour que Mika puisse travailler.",
+    "lede": "Connectez un ordinateur pour que Marvis puisse travailler.",
     "hint_default": "Vous pouvez vous connecter plus tard.",
     "download_title": "Utiliser cet ordinateur",
     "download_subtitle": "Installez Marvis Desktop pour connecter cet ordinateur.",
@@ -225,12 +225,12 @@
   "errors": {
     "skip_failed": "Échec de la finalisation de la prise en main",
     "guide_failed": "Le guide de runtime n'a pas été créé. Veuillez réessayer.",
-    "mika_setup_failed": "Impossible de démarrer votre espace de travail Mika"
+    "mika_setup_failed": "Impossible de démarrer votre espace de travail Marvis"
   },
   "mika_intro": {
-    "headline": "Rencontrez Mika, votre premier coéquipier agent.",
-    "name": "Mika",
+    "headline": "Rencontrez Marvis, votre premier coéquipier agent.",
+    "name": "Marvis",
     "role": "Chef de cabinet",
-    "blurb": "Dites à Mika ce que vous voulez faire. Cela devient une tâche, avec le bon agent dessus."
+    "blurb": "Dites à Marvis ce que vous voulez faire. Cela devient une tâche, avec le bon agent dessus."
   }
 }

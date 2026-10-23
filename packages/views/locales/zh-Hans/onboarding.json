@@ -9,7 +9,7 @@
       "label": "工作区"
     },
     "runtime": {
-      "label": "认识 Mika"
+      "label": "认识 Marvis"
     }
   },
   "welcome": {
@@ -171,7 +171,7 @@
     "scanning_headline": "正在连接这台电脑...",
     "scanning_lede_prefix": "你的智能体借助本机已安装的 AI 编程工具运行，例如 ",
     "scanning_lede_suffix": " 等。我们正在检测这台电脑上装了哪些。",
-    "found_headline": "让 Mika 在哪台电脑上运行？",
+    "found_headline": "让 Marvis 在哪台电脑上运行？",
     "runtime_count_other": "{{count}} 个智能体运行时",
     "status_all_online": "全部在线",
     "status_none_online": "全部离线",
@@ -189,13 +189,13 @@
     "refresh": "刷新",
     "refreshing": "正在刷新...",
     "hint_selected": "已选择：{{name}}",
-    "hint_pick": "在上方选择一个智能体运行时，就可以开始使用 Mika。",
+    "hint_pick": "在上方选择一个智能体运行时，就可以开始使用 Marvis。",
     "hint_waiting": "等待第一个结果...",
-    "continue": "开始使用 Mika"
+    "continue": "开始使用 Marvis"
   },
   "step_platform": {
     "headline": "连接一台电脑来运行你的智能体。",
-    "lede": "连接一台电脑，让 Mika 开始工作。",
+    "lede": "连接一台电脑，让 Marvis 开始工作。",
     "hint_default": "可稍后连接。",
     "download_title": "使用这台电脑",
     "download_subtitle": "安装桌面端，连接这台电脑。",
@@ -223,12 +223,12 @@
   "errors": {
     "skip_failed": "完成上手引导失败",
     "guide_failed": "运行时引导任务没有创建成功，请重试。",
-    "mika_setup_failed": "无法启动 Mika 工作区"
+    "mika_setup_failed": "无法启动 Marvis 工作区"
   },
   "mika_intro": {
-    "headline": "认识一下 Mika，你的第一个智能体队友。",
-    "name": "Mika",
+    "headline": "认识一下 Marvis，你的第一个智能体队友。",
+    "name": "Marvis",
     "role": "参谋长",
-    "blurb": "把你想做的事告诉 Mika，它会变成一个任务，并交给合适的智能体处理。"
+    "blurb": "把你想做的事告诉 Marvis，它会变成一个任务，并交给合适的智能体处理。"
   }
 }
