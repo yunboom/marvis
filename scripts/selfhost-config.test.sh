@@ -66,6 +66,11 @@ if grep -Eq '(published|target):.*6061' <<<"$maintenance_config"; then
   echo "Maintenance loopback port must not be published"
   exit 1
 fi
+# LAN discovery cannot work from a container, so the backend defaults it to off
+# and only an explicit operator value turns it on.
+require_config "$config" 'MARVIS_LAN_DISCOVERY: "false"'
+lan_config="$(MARVIS_LAN_DISCOVERY=true docker compose --env-file "$tmp_env" -f docker-compose.selfhost.yml config)"
+require_config "$lan_config" 'MARVIS_LAN_DISCOVERY: "true"'
 require_config "$config" 'DATABASE_REPLICA_URL: postgres://reader:secret@replica.example.com:5432/marvis?sslmode=require'
 require_config "$config" 'DATABASE_REPLICA_MAX_CONNS: "12"'
 require_config "$config" 'DATABASE_REPLICA_MIN_CONNS: "1"'

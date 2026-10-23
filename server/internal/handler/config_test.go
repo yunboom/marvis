@@ -114,6 +114,12 @@ func TestGetConfigIncludesRuntimeAuthConfig(t *testing.T) {
 	}
 }
 
+// 局域网身份测试使用的服务器名称和实例 ID。
+const (
+	lanTestServerName = "设计部 Marvis"
+	lanTestInstanceID = "7f3a0c52-9d1e-4b6a-8f20-3c5d7e9a1b44"
+)
+
 func TestGetConfigIncludesLANIdentity(t *testing.T) {
 	origCfg := testHandler.cfg
 	t.Cleanup(func() { testHandler.cfg = origCfg })
@@ -126,13 +132,17 @@ func TestGetConfigIncludesLANIdentity(t *testing.T) {
 		return body
 	}
 
-	testHandler.cfg.ServerName = "设计部 Marvis"
-	testHandler.cfg.InstanceID = "7f3a0c52-9d1e-4b6a-8f20-3c5d7e9a1b44"
+	// 自托管部署：两个字段随 /api/config 下发。
+	t.Setenv("MARVIS_APP_URL", "https://marvis.self-hosted.example")
+	t.Setenv("FRONTEND_ORIGIN", "")
+
+	testHandler.cfg.ServerName = lanTestServerName
+	testHandler.cfg.InstanceID = lanTestInstanceID
 	body := fetch()
-	if body["server_name"] != "设计部 Marvis" {
-		t.Fatalf("server_name = %v, want 设计部 Marvis", body["server_name"])
+	if body["server_name"] != lanTestServerName {
+		t.Fatalf("server_name = %v, want %s", body["server_name"], lanTestServerName)
 	}
-	if body["instance_id"] != "7f3a0c52-9d1e-4b6a-8f20-3c5d7e9a1b44" {
+	if body["instance_id"] != lanTestInstanceID {
 		t.Fatalf("instance_id = %v, want the configured instance id", body["instance_id"])
 	}
 
@@ -144,6 +154,39 @@ func TestGetConfigIncludesLANIdentity(t *testing.T) {
 		if _, ok := body[key]; ok {
 			t.Fatalf("%s must be omitted when empty", key)
 		}
+	}
+}
+
+// TestGetConfigOmitsLANIdentityOnOfficialCloud 确认官方云（前端域名 marvis.ai）不下发
+// server_name 和 instance_id，即使服务端配置了它们；自托管的前端域名仍然下发。
+func TestGetConfigOmitsLANIdentityOnOfficialCloud(t *testing.T) {
+	origCfg := testHandler.cfg
+	t.Cleanup(func() { testHandler.cfg = origCfg })
+
+	testHandler.cfg.ServerName = lanTestServerName
+	testHandler.cfg.InstanceID = lanTestInstanceID
+
+	fetch := func() map[string]any {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+		var body map[string]any
+		testutil.Call(t, testHandler.GetConfig, req).Want(http.StatusOK).JSON(&body)
+		return body
+	}
+
+	t.Setenv("MARVIS_APP_URL", "https://marvis.ai")
+	t.Setenv("FRONTEND_ORIGIN", "")
+	body := fetch()
+	for _, key := range []string{"server_name", "instance_id"} {
+		if _, ok := body[key]; ok {
+			t.Fatalf("%s must be omitted on the official cloud, got %v", key, body[key])
+		}
+	}
+
+	t.Setenv("MARVIS_APP_URL", "https://marvis.self-hosted.example")
+	body = fetch()
+	if body["server_name"] != lanTestServerName || body["instance_id"] != lanTestInstanceID {
+		t.Fatalf("self-hosted: server_name = %v, instance_id = %v, want both configured values", body["server_name"], body["instance_id"])
 	}
 }
 

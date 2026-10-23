@@ -155,6 +155,8 @@ services:
       # Empty default = headers ignored, RemoteAddr used. Set e.g.
       # "127.0.0.1/32" when running behind a same-host reverse proxy.
       MARVIS_TRUSTED_PROXIES: ${MARVIS_TRUSTED_PROXIES:-}
+      # LAN discovery does not work from Docker Desktop and is meant for source runs, so it is off here.
+      MARVIS_LAN_DISCOVERY: ${MARVIS_LAN_DISCOVERY:-false}
       # Server-side LLM layer, backing internal helpers such as chat title
       # generation. Both the API key and the base URL empty = layer disabled,
       # and callers fall back silently rather than failing. MARVIS_LLM_MAX_RETRIES
