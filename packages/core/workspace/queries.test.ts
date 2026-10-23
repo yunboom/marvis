@@ -5,6 +5,7 @@ import {
   larkChatListOptions,
   larkInviteListOptions,
   larkInviteStatusOptions,
+  larkInviteWelcomeOptions,
   larkStatusKey,
   workspaceBySlugOptions,
   workspaceKeys,
@@ -95,5 +96,17 @@ describe("Feishu invite queries", () => {
   it("uses the workspace keys for the list and chat options", () => {
     expect(larkInviteListOptions("ws-1", true).queryKey).toEqual(workspaceKeys.larkInvites("ws-1"));
     expect(larkChatListOptions("ws-1", true).queryKey).toEqual(workspaceKeys.larkChats("ws-1"));
+  });
+
+  it("fetches the welcome once per workspace and never refetches on its own", () => {
+    const options = larkInviteWelcomeOptions("ws-1");
+
+    expect(options.queryKey).toEqual(["workspaces", "ws-1", "lark-invite-welcome"]);
+    expect(options.queryKey).toEqual(workspaceKeys.larkInviteWelcome("ws-1"));
+    expect(options.queryKey).not.toEqual(workspaceKeys.larkInviteWelcome("ws-2"));
+    expect(options.staleTime).toBe(Infinity);
+    expect(options.refetchOnWindowFocus).toBe(false);
+    expect(options.enabled).toBe(true);
+    expect(larkInviteWelcomeOptions("").enabled).toBe(false);
   });
 });

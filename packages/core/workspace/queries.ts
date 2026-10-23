@@ -10,6 +10,8 @@ export const workspaceKeys = {
   shareLinks: (wsId: string) => ["workspaces", wsId, "share-links"] as const,
   larkInvites: (wsId: string) => ["workspaces", wsId, "lark-invites"] as const,
   larkChats: (wsId: string) => ["workspaces", wsId, "lark-chats"] as const,
+  larkInviteWelcome: (wsId: string) =>
+    ["workspaces", wsId, "lark-invite-welcome"] as const,
   myInvitations: () => ["invitations", "mine"] as const,
   agents: (wsId: string) => ["workspaces", wsId, "agents"] as const,
   agent: (wsId: string, agentId: string) =>
@@ -203,6 +205,18 @@ export function larkChatListOptions(wsId: string, enabled = true) {
     queryKey: workspaceKeys.larkChats(wsId),
     queryFn: () => api.listLarkChats(wsId),
     enabled: enabled && !!wsId,
+  });
+}
+
+// 首次进入的提示：服务端按当前用户返回待提示记录，没有则为 null。
+// 记录由界面确认（ack）后才消失，所以不自动重取，窗口聚焦也不重取。
+export function larkInviteWelcomeOptions(wsId: string) {
+  return queryOptions({
+    queryKey: workspaceKeys.larkInviteWelcome(wsId),
+    queryFn: () => api.getLarkInviteWelcome(wsId),
+    enabled: !!wsId,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 }
 

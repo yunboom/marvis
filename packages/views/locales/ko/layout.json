@@ -64,5 +64,9 @@
     "show_more_pins": "{{count}}개 더 보기…",
     "show_fewer_pins": "접기",
     "unread_overflow": "99+"
+  },
+  "lark_invite_welcome": {
+    "title": "{{workspace}}에 참여했습니다",
+    "description": "{{inviter}}님의 Feishu 초대로 참여했습니다. 역할: {{role}}."
   }
 }
