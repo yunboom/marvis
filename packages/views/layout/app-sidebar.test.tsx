@@ -106,7 +106,9 @@ vi.mock("@marvis/ui/components/ui/tooltip", () => ({
 vi.mock("../common/use-app-foreground", () => ({
   useAppForeground: () => appForeground.current,
 }));
-vi.mock("./help-launcher", () => ({ HelpLauncher: () => null }));
+vi.mock("./help-launcher", () => ({
+  HelpLauncher: () => <span data-testid="help-launcher" />,
+}));
 vi.mock("../auth", () => ({ useLogout: () => vi.fn() }));
 vi.mock("../issues/components/status-icon", () => ({ StatusIcon: () => <span /> }));
 vi.mock("../navigation", () => ({
@@ -404,6 +406,17 @@ describe("navigation item presentation", () => {
         referenceClassName,
       );
     }
+  });
+
+  it("puts Help in the Settings row", () => {
+    const { container } = render(<AppSidebar />);
+    // SidebarMenuItem is mocked as a fragment, so the row's next element is
+    // whatever shares the Settings menu item.
+    const besideSettings = container.querySelector(
+      'button[data-href="/acme/settings"]',
+    )?.nextElementSibling;
+
+    expect(besideSettings?.querySelector('[data-testid="help-launcher"]')).toBeTruthy();
   });
 });
 
