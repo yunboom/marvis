@@ -1332,7 +1332,12 @@
         "rescan": "Rechercher à nouveau",
         "local_badge": "Cet ordinateur",
         "none": "Aucun serveur trouvé sur le réseau local. L'ordinateur et le serveur doivent être sur le même réseau.",
-        "continue": "Continuer"
+        "continue": "Continuer",
+        "or_address": "ou saisissez une adresse",
+        "summary_scanning": "Recherche…",
+        "summary_scanning_hint": "Les serveurs Marvis du réseau apparaissent ici",
+        "summary_manual": "Adresse saisie manuellement",
+        "summary_manual_hint": "Testez la connexion pour continuer"
       },
       "address": {
         "label": "Adresse du serveur",

@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import { Loader2, RefreshCw, Server, TriangleAlert, WifiOff } from "lucide-react";
+import { Loader2, RefreshCw, Server, TriangleAlert, Wifi, WifiOff } from "lucide-react";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Card } from "@marvis/ui/components/ui/card";
@@ -20,12 +20,10 @@ import { useLanServers } from "./use-lan-servers";
 const HTTP_PROTOCOL = "http:";
 const DETAIL_SEPARATOR = " · ";
 
-// 卡片 480 宽、24 圆角；投影与登录页一致，暗色去掉投影只留描边。
+// 两栏卡片与引导页一致：左栏说明和按钮，右栏浅灰面板放选择。
 const CARD_CLASS =
-  "w-full max-w-120 gap-0 rounded-2xl border-0 p-8 pb-7 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border dark:shadow-none";
-const TITLE_CLASS = "mt-4.5 text-center text-display-sm font-bold";
-const SUBTITLE_CLASS = "mt-2 text-center text-body text-muted-foreground";
-const PRIMARY_BUTTON_CLASS = "h-12 text-body-lg";
+  "w-full max-w-[960px] gap-0 overflow-hidden rounded-[28px] border-0 p-0 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border md:grid md:h-[600px] md:grid-cols-[380px_minmax(0,1fr)] md:grid-rows-[1fr_auto] dark:shadow-none";
+const PRIMARY_BUTTON_CLASS = "h-12 w-full text-body-lg";
 
 // 用户在选择步骤里明确点选过的项；null 表示还没有操作，走默认选中。
 type UserPick = { kind: typeof SERVER_SOURCE_LAN; url: string } | { kind: typeof SERVER_SOURCE_MANUAL };
@@ -102,52 +100,193 @@ function toConnectTarget(
   return null;
 }
 
+// 选中项在左栏摘要里的一行：名称 + 地址 · 版本。
+function serverSummaryLine(url: string, version: string): string {
+  return [new URL(url).host, version].filter((part) => part !== "").join(DETAIL_SEPARATOR);
+}
+
 // 桌面端首次启动（还没有选择服务器）时的连接页：先选服务器，再确认，最后保存并重载。
-export function ConnectServerScreen() {
+// 两栏布局与引导页一致：左栏标题、已选服务器摘要和按钮，右栏是选择或确认详情。
+// 三个网格子元素而不是两列，窄窗口里按 说明 → 选择 → 按钮 的顺序竖排。
+export function ConnectServerScreen({
+  suggestedAddress,
+}: {
+  /** 预填进地址栏的地址（开发模式下的本地后端）；缺省用默认地址。 */
+  suggestedAddress?: string;
+}) {
+  const { t } = useT("settings");
   const [target, setTarget] = useState<ConnectTarget | null>(null);
   const [pick, setPick] = useState<UserPick | null>(null);
-  const [address, setAddress] = useState(DEFAULT_SERVER_ADDRESS);
+  const [address, setAddress] = useState(suggestedAddress ?? DEFAULT_SERVER_ADDRESS);
   const [probe, setProbe] = useState<ProbeResult | null>(null);
+  const [connecting, setConnecting] = useState(false);
   const { servers, scanning, rescan } = useLanServers();
 
   const selection = resolveSelection(pick, servers, scanning);
+  const noneFound = !scanning && servers.length === 0;
+
+  let continueDisabled: boolean;
+  if (selection.kind === SERVER_SOURCE_LAN) {
+    // 查找窗口内默认选中的项还可能变化，用户明确点选过才能继续。
+    continueDisabled = scanning && pick === null;
+  } else if (selection.kind === SERVER_SOURCE_MANUAL) {
+    continueDisabled = probe?.kind !== "ok";
+  } else {
+    continueDisabled = true;
+  }
+
+  const summaryTarget = target ?? toConnectTarget(selection, probe);
+  let summary: { name: string; line: string; picked: boolean };
+  if (summaryTarget) {
+    summary = {
+      name: summaryTarget.selected.name,
+      line: serverSummaryLine(summaryTarget.selected.url, summaryTarget.version),
+      picked: true,
+    };
+  } else if (selection.kind === SERVER_SOURCE_MANUAL) {
+    summary = {
+      name: t(($) => $.desktop.server.connect.summary_manual),
+      line: t(($) => $.desktop.server.connect.summary_manual_hint),
+      picked: false,
+    };
+  } else {
+    summary = {
+      name: t(($) => $.desktop.server.connect.summary_scanning),
+      line: t(($) => $.desktop.server.connect.summary_scanning_hint),
+      picked: false,
+    };
+  }
+
+  const handleConnect = async () => {
+    if (!target) return;
+
+    setConnecting(true);
+    try {
+      // 保存后主进程会重载所有窗口，页面随即回到登录页。
+      await window.desktopAPI.server.select(target.selected);
+    } catch (err) {
+      setConnecting(false);
+      throw err;
+    }
+  };
+
+  let title: string;
+  let subtitle: string;
+  if (target) {
+    title = t(($) => $.desktop.server.confirm.title, { name: target.selected.name });
+    subtitle = t(($) => $.desktop.server.confirm.subtitle);
+  } else {
+    title = t(($) => $.desktop.server.connect.title);
+    subtitle = noneFound
+      ? t(($) => $.desktop.server.connect.subtitle_none)
+      : t(($) => $.desktop.server.connect.subtitle);
+  }
 
   return (
     <div className="flex h-screen flex-col bg-app-shell text-foreground">
       <DragStrip />
       <div className="flex flex-1 items-center justify-center overflow-auto px-4 pb-12">
         <Card className={CARD_CLASS}>
-          <MarvisIcon className="mx-auto size-11 text-foreground" />
-          {target ? (
-            <ConfirmStep target={target} onBack={() => setTarget(null)} />
-          ) : (
-            <PickStep
-              servers={servers}
-              scanning={scanning}
-              selection={selection}
-              explicit={pick !== null}
-              address={address}
-              probe={probe}
-              onRescan={rescan}
-              onPickServer={(server) => setPick({ kind: SERVER_SOURCE_LAN, url: server.url })}
-              onPickAddress={() => setPick({ kind: SERVER_SOURCE_MANUAL })}
-              onAddressChange={setAddress}
-              onProbeResult={setProbe}
-              onContinue={() => setTarget(toConnectTarget(selection, probe))}
-            />
-          )}
+          <div className="flex flex-col px-10 pt-10 md:col-start-1 md:row-start-1">
+            <MarvisIcon className="size-9 text-foreground" />
+
+            <h1 className="mt-8 text-display-sm font-bold">{title}</h1>
+            <p className="mt-3 text-body leading-relaxed text-muted-foreground">{subtitle}</p>
+
+            <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3">
+              <span
+                aria-hidden
+                className={cn(
+                  "flex size-9 shrink-0 items-center justify-center rounded-[10px] text-background",
+                  summary.picked ? "bg-foreground" : "bg-input",
+                )}
+              >
+                <Server className="size-4.5" />
+              </span>
+              <div className="min-w-0">
+                <p
+                  className={cn(
+                    "truncate text-body font-semibold",
+                    !summary.picked && "text-faint-foreground",
+                  )}
+                >
+                  {summary.name}
+                </p>
+                <p aria-live="polite" className="truncate text-caption text-muted-foreground">
+                  {summary.line}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex min-h-0 flex-col px-6 pt-8 md:col-start-2 md:row-span-2 md:row-start-1 md:py-8 md:pr-8 md:pl-2">
+            <div className="flex min-h-[320px] flex-1 flex-col overflow-y-auto rounded-[20px] bg-surface-sunken">
+              {target ? (
+                <ConfirmDetails target={target} />
+              ) : (
+                <PickPane
+                  servers={servers}
+                  scanning={scanning}
+                  noneFound={noneFound}
+                  selection={selection}
+                  address={address}
+                  probe={probe}
+                  onRescan={rescan}
+                  onPickServer={(server) => setPick({ kind: SERVER_SOURCE_LAN, url: server.url })}
+                  onPickAddress={() => setPick({ kind: SERVER_SOURCE_MANUAL })}
+                  onAddressChange={setAddress}
+                  onProbeResult={setProbe}
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col px-10 pt-8 pb-9 md:col-start-1 md:row-start-2">
+            {target ? (
+              <>
+                <Button
+                  size="lg"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={connecting}
+                  onClick={() => void handleConnect()}
+                >
+                  {connecting && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                  {connecting
+                    ? t(($) => $.desktop.server.confirm.connecting)
+                    : t(($) => $.desktop.server.confirm.connect)}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className={cn(PRIMARY_BUTTON_CLASS, "mt-2 h-11 font-normal")}
+                  disabled={connecting}
+                  onClick={() => setTarget(null)}
+                >
+                  {t(($) => $.desktop.server.confirm.back)}
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="lg"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={continueDisabled}
+                onClick={() => setTarget(toConnectTarget(selection, probe))}
+              >
+                {t(($) => $.desktop.server.connect.continue)}
+              </Button>
+            )}
+          </div>
         </Card>
       </div>
     </div>
   );
 }
 
-interface PickStepProps {
+interface PickPaneProps {
   servers: DiscoveredServer[];
   scanning: boolean;
+  noneFound: boolean;
   selection: Selection;
-  /** 用户是否明确点选过；查找窗口内默认选中的项还可能变化，需要等查找结束。 */
-  explicit: boolean;
   address: string;
   probe: ProbeResult | null;
   onRescan: () => void;
@@ -155,14 +294,13 @@ interface PickStepProps {
   onPickAddress: () => void;
   onAddressChange: (value: string) => void;
   onProbeResult: (result: ProbeResult | null) => void;
-  onContinue: () => void;
 }
 
-function PickStep({
+function PickPane({
   servers,
   scanning,
+  noneFound,
   selection,
-  explicit,
   address,
   probe,
   onRescan,
@@ -170,78 +308,53 @@ function PickStep({
   onPickAddress,
   onAddressChange,
   onProbeResult,
-  onContinue,
-}: PickStepProps) {
+}: PickPaneProps) {
   const { t } = useT("settings");
   const headingId = useId();
 
-  const noneFound = !scanning && servers.length === 0;
-  const manualSelected = selection.kind === SERVER_SOURCE_MANUAL;
-
-  let continueDisabled: boolean;
-  if (selection.kind === SERVER_SOURCE_LAN) {
-    continueDisabled = scanning && !explicit;
-  } else if (selection.kind === SERVER_SOURCE_MANUAL) {
-    continueDisabled = probe?.kind !== "ok";
-  } else {
-    continueDisabled = true;
-  }
-
   return (
-    <>
-      <h1 className={TITLE_CLASS}>{t(($) => $.desktop.server.connect.title)}</h1>
-      <p className={SUBTITLE_CLASS}>
-        {noneFound
-          ? t(($) => $.desktop.server.connect.subtitle_none)
-          : t(($) => $.desktop.server.connect.subtitle)}
-      </p>
-
+    <div className="flex flex-col p-2">
       {noneFound ? (
-        <div
-          role="status"
-          className="mt-5.5 flex items-center gap-3 rounded-xl bg-surface-sunken px-3.5 py-3"
-        >
-          <WifiOff className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+        <div role="status" className="flex items-start gap-3 px-3 pt-3 pb-4">
+          <WifiOff className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
           <span className="flex-1 text-label leading-relaxed text-muted-foreground">
             {t(($) => $.desktop.server.connect.none)}
           </span>
-          <Button variant="secondary" size="sm" className="shrink-0" onClick={onRescan}>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="shrink-0 bg-surface"
+            onClick={onRescan}
+          >
             {t(($) => $.desktop.server.connect.rescan)}
           </Button>
         </div>
       ) : (
         <>
-          <div className="mt-5.5 flex h-7 items-center">
-            <span id={headingId} className="text-label text-muted-foreground">
+          <div className="flex h-9 items-center gap-2 px-2.5 text-caption text-muted-foreground">
+            <Wifi className="size-3.5" aria-hidden />
+            <span id={headingId} className="font-semibold text-foreground">
               {t(($) => $.desktop.server.connect.lan_heading)}
             </span>
             {scanning ? (
-              <span
-                role="status"
-                className="ml-auto inline-flex items-center gap-1.5 text-label text-muted-foreground"
-              >
-                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              <span role="status" className="ml-auto inline-flex items-center gap-1.5">
+                <Loader2 className="size-3 animate-spin" aria-hidden />
                 {t(($) => $.desktop.server.connect.scanning)}
               </span>
             ) : (
               <Button
                 variant="ghost"
-                size="icon-sm"
-                className="ml-auto text-muted-foreground"
-                aria-label={t(($) => $.desktop.server.connect.rescan)}
-                title={t(($) => $.desktop.server.connect.rescan)}
+                size="sm"
+                className="ml-auto h-6.5 gap-1 px-2 text-caption font-normal text-muted-foreground"
                 onClick={onRescan}
               >
-                <RefreshCw className="size-3.5" aria-hidden />
+                <RefreshCw className="size-3" aria-hidden />
+                {t(($) => $.desktop.server.connect.rescan)}
               </Button>
             )}
           </div>
 
-          <div
-            role="radiogroup"
-            aria-labelledby={headingId}
-            className="mt-1.5 flex flex-col gap-1"
-          >
+          <div role="radiogroup" aria-labelledby={headingId} className="flex flex-col gap-0.5">
             {servers.map((server) => (
               <ServerRow
                 key={server.instanceId || server.url}
@@ -252,29 +365,25 @@ function PickStep({
             ))}
             {scanning && servers.length === 0 && <ScanningPlaceholder />}
           </div>
+
+          <div aria-hidden className="mx-2.5 mt-2.5 mb-1 flex items-center gap-2.5 text-caption text-faint-foreground">
+            <span className="h-px flex-1 bg-surface-border" />
+            {t(($) => $.desktop.server.connect.or_address)}
+            <span className="h-px flex-1 bg-surface-border" />
+          </div>
         </>
       )}
 
-      <div className="mt-4.5">
-        <ServerAddressField
-          value={address}
-          onChange={onAddressChange}
-          result={probe}
-          onResult={onProbeResult}
-          selected={manualSelected}
-          onSelect={onPickAddress}
-        />
-      </div>
-
-      <Button
-        size="lg"
-        className={cn(PRIMARY_BUTTON_CLASS, "mt-5 w-full")}
-        disabled={continueDisabled}
-        onClick={onContinue}
-      >
-        {t(($) => $.desktop.server.connect.continue)}
-      </Button>
-    </>
+      <ServerAddressField
+        variant="pane"
+        value={address}
+        onChange={onAddressChange}
+        result={probe}
+        onResult={onProbeResult}
+        selected={selection.kind === SERVER_SOURCE_MANUAL}
+        onSelect={onPickAddress}
+      />
+    </div>
   );
 }
 
@@ -284,6 +393,7 @@ interface ServerRowProps {
   onPick: () => void;
 }
 
+// 一台服务器一行：选中行白底墨色描边，与运行时列表一致。
 function ServerRow({ server, checked, onPick }: ServerRowProps) {
   const { t } = useT("settings");
 
@@ -303,31 +413,35 @@ function ServerRow({ server, checked, onPick }: ServerRowProps) {
       disabled={!server.compatible}
       onClick={onPick}
       className={cn(
-        "flex min-h-14.5 items-center gap-3 rounded-xl border px-3 py-2 text-left outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50",
-        checked ? "border-foreground bg-field" : "border-surface-border hover:bg-field",
+        "flex min-h-14 items-center gap-3 rounded-[14px] py-2 pr-3.5 pl-2.5 text-left outline-none transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50",
+        checked
+          ? "bg-surface shadow-[0_0_0_1.5px_var(--color-foreground)]"
+          : "hover:bg-surface/60",
       )}
     >
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-        <Server className="size-4.5" aria-hidden />
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-surface text-muted-foreground ring-1 ring-surface-border">
+        <Server className="size-4" aria-hidden />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5 text-body font-medium">
           <span className="truncate">{server.name}</span>
           {server.isLocal && (
-            <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-muted px-1.5 text-micro font-normal text-muted-foreground">
+            <span className="shrink-0 text-caption font-normal text-faint-foreground">
               {t(($) => $.desktop.server.connect.local_badge)}
             </span>
           )}
         </span>
-        <span className="truncate text-caption text-muted-foreground">{detail}</span>
+        <span className="truncate text-caption text-faint-foreground">{detail}</span>
       </span>
       <span
         aria-hidden
         className={cn(
-          "size-4.5 shrink-0 rounded-full border-input",
-          checked ? "border-[5px] border-foreground" : "border-[1.5px]",
+          "flex size-4.5 shrink-0 items-center justify-center rounded-full",
+          checked ? "bg-foreground" : "border-[1.5px] border-input",
         )}
-      />
+      >
+        {checked && <span className="size-1.5 rounded-full bg-background" />}
+      </span>
     </button>
   );
 }
@@ -335,11 +449,8 @@ function ServerRow({ server, checked, onPick }: ServerRowProps) {
 // 还没有任何服务器出现时的占位行。
 function ScanningPlaceholder() {
   return (
-    <div
-      aria-hidden
-      className="flex h-14.5 animate-pulse items-center gap-3 rounded-xl border border-dashed border-input px-3"
-    >
-      <span className="size-9 rounded-lg bg-skeleton" />
+    <div aria-hidden className="flex h-14 animate-pulse items-center gap-3 px-2.5">
+      <span className="size-8 rounded-[9px] bg-skeleton" />
       <span className="flex flex-col gap-1.5">
         <span className="h-2.5 w-30 rounded-full bg-skeleton" />
         <span className="h-2 w-45 rounded-full bg-skeleton" />
@@ -348,57 +459,31 @@ function ScanningPlaceholder() {
   );
 }
 
-interface ConfirmStepProps {
-  target: ConnectTarget;
-  onBack: () => void;
-}
-
-function ConfirmStep({ target, onBack }: ConfirmStepProps) {
+// 确认步骤的右栏：地址、版本、主机名，HTTP 时附提醒。
+function ConfirmDetails({ target }: { target: ConnectTarget }) {
   const { t } = useT("settings");
-  const [connecting, setConnecting] = useState(false);
 
   const { selected } = target;
   const insecure = new URL(selected.url).protocol === HTTP_PROTOCOL;
   const details = [
-    { label: t(($) => $.desktop.server.confirm.address), value: selected.url, mono: true },
-    { label: t(($) => $.desktop.server.confirm.version), value: target.version, mono: false },
-    { label: t(($) => $.desktop.server.confirm.host), value: target.host, mono: true },
+    { label: t(($) => $.desktop.server.confirm.address), value: selected.url },
+    { label: t(($) => $.desktop.server.confirm.version), value: target.version },
+    { label: t(($) => $.desktop.server.confirm.host), value: target.host },
   ].filter((detail) => detail.value !== "");
 
-  const handleConnect = async () => {
-    setConnecting(true);
-
-    try {
-      // 保存后主进程会重载所有窗口，页面随即回到登录页。
-      await window.desktopAPI.server.select(selected);
-    } catch (err) {
-      setConnecting(false);
-      throw err;
-    }
-  };
-
   return (
-    <>
-      <h1 className={TITLE_CLASS}>
-        {t(($) => $.desktop.server.confirm.title, { name: selected.name })}
-      </h1>
-      <p className={SUBTITLE_CLASS}>{t(($) => $.desktop.server.confirm.subtitle)}</p>
-
-      <dl className="mt-6 flex flex-col rounded-xl bg-surface-sunken px-4 py-1">
+    <div className="flex flex-1 flex-col justify-center p-7">
+      <dl className="flex flex-col rounded-2xl bg-surface px-4.5 py-1 ring-1 ring-surface-border">
         {details.map((detail, index) => (
           <div
             key={detail.label}
             className={cn(
-              "flex min-h-10 items-center gap-3",
+              "flex min-h-12 items-center gap-3",
               index > 0 && "border-t border-surface-border",
             )}
           >
             <dt className="w-18 shrink-0 text-label text-muted-foreground">{detail.label}</dt>
-            <dd
-              className={cn("min-w-0 flex-1 truncate text-label", detail.mono && "font-mono")}
-            >
-              {detail.value}
-            </dd>
+            <dd className="min-w-0 flex-1 truncate text-body tabular-nums">{detail.value}</dd>
           </div>
         ))}
       </dl>
@@ -412,29 +497,6 @@ function ConfirmStep({ target, onBack }: ConfirmStepProps) {
           <span>{t(($) => $.desktop.server.confirm.http_warning)}</span>
         </div>
       )}
-
-      <div className="mt-6 flex gap-2.5">
-        <Button
-          variant="secondary"
-          size="lg"
-          className={cn(PRIMARY_BUTTON_CLASS, "flex-1 font-normal")}
-          disabled={connecting}
-          onClick={onBack}
-        >
-          {t(($) => $.desktop.server.confirm.back)}
-        </Button>
-        <Button
-          size="lg"
-          className={cn(PRIMARY_BUTTON_CLASS, "flex-1")}
-          disabled={connecting}
-          onClick={() => void handleConnect()}
-        >
-          {connecting && <Loader2 className="size-4 animate-spin" aria-hidden />}
-          {connecting
-            ? t(($) => $.desktop.server.confirm.connecting)
-            : t(($) => $.desktop.server.confirm.connect)}
-        </Button>
-      </div>
-    </>
+    </div>
   );
 }

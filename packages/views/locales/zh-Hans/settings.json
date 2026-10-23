@@ -1322,7 +1322,12 @@
         "rescan": "重新查找",
         "local_badge": "本机",
         "none": "局域网中没有找到服务器。电脑和服务器需要连在同一个局域网。",
-        "continue": "继续"
+        "continue": "继续",
+        "or_address": "或输入地址",
+        "summary_scanning": "正在查找…",
+        "summary_scanning_hint": "局域网中的 Marvis 服务器会自动出现",
+        "summary_manual": "手动输入的地址",
+        "summary_manual_hint": "测试连接通过后可以继续"
       },
       "address": {
         "label": "服务器地址",

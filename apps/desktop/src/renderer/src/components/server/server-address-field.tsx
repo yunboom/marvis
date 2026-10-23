@@ -30,9 +30,10 @@ export interface ServerAddressFieldProps {
   onSelect?: () => void;
   /**
    * card：带标签和边框的选择卡片（连接页）；
-   * plain：不带外框，标签只给辅助技术朗读，由页面自己的小标题承担（设置页）。
+   * plain：不带外框，标签只给辅助技术朗读，由页面自己的小标题承担（设置页）；
+   * pane：放在连接页浅灰面板里的一行，选中时白底墨色描边，标签同样只给辅助技术。
    */
-  variant?: "card" | "plain";
+  variant?: "card" | "plain" | "pane";
   /** 排在“测试连接”之后的额外控件，与输入框同一行。 */
   actions?: ReactNode;
 }
@@ -111,6 +112,7 @@ export function ServerAddressField({
 
   const failed = result !== null && result.kind !== "ok";
   const plain = variant === "plain";
+  const pane = variant === "pane";
 
   return (
     <>
@@ -119,7 +121,7 @@ export function ServerAddressField({
         htmlFor={inputId}
         className={cn(
           "text-label text-muted-foreground",
-          plain ? "sr-only" : "flex h-7 items-center",
+          plain || pane ? "sr-only" : "flex h-7 items-center",
         )}
       >
         {t(($) => $.desktop.server.address.label)}
@@ -132,8 +134,10 @@ export function ServerAddressField({
         onFocus={onSelect}
         className={cn(
           "flex flex-col gap-2",
-          !plain && "mt-1.5 rounded-xl border p-2.5 transition-colors",
-          !plain && (selected ? "border-foreground bg-field" : "border-surface-border"),
+          variant === "card" && "mt-1.5 rounded-xl border p-2.5 transition-colors",
+          variant === "card" && (selected ? "border-foreground bg-field" : "border-surface-border"),
+          pane && "rounded-[14px] py-2.5 pr-3.5 pl-2.5 transition-[background-color,box-shadow]",
+          pane && selected && "bg-surface shadow-[0_0_0_1.5px_var(--color-foreground)]",
         )}
       >
         {/* 允许不带协议的输入（如 marvis.local:13840），交给 normalizeServerAddress 补全。 */}
@@ -148,15 +152,17 @@ export function ServerAddressField({
             value={value}
             onChange={(event) => handleChange(event.target.value)}
             className={cn(
-              "h-10 flex-1 rounded-lg border px-3 font-mono text-body md:text-body",
-              selected ? "border-input bg-background" : "border-transparent",
+              "h-10 flex-1 rounded-lg border px-3 text-body md:text-body",
+              pane
+                ? "border-transparent bg-surface ring-1 ring-surface-border hover:bg-surface focus-visible:bg-surface aria-invalid:ring-destructive"
+                : cn("font-mono", selected ? "border-input bg-background" : "border-transparent"),
             )}
           />
           <Button
             type="submit"
             variant="outline"
             disabled={testing || value.trim() === ""}
-            className="h-10 shrink-0 px-3.5 text-label"
+            className={cn("h-10 shrink-0 px-3.5 text-label", pane && "bg-surface")}
           >
             {testing && <Loader2 className="size-3.5 animate-spin" aria-hidden />}
             {testing

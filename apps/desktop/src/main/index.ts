@@ -15,7 +15,11 @@ import { installNavigationGestures } from "./navigation-gestures";
 import { installNavigationGuard } from "./navigation-guard";
 import { createRendererWebPreferences } from "./renderer-web-preferences";
 import { getAppVersion } from "./app-version";
-import { loadRuntimeConfig } from "./runtime-config-loader";
+import {
+  devRuntimeConfig,
+  loadRuntimeConfig,
+  preferDevConfig,
+} from "./runtime-config-loader";
 import { browseBonjour, createLanBrowser, listLocalAddresses } from "./lan-browser";
 import { browseDnsSd } from "./dns-sd-browse";
 import { probeServer } from "./server-probe";
@@ -654,17 +658,19 @@ if (!gotTheLock) {
       readonly VITE_APP_URL?: string;
     };
 
+    // electron-vite exposes VITE_* on import.meta.env for the main process;
+    // keep dev URL overrides on the same source the renderer used before
+    // runtime config moved endpoint resolution into main/preload.
+    const runtimeEnv = {
+      apiUrl: viteEnv.VITE_API_URL,
+      wsUrl: viteEnv.VITE_WS_URL,
+      appUrl: viteEnv.VITE_APP_URL,
+    };
+    const devConfig = devRuntimeConfig(is.dev, runtimeEnv);
     runtimeConfigResult = await loadRuntimeConfig({
       isDev: is.dev,
       userDataDir: app.getPath("userData"),
-      // electron-vite exposes VITE_* on import.meta.env for the main process;
-      // keep dev URL overrides on the same source the renderer used before
-      // runtime config moved endpoint resolution into main/preload.
-      env: {
-        apiUrl: viteEnv.VITE_API_URL,
-        wsUrl: viteEnv.VITE_WS_URL,
-        appUrl: viteEnv.VITE_APP_URL,
-      },
+      env: runtimeEnv,
     });
 
     electronApp.setAppUserModelId(
@@ -765,7 +771,9 @@ if (!gotTheLock) {
     // 服务器发现、探测与选定。选定后更新上面这份运行配置并重载所有窗口，
     // 窗口重新启动时 preload 会同步拿到新的配置。
     const applyRuntimeConfig = (result: RuntimeConfigResult): void => {
-      runtimeConfigResult = result;
+      runtimeConfigResult = result.ok
+        ? { ok: true, config: preferDevConfig(result.config, devConfig) }
+        : result;
     };
     const reloadAllWindows = (): void => {
       for (const target of BrowserWindow.getAllWindows()) {
