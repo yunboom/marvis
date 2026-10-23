@@ -298,6 +298,22 @@ Sans adresse web, ou avec une adresse `localhost`, les clients considèrent que 
 
 La connexion Feishu de Desktop fonctionne sans l'application web. Dans la console développeur Feishu, enregistrez aussi `http://marvis.local:13840/auth/lark/desktop-callback` comme URL de redirection. Le backend traite lui-même ce rappel, donc Desktop garde le bouton Feishu quand seul le backend tourne. Le backend construit cette adresse à partir du nom d'hôte qu'il annonce et de son port : pour un serveur annoncé comme `marvis-2.local`, ou sur un autre port, enregistrez l'adresse correspondante. Quand la découverte sur le réseau local est désactivée, comme avec Docker, indiquez l'adresse enregistrée dans `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` dans `.env`.
 
+#### Invitations Feishu
+
+Les propriétaires et administrateurs d'un espace de travail peuvent envoyer une carte d'invitation à un groupe ou à une personne sur Feishu ; quiconque clique sur la carte rejoint l'espace de travail. Les invitations réutilisent l'application de connexion Feishu (`MARVIS_LARK_LOGIN_APP_ID` / `MARVIS_LARK_LOGIN_APP_SECRET`). Dans la console développeur Feishu, pour cette application :
+
+1. Activez la fonction bot.
+2. Demandez ces cinq autorisations : `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:user.base:readonly` et `contact:user.email:readonly`.
+3. Dans les événements et rappels, choisissez la connexion longue (long connection) comme mode de rappel et ajoutez le rappel `card.action.trigger`.
+4. Réglez la portée de disponibilité pour couvrir toutes les personnes que vous pourriez inviter. Les personnes hors de cette portée ne peuvent pas rejoindre depuis une carte.
+5. Publiez une nouvelle version de l'application.
+
+Définissez ensuite `MARVIS_LARK_INVITE_ENABLED=true` dans `.env` et exécutez `docker compose -f docker-compose.selfhost.yml up -d`. En option, `MARVIS_DESKTOP_DOWNLOAD_URL` affiche un bouton **下载 Marvis** (Télécharger Marvis) sur les cartes. Les invitations Feishu sont indisponibles lorsque la capacité de sièges Marvis Cloud est activée.
+
+<Callout type="warning">
+N'activez les invitations Feishu que dans un seul déploiement par application Feishu. Feishu transmet chaque clic sur une carte à l'une des connexions longues de l'application ; un clic reçu par un déploiement où l'option est désactivée est perdu.
+</Callout>
+
 ### CLI
 
 Dans un terminal, `marvis setup self-host` sans `--server-url` cherche sur le réseau pendant environ 3 secondes et liste les serveurs trouvés. Un serveur qui tourne sur cet ordinateur (`http://localhost:13840`) apparaît en premier et est présélectionné, suivi du serveur utilisé par Desktop. La dernière entrée permet de saisir une adresse.

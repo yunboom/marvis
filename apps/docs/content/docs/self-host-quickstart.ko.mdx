@@ -297,6 +297,22 @@ Web 주소가 없거나 `localhost`이면 클라이언트는 Web 앱이 없는 �
 
 Desktop의 Feishu 로그인은 Web 앱 없이도 동작합니다. Feishu 개발자 콘솔에 리디렉션 URL로 `http://marvis.local:13840/auth/lark/desktop-callback`도 등록합니다. 이 콜백은 backend가 직접 처리하므로 backend만 실행 중일 때도 Desktop에 Feishu 버튼이 남습니다. 이 주소는 서버가 알리는 호스트 이름과 backend 포트로 만들어집니다. 서버가 `marvis-2.local`로 알려지거나 다른 포트를 쓰면 그에 맞는 주소를 등록합니다. Docker처럼 로컬 네트워크 검색이 꺼져 있으면 등록한 주소를 `.env`의 `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI`에 설정합니다.
 
+#### Feishu 초대
+
+워크스페이스 owner와 admin은 Feishu 그룹이나 개인에게 초대 카드를 보낼 수 있고, 카드를 누른 사람은 워크스페이스에 참여합니다. 초대는 Feishu 로그인 앱(`MARVIS_LARK_LOGIN_APP_ID` / `MARVIS_LARK_LOGIN_APP_SECRET`)을 그대로 사용합니다. Feishu 개발자 콘솔에서 이 앱에 다음을 설정합니다:
+
+1. 봇 기능을 켭니다.
+2. 다섯 가지 권한을 신청합니다: `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:user.base:readonly`, `contact:user.email:readonly`.
+3. 이벤트와 콜백에서 콜백 수신 방식을 장기 연결(long connection)로 설정하고 `card.action.trigger` 콜백을 추가합니다.
+4. 사용 가능 범위에 초대할 수 있는 모든 사람이 포함되도록 설정합니다. 범위 밖의 사람은 카드로 참여할 수 없습니다.
+5. 앱의 새 버전을 게시합니다.
+
+그다음 `.env`에 `MARVIS_LARK_INVITE_ENABLED=true`를 설정하고 `docker compose -f docker-compose.selfhost.yml up -d`를 실행합니다. 선택적으로 `MARVIS_DESKTOP_DOWNLOAD_URL`을 설정하면 카드에 "下载 Marvis"(Marvis 다운로드) 버튼이 표시됩니다. Marvis Cloud 좌석 용량이 켜져 있으면 Feishu 초대는 사용할 수 없습니다.
+
+<Callout type="warning">
+Feishu 앱 하나당 한 배포에서만 Feishu 초대를 켜세요. Feishu는 카드 클릭을 앱의 장기 연결 중 하나로 보내므로, 스위치가 꺼진 배포에 도착한 클릭은 사라집니다.
+</Callout>
+
 ### CLI
 
 터미널에서 `--server-url` 없이 `marvis setup self-host`를 실행하면 네트워크를 약 3초 동안 검색하고 찾은 서버를 목록으로 보여 줍니다. 이 컴퓨터에서 실행 중인 서버(`http://localhost:13840`)가 맨 위에 표시되고 미리 선택되며, 그다음에 Desktop이 사용 중인 서버가 표시됩니다. 마지막 항목에서 주소를 직접 입력할 수 있습니다.

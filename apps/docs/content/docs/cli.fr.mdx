@@ -82,6 +82,15 @@ marvis workspace member invite teammate@example.com
 marvis workspace member invite admin@example.com --role admin
 ```
 
+Sur un serveur où les invitations Feishu sont activées, les propriétaires et administrateurs peuvent aussi envoyer une carte d'invitation à un groupe ou à une personne sur Feishu. Les cartes sont en chinois ; toute personne qui clique sur **加入工作区** (Rejoindre l'espace de travail) rejoint avec le rôle choisi à l'envoi :
+
+```bash
+marvis workspace lark-invite send --chat-id oc_xxx
+marvis workspace lark-invite send --user-id ou_xxx --role admin --expires-in 3d
+marvis workspace lark-invite list --status all
+marvis workspace lark-invite revoke <invite-id>
+```
+
 ## Opérations courantes sur les tâches
 
 ```bash
@@ -273,6 +282,7 @@ Les tableaux ci-dessous couvrent toutes les commandes de premier niveau actuelle
 | `workspace` | `list/get/create/update/switch` | Gérer les espaces de travail ; `switch` définit l'espace de travail par défaut du profil actuel | |
 | | `mcp list/add/update/remove` | Gérer la bibliothèque de serveurs MCP de l'espace de travail | Les écritures sont réservées aux propriétaires et administrateurs. Un serveur ajouté ici n'est assigné à aucun agent — attribuez-le à un agent avec `marvis agent mcp add`. `list` n'affiche que les noms et les transports ; l'entrée enregistrée est en écriture seule et n'est jamais renvoyée. `--server-config-file` / `--server-config-stdin` gardent les jetons hors de l'historique du shell |
 | | `member list/invite <email>` | Consulter les membres, envoyer des invitations | `invite` : `--role` (member ou admin, member par défaut) |
+| | `lark-invite send/list/get/revoke` | Envoyer des cartes d'invitation Feishu à un groupe ou à une personne et les suivre | Réservé aux propriétaires et administrateurs, et le serveur doit avoir activé les invitations Feishu, sinon `lark_not_configured`. `send` : exactement un de `--chat-id` (`oc_`) ou `--user-id` (`ou_`, un open_id de l'application de connexion Feishu), `--role`, `--expires-in` (1h à 720h, `7d` accepté), `--max-uses` (cartes de groupe), `--note`, `--idempotency-key` (une nouvelle tentative dans l'heure renvoie l'invitation d'origine) ; `list` : `--status` (`active` par défaut ; aussi `completed`, `expired`, `revoked`, `all`), `--full-id` ; `get` / `revoke` acceptent l'ID court de `list` ; en cas d'échec, affiche `Error: <code>: <message>` |
 | `repo` | `list/add/remove/checkout` | Gérer les dépôts de l'espace de travail et les extraire localement | `--url` (répétable) ; `checkout` : `--ref` |
 | `skill` | `list/get/create/update/delete` | Gérer les skills | |
 | | `import` | Importer un skill depuis une URL ou un fichier local | `--url` / `--file`, `--on-conflict` (`fail`, `overwrite`, `rename`, `skip` ; `fail` par défaut) |

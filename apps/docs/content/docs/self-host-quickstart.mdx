@@ -298,6 +298,22 @@ Without a web address, or with a `localhost` one, clients treat the server as ha
 
 Feishu login in Desktop works without the web app. In the Feishu developer console, also register `http://marvis.local:13840/auth/lark/desktop-callback` as a redirect URL. The backend handles this callback itself, so Desktop keeps the Feishu button when only the backend runs. The backend builds this address from the host name it advertises and its port: a server advertised as `marvis-2.local`, or on another port, needs the matching address registered instead. With LAN discovery off, as in Docker, set the registered address as `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` in `.env`.
 
+#### Feishu invites
+
+Workspace owners and admins can send an invite card to a Feishu chat or person, and whoever clicks the card joins the workspace. Invites reuse the Feishu login app (`MARVIS_LARK_LOGIN_APP_ID` / `MARVIS_LARK_LOGIN_APP_SECRET`). In the Feishu developer console, for that app:
+
+1. Enable the bot capability.
+2. Request these five permissions: `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:user.base:readonly`, and `contact:user.email:readonly`.
+3. Under events and callbacks, set the callback mode to long connection and add the `card.action.trigger` callback.
+4. Set the availability scope to cover everyone you may invite. People outside it cannot join from a card.
+5. Publish a new version of the app.
+
+Then set `MARVIS_LARK_INVITE_ENABLED=true` in `.env` and run `docker compose -f docker-compose.selfhost.yml up -d`. Optionally, set `MARVIS_DESKTOP_DOWNLOAD_URL` to show a **下载 Marvis** (Download Marvis) button on cards. Feishu invites are unavailable when Marvis Cloud seat capacity is enabled.
+
+<Callout type="warning">
+Turn on Feishu invites in only one deployment per Feishu app. Feishu delivers each card click to one of the app's long connections, so a click that reaches a deployment with the switch off is lost.
+</Callout>
+
 ### CLI
 
 In a terminal, `marvis setup self-host` without `--server-url` searches the network for about 3 seconds and lists the servers it finds. A server running on this computer (`http://localhost:13840`) is listed first and preselected, followed by the server Desktop uses. The last entry lets you type an address.

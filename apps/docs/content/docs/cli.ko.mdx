@@ -82,6 +82,15 @@ marvis workspace member invite teammate@example.com
 marvis workspace member invite admin@example.com --role admin
 ```
 
+서버에서 Feishu 초대가 켜져 있으면 owner와 admin은 Feishu 그룹이나 개인에게 초대 카드도 보낼 수 있습니다. 카드는 중국어로 표시되며, "加入工作区"(워크스페이스 참여)를 누른 사람은 보낼 때 고른 역할로 참여합니다:
+
+```bash
+marvis workspace lark-invite send --chat-id oc_xxx
+marvis workspace lark-invite send --user-id ou_xxx --role admin --expires-in 3d
+marvis workspace lark-invite list --status all
+marvis workspace lark-invite revoke <invite-id>
+```
+
 ## 자주 사용하는 태스크 작업
 
 ```bash
@@ -265,6 +274,7 @@ CLI 설정 파일에는 사용자를 대신해 Marvis에 접근할 수 있는 to
 | `workspace` | `list/get/create/update/switch` | 워크스페이스 관리. `switch`는 현재 profile의 기본 워크스페이스 설정 | |
 | | `mcp list/add/update/remove` | 워크스페이스의 MCP 서버 라이브러리를 관리 | 쓰기는 owner/admin 전용. 여기에 추가한 서버는 어떤 에이전트에도 할당되지 않으며 `marvis agent mcp add`로 할당합니다. `list`는 이름과 transport만 표시하고, 저장된 항목은 쓰기 전용이라 어떤 역할에도 반환되지 않습니다. `--server-config-file` / `--server-config-stdin`은 토큰이 셸 기록에 남지 않게 합니다 |
 | | `member list/invite <email>` | 멤버 확인 및 초대 전송 | `invite`: `--role`(member 또는 admin, 기본 member) |
+| | `lark-invite send/list/get/revoke` | Feishu 그룹이나 개인에게 초대 카드를 보내고 결과를 추적 | owner/admin 전용이며 서버에서 Feishu 초대가 켜져 있어야 합니다. 아니면 `lark_not_configured`. `send`: `--chat-id`(`oc_`)와 `--user-id`(`ou_`, Feishu 로그인 앱의 open_id) 중 하나, `--role`, `--expires-in`(1h–720h, `7d` 가능), `--max-uses`(그룹 카드), `--note`, `--idempotency-key`(1시간 안의 재시도는 원래 초대를 반환); `list`: `--status`(기본 `active`, 그 밖에 `completed`, `expired`, `revoked`, `all`), `--full-id`; `get` / `revoke`는 `list`의 짧은 ID를 받습니다. 실패하면 `Error: <code>: <message>`를 출력 |
 | `repo` | `list/add/remove/checkout` | 워크스페이스 저장소 관리 및 로컬 checkout | `--url`(반복 가능). `checkout`: `--ref` |
 | `skill` | `list/get/create/update/delete` | 스킬 관리 | |
 | | `import` | URL 또는 로컬 파일에서 스킬 가져오기 | `--url` / `--file`, `--on-conflict`(`fail`, `overwrite`, `rename`, `skip`, 기본 `fail`) |
