@@ -1082,6 +1082,14 @@ func (h *Handler) larkInviteCardViewOf(inv db.LarkInvite, names larkInviteCardNa
 	return view
 }
 
+// larkInviteInvalidCardView 构造失效状态的卡片数据，底部说明按撤销或过期生成。
+func (h *Handler) larkInviteInvalidCardView(inv db.LarkInvite, names larkInviteCardNames, now time.Time) larkInviteCardView {
+	view := h.larkInviteCardViewOf(inv, names, larkInviteCardInvalid)
+	view.InvalidReason = larkInviteInvalidReason(inv, now)
+
+	return view
+}
+
 // patchLarkInviteInvalidCard 把邀请卡片更新为失效状态，底部说明按撤销或过期生成。
 func (h *Handler) patchLarkInviteInvalidCard(ctx context.Context, inv db.LarkInvite, now time.Time) error {
 	names, err := h.loadLarkInviteCardNames(ctx, inv.WorkspaceID, inv.SentByUserID, inv.SentByAgentID)
@@ -1089,15 +1097,19 @@ func (h *Handler) patchLarkInviteInvalidCard(ctx context.Context, inv db.LarkInv
 		return err
 	}
 
-	view := h.larkInviteCardViewOf(inv, names, larkInviteCardInvalid)
-	view.InvalidReason = larkInviteInvalidReason(inv, now)
+	return patchLarkInviteCard(ctx, h.LarkInviteAPI, h.LarkInviteCreds, inv.ID, inv.LarkMessageID.String, h.larkInviteInvalidCardView(inv, names, now))
+}
+
+// patchLarkInviteCard 按 view 生成卡片，更新 messageID 这条消息。接口和凭据由调用方传入，
+// 后台 goroutine 调用时不必再读 Handler 的字段。
+func patchLarkInviteCard(ctx context.Context, api lark.InviteAPIClient, creds lark.InstallationCredentials, inviteID pgtype.UUID, messageID string, view larkInviteCardView) error {
 	card, err := buildLarkInviteCard(view)
 	if err != nil {
 		return err
 	}
 
-	if err := h.LarkInviteAPI.PatchInviteCard(ctx, h.LarkInviteCreds, inv.LarkMessageID.String, card); err != nil {
-		return errors.Wrapf(err, "patch lark invite card invite_id=%s", uuidToString(inv.ID))
+	if err := api.PatchInviteCard(ctx, creds, messageID, card); err != nil {
+		return errors.Wrapf(err, "patch lark invite card invite_id=%s", uuidToString(inviteID))
 	}
 
 	return nil

@@ -45,6 +45,10 @@ type fakeInviteSend struct {
 type fakeInvitePatch struct {
 	MessageID string
 	CardJSON  string
+	// HasDeadline 表示更新时的 context 带超时。
+	HasDeadline bool
+	// CtxErr 是更新时 context 的错误，回调结束不应取消回应之后的更新。
+	CtxErr error
 }
 
 // fakeInviteAPI 是测试用的飞书邀请接口桩：按 ID 返回预设结果或错误，并记录调用。
@@ -58,6 +62,8 @@ type fakeInviteAPI struct {
 	sendErrs map[string]error // 按 receive_id 命中的发送错误
 	patchErr error
 	botChats []lark.InviteChat
+	// blockGetUser 为 true 时 GetUser 一直阻塞到调用方的 context 结束，模拟通讯录接口无响应。
+	blockGetUser bool
 
 	calls        int
 	sends        []fakeInviteSend // 成功的发送
@@ -100,12 +106,17 @@ func (f *fakeInviteAPI) ListBotChats(_ context.Context, _ lark.InstallationCrede
 	return f.botChats, nil
 }
 
-func (f *fakeInviteAPI) GetUser(_ context.Context, _ lark.InstallationCredentials, openID string) (lark.InviteUser, error) {
+func (f *fakeInviteAPI) GetUser(ctx context.Context, _ lark.InstallationCredentials, openID string) (lark.InviteUser, error) {
 	f.mu.Lock()
-	defer f.mu.Unlock()
-
 	f.calls++
+	block := f.blockGetUser
 	user, ok := f.users[openID]
+	f.mu.Unlock()
+
+	if block {
+		<-ctx.Done()
+		return lark.InviteUser{}, ctx.Err()
+	}
 	if !ok {
 		return lark.InviteUser{}, &lark.APIError{Op: "get user", Code: fakeLarkCodeUserIDInvalid, Msg: "invalid user id"}
 	}
@@ -165,12 +176,13 @@ func (f *fakeInviteAPI) attempts() []fakeInviteSend {
 	return append([]fakeInviteSend(nil), f.sendAttempts...)
 }
 
-func (f *fakeInviteAPI) PatchInviteCard(_ context.Context, _ lark.InstallationCredentials, messageID, cardJSON string) error {
+func (f *fakeInviteAPI) PatchInviteCard(ctx context.Context, _ lark.InstallationCredentials, messageID, cardJSON string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	f.calls++
-	f.patches = append(f.patches, fakeInvitePatch{MessageID: messageID, CardJSON: cardJSON})
+	_, hasDeadline := ctx.Deadline()
+	f.patches = append(f.patches, fakeInvitePatch{MessageID: messageID, CardJSON: cardJSON, HasDeadline: hasDeadline, CtxErr: ctx.Err()})
 
 	return f.patchErr
 }
