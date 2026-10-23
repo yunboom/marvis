@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Input } from "@marvis/ui/components/ui/input";
@@ -20,6 +28,13 @@ export interface ServerAddressFieldProps {
   selected?: boolean;
   /** 聚焦或点击地址栏时回调，用来把它设为选中项。 */
   onSelect?: () => void;
+  /**
+   * card：带标签和边框的选择卡片（连接页）；
+   * plain：不带外框，标签只给辅助技术朗读，由页面自己的小标题承担（设置页）。
+   */
+  variant?: "card" | "plain";
+  /** 排在“测试连接”之后的额外控件，与输入框同一行。 */
+  actions?: ReactNode;
 }
 
 // 服务器地址输入框 + “测试连接”。测试结果就地显示，失败时输入框描边变红。
@@ -33,6 +48,8 @@ export function ServerAddressField({
   onResult,
   selected = false,
   onSelect,
+  variant = "card",
+  actions,
 }: ServerAddressFieldProps) {
   const { t } = useT("settings");
   const labelId = useId();
@@ -93,13 +110,17 @@ export function ServerAddressField({
   };
 
   const failed = result !== null && result.kind !== "ok";
+  const plain = variant === "plain";
 
   return (
     <>
       <label
         id={labelId}
         htmlFor={inputId}
-        className="flex h-7 items-center text-label text-muted-foreground"
+        className={cn(
+          "text-label text-muted-foreground",
+          plain ? "sr-only" : "flex h-7 items-center",
+        )}
       >
         {t(($) => $.desktop.server.address.label)}
       </label>
@@ -110,8 +131,9 @@ export function ServerAddressField({
         onClick={onSelect}
         onFocus={onSelect}
         className={cn(
-          "mt-1.5 flex flex-col gap-2 rounded-xl border p-2.5 transition-colors",
-          selected ? "border-foreground bg-field" : "border-surface-border",
+          "flex flex-col gap-2",
+          !plain && "mt-1.5 rounded-xl border p-2.5 transition-colors",
+          !plain && (selected ? "border-foreground bg-field" : "border-surface-border"),
         )}
       >
         {/* 允许不带协议的输入（如 marvis.local:13840），交给 normalizeServerAddress 补全。 */}
@@ -141,6 +163,7 @@ export function ServerAddressField({
               ? t(($) => $.desktop.server.address.testing)
               : t(($) => $.desktop.server.address.test)}
           </Button>
+          {actions}
         </form>
         {result !== null && <ProbeResultLine result={result} />}
       </div>

@@ -1355,7 +1355,19 @@
         "back": "Back",
         "connect": "Connect",
         "connecting": "Connecting..."
-      }
+      },
+      "settings": {
+        "title": "Server",
+        "description": "The Marvis server this computer is connected to. You will need to sign in again after switching.",
+        "connected": "Connected",
+        "offline": "Can't connect",
+        "other_address": "Other address",
+        "switch": "Switch",
+        "switch_title": "Switch to {{name}}?",
+        "switch_body": "This signs you out of the current account. After connecting to {{address}}, you will need to sign in again.",
+        "cancel": "Cancel"
+      },
+      "tab_label": "Server"
     }
   },
   "members": {

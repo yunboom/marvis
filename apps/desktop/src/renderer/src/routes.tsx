@@ -32,8 +32,9 @@ import { InboxPage } from "@marvis/views/inbox";
 import { ChatPage } from "@marvis/views/chat";
 import { SettingsPage } from "@marvis/views/settings";
 import { useT } from "@marvis/views/i18n";
-import { Download, Server } from "lucide-react";
+import { Cpu, Download, Server } from "lucide-react";
 import { DaemonSettingsTab } from "./components/daemon-settings-tab";
+import { ServerSettingsTab } from "./components/server/server-settings-tab";
 import { UpdatesSettingsTab } from "./components/updates-settings-tab";
 import { WorkspaceRouteLayout } from "./components/workspace-route-layout";
 import { DesktopRouteErrorPage } from "./components/route-error-page";
@@ -49,9 +50,15 @@ function DesktopSettingsRoute() {
     <SettingsPage
       extraDeviceTabs={[
         {
+          value: "server",
+          label: t(($) => $.desktop.server.tab_label),
+          icon: Server,
+          content: <ServerSettingsTab />,
+        },
+        {
           value: "daemon",
           label: t(($) => $.desktop.daemon.title),
-          icon: Server,
+          icon: Cpu,
           content: <DaemonSettingsTab />,
         },
         {

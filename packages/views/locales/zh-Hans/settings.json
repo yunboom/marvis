@@ -1345,7 +1345,19 @@
         "back": "返回",
         "connect": "连接",
         "connecting": "正在连接..."
-      }
+      },
+      "settings": {
+        "title": "服务器",
+        "description": "这台电脑连接的 Marvis 服务器。切换后需要重新登录。",
+        "connected": "已连接",
+        "offline": "无法连接",
+        "other_address": "其他地址",
+        "switch": "切换",
+        "switch_title": "切换到 {{name}}？",
+        "switch_body": "会退出当前账号，连接到 {{address}} 后重新登录。",
+        "cancel": "取消"
+      },
+      "tab_label": "服务器"
     }
   },
   "members": {

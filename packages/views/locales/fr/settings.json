@@ -1355,7 +1355,19 @@
         "back": "Retour",
         "connect": "Se connecter",
         "connecting": "Connexion en cours..."
-      }
+      },
+      "settings": {
+        "title": "Serveur",
+        "description": "Le serveur Marvis auquel cet ordinateur est connecté. Vous devrez vous reconnecter après le changement.",
+        "connected": "Connecté",
+        "offline": "Connexion impossible",
+        "other_address": "Autre adresse",
+        "switch": "Changer",
+        "switch_title": "Passer à {{name}} ?",
+        "switch_body": "Vous serez déconnecté du compte actuel. Après la connexion à {{address}}, vous devrez vous reconnecter.",
+        "cancel": "Annuler"
+      },
+      "tab_label": "Serveur"
     }
   },
   "members": {

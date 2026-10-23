@@ -1345,7 +1345,19 @@
         "back": "戻る",
         "connect": "接続",
         "connecting": "接続中…"
-      }
+      },
+      "settings": {
+        "title": "サーバー",
+        "description": "このコンピュータが接続している Marvis サーバーです。切り替えると、あらためてログインが必要です。",
+        "connected": "接続済み",
+        "offline": "接続できません",
+        "other_address": "その他のアドレス",
+        "switch": "切り替え",
+        "switch_title": "{{name}} に切り替えますか？",
+        "switch_body": "現在のアカウントからログアウトし、{{address}} に接続したあと、あらためてログインします。",
+        "cancel": "キャンセル"
+      },
+      "tab_label": "サーバー"
     }
   },
   "members": {

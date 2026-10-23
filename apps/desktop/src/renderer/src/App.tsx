@@ -32,10 +32,9 @@ import { DiagnosticRouteReporter } from "./platform/diagnostic-route-reporter";
 import { flushFreezeBreadcrumb } from "./freeze-flush";
 import { DesktopAuthSessionBridge } from "./platform/auth-session-bridge";
 import {
-  tearDownOnLogout,
-  tearDownOnSessionExpiry,
-  type SessionTeardown,
-} from "./platform/session-teardown";
+  handleDaemonLogout,
+  handleSessionExpired,
+} from "./platform/desktop-session-teardown";
 
 // BCP-47 region tags for the <html lang> attribute, mirroring
 // apps/web/app/layout.tsx HTML_LANG. index.html ships a static lang="en";
@@ -355,26 +354,6 @@ function BlockingRuntimeConfigError({ message }: { message: string }) {
       </div>
     </div>
   );
-}
-
-// Binds the teardown steps to this renderer's real stores and IPC. Which of
-// them each path runs — and why logout stops the daemon while an expiry
-// leaves it running — lives in platform/session-teardown.
-const sessionTeardown: SessionTeardown = {
-  reportAuthSession: (userId) =>
-    window.desktopAPI.reportAuthSession?.(userId),
-  resetTabs: () => useTabStore.getState().reset(),
-  closeOverlay: () => useWindowOverlayStore.getState().close(),
-  clearDaemonToken: () => window.daemonAPI.clearToken(),
-  stopDaemon: () => window.daemonAPI.stop(),
-};
-
-function handleDaemonLogout() {
-  return tearDownOnLogout(sessionTeardown);
-}
-
-function handleSessionExpired() {
-  tearDownOnSessionExpiry(sessionTeardown);
 }
 
 export default function App() {
