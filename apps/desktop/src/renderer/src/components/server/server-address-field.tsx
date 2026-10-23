@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Input } from "@marvis/ui/components/ui/input";
@@ -24,6 +24,8 @@ export interface ServerAddressFieldProps {
 
 // 服务器地址输入框 + “测试连接”。测试结果就地显示，失败时输入框描边变红。
 // 结果由父组件持有，切到别的步骤再回来时仍然保留。
+// 输入框、按钮和结果行都是可交互或需要被朗读的内容，所以外层用 group 而不是 radio
+// （radio 的子树会被辅助技术当作展示用途剪掉）；选中状态用 aria-current 表达。
 export function ServerAddressField({
   value,
   onChange,
@@ -33,6 +35,8 @@ export function ServerAddressField({
   onSelect,
 }: ServerAddressFieldProps) {
   const { t } = useT("settings");
+  const labelId = useId();
+  const inputId = useId();
   const [testing, setTesting] = useState(false);
   // 每次测试或编辑都递增，用来丢弃已经过期的 probe 结果。
   const requestRef = useRef(0);
@@ -91,47 +95,56 @@ export function ServerAddressField({
   const failed = result !== null && result.kind !== "ok";
 
   return (
-    <div
-      role="radio"
-      aria-checked={selected}
-      aria-label={t(($) => $.desktop.server.address.label)}
-      onClick={onSelect}
-      onFocus={onSelect}
-      className={cn(
-        "flex flex-col gap-2 rounded-xl border p-2.5 transition-colors",
-        selected ? "border-foreground bg-field" : "border-surface-border",
-      )}
-    >
-      {/* 允许不带协议的输入（如 marvis.local:13840），交给 normalizeServerAddress 补全。 */}
-      <form noValidate onSubmit={handleSubmit} className="flex items-center gap-2">
-        <Input
-          type="url"
-          inputMode="url"
-          autoComplete="off"
-          spellCheck={false}
-          aria-label={t(($) => $.desktop.server.address.label)}
-          aria-invalid={failed || undefined}
-          value={value}
-          onChange={(event) => handleChange(event.target.value)}
-          className={cn(
-            "h-10 flex-1 rounded-lg border px-3 font-mono text-body md:text-body",
-            selected ? "border-input bg-background" : "border-transparent",
-          )}
-        />
-        <Button
-          type="submit"
-          variant="outline"
-          disabled={testing || value.trim() === ""}
-          className="h-10 shrink-0 px-3.5 text-label"
-        >
-          {testing && <Loader2 className="size-3.5 animate-spin" aria-hidden />}
-          {testing
-            ? t(($) => $.desktop.server.address.testing)
-            : t(($) => $.desktop.server.address.test)}
-        </Button>
-      </form>
-      {result !== null && <ProbeResultLine result={result} />}
-    </div>
+    <>
+      <label
+        id={labelId}
+        htmlFor={inputId}
+        className="flex h-7 items-center text-label text-muted-foreground"
+      >
+        {t(($) => $.desktop.server.address.label)}
+      </label>
+      <div
+        role="group"
+        aria-labelledby={labelId}
+        aria-current={selected || undefined}
+        onClick={onSelect}
+        onFocus={onSelect}
+        className={cn(
+          "mt-1.5 flex flex-col gap-2 rounded-xl border p-2.5 transition-colors",
+          selected ? "border-foreground bg-field" : "border-surface-border",
+        )}
+      >
+        {/* 允许不带协议的输入（如 marvis.local:13840），交给 normalizeServerAddress 补全。 */}
+        <form noValidate onSubmit={handleSubmit} className="flex items-center gap-2">
+          <Input
+            id={inputId}
+            type="url"
+            inputMode="url"
+            autoComplete="off"
+            spellCheck={false}
+            aria-invalid={failed || undefined}
+            value={value}
+            onChange={(event) => handleChange(event.target.value)}
+            className={cn(
+              "h-10 flex-1 rounded-lg border px-3 font-mono text-body md:text-body",
+              selected ? "border-input bg-background" : "border-transparent",
+            )}
+          />
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={testing || value.trim() === ""}
+            className="h-10 shrink-0 px-3.5 text-label"
+          >
+            {testing && <Loader2 className="size-3.5 animate-spin" aria-hidden />}
+            {testing
+              ? t(($) => $.desktop.server.address.testing)
+              : t(($) => $.desktop.server.address.test)}
+          </Button>
+        </form>
+        {result !== null && <ProbeResultLine result={result} />}
+      </div>
+    </>
   );
 }
 

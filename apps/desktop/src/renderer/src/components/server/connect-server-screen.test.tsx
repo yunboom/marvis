@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "@marvis/core/i18n/react";
 import { RESOURCES } from "@marvis/views/locales";
@@ -95,6 +95,11 @@ function settleDiscovery(list: DiscoveredServer[]) {
   });
 }
 
+// 地址栏的外层容器：group，名称取自可见的“服务器地址”标签。
+function addressGroup(): HTMLElement {
+  return screen.getByRole("group", { name: "服务器地址" });
+}
+
 function addressInput(): HTMLInputElement {
   return screen.getByRole("textbox", { name: "服务器地址" }) as HTMLInputElement;
 }
@@ -120,9 +125,8 @@ describe("ConnectServerScreen", () => {
     renderScreen();
     settleDiscovery([designServer, devServer, oldServer]);
 
-    const rows = screen.getAllByRole("radio");
-    // 三个服务器行 + 地址栏。
-    expect(rows).toHaveLength(4);
+    // radio 只有三个服务器行，地址栏不是 radio。
+    expect(screen.getAllByRole("radio")).toHaveLength(3);
 
     const design = screen.getByRole("radio", { name: /设计部 Marvis/ });
     const dev = screen.getByRole("radio", { name: /marvis-dev/ });
@@ -168,7 +172,7 @@ describe("ConnectServerScreen", () => {
 
     // 选中地址栏：没测试通过之前不能继续。
     fireEvent.focus(addressInput());
-    expect(screen.getByRole("radio", { name: /服务器地址/ })).toHaveAttribute("aria-checked", "true");
+    expect(addressGroup()).toHaveAttribute("aria-current", "true");
     expect(screen.getByRole("radio", { name: /设计部 Marvis/ })).toHaveAttribute("aria-checked", "false");
     expect(screen.getByRole("button", { name: "继续" })).toBeDisabled();
 
@@ -222,6 +226,40 @@ describe("ConnectServerScreen", () => {
     expect(screen.getByRole("button", { name: "继续" })).toBeDisabled();
   });
 
+  it("exposes the address controls outside any radio and conveys selection with aria-current", async () => {
+    renderScreen();
+    settleDiscovery([designServer]);
+
+    // 默认选中第一个服务器行：地址栏的 group 不带 aria-current。
+    expect(addressGroup()).not.toHaveAttribute("aria-current");
+
+    fireEvent.focus(addressInput());
+    await runProbe({ kind: "ok", server: designServer });
+
+    // 输入框、“测试连接”和结果行都在名为“服务器地址”的 group 里。
+    const group = addressGroup();
+    const input = within(group).getByRole("textbox", { name: "服务器地址" });
+    const testButton = within(group).getByRole("button", { name: "测试连接" });
+    const status = within(group).getByRole("status");
+    expect(status).toHaveTextContent("可以连接 · 设计部 Marvis · v0.6.5");
+
+    // 它们都不是任何 radio 的后代（radio 的子树会被辅助技术剪掉）。
+    for (const element of [group, input, testButton, status]) {
+      expect(element.closest('[role="radio"]')).toBeNull();
+    }
+    expect(within(screen.getByRole("radiogroup")).queryByRole("textbox")).toBeNull();
+
+    // 名称只来自可见标签，不再重复写 aria-label。
+    expect(group).not.toHaveAttribute("aria-label");
+    expect(input).not.toHaveAttribute("aria-label");
+    expect(group).toHaveAttribute("aria-current", "true");
+
+    // 选回服务器行后，地址栏不再是当前项。
+    fireEvent.click(screen.getByRole("radio", { name: /设计部 Marvis/ }));
+    expect(addressGroup()).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("radio", { name: /设计部 Marvis/ })).toHaveAttribute("aria-checked", "true");
+  });
+
   it("shows the not-found note and selects the address field when nothing is discovered", () => {
     renderScreen();
     settleDiscovery([]);
@@ -231,7 +269,7 @@ describe("ConnectServerScreen", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("输入服务器地址")).toBeInTheDocument();
     expect(screen.queryByText("局域网中的服务器")).not.toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /服务器地址/ })).toHaveAttribute("aria-checked", "true");
+    expect(addressGroup()).toHaveAttribute("aria-current", "true");
 
     // 重新查找按钮会重新扫描。
     fireEvent.click(screen.getByRole("button", { name: "重新查找" }));

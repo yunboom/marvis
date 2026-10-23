@@ -255,10 +255,7 @@ function PickStep({
         </>
       )}
 
-      <div className="mt-4.5 flex h-7 items-center text-label text-muted-foreground">
-        {t(($) => $.desktop.server.address.label)}
-      </div>
-      <div className="mt-1.5">
+      <div className="mt-4.5">
         <ServerAddressField
           value={address}
           onChange={onAddressChange}
