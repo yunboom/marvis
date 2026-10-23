@@ -53,6 +53,14 @@ const (
 	larkCardResponseTypeRaw = "raw"
 )
 
+// 卡片回调响应里 toast 的类型。
+const (
+	larkInviteToastSuccess = "success"
+	larkInviteToastError   = "error"
+	larkInviteToastInfo    = "info"
+	larkInviteToastWarning = "warning"
+)
+
 // 角色取值，与工作区成员角色一致。
 const (
 	larkInviteRoleMember = "member"
@@ -231,7 +239,7 @@ func buildLarkInviteCard(v larkInviteCardView) (string, error) {
 	return string(raw), nil
 }
 
-// buildLarkInviteToast 生成只提示不更新卡片的回调响应，kind 取 success / error / info / warning。
+// buildLarkInviteToast 生成只提示不更新卡片的回调响应，kind 取 larkInviteToast* 常量。
 func buildLarkInviteToast(kind, content string) []byte {
 	// 结构体只含字符串字段，序列化不会失败。
 	raw, _ := json.Marshal(larkInviteCallbackResponse{Toast: larkInviteToast{Type: kind, Content: content}})
@@ -239,18 +247,18 @@ func buildLarkInviteToast(kind, content string) []byte {
 	return raw
 }
 
-// buildLarkInviteCardResponse 生成提示并更新卡片的回调响应，card 是 buildLarkInviteCard 的输出。
-// card 不是合法 JSON 时退化为只提示，保证回调仍然在时限内返回有效响应。
-func buildLarkInviteCardResponse(kind, content string, card string) []byte {
+// buildLarkInviteCardResponse 生成提示并更新卡片的回调响应，kind 取 larkInviteToast* 常量，
+// card 是 buildLarkInviteCard 的输出。card 不是合法 JSON 时返回错误。
+func buildLarkInviteCardResponse(kind, content string, card string) ([]byte, error) {
 	raw, err := json.Marshal(larkInviteCallbackResponse{
 		Toast: larkInviteToast{Type: kind, Content: content},
 		Card:  &larkInviteCardResponse{Type: larkCardResponseTypeRaw, Data: json.RawMessage(card)},
 	})
 	if err != nil {
-		return buildLarkInviteToast(kind, content)
+		return nil, errors.WithStack(err)
 	}
 
-	return raw
+	return raw, nil
 }
 
 // larkInviteHeader 构造卡片标题栏，标题为 plain_text。

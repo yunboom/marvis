@@ -474,11 +474,11 @@ func TestBuildLarkInviteCardToast(t *testing.T) {
 		} `json:"toast"`
 		Card json.RawMessage `json:"card"`
 	}
-	if err := json.Unmarshal(buildLarkInviteToast("error", `邀请"已失效"`), &got); err != nil {
+	if err := json.Unmarshal(buildLarkInviteToast(larkInviteToastError, `邀请"已失效"`), &got); err != nil {
 		t.Fatalf("toast is not valid JSON: %v", err)
 	}
 
-	if got.Toast.Type != "error" || got.Toast.Content != `邀请"已失效"` {
+	if got.Toast.Type != larkInviteToastError || got.Toast.Content != `邀请"已失效"` {
 		t.Fatalf("toast = %+v", got.Toast)
 	}
 	if got.Card != nil {
@@ -502,11 +502,15 @@ func TestBuildLarkInviteCardResponse(t *testing.T) {
 			Data map[string]any `json:"data"`
 		} `json:"card"`
 	}
-	if err := json.Unmarshal(buildLarkInviteCardResponse("success", "已加入", card), &got); err != nil {
+	body, err := buildLarkInviteCardResponse(larkInviteToastSuccess, "已加入", card)
+	if err != nil {
+		t.Fatalf("buildLarkInviteCardResponse: %v", err)
+	}
+	if err := json.Unmarshal(body, &got); err != nil {
 		t.Fatalf("response is not valid JSON: %v", err)
 	}
 
-	if got.Toast.Type != "success" || got.Toast.Content != "已加入" {
+	if got.Toast.Type != larkInviteToastSuccess || got.Toast.Content != "已加入" {
 		t.Fatalf("toast = %+v", got.Toast)
 	}
 	if got.Card.Type != "raw" {
@@ -518,21 +522,20 @@ func TestBuildLarkInviteCardResponse(t *testing.T) {
 	}
 }
 
-func TestBuildLarkInviteCardResponse_InvalidCardFallsBackToToast(t *testing.T) {
-	var got struct {
-		Toast struct {
-			Type string `json:"type"`
-		} `json:"toast"`
-		Card json.RawMessage `json:"card"`
-	}
-	if err := json.Unmarshal(buildLarkInviteCardResponse("error", "失败", "not json"), &got); err != nil {
-		t.Fatalf("response is not valid JSON: %v", err)
-	}
-
-	if got.Toast.Type != "error" {
-		t.Fatalf("toast type = %q", got.Toast.Type)
-	}
-	if got.Card != nil {
-		t.Fatalf("invalid card must be dropped: %s", got.Card)
+func TestBuildLarkInviteCardResponse_InvalidCard(t *testing.T) {
+	for name, card := range map[string]string{
+		"not json":  "not json",
+		"empty":     "",
+		"truncated": `{"schema":"2.0"`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			body, err := buildLarkInviteCardResponse(larkInviteToastError, "失败", card)
+			if err == nil {
+				t.Fatalf("expected an error for an invalid card, got body %s", body)
+			}
+			if body != nil {
+				t.Fatalf("body must be nil on error, got %s", body)
+			}
+		})
 	}
 }
