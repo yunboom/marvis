@@ -101,6 +101,22 @@ describe("Feishu invite API", () => {
       expect(results[1]?.error?.code).toBe("bot_not_in_chat");
     });
 
+    it("sends the idempotency key in the body", async () => {
+      const fetch = respond(200, { results: [] });
+      await api().sendLarkInvites("ws-1", {
+        chat_ids: ["oc_1"],
+        role: "member",
+        expires_in_hours: 24,
+        idempotency_key: "dialog-key-1",
+      });
+      expect(JSON.parse(String(requestOf(fetch).init?.body))).toEqual({
+        chat_ids: ["oc_1"],
+        role: "member",
+        expires_in_hours: 24,
+        idempotency_key: "dialog-key-1",
+      });
+    });
+
     it.each([null, [], "oops"])("returns an empty list for malformed response %j", async (body) => {
       respond(200, body);
       await expect(

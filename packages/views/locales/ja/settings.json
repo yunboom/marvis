@@ -1492,7 +1492,7 @@
       "empty": "Feishu 招待はまだ送信されていません",
       "load_failed": "招待を読み込めませんでした",
       "not_configured_title": "サーバーに Feishu ボットが設定されていません",
-      "not_configured_body": "設定すると、招待カードを Feishu のグループまたは個人に送れます。サーバー管理者が Feishu ログインアプリでボット機能を有効にする必要があります。",
+      "not_configured_body": "サーバー管理者が Feishu 招待を有効にすると利用できます。",
       "dialog_title": "Feishu 招待を送信",
       "tab_chat": "グループ",
       "tab_user": "個人",

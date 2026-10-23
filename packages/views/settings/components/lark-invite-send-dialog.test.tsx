@@ -134,6 +134,7 @@ describe("LarkInviteSendDialog groups", () => {
         chat_ids: ["oc_1", "oc_2"],
         role: "member",
         expires_in_hours: 168,
+        idempotency_key: expect.any(String),
       }),
     );
     expect(toast.success).toHaveBeenCalledWith("2 cards sent");
@@ -212,6 +213,7 @@ describe("LarkInviteSendDialog groups", () => {
         expires_in_hours: 720,
         max_uses: 20,
         note: "Welcome aboard",
+        idempotency_key: expect.any(String),
       }),
     );
   });
@@ -316,6 +318,7 @@ describe("LarkInviteSendDialog people", () => {
         user_emails: ["ada@acme.dev"],
         role: "member",
         expires_in_hours: 168,
+        idempotency_key: expect.any(String),
       }),
     );
     expect(toast.success).toHaveBeenCalledWith("1 card sent");
@@ -433,6 +436,40 @@ describe("LarkInviteSendDialog results", () => {
     // 已发送的群从选择里去掉，重试只发失败的。
     expect(screen.getByRole("button", { name: "Send to 2 groups" })).toBeEnabled();
     expect(screen.getByRole("checkbox", { name: /^Group 1/ })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("sends one idempotency key for every submit from the same open and a new one after reopening", async () => {
+    const user = userEvent.setup();
+    mockApi.sendLarkInvites
+      .mockResolvedValueOnce([sent("oc_1", "Group 1"), failed("oc_2", "Group 2", "send_failed")])
+      .mockResolvedValueOnce([sent("oc_2", "Group 2")])
+      .mockResolvedValueOnce([sent("oc_1", "Group 1")]);
+    const first = mount();
+
+    await selectChats(user, "Group 1", "Group 2");
+    await user.click(screen.getByRole("button", { name: "Send to 2 groups" }));
+    // 重试只发失败的群，沿用这次打开弹窗时生成的键，服务端据此避免重复发卡片。
+    await user.click(await screen.findByRole("button", { name: "Send to 1 group" }));
+    await waitFor(() => expect(mockApi.sendLarkInvites).toHaveBeenCalledTimes(2));
+
+    const firstKey = mockApi.sendLarkInvites.mock.calls[0]![1].idempotency_key;
+    expect(typeof firstKey).toBe("string");
+    expect(firstKey.length).toBeGreaterThan(0);
+    expect(firstKey.length).toBeLessThanOrEqual(50);
+    expect(mockApi.sendLarkInvites.mock.calls[1]![1]).toEqual({
+      chat_ids: ["oc_2"],
+      role: "member",
+      expires_in_hours: 168,
+      idempotency_key: firstKey,
+    });
+
+    // 关闭后重新打开是一次新的发送，换一个键。
+    first.unmount();
+    mount();
+    await selectChats(user, "Group 1");
+    await user.click(screen.getByRole("button", { name: "Send to 1 group" }));
+    await waitFor(() => expect(mockApi.sendLarkInvites).toHaveBeenCalledTimes(3));
+    expect(mockApi.sendLarkInvites.mock.calls[2]![1].idempotency_key).not.toBe(firstKey);
   });
 
   it("reports nothing as sent when every receiver failed", async () => {

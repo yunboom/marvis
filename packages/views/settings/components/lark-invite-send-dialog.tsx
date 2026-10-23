@@ -35,6 +35,7 @@ import { cn } from "@marvis/ui/lib/utils";
 import { api, errorCode } from "@marvis/core/api";
 import { useAuthStore } from "@marvis/core/auth";
 import { useCurrentWorkspace } from "@marvis/core/paths";
+import { createSafeId } from "@marvis/core/utils";
 import { larkChatListOptions, workspaceKeys } from "@marvis/core/workspace/queries";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { useLocale, useT } from "../../i18n";
@@ -185,6 +186,9 @@ function SendForm({
   const [maxUsesInput, setMaxUsesInput] = useState("");
   const [note, setNote] = useState("");
   const [failures, setFailures] = useState<SendFailure[]>([]);
+  // 表单随弹窗打开挂载、关闭卸载，所以每次打开弹窗生成一个幂等键，这次打开里的每次提交都带上它：
+  // 请求超时后再点一次，已经发出的接收方不会收到第二张卡片。
+  const [idempotencyKey] = useState(createSafeId);
 
   const isChatTab = tab === TARGET_TAB.chat;
   const chatList = useMemo(() => chats.data ?? [], [chats.data]);
@@ -306,6 +310,7 @@ function SendForm({
       expires_in_hours: expiryHours,
       ...(isChatTab && maxUses.value !== null ? { max_uses: maxUses.value } : {}),
       ...(trimmedNote !== "" ? { note: trimmedNote } : {}),
+      idempotency_key: idempotencyKey,
     };
 
     try {

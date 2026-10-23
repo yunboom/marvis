@@ -1504,7 +1504,7 @@
       "empty": "No Feishu invites sent yet",
       "load_failed": "Could not load invites",
       "not_configured_title": "Feishu bot is not configured on this server",
-      "not_configured_body": "Once configured, invite cards can be sent to Feishu groups or people. A server admin needs to enable the bot capability in the Feishu login app.",
+      "not_configured_body": "Available once a server admin turns on Feishu invites.",
       "dialog_title": "Send Feishu invite",
       "tab_chat": "Groups",
       "tab_user": "People",

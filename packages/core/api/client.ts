@@ -3567,6 +3567,7 @@ export class ApiClient {
   }
 
   // 一次最多 50 个接收方，超出由服务端返回 invalid_request。
+  // idempotency_key 最多 50 个字符：同一个键在 1 小时内重试时，已发出的接收方不会再收到一张卡片。
   async sendLarkInvites(
     workspaceId: string,
     data: {
@@ -3576,6 +3577,7 @@ export class ApiClient {
       expires_in_hours: number;
       max_uses?: number;
       note?: string;
+      idempotency_key?: string;
     },
   ): Promise<LarkInviteSendResult[]> {
     const raw = await this.fetch<unknown>(`/api/workspaces/${workspaceId}/lark-invites`, {

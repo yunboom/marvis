@@ -291,7 +291,7 @@ describe("LarkInvitesView", () => {
     mount();
 
     expect(await screen.findByText("Feishu bot is not configured on this server")).toBeInTheDocument();
-    expect(screen.getByText(/A server admin needs to enable the bot capability/)).toBeInTheDocument();
+    expect(screen.getByText("Available once a server admin turns on Feishu invites.")).toBeInTheDocument();
     expect(mockApi.listLarkInvites).not.toHaveBeenCalled();
   });
 

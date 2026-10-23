@@ -1492,7 +1492,7 @@
       "empty": "还没有发出飞书邀请",
       "load_failed": "邀请列表加载失败",
       "not_configured_title": "服务器未配置飞书机器人",
-      "not_configured_body": "配置后可以把邀请卡片发到飞书群或个人。需要服务器管理员在飞书登录应用里开启机器人能力。",
+      "not_configured_body": "服务器管理员开启飞书邀请后可用。",
       "dialog_title": "发送飞书邀请",
       "tab_chat": "群聊",
       "tab_user": "个人",

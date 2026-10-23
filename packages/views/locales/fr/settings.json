@@ -1504,7 +1504,7 @@
       "empty": "Aucune invitation Feishu envoyée",
       "load_failed": "Impossible de charger les invitations",
       "not_configured_title": "Le bot Feishu n’est pas configuré sur ce serveur",
-      "not_configured_body": "Une fois configuré, les cartes d’invitation peuvent être envoyées à des groupes ou à des personnes sur Feishu. Un administrateur du serveur doit activer la fonction bot dans l’application de connexion Feishu.",
+      "not_configured_body": "Disponible une fois que l’administrateur du serveur a activé les invitations Feishu.",
       "dialog_title": "Envoyer une invitation Feishu",
       "tab_chat": "Groupes",
       "tab_user": "Personnes",
