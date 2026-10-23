@@ -85,6 +85,7 @@ import type {
   SearchProjectsResponse,
   ShareLink,
   ShareLinkInfo,
+  LarkInvite,
   Skill,
   SkillImportResult,
   SkillSummary,
@@ -3685,6 +3686,114 @@ export const EMPTY_SHARE_LINK_INFO: ShareLinkInfo = {
   workspace_slug: "",
   role: "member",
 };
+
+// 飞书邀请。字段与服务端 lark_invite.go 的 JSON 一致，缺字段用默认值，
+// 未知的状态和目标类型回落到最保守的取值，不让一条畸形数据拖垮列表。
+export const LarkInviteStatusSchema = z.enum(["active", "completed", "expired", "revoked"]).catch("expired");
+
+export const LarkInviteTargetSchema = z.object({
+  type: z.enum(["chat", "user"]).catch("chat"),
+  id: z.string().default(""),
+  id_type: z.string().default(""),
+  name: z.string().default(""),
+  avatar_url: z.string().nullable().optional().default(null),
+}).loose();
+
+export const LarkInviteActorSchema = z.object({
+  id: z.string().default(""),
+  name: z.string().default(""),
+  avatar_url: z.string().nullable().optional().default(null),
+}).loose();
+
+export const LarkInviteJoinedUserSchema = z.object({
+  user_id: z.string().default(""),
+  name: z.string().default(""),
+  email: z.string().default(""),
+  avatar_url: z.string().nullable().optional().default(null),
+  joined_at: z.string().default(""),
+}).loose();
+
+export const LarkInviteSchema = z.object({
+  id: z.string(),
+  target: LarkInviteTargetSchema.prefault({ type: "chat" }),
+  role: z.string().default("member"),
+  status: LarkInviteStatusSchema,
+  use_count: z.number().default(0),
+  max_uses: z.number().nullable().optional().default(null),
+  expires_at: z.string().default(""),
+  revoked_at: z.string().nullable().optional().default(null),
+  note: z.string().default(""),
+  sent_by: LarkInviteActorSchema.prefault({}),
+  sent_by_agent: LarkInviteActorSchema.nullable().optional().default(null),
+  created_at: z.string().default(""),
+  joined: z.array(LarkInviteJoinedUserSchema).default([]),
+}).loose();
+
+export const EMPTY_LARK_INVITE: LarkInvite = {
+  id: "",
+  target: { type: "chat", id: "", id_type: "", name: "", avatar_url: null },
+  role: "member",
+  status: "expired",
+  use_count: 0,
+  max_uses: null,
+  expires_at: "",
+  revoked_at: null,
+  note: "",
+  sent_by: { id: "", name: "", avatar_url: null },
+  sent_by_agent: null,
+  created_at: "",
+  joined: [],
+};
+
+export const LarkInviteListSchema = z.array(LarkInviteSchema).default([]);
+
+export const LarkInviteSendResultSchema = z.object({
+  id: z.string().nullable().optional().default(null),
+  target: LarkInviteTargetSchema.prefault({ type: "chat" }),
+  role: z.string().default("member"),
+  expires_at: z.string().nullable().optional().default(null),
+  max_uses: z.number().nullable().optional().default(null),
+  // 服务端只有 sent 和 failed 两种；看不懂的取值按失败处理，不让用户误以为已发出。
+  status: z.enum(["sent", "failed"]).catch("failed"),
+  error: z.object({
+    code: z.string().default(""),
+    message: z.string().default(""),
+  }).loose().nullable().optional().default(null),
+}).loose();
+
+// 发送接口返回 {"results": [...]}，解析后直接是结果数组。
+export const LarkInviteSendResultListSchema = z.object({
+  results: z.array(LarkInviteSendResultSchema).default([]),
+}).loose().transform((body) => body.results);
+
+export const LarkChatSchema = z.object({
+  chat_id: z.string(),
+  name: z.string().default(""),
+  avatar_url: z.string().nullable().optional().default(null),
+  member_count: z.number().default(0),
+}).loose();
+
+export const LarkChatListSchema = z.array(LarkChatSchema).default([]);
+
+// open_id 为空的响应不算查到了人，所以这里要求非空，畸形时由调用方当作失败处理。
+export const LarkUserLookupSchema = z.object({
+  open_id: z.string().min(1),
+  name: z.string().default(""),
+  avatar_url: z.string().nullable().optional().default(null),
+  email: z.string().default(""),
+}).loose();
+
+export const LarkInviteStatusResponseSchema = z.object({
+  enabled: z.boolean().default(false),
+}).loose();
+
+export const EMPTY_LARK_INVITE_STATUS_RESPONSE: { enabled: boolean } = { enabled: false };
+
+export const LarkInviteWelcomeSchema = z.object({
+  invite_id: z.string(),
+  inviter_name: z.string().default(""),
+  role: z.string().default("member"),
+}).loose();
 
 export const MemberWithUserSchema = z.object({
   id: z.string(),

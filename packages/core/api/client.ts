@@ -150,6 +150,13 @@ import type {
   Invitation,
   ShareLink,
   ShareLinkInfo,
+  LarkInvite,
+  LarkInviteStatus,
+  LarkInviteSendResult,
+  LarkInviteWelcome,
+  LarkChat,
+  LarkUserLookup,
+  MemberRole,
   Autopilot,
   AutopilotTrigger,
   AutopilotRun,
@@ -489,6 +496,15 @@ import {
   EMPTY_SHARE_LINK,
   EMPTY_SHARE_LINK_INFO,
   EMPTY_JOIN_SHARE_LINK_RESPONSE,
+  LarkInviteSchema,
+  LarkInviteListSchema,
+  LarkInviteSendResultListSchema,
+  LarkChatListSchema,
+  LarkUserLookupSchema,
+  LarkInviteStatusResponseSchema,
+  LarkInviteWelcomeSchema,
+  EMPTY_LARK_INVITE,
+  EMPTY_LARK_INVITE_STATUS_RESPONSE,
   type IssueView,
   type IssueViewPreference,
   type CreateIssueViewRequest,
@@ -3529,6 +3545,89 @@ export class ApiClient {
     const raw = await this.fetch<unknown>(`/api/share-links/${encodeURIComponent(code)}`);
     return parseWithFallback(raw, ShareLinkInfoSchema, EMPTY_SHARE_LINK_INFO, {
       endpoint: "GET /api/share-links/{code}",
+    });
+  }
+
+  // 飞书邀请。账号级的开关 /api/lark/status 不属于任何工作区，其余接口都挂在工作区下。
+
+  async getLarkInviteStatus(): Promise<{ enabled: boolean }> {
+    const raw = await this.fetch<unknown>("/api/lark/status");
+    return parseWithFallback(raw, LarkInviteStatusResponseSchema, EMPTY_LARK_INVITE_STATUS_RESPONSE, {
+      endpoint: "GET /api/lark/status",
+    });
+  }
+
+  // 不传 status 时不带查询参数，由服务端按默认值（active）筛选。
+  async listLarkInvites(workspaceId: string, status?: LarkInviteStatus | "all"): Promise<LarkInvite[]> {
+    const search = status ? `?${new URLSearchParams({ status }).toString()}` : "";
+    const raw = await this.fetch<unknown>(`/api/workspaces/${workspaceId}/lark-invites${search}`);
+    return parseWithFallback(raw, LarkInviteListSchema, [], {
+      endpoint: "GET /api/workspaces/{id}/lark-invites",
+    });
+  }
+
+  // 一次最多 50 个接收方，超出由服务端返回 invalid_request。
+  async sendLarkInvites(
+    workspaceId: string,
+    data: {
+      chat_ids?: string[];
+      user_emails?: string[];
+      role: MemberRole;
+      expires_in_hours: number;
+      max_uses?: number;
+      note?: string;
+    },
+  ): Promise<LarkInviteSendResult[]> {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${workspaceId}/lark-invites`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, LarkInviteSendResultListSchema, [], {
+      endpoint: "POST /api/workspaces/{id}/lark-invites",
+    });
+  }
+
+  async revokeLarkInvite(workspaceId: string, inviteId: string): Promise<LarkInvite> {
+    const raw = await this.fetch<unknown>(
+      `/api/workspaces/${workspaceId}/lark-invites/${encodeURIComponent(inviteId)}`,
+      { method: "DELETE" },
+    );
+    return parseWithFallback(raw, LarkInviteSchema, EMPTY_LARK_INVITE, {
+      endpoint: "DELETE /api/workspaces/{id}/lark-invites/{inviteId}",
+    });
+  }
+
+  async listLarkChats(workspaceId: string): Promise<LarkChat[]> {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${workspaceId}/lark/chats`);
+    return parseWithFallback(raw, LarkChatListSchema, [], {
+      endpoint: "GET /api/workspaces/{id}/lark/chats",
+    });
+  }
+
+  // 邮箱在飞书里不存在时服务端返回 404，code 为 user_not_found，用 errorCode 取。
+  // 响应畸形时抛错而不是返回空用户，避免界面把它当成查到了人。
+  async lookupLarkUser(workspaceId: string, email: string): Promise<LarkUserLookup> {
+    const endpoint = "GET /api/workspaces/{id}/lark/users/lookup";
+    const raw = await this.fetch<unknown>(
+      `/api/workspaces/${workspaceId}/lark/users/lookup?${new URLSearchParams({ email }).toString()}`,
+    );
+    const user = parseWithFallback<LarkUserLookup | null>(raw, LarkUserLookupSchema, null, { endpoint });
+    if (user === null) throw new Error(`Malformed response from ${endpoint}`);
+    return user;
+  }
+
+  // 没有待提示的记录时服务端返回 204，这里返回 null。
+  async getLarkInviteWelcome(workspaceId: string): Promise<LarkInviteWelcome | null> {
+    const raw = await this.fetch<unknown>(`/api/workspaces/${workspaceId}/lark-invites/welcome`);
+    if (raw === undefined) return null;
+    return parseWithFallback<LarkInviteWelcome | null>(raw, LarkInviteWelcomeSchema, null, {
+      endpoint: "GET /api/workspaces/{id}/lark-invites/welcome",
+    });
+  }
+
+  async ackLarkInviteWelcome(workspaceId: string): Promise<void> {
+    await this.fetch(`/api/workspaces/${workspaceId}/lark-invites/welcome/ack`, {
+      method: "POST",
     });
   }
 

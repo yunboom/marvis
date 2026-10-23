@@ -111,6 +111,19 @@ export type {
 export { RUNTIME_PROFILE_PROTOCOL_FAMILIES, RUNTIME_PROFILE_RUNTIME_TYPES } from "./agent";
 export type { Workspace, WorkspaceRepo, WorkspaceMcpServer, Member, MemberRole, User, MemberWithUser, Invitation, ShareLink, ShareLinkInfo } from "./workspace";
 export type {
+  LarkInviteStatus,
+  LarkInviteTarget,
+  LarkInviteActor,
+  LarkInviteJoinedUser,
+  LarkInvite,
+  LarkInviteSendResult,
+  LarkChat,
+  LarkUserLookup,
+  LarkInviteWelcome,
+  LarkInviteErrorCode,
+} from "./workspace";
+export { LARK_INVITE_ERROR_CODES } from "./workspace";
+export type {
   PluginInstallation,
   PluginConfigField,
   PluginConfigFieldType,

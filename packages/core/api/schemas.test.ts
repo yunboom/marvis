@@ -74,6 +74,18 @@ import {
   EMPTY_LIST_ISSUE_STATUSES_RESPONSE,
   EMPTY_ISSUE_STATUS_ENTRY,
 } from "./schemas";
+import {
+  LarkInviteSchema,
+  LarkInviteListSchema,
+  LarkInviteSendResultSchema,
+  LarkInviteSendResultListSchema,
+  LarkChatListSchema,
+  LarkUserLookupSchema,
+  LarkInviteWelcomeSchema,
+  LarkInviteStatusSchema,
+  LarkInviteStatusResponseSchema,
+  EMPTY_LARK_INVITE_STATUS_RESPONSE,
+} from "./schemas";
 import { parseWithFallback } from "./schema";
 
 const baseIssue = {
@@ -2375,5 +2387,220 @@ describe("AppConfigSchema lark_desktop_login", () => {
     [true, true],
   ])("%j parses as %j", (value, expected) => {
     expect(AppConfigSchema.parse({ lark_desktop_login: value }).lark_desktop_login).toBe(expected);
+  });
+});
+
+describe("Feishu invite schemas", () => {
+  const fullInvite = {
+    id: "invite-1",
+    target: { type: "user", id: "ou_1", id_type: "open_id", name: "Alice", avatar_url: "https://example.test/a.png" },
+    role: "admin",
+    status: "completed",
+    use_count: 1,
+    max_uses: 1,
+    expires_at: "2026-10-30T00:00:00Z",
+    revoked_at: null,
+    note: "welcome",
+    sent_by: { id: "user-1", name: "Bob", avatar_url: null },
+    sent_by_agent: { id: "agent-1", name: "Helper", avatar_url: null },
+    created_at: "2026-10-23T00:00:00Z",
+    joined: [
+      { user_id: "user-2", name: "Alice", email: "alice@example.test", avatar_url: null, joined_at: "2026-10-24T00:00:00Z" },
+    ],
+  };
+
+  describe("LarkInviteSchema", () => {
+    it("keeps every field of a full invite", () => {
+      expect(LarkInviteSchema.parse(fullInvite)).toEqual(fullInvite);
+    });
+
+    it("fills defaults when optional fields are missing", () => {
+      const parsed = LarkInviteSchema.parse({ id: "invite-1" });
+      expect(parsed).toEqual({
+        id: "invite-1",
+        target: { type: "chat", id: "", id_type: "", name: "", avatar_url: null },
+        role: "member",
+        status: "expired",
+        use_count: 0,
+        max_uses: null,
+        expires_at: "",
+        revoked_at: null,
+        note: "",
+        sent_by: { id: "", name: "", avatar_url: null },
+        sent_by_agent: null,
+        created_at: "",
+        joined: [],
+      });
+    });
+
+    it("falls back to expired for an unknown status", () => {
+      expect(LarkInviteSchema.parse({ ...fullInvite, status: "paused" }).status).toBe("expired");
+      expect(LarkInviteSchema.parse({ ...fullInvite, status: 7 }).status).toBe("expired");
+    });
+
+    it("falls back to chat for an unknown target type", () => {
+      const parsed = LarkInviteSchema.parse({ ...fullInvite, target: { ...fullInvite.target, type: "department" } });
+      expect(parsed.target.type).toBe("chat");
+      expect(parsed.target.id).toBe("ou_1");
+    });
+
+    it("passes through unknown server fields", () => {
+      const parsed = LarkInviteSchema.parse({ ...fullInvite, future_field: 1 }) as Record<string, unknown>;
+      expect(parsed.future_field).toBe(1);
+    });
+
+    it("rejects an invite without an id", () => {
+      expect(LarkInviteSchema.safeParse({ status: "active" }).success).toBe(false);
+    });
+  });
+
+  describe("LarkInviteStatusSchema", () => {
+    it.each(["active", "completed", "expired", "revoked"])("keeps %s", (status) => {
+      expect(LarkInviteStatusSchema.parse(status)).toBe(status);
+    });
+
+    it.each([undefined, null, "unknown", 1])("falls back to expired for %j", (status) => {
+      expect(LarkInviteStatusSchema.parse(status)).toBe("expired");
+    });
+  });
+
+  describe("LarkInviteListSchema", () => {
+    it("parses an invite array", () => {
+      expect(LarkInviteListSchema.parse([fullInvite])).toEqual([fullInvite]);
+    });
+
+    it.each([null, {}, "oops", 3])("falls back to an empty array for malformed response %j", (raw) => {
+      expect(parseWithFallback(raw, LarkInviteListSchema, [], { endpoint: "test" })).toEqual([]);
+    });
+  });
+
+  describe("LarkInviteSendResultSchema", () => {
+    it("parses a sent result", () => {
+      const sent = {
+        id: "invite-1",
+        target: { type: "chat", id: "oc_1", id_type: "chat_id", name: "Team", avatar_url: null },
+        role: "member",
+        expires_at: "2026-10-30T00:00:00Z",
+        max_uses: null,
+        status: "sent",
+        error: null,
+      };
+      expect(LarkInviteSendResultSchema.parse(sent)).toEqual(sent);
+    });
+
+    it("parses a failed result with an error", () => {
+      const parsed = LarkInviteSendResultSchema.parse({
+        id: null,
+        target: { type: "chat", id: "oc_1", id_type: "chat_id", name: "", avatar_url: null },
+        role: "member",
+        expires_at: null,
+        max_uses: null,
+        status: "failed",
+        error: { code: "bot_not_in_chat", message: "the Marvis bot is not in this chat" },
+      });
+      expect(parsed.status).toBe("failed");
+      expect(parsed.id).toBeNull();
+      expect(parsed.error).toEqual({ code: "bot_not_in_chat", message: "the Marvis bot is not in this chat" });
+    });
+
+    it("fills defaults and treats an unknown status as failed", () => {
+      const parsed = LarkInviteSendResultSchema.parse({ status: "queued" });
+      expect(parsed).toEqual({
+        id: null,
+        target: { type: "chat", id: "", id_type: "", name: "", avatar_url: null },
+        role: "member",
+        expires_at: null,
+        max_uses: null,
+        status: "failed",
+        error: null,
+      });
+    });
+  });
+
+  describe("LarkInviteSendResultListSchema", () => {
+    it("unwraps {results: [...]} into the array", () => {
+      const parsed = LarkInviteSendResultListSchema.parse({
+        results: [{ id: "invite-1", status: "sent" }, { id: null, status: "failed" }],
+      });
+      expect(parsed).toHaveLength(2);
+      expect(parsed[0]?.status).toBe("sent");
+      expect(parsed[1]?.status).toBe("failed");
+    });
+
+    it("defaults a missing results field to an empty array", () => {
+      expect(LarkInviteSendResultListSchema.parse({})).toEqual([]);
+    });
+
+    it.each([null, [], "oops", 3, { results: null }, { results: "oops" }])(
+      "falls back to an empty array for malformed response %j",
+      (raw) => {
+        expect(parseWithFallback(raw, LarkInviteSendResultListSchema, [], { endpoint: "test" })).toEqual([]);
+      },
+    );
+  });
+
+  describe("LarkChatListSchema", () => {
+    it("parses chats and fills defaults", () => {
+      const parsed = LarkChatListSchema.parse([
+        { chat_id: "oc_1", name: "Team", avatar_url: "https://example.test/t.png", member_count: 8 },
+        { chat_id: "oc_2" },
+      ]);
+      expect(parsed).toEqual([
+        { chat_id: "oc_1", name: "Team", avatar_url: "https://example.test/t.png", member_count: 8 },
+        { chat_id: "oc_2", name: "", avatar_url: null, member_count: 0 },
+      ]);
+    });
+
+    it.each([null, {}, "oops"])("falls back to an empty array for malformed response %j", (raw) => {
+      expect(parseWithFallback(raw, LarkChatListSchema, [], { endpoint: "test" })).toEqual([]);
+    });
+  });
+
+  describe("LarkUserLookupSchema", () => {
+    it("parses a user and fills defaults", () => {
+      expect(LarkUserLookupSchema.parse({ open_id: "ou_1", name: "Alice", avatar_url: null, email: "alice@example.test" })).toEqual({
+        open_id: "ou_1",
+        name: "Alice",
+        avatar_url: null,
+        email: "alice@example.test",
+      });
+      expect(LarkUserLookupSchema.parse({ open_id: "ou_1" })).toEqual({ open_id: "ou_1", name: "", avatar_url: null, email: "" });
+    });
+
+    it.each([null, {}, { open_id: "" }, { open_id: 1 }, "oops"])("rejects malformed response %j", (raw) => {
+      expect(LarkUserLookupSchema.safeParse(raw).success).toBe(false);
+    });
+  });
+
+  describe("LarkInviteStatusResponseSchema", () => {
+    it("parses the enabled flag and defaults a missing one to disabled", () => {
+      expect(LarkInviteStatusResponseSchema.parse({ enabled: true })).toEqual({ enabled: true });
+      expect(LarkInviteStatusResponseSchema.parse({})).toEqual({ enabled: false });
+    });
+
+    it.each([null, [], "oops", { enabled: "yes" }])("falls back to disabled for malformed response %j", (raw) => {
+      expect(
+        parseWithFallback(raw, LarkInviteStatusResponseSchema, EMPTY_LARK_INVITE_STATUS_RESPONSE, { endpoint: "test" }),
+      ).toEqual({ enabled: false });
+    });
+  });
+
+  describe("LarkInviteWelcomeSchema", () => {
+    it("parses a welcome and fills defaults", () => {
+      expect(LarkInviteWelcomeSchema.parse({ invite_id: "invite-1", inviter_name: "Bob", role: "admin" })).toEqual({
+        invite_id: "invite-1",
+        inviter_name: "Bob",
+        role: "admin",
+      });
+      expect(LarkInviteWelcomeSchema.parse({ invite_id: "invite-1" })).toEqual({
+        invite_id: "invite-1",
+        inviter_name: "",
+        role: "member",
+      });
+    });
+
+    it.each([null, {}, [], "oops", { invite_id: 1 }])("falls back to null for malformed response %j", (raw) => {
+      expect(parseWithFallback(raw, LarkInviteWelcomeSchema, null, { endpoint: "test" })).toBeNull();
+    });
   });
 });

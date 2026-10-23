@@ -8,6 +8,8 @@ export const workspaceKeys = {
   members: (wsId: string) => ["workspaces", wsId, "members"] as const,
   invitations: (wsId: string) => ["workspaces", wsId, "invitations"] as const,
   shareLinks: (wsId: string) => ["workspaces", wsId, "share-links"] as const,
+  larkInvites: (wsId: string) => ["workspaces", wsId, "lark-invites"] as const,
+  larkChats: (wsId: string) => ["workspaces", wsId, "lark-chats"] as const,
   myInvitations: () => ["invitations", "mine"] as const,
   agents: (wsId: string) => ["workspaces", wsId, "agents"] as const,
   agent: (wsId: string, agentId: string) =>
@@ -173,6 +175,33 @@ export function shareLinkListOptions(wsId: string, enabled = true) {
   return queryOptions({
     queryKey: workspaceKeys.shareLinks(wsId),
     queryFn: () => api.listShareLinks(wsId),
+    enabled: enabled && !!wsId,
+  });
+}
+
+// 飞书邀请是否可用取决于服务器配置，不属于任何工作区，key 与工作区无关。
+export const larkStatusKey = ["lark", "invite-status"] as const;
+
+export function larkInviteStatusOptions() {
+  return queryOptions({
+    queryKey: larkStatusKey,
+    queryFn: () => api.getLarkInviteStatus(),
+  });
+}
+
+// 拉全部状态：界面在客户端按状态展示和分组，不为每个状态各发一次请求。
+export function larkInviteListOptions(wsId: string, enabled = true) {
+  return queryOptions({
+    queryKey: workspaceKeys.larkInvites(wsId),
+    queryFn: () => api.listLarkInvites(wsId, "all"),
+    enabled: enabled && !!wsId,
+  });
+}
+
+export function larkChatListOptions(wsId: string, enabled = true) {
+  return queryOptions({
+    queryKey: workspaceKeys.larkChats(wsId),
+    queryFn: () => api.listLarkChats(wsId),
     enabled: enabled && !!wsId,
   });
 }
