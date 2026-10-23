@@ -55,6 +55,10 @@
     "skip": "暂时跳过",
     "refresh": "刷新",
     "refreshing": "正在刷新...",
-    "mika_name": "Marvis"
+    "mika_name": "Marvis",
+    "subtitle": "选一个电脑上的 AI 编程工具。Marvis 会用它接收需求、拆成任务、分派给智能体。",
+    "summary_running_on": "将运行在 {{runtime}} · {{host}}",
+    "summary_pick": "选好运行时后开始",
+    "more_runtimes_other": "还有 {{count}} 个"
   }
 }

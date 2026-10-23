@@ -55,6 +55,7 @@ function makeRuntime(overrides: Partial<AgentRuntime> = {}): AgentRuntime {
     name: "Claude (dev-box)",
     provider: "claude",
     status: "online",
+    device_info: "dev-box · 2.1.309",
     ...overrides,
   } as AgentRuntime;
 }
@@ -144,6 +145,8 @@ describe("StepConnectRuntime", () => {
     const { onNext } = renderStep();
 
     expect(screen.getByText("Claude (dev-box)")).toBeInTheDocument();
+    // The summary names the runtime without repeating its host.
+    expect(screen.getByText("Runs on Claude · dev-box")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "pick opus" }));
     fireEvent.click(screen.getByRole("button", { name: "Start with Marvis" }));
 

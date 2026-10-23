@@ -1,11 +1,12 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, RefreshCw } from "lucide-react";
+import { ArrowDown, Check, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Card } from "@marvis/ui/components/ui/card";
 import { cn } from "@marvis/ui/lib/utils";
+import { groupRuntimesByMachine, splitRuntimeDeviceInfo } from "@marvis/core/runtimes";
 import { runtimeKeys } from "@marvis/core/runtimes/queries";
 import type { AgentRuntime } from "@marvis/core/types";
 import { DragStrip } from "../../platform";
@@ -149,116 +150,215 @@ export function StepConnectRuntime({
     <RefreshButton onClick={handleRefresh} refreshing={refreshing} />
   );
 
+  // The same host-free label the grouped list shows, so the summary does not
+  // repeat the machine ("Claude (dev-box) · dev-box").
+  const selectedEntry = selected
+    ? groupRuntimesByMachine([selected])[0]?.runtimes[0]
+    : undefined;
+  const selectedHost = selected
+    ? splitRuntimeDeviceInfo(selected.device_info).host
+    : "";
+  const summary =
+    canStart && selectedEntry
+      ? selectedHost
+        ? t(($) => $.step_connect.summary_running_on, {
+            runtime: selectedEntry.label,
+            host: selectedHost,
+          })
+        : selectedEntry.label
+      : t(($) => $.step_connect.summary_pick);
+
+  // Two panes so the whole step fits one screen: context and actions on the
+  // left (the buttons never scroll away), the choice on the right, which
+  // scrolls on its own when a member has many runtimes.
   return (
     <div className="flex min-h-svh flex-col bg-app-shell">
       <DragStrip />
       <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-[560px] gap-0 rounded-2xl border-0 p-10 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border dark:shadow-none">
-          <Progress />
+        <Card className="w-full max-w-[960px] gap-0 overflow-hidden rounded-[28px] border-0 p-0 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border md:grid md:h-[600px] md:grid-cols-[380px_minmax(0,1fr)] dark:shadow-none">
+          <div className="flex flex-col p-10">
+            <Progress />
 
-          <h1 className="mt-6 text-display-sm font-bold">
-            {t(($) => $.step_connect.title)}
-          </h1>
-
-          <div className="mt-4 flex items-center gap-3 rounded-xl bg-surface-sunken px-4 py-3.5">
-            <img
-              src={MIKA_AVATAR_SRC}
-              alt={t(($) => $.step_connect.mika_name)}
-              className="size-9 shrink-0 select-none rounded-full object-cover"
-            />
-            <p className="text-body leading-relaxed">
-              <span className="font-semibold">{t(($) => $.step_connect.mika_name)}</span>
-              <span className="text-muted-foreground">
-                {t(($) => $.step_connect.mika_blurb)}
-              </span>
+            <h1 className="mt-10 text-display-sm font-bold">
+              {t(($) => $.step_connect.title)}
+            </h1>
+            <p className="mt-3 text-body leading-relaxed text-muted-foreground">
+              {t(($) => $.step_connect.subtitle)}
             </p>
-          </div>
 
-          <div key={phase} className="mt-7 animate-onboarding-enter">
-            {phase === "found" && (
-              <>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-body font-medium">
-                    {t(($) => $.step_connect.runtime_label)}
-                  </span>
-                  {refreshButton}
-                </div>
-                <MikaRuntimeChoice
-                  layout="list"
-                  runtimes={runtimes}
-                  value={{ runtimeId: selectedId ?? "", model }}
-                  onChange={(next) => {
-                    if (next.runtimeId !== selectedId) setSelectedId(next.runtimeId);
-                    setModel(next.model);
-                  }}
-                  disabled={busy}
-                  modelLabel={t(($) => $.step_connect.model_label)}
-                />
-              </>
-            )}
-
-            {phase === "scanning" && <ScanningView />}
-
-            {phase === "empty" && (
-              <div className="rounded-xl border border-surface-border p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-body-lg font-medium">
-                    {t(($) => $.step_connect.empty_title)}
-                  </p>
-                  {refreshButton}
-                </div>
-                <p className="mt-2 text-body leading-relaxed text-muted-foreground">
-                  {t(($) => $.step_connect.empty_hint)}
+            <div className="mt-7 flex items-center gap-3 rounded-2xl bg-surface-sunken px-3.5 py-3">
+              <img
+                src={MIKA_AVATAR_SRC}
+                alt=""
+                className="size-9 shrink-0 select-none rounded-full object-cover"
+              />
+              <div className="min-w-0">
+                <p className="text-body font-semibold">
+                  {t(($) => $.step_connect.mika_name)}
+                </p>
+                <p aria-live="polite" className="truncate text-caption text-muted-foreground">
+                  {summary}
                 </p>
               </div>
-            )}
+            </div>
 
-            {phase === "waiting" && (
-              <div className="flex flex-col gap-4">
-                <span className="text-body font-medium">
-                  {t(($) => $.step_connect.web_title)}
-                </span>
-                {cliInstructions}
-                <WaitingStatus />
-                <p className="text-label text-muted-foreground">
-                  {t(($) => $.step_connect.download_prompt)}{" "}
-                  <a
-                    href={DOWNLOAD_PAGE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-foreground underline underline-offset-[3px]"
-                  >
-                    {t(($) => $.step_connect.download_link)}
-                  </a>
-                </p>
-              </div>
-            )}
+            <div className="mt-auto flex flex-col pt-8">
+              <Button
+                className="h-12 w-full text-body-lg"
+                disabled={!canStart || busy}
+                onClick={handleStart}
+              >
+                {starting && <Loader2 className="size-4 animate-spin" />}
+                {starting
+                  ? t(($) => $.step_connect.starting)
+                  : t(($) => $.step_connect.start)}
+              </Button>
+              <Button
+                variant="ghost"
+                className="mt-2 h-11 w-full text-body-lg font-normal"
+                disabled={busy}
+                onClick={handleSkip}
+              >
+                {skipping && <Loader2 className="size-4 animate-spin" />}
+                {t(($) => $.step_connect.skip)}
+              </Button>
+              <p className="mt-1 text-center text-label text-muted-foreground">
+                {t(($) => $.step_connect.skip_note)}
+              </p>
+            </div>
           </div>
 
-          <Button
-            className="mt-8 h-12 w-full text-body-lg"
-            disabled={!canStart || busy}
-            onClick={handleStart}
-          >
-            {starting && <Loader2 className="size-4 animate-spin" />}
-            {starting
-              ? t(($) => $.step_connect.starting)
-              : t(($) => $.step_connect.start)}
-          </Button>
-          <Button
-            variant="ghost"
-            className="mt-2 h-11 w-full text-body-lg font-normal"
-            disabled={busy}
-            onClick={handleSkip}
-          >
-            {skipping && <Loader2 className="size-4 animate-spin" />}
-            {t(($) => $.step_connect.skip)}
-          </Button>
-          <p className="mt-1 text-center text-label text-muted-foreground">
-            {t(($) => $.step_connect.skip_note)}
-          </p>
+          <div className="flex min-h-0 flex-col px-6 pb-6 md:py-8 md:pr-8 md:pl-2">
+            <ChoicePanel scrollKey={`${phase}:${runtimes.length}`}>
+              <div key={phase} className="animate-onboarding-enter">
+                {phase === "found" && (
+                  <MikaRuntimeChoice
+                    layout="grouped"
+                    runtimes={runtimes}
+                    value={{ runtimeId: selectedId ?? "", model }}
+                    onChange={(next) => {
+                      if (next.runtimeId !== selectedId) setSelectedId(next.runtimeId);
+                      setModel(next.model);
+                    }}
+                    disabled={busy}
+                    modelLabel={t(($) => $.step_connect.model_label)}
+                    headerAction={refreshButton}
+                  />
+                )}
+
+                {phase === "scanning" && <ScanningView />}
+
+                {phase === "empty" && (
+                  <div className="flex min-h-[320px] flex-col items-center justify-center gap-2 px-8 text-center">
+                    <p className="text-body-lg font-medium">
+                      {t(($) => $.step_connect.empty_title)}
+                    </p>
+                    <p className="max-w-[340px] text-body leading-relaxed text-muted-foreground">
+                      {t(($) => $.step_connect.empty_hint)}
+                    </p>
+                    <div className="mt-2">{refreshButton}</div>
+                  </div>
+                )}
+
+                {phase === "waiting" && (
+                  <div className="flex flex-col gap-4 p-3">
+                    <span className="text-body font-medium">
+                      {t(($) => $.step_connect.web_title)}
+                    </span>
+                    {cliInstructions}
+                    <WaitingStatus />
+                    <p className="text-label text-muted-foreground">
+                      {t(($) => $.step_connect.download_prompt)}{" "}
+                      <a
+                        href={DOWNLOAD_PAGE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-foreground underline underline-offset-[3px]"
+                      >
+                        {t(($) => $.step_connect.download_link)}
+                      </a>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </ChoicePanel>
+          </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The right-hand pane: a sunken panel that scrolls on its own. When runtime
+ * rows sit below the fold it fades the bottom edge and offers a "N more"
+ * jump, so a long list never hides that there is more to pick from.
+ */
+function ChoicePanel({
+  scrollKey,
+  children,
+}: {
+  /** Changes when the content changes, to recount what is below the fold. */
+  scrollKey: string;
+  children: ReactNode;
+}) {
+  const { t } = useT("onboarding");
+  const ref = useRef<HTMLDivElement>(null);
+  const [below, setBelow] = useState(0);
+
+  const recount = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const fold = el.scrollTop + el.clientHeight;
+    const rows = el.querySelectorAll<HTMLElement>('[role="radio"]');
+    let count = 0;
+    rows.forEach((row) => {
+      if (row.offsetTop + row.offsetHeight / 2 > fold) count += 1;
+    });
+    setBelow(count);
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    recount();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(recount);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [recount, scrollKey]);
+
+  const scrollDown = () => {
+    const el = ref.current;
+    if (!el) return;
+
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollBy({ top: el.clientHeight * 0.8, behavior: reduce ? "auto" : "smooth" });
+  };
+
+  return (
+    <div className="relative flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[20px] bg-surface-sunken">
+      <div ref={ref} onScroll={recount} className="relative min-h-0 flex-1 overflow-y-auto p-2">
+        {children}
+      </div>
+      {below > 0 ? (
+        <>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-18 bg-linear-to-b from-transparent to-surface-sunken"
+          />
+          <button
+            type="button"
+            onClick={scrollDown}
+            className="absolute bottom-3.5 left-1/2 flex h-7 -translate-x-1/2 items-center gap-1.5 rounded-full bg-foreground pr-3 pl-2.5 text-caption text-background shadow-[0_4px_12px_rgba(0,0,0,0.16)]"
+          >
+            <ArrowDown className="size-3" aria-hidden />
+            {t(($) => $.step_connect.more_runtimes, { count: below })}
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }

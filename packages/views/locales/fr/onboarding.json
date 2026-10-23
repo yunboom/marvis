@@ -55,6 +55,11 @@
     "skip": "Passer pour l'instant",
     "refresh": "Actualiser",
     "refreshing": "Actualisation…",
-    "mika_name": "Marvis"
+    "mika_name": "Marvis",
+    "subtitle": "Choisissez un outil de code IA sur votre ordinateur. Marvis s'en sert pour recevoir les demandes, les découper en tâches et les confier aux agents.",
+    "summary_running_on": "Sur {{runtime}} · {{host}}",
+    "summary_pick": "Choisissez un runtime pour commencer",
+    "more_runtimes_one": "{{count}} de plus",
+    "more_runtimes_other": "{{count}} de plus"
   }
 }

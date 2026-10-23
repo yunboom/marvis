@@ -55,6 +55,11 @@
     "skip": "Skip for now",
     "refresh": "Refresh",
     "refreshing": "Refreshing…",
-    "mika_name": "Marvis"
+    "mika_name": "Marvis",
+    "subtitle": "Pick an AI coding tool on your computer. Marvis uses it to take requests, break them into issues, and hand them to agents.",
+    "summary_running_on": "Runs on {{runtime}} · {{host}}",
+    "summary_pick": "Pick a runtime to start",
+    "more_runtimes_one": "{{count}} more",
+    "more_runtimes_other": "{{count}} more"
   }
 }

@@ -55,6 +55,10 @@
     "skip": "今はスキップ",
     "refresh": "更新",
     "refreshing": "更新中…",
-    "mika_name": "Marvis"
+    "mika_name": "Marvis",
+    "subtitle": "コンピューター上の AI コーディングツールを選んでください。Marvis はそれを使って依頼を受け、タスクに分解し、エージェントに割り当てます。",
+    "summary_running_on": "{{runtime}} · {{host}} で実行",
+    "summary_pick": "ランタイムを選ぶと開始できます",
+    "more_runtimes_other": "あと {{count}} 件"
   }
 }

@@ -62,3 +62,49 @@ describe("MikaRuntimeChoice list layout", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+describe("MikaRuntimeChoice grouped layout", () => {
+  const grouped = [
+    { id: "rt-1", name: "Claude (dev-box)", provider: "claude", status: "online", device_info: "dev-box · 2.1.309", daemon_id: "d1" },
+    { id: "rt-2", name: "Codex (dev-box)", provider: "codex", status: "online", device_info: "dev-box · 0.149.1", daemon_id: "d1" },
+    { id: "rt-3", name: "Codex (build)", provider: "codex", status: "offline", device_info: "build · 0.148.0", daemon_id: "d2" },
+  ] as AgentRuntime[];
+
+  it("heads each machine once and names rows without the host", () => {
+    renderChoice({ layout: "grouped", runtimes: grouped });
+
+    const groups = screen.getAllByRole("radiogroup");
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["dev-box", "build"]);
+    expect(screen.getByRole("radio", { name: /Claude.*2\.1\.309/ })).toBeChecked();
+    expect(screen.getByText("Claude")).toBeInTheDocument();
+    expect(screen.queryByText("Claude (dev-box)")).not.toBeInTheDocument();
+  });
+
+  it("opens the model under the selected row only", () => {
+    renderChoice({ layout: "grouped", runtimes: grouped, modelLabel: "Model label" });
+
+    const selectedRow = screen.getByRole("radio", { name: /Claude/ }).parentElement;
+    const otherRow = screen.getByRole("radio", { name: /Codex.*0\.149\.1/ }).parentElement;
+    expect(selectedRow).toHaveTextContent("Model label");
+    expect(otherRow).not.toHaveTextContent("Model label");
+  });
+
+  it("clears the model when switching runtimes and honours disabled", async () => {
+    const onChange = vi.fn();
+    const { unmount } = renderChoice({
+      layout: "grouped",
+      runtimes: grouped,
+      value: { runtimeId: "rt-1", model: "opus" },
+      onChange,
+    });
+
+    await userEvent.click(screen.getByRole("radio", { name: /Codex.*0\.149\.1/ }));
+    expect(onChange).toHaveBeenCalledWith({ runtimeId: "rt-2", model: "" });
+    unmount();
+
+    onChange.mockClear();
+    renderChoice({ layout: "grouped", runtimes: grouped, disabled: true, onChange });
+    await userEvent.click(screen.getByRole("radio", { name: /Codex.*0\.149\.1/ }));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
