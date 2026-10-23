@@ -929,6 +929,7 @@ export function ManualCreatePanel({
         : submitState === "uploading"
           ? tEditor(($) => $.upload.in_progress)
           : t(($) => $.create_issue.submit)}
+      <SendShortcutHint />
     </Button>
   );
 
@@ -1450,7 +1451,6 @@ export function ManualCreatePanel({
                 </label>
               </div>
               <div className="flex items-center gap-3">
-                <SendShortcutHint />
                 {submitState === "missing_title" ? (
                   <TooltipProvider delay={200}>
                     <Tooltip>

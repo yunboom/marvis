@@ -13,8 +13,17 @@ import { useT } from "../i18n";
 const ICON_BUTTON_CLASS =
   "flex size-7.5 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground cursor-pointer";
 
+// Segmented control, the same shape as the collection-page scope switches: a
+// grey track with a raised white thumb on the selected mode, so the two modes
+// read as a switch rather than two labels.
+const TABLIST_CLASS =
+  "flex min-w-0 items-center gap-0.5 rounded-full bg-field p-0.75";
+
 const TAB_CLASS =
-  "relative flex h-7.5 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-body transition-colors duration-(--motion-fast) ease-out outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
+  "relative flex h-7 shrink-0 items-center gap-1.5 rounded-full px-3 text-label transition-[color,background-color,box-shadow] duration-(--motion-fast) ease-out outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
+
+const TAB_SELECTED_CLASS =
+  "bg-surface font-medium text-foreground shadow-control dark:bg-white/12";
 
 /**
  * Header shared by both create-issue panels: the manual / agent mode tabs on
@@ -69,7 +78,7 @@ export function CreateIssueHeader({
         className={cn(
           TAB_CLASS,
           selected
-            ? "font-semibold text-foreground"
+            ? TAB_SELECTED_CLASS
             : "text-muted-foreground hover:text-foreground cursor-pointer",
         )}
       >
@@ -100,7 +109,7 @@ export function CreateIssueHeader({
       <div
         role="tablist"
         aria-label={t(($) => $.create_issue.mode_tabs_aria)}
-        className="flex min-w-0 items-center gap-1"
+        className={TABLIST_CLASS}
       >
         {tab("manual")}
         {tab("agent")}
@@ -140,9 +149,11 @@ export function CreateIssueHeader({
 }
 
 /**
- * Muted send-chord hint ("⌘ ↵") beside the primary create button, outside it,
- * so the button's accessible name stays its label. Decorative, absent when
- * `send` is unbound, and hidden on phones, which have no ⌘ key.
+ * Send-chord hint ("⌘ ↵") inside the primary create button, after its label.
+ * Decorative (aria-hidden), so the button's accessible name stays its label.
+ * Each key is a fixed 14px line-height-free box so the glyphs sit on the
+ * label's centre line regardless of font metrics. Absent when `send` is
+ * unbound, and hidden on phones, which have no ⌘ key.
  */
 export function SendShortcutHint() {
   const sendShortcut = useShortcut("send");
@@ -151,8 +162,8 @@ export function SendShortcutHint() {
     <ShortcutKeycaps
       shortcut={sendShortcut}
       decorative
-      className="gap-0.5 max-sm:hidden"
-      keyClassName="h-auto min-w-0 border-0 bg-transparent px-0 shadow-none text-caption text-muted-foreground"
+      className="ml-1 gap-0.5 opacity-60 max-sm:hidden"
+      keyClassName="h-3.5 min-w-0 rounded-none border-0 bg-transparent px-0 shadow-none text-caption leading-none text-current [&_svg]:size-3"
     />
   );
 }

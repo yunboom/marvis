@@ -2235,16 +2235,17 @@ describe("CreateIssueModal", () => {
       expect(mockCreateIssue).toHaveBeenCalledTimes(1);
     });
 
-    it("renders the send keycaps beside Create, outside the button", async () => {
+    it("renders the send keycaps inside Create without changing its name", async () => {
       const user = userEvent.setup();
       renderManual();
 
-      // Accessible name must stay the label alone — the keycaps are a
-      // decorative hint next to the button, not inside it.
+      // The keycaps sit inside the button after its label, but stay
+      // aria-hidden so the accessible name is still the label alone.
       const create = screen.getByRole("button", { name: "Create Issue" });
       const keycaps = document.querySelector("[data-slot='shortcut-keycaps']");
       expect(keycaps).toBeInTheDocument();
-      expect(create.contains(keycaps)).toBe(false);
+      expect(create.contains(keycaps)).toBe(true);
+      expect(keycaps).toHaveAttribute("aria-hidden", "true");
 
       // And the affordance survives the empty → filled transition.
       await user.type(screen.getByPlaceholderText("Issue title"), "Now valid");

@@ -627,6 +627,7 @@ export function AgentCreatePanel({
       ) : (
         t(($) => $.create_issue.agent.submit)
       )}
+      {!justSent && <SendShortcutHint />}
     </Button>
   );
 
@@ -876,7 +877,6 @@ export function AgentCreatePanel({
             )}
           </div>
           <div className="flex items-center gap-3">
-            <SendShortcutHint />
             {versionBlocked ? (
               <Tooltip>
                 <TooltipTrigger render={createButton} />
