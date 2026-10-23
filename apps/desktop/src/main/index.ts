@@ -17,6 +17,7 @@ import { createRendererWebPreferences } from "./renderer-web-preferences";
 import { getAppVersion } from "./app-version";
 import { loadRuntimeConfig } from "./runtime-config-loader";
 import { browseBonjour, createLanBrowser, listLocalAddresses } from "./lan-browser";
+import { browseDnsSd } from "./dns-sd-browse";
 import { probeServer } from "./server-probe";
 import { readSelectedServer, writeSelectedServer } from "./server-selection";
 import { registerServerIpc } from "./server-ipc";
@@ -772,6 +773,9 @@ if (!gotTheLock) {
       }
     };
 
+    // macOS 经系统 Bonjour 发现：防火墙开着“阻止所有传入连接”时，应用自己收组播会被拦。
+    const browseLan = process.platform === "darwin" ? browseDnsSd : browseBonjour;
+
     // 掉线监测：监测已选服务器（没有保存过选择时监测运行配置里的地址），
     // 掉线时在局域网里找同一台服务器的新地址。监测专用一个局域网浏览器，
     // 与设置页订阅用的互不影响。
@@ -783,7 +787,7 @@ if (!gotTheLock) {
       applyRuntimeConfig,
       probe: probeServer,
       lanBrowser: createLanBrowser({
-        browse: browseBonjour,
+        browse: browseLan,
         probe: probeServer,
         localAddresses: listLocalAddresses,
       }),
@@ -795,7 +799,7 @@ if (!gotTheLock) {
       ipcMain,
       userDataDir: app.getPath("userData"),
       lanBrowser: createLanBrowser({
-        browse: browseBonjour,
+        browse: browseLan,
         probe: probeServer,
         localAddresses: listLocalAddresses,
       }),
