@@ -10,6 +10,7 @@ import {
   type ProbeResult,
 } from "../../../../shared/server-discovery";
 import { ConnectServerScreen } from "./connect-server-screen";
+import { PROBE_MIN_DISPLAY_MS } from "./server-address-field";
 import { LAN_SCAN_WINDOW_MS } from "./use-lan-servers";
 
 function lanServer(overrides: Partial<DiscoveredServer> = {}): DiscoveredServer {
@@ -107,8 +108,10 @@ function addressInput(): HTMLInputElement {
 async function runProbe(result: ProbeResult) {
   mocks.probe.mockResolvedValueOnce(result);
   fireEvent.click(screen.getByRole("button", { name: "测试连接" }));
-  // 让 probe 的 Promise 落地。
-  await act(async () => {});
+  // 让 probe 的 Promise 落地，并走完“正在测试”的最短显示时长。
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(PROBE_MIN_DISPLAY_MS);
+  });
 }
 
 beforeEach(() => {
@@ -121,7 +124,7 @@ afterEach(() => {
 });
 
 describe("ConnectServerScreen", () => {
-  it("lists discovered servers, disables incompatible ones, and continues to the confirm step", () => {
+  it("lists discovered servers, disables incompatible ones, and connects to the picked one", async () => {
     renderScreen();
     settleDiscovery([designServer, devServer, oldServer]);
 
@@ -144,46 +147,52 @@ describe("ConnectServerScreen", () => {
     expect(design).toHaveAttribute("aria-checked", "true");
     expect(dev).toHaveAttribute("aria-checked", "false");
 
-    fireEvent.click(screen.getByRole("button", { name: "继续" }));
+    // 选中即可连接，没有额外的确认步骤；保存期间按钮显示进度并禁用。
+    let resolveSelect: () => void = () => {};
+    mocks.select.mockReturnValueOnce(new Promise<void>((resolve) => (resolveSelect = resolve)));
+    fireEvent.click(screen.getByRole("button", { name: "连接" }));
 
-    expect(screen.getByRole("heading", { name: "连接到 设计部 Marvis？" })).toBeInTheDocument();
-    expect(screen.getByText("http://192.168.1.20:13840")).toBeInTheDocument();
-    expect(screen.getByText("v0.6.5")).toBeInTheDocument();
-    expect(screen.getByText("design-mac-mini.local")).toBeInTheDocument();
+    expect(mocks.select).toHaveBeenCalledWith({
+      url: designServer.url,
+      name: designServer.name,
+      instanceId: designServer.instanceId,
+      source: SERVER_SOURCE_LAN,
+      appUrl: designServer.appUrl,
+    });
+    expect(screen.getByRole("button", { name: "正在连接..." })).toBeDisabled();
+
+    await act(async () => resolveSelect());
   });
 
-  it("keeps continue disabled while scanning unless the user picked a row", () => {
+  it("keeps connect disabled while scanning unless the user picked a row", () => {
     renderScreen();
     act(() => pushServers([designServer, devServer]));
 
-    // 查找窗口内默认选中的行还可能变化，先不让继续。
+    // 查找窗口内默认选中的行还可能变化，先不让连接。
     expect(screen.getByText("正在查找")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "继续" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "连接" })).toBeDisabled();
 
     fireEvent.click(screen.getByRole("radio", { name: /marvis-dev/ }));
-    expect(screen.getByRole("button", { name: "继续" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "连接" })).toBeEnabled();
   });
 
-  it("pre-fills the address field and only enables continue after a successful test", async () => {
+  it("pre-fills the address field and only enables connect after a successful test", async () => {
     renderScreen();
     settleDiscovery([designServer]);
 
     expect(addressInput().value).toBe(DEFAULT_SERVER_ADDRESS);
 
-    // 选中地址栏：没测试通过之前不能继续。
+    // 选中地址栏：没测试通过之前不能连接。
     fireEvent.focus(addressInput());
     expect(addressGroup()).toHaveAttribute("aria-current", "true");
     expect(screen.getByRole("radio", { name: /设计部 Marvis/ })).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByRole("button", { name: "继续" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "连接" })).toBeDisabled();
 
     await runProbe({ kind: "ok", server: designServer });
 
     expect(mocks.probe).toHaveBeenCalledWith(DEFAULT_SERVER_ADDRESS);
     expect(screen.getByText("可以连接 · 设计部 Marvis · v0.6.5")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "继续" })).toBeEnabled();
-
-    // 继续到确认步骤，之后连接以 manual 来源保存。
-    fireEvent.click(screen.getByRole("button", { name: "继续" }));
+    // 连接以 manual 来源保存。
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "连接" }));
     });
@@ -210,7 +219,7 @@ describe("ConnectServerScreen", () => {
 
     expect(screen.getByText(text, { selector: "[role=status] span" })).toBeInTheDocument();
     expect(addressInput()).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByRole("button", { name: "继续" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "连接" })).toBeDisabled();
   });
 
   it("drops the test result when the address is edited", async () => {
@@ -218,12 +227,12 @@ describe("ConnectServerScreen", () => {
     settleDiscovery([]);
 
     await runProbe({ kind: "ok", server: designServer });
-    expect(screen.getByRole("button", { name: "继续" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "连接" })).toBeEnabled();
 
     fireEvent.change(addressInput(), { target: { value: "http://192.168.1.99:13840" } });
 
     expect(screen.queryByText("可以连接 · 设计部 Marvis · v0.6.5")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "继续" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "连接" })).toBeDisabled();
   });
 
   it("exposes the address controls outside any radio and conveys selection with aria-current", async () => {
@@ -276,44 +285,49 @@ describe("ConnectServerScreen", () => {
     expect(mocks.rescan).toHaveBeenCalledOnce();
   });
 
-  it("shows the HTTP warning on the confirm step and calls select on connect", async () => {
+  // 本机探测只要几毫秒：“正在测试”至少停留一小段时间，不会一闪而过。
+  it("holds the testing line for a minimum time even when the probe answers at once", async () => {
     renderScreen();
-    settleDiscovery([designServer, devServer]);
+    settleDiscovery([]);
 
-    fireEvent.click(screen.getByRole("button", { name: "继续" }));
-
-    expect(
-      screen.getByText("这个服务器使用 HTTP 连接，同一网络中的设备可能看到传输的内容。"),
-    ).toBeInTheDocument();
-
-    // 返回再继续仍停在同一选择上。
-    fireEvent.click(screen.getByRole("button", { name: "返回" }));
-    expect(screen.getByRole("radio", { name: /设计部 Marvis/ })).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(screen.getByRole("button", { name: "继续" }));
-
-    let resolveSelect: () => void = () => {};
-    mocks.select.mockReturnValueOnce(new Promise<void>((resolve) => (resolveSelect = resolve)));
-    fireEvent.click(screen.getByRole("button", { name: "连接" }));
-
-    expect(mocks.select).toHaveBeenCalledWith({
-      url: designServer.url,
-      name: designServer.name,
-      instanceId: designServer.instanceId,
-      source: SERVER_SOURCE_LAN,
-      appUrl: designServer.appUrl,
+    mocks.probe.mockResolvedValueOnce({ kind: "ok", server: designServer });
+    fireEvent.click(screen.getByRole("button", { name: "测试连接" }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(PROBE_MIN_DISPLAY_MS - 1);
     });
-    expect(screen.getByRole("button", { name: "正在连接..." })).toBeDisabled();
 
-    await act(async () => resolveSelect());
+    expect(within(addressGroup()).getByRole("status")).toHaveTextContent("正在测试");
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+
+    expect(within(addressGroup()).getByRole("status")).toHaveTextContent(
+      "可以连接 · 设计部 Marvis · v0.6.5",
+    );
   });
 
-  it("does not warn about HTTPS servers", () => {
+  // 重新测试同一地址时，按钮文字和左栏摘要不跟着来回切换。
+  it("keeps the button label and the summary steady while re-testing", async () => {
     renderScreen();
-    settleDiscovery([lanServer({ url: "https://marvis.example.com" })]);
+    settleDiscovery([]);
+    await runProbe({ kind: "ok", server: designServer });
 
-    fireEvent.click(screen.getByRole("button", { name: "继续" }));
+    let resolveProbe: (result: ProbeResult) => void = () => {};
+    mocks.probe.mockReturnValueOnce(new Promise<ProbeResult>((resolve) => (resolveProbe = resolve)));
+    fireEvent.click(screen.getByRole("button", { name: "测试连接" }));
 
-    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+    expect(within(addressGroup()).getByRole("status")).toHaveTextContent("正在测试");
+    expect(screen.getByRole("button", { name: "测试连接" })).toBeDisabled();
+    expect(screen.getByText("192.168.1.20:13840 · v0.6.5")).toBeInTheDocument();
+
+    await act(async () => {
+      resolveProbe({ kind: "ok", server: designServer });
+      await vi.advanceTimersByTimeAsync(PROBE_MIN_DISPLAY_MS);
+    });
+
+    expect(screen.getByRole("button", { name: "测试连接" })).toBeEnabled();
+    expect(screen.getByText("可以连接 · 设计部 Marvis · v0.6.5")).toBeInTheDocument();
   });
 
   it("pre-fills the suggested address instead of the default", () => {
@@ -332,7 +346,7 @@ describe("ConnectServerScreen", () => {
 
     // 选中地址栏、还没测试：摘要提示先测试。
     fireEvent.focus(addressInput());
-    expect(screen.getByText("测试连接通过后可以继续")).toBeInTheDocument();
+    expect(screen.getByText("先测试连接")).toBeInTheDocument();
 
     await runProbe({ kind: "ok", server: lanServer({ url: "http://192.168.1.99:13840" }) });
     expect(screen.getByText("192.168.1.99:13840 · v0.6.5")).toBeInTheDocument();

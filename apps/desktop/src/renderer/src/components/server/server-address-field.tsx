@@ -17,12 +17,28 @@ import {
   type ProbeResult,
 } from "../../../../shared/server-discovery";
 
+/** 测试中状态的最短显示时长：本机探测只要几毫秒，状态一闪而过会像闪烁。 */
+export const PROBE_MIN_DISPLAY_MS = 300;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function probeAddress(address: string): Promise<ProbeResult> {
+  try {
+    return await window.desktopAPI.server.probe(address);
+  } catch {
+    // 探测通道本身失败时，对用户而言等同于连不上这个地址。
+    return { kind: "unreachable" };
+  }
+}
+
 export interface ServerAddressFieldProps {
   value: string;
   onChange: (value: string) => void;
   /** 当前地址的测试结果；没测过、测试中或地址被修改后为 null。 */
   result: ProbeResult | null;
-  /** 测试连接有结果时回调；地址被修改、测试开始时回调 null。 */
+  /** 测试连接有结果时回调；地址被修改时回调 null。重新测试期间保留上一次的结果。 */
   onResult: (result: ProbeResult | null) => void;
   /** 地址栏是否为当前选中的连接目标。 */
   selected?: boolean;
@@ -39,6 +55,7 @@ export interface ServerAddressFieldProps {
 }
 
 // 服务器地址输入框 + “测试连接”。测试结果就地显示，失败时输入框描边变红。
+// 测试中结果行换成同高的“正在测试”，按钮文字不变，避免高度、宽度和摘要来回跳。
 // 结果由父组件持有，切到别的步骤再回来时仍然保留。
 // 输入框、按钮和结果行都是可交互或需要被朗读的内容，所以外层用 group 而不是 radio
 // （radio 的子树会被辅助技术当作展示用途剪掉）；选中状态用 aria-current 表达。
@@ -81,7 +98,6 @@ export function ServerAddressField({
     const requestId = requestRef.current;
 
     onSelect?.();
-    onResult(null);
 
     const address = normalizeServerAddress(value);
     if (address === null) {
@@ -91,13 +107,7 @@ export function ServerAddressField({
 
     setTesting(true);
 
-    let probed: ProbeResult;
-    try {
-      probed = await window.desktopAPI.server.probe(address);
-    } catch {
-      // 探测通道本身失败时，对用户而言等同于连不上这个地址。
-      probed = { kind: "unreachable" };
-    }
+    const [probed] = await Promise.all([probeAddress(address), delay(PROBE_MIN_DISPLAY_MS)]);
     if (requestRef.current !== requestId) return;
 
     setTesting(false);
@@ -164,16 +174,25 @@ export function ServerAddressField({
             disabled={testing || value.trim() === ""}
             className={cn("h-10 shrink-0 px-3.5 text-label", pane && "bg-surface")}
           >
-            {testing && <Loader2 className="size-3.5 animate-spin" aria-hidden />}
-            {testing
-              ? t(($) => $.desktop.server.address.testing)
-              : t(($) => $.desktop.server.address.test)}
+            {t(($) => $.desktop.server.address.test)}
           </Button>
           {actions}
         </form>
-        {result !== null && <ProbeResultLine result={result} />}
+        {testing ? <ProbeTestingLine /> : result !== null && <ProbeResultLine result={result} />}
       </div>
     </>
+  );
+}
+
+// 与结果行同样的排版，测试结束换成结果时高度不变。
+function ProbeTestingLine() {
+  const { t } = useT("settings");
+
+  return (
+    <p role="status" className="flex items-center gap-1.5 px-1 text-label text-muted-foreground">
+      <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
+      <span>{t(($) => $.desktop.server.address.testing)}</span>
+    </p>
   );
 }
 

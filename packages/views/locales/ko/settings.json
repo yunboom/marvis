@@ -1062,12 +1062,11 @@
         "rescan": "다시 검색",
         "local_badge": "이 컴퓨터",
         "none": "로컬 네트워크에서 서버를 찾지 못했습니다. 컴퓨터와 서버가 같은 네트워크에 연결되어 있어야 합니다.",
-        "continue": "계속",
         "or_address": "또는 주소 입력",
         "summary_scanning": "찾는 중…",
         "summary_scanning_hint": "네트워크의 Marvis 서버가 여기에 표시됩니다",
         "summary_manual": "직접 입력한 주소",
-        "summary_manual_hint": "연결 테스트를 통과하면 계속할 수 있습니다"
+        "summary_manual_hint": "먼저 연결을 테스트하세요"
       },
       "address": {
         "label": "서버 주소",
@@ -1082,13 +1081,7 @@
         "too_old": "서버 버전이 너무 오래되었습니다"
       },
       "confirm": {
-        "title": "{{name}}에 연결할까요?",
-        "subtitle": "주소를 확인하고 사용하려는 서버가 맞는지 확인하세요",
-        "address": "주소",
-        "version": "버전",
-        "host": "호스트 이름",
         "http_warning": "이 서버는 HTTP로 연결합니다. 같은 네트워크의 다른 기기에서 전송 내용이 보일 수 있습니다.",
-        "back": "뒤로",
         "connect": "연결",
         "connecting": "연결 중..."
       },
