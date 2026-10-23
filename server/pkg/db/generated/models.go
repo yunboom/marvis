@@ -1167,6 +1167,37 @@ type LarkInstallation struct {
 	Region             string             `json:"region"`
 }
 
+type LarkInvite struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	TargetType      string             `json:"target_type"`
+	TargetID        string             `json:"target_id"`
+	TargetIDType    string             `json:"target_id_type"`
+	TargetOpenID    pgtype.Text        `json:"target_open_id"`
+	TargetName      string             `json:"target_name"`
+	TargetAvatarUrl pgtype.Text        `json:"target_avatar_url"`
+	Role            string             `json:"role"`
+	MaxUses         pgtype.Int4        `json:"max_uses"`
+	UseCount        int32              `json:"use_count"`
+	ExpiresAt       pgtype.Timestamptz `json:"expires_at"`
+	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+	Note            string             `json:"note"`
+	IdempotencyKey  pgtype.Text        `json:"idempotency_key"`
+	LarkMessageID   pgtype.Text        `json:"lark_message_id"`
+	SentByUserID    pgtype.UUID        `json:"sent_by_user_id"`
+	SentByAgentID   pgtype.UUID        `json:"sent_by_agent_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
+type LarkInviteJoin struct {
+	InviteID    pgtype.UUID        `json:"invite_id"`
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	LarkOpenID  string             `json:"lark_open_id"`
+	JoinedAt    pgtype.Timestamptz `json:"joined_at"`
+	WelcomedAt  pgtype.Timestamptz `json:"welcomed_at"`
+}
+
 type LarkOutboundCardMessage struct {
 	ID                pgtype.UUID        `json:"id"`
 	ChatSessionID     pgtype.UUID        `json:"chat_session_id"`
