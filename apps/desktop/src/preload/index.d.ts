@@ -17,6 +17,29 @@ import type {
   LocalRuntimeProbe,
 } from "../shared/daemon-types";
 import type { TabSelectionShortcutKey } from "../shared/main-renderer-messages";
+import type {
+  DiscoveredServer,
+  ProbeResult,
+  SelectedServer,
+  ServerStatus,
+} from "../shared/server-discovery";
+
+interface ServerAPI {
+  /** 订阅局域网里发现的 Marvis 服务器，列表变化时回调。返回取消订阅函数。 */
+  discover: (onChange: (list: DiscoveredServer[]) => void) => () => void;
+  /** 重新扫描局域网，并重新核实已发现的服务器。 */
+  rescan: () => void;
+  /** 请求 `<url>/api/config` 核实对方是不是 Marvis 服务器。 */
+  probe: (url: string) => Promise<ProbeResult>;
+  /** 已保存的服务器选择；没有选择过时为 null。 */
+  current: () => Promise<SelectedServer | null>;
+  /** 保存所选服务器并重载所有窗口。 */
+  select: (server: SelectedServer) => Promise<void>;
+  /** 订阅已选服务器的连接状态。返回取消订阅函数。 */
+  onStatus: (callback: (status: ServerStatus) => void) => () => void;
+  /** 请求主进程立即重试连接已选服务器。 */
+  retry: () => void;
+}
 
 interface DesktopAPI {
   /** App version + normalized OS, captured synchronously at preload time. */
@@ -120,6 +143,8 @@ interface DesktopAPI {
   openIssueWindow: (
     request: IssueWindowRequest,
   ) => Promise<{ ok: true } | { ok: false; reason: "invalid_request" }>;
+  /** 服务器发现、探测与选择。 */
+  server: ServerAPI;
 }
 
 type DaemonReauthResult =

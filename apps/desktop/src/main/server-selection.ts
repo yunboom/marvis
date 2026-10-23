@@ -55,7 +55,9 @@ export async function writeSelectedServer(
   await rename(tmp, target);
 }
 
-function toSelectedServer(value: unknown): SelectedServer | null {
+// 把未知输入收窄为 SelectedServer，字段缺失或不合法时返回 null。
+// 读盘和校验界面传来的选择共用这一份规则。
+export function toSelectedServer(value: unknown): SelectedServer | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
 
   const obj = value as Record<string, unknown>;

@@ -33,6 +33,37 @@ export interface SelectedServer {
   appUrl: string;
 }
 
+// 局域网发现到的服务器：身份取自 /api/config 的核实结果。
+// isLocal 表示服务器就在本机；compatible 为 false 表示版本过旧，不能选用。
+export interface DiscoveredServer extends ServerIdentity {
+  isLocal: boolean;
+  compatible: boolean;
+}
+
+// 已选服务器的连接状态，由主进程推送给界面。
+export const SERVER_STATE_ONLINE = "online";
+export const SERVER_STATE_RECONNECTING = "reconnecting";
+export const SERVER_STATE_UNREACHABLE = "unreachable";
+export const SERVER_STATE_MOVED = "moved";
+export const SERVER_STATE_REPLACED = "replaced";
+
+export type ServerStatus =
+  | { state: typeof SERVER_STATE_ONLINE }
+  | { state: typeof SERVER_STATE_RECONNECTING }
+  | { state: typeof SERVER_STATE_UNREACHABLE }
+  | { state: typeof SERVER_STATE_MOVED; url: string }
+  | { state: typeof SERVER_STATE_REPLACED; otherName: string };
+
+// 服务器发现相关的 IPC 通道。
+export const SERVER_DISCOVER = "server:discover";
+export const SERVER_DISCOVERED = "server:discovered";
+export const SERVER_RESCAN = "server:rescan";
+export const SERVER_PROBE = "server:probe";
+export const SERVER_CURRENT = "server:current";
+export const SERVER_SELECT = "server:select";
+export const SERVER_STATUS = "server:status";
+export const SERVER_RETRY = "server:retry";
+
 const SCHEME_PREFIX = /^[a-z][a-z0-9+.-]*:\/\//i;
 
 // 把用户输入规整为 `scheme://host[:port]`：缺少协议时补 http://，

@@ -16,6 +16,10 @@ import { installNavigationGuard } from "./navigation-guard";
 import { createRendererWebPreferences } from "./renderer-web-preferences";
 import { getAppVersion } from "./app-version";
 import { loadRuntimeConfig } from "./runtime-config-loader";
+import { browseBonjour, createLanBrowser, listLocalAddresses } from "./lan-browser";
+import { probeServer } from "./server-probe";
+import { readSelectedServer, writeSelectedServer } from "./server-selection";
+import { registerServerIpc } from "./server-ipc";
 import type { RuntimeConfigResult } from "../shared/runtime-config";
 import {
   RENDERER_ROUTE_CONTEXT_CHANNEL,
@@ -726,6 +730,34 @@ if (!gotTheLock) {
     // the unconfigured branch instead of any built-in default server.
     ipcMain.on("runtime-config:get", (event) => {
       event.returnValue = runtimeConfigResult;
+    });
+
+    // 服务器发现、探测与选定。选定后更新上面这份运行配置并重载所有窗口，
+    // 窗口重新启动时 preload 会同步拿到新的配置。
+    registerServerIpc({
+      ipcMain,
+      userDataDir: app.getPath("userData"),
+      lanBrowser: createLanBrowser({
+        browse: browseBonjour,
+        probe: probeServer,
+        localAddresses: listLocalAddresses,
+      }),
+      probe: probeServer,
+      readSelected: readSelectedServer,
+      writeSelected: writeSelectedServer,
+      applyRuntimeConfig: (result) => {
+        runtimeConfigResult = result;
+      },
+      reloadAll: () => {
+        for (const target of BrowserWindow.getAllWindows()) {
+          if (!target.isDestroyed()) target.webContents.reload();
+        }
+      },
+      broadcast: (channel, payload) => {
+        for (const target of BrowserWindow.getAllWindows()) {
+          if (!target.isDestroyed()) target.webContents.send(channel, payload);
+        }
+      },
     });
 
     ipcMain.on(RENDERER_ROUTE_CONTEXT_CHANNEL, (event, context: unknown) => {

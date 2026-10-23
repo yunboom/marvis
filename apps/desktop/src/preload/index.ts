@@ -20,6 +20,20 @@ import {
   type IssueWindowRequest,
 } from "../shared/issue-window";
 import { AUTH_SESSION_STATE_CHANNEL } from "../shared/auth-session";
+import {
+  SERVER_CURRENT,
+  SERVER_DISCOVER,
+  SERVER_DISCOVERED,
+  SERVER_PROBE,
+  SERVER_RESCAN,
+  SERVER_RETRY,
+  SERVER_SELECT,
+  SERVER_STATUS,
+  type DiscoveredServer,
+  type ProbeResult,
+  type SelectedServer,
+  type ServerStatus,
+} from "../shared/server-discovery";
 import type {
   DaemonStatus,
   LocalRuntimeProbe,
@@ -99,6 +113,50 @@ function subscribeToMainRendererChannel<T>(
     });
   };
 }
+
+// 同一个页面里可能有多处订阅局域网发现；按引用计数向主进程发订阅 / 取消订阅，
+// 避免一处取消后其余订阅者收不到推送。
+let discoverSubscribers = 0;
+
+const serverAPI = {
+  /** 订阅局域网里发现的 Marvis 服务器，列表变化时回调。返回取消订阅函数。 */
+  discover: (onChange: (list: DiscoveredServer[]) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, list: DiscoveredServer[]) =>
+      onChange(list);
+    ipcRenderer.on(SERVER_DISCOVERED, handler);
+    discoverSubscribers += 1;
+    if (discoverSubscribers === 1) ipcRenderer.send(SERVER_DISCOVER, true);
+
+    return () => {
+      ipcRenderer.removeListener(SERVER_DISCOVERED, handler);
+      discoverSubscribers -= 1;
+      if (discoverSubscribers === 0) ipcRenderer.send(SERVER_DISCOVER, false);
+    };
+  },
+  /** 重新扫描局域网，并重新核实已发现的服务器。 */
+  rescan: () => ipcRenderer.send(SERVER_RESCAN),
+  /** 请求 `<url>/api/config` 核实对方是不是 Marvis 服务器。 */
+  probe: (url: string): Promise<ProbeResult> =>
+    ipcRenderer.invoke(SERVER_PROBE, url),
+  /** 已保存的服务器选择；没有选择过时为 null。 */
+  current: (): Promise<SelectedServer | null> =>
+    ipcRenderer.invoke(SERVER_CURRENT),
+  /** 保存所选服务器并重载所有窗口。 */
+  select: (server: SelectedServer): Promise<void> =>
+    ipcRenderer.invoke(SERVER_SELECT, server),
+  /** 订阅已选服务器的连接状态。返回取消订阅函数。 */
+  onStatus: (callback: (status: ServerStatus) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, status: ServerStatus) =>
+      callback(status);
+    ipcRenderer.on(SERVER_STATUS, handler);
+
+    return () => {
+      ipcRenderer.removeListener(SERVER_STATUS, handler);
+    };
+  },
+  /** 请求主进程立即重试连接已选服务器。 */
+  retry: () => ipcRenderer.send(SERVER_RETRY),
+};
 
 const desktopAPI = {
   /** App version + normalized OS. Read once at preload time so the renderer
@@ -243,6 +301,8 @@ const desktopAPI = {
   /** Open a validated issue-detail route in a dedicated native window. */
   openIssueWindow: (request: IssueWindowRequest) =>
     ipcRenderer.invoke("window:open-issue", request),
+  /** 服务器发现、探测与选择。 */
+  server: serverAPI,
 };
 
 type DaemonReauthResult =
