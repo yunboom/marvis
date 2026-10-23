@@ -4,6 +4,7 @@ import { render } from "@testing-library/react";
 import { useTabStore } from "@/stores/tab-store";
 import { useWindowOverlayStore } from "@/stores/window-overlay-store";
 import {
+  openServerSettingsTab,
   openSettingsTab,
   useOpenSettingsShortcut,
 } from "./use-open-settings-shortcut";
@@ -101,6 +102,53 @@ describe("openSettingsTab", () => {
     useTabStore.setState({ activeWorkspaceSlug: null });
 
     expect(() => openSettingsTab()).not.toThrow();
+    expect(tabUrls()).toEqual(["/acme/issues"]);
+  });
+});
+
+describe("openServerSettingsTab", () => {
+  beforeEach(() => {
+    seedTabs();
+    useWindowOverlayStore.setState({ overlay: null });
+  });
+
+  it("opens Settings on the server tab", () => {
+    openServerSettingsTab();
+
+    expect(tabUrls()).toEqual(["/acme/issues", "/acme/settings?tab=server"]);
+    expect(activeTabUrl()).toBe("/acme/settings?tab=server");
+  });
+
+  // openTab only focuses an existing Settings tab and keeps its own url, so
+  // a Settings tab sitting on another section has to be moved explicitly.
+  it("moves an already open Settings tab to the server tab", () => {
+    useTabStore.getState().openTab("/acme/settings?tab=profile", "", { activate: true });
+
+    openServerSettingsTab();
+
+    expect(tabUrls()).toEqual(["/acme/issues", "/acme/settings?tab=server"]);
+    expect(activeTabUrl()).toBe("/acme/settings?tab=server");
+  });
+
+  it("does not stack duplicates when called twice", () => {
+    openServerSettingsTab();
+    openServerSettingsTab();
+
+    expect(tabUrls()).toEqual(["/acme/issues", "/acme/settings?tab=server"]);
+  });
+
+  it("does nothing while a pre-workspace overlay covers the window", () => {
+    useWindowOverlayStore.setState({ overlay: { type: "onboarding" } });
+
+    openServerSettingsTab();
+
+    expect(tabUrls()).toEqual(["/acme/issues"]);
+  });
+
+  it("does nothing without an active workspace", () => {
+    useTabStore.setState({ activeWorkspaceSlug: null });
+
+    expect(() => openServerSettingsTab()).not.toThrow();
     expect(tabUrls()).toEqual(["/acme/issues"]);
   });
 });

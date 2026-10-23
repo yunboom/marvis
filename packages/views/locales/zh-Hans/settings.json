@@ -1358,6 +1358,22 @@
         "switch_failed": "切换服务器失败",
         "cancel": "取消"
       },
+      "banner": {
+        "reconnecting": "与 {{name}} 的连接已断开，正在重新连接…",
+        "unreachable": "无法连接到 {{name}}（{{address}}）。页面内容可能不是最新的。",
+        "retry": "重试",
+        "switch": "切换服务器"
+      },
+      "moved": {
+        "title": "已重新连接到 {{name}}",
+        "body": "服务器地址变为 {{address}}，已自动更新"
+      },
+      "replaced": {
+        "title": "这个地址上换了一台服务器",
+        "body": "{{address}} 现在是“{{other}}”，不是你之前连接的“{{name}}”。为避免连错，没有自动切换。",
+        "wait": "继续等待",
+        "switch": "切换服务器"
+      },
       "tab_label": "服务器"
     }
   },

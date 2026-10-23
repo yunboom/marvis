@@ -29,6 +29,7 @@ import {
   SERVER_RETRY,
   SERVER_SELECT,
   SERVER_STATUS,
+  SERVER_STATUS_GET,
   type DiscoveredServer,
   type ProbeResult,
   type SelectedServer,
@@ -144,13 +145,24 @@ const serverAPI = {
   /** 保存所选服务器并重载所有窗口。 */
   select: (server: SelectedServer): Promise<void> =>
     ipcRenderer.invoke(SERVER_SELECT, server),
-  /** 订阅已选服务器的连接状态。返回取消订阅函数。 */
+  /** 订阅已选服务器的连接状态：先回调一次当前状态（补上订阅前错过的推送），
+   *  之后每次变化回调。返回取消订阅函数。 */
   onStatus: (callback: (status: ServerStatus) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, status: ServerStatus) =>
       callback(status);
     ipcRenderer.on(SERVER_STATUS, handler);
 
+    // 先挂监听再查当前状态：同一条通道上消息有序，查询的应答之后到达的推送一定更新。
+    // 查询失败时只是没有初始状态，之后的推送不受影响。
+    let subscribed = true;
+    void (ipcRenderer.invoke(SERVER_STATUS_GET) as Promise<ServerStatus>)
+      .then((status) => {
+        if (subscribed) callback(status);
+      })
+      .catch(() => {});
+
     return () => {
+      subscribed = false;
       ipcRenderer.removeListener(SERVER_STATUS, handler);
     };
   },

@@ -1368,6 +1368,22 @@
         "switch_failed": "Couldn't switch server",
         "cancel": "Cancel"
       },
+      "banner": {
+        "reconnecting": "Lost connection to {{name}}. Reconnecting…",
+        "unreachable": "Can't reach {{name}} ({{address}}). What you see may be out of date.",
+        "retry": "Retry",
+        "switch": "Switch server"
+      },
+      "moved": {
+        "title": "Reconnected to {{name}}",
+        "body": "The server address changed to {{address}} and was updated automatically"
+      },
+      "replaced": {
+        "title": "A different server is at this address",
+        "body": "{{address}} is now “{{other}}”, not “{{name}}”, the server you connected to before. To avoid connecting to the wrong one, it was not switched automatically.",
+        "wait": "Keep waiting",
+        "switch": "Switch server"
+      },
       "tab_label": "Server"
     }
   },

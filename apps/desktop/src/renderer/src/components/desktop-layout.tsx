@@ -2,6 +2,7 @@ import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@marvis/ui/lib/utils";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
+import { openServerSettingsTab } from "@/hooks/use-open-settings-shortcut";
 import {
   useNavigationInputBindings,
   useTabHistory,
@@ -31,6 +32,11 @@ import {
   DesktopNavigationProvider,
   routeContentLinkPath,
 } from "@/platform/navigation";
+import {
+  ServerReplacedDialog,
+  ServerStatusBanner,
+} from "./server/server-status-banner";
+import { useServerStatus } from "./server/use-server-status";
 import { TabBar } from "./tab-bar";
 import { TabContent } from "./tab-content";
 import { WindowOverlay } from "./window-overlay";
@@ -100,12 +106,18 @@ function MainTopBar({ sidebarMounted }: { sidebarMounted: boolean }) {
 
 // 主区白卡：与侧栏浮卡同样的 16px 外壳留白、24 圆角、细描边。侧栏的 sidebar-gap
 // 已把 16px 外壳留白放在浮卡左侧，所以无论侧栏展开还是收起，白卡左侧都是 16px。
+// banner 是服务器连接状态横幅，贴在卡片顶部、页面内容之上；dimmed 时页面内容变淡，
+// 说明数据可能不是最新的（仍可阅读和操作）。
 function MainCanvas({
   children,
   showWorkspaceLoading,
+  banner,
+  dimmed,
 }: {
   children: React.ReactNode;
   showWorkspaceLoading: boolean;
+  banner: React.ReactNode;
+  dimmed: boolean;
 }) {
   const { t } = useT("layout");
   const loadingLabel = t(($) => $.workspace_loader.loading_workspace);
@@ -115,7 +127,16 @@ function MainCanvas({
       data-slot="main-canvas"
       className="relative mx-4 mb-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-page-canvas"
     >
-      {children}
+      {banner}
+      <div
+        data-slot="main-canvas-content"
+        className={cn(
+          "relative flex min-h-0 flex-1 flex-col transition-opacity duration-(--motion-base) motion-reduce:transition-none",
+          dimmed && "opacity-55",
+        )}
+      >
+        {children}
+      </div>
       {showWorkspaceLoading && (
         <div
           aria-label={loadingLabel}
@@ -195,6 +216,7 @@ export function DesktopShell() {
   useInternalLinkHandler();
   useNativeNavigationGestures();
   useNavigationInputBindings();
+  const serverStatus = useServerStatus();
 
   // Reactive read of current workspace slug from the platform singleton.
   // On first mount, it is null until WorkspaceRouteLayout (inside the tab
@@ -262,7 +284,20 @@ export function DesktopShell() {
             {/* Right side: header + content container */}
             <div className="flex flex-1 min-w-0 flex-col">
               <MainTopBar sidebarMounted={Boolean(slug)} />
-              <MainCanvas showWorkspaceLoading={!slug}>
+              <MainCanvas
+                showWorkspaceLoading={!slug}
+                dimmed={serverStatus.banner !== null}
+                banner={
+                  serverStatus.banner !== null && (
+                    <ServerStatusBanner
+                      state={serverStatus.banner}
+                      server={serverStatus.server}
+                      onRetry={serverStatus.retry}
+                      onSwitch={openServerSettingsTab}
+                    />
+                  )
+                }
+              >
                 {/* Same indicator, same anchor as web: DashboardLayout puts it
                     at the top of SidebarInset, and MainCanvas is desktop's
                     equivalent relative/overflow-hidden content box. Desktop
@@ -278,6 +313,16 @@ export function DesktopShell() {
         {slug && <ModalRegistry />}
         {slug && <SearchCommand />}
         <WindowOverlay />
+        <ServerReplacedDialog
+          open={serverStatus.replaced.open}
+          server={serverStatus.server}
+          otherName={serverStatus.replaced.otherName}
+          onWait={serverStatus.dismissReplaced}
+          onSwitch={() => {
+            serverStatus.dismissReplaced();
+            openServerSettingsTab();
+          }}
+        />
       </WorkspaceSlugProvider>
     </DesktopNavigationProvider>
   );

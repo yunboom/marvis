@@ -62,6 +62,7 @@ export const SERVER_PROBE = "server:probe";
 export const SERVER_CURRENT = "server:current";
 export const SERVER_SELECT = "server:select";
 export const SERVER_STATUS = "server:status";
+export const SERVER_STATUS_GET = "server:status-get";
 export const SERVER_RETRY = "server:retry";
 
 const SCHEME_PREFIX = /^[a-z][a-z0-9+.-]*:\/\//i;

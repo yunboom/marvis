@@ -20,6 +20,7 @@ import { browseBonjour, createLanBrowser, listLocalAddresses } from "./lan-brows
 import { probeServer } from "./server-probe";
 import { readSelectedServer, writeSelectedServer } from "./server-selection";
 import { registerServerIpc } from "./server-ipc";
+import { createServerWatchRunner } from "./server-watch-runner";
 import type { RuntimeConfigResult } from "../shared/runtime-config";
 import {
   RENDERER_ROUTE_CONTEXT_CHANNEL,
@@ -734,7 +735,35 @@ if (!gotTheLock) {
 
     // 服务器发现、探测与选定。选定后更新上面这份运行配置并重载所有窗口，
     // 窗口重新启动时 preload 会同步拿到新的配置。
-    registerServerIpc({
+    const applyRuntimeConfig = (result: RuntimeConfigResult): void => {
+      runtimeConfigResult = result;
+    };
+    const reloadAllWindows = (): void => {
+      for (const target of BrowserWindow.getAllWindows()) {
+        if (!target.isDestroyed()) target.webContents.reload();
+      }
+    };
+
+    // 掉线监测：监测已选服务器（没有保存过选择时监测运行配置里的地址），
+    // 掉线时在局域网里找同一台服务器的新地址。监测专用一个局域网浏览器，
+    // 与设置页订阅用的互不影响。
+    const serverWatch = createServerWatchRunner({
+      userDataDir: app.getPath("userData"),
+      getRuntimeConfig: () => runtimeConfigResult,
+      readSelected: readSelectedServer,
+      writeSelected: writeSelectedServer,
+      applyRuntimeConfig,
+      probe: probeServer,
+      lanBrowser: createLanBrowser({
+        browse: browseBonjour,
+        probe: probeServer,
+        localAddresses: listLocalAddresses,
+      }),
+      publish: (status) => serverIpc.publishStatus(status),
+      reloadAll: reloadAllWindows,
+    });
+
+    const serverIpc = registerServerIpc({
       ipcMain,
       userDataDir: app.getPath("userData"),
       lanBrowser: createLanBrowser({
@@ -746,19 +775,21 @@ if (!gotTheLock) {
       readSelected: readSelectedServer,
       writeSelected: writeSelectedServer,
       applyRuntimeConfig: (result) => {
-        runtimeConfigResult = result;
+        applyRuntimeConfig(result);
+        // 选定了新服务器：监测改为盯着它。
+        void serverWatch.restart();
       },
-      reloadAll: () => {
-        for (const target of BrowserWindow.getAllWindows()) {
-          if (!target.isDestroyed()) target.webContents.reload();
-        }
-      },
+      reloadAll: reloadAllWindows,
       broadcast: (channel, payload) => {
         for (const target of BrowserWindow.getAllWindows()) {
           if (!target.isDestroyed()) target.webContents.send(channel, payload);
         }
       },
+      onRetry: () => serverWatch.retryNow(),
+      currentStatus: () => serverWatch.currentStatus(),
     });
+
+    void serverWatch.restart();
 
     ipcMain.on(RENDERER_ROUTE_CONTEXT_CHANNEL, (event, context: unknown) => {
       if (!BrowserWindow.fromWebContents(event.sender)) return;

@@ -8,7 +8,9 @@ import {
   SERVER_RESCAN,
   SERVER_RETRY,
   SERVER_SELECT,
+  SERVER_STATE_ONLINE,
   SERVER_STATUS,
+  SERVER_STATUS_GET,
   type DiscoveredServer,
   type ProbeResult,
   type SelectedServer,
@@ -153,8 +155,10 @@ export interface ServerIpcDeps extends ServerControllerDeps {
   lanBrowser: LanBrowser;
   // 向所有窗口推送一条消息。
   broadcast: (channel: string, payload: unknown) => void;
-  // 界面请求立即重试连接；生产者由后续的连接监控接入，默认什么都不做。
+  // 界面请求立即重试连接，由连接监控接入；默认什么都不做。
   onRetry?: () => void;
+  // 当前的连接状态，新打开的窗口据此补上错过的推送；默认在线。
+  currentStatus?: () => ServerStatus;
 }
 
 // 注册服务器发现、探测和选定相关的 IPC。
@@ -177,6 +181,11 @@ export function registerServerIpc(deps: ServerIpcDeps) {
   deps.ipcMain.on(SERVER_RETRY, () => {
     deps.onRetry?.();
   });
+
+  deps.ipcMain.handle(
+    SERVER_STATUS_GET,
+    (): ServerStatus => deps.currentStatus?.() ?? { state: SERVER_STATE_ONLINE },
+  );
 
   deps.ipcMain.handle(SERVER_PROBE, (_event, url) => controller.probe(url));
 

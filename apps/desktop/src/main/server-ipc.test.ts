@@ -10,6 +10,7 @@ import {
   SERVER_RETRY,
   SERVER_SELECT,
   SERVER_STATUS,
+  SERVER_STATUS_GET,
   type DiscoveredServer,
   type ProbeResult,
   type SelectedServer,
@@ -215,6 +216,7 @@ function ipcSetup() {
   const reloadAll = vi.fn();
   const broadcast = vi.fn();
   const onRetry = vi.fn();
+  const currentStatus = vi.fn((): ServerStatus => ({ state: "reconnecting" }));
 
   const api = registerServerIpc({
     ipcMain,
@@ -227,6 +229,7 @@ function ipcSetup() {
     reloadAll,
     broadcast,
     onRetry,
+    currentStatus,
   });
 
   return {
@@ -237,6 +240,7 @@ function ipcSetup() {
     reloadAll,
     broadcast,
     onRetry,
+    currentStatus,
     publish: (list: DiscoveredServer[]) => publish(list),
   };
 }
@@ -253,6 +257,7 @@ describe("registerServerIpc", () => {
         SERVER_RESCAN,
         SERVER_RETRY,
         SERVER_SELECT,
+        SERVER_STATUS_GET,
       ].sort(),
     );
   });
@@ -358,6 +363,31 @@ describe("registerServerIpc", () => {
     const t = ipcSetup();
 
     expect(await t.ipcMain.invoke(SERVER_CURRENT, fakeSender(1))).toEqual(selected);
+  });
+
+  it("answers the current connection status so a new window can catch up", async () => {
+    const t = ipcSetup();
+
+    expect(await t.ipcMain.invoke(SERVER_STATUS_GET, fakeSender(1))).toEqual({
+      state: "reconnecting",
+    });
+  });
+
+  it("reports online when no status source is wired", async () => {
+    const ipcMain = fakeIpcMain();
+    registerServerIpc({
+      ipcMain,
+      userDataDir: USER_DATA_DIR,
+      lanBrowser: { start: vi.fn(), stop: vi.fn(), rescan: vi.fn() },
+      probe: vi.fn(async (): Promise<ProbeResult> => ({ kind: "unreachable" })),
+      readSelected: vi.fn(async () => null),
+      writeSelected: vi.fn(async () => {}),
+      applyRuntimeConfig: vi.fn(),
+      reloadAll: vi.fn(),
+      broadcast: vi.fn(),
+    });
+
+    expect(await ipcMain.invoke(SERVER_STATUS_GET, fakeSender(1))).toEqual({ state: "online" });
   });
 
   it("publishStatus broadcasts to every window", () => {

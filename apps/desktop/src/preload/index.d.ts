@@ -35,7 +35,7 @@ interface ServerAPI {
   current: () => Promise<SelectedServer | null>;
   /** 保存所选服务器并重载所有窗口。 */
   select: (server: SelectedServer) => Promise<void>;
-  /** 订阅已选服务器的连接状态。返回取消订阅函数。 */
+  /** 订阅已选服务器的连接状态：先回调一次当前状态，之后每次变化回调。返回取消订阅函数。 */
   onStatus: (callback: (status: ServerStatus) => void) => () => void;
   /** 请求主进程立即重试连接已选服务器。 */
   retry: () => void;

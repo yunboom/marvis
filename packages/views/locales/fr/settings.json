@@ -1368,6 +1368,22 @@
         "switch_failed": "Impossible de changer de serveur",
         "cancel": "Annuler"
       },
+      "banner": {
+        "reconnecting": "La connexion à {{name}} est perdue. Reconnexion en cours…",
+        "unreachable": "Impossible de joindre {{name}} ({{address}}). Le contenu affiché n'est peut-être plus à jour.",
+        "retry": "Réessayer",
+        "switch": "Changer de serveur"
+      },
+      "moved": {
+        "title": "Reconnecté à {{name}}",
+        "body": "L'adresse du serveur est devenue {{address}} et a été mise à jour automatiquement"
+      },
+      "replaced": {
+        "title": "Un autre serveur répond à cette adresse",
+        "body": "{{address}} correspond désormais à « {{other}} » et non à « {{name}} », le serveur auquel vous étiez connecté. Pour éviter de vous connecter au mauvais serveur, le changement n'a pas été fait automatiquement.",
+        "wait": "Continuer à attendre",
+        "switch": "Changer de serveur"
+      },
       "tab_label": "Serveur"
     }
   },
