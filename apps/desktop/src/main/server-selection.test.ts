@@ -88,4 +88,13 @@ describe("server selection", () => {
 
     expect(await readSelectedServer(dir)).toBeNull();
   });
+
+  it("strips control and bidi characters from the saved name", async () => {
+    await writeFile(
+      join(dir, "server.json"),
+      JSON.stringify({ ...selected, name: "evil\u001b[31m\u202ename" }),
+    );
+
+    expect(await readSelectedServer(dir)).toMatchObject({ name: "evil[31mname" });
+  });
 });

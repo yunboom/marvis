@@ -1341,6 +1341,7 @@
       },
       "probe": {
         "ok": "Connexion possible · {{name}} · {{version}}",
+        "ok_no_version": "Connexion possible · {{name}}",
         "unreachable": "Impossible de se connecter à cette adresse",
         "not_marvis": "Cette adresse n'est pas un serveur Marvis",
         "too_old": "La version du serveur est trop ancienne"

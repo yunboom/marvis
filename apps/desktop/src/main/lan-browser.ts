@@ -1,7 +1,10 @@
 import { networkInterfaces } from "os";
 import { Bonjour } from "bonjour-service";
 import {
+  mdnsHostname,
   normalizeServerAddress,
+  preferredIPv4,
+  sanitizeDisplayText,
   type DiscoveredServer,
   type ProbeResult,
 } from "../shared/server-discovery";
@@ -51,6 +54,7 @@ export interface LanBrowser {
 // 一条 mDNS 通告及其核实结果。result 为 null 表示探测还没返回。
 interface Advert {
   url: string;
+  // 通告的 mDNS 主机名（如 marvis.local），只用于显示；不合规时为空串。
   host: string;
   addresses: string[];
   txtName: string;
@@ -109,7 +113,7 @@ export function createLanBrowser(deps: LanBrowserDeps): LanBrowser {
     const announced = advertFromService(svc, url);
 
     if (existing && existing.url === url) {
-      // 同一条通告再次出现：只刷新地址和 TXT，不重新探测。
+      // 同一条通告再次出现且地址没变：只刷新地址和 TXT，不重新探测。
       Object.assign(existing, announced, { result: existing.result });
       emit();
       return;
@@ -209,11 +213,14 @@ export function createLanBrowser(deps: LanBrowserDeps): LanBrowser {
   };
 }
 
-// 由通告的主机名和端口生成候选 URL。用主机名而不是 IP：地址变了名字不变。
+// 由通告的 IPv4 和端口生成候选 URL：优先私有网段，其次任意 IPv4，再退回数据包的来源地址，
+// 都没有 IPv4 时才用主机名。用 IP 不依赖 .local 解析；服务器换了 IP 后按实例 ID 跟随（见 server-watch）。
 function candidateUrl(svc: MdnsService): string | null {
-  const host = svc.host.trim().replace(/\.$/, "");
-  if (host === "") return null;
   if (!Number.isInteger(svc.port) || svc.port <= 0 || svc.port > MAX_PORT) return null;
+
+  const ip = preferredIPv4(svc.addresses ?? []) ?? preferredIPv4(svc.referer ? [svc.referer.address] : []);
+  const host = ip ?? mdnsHostname(svc.host);
+  if (host === null) return null;
 
   return normalizeServerAddress(`http://${host}:${svc.port}`);
 }
@@ -224,22 +231,27 @@ function advertFromService(svc: MdnsService, url: string): Omit<Advert, "result"
 
   return {
     url,
-    host: new URL(url).hostname,
+    host: mdnsHostname(svc.host) ?? "",
     addresses,
-    txtName: txtValue(svc.txt, TXT_KEY_NAME) || svc.name,
+    txtName: txtValue(svc.txt, TXT_KEY_NAME) || sanitizeDisplayText(svc.name),
     txtVersion: txtValue(svc.txt, TXT_KEY_VERSION),
     txtId: txtValue(svc.txt, TXT_KEY_ID),
   };
 }
 
-// 探测通过时用 /api/config 的身份；版本过旧的服务器没有身份可核实，
-// 只能用通告里的信息并标记为不兼容；其余结果（不可达、不是 Marvis）不展示。
+// 探测通过时用 /api/config 的身份，主机名换成通告的 mDNS 主机名（地址是 IP）；
+// 版本过旧的服务器没有身份可核实，只能用通告里的信息并标记为不兼容；其余结果（不可达、不是 Marvis）不展示。
 function toDiscovered(advert: Advert): DiscoveredServer | null {
   const result = advert.result;
   if (!result) return null;
 
   if (result.kind === "ok") {
-    return { ...result.server, isLocal: false, compatible: true };
+    return {
+      ...result.server,
+      host: advert.host || result.server.host,
+      isLocal: false,
+      compatible: true,
+    };
   }
 
   if (result.kind === "too_old") {
@@ -248,7 +260,7 @@ function toDiscovered(advert: Advert): DiscoveredServer | null {
       name: advert.txtName,
       version: advert.txtVersion,
       instanceId: advert.txtId,
-      host: advert.host,
+      host: advert.host || new URL(advert.url).hostname,
       appUrl: "",
       isLocal: false,
       compatible: false,
@@ -261,7 +273,7 @@ function toDiscovered(advert: Advert): DiscoveredServer | null {
 function txtValue(txt: Record<string, unknown> | undefined, key: string): string {
   const value = txt?.[key];
 
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === "string" ? sanitizeDisplayText(value) : "";
 }
 
 // IPv6 地址去掉网卡后缀（fe80::1%en0）并统一小写，便于比较。

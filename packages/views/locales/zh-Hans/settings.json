@@ -1331,6 +1331,7 @@
       },
       "probe": {
         "ok": "可以连接 · {{name}} · {{version}}",
+        "ok_no_version": "可以连接 · {{name}}",
         "unreachable": "无法连接到这个地址",
         "not_marvis": "这个地址不是 Marvis 服务器",
         "too_old": "服务器版本过旧"

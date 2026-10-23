@@ -97,19 +97,19 @@ describe("lan browser", () => {
     t.up(sameInstance);
     t.up(other);
 
-    // 三个候选 URL 在任一探测返回之前就已全部发出。
+    // 三个候选 URL 用通告里的 IPv4 拼成，在任一探测返回之前就已全部发出。
     expect(t.probe.mock.calls.map(([url]) => url)).toEqual([
-      "http://marvis.local:13840",
-      "http://marvis-2.local:13840",
-      "http://studio.local:13840",
+      "http://192.168.1.10:13840",
+      "http://10.0.0.5:13840",
+      "http://192.168.1.20:13840",
     ]);
     expect(t.onChange).not.toHaveBeenCalled();
 
-    t.resolve("http://marvis.local:13840", ok("http://marvis.local:13840"));
-    t.resolve("http://marvis-2.local:13840", ok("http://marvis-2.local:13840"));
+    t.resolve("http://192.168.1.10:13840", ok("http://192.168.1.10:13840"));
+    t.resolve("http://10.0.0.5:13840", ok("http://10.0.0.5:13840"));
     t.resolve(
-      "http://studio.local:13840",
-      ok("http://studio.local:13840", { name: "工作室", instanceId: "inst-b" }),
+      "http://192.168.1.20:13840",
+      ok("http://192.168.1.20:13840", { name: "工作室", instanceId: "inst-b" }),
     );
     await flush();
 
@@ -168,12 +168,12 @@ describe("lan browser", () => {
         txt: { v: "1", name: "旧服务器", ver: "0.5.0", id: "inst-old" },
       }),
     );
-    t.resolve("http://marvis.local:13840", ok("http://marvis.local:13840"));
+    t.resolve("http://192.168.1.10:13840", ok("http://192.168.1.10:13840"));
     t.resolve(
-      "http://studio.local:13840",
-      ok("http://studio.local:13840", { name: "工作室", instanceId: "inst-b" }),
+      "http://192.168.1.20:13840",
+      ok("http://192.168.1.20:13840", { name: "工作室", instanceId: "inst-b" }),
     );
-    t.resolve("http://legacy.local:13840", { kind: "too_old" });
+    t.resolve("http://192.168.1.30:13840", { kind: "too_old" });
     await flush();
 
     const byId = Object.fromEntries(t.lastList().map((s) => [s.instanceId, s]));
@@ -181,7 +181,8 @@ describe("lan browser", () => {
     expect(byId["inst-b"]).toMatchObject({ isLocal: false, compatible: true });
     // 版本过旧的服务器没有身份可核实，名称与版本取自通告，标记为不兼容。
     expect(byId["inst-old"]).toMatchObject({
-      url: "http://legacy.local:13840",
+      url: "http://192.168.1.30:13840",
+      host: "legacy.local",
       name: "旧服务器",
       version: "0.5.0",
       appUrl: "",
@@ -195,10 +196,88 @@ describe("lan browser", () => {
     t.browser.start(t.onChange);
 
     t.up(advert({ host: "marvis.local", addresses: [], referer: { address: "192.168.1.10" } }));
-    t.resolve("http://marvis.local:13840", ok("http://marvis.local:13840"));
+
+    expect(t.probe.mock.calls.map(([url]) => url)).toEqual(["http://192.168.1.10:13840"]);
+
+    t.resolve("http://192.168.1.10:13840", ok("http://192.168.1.10:13840"));
     await flush();
 
-    expect(t.lastList()[0]).toMatchObject({ isLocal: true });
+    expect(t.lastList()[0]).toMatchObject({ isLocal: true, host: "marvis.local" });
+  });
+
+  it("prefers a private IPv4 and keeps the mDNS host name for display", async () => {
+    const t = setup();
+    t.browser.start(t.onChange);
+
+    t.up(
+      advert({
+        host: "Marvis.local.",
+        addresses: ["fe80::1%en0", "203.0.113.5", "192.168.1.10"],
+        referer: { address: "192.168.1.99" },
+      }),
+    );
+
+    expect(t.probe.mock.calls.map(([url]) => url)).toEqual(["http://192.168.1.10:13840"]);
+
+    t.resolve("http://192.168.1.10:13840", ok("http://192.168.1.10:13840"));
+    await flush();
+
+    expect(t.lastList()[0]).toMatchObject({
+      url: "http://192.168.1.10:13840",
+      host: "marvis.local",
+    });
+  });
+
+  it("falls back to the host name when the announcement has no IPv4", async () => {
+    const t = setup();
+    t.browser.start(t.onChange);
+
+    t.up(advert({ host: "marvis.local", addresses: ["fe80::1%en0"], referer: { address: "fe80::1" } }));
+
+    expect(t.probe.mock.calls.map(([url]) => url)).toEqual(["http://marvis.local:13840"]);
+  });
+
+  it("ignores an announcement whose host name cannot go into an address and has no IPv4", () => {
+    const t = setup();
+    t.browser.start(t.onChange);
+
+    t.up(advert({ host: "evil host.local", addresses: [] }));
+    t.up(advert({ host: "evil/x.local", addresses: ["fe80::1"], fqdn: "x._marvis._tcp.local" }));
+
+    expect(t.probe).not.toHaveBeenCalled();
+  });
+
+  it("follows a new IPv4 announced for the same service", async () => {
+    const t = setup();
+    t.browser.start(t.onChange);
+
+    const svc = advert({ host: "marvis.local", addresses: ["192.168.1.10"] });
+    t.up(svc);
+    t.resolve("http://192.168.1.10:13840", ok("http://192.168.1.10:13840"));
+    await flush();
+
+    t.up({ ...svc, addresses: ["192.168.1.31"] });
+    t.resolve("http://192.168.1.31:13840", ok("http://192.168.1.31:13840"));
+    await flush();
+
+    expect(t.lastList().map((server) => server.url)).toEqual(["http://192.168.1.31:13840"]);
+  });
+
+  it("strips control and bidi characters from announced text", async () => {
+    const t = setup();
+    t.browser.start(t.onChange);
+
+    t.up(
+      advert({
+        host: "legacy.local",
+        addresses: ["192.168.1.30"],
+        txt: { v: "1", name: "旧\u001b[31m服务器\u202e", ver: "0.5.0\n", id: "inst-old" },
+      }),
+    );
+    t.resolve("http://192.168.1.30:13840", { kind: "too_old" });
+    await flush();
+
+    expect(t.lastList()[0]).toMatchObject({ name: "旧[31m服务器", version: "0.5.0" });
   });
 
   it("hides candidates that are unreachable or not Marvis", async () => {
@@ -253,9 +332,9 @@ describe("lan browser", () => {
     const t = setup();
     t.browser.start(t.onChange);
 
-    const svc = advert({ host: "marvis.local" });
+    const svc = advert({ host: "marvis.local", addresses: ["192.168.1.10"] });
     t.up(svc);
-    t.up({ ...svc, addresses: ["192.168.1.10"] });
+    t.up({ ...svc, txt: { ...svc.txt, ver: "0.6.6" } });
 
     expect(t.probe).toHaveBeenCalledTimes(1);
   });

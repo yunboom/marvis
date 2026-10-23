@@ -193,7 +193,7 @@ export function createServerWatch(deps: ServerWatchDeps): ServerWatch {
     return WATCH_UNREACHABLE_INTERVAL_MS;
   }
 
-  // 按固定间隔排下一次：探测本身的耗时（最长 3 秒的超时）计入间隔。
+  // 按固定间隔排下一次：探测本身的耗时（超时最长 3 秒，.local 地址 6 秒）计入间隔。
   function schedule(token: number, startedAt: number): void {
     if (!running || token !== generation) return;
 
