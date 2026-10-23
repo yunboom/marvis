@@ -68,6 +68,7 @@ function WindowOverlayInner() {
       {(overlay.type === "new-workspace" || overlay.type === "onboarding") && (
         <OnboardingFlow
           onCancel={overlay.type === "new-workspace" ? onBack : undefined}
+          resumeExistingWorkspace={overlay.type === "onboarding"}
           onComplete={(ws, destination) => {
             close();
             if (ws && destination?.kind === "chat") {

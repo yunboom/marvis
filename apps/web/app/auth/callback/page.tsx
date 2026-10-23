@@ -155,8 +155,9 @@ function CallbackContent() {
             }
           }
 
-          // 3. Default: hand off to the resolver (first workspace for users
-          //    who have one, /workspaces/new for users with none).
+          // 3. Default: hand off to the resolver (onboarding for users who
+          //    haven't finished it, first workspace for returning users,
+          //    /workspaces/new for onboarded users with zero workspaces).
           router.push(resolvePostAuthDestination(wsList, onboarded));
         })
         .catch((err) => {

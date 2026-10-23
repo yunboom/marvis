@@ -15,6 +15,7 @@ import {
   useBootstrapMika,
   type OnboardingStep,
 } from "@marvis/core/onboarding";
+import { useWorkspaceList } from "@marvis/core/workspace";
 import type { AgentRuntime, Workspace } from "@marvis/core/types";
 import { StepShell } from "./components/step-shell";
 import { StepRuntimeConnect } from "./steps/step-runtime-connect";
@@ -31,9 +32,13 @@ import { useT } from "../i18n";
 
 /**
  * Creating a workspace: the standalone create page, then the runtime step that
- * provisions the workspace's Mika. Users are onboarded on signup, so this is
- * the only flow left — a user with no workspace lands here right after login,
- * and the workspace switcher's "new workspace" runs the same two steps.
+ * provisions the workspace's Mika. First-run onboarding and the workspace
+ * switcher's "new workspace" run the same two steps.
+ *
+ * Onboarding stays incomplete until the runtime step finishes, so a member who
+ * leaves after creating the workspace — to install the CLI, or the desktop app
+ * — comes back to onboarding; `resumeExistingWorkspace` then picks up at the
+ * runtime step for that workspace instead of asking for another one.
  *
  * Two exit shapes feed onComplete:
  *   - Runtime-skipped (no runtime picked): create one install-runtime guide
@@ -53,6 +58,10 @@ interface OnboardingFlowProps {
   /** Only passed when the user has a workspace to return to; without one the
    *  create page offers Log out instead. */
   onCancel?: () => void;
+  /** First-run onboarding only: a workspace that already exists was created
+   *  by an earlier, unfinished pass, so the flow resumes at its runtime step.
+   *  Creating an additional workspace never resumes. */
+  resumeExistingWorkspace?: boolean;
   runtimeInstructions?: React.ReactNode;
   /** Desktop wires this to restart the bundled daemon so a freshly
    *  installed agent CLI gets picked up on the runtime step. Web omits
@@ -68,6 +77,7 @@ interface OnboardingFlowProps {
 export function OnboardingFlow({
   onComplete,
   onCancel,
+  resumeExistingWorkspace = false,
   runtimeInstructions,
   onRuntimeRefresh,
   runtimesPending,
@@ -78,7 +88,13 @@ export function OnboardingFlow({
     throw new Error("OnboardingFlow requires an authenticated user");
   }
 
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [createdWorkspace, setWorkspace] = useState<Workspace | null>(null);
+  const { workspaces, ready: workspacesReady } = useWorkspaceList({
+    enabled: resumeExistingWorkspace,
+  });
+  const workspace =
+    createdWorkspace ??
+    (resumeExistingWorkspace ? (workspaces[0] ?? null) : null);
   const bootstrapMika = useBootstrapMika(workspace?.id ?? "");
   // Keyed by workspace so retrying Skip after completeOnboarding failed reuses
   // the guide issue instead of creating a second one.
@@ -181,6 +197,12 @@ export function OnboardingFlow({
     },
     [bootstrapMika, i18n.language, workspace, onComplete, t, user.id],
   );
+
+  // Wait for the list before choosing a step, so a resumable member never
+  // sees the create page flash first.
+  if (resumeExistingWorkspace && !workspacesReady && !createdWorkspace) {
+    return null;
+  }
 
   if (!workspace) {
     return (

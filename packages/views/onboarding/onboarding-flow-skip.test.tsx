@@ -49,6 +49,10 @@ vi.mock("@marvis/core/auth", () => ({
   ),
 }));
 
+vi.mock("@marvis/core/workspace", () => ({
+  useWorkspaceList: () => ({ workspaces: [], ready: true }),
+}));
+
 vi.mock("@marvis/core/onboarding", async () => {
   const actual = await vi.importActual<Record<string, unknown>>(
     "@marvis/core/onboarding",

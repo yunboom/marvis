@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider } from "@marvis/core/i18n/react";
 import enCommon from "../locales/en/common.json";
@@ -10,6 +10,14 @@ const TEST_RESOURCES = {
 };
 
 const NEW_WORKSPACE = { id: "ws-new", slug: "new-ws", name: "New" };
+
+const { workspaceList } = vi.hoisted(() => ({
+  workspaceList: { workspaces: [] as unknown[], ready: true },
+}));
+
+vi.mock("@marvis/core/workspace", () => ({
+  useWorkspaceList: () => workspaceList,
+}));
 
 vi.mock("../auth", () => ({ useLogout: () => vi.fn() }));
 
@@ -57,7 +65,14 @@ vi.mock("./steps/step-runtime-connect", () => ({
 
 import { OnboardingFlow } from "./onboarding-flow";
 
-function renderFlow(props: { onCancel?: () => void } = {}) {
+beforeEach(() => {
+  workspaceList.workspaces = [];
+  workspaceList.ready = true;
+});
+
+function renderFlow(
+  props: { onCancel?: () => void; resumeExistingWorkspace?: boolean } = {},
+) {
   return render(
     <I18nProvider locale="en" resources={TEST_RESOURCES}>
       <OnboardingFlow onComplete={vi.fn()} {...props} />
@@ -86,6 +101,38 @@ describe("OnboardingFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "cancel" }));
 
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  // A member who leaves after creating the workspace (to install the CLI or
+  // the desktop app) must land back on the runtime step, or Mika is never set
+  // up for that workspace.
+  it("resumes at the runtime step for a workspace from an unfinished pass", () => {
+    workspaceList.workspaces = [{ id: "ws-old", slug: "old-ws", name: "Old" }];
+    renderFlow({ resumeExistingWorkspace: true });
+
+    expect(screen.getByText("runtime step for old-ws")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "create workspace" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("waits for the workspace list before choosing a step when resuming", () => {
+    workspaceList.ready = false;
+    renderFlow({ resumeExistingWorkspace: true });
+
+    expect(
+      screen.queryByRole("button", { name: "create workspace" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/runtime step/)).not.toBeInTheDocument();
+  });
+
+  it("never resumes when creating an additional workspace", () => {
+    workspaceList.workspaces = [{ id: "ws-old", slug: "old-ws", name: "Old" }];
+    renderFlow();
+
+    expect(
+      screen.getByRole("button", { name: "create workspace" }),
+    ).toBeInTheDocument();
   });
 
   it("offers no way back once the workspace exists", () => {
