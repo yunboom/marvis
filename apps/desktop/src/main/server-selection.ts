@@ -5,6 +5,7 @@ import {
   sanitizeDisplayText,
   SERVER_SOURCE_LAN,
   SERVER_SOURCE_MANUAL,
+  SERVER_SOURCE_STANDALONE,
   type SelectedServer,
 } from "../shared/server-discovery";
 
@@ -66,7 +67,9 @@ export function toSelectedServer(value: unknown): SelectedServer | null {
   if (typeof url !== "string" || normalizeServerAddress(url) === null) return null;
   if (typeof name !== "string") return null;
   if (typeof instanceId !== "string") return null;
-  if (source !== SERVER_SOURCE_LAN && source !== SERVER_SOURCE_MANUAL) return null;
+  if (source !== SERVER_SOURCE_LAN && source !== SERVER_SOURCE_MANUAL && source !== SERVER_SOURCE_STANDALONE) {
+    return null;
+  }
   if (typeof appUrl !== "string") return null;
 
   return { url, name: sanitizeDisplayText(name), instanceId, source, appUrl };

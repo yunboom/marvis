@@ -48,10 +48,20 @@ function sampleState(): StandaloneStateFile {
     previousServerVersion: null,
     postgresVersion: "17.2",
     installedAt: "2026-10-24T00:00:00.000Z",
+    autoDownloadUpdates: false,
   };
 }
 
 describe("state file", () => {
+  it("treats a state file without autoDownloadUpdates as enabled", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "standalone-state-"));
+    const path = join(dir, "config.json");
+    const { autoDownloadUpdates: _omitted, ...legacy } = sampleState();
+    await writeFile(path, JSON.stringify(legacy), "utf-8");
+
+    expect((await readStateFile(path))?.autoDownloadUpdates).toBe(true);
+  });
+
   let dir: string;
 
   beforeEach(async () => {

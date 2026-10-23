@@ -1,11 +1,15 @@
 // 输入框的默认地址：mDNS 主机名 + 后端默认端口。
 export const DEFAULT_SERVER_ADDRESS = "http://marvis.local:13840";
 
-// 已选服务器的来源：局域网发现 / 手动输入。
+// 已选服务器的来源：局域网发现 / 手动输入 / 本机单机模式。
 export const SERVER_SOURCE_LAN = "lan";
 export const SERVER_SOURCE_MANUAL = "manual";
+export const SERVER_SOURCE_STANDALONE = "standalone";
 
-export type ServerSource = typeof SERVER_SOURCE_LAN | typeof SERVER_SOURCE_MANUAL;
+export type ServerSource =
+  | typeof SERVER_SOURCE_LAN
+  | typeof SERVER_SOURCE_MANUAL
+  | typeof SERVER_SOURCE_STANDALONE;
 
 // 经 /api/config 核实后的服务器身份。appUrl 为空串表示没有网页端。
 export interface ServerIdentity {

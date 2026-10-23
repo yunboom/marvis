@@ -20,6 +20,38 @@ import {
   type IssueWindowRequest,
 } from "../shared/issue-window";
 import { AUTH_SESSION_STATE_CHANNEL } from "../shared/auth-session";
+import {
+  STANDALONE_AUTO_UPDATE_GET,
+  STANDALONE_AUTO_UPDATE_SET,
+  STANDALONE_BACKUP_NOW,
+  STANDALONE_BACKUP_RESTORE,
+  STANDALONE_BACKUPS_LIST,
+  STANDALONE_CANCEL,
+  STANDALONE_CONFIG_GET,
+  STANDALONE_DEFAULTS_GET,
+  STANDALONE_ENTER,
+  STANDALONE_INSTALL,
+  STANDALONE_OPEN_DIR,
+  STANDALONE_OPEN_LOGS,
+  STANDALONE_PAUSE,
+  STANDALONE_RESTART,
+  STANDALONE_RESUME,
+  STANDALONE_RETRY,
+  STANDALONE_SAVE_SETTINGS,
+  STANDALONE_SET_LAN,
+  STANDALONE_STATUS,
+  STANDALONE_STATUS_GET,
+  STANDALONE_STOP,
+  STANDALONE_SWITCH_REMOTE,
+  STANDALONE_UPDATE_CHECK,
+  STANDALONE_UPDATE_DOWNLOAD,
+  STANDALONE_UPDATE_INSTALL,
+  type StandaloneBackup,
+  type StandaloneConfigView,
+  type StandaloneSetupInput,
+  type StandaloneStatus,
+  type StandaloneSubmitResult,
+} from "../shared/standalone";
 import { LARK_DESKTOP_LOGIN_START_CHANNEL } from "../shared/lark-desktop-login";
 import {
   SERVER_CURRENT,
@@ -170,6 +202,58 @@ const serverAPI = {
   },
   /** 请求主进程立即重试连接已选服务器。 */
   retry: () => ipcRenderer.send(SERVER_RETRY),
+};
+
+const standaloneAPI = {
+  /** 订阅单机模式状态：先回调一次当前状态，之后每次变化回调。返回取消订阅函数。 */
+  onStatus: (callback: (status: StandaloneStatus) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, status: StandaloneStatus) => callback(status);
+    ipcRenderer.on(STANDALONE_STATUS, handler);
+
+    let subscribed = true;
+    void (ipcRenderer.invoke(STANDALONE_STATUS_GET) as Promise<StandaloneStatus>)
+      .then((status) => {
+        if (subscribed) callback(status);
+      })
+      .catch(() => {});
+
+    return () => {
+      subscribed = false;
+      ipcRenderer.removeListener(STANDALONE_STATUS, handler);
+    };
+  },
+  /** 「完成设置」页的预填值。 */
+  defaults: (): Promise<StandaloneSetupInput> => ipcRenderer.invoke(STANDALONE_DEFAULTS_GET),
+  /** 当前保存的配置；敏感值只告诉是否已设置。未安装时为 null。 */
+  config: (): Promise<StandaloneConfigView | null> => ipcRenderer.invoke(STANDALONE_CONFIG_GET),
+  /** 保存配置并开始准备资源。 */
+  install: (input: StandaloneSetupInput): Promise<StandaloneSubmitResult> =>
+    ipcRenderer.invoke(STANDALONE_INSTALL, input),
+  /** 保存配置；运行中会重新加载生效。 */
+  saveSettings: (input: StandaloneSetupInput): Promise<StandaloneSubmitResult> =>
+    ipcRenderer.invoke(STANDALONE_SAVE_SETTINGS, input),
+  pause: () => ipcRenderer.send(STANDALONE_PAUSE),
+  resume: () => ipcRenderer.send(STANDALONE_RESUME),
+  cancel: (): Promise<void> => ipcRenderer.invoke(STANDALONE_CANCEL),
+  retry: (): Promise<void> => ipcRenderer.invoke(STANDALONE_RETRY),
+  /** 选定本机并以管理员身份登录。 */
+  enter: (): Promise<void> => ipcRenderer.invoke(STANDALONE_ENTER),
+  restart: (): Promise<void> => ipcRenderer.invoke(STANDALONE_RESTART),
+  stop: (): Promise<void> => ipcRenderer.invoke(STANDALONE_STOP),
+  setLan: (enabled: boolean): Promise<void> => ipcRenderer.invoke(STANDALONE_SET_LAN, enabled),
+  autoDownloadUpdates: (): Promise<boolean> => ipcRenderer.invoke(STANDALONE_AUTO_UPDATE_GET),
+  setAutoDownloadUpdates: (enabled: boolean): Promise<void> =>
+    ipcRenderer.invoke(STANDALONE_AUTO_UPDATE_SET, enabled),
+  checkForUpdate: (): Promise<void> => ipcRenderer.invoke(STANDALONE_UPDATE_CHECK),
+  downloadUpdate: (): Promise<void> => ipcRenderer.invoke(STANDALONE_UPDATE_DOWNLOAD),
+  installUpdate: (): Promise<void> => ipcRenderer.invoke(STANDALONE_UPDATE_INSTALL),
+  listBackups: (): Promise<StandaloneBackup[]> => ipcRenderer.invoke(STANDALONE_BACKUPS_LIST),
+  backupNow: (): Promise<void> => ipcRenderer.invoke(STANDALONE_BACKUP_NOW),
+  restoreBackup: (fileName: string): Promise<void> => ipcRenderer.invoke(STANDALONE_BACKUP_RESTORE, fileName),
+  openDataDir: (): Promise<void> => ipcRenderer.invoke(STANDALONE_OPEN_DIR),
+  openLogs: (): Promise<void> => ipcRenderer.invoke(STANDALONE_OPEN_LOGS),
+  /** 已探测通过的远程服务器：切换过去并停止单机模式。 */
+  switchRemote: (server: SelectedServer): Promise<void> => ipcRenderer.invoke(STANDALONE_SWITCH_REMOTE, server),
 };
 
 const desktopAPI = {
@@ -323,6 +407,8 @@ const desktopAPI = {
     ipcRenderer.invoke("window:open-issue", request),
   /** 服务器发现、探测与选择。 */
   server: serverAPI,
+  /** 单机模式：准备资源、启停、更新与备份。 */
+  standalone: standaloneAPI,
 };
 
 type DaemonReauthResult =

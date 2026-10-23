@@ -370,6 +370,8 @@ export const STANDALONE_RESTART = "standalone:restart";
 export const STANDALONE_STOP = "standalone:stop";
 export const STANDALONE_SET_LAN = "standalone:set-lan";
 export const STANDALONE_SAVE_SETTINGS = "standalone:save-settings";
+export const STANDALONE_AUTO_UPDATE_SET = "standalone:auto-update-set";
+export const STANDALONE_AUTO_UPDATE_GET = "standalone:auto-update-get";
 export const STANDALONE_UPDATE_CHECK = "standalone:update-check";
 export const STANDALONE_UPDATE_DOWNLOAD = "standalone:update-download";
 export const STANDALONE_UPDATE_INSTALL = "standalone:update-install";
@@ -379,6 +381,9 @@ export const STANDALONE_BACKUP_RESTORE = "standalone:backup-restore";
 export const STANDALONE_OPEN_DIR = "standalone:open-dir";
 export const STANDALONE_OPEN_LOGS = "standalone:open-logs";
 export const STANDALONE_SWITCH_REMOTE = "standalone:switch-remote";
+
+// 安装、保存设置的结果：校验不通过时带逐项错误。
+export type StandaloneSubmitResult = { ok: true } | { ok: false; errors: ValidationErrors };
 
 // 「设置」页读取的当前配置：敏感值只告诉界面是否已设置，不回传明文。
 export interface StandaloneConfigView {

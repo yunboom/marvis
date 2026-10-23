@@ -35,6 +35,14 @@ describe("server selection", () => {
     expect(await readSelectedServer(dir)).toEqual(manual);
   });
 
+  it("round-trips the local standalone server", async () => {
+    const local: SelectedServer = { ...selected, url: "http://127.0.0.1:13840", source: "standalone", appUrl: "" };
+
+    await writeSelectedServer(dir, local);
+
+    expect(await readSelectedServer(dir)).toEqual(local);
+  });
+
   it("writes exactly the keys the CLI reads", async () => {
     await writeSelectedServer(dir, selected);
 

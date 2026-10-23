@@ -26,6 +26,8 @@ export interface StandaloneStateFile {
   postgresVersion: string | null;
   // 首次启动成功的 ISO 时间。
   installedAt: string | null;
+  // 「设置 › 更新」里的「自动下载资源更新」，旧文件缺这个键时按开启处理。
+  autoDownloadUpdates: boolean;
 }
 
 // SecretStorageUnavailableError 表示系统加密存储不可用，敏感配置无法安全落盘。
@@ -63,6 +65,7 @@ export async function writeStateFile(path: string, state: StandaloneStateFile): 
     previousServerVersion: state.previousServerVersion,
     postgresVersion: state.postgresVersion,
     installedAt: state.installedAt,
+    autoDownloadUpdates: state.autoDownloadUpdates,
   };
 
   await writeAtomic(path, `${JSON.stringify(body, null, 2)}\n`);
@@ -184,12 +187,21 @@ function toStateFile(value: unknown): StandaloneStateFile | null {
   const settings = toSettings(value.settings);
   if (!settings) return null;
 
-  const { locked, serverVersion, previousServerVersion, postgresVersion, installedAt } = value;
+  const { locked, serverVersion, previousServerVersion, postgresVersion, installedAt, autoDownloadUpdates } = value;
   if (typeof locked !== "boolean") return null;
   if (!isStringOrNull(serverVersion) || !isStringOrNull(previousServerVersion)) return null;
   if (!isStringOrNull(postgresVersion) || !isStringOrNull(installedAt)) return null;
+  if (autoDownloadUpdates !== undefined && typeof autoDownloadUpdates !== "boolean") return null;
 
-  return { settings, locked, serverVersion, previousServerVersion, postgresVersion, installedAt };
+  return {
+    settings,
+    locked,
+    serverVersion,
+    previousServerVersion,
+    postgresVersion,
+    installedAt,
+    autoDownloadUpdates: autoDownloadUpdates ?? true,
+  };
 }
 
 function toSecrets(value: unknown): StandaloneSecrets | null {

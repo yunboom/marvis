@@ -24,7 +24,8 @@ import { browseBonjour, createLanBrowser, listLocalAddresses } from "./lan-brows
 import { browseDnsSd } from "./dns-sd-browse";
 import { probeServer } from "./server-probe";
 import { readSelectedServer, writeSelectedServer } from "./server-selection";
-import { registerServerIpc } from "./server-ipc";
+import { createServerController, registerServerIpc } from "./server-ipc";
+import { setupStandalone } from "./standalone/setup";
 import { createServerWatchRunner } from "./server-watch-runner";
 import type { RuntimeConfigResult } from "../shared/runtime-config";
 import {
@@ -830,6 +831,31 @@ if (!gotTheLock) {
     });
 
     void serverWatch.restart();
+
+    // 单机模式：选定本机服务器、切换到远程服务器都走与设置页相同的选定流程。
+    // 创建窗口前完成初始化，界面一启动就能查询单机模式的状态。
+    const standaloneServerController = createServerController({
+      userDataDir: app.getPath("userData"),
+      probe: probeServer,
+      readSelected: readSelectedServer,
+      writeSelected: writeSelectedServer,
+      applyRuntimeConfig: (result) => {
+        applyRuntimeConfig(result);
+        void serverWatch.restart();
+      },
+      reloadAll: reloadAllWindows,
+    });
+    await setupStandalone({
+      isDev: is.dev,
+      userDataDir: app.getPath("userData"),
+      broadcast: (channel, payload) => {
+        for (const target of BrowserWindow.getAllWindows()) {
+          if (!target.isDestroyed()) target.webContents.send(channel, payload);
+        }
+      },
+      selectServer: (server) => standaloneServerController.select(server),
+      deliverToken: (token) => dispatchToMainRenderer("auth:token", token),
+    });
 
     ipcMain.on(RENDERER_ROUTE_CONTEXT_CHANNEL, (event, context: unknown) => {
       if (!BrowserWindow.fromWebContents(event.sender)) return;

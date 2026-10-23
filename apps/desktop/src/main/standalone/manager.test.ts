@@ -1,0 +1,370 @@
+// @vitest-environment node
+import { existsSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import {
+  STANDALONE_ERROR_CHECKSUM,
+  STANDALONE_ERROR_PORT_IN_USE,
+  STANDALONE_ERROR_START_FAILED,
+  STANDALONE_ERROR_UNSUPPORTED_PLATFORM,
+  defaultStandaloneSettings,
+  generateStandaloneSecrets,
+  type StandaloneManifest,
+  type StandalonePhase,
+  type StandaloneSetupInput,
+  type StandaloneStatus,
+} from "../../shared/standalone";
+import { BootstrapLoginError } from "./bootstrap-login";
+import type { SecretCodec } from "./config-store";
+import { DownloadAbortedError, DownloadChecksumError, type DownloadOptions } from "./download";
+import { StandaloneManager, StandaloneValidationError, type StandaloneOps } from "./manager";
+import { standaloneLayout } from "./paths";
+import type { ServerHandle } from "./server-process";
+
+const codec: SecretCodec = {
+  isAvailable: () => true,
+  encrypt: (plain) => Buffer.from(`enc:${Buffer.from(plain).toString("base64")}`),
+  decrypt: (data) => Buffer.from(data.toString().slice(4), "base64").toString(),
+};
+
+function asset(name: string) {
+  return { name, size: 100, sha256: "a".repeat(64), urls: [`https://example.com/${name}`] };
+}
+
+function manifest(version = "0.6.6"): StandaloneManifest {
+  return {
+    schemaVersion: 1,
+    version,
+    minAppVersion: "0.0.0",
+    server: { "darwin-arm64": asset(`marvis-server-${version}-darwin-arm64.tar.xz`) },
+    postgres: { version: "17.11.0", assets: { "darwin-arm64": asset("marvis-postgres-17.11.0-darwin-arm64.tar.xz") } },
+  };
+}
+
+function setupInput(): StandaloneSetupInput {
+  const settings = defaultStandaloneSettings("studio");
+  settings.adminEmail = "admin@example.com";
+  return { settings, secrets: generateStandaloneSecrets() };
+}
+
+// 一个可控的服务端进程：exit() 模拟意外退出。
+function fakeHandle(): ServerHandle & { exit(code: number): void } {
+  let resolveExit!: (code: number | null) => void;
+  const exited = new Promise<number | null>((r) => (resolveExit = r));
+  return {
+    pid: 4242,
+    exited,
+    stop: vi.fn(async () => resolveExit(0)),
+    exit: (code) => resolveExit(code),
+  };
+}
+
+interface Harness {
+  manager: StandaloneManager;
+  phases: StandalonePhase[];
+  last: () => StandaloneStatus;
+  ops: StandaloneOps;
+  handles: ReturnType<typeof fakeHandle>[];
+  selected: string[];
+  tokens: string[];
+  root: string;
+  setManifest(m: StandaloneManifest): void;
+}
+
+let clockTick = 0;
+
+async function harness(overrides: Partial<StandaloneOps> = {}, platformKey: "darwin-arm64" | null = "darwin-arm64"): Promise<Harness> {
+  const root = await mkdtemp(join(tmpdir(), "standalone-manager-"));
+  const layout = standaloneLayout(root);
+  const phases: StandalonePhase[] = [];
+  const statuses: StandaloneStatus[] = [];
+  const handles: ReturnType<typeof fakeHandle>[] = [];
+  const selected: string[] = [];
+  const tokens: string[] = [];
+  let current = manifest();
+
+  const ops: StandaloneOps = {
+    fetchManifest: vi.fn(async () => current),
+    download: vi.fn(async (o: DownloadOptions) => {
+      o.onProgress?.({ receivedBytes: o.expectedSize, totalBytes: o.expectedSize, bytesPerSecond: 10 });
+      await writeFile(o.destPath, "bundle");
+    }),
+    installArchive: vi.fn(async (_archive: string, finalDir: string) => {
+      await mkdir(finalDir, { recursive: true });
+    }),
+    initPostgres: vi.fn(async (paths) => {
+      await mkdir(paths.dataDir, { recursive: true });
+      await writeFile(join(paths.dataDir, "PG_VERSION"), "17");
+      return true;
+    }),
+    startPostgres: vi.fn(async () => undefined),
+    stopPostgres: vi.fn(async () => undefined),
+    findFreePort: vi.fn(async () => 55432),
+    isPortFree: vi.fn(async () => true),
+    runMigrations: vi.fn(async () => undefined),
+    startServerProcess: vi.fn(() => {
+      const h = fakeHandle();
+      handles.push(h);
+      return h;
+    }),
+    waitForReady: vi.fn(async () => undefined),
+    killStaleProcess: vi.fn(async () => false),
+    tailFile: vi.fn(async () => "last log lines"),
+    bootstrapLogin: vi.fn(async () => "jwt-token"),
+    ...overrides,
+  };
+
+  const manager = new StandaloneManager({
+    layout,
+    platformKey,
+    appVersion: "0.6.6",
+    manifestUrl: "https://example.com/server-manifest.json",
+    hostName: "studio",
+    baseEnv: { PATH: "/usr/bin" },
+    codec,
+    publish: (s) => {
+      statuses.push(s);
+      if (phases[phases.length - 1] !== s.phase) phases.push(s.phase);
+    },
+    lanAddress: () => "192.168.1.20",
+    selectStandaloneServer: async (url) => {
+      selected.push(url);
+    },
+    deliverToken: (t) => tokens.push(t),
+    log: () => undefined,
+    ops,
+    now: () => new Date(Date.UTC(2026, 9, 24, 8, 0, clockTick++)),
+  });
+  await manager.init();
+
+  return {
+    manager,
+    phases,
+    last: () => statuses[statuses.length - 1],
+    ops,
+    handles,
+    selected,
+    tokens,
+    root,
+    setManifest: (m) => (current = m),
+  };
+}
+
+async function settle(h: Harness, phase: StandalonePhase): Promise<void> {
+  await vi.waitFor(() => expect(h.last().phase).toBe(phase));
+}
+
+describe("StandaloneManager install", () => {
+  it("downloads, installs and starts", async () => {
+    const h = await harness();
+
+    await h.manager.install(setupInput());
+    await settle(h, "running");
+
+    expect(h.phases).toEqual(["not_installed", "downloading", "verifying", "installing", "starting", "running"]);
+    expect(h.last()).toMatchObject({ version: "0.6.6", localUrl: "http://127.0.0.1:13840", lanUrl: null });
+    expect(h.ops.download).toHaveBeenCalledTimes(2);
+    expect(existsSync(join(h.root, "downloads"))).toBe(false);
+    const state = JSON.parse(await readFile(join(h.root, "config.json"), "utf-8"));
+    expect(state).toMatchObject({ locked: true, serverVersion: "0.6.6", postgresVersion: "17.11.0" });
+    // 敏感配置加密落盘，状态文件里没有明文密钥。
+    expect(JSON.stringify(state)).not.toContain("jwtSecret");
+  });
+
+  it("rejects invalid settings without writing anything", async () => {
+    const h = await harness();
+    const input = setupInput();
+    input.settings.adminEmail = "";
+
+    await expect(h.manager.install(input)).rejects.toBeInstanceOf(StandaloneValidationError);
+    expect(existsSync(join(h.root, "config.json"))).toBe(false);
+  });
+
+  it("reports a busy port with the port number", async () => {
+    const h = await harness({ isPortFree: vi.fn(async () => false) });
+
+    await h.manager.install(setupInput());
+    await settle(h, "failed");
+
+    expect(h.last().error).toMatchObject({ code: STANDALONE_ERROR_PORT_IN_USE, port: 13840 });
+    expect(h.ops.startServerProcess).not.toHaveBeenCalled();
+  });
+
+  it("pauses and resumes the download", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    let calls = 0;
+    const download = vi.fn(async (o: DownloadOptions) => {
+      calls++;
+      if (o.signal?.aborted) throw new DownloadAbortedError();
+      if (calls === 1) {
+        await new Promise((_, reject) => o.signal?.addEventListener("abort", () => reject(new DownloadAbortedError())));
+      }
+      await gate;
+      await writeFile(o.destPath, "bundle");
+    });
+    const h = await harness({ download });
+
+    await h.manager.install(setupInput());
+    await settle(h, "downloading");
+    h.manager.pause();
+    await settle(h, "paused");
+
+    release();
+    h.manager.resume();
+    await settle(h, "running");
+  });
+
+  it("fails with a checksum error", async () => {
+    const h = await harness({
+      download: vi.fn(async () => {
+        throw new DownloadChecksumError("mismatch");
+      }),
+    });
+
+    await h.manager.install(setupInput());
+    await settle(h, "failed");
+
+    expect(h.last().error?.code).toBe(STANDALONE_ERROR_CHECKSUM);
+  });
+
+  it("refuses unsupported platforms", async () => {
+    const h = await harness({}, null);
+
+    await h.manager.install(setupInput());
+    await settle(h, "failed");
+
+    expect(h.last().error?.code).toBe(STANDALONE_ERROR_UNSUPPORTED_PLATFORM);
+  });
+});
+
+describe("StandaloneManager running", () => {
+  let h: Harness;
+
+  beforeEach(async () => {
+    h = await harness();
+    await h.manager.install(setupInput());
+    await settle(h, "running");
+  });
+
+  it("enters: selects the local server and hands the session token over", async () => {
+    await h.manager.enter();
+
+    expect(h.selected).toEqual(["http://127.0.0.1:13840"]);
+    expect(h.tokens).toEqual(["jwt-token"]);
+    expect(h.ops.bootstrapLogin).toHaveBeenCalledWith("http://127.0.0.1:13840", expect.stringMatching(/^[0-9a-f]{64}$/), "admin@example.com");
+  });
+
+  it("restarts for a fresh bootstrap token when the old one was used", async () => {
+    await h.manager.enter();
+    await h.manager.enter();
+
+    expect(h.handles).toHaveLength(2);
+    expect(h.tokens).toEqual(["jwt-token", "jwt-token"]);
+  });
+
+  it("restarts when the server reports the token as used", async () => {
+    const login = vi.mocked(h.ops.bootstrapLogin);
+    login.mockRejectedValueOnce(new BootstrapLoginError("used", true));
+
+    await h.manager.enter();
+
+    expect(h.handles).toHaveLength(2);
+    expect(h.tokens).toEqual(["jwt-token"]);
+  });
+
+  it("marks an unexpected server exit as failed", async () => {
+    h.handles[0].exit(2);
+    await settle(h, "failed");
+
+    expect(h.last().error?.code).toBe(STANDALONE_ERROR_START_FAILED);
+    expect(h.ops.stopPostgres).toHaveBeenCalled();
+  });
+
+  it("stops the server and the database", async () => {
+    await h.manager.stop();
+
+    expect(h.last().phase).toBe("stopped");
+    expect(h.handles[0].stop).toHaveBeenCalled();
+    expect(h.manager.isRunning()).toBe(false);
+  });
+
+  it("restarts with LAN access on a changed setting", async () => {
+    await h.manager.setLan(true);
+
+    expect(h.handles).toHaveLength(2);
+    expect(h.last()).toMatchObject({ phase: "running", lanUrl: "http://192.168.1.20:13840" });
+    expect(h.ops.isPortFree).toHaveBeenLastCalledWith(13840, "0.0.0.0");
+  });
+});
+
+describe("StandaloneManager updates and backups", () => {
+  let h: Harness;
+
+  beforeEach(async () => {
+    h = await harness();
+    await h.manager.install(setupInput());
+    await settle(h, "running");
+    await writeFile(join(h.root, "pgdata", "data.txt"), "before-update");
+    await h.manager.setAutoDownloadUpdates(false);
+  });
+
+  it("installs a newer version after a backup", async () => {
+    h.setManifest(manifest("0.6.7"));
+
+    await h.manager.checkForUpdate();
+    expect(h.last().update).toMatchObject({ state: "available", availableVersion: "0.6.7" });
+
+    await h.manager.installUpdate();
+
+    expect(h.last()).toMatchObject({ phase: "running", version: "0.6.7", update: { state: "latest" } });
+    const backups = await h.manager.listBackups();
+    expect(backups).toHaveLength(1);
+    expect(backups[0]).toMatchObject({ version: "0.6.6", reason: "update" });
+    const state = JSON.parse(await readFile(join(h.root, "config.json"), "utf-8"));
+    expect(state).toMatchObject({ serverVersion: "0.6.7", previousServerVersion: "0.6.6" });
+  });
+
+  it("rolls back to the previous version and data when the new one fails", async () => {
+    h.setManifest(manifest("0.6.7"));
+    await h.manager.checkForUpdate();
+    vi.mocked(h.ops.runMigrations).mockImplementationOnce(async () => {
+      await writeFile(join(h.root, "pgdata", "data.txt"), "half-migrated");
+      throw new Error("migration 591 failed");
+    });
+
+    await h.manager.installUpdate();
+
+    expect(h.last()).toMatchObject({ phase: "running", version: "0.6.6", update: { state: "rolled_back" } });
+    expect(await readFile(join(h.root, "pgdata", "data.txt"), "utf-8")).toBe("before-update");
+  });
+
+  it("stays latest when the manifest is not newer", async () => {
+    await h.manager.checkForUpdate();
+
+    expect(h.last().update.state).toBe("latest");
+  });
+
+  it("keeps the three newest backups", async () => {
+    for (let i = 0; i < 4; i++) {
+      await h.manager.backupNow();
+    }
+
+    expect(await h.manager.listBackups()).toHaveLength(3);
+    expect(h.last().phase).toBe("running");
+  });
+
+  it("restores a backup", async () => {
+    await h.manager.backupNow();
+    const [backup] = await h.manager.listBackups();
+    await writeFile(join(h.root, "pgdata", "data.txt"), "changed");
+
+    await h.manager.restoreBackup(backup.fileName);
+
+    expect(await readFile(join(h.root, "pgdata", "data.txt"), "utf-8")).toBe("before-update");
+    expect(h.last().phase).toBe("running");
+  });
+});
