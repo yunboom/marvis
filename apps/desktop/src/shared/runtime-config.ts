@@ -13,11 +13,12 @@ export interface RuntimeConfigError {
 }
 
 // unconfigured：还没有选择服务器（既没有 server.json 也没有 desktop.json），
-// 由界面引导用户连接；error：配置存在但不合法，必须阻断而不是静默回退。
+// 由界面引导用户连接，suggestedAddress 是预填进地址栏的地址（开发模式的后端）；
+// error：配置存在但不合法，必须阻断而不是静默回退。
 export type RuntimeConfigResult =
   | { ok: true; config: RuntimeConfig }
   | { ok: false; error: RuntimeConfigError }
-  | { ok: false; unconfigured: true };
+  | { ok: false; unconfigured: true; suggestedAddress?: string };
 
 const LOCAL_DEV_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
   schemaVersion: 1,

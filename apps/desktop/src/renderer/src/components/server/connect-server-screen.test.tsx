@@ -79,10 +79,10 @@ function installDesktopAPI() {
   });
 }
 
-function renderScreen() {
+function renderScreen(props: { suggestedAddress?: string } = {}) {
   return render(
     <I18nProvider locale="zh-Hans" resources={RESOURCES}>
-      <ConnectServerScreen />
+      <ConnectServerScreen {...props} />
     </I18nProvider>,
   );
 }
@@ -314,6 +314,28 @@ describe("ConnectServerScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "继续" }));
 
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
+  });
+
+  it("pre-fills the suggested address instead of the default", () => {
+    renderScreen({ suggestedAddress: "http://localhost:18920" });
+    settleDiscovery([]);
+
+    expect(addressInput().value).toBe("http://localhost:18920");
+  });
+
+  it("summarises the current choice beside the actions", async () => {
+    renderScreen();
+    settleDiscovery([designServer]);
+
+    // 选中的服务器：摘要和行里各出现一次地址 · 版本。
+    expect(screen.getAllByText("192.168.1.20:13840 · v0.6.5")).toHaveLength(2);
+
+    // 选中地址栏、还没测试：摘要提示先测试。
+    fireEvent.focus(addressInput());
+    expect(screen.getByText("测试连接通过后可以继续")).toBeInTheDocument();
+
+    await runProbe({ kind: "ok", server: lanServer({ url: "http://192.168.1.99:13840" }) });
+    expect(screen.getByText("192.168.1.99:13840 · v0.6.5")).toBeInTheDocument();
   });
 
   it("unsubscribes from discovery when it unmounts", () => {

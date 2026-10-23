@@ -1322,7 +1322,12 @@
         "rescan": "再検索",
         "local_badge": "このコンピュータ",
         "none": "ローカルネットワーク上にサーバーが見つかりません。コンピュータとサーバーは同じネットワークに接続されている必要があります。",
-        "continue": "続ける"
+        "continue": "続ける",
+        "or_address": "またはアドレスを入力",
+        "summary_scanning": "検索中…",
+        "summary_scanning_hint": "ネットワーク上の Marvis サーバーがここに表示されます",
+        "summary_manual": "手動で入力したアドレス",
+        "summary_manual_hint": "接続テストに成功すると続行できます"
       },
       "address": {
         "label": "サーバーのアドレス",

@@ -21,33 +21,50 @@ async function makeDirs() {
 }
 
 describe("loadRuntimeConfig", () => {
-  it("uses dev env and ignores server.json and desktop.json when VITE_API_URL is set in dev", async () => {
+  const devEnv = {
+    apiUrl: "http://localhost:18920",
+    wsUrl: "ws://localhost:18920/ws",
+    appUrl: "http://localhost:13840",
+  };
+
+  it("shows the connect page on a fresh dev launch, pre-filled with VITE_API_URL", async () => {
     const { userDataDir, configPath } = await makeDirs();
     await writeFile(
       configPath,
       JSON.stringify({ schemaVersion: 1, apiUrl: "https://prod.example.com" }),
     );
+
+    await expect(
+      loadRuntimeConfig({ isDev: true, userDataDir, configPath, env: devEnv }),
+    ).resolves.toEqual({
+      ok: false,
+      unconfigured: true,
+      suggestedAddress: "http://localhost:18920",
+    });
+  });
+
+  it("uses the full dev env once the dev backend itself was selected", async () => {
+    const { userDataDir, configPath } = await makeDirs();
+    await writeSelectedServer(userDataDir, {
+      ...selected,
+      url: "http://localhost:18920",
+      source: "manual",
+    });
+
+    await expect(
+      loadRuntimeConfig({ isDev: true, userDataDir, configPath, env: devEnv }),
+    ).resolves.toEqual({ ok: true, config: { schemaVersion: 1, ...devEnv } });
+  });
+
+  it("uses another selected server in dev instead of VITE_API_URL", async () => {
+    const { userDataDir, configPath } = await makeDirs();
     await writeSelectedServer(userDataDir, selected);
 
     await expect(
-      loadRuntimeConfig({
-        isDev: true,
-        userDataDir,
-        configPath,
-        env: {
-          apiUrl: "http://localhost:13840",
-          wsUrl: "ws://localhost:13840/ws",
-          appUrl: "http://localhost:3000",
-        },
-      }),
-    ).resolves.toEqual({
+      loadRuntimeConfig({ isDev: true, userDataDir, configPath, env: devEnv }),
+    ).resolves.toMatchObject({
       ok: true,
-      config: {
-        schemaVersion: 1,
-        apiUrl: "http://localhost:13840",
-        wsUrl: "ws://localhost:13840/ws",
-        appUrl: "http://localhost:3000",
-      },
+      config: { apiUrl: "http://marvis.local:13840", appUrl: "" },
     });
   });
 

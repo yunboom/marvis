@@ -1332,7 +1332,12 @@
         "rescan": "Search again",
         "local_badge": "This computer",
         "none": "No servers found on your local network. The computer and the server must be on the same network.",
-        "continue": "Continue"
+        "continue": "Continue",
+        "or_address": "or enter an address",
+        "summary_scanning": "Searching…",
+        "summary_scanning_hint": "Marvis servers on your network appear here",
+        "summary_manual": "Address entered manually",
+        "summary_manual_hint": "Test the connection to continue"
       },
       "address": {
         "label": "Server address",
