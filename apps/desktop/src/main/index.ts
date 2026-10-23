@@ -70,6 +70,8 @@ import {
   parseOpenLinkPath,
 } from "../shared/open-link";
 import { AuthSessionCoordinator } from "./auth-session-coordinator";
+import { createLarkDesktopLogin } from "./lark-desktop-login";
+import { LARK_DESKTOP_LOGIN_START_CHANNEL } from "../shared/lark-desktop-login";
 import {
   NotificationGate,
   parseNativeNotificationPayload,
@@ -154,6 +156,8 @@ const authSessionCoordinator = new AuthSessionCoordinator<BrowserWindow>(
   },
 );
 const notificationGate = new NotificationGate();
+// 没有网页端时的飞书登录：保存待完成登录的 nonce，校验深链带回的凭证。
+const larkDesktopLogin = createLarkDesktopLogin({ openExternal: openExternalSafely });
 const mainRendererMessages = new MainRendererMessageQueue();
 let desktopInitialized = false;
 let authSessionGeneration = 0;
@@ -204,9 +208,10 @@ function handleDeepLink(url: string): void {
     const parsed = new URL(url);
     if (parsed.protocol !== `${PROTOCOL}:`) return;
 
-    // marvis://auth/callback?token=<jwt>
+    // marvis://auth/callback?token=<jwt>[&nonce=<nonce>]
+    // 带 nonce 时只有与待完成的飞书登录一致才接受，不带 nonce 的是网页端跳回来的旧流程。
     if (parsed.hostname === "auth" && parsed.pathname === "/callback") {
-      const token = parsed.searchParams.get("token");
+      const token = larkDesktopLogin.acceptCallback(parsed.searchParams);
       if (token) dispatchToMainRenderer("auth:token", token);
       return;
     }
@@ -684,6 +689,14 @@ if (!gotTheLock) {
     // (the renderer itself runs sandboxed).
     ipcMain.handle("shell:openExternal", (_event, url: string) => {
       return openExternalSafely(url);
+    });
+
+    // 没有网页端时的飞书登录：只接受主窗口的请求，地址取当前运行配置里的服务器，
+    // 不接受渲染进程传入的地址。
+    ipcMain.handle(LARK_DESKTOP_LOGIN_START_CHANNEL, async (event) => {
+      if (!mainWindow || event.sender !== mainWindow.webContents) return;
+      if (!runtimeConfigResult.ok) return;
+      await larkDesktopLogin.start(runtimeConfigResult.config.apiUrl);
     });
 
     // Renderer requests its own window close (e.g. Cmd+W on the last main

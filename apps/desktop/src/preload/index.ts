@@ -20,6 +20,7 @@ import {
   type IssueWindowRequest,
 } from "../shared/issue-window";
 import { AUTH_SESSION_STATE_CHANNEL } from "../shared/auth-session";
+import { LARK_DESKTOP_LOGIN_START_CHANNEL } from "../shared/lark-desktop-login";
 import {
   SERVER_CURRENT,
   SERVER_DISCOVER,
@@ -223,6 +224,9 @@ const desktopAPI = {
     subscribeToMainRendererChannel(OPEN_PATH_CHANNEL, callback),
   /** Open a URL in the default browser */
   openExternal: (url: string) => ipcRenderer.invoke("shell:openExternal", url),
+  /** 没有网页端时的飞书登录：主进程生成一次性 nonce，用浏览器打开服务端的飞书登录地址。 */
+  startLarkDesktopLogin: (): Promise<void> =>
+    ipcRenderer.invoke(LARK_DESKTOP_LOGIN_START_CHANNEL),
   /** Download a file by URL through Electron's native download system.
    *  Shows a save dialog and saves to disk. Unlike openExternal, this
    *  avoids browser rendering of HTML files on Linux.

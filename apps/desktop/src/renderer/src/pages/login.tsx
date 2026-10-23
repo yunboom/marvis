@@ -16,7 +16,8 @@ function requireRuntimeAppUrl(): string {
 export function DesktopLoginPage() {
   const webUrl = requireRuntimeAppUrl();
   const larkLoginAppId = useConfigStore((state) => state.larkLoginAppId);
-  // 没有网页端时浏览器里没有登录页可去，只保留邮箱验证码登录。
+  const larkDesktopLogin = useConfigStore((state) => state.larkDesktopLogin);
+  // 没有网页端时浏览器里没有登录页可去，Google 登录隐藏。
   const hasWebApp = webUrl !== "";
   const handleGoogleLogin = () => {
     // Open web login page in the default browser with platform=desktop flag.
@@ -26,9 +27,18 @@ export function DesktopLoginPage() {
     );
   };
 
-  // 飞书登录同样在浏览器里完成，再经深链回到桌面端；未配置时不显示按钮。
-  const handleLarkLogin =
-    hasWebApp && larkLoginAppId ? handleGoogleLogin : undefined;
+  // 飞书登录在浏览器里完成，再经深链回到桌面端：有网页端时走网页登录页；
+  // 没有网页端时由服务端直接完成飞书回调，主进程负责打开浏览器并校验回来的深链。
+  // 都不可用时不显示按钮。
+  const handleLarkDesktopLogin = () => {
+    void window.desktopAPI.startLarkDesktopLogin();
+  };
+  let handleLarkLogin: (() => void) | undefined;
+  if (hasWebApp) {
+    handleLarkLogin = larkLoginAppId ? handleGoogleLogin : undefined;
+  } else if (larkDesktopLogin) {
+    handleLarkLogin = handleLarkDesktopLogin;
+  }
 
   return (
     <div className="flex h-screen flex-col">

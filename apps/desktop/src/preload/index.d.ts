@@ -72,6 +72,8 @@ interface DesktopAPI {
   onOpenPath: (callback: (path: string) => void) => () => void;
   /** Open a URL in the default browser. */
   openExternal: (url: string) => Promise<void>;
+  /** 没有网页端时的飞书登录：主进程生成一次性 nonce，用浏览器打开服务端的飞书登录地址。 */
+  startLarkDesktopLogin: () => Promise<void>;
   /** Download a file by URL through Electron's native download system.
    *  Shows a native save dialog. On non-desktop platforms this is undefined. */
   downloadURL: (url: string) => Promise<void>;
