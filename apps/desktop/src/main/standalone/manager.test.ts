@@ -18,7 +18,7 @@ import {
   type StandaloneStatus,
 } from "../../shared/standalone";
 import { BootstrapLoginError } from "./bootstrap-login";
-import type { SecretCodec } from "./config-store";
+import { readSecrets, type SecretCodec } from "./config-store";
 import { DownloadAbortedError, DownloadChecksumError, type DownloadOptions } from "./download";
 import { StandaloneManager, StandaloneValidationError, type StandaloneOps } from "./manager";
 import { standaloneLayout } from "./paths";
@@ -193,6 +193,20 @@ describe("StandaloneManager install", () => {
     expect(h.ops.startServerProcess).not.toHaveBeenCalled();
   });
 
+  // 首次启动没成功（未锁定）但数据库已经初始化：重新提交设置不能换掉数据库密码。
+  it("keeps the database password once the data directory exists", async () => {
+    const h = await harness({ isPortFree: vi.fn(async () => false) });
+    await h.manager.install(setupInput());
+    await settle(h, "failed");
+    const first = await readSecrets(standaloneLayout(h.root).secretsFile, codec);
+
+    await h.manager.install(setupInput());
+    await settle(h, "failed");
+
+    const second = await readSecrets(standaloneLayout(h.root).secretsFile, codec);
+    expect(second?.postgresPassword).toBe(first?.postgresPassword);
+  });
+
   it("pauses and resumes the download", async () => {
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));
@@ -298,6 +312,33 @@ describe("StandaloneManager running", () => {
     expect(h.handles).toHaveLength(2);
     expect(h.last()).toMatchObject({ phase: "running", lanUrl: "http://192.168.1.20:13840" });
     expect(h.ops.isPortFree).toHaveBeenLastCalledWith(13840, "0.0.0.0");
+  });
+
+  it("saves settings with locked keys and saved secrets left empty", async () => {
+    const before = await readSecrets(standaloneLayout(h.root).secretsFile, codec);
+    const first = setupInput();
+    first.settings.lark.appId = "cli_abc";
+    first.secrets.larkAppSecret = "lark-secret";
+    await h.manager.saveSettings(first);
+
+    const edit = setupInput();
+    edit.settings.lark.appId = "cli_abc";
+    edit.settings.name = "studio 2";
+    edit.secrets.jwtSecret = "";
+    edit.secrets.postgresPassword = "";
+    for (const env of Object.keys(edit.secrets.integrationKeys) as (keyof typeof edit.secrets.integrationKeys)[]) {
+      edit.secrets.integrationKeys[env] = "";
+    }
+    await h.manager.saveSettings(edit);
+
+    const after = await readSecrets(standaloneLayout(h.root).secretsFile, codec);
+    expect(after).toMatchObject({
+      jwtSecret: before?.jwtSecret,
+      integrationKeys: before?.integrationKeys,
+      postgresPassword: before?.postgresPassword,
+      larkAppSecret: "lark-secret",
+    });
+    expect((await h.manager.configView())?.settings.name).toBe("studio 2");
   });
 });
 

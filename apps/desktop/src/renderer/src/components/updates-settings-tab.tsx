@@ -3,8 +3,11 @@ import { AlertCircle, ArrowDownToLine, Check, Loader2 } from "lucide-react";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Switch } from "@marvis/ui/components/ui/switch";
 import { useT } from "@marvis/views/i18n";
-import { SettingsCard, SettingsRow, SettingsTab } from "@marvis/views/settings";
+import { SettingsCard, SettingsRow, SettingsSection, SettingsTab } from "@marvis/views/settings";
 import { toast } from "sonner";
+import { SERVER_SOURCE_STANDALONE } from "../../../shared/server-discovery";
+import { StandaloneUpdateSection } from "./standalone/standalone-update-section";
+import { useSavedServerSource } from "./standalone/use-saved-server-source";
 
 type CheckState =
   | { status: "idle" }
@@ -20,6 +23,7 @@ export function UpdatesSettingsTab() {
   const [preferencesReady, setPreferencesReady] = useState(false);
   const [savingPreference, setSavingPreference] = useState(false);
   const currentVersion = window.desktopAPI.appInfo.version;
+  const source = useSavedServerSource();
 
   useEffect(() => {
     let mounted = true;
@@ -73,75 +77,88 @@ export function UpdatesSettingsTab() {
     );
   }, []);
 
+  const appCard = (
+    <SettingsCard>
+      <SettingsRow label={t(($) => $.desktop.updates.current_version)}>
+        <span className="font-mono text-caption text-muted-foreground">
+          v{currentVersion}
+        </span>
+      </SettingsRow>
+
+      <SettingsRow
+        label={t(($) => $.desktop.updates.automatic_updates_title)}
+        description={t(($) => $.desktop.updates.automatic_updates_description)}
+      >
+        <Switch
+          checked={automaticUpdates}
+          onCheckedChange={handleAutomaticUpdatesChange}
+          disabled={!preferencesReady || savingPreference}
+          aria-label={t(($) => $.desktop.updates.automatic_updates_title)}
+        />
+      </SettingsRow>
+
+      <SettingsRow
+        label={t(($) => $.desktop.updates.check_section_title)}
+        align="start"
+        description={
+          <>
+            <p>{t(($) => $.desktop.updates.check_section_description)}</p>
+            {state.status === "up-to-date" && (
+              <p className="mt-2 inline-flex items-center gap-1.5">
+                <Check className="size-3.5 text-success" />
+                {t(($) => $.desktop.updates.up_to_date)}
+              </p>
+            )}
+            {state.status === "available" && (
+              <p className="mt-2 inline-flex items-center gap-1.5">
+                <ArrowDownToLine className="size-3.5 text-primary" />
+                {t(($) => $.desktop.updates.downloading, {
+                  version: state.latestVersion,
+                })}
+              </p>
+            )}
+            {state.status === "error" && (
+              <p className="mt-2 inline-flex items-center gap-1.5 text-destructive">
+                <AlertCircle className="size-3.5" />
+                {state.message}
+              </p>
+            )}
+          </>
+        }
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCheck}
+          disabled={state.status === "checking"}
+        >
+          {state.status === "checking" ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin" />
+              {t(($) => $.desktop.updates.checking)}
+            </>
+          ) : (
+            t(($) => $.desktop.updates.check_now)
+          )}
+        </Button>
+      </SettingsRow>
+    </SettingsCard>
+  );
+
   return (
     <SettingsTab
       title={t(($) => $.desktop.updates.title)}
     >
-      <SettingsCard>
-        <SettingsRow label={t(($) => $.desktop.updates.current_version)}>
-          <span className="font-mono text-caption text-muted-foreground">
-            v{currentVersion}
-          </span>
-        </SettingsRow>
-
-        <SettingsRow
-          label={t(($) => $.desktop.updates.automatic_updates_title)}
-          description={t(($) => $.desktop.updates.automatic_updates_description)}
-        >
-          <Switch
-            checked={automaticUpdates}
-            onCheckedChange={handleAutomaticUpdatesChange}
-            disabled={!preferencesReady || savingPreference}
-            aria-label={t(($) => $.desktop.updates.automatic_updates_title)}
-          />
-        </SettingsRow>
-
-        <SettingsRow
-          label={t(($) => $.desktop.updates.check_section_title)}
-          align="start"
-          description={
-            <>
-              <p>{t(($) => $.desktop.updates.check_section_description)}</p>
-              {state.status === "up-to-date" && (
-                <p className="mt-2 inline-flex items-center gap-1.5">
-                  <Check className="size-3.5 text-success" />
-                  {t(($) => $.desktop.updates.up_to_date)}
-                </p>
-              )}
-              {state.status === "available" && (
-                <p className="mt-2 inline-flex items-center gap-1.5">
-                  <ArrowDownToLine className="size-3.5 text-primary" />
-                  {t(($) => $.desktop.updates.downloading, {
-                    version: state.latestVersion,
-                  })}
-                </p>
-              )}
-              {state.status === "error" && (
-                <p className="mt-2 inline-flex items-center gap-1.5 text-destructive">
-                  <AlertCircle className="size-3.5" />
-                  {state.message}
-                </p>
-              )}
-            </>
-          }
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCheck}
-            disabled={state.status === "checking"}
-          >
-            {state.status === "checking" ? (
-              <>
-                <Loader2 className="size-3.5 animate-spin" />
-                {t(($) => $.desktop.updates.checking)}
-              </>
-            ) : (
-              t(($) => $.desktop.updates.check_now)
-            )}
-          </Button>
-        </SettingsRow>
-      </SettingsCard>
+      {source === SERVER_SOURCE_STANDALONE ? (
+        <>
+          <SettingsSection title={t(($) => $.desktop.standalone.update.app_heading)}>
+            {appCard}
+          </SettingsSection>
+          <StandaloneUpdateSection />
+        </>
+      ) : (
+        appCard
+      )}
     </SettingsTab>
   );
 }

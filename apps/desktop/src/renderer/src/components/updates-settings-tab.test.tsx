@@ -65,7 +65,8 @@ describe("UpdatesSettingsTab", () => {
 
     Object.defineProperty(window, "desktopAPI", {
       configurable: true,
-      value: { appInfo: { version: "1.2.3" } },
+      // 没有选单机模式：只显示桌面端自身的更新。
+      value: { appInfo: { version: "1.2.3" }, server: { current: async () => null } },
     });
     Object.defineProperty(window, "updater", {
       configurable: true,

@@ -11,6 +11,7 @@ import {
   type ProbeResult,
   type SelectedServer,
 } from "../../../../shared/server-discovery";
+import type { StandaloneStatus } from "../../../../shared/standalone";
 import { PROBE_MIN_DISPLAY_MS } from "./server-address-field";
 import { LAN_SCAN_WINDOW_MS } from "./use-lan-servers";
 
@@ -27,6 +28,8 @@ const mocks = vi.hoisted(() => ({
   // 记录退出登录与保存选择的先后顺序。
   calls: [] as string[],
   toastError: vi.fn(),
+  standaloneOnStatus: vi.fn(),
+  enter: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -90,6 +93,22 @@ const savedDesign: SelectedServer = {
   appUrl: designServer.appUrl,
 };
 
+// 单机模式的安装状态：默认未安装。
+let standaloneVersion: string | null = null;
+
+function standaloneStatus(version: string | null): StandaloneStatus {
+  return {
+    phase: version === null ? "not_installed" : "stopped",
+    version,
+    progress: null,
+    error: null,
+    lanUrl: null,
+    localUrl: null,
+    startedAt: null,
+    update: { state: "latest", availableVersion: null, sizeBytes: null, progress: null, checkedAt: null },
+  };
+}
+
 // 触发主进程推送的发现列表。
 let pushServers: (list: DiscoveredServer[]) => void = () => {};
 // 按地址返回 probe 结果；没配置的地址视为连不上。
@@ -122,6 +141,14 @@ function installDesktopAPI(runtimeConfig: unknown) {
     mocks.calls.push("logout");
   });
   mocks.toastError.mockReset();
+  standaloneVersion = null;
+  mocks.standaloneOnStatus.mockReset().mockImplementation((callback: (status: StandaloneStatus) => void) => {
+    callback(standaloneStatus(standaloneVersion));
+    return () => {};
+  });
+  mocks.enter.mockReset().mockImplementation(async () => {
+    mocks.calls.push("enter");
+  });
 
   Object.defineProperty(window, "desktopAPI", {
     configurable: true,
@@ -133,6 +160,10 @@ function installDesktopAPI(runtimeConfig: unknown) {
         probe: mocks.probe,
         current: mocks.current,
         select: mocks.select,
+      },
+      standalone: {
+        onStatus: mocks.standaloneOnStatus,
+        enter: mocks.enter,
       },
     },
   });
@@ -522,5 +553,32 @@ describe("ServerSettingsTab switch confirmation", () => {
 
     const address = screen.getByRole("group", { name: "服务器地址" });
     expect(within(address).getByRole("status")).toHaveTextContent(/^可以连接 · 测试环境$/);
+  });
+});
+
+describe("ServerSettingsTab standalone mode entry", () => {
+  it("hides the this-computer row when standalone mode is not installed", async () => {
+    await openTab([]);
+
+    expect(screen.queryByText("这台电脑")).not.toBeInTheDocument();
+  });
+
+  it("switches to standalone mode after confirmation, signing out first", async () => {
+    standaloneVersion = "0.6.5";
+    await openTab([]);
+
+    const row = screen.getByRole("region", { name: "这台电脑" });
+    expect(row).toHaveTextContent("单机模式 · 已就绪 v0.6.5");
+
+    fireEvent.click(within(row).getByRole("button", { name: "切换" }));
+    const dialog = await screen.findByRole("alertdialog", { name: "切换到单机模式？" });
+    expect(dialog).toHaveTextContent("会退出当前账号，在这台电脑上使用。");
+    expect(mocks.enter).not.toHaveBeenCalled();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "切换" }));
+
+    await waitFor(() => expect(mocks.enter).toHaveBeenCalledTimes(1));
+    expect(mocks.calls).toEqual(["teardown", "clear", "logout", "enter"]);
+    expect(mocks.select).not.toHaveBeenCalled();
   });
 });

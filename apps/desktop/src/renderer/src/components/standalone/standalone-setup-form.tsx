@@ -742,7 +742,7 @@ const TOOLTIP_REASON_OUTSIDE_PRESS = "outside-press";
 const TOOLTIP_REASON_ESCAPE_KEY = "escape-key";
 
 // 标签旁的「ⓘ」：悬停或聚焦时显示说明；点击后固定，再点一次、点别处或按 Esc 收起。
-function InfoTip({ label, help }: { label: string; help: string }) {
+export function InfoTip({ label, help }: { label: string; help: string }) {
   const { t } = useT("settings");
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);

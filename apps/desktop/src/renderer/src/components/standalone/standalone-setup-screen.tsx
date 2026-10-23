@@ -21,7 +21,7 @@ import { StandaloneScreenFrame } from "./standalone-screen-frame";
 const PRIMARY_BUTTON_CLASS = "h-12 w-full text-body-lg";
 
 // 资源目录在各系统上的位置，只用于摘要展示（完整路径在设置页可以打开）。
-const DATA_LOCATION: Record<string, string> = {
+export const DATA_LOCATION: Record<string, string> = {
   macos: "Application Support/Marvis",
   windows: "AppData\\Roaming\\Marvis",
   linux: ".config/Marvis",

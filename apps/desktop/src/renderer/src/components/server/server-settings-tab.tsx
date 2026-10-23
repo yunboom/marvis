@@ -1,9 +1,6 @@
-import { useCallback, useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Loader2, RefreshCw, Server, TriangleAlert } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAuthStore } from "@marvis/core/auth";
-import { clearClientSessionData } from "@marvis/core/platform";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +19,7 @@ import {
   DEFAULT_SERVER_ADDRESS,
   SERVER_SOURCE_LAN,
   SERVER_SOURCE_MANUAL,
+  SERVER_SOURCE_STANDALONE,
   normalizeServerAddress,
   type DiscoveredServer,
   type ProbeResult,
@@ -29,8 +27,11 @@ import {
   type ServerIdentity,
   type ServerSource,
 } from "../../../../shared/server-discovery";
-import { handleDaemonLogout } from "../../platform/desktop-session-teardown";
+import { StandaloneDeviceRow } from "../standalone/standalone-device-row";
+import { StandaloneServerSettings } from "../standalone/standalone-server-settings";
+import { useSavedServerSource } from "../standalone/use-saved-server-source";
 import { ServerAddressField } from "./server-address-field";
+import { useLogoutBeforeSwitch } from "./use-logout-before-switch";
 import { useLanServers } from "./use-lan-servers";
 
 const DETAIL_SEPARATOR = " · ";
@@ -155,24 +156,18 @@ function useCurrentServer() {
   return { current, connection };
 }
 
-// 切换服务器前的退出登录：守护进程清理 + 网页会话清理。
-function useLogoutBeforeSwitch() {
-  const queryClient = useQueryClient();
-  const authLogout = useAuthStore((state) => state.logout);
+// 设置 · 服务器：已选单机模式时显示单机模式的设置，否则显示远程服务器。
+export function ServerSettingsTab() {
+  const source = useSavedServerSource();
 
-  return useCallback(async () => {
-    // 先等守护进程清理完成：随后保存选择会重载所有窗口，没来得及发出的清理就丢了。
-    await handleDaemonLogout();
+  if (source === undefined) return null;
+  if (source === SERVER_SOURCE_STANDALONE) return <StandaloneServerSettings />;
 
-    // 再清掉网页会话（令牌、缓存、本地草稿），与侧边栏的退出登录一致，
-    // 否则旧令牌会被带到新服务器。authLogout 会再触发一次壳层的 onLogout，各步骤都是幂等的。
-    clearClientSessionData(queryClient);
-    authLogout();
-  }, [queryClient, authLogout]);
+  return <RemoteServerSettings />;
 }
 
-// 设置 · 服务器：查看当前服务器，切换到局域网中发现的服务器或手动输入的地址。
-export function ServerSettingsTab() {
+// 远程服务器：查看当前服务器，切换到局域网中发现的服务器或手动输入的地址。
+function RemoteServerSettings() {
   const { t } = useT("settings");
   const { current, connection } = useCurrentServer();
   const { servers, scanning, rescan } = useLanServers();
@@ -225,6 +220,8 @@ export function ServerSettingsTab() {
       description={t(($) => $.desktop.server.settings.description)}
     >
       {current !== null && <CurrentServerCard current={current} connection={connection} />}
+
+      <StandaloneDeviceRow />
 
       <SettingsSection
         title={t(($) => $.desktop.server.connect.lan_heading)}

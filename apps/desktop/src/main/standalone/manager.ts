@@ -83,6 +83,9 @@ const BACKUP_REASON_UPDATE = "update";
 const BACKUP_REASON_MANUAL = "manual";
 type BackupReason = typeof BACKUP_REASON_UPDATE | typeof BACKUP_REASON_MANUAL;
 
+// initdb 完成后数据目录里一定有的文件。
+const PG_VERSION_FILE = "PG_VERSION";
+
 const LOOPBACK = "127.0.0.1";
 const ALL_INTERFACES = "0.0.0.0";
 
@@ -333,12 +336,18 @@ export class StandaloneManager {
 
   // 校验并保存配置；锁定后的密钥沿用已保存的值。
   private async persistSetup(input: StandaloneSetupInput): Promise<void> {
-    const errors = validateStandaloneSetup(input);
-    if (Object.keys(errors).length > 0) throw new StandaloneValidationError(errors);
-
     const locked = this.state?.locked ?? false;
     const existing = await readSecrets(this.deps.layout.secretsFile, this.deps.codec);
     const secrets = mergeSecrets(existing, input.secrets, locked, input.settings);
+    // 数据库一旦初始化，密码就写进了数据目录：无论是否锁定都沿用已保存的密码。
+    if (existing?.postgresPassword && existsSync(join(this.deps.layout.pgData, PG_VERSION_FILE))) {
+      secrets.postgresPassword = existing.postgresPassword;
+    }
+
+    // 校验合并后的结果：设置页拿不到已锁定的密钥和已保存的可选密钥，提交 "" 表示不变。
+    const errors = validateStandaloneSetup({ settings: input.settings, secrets });
+    if (Object.keys(errors).length > 0) throw new StandaloneValidationError(errors);
+
     await writeSecrets(this.deps.layout.secretsFile, secrets, this.deps.codec);
 
     this.state = {
