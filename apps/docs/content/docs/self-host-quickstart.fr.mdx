@@ -266,6 +266,44 @@ De retour dans Marvis, dès qu'un runtime en ligne apparaît dans la liste des r
 
 Lorsque l'exécution apparaît comme terminée et que la réponse de l'agent s'affiche dans la chronologie, le service auto-hébergé, l'ordinateur et l'outil de codage IA sont tous connectés. Pour le détail, consultez les étapes 3 à 5 du [démarrage rapide](/cloud-quickstart).
 
+## Découverte sur le réseau local
+
+La découverte sur le réseau local permet à Desktop et au CLI du même réseau de trouver le serveur Marvis sans saisir d'adresse. Elle convient à une équipe qui partage une seule machine, par exemple un Mac au bureau.
+
+La découverte fonctionne quand le serveur est lancé depuis les sources, avec `make start` ou `make server`. Le serveur annonce :
+
+- le service `_marvis._tcp` sur le port du backend, `13840` par défaut ;
+- le nom d'hôte `marvis.local`. Si un autre serveur Marvis du réseau l'utilise déjà, ce serveur devient `marvis-2.local`, et le journal du backend indique le nom retenu.
+
+Deux variables facultatives de `.env` la contrôlent :
+
+| Variable | Effet |
+| --- | --- |
+| `MARVIS_LAN_DISCOVERY` | `false` désactive l'annonce. Activée par défaut. |
+| `MARVIS_LAN_NAME` | Nom du serveur affiché dans les clients. Par défaut, le nom de l'ordinateur. |
+
+Les clients se contentent de lister ce qu'ils trouvent. Rien ne se connecte ni n'ouvre de session avant votre confirmation. Si rien n'est trouvé, saisissez l'adresse `http://marvis.local:13840`.
+
+<Callout type="warning">
+La découverte ne fonctionne pas depuis Docker. Docker Desktop ne peut pas envoyer de multicast sur le réseau local ; `docker-compose.selfhost.yml` définit donc `MARVIS_LAN_DISCOVERY` à `false` par défaut. Un déploiement Docker reste joignable en saisissant son adresse. Pour utiliser la découverte, lancez le serveur depuis les sources.
+</Callout>
+
+macOS demande l'autorisation d'accès au réseau local la première fois, sur le serveur et sur chaque client. Autorisez-la.
+
+### Desktop et application web
+
+Desktop n'a besoin que du backend. L'application web est facultative. Pour la servir sur le même réseau, définissez `MARVIS_APP_URL=http://marvis.local:3000` dans `.env`, et enregistrez `http://marvis.local:3000/auth/callback` comme adresse de rappel pour la connexion Google et Feishu.
+
+Sans adresse web, ou avec une adresse `localhost`, les clients considèrent que le serveur n'a pas d'application web. Desktop masque alors les boutons Google et Feishu et ne garde que la connexion par code e-mail. Voir [Application de bureau](/desktop-app#se-connecter-à-un-serveur).
+
+### CLI
+
+Dans un terminal, `marvis setup self-host` sans `--server-url` cherche sur le réseau pendant environ 3 secondes et liste les serveurs trouvés. Le serveur utilisé par Desktop apparaît en premier et est présélectionné. La dernière entrée permet de saisir une adresse.
+
+Si le serveur choisi n'a pas d'application web, la commande n'ouvre pas de navigateur. Créez un jeton dans **Paramètres → Jetons d'API** de Desktop, puis exécutez `marvis login --token`.
+
+Avec `--server-url` ou `MARVIS_SERVER_URL`, avec une adresse de serveur déjà enregistrée dans la configuration du CLI, ou hors terminal, la commande se comporte comme avant.
+
 ## Commandes d'administration courantes
 
 Lancez-les toutes depuis le répertoire du dépôt `marvis` :

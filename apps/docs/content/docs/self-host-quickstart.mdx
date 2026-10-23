@@ -266,6 +266,44 @@ Back in Marvis, once an online runtime appears in the runtime list, create an ag
 
 When the run shows as completed and the agent's reply appears in the timeline, the self-hosted service, the computer, and the AI coding tool are all connected. For detailed steps, see steps 3-5 of the [quickstart](/cloud-quickstart).
 
+## LAN discovery
+
+LAN discovery lets Desktop and the CLI on the same network find the Marvis server without an address. It fits a team that shares one machine, such as a Mac in the office.
+
+Discovery runs when the server is started from source with `make start` or `make server`. The server advertises:
+
+- the service `_marvis._tcp` on the backend port, `13840` by default;
+- the host name `marvis.local`. When another Marvis server on the network already uses it, this server becomes `marvis-2.local`, and the backend log shows the name in use.
+
+Two optional variables in `.env` control it:
+
+| Variable | Effect |
+| --- | --- |
+| `MARVIS_LAN_DISCOVERY` | `false` turns advertising off. On by default. |
+| `MARVIS_LAN_NAME` | The server name shown in clients. Defaults to the computer name. |
+
+Clients only list what they find. Nothing connects or signs in until you confirm. When nothing is found, enter `http://marvis.local:13840` as the address.
+
+<Callout type="warning">
+LAN discovery does not work from Docker. Docker Desktop cannot send multicast onto the local network, so `docker-compose.selfhost.yml` sets `MARVIS_LAN_DISCOVERY` to `false` by default. A Docker deployment is still reachable by entering its address. To use discovery, run the server from source.
+</Callout>
+
+macOS asks for local network permission the first time, on the server and on each client. Allow it.
+
+### Desktop and the web app
+
+Desktop needs only the backend. The web app is optional. To serve it on the same network, set `MARVIS_APP_URL=http://marvis.local:3000` in `.env`, and register `http://marvis.local:3000/auth/callback` as the callback address for Google and Feishu login.
+
+Without a web address, or with a `localhost` one, clients treat the server as having no web app. Desktop then hides the Google and Feishu buttons and keeps only email-code login. See [Desktop app](/desktop-app#connecting-to-a-server).
+
+### CLI
+
+In a terminal, `marvis setup self-host` without `--server-url` searches the network for about 3 seconds and lists the servers it finds. The server Desktop uses is listed first and preselected. The last entry lets you type an address.
+
+When the selected server has no web app, the command does not open a browser. Create a token under **Settings → API Tokens** in Desktop, then run `marvis login --token`.
+
+With `--server-url` or `MARVIS_SERVER_URL`, with a server address already saved in the CLI config, or outside a terminal, the command behaves as before.
+
 ## Common admin commands
 
 Run all of these from the `marvis` repository directory:
