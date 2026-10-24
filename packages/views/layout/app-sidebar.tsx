@@ -78,6 +78,7 @@ import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inboxUnreadSummaryEnabled, inboxUnreadSummaryOptions, useInboxUnreadCount, hasOtherWorkspaceUnread, unreadWorkspaceIds } from "@marvis/core/inbox/queries";
 import { chatSessionsOptions } from "@marvis/core/chat/queries";
+import { knowledgePendingReviewOptions } from "@marvis/core/knowledge";
 import { countUnreadChatMessages } from "@marvis/core/chat/unread";
 import { useChatStore } from "@marvis/core/chat";
 import { api, ApiError } from "@marvis/core/api";
@@ -500,6 +501,11 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
     ...chatSessionsOptions(wsId ?? ""),
     enabled: !!wsId,
   });
+  // Knowledge badge: open change requests across every knowledge base.
+  const { data: pendingKnowledgeReviews = 0 } = useQuery({
+    ...knowledgePendingReviewOptions(wsId ?? ""),
+    enabled: !!wsId,
+  });
   // The session the user is reading right now must not count: the thread list
   // renders its row badge as 0 (auto mark-read is about to clear it), and a
   // reply landing in the open conversation would otherwise flash a sidebar
@@ -868,6 +874,13 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                       >
                         <Icon />
                         <span>{t(($) => $.nav[item.labelKey])}</span>
+                        {item.key === "knowledge" && pendingKnowledgeReviews > 0 && (
+                          <CappedNumberFlow
+                            value={pendingKnowledgeReviews}
+                            animated={false}
+                            className="ml-auto text-caption"
+                          />
+                        )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );

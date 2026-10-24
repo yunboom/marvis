@@ -141,5 +141,79 @@
       "search_miss": "Search miss",
       "agent": "Recorded by agent"
     }
+  },
+  "review": {
+    "filter": "Filter by status",
+    "filters": {
+      "open": "Open",
+      "done": "Done",
+      "all": "All"
+    },
+    "empty": "No change requests",
+    "states": {
+      "open": "Open",
+      "conflict": "Conflict",
+      "merged": "Merged",
+      "closed": "Closed"
+    },
+    "sources": {
+      "fix": "Annotation fix",
+      "ingest": "Ingest",
+      "fresh": "Freshness",
+      "merge": "Knowledge merge",
+      "gap": "Gap fill",
+      "digest": "Daily digest",
+      "edit": "Manual edit",
+      "revert": "Revert",
+      "agent": "Agent"
+    },
+    "risks": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high"
+    },
+    "merge": "Merge",
+    "merging": "Merging…",
+    "close": "Close",
+    "needs_admin": "An owner or admin merges this",
+    "resolve_first": "Resolve the conflict before merging",
+    "merged": "Merged #{{number}}",
+    "closed": "Closed #{{number}}",
+    "merge_conflict": "Conflicts with main. Not merged.",
+    "action_failed": "Something went wrong",
+    "conflict": "Conflicts with main: {{files}}",
+    "self_review": "Agent self-review",
+    "no_summary": "No summary",
+    "risk_files": "Risk {{risk}} · {{files}} files",
+    "checks": "Checks",
+    "check_mergeable": "Merges cleanly into main",
+    "check_conflict": "Conflicts with main",
+    "handles_annotations": "Handles annotations: {{n}}",
+    "binary": "Binary file",
+    "comment_on_line": "Comment on line {{line}}",
+    "comment_label": "Line comment",
+    "comment_placeholder": "What should the agent change?",
+    "comment": "Comment",
+    "close_title": "Close #{{number}}?",
+    "close_description": "Its annotations go back to pending and the branch is deleted."
+  },
+  "history": {
+    "empty": "Nothing merged yet",
+    "revert": "Revert this change",
+    "revert_hint": "Reverting opens a new change request that takes effect once merged.",
+    "reverted": "Opened revert #{{number}}",
+    "revert_conflict": "Later changes touch the same lines. Revert by hand.",
+    "revert_failed": "Couldn't revert",
+    "meta": "{{commit}} · #{{number}} · {{author}}"
+  },
+  "edit": {
+    "action": "Edit",
+    "title": "Edit · {{title}}",
+    "label": "Page markdown",
+    "submit": "Submit change",
+    "hint": "Submitting opens a change request. It takes effect once an owner or admin merges it.",
+    "change_title": "Edit {{title}}",
+    "submitted": "Opened change request #{{number}}",
+    "failed": "Couldn't submit"
   }
 }

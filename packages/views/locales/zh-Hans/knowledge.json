@@ -141,5 +141,79 @@
       "search_miss": "搜索未命中",
       "agent": "智能体记录"
     }
+  },
+  "review": {
+    "filter": "按状态筛选",
+    "filters": {
+      "open": "待审核",
+      "done": "已处理",
+      "all": "全部"
+    },
+    "empty": "没有变更请求",
+    "states": {
+      "open": "待审核",
+      "conflict": "有冲突",
+      "merged": "已合并",
+      "closed": "已关闭"
+    },
+    "sources": {
+      "fix": "批注纠错",
+      "ingest": "沉淀",
+      "fresh": "保鲜",
+      "merge": "知识合并",
+      "gap": "补齐缺口",
+      "digest": "每日沉淀",
+      "edit": "手动编辑",
+      "revert": "回滚",
+      "agent": "智能体"
+    },
+    "risks": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "merge": "合并",
+    "merging": "合并中…",
+    "close": "关闭",
+    "needs_admin": "需要 owner 或 admin 合并",
+    "resolve_first": "解决冲突后才能合并",
+    "merged": "已合并 #{{number}}",
+    "closed": "已关闭 #{{number}}",
+    "merge_conflict": "与主线冲突，未合并",
+    "action_failed": "操作失败",
+    "conflict": "与主线冲突：{{files}}",
+    "self_review": "智能体自查",
+    "no_summary": "没有填写摘要",
+    "risk_files": "风险 {{risk}} · 影响 {{files}} 个文件",
+    "checks": "检查",
+    "check_mergeable": "可以合并到主线",
+    "check_conflict": "与主线冲突",
+    "handles_annotations": "处理批注 {{n}} 条",
+    "binary": "二进制文件",
+    "comment_on_line": "在第 {{line}} 行评论",
+    "comment_label": "行评论",
+    "comment_placeholder": "写给智能体的修改意见",
+    "comment": "评论",
+    "close_title": "关闭 #{{number}}？",
+    "close_description": "关联的批注退回待处理，分支会被删除。"
+  },
+  "history": {
+    "empty": "还没有合并过的变更",
+    "revert": "回滚此次变更",
+    "revert_hint": "回滚会生成新的变更请求，合并后生效。",
+    "reverted": "已生成回滚变更请求 #{{number}}",
+    "revert_conflict": "之后的改动动了同样的内容，需要手动处理",
+    "revert_failed": "回滚失败",
+    "meta": "{{commit}} · #{{number}} · {{author}}"
+  },
+  "edit": {
+    "action": "编辑",
+    "title": "编辑 · {{title}}",
+    "label": "页面 markdown",
+    "submit": "提交变更",
+    "hint": "提交后生成变更请求，owner 或 admin 合并后生效。",
+    "change_title": "编辑「{{title}}」",
+    "submitted": "已提交变更请求 #{{number}}",
+    "failed": "提交失败"
   }
 }

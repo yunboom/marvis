@@ -141,5 +141,79 @@
       "search_miss": "Recherche sans résultat",
       "agent": "Notée par un agent"
     }
+  },
+  "review": {
+    "filter": "Filtrer par statut",
+    "filters": {
+      "open": "À revoir",
+      "done": "Traitées",
+      "all": "Toutes"
+    },
+    "empty": "Aucune demande de modification",
+    "states": {
+      "open": "À revoir",
+      "conflict": "En conflit",
+      "merged": "Fusionnée",
+      "closed": "Fermée"
+    },
+    "sources": {
+      "fix": "Correction d'annotation",
+      "ingest": "Import",
+      "fresh": "Actualisation",
+      "merge": "Fusion de connaissances",
+      "gap": "Lacune comblée",
+      "digest": "Synthèse quotidienne",
+      "edit": "Modification manuelle",
+      "revert": "Annulation",
+      "agent": "Agent"
+    },
+    "risks": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "élevé"
+    },
+    "merge": "Fusionner",
+    "merging": "Fusion…",
+    "close": "Fermer",
+    "needs_admin": "Un owner ou un admin la fusionne",
+    "resolve_first": "Résolvez le conflit avant de fusionner",
+    "merged": "#{{number}} fusionnée",
+    "closed": "#{{number}} fermée",
+    "merge_conflict": "En conflit avec main, non fusionnée",
+    "action_failed": "Une erreur s'est produite",
+    "conflict": "En conflit avec main : {{files}}",
+    "self_review": "Auto-revue de l'agent",
+    "no_summary": "Aucun résumé",
+    "risk_files": "Risque {{risk}} · {{files}} fichiers",
+    "checks": "Vérifications",
+    "check_mergeable": "Fusionnable dans main",
+    "check_conflict": "En conflit avec main",
+    "handles_annotations": "Annotations traitées : {{n}}",
+    "binary": "Fichier binaire",
+    "comment_on_line": "Commenter la ligne {{line}}",
+    "comment_label": "Commentaire de ligne",
+    "comment_placeholder": "Que doit modifier l'agent ?",
+    "comment": "Commenter",
+    "close_title": "Fermer #{{number}} ?",
+    "close_description": "Ses annotations repassent en attente et la branche est supprimée."
+  },
+  "history": {
+    "empty": "Rien n'a encore été fusionné",
+    "revert": "Annuler cette modification",
+    "revert_hint": "L'annulation ouvre une nouvelle demande, appliquée une fois fusionnée.",
+    "reverted": "Demande d'annulation #{{number}} ouverte",
+    "revert_conflict": "Des modifications ultérieures touchent les mêmes lignes. Annulez à la main.",
+    "revert_failed": "Impossible d'annuler",
+    "meta": "{{commit}} · #{{number}} · {{author}}"
+  },
+  "edit": {
+    "action": "Modifier",
+    "title": "Modifier · {{title}}",
+    "label": "Markdown de la page",
+    "submit": "Envoyer la modification",
+    "hint": "L'envoi ouvre une demande de modification, appliquée une fois fusionnée par un owner ou un admin.",
+    "change_title": "Modifier {{title}}",
+    "submitted": "Demande de modification #{{number}} ouverte",
+    "failed": "Impossible d'envoyer"
   }
 }

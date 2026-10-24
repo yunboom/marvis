@@ -240,3 +240,95 @@ export const KnowledgeGraphSchema = z
   .loose();
 export type KnowledgeGraph = z.infer<typeof KnowledgeGraphSchema>;
 export const EMPTY_KNOWLEDGE_GRAPH: KnowledgeGraph = { nodes: [], edges: [] };
+
+export const KNOWLEDGE_CHANGE_STATUSES = ["open", "merged", "closed"] as const;
+export type KnowledgeChangeStatus = (typeof KNOWLEDGE_CHANGE_STATUSES)[number];
+
+export const KNOWLEDGE_CHANGE_SOURCES = ["fix", "ingest", "fresh", "merge", "gap", "digest", "edit", "revert", "agent"] as const;
+export type KnowledgeChangeSource = (typeof KNOWLEDGE_CHANGE_SOURCES)[number];
+
+export const KNOWLEDGE_CHANGE_RISKS = ["low", "medium", "high"] as const;
+export type KnowledgeChangeRisk = (typeof KNOWLEDGE_CHANGE_RISKS)[number];
+
+export const KnowledgeChangeRequestSchema = z
+  .object({
+    id: z.string(),
+    number: z.number(),
+    title: z.string().optional().default(""),
+    source: z.enum(KNOWLEDGE_CHANGE_SOURCES).catch("agent"),
+    author_type: z.string().optional().default("member"),
+    author_id: z.string().optional().default(""),
+    author_name: z.string().optional().default(""),
+    branch: z.string().optional().default(""),
+    status: z.enum(KNOWLEDGE_CHANGE_STATUSES).catch("open"),
+    conflict: z.boolean().optional().default(false),
+    conflict_files: stringList,
+    summary: z.string().optional().default(""),
+    risk: z.enum(KNOWLEDGE_CHANGE_RISKS).catch("low"),
+    merge_commit: z.string().nullable().optional().default(null),
+    chat_session_id: z.string().nullable().optional().default(null),
+    annotation_ids: stringList,
+    kb_slugs: stringList,
+    merged_at: z.string().nullable().optional().default(null),
+    created_at: z.string().optional().default(""),
+    updated_at: z.string().optional().default(""),
+  })
+  .loose();
+export type KnowledgeChangeRequest = z.infer<typeof KnowledgeChangeRequestSchema>;
+export const KnowledgeChangeRequestListSchema = z.array(KnowledgeChangeRequestSchema).catch([]);
+
+const DiffLineSchema = z.object({
+  kind: z.enum(["context", "add", "delete"]).catch("context"),
+  text: z.string().optional().default(""),
+  old_line: z.number().optional().default(0),
+  new_line: z.number().optional().default(0),
+});
+export type KnowledgeDiffLine = z.infer<typeof DiffLineSchema>;
+
+const FileDiffSchema = z.object({
+  path: z.string(),
+  status: z.string().optional().default("modified"),
+  binary: z.boolean().optional().default(false),
+  added: z.number().optional().default(0),
+  deleted: z.number().optional().default(0),
+  lines: z
+    .array(DiffLineSchema)
+    .nullable()
+    .catch([])
+    .transform((v) => v ?? []),
+});
+export type KnowledgeFileDiff = z.infer<typeof FileDiffSchema>;
+
+export const KnowledgeChangeCommentSchema = z.object({
+  id: z.string(),
+  path: z.string(),
+  line: z.number(),
+  author_type: z.string().optional().default("member"),
+  author_id: z.string().optional().default(""),
+  body: z.string().optional().default(""),
+  created_at: z.string().optional().default(""),
+});
+export type KnowledgeChangeComment = z.infer<typeof KnowledgeChangeCommentSchema>;
+
+export const KnowledgeChangeDetailSchema = KnowledgeChangeRequestSchema.extend({
+  groups: z
+    .array(
+      z.object({
+        slug: z.string(),
+        files: z
+          .array(FileDiffSchema)
+          .nullable()
+          .catch([])
+          .transform((v) => v ?? []),
+      }),
+    )
+    .nullable()
+    .catch([])
+    .transform((v) => v ?? []),
+  comments: z
+    .array(KnowledgeChangeCommentSchema)
+    .nullable()
+    .catch([])
+    .transform((v) => v ?? []),
+}).loose();
+export type KnowledgeChangeDetail = z.infer<typeof KnowledgeChangeDetailSchema>;

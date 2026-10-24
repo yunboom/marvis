@@ -2442,8 +2442,14 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Route("/{number}", func(r chi.Router) {
 						r.Get("/", h.GetKnowledgeChangeRequest)
 						r.Patch("/", h.UpdateKnowledgeChangeRequest)
+						r.Post("/merge", h.MergeKnowledgeChangeRequest)
+						r.Post("/close", h.CloseKnowledgeChangeRequest)
+						r.Post("/comments", h.CreateKnowledgeChangeComment)
+						r.Post("/revert", h.RevertKnowledgeChangeRequest)
 					})
 				})
+				r.Post("/edits", h.SubmitKnowledgeEdit)
+				r.Get("/history", h.ListKnowledgeHistory)
 				r.Route("/gaps", func(r chi.Router) {
 					r.Get("/", h.ListKnowledgeGaps)
 					r.Post("/", h.CreateKnowledgeGap)

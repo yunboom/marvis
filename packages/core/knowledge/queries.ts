@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
-import type { KnowledgeGapStatus } from "./schemas";
+import type { KnowledgeChangeStatus, KnowledgeGapStatus } from "./schemas";
 
 // Everything lives under knowledgeKeys.all so one `knowledge:changed` event
 // invalidates the whole knowledge surface of the workspace.
@@ -14,7 +14,41 @@ export const knowledgeKeys = {
   graph: (wsId: string, kbId: string) => ["workspaces", wsId, "knowledge", "graph", kbId] as const,
   search: (wsId: string, query: string) => ["workspaces", wsId, "knowledge", "search", query] as const,
   gaps: (wsId: string, status: KnowledgeGapStatus | "all") => ["workspaces", wsId, "knowledge", "gaps", status] as const,
+  changes: (wsId: string, status: KnowledgeChangeStatus | "all") =>
+    ["workspaces", wsId, "knowledge", "changes", status] as const,
+  change: (wsId: string, number: number) => ["workspaces", wsId, "knowledge", "change", number] as const,
+  history: (wsId: string) => ["workspaces", wsId, "knowledge", "history"] as const,
 };
+
+export function knowledgeChangeListOptions(wsId: string, status: KnowledgeChangeStatus | "all") {
+  return queryOptions({
+    queryKey: knowledgeKeys.changes(wsId, status),
+    queryFn: () => api.listKnowledgeChanges(status === "all" ? undefined : status),
+  });
+}
+
+export function knowledgeChangeOptions(wsId: string, number: number | null) {
+  return queryOptions({
+    queryKey: knowledgeKeys.change(wsId, number ?? 0),
+    queryFn: () => api.getKnowledgeChange(number ?? 0),
+    enabled: !!number,
+  });
+}
+
+export function knowledgeHistoryOptions(wsId: string) {
+  return queryOptions({
+    queryKey: knowledgeKeys.history(wsId),
+    queryFn: () => api.listKnowledgeHistory(),
+  });
+}
+
+/** Open change requests across all knowledge bases; backs the sidebar badge. */
+export function knowledgePendingReviewOptions(wsId: string) {
+  return queryOptions({
+    ...knowledgeChangeListOptions(wsId, "open"),
+    select: (changes) => changes.length,
+  });
+}
 
 export function knowledgeBaseListOptions(wsId: string) {
   return queryOptions({

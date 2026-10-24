@@ -141,5 +141,79 @@
       "search_miss": "検索で見つからず",
       "agent": "エージェントが記録"
     }
+  },
+  "review": {
+    "filter": "状態で絞り込む",
+    "filters": {
+      "open": "レビュー待ち",
+      "done": "処理済み",
+      "all": "すべて"
+    },
+    "empty": "変更リクエストはありません",
+    "states": {
+      "open": "レビュー待ち",
+      "conflict": "競合",
+      "merged": "マージ済み",
+      "closed": "クローズ"
+    },
+    "sources": {
+      "fix": "注釈の修正",
+      "ingest": "取り込み",
+      "fresh": "鮮度維持",
+      "merge": "ナレッジ統合",
+      "gap": "ギャップ補完",
+      "digest": "毎日の蓄積",
+      "edit": "手動編集",
+      "revert": "取り消し",
+      "agent": "エージェント"
+    },
+    "risks": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "merge": "マージ",
+    "merging": "マージ中…",
+    "close": "クローズ",
+    "needs_admin": "owner または admin がマージします",
+    "resolve_first": "競合を解消してからマージしてください",
+    "merged": "#{{number}} をマージしました",
+    "closed": "#{{number}} をクローズしました",
+    "merge_conflict": "main と競合しているためマージしていません",
+    "action_failed": "操作に失敗しました",
+    "conflict": "main と競合：{{files}}",
+    "self_review": "エージェントのセルフレビュー",
+    "no_summary": "概要がありません",
+    "risk_files": "リスク {{risk}} · {{files}} ファイル",
+    "checks": "チェック",
+    "check_mergeable": "main にマージできます",
+    "check_conflict": "main と競合しています",
+    "handles_annotations": "対応する注釈 {{n}} 件",
+    "binary": "バイナリファイル",
+    "comment_on_line": "{{line}} 行目にコメント",
+    "comment_label": "行コメント",
+    "comment_placeholder": "エージェントへの修正指示",
+    "comment": "コメント",
+    "close_title": "#{{number}} をクローズしますか？",
+    "close_description": "関連する注釈は未処理に戻り、ブランチは削除されます。"
+  },
+  "history": {
+    "empty": "マージされた変更はまだありません",
+    "revert": "この変更を取り消す",
+    "revert_hint": "取り消しは新しい変更リクエストになり、マージ後に反映されます。",
+    "reverted": "取り消しの変更リクエスト #{{number}} を作成しました",
+    "revert_conflict": "後の変更が同じ箇所に触れています。手動で対応してください",
+    "revert_failed": "取り消せませんでした",
+    "meta": "{{commit}} · #{{number}} · {{author}}"
+  },
+  "edit": {
+    "action": "編集",
+    "title": "編集 · {{title}}",
+    "label": "ページの markdown",
+    "submit": "変更を送信",
+    "hint": "送信すると変更リクエストになり、owner または admin のマージ後に反映されます。",
+    "change_title": "{{title}} を編集",
+    "submitted": "変更リクエスト #{{number}} を作成しました",
+    "failed": "送信できませんでした"
   }
 }

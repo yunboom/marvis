@@ -141,5 +141,79 @@
       "search_miss": "검색 실패",
       "agent": "에이전트 기록"
     }
+  },
+  "review": {
+    "filter": "상태로 필터",
+    "filters": {
+      "open": "검토 대기",
+      "done": "처리됨",
+      "all": "전체"
+    },
+    "empty": "변경 요청이 없습니다",
+    "states": {
+      "open": "검토 대기",
+      "conflict": "충돌",
+      "merged": "병합됨",
+      "closed": "닫힘"
+    },
+    "sources": {
+      "fix": "주석 수정",
+      "ingest": "정리",
+      "fresh": "최신화",
+      "merge": "지식 병합",
+      "gap": "공백 보완",
+      "digest": "일일 정리",
+      "edit": "직접 편집",
+      "revert": "되돌리기",
+      "agent": "에이전트"
+    },
+    "risks": {
+      "low": "낮음",
+      "medium": "보통",
+      "high": "높음"
+    },
+    "merge": "병합",
+    "merging": "병합 중…",
+    "close": "닫기",
+    "needs_admin": "owner 또는 admin이 병합합니다",
+    "resolve_first": "충돌을 해결한 뒤 병합하세요",
+    "merged": "#{{number}} 병합함",
+    "closed": "#{{number}} 닫음",
+    "merge_conflict": "main과 충돌해 병합하지 않았습니다",
+    "action_failed": "작업에 실패했습니다",
+    "conflict": "main과 충돌: {{files}}",
+    "self_review": "에이전트 자체 검토",
+    "no_summary": "요약이 없습니다",
+    "risk_files": "위험도 {{risk}} · 파일 {{files}}개",
+    "checks": "검사",
+    "check_mergeable": "main에 병합할 수 있습니다",
+    "check_conflict": "main과 충돌합니다",
+    "handles_annotations": "처리하는 주석 {{n}}개",
+    "binary": "바이너리 파일",
+    "comment_on_line": "{{line}}번째 줄에 댓글",
+    "comment_label": "줄 댓글",
+    "comment_placeholder": "에이전트에게 보낼 수정 의견",
+    "comment": "댓글",
+    "close_title": "#{{number}}을(를) 닫을까요?",
+    "close_description": "연결된 주석은 처리 대기로 돌아가고 브랜치는 삭제됩니다."
+  },
+  "history": {
+    "empty": "아직 병합된 변경이 없습니다",
+    "revert": "이 변경 되돌리기",
+    "revert_hint": "되돌리기는 새 변경 요청이 되며 병합 후 적용됩니다.",
+    "reverted": "되돌리기 변경 요청 #{{number}}을(를) 만들었습니다",
+    "revert_conflict": "이후 변경이 같은 부분을 건드렸습니다. 직접 처리하세요",
+    "revert_failed": "되돌리지 못했습니다",
+    "meta": "{{commit}} · #{{number}} · {{author}}"
+  },
+  "edit": {
+    "action": "편집",
+    "title": "편집 · {{title}}",
+    "label": "페이지 markdown",
+    "submit": "변경 제출",
+    "hint": "제출하면 변경 요청이 되며 owner 또는 admin이 병합한 뒤 적용됩니다.",
+    "change_title": "{{title}} 편집",
+    "submitted": "변경 요청 #{{number}}을(를) 만들었습니다",
+    "failed": "제출하지 못했습니다"
   }
 }

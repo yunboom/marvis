@@ -24,7 +24,9 @@ import { useT } from "../../i18n";
 import { KnowledgeIcon } from "../lib/knowledge-icon";
 import { CreateKnowledgeDialog } from "./create-knowledge-dialog";
 import { KnowledgeGapsTab } from "./knowledge-gaps-tab";
-import { KnowledgePagesTab } from "./knowledge-pages-tab";
+import { KnowledgeHistoryTab } from "./knowledge-history-tab";
+import { KnowledgePagesWorkspace } from "./knowledge-pages-workspace";
+import { KnowledgeReviewTab } from "./knowledge-review-tab";
 import { KnowledgeSearch } from "./knowledge-search";
 import { KnowledgeSettingsTab } from "./knowledge-settings-tab";
 
@@ -138,7 +140,14 @@ export function KnowledgePage() {
           </div>
           {KNOWLEDGE_TABS.map((key) => (
             <TabsContent key={key} value={key} className="flex min-h-0 flex-1 flex-col data-hidden:hidden">
-              <KnowledgeTabBody tab={key} kb={kb} agents={agents} isLast={bases.length === 1} onDeleted={() => setParams({ kb: null, tab: null, page: null })} />
+              <KnowledgeTabBody
+                tab={key}
+                kb={kb}
+                bases={bases}
+                agents={agents}
+                onDeleted={() => setParams({ kb: null, tab: null, page: null })}
+                onOpenChange={(number) => setParams({ tab: "review", change: String(number) })}
+              />
             </TabsContent>
           ))}
         </Tabs>
@@ -163,23 +172,29 @@ export function KnowledgePage() {
 function KnowledgeTabBody({
   tab,
   kb,
+  bases,
   agents,
-  isLast,
   onDeleted,
+  onOpenChange,
 }: {
   tab: KnowledgeTab;
   kb: KnowledgeBase;
+  bases: KnowledgeBase[];
   agents: Agent[];
-  isLast: boolean;
   onDeleted: () => void;
+  onOpenChange: (number: number) => void;
 }) {
   switch (tab) {
     case "pages":
-      return <KnowledgePagesTab kb={kb} />;
+      return <KnowledgePagesWorkspace kb={kb} onOpenChange={onOpenChange} />;
+    case "review":
+      return <KnowledgeReviewTab bases={bases} />;
     case "gaps":
       return <KnowledgeGapsTab />;
+    case "history":
+      return <KnowledgeHistoryTab bases={bases} onReverted={onOpenChange} />;
     case "settings":
-      return <KnowledgeSettingsTab kb={kb} agents={agents} isLast={isLast} onDeleted={onDeleted} />;
+      return <KnowledgeSettingsTab kb={kb} agents={agents} isLast={bases.length === 1} onDeleted={onDeleted} />;
     default:
       return null;
   }

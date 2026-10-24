@@ -72,9 +72,52 @@ var kbChangeListCmd = &cobra.Command{
 	RunE:  runKBChangeList,
 }
 
+var kbChangeMergeCmd = &cobra.Command{
+	Use:   "merge <number>",
+	Short: "Merge a change request (workspace owner or admin, with your own credentials)",
+	Args:  exactArgs(1),
+	RunE:  func(cmd *cobra.Command, args []string) error { return runKBChangeAction(cmd, args[0], "merge") },
+}
+
+var kbChangeCloseCmd = &cobra.Command{
+	Use:   "close <number>",
+	Short: "Close a change request; its annotations go back to pending",
+	Args:  exactArgs(1),
+	RunE:  func(cmd *cobra.Command, args []string) error { return runKBChangeAction(cmd, args[0], "close") },
+}
+
+var kbChangeRevertCmd = &cobra.Command{
+	Use:   "revert <number>",
+	Short: "Open a change request that undoes a merged one",
+	Args:  exactArgs(1),
+	RunE:  func(cmd *cobra.Command, args []string) error { return runKBChangeAction(cmd, args[0], "revert") },
+}
+
+var kbChangeCommentCmd = &cobra.Command{
+	Use:   "comment <number>",
+	Short: "Comment on a line of a change request",
+	Args:  exactArgs(1),
+	RunE:  runKBChangeComment,
+}
+
+var kbHistoryCmd = &cobra.Command{
+	Use:   "history",
+	Short: "List merged changes",
+	RunE:  runKBHistory,
+}
+
 func init() {
-	kbCmd.AddCommand(kbCloneCmd, kbSyncCmd, kbChangeCmd)
-	kbChangeCmd.AddCommand(kbChangeCreateCmd, kbChangeUpdateCmd, kbChangeGetCmd, kbChangeListCmd)
+	kbCmd.AddCommand(kbCloneCmd, kbSyncCmd, kbChangeCmd, kbHistoryCmd)
+	kbChangeCmd.AddCommand(kbChangeCreateCmd, kbChangeUpdateCmd, kbChangeGetCmd, kbChangeListCmd,
+		kbChangeMergeCmd, kbChangeCloseCmd, kbChangeRevertCmd, kbChangeCommentCmd)
+	for _, c := range []*cobra.Command{kbChangeMergeCmd, kbChangeCloseCmd, kbChangeRevertCmd} {
+		c.Flags().String("output", "table", "Output format: table or json")
+	}
+	kbChangeCommentCmd.Flags().String("path", "", "File path in the repository (required)")
+	kbChangeCommentCmd.Flags().Int("line", 0, "Line number in the new file (required)")
+	kbChangeCommentCmd.Flags().String("body", "", "Comment text (required)")
+	kbHistoryCmd.Flags().Int("limit", 20, "Number of merged changes to list")
+	kbHistoryCmd.Flags().String("output", "table", "Output format: table or json")
 
 	kbSyncCmd.Flags().String("dir", ".", "Local clone of the knowledge repository")
 
@@ -375,6 +418,76 @@ func printKBDiff(change map[string]any) {
 			}
 		}
 	}
+}
+
+func runKBChangeAction(cmd *cobra.Command, ref, action string) error {
+	number := strings.TrimPrefix(ref, "#")
+	if _, err := strconv.Atoi(number); err != nil {
+		return fmt.Errorf("invalid change request number %q", ref)
+	}
+	client, err := newAPIClient(cmd)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := cli.APIContext(context.Background())
+	defer cancel()
+	var change map[string]any
+	if err := client.PostJSON(ctx, "/api/knowledge/changes/"+number+"/"+action, map[string]any{}, &change); err != nil {
+		return fmt.Errorf("%s change request #%s: %w", action, number, err)
+	}
+
+	return printKBChange(cmd, change)
+}
+
+func runKBChangeComment(cmd *cobra.Command, args []string) error {
+	path, _ := cmd.Flags().GetString("path")
+	line, _ := cmd.Flags().GetInt("line")
+	body, _ := cmd.Flags().GetString("body")
+	if path == "" || line <= 0 || strings.TrimSpace(body) == "" {
+		return fmt.Errorf("--path, --line and --body are required")
+	}
+	client, err := newAPIClient(cmd)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := cli.APIContext(context.Background())
+	defer cancel()
+	var comment map[string]any
+	number := strings.TrimPrefix(args[0], "#")
+	if err := client.PostJSON(ctx, "/api/knowledge/changes/"+number+"/comments", map[string]any{"path": path, "line": line, "body": body}, &comment); err != nil {
+		return fmt.Errorf("comment on change request #%s: %w", number, err)
+	}
+	_, err = fmt.Fprintf(os.Stdout, "Commented on %s:%d\n", path, line)
+
+	return err
+}
+
+func runKBHistory(cmd *cobra.Command, _ []string) error {
+	client, err := newAPIClient(cmd)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := cli.APIContext(context.Background())
+	defer cancel()
+	limit, _ := cmd.Flags().GetInt("limit")
+	var changes []map[string]any
+	if err := client.GetJSON(ctx, fmt.Sprintf("/api/knowledge/history?limit=%d", limit), &changes); err != nil {
+		return fmt.Errorf("list knowledge history: %w", err)
+	}
+	if output, _ := cmd.Flags().GetString("output"); output == "json" {
+		return cli.PrintJSON(os.Stdout, changes)
+	}
+	rows := make([][]string, 0, len(changes))
+	for _, c := range changes {
+		commit := strVal(c, "merge_commit")
+		if len(commit) > 9 {
+			commit = commit[:9]
+		}
+		rows = append(rows, []string{commit, "#" + strVal(c, "number"), strVal(c, "merged_at"), strVal(c, "author_name"), strVal(c, "title")})
+	}
+	cli.PrintTable(os.Stdout, []string{"COMMIT", "NUMBER", "MERGED_AT", "AUTHOR", "TITLE"}, rows)
+
+	return nil
 }
 
 func runKBChangeList(cmd *cobra.Command, _ []string) error {

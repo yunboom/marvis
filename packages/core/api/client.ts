@@ -10,6 +10,9 @@ import * as kbSchemas from "../knowledge/schemas";
 import type {
   CreateKnowledgeBaseRequest,
   KnowledgeBase,
+  KnowledgeChangeDetail,
+  KnowledgeChangeRequest,
+  KnowledgeChangeStatus,
   KnowledgeDeleteImpact,
   KnowledgeGap,
   KnowledgeGapStatus,
@@ -3742,6 +3745,49 @@ export class ApiClient {
     return parseWithFallback<KnowledgeGap | null>(raw, kbSchemas.KnowledgeGapSchema, null, {
       endpoint: "POST /api/knowledge/gaps",
     });
+  }
+
+  async listKnowledgeChanges(status?: KnowledgeChangeStatus): Promise<KnowledgeChangeRequest[]> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/changes${status ? `?status=${status}` : ""}`);
+    return parseWithFallback(raw, kbSchemas.KnowledgeChangeRequestListSchema, [], { endpoint: "GET /api/knowledge/changes" });
+  }
+
+  async getKnowledgeChange(number: number): Promise<KnowledgeChangeDetail | null> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/changes/${number}`);
+    return parseWithFallback<KnowledgeChangeDetail | null>(raw, kbSchemas.KnowledgeChangeDetailSchema, null, {
+      endpoint: "GET /api/knowledge/changes/:number",
+    });
+  }
+
+  async mergeKnowledgeChange(number: number): Promise<void> {
+    await this.fetch(`/api/knowledge/changes/${number}/merge`, { method: "POST" });
+  }
+
+  async closeKnowledgeChange(number: number): Promise<void> {
+    await this.fetch(`/api/knowledge/changes/${number}/close`, { method: "POST" });
+  }
+
+  async revertKnowledgeChange(number: number): Promise<KnowledgeChangeDetail | null> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/changes/${number}/revert`, { method: "POST" });
+    return parseWithFallback<KnowledgeChangeDetail | null>(raw, kbSchemas.KnowledgeChangeDetailSchema, null, {
+      endpoint: "POST /api/knowledge/changes/:number/revert",
+    });
+  }
+
+  async commentOnKnowledgeChange(number: number, data: { path: string; line: number; body: string }): Promise<void> {
+    await this.fetch(`/api/knowledge/changes/${number}/comments`, { method: "POST", body: JSON.stringify(data) });
+  }
+
+  async submitKnowledgeEdit(data: { path: string; content: string; base_commit: string; title?: string }): Promise<KnowledgeChangeDetail | null> {
+    const raw = await this.fetch<unknown>("/api/knowledge/edits", { method: "POST", body: JSON.stringify(data) });
+    return parseWithFallback<KnowledgeChangeDetail | null>(raw, kbSchemas.KnowledgeChangeDetailSchema, null, {
+      endpoint: "POST /api/knowledge/edits",
+    });
+  }
+
+  async listKnowledgeHistory(): Promise<KnowledgeChangeRequest[]> {
+    const raw = await this.fetch<unknown>("/api/knowledge/history");
+    return parseWithFallback(raw, kbSchemas.KnowledgeChangeRequestListSchema, [], { endpoint: "GET /api/knowledge/history" });
   }
 
   async updateKnowledgeGap(id: string, status: KnowledgeGapStatus): Promise<KnowledgeGap | null> {
