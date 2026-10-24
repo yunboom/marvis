@@ -69,6 +69,31 @@ export interface IssuePeekPosition {
  * Where `issueId` sits in the published columns, or `null` when it is in none
  * of them (a filtered-out issue, or a view that published no order).
  */
+/** Space between the side peek and the card it was opened from. */
+const PEEK_CARD_GAP = 12;
+/** The side peek's minimum distance from the surface's edges. */
+const PEEK_EDGE_INSET = 8;
+
+/**
+ * Where the side peek sits beside the peeked card, as a left offset within
+ * the surface: right of the card when the panel fits there, else left of it.
+ * Null docks the panel to the surface's right edge — a full-width row (list,
+ * table) leaves room on neither side.
+ */
+export function placePeekBesideCard(
+  card: { left: number; right: number },
+  surfaceWidth: number,
+  panelWidth: number,
+): number | null {
+  const afterCard = card.right + PEEK_CARD_GAP;
+  if (afterCard + panelWidth <= surfaceWidth - PEEK_EDGE_INSET) return afterCard;
+
+  const beforeCard = card.left - PEEK_CARD_GAP - panelWidth;
+  if (beforeCard >= PEEK_EDGE_INSET) return beforeCard;
+
+  return null;
+}
+
 export function locateInColumns(
   columns: IssuePeekColumns | null,
   issueId: string | null,

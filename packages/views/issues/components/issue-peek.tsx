@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "motion/react";
 import { ChevronDown, ChevronUp, Maximize2, X } from "lucide-react";
 import { Button, buttonVariants } from "@marvis/ui/components/ui/button";
@@ -31,6 +31,7 @@ import {
   IssuePeekPositionContext,
   PEEK_TARGET_ATTR,
   locateInColumns,
+  placePeekBesideCard,
   useIssuePeekActions,
   useIssuePeekPosition,
   type IssuePeekActions,
@@ -55,8 +56,9 @@ const ARROW_STEPS: Record<string, Step> = {
 /**
  * Owns the surface's side peek: which issue is open, the current view's order
  * for keyboard stepping, and the floating panel itself. Wraps the surface
- * content so the panel can position against it — it floats over the view,
- * below the page header and toolbar, which stay usable while it is open.
+ * content so the panel can position against it — it floats over the view
+ * beside the peeked card, below the page header and toolbar, which stay
+ * usable while it is open.
  *
  * Every view hosts it, so switching views keeps the peeked issue open; the new
  * view publishes its own order.
@@ -141,71 +143,87 @@ const IssuePeekPanel = memo(function IssuePeekPanel({ issueId }: { issueId: stri
   // clicks or keys, so the board is usable the moment the peek is dismissed.
   const isPresent = useIsPresent();
   const reduceMotion = useReducedMotion() ?? false;
+  // Left offset beside the peeked card; null docks the panel to the right edge.
+  const [anchorLeft, setAnchorLeft] = useState<number | null>(null);
 
   return (
-    <motion.aside
-      ref={panelRef}
-      aria-label={t(($) => $.peek.panel_label)}
-      data-issue-peek=""
-      className={cn(
-        "absolute right-2 top-2 z-30 flex w-[min(var(--issue-peek-width),calc(100%-1rem))] flex-col overflow-hidden",
-        "rounded-xl bg-background shadow-[var(--floating-shadow)] ring-1 ring-surface-border",
-        // Stops above the chat launcher, which owns the dashboard's
-        // bottom-right corner — the panel's composer would sit under it.
-        "above-chat-launcher",
-        !isPresent && "pointer-events-none",
-      )}
-      // Slides in from the edge it is anchored to; the exit is shorter and
-      // travels half as far. Reduced motion keeps only the fade.
-      initial={{ opacity: 0, transform: reduceMotion ? "translateX(0)" : "translateX(16px)" }}
-      animate={{
-        opacity: 1,
-        transform: "translateX(0)",
-        transition: { duration: UI_MOTION_DURATION.standard, ease: UI_EASE_OUT },
-      }}
-      exit={{
-        opacity: 0,
-        transform: reduceMotion ? "translateX(0)" : "translateX(8px)",
-        transition: { duration: UI_MOTION_DURATION.fast, ease: UI_EASE_OUT },
-      }}
-    >
-      {isPresent && <IssuePeekFollow issueId={issueId} panelRef={panelRef} />}
-      <ErrorBoundary
-        resetKeys={[issueId]}
-        // The default fallback is a bare message card; here it would be a
-        // panel with no way to close it but Esc.
-        fallback={({ error }) => (
-          <div className="flex flex-1 min-h-0 flex-col">
-            <div className={cn("flex h-12 shrink-0 items-center justify-end gap-1 border-b", PAGE_GUTTER)}>
-              <IssuePeekTrailingActions issueId={issueId} />
-            </div>
-            <div className="flex flex-1 min-h-0 items-center justify-center px-4 text-center text-body text-muted-foreground">
-              {error.message}
-            </div>
-          </div>
+    <>
+      <motion.aside
+        ref={panelRef}
+        aria-label={t(($) => $.peek.panel_label)}
+        data-issue-peek=""
+        className={cn(
+          "absolute right-2 top-2 z-30 flex w-[min(var(--issue-peek-width),calc(100%-1rem))] flex-col overflow-hidden",
+          "rounded-xl bg-background shadow-[var(--floating-shadow)] ring-1 ring-surface-border",
+          // Stops above the chat launcher, which owns the dashboard's
+          // bottom-right corner — the panel's composer would sit under it.
+          "above-chat-launcher",
+          // Follows the card when H / L steps to another column.
+          "transition-[left] duration-(--motion-fast) ease-out",
+          !isPresent && "pointer-events-none",
         )}
+        // The clamp keeps a placement made for a wider surface inside it.
+        style={
+          anchorLeft === null
+            ? undefined
+            : { left: `min(${anchorLeft}px, calc(100% - var(--issue-peek-width) - 0.5rem))`, right: "auto" }
+        }
+        // Slides in from the edge it is anchored to; the exit is shorter and
+        // travels half as far. Reduced motion keeps only the fade.
+        initial={{ opacity: 0, transform: reduceMotion ? "translateX(0)" : "translateX(16px)" }}
+        animate={{
+          opacity: 1,
+          transform: "translateX(0)",
+          transition: { duration: UI_MOTION_DURATION.standard, ease: UI_EASE_OUT },
+        }}
+        exit={{
+          opacity: 0,
+          transform: reduceMotion ? "translateX(0)" : "translateX(8px)",
+          transition: { duration: UI_MOTION_DURATION.fast, ease: UI_EASE_OUT },
+        }}
       >
-        <IssueDetail
-          key={issueId}
-          issueId={issueId}
-          variant="peek"
-          defaultSidebarOpen={false}
-          leadingAction={<IssuePeekNav />}
-          trailingActions={<IssuePeekTrailingActions issueId={issueId} />}
-          onDelete={actions.close}
-        />
-      </ErrorBoundary>
-    </motion.aside>
+        <ErrorBoundary
+          resetKeys={[issueId]}
+          // The default fallback is a bare message card; here it would be a
+          // panel with no way to close it but Esc.
+          fallback={({ error }) => (
+            <div className="flex flex-1 min-h-0 flex-col">
+              <div className={cn("flex h-12 shrink-0 items-center justify-end gap-1 border-b", PAGE_GUTTER)}>
+                <IssuePeekTrailingActions issueId={issueId} />
+              </div>
+              <div className="flex flex-1 min-h-0 items-center justify-center px-4 text-center text-body text-muted-foreground">
+                {error.message}
+              </div>
+            </div>
+          )}
+        >
+          <IssueDetail
+            key={issueId}
+            issueId={issueId}
+            variant="peek"
+            defaultSidebarOpen={false}
+            leadingAction={<IssuePeekNav />}
+            trailingActions={<IssuePeekTrailingActions issueId={issueId} />}
+            onDelete={actions.close}
+          />
+        </ErrorBoundary>
+      </motion.aside>
+      {/* A sibling, not a child: its layout effect reads panelRef, which is
+          attached only after the panel's own subtree has committed. */}
+      {isPresent && <IssuePeekFollow issueId={issueId} panelRef={panelRef} onPlace={setAnchorLeft} />}
+    </>
   );
 });
 
-/** The panel's keyboard (Esc, J / K / H / L, arrows) and keeping the peeked issue in view. */
+/** The panel's keyboard (Esc, J / K / H / L, arrows), placing it beside the peeked issue, and keeping that issue in view. */
 function IssuePeekFollow({
   issueId,
   panelRef,
+  onPlace,
 }: {
   issueId: string;
   panelRef: RefObject<HTMLElement | null>;
+  onPlace: (left: number | null) => void;
 }) {
   const actions = useIssuePeekActions()!;
   const position = useIssuePeekPosition();
@@ -256,9 +274,12 @@ function IssuePeekFollow({
     };
   }, [actions, panelRef]);
 
-  // Keep the peeked issue in sight: scroll it into its column, then scroll the
-  // board sideways if the panel covers it (the board reserves room for this
-  // while a peek is open — see BoardView).
+  // Keep the peeked issue in sight: scroll it into its column, then open the
+  // panel beside it. When neither side has room the panel docks to the right
+  // edge, and the board scrolls sideways if the panel covers the card (the
+  // board reserves room for this while a peek is open — see BoardView).
+  //
+  // A layout effect, so the first frame already shows the panel in place.
   //
   // Checked on every order change, but acted on only when the element standing
   // for the issue is a new one: another issue, the same card remounted in
@@ -266,7 +287,7 @@ function IssuePeekFollow({
   // that leave the element in place never scroll, so a reader who scrolled
   // the peeked card away is not pulled back by an unrelated update.
   const revealedRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const panel = panelRef.current;
     const host = panel?.parentElement;
     if (!panel || !host) return;
@@ -276,15 +297,27 @@ function IssuePeekFollow({
     if (!card || card === revealedRef.current) return;
     revealedRef.current = card;
     card.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+
+    const hostRect = host.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const anchorLeft = placePeekBesideCard(
+      { left: cardRect.left - hostRect.left, right: cardRect.right - hostRect.left },
+      hostRect.width,
+      panel.offsetWidth,
+    );
+    onPlace(anchorLeft);
+    if (anchorLeft !== null) return;
+
     const scroller = card.closest<HTMLElement>("[data-board-scroller]");
-    // offsetLeft, not the panel's rect: on the first frame the rect is still
-    // shifted by the slide-in animation.
-    const panelLeft = host.getBoundingClientRect().left + panel.offsetLeft;
-    const covered = card.getBoundingClientRect().right - (panelLeft - 16);
+    // The docked position (right-2), not the panel's rect or offsetLeft: on
+    // the first frame the rect is still shifted by the slide-in animation,
+    // and offsetLeft may still hold the previous placement.
+    const panelLeft = hostRect.right - panel.offsetWidth - 8;
+    const covered = cardRect.right - (panelLeft - 16);
     if (scroller && covered > 0) {
       scroller.scrollBy?.({ left: covered, behavior: reduceMotion ? "auto" : "smooth" });
     }
-  }, [issueId, position, panelRef, reduceMotion]);
+  }, [issueId, position, panelRef, reduceMotion, onPlace]);
 
   return null;
 }
