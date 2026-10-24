@@ -1,8 +1,9 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, Loader2, RefreshCw } from "lucide-react";
+import { BorderBeam } from "@marvis/ui/components/common/border-beam";
 import { Button } from "@marvis/ui/components/ui/button";
 import {
   SplitCard,
@@ -369,23 +370,33 @@ function ChoicePanel({
   );
 }
 
+// The runtime count is unknown until the daemon reports, so the placeholder
+// rows are a fixed count; the beam relay between them is decorative.
+const SCAN_PLACEHOLDER_ROWS = 3;
+const SCAN_RELAY_SLOT_SECONDS = 1.2;
+
 function ScanningView() {
   const { t } = useT("onboarding");
   return (
     <div>
-      <p aria-live="polite" className="text-body text-muted-foreground">
+      <p aria-live="polite" className="flex items-center gap-2 text-body font-medium">
+        <Loader2 aria-hidden className="size-3.5 shrink-0 motion-safe:animate-spin" />
         {t(($) => $.step_connect.scanning)}
       </p>
       <div aria-hidden className="mt-3 flex flex-col gap-2">
-        {[0, 1].map((i) => (
+        {Array.from({ length: SCAN_PLACEHOLDER_ROWS }, (_, i) => (
           <div
             key={i}
-            className="flex h-16 animate-pulse items-center gap-3 rounded-xl border border-surface-border px-4"
+            className="scan-relay-row relative flex h-16 items-center rounded-xl border border-surface-border bg-background px-4"
+            style={{ "--scan-relay-delay": `${i * SCAN_RELAY_SLOT_SECONDS}s` } as CSSProperties}
           >
-            <div className="size-7 shrink-0 rounded-lg bg-skeleton" />
-            <div className="flex-1 space-y-2">
-              <div className="h-2.5 w-30 rounded-xs bg-skeleton" />
-              <div className="h-2 w-20 rounded-xs bg-skeleton" />
+            <BorderBeam variant="ink" />
+            <div className="scan-relay-content flex flex-1 items-center gap-3">
+              <div className="size-7 shrink-0 rounded-lg bg-skeleton" />
+              <div className="flex-1 space-y-2">
+                <div className="h-2.5 w-30 rounded-xs bg-skeleton" />
+                <div className="h-2 w-20 rounded-xs bg-skeleton" />
+              </div>
             </div>
           </div>
         ))}

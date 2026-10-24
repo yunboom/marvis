@@ -356,6 +356,47 @@
   }
 }
 
+/* Scan relay: a row of placeholders takes turns carrying an ink beam while
+ * the result count is still unknown. Each row sets `--scan-relay-delay` to its
+ * slot; one beam lap per slot keeps the hand-off on the same corner. The
+ * order is decorative — detection results arrive all at once. */
+@keyframes scan-relay-beam {
+  0% { opacity: 0; }
+  5%, 28% { opacity: 1; }
+  33%, 100% { opacity: 0; }
+}
+
+@keyframes scan-relay-content {
+  0% { opacity: 0.55; }
+  5%, 28% { opacity: 1; }
+  33%, 100% { opacity: 0.55; }
+}
+
+.scan-relay-row .border-beam-ring {
+  opacity: 0;
+  animation: scan-relay-beam 3.6s linear infinite;
+  animation-delay: var(--scan-relay-delay, 0s);
+}
+
+.scan-relay-row .border-beam-light {
+  animation-duration: 1.2s;
+}
+
+.scan-relay-content {
+  animation: scan-relay-content 3.6s linear infinite;
+  animation-delay: var(--scan-relay-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-relay-row .border-beam-ring {
+    display: none;
+  }
+
+  .scan-relay-content {
+    animation: none;
+  }
+}
+
 /* Sidebar: open triggers (dropdown/popover) get active background */
 [data-sidebar="menu-button"][data-popup-open] {
   background-color: var(--sidebar-accent);
