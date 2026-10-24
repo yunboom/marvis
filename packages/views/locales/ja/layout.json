@@ -64,6 +64,8 @@
     "ai_team_group": "AI チーム",
     "show_more_pins": "さらに {{count}} 件を表示…",
     "show_fewer_pins": "表示を減らす",
+    "expand_sub_nav": "{{label}}を展開",
+    "collapse_sub_nav": "{{label}}を折りたたむ",
     "unread_overflow": "99+"
   },
   "lark_invite_welcome": {

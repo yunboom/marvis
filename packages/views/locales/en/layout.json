@@ -64,6 +64,8 @@
     "ai_team_group": "AI Team",
     "show_more_pins": "Show {{count}} more…",
     "show_fewer_pins": "Show fewer",
+    "expand_sub_nav": "Expand {{label}}",
+    "collapse_sub_nav": "Collapse {{label}}",
     "unread_overflow": "99+"
   },
   "lark_invite_welcome": {
