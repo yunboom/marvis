@@ -386,7 +386,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
     };
   }, [active.value, location.section]);
 
-  // nested：折叠分组里的子项，不带图标，文字与分组名对齐。
+  // nested：折叠分组里的子项，整行缩进一级。
   const navItem = (item: SettingsEntry, nested = false) => (
     <li key={item.value}>
       <AppLink
@@ -400,7 +400,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
             : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
         )}
       >
-        {nested ? null : <item.icon className="size-4 shrink-0 text-foreground" aria-hidden="true" />}
+        <item.icon className="size-4 shrink-0 text-foreground" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         {isMember && item.adminOnly ? (
           <Lock

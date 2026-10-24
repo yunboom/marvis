@@ -45,6 +45,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -570,6 +571,20 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   }, [wsId]);
   const visiblePinned = localPinnedWsId === (wsId ?? null) ? localPinned : EMPTY_PINS;
   const pinsExpanded = expandedPinsWorkspaceId === wsId;
+  // Sub-nav groups default open; landing on a sub route reopens its group.
+  const [collapsedSubNav, setCollapsedSubNav] = useState<Partial<Record<NavKey, boolean>>>({});
+  const toggleSubNav = (key: NavKey) =>
+    setCollapsedSubNav((current) => ({ ...current, [key]: !current[key] }));
+  const activeSubNavParent = (Object.keys(workSubNav) as NavKey[]).find((key) =>
+    workSubNav[key]?.some((sub) => isNavActive(pathname, p[sub.key]())),
+  );
+  useEffect(() => {
+    if (activeSubNavParent) {
+      setCollapsedSubNav((current) =>
+        current[activeSubNavParent] ? { ...current, [activeSubNavParent]: false } : current,
+      );
+    }
+  }, [activeSubNavParent]);
   const displayedPinned = pinsExpanded ? visiblePinned : visiblePinned.slice(0, PINNED_PREVIEW_LIMIT);
   // View pins are absent here (their href resolves async): while a view
   // pin is active the plain nav row for its surface stays highlighted too.
@@ -764,27 +779,54 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                   const Icon = routeIconForPath(href);
                   const isActive = !isActivePinnedRoute && isNavActive(pathname, href);
                   const subNav = workSubNav[item.key];
+                  const label = t(($) => $.nav[item.labelKey]);
+                  const subOpen = !collapsedSubNav[item.key];
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
                         isActive={isActive}
                         render={<AppLink href={href} />}
-                        className={NAV_ITEM_CLASS_NAME}
+                        className={cn(NAV_ITEM_CLASS_NAME, subNav && "pr-9")}
                       >
                         <Icon />
-                        <span>{t(($) => $.nav[item.labelKey])}</span>
+                        <span>{label}</span>
                       </SidebarMenuButton>
                       {subNav && (
-                        <SidebarMenuSub className="mx-0 mt-0.5 translate-x-0 gap-0.5 border-l-0 p-0">
+                        <SidebarMenuAction
+                          aria-expanded={subOpen}
+                          aria-controls={`sidebar-sub-nav-${item.key}`}
+                          aria-label={
+                            subOpen
+                              ? t(($) => $.sidebar.collapse_sub_nav, { label })
+                              : t(($) => $.sidebar.expand_sub_nav, { label })
+                          }
+                          onClick={() => toggleSubNav(item.key)}
+                          className="top-[7px] right-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                        >
+                          <ChevronRight
+                            className={cn(
+                              "!size-3.5 transition-transform duration-150 ease-out motion-reduce:transition-none",
+                              subOpen && "rotate-90",
+                            )}
+                          />
+                        </SidebarMenuAction>
+                      )}
+                      {subNav && subOpen && (
+                        <SidebarMenuSub
+                          id={`sidebar-sub-nav-${item.key}`}
+                          className="mx-0 mt-0.5 translate-x-0 gap-0.5 border-l-0 p-0"
+                        >
                           {subNav.map((sub) => {
                             const subHref = p[sub.key]();
+                            const SubIcon = routeIconForPath(subHref);
                             return (
                               <SidebarMenuSubItem key={sub.key}>
                                 <SidebarMenuSubButton
                                   isActive={!isActivePinnedRoute && isNavActive(pathname, subHref)}
                                   render={<AppLink href={subHref} />}
-                                  className="h-[34px] translate-x-0 rounded-md pr-3 pl-10 text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground data-active:font-medium"
+                                  className="h-[34px] translate-x-0 gap-2.5 rounded-md pr-3 pl-10 text-foreground hover:bg-sidebar-accent/70 data-active:font-medium [&>svg]:size-[18px] [&>svg]:text-current"
                                 >
+                                  <SubIcon />
                                   <span>{t(($) => $.nav[sub.labelKey])}</span>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>

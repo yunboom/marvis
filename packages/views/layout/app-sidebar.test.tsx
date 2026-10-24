@@ -80,6 +80,11 @@ vi.mock("@marvis/ui/components/ui/sidebar", () => ({
       {children}
     </button>
   ),
+  SidebarMenuAction: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  ),
   SidebarMenuItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarMenuSub: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="sidebar-menu-sub">{children}</div>
@@ -462,6 +467,21 @@ describe("navigation item presentation", () => {
     expect(container.querySelectorAll('button[data-href="/acme/workflows"]')).toHaveLength(1);
     expect(container.querySelector('button[data-href="/acme/projects"]')?.getAttribute("data-active")).toBeNull();
     navigation.current = { pathname: "/acme/issues" };
+  });
+
+  it("collapses and expands the Projects sub-nav", () => {
+    const { container } = render(<AppSidebar />);
+    const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-projects"]');
+
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+
+    fireEvent.click(toggle!);
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+
+    fireEvent.click(toggle!);
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
   });
 
   it("keeps Help out of the sidebar", () => {

@@ -64,6 +64,8 @@
     "ai_team_group": "AI 团队",
     "show_more_pins": "再显示 {{count}} 项...",
     "show_fewer_pins": "收起",
+    "expand_sub_nav": "展开{{label}}",
+    "collapse_sub_nav": "收起{{label}}",
     "unread_overflow": "99+"
   },
   "lark_invite_welcome": {
