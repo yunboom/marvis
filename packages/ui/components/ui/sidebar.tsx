@@ -26,15 +26,15 @@ import {
 } from "@marvis/ui/components/ui/tooltip"
 import { PanelLeftIcon } from "lucide-react"
 
-const SIDEBAR_WIDTH_DEFAULT = 256
-const SIDEBAR_WIDTH_MIN = 200
+const SIDEBAR_WIDTH_DEFAULT = 216
+const SIDEBAR_WIDTH_MIN = 184
 const SIDEBAR_WIDTH_MAX = 360
 const SIDEBAR_WIDTH_STORAGE_KEY = "sidebar_width"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_DRAG_THRESHOLD = 2
 // Tailwind `lg`–`xl`: wide enough to keep a two-pane list/detail surface, too
-// narrow to also spend 256px on the nav. The nav starts collapsed here and the
+// narrow to also spend 216px on the nav. The nav starts collapsed here and the
 // header's trigger brings it back.
 const SIDEBAR_AUTO_COLLAPSE_QUERY = "(min-width: 1024px) and (max-width: 1279px)"
 
