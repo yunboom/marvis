@@ -646,10 +646,12 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
               }
               tooltipSide="bottom"
               size="icon"
-              className="relative ml-auto rounded-full [&_svg]:size-5"
+              // Solid ink glyph, as large as the logo: the primary action of
+              // the sidebar, in Marvis.app's "new chat" style.
+              className="relative ml-auto rounded-full text-foreground"
               onClick={() => openCreateIssueWithPreference()}
             >
-              <PlusCircle />
+              <PlusCircle weight="fill" className="size-6" />
               <DraftDot />
             </IconButton>
           </div>
@@ -949,10 +951,10 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
               aria-haspopup="dialog"
               tooltipSide="top"
               size="icon-lg"
-              className="relative shrink-0 rounded-md text-foreground [&_svg]:size-[18px]"
+              className="relative shrink-0 rounded-md text-foreground"
               onClick={() => setMessageBoxOpen(true)}
             >
-              <Bell />
+              <Bell className="size-[18px]" />
               {unreadCount > 0 && (
                 <span
                   data-testid="message-box-unread-dot"
