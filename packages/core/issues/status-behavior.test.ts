@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { buildIssueStatusCatalog } from "../issue-statuses";
 import type { Issue, IssueStatusEntry } from "../types";
+import { defaultStatusGroup } from "./config/status";
 import {
   issueBehavesAs,
   issueBehavesAsAny,
@@ -23,6 +24,7 @@ function entry(key: string, category: string, isSystem = false): IssueStatusEntr
     name: key,
     description: "",
     category: category as IssueStatusEntry["category"],
+    status_group: defaultStatusGroup(key, category as IssueStatusEntry["category"]),
     color: "#000000",
     is_system: isSystem,
     position: 0,

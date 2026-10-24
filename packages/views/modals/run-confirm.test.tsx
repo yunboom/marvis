@@ -19,6 +19,7 @@ vi.mock("@marvis/core/issue-statuses/hooks", () => ({
         name: "Rework",
         description: "",
         category: "unstarted",
+        status_group: "not_started",
         color: "#22c55e",
         is_system: false,
         position: 0,

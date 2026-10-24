@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import type { Issue, IssueStatusEntry } from "@marvis/core/types";
 import {
   BOARD_CATEGORIES,
@@ -48,6 +49,7 @@ function entry(
     name: key,
     description: "",
     category: category as IssueStatusEntry["category"],
+    status_group: defaultStatusGroup(key, category as IssueStatusEntry["category"]),
     color: "#123456",
     is_system: false,
     position: 0,

@@ -370,7 +370,7 @@
     "manual_reorder_hint": "列内の順序を変更するには、並び順を「手動」に切り替えてください。",
     "status_column": {
       "not_started": "未着手",
-      "started": "着手済み",
+      "working": "作業中",
       "needs_attention": "要対応",
       "ended": "終了"
     },

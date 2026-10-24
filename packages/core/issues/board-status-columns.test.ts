@@ -9,15 +9,16 @@ import {
 import { visibleStatusKeys } from "./status-category";
 
 const catalog = buildIssueStatusCatalog([
-  { key: "triage", category: "unstarted", name: "Triage", position: 1, is_system: false },
-  { key: "qa", category: "started", name: "QA", position: 2, is_system: false },
-  { key: "shipped", category: "done", name: "Shipped", position: 3, is_system: false },
-  { key: "wont_fix", category: "closed", name: "Won't fix", position: 4, is_system: false },
+  { key: "triage", category: "unstarted", status_group: "not_started", name: "Triage", position: 1, is_system: false },
+  { key: "qa", category: "started", status_group: "working", name: "QA", position: 2, is_system: false },
+  { key: "waiting_customer", category: "started", status_group: "needs_attention", name: "Waiting", position: 3, is_system: false },
+  { key: "shipped", category: "done", status_group: "ended", name: "Shipped", position: 4, is_system: false },
+  { key: "wont_fix", category: "closed", status_group: "ended", name: "Won't fix", position: 5, is_system: false },
 ] as IssueStatusEntry[]);
 
 function columnsOf(statuses: string[]) {
   return Object.fromEntries(
-    groupStatusesIntoBoardColumns(statuses, catalog.categoryOf).map((column) => [
+    groupStatusesIntoBoardColumns(statuses, catalog.groupOf).map((column) => [
       column.key,
       column.statuses,
     ]),
@@ -25,33 +26,33 @@ function columnsOf(statuses: string[]) {
 }
 
 describe("groupStatusesIntoBoardColumns", () => {
-  it("routes built-in statuses by category, with review and blocked needing attention", () => {
+  it("routes built-in statuses by their fixed group", () => {
     expect(
       columnsOf(["backlog", "todo", "in_progress", "in_review", "blocked", "done", "cancelled"]),
     ).toEqual({
       not_started: ["backlog", "todo"],
-      started: ["in_progress"],
+      working: ["in_progress"],
       needs_attention: ["in_review", "blocked"],
       ended: ["done", "cancelled"],
     });
   });
 
-  it("places custom statuses by their category, never in needs attention", () => {
+  it("places custom statuses by their stored group, needs attention included", () => {
     const columns = columnsOf(visibleStatusKeys([], [], catalog));
 
     expect(columns.not_started).toContain("triage");
-    expect(columns.started).toContain("qa");
-    expect(columns.needs_attention).toEqual(["in_review", "blocked"]);
+    expect(columns.working).toContain("qa");
+    expect(columns.needs_attention).toEqual(expect.arrayContaining(["in_review", "blocked", "waiting_customer"]));
     expect(columns.ended).toEqual(expect.arrayContaining(["shipped", "wont_fix"]));
   });
 
   it("drops hidden statuses and keeps a column whose lanes are all hidden", () => {
-    const visible = visibleStatusKeys([], ["in_review", "blocked", "cancelled"], catalog);
-    const columns = groupStatusesIntoBoardColumns(visible, catalog.categoryOf);
+    const visible = visibleStatusKeys([], ["in_review", "blocked", "waiting_customer", "cancelled"], catalog);
+    const columns = groupStatusesIntoBoardColumns(visible, catalog.groupOf);
 
     expect(columns.map((column) => column.key)).toEqual([
       "not_started",
-      "started",
+      "working",
       "needs_attention",
       "ended",
     ]);
@@ -65,6 +66,16 @@ describe("groupStatusesIntoBoardColumns", () => {
       "triage",
       "backlog",
     ]);
+  });
+
+  it("falls back to the default group when an entry carries none", () => {
+    const legacy = buildIssueStatusCatalog([
+      { key: "review_2", category: "started", name: "Review", position: 1, is_system: false },
+    ] as IssueStatusEntry[]);
+
+    expect(legacy.groupOf("review_2")).toBe("working");
+    expect(legacy.groupOf("blocked")).toBe("needs_attention");
+    expect(legacy.groupOf("unknown_key")).toBe("not_started");
   });
 });
 

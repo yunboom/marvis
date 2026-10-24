@@ -2140,6 +2140,7 @@ describe("IssueDetail (shared)", () => {
     name: "In Review",
     description: "",
     category: "started",
+    status_group: "needs_attention",
     color: "#8b5cf6",
     is_system: true,
     position: 0,

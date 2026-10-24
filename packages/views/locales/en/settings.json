@@ -15,7 +15,7 @@
       "archive": "Archive",
       "reorder": "Reorder {{name}}"
     },
-    "reorder_hint": "Drag within a category to reorder boards, lists, and menus.",
+    "reorder_hint": "Drag within a group to reorder boards, lists, and menus.",
     "built_in_dialog": {},
     "editor": {
       "create_title": "New status",
@@ -24,8 +24,9 @@
       "name_placeholder": "e.g. Code Review",
       "key_hint": "Referred to as {{key}} by the API and the CLI.",
       "created": "Status created. The API and the CLI refer to it as {{key}}.",
-      "category": "Category",
-      "category_locked": "Category cannot be changed after a status is created.",
+      "lifecycle": "Lifecycle type",
+      "group": "Group",
+      "lifecycle_locked": "Lifecycle type cannot be changed after a status is created.",
       "description": "Description",
       "description_placeholder": "What this status means for your team",
       "color": "Color",
@@ -63,11 +64,11 @@
       "done": "Done",
       "closed": "Closed"
     },
-    "categories": {
-      "unstarted": "Work that has not started, whether planned or in the backlog.",
-      "started": "Work that is active, under review, or blocked.",
-      "done": "Work that has been finished.",
-      "closed": "Work that will not be completed."
+    "group_labels": {
+      "not_started": "Not started",
+      "working": "Working",
+      "needs_attention": "Needs attention",
+      "ended": "Ended"
     },
     "built_in_descriptions": {
       "backlog": "Parked. Assigning an issue here never starts an agent run.",

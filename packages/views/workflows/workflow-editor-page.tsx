@@ -101,7 +101,9 @@ const STEP_CONNECTOR = "ml-9.5 h-2.5 w-0.5 bg-input group-last/step:hidden";
 const NEW_WORKFLOW_MIDDLE = ["in_progress", "in_review"];
 
 /** A middle column of the draft: a library status, or one to create on save. */
-type DraftColumn = { id: string; status_key: string } | { id: string; new_name: string; category?: "unstarted" | "started" };
+type DraftColumn =
+  | { id: string; status_key: string }
+  | { id: string; new_name: string; category?: "unstarted" | "started"; status_group?: "working" | "needs_attention" };
 
 /** What entering a column does, keyed in the draft by column id. */
 type Handoff = Pick<IssueWorkflowStep, "handler" | "instructions" | "next_status_key" | "back_status_key">;
@@ -235,7 +237,7 @@ export function WorkflowEditorPage({
           const existing = catalog.activeStatuses.find((e) => e.name.toLowerCase() === name.toLowerCase());
           return existing
             ? { id: existing.key, status_key: existing.key }
-            : { id: `new:${name}`, new_name: name, category: column.category };
+            : { id: `new:${name}`, new_name: name, category: column.category, status_group: column.status_group };
         }),
       };
     }
@@ -324,7 +326,14 @@ export function WorkflowEditorPage({
         : {};
       return "status_key" in c
         ? { status_key: c.status_key, ...handoff }
-        : { new_status: { name: c.new_name, ...(c.category ? { category: c.category } : {}) }, ...handoff };
+        : {
+            new_status: {
+              name: c.new_name,
+              ...(c.category ? { category: c.category } : {}),
+              ...(c.status_group ? { status_group: c.status_group } : {}),
+            },
+            ...handoff,
+          };
     });
     const body = {
       ...(isDefault ? {} : { name: draft.name.trim() }),

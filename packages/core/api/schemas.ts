@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { normalizeIssueStatusCategory } from "../issues/config/status";
+import { defaultStatusGroup, normalizeIssueStatusCategory, normalizeIssueStatusGroup } from "../issues/config/status";
 import type {
   WorkflowHandoffPreview,
   IssueWorkflow,
@@ -504,6 +504,9 @@ export const IssueStatusEntrySchema = z.object({
   name: z.string(),
   description: z.string().optional().default(""),
   category: z.string().transform((value) => normalizeIssueStatusCategory(value) ?? value),
+  // A missing or unknown group falls back to the category default, so a server
+  // that predates the field (or reports a newer group) still groups the board.
+  status_group: z.unknown().optional(),
   color: z.string().optional().default("#6b7280"),
   icon: z.string().nullable().optional(),
   is_system: z.boolean().optional().default(false),
@@ -511,7 +514,14 @@ export const IssueStatusEntrySchema = z.object({
   archived_at: z.string().nullable().optional().default(null),
   created_at: z.string(),
   updated_at: z.string(),
-}).loose();
+}).loose().transform((entry) => {
+  const category = normalizeIssueStatusCategory(entry.category);
+  const group = normalizeIssueStatusGroup(entry.status_group);
+  return {
+    ...entry,
+    status_group: group ?? (category ? defaultStatusGroup(entry.key, category) : "not_started"),
+  };
+});
 
 export const EMPTY_ISSUE_STATUS_ENTRY: IssueStatusEntry = {
   id: "",
@@ -520,6 +530,7 @@ export const EMPTY_ISSUE_STATUS_ENTRY: IssueStatusEntry = {
   name: "",
   description: "",
   category: "unstarted",
+  status_group: "not_started",
   color: "#6b7280",
   is_system: false,
   position: 0,
@@ -1441,6 +1452,9 @@ export const IssueSchema = z.object({
   // consumers must fall back to `status` rather than treat "" as a category.
   // (MUL-6243)
   status_category: z.string().transform((value) => normalizeIssueStatusCategory(value) ?? value).optional(),
+  // Display data; an unknown or malformed group is dropped and the client
+  // groups from its catalog instead.
+  status_group: z.unknown().optional().transform((value) => normalizeIssueStatusGroup(value) ?? undefined),
   // A CUSTOM status's display name; "" for a built-in, which clients localize
   // from the key. Optional so a response from a server that predates the field
   // still validates.

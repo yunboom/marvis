@@ -15,7 +15,7 @@
       "archive": "Archiver",
       "reorder": "Réordonner {{name}}"
     },
-    "reorder_hint": "Glissez les statuts au sein d’une catégorie pour réordonner les tableaux, listes et menus.",
+    "reorder_hint": "Glissez les statuts au sein d’un groupe pour réordonner les tableaux, listes et menus.",
     "built_in_dialog": {},
     "editor": {
       "create_title": "Nouvel état",
@@ -24,8 +24,9 @@
       "name_placeholder": "ex. Relecture de code",
       "key_hint": "Désigné par {{key}} dans l'API et la CLI.",
       "created": "Statut créé. L'API et le CLI le désignent par {{key}}.",
-      "category": "Catégorie",
-      "category_locked": "La catégorie ne peut plus être modifiée après la création du statut.",
+      "lifecycle": "Type de cycle de vie",
+      "group": "Groupe",
+      "lifecycle_locked": "Le type de cycle de vie ne peut plus être modifié après la création du statut.",
       "description": "Description",
       "description_placeholder": "Ce que cet état signifie pour votre équipe",
       "color": "Couleur",
@@ -63,11 +64,11 @@
       "done": "Terminé",
       "closed": "Fermée"
     },
-    "categories": {
-      "unstarted": "Travail non démarré, qu'il soit planifié ou dans le backlog.",
-      "started": "Travail en cours, en relecture ou bloqué.",
-      "done": "Travail terminé.",
-      "closed": "Travail qui ne sera pas terminé."
+    "group_labels": {
+      "not_started": "Non commencé",
+      "working": "En cours",
+      "needs_attention": "À traiter",
+      "ended": "Terminé"
     },
     "built_in_descriptions": {
       "backlog": "En attente. Affecter une tâche ici ne démarre jamais un agent.",

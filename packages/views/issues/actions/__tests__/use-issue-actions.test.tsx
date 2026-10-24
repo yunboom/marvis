@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
@@ -83,6 +84,7 @@ function statusEntry(overrides: Partial<IssueStatusEntry>): IssueStatusEntry {
     created_at: "",
     updated_at: "",
     ...overrides,
+    status_group: overrides.status_group ?? defaultStatusGroup(overrides.key ?? "custom", overrides.category ?? "unstarted"),
   };
 }
 vi.mock("@marvis/core/issue-statuses/hooks", () => ({

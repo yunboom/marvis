@@ -10,7 +10,7 @@ import type {
   IssueTableQuerySpec,
   Comment,
 } from "@marvis/core/types";
-import { STATUS_ORDER } from "@marvis/core/issues/config";
+import { STATUS_ORDER, defaultStatusGroup } from "@marvis/core/issues/config";
 import { ApiClient } from "@marvis/core/api";
 
 const time = "2026-09-14T06:00:00Z";
@@ -315,6 +315,7 @@ export function createFixtureApi(getLocale: () => LabLocale = () => "en") {
         name: key,
         description: "",
         category: key,
+        status_group: defaultStatusGroup(key, key),
         color: "#777777",
         is_system: true,
         position: index,
