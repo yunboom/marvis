@@ -1,4 +1,4 @@
-.PHONY: help makehelp dev server daemon cli marvis build standalone-bundle test migrate-up migrate-down sqlc seed clean setup start stop check worktree-env setup-main start-main stop-main check-main setup-worktree start-worktree stop-worktree check-worktree remove-worktree db-up db-down db-drop db-reset selfhost selfhost-build selfhost-stop up down status list destroy gc env-exec api-dev web-dev desktop-dev
+.PHONY: help makehelp dev server daemon cli marvis build standalone-bundle test migrate-up migrate-down sqlc schema seed clean setup start stop check worktree-env setup-main start-main stop-main check-main setup-worktree start-worktree stop-worktree check-worktree remove-worktree db-up db-down db-drop db-reset selfhost selfhost-build selfhost-stop up down status list destroy gc env-exec api-dev web-dev desktop-dev
 
 MAIN_ENV_FILE ?= .env
 WORKTREE_ENV_FILE ?= .env.worktree
@@ -358,6 +358,11 @@ migrate-up: ## Create the target DB if needed, then apply database migrations
 	$(REQUIRE_ENV)
 	@bash scripts/ensure-postgres.sh "$(ENV_FILE)"
 	cd server && go run ./cmd/migrate up
+
+schema: ## Regenerate server/schema.sql, the full schema after all migrations
+	$(REQUIRE_ENV)
+	@bash scripts/ensure-postgres.sh "$(ENV_FILE)"
+	@bash scripts/dump-schema.sh "$(ENV_FILE)"
 
 migrate-down: ## Create the target DB if needed, then roll back database migrations
 	$(REQUIRE_ENV)
