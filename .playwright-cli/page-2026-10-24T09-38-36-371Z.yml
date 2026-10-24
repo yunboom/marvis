@@ -1,0 +1,29 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e9]: 登录 Marvis
+      - generic [ref=e10]: 输入邮箱以获取登录验证码
+    - generic [ref=e13]:
+      - generic [ref=e14]: 邮箱
+      - textbox "邮箱" [active] [ref=e15]:
+        - /placeholder: you@example.com
+    - generic [ref=e16]:
+      - button "继续" [disabled]
+      - button "使用飞书登录" [ref=e17]
+      - generic [ref=e19]:
+        - text: 想用桌面应用？
+        - link "下载" [ref=e20] [cursor=pointer]:
+          - /url: /download
+  - region "Notifications alt+T"
+  - generic [ref=e25] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e26]
+    - generic [ref=e30]:
+      - button "Open issues overlay" [ref=e31]:
+        - generic [ref=e32]:
+          - generic [aria-hidden] [ref=e33]: "1"
+          - generic [ref=e34]: "2"
+        - generic [ref=e35]:
+          - text: Issue
+          - generic [aria-hidden] [ref=e36]: s
+      - button "Collapse issues badge" [ref=e37]
+  - alert [ref=e40]
