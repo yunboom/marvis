@@ -48,7 +48,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@marvis/ui/components/u
 import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { Button } from "@marvis/ui/components/ui/button";
-import { EmojiPicker } from "@marvis/ui/components/common/emoji-picker";
+import { ProjectIconPicker } from "../projects/components/project-icon-picker";
 import { ContentEditor, type ContentEditorRef, TitleEditor } from "../editor";
 import { PriorityIcon } from "../issues/components/priority-icon";
 import { ActorAvatar } from "../common/actor-avatar";
@@ -174,7 +174,6 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
   // disclosure, mirroring create-issue); these flip a pill inline + open.
   const [startDatePickerOpen, setStartDatePickerOpen] = useState(false);
   const [dueDatePickerOpen, setDueDatePickerOpen] = useState(false);
-  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   // Repos selected to attach as github_repo resources after the project is
@@ -527,29 +526,11 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="px-5 pb-2 shrink-0">
-          <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
-            <TooltipHint label={t(($) => $.create_project.icon_tooltip)}>
-              <PopoverTrigger
-                render={
-                  <button
-                    type="button"
-                    className="text-display-sm cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
-                    aria-label={t(($) => $.create_project.icon_tooltip)}
-                  >
-                    {icon || "📁"}
-                  </button>
-                }
-              />
-            </TooltipHint>
-            <PopoverContent align="start" className="w-auto p-0">
-              <EmojiPicker
-                onSelect={(emoji) => {
-                  updateIcon(emoji);
-                  setIconPickerOpen(false);
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+          <ProjectIconPicker
+            icon={icon}
+            label={t(($) => $.create_project.icon_tooltip)}
+            onChange={updateIcon}
+          />
           <TitleEditor
             autoFocus
             defaultValue={draft.title}

@@ -180,5 +180,43 @@
     "direction_desc": "내림차순",
     "section_columns": "열",
     "view": "보기"
+  },
+  "icon_picker": {
+    "tab_glyph": "아이콘",
+    "tab_emoji": "이모지",
+    "glyphs": {
+      "folder": "폴더",
+      "briefcase": "서류 가방",
+      "rocket": "로켓",
+      "target": "과녁",
+      "flag": "깃발",
+      "compass": "나침반",
+      "layers": "레이어",
+      "box": "상자",
+      "code": "코드",
+      "terminal": "터미널",
+      "git_branch": "브랜치",
+      "database": "데이터베이스",
+      "server": "서버",
+      "cloud": "클라우드",
+      "smartphone": "휴대폰",
+      "monitor": "모니터",
+      "palette": "팔레트",
+      "pen_tool": "펜",
+      "book_open": "책",
+      "file_text": "문서",
+      "megaphone": "메가폰",
+      "chart_line": "차트",
+      "lightbulb": "전구",
+      "sparkles": "반짝임",
+      "users": "멤버",
+      "shield": "방패",
+      "bug": "버그",
+      "wrench": "렌치",
+      "calendar": "캘린더",
+      "mountain": "산",
+      "leaf": "잎",
+      "feather": "깃털"
+    }
   }
 }
