@@ -38,7 +38,10 @@ describe("TitleEditor send chord (real editor)", () => {
     useShortcutStore.setState({ overrides: {} });
   });
 
-  it("fires onSubmitShortcut on the default Cmd+Enter chord", async () => {
+  it("fires onSubmitShortcut when send is bound to Cmd+Enter", async () => {
+    useShortcutStore.setState({
+      overrides: { send: createShortcutChord("Enter", { primary: true }) },
+    });
     const onSubmitShortcut = vi.fn();
     render(<TitleEditor defaultValue="A title" onSubmitShortcut={onSubmitShortcut} />);
     await screen.findByText("A title");
