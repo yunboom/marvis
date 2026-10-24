@@ -33,6 +33,7 @@ import {
   MIN_BODY_INPUT_HEIGHT_PX,
   MOBILE_PLACEHOLDER_COLOR,
 } from "@/components/ui/input-tokens";
+import { ProjectIconGrid } from "@/components/project/project-icon-grid";
 import { ProjectStatusIcon } from "@/components/ui/project-status-icon";
 import { ProjectPriorityIcon } from "@/components/ui/project-priority-icon";
 import {
@@ -188,15 +189,8 @@ export default function NewProject() {
           contentContainerClassName="px-4 pt-4 pb-6 gap-4"
           keyboardShouldPersistTaps="handled"
         >
-              <Field label={t("form.icon_emoji")}>
-            <TextInput
-              value={icon}
-              onChangeText={(v) => setIcon(v.slice(0, 4))}
-              placeholder="📦"
-              placeholderTextColor={MOBILE_PLACEHOLDER_COLOR}
-              className="text-2xl text-foreground bg-secondary/50 rounded-md px-3 py-2 self-start min-w-[60px] text-center"
-              maxLength={4}
-            />
+              <Field label={t("form.icon")}>
+            <ProjectIconGrid value={icon} onChange={setIcon} />
           </Field>
 
               <Field label={t("form.title")}>

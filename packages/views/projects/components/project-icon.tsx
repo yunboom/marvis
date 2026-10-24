@@ -33,11 +33,15 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { parseProjectIcon, type ProjectGlyph } from "@marvis/core/projects/config";
+import {
+  DEFAULT_PROJECT_ICON,
+  parseProjectIcon,
+  type ProjectIconKey,
+} from "@marvis/core/projects/config";
 import type { Project } from "@marvis/core/types";
 import { cn } from "@marvis/ui/lib/utils";
 
-export type ProjectIconSize = "sm" | "md" | "lg";
+export type ProjectIconSize = "sm" | "md" | "tile";
 
 export interface ProjectIconProps {
   project?: Pick<Project, "icon"> | null;
@@ -45,7 +49,7 @@ export interface ProjectIconProps {
   className?: string;
 }
 
-export const PROJECT_GLYPH_COMPONENTS: Record<ProjectGlyph, LucideIcon> = {
+export const PROJECT_ICON_COMPONENTS: Record<ProjectIconKey, LucideIcon> = {
   folder: Folder,
   briefcase: Briefcase,
   rocket: Rocket,
@@ -56,18 +60,18 @@ export const PROJECT_GLYPH_COMPONENTS: Record<ProjectGlyph, LucideIcon> = {
   box: Box,
   code: Code,
   terminal: Terminal,
-  git_branch: GitBranch,
+  "git-branch": GitBranch,
   database: Database,
   server: Server,
   cloud: Cloud,
   smartphone: Smartphone,
   monitor: Monitor,
   palette: Palette,
-  pen_tool: PenTool,
-  book_open: BookOpen,
-  file_text: FileText,
+  "pen-tool": PenTool,
+  "book-open": BookOpen,
+  "file-text": FileText,
   megaphone: Megaphone,
-  chart_line: ChartLine,
+  "chart-line": ChartLine,
   lightbulb: Lightbulb,
   sparkles: Sparkles,
   users: Users,
@@ -80,30 +84,32 @@ export const PROJECT_GLYPH_COMPONENTS: Record<ProjectGlyph, LucideIcon> = {
   feather: Feather,
 };
 
-const SIZE_CLASS: Record<ProjectIconSize, string> = {
-  sm: "size-3.5 text-caption leading-none",
-  md: "size-4 text-body leading-none",
-  lg: "size-6 text-display-sm leading-none",
+// `tile` sits beside a project title: the glyph on the neutral avatar square.
+const BOX_CLASS: Record<ProjectIconSize, string> = {
+  sm: "size-3.5",
+  md: "size-4",
+  tile: "size-10 rounded-[28%] bg-identity-gray text-identity-gray-foreground",
+};
+
+const GLYPH_CLASS: Record<ProjectIconSize, string> = {
+  sm: "size-full",
+  md: "size-full",
+  tile: "size-5",
 };
 
 export function ProjectIcon({ project, size = "sm", className }: ProjectIconProps) {
-  const icon = parseProjectIcon(project?.icon);
-  const Glyph = PROJECT_GLYPH_COMPONENTS[icon?.kind === "glyph" ? icon.glyph : "folder"];
+  const Glyph = PROJECT_ICON_COMPONENTS[parseProjectIcon(project?.icon) ?? DEFAULT_PROJECT_ICON];
 
   return (
     <span
       aria-hidden="true"
       className={cn(
         "inline-flex shrink-0 items-center justify-center",
-        SIZE_CLASS[size],
+        BOX_CLASS[size],
         className,
       )}
     >
-      {icon?.kind === "emoji" ? (
-        icon.emoji
-      ) : (
-        <Glyph data-project-glyph="" className="size-full" strokeWidth={1.75} />
-      )}
+      <Glyph className={GLYPH_CLASS[size]} strokeWidth={1.75} />
     </span>
   );
 }

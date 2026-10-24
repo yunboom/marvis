@@ -38,12 +38,9 @@ export const PROJECT_PRIORITY_CONFIG: Record<
   none: { label: "No priority", bars: 0, color: "text-muted-foreground", badgeBg: "bg-muted", badgeText: "text-muted-foreground" },
 };
 
-// Project icons are either an emoji or a line glyph from this curated set,
-// stored in the same `icon` field as `icon:<name>` so the API and older
-// clients keep treating the value as an opaque string.
-export const PROJECT_GLYPH_PREFIX = "icon:";
-
-export const PROJECT_GLYPHS = [
+// Project icons are line glyph keys; the server rejects anything else
+// (emoji included). Keep in sync with server/internal/projecticon.
+export const PROJECT_ICONS = [
   "folder",
   "briefcase",
   "rocket",
@@ -54,18 +51,18 @@ export const PROJECT_GLYPHS = [
   "box",
   "code",
   "terminal",
-  "git_branch",
+  "git-branch",
   "database",
   "server",
   "cloud",
   "smartphone",
   "monitor",
   "palette",
-  "pen_tool",
-  "book_open",
-  "file_text",
+  "pen-tool",
+  "book-open",
+  "file-text",
   "megaphone",
-  "chart_line",
+  "chart-line",
   "lightbulb",
   "sparkles",
   "users",
@@ -78,27 +75,13 @@ export const PROJECT_GLYPHS = [
   "feather",
 ] as const;
 
-export type ProjectGlyph = (typeof PROJECT_GLYPHS)[number];
+export type ProjectIconKey = (typeof PROJECT_ICONS)[number];
 
-export type ProjectIconValue =
-  | { kind: "glyph"; glyph: ProjectGlyph }
-  | { kind: "emoji"; emoji: string };
+export const DEFAULT_PROJECT_ICON: ProjectIconKey = "folder";
 
-const GLYPH_SET = new Set<string>(PROJECT_GLYPHS);
+const PROJECT_ICON_SET = new Set<string>(PROJECT_ICONS);
 
-export function projectGlyphIcon(glyph: ProjectGlyph): string {
-  return `${PROJECT_GLYPH_PREFIX}${glyph}`;
-}
-
-/** Empty values and unknown glyph keys resolve to null; callers render the default glyph. */
-export function parseProjectIcon(icon: string | null | undefined): ProjectIconValue | null {
-  const value = icon?.trim();
-  if (!value) return null;
-
-  if (value.startsWith(PROJECT_GLYPH_PREFIX)) {
-    const glyph = value.slice(PROJECT_GLYPH_PREFIX.length);
-    return GLYPH_SET.has(glyph) ? { kind: "glyph", glyph: glyph as ProjectGlyph } : null;
-  }
-
-  return { kind: "emoji", emoji: value };
+/** Returns the icon key, or null for empty and legacy free-text values. */
+export function parseProjectIcon(icon: string | null | undefined): ProjectIconKey | null {
+  return icon && PROJECT_ICON_SET.has(icon) ? (icon as ProjectIconKey) : null;
 }

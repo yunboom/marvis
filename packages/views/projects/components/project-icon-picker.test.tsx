@@ -6,14 +6,6 @@ import enProjects from "../../locales/en/projects.json";
 import { ProjectIcon } from "./project-icon";
 import { ProjectIconPicker } from "./project-icon-picker";
 
-vi.mock("@marvis/ui/components/common/emoji-picker", () => ({
-  EmojiPicker: ({ onSelect }: { onSelect: (emoji: string) => void }) => (
-    <button type="button" onClick={() => onSelect("🚀")}>
-      emoji-picker
-    </button>
-  ),
-}));
-
 function renderPicker(icon: string | null, onChange = vi.fn()) {
   render(
     <I18nProvider locale="en" resources={{ en: { projects: enProjects } }}>
@@ -24,53 +16,38 @@ function renderPicker(icon: string | null, onChange = vi.fn()) {
 }
 
 describe("ProjectIcon", () => {
-  it.each([null, "", "icon:unknown"])("falls back to the folder glyph for %j", (icon) => {
+  it.each([null, "", "unicorn", "📁"])("falls back to the folder glyph for %j", (icon) => {
     const { container } = render(<ProjectIcon project={{ icon }} />);
-    expect(container.querySelector("[data-project-glyph]")).not.toBeNull();
+    expect(container.querySelector("svg.lucide-folder")).not.toBeNull();
     expect(container.textContent).toBe("");
   });
 
-  it("renders a stored glyph as a line icon", () => {
-    const { container } = render(<ProjectIcon project={{ icon: "icon:rocket" }} />);
-    expect(container.querySelector("svg.lucide-rocket")).not.toBeNull();
-  });
-
-  it("keeps rendering emoji icons", () => {
-    const { container } = render(<ProjectIcon project={{ icon: "🚀" }} />);
-    expect(container.querySelector("[data-project-glyph]")).toBeNull();
-    expect(container.textContent).toBe("🚀");
+  it("renders a stored key as its line icon", () => {
+    const { container } = render(<ProjectIcon project={{ icon: "git-branch" }} />);
+    expect(container.querySelector("svg.lucide-git-branch")).not.toBeNull();
   });
 });
 
 describe("ProjectIconPicker", () => {
-  it("opens on the icon tab and stores the chosen glyph", async () => {
+  it("stores the chosen icon key and closes", async () => {
     const user = userEvent.setup();
     const onChange = renderPicker(null);
 
     await user.click(screen.getByRole("button", { name: "Change icon" }));
     await user.click(screen.getByRole("button", { name: "Rocket" }));
 
-    expect(onChange).toHaveBeenCalledWith("icon:rocket");
+    expect(onChange).toHaveBeenCalledWith("rocket");
     expect(screen.queryByRole("button", { name: "Rocket" })).toBeNull();
   });
 
-  it("marks the current glyph as selected", async () => {
+  it("marks the current icon as selected and offers no emoji", async () => {
     const user = userEvent.setup();
-    renderPicker("icon:leaf");
+    renderPicker("leaf");
 
     await user.click(screen.getByRole("button", { name: "Change icon" }));
 
     expect(screen.getByRole("button", { name: "Leaf" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Rocket" })).toHaveAttribute("aria-pressed", "false");
-  });
-
-  it("opens on the emoji tab for an emoji icon and still accepts emoji", async () => {
-    const user = userEvent.setup();
-    const onChange = renderPicker("🎯");
-
-    await user.click(screen.getByRole("button", { name: "Change icon" }));
-    await user.click(screen.getByRole("button", { name: "emoji-picker" }));
-
-    expect(onChange).toHaveBeenCalledWith("🚀");
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 });

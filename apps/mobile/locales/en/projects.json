@@ -27,7 +27,7 @@
     "add_resource": "Add resource"
   },
   "form": {
-    "icon_emoji": "Icon (emoji)",
+    "icon": "Icon",
     "title": "Title",
     "title_placeholder": "Project title",
     "description": "Description",

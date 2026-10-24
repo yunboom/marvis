@@ -24,6 +24,7 @@ import {
   MIN_BODY_INPUT_HEIGHT_PX,
   MOBILE_PLACEHOLDER_COLOR,
 } from "@/components/ui/input-tokens";
+import { ProjectIconGrid } from "@/components/project/project-icon-grid";
 import { projectDetailOptions } from "@/data/queries/projects";
 import { useUpdateProject } from "@/data/mutations/projects";
 import { useWorkspaceStore } from "@/data/workspace-store";
@@ -139,20 +140,8 @@ export default function EditProject() {
             </Text>
           ) : (
             <>
-              <Field label={t("form.icon_emoji")}>
-                <TextInput
-                  value={icon}
-                  onChangeText={(v) => {
-                    // Cap at two characters — emoji are usually 1-2 UTF-16
-                    // code units. Prevents the user typing a full sentence
-                    // by accident.
-                    setIcon(v.slice(0, 4));
-                  }}
-                  placeholder="📦"
-                  placeholderTextColor={MOBILE_PLACEHOLDER_COLOR}
-                  className="text-2xl text-foreground bg-secondary/50 rounded-md px-3 py-2 self-start min-w-[60px] text-center"
-                  maxLength={4}
-                />
+              <Field label={t("form.icon")}>
+                <ProjectIconGrid value={icon} onChange={setIcon} />
               </Field>
 
               <Field label={t("form.title")}>

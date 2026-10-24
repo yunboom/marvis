@@ -28,6 +28,7 @@ import {
   PROJECT_STATUS_CONFIG,
   PROJECT_STATUS_ORDER,
   PROJECT_PRIORITY_ORDER,
+  parseProjectIcon,
 } from "@marvis/core/projects/config";
 import { splitGithubUrlRef } from "@marvis/core/github";
 import { useWorkspaceId } from "@marvis/core/hooks";
@@ -167,7 +168,8 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
   const [priority, setPriority] = useState<ProjectPriority>(draft.priority);
   const [leadType, setLeadType] = useState<"member" | "agent" | undefined>(draft.leadType);
   const [leadId, setLeadId] = useState<string | undefined>(draft.leadId);
-  const [icon, setIcon] = useState<string | undefined>(draft.icon);
+  // Drafts saved before icons became glyph keys may still hold an emoji.
+  const [icon, setIcon] = useState<string | undefined>(parseProjectIcon(draft.icon) ?? undefined);
   const [startDate, setStartDate] = useState<string>(draft.startDate ?? "");
   const [dueDate, setDueDate] = useState<string>(draft.dueDate ?? "");
   // Dates are collapsed into the ⋯ overflow by default (progressive
@@ -525,7 +527,7 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <div className="px-5 pb-2 shrink-0">
+        <div className="px-5 pb-2 shrink-0 flex items-center gap-3">
           <ProjectIconPicker
             icon={icon}
             label={t(($) => $.create_project.icon_tooltip)}
@@ -535,7 +537,7 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
             autoFocus
             defaultValue={draft.title}
             placeholder={t(($) => $.create_project.title_placeholder)}
-            className="text-title font-semibold"
+            className="min-w-0 flex-1 text-title font-semibold"
             onChange={(v) => updateTitle(v)}
             onSubmit={handleSubmit}
           />
