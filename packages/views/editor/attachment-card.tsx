@@ -13,6 +13,7 @@
 
 import type { ReactNode } from "react";
 import { Download, Eye, FileText, Loader2, Trash2 } from "lucide-react";
+import { BorderBeam } from "@marvis/ui/components/common/border-beam";
 import { useT } from "../i18n";
 import { DeferredTooltip } from "../common/deferred-tooltip";
 import { formatBytes } from "../common/format-bytes";
@@ -43,9 +44,10 @@ function AttachmentCardChrome({
   const { t } = useT("editor");
   return (
     <div
-      className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-2.5 py-1 transition-colors hover:bg-muted"
+      className="relative flex items-center gap-2 rounded-md border border-border bg-muted/50 px-2.5 py-1 transition-colors hover:bg-muted"
       onMouseDown={(e) => e.stopPropagation()}
     >
+      {uploading && <BorderBeam variant="ink" />}
       {uploading ? (
         <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
       ) : (
@@ -214,6 +216,7 @@ export function AttachmentFileCard({
 
   return (
     <div className="group/file-card relative flex min-w-0 items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 transition-colors hover:bg-muted/50">
+      {uploading && <BorderBeam variant="ink" />}
       {/* The card's click target, under the content so text stays
           selectable-looking but every click lands here; the action buttons
           sit above it. */}

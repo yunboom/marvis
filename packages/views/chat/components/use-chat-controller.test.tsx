@@ -589,7 +589,7 @@ describe("useChatController queued task actions", () => {
     } as Awaited<ReturnType<typeof api.cancelTaskById>>);
     const result = setup("sA", [sA], [agentA], pending);
 
-    act(() => result.current.handleStop());
+    act(() => { void result.current.handleStop(); });
 
     await waitFor(() => {
       expect(api.cancelTaskById).toHaveBeenCalledWith(taskId, {
@@ -619,7 +619,7 @@ describe("useChatController queued task actions", () => {
     } as Awaited<ReturnType<typeof api.cancelTaskById>>);
     const result = setup("sA", [sA], [agentA], pending);
 
-    act(() => result.current.handleStop());
+    act(() => { void result.current.handleStop(); });
 
     await waitFor(() => {
       expect(api.cancelTaskById).toHaveBeenCalledWith(taskId, undefined);
@@ -652,7 +652,7 @@ describe("useChatController queued task actions", () => {
       } as Awaited<ReturnType<typeof api.cancelTaskById>>);
     const result = setup("sA", [sA], [agentA], pending);
 
-    act(() => result.current.handleStop());
+    act(() => { void result.current.handleStop(); });
 
     await waitFor(() => {
       expect(api.cancelTaskById).toHaveBeenNthCalledWith(1, taskId, {

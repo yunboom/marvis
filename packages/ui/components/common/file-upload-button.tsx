@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 import { Paperclip } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
@@ -13,6 +13,8 @@ interface FileUploadButtonProps {
   className?: string;
   size?: "sm" | "default";
   multiple?: boolean;
+  /** Replaces the default paperclip glyph. */
+  icon?: ReactNode;
 }
 
 function FileUploadButton({
@@ -21,6 +23,7 @@ function FileUploadButton({
   className,
   size = "default",
   multiple = false,
+  icon,
 }: FileUploadButtonProps) {
   const { t } = useTranslation("ui");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +50,7 @@ function FileUploadButton({
         label={attachLabel}
         className={cn("text-muted-foreground", className)}
       >
-        <Paperclip className={iconSize} />
+        {icon ?? <Paperclip className={iconSize} />}
       </IconButton>
       <input
         ref={inputRef}

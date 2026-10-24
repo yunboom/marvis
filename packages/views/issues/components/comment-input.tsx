@@ -6,6 +6,7 @@ import { ContentEditor, type ContentEditorRef, useFileDropZone, FileDropOverlay,
 import { FileUploadButton } from "@marvis/ui/components/common/file-upload-button";
 import { SubmitButton } from "@marvis/ui/components/common/submit-button";
 import { Button } from "@marvis/ui/components/ui/button";
+import { Loader2, Plus, Square } from "lucide-react";
 import { contentReferencesAttachment, type AgentTask } from "@marvis/core/types";
 import { useShortcut } from "@marvis/core/shortcuts";
 import { ShortcutKeycaps } from "../../common/shortcut-keycaps";
@@ -222,7 +223,8 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
   return (
     <div
       {...dropZoneProps}
-      className="relative flex min-h-24 flex-col rounded-xl border border-input bg-background pb-11 shadow-control"
+      data-slot="comment-composer"
+      className="relative flex flex-col rounded-[22px] border border-input bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04),0_6px_20px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow] duration-(--motion-fast) ease-out focus-within:border-ring focus-within:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_28px_rgb(0_0_0/0.07)]"
     >
       {attachmentsBlockSteer && <div className="px-3.5 pt-3">
         <SteerAttachmentNotice />
@@ -238,7 +240,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
       {lazy.active && (
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto px-3.5 pt-3 pb-1",
+          "flex-1 min-h-0 overflow-y-auto px-4.5 pt-3.5 pb-1",
           // Pinned to the viewport bottom the composer grows upward; cap it
           // so a long draft can't swallow the whole timeline (the editor
           // area scrolls internally instead).
@@ -283,7 +285,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
           role="button"
           tabIndex={0}
           aria-label={t(($) => $.comment.leave_comment_placeholder)}
-          className="flex-1 min-h-0 cursor-text px-3.5 pt-3 pb-1"
+          className="flex-1 min-h-0 cursor-text px-4.5 pt-3.5 pb-1"
           onClick={() => lazy.activate()}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -300,30 +302,38 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
           </div>
         </div>
       )}
-      <div className="absolute bottom-2 left-2.5 right-28 min-w-0">
-        <CommentTriggerChips
-          recipients={recipients}
-          blocked={triggerPreview.blocked}
-          hasAllMembersMention={triggerPreview.hasAllMembersMention}
-          draftContent={composedContent}
-          onActionChange={setAction}
-        />
-      </div>
-      <div className="absolute bottom-2 right-2 flex items-center gap-1">
+      {/* In-flow toolbar: the card keeps one fixed two-row height (text line +
+          this row) from empty to typing, so focusing never makes it jump. */}
+      <div data-slot="comment-composer-toolbar" className="flex min-w-0 items-center gap-1 px-2 pb-2">
         <FileUploadButton
-          size="sm"
           multiple
+          className="size-9 rounded-full text-foreground"
+          icon={<Plus className="size-5" aria-hidden="true" />}
           onSelect={(file) => lazy.uploadOrQueue([file])}
         />
+        <div className="min-w-0 flex-1">
+          <CommentTriggerChips
+            recipients={recipients}
+            blocked={triggerPreview.blocked}
+            hasAllMembersMention={triggerPreview.hasAllMembersMention}
+            draftContent={composedContent}
+            onActionChange={setAction}
+          />
+        </div>
         {routing.restartTaskIds.length > 0 ? (
           <Button
-            size="sm"
             variant="destructive"
-            className="rounded-full"
+            className="h-9 rounded-full px-4"
             onClick={submit}
             disabled={!canSend || submitting || gate.uploading}
+            aria-label={t(($) => $.comment.restart_send)}
           >
-            {t(($) => $.comment.restart_send)}
+            {submitting ? (
+              <Loader2 className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Square className="size-3 fill-current" aria-hidden="true" />
+            )}
+            {submitting ? t(($) => $.comment.restart_stopping) : t(($) => $.comment.restart_send)}
           </Button>
         ) : <SubmitButton
           onClick={submit}

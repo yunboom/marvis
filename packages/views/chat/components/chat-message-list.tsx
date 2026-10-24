@@ -26,6 +26,7 @@ import {
   ArrowUpRight,
   Copy,
   RotateCw,
+  Square,
 } from "lucide-react";
 import { useScrollFade } from "@marvis/ui/hooks/use-scroll-fade";
 import { isTaskMessageTaskId, taskMessagesOptions } from "@marvis/core/chat/queries";
@@ -593,6 +594,11 @@ function AssistantMessage({
   // chat_message (failure_reason set), render a destructive bubble with the
   // human-readable reason label + collapsible raw errMsg + the same timeline
   // so the user can see exactly where the run broke.
+  // A run the user stopped is not a failure: keep what it produced and close
+  // it with a quiet marker instead of the destructive failure note.
+  if (message?.failure_reason && STOPPED_FAILURE_REASONS.has(message.failure_reason)) {
+    return <StoppedReply timeline={timeline} />;
+  }
   if (message?.failure_reason) {
     return (
       <FailureBubble
@@ -854,6 +860,24 @@ function QuickActionsSkeleton() {
 // Muted, localized notice shown in place of assistant text when a turn
 // completed with no reply (message_kind === "no_response"). Explains the empty
 // turn instead of rendering a blank bubble (MUL-4351).
+const STOPPED_FAILURE_REASONS = new Set(["manual", "cancelled"]);
+
+function StoppedReply({ timeline }: { timeline: ChatTimelineItem[] }) {
+  const { t } = useT("chat");
+  return (
+    <div className="w-full space-y-2">
+      {timeline.length > 0 && <TimelineView items={timeline} />}
+      <span
+        data-slot="chat-stopped-marker"
+        className="inline-flex h-6 items-center gap-1.5 rounded-full bg-muted px-2.5 text-caption text-muted-foreground"
+      >
+        <Square className="size-2.5 fill-current" aria-hidden="true" />
+        {t(($) => $.message_list.stopped)}
+      </span>
+    </div>
+  );
+}
+
 function NoResponseNotice() {
   const { t } = useT("chat");
   return (

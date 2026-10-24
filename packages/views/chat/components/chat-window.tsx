@@ -606,7 +606,7 @@ export function ChatWindow() {
       });
       return;
     }
-    void cancelChatTask(pendingTaskId, activeSessionId, {
+    return cancelChatTask(pendingTaskId, activeSessionId, {
       restoreDraftToInput: true,
       source: "active-input",
     });
