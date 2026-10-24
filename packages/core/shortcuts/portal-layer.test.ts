@@ -63,4 +63,15 @@ describe("isPortalLayerShortcutTarget", () => {
     const own = document.getElementById("own");
     expect(isPortalLayerShortcutTarget(document.getElementById("t"), own)).toBe(true);
   });
+
+  // A closed `keepMounted` popover (the agent chip in the issue header) stays
+  // in the DOM under a hidden positioner; it must not hold the host's Escape.
+  it("ignores a closed keepMounted layer beside the host dialog", () => {
+    mount(`
+      <div role="dialog" id="own"><button id="t"></button></div>
+      <div hidden><div role="dialog"></div></div>
+    `);
+    const own = document.getElementById("own");
+    expect(isPortalLayerShortcutTarget(document.getElementById("t"), own)).toBe(false);
+  });
 });

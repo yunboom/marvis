@@ -283,7 +283,9 @@ const PORTAL_LAYER_SELECTOR =
  * dialog); keypresses inside it are the listener's own, while any other popup
  * still owns the keyboard. That dialog marks the rest of the page inert, so
  * the inert marker says nothing here; any other open layer does — popups
- * opened from inside it are portaled to the body, not nested in it.
+ * opened from inside it are portaled to the body, not nested in it. A closed
+ * `keepMounted` popup stays in the DOM under a `hidden` positioner and is not
+ * open.
  */
 export function isPortalLayerShortcutTarget(
   target: EventTarget | null,
@@ -292,7 +294,9 @@ export function isPortalLayerShortcutTarget(
   if (typeof document === "undefined") return false;
   if (ownLayer) {
     for (const layer of document.querySelectorAll(PORTAL_LAYER_SELECTOR)) {
-      if (layer !== ownLayer && !ownLayer.contains(layer)) return true;
+      if (layer === ownLayer || ownLayer.contains(layer)) continue;
+      if (layer.closest("[hidden]") !== null) continue;
+      return true;
     }
   } else if (document.querySelector("[data-base-ui-inert]") !== null) {
     return true;
