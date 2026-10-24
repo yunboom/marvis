@@ -19,6 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Layers,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   LogOut,
   Plus,
   CirclePlus,
@@ -575,6 +576,17 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   const [collapsedSubNav, setCollapsedSubNav] = useState<Partial<Record<NavKey, boolean>>>({});
   const toggleSubNav = (key: NavKey) =>
     setCollapsedSubNav((current) => ({ ...current, [key]: !current[key] }));
+  // Clicking a parent row that owns a page: from elsewhere it navigates and
+  // expands; on its own page it toggles. Modified clicks open tabs instead.
+  const handleParentNavClick = (key: NavKey, href: string, e: React.MouseEvent) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (pathname === href) {
+      e.preventDefault();
+      toggleSubNav(key);
+      return;
+    }
+    setCollapsedSubNav((current) => (current[key] ? { ...current, [key]: false } : current));
+  };
   const activeSubNavParent = (Object.keys(workSubNav) as NavKey[]).find((key) =>
     workSubNav[key]?.some((sub) => isNavActive(pathname, p[sub.key]())),
   );
@@ -787,7 +799,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                         isActive={isActive}
                         render={<AppLink href={href} />}
                         className={cn(NAV_ITEM_CLASS_NAME, subNav && "pr-9")}
-                      >
+                        onClick={subNav ? (e) => handleParentNavClick(item.key, href, e) : undefined}                      >
                         <Icon />
                         <span>{label}</span>
                       </SidebarMenuButton>
@@ -803,12 +815,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                           onClick={() => toggleSubNav(item.key)}
                           className="top-[7px] right-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
                         >
-                          <ChevronRight
-                            className={cn(
-                              "!size-3.5 transition-transform duration-150 ease-out motion-reduce:transition-none",
-                              subOpen && "rotate-90",
-                            )}
-                          />
+                          {subOpen ? <ChevronUp className="!size-3.5" /> : <ChevronDown className="!size-3.5" />}
                         </SidebarMenuAction>
                       )}
                       {subNav && subOpen && (

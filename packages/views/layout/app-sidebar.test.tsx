@@ -484,6 +484,35 @@ describe("navigation item presentation", () => {
     expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
   });
 
+  it("toggles the sub-nav when Projects is clicked on its own page", () => {
+    navigation.current = { pathname: "/acme/projects" };
+    const { container } = render(<AppSidebar />);
+    const projects = container.querySelector<HTMLElement>('button[data-href="/acme/projects"]')!;
+
+    fireEvent.click(projects);
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+
+    fireEvent.click(projects);
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+    navigation.current = { pathname: "/acme/issues" };
+  });
+
+  it("expands but never collapses when Projects is clicked from another page", () => {
+    const { container } = render(<AppSidebar />);
+    const projects = container.querySelector<HTMLElement>('button[data-href="/acme/projects"]')!;
+    const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-projects"]')!;
+
+    fireEvent.click(projects);
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+
+    fireEvent.click(toggle);
+    fireEvent.click(projects, { metaKey: true });
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+
+    fireEvent.click(projects);
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+  });
+
   it("keeps Help out of the sidebar", () => {
     render(<AppSidebar />);
 
