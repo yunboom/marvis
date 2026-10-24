@@ -429,7 +429,7 @@ const StatusLane = memo(function StatusLane({
       </div>
 
       {!collapsed && (
-        <div className="relative px-0.5 pb-1">
+        <div className="relative px-0.5 pt-1.5 pb-1">
           {isOver && sortLabel && (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/40">
               <span className="rounded-full border border-border bg-popover px-2.5 py-1 text-caption font-medium text-popover-foreground shadow-control">
