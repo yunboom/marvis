@@ -42,11 +42,11 @@ const STATUS_BOARD_GRID_TEMPLATE = "repeat(4, minmax(240px, 1fr))";
 const EMPTY_IDS: string[] = [];
 const EMPTY_COLLAPSE: Record<string, boolean> = {};
 
-type StatusGroup = BoardColumnGroup & { status: IssueStatus };
+export type StatusGroup = BoardColumnGroup & { status: IssueStatus };
 
-type LaneMode = "normal" | "focused" | "pinned";
+export type LaneMode = "normal" | "focused" | "pinned";
 
-interface LaneSharedProps {
+export interface LaneSharedProps {
   columns: Record<string, string[]>;
   issueMap: Map<string, Issue>;
   childProgressMap?: Map<string, ChildProgress>;
@@ -113,24 +113,17 @@ function laneCount(
   return statusPagination?.[group.status]?.total ?? (columns[group.id] ?? EMPTY_IDS).length;
 }
 
-function StatusBoardColumn({
-  columnKey,
-  groups,
-  ...shared
-}: LaneSharedProps & { columnKey: BoardStatusColumnKey; groups: StatusGroup[] }) {
-  const { t } = useT("issues");
+/**
+ * Focus mode for a stack of status lanes: one lane takes the stack and the
+ * others pin below it. Esc leaves focus mode, unless something else (a
+ * dialog, a menu) already handled the key.
+ */
+export function useFocusedLane(groups: StatusGroup[]) {
   const [focusedStatus, setFocusedStatus] = useState<IssueStatus | null>(null);
   const focused = focusedStatus !== null && groups.some((group) => group.status === focusedStatus)
     ? focusedStatus
     : null;
-  const total = groups.reduce(
-    (sum, group) => sum + laneCount(group, shared.columns, shared.statusPagination),
-    0,
-  );
-  const title = t(($) => $.board.status_column[columnKey]);
 
-  // Esc leaves focus mode. Skipped when something else (a dialog, a menu)
-  // already handled the key.
   useEffect(() => {
     if (!focused) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -141,6 +134,22 @@ function StatusBoardColumn({
 
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [focused]);
+
+  return [focused, setFocusedStatus] as const;
+}
+
+function StatusBoardColumn({
+  columnKey,
+  groups,
+  ...shared
+}: LaneSharedProps & { columnKey: BoardStatusColumnKey; groups: StatusGroup[] }) {
+  const { t } = useT("issues");
+  const [focused, setFocusedStatus] = useFocusedLane(groups);
+  const total = groups.reduce(
+    (sum, group) => sum + laneCount(group, shared.columns, shared.statusPagination),
+    0,
+  );
+  const title = t(($) => $.board.status_column[columnKey]);
 
   const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null);
   const restoreScrollRef = useRestoredScrollRef(`board:column:${columnKey}`);
@@ -225,7 +234,7 @@ function StatusBoardColumn({
   );
 }
 
-const StatusLane = memo(function StatusLane({
+export const StatusLane = memo(function StatusLane({
   group,
   mode,
   onFocusChange,
@@ -288,6 +297,9 @@ const StatusLane = memo(function StatusLane({
   }, [activeIssueId, collapsed, issueIds, showAll]);
 
   const hiddenCount = Math.max(0, count - visibleIds.length);
+  // A server-paged lane may not have its first rows yet; the footer's
+  // sentinel fetches them, so it mounts until the preview is filled.
+  const fillingPreview = !collapsed && !!page?.hasMore && issueIds.length < LANE_PREVIEW_COUNT;
 
   const expand = () => {
     setExpanded(true);
@@ -472,7 +484,7 @@ const StatusLane = memo(function StatusLane({
               </span>
             </div>
           )}
-          {!showAll && hiddenCount > 0 && (
+          {!showAll && !fillingPreview && hiddenCount > 0 && (
             <Button
               variant="ghost"
               size="xs"
@@ -483,7 +495,7 @@ const StatusLane = memo(function StatusLane({
               <ChevronDown className="size-3" />
             </Button>
           )}
-          {showAll && page && (
+          {page && (showAll || fillingPreview) && (
             <ListLoadMoreFooter
               hasMore={page.hasMore}
               isLoading={page.isLoading || page.isFetching}

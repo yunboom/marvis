@@ -282,6 +282,40 @@ describe("Status lane board", () => {
     expect(loadMore).toHaveBeenCalled();
   });
 
+  // A server-paged lane can start with no rows loaded; the footer sentinel
+  // brings in its first page, so "N more" over an empty lane never shows.
+  it("loads a paged lane's preview instead of offering N more over no cards", () => {
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class extends ObserverStub {
+        constructor(private readonly callback: IntersectionObserverCallback) {
+          super();
+        }
+        override observe() {
+          this.callback([{ isIntersecting: true } as IntersectionObserverEntry], this as never);
+        }
+      },
+    );
+    const loadMore = vi.fn();
+    render({
+      statusPagination: {
+        blocked: {
+          total: 2,
+          loaded: 0,
+          hasMore: true,
+          isLoading: false,
+          isFetching: false,
+          isError: false,
+          loadMore,
+          retry: () => {},
+        },
+      } as unknown as IssueStatusPagination,
+    });
+
+    expect(loadMore).toHaveBeenCalled();
+    expect(within(lane("blocked")).queryByRole("button", { name: "2 more" })).toBeNull();
+  });
+
   it("focuses one lane and pins the column's other lanes", () => {
     render();
 
