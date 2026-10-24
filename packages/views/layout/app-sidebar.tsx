@@ -47,6 +47,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from "@marvis/ui/components/ui/sidebar";
@@ -164,9 +167,13 @@ const personalNav: { key: NavKey; labelKey: NavLabelKey }[] = [
 const workNav: { key: NavKey; labelKey: NavLabelKey }[] = [
   { key: "issues", labelKey: "issues" },
   { key: "projects", labelKey: "projects" },
-  { key: "workflows", labelKey: "workflows" },
   { key: "autopilots", labelKey: "autopilots" },
 ];
+
+// Second-level rows rendered under a work nav item.
+const workSubNav: Partial<Record<NavKey, { key: NavKey; labelKey: NavLabelKey }[]>> = {
+  projects: [{ key: "workflows", labelKey: "workflows" }],
+};
 
 const aiTeamNav: { key: NavKey; labelKey: NavLabelKey }[] = [
   { key: "agents", labelKey: "agents" },
@@ -756,6 +763,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
                   const isActive = !isActivePinnedRoute && isNavActive(pathname, href);
+                  const subNav = workSubNav[item.key];
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
@@ -766,6 +774,24 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                         <Icon />
                         <span>{t(($) => $.nav[item.labelKey])}</span>
                       </SidebarMenuButton>
+                      {subNav && (
+                        <SidebarMenuSub className="mx-0 mt-0.5 translate-x-0 gap-0.5 border-l-0 p-0">
+                          {subNav.map((sub) => {
+                            const subHref = p[sub.key]();
+                            return (
+                              <SidebarMenuSubItem key={sub.key}>
+                                <SidebarMenuSubButton
+                                  isActive={!isActivePinnedRoute && isNavActive(pathname, subHref)}
+                                  render={<AppLink href={subHref} />}
+                                  className="h-[34px] translate-x-0 rounded-md pr-3 pl-10 text-muted-foreground hover:bg-sidebar-accent/70 hover:text-foreground data-active:font-medium"
+                                >
+                                  <span>{t(($) => $.nav[sub.labelKey])}</span>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            );
+                          })}
+                        </SidebarMenuSub>
+                      )}
                     </SidebarMenuItem>
                   );
                 })}
