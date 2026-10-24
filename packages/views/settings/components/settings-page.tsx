@@ -589,7 +589,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                           aria-expanded={open}
                           aria-controls={`settings-subgroup-${subgroup.key}`}
                           onClick={() => toggleSubgroup(subgroup.key)}
-                          className="flex h-7.5 w-full items-center gap-2.5 rounded-row px-2.5 text-left text-body text-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-surface-hover hover:duration-(--motion-instant) focus-visible:outline-2 focus-visible:outline-ring"
+                          className="flex h-7.5 w-full items-center gap-2.5 rounded-row px-2.5 text-left text-body text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-surface-hover hover:text-foreground hover:duration-(--motion-instant) focus-visible:outline-2 focus-visible:outline-ring"
                         >
                           {Icon ? <Icon className="size-4 shrink-0 text-foreground" aria-hidden="true" /> : null}
                           <span className="min-w-0 flex-1 truncate">{subgroup.label}</span>

@@ -81,6 +81,23 @@ vi.mock("@marvis/ui/components/ui/sidebar", () => ({
     </button>
   ),
   SidebarMenuItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SidebarMenuSub: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-menu-sub">{children}</div>
+  ),
+  SidebarMenuSubItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SidebarMenuSubButton: ({
+    children,
+    isActive,
+    render,
+  }: {
+    children: React.ReactNode;
+    isActive?: boolean;
+    render?: React.ReactElement<{ href?: string }>;
+  }) => (
+    <button type="button" data-active={isActive ? "true" : undefined} data-href={render?.props.href}>
+      {children}
+    </button>
+  ),
   SidebarRail: () => null,
   useSidebar: () => ({ setOpenMobile: sidebarState.setOpenMobile }),
 }));
@@ -432,6 +449,19 @@ describe("navigation item presentation", () => {
         referenceClassName,
       );
     }
+  });
+
+  it("nests Workflows under Projects as a second-level row", () => {
+    navigation.current = { pathname: "/acme/workflows" };
+    const { container } = render(<AppSidebar />);
+    const workflows = screen
+      .getByTestId("sidebar-menu-sub")
+      .querySelector<HTMLElement>('button[data-href="/acme/workflows"]');
+
+    expect(workflows?.dataset.active).toBe("true");
+    expect(container.querySelectorAll('button[data-href="/acme/workflows"]')).toHaveLength(1);
+    expect(container.querySelector('button[data-href="/acme/projects"]')?.getAttribute("data-active")).toBeNull();
+    navigation.current = { pathname: "/acme/issues" };
   });
 
   it("keeps Help out of the sidebar", () => {
