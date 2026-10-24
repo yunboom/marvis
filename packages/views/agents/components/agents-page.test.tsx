@@ -340,11 +340,11 @@ describe("AgentsPage listReady gate", () => {
 });
 
 describe("AgentsPage docs link", () => {
-  it("points Learn more at the viewer's docs locale", () => {
+  it("hides Learn more while the docs site is offline", () => {
     renderPage("fr");
 
     expect(
-      screen.getByRole("link", { name: "En savoir plus →" }),
-    ).toHaveAttribute("href", "https://marvis.ai/docs/fr/agents");
+      screen.queryByRole("link", { name: "En savoir plus →" }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -1,3 +1,5 @@
+import { DOCS_LINKS_ENABLED } from "../../common/docs-locale";
+
 /**
  * Skip path: "Connect a runtime to start with Marvis".
  *
@@ -194,4 +196,15 @@ Codex のリファレンス: https://developers.openai.com/codex/cli
 
 Marvis は実際の目標を 1 つのタスクにし、適切なエージェントで実行を開始し、ワークフローに必要なときは再利用可能な specialist を提案します。`;
 
-export const INSTALL_RUNTIME_ISSUE_BODY = { en, zh, ko, ja } as const;
+const DOCS_LINE = /^.*https:\/\/marvis\.ai\/docs\/install-agent-runtime\n\n/m;
+
+function withDocsLink(body: string): string {
+  return DOCS_LINKS_ENABLED ? body : body.replace(DOCS_LINE, "");
+}
+
+export const INSTALL_RUNTIME_ISSUE_BODY = {
+  en: withDocsLink(en),
+  zh: withDocsLink(zh),
+  ko: withDocsLink(ko),
+  ja: withDocsLink(ja),
+} as const;

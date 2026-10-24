@@ -107,17 +107,9 @@ describe("HelpLauncher", () => {
     expect(link).toHaveAttribute("href", "https://marvis.ai/download");
   });
 
-  it.each([
-    ["en", "https://marvis.ai/docs"],
-    ["zh-Hans", "https://marvis.ai/docs/zh"],
-    ["fr", "https://marvis.ai/docs/fr"],
-  ])("links Docs to the %s docs", (language, href) => {
-    i18nState.language = language;
+  it("hides Docs while the docs site is offline", () => {
     render(<HelpLauncher />);
-    expect(screen.getByRole("link", { name: /Docs/ })).toHaveAttribute(
-      "href",
-      href,
-    );
+    expect(screen.queryByText("Docs")).not.toBeInTheDocument();
   });
 
   // AppSidebar is shared: apps/desktop renders the same component tree. Without
@@ -127,6 +119,6 @@ describe("HelpLauncher", () => {
     render(<HelpLauncher />);
     expect(screen.queryByText("Desktop app")).not.toBeInTheDocument();
     // The rest of the menu is unaffected by the gate.
-    expect(screen.getByText("Docs")).toBeInTheDocument();
+    expect(screen.getByText("Change log")).toBeInTheDocument();
   });
 });

@@ -35,7 +35,7 @@ import { slackInstallationsOptions, slackKeys } from "@marvis/core/slack";
 import { api } from "@marvis/core/api";
 import type { SlackInstallation } from "@marvis/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { docsLocalePrefix } from "../../common/docs-locale";
+import { DOCS_LINKS_ENABLED, docsLocalePrefix } from "../../common/docs-locale";
 import { openExternal } from "../../platform";
 import { useLocale, useT } from "../../i18n";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
@@ -391,15 +391,17 @@ export function SlackAgentBindButton({
             </button>
           ) : null}
 
-          <button
-            type="button"
-            onClick={() => openExternal(slackDocsUrl(i18n.language))}
-            className="inline-flex w-fit items-center gap-2 text-body font-medium text-primary underline-offset-2 hover:underline"
-            data-testid="slack-byo-docs-link"
-          >
-            <ExternalLink className="h-4 w-4" />
-            {t(($) => $.slack.byo_docs_link)}
-          </button>
+          {DOCS_LINKS_ENABLED && (
+            <button
+              type="button"
+              onClick={() => openExternal(slackDocsUrl(i18n.language))}
+              className="inline-flex w-fit items-center gap-2 text-body font-medium text-primary underline-offset-2 hover:underline"
+              data-testid="slack-byo-docs-link"
+            >
+              <ExternalLink className="h-4 w-4" />
+              {t(($) => $.slack.byo_docs_link)}
+            </button>
+          )}
 
           <div className="space-y-4">
             <div className="space-y-1.5">

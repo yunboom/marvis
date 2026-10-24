@@ -81,7 +81,7 @@ import {
   type SkillActionsContext,
 } from "./skill-list-actions";
 import { useT, useTimeAgo } from "../../i18n";
-import { docsLocalePrefix } from "../../common/docs-locale";
+import { DOCS_LINKS_ENABLED, docsLocalePrefix } from "../../common/docs-locale";
 
 // Column template — single source of truth for header, rows, and skeletons.
 // Tracks: [edge 0.75rem] [checkbox 1rem] [name, only fr track]
@@ -184,10 +184,14 @@ function PageHeaderBar({
       icon={SkillIcon}
       title={t(($) => $.page.title)}
       count={totalCount}
-      learnMore={{
-        href: `https://marvis.ai/docs${docsLocalePrefix(i18n.language)}/skills`,
-        label: t(($) => $.page.learn_more),
-      }}
+      learnMore={
+        DOCS_LINKS_ENABLED
+          ? {
+              href: `https://marvis.ai/docs${docsLocalePrefix(i18n.language)}/skills`,
+              label: t(($) => $.page.learn_more),
+            }
+          : undefined
+      }
       actions={
         <CollectionPageHeaderAction
           icon={Plus}

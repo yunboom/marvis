@@ -41,7 +41,7 @@ import { larkInstallationsOptions, larkKeys } from "@marvis/core/lark";
 import { api, ApiError } from "@marvis/core/api";
 import type { LarkInstallation, LarkInstallStatusResponse } from "@marvis/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { docsLocalePrefix } from "../../common/docs-locale";
+import { DOCS_LINKS_ENABLED, docsLocalePrefix } from "../../common/docs-locale";
 import { useLocale, useT } from "../../i18n";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 
@@ -625,15 +625,20 @@ function LarkAgentBotConnectedBadge({
           and this row is where someone looks when the Bot stays quiet —
           the install dialog closes itself a beat after success. */}
       <p className="text-caption text-muted-foreground">
-        {t(($) => $.lark.agent_bot_silent_hint)}{" "}
-        <a
-          href={larkDocsUrl(i18n.language)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline underline-offset-2 transition-colors hover:text-foreground"
-        >
-          {t(($) => $.lark.agent_bot_silent_hint_link)}
-        </a>
+        {t(($) => $.lark.agent_bot_silent_hint)}
+        {DOCS_LINKS_ENABLED && (
+          <>
+            {" "}
+            <a
+              href={larkDocsUrl(i18n.language)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 transition-colors hover:text-foreground"
+            >
+              {t(($) => $.lark.agent_bot_silent_hint_link)}
+            </a>
+          </>
+        )}
       </p>
 
       <AlertDialog

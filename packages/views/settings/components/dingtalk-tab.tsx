@@ -51,7 +51,7 @@ import type {
   DingTalkInstallation,
 } from "@marvis/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { docsLocalePrefix } from "../../common/docs-locale";
+import { DOCS_LINKS_ENABLED, docsLocalePrefix } from "../../common/docs-locale";
 import { openExternal } from "../../platform";
 import { useT, useTimeAgo } from "../../i18n";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
@@ -958,15 +958,17 @@ export function DingTalkAgentBindButton({
               {t(($) => $.dingtalk.byo_dialog_title)}
             </DialogTitle>
 
-            <button
-              type="button"
-              onClick={() => openExternal(dingtalkDocsUrl(i18n.language))}
-              className="inline-flex w-fit items-center gap-1.5 text-caption text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
-              data-testid="dingtalk-byo-docs-link"
-            >
-              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-              {t(($) => $.dingtalk.byo_docs_link)}
-            </button>
+            {DOCS_LINKS_ENABLED && (
+              <button
+                type="button"
+                onClick={() => openExternal(dingtalkDocsUrl(i18n.language))}
+                className="inline-flex w-fit items-center gap-1.5 text-caption text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
+                data-testid="dingtalk-byo-docs-link"
+              >
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                {t(($) => $.dingtalk.byo_docs_link)}
+              </button>
+            )}
           </DialogHeader>
 
           <div className="space-y-4 p-5">
