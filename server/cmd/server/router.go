@@ -2460,6 +2460,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Post("/", h.CreateKnowledgeGap)
 					r.Patch("/{gapId}", h.UpdateKnowledgeGap)
 				})
+				r.Get("/sources", h.ListKnowledgeSources)
+				r.Get("/digest", h.GetKnowledgeDigest)
+				r.Post("/digest", h.CreateKnowledgeDigest)
 			})
 
 			// Skills

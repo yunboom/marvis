@@ -218,3 +218,59 @@ SELECT a.id, a.name FROM agent a WHERE a.id = ANY(sqlc.arg('agent_ids')::uuid[])
 UPDATE knowledge_gap SET status = sqlc.arg('status'), updated_at = now()
 WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id')
 RETURNING *;
+
+-- name: GetAutopilotBySystemKey :one
+SELECT * FROM autopilot
+WHERE workspace_id = sqlc.arg('workspace_id') AND system_key = sqlc.arg('system_key');
+
+-- name: SetAutopilotSystemKey :exec
+UPDATE autopilot SET system_key = sqlc.arg('system_key') WHERE id = sqlc.arg('id');
+
+-- name: PauseSystemAutopilot :exec
+-- Pauses a platform-owned autopilot with a reason the UI explains (e.g. the last
+-- knowledge base was deleted). Archived rows stay archived.
+UPDATE autopilot SET status = 'paused', pause_reason = sqlc.arg('pause_reason'), updated_at = now()
+WHERE workspace_id = sqlc.arg('workspace_id') AND system_key = sqlc.arg('system_key') AND status = 'active';
+
+-- name: GetLastCompletedAutopilotRunAt :one
+-- Start of the latest completed run; the digest reads sources from there on.
+SELECT COALESCE(max(triggered_at), 'epoch'::timestamptz)::timestamptz AS triggered_at
+FROM autopilot_run
+WHERE autopilot_id = sqlc.arg('autopilot_id') AND status = 'completed';
+
+-- name: ListKnowledgeSourceIssues :many
+-- Issues created or updated in [since, until), oldest first, for the daily digest.
+SELECT i.id, i.number, i.title, i.status, COALESCE(i.description, '')::text AS description, i.updated_at, w.issue_prefix
+FROM issue i
+JOIN workspace w ON w.id = i.workspace_id
+WHERE i.workspace_id = sqlc.arg('workspace_id')
+  AND i.updated_at >= sqlc.arg('since') AND i.updated_at < sqlc.arg('until')
+ORDER BY i.updated_at, i.id
+LIMIT sqlc.arg('max_rows');
+
+-- name: ListKnowledgeSourceComments :many
+-- Comments written in [since, until), oldest first. System and status rows are noise for the digest.
+SELECT c.id, c.content, c.author_type, c.created_at, i.number, w.issue_prefix,
+       COALESCE(u.name, a.name, '')::text AS author_name
+FROM comment c
+JOIN issue i ON i.id = c.issue_id
+JOIN workspace w ON w.id = i.workspace_id
+LEFT JOIN "user" u ON c.author_type = 'member' AND u.id = c.author_id
+LEFT JOIN agent a ON c.author_type = 'agent' AND a.id = c.author_id
+WHERE i.workspace_id = sqlc.arg('workspace_id') AND c.type = 'comment'
+  AND c.created_at >= sqlc.arg('since') AND c.created_at < sqlc.arg('until')
+ORDER BY c.created_at, c.id
+LIMIT sqlc.arg('max_rows');
+
+-- name: ListKnowledgeSourceChatMessages :many
+-- Chat messages in [since, until) from sessions the given user created with a regular
+-- (kind = 'user') agent. Other people's chats and hidden system sessions never appear.
+SELECT m.id, m.chat_session_id, m.role, m.content, m.created_at, cs.title AS session_title, a.name AS agent_name
+FROM chat_message m
+JOIN chat_session cs ON cs.id = m.chat_session_id
+JOIN agent a ON a.id = cs.agent_id
+WHERE cs.workspace_id = sqlc.arg('workspace_id') AND cs.creator_id = sqlc.arg('user_id')
+  AND a.kind = 'user' AND m.message_kind = 'message'
+  AND m.created_at >= sqlc.arg('since') AND m.created_at < sqlc.arg('until')
+ORDER BY m.created_at, m.id
+LIMIT sqlc.arg('max_rows');

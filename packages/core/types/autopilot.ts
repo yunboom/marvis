@@ -37,6 +37,9 @@ export interface Autopilot {
   pause_reason?: string | null;
   execution_mode: AutopilotExecutionMode;
   issue_title_template: string | null;
+  // Built-in autopilot marker (e.g. "knowledge-digest"); such autopilots cannot be
+  // deleted. Null or absent on user autopilots and older servers.
+  system_key?: string | null;
   created_by_type: string;
   created_by_id: string;
   last_run_at: string | null;

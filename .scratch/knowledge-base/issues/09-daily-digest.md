@@ -4,10 +4,10 @@
 
 **Blocked by:** 05
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] autopilot `system_key`，删除拒绝、无库拒绝启用、删光知识库自动停用
-- [ ] 配置 API（按需创建）、立即运行
-- [ ] sources 分页（60% 窗口、最多 10 页、截断标记）与对话范围
-- [ ] 自动化列表与详情 UI、知识库页入口
-- [ ] 测试
+- [x] autopilot `system_key`，删除拒绝、无库拒绝启用、删光知识库自动停用
+- [x] 配置 API（按需创建）、立即运行
+- [x] sources 分页（60% 窗口、最多 10 页、截断标记）与对话范围
+- [x] 自动化列表与详情 UI、知识库页入口
+- [x] 测试

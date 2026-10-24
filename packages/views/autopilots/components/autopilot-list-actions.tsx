@@ -36,6 +36,7 @@ import {
 } from "@marvis/ui/components/ui/dropdown-menu";
 import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
+import { isSystemAutopilot } from "../lib/system-autopilot";
 import { useIntentNavigate } from "../../navigation";
 import {
   COLLECTION_BATCH_ACTION,
@@ -209,14 +210,18 @@ export function AutopilotRowActions({ row }: { row: Autopilot }) {
               {t(($) => $.actions.resume)}
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="size-3.5" />
-            {t(($) => $.actions.delete)}
-          </DropdownMenuItem>
+          {!isSystemAutopilot(row) && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="size-3.5" />
+                {t(($) => $.actions.delete)}
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <DeleteAutopilotsDialog
@@ -245,6 +250,8 @@ export function AutopilotBatchToolbar({
 
   const anyActive = rows.some((r) => r.status === "active");
   const anyPaused = rows.some((r) => r.status === "paused");
+  // Built-in autopilots cannot be deleted; batch delete acts on the rest.
+  const deletable = rows.filter((r) => !isSystemAutopilot(r));
 
   return (
     <>
@@ -288,22 +295,24 @@ export function AutopilotBatchToolbar({
             {t(($) => $.actions.resume)}
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn(
-            COLLECTION_BATCH_ACTION,
-            "text-destructive hover:text-destructive aria-expanded:text-destructive",
-          )}
-          onClick={() => setDeleteOpen(true)}
-        >
-          <Trash2 className="size-3.5" />
-          {t(($) => $.actions.delete)}
-        </Button>
+        {deletable.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              COLLECTION_BATCH_ACTION,
+              "text-destructive hover:text-destructive aria-expanded:text-destructive",
+            )}
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="size-3.5" />
+            {t(($) => $.actions.delete)}
+          </Button>
+        )}
       </div>
 
       <DeleteAutopilotsDialog
-        rows={rows}
+        rows={deletable}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onDeleted={onClear}

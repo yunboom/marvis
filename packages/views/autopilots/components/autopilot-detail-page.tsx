@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Zap, Play, Clock, Plus, Trash2, CheckCircle2, XCircle, Loader2, Pencil,
   Ban, ChevronDown, ChevronRight,
-  Webhook, RotateCw, Server,
+  Webhook, RotateCw, Server, Lock, Library,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { autopilotDetailOptions, autopilotRunsOptions, autopilotRunOptions } from "@marvis/core/autopilots/queries";
@@ -71,6 +71,7 @@ import { WebhookPayloadPreview } from "./webhook-payload-preview";
 import { WebhookDeliveriesSection } from "./webhook-deliveries-section";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { useT } from "../../i18n";
+import { isSystemAutopilot, PAUSE_REASON_NO_KNOWLEDGE_BASE, useAutopilotTitle } from "../lib/system-autopilot";
 import { PageHeader } from "../../layout/page-header";
 
 // A run that already happened is an instant in the reader's day, so it reads in
@@ -676,6 +677,7 @@ function SubscriberChips({
 
 export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
   const { t } = useT("autopilots");
+  const titleOf = useAutopilotTitle();
   const wsId = useWorkspaceId();
   const wsPaths = useWorkspacePaths();
   const router = useNavigation();
@@ -815,7 +817,12 @@ export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
         segments={[{ href: wsPaths.autopilots(), label: t(($) => $.page.title) }]}
         leaf={
           <>
-            <h1 className="min-w-0 truncate text-body font-medium text-foreground">{autopilot.title}</h1>
+            <h1 className="min-w-0 truncate text-body font-medium text-foreground">{titleOf(autopilot)}</h1>
+            {isSystemAutopilot(autopilot) && (
+              <span title={t(($) => $.system.locked)} aria-label={t(($) => $.system.locked)} className="flex shrink-0 items-center text-muted-foreground">
+                <Lock className="size-3" />
+              </span>
+            )}
             <div className="ml-1 flex items-center gap-1.5 shrink-0">
               <Switch
                 size="sm"
@@ -883,6 +890,13 @@ export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
               {t(($) => $.detail.bind_runtime)}
             </AppLink>
           )}
+        </div>
+      )}
+
+      {autopilot.pause_reason === PAUSE_REASON_NO_KNOWLEDGE_BASE && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 text-caption text-amber-900 dark:text-amber-100">
+          <Library className="size-3.5 shrink-0" />
+          <span className="flex-1">{t(($) => $.detail.paused_no_knowledge_base)}</span>
         </div>
       )}
 
@@ -1037,7 +1051,7 @@ export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
           </section>
 
           {/* Danger zone */}
-          {canWrite && (
+          {canWrite && !isSystemAutopilot(autopilot) && (
             <section className="space-y-3 pt-4 border-t">
               <h2 className="text-body font-medium text-destructive uppercase tracking-wider">
                 {t(($) => $.detail.section_danger)}

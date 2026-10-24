@@ -370,5 +370,21 @@
       "gap": "遵循知识库「{{kb}}」的 AGENTS.md，补齐以下知识缺口，完成后自查并提交变更请求：",
       "rebase": "变更请求 #{{number}}（分支 {{branch}}）与主线冲突。请运行 marvis kb sync 基于最新主线重做，然后 marvis kb change update {{number}}。"
     }
+  },
+  "digest": {
+    "title": "每日知识沉淀",
+    "hint": "工作区共用一份。每天读取任务、评论和执行智能体所在运行时主人的对话，产出一个变更请求。",
+    "agent": "执行智能体",
+    "time": "运行时间",
+    "setup": "设置",
+    "status_active": "已启用",
+    "status_paused": "已停用",
+    "schedule_daily": "每天 {{time}}（{{tz}}）",
+    "schedule_cron": "{{cron}}（{{tz}}）",
+    "enable_aria": "启用每日知识沉淀",
+    "no_knowledge_base": "创建知识库后才能启用",
+    "open_automation": "在自动化中打开",
+    "admin_only": "由 owner 或 admin 设置",
+    "failed": "每日知识沉淀更新失败"
   }
 }

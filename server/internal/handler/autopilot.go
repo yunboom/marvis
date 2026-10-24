@@ -47,11 +47,13 @@ type AutopilotResponse struct {
 	PauseReason        *string `json:"pause_reason"`
 	ExecutionMode      string  `json:"execution_mode"`
 	IssueTitleTemplate *string `json:"issue_title_template"`
-	CreatedByType      string  `json:"created_by_type"`
-	CreatedByID        string  `json:"created_by_id"`
-	LastRunAt          *string `json:"last_run_at"`
-	CreatedAt          string  `json:"created_at"`
-	UpdatedAt          string  `json:"updated_at"`
+	// SystemKey marks a built-in autopilot (e.g. "knowledge-digest"): it cannot be deleted.
+	SystemKey     *string `json:"system_key"`
+	CreatedByType string  `json:"created_by_type"`
+	CreatedByID   string  `json:"created_by_id"`
+	LastRunAt     *string `json:"last_run_at"`
+	CreatedAt     string  `json:"created_at"`
+	UpdatedAt     string  `json:"updated_at"`
 
 	// List-endpoint-only derived fields (absent on the detail/create/update
 	// responses and on older servers — clients must treat them as optional).
@@ -210,6 +212,7 @@ func autopilotToResponse(a db.Autopilot, subscribers []db.AutopilotSubscriber) A
 		PauseReason:        textToPtr(a.PauseReason),
 		ExecutionMode:      a.ExecutionMode,
 		IssueTitleTemplate: textToPtr(a.IssueTitleTemplate),
+		SystemKey:          textToPtr(a.SystemKey),
 		CreatedByType:      a.CreatedByType,
 		CreatedByID:        uuidToString(a.CreatedByID),
 		LastRunAt:          timestampToPtr(a.LastRunAt),
@@ -1064,6 +1067,15 @@ func (h *Handler) UpdateAutopilot(w http.ResponseWriter, r *http.Request) {
 	}
 	var rawFields map[string]json.RawMessage
 	json.Unmarshal(bodyBytes, &rawFields)
+	refusal, err := h.systemAutopilotGuard(r.Context(), prev, req.Status, req.ExecutionMode)
+	if err != nil {
+		writeKnowledgeError(w, r, err, "failed to update autopilot")
+		return
+	}
+	if refusal != "" {
+		writeError(w, http.StatusConflict, refusal)
+		return
+	}
 
 	params := db.UpdateAutopilotParams{
 		ID:                 prev.ID,
@@ -1362,6 +1374,10 @@ func (h *Handler) DeleteAutopilot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID := uuidToString(actor.UserID)
+	if ap.SystemKey.Valid {
+		writeError(w, http.StatusConflict, "built-in autopilots cannot be deleted; pause it instead")
+		return
+	}
 
 	// Product "delete" is archival: stop future triggers and hide the
 	// autopilot from default lists while preserving runs, tasks, webhook

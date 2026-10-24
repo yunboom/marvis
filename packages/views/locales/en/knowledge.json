@@ -370,5 +370,21 @@
       "gap": "Following the AGENTS.md of {{kb}}, fill these knowledge gaps, self-review and open a change request:",
       "rebase": "Change request #{{number}} (branch {{branch}}) conflicts with main. Run marvis kb sync, redo it on the latest main, then marvis kb change update {{number}}."
     }
+  },
+  "digest": {
+    "title": "Daily knowledge digest",
+    "hint": "Shared by the whole workspace. Each day it reads tasks, comments and the chats of the agent's runtime owner, then opens one change request.",
+    "agent": "Agent",
+    "time": "Time",
+    "setup": "Set up",
+    "status_active": "On",
+    "status_paused": "Off",
+    "schedule_daily": "Every day at {{time}} ({{tz}})",
+    "schedule_cron": "{{cron}} ({{tz}})",
+    "enable_aria": "Enable the daily knowledge digest",
+    "no_knowledge_base": "Create a knowledge base to enable it",
+    "open_automation": "Open in automations",
+    "admin_only": "An owner or admin sets this up",
+    "failed": "Could not update the daily knowledge digest"
   }
 }

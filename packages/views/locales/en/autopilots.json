@@ -28,7 +28,8 @@
     "active": "Active",
     "paused": "Paused",
     "paused_runtime_required": "Paused — the assignee needs a runtime",
-    "archived": "Archived"
+    "archived": "Archived",
+    "paused_no_knowledge_base": "Paused — no knowledge base"
   },
   "execution_mode": {
     "create_issue": "Create Issue",
@@ -112,7 +113,8 @@
       "cancel": "Cancel",
       "confirm": "Delete",
       "deleting": "Deleting..."
-    }
+    },
+    "paused_no_knowledge_base": "Paused because the workspace has no knowledge base. Create one, then enable this autopilot."
   },
   "access": {
     "title": "Manage access",
@@ -549,5 +551,9 @@
     "create": "New wakeup",
     "create_pick_issue": "Choose the issue to add a wakeup to",
     "create_pick_issue_description": "The wakeup belongs to this issue and ends with it."
+  },
+  "system": {
+    "knowledge_digest": "Daily knowledge digest",
+    "locked": "Built in. It can be paused but not deleted."
   }
 }

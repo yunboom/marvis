@@ -458,3 +458,31 @@ export const KnowledgeChangeDetailSchema = KnowledgeChangeRequestSchema.extend({
     .transform((v) => v ?? []),
 }).loose();
 export type KnowledgeChangeDetail = z.infer<typeof KnowledgeChangeDetailSchema>;
+
+// Daily knowledge digest: a built-in run_only autopilot, created on first setup.
+export const KnowledgeDigestSchema = z
+  .object({
+    autopilot: z
+      .object({
+        id: z.string(),
+        status: z.enum(["active", "paused", "archived"]).catch("paused"),
+        assignee_id: z.string().optional().default(""),
+        pause_reason: z.string().nullable().optional().default(null),
+      })
+      .loose()
+      .nullable()
+      .catch(null),
+    schedule: z
+      .object({
+        id: z.string(),
+        cron_expression: z.string().nullable().optional().default(null),
+        timezone: z.string().nullable().optional().default(null),
+      })
+      .loose()
+      .nullable()
+      .catch(null),
+    knowledge_base_count: z.number().optional().default(0),
+  })
+  .loose();
+export type KnowledgeDigest = z.infer<typeof KnowledgeDigestSchema>;
+export const EMPTY_KNOWLEDGE_DIGEST: KnowledgeDigest = { autopilot: null, schedule: null, knowledge_base_count: 0 };

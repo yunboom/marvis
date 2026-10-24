@@ -16,6 +16,7 @@ import type {
   KnowledgeChangeRequest,
   KnowledgeChangeStatus,
   KnowledgeDeleteImpact,
+  KnowledgeDigest,
   KnowledgeGap,
   KnowledgeGapStatus,
   KnowledgeGraph,
@@ -3851,6 +3852,20 @@ export class ApiClient {
     });
     return parseWithFallback<KnowledgeGap | null>(raw, kbSchemas.KnowledgeGapSchema, null, {
       endpoint: "PATCH /api/knowledge/gaps/:id",
+    });
+  }
+
+  async getKnowledgeDigest(): Promise<KnowledgeDigest> {
+    const raw = await this.fetch<unknown>("/api/knowledge/digest");
+    return parseWithFallback(raw, kbSchemas.KnowledgeDigestSchema, kbSchemas.EMPTY_KNOWLEDGE_DIGEST, {
+      endpoint: "GET /api/knowledge/digest",
+    });
+  }
+
+  async createKnowledgeDigest(data: { assignee_id: string; cron_expression: string; timezone: string }): Promise<KnowledgeDigest> {
+    const raw = await this.fetch<unknown>("/api/knowledge/digest", { method: "POST", body: JSON.stringify(data) });
+    return parseWithFallback(raw, kbSchemas.KnowledgeDigestSchema, kbSchemas.EMPTY_KNOWLEDGE_DIGEST, {
+      endpoint: "POST /api/knowledge/digest",
     });
   }
 

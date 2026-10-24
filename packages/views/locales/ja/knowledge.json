@@ -370,5 +370,21 @@
       "gap": "{{kb}} の AGENTS.md に従い、次のナレッジギャップを補完し、セルフレビューして変更リクエストを出してください：",
       "rebase": "変更リクエスト #{{number}}（ブランチ {{branch}}）が main と競合しています。marvis kb sync で最新の main に合わせてやり直し、marvis kb change update {{number}} を実行してください。"
     }
+  },
+  "digest": {
+    "title": "毎日のナレッジ集約",
+    "hint": "ワークスペース全体で共有します。毎日、タスク・コメントと、実行エージェントのランタイム所有者のチャットを読み、変更リクエストを 1 件作成します。",
+    "agent": "エージェント",
+    "time": "実行時刻",
+    "setup": "設定",
+    "status_active": "有効",
+    "status_paused": "停止中",
+    "schedule_daily": "毎日 {{time}}（{{tz}}）",
+    "schedule_cron": "{{cron}}（{{tz}}）",
+    "enable_aria": "毎日のナレッジ集約を有効にする",
+    "no_knowledge_base": "ナレッジベースを作成すると有効にできます",
+    "open_automation": "自動化で開く",
+    "admin_only": "owner または admin が設定します",
+    "failed": "毎日のナレッジ集約を更新できませんでした"
   }
 }

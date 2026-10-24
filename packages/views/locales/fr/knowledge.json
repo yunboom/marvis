@@ -370,5 +370,21 @@
       "gap": "En suivant l'AGENTS.md de {{kb}}, comblez ces lacunes, faites une auto-revue et ouvrez une demande de modification :",
       "rebase": "La demande #{{number}} (branche {{branch}}) est en conflit avec main. Lancez marvis kb sync, refaites-la sur le dernier main, puis marvis kb change update {{number}}."
     }
+  },
+  "digest": {
+    "title": "Synthèse quotidienne des connaissances",
+    "hint": "Partagée par tout l’espace de travail. Chaque jour, elle lit les tâches, les commentaires et les conversations du propriétaire du runtime de l’agent, puis ouvre une demande de modification.",
+    "agent": "Agent",
+    "time": "Heure",
+    "setup": "Configurer",
+    "status_active": "Activée",
+    "status_paused": "Désactivée",
+    "schedule_daily": "Tous les jours à {{time}} ({{tz}})",
+    "schedule_cron": "{{cron}} ({{tz}})",
+    "enable_aria": "Activer la synthèse quotidienne des connaissances",
+    "no_knowledge_base": "Créez une base de connaissances pour l’activer",
+    "open_automation": "Ouvrir dans les automatisations",
+    "admin_only": "Un owner ou un admin la configure",
+    "failed": "Impossible de mettre à jour la synthèse quotidienne"
   }
 }

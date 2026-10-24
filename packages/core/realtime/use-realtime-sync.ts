@@ -925,7 +925,10 @@ export function useRealtimeSync(
       },
       autopilot: () => {
         const wsId = getCurrentWsId();
-        if (wsId) qc.invalidateQueries({ queryKey: autopilotKeys.all(wsId) });
+        if (!wsId) return;
+        qc.invalidateQueries({ queryKey: autopilotKeys.all(wsId) });
+        // The daily knowledge digest is an autopilot shown on the knowledge page.
+        qc.invalidateQueries({ queryKey: knowledgeKeys.digest(wsId) });
       },
       github_installation: () => {
         const wsId = getCurrentWsId();

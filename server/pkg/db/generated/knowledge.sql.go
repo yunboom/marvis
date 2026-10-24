@@ -508,6 +508,41 @@ func (q *Queries) FindOpenKnowledgeGap(ctx context.Context, arg FindOpenKnowledg
 	return i, err
 }
 
+const getAutopilotBySystemKey = `-- name: GetAutopilotBySystemKey :one
+SELECT id, workspace_id, title, description, assignee_id, status, execution_mode, issue_title_template, created_by_type, created_by_id, last_run_at, created_at, updated_at, assignee_type, project_id, pause_reason, system_key FROM autopilot
+WHERE workspace_id = $1 AND system_key = $2
+`
+
+type GetAutopilotBySystemKeyParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	SystemKey   pgtype.Text `json:"system_key"`
+}
+
+func (q *Queries) GetAutopilotBySystemKey(ctx context.Context, arg GetAutopilotBySystemKeyParams) (Autopilot, error) {
+	row := q.db.QueryRow(ctx, getAutopilotBySystemKey, arg.WorkspaceID, arg.SystemKey)
+	var i Autopilot
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Title,
+		&i.Description,
+		&i.AssigneeID,
+		&i.Status,
+		&i.ExecutionMode,
+		&i.IssueTitleTemplate,
+		&i.CreatedByType,
+		&i.CreatedByID,
+		&i.LastRunAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AssigneeType,
+		&i.ProjectID,
+		&i.PauseReason,
+		&i.SystemKey,
+	)
+	return i, err
+}
+
 const getKnowledgeAnnotation = `-- name: GetKnowledgeAnnotation :one
 SELECT id, workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id, status, change_request_id, created_at, updated_at FROM knowledge_annotation WHERE id = $1 AND workspace_id = $2
 `
@@ -664,6 +699,20 @@ func (q *Queries) GetKnowledgeSession(ctx context.Context, arg GetKnowledgeSessi
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getLastCompletedAutopilotRunAt = `-- name: GetLastCompletedAutopilotRunAt :one
+SELECT COALESCE(max(triggered_at), 'epoch'::timestamptz)::timestamptz AS triggered_at
+FROM autopilot_run
+WHERE autopilot_id = $1 AND status = 'completed'
+`
+
+// Start of the latest completed run; the digest reads sources from there on.
+func (q *Queries) GetLastCompletedAutopilotRunAt(ctx context.Context, autopilotID pgtype.UUID) (pgtype.Timestamptz, error) {
+	row := q.db.QueryRow(ctx, getLastCompletedAutopilotRunAt, autopilotID)
+	var triggered_at pgtype.Timestamptz
+	err := row.Scan(&triggered_at)
+	return triggered_at, err
 }
 
 const getOpenKnowledgeChangeRequestByBranch = `-- name: GetOpenKnowledgeChangeRequestByBranch :one
@@ -1051,6 +1100,198 @@ func (q *Queries) ListKnowledgeGaps(ctx context.Context, arg ListKnowledgeGapsPa
 	return items, nil
 }
 
+const listKnowledgeSourceChatMessages = `-- name: ListKnowledgeSourceChatMessages :many
+SELECT m.id, m.chat_session_id, m.role, m.content, m.created_at, cs.title AS session_title, a.name AS agent_name
+FROM chat_message m
+JOIN chat_session cs ON cs.id = m.chat_session_id
+JOIN agent a ON a.id = cs.agent_id
+WHERE cs.workspace_id = $1 AND cs.creator_id = $2
+  AND a.kind = 'user' AND m.message_kind = 'message'
+  AND m.created_at >= $3 AND m.created_at < $4
+ORDER BY m.created_at, m.id
+LIMIT $5
+`
+
+type ListKnowledgeSourceChatMessagesParams struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	Since       pgtype.Timestamptz `json:"since"`
+	Until       pgtype.Timestamptz `json:"until"`
+	MaxRows     int32              `json:"max_rows"`
+}
+
+type ListKnowledgeSourceChatMessagesRow struct {
+	ID            pgtype.UUID        `json:"id"`
+	ChatSessionID pgtype.UUID        `json:"chat_session_id"`
+	Role          string             `json:"role"`
+	Content       string             `json:"content"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	SessionTitle  string             `json:"session_title"`
+	AgentName     string             `json:"agent_name"`
+}
+
+// Chat messages in [since, until) from sessions the given user created with a regular
+// (kind = 'user') agent. Other people's chats and hidden system sessions never appear.
+func (q *Queries) ListKnowledgeSourceChatMessages(ctx context.Context, arg ListKnowledgeSourceChatMessagesParams) ([]ListKnowledgeSourceChatMessagesRow, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeSourceChatMessages,
+		arg.WorkspaceID,
+		arg.UserID,
+		arg.Since,
+		arg.Until,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKnowledgeSourceChatMessagesRow{}
+	for rows.Next() {
+		var i ListKnowledgeSourceChatMessagesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ChatSessionID,
+			&i.Role,
+			&i.Content,
+			&i.CreatedAt,
+			&i.SessionTitle,
+			&i.AgentName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKnowledgeSourceComments = `-- name: ListKnowledgeSourceComments :many
+SELECT c.id, c.content, c.author_type, c.created_at, i.number, w.issue_prefix,
+       COALESCE(u.name, a.name, '')::text AS author_name
+FROM comment c
+JOIN issue i ON i.id = c.issue_id
+JOIN workspace w ON w.id = i.workspace_id
+LEFT JOIN "user" u ON c.author_type = 'member' AND u.id = c.author_id
+LEFT JOIN agent a ON c.author_type = 'agent' AND a.id = c.author_id
+WHERE i.workspace_id = $1 AND c.type = 'comment'
+  AND c.created_at >= $2 AND c.created_at < $3
+ORDER BY c.created_at, c.id
+LIMIT $4
+`
+
+type ListKnowledgeSourceCommentsParams struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	Since       pgtype.Timestamptz `json:"since"`
+	Until       pgtype.Timestamptz `json:"until"`
+	MaxRows     int32              `json:"max_rows"`
+}
+
+type ListKnowledgeSourceCommentsRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	Content     string             `json:"content"`
+	AuthorType  string             `json:"author_type"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	Number      int32              `json:"number"`
+	IssuePrefix string             `json:"issue_prefix"`
+	AuthorName  string             `json:"author_name"`
+}
+
+// Comments written in [since, until), oldest first. System and status rows are noise for the digest.
+func (q *Queries) ListKnowledgeSourceComments(ctx context.Context, arg ListKnowledgeSourceCommentsParams) ([]ListKnowledgeSourceCommentsRow, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeSourceComments,
+		arg.WorkspaceID,
+		arg.Since,
+		arg.Until,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKnowledgeSourceCommentsRow{}
+	for rows.Next() {
+		var i ListKnowledgeSourceCommentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Content,
+			&i.AuthorType,
+			&i.CreatedAt,
+			&i.Number,
+			&i.IssuePrefix,
+			&i.AuthorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKnowledgeSourceIssues = `-- name: ListKnowledgeSourceIssues :many
+SELECT i.id, i.number, i.title, i.status, COALESCE(i.description, '')::text AS description, i.updated_at, w.issue_prefix
+FROM issue i
+JOIN workspace w ON w.id = i.workspace_id
+WHERE i.workspace_id = $1
+  AND i.updated_at >= $2 AND i.updated_at < $3
+ORDER BY i.updated_at, i.id
+LIMIT $4
+`
+
+type ListKnowledgeSourceIssuesParams struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	Since       pgtype.Timestamptz `json:"since"`
+	Until       pgtype.Timestamptz `json:"until"`
+	MaxRows     int32              `json:"max_rows"`
+}
+
+type ListKnowledgeSourceIssuesRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	Number      int32              `json:"number"`
+	Title       string             `json:"title"`
+	Status      string             `json:"status"`
+	Description string             `json:"description"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	IssuePrefix string             `json:"issue_prefix"`
+}
+
+// Issues created or updated in [since, until), oldest first, for the daily digest.
+func (q *Queries) ListKnowledgeSourceIssues(ctx context.Context, arg ListKnowledgeSourceIssuesParams) ([]ListKnowledgeSourceIssuesRow, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeSourceIssues,
+		arg.WorkspaceID,
+		arg.Since,
+		arg.Until,
+		arg.MaxRows,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKnowledgeSourceIssuesRow{}
+	for rows.Next() {
+		var i ListKnowledgeSourceIssuesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Number,
+			&i.Title,
+			&i.Status,
+			&i.Description,
+			&i.UpdatedAt,
+			&i.IssuePrefix,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMergedKnowledgeChangeRequests = `-- name: ListMergedKnowledgeChangeRequests :many
 SELECT id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at FROM knowledge_change_request
 WHERE workspace_id = $1 AND status = 'merged'
@@ -1166,6 +1407,24 @@ func (q *Queries) MarkKnowledgeChangeRequestMerged(ctx context.Context, arg Mark
 	return i, err
 }
 
+const pauseSystemAutopilot = `-- name: PauseSystemAutopilot :exec
+UPDATE autopilot SET status = 'paused', pause_reason = $1, updated_at = now()
+WHERE workspace_id = $2 AND system_key = $3 AND status = 'active'
+`
+
+type PauseSystemAutopilotParams struct {
+	PauseReason pgtype.Text `json:"pause_reason"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	SystemKey   pgtype.Text `json:"system_key"`
+}
+
+// Pauses a platform-owned autopilot with a reason the UI explains (e.g. the last
+// knowledge base was deleted). Archived rows stay archived.
+func (q *Queries) PauseSystemAutopilot(ctx context.Context, arg PauseSystemAutopilotParams) error {
+	_, err := q.db.Exec(ctx, pauseSystemAutopilot, arg.PauseReason, arg.WorkspaceID, arg.SystemKey)
+	return err
+}
+
 const refreshKnowledgeChangeRequest = `-- name: RefreshKnowledgeChangeRequest :one
 UPDATE knowledge_change_request SET
     title = $1,
@@ -1235,6 +1494,20 @@ func (q *Queries) RefreshKnowledgeChangeRequest(ctx context.Context, arg Refresh
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const setAutopilotSystemKey = `-- name: SetAutopilotSystemKey :exec
+UPDATE autopilot SET system_key = $1 WHERE id = $2
+`
+
+type SetAutopilotSystemKeyParams struct {
+	SystemKey pgtype.Text `json:"system_key"`
+	ID        pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) SetAutopilotSystemKey(ctx context.Context, arg SetAutopilotSystemKeyParams) error {
+	_, err := q.db.Exec(ctx, setAutopilotSystemKey, arg.SystemKey, arg.ID)
+	return err
 }
 
 const setKnowledgeAnnotationsStatusForChange = `-- name: SetKnowledgeAnnotationsStatusForChange :exec

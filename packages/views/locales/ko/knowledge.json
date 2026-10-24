@@ -370,5 +370,21 @@
       "gap": "{{kb}}의 AGENTS.md를 따라 다음 지식 공백을 보완하고, 자체 검토 후 변경 요청을 올려 주세요:",
       "rebase": "변경 요청 #{{number}}(브랜치 {{branch}})이 main과 충돌합니다. marvis kb sync로 최신 main 기준으로 다시 작업한 뒤 marvis kb change update {{number}}를 실행하세요."
     }
+  },
+  "digest": {
+    "title": "일일 지식 정리",
+    "hint": "워크스페이스 전체가 공유합니다. 매일 작업, 댓글, 실행 에이전트 런타임 소유자의 대화를 읽고 변경 요청 하나를 만듭니다.",
+    "agent": "에이전트",
+    "time": "실행 시간",
+    "setup": "설정",
+    "status_active": "켜짐",
+    "status_paused": "꺼짐",
+    "schedule_daily": "매일 {{time}} ({{tz}})",
+    "schedule_cron": "{{cron}} ({{tz}})",
+    "enable_aria": "일일 지식 정리 켜기",
+    "no_knowledge_base": "지식 베이스를 만들어야 켤 수 있습니다",
+    "open_automation": "자동화에서 열기",
+    "admin_only": "owner 또는 admin이 설정합니다",
+    "failed": "일일 지식 정리를 업데이트하지 못했습니다"
   }
 }

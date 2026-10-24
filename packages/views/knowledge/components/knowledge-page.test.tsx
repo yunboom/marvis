@@ -44,7 +44,15 @@ vi.mock("@marvis/core/knowledge", async (importOriginal) => ({
     queryKey: ["kb-gaps", wsId, status],
     queryFn: () => Promise.resolve([]),
   }),
-  knowledgeKeys: { all: (wsId: string) => ["kb", wsId], bases: (wsId: string) => ["kb", wsId] },
+  knowledgeDigestOptions: (wsId: string) => ({
+    queryKey: ["kb-digest", wsId],
+    queryFn: () => Promise.resolve({ autopilot: null, schedule: null, knowledge_base_count: 1 }),
+  }),
+  knowledgeKeys: { all: (wsId: string) => ["kb", wsId], bases: (wsId: string) => ["kb", wsId], digest: (wsId: string) => ["kb-digest", wsId] },
+}));
+vi.mock("@marvis/core/paths", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@marvis/core/paths")>()),
+  useWorkspacePaths: () => ({ autopilotDetail: (id: string) => `/acme/autopilots/${id}` }),
 }));
 vi.mock("@marvis/core/workspace/queries", () => ({
   agentListOptions: (wsId: string) => ({ queryKey: ["agents", wsId], queryFn: () => Promise.resolve([]) }),

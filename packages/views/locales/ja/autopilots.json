@@ -28,7 +28,8 @@
     "active": "アクティブ",
     "paused": "一時停止中",
     "paused_runtime_required": "一時停止中 — 担当エージェントのランタイムが必要です",
-    "archived": "アーカイブ済み"
+    "archived": "アーカイブ済み",
+    "paused_no_knowledge_base": "停止中 — ナレッジベースがありません"
   },
   "execution_mode": {
     "create_issue": "タスクを作成",
@@ -112,7 +113,8 @@
       "cancel": "キャンセル",
       "confirm": "削除",
       "deleting": "削除中..."
-    }
+    },
+    "paused_no_knowledge_base": "ワークスペースにナレッジベースがないため停止しています。作成してから再度有効にしてください。"
   },
   "access": {
     "title": "アクセス管理",
@@ -545,5 +547,9 @@
     "create": "起動を追加",
     "create_pick_issue": "起動を追加するタスクを選択",
     "create_pick_issue_description": "起動はこのタスクに属し、タスクの終了とともに終わります。"
+  },
+  "system": {
+    "knowledge_digest": "毎日のナレッジ集約",
+    "locked": "組み込みの自動化です。停止できますが削除できません。"
   }
 }

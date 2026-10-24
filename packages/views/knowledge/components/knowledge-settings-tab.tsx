@@ -24,6 +24,7 @@ import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { PAGE_GUTTER } from "../../layout/page-header";
 import { useT } from "../../i18n";
 import { canAdministerWorkspace } from "../lib/permissions";
+import { KnowledgeDigestSection } from "./knowledge-digest-section";
 import { MaintainerAgentSelect } from "./maintainer-agent-select";
 
 export function KnowledgeSettingsTab({
@@ -135,6 +136,8 @@ export function KnowledgeSettingsTab({
             <p className="text-caption text-muted-foreground">{t(($) => $.settings.manage_hint)}</p>
           )}
         </section>
+
+        <KnowledgeDigestSection agents={agents} defaultAgentId={kb.maintainer_agent_id} isAdmin={isAdmin} />
 
         <section className="flex flex-col gap-2">
           <h2 className="text-title-sm font-semibold">{t(($) => $.repo.title)}</h2>

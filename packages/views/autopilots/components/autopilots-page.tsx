@@ -9,6 +9,7 @@ import {
   Code,
   FileSearch,
   GitPullRequest,
+  Lock,
   Newspaper,
   Pause,
   Plus,
@@ -75,6 +76,7 @@ import {
 } from "./autopilot-list-actions";
 import type { ScheduleConfig } from "./schedule-editor/model";
 import { useLocale, useT, useTimeAgo } from "../../i18n";
+import { isSystemAutopilot, PAUSE_REASON_NO_KNOWLEDGE_BASE, useAutopilotTitle } from "../lib/system-autopilot";
 
 // Column template — single source of truth for header, rows, and skeletons.
 // Same conventions as the skills list (see list-grid.tsx and the comment
@@ -264,22 +266,30 @@ function CheckboxCell({
   );
 }
 
+function pausedTitle(autopilot: Autopilot, t: ReturnType<typeof useT<"autopilots">>["t"]) {
+  if (autopilot.pause_reason === "agent_runtime_required") return t(($) => $.status.paused_runtime_required);
+  if (autopilot.pause_reason === PAUSE_REASON_NO_KNOWLEDGE_BASE) return t(($) => $.status.paused_no_knowledge_base);
+  return t(($) => $.status.paused);
+}
+
 function NameCell({ autopilot }: { autopilot: Autopilot }) {
   const { t } = useT("autopilots");
+  const titleOf = useAutopilotTitle();
   return (
     <ListGridCell className="gap-1.5">
       <span className="min-w-0 truncate text-body font-medium">
-        {autopilot.title}
+        {titleOf(autopilot)}
       </span>
+      {isSystemAutopilot(autopilot) && (
+        <span title={t(($) => $.system.locked)} aria-label={t(($) => $.system.locked)} className="flex shrink-0 items-center text-muted-foreground">
+          <Lock className="size-3" />
+        </span>
+      )}
       {/* Paused marker: in the "all" scope active and paused rows mix, so a
           paused automation needs an inline signal. */}
       {autopilot.status === "paused" && (
         <span
-          title={
-            autopilot.pause_reason === "agent_runtime_required"
-              ? t(($) => $.status.paused_runtime_required)
-              : t(($) => $.status.paused)
-          }
+          title={pausedTitle(autopilot, t)}
           className="flex shrink-0 items-center text-warning"
         >
           <Pause className="size-3" />

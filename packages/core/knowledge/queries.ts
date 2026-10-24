@@ -18,6 +18,7 @@ export const knowledgeKeys = {
     ["workspaces", wsId, "knowledge", "changes", status] as const,
   change: (wsId: string, number: number) => ["workspaces", wsId, "knowledge", "change", number] as const,
   history: (wsId: string) => ["workspaces", wsId, "knowledge", "history"] as const,
+  digest: (wsId: string) => ["workspaces", wsId, "knowledge", "digest"] as const,
   annotations: (wsId: string, kbId: string, status: KnowledgeAnnotationStatus | "all", page: string) =>
     ["workspaces", wsId, "knowledge", "annotations", kbId, status, page] as const,
 };
@@ -109,6 +110,13 @@ export function knowledgeSearchOptions(wsId: string, query: string) {
     queryFn: () => api.searchKnowledge(query),
     enabled: query.trim().length > 0,
     staleTime: 30_000,
+  });
+}
+
+export function knowledgeDigestOptions(wsId: string) {
+  return queryOptions({
+    queryKey: knowledgeKeys.digest(wsId),
+    queryFn: () => api.getKnowledgeDigest(),
   });
 }
 
