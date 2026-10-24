@@ -34,7 +34,7 @@
 - Logo：`packages/ui/components/common/marvis-icon.tsx`（圆角方块 + 镂空 "M"），docs 站、移动端、favicon、桌面/PWA/移动端图标已同步；应用侧栏顶部显示 logo + "Marvis" 字标（`marvis-wordmark.tsx`，Marvis.app 的 SVG 字标）；侧栏默认宽 216px。
 - 状态与优先级色（`tokens.css` 的 `--status-*`、`--priority-*`）：状态用国画颜料（淡墨、藤黄、花青、石绿、朱砂），优先级是小圆点（紧急 / 高 / 中实心，低空心）；浅色值对白底和 `#f7f7f7` 都要保持 3:1。自定义状态 / 标签色板是 `color-picker.tsx` 的 10 色国画色板。
 - 头像统一浅灰底黑字，成员圆形、智能体和小队圆角方形（`actor-avatar.tsx`）；智能体运行用绿色呼吸灯（`breathing-dot.tsx`、`base.css` 的 `animate-breathe`）。
-- 看板按状态分组时是四列泳道（未开始 / 已开始 / 需介入 / 已结束，`board-status-columns.ts`、`status-lane-board.tsx`）；泳道视图同样是这四列，每个格子直接渲染看板的 `StatusLane`，只是多了按负责人 / 项目 / 父任务分行（`swimlane-view.tsx`）；新建任务弹窗用「手动创建 / 智能体创建」标签和墨色 `BorderBeam variant="ink"`。同步上游时这些文件冲突，保留本 fork 的样式，只合入上游新增的行为。
+- 看板按状态分组时是四列泳道（未开始 / 工作中 / 需介入 / 已结束，按 `status_group` 分列，见决策六；`board-status-columns.ts`、`status-lane-board.tsx`）；泳道视图同样是这四列，每个格子直接渲染看板的 `StatusLane`，只是多了按负责人 / 项目 / 父任务分行（`swimlane-view.tsx`）；新建任务弹窗用「手动创建 / 智能体创建」标签和墨色 `BorderBeam variant="ink"`。同步上游时这些文件冲突，保留本 fork 的样式，只合入上游新增的行为。
 
 ## 决策三：飞书登录（fork 独有）
 
@@ -57,6 +57,15 @@
 `MARVIS_LAN_DISCOVERY` 默认关闭（`server/internal/landiscovery/config.go`），设为 true 才广播，所有部署方式一致；上游默认开启。
 
 - 同步上游时 `config.go`、`config_test.go`、`.env.example` 和 `self-host-quickstart*.mdx` 的局域网发现段落冲突：保留默认关闭，只合入上游新增的行为。
+
+## 决策六：状态分组 status_group（fork 独有）
+
+看板四列和状态库共用一套状态分组（未开始 / 工作中 / 需介入 / 已结束），存在 `issue_status.status_group`；`category` 仍是生命周期类型（未开始 / 已开始 / 已完成 / 已关闭），平台行为只读它。为什么不复用 `category` 见 `docs/adr/0001-status-group-column.md`，术语见 `GLOSSARY.md`。
+
+- 规则：工作中和需介入同属已开始，已开始的自定义状态可在两者之间切换；已结束包含已完成和已关闭；内置状态分组固定（审核中、已阻塞是需介入）。迁移 `602_issue_status_group` 用约束锁住合法组合，插入没带分组时触发器按类型给默认值。
+- 后端：`issuestatus`（`Group*` 常量、`DefaultGroup`、`ValidGroup`、`Resolver.Group`、`CategoryNameAndGroup`）、状态接口的 `status_group`、任务响应和后台事件的 `status_group`、工作流新建状态可带分组、CLI `--fields status_group`。
+- 前端：core 的 `IssueStatusGroup`、`STATUS_GROUP_ORDER`、`defaultStatusGroup`、目录的 `groupOf` / `inGroup`；状态库（`issue-statuses-tab.tsx`）按分组排列、行尾显示生命周期类型；看板、状态选择器、「PR 合并后改为」下拉框按分组排序；工作流模板「等待反馈」放需介入。移动端未对齐。
+- 同步上游时：上游新增的按生命周期做行为判断的代码继续用 `category`，不要改读 `status_group`；上游新增的状态插入路径（迁移、种子数据、工作流模板）要带上 `status_group`；`issue-statuses-tab.tsx`、`status-options.ts`、`pr-merge-status-row.tsx` 冲突时保留按分组的结构，只合入上游新增的行为。
 
 ## 同步上游流程
 
