@@ -131,6 +131,12 @@ describe("KeyboardShortcutsTab", () => {
       name: "Change shortcut for Send",
     });
     fireEvent.click(sendRecorder);
+    fireEvent.keyDown(sendRecorder, { key: "Enter", ctrlKey: true });
+    expect(getShortcut("send")).toEqual(
+      createShortcutChord("Enter", { primary: true }),
+    );
+
+    fireEvent.click(sendRecorder);
     fireEvent.keyDown(sendRecorder, { key: "Enter" });
     expect(getShortcut("send")).toEqual(createShortcutChord("Enter"));
   });
@@ -143,9 +149,7 @@ describe("KeyboardShortcutsTab", () => {
 
     fireEvent.click(sendRecorder);
     fireEvent.keyDown(sendRecorder, { key: "Enter", shiftKey: true });
-    expect(getShortcut("send")).toEqual(
-      createShortcutChord("Enter", { primary: true }),
-    );
+    expect(getShortcut("send")).toEqual(createShortcutChord("Enter"));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Send can only use Enter or Mod+Enter.",
     );
