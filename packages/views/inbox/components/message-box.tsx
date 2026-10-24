@@ -29,6 +29,9 @@ export function MessageBox() {
   const open = useMessageBoxStore((s) => s.open);
   const setOpen = useMessageBoxStore((s) => s.setOpen);
   const { pathname } = useNavigation();
+  // Opening focuses the box itself: the first control is the filter button,
+  // and focusing it pops its tooltip as soon as the box appears.
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // A link followed from inside (a mention, a project) leaves the page the box
   // was opened over, so the box goes with it.
@@ -67,6 +70,8 @@ export function MessageBox() {
       }}
     >
       <DialogContent
+        ref={contentRef}
+        initialFocus={contentRef}
         showCloseButton={false}
         {...{ [MESSAGE_BOX_LAYER_ATTR]: "" }}
         className="flex h-[min(54rem,calc(100dvh-4rem))] w-[min(84rem,calc(100vw-4rem))] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
