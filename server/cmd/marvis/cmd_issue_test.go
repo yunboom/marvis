@@ -4386,6 +4386,7 @@ func sampleIssueResponse() handler.IssueResponse {
 		Description:    &desc,
 		Status:         "in_progress",
 		StatusCategory: "active",
+		StatusGroup:    "working",
 		StatusName:     "In Progress",
 		Priority:       "high",
 		AssigneeType:   &assigneeType,

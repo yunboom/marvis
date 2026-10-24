@@ -304,7 +304,9 @@ func (h *Handler) issueWorkflowResponse(ctx context.Context, row db.IssueWorkflo
 type NewWorkflowStatus struct {
 	Name     string `json:"name"`
 	Category string `json:"category"`
-	Color    string `json:"color"`
+	// StatusGroup is optional; empty takes the category default.
+	StatusGroup string `json:"status_group"`
+	Color       string `json:"color"`
 }
 
 // IssueWorkflowStepInput names a step by an existing status key or by a
@@ -391,6 +393,13 @@ func createWorkflowStatus(ctx context.Context, qtx *db.Queries, wsUUID pgtype.UU
 	if !ok {
 		category = "started"
 	}
+	statusGroup := strings.TrimSpace(in.StatusGroup)
+	if statusGroup == "" {
+		statusGroup = issuestatus.DefaultGroup("", category)
+	}
+	if !issuestatus.ValidGroup(category, statusGroup) {
+		return db.IssueStatus{}, false, "status_group must be one of: " + strings.Join(issuestatus.GroupsForCategory(category), ", "), nil
+	}
 	color := newStatusDefaultColor[category]
 	if strings.TrimSpace(in.Color) != "" {
 		c, err := normalizeColor(in.Color)
@@ -417,6 +426,7 @@ func createWorkflowStatus(ctx context.Context, qtx *db.Queries, wsUUID pgtype.UU
 		WorkspaceID: wsUUID,
 		Name:        name,
 		Category:    category,
+		StatusGroup: statusGroup,
 		Color:       color,
 	})
 	if err != nil && isUniqueViolation(err) {

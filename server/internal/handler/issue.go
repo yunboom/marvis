@@ -49,6 +49,10 @@ type IssueResponse struct {
 	// omitted when an endpoint cannot resolve a custom status, so consumers must
 	// fall back to their catalog rather than treat a blank as "no category".
 	StatusCategory string `json:"status_category,omitempty"`
+	// StatusGroup is how the status is arranged on the board and in the status
+	// library. Display data only; lifecycle decisions read StatusCategory. Same
+	// omission rule as StatusCategory when a custom status is unresolved.
+	StatusGroup string `json:"status_group,omitempty"`
 	// StatusName is a CUSTOM status's display name, carried beside the key so a
 	// consumer that only ever sees `status` is not left holding a bare handle.
 	// A key derived from a non-Latin name is opaque by construction
@@ -378,6 +382,9 @@ func (h *Handler) newStatusCategoryFiller(ctx context.Context, wsID pgtype.UUID,
 		// Every response that resolves its status also resolves its duplicate
 		// mark, so the two never disagree about which endpoints carry them.
 		h.fillDuplicateOf(ctx, wsID, resp, refs)
+		if resp.StatusGroup == "" {
+			resp.StatusGroup = resolver.Group(ctx, h.Queries, resp.Status)
+		}
 		if resp.StatusCategory != "" {
 			return
 		}
@@ -485,6 +492,7 @@ func issueToResponse(i db.Issue, issuePrefix string) IssueResponse {
 		Description:        textToPtr(i.Description),
 		Status:             i.Status,
 		StatusCategory:     statusCategory,
+		StatusGroup:        issuestatus.BuiltInGroup(i.Status),
 		Priority:           i.Priority,
 		AssigneeType:       textToPtr(i.AssigneeType),
 		AssigneeID:         uuidToPtr(i.AssigneeID),
@@ -523,6 +531,7 @@ func issueListRowToResponse(i db.ListIssuesRow, issuePrefix string) IssueRespons
 		Description:        textToPtr(i.Description),
 		Status:             i.Status,
 		StatusCategory:     statusCategory,
+		StatusGroup:        issuestatus.BuiltInGroup(i.Status),
 		Priority:           i.Priority,
 		AssigneeType:       textToPtr(i.AssigneeType),
 		AssigneeID:         uuidToPtr(i.AssigneeID),
@@ -593,6 +602,7 @@ func openIssueRowToResponse(i db.ListOpenIssuesRow, issuePrefix string) IssueRes
 		Description:        textToPtr(i.Description),
 		Status:             i.Status,
 		StatusCategory:     statusCategory,
+		StatusGroup:        issuestatus.BuiltInGroup(i.Status),
 		Priority:           i.Priority,
 		AssigneeType:       textToPtr(i.AssigneeType),
 		AssigneeID:         uuidToPtr(i.AssigneeID),
@@ -2552,6 +2562,7 @@ func (h *Handler) ListChildIssues(w http.ResponseWriter, r *http.Request) {
 	for i, child := range children {
 		resp[i] = issueToResponse(child, prefix)
 		resp[i].StatusCategory = issuestatus.WireCategory(child.Status, statusResolver.Category(r.Context(), h.Queries, child.Status))
+		resp[i].StatusGroup = statusResolver.Group(r.Context(), h.Queries, child.Status)
 		labels := labelsMap[resp[i].ID]
 		if labels == nil {
 			labels = []LabelResponse{}
@@ -2638,6 +2649,7 @@ func (h *Handler) ListChildrenByParents(w http.ResponseWriter, r *http.Request) 
 	for i, child := range children {
 		resp[i] = issueToResponse(child, prefix)
 		resp[i].StatusCategory = issuestatus.WireCategory(child.Status, statusResolver.Category(r.Context(), h.Queries, child.Status))
+		resp[i].StatusGroup = statusResolver.Group(r.Context(), h.Queries, child.Status)
 		labels := labelsMap[resp[i].ID]
 		if labels == nil {
 			labels = []LabelResponse{}

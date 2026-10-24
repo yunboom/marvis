@@ -33,6 +33,7 @@ type IssueStatusResponse struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
 	Category    string  `json:"category"`
+	StatusGroup string  `json:"status_group"`
 	Color       string  `json:"color"`
 	Icon        string  `json:"icon"`
 	IsSystem    bool    `json:"is_system"`
@@ -61,6 +62,7 @@ func issueStatusToResponse(s db.IssueStatus) IssueStatusResponse {
 		Name:        s.Name,
 		Description: s.Description,
 		Category:    category,
+		StatusGroup: s.StatusGroup,
 		Color:       s.Color,
 		Icon:        s.Icon,
 		IsSystem:    s.IsSystem,
@@ -78,6 +80,9 @@ type CreateIssueStatusRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Category    string `json:"category"`
+	// StatusGroup is optional and defaults to the category's first group. Only
+	// started statuses choose, between working and needs_attention.
+	StatusGroup string `json:"status_group"`
 	Color       string `json:"color"`
 	Icon        string `json:"icon"`
 }
@@ -85,8 +90,11 @@ type CreateIssueStatusRequest struct {
 // UpdateIssueStatusRequest deliberately has no Key or Category field. Both are
 // immutable: changing a category would silently rewrite the machine semantics
 // of every issue already on that status, and changing a key would strand them.
+// StatusGroup is display data, so a started status may move between working
+// and needs_attention.
 type UpdateIssueStatusRequest struct {
 	Name        *string  `json:"name"`
+	StatusGroup *string  `json:"status_group"`
 	Description *string  `json:"description"`
 	Color       *string  `json:"color"`
 	Icon        *string  `json:"icon"`
@@ -168,6 +176,14 @@ func (h *Handler) CreateIssueStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Category = category
+	statusGroup := strings.TrimSpace(req.StatusGroup)
+	if statusGroup == "" {
+		statusGroup = issuestatus.DefaultGroup("", category)
+	}
+	if !issuestatus.ValidGroup(category, statusGroup) {
+		writeError(w, http.StatusBadRequest, "status_group must be one of: "+strings.Join(issuestatus.GroupsForCategory(category), ", "))
+		return
+	}
 	if !validIssueStatusIcon(req.Icon) {
 		writeError(w, http.StatusBadRequest, "invalid status icon")
 		return
@@ -197,6 +213,7 @@ func (h *Handler) CreateIssueStatus(w http.ResponseWriter, r *http.Request) {
 		Name:        name,
 		Description: req.Description,
 		Category:    category,
+		StatusGroup: statusGroup,
 		Color:       strings.ToLower(color),
 		Icon:        req.Icon,
 	})
@@ -322,6 +339,14 @@ func (h *Handler) UpdateIssueStatus(w http.ResponseWriter, r *http.Request) {
 		}
 		name = pgtype.Text{String: trimmed, Valid: true}
 	}
+	var statusGroup pgtype.Text
+	if req.StatusGroup != nil {
+		if !issuestatus.ValidGroup(entry.Category, *req.StatusGroup) {
+			writeError(w, http.StatusBadRequest, "status_group must be one of: "+strings.Join(issuestatus.GroupsForCategory(entry.Category), ", "))
+			return
+		}
+		statusGroup = pgtype.Text{String: *req.StatusGroup, Valid: true}
+	}
 	var description pgtype.Text
 	if req.Description != nil {
 		if len([]rune(*req.Description)) > 256 {
@@ -356,6 +381,7 @@ func (h *Handler) UpdateIssueStatus(w http.ResponseWriter, r *http.Request) {
 		ID:          entry.ID,
 		WorkspaceID: wsUUID,
 		Name:        name,
+		StatusGroup: statusGroup,
 		Description: description,
 		Color:       color,
 		Icon:        icon,

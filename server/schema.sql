@@ -612,6 +612,36 @@ CREATE FUNCTION public.issue_status_category(p_category text) RETURNS text
 $$;
 
 --
+-- Name: issue_status_default_group(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.issue_status_default_group(p_key text, p_category text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    AS $$
+    SELECT CASE p_category
+        WHEN 'unstarted' THEN 'not_started'
+        WHEN 'started' THEN CASE WHEN p_key IN ('in_review', 'blocked') THEN 'needs_attention' ELSE 'working' END
+        WHEN 'done' THEN 'ended'
+        WHEN 'closed' THEN 'ended'
+    END
+$$;
+
+--
+-- Name: issue_status_fill_group(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.issue_status_fill_group() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.status_group IS NULL THEN
+        NEW.status_group := issue_status_default_group(NEW.key, NEW.category);
+    END IF;
+    RETURN NEW;
+END
+$$;
+
+--
 -- Name: lock_task_owner_rows(uuid, uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2545,11 +2575,14 @@ CREATE TABLE public.issue_status (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     icon text DEFAULT ''::text NOT NULL,
+    status_group text NOT NULL,
     CONSTRAINT issue_status_category_check CHECK ((category = ANY (ARRAY['unstarted'::text, 'started'::text, 'done'::text, 'closed'::text]))),
     CONSTRAINT issue_status_color_check CHECK ((color ~ '^#[0-9a-f]{6}$'::text)),
     CONSTRAINT issue_status_description_check CHECK ((char_length(description) <= 256)),
+    CONSTRAINT issue_status_group_check CHECK ((((category = 'unstarted'::text) AND (status_group = 'not_started'::text)) OR ((category = 'started'::text) AND (status_group = ANY (ARRAY['working'::text, 'needs_attention'::text]))) OR ((category = ANY (ARRAY['done'::text, 'closed'::text])) AND (status_group = 'ended'::text)))),
     CONSTRAINT issue_status_key_check CHECK ((key ~ '^[a-z0-9][a-z0-9_]{0,31}$'::text)),
     CONSTRAINT issue_status_name_check CHECK (((char_length(name) >= 1) AND (char_length(name) <= 64))),
+    CONSTRAINT issue_status_system_group CHECK (((NOT is_system) OR (status_group = public.issue_status_default_group(key, category)))),
     CONSTRAINT issue_status_system_is_canonical CHECK (((NOT is_system) OR ((((((((key = 'backlog'::text) AND (category = 'unstarted'::text)) OR ((key = 'todo'::text) AND (category = 'unstarted'::text))) OR ((key = 'in_progress'::text) AND (category = 'started'::text))) OR ((key = 'in_review'::text) AND (category = 'started'::text))) OR ((key = 'blocked'::text) AND (category = 'started'::text))) OR ((key = 'done'::text) AND (category = 'done'::text))) OR ((key = 'cancelled'::text) AND (category = 'closed'::text))))),
     CONSTRAINT issue_status_system_not_archivable CHECK (((NOT is_system) OR (archived_at IS NULL)))
 );
@@ -6706,6 +6739,12 @@ CREATE TRIGGER issue_child_event_insert AFTER INSERT ON public.issue FOR EACH RO
 --
 
 CREATE TRIGGER issue_child_event_update AFTER UPDATE OF status, parent_issue_id, stage ON public.issue FOR EACH ROW WHEN (((old.parent_issue_id IS DISTINCT FROM new.parent_issue_id) OR ((new.parent_issue_id IS NOT NULL) AND ((old.status IS DISTINCT FROM new.status) OR (old.stage IS DISTINCT FROM new.stage))))) EXECUTE FUNCTION public.record_issue_child_event();
+
+--
+-- Name: issue_status issue_status_fill_group; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER issue_status_fill_group BEFORE INSERT ON public.issue_status FOR EACH ROW EXECUTE FUNCTION public.issue_status_fill_group();
 
 --
 -- Name: dingtalk_group_presence mirror_dingtalk_group_presence_bot_identity; Type: TRIGGER; Schema: public; Owner: -
