@@ -24,7 +24,7 @@ import { Layers,
   Check,
   X,
 } from "lucide-react";
-import { Bell, Plus as PlusGlyph } from "@phosphor-icons/react/ssr";
+import { Bell } from "@phosphor-icons/react/ssr";
 import { useMessageBoxStore } from "@marvis/core/inbox/message-box-store";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
@@ -646,12 +646,13 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
               }
               tooltipSide="bottom"
               size="icon"
-              // Same outline as the search box below, whose right edge it
-              // shares; the glyph keeps the nav icons' 18px regular weight.
-              className="relative ml-auto rounded-lg border border-input text-foreground hover:border-black/20 hover:bg-accent dark:hover:border-white/20"
+              // Ink ring and ink plus on the card colour; the plus is stroked at
+              // the ring's 1.5px (2.25 on lucide's 24-unit grid at 16px). Its
+              // right edge lines up with the search box below.
+              className="relative ml-auto rounded-full border-[1.5px] border-foreground bg-sidebar text-foreground hover:bg-accent"
               onClick={() => openCreateIssueWithPreference()}
             >
-              <PlusGlyph className="size-[18px]" />
+              <Plus className="size-4" strokeWidth={2.25} />
               <DraftDot />
             </IconButton>
           </div>
