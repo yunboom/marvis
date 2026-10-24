@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SwimLaneView } from "./swimlane-view";
 import { IssueContextMenuProvider } from "../actions";
@@ -179,11 +179,13 @@ vi.mock("@marvis/core/modals", () => ({
 // Mock dnd-kit
 let lastOnDragEnd: any = null;
 let lastOnDragOver: any = null;
+let lastOnDragStart: any = null;
 
 vi.mock("@dnd-kit/core", () => ({
-  DndContext: ({ children, onDragEnd, onDragOver }: any) => {
+  DndContext: ({ children, onDragEnd, onDragOver, onDragStart }: any) => {
     lastOnDragEnd = onDragEnd;
     lastOnDragOver = onDragOver;
+    lastOnDragStart = onDragStart;
     return children;
   },
   DragOverlay: () => null,
@@ -385,7 +387,7 @@ describe("SwimLaneView", () => {
     mockGetAgentTaskSnapshot.mockResolvedValue([]);
   });
 
-  it("renders status columns as headers", () => {
+  it("renders the four status board categories as column headers", () => {
     renderWithI18n(
       <SwimLaneView
         issues={mockIssues}
@@ -393,9 +395,54 @@ describe("SwimLaneView", () => {
       />,
     );
 
-    expect(screen.getByText("Todo")).toBeInTheDocument();
-    expect(screen.getByText("Todo")).toBeInTheDocument();
-    expect(screen.getByText("In Progress")).toBeInTheDocument();
+    for (const name of ["Not started", "Started", "Needs attention", "Ended"]) {
+      expect(screen.getByRole("heading", { level: 2, name })).toBeInTheDocument();
+    }
+    // Concrete statuses head the groups inside each cell.
+    expect(screen.getAllByText("In Progress").length).toBeGreaterThan(0);
+  });
+
+  it("lists only the statuses that hold cards inside a cell", () => {
+    const { container } = renderWithI18n(
+      <SwimLaneView issues={mockIssues} onMoveIssue={vi.fn()} />,
+    );
+
+    const noParent = container.querySelector('[data-swimlane-lane="parent:none"]')!;
+    expect(noParent.querySelector('[data-swimlane-status="backlog"]')).not.toBeNull();
+    expect(noParent.querySelector('[data-swimlane-status="done"]')).toBeNull();
+  });
+
+  it("shows every live status of a category as a drop target while a card is dragged", () => {
+    const { container } = renderWithI18n(
+      <SwimLaneView issues={mockIssues} onMoveIssue={vi.fn()} />,
+    );
+
+    act(() => {
+      lastOnDragStart({ active: { id: "orphan-1" } });
+    });
+
+    const noParent = container.querySelector('[data-swimlane-lane="parent:none"]')!;
+    const ended = noParent.querySelector('[data-swimlane-cell="ended"]')!;
+    expect(ended.querySelector('[data-swimlane-status="done"]')).not.toBeNull();
+    expect(ended.querySelector('[data-swimlane-status="cancelled"]')).not.toBeNull();
+  });
+
+  it("previews three cards per status and reveals the rest in place", () => {
+    const backlog = [1, 2, 3, 4].map((n) => ({
+      ...mockIssues.find((issue) => issue.id === "orphan-1")!,
+      id: `backlog-${n}`,
+      number: 100 + n,
+      identifier: `PROJ-${100 + n}`,
+      title: `Backlog Card ${n}`,
+      position: n,
+    }));
+    renderWithI18n(<SwimLaneView issues={backlog} onMoveIssue={vi.fn()} />);
+
+    expect(screen.queryByText("Backlog Card 4")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /1 more/i }));
+
+    expect(screen.getByText("Backlog Card 4")).toBeInTheDocument();
   });
 
   // MUL-4290: `cancelled` is a first-class default status. Status columns come
@@ -595,13 +642,15 @@ describe("SwimLaneView", () => {
       />,
     );
 
-    // No parent + Parent Issue 1 each have one + per visible status column.
-    // The Other parents lane must add zero.
-    const realLaneCount = 2;
-    const visibleStatusCount = 7; // Four lifecycle categories (closed included)
+    // Real lanes keep their create buttons; the Other parents lane adds none.
+    const orphanLane = document.querySelector('[data-swimlane-lane="parent:__orphans__"]')!;
+    expect(screen.getByText("Lonely Child")).toBeInTheDocument();
+    expect(
+      within(orphanLane as HTMLElement).queryAllByRole("button", { name: /add issue/i }),
+    ).toHaveLength(0);
     expect(
       screen.getAllByRole("button", { name: /add issue/i }).length,
-    ).toBe(realLaneCount * visibleStatusCount);
+    ).toBeGreaterThan(0);
   });
 
   it("does not call onMoveIssue when a card is dropped onto the empty whitespace of an 'Other parents' cell", () => {
