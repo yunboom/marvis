@@ -303,7 +303,7 @@ La connexion Feishu de Desktop fonctionne sans l'application web. Dans la consol
 Les propriétaires et administrateurs d'un espace de travail peuvent envoyer une carte d'invitation à un groupe ou à une personne sur Feishu ; quiconque clique sur la carte rejoint l'espace de travail. Les invitations réutilisent l'application de connexion Feishu (`MARVIS_LARK_LOGIN_APP_ID` / `MARVIS_LARK_LOGIN_APP_SECRET`). Dans la console développeur Feishu, pour cette application :
 
 1. Activez la fonction bot.
-2. Demandez ces cinq autorisations : `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:user.base:readonly` et `contact:user.email:readonly`.
+2. Demandez ces six autorisations : `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:contact.base:readonly`, `contact:user.base:readonly` et `contact:user.email:readonly`.
 3. Dans les événements et rappels, choisissez la connexion longue (long connection) comme mode de rappel et ajoutez le rappel `card.action.trigger`.
 4. Réglez la portée de disponibilité pour couvrir toutes les personnes que vous pourriez inviter. Les personnes hors de cette portée ne peuvent pas rejoindre depuis une carte.
 5. Publiez une nouvelle version de l'application.

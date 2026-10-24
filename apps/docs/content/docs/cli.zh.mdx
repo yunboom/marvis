@@ -274,7 +274,7 @@ CLI 配置文件包含可代表你访问 Marvis 的令牌。不要提交到仓�
 | `workspace` | `list/get/create/update/switch` | 管理工作区；`switch` 设置当前 profile 的默认工作区 | |
 | | `mcp list/add/update/remove` | 管理工作区的 MCP 服务库 | 写操作需要 owner/admin。这里添加的服务不会分配给任何 agent——用 `marvis agent mcp add` 分配给某个 agent。`list` 只列出名称与 transport；存储的条目是只写的，任何角色都读不回。`--server-config-file` / `--server-config-stdin` 避免 token 进入 shell 历史 |
 | | `member list/invite <email>` | 查看成员、发出邀请 | `invite`：`--role`（member 或 admin，默认 member） |
-| | `lark-invite send/list/get/revoke` | 向飞书群或个人发送邀请卡片，并跟踪结果 | 仅 owner/admin，且服务器需开启飞书邀请，否则返回 `lark_not_configured`。`send`：`--chat-id`（`oc_`）和 `--user-id`（`ou_`，飞书登录应用下的 open_id）二选一，`--role`，`--expires-in`（1h–720h，可写 `7d`），`--max-uses`（群卡片），`--note`，`--idempotency-key`（1 小时内重试返回原邀请）；`list`：`--status`（默认 `active`，另有 `completed`、`expired`、`revoked`、`all`），`--full-id`；`get` / `revoke` 接受 `list` 显示的短 ID；失败时输出 `Error: <code>: <message>` |
+| | `lark-invite send/list/get/revoke` | 向飞书群或个人发送邀请卡片，并跟踪结果 | 仅 owner/admin，且服务器需开启飞书邀请，否则返回 `lark_not_configured`；飞书应用没开机器人或缺权限时，`send` 也返回它。`send`：`--chat-id`（`oc_`）和 `--user-id`（`ou_`，飞书登录应用下的 open_id）二选一，`--role`，`--expires-in`（1h–720h，可写 `7d`），`--max-uses`（群卡片），`--note`，`--idempotency-key`（1 小时内重试返回原邀请）；`list`：`--status`（默认 `active`，另有 `completed`、`expired`、`revoked`、`all`），`--full-id`；`get` / `revoke` 接受 `list` 显示的短 ID；失败时输出 `Error: <code>: <message>` |
 | `repo` | `list/add/remove/checkout` | 管理工作区仓库并检出到本机 | `--url`（可重复）；`checkout`：`--ref` |
 | `skill` | `list/get/create/update/delete` | 管理 skill | |
 | | `import` | 从 URL 或本地文件导入 skill | `--url` / `--file`、`--on-conflict`（`fail`、`overwrite`、`rename`、`skip`，默认 `fail`） |

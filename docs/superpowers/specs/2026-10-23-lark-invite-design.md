@@ -69,12 +69,13 @@ Marvis 部署在办公室局域网里，同事都用飞书登录。邀请成员�
   - `im:message:send_as_bot`：发卡片、更新卡片。
   - `im:chat:readonly`：列出机器人所在的群，供界面选择。
   - `contact:user.id:readonly`：界面按邮箱换 open_id。
+  - `contact:contact.base:readonly`：按 open_id 读用户资料（应用身份）。
   - `contact:user.base:readonly`：点击人和接收人的姓名、头像。
   - `contact:user.email:readonly`：点击人的邮箱，用来找到或建立 Marvis 账号。
 - 事件与回调：连接方式选长连接，在“回调配置”里添加 `card.action.trigger`。
 - 可用范围覆盖要邀请的人，然后发布新版本。
 
-服务端没配登录应用、或没打开开关时，飞书邀请整体不可用：接口返回 `lark_not_configured`，成员页显示“服务器未配置飞书机器人”。飞书邀请的长连接只依赖登录应用的凭据，不依赖智能体机器人用的 `MARVIS_LARK_SECRET_KEY`。配了应用但没开机器人或缺权限时，发送会失败，失败原因按飞书返回的错误码映射成第 9 节的错误码。
+服务端没配登录应用、或没打开开关时，飞书邀请整体不可用：接口返回 `lark_not_configured`，成员页显示“服务器未配置飞书机器人”。飞书邀请的长连接只依赖登录应用的凭据，不依赖智能体机器人用的 `MARVIS_LARK_SECRET_KEY`。配了应用但没开机器人（飞书错误码 232025）或缺权限（99991672）时，列群、查人和发送都返回 `lark_not_configured`，英文说明按原因区分；其余失败原因按飞书返回的错误码映射成第 9 节的错误码。
 
 ### 2. 数据模型
 
@@ -193,7 +194,7 @@ marvis workspace lark-invite revoke <invite-id>...
 
 - 一次一个接收方，和飞书 CLI 一样；要发多个就调多次。界面上的多选走同一个接口的数组入参。
 - 智能体查 ID：群用 `lark-cli im +chat-search --query <群名>`，人用 `lark-cli contact +search-user`（需要 `--as user`）。
-- open_id 按飞书应用区分。飞书 CLI 配置的应用必须和 Marvis 飞书登录用的是同一个（`MARVIS_LARK_LOGIN_APP_ID`），否则查出来的 open_id 发不了，返回 `open_id_cross_app`。帮助文本和错误提示里都写明这一点。现在这台电脑上两者是同一个应用。
+- open_id 按飞书应用区分。飞书 CLI 配置的应用必须和 Marvis 飞书登录用的是同一个（`MARVIS_LARK_LOGIN_APP_ID`），否则查出来的 open_id 发不了，返回 `open_id_cross_app`。帮助文本和错误提示里都写明这一点。
 
 输出与报错用英文。表格把可能含中文的 TARGET 放在最后一列，避免中文字宽把后面的列挤歪。发送失败时打印原因，退出码为 1。各命令的输出样例见 34 号画板。
 
@@ -201,7 +202,7 @@ marvis workspace lark-invite revoke <invite-id>...
 
 | code | 什么时候 |
 |---|---|
-| `lark_not_configured` | 服务端没配登录应用，或没开机器人 |
+| `lark_not_configured` | 服务端没配登录应用、没开机器人，或缺权限 |
 | `permission_denied` | 请求人或任务发起人不是管理员或所有者 |
 | `bot_not_in_chat` | Marvis 机器人不在这个群 |
 | `user_not_found` | open_id 或邮箱在飞书里查不到 |

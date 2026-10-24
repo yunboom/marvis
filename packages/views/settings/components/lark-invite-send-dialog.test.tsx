@@ -81,7 +81,8 @@ const notFound = () =>
 function mount(
   onOpenChange: (open: boolean) => void = vi.fn(),
   client = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    // 列群查询自带重试策略，会盖过这里的 retry；重试间隔压到 0，失败测试不用等。
+    defaultOptions: { queries: { retry: false, retryDelay: 0 }, mutations: { retry: false } },
   }),
 ) {
   const invalidate = vi.spyOn(client, "invalidateQueries");
@@ -276,6 +277,31 @@ describe("LarkInviteSendDialog groups", () => {
 
   it("explains when the group list fails to load", async () => {
     mockApi.listLarkChats.mockRejectedValue(new Error("boom"));
+    mount();
+    expect(await screen.findByText("Could not load groups")).toBeInTheDocument();
+    // 非 4xx 的失败保留一次重试，所以请求两次。
+    expect(mockApi.listLarkChats).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows the localized not-configured error when the group list is refused", async () => {
+    mockApi.listLarkChats.mockRejectedValue(
+      new ApiError("the Feishu app's bot ability is not enabled", 403, "Forbidden", {
+        error: "the Feishu app's bot ability is not enabled",
+        code: "lark_not_configured",
+      }),
+    );
+    mount();
+    expect(await screen.findByText("Feishu app configuration is incomplete")).toBeInTheDocument();
+    expect(screen.queryByText("Could not load groups")).not.toBeInTheDocument();
+    expect(screen.queryByText(/bot ability/)).not.toBeInTheDocument();
+    // 4xx 重试不会成功，只请求一次。
+    expect(mockApi.listLarkChats).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to the generic failure for an error code the dialog does not know", async () => {
+    mockApi.listLarkChats.mockRejectedValue(
+      new ApiError("odd", 502, "Bad Gateway", { error: "odd", code: "something_new" }),
+    );
     mount();
     expect(await screen.findByText("Could not load groups")).toBeInTheDocument();
   });

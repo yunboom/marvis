@@ -302,7 +302,7 @@ Desktop의 Feishu 로그인은 Web 앱 없이도 동작합니다. Feishu 개발�
 워크스페이스 owner와 admin은 Feishu 그룹이나 개인에게 초대 카드를 보낼 수 있고, 카드를 누른 사람은 워크스페이스에 참여합니다. 초대는 Feishu 로그인 앱(`MARVIS_LARK_LOGIN_APP_ID` / `MARVIS_LARK_LOGIN_APP_SECRET`)을 그대로 사용합니다. Feishu 개발자 콘솔에서 이 앱에 다음을 설정합니다:
 
 1. 봇 기능을 켭니다.
-2. 다섯 가지 권한을 신청합니다: `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:user.base:readonly`, `contact:user.email:readonly`.
+2. 여섯 가지 권한을 신청합니다: `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:contact.base:readonly`, `contact:user.base:readonly`, `contact:user.email:readonly`.
 3. 이벤트와 콜백에서 콜백 수신 방식을 장기 연결(long connection)로 설정하고 `card.action.trigger` 콜백을 추가합니다.
 4. 사용 가능 범위에 초대할 수 있는 모든 사람이 포함되도록 설정합니다. 범위 밖의 사람은 카드로 참여할 수 없습니다.
 5. 앱의 새 버전을 게시합니다.

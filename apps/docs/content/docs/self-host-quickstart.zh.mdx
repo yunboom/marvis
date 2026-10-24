@@ -302,7 +302,7 @@ Desktop 的飞书登录不依赖网页端。在飞书开发者后台再登记一
 工作区的所有者和管理员可以把邀请卡片发到飞书群或个人，点击卡片的人加入工作区。飞书邀请复用飞书登录应用（`MARVIS_LARK_LOGIN_APP_ID` / `MARVIS_LARK_LOGIN_APP_SECRET`）。在飞书开发者后台为这个应用：
 
 1. 开启机器人能力。
-2. 申请五个权限：`im:message:send_as_bot`、`im:chat:readonly`、`contact:user.id:readonly`、`contact:user.base:readonly`、`contact:user.email:readonly`。
+2. 申请六个权限：`im:message:send_as_bot`、`im:chat:readonly`、`contact:user.id:readonly`、`contact:contact.base:readonly`、`contact:user.base:readonly`、`contact:user.email:readonly`。
 3. 在事件与回调里把回调订阅方式设为长连接，添加回调 `card.action.trigger`。
 4. 把可用范围设为覆盖所有可能被邀请的人。范围外的人无法通过卡片加入。
 5. 发布新版本。

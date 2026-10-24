@@ -252,7 +252,9 @@ func newLarkInviteCmd() *cobra.Command {
 			"and tracks it afterwards. Whoever clicks 'Join' on the card joins the " +
 			"workspace with the role chosen at send time.\n\n" +
 			"Needs a Feishu-enabled server and a workspace admin or owner. When the " +
-			"server has the feature off, every command fails with lark_not_configured.",
+			"server has the feature off, every command fails with lark_not_configured. " +
+			"'send' also fails with it when the Feishu app has its bot ability off or " +
+			"is missing a permission scope.",
 	}
 	cmd.AddCommand(
 		newLarkInviteSendCmd(),
@@ -287,7 +289,8 @@ func newLarkInviteSendCmd() *cobra.Command {
 			"On failure it prints 'Error: <code>: <message>' and exits non-zero. Codes: " +
 			"lark_not_configured, permission_denied, invalid_target, invalid_request, " +
 			"bot_not_in_chat, user_not_found, user_not_in_app_scope, open_id_cross_app, " +
-			"send_failed.",
+			"send_failed. lark_not_configured also means the Feishu app has its bot " +
+			"ability off or is missing a permission scope; the message says which.",
 		Example: "  marvis workspace lark-invite send --chat-id oc_xxx\n" +
 			"  marvis workspace lark-invite send --user-id ou_xxx --role admin --expires-in 3d --note \"Welcome\"",
 		Args: cobra.MaximumNArgs(1),

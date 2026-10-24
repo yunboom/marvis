@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -33,6 +34,12 @@ const (
 
 	// larkCodeUserNoAuthority 没有读取该用户的权限，用户不在应用的通讯录可见范围内。
 	larkCodeUserNoAuthority = 41050
+
+	// larkCodeBotNotActivated 应用没有开启机器人能力（Bot ability is not activated）。
+	larkCodeBotNotActivated = 232025
+
+	// larkCodeScopeMissing 应用缺少调用该接口需要的权限范围（Access denied. One of the following scopes is required）。
+	larkCodeScopeMissing = 99991672
 )
 
 // 邀请错误码，面向上层调用方，由 ClassifyInviteError 从飞书错误中归类得到。
@@ -57,6 +64,22 @@ var inviteErrorByLarkCode = map[int]string{
 	larkCodeOpenIDCrossApp:  InviteErrOpenIDCrossApp,
 	larkCodeUserIDInvalid:   InviteErrUserNotFound,
 	larkCodeUserNoAuthority: InviteErrUserNotFound,
+}
+
+// 应用配置类错误的原因，面向上层调用方，由 ClassifyInviteConfigError 从飞书错误中归类得到。
+// 这类错误需要管理员在飞书开发者后台处理，重试不会成功；与 InviteErr* 分开，对外统一按未配置处理。
+const (
+	// InviteConfigBotNotEnabled 应用没有开启机器人能力。
+	InviteConfigBotNotEnabled = "bot_not_enabled"
+
+	// InviteConfigScopeMissing 应用缺少需要的权限范围。
+	InviteConfigScopeMissing = "scope_missing"
+)
+
+// inviteConfigByLarkCode 飞书业务错误码到应用配置类错误原因的映射。
+var inviteConfigByLarkCode = map[int]string{
+	larkCodeBotNotActivated: InviteConfigBotNotEnabled,
+	larkCodeScopeMissing:    InviteConfigScopeMissing,
 }
 
 const (
@@ -151,6 +174,41 @@ func ClassifyInviteError(err error) string {
 	}
 
 	return inviteErrorByLarkCode[code]
+}
+
+// InviteConfigCauses 返回全部应用配置类错误的原因（InviteConfig*），去重，顺序固定。
+// 调用方用它核对自己按原因维护的说明表是否齐全，新增原因时不会漏掉说明。
+func InviteConfigCauses() []string {
+	causes := make([]string, 0, len(inviteConfigByLarkCode))
+	for _, cause := range inviteConfigByLarkCode {
+		causes = append(causes, cause)
+	}
+	slices.Sort(causes)
+
+	// 多个飞书错误码可能对应同一个原因，排序后相邻去重。
+	return slices.Compact(causes)
+}
+
+// ClassifyInviteConfigError 把飞书错误归类为应用配置类错误的原因（InviteConfig*），
+// 不是配置类错误时返回空字符串。识别方式与 ClassifyInviteError 相同，错误被包装后依然可识别。
+func ClassifyInviteConfigError(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	code, _, ok := larkErrorCodeMsg(err)
+	if !ok {
+		return ""
+	}
+
+	return inviteConfigByLarkCode[code]
+}
+
+// InviteAPIErrorDetail 取出飞书错误里的业务错误码和顶层 msg。
+// 只取这两个字段：飞书错误体里的排查链接、log_id 等不属于面向用户的信息。
+// 错误不带飞书错误码时（网络错误、超时、网关返回的非飞书响应）ok 为 false。
+func InviteAPIErrorDetail(err error) (code int, msg string, ok bool) {
+	return larkErrorCodeMsg(err)
 }
 
 // larkEnvelope 是飞书响应的通用外壳。

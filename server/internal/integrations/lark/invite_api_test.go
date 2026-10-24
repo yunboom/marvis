@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -461,5 +462,128 @@ func TestClassifyInviteError(t *testing.T) {
 				t.Errorf("ClassifyInviteError(%v) = %q, want %q", tc.err, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestClassifyInviteConfigError 表驱动覆盖应用配置类错误的归类：232025 没开机器人，99991672 缺权限范围；
+// 业务类错误码、没有错误码的错误都不算配置类，被包装的错误依然可识别。
+func TestClassifyInviteConfigError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{name: "nil", err: nil, want: ""},
+		{name: "bot not activated status error", err: &larkAPIStatusError{StatusCode: 400, Code: 232025}, want: InviteConfigBotNotEnabled},
+		{name: "bot not activated envelope error", err: &APIError{Op: "list bot chats", Code: 232025, Msg: "Bot ability is not activated."}, want: InviteConfigBotNotEnabled},
+		{name: "scope missing status error", err: &larkAPIStatusError{StatusCode: 400, Code: 99991672}, want: InviteConfigScopeMissing},
+		{name: "scope missing envelope error", err: &APIError{Op: "get user", Code: 99991672, Msg: "Access denied"}, want: InviteConfigScopeMissing},
+		{name: "wrapped", err: errors.Wrapf(fmt.Errorf("get user: %w", &larkAPIStatusError{StatusCode: 400, Code: 99991672}), "open_id=%s", "ou_1"), want: InviteConfigScopeMissing},
+		{name: "business error is not config", err: &larkAPIStatusError{StatusCode: 400, Code: 230002}, want: ""},
+		{name: "unmapped code", err: &larkAPIStatusError{StatusCode: 400, Code: 230099}, want: ""},
+		{name: "status error without code", err: &larkAPIStatusError{StatusCode: 502}, want: ""},
+		{name: "plain error", err: errors.New("boom"), want: ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := ClassifyInviteConfigError(tc.err); got != tc.want {
+				t.Errorf("ClassifyInviteConfigError(%v) = %q, want %q", tc.err, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestClassifyInviteError_ConfigCodesStayUnclassified 确认配置类错误码不进 ClassifyInviteError 的四类，
+// 避免调用方把它当成按接收方归类的业务错误。
+func TestClassifyInviteError_ConfigCodesStayUnclassified(t *testing.T) {
+	for _, code := range []int{232025, 99991672} {
+		if got := ClassifyInviteError(&larkAPIStatusError{StatusCode: 400, Code: code}); got != "" {
+			t.Errorf("ClassifyInviteError(code %d) = %q, want empty", code, got)
+		}
+	}
+}
+
+// TestInviteAPIErrorDetail 只取飞书响应顶层的错误码和 msg：真实的权限错误体里还带排查链接和 log_id，
+// 它们不能出现在面向用户的说明里。
+func TestInviteAPIErrorDetail(t *testing.T) {
+	fake := newLarkFake(t)
+	fake.stubToken("tok", 7200)
+	fake.mux.HandleFunc("/open-apis/contact/v3/users/ou_1", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"code":99991672,"msg":"Access denied. One of the following scopes is required.","error":{"log_id":"2026102312000000LOGID","troubleshooter":"https://open.feishu.cn/search?log_id=2026102312000000LOGID"}}`))
+	})
+
+	_, err := newTestInviteClient(fake).GetUser(context.Background(), testCreds(), "ou_1")
+	if err == nil {
+		t.Fatal("GetUser: want error")
+	}
+
+	code, msg, ok := InviteAPIErrorDetail(err)
+	if !ok || code != 99991672 || msg != "Access denied. One of the following scopes is required." {
+		t.Errorf("InviteAPIErrorDetail = (%d, %q, %v), want (99991672, top-level msg, true)", code, msg, ok)
+	}
+	if got := ClassifyInviteConfigError(err); got != InviteConfigScopeMissing {
+		t.Errorf("ClassifyInviteConfigError = %q, want %q", got, InviteConfigScopeMissing)
+	}
+}
+
+// TestInviteAPIErrorDetail_NotFeishu 不带飞书错误码的错误（网络错误、网关返回的非飞书响应）取不到明细。
+func TestInviteAPIErrorDetail_NotFeishu(t *testing.T) {
+	for name, err := range map[string]error{
+		"nil":               nil,
+		"network":           errors.New("dial tcp 10.0.0.1:443: connect: connection refused"),
+		"gateway":           &larkAPIStatusError{StatusCode: 502, Raw: "<html>bad gateway</html>"},
+		"wrapped transport": errors.Wrap(errors.New("context deadline exceeded"), "send invite card"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if code, msg, ok := InviteAPIErrorDetail(err); ok {
+				t.Errorf("InviteAPIErrorDetail = (%d, %q, true), want ok=false", code, msg)
+			}
+		})
+	}
+}
+
+// TestInviteConfigCauses 确认 InviteConfigCauses 与映射表一致：每个映射值都在列表里、没有重复，
+// 导出的原因常量都有对应的飞书错误码。
+func TestInviteConfigCauses(t *testing.T) {
+	causes := InviteConfigCauses()
+
+	want := map[string]bool{}
+	for _, cause := range inviteConfigByLarkCode {
+		want[cause] = true
+	}
+	if len(causes) != len(want) {
+		t.Fatalf("InviteConfigCauses() = %v, want %d distinct causes", causes, len(want))
+	}
+	for _, cause := range causes {
+		if !want[cause] {
+			t.Errorf("InviteConfigCauses() has %q that no Feishu code maps to", cause)
+		}
+	}
+
+	for _, exported := range []string{InviteConfigBotNotEnabled, InviteConfigScopeMissing} {
+		if !want[exported] {
+			t.Errorf("exported cause %q is not in inviteConfigByLarkCode", exported)
+		}
+	}
+}
+
+// TestInviteConfigCauses_DistinctWhenCodesShareCause 两个飞书错误码映射到同一个原因时，InviteConfigCauses 仍只返回一次。
+// 测试期间临时往映射表里加一个重复的映射，结束时还原；本测试不并行，不会和读映射表的并行测试重叠。
+func TestInviteConfigCauses_DistinctWhenCodesShareCause(t *testing.T) {
+	before := InviteConfigCauses()
+
+	const extraCode = 99999001
+	inviteConfigByLarkCode[extraCode] = InviteConfigScopeMissing
+	t.Cleanup(func() { delete(inviteConfigByLarkCode, extraCode) })
+
+	after := InviteConfigCauses()
+
+	if !slices.Equal(after, before) {
+		t.Errorf("InviteConfigCauses() = %v after a second code maps to %q, want unchanged %v", after, InviteConfigScopeMissing, before)
+	}
+	if got := slices.Compact(slices.Clone(after)); len(got) != len(after) {
+		t.Errorf("InviteConfigCauses() = %v has duplicates", after)
 	}
 }
