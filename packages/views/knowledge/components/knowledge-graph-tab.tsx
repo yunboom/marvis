@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceId } from "@marvis/core/hooks";
-import { knowledgeGraphOptions, type KnowledgeBase } from "@marvis/core/knowledge";
+import { EMPTY_KNOWLEDGE_GRAPH as EMPTY_GRAPH, knowledgeGraphOptions, type KnowledgeBase } from "@marvis/core/knowledge";
 import { cn } from "@marvis/ui/lib/utils";
 import { PAGE_GUTTER } from "../../layout/page-header";
 import { useT } from "../../i18n";
@@ -44,8 +44,8 @@ export function KnowledgeGraphTab({ kb, onOpenPage }: { kb: KnowledgeBase; onOpe
   const { data: graph } = useQuery(knowledgeGraphOptions(wsId, kb.id));
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const nodes = graph?.nodes ?? [];
-  const edges = graph?.edges ?? [];
+  const nodes = graph?.nodes ?? EMPTY_GRAPH.nodes;
+  const edges = graph?.edges ?? EMPTY_GRAPH.edges;
   const positions = useMemo(() => layoutGraph(nodes.map((n) => n.path), edges, WIDTH, HEIGHT), [nodes, edges]);
   const highlight = useMemo(() => {
     if (!hovered) return null;
