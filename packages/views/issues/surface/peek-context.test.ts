@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { locateInColumns, resolveIssueClick } from "./peek-context";
+import { locateInColumns, placePeekBesideCard, resolveIssueClick } from "./peek-context";
 
 describe("locateInColumns", () => {
   const columns = [["a", "b", "c"], [], ["d"]];
@@ -56,4 +56,20 @@ describe("resolveIssueClick", () => {
       }
     },
   );
+});
+
+describe("placePeekBesideCard", () => {
+  const panelWidth = 520;
+
+  it("opens right of the card when the panel fits there", () => {
+    expect(placePeekBesideCard({ left: 24, right: 304 }, 1400, panelWidth)).toBe(316);
+  });
+
+  it("opens left of the card when the right side is too narrow", () => {
+    expect(placePeekBesideCard({ left: 1000, right: 1280 }, 1400, panelWidth)).toBe(468);
+  });
+
+  it("docks to the edge when neither side fits", () => {
+    expect(placePeekBesideCard({ left: 0, right: 900 }, 900, panelWidth)).toBeNull();
+  });
 });

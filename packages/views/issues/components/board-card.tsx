@@ -46,7 +46,7 @@ function formatDate(date: string, locale: string): string {
 // open popup deepen the ring; the peeked ring composes with it, so a selected
 // card stays identifiable while hovered.
 const BOARD_CARD_SURFACE =
-  "rounded-[12px] bg-card px-3.5 py-3 shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_1px_2px_rgb(0_0_0/0.04)] transition-shadow duration-(--motion-fast) ease-out dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] group-hover/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] group-hover/card:duration-(--motion-instant) group-data-[popup-open]/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] dark:group-hover/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] dark:group-data-[popup-open]/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] group-data-[peeked]/card:ring-2 group-data-[peeked]/card:ring-brand/50";
+  "rounded-[12px] bg-card px-3.5 py-3 shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_1px_2px_rgb(0_0_0/0.04)] transition-shadow duration-(--motion-fast) ease-out dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] group-hover/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] group-hover/card:duration-(--motion-instant) group-data-[popup-open]/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] dark:group-hover/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] dark:group-data-[popup-open]/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] group-data-[peeked]/card:ring-[1.5px] group-data-[peeked]/card:ring-foreground";
 
 // Inline meta item on the project / labels line: plain muted text, no pill.
 const BOARD_CARD_META_ITEM = "inline-flex min-w-0 items-center gap-1";
