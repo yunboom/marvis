@@ -30,8 +30,14 @@ const PILL_CHROME = cn(PILL_SHELL, "h-[var(--button-height-xs)] border text-capt
 
 // Ghost pills sit in a borderless property row (the create-issue modal): no
 // fill or border at rest, a 30px hit target and label-size text. They tint
-// only on hover and while their popover is open.
-const GHOST_PILL_CHROME = cn(PILL_SHELL, "h-[30px] text-label text-foreground");
+// only on hover and while their popover is open. The priority dot fills only
+// part of its box, so here it is drawn at 20px to match the status ring beside
+// it, with negative margins keeping its 14px footprint.
+const GHOST_PILL_CHROME = cn(
+  PILL_SHELL,
+  "h-[30px] text-label text-foreground",
+  "[&_[data-slot=priority-icon]]:size-5 [&_[data-slot=priority-icon]]:-mx-[3px]",
+);
 
 // An unset ghost pill shows its icon alone. The value text stays in the DOM
 // as `sr-only`, so the pill keeps its accessible name; the picker's tooltip
