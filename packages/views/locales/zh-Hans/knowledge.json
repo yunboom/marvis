@@ -75,5 +75,71 @@
     "type_name": "输入知识库名称确认",
     "deleted": "已删除「{{name}}」",
     "failed": "删除失败"
+  },
+  "pages": {
+    "tree_label": "页面树",
+    "domain_filter": "按领域筛选",
+    "empty": "这个领域下还没有页面",
+    "no_pages": "还没有页面，沉淀资料后智能体会写入。",
+    "needs_attention": "有待处理的发现",
+    "type": "类型 {{type}}",
+    "domains": "领域 {{domains}}",
+    "verified": "已核实 · {{by}} · {{at}}",
+    "unverified": "待核实",
+    "sources": "来源",
+    "backlinks": "反向链接",
+    "source_n": "来源 {{n}}"
+  },
+  "groups": {
+    "entities": "实体",
+    "concepts": "概念",
+    "howtos": "操作手册",
+    "decisions": "决策",
+    "syntheses": "综合分析",
+    "sources": "来源",
+    "queries": "问答"
+  },
+  "domains": {
+    "all": "全部",
+    "dev": "开发",
+    "qa": "测试",
+    "product": "产品"
+  },
+  "sources": {
+    "task": "任务",
+    "chat": "对话",
+    "doc": "文档",
+    "pr": "合并请求",
+    "repo": "代码",
+    "web": "网页",
+    "text": "说明",
+    "chat_label": "{{owner}} 与 {{agent}} 的对话 · {{date}}",
+    "chat_missing": "对话已不存在",
+    "private": "仅本人可打开"
+  },
+  "search": {
+    "label": "搜索知识库",
+    "placeholder": "搜索知识库",
+    "results": "搜索结果",
+    "no_results": "没有找到「{{query}}」",
+    "press_enter": "按回车记入知识缺口",
+    "gap_logged": "已记入知识缺口"
+  },
+  "gaps": {
+    "filter": "按状态筛选",
+    "hint": "搜索没有命中的问题和智能体记下的缺口，每日知识沉淀会优先补齐。",
+    "empty": "没有这类缺口",
+    "mark_filled": "标为已补充",
+    "update_failed": "更新失败",
+    "status": {
+      "open": "待补充",
+      "processing": "处理中",
+      "filled": "已补充",
+      "all": "全部"
+    },
+    "source": {
+      "search_miss": "搜索未命中",
+      "agent": "智能体记录"
+    }
   }
 }

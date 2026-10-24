@@ -75,5 +75,71 @@
     "type_name": "확인을 위해 지식 베이스 이름을 입력하세요",
     "deleted": "{{name}} 을(를) 삭제했습니다",
     "failed": "삭제하지 못했습니다"
+  },
+  "pages": {
+    "tree_label": "페이지",
+    "domain_filter": "영역으로 필터",
+    "empty": "이 영역에는 아직 페이지가 없습니다",
+    "no_pages": "아직 페이지가 없습니다. 자료를 정리하면 에이전트가 작성합니다.",
+    "needs_attention": "처리할 지적 사항이 있습니다",
+    "type": "유형 {{type}}",
+    "domains": "영역 {{domains}}",
+    "verified": "확인됨 · {{by}} · {{at}}",
+    "unverified": "확인 필요",
+    "sources": "출처",
+    "backlinks": "역링크",
+    "source_n": "출처 {{n}}"
+  },
+  "groups": {
+    "entities": "엔티티",
+    "concepts": "개념",
+    "howtos": "운영 매뉴얼",
+    "decisions": "결정",
+    "syntheses": "종합 분석",
+    "sources": "출처",
+    "queries": "Q&A"
+  },
+  "domains": {
+    "all": "전체",
+    "dev": "개발",
+    "qa": "테스트",
+    "product": "제품"
+  },
+  "sources": {
+    "task": "작업",
+    "chat": "대화",
+    "doc": "문서",
+    "pr": "풀 리퀘스트",
+    "repo": "코드",
+    "web": "웹 페이지",
+    "text": "메모",
+    "chat_label": "{{owner}} 님과 {{agent}}의 대화 · {{date}}",
+    "chat_missing": "대화가 더 이상 없습니다",
+    "private": "본인만 열 수 있습니다"
+  },
+  "search": {
+    "label": "지식 검색",
+    "placeholder": "지식 검색",
+    "results": "검색 결과",
+    "no_results": "\"{{query}}\"에 대한 결과가 없습니다",
+    "press_enter": "Enter를 눌러 지식 공백으로 기록",
+    "gap_logged": "지식 공백으로 기록했습니다"
+  },
+  "gaps": {
+    "filter": "상태로 필터",
+    "hint": "검색으로 찾지 못한 질문과 에이전트가 기록한 공백입니다. 일일 지식 정리가 먼저 채웁니다.",
+    "empty": "해당하는 공백이 없습니다",
+    "mark_filled": "채움으로 표시",
+    "update_failed": "업데이트하지 못했습니다",
+    "status": {
+      "open": "미보완",
+      "processing": "처리 중",
+      "filled": "보완됨",
+      "all": "전체"
+    },
+    "source": {
+      "search_miss": "검색 실패",
+      "agent": "에이전트 기록"
+    }
   }
 }

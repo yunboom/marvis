@@ -65,3 +65,178 @@ export interface UpdateKnowledgeBaseRequest {
   description?: string;
   maintainer_agent_id?: string | null;
 }
+
+export const KNOWLEDGE_PAGE_GROUPS = ["entities", "concepts", "howtos", "decisions", "syntheses", "sources", "queries"] as const;
+export type KnowledgePageGroup = (typeof KNOWLEDGE_PAGE_GROUPS)[number];
+
+export const KNOWLEDGE_DOMAINS = ["dev", "qa", "product"] as const;
+export type KnowledgeDomain = (typeof KNOWLEDGE_DOMAINS)[number];
+
+const stringList = z
+  .array(z.string())
+  .nullable()
+  .catch([])
+  .transform((v) => v ?? []);
+
+export const KnowledgePageSummarySchema = z
+  .object({
+    path: z.string(),
+    group: z.string().optional().default(""),
+    title: z.string().optional().default(""),
+    type: z.string().optional().default(""),
+    domains: stringList,
+    verified: z.boolean().optional().default(false),
+    needs_check: z.boolean().optional().default(false),
+    open_annotations: z.number().optional().default(0),
+    agent_findings: z.number().optional().default(0),
+  })
+  .loose();
+export type KnowledgePageSummary = z.infer<typeof KnowledgePageSummarySchema>;
+
+export const KnowledgePageListSchema = z
+  .object({
+    commit: z.string().optional().default(""),
+    pages: z.array(KnowledgePageSummarySchema).catch([]),
+  })
+  .loose();
+export type KnowledgePageList = z.infer<typeof KnowledgePageListSchema>;
+export const EMPTY_KNOWLEDGE_PAGE_LIST: KnowledgePageList = { commit: "", pages: [] };
+
+const SentenceSchema = z.object({
+  text: z.string().optional().default(""),
+  cites: z
+    .array(z.number())
+    .nullable()
+    .catch([])
+    .transform((v) => v ?? []),
+});
+export type KnowledgeSentence = z.infer<typeof SentenceSchema>;
+
+const SectionSchema = z.object({
+  heading: z.string().optional().default(""),
+  paragraphs: z
+    .array(z.array(SentenceSchema))
+    .nullable()
+    .catch([])
+    .transform((v) => v ?? []),
+});
+export type KnowledgeSection = z.infer<typeof SectionSchema>;
+
+export const KnowledgeSourceSchema = z
+  .object({
+    n: z.number(),
+    kind: z.string().optional().default("text"),
+    uri: z.string().optional().default(""),
+    label: z.string().optional().default(""),
+    chat: z
+      .object({
+        owner_name: z.string().optional().default(""),
+        agent_name: z.string().optional().default(""),
+        created_at: z.string().optional().default(""),
+        openable: z.boolean().optional().default(false),
+        session_id: z.string().optional(),
+      })
+      .nullable()
+      .optional()
+      .default(null),
+  })
+  .loose();
+export type KnowledgeSource = z.infer<typeof KnowledgeSourceSchema>;
+
+const FrontMatterSchema = z
+  .object({
+    type: z.string().optional().default(""),
+    description: z.string().optional().default(""),
+    domains: stringList,
+    verified: z
+      .object({ by: z.string().optional().default(""), at: z.string().optional().default("") })
+      .nullable()
+      .catch(null),
+    status: z.string().optional().default(""),
+    stale_after: z.string().optional().default(""),
+  })
+  .loose();
+
+export const KnowledgePageSchema = z
+  .object({
+    commit: z.string().optional().default(""),
+    path: z.string(),
+    group: z.string().optional().default(""),
+    title: z.string().optional().default(""),
+    front_matter: FrontMatterSchema.catch({ type: "", description: "", domains: [], verified: null, status: "", stale_after: "" }),
+    needs_check: z.boolean().optional().default(false),
+    sections: z
+      .array(SectionSchema)
+      .nullable()
+      .catch([])
+      .transform((v) => v ?? []),
+    sources: z
+      .array(KnowledgeSourceSchema)
+      .nullable()
+      .catch([])
+      .transform((v) => v ?? []),
+    backlinks: z
+      .array(z.object({ path: z.string(), title: z.string().optional().default("") }))
+      .nullable()
+      .catch([])
+      .transform((v) => v ?? []),
+    markdown: z.string().optional().default(""),
+  })
+  .loose();
+export type KnowledgePage = z.infer<typeof KnowledgePageSchema>;
+
+export const KnowledgeSearchHitSchema = z
+  .object({
+    path: z.string(),
+    slug: z.string().optional().default(""),
+    title: z.string().optional().default(""),
+    excerpt: z.string().optional().default(""),
+  })
+  .loose();
+export type KnowledgeSearchHit = z.infer<typeof KnowledgeSearchHitSchema>;
+
+export const KNOWLEDGE_GAP_STATUSES = ["open", "processing", "filled"] as const;
+export type KnowledgeGapStatus = (typeof KNOWLEDGE_GAP_STATUSES)[number];
+
+export const KnowledgeGapSchema = z
+  .object({
+    id: z.string(),
+    question: z.string().optional().default(""),
+    source: z.string().optional().default(""),
+    status: z.enum(KNOWLEDGE_GAP_STATUSES).catch("open"),
+    created_at: z.string().optional().default(""),
+  })
+  .loose();
+export type KnowledgeGap = z.infer<typeof KnowledgeGapSchema>;
+export const KnowledgeGapListSchema = z.array(KnowledgeGapSchema).catch([]);
+
+export const KnowledgeSearchSchema = z
+  .object({
+    hits: z
+      .array(KnowledgeSearchHitSchema)
+      .nullable()
+      .catch([])
+      .transform((v) => v ?? []),
+    gap: KnowledgeGapSchema.nullable().optional().default(null),
+  })
+  .loose();
+export type KnowledgeSearchResult = z.infer<typeof KnowledgeSearchSchema>;
+export const EMPTY_KNOWLEDGE_SEARCH: KnowledgeSearchResult = { hits: [], gap: null };
+
+export const KnowledgeGraphSchema = z
+  .object({
+    nodes: z
+      .array(
+        z.object({
+          path: z.string(),
+          title: z.string().optional().default(""),
+          group: z.string().optional().default(""),
+          degree: z.number().optional().default(0),
+        }),
+      )
+      .catch([]),
+    edges: z.array(z.object({ from: z.string(), to: z.string() })).catch([]),
+  })
+  .loose();
+export type KnowledgeGraph = z.infer<typeof KnowledgeGraphSchema>;
+export const EMPTY_KNOWLEDGE_GRAPH: KnowledgeGraph = { nodes: [], edges: [] };

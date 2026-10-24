@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Check, ChevronDown, Plus } from "lucide-react";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { knowledgeBaseListOptions, type KnowledgeBase } from "@marvis/core/knowledge";
+import type { Agent } from "@marvis/core/types";
 import { agentListOptions } from "@marvis/core/workspace/queries";
 import { Button } from "@marvis/ui/components/ui/button";
 import {
@@ -22,6 +23,9 @@ import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { KnowledgeIcon } from "../lib/knowledge-icon";
 import { CreateKnowledgeDialog } from "./create-knowledge-dialog";
+import { KnowledgeGapsTab } from "./knowledge-gaps-tab";
+import { KnowledgePagesTab } from "./knowledge-pages-tab";
+import { KnowledgeSearch } from "./knowledge-search";
 import { KnowledgeSettingsTab } from "./knowledge-settings-tab";
 
 export const KNOWLEDGE_TABS = ["pages", "review", "annotations", "gaps", "graph", "history", "settings"] as const;
@@ -33,10 +37,7 @@ function isKnowledgeTab(value: string | null): value is KnowledgeTab {
   return !!value && (KNOWLEDGE_TABS as readonly string[]).includes(value);
 }
 
-/** Tab bodies are injected so each tab can live in its own module. */
-export type KnowledgeTabRenderers = Partial<Record<KnowledgeTab, (kb: KnowledgeBase) => ReactNode>>;
-
-export function KnowledgePage({ tabs: renderers = {} }: { tabs?: KnowledgeTabRenderers }) {
+export function KnowledgePage() {
   const { t } = useT("knowledge");
   const wsId = useWorkspaceId();
   const navigation = useNavigation();
@@ -103,7 +104,7 @@ export function KnowledgePage({ tabs: renderers = {} }: { tabs?: KnowledgeTabRen
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72">
                 {bases.map((b) => (
-                  <DropdownMenuItem key={b.id} onClick={() => setParams({ kb: b.slug })} className="items-start py-2">
+                  <DropdownMenuItem key={b.id} onClick={() => setParams({ kb: b.slug, page: null })} className="items-start py-2">
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="font-medium">{b.name}</span>
                       {b.description ? (
@@ -123,6 +124,8 @@ export function KnowledgePage({ tabs: renderers = {} }: { tabs?: KnowledgeTabRen
             <span className="text-caption text-muted-foreground">
               {t(($) => $.page.summary, { pages: kb.page_count, agent: maintainerName })}
             </span>
+            <div className="flex-1" />
+            <KnowledgeSearch onOpen={(hit) => setParams({ kb: hit.slug, tab: null, page: hit.path })} />
           </div>
           <div className={`shrink-0 border-b border-border ${PAGE_GUTTER}`}>
             <TabsList variant="line" aria-label={t(($) => $.page.title)} className="gap-5 p-0 group-data-horizontal/tabs:h-10">
@@ -135,11 +138,7 @@ export function KnowledgePage({ tabs: renderers = {} }: { tabs?: KnowledgeTabRen
           </div>
           {KNOWLEDGE_TABS.map((key) => (
             <TabsContent key={key} value={key} className="flex min-h-0 flex-1 flex-col data-hidden:hidden">
-              {key === "settings" ? (
-                <KnowledgeSettingsTab kb={kb} agents={agents} isLast={bases.length === 1} onDeleted={() => setParams({ kb: null, tab: null })} />
-              ) : (
-                renderers[key]?.(kb) ?? null
-              )}
+              <KnowledgeTabBody tab={key} kb={kb} agents={agents} isLast={bases.length === 1} onDeleted={() => setParams({ kb: null, tab: null, page: null })} />
             </TabsContent>
           ))}
         </Tabs>
@@ -155,8 +154,33 @@ export function KnowledgePage({ tabs: renderers = {} }: { tabs?: KnowledgeTabRen
         open={createOpen}
         onOpenChange={setCreateOpen}
         agents={agents}
-        onCreated={(created) => setParams({ kb: created.slug, tab: null })}
+        onCreated={(created) => setParams({ kb: created.slug, tab: null, page: null })}
       />
     </div>
   );
+}
+
+function KnowledgeTabBody({
+  tab,
+  kb,
+  agents,
+  isLast,
+  onDeleted,
+}: {
+  tab: KnowledgeTab;
+  kb: KnowledgeBase;
+  agents: Agent[];
+  isLast: boolean;
+  onDeleted: () => void;
+}) {
+  switch (tab) {
+    case "pages":
+      return <KnowledgePagesTab kb={kb} />;
+    case "gaps":
+      return <KnowledgeGapsTab />;
+    case "settings":
+      return <KnowledgeSettingsTab kb={kb} agents={agents} isLast={isLast} onDeleted={onDeleted} />;
+    default:
+      return null;
+  }
 }

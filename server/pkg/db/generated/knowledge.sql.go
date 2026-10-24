@@ -39,6 +39,43 @@ func (q *Queries) CloseKnowledgeChangeRequestsForSlug(ctx context.Context, arg C
 	return err
 }
 
+const countKnowledgeAnnotationsByPage = `-- name: CountKnowledgeAnnotationsByPage :many
+SELECT page_path,
+       count(*)::int AS open_count,
+       (count(*) FILTER (WHERE author_type = 'agent'))::int AS agent_count
+FROM knowledge_annotation
+WHERE knowledge_base_id = $1 AND status IN ('pending', 'processing')
+GROUP BY page_path
+`
+
+type CountKnowledgeAnnotationsByPageRow struct {
+	PagePath   string `json:"page_path"`
+	OpenCount  int32  `json:"open_count"`
+	AgentCount int32  `json:"agent_count"`
+}
+
+// Open annotations per page of one knowledge base; agent-authored ones are the
+// freshness findings the page header calls out.
+func (q *Queries) CountKnowledgeAnnotationsByPage(ctx context.Context, knowledgeBaseID pgtype.UUID) ([]CountKnowledgeAnnotationsByPageRow, error) {
+	rows, err := q.db.Query(ctx, countKnowledgeAnnotationsByPage, knowledgeBaseID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountKnowledgeAnnotationsByPageRow{}
+	for rows.Next() {
+		var i CountKnowledgeAnnotationsByPageRow
+		if err := rows.Scan(&i.PagePath, &i.OpenCount, &i.AgentCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countKnowledgeBases = `-- name: CountKnowledgeBases :one
 SELECT count(*) FROM knowledge_base WHERE workspace_id = $1
 `
@@ -117,6 +154,43 @@ func (q *Queries) CreateKnowledgeBase(ctx context.Context, arg CreateKnowledgeBa
 	return i, err
 }
 
+const createKnowledgeGap = `-- name: CreateKnowledgeGap :one
+INSERT INTO knowledge_gap (workspace_id, question, source, created_by_type, created_by_id)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, workspace_id, question, source, status, created_by_type, created_by_id, created_at, updated_at
+`
+
+type CreateKnowledgeGapParams struct {
+	WorkspaceID   pgtype.UUID `json:"workspace_id"`
+	Question      string      `json:"question"`
+	Source        string      `json:"source"`
+	CreatedByType string      `json:"created_by_type"`
+	CreatedByID   pgtype.UUID `json:"created_by_id"`
+}
+
+func (q *Queries) CreateKnowledgeGap(ctx context.Context, arg CreateKnowledgeGapParams) (KnowledgeGap, error) {
+	row := q.db.QueryRow(ctx, createKnowledgeGap,
+		arg.WorkspaceID,
+		arg.Question,
+		arg.Source,
+		arg.CreatedByType,
+		arg.CreatedByID,
+	)
+	var i KnowledgeGap
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Question,
+		&i.Source,
+		&i.Status,
+		&i.CreatedByType,
+		&i.CreatedByID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createKnowledgeRepo = `-- name: CreateKnowledgeRepo :one
 INSERT INTO knowledge_repo (workspace_id) VALUES ($1)
 ON CONFLICT (workspace_id) DO NOTHING
@@ -154,6 +228,34 @@ WHERE knowledge_base_id = $1 AND status IN ('pending', 'processing')
 func (q *Queries) DismissKnowledgeAnnotationsForBase(ctx context.Context, knowledgeBaseID pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, dismissKnowledgeAnnotationsForBase, knowledgeBaseID)
 	return err
+}
+
+const findOpenKnowledgeGap = `-- name: FindOpenKnowledgeGap :one
+SELECT id, workspace_id, question, source, status, created_by_type, created_by_id, created_at, updated_at FROM knowledge_gap
+WHERE workspace_id = $1 AND lower(question) = lower($2::text) AND status IN ('open', 'processing')
+LIMIT 1
+`
+
+type FindOpenKnowledgeGapParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	Question    string      `json:"question"`
+}
+
+func (q *Queries) FindOpenKnowledgeGap(ctx context.Context, arg FindOpenKnowledgeGapParams) (KnowledgeGap, error) {
+	row := q.db.QueryRow(ctx, findOpenKnowledgeGap, arg.WorkspaceID, arg.Question)
+	var i KnowledgeGap
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Question,
+		&i.Source,
+		&i.Status,
+		&i.CreatedByType,
+		&i.CreatedByID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getKnowledgeBase = `-- name: GetKnowledgeBase :one
@@ -253,6 +355,97 @@ func (q *Queries) ListKnowledgeBases(ctx context.Context, workspaceID pgtype.UUI
 	return items, nil
 }
 
+const listKnowledgeChatSources = `-- name: ListKnowledgeChatSources :many
+SELECT cs.id, cs.creator_id, cs.created_at, u.name AS creator_name, a.name AS agent_name
+FROM chat_session cs
+JOIN "user" u ON u.id = cs.creator_id
+JOIN agent a ON a.id = cs.agent_id
+WHERE cs.workspace_id = $1 AND cs.id = ANY($2::uuid[])
+`
+
+type ListKnowledgeChatSourcesParams struct {
+	WorkspaceID pgtype.UUID   `json:"workspace_id"`
+	Ids         []pgtype.UUID `json:"ids"`
+}
+
+type ListKnowledgeChatSourcesRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	CreatorID   pgtype.UUID        `json:"creator_id"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	CreatorName string             `json:"creator_name"`
+	AgentName   string             `json:"agent_name"`
+}
+
+// Display data for chat:// citations. Only the owner may open a session, so the
+// handler decides per row whether to expose the session id.
+func (q *Queries) ListKnowledgeChatSources(ctx context.Context, arg ListKnowledgeChatSourcesParams) ([]ListKnowledgeChatSourcesRow, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeChatSources, arg.WorkspaceID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKnowledgeChatSourcesRow{}
+	for rows.Next() {
+		var i ListKnowledgeChatSourcesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatorID,
+			&i.CreatedAt,
+			&i.CreatorName,
+			&i.AgentName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKnowledgeGaps = `-- name: ListKnowledgeGaps :many
+SELECT id, workspace_id, question, source, status, created_by_type, created_by_id, created_at, updated_at FROM knowledge_gap
+WHERE workspace_id = $1 AND ($2::text IS NULL OR status = $2::text)
+ORDER BY created_at DESC
+LIMIT 200
+`
+
+type ListKnowledgeGapsParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	Status      pgtype.Text `json:"status"`
+}
+
+func (q *Queries) ListKnowledgeGaps(ctx context.Context, arg ListKnowledgeGapsParams) ([]KnowledgeGap, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeGaps, arg.WorkspaceID, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KnowledgeGap{}
+	for rows.Next() {
+		var i KnowledgeGap
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.Question,
+			&i.Source,
+			&i.Status,
+			&i.CreatedByType,
+			&i.CreatedByID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateKnowledgeBase = `-- name: UpdateKnowledgeBase :one
 UPDATE knowledge_base SET
     name = $1,
@@ -288,6 +481,35 @@ func (q *Queries) UpdateKnowledgeBase(ctx context.Context, arg UpdateKnowledgeBa
 		&i.Description,
 		&i.MaintainerAgentID,
 		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateKnowledgeGapStatus = `-- name: UpdateKnowledgeGapStatus :one
+UPDATE knowledge_gap SET status = $1, updated_at = now()
+WHERE id = $2 AND workspace_id = $3
+RETURNING id, workspace_id, question, source, status, created_by_type, created_by_id, created_at, updated_at
+`
+
+type UpdateKnowledgeGapStatusParams struct {
+	Status      string      `json:"status"`
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+}
+
+func (q *Queries) UpdateKnowledgeGapStatus(ctx context.Context, arg UpdateKnowledgeGapStatusParams) (KnowledgeGap, error) {
+	row := q.db.QueryRow(ctx, updateKnowledgeGapStatus, arg.Status, arg.ID, arg.WorkspaceID)
+	var i KnowledgeGap
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Question,
+		&i.Source,
+		&i.Status,
+		&i.CreatedByType,
+		&i.CreatedByID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

@@ -6,16 +6,18 @@ import { WorkspaceWakeupPageSchema, IssueWakeupSchema, IssueWakeupSummaryRowSche
 import type { ArchivedInboxFilters } from "../inbox/filter-store";
 import type { ArchivedInboxPage, ArchivedInboxFacets } from "../types/inbox";
 import { parseQoderConnection, parseQoderCatalog, type QoderInput } from "../runtimes/qoder-schema";
-import {
-  EMPTY_KNOWLEDGE_BASE,
-  EMPTY_KNOWLEDGE_DELETE_IMPACT,
-  KnowledgeBaseListSchema,
-  KnowledgeBaseSchema,
-  KnowledgeDeleteImpactSchema,
-  type CreateKnowledgeBaseRequest,
-  type KnowledgeBase,
-  type KnowledgeDeleteImpact,
-  type UpdateKnowledgeBaseRequest,
+import * as kbSchemas from "../knowledge/schemas";
+import type {
+  CreateKnowledgeBaseRequest,
+  KnowledgeBase,
+  KnowledgeDeleteImpact,
+  KnowledgeGap,
+  KnowledgeGapStatus,
+  KnowledgeGraph,
+  KnowledgePage,
+  KnowledgePageList,
+  KnowledgeSearchResult,
+  UpdateKnowledgeBaseRequest,
 } from "../knowledge/schemas";
 import { configStore } from "../config";
 import type {
@@ -3659,17 +3661,21 @@ export class ApiClient {
   // Knowledge bases
   async listKnowledgeBases(): Promise<KnowledgeBase[]> {
     const raw = await this.fetch<unknown>("/api/knowledge/bases");
-    return parseWithFallback(raw, KnowledgeBaseListSchema, [], { endpoint: "GET /api/knowledge/bases" });
+    return parseWithFallback(raw, kbSchemas.KnowledgeBaseListSchema, [], { endpoint: "GET /api/knowledge/bases" });
   }
 
   async getKnowledgeBase(ref: string): Promise<KnowledgeBase> {
     const raw = await this.fetch<unknown>(`/api/knowledge/bases/${encodeURIComponent(ref)}`);
-    return parseWithFallback(raw, KnowledgeBaseSchema, EMPTY_KNOWLEDGE_BASE, { endpoint: "GET /api/knowledge/bases/:id" });
+    return parseWithFallback(raw, kbSchemas.KnowledgeBaseSchema, kbSchemas.EMPTY_KNOWLEDGE_BASE, {
+      endpoint: "GET /api/knowledge/bases/:id",
+    });
   }
 
   async createKnowledgeBase(data: CreateKnowledgeBaseRequest): Promise<KnowledgeBase> {
     const raw = await this.fetch<unknown>("/api/knowledge/bases", { method: "POST", body: JSON.stringify(data) });
-    return parseWithFallback(raw, KnowledgeBaseSchema, EMPTY_KNOWLEDGE_BASE, { endpoint: "POST /api/knowledge/bases" });
+    return parseWithFallback(raw, kbSchemas.KnowledgeBaseSchema, kbSchemas.EMPTY_KNOWLEDGE_BASE, {
+      endpoint: "POST /api/knowledge/bases",
+    });
   }
 
   async updateKnowledgeBase(ref: string, data: UpdateKnowledgeBaseRequest): Promise<KnowledgeBase> {
@@ -3677,7 +3683,9 @@ export class ApiClient {
       method: "PATCH",
       body: JSON.stringify(data),
     });
-    return parseWithFallback(raw, KnowledgeBaseSchema, EMPTY_KNOWLEDGE_BASE, { endpoint: "PATCH /api/knowledge/bases/:id" });
+    return parseWithFallback(raw, kbSchemas.KnowledgeBaseSchema, kbSchemas.EMPTY_KNOWLEDGE_BASE, {
+      endpoint: "PATCH /api/knowledge/bases/:id",
+    });
   }
 
   async deleteKnowledgeBase(ref: string): Promise<void> {
@@ -3686,8 +3694,63 @@ export class ApiClient {
 
   async getKnowledgeDeleteImpact(ref: string): Promise<KnowledgeDeleteImpact> {
     const raw = await this.fetch<unknown>(`/api/knowledge/bases/${encodeURIComponent(ref)}/delete-impact`);
-    return parseWithFallback(raw, KnowledgeDeleteImpactSchema, EMPTY_KNOWLEDGE_DELETE_IMPACT, {
+    return parseWithFallback(raw, kbSchemas.KnowledgeDeleteImpactSchema, kbSchemas.EMPTY_KNOWLEDGE_DELETE_IMPACT, {
       endpoint: "GET /api/knowledge/bases/:id/delete-impact",
+    });
+  }
+
+  async listKnowledgePages(ref: string): Promise<KnowledgePageList> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/bases/${encodeURIComponent(ref)}/pages`);
+    return parseWithFallback(raw, kbSchemas.KnowledgePageListSchema, kbSchemas.EMPTY_KNOWLEDGE_PAGE_LIST, {
+      endpoint: "GET /api/knowledge/bases/:id/pages",
+    });
+  }
+
+  async getKnowledgePage(ref: string, path: string): Promise<KnowledgePage | null> {
+    const raw = await this.fetch<unknown>(
+      `/api/knowledge/bases/${encodeURIComponent(ref)}/page?path=${encodeURIComponent(path)}`,
+    );
+    return parseWithFallback<KnowledgePage | null>(raw, kbSchemas.KnowledgePageSchema, null, {
+      endpoint: "GET /api/knowledge/bases/:id/page",
+    });
+  }
+
+  async getKnowledgeGraph(ref: string): Promise<KnowledgeGraph> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/bases/${encodeURIComponent(ref)}/graph`);
+    return parseWithFallback(raw, kbSchemas.KnowledgeGraphSchema, kbSchemas.EMPTY_KNOWLEDGE_GRAPH, {
+      endpoint: "GET /api/knowledge/bases/:id/graph",
+    });
+  }
+
+  async searchKnowledge(query: string, opts: { kb?: string; recordMiss?: boolean } = {}): Promise<KnowledgeSearchResult> {
+    const params = new URLSearchParams({ q: query });
+    if (opts.kb) params.set("kb", opts.kb);
+    if (opts.recordMiss) params.set("record_miss", "1");
+    const raw = await this.fetch<unknown>(`/api/knowledge/search?${params}`);
+    return parseWithFallback(raw, kbSchemas.KnowledgeSearchSchema, kbSchemas.EMPTY_KNOWLEDGE_SEARCH, {
+      endpoint: "GET /api/knowledge/search",
+    });
+  }
+
+  async listKnowledgeGaps(status?: KnowledgeGapStatus): Promise<KnowledgeGap[]> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/gaps${status ? `?status=${status}` : ""}`);
+    return parseWithFallback(raw, kbSchemas.KnowledgeGapListSchema, [], { endpoint: "GET /api/knowledge/gaps" });
+  }
+
+  async createKnowledgeGap(question: string): Promise<KnowledgeGap | null> {
+    const raw = await this.fetch<unknown>("/api/knowledge/gaps", { method: "POST", body: JSON.stringify({ question }) });
+    return parseWithFallback<KnowledgeGap | null>(raw, kbSchemas.KnowledgeGapSchema, null, {
+      endpoint: "POST /api/knowledge/gaps",
+    });
+  }
+
+  async updateKnowledgeGap(id: string, status: KnowledgeGapStatus): Promise<KnowledgeGap | null> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/gaps/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+    return parseWithFallback<KnowledgeGap | null>(raw, kbSchemas.KnowledgeGapSchema, null, {
+      endpoint: "PATCH /api/knowledge/gaps/:id",
     });
   }
 

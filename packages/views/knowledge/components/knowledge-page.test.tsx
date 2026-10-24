@@ -14,7 +14,9 @@ const basesRef = vi.hoisted(() => ({ current: [] as unknown[] }));
 const memberRef = vi.hoisted(() => ({ current: { userId: "user-1", role: "member" as string | null } }));
 
 vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
-vi.mock("@marvis/core/knowledge", () => ({
+vi.mock("@marvis/core/knowledge", async (importOriginal) => ({
+  // Constants (page groups, domains) stay real; every query is stubbed.
+  ...(await importOriginal<typeof import("@marvis/core/knowledge")>()),
   knowledgeBaseListOptions: (wsId: string) => ({
     queryKey: ["kb", wsId],
     queryFn: () => Promise.resolve(basesRef.current),
@@ -23,6 +25,24 @@ vi.mock("@marvis/core/knowledge", () => ({
     queryKey: ["kb-impact", wsId, id],
     queryFn: () => Promise.resolve({ open_annotations: 0, open_change_requests: 0, last_knowledge_base: false }),
     enabled,
+  }),
+  knowledgePageListOptions: (wsId: string, id: string) => ({
+    queryKey: ["kb-pages", wsId, id],
+    queryFn: () => Promise.resolve({ commit: "c1", pages: [] }),
+  }),
+  knowledgePageOptions: (wsId: string, id: string, path: string | null) => ({
+    queryKey: ["kb-page", wsId, id, path],
+    queryFn: () => Promise.resolve(null),
+    enabled: false,
+  }),
+  knowledgeSearchOptions: (wsId: string, q: string) => ({
+    queryKey: ["kb-search", wsId, q],
+    queryFn: () => Promise.resolve({ hits: [], gap: null }),
+    enabled: false,
+  }),
+  knowledgeGapListOptions: (wsId: string, status: string) => ({
+    queryKey: ["kb-gaps", wsId, status],
+    queryFn: () => Promise.resolve([]),
   }),
   knowledgeKeys: { all: (wsId: string) => ["kb", wsId], bases: (wsId: string) => ["kb", wsId] },
 }));

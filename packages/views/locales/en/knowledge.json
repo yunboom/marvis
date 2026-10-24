@@ -75,5 +75,71 @@
     "type_name": "Type the knowledge base name to confirm",
     "deleted": "Deleted {{name}}",
     "failed": "Couldn't delete the knowledge base"
+  },
+  "pages": {
+    "tree_label": "Pages",
+    "domain_filter": "Filter by domain",
+    "empty": "No pages in this domain yet",
+    "no_pages": "No pages yet. Agents write them when you ingest sources.",
+    "needs_attention": "Has findings to handle",
+    "type": "Type {{type}}",
+    "domains": "Domains {{domains}}",
+    "verified": "Verified · {{by}} · {{at}}",
+    "unverified": "Needs verification",
+    "sources": "Sources",
+    "backlinks": "Linked from",
+    "source_n": "Source {{n}}"
+  },
+  "groups": {
+    "entities": "Entities",
+    "concepts": "Concepts",
+    "howtos": "How-tos",
+    "decisions": "Decisions",
+    "syntheses": "Syntheses",
+    "sources": "Sources",
+    "queries": "Answers"
+  },
+  "domains": {
+    "all": "All",
+    "dev": "Dev",
+    "qa": "QA",
+    "product": "Product"
+  },
+  "sources": {
+    "task": "Task",
+    "chat": "Chat",
+    "doc": "Document",
+    "pr": "Pull request",
+    "repo": "Code",
+    "web": "Web page",
+    "text": "Note",
+    "chat_label": "{{owner}}'s chat with {{agent}} · {{date}}",
+    "chat_missing": "This chat no longer exists",
+    "private": "Only its owner can open it"
+  },
+  "search": {
+    "label": "Search knowledge",
+    "placeholder": "Search knowledge",
+    "results": "Search results",
+    "no_results": "Nothing found for \"{{query}}\"",
+    "press_enter": "Press Enter to record it as a gap",
+    "gap_logged": "Recorded as a knowledge gap"
+  },
+  "gaps": {
+    "filter": "Filter by status",
+    "hint": "Questions search couldn't answer and gaps agents recorded. The daily digest fills them first.",
+    "empty": "No gaps here",
+    "mark_filled": "Mark filled",
+    "update_failed": "Couldn't update",
+    "status": {
+      "open": "Open",
+      "processing": "In progress",
+      "filled": "Filled",
+      "all": "All"
+    },
+    "source": {
+      "search_miss": "Search miss",
+      "agent": "Recorded by agent"
+    }
   }
 }

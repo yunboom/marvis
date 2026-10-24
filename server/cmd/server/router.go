@@ -2427,7 +2427,16 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 						r.Patch("/", h.UpdateKnowledgeBase)
 						r.Delete("/", h.DeleteKnowledgeBase)
 						r.Get("/delete-impact", h.GetKnowledgeDeleteImpact)
+						r.Get("/pages", h.ListKnowledgePages)
+						r.Get("/page", h.GetKnowledgePage)
+						r.Get("/graph", h.GetKnowledgeGraph)
 					})
+				})
+				r.Get("/search", h.SearchKnowledge)
+				r.Route("/gaps", func(r chi.Router) {
+					r.Get("/", h.ListKnowledgeGaps)
+					r.Post("/", h.CreateKnowledgeGap)
+					r.Patch("/{gapId}", h.UpdateKnowledgeGap)
 				})
 			})
 

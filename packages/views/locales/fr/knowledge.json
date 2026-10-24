@@ -75,5 +75,71 @@
     "type_name": "Saisissez le nom de la base pour confirmer",
     "deleted": "{{name}} supprimée",
     "failed": "Impossible de supprimer la base de connaissances"
+  },
+  "pages": {
+    "tree_label": "Pages",
+    "domain_filter": "Filtrer par domaine",
+    "empty": "Aucune page dans ce domaine",
+    "no_pages": "Aucune page pour l'instant. Les agents les écrivent quand vous importez des sources.",
+    "needs_attention": "Des constats à traiter",
+    "type": "Type {{type}}",
+    "domains": "Domaines {{domains}}",
+    "verified": "Vérifiée · {{by}} · {{at}}",
+    "unverified": "À vérifier",
+    "sources": "Sources",
+    "backlinks": "Liens entrants",
+    "source_n": "Source {{n}}"
+  },
+  "groups": {
+    "entities": "Entités",
+    "concepts": "Concepts",
+    "howtos": "Procédures",
+    "decisions": "Décisions",
+    "syntheses": "Synthèses",
+    "sources": "Sources",
+    "queries": "Réponses"
+  },
+  "domains": {
+    "all": "Tous",
+    "dev": "Dév",
+    "qa": "Tests",
+    "product": "Produit"
+  },
+  "sources": {
+    "task": "Tâche",
+    "chat": "Conversation",
+    "doc": "Document",
+    "pr": "Pull request",
+    "repo": "Code",
+    "web": "Page web",
+    "text": "Note",
+    "chat_label": "Conversation de {{owner}} avec {{agent}} · {{date}}",
+    "chat_missing": "Cette conversation n'existe plus",
+    "private": "Seul son auteur peut l'ouvrir"
+  },
+  "search": {
+    "label": "Rechercher dans les connaissances",
+    "placeholder": "Rechercher",
+    "results": "Résultats",
+    "no_results": "Aucun résultat pour « {{query}} »",
+    "press_enter": "Appuyez sur Entrée pour l'enregistrer comme lacune",
+    "gap_logged": "Enregistré comme lacune"
+  },
+  "gaps": {
+    "filter": "Filtrer par statut",
+    "hint": "Questions sans réponse et lacunes notées par les agents. La synthèse quotidienne les comble en priorité.",
+    "empty": "Aucune lacune ici",
+    "mark_filled": "Marquer comblée",
+    "update_failed": "Impossible de mettre à jour",
+    "status": {
+      "open": "Ouverte",
+      "processing": "En cours",
+      "filled": "Comblée",
+      "all": "Toutes"
+    },
+    "source": {
+      "search_miss": "Recherche sans résultat",
+      "agent": "Notée par un agent"
+    }
   }
 }

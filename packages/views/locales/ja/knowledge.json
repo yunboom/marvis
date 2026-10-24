@@ -75,5 +75,71 @@
     "type_name": "確認のためナレッジベース名を入力",
     "deleted": "{{name}} を削除しました",
     "failed": "削除できませんでした"
+  },
+  "pages": {
+    "tree_label": "ページ",
+    "domain_filter": "領域で絞り込む",
+    "empty": "この領域のページはまだありません",
+    "no_pages": "ページはまだありません。資料を取り込むとエージェントが書きます。",
+    "needs_attention": "対応が必要な指摘があります",
+    "type": "種類 {{type}}",
+    "domains": "領域 {{domains}}",
+    "verified": "確認済み · {{by}} · {{at}}",
+    "unverified": "要確認",
+    "sources": "出典",
+    "backlinks": "被リンク",
+    "source_n": "出典 {{n}}"
+  },
+  "groups": {
+    "entities": "エンティティ",
+    "concepts": "概念",
+    "howtos": "手順書",
+    "decisions": "意思決定",
+    "syntheses": "総合分析",
+    "sources": "出典",
+    "queries": "Q&A"
+  },
+  "domains": {
+    "all": "すべて",
+    "dev": "開発",
+    "qa": "テスト",
+    "product": "プロダクト"
+  },
+  "sources": {
+    "task": "タスク",
+    "chat": "会話",
+    "doc": "ドキュメント",
+    "pr": "プルリクエスト",
+    "repo": "コード",
+    "web": "Web ページ",
+    "text": "メモ",
+    "chat_label": "{{owner}} と {{agent}} の会話 · {{date}}",
+    "chat_missing": "この会話は存在しません",
+    "private": "本人のみ開けます"
+  },
+  "search": {
+    "label": "ナレッジを検索",
+    "placeholder": "ナレッジを検索",
+    "results": "検索結果",
+    "no_results": "「{{query}}」は見つかりませんでした",
+    "press_enter": "Enter でナレッジギャップに記録",
+    "gap_logged": "ナレッジギャップに記録しました"
+  },
+  "gaps": {
+    "filter": "状態で絞り込む",
+    "hint": "検索で見つからなかった質問とエージェントが記録したギャップ。毎日のナレッジ蓄積が優先して埋めます。",
+    "empty": "該当するギャップはありません",
+    "mark_filled": "補完済みにする",
+    "update_failed": "更新できませんでした",
+    "status": {
+      "open": "未補完",
+      "processing": "対応中",
+      "filled": "補完済み",
+      "all": "すべて"
+    },
+    "source": {
+      "search_miss": "検索で見つからず",
+      "agent": "エージェントが記録"
+    }
   }
 }

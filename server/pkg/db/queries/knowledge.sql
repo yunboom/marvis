@@ -58,3 +58,43 @@ WHERE knowledge_base_id = $1 AND status IN ('pending', 'processing');
 -- name: CloseKnowledgeChangeRequestsForSlug :exec
 UPDATE knowledge_change_request SET status = 'closed', updated_at = now()
 WHERE workspace_id = $1 AND sqlc.arg('slug')::text = ANY(kb_slugs) AND status = 'open';
+
+-- name: CountKnowledgeAnnotationsByPage :many
+-- Open annotations per page of one knowledge base; agent-authored ones are the
+-- freshness findings the page header calls out.
+SELECT page_path,
+       count(*)::int AS open_count,
+       (count(*) FILTER (WHERE author_type = 'agent'))::int AS agent_count
+FROM knowledge_annotation
+WHERE knowledge_base_id = $1 AND status IN ('pending', 'processing')
+GROUP BY page_path;
+
+-- name: ListKnowledgeChatSources :many
+-- Display data for chat:// citations. Only the owner may open a session, so the
+-- handler decides per row whether to expose the session id.
+SELECT cs.id, cs.creator_id, cs.created_at, u.name AS creator_name, a.name AS agent_name
+FROM chat_session cs
+JOIN "user" u ON u.id = cs.creator_id
+JOIN agent a ON a.id = cs.agent_id
+WHERE cs.workspace_id = $1 AND cs.id = ANY(sqlc.arg('ids')::uuid[]);
+
+-- name: ListKnowledgeGaps :many
+SELECT * FROM knowledge_gap
+WHERE workspace_id = $1 AND (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
+ORDER BY created_at DESC
+LIMIT 200;
+
+-- name: FindOpenKnowledgeGap :one
+SELECT * FROM knowledge_gap
+WHERE workspace_id = $1 AND lower(question) = lower(sqlc.arg('question')::text) AND status IN ('open', 'processing')
+LIMIT 1;
+
+-- name: CreateKnowledgeGap :one
+INSERT INTO knowledge_gap (workspace_id, question, source, created_by_type, created_by_id)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING *;
+
+-- name: UpdateKnowledgeGapStatus :one
+UPDATE knowledge_gap SET status = sqlc.arg('status'), updated_at = now()
+WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id')
+RETURNING *;
