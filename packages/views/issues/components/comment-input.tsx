@@ -63,7 +63,23 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
   const annotations = useCommentDraftStore((s) => s.getAnnotations(draftKey));
   const composedContent = useMemo(() => composeAnnotatedReply(content, annotations), [content, annotations]);
   const canSend = annotations.length ? hasReplyIntent(content, annotations) : !isEmpty;
-  const triggerPreview = useCommentTriggerPreview({ issueId, content: canSend ? composedContent : "" });
+  // Readonly-first: the composer renders as a same-looking static shell until
+  // the user shows intent (click / keyboard / file drop). An unsent draft is
+  // standing intent — mount the real editor immediately so the draft is
+  // visible and editable, exactly like the pre-lazy behavior.
+  const lazy = useLazyEditor({
+    initialActive:
+      !!initialDraft?.trim() ||
+      useCommentDraftStore.getState().getUploads(draftKey).length > 0,
+    editorRef,
+  });
+  // Prefetch once the user engages, so recipient chips land with the first
+  // keystroke instead of a debounce and a round-trip later.
+  const triggerPreview = useCommentTriggerPreview({
+    issueId,
+    content: canSend ? composedContent : "",
+    prefetch: lazy.active,
+  });
   // Uploads for this composer session (MUL-5181). Owned by the module-level
   // coordinator and persisted in the draft store, so closing/scrolling the
   // composer away no longer drops an in-flight upload — its result lands in the
@@ -87,17 +103,6 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
     resetKey: issueId,
   });
   const stopRunsBeforeSend = useStopRunsBeforeSend(issueId);
-
-  // Readonly-first: the composer renders as a same-looking static shell until
-  // the user shows intent (click / keyboard / file drop). An unsent draft is
-  // standing intent — mount the real editor immediately so the draft is
-  // visible and editable, exactly like the pre-lazy behavior.
-  const lazy = useLazyEditor({
-    initialActive:
-      !!initialDraft?.trim() ||
-      useCommentDraftStore.getState().getUploads(draftKey).length > 0,
-    editorRef,
-  });
   const { isDragOver, dropZoneProps } = useFileDropZone({
     onDrop: lazy.uploadOrQueue,
   });
@@ -240,7 +245,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
       {lazy.active && (
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto px-4.5 pt-3.5 pb-1",
+          "flex-1 min-h-0 overflow-y-auto px-4 pt-3.5 pb-1",
           // Pinned to the viewport bottom the composer grows upward; cap it
           // so a long draft can't swallow the whole timeline (the editor
           // area scrolls internally instead).
@@ -285,7 +290,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
           role="button"
           tabIndex={0}
           aria-label={t(($) => $.comment.leave_comment_placeholder)}
-          className="flex-1 min-h-0 cursor-text px-4.5 pt-3.5 pb-1"
+          className="flex-1 min-h-0 cursor-text px-4 pt-3.5 pb-1"
           onClick={() => lazy.activate()}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {

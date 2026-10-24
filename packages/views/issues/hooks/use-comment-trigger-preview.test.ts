@@ -60,7 +60,7 @@ describe("useCommentTriggerPreview", () => {
     previewCommentTriggers.mockReset();
   });
 
-  it("debounces preview and sends the latest content for an unchanged signature", async () => {
+  it("previews plain text at once and does not refetch while ordinary text changes", async () => {
     const { rerender } = renderHook(
       ({ content }) => useCommentTriggerPreview({ issueId: "issue-1", content }),
       {
@@ -68,19 +68,49 @@ describe("useCommentTriggerPreview", () => {
         initialProps: { content: "hello" },
       },
     );
+    await act(async () => {});
+
+    expect(previewCommentTriggers).toHaveBeenCalledTimes(1);
+    expect(previewCommentTriggers).toHaveBeenCalledWith("issue-1", "hello", undefined, undefined);
 
     rerender({ content: "hello with more ordinary text" });
-    expect(previewCommentTriggers).not.toHaveBeenCalled();
-
     await advancePreviewDebounce();
 
     expect(previewCommentTriggers).toHaveBeenCalledTimes(1);
-    expect(previewCommentTriggers).toHaveBeenCalledWith(
-      "issue-1",
-      "hello with more ordinary text",
-      undefined,
-      undefined,
+  });
+
+  it("prefetches the plain answer for an empty draft and shows it on the first keystroke", async () => {
+    previewCommentTriggers.mockResolvedValue({ agents: [waltAgent] });
+    const { result, rerender } = renderHook(
+      ({ content }) => useCommentTriggerPreview({ issueId: "issue-1", content, prefetch: true }),
+      {
+        wrapper: createWrapper(),
+        initialProps: { content: "" },
+      },
     );
+    await act(async () => {});
+
+    // The empty draft itself shows nobody; the server is asked about a
+    // stand-in plain text instead of the empty string it would answer emptily.
+    expect(result.current.agents).toEqual([]);
+    expect(previewCommentTriggers).toHaveBeenCalledTimes(1);
+    expect(previewCommentTriggers).toHaveBeenCalledWith("issue-1", ".", undefined, undefined);
+
+    rerender({ content: "1" });
+    expect(result.current.agents).toEqual([waltAgent]);
+
+    await act(async () => {});
+    expect(previewCommentTriggers).toHaveBeenCalledTimes(2);
+    expect(previewCommentTriggers).toHaveBeenLastCalledWith("issue-1", "1", undefined, undefined);
+  });
+
+  it("does not prefetch unless asked", async () => {
+    renderHook(() => useCommentTriggerPreview({ issueId: "issue-1", content: "" }), {
+      wrapper: createWrapper(),
+    });
+    await advancePreviewDebounce();
+
+    expect(previewCommentTriggers).not.toHaveBeenCalled();
   });
 
   it("passes editing comment context and refetches when it changes", async () => {

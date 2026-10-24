@@ -134,9 +134,9 @@ function chipToneClass(action: RecipientAction): string {
     return "border-brand/28 bg-brand/7 text-foreground hover:bg-brand/12 aria-expanded:bg-brand/12 dark:border-brand/45 dark:bg-brand/12 dark:hover:bg-brand/18";
   }
   if (action === "restart") {
-    return "text-destructive hover:bg-destructive/10 hover:text-destructive aria-expanded:bg-destructive/10";
+    return "bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive aria-expanded:bg-destructive/15";
   }
-  return "text-muted-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground";
+  return "bg-muted text-muted-foreground hover:bg-surface-selected hover:text-foreground aria-expanded:bg-surface-selected aria-expanded:text-foreground";
 }
 
 export function CommentTriggerChips({
@@ -167,7 +167,7 @@ export function CommentTriggerChips({
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {hasAllMembersMention && (
-        <span className="inline-flex h-6 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-row px-1.5 text-micro font-medium text-muted-foreground">
+        <span className="inline-flex h-8 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-full bg-muted px-2.5 text-caption font-medium text-muted-foreground">
           <Users className="size-3 shrink-0" />
           <span className="truncate">{t(($) => $.comment.all_members_notice)}</span>
         </span>
@@ -204,7 +204,7 @@ function BlockedTriggerChip({
       <TooltipTrigger
         render={
           <span
-            className="inline-flex h-6 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-row px-1.5 text-micro font-medium text-destructive"
+            className="inline-flex h-8 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 text-caption font-medium text-destructive"
             aria-label={
               label
                 ? t(($) => $.comment.trigger_blocked_chip_aria, { name: label, reason: shortReason })
@@ -301,7 +301,7 @@ function SingleRecipientChip({
           type="button"
           aria-label={t(($) => $.comment.trigger_chip_aria, { name: entry.agent.name, state: label })}
           className={cn(
-            "inline-flex h-6 min-w-0 max-w-full animate-in fade-in cursor-pointer items-center gap-1.5 rounded-row border border-transparent px-1.5 text-micro font-medium transition-colors duration-200",
+            "inline-flex h-8 min-w-0 max-w-full animate-in fade-in cursor-pointer items-center gap-1.5 rounded-full border border-transparent pr-2.5 pl-1.5 text-caption font-medium transition-colors duration-200",
             chipToneClass(entry.action),
           )}
         >
@@ -345,7 +345,7 @@ function MultiRecipientChip({
         <button
           type="button"
           className={cn(
-            "inline-flex h-6 min-w-0 max-w-full animate-in fade-in cursor-pointer items-center gap-1.5 rounded-row border border-transparent px-1.5 text-micro font-medium transition-colors duration-200",
+            "inline-flex h-8 min-w-0 max-w-full animate-in fade-in cursor-pointer items-center gap-1.5 rounded-full border border-transparent pr-2.5 pl-1.5 text-caption font-medium transition-colors duration-200",
             chipToneClass(tone),
           )}
         />
