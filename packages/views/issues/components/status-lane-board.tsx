@@ -34,11 +34,10 @@ import { StatusIcon } from "./status-icon";
 /** Cards a lane shows before its "N more" button. */
 export const LANE_PREVIEW_COUNT = 4;
 
-// Three equal columns plus a narrower "Ended" column. The minimums only bite
-// on narrow viewports, where the board scroller falls back to horizontal
-// scrolling instead of crushing the cards.
-const STATUS_BOARD_GRID_TEMPLATE =
-  "repeat(3, minmax(240px, 1fr)) minmax(200px, 0.8fr)";
+// Four equal columns. The minimum only bites on narrow viewports, where the
+// board scroller falls back to horizontal scrolling instead of crushing the
+// cards.
+const STATUS_BOARD_GRID_TEMPLATE = "repeat(4, minmax(240px, 1fr))";
 
 const EMPTY_IDS: string[] = [];
 const EMPTY_COLLAPSE: Record<string, boolean> = {};
