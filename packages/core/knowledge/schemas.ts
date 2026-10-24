@@ -241,6 +241,50 @@ export const KnowledgeGraphSchema = z
 export type KnowledgeGraph = z.infer<typeof KnowledgeGraphSchema>;
 export const EMPTY_KNOWLEDGE_GRAPH: KnowledgeGraph = { nodes: [], edges: [] };
 
+export const KNOWLEDGE_SESSION_KINDS = ["fix", "ingest", "fresh", "merge", "gap", "create", "rebase"] as const;
+export type KnowledgeSessionKind = (typeof KNOWLEDGE_SESSION_KINDS)[number];
+
+export const KnowledgeSessionSchema = z
+  .object({
+    session_id: z.string(),
+    kind: z.enum(KNOWLEDGE_SESSION_KINDS).catch("fix"),
+    maintainer_agent_id: z.string().optional().default(""),
+    carrier_agent_id: z.string().optional().default(""),
+    knowledge_base_id: z.string().nullable().optional().default(null),
+    created_by: z.string().optional().default(""),
+    created_at: z.string().optional().default(""),
+  })
+  .loose();
+export type KnowledgeSession = z.infer<typeof KnowledgeSessionSchema>;
+
+/** The draft an agent proposes when creating a knowledge base in a session (`<kb_draft>{...}</kb_draft>`). */
+export interface KnowledgeBaseDraft {
+  name: string;
+  description: string;
+  purpose: string;
+}
+
+const KB_DRAFT_PATTERN = /<kb_draft>([\s\S]*?)<\/kb_draft>/g;
+
+/** Latest complete `<kb_draft>` block in a reply, or null. */
+export function parseKnowledgeBaseDraft(content: string): KnowledgeBaseDraft | null {
+  let last: string | null = null;
+  for (const m of content.matchAll(KB_DRAFT_PATTERN)) last = m[1] ?? null;
+  if (!last) return null;
+  try {
+    const raw = JSON.parse(last) as Partial<KnowledgeBaseDraft>;
+    if (typeof raw.name !== "string" || !raw.name.trim()) return null;
+    return { name: raw.name.trim(), description: String(raw.description ?? ""), purpose: String(raw.purpose ?? "") };
+  } catch {
+    return null;
+  }
+}
+
+/** Removes draft blocks (complete or still streaming) from a reply before it is shown. */
+export function stripKnowledgeBaseDraft(content: string): string {
+  return content.replace(KB_DRAFT_PATTERN, "").replace(/<kb_draft>[\s\S]*$/, "").trimEnd();
+}
+
 export const KNOWLEDGE_ANNOTATION_STATUSES = ["pending", "processing", "resolved", "dismissed"] as const;
 export type KnowledgeAnnotationStatus = (typeof KNOWLEDGE_ANNOTATION_STATUSES)[number];
 

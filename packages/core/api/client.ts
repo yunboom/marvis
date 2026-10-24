@@ -22,6 +22,8 @@ import type {
   KnowledgePage,
   KnowledgePageList,
   KnowledgeSearchResult,
+  KnowledgeSession,
+  KnowledgeSessionKind,
   UpdateKnowledgeBaseRequest,
 } from "../knowledge/schemas";
 import { configStore } from "../config";
@@ -3746,6 +3748,24 @@ export class ApiClient {
     const raw = await this.fetch<unknown>("/api/knowledge/gaps", { method: "POST", body: JSON.stringify({ question }) });
     return parseWithFallback<KnowledgeGap | null>(raw, kbSchemas.KnowledgeGapSchema, null, {
       endpoint: "POST /api/knowledge/gaps",
+    });
+  }
+
+  async createKnowledgeSession(data: {
+    kind: KnowledgeSessionKind;
+    knowledge_base_id?: string;
+    agent_id?: string;
+  }): Promise<KnowledgeSession | null> {
+    const raw = await this.fetch<unknown>("/api/knowledge/sessions", { method: "POST", body: JSON.stringify(data) });
+    return parseWithFallback<KnowledgeSession | null>(raw, kbSchemas.KnowledgeSessionSchema, null, {
+      endpoint: "POST /api/knowledge/sessions",
+    });
+  }
+
+  async getKnowledgeSession(sessionId: string): Promise<KnowledgeSession | null> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/sessions/${encodeURIComponent(sessionId)}`);
+    return parseWithFallback<KnowledgeSession | null>(raw, kbSchemas.KnowledgeSessionSchema, null, {
+      endpoint: "GET /api/knowledge/sessions/:id",
     });
   }
 

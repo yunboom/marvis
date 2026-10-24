@@ -27,15 +27,19 @@ export function CreateKnowledgeDialog({
   onOpenChange,
   agents,
   onCreated,
+  onCreateWithAgent,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   agents: Agent[];
   onCreated: (kb: KnowledgeBase) => void;
+  /** Hands creation to a session with an agent that drafts the knowledge base. */
+  onCreateWithAgent?: () => void;
 }) {
   const { t } = useT("knowledge");
   const wsId = useWorkspaceId();
   const qc = useQueryClient();
+  const [mode, setMode] = useState<"manual" | "agent">("manual");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [agentId, setAgentId] = useState<string | null>(null);
@@ -70,6 +74,28 @@ export function CreateKnowledgeDialog({
           <DialogTitle>{t(($) => $.create.title)}</DialogTitle>
           <DialogDescription>{t(($) => $.create.description)}</DialogDescription>
         </DialogHeader>
+        {onCreateWithAgent ? (
+          <div role="radiogroup" aria-label={t(($) => $.create.mode)} className="flex gap-1">
+            {(["manual", "agent"] as const).map((m) => (
+              <Button key={m} size="xs" role="radio" aria-checked={mode === m} variant={mode === m ? "secondary" : "ghost"} onClick={() => setMode(m)}>
+                {t(($) => $.create.modes[m])}
+              </Button>
+            ))}
+          </div>
+        ) : null}
+        {mode === "agent" && onCreateWithAgent ? (
+          <>
+            <p className="text-body text-muted-foreground">{t(($) => $.create.agent_hint)}</p>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                {t(($) => $.common.cancel)}
+              </Button>
+              <Button type="button" onClick={onCreateWithAgent}>
+                {t(($) => $.create.start_session)}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
         <form
           className="flex flex-col gap-4"
           onSubmit={(e) => {
@@ -111,6 +137,7 @@ export function CreateKnowledgeDialog({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

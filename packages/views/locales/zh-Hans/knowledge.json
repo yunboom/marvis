@@ -43,7 +43,14 @@
     "description": "使用内置 schema，可在设置里修改。",
     "submit": "创建",
     "created": "已创建「{{name}}」",
-    "failed": "创建失败"
+    "failed": "创建失败",
+    "mode": "创建方式",
+    "modes": {
+      "manual": "手动创建",
+      "agent": "智能体创建"
+    },
+    "agent_hint": "和智能体聊清楚这个知识库给谁用、收录什么，它会拟好名称、描述和 purpose，你确认后创建。",
+    "start_session": "开始对话"
   },
   "settings": {
     "title": "知识库",
@@ -140,7 +147,8 @@
     "source": {
       "search_miss": "搜索未命中",
       "agent": "智能体记录"
-    }
+    },
+    "send": "交给智能体补充"
   },
   "review": {
     "filter": "按状态筛选",
@@ -246,5 +254,101 @@
     "change_n": "#{{number}}",
     "agent": "智能体",
     "unknown_author": "未知"
+  },
+  "actions": {
+    "ingest": "沉淀资料",
+    "fresh": "保鲜",
+    "merge": "知识合并"
+  },
+  "picker": {
+    "title": "选择「{{kb}}」的维护智能体",
+    "title_create": "选择智能体",
+    "description": "之后的批注纠错、沉淀、保鲜、知识合并默认交给它，可以在设置里更换。",
+    "description_create": "由它在对话里帮你拟知识库。",
+    "none": "工作区还没有智能体",
+    "continue": "继续"
+  },
+  "ingest": {
+    "title": "沉淀资料到「{{kb}}」",
+    "description": "智能体读取资料，写入来源摘要并更新相关页面。",
+    "source": "资料来源",
+    "sources": {
+      "url": "链接",
+      "issue": "任务",
+      "chat": "我的对话"
+    },
+    "urls": "链接",
+    "urls_placeholder": "每行一个链接",
+    "issues": "任务编号",
+    "issues_placeholder": "比如 MAR-131, MAR-129",
+    "own_chats_only": "只列出你自己的对话。",
+    "files_hint": "文件可以在会话里直接附加。",
+    "selected_n": "已选 {{n}} 项",
+    "start": "开始沉淀",
+    "issue_item": "任务 {{key}}",
+    "chat_item": "我的对话「{{title}}」（chat://{{id}}）"
+  },
+  "merge": {
+    "title": "知识合并",
+    "description": "智能体合并内容、改写链接，提交变更请求。",
+    "mode": "合并方式",
+    "modes": {
+      "pages": "合并重复页面",
+      "kb": "合并知识库"
+    },
+    "page_a": "「{{kb}}」中的页面",
+    "other_kb": "另一页所在的知识库",
+    "page_b": "另一页",
+    "from": "把这个知识库",
+    "into": "合并进「{{kb}}」",
+    "kb_hint": "合并后源知识库的目录移除，变更请求合并后生效。",
+    "start": "交给智能体合并"
+  },
+  "session": {
+    "titles": {
+      "fix": "批注纠错",
+      "ingest": "沉淀资料",
+      "fresh": "保鲜",
+      "merge": "知识合并",
+      "gap": "补齐知识缺口",
+      "create": "智能体创建知识库",
+      "rebase": "基于主线更新"
+    },
+    "subtitle": "{{agent}} · {{kb}}",
+    "new_kb": "新知识库",
+    "running": "运行中",
+    "conversation": "对话",
+    "output": "产出",
+    "output_changes": "变更请求",
+    "output_findings": "新增批注",
+    "output_draft": "知识库草稿",
+    "empty": "智能体收到任务后会在这里回复。",
+    "create_prompt": "说说这个知识库给谁用、收录什么。",
+    "no_changes_yet": "智能体提交变更请求后会出现在这里。",
+    "change_meta": "#{{number}} · {{files}} 个知识库",
+    "review": "去审核",
+    "findings_n": "已记下 {{n}} 条批注",
+    "open_annotations": "去批注页",
+    "draft_pending": "智能体拟好草稿后会出现在这里。",
+    "confirm_create": "确认创建",
+    "stop_failed": "停止失败",
+    "send_failed": "发送失败",
+    "start_failed": "无法发起会话",
+    "agent_fallback": "智能体",
+    "rebase_action": "让智能体基于主线更新",
+    "open_source": "打开产出这次变更的会话",
+    "owner_only": "只有发起人能打开这个会话",
+    "first": {
+      "footer": "知识库目录：{{slug}}/ · 会话 ID：{{session}}",
+      "fix": "遵循知识库「{{kb}}」的 AGENTS.md，处理以下 {{n}} 条批注，完成后自查并提交变更请求（带上 --annotations）：",
+      "annotation_line": "- [{{id}}] {{page}}：「{{quote}}」—— {{body}}",
+      "annotation_page": "- [{{id}}] {{page}}（页面批注）—— {{body}}",
+      "ingest": "遵循知识库「{{kb}}」的 AGENTS.md，沉淀以下资料，完成后自查并提交变更请求：",
+      "fresh": "遵循知识库「{{kb}}」的 AGENTS.md 执行保鲜：运行 marvis kb lint 和 marvis kb stale，把真正的问题用 marvis kb annotate add 记为批注，不直接改页面。",
+      "merge_pages": "遵循相关知识库的 AGENTS.md，合并以下重复页面，保留一页、另一页改为指向它并更新链接，完成后自查并提交变更请求：",
+      "merge_kb": "遵循两个知识库的 AGENTS.md，把「{{from}}」（{{fromSlug}}/）合并进「{{into}}」（{{intoSlug}}/）：迁移页面、去重、更新链接，最后移除 {{fromSlug}}/，完成后自查并提交变更请求。",
+      "gap": "遵循知识库「{{kb}}」的 AGENTS.md，补齐以下知识缺口，完成后自查并提交变更请求：",
+      "rebase": "变更请求 #{{number}}（分支 {{branch}}）与主线冲突。请运行 marvis kb sync 基于最新主线重做，然后 marvis kb change update {{number}}。"
+    }
   }
 }

@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Check, ChevronDown, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { api } from "@marvis/core/api";
 import { useWorkspaceId } from "@marvis/core/hooks";
-import { knowledgeBaseListOptions, type KnowledgeBase } from "@marvis/core/knowledge";
+import { knowledgeBaseListOptions, type KnowledgeAnnotation, type KnowledgeBase } from "@marvis/core/knowledge";
+import { useCurrentMember } from "@marvis/core/permissions";
 import type { Agent } from "@marvis/core/types";
 import { agentListOptions } from "@marvis/core/workspace/queries";
 import { Button } from "@marvis/ui/components/ui/button";
@@ -26,8 +29,9 @@ import { CreateKnowledgeDialog } from "./create-knowledge-dialog";
 import { KnowledgeAnnotationsTab } from "./knowledge-annotations";
 import { KnowledgeGapsTab } from "./knowledge-gaps-tab";
 import { KnowledgeHistoryTab } from "./knowledge-history-tab";
+import { useKnowledgeLauncher } from "./knowledge-launch";
 import { KnowledgePagesWorkspace } from "./knowledge-pages-workspace";
-import { KnowledgeReviewTab } from "./knowledge-review-tab";
+import { KnowledgeReviewTab, type KnowledgeReviewSlots } from "./knowledge-review-tab";
 import { KnowledgeSearch } from "./knowledge-search";
 import { KnowledgeSettingsTab } from "./knowledge-settings-tab";
 
@@ -44,6 +48,7 @@ export function KnowledgePage() {
   const { t } = useT("knowledge");
   const wsId = useWorkspaceId();
   const navigation = useNavigation();
+  const { userId } = useCurrentMember(wsId);
   const [createOpen, setCreateOpen] = useState(false);
 
   const { data: bases = [], isLoading, error } = useQuery(knowledgeBaseListOptions(wsId));
@@ -62,6 +67,47 @@ export function KnowledgePage() {
       else next.set(key, value);
     }
     navigation.replace(`${navigation.pathname}${next.size ? `?${next}` : ""}${navigation.hash}`);
+  };
+  const openChange = (number: number) => setParams({ tab: "review", change: String(number) });
+
+  const launcher = useKnowledgeLauncher({
+    kb,
+    bases,
+    agents,
+    onOpenChange: openChange,
+    onOpenAnnotations: () => setParams({ tab: "annotations" }),
+    onCreated: (created) => setParams({ kb: created.slug, tab: null, page: null }),
+  });
+
+  const reviewSlots: KnowledgeReviewSlots = {
+    conflictAction: (change) => (
+      <Button size="sm" variant="outline" onClick={() => launcher.launch({ kind: "rebase", change })}>
+        {t(($) => $.session.rebase_action)}
+      </Button>
+    ),
+    sessionAction: (change) =>
+      change.chat_session_id ? (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={async () => {
+            const meta = await api.getKnowledgeSession(change.chat_session_id ?? "").catch(() => null);
+            if (!meta || meta.created_by !== userId) {
+              toast.error(t(($) => $.session.owner_only));
+              return;
+            }
+            launcher.openSession({
+              sessionId: meta.session_id,
+              kind: meta.kind,
+              agentName: change.author_name,
+              kb: bases.find((b) => b.id === meta.knowledge_base_id) ?? null,
+              startedAt: meta.created_at,
+            });
+          }}
+        >
+          {t(($) => $.session.open_source)}
+        </Button>
+      ) : null,
   };
 
   const maintainerName = kb?.maintainer_agent_id
@@ -96,7 +142,7 @@ export function KnowledgePage() {
           value={tab}
           onValueChange={(value) => setParams({ tab: value === "pages" ? null : String(value) })}
         >
-          <div className={`flex h-18 shrink-0 items-center gap-2.5 ${PAGE_GUTTER}`}>
+          <div className={`flex h-18 shrink-0 flex-wrap items-center gap-2.5 ${PAGE_GUTTER}`}>
             <KnowledgeIcon aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -129,6 +175,15 @@ export function KnowledgePage() {
             </span>
             <div className="flex-1" />
             <KnowledgeSearch onOpen={(hit) => setParams({ kb: hit.slug, tab: null, page: hit.path })} />
+            <Button variant="secondary" onClick={launcher.openIngest}>
+              {t(($) => $.actions.ingest)}
+            </Button>
+            <Button variant="secondary" disabled={launcher.starting} onClick={() => launcher.launch({ kind: "fresh" })}>
+              {t(($) => $.actions.fresh)}
+            </Button>
+            <Button variant="secondary" onClick={launcher.openMerge}>
+              {t(($) => $.actions.merge)}
+            </Button>
           </div>
           <div className={`shrink-0 border-b border-border ${PAGE_GUTTER}`}>
             <TabsList variant="line" aria-label={t(($) => $.page.title)} className="gap-5 p-0 group-data-horizontal/tabs:h-10">
@@ -146,8 +201,10 @@ export function KnowledgePage() {
                 kb={kb}
                 bases={bases}
                 agents={agents}
+                reviewSlots={reviewSlots}
+                launcher={launcher}
                 onDeleted={() => setParams({ kb: null, tab: null, page: null })}
-                onOpenChange={(number) => setParams({ tab: "review", change: String(number) })}
+                onOpenChange={openChange}
                 onOpenPage={(path) => setParams({ tab: null, page: path })}
               />
             </TabsContent>
@@ -166,7 +223,12 @@ export function KnowledgePage() {
         onOpenChange={setCreateOpen}
         agents={agents}
         onCreated={(created) => setParams({ kb: created.slug, tab: null, page: null })}
+        onCreateWithAgent={() => {
+          setCreateOpen(false);
+          launcher.launch({ kind: "create" });
+        }}
       />
+      {launcher.dialogs}
     </div>
   );
 }
@@ -176,6 +238,8 @@ function KnowledgeTabBody({
   kb,
   bases,
   agents,
+  reviewSlots,
+  launcher,
   onDeleted,
   onOpenChange,
   onOpenPage,
@@ -184,19 +248,32 @@ function KnowledgeTabBody({
   kb: KnowledgeBase;
   bases: KnowledgeBase[];
   agents: Agent[];
+  reviewSlots: KnowledgeReviewSlots;
+  launcher: ReturnType<typeof useKnowledgeLauncher>;
   onDeleted: () => void;
   onOpenChange: (number: number) => void;
   onOpenPage: (path: string) => void;
 }) {
+  const { t } = useT("knowledge");
+  const submitAnnotations = (annotations: KnowledgeAnnotation[]) => launcher.launch({ kind: "fix", annotations });
+
   switch (tab) {
     case "pages":
-      return <KnowledgePagesWorkspace kb={kb} onOpenChange={onOpenChange} />;
+      return <KnowledgePagesWorkspace kb={kb} onOpenChange={onOpenChange} onSubmitAnnotations={submitAnnotations} />;
     case "review":
-      return <KnowledgeReviewTab bases={bases} />;
+      return <KnowledgeReviewTab bases={bases} slots={reviewSlots} />;
     case "annotations":
-      return <KnowledgeAnnotationsTab kb={kb} onOpenPage={onOpenPage} onOpenChange={onOpenChange} />;
+      return <KnowledgeAnnotationsTab kb={kb} onOpenPage={onOpenPage} onOpenChange={onOpenChange} submit={submitAnnotations} />;
     case "gaps":
-      return <KnowledgeGapsTab />;
+      return (
+        <KnowledgeGapsTab
+          action={(open) => (
+            <Button disabled={open.length === 0} onClick={() => launcher.launch({ kind: "gap", gaps: open })}>
+              {t(($) => $.gaps.send)}
+            </Button>
+          )}
+        />
+      );
     case "history":
       return <KnowledgeHistoryTab bases={bases} onReverted={onOpenChange} />;
     case "settings":

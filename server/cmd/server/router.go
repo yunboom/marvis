@@ -2452,6 +2452,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					})
 				})
 				r.Post("/edits", h.SubmitKnowledgeEdit)
+				r.Post("/sessions", h.CreateKnowledgeSession)
+				r.Get("/sessions/{sessionId}", h.GetKnowledgeSession)
 				r.Get("/history", h.ListKnowledgeHistory)
 				r.Route("/gaps", func(r chi.Router) {
 					r.Get("/", h.ListKnowledgeGaps)

@@ -419,6 +419,43 @@ func (q *Queries) CreateKnowledgeRepo(ctx context.Context, workspaceID pgtype.UU
 	return i, err
 }
 
+const createKnowledgeSession = `-- name: CreateKnowledgeSession :one
+INSERT INTO knowledge_session (chat_session_id, workspace_id, carrier_agent_id, knowledge_base_id, kind, created_by)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING chat_session_id, workspace_id, carrier_agent_id, knowledge_base_id, kind, created_by, created_at
+`
+
+type CreateKnowledgeSessionParams struct {
+	ChatSessionID   pgtype.UUID `json:"chat_session_id"`
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+	CarrierAgentID  pgtype.UUID `json:"carrier_agent_id"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	Kind            string      `json:"kind"`
+	CreatedBy       pgtype.UUID `json:"created_by"`
+}
+
+func (q *Queries) CreateKnowledgeSession(ctx context.Context, arg CreateKnowledgeSessionParams) (KnowledgeSession, error) {
+	row := q.db.QueryRow(ctx, createKnowledgeSession,
+		arg.ChatSessionID,
+		arg.WorkspaceID,
+		arg.CarrierAgentID,
+		arg.KnowledgeBaseID,
+		arg.Kind,
+		arg.CreatedBy,
+	)
+	var i KnowledgeSession
+	err := row.Scan(
+		&i.ChatSessionID,
+		&i.WorkspaceID,
+		&i.CarrierAgentID,
+		&i.KnowledgeBaseID,
+		&i.Kind,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const deleteKnowledgeBase = `-- name: DeleteKnowledgeBase :exec
 DELETE FROM knowledge_base WHERE id = $1 AND workspace_id = $2
 `
@@ -602,6 +639,30 @@ func (q *Queries) GetKnowledgeRepo(ctx context.Context, workspaceID pgtype.UUID)
 	row := q.db.QueryRow(ctx, getKnowledgeRepo, workspaceID)
 	var i KnowledgeRepo
 	err := row.Scan(&i.WorkspaceID, &i.NextChangeNumber, &i.CreatedAt)
+	return i, err
+}
+
+const getKnowledgeSession = `-- name: GetKnowledgeSession :one
+SELECT chat_session_id, workspace_id, carrier_agent_id, knowledge_base_id, kind, created_by, created_at FROM knowledge_session WHERE chat_session_id = $1 AND workspace_id = $2
+`
+
+type GetKnowledgeSessionParams struct {
+	ChatSessionID pgtype.UUID `json:"chat_session_id"`
+	WorkspaceID   pgtype.UUID `json:"workspace_id"`
+}
+
+func (q *Queries) GetKnowledgeSession(ctx context.Context, arg GetKnowledgeSessionParams) (KnowledgeSession, error) {
+	row := q.db.QueryRow(ctx, getKnowledgeSession, arg.ChatSessionID, arg.WorkspaceID)
+	var i KnowledgeSession
+	err := row.Scan(
+		&i.ChatSessionID,
+		&i.WorkspaceID,
+		&i.CarrierAgentID,
+		&i.KnowledgeBaseID,
+		&i.Kind,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
@@ -1201,6 +1262,22 @@ func (q *Queries) SetKnowledgeAnnotationsStatusForChange(ctx context.Context, ar
 		arg.WorkspaceID,
 		arg.Ids,
 	)
+	return err
+}
+
+const setKnowledgeBaseMaintainerIfUnset = `-- name: SetKnowledgeBaseMaintainerIfUnset :exec
+UPDATE knowledge_base SET maintainer_agent_id = $3, updated_at = now()
+WHERE id = $1 AND workspace_id = $2 AND maintainer_agent_id IS NULL
+`
+
+type SetKnowledgeBaseMaintainerIfUnsetParams struct {
+	ID                pgtype.UUID `json:"id"`
+	WorkspaceID       pgtype.UUID `json:"workspace_id"`
+	MaintainerAgentID pgtype.UUID `json:"maintainer_agent_id"`
+}
+
+func (q *Queries) SetKnowledgeBaseMaintainerIfUnset(ctx context.Context, arg SetKnowledgeBaseMaintainerIfUnsetParams) error {
+	_, err := q.db.Exec(ctx, setKnowledgeBaseMaintainerIfUnset, arg.ID, arg.WorkspaceID, arg.MaintainerAgentID)
 	return err
 }
 

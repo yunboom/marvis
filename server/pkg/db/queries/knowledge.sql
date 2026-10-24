@@ -196,6 +196,18 @@ UPDATE knowledge_annotation SET status = sqlc.arg('status'), updated_at = now()
 WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id')
 RETURNING *;
 
+-- name: CreateKnowledgeSession :one
+INSERT INTO knowledge_session (chat_session_id, workspace_id, carrier_agent_id, knowledge_base_id, kind, created_by)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING *;
+
+-- name: GetKnowledgeSession :one
+SELECT * FROM knowledge_session WHERE chat_session_id = $1 AND workspace_id = $2;
+
+-- name: SetKnowledgeBaseMaintainerIfUnset :exec
+UPDATE knowledge_base SET maintainer_agent_id = $3, updated_at = now()
+WHERE id = $1 AND workspace_id = $2 AND maintainer_agent_id IS NULL;
+
 -- name: ListKnowledgeActorNames :many
 -- Display names for authors that are either members or agents, in one round trip.
 SELECT u.id, u.name FROM "user" u WHERE u.id = ANY(sqlc.arg('user_ids')::uuid[])

@@ -43,7 +43,14 @@
     "description": "組み込みのスキーマを使います。設定で変更できます。",
     "submit": "作成",
     "created": "{{name}} を作成しました",
-    "failed": "作成できませんでした"
+    "failed": "作成できませんでした",
+    "mode": "作成方法",
+    "modes": {
+      "manual": "手動で作成",
+      "agent": "エージェントで作成"
+    },
+    "agent_hint": "誰のためのナレッジベースで何を収録するかをエージェントに伝えると、名前・説明・purpose を下書きします。確認すると作成されます。",
+    "start_session": "会話を始める"
   },
   "settings": {
     "title": "ナレッジベース",
@@ -140,7 +147,8 @@
     "source": {
       "search_miss": "検索で見つからず",
       "agent": "エージェントが記録"
-    }
+    },
+    "send": "エージェントに補完を依頼"
   },
   "review": {
     "filter": "状態で絞り込む",
@@ -246,5 +254,101 @@
     "change_n": "#{{number}}",
     "agent": "エージェント",
     "unknown_author": "不明"
+  },
+  "actions": {
+    "ingest": "資料を取り込む",
+    "fresh": "鮮度チェック",
+    "merge": "ナレッジ統合"
+  },
+  "picker": {
+    "title": "{{kb}} の管理エージェントを選択",
+    "title_create": "エージェントを選択",
+    "description": "注釈の修正・取り込み・鮮度チェック・統合は既定でこのエージェントに任せます。設定で変更できます。",
+    "description_create": "会話でナレッジベースの下書きを作ります。",
+    "none": "ワークスペースにエージェントがいません",
+    "continue": "続ける"
+  },
+  "ingest": {
+    "title": "{{kb}} に資料を取り込む",
+    "description": "エージェントが資料を読み、出典の要約を書いて関連ページを更新します。",
+    "source": "資料の種類",
+    "sources": {
+      "url": "リンク",
+      "issue": "タスク",
+      "chat": "自分の会話"
+    },
+    "urls": "リンク",
+    "urls_placeholder": "1 行に 1 つ",
+    "issues": "タスク番号",
+    "issues_placeholder": "例：MAR-131, MAR-129",
+    "own_chats_only": "自分の会話のみ表示されます。",
+    "files_hint": "ファイルはセッションで直接添付できます。",
+    "selected_n": "{{n}} 件選択中",
+    "start": "取り込みを開始",
+    "issue_item": "タスク {{key}}",
+    "chat_item": "自分の会話「{{title}}」（chat://{{id}}）"
+  },
+  "merge": {
+    "title": "ナレッジ統合",
+    "description": "エージェントが内容を統合し、リンクを書き換えて変更リクエストを出します。",
+    "mode": "統合の対象",
+    "modes": {
+      "pages": "重複ページ",
+      "kb": "ナレッジベース"
+    },
+    "page_a": "{{kb}} のページ",
+    "other_kb": "もう一方のページのナレッジベース",
+    "page_b": "もう一方のページ",
+    "from": "このナレッジベースを",
+    "into": "{{kb}} に統合",
+    "kb_hint": "統合元のディレクトリは削除されます。変更リクエストのマージ後に反映されます。",
+    "start": "エージェントに統合を依頼"
+  },
+  "session": {
+    "titles": {
+      "fix": "注釈の修正",
+      "ingest": "資料の取り込み",
+      "fresh": "鮮度チェック",
+      "merge": "ナレッジ統合",
+      "gap": "ナレッジギャップの補完",
+      "create": "エージェントでナレッジベースを作成",
+      "rebase": "main に合わせて更新"
+    },
+    "subtitle": "{{agent}} · {{kb}}",
+    "new_kb": "新しいナレッジベース",
+    "running": "実行中",
+    "conversation": "会話",
+    "output": "成果物",
+    "output_changes": "変更リクエスト",
+    "output_findings": "新しい注釈",
+    "output_draft": "下書き",
+    "empty": "エージェントがタスクを受け取るとここで返信します。",
+    "create_prompt": "誰のためのナレッジベースで、何を収録しますか？",
+    "no_changes_yet": "エージェントが変更リクエストを出すとここに表示されます。",
+    "change_meta": "#{{number}} · ナレッジベース {{files}} 件",
+    "review": "レビューへ",
+    "findings_n": "記録した注釈 {{n}} 件",
+    "open_annotations": "注釈を開く",
+    "draft_pending": "エージェントが下書きを出すとここに表示されます。",
+    "confirm_create": "作成",
+    "stop_failed": "停止できませんでした",
+    "send_failed": "送信できませんでした",
+    "start_failed": "セッションを開始できませんでした",
+    "agent_fallback": "エージェント",
+    "rebase_action": "main に合わせて更新を依頼",
+    "open_source": "この変更を作ったセッションを開く",
+    "owner_only": "このセッションは開始した本人のみ開けます",
+    "first": {
+      "footer": "ナレッジベースのディレクトリ：{{slug}}/ · セッション ID：{{session}}",
+      "fix": "{{kb}} の AGENTS.md に従い、次の {{n}} 件の注釈に対応し、セルフレビューして変更リクエストを出してください（--annotations を付ける）：",
+      "annotation_line": "- [{{id}}] {{page}}：「{{quote}}」—— {{body}}",
+      "annotation_page": "- [{{id}}] {{page}}（ページの注釈）—— {{body}}",
+      "ingest": "{{kb}} の AGENTS.md に従い、次の資料を取り込み、セルフレビューして変更リクエストを出してください：",
+      "fresh": "{{kb}} の AGENTS.md に従い鮮度チェックを行ってください：marvis kb lint と marvis kb stale を実行し、本当の問題は marvis kb annotate add で注釈として記録し、ページは直接編集しないでください。",
+      "merge_pages": "関係するナレッジベースの AGENTS.md に従い、次の重複ページを統合してください。1 ページを残し、もう一方を参照に変え、リンクを更新し、セルフレビューして変更リクエストを出してください：",
+      "merge_kb": "両方の AGENTS.md に従い、{{from}}（{{fromSlug}}/）を {{into}}（{{intoSlug}}/）に統合してください。ページを移し、重複を除き、リンクを更新し、最後に {{fromSlug}}/ を削除して、セルフレビューのうえ変更リクエストを出してください。",
+      "gap": "{{kb}} の AGENTS.md に従い、次のナレッジギャップを補完し、セルフレビューして変更リクエストを出してください：",
+      "rebase": "変更リクエスト #{{number}}（ブランチ {{branch}}）が main と競合しています。marvis kb sync で最新の main に合わせてやり直し、marvis kb change update {{number}} を実行してください。"
+    }
   }
 }

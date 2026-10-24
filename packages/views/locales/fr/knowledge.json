@@ -43,7 +43,14 @@
     "description": "Utilise le schéma intégré, modifiable dans les paramètres.",
     "submit": "Créer",
     "created": "{{name}} créée",
-    "failed": "Impossible de créer la base de connaissances"
+    "failed": "Impossible de créer la base de connaissances",
+    "mode": "Mode de création",
+    "modes": {
+      "manual": "Manuellement",
+      "agent": "Avec un agent"
+    },
+    "agent_hint": "Dites à l'agent pour qui est la base et ce qu'elle couvre. Il propose un nom, une description et un purpose ; vous confirmez pour la créer.",
+    "start_session": "Démarrer la conversation"
   },
   "settings": {
     "title": "Base de connaissances",
@@ -140,7 +147,8 @@
     "source": {
       "search_miss": "Recherche sans résultat",
       "agent": "Notée par un agent"
-    }
+    },
+    "send": "Confier à l'agent"
   },
   "review": {
     "filter": "Filtrer par statut",
@@ -246,5 +254,101 @@
     "change_n": "#{{number}}",
     "agent": "Agent",
     "unknown_author": "Inconnu"
+  },
+  "actions": {
+    "ingest": "Importer",
+    "fresh": "Actualiser",
+    "merge": "Fusionner"
+  },
+  "picker": {
+    "title": "Choisir l'agent responsable de {{kb}}",
+    "title_create": "Choisir un agent",
+    "description": "Les corrections d'annotations, imports, actualisations et fusions lui sont confiés par défaut. Modifiable dans les paramètres.",
+    "description_create": "Il rédige la base de connaissances avec vous dans une conversation.",
+    "none": "Cet espace de travail n'a pas encore d'agent",
+    "continue": "Continuer"
+  },
+  "ingest": {
+    "title": "Importer dans {{kb}}",
+    "description": "L'agent lit les sources, rédige leurs résumés et met à jour les pages liées.",
+    "source": "Source",
+    "sources": {
+      "url": "Liens",
+      "issue": "Tâches",
+      "chat": "Mes conversations"
+    },
+    "urls": "Liens",
+    "urls_placeholder": "Un lien par ligne",
+    "issues": "Clés de tâches",
+    "issues_placeholder": "Ex. : MAR-131, MAR-129",
+    "own_chats_only": "Seules vos conversations sont listées.",
+    "files_hint": "Joignez les fichiers directement dans la session.",
+    "selected_n": "Sélection : {{n}}",
+    "start": "Lancer l'import",
+    "issue_item": "Tâche {{key}}",
+    "chat_item": "Ma conversation « {{title}} » (chat://{{id}})"
+  },
+  "merge": {
+    "title": "Fusionner des connaissances",
+    "description": "L'agent fusionne le contenu, réécrit les liens et ouvre une demande de modification.",
+    "mode": "Que fusionner",
+    "modes": {
+      "pages": "Pages en double",
+      "kb": "Bases de connaissances"
+    },
+    "page_a": "Page de {{kb}}",
+    "other_kb": "Base de l'autre page",
+    "page_b": "Autre page",
+    "from": "Fusionner cette base",
+    "into": "dans {{kb}}",
+    "kb_hint": "Le répertoire source est supprimé. Appliqué une fois la demande fusionnée.",
+    "start": "Confier à l'agent"
+  },
+  "session": {
+    "titles": {
+      "fix": "Correction d'annotations",
+      "ingest": "Import",
+      "fresh": "Actualisation",
+      "merge": "Fusion de connaissances",
+      "gap": "Combler des lacunes",
+      "create": "Créer une base avec un agent",
+      "rebase": "Mettre à jour sur main"
+    },
+    "subtitle": "{{agent}} · {{kb}}",
+    "new_kb": "Nouvelle base",
+    "running": "En cours",
+    "conversation": "Conversation",
+    "output": "Résultat",
+    "output_changes": "Demandes de modification",
+    "output_findings": "Nouvelles annotations",
+    "output_draft": "Brouillon",
+    "empty": "L'agent répond ici dès qu'il prend la tâche.",
+    "create_prompt": "Pour qui est cette base, et que doit-elle couvrir ?",
+    "no_changes_yet": "Les demandes de modification apparaissent ici une fois soumises.",
+    "change_meta": "#{{number}} · bases : {{files}}",
+    "review": "Revoir",
+    "findings_n": "Annotations enregistrées : {{n}}",
+    "open_annotations": "Ouvrir les annotations",
+    "draft_pending": "Le brouillon apparaît ici dès que l'agent en propose un.",
+    "confirm_create": "Créer",
+    "stop_failed": "Impossible d'arrêter",
+    "send_failed": "Impossible d'envoyer",
+    "start_failed": "Impossible de démarrer la session",
+    "agent_fallback": "Agent",
+    "rebase_action": "Demander une mise à jour sur main",
+    "open_source": "Ouvrir la session à l'origine",
+    "owner_only": "Seule la personne qui a lancé cette session peut l'ouvrir",
+    "first": {
+      "footer": "Répertoire de la base : {{slug}}/ · Identifiant de session : {{session}}",
+      "fix": "En suivant l'AGENTS.md de {{kb}}, traitez ces {{n}} annotations, faites une auto-revue et ouvrez une demande de modification (avec --annotations) :",
+      "annotation_line": "- [{{id}}] {{page}} : « {{quote}} » — {{body}}",
+      "annotation_page": "- [{{id}}] {{page}} (annotation de page) — {{body}}",
+      "ingest": "En suivant l'AGENTS.md de {{kb}}, importez ces sources, faites une auto-revue et ouvrez une demande de modification :",
+      "fresh": "En suivant l'AGENTS.md de {{kb}}, actualisez la base : lancez marvis kb lint et marvis kb stale et notez chaque vrai problème avec marvis kb annotate add au lieu de modifier les pages.",
+      "merge_pages": "En suivant l'AGENTS.md des bases concernées, fusionnez ces pages en double : gardez-en une, faites de l'autre un renvoi, mettez à jour les liens, faites une auto-revue et ouvrez une demande de modification :",
+      "merge_kb": "En suivant les deux AGENTS.md, fusionnez {{from}} ({{fromSlug}}/) dans {{into}} ({{intoSlug}}/) : déplacez les pages, supprimez les doublons, mettez à jour les liens puis supprimez {{fromSlug}}/. Faites une auto-revue et ouvrez une demande de modification.",
+      "gap": "En suivant l'AGENTS.md de {{kb}}, comblez ces lacunes, faites une auto-revue et ouvrez une demande de modification :",
+      "rebase": "La demande #{{number}} (branche {{branch}}) est en conflit avec main. Lancez marvis kb sync, refaites-la sur le dernier main, puis marvis kb change update {{number}}."
+    }
   }
 }

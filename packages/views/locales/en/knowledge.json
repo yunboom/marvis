@@ -43,7 +43,14 @@
     "description": "Uses the built-in schema. You can change it in settings.",
     "submit": "Create",
     "created": "Created {{name}}",
-    "failed": "Couldn't create the knowledge base"
+    "failed": "Couldn't create the knowledge base",
+    "mode": "How to create",
+    "modes": {
+      "manual": "Manually",
+      "agent": "With an agent"
+    },
+    "agent_hint": "Tell the agent who the knowledge base serves and what it covers. It drafts the name, description and purpose; you confirm to create it.",
+    "start_session": "Start conversation"
   },
   "settings": {
     "title": "Knowledge base",
@@ -140,7 +147,8 @@
     "source": {
       "search_miss": "Search miss",
       "agent": "Recorded by agent"
-    }
+    },
+    "send": "Send to the agent"
   },
   "review": {
     "filter": "Filter by status",
@@ -246,5 +254,101 @@
     "change_n": "#{{number}}",
     "agent": "Agent",
     "unknown_author": "Unknown"
+  },
+  "actions": {
+    "ingest": "Ingest",
+    "fresh": "Freshness check",
+    "merge": "Merge knowledge"
+  },
+  "picker": {
+    "title": "Choose the maintainer agent for {{kb}}",
+    "title_create": "Choose an agent",
+    "description": "Annotation fixes, ingests, freshness checks and merges go to it by default. You can change it in settings.",
+    "description_create": "It drafts the knowledge base with you in a conversation.",
+    "none": "This workspace has no agents yet",
+    "continue": "Continue"
+  },
+  "ingest": {
+    "title": "Ingest into {{kb}}",
+    "description": "The agent reads the sources, writes source summaries and updates related pages.",
+    "source": "Source",
+    "sources": {
+      "url": "Links",
+      "issue": "Tasks",
+      "chat": "My chats"
+    },
+    "urls": "Links",
+    "urls_placeholder": "One link per line",
+    "issues": "Task keys",
+    "issues_placeholder": "e.g. MAR-131, MAR-129",
+    "own_chats_only": "Only your own chats are listed.",
+    "files_hint": "Attach files directly in the session.",
+    "selected_n": "Selected: {{n}}",
+    "start": "Start ingest",
+    "issue_item": "Task {{key}}",
+    "chat_item": "My chat \"{{title}}\" (chat://{{id}})"
+  },
+  "merge": {
+    "title": "Merge knowledge",
+    "description": "The agent merges the content, rewrites links and opens a change request.",
+    "mode": "What to merge",
+    "modes": {
+      "pages": "Duplicate pages",
+      "kb": "Knowledge bases"
+    },
+    "page_a": "Page in {{kb}}",
+    "other_kb": "Knowledge base of the other page",
+    "page_b": "Other page",
+    "from": "Merge this knowledge base",
+    "into": "into {{kb}}",
+    "kb_hint": "The source directory is removed. It takes effect once the change request is merged.",
+    "start": "Send to the agent"
+  },
+  "session": {
+    "titles": {
+      "fix": "Annotation fix",
+      "ingest": "Ingest",
+      "fresh": "Freshness check",
+      "merge": "Knowledge merge",
+      "gap": "Fill knowledge gaps",
+      "create": "Create a knowledge base with an agent",
+      "rebase": "Update on main"
+    },
+    "subtitle": "{{agent}} · {{kb}}",
+    "new_kb": "New knowledge base",
+    "running": "Running",
+    "conversation": "Conversation",
+    "output": "Output",
+    "output_changes": "Change requests",
+    "output_findings": "New annotations",
+    "output_draft": "Draft",
+    "empty": "The agent replies here once it picks up the task.",
+    "create_prompt": "Who is this knowledge base for, and what should it cover?",
+    "no_changes_yet": "Change requests show up here once the agent submits them.",
+    "change_meta": "#{{number}} · knowledge bases: {{files}}",
+    "review": "Review",
+    "findings_n": "Annotations recorded: {{n}}",
+    "open_annotations": "Open annotations",
+    "draft_pending": "The draft shows up here once the agent proposes one.",
+    "confirm_create": "Create",
+    "stop_failed": "Couldn't stop",
+    "send_failed": "Couldn't send",
+    "start_failed": "Couldn't start the session",
+    "agent_fallback": "Agent",
+    "rebase_action": "Ask the agent to update on main",
+    "open_source": "Open the session that produced this",
+    "owner_only": "Only the person who started this session can open it",
+    "first": {
+      "footer": "Knowledge base directory: {{slug}}/ · Session id: {{session}}",
+      "fix": "Following the AGENTS.md of {{kb}}, handle these {{n}} annotations, self-review and open a change request (pass --annotations):",
+      "annotation_line": "- [{{id}}] {{page}}: \"{{quote}}\" — {{body}}",
+      "annotation_page": "- [{{id}}] {{page}} (page annotation) — {{body}}",
+      "ingest": "Following the AGENTS.md of {{kb}}, ingest these sources, self-review and open a change request:",
+      "fresh": "Following the AGENTS.md of {{kb}}, run a freshness check: run marvis kb lint and marvis kb stale and record each real problem with marvis kb annotate add instead of editing pages.",
+      "merge_pages": "Following the AGENTS.md of the knowledge bases involved, merge these duplicate pages: keep one, turn the other into a pointer, update links, self-review and open a change request:",
+      "merge_kb": "Following both AGENTS.md files, merge {{from}} ({{fromSlug}}/) into {{into}} ({{intoSlug}}/): move pages, remove duplicates, update links, then remove {{fromSlug}}/. Self-review and open a change request.",
+      "gap": "Following the AGENTS.md of {{kb}}, fill these knowledge gaps, self-review and open a change request:",
+      "rebase": "Change request #{{number}} (branch {{branch}}) conflicts with main. Run marvis kb sync, redo it on the latest main, then marvis kb change update {{number}}."
+    }
   }
 }

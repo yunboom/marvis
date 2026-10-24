@@ -7,6 +7,8 @@ import {
   KnowledgeBaseListSchema,
   KnowledgeBaseSchema,
   KnowledgeDeleteImpactSchema,
+  parseKnowledgeBaseDraft,
+  stripKnowledgeBaseDraft,
 } from "./schemas";
 
 const opts = { endpoint: "test" };
@@ -23,6 +25,16 @@ describe("knowledge schemas", () => {
 
   it("turns a malformed list into an empty list", () => {
     expect(parseWithFallback({ bases: [] }, KnowledgeBaseListSchema, [], opts)).toEqual([]);
+  });
+
+  it("reads the latest complete knowledge base draft and strips draft blocks", () => {
+    const reply =
+      'First idea <kb_draft>{"name":"Old","description":"","purpose":""}</kb_draft>\nBetter: <kb_draft>{"name":"QA lab","description":"Test methods","purpose":"For testers"}</kb_draft>';
+    expect(parseKnowledgeBaseDraft(reply)).toEqual({ name: "QA lab", description: "Test methods", purpose: "For testers" });
+    expect(stripKnowledgeBaseDraft(reply)).toBe("First idea \nBetter:");
+    expect(stripKnowledgeBaseDraft('Streaming <kb_draft>{"name":"Q')).toBe("Streaming");
+    expect(parseKnowledgeBaseDraft("<kb_draft>{not json}</kb_draft>")).toBeNull();
+    expect(parseKnowledgeBaseDraft('<kb_draft>{"name":" "}</kb_draft>')).toBeNull();
   });
 
   it("defaults a malformed delete impact", () => {
