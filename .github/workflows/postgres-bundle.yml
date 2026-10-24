@@ -2,9 +2,10 @@ name: PostgreSQL bundle
 
 # Repackages a pinned zonky embedded-postgres-binaries release from Maven
 # Central into the PostgreSQL bundles the desktop app downloads for standalone
-# mode, and publishes them on a `pg-<version>` release that is never marked
-# latest. Run it once per PostgreSQL version; the Release workflow's
-# standalone-bundles job reads that release's postgres-manifest.json.
+# mode, and publishes them on a `pg-<version>` prerelease, so it never becomes
+# the latest release even before any app release exists. Run it once per
+# PostgreSQL version; the Release workflow's standalone-bundles job reads that
+# release's postgres-manifest.json.
 
 on:
   workflow_dispatch:
@@ -53,7 +54,7 @@ jobs:
           set -euo pipefail
           tag="pg-$PG_VERSION"
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --target "$GITHUB_SHA" --latest=false \
+            gh release create "$tag" --target "$GITHUB_SHA" --prerelease --latest=false \
               --title "PostgreSQL $PG_VERSION for standalone mode" \
               --notes "PostgreSQL $PG_VERSION repackaged from zonky embedded-postgres-binaries for the desktop standalone mode."
           fi
