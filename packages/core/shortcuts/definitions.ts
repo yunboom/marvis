@@ -278,11 +278,28 @@ const PORTAL_LAYER_SELECTOR =
  * portaled to the body, so page-level listeners still see their keypresses;
  * the `data-base-ui-inert` marker catches modal layers even when focus never
  * left the page.
+ *
+ * `ownLayer` is the popup the listener itself lives in (a page hosted in a
+ * dialog); keypresses inside it are the listener's own, while any other popup
+ * still owns the keyboard. That dialog marks the rest of the page inert, so
+ * the inert marker says nothing here; any other open layer does — popups
+ * opened from inside it are portaled to the body, not nested in it.
  */
-export function isPortalLayerShortcutTarget(target: EventTarget | null): boolean {
+export function isPortalLayerShortcutTarget(
+  target: EventTarget | null,
+  ownLayer?: Element | null,
+): boolean {
   if (typeof document === "undefined") return false;
-  if (document.querySelector("[data-base-ui-inert]") !== null) return true;
-  return target instanceof Element && target.closest(PORTAL_LAYER_SELECTOR) !== null;
+  if (ownLayer) {
+    for (const layer of document.querySelectorAll(PORTAL_LAYER_SELECTOR)) {
+      if (layer !== ownLayer && !ownLayer.contains(layer)) return true;
+    }
+  } else if (document.querySelector("[data-base-ui-inert]") !== null) {
+    return true;
+  }
+  if (!(target instanceof Element)) return false;
+  const layer = target.closest(PORTAL_LAYER_SELECTOR);
+  return layer !== null && layer !== ownLayer;
 }
 
 const PRIMARY_RESERVED_KEYS = new Set([
