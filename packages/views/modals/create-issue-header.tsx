@@ -26,7 +26,7 @@ const TAB_SELECTED_CLASS =
   "bg-surface font-medium text-foreground shadow-control dark:bg-white/12";
 
 /**
- * Header shared by both create-issue panels: the manual / agent mode tabs on
+ * Header shared by both create-issue panels: the agent / manual mode tabs on
  * the left, expand and close on the right.
  *
  * Each panel owns its own switch logic (draft hand-off, upload gate), so the
@@ -111,8 +111,8 @@ export function CreateIssueHeader({
         aria-label={t(($) => $.create_issue.mode_tabs_aria)}
         className={TABLIST_CLASS}
       >
-        {tab("manual")}
         {tab("agent")}
+        {tab("manual")}
       </div>
       <div className="flex items-center gap-1">
         <DeferredTooltip
