@@ -1,4 +1,4 @@
-import type { IssueStatusCategory } from "./issue";
+import type { IssueStatusCategory, IssueStatusGroup } from "./issue";
 
 /**
  * A workspace's issue status catalog (MUL-6243).
@@ -12,7 +12,7 @@ import type { IssueStatusCategory } from "./issue";
 // IssueStatusCategory is defined in ./issue, next to IssueStatus, because the
 // two only make sense read together. Re-exported here so catalog consumers can
 // import both from one place. (MUL-6243, MUL-7240)
-export type { IssueStatusCategory } from "./issue";
+export type { IssueStatusCategory, IssueStatusGroup } from "./issue";
 
 /** Visual geometry only; never use these values to infer workflow behavior. */
 export const ISSUE_STATUS_ICONS = ["dotted", "circle", "half", "three_quarters", "check", "slash", "cross"] as const;
@@ -31,6 +31,11 @@ export interface IssueStatusEntry {
   name: string;
   description: string;
   category: IssueStatusCategory;
+  /**
+   * Board and status-library group. Started statuses choose between working
+   * and needs_attention; every other category has exactly one group.
+   */
+  status_group: IssueStatusGroup;
   /** "#rrggbb". */
   color: string;
   /** Empty/absent means category default. Unknown future values render a fallback. */
@@ -60,6 +65,8 @@ export interface CreateIssueStatusRequest {
   name: string;
   description?: string;
   category: IssueStatusCategory;
+  /** Optional; the server defaults it from the category. */
+  status_group?: IssueStatusGroup;
   color: string;
   icon?: IssueStatusIcon | "";
 }
@@ -71,6 +78,8 @@ export interface CreateIssueStatusRequest {
  */
 export interface UpdateIssueStatusRequest {
   name?: string;
+  /** Started statuses only: working or needs_attention. */
+  status_group?: IssueStatusGroup;
   description?: string;
   color?: string;
   /** Omit to preserve; empty string resets to the default. */

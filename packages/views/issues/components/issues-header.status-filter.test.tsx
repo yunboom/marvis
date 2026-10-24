@@ -3,8 +3,8 @@
 /**
  * The status filter's list, against the REAL Base UI menu primitives.
  *
- * The filter lists every offerable status flat, in canonical category order,
- * with no category heading — the icon already carries the category, and a
+ * The filter lists every offerable status flat, in status-group order (the
+ * board's columns), with no category heading — the icon already carries the category, and a
  * heading per category doubled the menu's height (MUL-6399).
  *
  * That is also what keeps the menu from crashing. `DropdownMenuLabel` renders
@@ -126,8 +126,8 @@ describe("IssueFilterMenu status section", () => {
     await openStatusSubmenu();
 
     expect(document.querySelector("[data-slot='dropdown-menu-label']")).toBeNull();
-    // The custom status sits directly after the built-in of the category it
-    // behaves as — one flat list, top to bottom.
+    // The custom status sits at the end of its group (working, after In
+    // Progress) — one flat list in board-column order, top to bottom.
     // Built-ins are named by i18n, the custom one by the catalog.
     expect(
       screen.getAllByRole("menuitemcheckbox").map((el) => el.textContent?.trim()),
@@ -135,9 +135,9 @@ describe("IssueFilterMenu status section", () => {
       "Backlog",
       "Todo",
       "In Progress",
+      "Human Review",
       "In Review",
       "Blocked",
-      "Human Review",
       "Done",
       "Cancelled",
     ]);

@@ -374,7 +374,7 @@
     "manual_reorder_hint": "Switch to Manual ordering to rearrange issues within a column.",
     "status_column": {
       "not_started": "Not started",
-      "started": "Started",
+      "working": "Working",
       "needs_attention": "Needs attention",
       "ended": "Ended"
     },

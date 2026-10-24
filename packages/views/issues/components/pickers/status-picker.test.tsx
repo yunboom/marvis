@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
 import type { IssueStatusEntry, IssueWorkflow } from "@marvis/core/types";
@@ -56,6 +57,7 @@ function entry(overrides: Partial<IssueStatusEntry>): IssueStatusEntry {
     created_at: "",
     updated_at: "",
     ...overrides,
+    status_group: overrides.status_group ?? defaultStatusGroup(overrides.key ?? "custom", overrides.category ?? "started"),
   };
 }
 
@@ -299,8 +301,9 @@ describe("StatusPicker on an issue outside any project (MUL-8121)", () => {
     catalogEntries = [TODO, IN_REVIEW, QA, MERGED, DONE];
     workspaceDefault = DEFAULT;
     renderWithI18n(<StatusPicker status="todo" onUpdate={() => {}} open onOpenChange={() => {}} />);
+    // Group order: In Review waits on a person, after the working statuses.
     // Cancelled is the built-in stand-in for a category the fixture omits.
-    expect(rows()).toEqual(["Todo", "In Review", "QA", "Merged", "Done", "Cancelled"]);
+    expect(rows()).toEqual(["Todo", "QA", "Merged", "In Review", "Done", "Cancelled"]);
   });
 
   it("offers the whole catalog while Default is unknown", () => {
@@ -308,7 +311,8 @@ describe("StatusPicker on an issue outside any project (MUL-8121)", () => {
     renderWithI18n(
       <StatusPicker status="todo" projectId={null} onUpdate={() => {}} open onOpenChange={() => {}} />,
     );
+    // Group order: In Review waits on a person, after the working statuses.
     // Cancelled is the built-in stand-in for a category the fixture omits.
-    expect(rows()).toEqual(["Todo", "In Review", "QA", "Merged", "Done", "Cancelled"]);
+    expect(rows()).toEqual(["Todo", "QA", "Merged", "In Review", "Done", "Cancelled"]);
   });
 });

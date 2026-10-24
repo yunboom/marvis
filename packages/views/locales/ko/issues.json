@@ -370,7 +370,7 @@
     "manual_reorder_hint": "열 안의 순서를 바꾸려면 정렬을 '수동'으로 전환하세요.",
     "status_column": {
       "not_started": "시작 전",
-      "started": "시작됨",
+      "working": "작업 중",
       "needs_attention": "확인 필요",
       "ended": "종료"
     },

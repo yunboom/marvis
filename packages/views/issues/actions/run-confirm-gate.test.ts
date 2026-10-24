@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from "vitest";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
 import type { IssueStatusEntry } from "@marvis/core/types";
 import { runConfirmIntent, resolveStatusCategory, type GateIssue } from "./run-confirm-gate";
@@ -14,6 +15,7 @@ function entry(key: string, category: string): IssueStatusEntry {
     name: key,
     description: "",
     category: category as IssueStatusEntry["category"],
+    status_group: defaultStatusGroup(key, category as IssueStatusEntry["category"]),
     color: "#ff0000",
     is_system: false,
     position: 0,

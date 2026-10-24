@@ -8,6 +8,16 @@ export type IssueStatusCategory =
   | "done"
   | "closed";
 
+/**
+ * How a status is arranged on the board and in the status library. Display
+ * data only; lifecycle decisions read IssueStatusCategory.
+ */
+export type IssueStatusGroup =
+  | "not_started"
+  | "working"
+  | "needs_attention"
+  | "ended";
+
 /** The seven built-in status keys kept for issue/API compatibility. */
 export type BuiltInIssueStatus =
   | "backlog"
@@ -181,6 +191,8 @@ export interface Issue {
    * locally; use `issueStatusCategory(issue)` rather than reading this directly.
    */
   status_category?: IssueStatusCategory;
+  /** The group `status` sits in, when the endpoint resolved it. Display only. */
+  status_group?: IssueStatusGroup;
   /**
    * A CUSTOM status's display name, carried beside the key. Empty for the 7
    * built-ins, which are localized from the key — prefer `useStatusLabel`,

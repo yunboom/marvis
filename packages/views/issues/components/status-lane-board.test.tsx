@@ -194,10 +194,10 @@ describe("Status lane board", () => {
       Array.from(document.querySelectorAll("[data-board-status-column]")).map(
         (el) => el.getAttribute("data-board-status-column"),
       ),
-    ).toEqual(["not_started", "started", "needs_attention", "ended"]);
+    ).toEqual(["not_started", "working", "needs_attention", "ended"]);
     expect(column("Not started").querySelector('[data-board-lane="todo"]')).toBeTruthy();
-    expect(column("Started").querySelector('[data-board-lane="in_progress"]')).toBeTruthy();
-    expect(column("Started").querySelector('[data-board-lane="in_review"]')).toBeNull();
+    expect(column("Working").querySelector('[data-board-lane="in_progress"]')).toBeTruthy();
+    expect(column("Working").querySelector('[data-board-lane="in_review"]')).toBeNull();
     expect(column("Needs attention").querySelector('[data-board-lane="in_review"]')).toBeTruthy();
     expect(column("Needs attention").querySelector('[data-board-lane="blocked"]')).toBeTruthy();
     expect(column("Ended").querySelector('[data-board-lane="cancelled"]')).toBeTruthy();

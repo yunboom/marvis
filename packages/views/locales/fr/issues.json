@@ -374,7 +374,7 @@
     "manual_reorder_hint": "Passez au tri Manuel pour réorganiser les tâches dans une colonne.",
     "status_column": {
       "not_started": "Non commencé",
-      "started": "Commencé",
+      "working": "En cours",
       "needs_attention": "À traiter",
       "ended": "Terminé"
     },

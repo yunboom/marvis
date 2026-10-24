@@ -15,7 +15,7 @@
       "archive": "归档",
       "reorder": "拖动排序 {{name}}"
     },
-    "reorder_hint": "在分类内拖动排序，同步用于看板、列表和菜单。",
+    "reorder_hint": "在分组内拖动排序，同步用于看板、列表和菜单。",
     "built_in_dialog": {},
     "editor": {
       "create_title": "新建状态",
@@ -24,8 +24,9 @@
       "name_placeholder": "例如：Code Review",
       "key_hint": "API 和 CLI 中通过 {{key}} 引用。",
       "created": "状态已创建。API 和 CLI 中通过 {{key}} 引用。",
-      "category": "分类",
-      "category_locked": "状态创建后不能修改分类。",
+      "lifecycle": "生命周期类型",
+      "group": "分组",
+      "lifecycle_locked": "状态创建后不能修改生命周期类型。",
       "description": "描述",
       "description_placeholder": "这个状态对团队意味着什么",
       "color": "颜色",
@@ -63,11 +64,11 @@
       "done": "已完成",
       "closed": "已关闭"
     },
-    "categories": {
-      "unstarted": "尚未开始的工作，包括待规划和已规划的任务。",
-      "started": "正在进行、审核中或已阻塞的工作。",
-      "done": "已经完成的工作。",
-      "closed": "不再继续的工作。"
+    "group_labels": {
+      "not_started": "未开始",
+      "working": "工作中",
+      "needs_attention": "需介入",
+      "ended": "已结束"
     },
     "built_in_descriptions": {
       "backlog": "搁置。把任务移到这里不会启动智能体。",

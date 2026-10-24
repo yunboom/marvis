@@ -1,4 +1,5 @@
 import { renderHook } from "@testing-library/react";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import { describe, expect, it, vi } from "vitest";
 import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
 import { statusCategoryOfKey } from "@marvis/core/issues";
@@ -43,6 +44,7 @@ function entry(overrides: Partial<IssueStatusEntry>): IssueStatusEntry {
     created_at: "",
     updated_at: "",
     ...overrides,
+    status_group: overrides.status_group ?? defaultStatusGroup(overrides.key ?? "custom", overrides.category ?? "started"),
   };
 }
 
@@ -82,8 +84,27 @@ describe("useStatusOptions", () => {
   // One flat list, never nested by category (MUL-6399): a custom status sits
   // directly after the built-in of the category it behaves as, so the whole
   // catalog reads top to bottom in canonical order.
-  it("places a custom status inline, after the built-in of its category", () => {
+  it("places a custom status inline, at the end of its group", () => {
     catalogEntries = [...BUILT_INS, entry({ key: "qa", name: "QA", category: "started" })];
+    const { result } = renderHook(() => useStatusOptions("workspace-1"));
+
+    expect(result.current.map((o) => o.key)).toEqual([
+      "backlog",
+      "todo",
+      "in_progress",
+      "qa",
+      "in_review",
+      "blocked",
+      "done",
+      "cancelled",
+    ]);
+  });
+
+  it("lists a needs-attention custom status with the statuses waiting on a person", () => {
+    catalogEntries = [
+      ...BUILT_INS,
+      entry({ key: "waiting_customer", name: "Waiting", category: "started", status_group: "needs_attention" }),
+    ];
     const { result } = renderHook(() => useStatusOptions("workspace-1"));
 
     expect(result.current.map((o) => o.key)).toEqual([
@@ -92,7 +113,7 @@ describe("useStatusOptions", () => {
       "in_progress",
       "in_review",
       "blocked",
-      "qa",
+      "waiting_customer",
       "done",
       "cancelled",
     ]);

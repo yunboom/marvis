@@ -15,7 +15,7 @@
       "archive": "アーカイブ",
       "reorder": "{{name}} を並べ替え"
     },
-    "reorder_hint": "カテゴリ内でドラッグすると、ボード・一覧・メニューの順序が変わります。",
+    "reorder_hint": "グループ内でドラッグすると、ボード・一覧・メニューの順序が変わります。",
     "built_in_dialog": {},
     "editor": {
       "create_title": "新しいステータス",
@@ -24,8 +24,9 @@
       "name_placeholder": "例: Code Review",
       "key_hint": "API と CLI では {{key}} として参照されます。",
       "created": "ステータスを作成しました。API と CLI では {{key}} として参照されます。",
-      "category": "カテゴリ",
-      "category_locked": "ステータスの作成後はカテゴリを変更できません。",
+      "lifecycle": "ライフサイクル種別",
+      "group": "グループ",
+      "lifecycle_locked": "ステータスの作成後はライフサイクル種別を変更できません。",
       "description": "説明",
       "description_placeholder": "チームにとってこのステータスが意味すること",
       "color": "色",
@@ -63,11 +64,11 @@
       "done": "完了",
       "closed": "終了"
     },
-    "categories": {
-      "unstarted": "バックログや計画済みを含む、まだ始まっていない作業。",
-      "started": "進行中、レビュー中、またはブロック中の作業。",
-      "done": "完了した作業。",
-      "closed": "完了しないことになった作業。"
+    "group_labels": {
+      "not_started": "未着手",
+      "working": "作業中",
+      "needs_attention": "要対応",
+      "ended": "終了"
     },
     "built_in_descriptions": {
       "backlog": "保留。ここに移動してもエージェントは起動しません。",

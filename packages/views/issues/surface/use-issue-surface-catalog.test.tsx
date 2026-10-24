@@ -34,6 +34,7 @@ const QA_ENTRY: IssueStatusEntry = {
   name: "QA",
   description: "",
   category: "started",
+  status_group: "working",
   color: "#ff0000",
   is_system: false,
   position: 1,

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import { describe, expect, it, vi } from "vitest";
 import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
 import type { IssueStatusEntry } from "@marvis/core/types";
@@ -29,6 +30,7 @@ function entry(overrides: Partial<IssueStatusEntry>): IssueStatusEntry {
     created_at: "",
     updated_at: "",
     ...overrides,
+    status_group: overrides.status_group ?? defaultStatusGroup(overrides.key ?? "custom", overrides.category ?? "started"),
   };
 }
 

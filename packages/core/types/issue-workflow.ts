@@ -60,6 +60,8 @@ export interface ListIssueWorkflowsResponse {
 export interface NewWorkflowStatus {
   name: string;
   category?: string;
+  /** Optional; the server defaults it from the category. */
+  status_group?: string;
   color?: string;
 }
 

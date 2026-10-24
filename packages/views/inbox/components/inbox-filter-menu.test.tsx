@@ -13,6 +13,7 @@ import type { ApiClient } from "@marvis/core/api/client";
 import {
   BUILT_IN_STATUS_CATEGORY,
   BUILT_IN_STATUS_ORDER,
+  defaultStatusGroup,
 } from "@marvis/core/issues/config";
 import {
   type InboxPriorityFilterSupport,
@@ -43,6 +44,7 @@ function statusEntry(key: (typeof BUILT_IN_STATUS_ORDER)[number]): IssueStatusEn
     name: key,
     description: "",
     category: BUILT_IN_STATUS_CATEGORY[key],
+    status_group: defaultStatusGroup(key, BUILT_IN_STATUS_CATEGORY[key]),
     color: "#888888",
     is_system: true,
     position: 0,

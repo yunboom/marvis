@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { IssueStatusEntry } from "@marvis/core/types";
@@ -101,6 +102,7 @@ function entry(overrides: Partial<IssueStatusEntry>): IssueStatusEntry {
     created_at: "",
     updated_at: "",
     ...overrides,
+    status_group: overrides.status_group ?? defaultStatusGroup(overrides.key ?? "custom", overrides.category ?? "started"),
   };
 }
 
@@ -111,6 +113,17 @@ const BUILT_IN_IN_REVIEW = entry({
   is_system: true,
   position: 0,
 });
+
+const BUILT_IN_IN_PROGRESS = entry({
+  id: "in_progress",
+  key: "in_progress",
+  name: "In Progress",
+  is_system: true,
+  position: 0,
+});
+
+const addTo = (group: keyof typeof en.issue_statuses.group_labels) =>
+  screen.getByLabelText(`${en.issue_statuses.add}: ${en.issue_statuses.group_labels[group]}`);
 
 const archivedToggle = () =>
   screen.queryByRole("switch", { name: new RegExp(`^${en.issue_statuses.show_archived.split(" (")[0]}`) });
@@ -157,7 +170,7 @@ describe("IssueStatusesTab", () => {
   it("keeps category and row actions at their end padding and pointer target sizes", () => {
     catalog = [BUILT_IN_IN_REVIEW, entry({ key: "qa", name: "QA" })];
     render(<IssueStatusesTab />);
-    const add = screen.getByLabelText(`${en.issue_statuses.add}: ${en.issue_statuses.category_labels.started}`);
+    const add = screen.getByLabelText(`${en.issue_statuses.add}: ${en.issue_statuses.group_labels.working}`);
     expect(add.parentElement).toHaveClass("px-0.5");
     expect(add).toHaveClass("size-[var(--button-height-sm)]", "shrink-0", "[@media(pointer:coarse)]:size-11");
     for (const name of ["in_review", "QA"]) {
@@ -167,11 +180,11 @@ describe("IssueStatusesTab", () => {
     }
   });
 
-  it.each(["unstarted", "started", "done", "closed"] as const)(
+  it.each(["not_started", "working", "needs_attention", "ended"] as const)(
     "offers seven unique shapes and a text-only default in %s",
-    async (category) => {
+    async (group) => {
       render(<IssueStatusesTab />);
-      fireEvent.click(screen.getByLabelText(`${en.issue_statuses.add}: ${en.issue_statuses.category_labels[category]}`));
+      fireEvent.click(addTo(group));
       const dialog = await screen.findByRole("dialog");
       const picker = within(dialog).getByRole("group", { name: en.issue_statuses.editor.icon });
       const defaultChoice = within(picker).getByRole("button", { name: en.issue_statuses.editor.icon_shapes.default });
@@ -259,7 +272,7 @@ describe("IssueStatusesTab", () => {
 
   it("marks the status name as ordinary text that password managers should ignore", () => {
     render(<IssueStatusesTab />);
-    fireEvent.click(screen.getByLabelText(`${en.issue_statuses.add}: ${en.issue_statuses.category_labels.started}`));
+    fireEvent.click(addTo("working"));
     const input = screen.getByLabelText(en.issue_statuses.editor.name);
     expect(input).toHaveAttribute("type", "text");
     expect(input).toHaveAttribute("autocomplete", "off");
@@ -268,14 +281,14 @@ describe("IssueStatusesTab", () => {
   it("creates a status with independent shape and color", async () => {
     catalog = [BUILT_IN_IN_REVIEW];
     render(<IssueStatusesTab />);
-    fireEvent.click(screen.getByLabelText(`${en.issue_statuses.add}: ${en.issue_statuses.category_labels.started}`));
+    fireEvent.click(addTo("working"));
     const dialog = await screen.findByRole("dialog");
     fireEvent.change(within(dialog).getByLabelText(en.issue_statuses.editor.name), { target: { value: "Awaiting response" } });
     const choice = within(dialog).getByRole("button", { name: en.issue_statuses.editor.icon_shapes.three_quarters });
     fireEvent.click(choice);
     expect(choice).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(within(dialog).getByRole("button", { name: en.issue_statuses.editor.save }));
-    expect(createMutate).toHaveBeenCalledWith(expect.objectContaining({ name: "Awaiting response", category: "started", icon: "three_quarters", color: expect.any(String) }), expect.any(Object));
+    expect(createMutate).toHaveBeenCalledWith(expect.objectContaining({ name: "Awaiting response", category: "started", status_group: "working", icon: "three_quarters", color: expect.any(String) }), expect.any(Object));
   });
 
   it("loads and edits a saved shape without changing category", async () => {
@@ -302,27 +315,115 @@ describe("IssueStatusesTab", () => {
     expect(updateMutate.mock.calls[0]![0]).toMatchObject({ id: "qa", name: "Renamed QA" });
     expect(updateMutate.mock.calls[0]![0]).not.toHaveProperty("icon");
   });
-  it("keeps the create dialog concise and category choices text-only", async () => {
+  it("keeps the create dialog concise and its one lifecycle type fixed and text-only", async () => {
     catalog = [BUILT_IN_IN_REVIEW];
     render(<IssueStatusesTab />);
-    fireEvent.click(screen.getByLabelText(
-      `${en.issue_statuses.add}: ${en.issue_statuses.category_labels.started}`,
-    ));
+    fireEvent.click(addTo("working"));
 
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).queryByText(/inherit|parking|recovery/i)).toBeNull();
+    expect(within(dialog).queryByText(en.issue_statuses.editor.lifecycle_locked)).toBeNull();
     expect(within(dialog).getByLabelText(en.issue_statuses.editor.name)).toBeInTheDocument();
     expect(within(dialog).getByLabelText(en.issue_statuses.editor.description)).toBeInTheDocument();
     expect(within(dialog).getByRole("button", {
       name: en.issue_statuses.editor.color,
     }).querySelector("svg")).not.toBeNull();
-    const category = within(dialog).getByRole("combobox");
-    // The chevron is a selector affordance, not a status glyph.
-    expect(category.querySelector("svg:not(.lucide-chevron-down)")).toBeNull();
-    fireEvent.click(category);
-    for (const option of await screen.findAllByRole("option")) {
-      expect(option.querySelector("svg:not(.lucide-check)")).toBeNull();
-    }
+    const lifecycle = within(dialog).getByRole("radiogroup", { name: en.issue_statuses.editor.lifecycle });
+    const choices = within(lifecycle).getAllByRole("radio");
+    expect(choices.map((choice) => choice.textContent)).toEqual([en.issue_statuses.category_labels.started]);
+    expect(choices[0]).toBeDisabled();
+    expect(choices[0]).toHaveAttribute("aria-checked", "true");
+    expect(lifecycle.querySelector("svg")).toBeNull();
+    // A new status lands in the group it was created from.
+    expect(within(dialog).queryByRole("radiogroup", { name: en.issue_statuses.editor.group })).toBeNull();
+  });
+
+  it("lets an ended status choose done or closed", async () => {
+    render(<IssueStatusesTab />);
+    fireEvent.click(addTo("ended"));
+    const dialog = await screen.findByRole("dialog");
+    const lifecycle = within(dialog).getByRole("radiogroup", { name: en.issue_statuses.editor.lifecycle });
+    const [done, closed] = within(lifecycle).getAllByRole("radio");
+    expect(done).toHaveTextContent(en.issue_statuses.category_labels.done);
+    expect(done).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(closed!);
+    expect(closed).toHaveAttribute("aria-checked", "true");
+    fireEvent.change(within(dialog).getByLabelText(en.issue_statuses.editor.name), { target: { value: "Won't fix" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: en.issue_statuses.editor.save }));
+    expect(createMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "Won't fix", category: "closed", status_group: "ended" }),
+      expect.any(Object),
+    );
+  });
+
+  it("creates a needs-attention status from that group", async () => {
+    render(<IssueStatusesTab />);
+    fireEvent.click(addTo("needs_attention"));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText(en.issue_statuses.editor.name), { target: { value: "Waiting on customer" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: en.issue_statuses.editor.save }));
+    expect(createMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ category: "started", status_group: "needs_attention" }),
+      expect.any(Object),
+    );
+  });
+
+  it("moves a started custom status between working and needs attention, to the end of its new group", async () => {
+    catalog = [BUILT_IN_IN_PROGRESS, BUILT_IN_IN_REVIEW, entry({ key: "qa", name: "QA", position: 4 })];
+    render(<IssueStatusesTab />);
+    fireEvent.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "QA")));
+    fireEvent.click(await screen.findByRole("menuitem", { name: en.issue_statuses.actions.edit }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(en.issue_statuses.editor.lifecycle_locked)).toBeInTheDocument();
+    const group = within(dialog).getByRole("radiogroup", { name: en.issue_statuses.editor.group });
+    fireEvent.click(within(group).getByRole("radio", { name: en.issue_statuses.group_labels.needs_attention }));
+    fireEvent.click(within(dialog).getByRole("button", { name: en.issue_statuses.editor.save }));
+    expect(updateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "qa", status_group: "needs_attention", position: 5 }),
+      expect.any(Object),
+    );
+  });
+
+  it("offers no group choice for a status that is not started", async () => {
+    catalog = [entry({ key: "shipped", name: "Shipped", category: "done" })];
+    render(<IssueStatusesTab />);
+    fireEvent.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "Shipped")));
+    fireEvent.click(await screen.findByRole("menuitem", { name: en.issue_statuses.actions.edit }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).queryByRole("radiogroup", { name: en.issue_statuses.editor.group })).toBeNull();
+    const lifecycle = within(dialog).getByRole("radiogroup", { name: en.issue_statuses.editor.lifecycle });
+    expect(within(lifecycle).getAllByRole("radio").map((choice) => choice.textContent)).toEqual([
+      en.issue_statuses.category_labels.done,
+    ]);
+    fireEvent.click(within(dialog).getByRole("button", { name: en.issue_statuses.editor.save }));
+    expect(updateMutate.mock.calls[0]![0]).not.toHaveProperty("status_group");
+  });
+
+  it("lays the library out in board groups with each row's lifecycle type", () => {
+    catalog = [
+      entry({ id: "todo", key: "todo", name: "Todo", category: "unstarted", is_system: true, position: 0 }),
+      BUILT_IN_IN_PROGRESS,
+      BUILT_IN_IN_REVIEW,
+      entry({ key: "waiting", name: "Waiting", status_group: "needs_attention", position: 3 }),
+      entry({ id: "done", key: "done", name: "Done", category: "done", is_system: true, position: 0 }),
+      entry({ key: "wont_fix", name: "Won't fix", category: "closed", position: 1 }),
+    ];
+    render(<IssueStatusesTab />);
+
+    const sections = screen.getAllByRole("region");
+    expect(sections.map((section) => section.getAttribute("aria-labelledby"))).toEqual([
+      "issue-status-group-not_started",
+      "issue-status-group-working",
+      "issue-status-group-needs_attention",
+      "issue-status-group-ended",
+    ]);
+    const attention = screen.getByRole("region", { name: en.issue_statuses.group_labels.needs_attention });
+    expect(within(attention).getByText("in_review")).toBeInTheDocument();
+    expect(within(attention).getByText("Waiting")).toBeInTheDocument();
+    expect(within(attention).getAllByText(en.issue_statuses.category_labels.started)).toHaveLength(2);
+    const ended = screen.getByRole("region", { name: en.issue_statuses.group_labels.ended });
+    expect(within(ended).getByText(en.issue_statuses.category_labels.done)).toBeInTheDocument();
+    expect(within(ended).getByText(en.issue_statuses.category_labels.closed)).toBeInTheDocument();
   });
 
   // Creation answers to workspace role alone since MUL-6643 removed the
@@ -385,7 +486,7 @@ describe("IssueStatusesTab", () => {
   });
 
   it("allows a single custom status to move relative to built-ins", () => {
-    catalog = [BUILT_IN_IN_REVIEW, entry({ key: "qa", name: "QA" })];
+    catalog = [BUILT_IN_IN_PROGRESS, entry({ key: "qa", name: "QA" })];
     render(<IssueStatusesTab />);
 
     expect(
@@ -395,9 +496,9 @@ describe("IssueStatusesTab", () => {
     ).toBeInTheDocument();
   });
 
-  it("offers reorder once a category holds two", () => {
+  it("offers reorder once a group holds two", () => {
     catalog = [
-      BUILT_IN_IN_REVIEW,
+      BUILT_IN_IN_PROGRESS,
       entry({ id: "qa", key: "qa", name: "QA", position: 1 }),
       entry({ id: "uat", key: "uat", name: "UAT", position: 2 }),
     ];
@@ -409,7 +510,7 @@ describe("IssueStatusesTab", () => {
   });
 
   it("saves the full active order, including built-ins, from the menu", async () => {
-    catalog = [BUILT_IN_IN_REVIEW, entry({ key: "qa", name: "QA" })];
+    catalog = [BUILT_IN_IN_PROGRESS, entry({ key: "qa", name: "QA" })];
     render(<IssueStatusesTab />);
     fireEvent.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "QA")));
     fireEvent.click(await screen.findByRole("menuitem", { name: en.issue_statuses.actions.move_up }));
@@ -419,9 +520,41 @@ describe("IssueStatusesTab", () => {
     );
   });
 
+  // Working and needs attention share the started category, which the server
+  // reorders as one set: a move in one group carries the other group along.
+  it("sends the other started group along with a reorder", async () => {
+    catalog = [BUILT_IN_IN_PROGRESS, BUILT_IN_IN_REVIEW, entry({ key: "qa", name: "QA", position: 2 })];
+    render(<IssueStatusesTab />);
+    fireEvent.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "QA")));
+    fireEvent.click(await screen.findByRole("menuitem", { name: en.issue_statuses.actions.move_up }));
+    expect(reorderMutate.mock.calls[0]![0].category).toBe("started");
+    expect(reorderMutate.mock.calls[0]![0].ordered.map((s: IssueStatusEntry) => s.key)).toEqual([
+      "qa", "in_progress", "in_review",
+    ]);
+  });
+
+  it("keeps done and closed statuses apart in the ended group", async () => {
+    catalog = [
+      entry({ id: "done", key: "done", name: "Done", category: "done", is_system: true, position: 0 }),
+      entry({ id: "cancelled", key: "cancelled", name: "Cancelled", category: "closed", is_system: true, position: 0 }),
+      entry({ key: "wont_fix", name: "Won't fix", category: "closed", position: 1 }),
+    ];
+    render(<IssueStatusesTab />);
+    fireEvent.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "cancelled")));
+    // Cancelled is the first closed status: nothing closed sits above it.
+    expect(await screen.findByRole("menuitem", { name: en.issue_statuses.actions.move_up })).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(screen.getByRole("menuitem", { name: en.issue_statuses.actions.move_down }));
+    expect(reorderMutate).toHaveBeenCalledWith(
+      { category: "closed", ordered: [catalog[2], catalog[1]] },
+      expect.any(Object),
+    );
+    // Done has no other done status to swap with, so it offers no handle.
+    expect(screen.queryByLabelText(en.issue_statuses.actions.reorder.replace("{{name}}", "done"))).toBeNull();
+  });
+
   it("excludes archived rows from reorder and restores the order after failure", async () => {
     catalog = [
-      BUILT_IN_IN_REVIEW,
+      BUILT_IN_IN_PROGRESS,
       entry({ key: "old", name: "Old", archived_at: "2026-01-01", position: 1 }),
       entry({ key: "qa", name: "QA", position: 2 }),
     ];
@@ -430,21 +563,21 @@ describe("IssueStatusesTab", () => {
     expect(screen.getByText("Old")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "QA")));
     fireEvent.click(await screen.findByRole("menuitem", { name: en.issue_statuses.actions.move_up }));
-    expect(reorderMutate.mock.calls[0]![0].ordered.map((s: IssueStatusEntry) => s.key)).toEqual(["qa", "in_review"]);
+    expect(reorderMutate.mock.calls[0]![0].ordered.map((s: IssueStatusEntry) => s.key)).toEqual(["qa", "in_progress"]);
     const callbacks = reorderMutate.mock.calls[0]![1];
     act(() => {
       callbacks.onError(new Error("Could not save order"));
       callbacks.onSettled();
     });
-    const section = screen.getByRole("region", { name: en.issue_statuses.category_labels.started });
+    const section = screen.getByRole("region", { name: en.issue_statuses.group_labels.working });
     expect(within(section).getAllByRole("button", { name: /^Reorder / }).map((button) => button.getAttribute("aria-label"))).toEqual([
-      "Reorder in_review", "Reorder QA",
+      "Reorder in_progress", "Reorder QA",
     ]);
   });
 
   it("locks the definition of built-in statuses where the actions are", async () => {
     const user = userEvent.setup();
-    catalog = [BUILT_IN_IN_REVIEW, entry({ key: "qa", name: "QA", position: 1 })];
+    catalog = [BUILT_IN_IN_REVIEW, entry({ key: "qa", name: "QA", status_group: "needs_attention", position: 1 })];
     render(<IssueStatusesTab />);
     const trigger = screen.getByLabelText(
       en.issue_statuses.actions.open.replace("{{name}}", "in_review"),

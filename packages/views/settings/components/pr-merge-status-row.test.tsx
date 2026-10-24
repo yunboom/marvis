@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -46,6 +47,7 @@ function status(key: string, name: string, category: IssueStatusEntry["category"
     name,
     description: "",
     category,
+    status_group: defaultStatusGroup(key, category),
     color: "#888888",
     is_system: key !== "qa",
     position: 0,
@@ -78,6 +80,25 @@ describe("PRMergeStatusRow", () => {
     workspaceRef.current.settings = { pr_merge_status: "none" };
     render(<PRMergeStatusRow canManage />, { wrapper: Wrapper });
     expect(select()).toHaveTextContent(enSettings.pr_merge_status.none);
+  });
+
+  it("groups the targets the way the board does and leaves closed statuses out", async () => {
+    const user = userEvent.setup();
+    catalogRef.current = [
+      ...catalogRef.current,
+      { ...status("waiting", "Waiting", "started"), status_group: "needs_attention", is_system: false },
+      { ...status("wont_fix", "Won't fix", "closed"), is_system: false },
+    ];
+    render(<PRMergeStatusRow canManage />, { wrapper: Wrapper });
+
+    await user.click(select());
+    const groups = await screen.findAllByRole("group");
+    const labelled = (label: string) => groups.find((group) => group.textContent?.startsWith(label));
+    expect(labelled(enSettings.issue_statuses.group_labels.working)).toHaveTextContent("QA");
+    expect(labelled(enSettings.issue_statuses.group_labels.needs_attention)).toHaveTextContent("Waiting");
+    expect(labelled(enSettings.issue_statuses.group_labels.needs_attention)).toHaveTextContent("In Review");
+    expect(labelled(enSettings.issue_statuses.group_labels.ended)).toHaveTextContent("Done");
+    expect(screen.queryByRole("option", { name: "Won't fix" })).toBeNull();
   });
 
   it("reads a status that is no longer offered as no change", () => {

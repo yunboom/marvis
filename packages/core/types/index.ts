@@ -3,6 +3,7 @@ export type { Issue, IssueStatus, BuiltInIssueStatus, IssuePriority, IssueAssign
 } from "./issue";
 export type {
   IssueStatusCategory,
+  IssueStatusGroup,
   IssueStatusEntry,
   IssueStatusIcon,
   ListIssueStatusesResponse,

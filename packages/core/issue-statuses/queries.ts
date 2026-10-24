@@ -7,8 +7,8 @@ import {
   STATUS_CONFIG,
   STATUS_ORDER,
 } from "../issues/config";
-import { normalizeIssueStatusCategory } from "../issues/config/status";
-import type { BuiltInIssueStatus, IssueStatusCategory, IssueStatusEntry } from "../types";
+import { defaultStatusGroup, normalizeIssueStatusCategory } from "../issues/config/status";
+import type { BuiltInIssueStatus, IssueStatusCategory, IssueStatusEntry, IssueStatusGroup } from "../types";
 
 /**
  * The workspace issue status catalog (MUL-6243).
@@ -58,6 +58,11 @@ export interface IssueStatusCatalog {
   activeStatuses: IssueStatusEntry[];
   /** Category for a status key; falls back to the built-in map, else "unstarted". */
   categoryOf: (statusKey: string) => IssueStatusCategory;
+  /**
+   * Board and status-library group for a status key. Falls back to the default
+   * group of its category, so an unknown key still lands in a column.
+   */
+  groupOf: (statusKey: string) => IssueStatusGroup;
   /** Human label for a status key; falls back to the category label, then the raw key. */
   labelOf: (statusKey: string) => string;
   /** Catalog entry for a status key, when the catalog knows it. */
@@ -78,6 +83,8 @@ export interface IssueStatusCatalog {
   iconOf: (statusKey: string) => string | null;
   /** ACTIVE statuses belonging to one category, in display order. */
   inCategory: (category: IssueStatusCategory) => IssueStatusEntry[];
+  /** ACTIVE statuses belonging to one group, in display order. */
+  inGroup: (group: IssueStatusGroup) => IssueStatusEntry[];
   /** True once the catalog has loaded; false while it is still in flight. */
   isLoaded: boolean;
   /**
@@ -176,6 +183,14 @@ export function issueStatusColor(entry: IssueStatusEntry | undefined): string | 
 }
 
 /**
+ * The group one catalog entry sits in: its own group, or its category's
+ * default when the entry carries none, so no entry falls out of every group.
+ */
+export function issueStatusGroup(entry: IssueStatusEntry): IssueStatusGroup {
+  return entry.status_group ?? defaultStatusGroup(entry.key, normalizeIssueStatusCategory(entry.category) ?? "unstarted");
+}
+
+/**
  * Builds the resolved catalog from a raw entry list. Pure, so the store and
  * other non-React callers can use it with a list they already hold.
  */
@@ -195,10 +210,16 @@ export function buildIssueStatusCatalog(
     return "unstarted";
   };
 
+  const groupOf = (statusKey: string): IssueStatusGroup => {
+    const entry = byKey.get(statusKey);
+    return entry ? issueStatusGroup(entry) : defaultStatusGroup(statusKey, categoryOf(statusKey));
+  };
+
   return {
     statuses: list,
     activeStatuses: list.filter((e) => !e.archived_at),
     categoryOf,
+    groupOf,
     entryOf: (statusKey) => byKey.get(statusKey),
     colorOf: (statusKey) => issueStatusColor(byKey.get(statusKey)),
     iconOf: (statusKey) => {
@@ -216,6 +237,7 @@ export function buildIssueStatusCatalog(
       list.filter(
         (e) => normalizeIssueStatusCategory(e.category) === category && !e.archived_at,
       ),
+    inGroup: (group) => list.filter((e) => !e.archived_at && groupOf(e.key) === group),
     isLoaded: entries !== undefined,
     // Defaults describe a non-React caller holding a list it already has:
     // resolved when entries are present, still pending when they are not.

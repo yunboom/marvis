@@ -34,6 +34,7 @@ function entry(overrides: Partial<IssueStatusEntry> & { id: string }): IssueStat
     name: overrides.id,
     description: "",
     category: "started",
+    status_group: "working",
     color: "#6366f1",
     is_system: false,
     position: 1,

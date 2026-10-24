@@ -60,8 +60,9 @@ interface LaneSharedProps {
 }
 
 /**
- * The status-grouped board: four fixed columns (not started / started /
- * needs attention / ended), each stacking one lane per visible status. Lanes
+ * The status-grouped board: four fixed columns, one per status group (not
+ * started / working / needs attention / ended), each stacking one lane per
+ * visible status. Lanes
  * keep the per-status droppable ids of the classic board, so the board's drag
  * handlers and column mirror work unchanged.
  */
@@ -70,14 +71,14 @@ export const StatusLaneBoard = memo(function StatusLaneBoard({
   ...shared
 }: LaneSharedProps & { groups: StatusGroup[] }) {
   const wsId = useWorkspaceId();
-  const { categoryOf } = useIssueStatuses(wsId);
+  const { groupOf } = useIssueStatuses(wsId);
 
   const boardColumns = useMemo(() => {
     const byStatus = new Map(groups.map((group) => [group.status, group]));
 
     return groupStatusesIntoBoardColumns(
       groups.map((group) => group.status),
-      categoryOf,
+      groupOf,
     ).map((column) => ({
       key: column.key,
       groups: column.statuses.flatMap((status) => {
@@ -85,7 +86,7 @@ export const StatusLaneBoard = memo(function StatusLaneBoard({
         return group ? [group] : [];
       }),
     }));
-  }, [groups, categoryOf]);
+  }, [groups, groupOf]);
 
   return (
     <div

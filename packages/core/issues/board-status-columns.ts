@@ -1,45 +1,19 @@
-import type { IssueStatus, IssueStatusCategory } from "../types";
+import { STATUS_GROUP_ORDER } from "./config/status";
+import type { IssueStatus, IssueStatusCategory, IssueStatusGroup } from "../types";
 
 /**
- * The fixed columns of a status-grouped board. Each column stacks one lane
- * per visible status; which column a status lands in depends on its lifecycle
- * category, except for the built-in review/blocked keys, which get their own
- * "needs attention" column so work waiting on a person stands out.
+ * The fixed columns of a status-grouped board, one per status group. Each
+ * column stacks one lane per visible status; the status library edits which
+ * group a status sits in.
  */
-export type BoardStatusColumnKey =
-  | "not_started"
-  | "started"
-  | "needs_attention"
-  | "ended";
+export type BoardStatusColumnKey = IssueStatusGroup;
 
-export const BOARD_STATUS_COLUMN_ORDER: readonly BoardStatusColumnKey[] = [
-  "not_started",
-  "started",
-  "needs_attention",
-  "ended",
-];
-
-/** Built-in started-category keys routed to the "needs attention" column. */
-export const BOARD_ATTENTION_STATUSES: readonly IssueStatus[] = [
-  "in_review",
-  "blocked",
-];
+export const BOARD_STATUS_COLUMN_ORDER: readonly BoardStatusColumnKey[] = STATUS_GROUP_ORDER;
 
 export interface BoardStatusColumn {
   key: BoardStatusColumnKey;
   /** Visible status keys in this column, in their incoming (catalog) order. */
   statuses: IssueStatus[];
-}
-
-/** The board column a status key belongs to, given its lifecycle category. */
-export function boardStatusColumnOf(
-  status: IssueStatus,
-  category: IssueStatusCategory,
-): BoardStatusColumnKey {
-  if (BOARD_ATTENTION_STATUSES.includes(status)) return "needs_attention";
-  if (category === "unstarted") return "not_started";
-  if (category === "started") return "started";
-  return "ended";
 }
 
 /**
@@ -52,13 +26,13 @@ export function boardStatusColumnOf(
  */
 export function groupStatusesIntoBoardColumns(
   visibleStatuses: readonly IssueStatus[],
-  categoryOf: (status: IssueStatus) => IssueStatusCategory,
+  groupOf: (status: IssueStatus) => IssueStatusGroup,
 ): BoardStatusColumn[] {
   const byColumn = new Map<BoardStatusColumnKey, IssueStatus[]>(
     BOARD_STATUS_COLUMN_ORDER.map((key) => [key, []]),
   );
   for (const status of visibleStatuses) {
-    byColumn.get(boardStatusColumnOf(status, categoryOf(status)))!.push(status);
+    byColumn.get(groupOf(status))!.push(status);
   }
 
   return BOARD_STATUS_COLUMN_ORDER.map((key) => ({

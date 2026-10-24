@@ -42,6 +42,7 @@ import { IssueSurfaceWithStore } from "../../issues/surface/issue-surface";
 import { memberListOptions } from "@marvis/core/workspace/queries";
 import {
   issueStatusColor,
+  issueStatusGroup,
   compareIssueStatusEntries,
   issueStatusListOptions,
   normalizeIssueStatusCategory,
@@ -52,11 +53,12 @@ import {
   useReorderIssueStatuses,
   useUpdateIssueStatus,
 } from "@marvis/core/issue-statuses/mutations";
-import { ALL_STATUSES } from "@marvis/core/issues/config";
+import { STATUS_GROUP_ORDER, statusCategoriesForGroup } from "@marvis/core/issues/config";
 import type {
   BuiltInIssueStatus,
   IssueStatusCategory,
   IssueStatusEntry,
+  IssueStatusGroup,
   IssueStatusIcon,
 } from "@marvis/core/types";
 import { ISSUE_STATUS_ICONS } from "@marvis/core/types/issue-status";
@@ -92,13 +94,6 @@ import {
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@marvis/ui/components/ui/select";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -117,13 +112,15 @@ import { settingsHref } from "./settings-navigation";
 /**
  * Workspace issue status catalog management (MUL-6243).
  *
- * The page is organised by CATEGORY rather than as one flat list, because a
- * category is the stable lifecycle group users scan. Concrete built-ins keep
- * their distinct automation behavior inside those groups: In Progress, In
- * Review, and Blocked all appear under Started without becoming one status.
+ * The page is organised by STATUS GROUP, the same four columns the board
+ * shows: not started, working, needs attention, ended. A group is display
+ * data; each row also shows its lifecycle type, which drives behavior. Working
+ * and needs-attention statuses are both started, and ended holds done and
+ * closed ones.
  *
- * Every active status can be ordered within its category. Built-in definitions
- * remain locked; moving their display position does not change automation.
+ * Every active status can be ordered within its group, and within one
+ * lifecycle type in the ended group. Built-in definitions remain locked;
+ * moving their display position does not change automation.
  *
  * The chrome is deliberately thin (MUL-6422): one bordered workflow list,
  * muted group headers, and row-level actions revealed only where available.
@@ -133,6 +130,7 @@ interface StatusDraft {
   name: string;
   description: string;
   category: IssueStatusCategory;
+  group: IssueStatusGroup;
   color: string;
   icon: IssueStatusIcon | "";
 }
@@ -144,6 +142,7 @@ const EMPTY_DRAFT: StatusDraft = {
   name: "",
   description: "",
   category: "unstarted",
+  group: "not_started",
   color: COLOR_PICKER_PRESETS[0],
   icon: "",
 };
@@ -165,7 +164,7 @@ export function IssueStatusesTab({
   const navigation = useNavigation();
 
   const [showArchived, setShowArchived] = useState(false);
-  const [createCategory, setCreateCategory] = useState<IssueStatusCategory | null>(null);
+  const [createGroup, setCreateGroup] = useState<IssueStatusGroup | null>(null);
   const [editing, setEditing] = useState<IssueStatusEntry | null>(null);
   const [pendingArchive, setPendingArchive] = useState<IssueStatusEntry | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -187,22 +186,42 @@ export function IssueStatusesTab({
     section: "pr-merge-status",
   });
 
+  // Catalog order inside a group: category first, then position, so the ended
+  // group lists done statuses before closed ones.
   const groups = useMemo(
     () =>
-      ALL_STATUSES.map((category) => {
-        const inCategory = statuses.filter(
-          (status) => normalizeIssueStatusCategory(status.category) === category,
-        );
-        return {
-          category,
-          // Archived rows are hidden behind a toggle rather than dropped: an
-          // admin needs to see what a lingering status on an old issue is.
-          entries: inCategory.filter((s) => showArchived || !s.archived_at)
-            .sort(compareIssueStatusEntries),
-        };
-      }),
+      STATUS_GROUP_ORDER.map((group) => ({
+        group,
+        // Archived rows are hidden behind a toggle rather than dropped: an
+        // admin needs to see what a lingering status on an old issue is.
+        entries: statuses
+          .filter((s) => issueStatusGroup(s) === group && (showArchived || !s.archived_at))
+          .sort(compareIssueStatusEntries),
+      })),
     [statuses, showArchived],
   );
+
+  // The server reorders one lifecycle category at a time and needs every active
+  // status in it. Working and needs-attention share the started category, so a
+  // drag in one group sends that group's new order followed or preceded by the
+  // other group's current order.
+  const categoryOrder = (
+    category: IssueStatusCategory,
+    group: IssueStatusGroup,
+    nextGroupOrder: IssueStatusEntry[],
+  ) =>
+    groups
+      .flatMap((g) => (g.group === group ? nextGroupOrder : g.entries))
+      .filter((entry) => !entry.archived_at && normalizeIssueStatusCategory(entry.category) === category);
+
+  // Moving a status to another group puts it after every started status, so
+  // it lands at the end of its new group.
+  const endOfStarted = Math.max(
+    0,
+    ...statuses
+      .filter((s) => !s.archived_at && normalizeIssueStatusCategory(s.category) === "started")
+      .map((s) => s.position),
+  ) + 1;
 
   const archivedCount = statuses.filter((s) => !s.is_system && s.archived_at).length;
 
@@ -230,18 +249,19 @@ export function IssueStatusesTab({
             {t(($) => $.issue_statuses.loading)}
           </div>
         ) : (
-          // 每个分类一张独立描边卡片，分类名在卡片上方。
+          // 每个分组一张独立描边卡片，分组名在卡片上方。
           <div className="space-y-3">
             {groups.map((group) => (
-              <CategorySection
-                key={`${wsId}:${group.category}`}
-                category={group.category}
+              <GroupSection
+                key={`${wsId}:${group.group}`}
+                group={group.group}
                 entries={group.entries}
+                categoryOrder={categoryOrder}
                 canManage={isAdmin}
                 workflowUsage={workflowUsage}
                 mergeTarget={mergeTarget}
                 mergeSettingsHref={mergeSettingsHref}
-                onCreate={() => setCreateCategory(group.category)}
+                onCreate={() => setCreateGroup(group.group)}
                 onEdit={(entry) => setEditing(entry)}
                 onArchive={(entry) => {
                   setPendingArchive(entry); setArchiveOpen(true);
@@ -254,17 +274,17 @@ export function IssueStatusesTab({
       </div>
 
       <StatusEditorDialog
-        open={createCategory !== null}
-        onOpenChange={(open) => !open && setCreateCategory(null)}
-        category={createCategory}
+        open={createGroup !== null}
+        onOpenChange={(open) => !open && setCreateGroup(null)}
+        group={createGroup}
+        endOfStarted={endOfStarted}
       />
       <StatusEditorDialog
         open={Boolean(editing)}
         onOpenChange={(open) => !open && setEditing(null)}
-        category={
-          editing ? normalizeIssueStatusCategory(editing.category) : null
-        }
+        group={editing ? issueStatusGroup(editing) : null}
         status={editing}
+        endOfStarted={endOfStarted}
       />
       <ArchiveStatusDialog open={archiveOpen && pendingArchive?.workspace_id === wsId} status={pendingArchive} onClose={() => setArchiveOpen(false)} onViewIssues={viewIssues} />
       <Dialog open={inspectionOpen && inspection?.workspaceId === wsId} onOpenChange={setInspectionOpen} onOpenChangeComplete={(open) => !open && setInspection(null)}>
@@ -295,9 +315,10 @@ export function IssueStatusesTab({
   );
 }
 
-function CategorySection({
-  category,
+function GroupSection({
+  group,
   entries,
+  categoryOrder,
   canManage,
   workflowUsage,
   mergeTarget,
@@ -307,8 +328,14 @@ function CategorySection({
   onArchive,
   onViewIssues,
 }: {
-  category: IssueStatusCategory;
+  group: IssueStatusGroup;
   entries: IssueStatusEntry[];
+  /** Every active status of one category, with this group's rows in their new order. */
+  categoryOrder: (
+    category: IssueStatusCategory,
+    group: IssueStatusGroup,
+    nextGroupOrder: IssueStatusEntry[],
+  ) => IssueStatusEntry[];
   canManage: boolean;
   /** Badge the built-in Done row: PR auto-complete writes that status. */
   workflowUsage?: (statusKey: string) => number;
@@ -338,6 +365,10 @@ function CategorySection({
   const move = (from: number, to: number) => {
     if (!canManage || saving.current || from < 0 || to < 0 || from === to ||
       !order[from] || !order[to] || order[from].archived_at || order[to].archived_at) return;
+    // The ended group holds two lifecycle types; a row only moves among rows
+    // of its own type, because the server orders one category at a time.
+    const category = normalizeIssueStatusCategory(order[from].category);
+    if (!category || category !== normalizeIssueStatusCategory(order[to].category)) return;
     const next = arrayMove(order, from, to);
     saving.current = true;
     setOrder(next);
@@ -347,7 +378,7 @@ function CategorySection({
     // already been reordered. Archived rows are frozen, so their absence from
     // the payload is also what the user sees.
     reorder.mutate(
-      { category, ordered: next.filter((entry) => !entry.archived_at) },
+      { category, ordered: categoryOrder(category, group, next) },
       {
         onError: (error) => {
           setOrder(entries);
@@ -371,18 +402,16 @@ function CategorySection({
 
   return (
     <section
-      aria-labelledby={`issue-status-category-${category}`}
+      aria-labelledby={`issue-status-group-${group}`}
       aria-busy={reorder.isPending}
     >
-      {/* Label plus the one action the header owns. The category glyph is the
-          same glyph the built-in row renders directly below it, so it said
-          nothing the eye had not already read. */}
+      {/* Label plus the one action the header owns. */}
       <div className="flex h-7.5 items-center justify-between gap-2 px-0.5">
         <h3
-          id={`issue-status-category-${category}`}
+          id={`issue-status-group-${group}`}
           className="text-label font-normal text-muted-foreground"
         >
-          {t(($) => $.issue_statuses.category_labels[category])}
+          {t(($) => $.issue_statuses.group_labels[group])}
         </h3>
         {canManage && (
           <Tooltip>
@@ -392,7 +421,7 @@ function CategorySection({
                   variant="ghost"
                   size="icon-sm"
                   className="shrink-0 text-muted-foreground [@media(pointer:coarse)]:size-11"
-                  aria-label={`${t(($) => $.issue_statuses.add)}: ${t(($) => $.issue_statuses.category_labels[category])}`}
+                  aria-label={`${t(($) => $.issue_statuses.add)}: ${t(($) => $.issue_statuses.group_labels[group])}`}
                   onClick={onCreate}
                 >
                   <Plus className="size-4" />
@@ -408,8 +437,10 @@ function CategorySection({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
             {order.map((entry, index) => {
-              const activeIndex = sortableIds.indexOf(entry.id);
-              const canMove = canReorder && !reorder.isPending && activeIndex >= 0;
+              // Rows this one may swap with: active, same lifecycle type.
+              const peers = order.filter((s) => !s.archived_at && s.category === entry.category);
+              const peerIndex = peers.findIndex((s) => s.id === entry.id);
+              const canMove = canReorder && !reorder.isPending && peerIndex >= 0 && peers.length > 1;
               return (
                 <StatusRow
                   key={entry.id}
@@ -424,16 +455,16 @@ function CategorySection({
                   canManage={canManage}
                   workflowUsage={entry.is_system ? undefined : workflowUsage?.(entry.key)}
                   showKey={Boolean(workflowUsage)}
-                  canReorder={canReorder && !entry.archived_at}
+                  canReorder={canReorder && !entry.archived_at && peers.length > 1}
                   isReordering={reorder.isPending}
                   onEdit={() => onEdit(entry)}
                   onArchive={() => onArchive(entry)}
                   onViewIssues={() => onViewIssues(entry)}
-                  onMoveUp={canMove && activeIndex > 0
-                    ? () => move(index, order.findIndex((s) => s.id === sortableIds[activeIndex - 1]))
+                  onMoveUp={canMove && peerIndex > 0
+                    ? () => move(index, order.indexOf(peers[peerIndex - 1]!))
                     : undefined}
-                  onMoveDown={canMove && activeIndex < sortableIds.length - 1
-                    ? () => move(index, order.findIndex((s) => s.id === sortableIds[activeIndex + 1]))
+                  onMoveDown={canMove && peerIndex < peers.length - 1
+                    ? () => move(index, order.indexOf(peers[peerIndex + 1]!))
                     : undefined}
                 />
               );
@@ -513,10 +544,10 @@ function StatusRow({
         icon={entry.icon}
         className="size-3.5 shrink-0"
       />
-      {/* Name over description, the way the row is read. The old layout pinned
-          the description to the far right, which left a column of em dashes on
-          every status nobody had described. */}
-      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+      {/* Name over description, the way the row is read: the name line keeps
+          its badges, the description gets a line of its own. */}
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <span className="min-w-0 truncate text-body font-medium">{label}</span>
           {showKey && (
             <span className="shrink-0 font-mono text-caption text-faint-foreground">{entry.key}</span>
@@ -542,21 +573,27 @@ function StatusRow({
               <TooltipContent>{t(($) => $.issue_statuses.archived_hint)}</TooltipContent>
             </Tooltip>
           )}
+        </div>
         {description && (
-          <p className="min-w-0 flex-1 truncate text-label text-muted-foreground">{description}</p>
+          <p className="min-w-0 truncate text-label text-muted-foreground">{description}</p>
         )}
       </div>
-      {/* Built-in is a quiet fact about the row, not a tag on the name. */}
-      {showKey && entry.is_system && (
-        <span className="shrink-0 whitespace-nowrap text-caption text-muted-foreground">
-          {t(($) => $.issue_statuses.builtin_badge)}
-        </span>
-      )}
       {workflowUsage !== undefined && !archived && (
         <span className="shrink-0 whitespace-nowrap text-caption text-muted-foreground">
           {workflowUsage > 0
             ? t(($) => $.issue_statuses.workflow_usage, { count: workflowUsage })
             : t(($) => $.issue_statuses.workflow_usage_none)}
+        </span>
+      )}
+      {/* The lifecycle type drives behavior; the group above is only where the
+          row sits. Working and needs-attention rows both read Started. */}
+      <span className="shrink-0 whitespace-nowrap rounded-full border border-surface-border px-2 py-px text-caption text-muted-foreground">
+        {t(($) => $.issue_statuses.category_labels[normalizeIssueStatusCategory(entry.category) ?? "unstarted"])}
+      </span>
+      {/* Built-in is a quiet fact about the row, not a tag on the name. */}
+      {showKey && entry.is_system && (
+        <span className="shrink-0 whitespace-nowrap text-caption text-muted-foreground">
+          {t(($) => $.issue_statuses.builtin_badge)}
         </span>
       )}
       {archived && <StatusIssuesButton variant="secondary" size="sm" onClick={onViewIssues} />}
@@ -611,13 +648,17 @@ function StatusRow({
 function StatusEditorDialog({
   open,
   onOpenChange,
-  category,
+  group,
   status,
+  endOfStarted,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  category: IssueStatusCategory | null;
+  /** The group a new status is created in, or the edited status's group. */
+  group: IssueStatusGroup | null;
   status?: IssueStatusEntry | null;
+  /** A position after every started status, for a status that changes group. */
+  endOfStarted: number;
 }) {
   const { t } = useT("settings");
   const create = useCreateIssueStatus();
@@ -625,27 +666,30 @@ function StatusEditorDialog({
   const [draft, setDraft] = useState<StatusDraft>(EMPTY_DRAFT);
   const [iconChanged, setIconChanged] = useState(false);
 
-  const categoryItems = ALL_STATUSES.map((c) => ({
-    value: c,
-    label: t(($) => $.issue_statuses.category_labels[c]),
-  }));
-
   useEffect(() => {
     if (!open) return;
     setIconChanged(false);
-    setDraft(
-      status
-        ? {
-            name: status.name,
-            description: status.description ?? "",
-            category: normalizeIssueStatusCategory(status.category) ?? "unstarted",
-            color: status.color,
-            icon: ISSUE_STATUS_ICONS.includes(status.icon as IssueStatusIcon)
-              ? status.icon as IssueStatusIcon : "",
-          }
-        : { ...EMPTY_DRAFT, category: category ?? "unstarted" },
-    );
-  }, [status, category, open]);
+    if (status) {
+      setDraft({
+        name: status.name,
+        description: status.description ?? "",
+        category: normalizeIssueStatusCategory(status.category) ?? "unstarted",
+        group: issueStatusGroup(status),
+        color: status.color,
+        icon: ISSUE_STATUS_ICONS.includes(status.icon as IssueStatusIcon)
+          ? status.icon as IssueStatusIcon : "",
+      });
+      return;
+    }
+    const createGroup = group ?? "not_started";
+    setDraft({ ...EMPTY_DRAFT, group: createGroup, category: statusCategoriesForGroup(createGroup)[0]! });
+  }, [status, group, open]);
+
+  // A new status may pick among its group's lifecycle types; an existing one
+  // keeps the type it was created with.
+  const lifecycleOptions = status ? [draft.category] : statusCategoriesForGroup(draft.group);
+  // Only a started custom status moves between working and needs attention.
+  const canChangeGroup = Boolean(status) && draft.category === "started";
 
   const submit = () => {
     const name = draft.name.trim();
@@ -656,6 +700,7 @@ function StatusEditorDialog({
       );
 
     if (status) {
+      const groupChanged = draft.group !== issueStatusGroup(status);
       update.mutate(
         {
           id: status.id,
@@ -664,6 +709,7 @@ function StatusEditorDialog({
           color: draft.color,
           // Preserve an unknown future icon when only other fields are edited.
           ...(iconChanged ? { icon: draft.icon } : {}),
+          ...(groupChanged ? { status_group: draft.group, position: endOfStarted } : {}),
         },
         { onSuccess: () => onOpenChange(false), onError },
       );
@@ -674,6 +720,7 @@ function StatusEditorDialog({
         name,
         description: draft.description.trim(),
         category: draft.category,
+        status_group: draft.group,
         color: draft.color,
         icon: draft.icon,
       },
@@ -707,10 +754,13 @@ function StatusEditorDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-baseline gap-2">
               {status
                 ? t(($) => $.issue_statuses.editor.edit_title)
                 : t(($) => $.issue_statuses.editor.create_title)}
+              <span className="text-label font-normal text-muted-foreground">
+                {t(($) => $.issue_statuses.group_labels[draft.group])}
+              </span>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-2">
@@ -742,36 +792,62 @@ function StatusEditorDialog({
                 </p>
               )}
             </div>
-            <div className="space-y-2">
-              <FieldLabel htmlFor="status-category">{t(($) => $.issue_statuses.editor.category)}</FieldLabel>
+            <fieldset className="space-y-2">
+              <legend className="mb-2 text-caption font-medium">
+                {t(($) => $.issue_statuses.editor.lifecycle)}
+              </legend>
               {/* Immutable after creation: changing it would alter the
-                  lifecycle of every issue already on this status. */}
-              <Select
-                items={categoryItems}
-                value={draft.category}
-                onValueChange={(value) =>
-                  value &&
-                  setDraft((current) => ({ ...current, category: value as IssueStatusCategory }))
-                }
-                disabled={Boolean(status)}
-              >
-                <SelectTrigger id="status-category">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-caption text-muted-foreground">
-                {status
-                  ? t(($) => $.issue_statuses.editor.category_locked)
-                  : t(($) => $.issue_statuses.categories[draft.category])}
-              </p>
-            </div>
+                  lifecycle of every issue already on this status. A group with
+                  one lifecycle type shows that type alone. */}
+              <div role="radiogroup" aria-label={t(($) => $.issue_statuses.editor.lifecycle)} className="flex flex-wrap gap-2">
+                {lifecycleOptions.map((category) => {
+                  const checked = draft.category === category;
+                  const fixed = lifecycleOptions.length === 1;
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      role="radio"
+                      aria-checked={checked}
+                      disabled={fixed}
+                      onClick={() => setDraft((current) => ({ ...current, category }))}
+                      className={`flex h-8 items-center rounded-lg bg-field px-3 text-label transition-colors disabled:cursor-default ${checked ? "text-foreground" : "text-muted-foreground hover:bg-field-hover"} ${checked && !fixed ? "ring-2 ring-inset ring-faint-foreground" : ""}`}
+                    >
+                      {t(($) => $.issue_statuses.category_labels[category])}
+                    </button>
+                  );
+                })}
+              </div>
+              {status && (
+                <p className="text-caption text-muted-foreground">
+                  {t(($) => $.issue_statuses.editor.lifecycle_locked)}
+                </p>
+              )}
+            </fieldset>
+            {canChangeGroup && (
+              <fieldset className="space-y-2">
+                <legend className="mb-2 text-caption font-medium">
+                  {t(($) => $.issue_statuses.editor.group)}
+                </legend>
+                <div role="radiogroup" aria-label={t(($) => $.issue_statuses.editor.group)} className="grid grid-cols-2 gap-0.5 rounded-lg bg-field p-0.5">
+                  {(["working", "needs_attention"] as const).map((option) => {
+                    const checked = draft.group === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        role="radio"
+                        aria-checked={checked}
+                        onClick={() => setDraft((current) => ({ ...current, group: option }))}
+                        className={`h-7 rounded-md text-label transition-colors ${checked ? "bg-card font-medium text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {t(($) => $.issue_statuses.group_labels[option])}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            )}
             <div className="space-y-2">
               <FieldLabel htmlFor="status-description">
                 {t(($) => $.issue_statuses.editor.description)}
@@ -801,7 +877,7 @@ function StatusEditorDialog({
                   <button
                     type="button"
                     aria-label={t(($) => $.issue_statuses.editor.color)}
-                    className="flex h-9 items-center gap-2.5 rounded-md border border-surface-border px-2.5 transition-colors hover:bg-surface-hover"
+                    className="flex h-8 items-center gap-2.5 rounded-lg bg-field px-2.5 transition-colors hover:bg-field-hover"
                   >
                     <StatusIcon
                       status={status?.key ?? ""}

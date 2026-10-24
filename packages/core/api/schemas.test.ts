@@ -204,6 +204,22 @@ describe("IssueSchema (via ListIssuesResponseSchema)", () => {
       expect(parsed.issues[0]?.status_name).toBeUndefined();
     }
   });
+  it("carries a known status_group and drops a malformed one without losing the issue", () => {
+    const known = ListIssuesResponseSchema.parse({
+      issues: [{ ...baseIssue, status: "waiting_customer", status_group: "needs_attention" }],
+      total: 1,
+    });
+    expect(known.issues[0]?.status_group).toBe("needs_attention");
+
+    for (const bad of ["waiting", 42, null]) {
+      const parsed = ListIssuesResponseSchema.parse({
+        issues: [{ ...baseIssue, status: "waiting_customer", status_group: bad }],
+        total: 1,
+      });
+      expect(parsed.issues).toHaveLength(1);
+      expect(parsed.issues[0]?.status_group).toBeUndefined();
+    }
+  });
   it("still parses an issue from a server that does not send status_name", () => {
     const { status_name: _omitted, ...withoutName } = { ...baseIssue, status_name: "x" };
     const parsed = ListIssuesResponseSchema.parse({ issues: [withoutName], total: 1 });
@@ -2229,6 +2245,23 @@ describe("issue status catalog schemas", () => {
     expect(parsed.is_system).toBe(false);
     expect(parsed.position).toBe(0);
     expect(parsed.archived_at).toBeNull();
+  });
+
+  it("keeps a known status group", () => {
+    const parsed = IssueStatusEntrySchema.parse({ ...baseStatus, category: "started", status_group: "needs_attention" });
+    expect(parsed.status_group).toBe("needs_attention");
+  });
+
+  it.each([undefined, null, 7, "waiting"])("derives the default group when the server sends %s", (statusGroup) => {
+    expect(
+      IssueStatusEntrySchema.parse({ ...baseStatus, key: "qa", category: "started", status_group: statusGroup }).status_group,
+    ).toBe("working");
+    expect(
+      IssueStatusEntrySchema.parse({ ...baseStatus, key: "blocked", category: "started", status_group: statusGroup }).status_group,
+    ).toBe("needs_attention");
+    expect(
+      IssueStatusEntrySchema.parse({ ...baseStatus, key: "shipped", category: "done", status_group: statusGroup }).status_group,
+    ).toBe("ended");
   });
 
   it.each([undefined, null, "", "three_quarters", "future-icon"])("keeps catalog readable with icon %s", (icon) => {
