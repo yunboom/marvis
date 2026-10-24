@@ -716,6 +716,14 @@ detached_client_usage AS (
 deleted_share_links AS (
     DELETE FROM workspace_share_link
     WHERE workspace_share_link.workspace_id = $1
+),
+deleted_lark_invite_joins AS (
+    DELETE FROM lark_invite_join
+    WHERE lark_invite_join.workspace_id = $1
+),
+deleted_lark_invites AS (
+    DELETE FROM lark_invite
+    WHERE lark_invite.workspace_id = $1
 )
 DELETE FROM workspace_invitation
 WHERE workspace_invitation.workspace_id = $1;

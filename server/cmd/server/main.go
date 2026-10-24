@@ -832,6 +832,11 @@ func main() {
 		go h.LarkTyping.Run(sweepCtx)
 	}
 
+	// 飞书邀请卡片的回调长连接：未启用时 LarkInviteConn 为 nil。
+	if h.LarkInviteConn != nil {
+		go h.LarkInviteConn.Run(sweepCtx)
+	}
+
 	// Media intent-ledger reconciler (PR #5580): settles uploaded-but-unbound
 	// channel media objects. An independent worker so object-storage latency
 	// spikes cannot starve any other sweeper's cadence.

@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { Agent, Workspace } from "../types";
-import { agentListOptions, workspaceBySlugOptions } from "./queries";
+import {
+  agentListOptions,
+  larkChatListOptions,
+  larkInviteListOptions,
+  larkInviteStatusOptions,
+  larkInviteWelcomeOptions,
+  larkStatusKey,
+  workspaceBySlugOptions,
+  workspaceKeys,
+} from "./queries";
 
 function makeWorkspace(slug: string): Workspace {
   return {
@@ -63,5 +72,41 @@ describe("agentListOptions", () => {
       ]),
     ).toBe(false);
     expect(queryState([])).toBe(false);
+  });
+});
+
+describe("Feishu invite queries", () => {
+  it("scopes workspace keys by wsId and keeps the status key account-level", () => {
+    expect(workspaceKeys.larkInvites("ws-1")).toEqual(["workspaces", "ws-1", "lark-invites"]);
+    expect(workspaceKeys.larkChats("ws-1")).toEqual(["workspaces", "ws-1", "lark-chats"]);
+    expect(workspaceKeys.larkInvites("ws-1")).not.toEqual(workspaceKeys.larkInvites("ws-2"));
+    expect(larkStatusKey).toEqual(["lark", "invite-status"]);
+    expect(larkInviteStatusOptions().queryKey).toEqual(larkStatusKey);
+  });
+
+  it("only fetches the invite list and chats when enabled and a workspace is known", () => {
+    expect(larkInviteListOptions("ws-1", true).enabled).toBe(true);
+    expect(larkInviteListOptions("ws-1", false).enabled).toBe(false);
+    expect(larkInviteListOptions("", true).enabled).toBe(false);
+    expect(larkChatListOptions("ws-1", true).enabled).toBe(true);
+    expect(larkChatListOptions("ws-1", false).enabled).toBe(false);
+    expect(larkChatListOptions("", true).enabled).toBe(false);
+  });
+
+  it("uses the workspace keys for the list and chat options", () => {
+    expect(larkInviteListOptions("ws-1", true).queryKey).toEqual(workspaceKeys.larkInvites("ws-1"));
+    expect(larkChatListOptions("ws-1", true).queryKey).toEqual(workspaceKeys.larkChats("ws-1"));
+  });
+
+  it("fetches the welcome once per workspace and never refetches on its own", () => {
+    const options = larkInviteWelcomeOptions("ws-1");
+
+    expect(options.queryKey).toEqual(["workspaces", "ws-1", "lark-invite-welcome"]);
+    expect(options.queryKey).toEqual(workspaceKeys.larkInviteWelcome("ws-1"));
+    expect(options.queryKey).not.toEqual(workspaceKeys.larkInviteWelcome("ws-2"));
+    expect(options.staleTime).toBe(Infinity);
+    expect(options.refetchOnWindowFocus).toBe(false);
+    expect(options.enabled).toBe(true);
+    expect(larkInviteWelcomeOptions("").enabled).toBe(false);
   });
 });

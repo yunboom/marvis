@@ -297,6 +297,22 @@ Desktop 只需要后端，网页端可选。要在同一网络里提供网页端
 
 Desktop 的飞书登录不依赖网页端。在飞书开发者后台再登记一个重定向 URL：`http://marvis.local:13840/auth/lark/desktop-callback`。后端直接处理这个回调，只运行后端时 Desktop 也保留飞书按钮。这个地址由服务器广播的主机名和后端端口拼成：服务器广播的是 `marvis-2.local`，或改了端口时，改为登记对应的地址。局域网发现关闭时（默认关闭），在 `.env` 里把登记的地址设为 `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI`。
 
+#### 飞书邀请
+
+工作区的所有者和管理员可以把邀请卡片发到飞书群或个人，点击卡片的人加入工作区。飞书邀请复用飞书登录应用（`MARVIS_LARK_LOGIN_APP_ID` / `MARVIS_LARK_LOGIN_APP_SECRET`）。在飞书开发者后台为这个应用：
+
+1. 开启机器人能力。
+2. 申请五个权限：`im:message:send_as_bot`、`im:chat:readonly`、`contact:user.id:readonly`、`contact:user.base:readonly`、`contact:user.email:readonly`。
+3. 在事件与回调里把回调订阅方式设为长连接，添加回调 `card.action.trigger`。
+4. 把可用范围设为覆盖所有可能被邀请的人。范围外的人无法通过卡片加入。
+5. 发布新版本。
+
+然后在 `.env` 里设置 `MARVIS_LARK_INVITE_ENABLED=true`，运行 `docker compose -f docker-compose.selfhost.yml up -d`。可选设置 `MARVIS_DESKTOP_DOWNLOAD_URL`，卡片上会显示“下载 Marvis”按钮。开启 Marvis Cloud 席位容量时，飞书邀请不可用。
+
+<Callout type="warning">
+同一个飞书应用只在一个部署里开启飞书邀请。飞书把每次卡片点击推给该应用的任意一条长连接，推到未开启的部署时，这次点击会丢失。
+</Callout>
+
 ### CLI
 
 在终端里不带 `--server-url` 执行 `marvis setup self-host`，命令会在网络里查找约 3 秒，并列出找到的服务器。运行在本机的服务器（`http://localhost:13840`）排第一并默认选中，Desktop 正在使用的服务器排在它后面。最后一项可以手动输入地址。

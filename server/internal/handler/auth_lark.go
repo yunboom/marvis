@@ -153,6 +153,12 @@ func larkLoginCredentials() (appID, appSecret string, ok bool) {
 	return appID, appSecret, appID != "" && appSecret != ""
 }
 
+// LarkLoginCredentials 返回飞书登录应用的 App ID 与 App Secret，任一为空时 ok 为 false。
+// 供 cmd/server 在启用飞书邀请时复用同一个应用，不另开一套配置。
+func LarkLoginCredentials() (appID, appSecret string, ok bool) {
+	return larkLoginCredentials()
+}
+
 // larkUserEmail 返回飞书用户的登录邮箱：优先 email，没有时取 enterprise_email，去掉空白并转小写；都没有时返回空串。
 func larkUserEmail(user *larkUserInfo) string {
 	email := strings.ToLower(strings.TrimSpace(user.Email))

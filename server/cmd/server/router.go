@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/yunboom/marvis/server/internal/analytics"
@@ -533,6 +534,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	if seatcapacity.CanRunWorker(h.SeatCapacity) {
 		h.SeatCapacityWorker = seatcapacity.NewWorker(queries, h.SeatCapacity, capacityLocker, seatcapacity.WorkerConfig{})
 	}
+	// 飞书邀请依赖上面的席位容量判断：席位容量开启（连了 Cloud）时整体不启用，所以必须排在它后面。
+	configureLarkInvite(h)
 	if opts.BusinessMetrics != nil {
 		// Wire the BusinessMetrics receiver into the cloud runtime client
 		// so every outbound Fleet/Gateway request feeds the
@@ -1727,6 +1730,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		r.Patch("/api/me/onboarding", h.PatchOnboarding)
 		r.Post("/api/me/onboarding/complete", h.CompleteOnboarding)
 		r.Post("/api/me/onboarding/cloud-waitlist", h.JoinCloudWaitlist)
+		// 飞书邀请是否可用，成员页据此决定显示列表还是未配置提示；所有已登录用户可读。
+		r.Get("/api/lark/status", h.GetLarkInviteStatus)
 		// Credential minting is human-only (MUL-8154): an agent task token
 		// (mat_) or cloud-node PAT (mcn_) authenticates as its owner, so
 		// without this guard a prompt-injected agent could trade its scoped,
@@ -1804,6 +1809,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					// because opening an issue is what asks for it; executable
 					// bytes stay off the authenticated app/API origin.
 					r.Get("/plugins/{installationId}/surfaces/{surfaceKey}/launch", h.GetPluginSurfaceLaunch)
+					// 通过飞书邀请卡片加入后的首次进入提示，只针对当前用户，成员可读。
+					r.Get("/lark-invites/welcome", h.GetLarkInviteWelcome)
+					r.Post("/lark-invites/welcome/ack", h.AckLarkInviteWelcome)
 				})
 				// Admin-level access
 				r.Group(func(r chi.Router) {
@@ -1825,6 +1833,13 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Post("/share-links", h.CreateShareLink)
 					r.Delete("/share-links/{linkId}", h.RevokeShareLink)
 					r.Get("/share-links", h.ListShareLinks)
+					// 飞书邀请卡片（管理员或所有者）。智能体代发时，处理函数再校验任务发起人。
+					r.Post("/lark-invites", h.SendLarkInvites)
+					r.Get("/lark-invites", h.ListLarkInvites)
+					r.Get("/lark-invites/{inviteId}", h.GetLarkInvite)
+					r.Delete("/lark-invites/{inviteId}", h.RevokeLarkInvite)
+					r.Get("/lark/chats", h.ListLarkChats)
+					r.Get("/lark/users/lookup", h.LookupLarkUser)
 					// Custom runtime profile mutations (admin-only).
 					r.Post("/runtime-profiles", h.CreateRuntimeProfile)
 					r.Patch("/runtime-profiles/{profileId}", h.UpdateRuntimeProfile)
@@ -2647,6 +2662,137 @@ func buildLarkConnector(installSvc *lark.InstallationService, apiClient lark.API
 		return lark.NewNoopConnector(slog.Default()), "noop"
 	}
 	return conn, "ws-long-conn"
+}
+
+const (
+	// larkInviteEnabledEnv 是飞书邀请卡片的总开关，默认关闭。
+	larkInviteEnabledEnv = "MARVIS_LARK_INVITE_ENABLED"
+	// desktopDownloadURLEnv 是邀请卡片上“下载 Marvis”按钮的链接，为空时卡片不显示该按钮。
+	desktopDownloadURLEnv = "MARVIS_DESKTOP_DOWNLOAD_URL"
+
+	// 下面三个与按 agent 绑定的飞书机器人共用同一组部署级覆盖项。
+	larkHTTPBaseURLEnv     = "MARVIS_LARK_HTTP_BASE_URL"
+	larkCallbackBaseURLEnv = "MARVIS_LARK_CALLBACK_BASE_URL"
+	larkWSProxyURLEnv      = "MARVIS_LARK_WS_PROXY_URL"
+)
+
+// 飞书邀请未启用时写进启动日志的原因。
+const (
+	larkInviteReasonSwitchOff       = "switch is off"
+	larkInviteReasonMissingLogin    = "feishu login app credentials are missing"
+	larkInviteReasonSeatCapacity    = "seat capacity is enabled"
+	larkInviteReasonConnectorFailed = "connector init failed"
+)
+
+// larkInviteEnabledValues 是开关视为开启的取值，比较前统一去空白并转小写。
+var larkInviteEnabledValues = map[string]struct{}{
+	"true": {},
+	"1":    {},
+	"yes":  {},
+}
+
+// larkInviteEnabled 读取开关：值为 "true"、"1"、"yes"（不区分大小写）时开启。
+func larkInviteEnabled() bool {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv(larkInviteEnabledEnv)))
+	_, ok := larkInviteEnabledValues[value]
+
+	return ok
+}
+
+// configureLarkInvite 按开关把飞书邀请卡片接到 handler 上。
+// 开关开启、飞书登录应用凭据齐全、席位容量未开启（没连 Cloud）三者同时满足才启用，
+// 启用时设置 LarkInviteAPI、LarkInviteCreds、LarkInviteDownloadURL、LarkInviteConn；
+// 否则四个字段都保持零值，相关接口返回 lark_not_configured，并在启动日志里写明原因。
+// 本函数只构造对象，不连飞书；长连接由 main 在 sweepCtx 下启动。
+func configureLarkInvite(h *handler.Handler) {
+	if !larkInviteEnabled() {
+		slog.Info("lark invite cards disabled", "reason", larkInviteReasonSwitchOff, "env", larkInviteEnabledEnv)
+
+		return
+	}
+
+	appID, appSecret, ok := handler.LarkLoginCredentials()
+	if !ok {
+		slog.Warn("lark invite cards disabled", "reason", larkInviteReasonMissingLogin)
+
+		return
+	}
+
+	// 席位容量开启时飞书邀请整体不可用，不为它新增席位意图类型。
+	if h.SeatCapacity != nil {
+		slog.Warn("lark invite cards disabled", "reason", larkInviteReasonSeatCapacity)
+
+		return
+	}
+
+	creds := lark.InstallationCredentials{
+		AppID:     appID,
+		AppSecret: appSecret,
+		Region:    lark.RegionFeishu,
+	}
+
+	conn, err := buildLarkInviteConnection(h, creds)
+	if err != nil {
+		slog.Error("lark invite cards disabled", "reason", larkInviteReasonConnectorFailed, "error", err)
+
+		return
+	}
+
+	downloadURL := strings.TrimSpace(os.Getenv(desktopDownloadURLEnv))
+
+	h.LarkInviteAPI = lark.NewInviteAPIClient(lark.HTTPClientConfig{
+		BaseURL: strings.TrimSpace(os.Getenv(larkHTTPBaseURLEnv)),
+		Logger:  slog.Default(),
+	})
+	h.LarkInviteCreds = creds
+	h.LarkInviteDownloadURL = downloadURL
+	h.LarkInviteConn = conn
+
+	slog.Info("lark invite cards enabled", "app_id", appID, "download_button", downloadURL != "")
+}
+
+// buildLarkInviteConnection 构造飞书登录应用的卡片回调长连接，写法对照 buildLarkConnector，
+// 区别是凭据固定取登录应用、不查 installation 表，事件帧一律丢弃，卡片回调交给 h.HandleLarkInviteCardAction。
+// 这里只构造对象，真正拨号发生在 InviteConnection.Run。
+func buildLarkInviteConnection(h *handler.Handler, creds lark.InstallationCredentials) (*lark.InviteConnection, error) {
+	endpointFetcher, err := lark.NewHTTPConnectionTokenFetcher(lark.HTTPConnectionTokenConfig{
+		BaseURL: strings.TrimSpace(os.Getenv(larkCallbackBaseURLEnv)),
+		Logger:  slog.Default(),
+	})
+	if err != nil {
+		return nil, pkgerrors.Wrap(err, "build lark invite endpoint fetcher")
+	}
+
+	dialer := lark.NewGorillaDialer()
+	if proxyURL := strings.TrimSpace(os.Getenv(larkWSProxyURLEnv)); proxyURL != "" {
+		dialer.ProxyURL = proxyURL
+	}
+
+	connector, err := lark.NewWSLongConnConnector(larkInviteConnectorConfig(h, creds, endpointFetcher, dialer))
+	if err != nil {
+		return nil, pkgerrors.Wrap(err, "build lark invite ws connector")
+	}
+
+	return lark.NewInviteConnection(lark.InviteConnectionConfig{
+		Connector: connector,
+		AppID:     creds.AppID,
+		Logger:    slog.Default(),
+	}), nil
+}
+
+// larkInviteConnectorConfig 组装邀请长连接的配置：凭据固定取登录应用，事件帧一律丢弃，
+// 卡片回调交给 h.HandleLarkInviteCardAction。
+func larkInviteConnectorConfig(h *handler.Handler, creds lark.InstallationCredentials, endpointFetcher lark.EndpointFetcher, dialer lark.WSDialer) lark.WSConnectorConfig {
+	return lark.WSConnectorConfig{
+		Dialer:          dialer,
+		EndpointFetcher: endpointFetcher,
+		FrameDecoder:    lark.NewDropAllFrameDecoder(),
+		CredentialsProvider: lark.CredentialsProviderFunc(func(context.Context, lark.Installation) (lark.InstallationCredentials, error) {
+			return creds, nil
+		}),
+		Logger:      slog.Default(),
+		CardHandler: h.HandleLarkInviteCardAction,
+	}
 }
 
 // membershipChecker implements realtime.MembershipChecker using database queries.

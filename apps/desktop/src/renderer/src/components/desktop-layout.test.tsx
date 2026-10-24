@@ -69,6 +69,7 @@ vi.mock("@marvis/views/layout", () => ({
   AppSidebar: () => null,
   GlobalShortcuts: () => null,
   NavigationProgress: () => null,
+  CurrentWorkspaceLarkInviteWelcome: () => null,
 }));
 
 vi.mock("@marvis/views/modals/registry", () => ({ ModalRegistry: () => null }));

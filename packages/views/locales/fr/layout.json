@@ -64,5 +64,9 @@
     "show_more_pins": "Afficher {{count}} de plus…",
     "show_fewer_pins": "Afficher moins",
     "unread_overflow": "99+"
+  },
+  "lark_invite_welcome": {
+    "title": "Vous avez rejoint {{workspace}}",
+    "description": "Via l’invitation Feishu de {{inviter}}. Rôle : {{role}}."
   }
 }
