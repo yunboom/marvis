@@ -179,13 +179,11 @@ vi.mock("@marvis/core/modals", () => ({
 // Mock dnd-kit
 let lastOnDragEnd: any = null;
 let lastOnDragOver: any = null;
-let lastOnDragStart: any = null;
 
 vi.mock("@dnd-kit/core", () => ({
-  DndContext: ({ children, onDragEnd, onDragOver, onDragStart }: any) => {
+  DndContext: ({ children, onDragEnd, onDragOver }: any) => {
     lastOnDragEnd = onDragEnd;
     lastOnDragOver = onDragOver;
-    lastOnDragStart = onDragStart;
     return children;
   },
   DragOverlay: () => null,
@@ -402,48 +400,9 @@ describe("SwimLaneView", () => {
     expect(screen.getAllByText("In Progress").length).toBeGreaterThan(0);
   });
 
-  it("lists only the statuses that hold cards inside a cell", () => {
-    const { container } = renderWithI18n(
-      <SwimLaneView issues={mockIssues} onMoveIssue={vi.fn()} />,
-    );
 
-    const noParent = container.querySelector('[data-swimlane-lane="parent:none"]')!;
-    expect(noParent.querySelector('[data-swimlane-status="backlog"]')).not.toBeNull();
-    expect(noParent.querySelector('[data-swimlane-status="done"]')).toBeNull();
-  });
 
-  it("shows every live status of a category as a drop target while a card is dragged", () => {
-    const { container } = renderWithI18n(
-      <SwimLaneView issues={mockIssues} onMoveIssue={vi.fn()} />,
-    );
 
-    act(() => {
-      lastOnDragStart({ active: { id: "orphan-1" } });
-    });
-
-    const noParent = container.querySelector('[data-swimlane-lane="parent:none"]')!;
-    const ended = noParent.querySelector('[data-swimlane-cell="ended"]')!;
-    expect(ended.querySelector('[data-swimlane-status="done"]')).not.toBeNull();
-    expect(ended.querySelector('[data-swimlane-status="cancelled"]')).not.toBeNull();
-  });
-
-  it("previews three cards per status and reveals the rest in place", () => {
-    const backlog = [1, 2, 3, 4].map((n) => ({
-      ...mockIssues.find((issue) => issue.id === "orphan-1")!,
-      id: `backlog-${n}`,
-      number: 100 + n,
-      identifier: `PROJ-${100 + n}`,
-      title: `Backlog Card ${n}`,
-      position: n,
-    }));
-    renderWithI18n(<SwimLaneView issues={backlog} onMoveIssue={vi.fn()} />);
-
-    expect(screen.queryByText("Backlog Card 4")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /1 more/i }));
-
-    expect(screen.getByText("Backlog Card 4")).toBeInTheDocument();
-  });
 
   // MUL-4290: `cancelled` is a first-class default status. Status columns come
   // from `visibleStatuses` in ALL_STATUSES order, so the Cancelled column
@@ -474,7 +433,7 @@ describe("SwimLaneView", () => {
     updated_at: "2026-01-01T00:00:00Z",
   };
 
-  it("renders a Cancelled column and its cards by default", () => {
+  it("renders a Cancelled lane by default, collapsed like the status board", () => {
     renderWithI18n(
       // No visibleStatuses prop → default (ALL_STATUSES) includes cancelled.
       <SwimLaneView
@@ -483,8 +442,12 @@ describe("SwimLaneView", () => {
       />,
     );
 
-    expect(screen.getByText("Cancelled")).toBeInTheDocument();
-    expect(screen.getByText("Cancelled Orphan")).toBeInTheDocument();
+    const toggles = screen.getAllByRole("button", { name: "Cancelled" });
+    expect(toggles.length).toBeGreaterThan(0);
+    for (const toggle of toggles) {
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    }
+    expect(screen.queryByText("Cancelled Orphan")).not.toBeInTheDocument();
   });
 
   // Cells are CATEGORIES, cards carry concrete status KEYS. Keying the cell by
@@ -527,6 +490,38 @@ describe("SwimLaneView", () => {
 
     expect(screen.queryByText("Cancelled")).not.toBeInTheDocument();
     expect(screen.queryByText("Cancelled Orphan")).not.toBeInTheDocument();
+  });
+
+  it("stacks every status of a category in each cell, like the status board", () => {
+    const { container } = renderWithI18n(
+      <SwimLaneView issues={mockIssues} onMoveIssue={vi.fn()} />,
+    );
+
+    const noParent = container.querySelector('[data-swimlane-lane="parent:none"]')!;
+    const ended = noParent.querySelector('[data-swimlane-cell="ended"]')!;
+    // Empty lanes still render, collapsed to their header, and stay droppable.
+    expect(ended.querySelector('[data-board-lane="done"]')).not.toBeNull();
+    expect(ended.querySelector('[data-board-lane="cancelled"]')).not.toBeNull();
+    expect(noParent.querySelector('[data-board-lane="backlog"]')).not.toBeNull();
+  });
+
+  it("previews four cards per status and reveals the rest in place", () => {
+    const backlog = [1, 2, 3, 4, 5].map((n) => ({
+      ...mockIssues.find((issue) => issue.id === "orphan-1")!,
+      id: `backlog-${n}`,
+      number: 100 + n,
+      identifier: `PROJ-${100 + n}`,
+      title: `Backlog Card ${n}`,
+      position: n,
+    }));
+    renderWithI18n(<SwimLaneView issues={backlog} onMoveIssue={vi.fn()} />);
+
+    expect(screen.getByText("Backlog Card 4")).toBeInTheDocument();
+    expect(screen.queryByText("Backlog Card 5")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /1 more/i }));
+
+    expect(screen.getByText("Backlog Card 5")).toBeInTheDocument();
   });
 
   it("renders parent swimlanes and orphans section", () => {

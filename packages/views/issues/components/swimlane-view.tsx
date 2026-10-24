@@ -16,7 +16,6 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  useDroppable,
   pointerWithin,
   closestCenter,
   type CollisionDetection,
@@ -27,7 +26,7 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Virtuoso } from "react-virtuoso";
-import { ChevronDown, ChevronRight, GripVertical, Pencil, Plus } from "lucide-react";
+import { ChevronRight, GripVertical, Pencil } from "lucide-react";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import type {
   Issue,
@@ -49,11 +48,10 @@ import { useActorName } from "@marvis/core/workspace/hooks";
 import { childrenByParentsOptions, issueKeys } from "@marvis/core/issues/queries";
 import { sortIssues } from "../utils/sort";
 import { BUILT_IN_STATUS_ORDER } from "@marvis/core/issues/config";
-import { DraggableBoardCard, BoardCardContent, DragLift, issueDropAnimation } from "./board-card";
+import { BoardCardContent, DragLift, issueDropAnimation } from "./board-card";
+import { StatusLane, useFocusedLane, type StatusGroup } from "./status-lane-board";
 import { StatusIcon } from "./status-icon";
-import { Button } from "@marvis/ui/components/ui/button";
 import { InfiniteScrollSentinel } from "./infinite-scroll-sentinel";
-import { ListLoadMoreFooter } from "./list-load-more-footer";
 import { AppLink } from "../../navigation";
 import { ProjectIcon } from "../../projects/components/project-icon";
 import { ActorAvatar } from "../../common/actor-avatar";
@@ -62,8 +60,8 @@ import { useRestoredScrollOffset, useRestoredScrollRef } from "../../platform";
 import { DeferredTooltip } from "../../common/deferred-tooltip";
 import type { ChildProgress } from "./list-row";
 import { useT } from "../../i18n";
-import { useStatusLabel } from "../utils/status-label";
 import type { IssueCreateDefaults } from "../surface/types";
+import type { IssueStatusPagination } from "../surface/use-issue-status-branches";
 import type {
   IssueGroupBranches,
   IssueGroupPageState,
@@ -74,9 +72,6 @@ import type {
 // scrolling instead of crushing the cards.
 const SWIMLANE_GRID_CLASS = "grid grid-cols-[repeat(4,minmax(240px,1fr))] gap-3.5";
 const SWIMLANE_MIN_WIDTH_CLASS = "min-w-[1002px]";
-
-/** Cards a status group in a cell shows before its "N more" button. */
-const CELL_PREVIEW_COUNT = 3;
 
 // A swimlane row (header + one row of card cells) is ~300px+ tall — a
 // viewport fits ~3. The generic VIRTUOSO_SEED_COUNT (30, sized for 36px list
@@ -1676,7 +1671,6 @@ function DraggableSwimLane({
               projectId={projectId}
               onCreateIssue={onCreateIssue}
               groupPagination={groupPagination}
-              statusCatalog={statusCatalog}
             />
           ))}
         </div>
@@ -1686,9 +1680,9 @@ function DraggableSwimLane({
 }
 
 /**
- * One lane × category cell. Only statuses holding cards render; while a card
- * is being dragged every status of the category shows up as its own drop
- * target, so a drop still names one concrete status.
+ * One lane × category cell: the status board's lanes, scoped to this swimlane.
+ * Each status lane keeps the classic `swim:<lane>:<status>` droppable id, so
+ * the swimlane's drag handlers work unchanged.
  */
 function SwimLaneColumnCell({
   columnKey,
@@ -1702,7 +1696,6 @@ function SwimLaneColumnCell({
   projectId,
   onCreateIssue,
   groupPagination,
-  statusCatalog,
 }: {
   columnKey: BoardStatusColumn["key"];
   statuses: IssueStatus[];
@@ -1715,292 +1708,83 @@ function SwimLaneColumnCell({
   projectId?: string;
   onCreateIssue?: (defaults: IssueCreateDefaults) => void;
   groupPagination?: Record<string, IssueGroupPageState>;
-  statusCatalog: IssueStatusCatalog;
 }) {
-  const { t } = useT("issues");
-  const { entryOf } = statusCatalog;
-  const readOnly = lane.isOrphan;
-  const dragging = activeIssueId !== null;
+  const groups = useMemo<StatusGroup[]>(
+    () =>
+      statuses.map((status) => ({
+        id: cellId(lane.key, status),
+        title: status,
+        status,
+        createData: { status, ...lane.moveUpdates },
+      })),
+    [statuses, lane],
+  );
 
-  const groups = statuses.flatMap((status) => {
-    const issueIds = localCells[lane.key]?.[status] ?? EMPTY_IDS;
-    const serverKey = lane.serverCellKeys?.[status];
-    const page = serverKey ? groupPagination?.[serverKey] : undefined;
-    const count = page?.total ?? issueIds.length;
-    const archived = !!entryOf(status)?.archived_at;
-    if (count === 0 && !(dragging && !archived)) return [];
+  const columns = useMemo(
+    () =>
+      Object.fromEntries(
+        statuses.map((status) => [cellId(lane.key, status), localCells[lane.key]?.[status] ?? EMPTY_IDS]),
+      ),
+    [statuses, lane.key, localCells],
+  );
 
-    return [{ status, issueIds, page, count, archived }];
-  });
+  const statusPagination = useMemo(() => {
+    const pages = statuses.flatMap((status) => {
+      const serverKey = lane.serverCellKeys?.[status];
+      const page = serverKey ? groupPagination?.[serverKey] : undefined;
+      return page ? [[status, page] as const] : [];
+    });
+    return pages.length > 0 ? (Object.fromEntries(pages) as IssueStatusPagination) : undefined;
+  }, [statuses, lane.serverCellKeys, groupPagination]);
 
-  // An empty cell creates into the category's first live status.
-  const createStatus = statuses.find((status) => !entryOf(status)?.archived_at);
-  const handleAdd = () => {
-    if (!createStatus) return;
-    const data: IssueCreateDefaults = { status: createStatus, ...lane.moveUpdates };
-    if (projectId) data.project_id = projectId;
-    onCreateIssue?.(data);
+  const [focused, setFocusedStatus] = useFocusedLane(groups);
+  const mainLanes = focused ? groups.filter((group) => group.status === focused) : groups;
+  const pinnedLanes = focused ? groups.filter((group) => group.status !== focused) : [];
+
+  const shared = {
+    columns,
+    issueMap,
+    childProgressMap,
+    projectMap,
+    statusPagination,
+    projectId,
+    // The "Other parents" lane is display-only: nothing can be created in it.
+    onCreateIssue: lane.isOrphan ? undefined : onCreateIssue,
+    activeIssueId,
   };
 
   return (
     <div
       data-swimlane-cell={columnKey}
-      className="group/cell flex min-h-16 min-w-0 flex-col gap-1 rounded-[16px] bg-surface-sunken p-1.5"
+      className="flex min-w-0 flex-col rounded-[16px] bg-surface-sunken p-1.5"
     >
-      {groups.map((group) => (
-        <SwimLaneStatusGroup
-          key={group.status}
-          cellId={cellId(lane.key, group.status)}
-          status={group.status}
-          issueIds={group.issueIds}
-          count={group.count}
-          page={group.page}
-          archived={group.archived}
-          lane={lane}
-          activeIssueId={activeIssueId}
-          issueMap={issueMap}
-          childProgressMap={childProgressMap}
-          projectMap={projectMap}
-          projectId={projectId}
-          onCreateIssue={readOnly ? undefined : onCreateIssue}
-          statusCatalog={statusCatalog}
-        />
-      ))}
-      {groups.length === 0 && !readOnly && createStatus && onCreateIssue && (
-        <DeferredTooltip
-          content={t(($) => $.board.add_issue_tooltip)}
-          trigger={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t(($) => $.board.add_issue_tooltip)}
-              className="h-auto w-full flex-1 rounded-[10px] text-faint-foreground opacity-0 transition-opacity group-hover/cell:opacity-100 focus-visible:opacity-100"
-              onClick={handleAdd}
-            >
-              <Plus className="size-3.5" />
-            </Button>
-          }
-        />
-      )}
-    </div>
-  );
-}
-
-function SwimLaneStatusGroup({
-  cellId: cId,
-  status,
-  issueIds,
-  count,
-  page,
-  archived,
-  lane,
-  activeIssueId,
-  issueMap,
-  childProgressMap,
-  projectMap,
-  projectId,
-  onCreateIssue,
-  statusCatalog,
-}: {
-  cellId: string;
-  status: IssueStatus;
-  issueIds: string[];
-  count: number;
-  page?: IssueGroupPageState;
-  archived: boolean;
-  lane: LaneGroup;
-  activeIssueId: string | null;
-  issueMap: Map<string, Issue>;
-  childProgressMap: Map<string, ChildProgress>;
-  projectMap?: Map<string, Project>;
-  projectId?: string;
-  /** Absent on display-only (orphan) lanes. */
-  onCreateIssue?: (defaults: IssueCreateDefaults) => void;
-  statusCatalog: IssueStatusCatalog;
-}) {
-  // The orphan lane's groups stay enabled in the collision graph so drops on
-  // them are absorbed here instead of falling through to the nearest real
-  // cell. The `isOrphan` guards in handleDragOver / handleDragEnd reject the
-  // actual move.
-  const { setNodeRef, isOver: droppableIsOver } = useDroppable({ id: cId });
-  const { t } = useT("issues");
-  const wsId = useWorkspaceId();
-  const labelOf = useStatusLabel(wsId);
-  const { categoryOf, colorOf, iconOf } = statusCatalog;
-  // Never highlight a drop the guards will reject.
-  const isOver = !lane.isOrphan && !archived && droppableIsOver;
-
-  // "N more" expansion is ephemeral: it resets on remount.
-  const [expanded, setExpanded] = useState(false);
-  const [revealFrom, setRevealFrom] = useState<number | null>(null);
-
-  const visibleIds = useMemo(() => {
-    if (expanded) return issueIds;
-
-    const preview = issueIds.slice(0, CELL_PREVIEW_COUNT);
-    // A card dragged into this group lands at its end; keep it on screen.
-    if (activeIssueId && !preview.includes(activeIssueId) && issueIds.includes(activeIssueId)) {
-      preview.push(activeIssueId);
-    }
-
-    return preview;
-  }, [activeIssueId, expanded, issueIds]);
-
-  const resolvedIssues = useMemo(
-    () =>
-      visibleIds.flatMap((id) => {
-        const issue = issueMap.get(id);
-        return issue ? [issue] : [];
-      }),
-    [visibleIds, issueMap],
-  );
-
-  const hiddenCount = Math.max(0, count - visibleIds.length);
-
-  const expand = () => {
-    setExpanded(true);
-    setRevealFrom(visibleIds.length);
-    // A server-paged cell may hold only the preview so far; fetch the next
-    // page right away instead of waiting for the footer.
-    if (page?.hasMore && !page.isFetching && issueIds.length <= CELL_PREVIEW_COUNT) {
-      page.loadMore();
-    }
-  };
-
-  const collapseExpansion = () => {
-    setExpanded(false);
-    setRevealFrom(null);
-  };
-
-  const handleAdd = () => {
-    const data: IssueCreateDefaults = { status, ...lane.moveUpdates };
-    // Per-page project override takes precedence (e.g. Project Detail
-    // pre-fills its own project id regardless of grouping).
-    if (projectId) data.project_id = projectId;
-    onCreateIssue?.(data);
-  };
-
-  const heading = (
-    <span className="inline-flex min-w-0 items-center gap-1.5 text-caption font-semibold">
-      <StatusIcon
-        category={categoryOf(status)}
-        color={colorOf(status)}
-        icon={iconOf(status)}
-        status={status}
-        className="size-3 shrink-0"
-      />
-      <span className="truncate">{labelOf(status)}</span>
-    </span>
-  );
-
-  // An empty group only renders while a card is in flight: a dashed drop zone.
-  if (count === 0) {
-    return (
-      <div
-        ref={setNodeRef}
-        data-swimlane-status={status}
-        className={cn(
-          "flex h-9 items-center rounded-[10px] border-[1.5px] border-dashed px-2.5 transition-colors duration-(--motion-fast) ease-out",
-          isOver
-            ? "border-foreground bg-card text-foreground"
-            : "border-border text-muted-foreground",
-        )}
-      >
-        {heading}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      data-swimlane-status={status}
-      className={cn(
-        "group/status flex flex-col gap-1.5 rounded-xl pb-0.5 transition-colors duration-(--motion-fast) ease-out",
-        isOver && "bg-surface-hover",
-      )}
-    >
-      <div className="flex h-6 items-center gap-1.5 px-1.5">
-        {heading}
-        <span className="shrink-0 text-caption tabular-nums text-faint-foreground">{count}</span>
-        <div className="ml-auto flex shrink-0 items-center gap-0.5">
-          {expanded && (
-            <Button
-              variant="ghost"
-              size="xs"
-              className="h-5 rounded-full px-1.5 text-muted-foreground"
-              onClick={collapseExpansion}
-            >
-              {t(($) => $.board.lane_collapse)}
-            </Button>
-          )}
-          {/* One of these per lane×status group — eagerly mounted tooltip
-              roots here were the single largest slice of swimlane mount cost. */}
-          {onCreateIssue && !archived && (
-            <DeferredTooltip
-              content={t(($) => $.board.add_issue_tooltip)}
-              trigger={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label={t(($) => $.board.add_issue_tooltip)}
-                  className="size-5 rounded-full text-muted-foreground opacity-0 transition-opacity group-hover/status:opacity-100 focus-visible:opacity-100"
-                  onClick={handleAdd}
-                >
-                  <Plus className="size-3" />
-                </Button>
-              }
-            />
-          )}
-        </div>
-      </div>
-      <SortableContext items={visibleIds} strategy={verticalListSortingStrategy}>
-        {resolvedIssues.map((issue, index) => (
-          <div
-            key={issue.id}
-            className={cn(
-              revealFrom !== null &&
-                index >= revealFrom &&
-                "animate-in fade-in slide-in-from-top-1 duration-200 ease-out motion-reduce:animate-none",
-            )}
-          >
-            <DraggableBoardCard
-              issue={issue}
-              childProgress={childProgressMap.get(issue.id)}
-              project={
-                issue.project_id ? projectMap?.get(issue.project_id) : undefined
-              }
-            />
-          </div>
+      <div className="flex flex-col gap-1.5">
+        {mainLanes.map((group) => (
+          <StatusLane
+            key={group.id}
+            group={group}
+            mode={focused ? "focused" : "normal"}
+            onFocusChange={setFocusedStatus}
+            {...shared}
+          />
         ))}
-      </SortableContext>
-      {!expanded && hiddenCount > 0 && (
-        <Button
-          variant="ghost"
-          size="xs"
-          className="w-full rounded-lg text-muted-foreground"
-          onClick={expand}
-        >
-          {t(($) => $.board.lane_more, { count: hiddenCount })}
-          <ChevronDown className="size-3" />
-        </Button>
-      )}
-      {expanded && page && (
-        <ListLoadMoreFooter
-          hasMore={page.hasMore}
-          isLoading={page.isLoading || page.isFetching}
-          total={page.total}
-          onLoadMore={page.loadMore}
-          isError={page.isError}
-          onRetry={page.retry}
-        />
+      </div>
+      {pinnedLanes.length > 0 && (
+        <div className="mt-1.5 flex flex-col gap-1 border-t border-border/60 pt-1.5">
+          {pinnedLanes.map((group) => (
+            <StatusLane
+              key={group.id}
+              group={group}
+              mode="pinned"
+              onFocusChange={setFocusedStatus}
+              {...shared}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
 }
-
 
 /**
  * Memoized: the surface controller re-renders on loading-flag flips (e.g. a
