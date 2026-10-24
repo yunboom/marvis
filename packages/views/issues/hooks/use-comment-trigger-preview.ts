@@ -62,12 +62,17 @@ function queryKeyMatchesPreviewContext(
   );
 }
 
+// Text with no mentions: every such draft gets the same answer, so it needs
+// neither a debounce nor the draft itself — the probe stands in for it.
+const PLAIN_SIGNATURE = "nonempty|";
+const PLAIN_PREVIEW_PROBE = ".";
+
 function useDebouncedSignature(signature: string) {
   const [debouncedSignature, setDebouncedSignature] = useState("empty");
 
   useEffect(() => {
-    if (signature === "empty") {
-      setDebouncedSignature("empty");
+    if (signature === "empty" || signature === PLAIN_SIGNATURE) {
+      setDebouncedSignature(signature);
       return;
     }
 
@@ -86,11 +91,15 @@ export function useCommentTriggerPreview({
   parentId,
   editingCommentId,
   content,
+  prefetch = false,
 }: {
   issueId: string;
   parentId?: string;
   editingCommentId?: string;
   content: string;
+  /** Fetch the no-mention answer while the draft is still empty, so the
+   *  recipient chips are ready on the first keystroke. */
+  prefetch?: boolean;
 }): UseCommentTriggerPreviewResult {
   const signature = useMemo(() => commentTriggerPreviewSignature(content), [content]);
   const hasAllMembersMention = useMemo(
@@ -98,6 +107,10 @@ export function useCommentTriggerPreview({
     [content],
   );
   const debouncedSignature = useDebouncedSignature(signature);
+  // Plain text skips the debounce render; an empty draft being prefetched
+  // queries the plain answer it will show on the first keystroke.
+  const settledSignature = signature === PLAIN_SIGNATURE ? PLAIN_SIGNATURE : debouncedSignature;
+  const querySignature = settledSignature === "empty" && prefetch ? PLAIN_SIGNATURE : settledSignature;
   const contentRef = useRef(content);
   const parentKey = parentId ?? "";
   const editingKey = editingCommentId ?? "";
@@ -107,9 +120,13 @@ export function useCommentTriggerPreview({
   }, [content]);
 
   const previewQuery = useQuery({
-    queryKey: [...issueKeys.commentTriggerPreview(issueId), parentKey, editingKey, debouncedSignature],
-    queryFn: () => api.previewCommentTriggers(issueId, contentRef.current, parentId, editingCommentId),
-    enabled: signature !== "empty" && debouncedSignature !== "empty",
+    queryKey: [...issueKeys.commentTriggerPreview(issueId), parentKey, editingKey, querySignature],
+    queryFn: () => {
+      const draft = contentRef.current;
+      const body = commentTriggerPreviewSignature(draft) === "empty" ? PLAIN_PREVIEW_PROBE : draft;
+      return api.previewCommentTriggers(issueId, body, parentId, editingCommentId);
+    },
+    enabled: querySignature !== "empty",
     retry: false,
     // The answer depends on live queue state (pending-task dedup), not just
     // the mention set, so a cached result must revalidate when its signature
@@ -125,9 +142,19 @@ export function useCommentTriggerPreview({
         : undefined,
   });
 
+  // The prefetched answer shows at once on the first keystroke; revalidate it
+  // then, since run state may have moved while the draft sat empty.
+  const { refetch } = previewQuery;
+  const previousSignatureRef = useRef(signature);
+  useEffect(() => {
+    const previous = previousSignatureRef.current;
+    previousSignatureRef.current = signature;
+    if (prefetch && previous === "empty" && signature === PLAIN_SIGNATURE) void refetch();
+  }, [prefetch, refetch, signature]);
+
   // Loading and errors intentionally surface as "no agents": the preview is
   // an enhancement, and the composer renders nothing for an empty list.
-  if (signature === "empty" || debouncedSignature === "empty") {
+  if (signature === "empty" || settledSignature === "empty") {
     return { agents: [], blocked: [], hasAllMembersMention, isCurrent: signature === "empty" };
   }
 
@@ -135,6 +162,6 @@ export function useCommentTriggerPreview({
     agents: previewQuery.data?.agents ?? [],
     blocked: previewQuery.data?.blocked ?? [],
     hasAllMembersMention,
-    isCurrent: signature === debouncedSignature && previewQuery.isSuccess && !previewQuery.isPlaceholderData,
+    isCurrent: signature === settledSignature && previewQuery.isSuccess && !previewQuery.isPlaceholderData,
   };
 }
