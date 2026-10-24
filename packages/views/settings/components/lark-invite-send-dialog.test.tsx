@@ -279,6 +279,27 @@ describe("LarkInviteSendDialog groups", () => {
     mount();
     expect(await screen.findByText("Could not load groups")).toBeInTheDocument();
   });
+
+  it("shows the localized not-configured error when the group list is refused", async () => {
+    mockApi.listLarkChats.mockRejectedValue(
+      new ApiError("the Feishu app's bot ability is not enabled", 403, "Forbidden", {
+        error: "the Feishu app's bot ability is not enabled",
+        code: "lark_not_configured",
+      }),
+    );
+    mount();
+    expect(await screen.findByText("Feishu app configuration is incomplete")).toBeInTheDocument();
+    expect(screen.queryByText("Could not load groups")).not.toBeInTheDocument();
+    expect(screen.queryByText(/bot ability/)).not.toBeInTheDocument();
+  });
+
+  it("falls back to the generic failure for an error code the dialog does not know", async () => {
+    mockApi.listLarkChats.mockRejectedValue(
+      new ApiError("odd", 502, "Bad Gateway", { error: "odd", code: "something_new" }),
+    );
+    mount();
+    expect(await screen.findByText("Could not load groups")).toBeInTheDocument();
+  });
 });
 
 describe("LarkInviteSendDialog people", () => {

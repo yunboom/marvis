@@ -30,6 +30,11 @@ const (
 	fakeLarkCodeBotNotInChat   = 230002
 	fakeLarkCodeUserNotInScope = 230013
 	fakeLarkCodeUserIDInvalid  = 99992360
+	// fakeLarkCodeBotNotActivated 是应用没开机器人（232025），fakeLarkCodeScopeMissing 是应用缺权限范围（99991672）。
+	fakeLarkCodeBotNotActivated = 232025
+	fakeLarkCodeScopeMissing    = 99991672
+	// fakeLarkCodeUnmapped 是不在任何分类里的飞书错误码。
+	fakeLarkCodeUnmapped = 230099
 )
 
 // fakeInviteSend 记录一次发卡片调用。
@@ -65,6 +70,8 @@ type fakeInviteAPI struct {
 	sendErrs map[string]error // 按 receive_id 命中的发送错误
 	patchErr error
 	botChats []lark.InviteChat
+	// listChatsErr 非空时 ListBotChats 一律返回它，模拟列群接口的业务错误。
+	listChatsErr error
 	// blockGetUser 为 true 时 GetUser 一直阻塞到调用方的 context 结束，模拟通讯录接口无响应。
 	blockGetUser bool
 	// getUserErr 非空时 GetUser 一律返回它，模拟通讯录接口的业务错误。
@@ -109,6 +116,9 @@ func (f *fakeInviteAPI) ListBotChats(_ context.Context, _ lark.InstallationCrede
 	defer f.mu.Unlock()
 
 	f.calls++
+	if f.listChatsErr != nil {
+		return nil, f.listChatsErr
+	}
 
 	return f.botChats, nil
 }
@@ -1435,6 +1445,268 @@ func TestLarkInviteStatusAndInvalidReason(t *testing.T) {
 			}
 			if got := larkInviteInvalidReason(tc.inv, now); got != tc.reason {
 				t.Fatalf("reason = %q, want %q", got, tc.reason)
+			}
+		})
+	}
+}
+
+// larkInviteConfigCases 是应用配置类错误的两种原因：飞书错误码、期望的英文说明。
+var larkInviteConfigCases = []struct {
+	name    string
+	code    int
+	message string
+}{
+	{name: "bot ability off", code: fakeLarkCodeBotNotActivated, message: larkInviteMsgBotNotEnabled},
+	{name: "scope missing", code: fakeLarkCodeScopeMissing, message: larkInviteMsgScopeMissing},
+}
+
+// assertLarkInviteConfigResponse 断言单个错误的接口响应：403、lark_not_configured、按原因区分的说明。
+func assertLarkInviteConfigResponse(t *testing.T, w *httptest.ResponseRecorder, wantMessage string) {
+	t.Helper()
+
+	assertLarkInviteError(t, w, http.StatusForbidden, larkInviteCodeNotConfigured)
+
+	var body map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode error body: %v, body = %s", err, w.Body.String())
+	}
+	if body["error"] != wantMessage {
+		t.Fatalf("message = %q, want %q", body["error"], wantMessage)
+	}
+}
+
+// assertLarkInviteConfigLogged 断言配置类错误按 Warn 记录，没有 Error 级别的日志。
+func assertLarkInviteConfigLogged(t *testing.T, logs *larkInviteLogBuffer) {
+	t.Helper()
+
+	got := logs.String()
+	if !strings.Contains(got, "level=WARN") {
+		t.Fatalf("config error not logged at warn; log was:\n%s", got)
+	}
+	if strings.Contains(got, "level=ERROR") {
+		t.Fatalf("config error logged as an error; log was:\n%s", got)
+	}
+}
+
+// TestListLarkChats_FeishuErrors 列群失败时：应用配置类错误（232025、99991672）与开关关闭同为 403 lark_not_configured，
+// 按 Warn 记录；其余飞书错误仍是 502。
+func TestListLarkChats_FeishuErrors(t *testing.T) {
+	list := func(t *testing.T, listErr error) *httptest.ResponseRecorder {
+		t.Helper()
+
+		api := newFakeInviteAPI()
+		api.listChatsErr = listErr
+		useFakeInviteAPI(t, api)
+
+		req := withURLParam(newRequest(http.MethodGet, "/api/workspaces/"+testWorkspaceID+"/lark/chats", nil), "id", testWorkspaceID)
+		w := httptest.NewRecorder()
+		testHandler.ListLarkChats(w, req)
+
+		return w
+	}
+
+	for _, tc := range larkInviteConfigCases {
+		t.Run(tc.name, func(t *testing.T) {
+			logs := captureLarkInviteLogs(t)
+
+			w := list(t, fmt.Errorf("list bot chats: %w", &lark.APIError{Op: "list bot chats", Code: tc.code, Msg: "feishu says no"}))
+
+			assertLarkInviteConfigResponse(t, w, tc.message)
+			assertLarkInviteConfigLogged(t, logs)
+		})
+	}
+
+	t.Run("other feishu error stays 502", func(t *testing.T) {
+		w := list(t, &lark.APIError{Op: "list bot chats", Code: fakeLarkCodeUnmapped, Msg: "other"})
+
+		if w.Code != http.StatusBadGateway {
+			t.Fatalf("status = %d, want 502, body = %s", w.Code, w.Body.String())
+		}
+	})
+}
+
+// TestLookupLarkUser_FeishuErrors 按邮箱查人失败时：应用配置类错误是 403 lark_not_configured（按 Warn 记录），
+// 找不到用户仍是 404 user_not_found，其余飞书错误仍是 502。
+func TestLookupLarkUser_FeishuErrors(t *testing.T) {
+	lookup := func(t *testing.T, getUserErr error) *httptest.ResponseRecorder {
+		t.Helper()
+
+		api := newFakeInviteAPI()
+		email := uniqueLarkEmail("lookup-err")
+		openID := uniqueLarkID("ou_")
+		api.emails[email] = openID
+		api.users[openID] = lark.InviteUser{OpenID: openID, Name: "赵六"}
+		api.getUserErr = getUserErr
+		useFakeInviteAPI(t, api)
+
+		req := withURLParam(newRequest(http.MethodGet, "/api/workspaces/"+testWorkspaceID+"/lark/users/lookup?email="+email, nil), "id", testWorkspaceID)
+		w := httptest.NewRecorder()
+		testHandler.LookupLarkUser(w, req)
+
+		return w
+	}
+
+	for _, tc := range larkInviteConfigCases {
+		t.Run(tc.name, func(t *testing.T) {
+			logs := captureLarkInviteLogs(t)
+
+			w := lookup(t, fmt.Errorf("get user: %w", &lark.APIError{Op: "get user", Code: tc.code, Msg: "feishu says no"}))
+
+			assertLarkInviteConfigResponse(t, w, tc.message)
+			assertLarkInviteConfigLogged(t, logs)
+		})
+	}
+
+	t.Run("user id invalid stays 404", func(t *testing.T) {
+		w := lookup(t, &lark.APIError{Op: "get user", Code: fakeLarkCodeUserIDInvalid, Msg: "invalid user id"})
+
+		assertLarkInviteError(t, w, http.StatusNotFound, lark.InviteErrUserNotFound)
+	})
+
+	t.Run("other feishu error stays 502", func(t *testing.T) {
+		w := lookup(t, &lark.APIError{Op: "get user", Code: fakeLarkCodeUnmapped, Msg: "other"})
+
+		if w.Code != http.StatusBadGateway {
+			t.Fatalf("status = %d, want 502, body = %s", w.Code, w.Body.String())
+		}
+	})
+}
+
+// TestSendLarkInvites_ConfigErrorBecomesNotConfigured 发送时的应用配置类错误是这个接收方的失败结果，
+// 错误码 lark_not_configured、说明按原因区分，按 Warn 记录；没发出的邀请行删除，带幂等键时也一样。
+func TestSendLarkInvites_ConfigErrorBecomesNotConfigured(t *testing.T) {
+	for _, tc := range larkInviteConfigCases {
+		t.Run(tc.name+" from get user", func(t *testing.T) {
+			logs := captureLarkInviteLogs(t)
+			api := newFakeInviteAPI()
+			email := uniqueLarkEmail("config")
+			openID := uniqueLarkID("ou_")
+			api.emails[email] = openID
+			api.getUserErr = fmt.Errorf("get user: %w", &lark.APIError{Op: "get user", Code: tc.code, Msg: "feishu says no"})
+			useFakeInviteAPI(t, api)
+			cleanupLarkInvitesByTarget(t, email)
+
+			results := decodeLarkInviteResults(t, postLarkInvites(t, map[string]any{
+				"user_emails":      []string{email},
+				"expires_in_hours": 72,
+			}, nil))
+
+			if len(results) != 1 || results[0].Status != larkInviteSendStatusFailed || results[0].Error == nil {
+				t.Fatalf("results = %+v, want one failed result", results)
+			}
+			if got := *results[0].Error; got.Code != larkInviteCodeNotConfigured || got.Message != tc.message {
+				t.Fatalf("error = %+v, want %s / %q", got, larkInviteCodeNotConfigured, tc.message)
+			}
+			if _, ok := loadLarkInviteRow(t, email); ok {
+				t.Fatal("failed target has an invite row")
+			}
+			assertLarkInviteConfigLogged(t, logs)
+		})
+
+		t.Run(tc.name+" from send with key deletes the row", func(t *testing.T) {
+			api := newFakeInviteAPI()
+			chatID := uniqueLarkID("oc_config_")
+			api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "配置群"}
+			api.setSendErr(chatID, &lark.APIError{Op: "send invite card", Code: tc.code, Msg: "feishu says no"})
+			useFakeInviteAPI(t, api)
+			cleanupLarkInvitesByTarget(t, chatID)
+
+			results := decodeLarkInviteResults(t, postLarkInvites(t, map[string]any{
+				"chat_ids":         []string{chatID},
+				"expires_in_hours": 72,
+				"idempotency_key":  uniqueLarkID("config-"),
+			}, nil))
+
+			if len(results) != 1 || results[0].Status != larkInviteSendStatusFailed || results[0].Error == nil {
+				t.Fatalf("results = %+v, want one failed result", results)
+			}
+			if got := *results[0].Error; got.Code != larkInviteCodeNotConfigured || got.Message != tc.message {
+				t.Fatalf("error = %+v, want %s / %q", got, larkInviteCodeNotConfigured, tc.message)
+			}
+			if _, ok := loadLarkInviteRow(t, chatID); ok {
+				t.Fatal("classified config error with a key kept the invite row")
+			}
+		})
+	}
+}
+
+// TestSendLarkInvites_UnclassifiedSendFailureMessages 归不进分类的发送错误不再回显 err.Error()：
+// 飞书接口错误只带错误码和飞书返回的 msg，其余错误用固定文案；完整错误只在 Warn 日志里。
+func TestSendLarkInvites_UnclassifiedSendFailureMessages(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+		want string
+		// leaked 是不应出现在响应里的原始错误片段。
+		leaked []string
+		// logged 是 Warn 日志里应有的完整错误片段。
+		logged string
+	}{
+		{
+			name:   "feishu api error",
+			err:    fmt.Errorf("send lark invite card: %w", &lark.APIError{Op: "send invite card", Code: fakeLarkCodeUnmapped, Msg: "Invalid card content"}),
+			want:   fmt.Sprintf("Feishu API error %d: Invalid card content", fakeLarkCodeUnmapped),
+			leaked: []string{"lark http client", "code=", "send lark invite card"},
+			logged: "lark http client: send invite card",
+		},
+		{
+			name:   "network error",
+			err:    errors.New("Post \"https://open.feishu.cn/open-apis/im/v1/messages\": dial tcp 10.1.2.3:443: connect: connection refused"),
+			want:   larkInviteMsgSendFailed,
+			leaked: []string{"dial tcp", "10.1.2.3", "open-apis"},
+			logged: "dial tcp 10.1.2.3:443",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			logs := captureLarkInviteLogs(t)
+			api := newFakeInviteAPI()
+			chatID := uniqueLarkID("oc_unclassified_")
+			api.chats[chatID] = lark.InviteChat{ChatID: chatID, Name: "失败群"}
+			api.setSendErr(chatID, tc.err)
+			useFakeInviteAPI(t, api)
+			cleanupLarkInvitesByTarget(t, chatID)
+
+			w := postLarkInvites(t, map[string]any{"chat_ids": []string{chatID}, "expires_in_hours": 72}, nil)
+			results := decodeLarkInviteResults(t, w)
+
+			if len(results) != 1 || results[0].Error == nil {
+				t.Fatalf("results = %+v, want one failed result", results)
+			}
+			if got := *results[0].Error; got.Code != larkInviteCodeSendFailed || got.Message != tc.want {
+				t.Fatalf("error = %+v, want %s / %q", got, larkInviteCodeSendFailed, tc.want)
+			}
+			for _, part := range tc.leaked {
+				if strings.Contains(w.Body.String(), part) {
+					t.Fatalf("response leaks %q: %s", part, w.Body.String())
+				}
+			}
+
+			got := logs.String()
+			if !strings.Contains(got, "level=WARN") || !strings.Contains(got, tc.logged) {
+				t.Fatalf("log missing the full error %q; log was:\n%s", tc.logged, got)
+			}
+		})
+	}
+}
+
+// TestLarkInviteUnclassifiedMessage 覆盖说明的边界：飞书没返回 msg 时只带错误码，非飞书错误用固定文案。
+func TestLarkInviteUnclassifiedMessage(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{name: "with msg", err: &lark.APIError{Code: fakeLarkCodeUnmapped, Msg: "bad card"}, want: "Feishu API error 230099: bad card"},
+		{name: "without msg", err: &lark.APIError{Code: fakeLarkCodeUnmapped}, want: "Feishu API error 230099"},
+		{name: "plain error", err: errors.New("boom"), want: larkInviteMsgSendFailed},
+		{name: "database error", err: errors.New("create lark invite: connection reset"), want: larkInviteMsgSendFailed},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := larkInviteUnclassifiedMessage(tc.err); got != tc.want {
+				t.Errorf("larkInviteUnclassifiedMessage = %q, want %q", got, tc.want)
 			}
 		})
 	}

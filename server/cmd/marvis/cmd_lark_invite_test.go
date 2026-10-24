@@ -850,6 +850,18 @@ func TestLarkInviteHelpListsErrorCodes(t *testing.T) {
 	}
 }
 
+// TestLarkInviteHelpExplainsNotConfigured 确认 lark-invite 和 send 的帮助写明 lark_not_configured 也覆盖
+// 飞书应用没开机器人或缺权限的情况。
+func TestLarkInviteHelpExplainsNotConfigured(t *testing.T) {
+	for _, cmd := range []*cobra.Command{newLarkInviteCmd(), newLarkInviteSendCmd()} {
+		for _, want := range []string{"lark_not_configured", "bot ability off", "permission scope"} {
+			if !strings.Contains(cmd.Long, want) {
+				t.Errorf("%s help does not mention %q:\n%s", cmd.Name(), want, cmd.Long)
+			}
+		}
+	}
+}
+
 // TestLarkInviteIdempotencyKeyHelpStatesWindow 确认 --idempotency-key 的帮助写明 1 小时的重放窗口和之后的失败码。
 func TestLarkInviteIdempotencyKeyHelpStatesWindow(t *testing.T) {
 	flag := newLarkInviteSendCmd().Flags().Lookup(larkInviteFlagIdempotencyKey)

@@ -192,6 +192,10 @@ function SendForm({
 
   const isChatTab = tab === TARGET_TAB.chat;
   const chatList = useMemo(() => chats.data ?? [], [chats.data]);
+  // 列群失败时服务端带稳定错误码（如应用没开机器人的 lark_not_configured），按码显示本地化文案；
+  // 没有可识别的错误码时用通用的“加载失败”。
+  const chatsErrorCode = errorCode(chats.error);
+  const chatsErrorText = isLarkInviteErrorCode(chatsErrorCode) ? errorText(chatsErrorCode) : null;
   const visibleChats = useMemo(() => {
     const needle = chatQuery.trim().toLocaleLowerCase();
     if (needle === "") return chatList;
@@ -390,6 +394,7 @@ function SendForm({
                 idPrefix={idPrefix}
                 loading={chats.isPending}
                 failed={chats.isError}
+                failedText={chatsErrorText}
                 chats={visibleChats}
                 selectedIds={selectedChatIds}
                 onToggle={toggleChat}
@@ -593,6 +598,7 @@ function ChatList({
   idPrefix,
   loading,
   failed,
+  failedText,
   chats,
   selectedIds,
   onToggle,
@@ -600,6 +606,8 @@ function ChatList({
   idPrefix: string;
   loading: boolean;
   failed: boolean;
+  /** 失败时显示的错误文案；为 null 时用通用的“加载失败”。 */
+  failedText: string | null;
   chats: LarkChat[];
   selectedIds: string[];
   onToggle: (chatId: string, checked: boolean) => void;
@@ -617,7 +625,9 @@ function ChatList({
   if (failed || chats.length === 0) {
     return (
       <div className="rounded-lg border border-surface-border px-3 py-10 text-center text-body text-muted-foreground">
-        {failed ? t(($) => $.members.lark.chats_load_failed) : t(($) => $.members.lark.chats_empty)}
+        {failed
+          ? (failedText ?? t(($) => $.members.lark.chats_load_failed))
+          : t(($) => $.members.lark.chats_empty)}
       </div>
     );
   }

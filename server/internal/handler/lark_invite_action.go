@@ -363,7 +363,13 @@ var larkInviteContactMessages = map[string]string{
 }
 
 // larkInviteContactRejection 把查通讯录资料的错误归成提示；err 为空或不是确定性的拒绝时 rejected 为 false。
+// 飞书应用配置不完整（没开机器人、缺通讯录权限）时点击人看不到有用的信息，回通用的失败提示，
+// 具体原因由调用方按 Warn 记录。
 func larkInviteContactRejection(err error) (reply larkInviteReply, rejected bool) {
+	if _, misconfigured := larkInviteConfigError(err); misconfigured {
+		return larkInviteToastReply(larkInviteToastError, larkInviteMsgFailed), true
+	}
+
 	msg, ok := larkInviteContactMessages[lark.ClassifyInviteError(err)]
 	if !ok {
 		return larkInviteReply{}, false
@@ -372,7 +378,7 @@ func larkInviteContactRejection(err error) (reply larkInviteReply, rejected bool
 	return larkInviteToastReply(larkInviteToastError, msg), true
 }
 
-// logLarkInviteRejection 按 Warn 记录确定性的拒绝：需要管理员调整应用范围或账号，不是服务端故障。
+// logLarkInviteRejection 按 Warn 记录确定性的拒绝：需要管理员调整应用范围、账号或飞书应用配置，不是服务端故障。
 func logLarkInviteRejection(click larkInviteClick, err error) {
 	slog.Warn("lark invite card action rejected", "invite_id", click.InviteID, "open_id", click.OpenID, "error", err.Error())
 }

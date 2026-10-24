@@ -1545,7 +1545,7 @@
       "sent_toast_other": "{{count}} cards sent",
       "submitted_toast": "Submitted, results will update shortly",
       "errors": {
-        "lark_not_configured": "The server has no Feishu bot configured",
+        "lark_not_configured": "Feishu app configuration is incomplete",
         "permission_denied": "Requires an owner or admin",
         "invalid_target": "Invalid receiver",
         "invalid_request": "Invalid request",

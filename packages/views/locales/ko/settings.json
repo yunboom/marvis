@@ -1270,7 +1270,7 @@
       "sent_toast_other": "카드 {{count}}장을 보냈습니다",
       "submitted_toast": "제출했습니다. 결과는 잠시 후 반영됩니다",
       "errors": {
-        "lark_not_configured": "서버에 Feishu 봇이 설정되지 않았습니다",
+        "lark_not_configured": "Feishu 앱 설정이 완료되지 않았습니다",
         "permission_denied": "소유자 또는 관리자 권한이 필요합니다",
         "invalid_target": "대상이 올바르지 않습니다",
         "invalid_request": "요청이 올바르지 않습니다",

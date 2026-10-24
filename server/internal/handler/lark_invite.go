@@ -117,8 +117,29 @@ const (
 	larkInviteReplayWindow = time.Hour
 )
 
+// 应用配置类错误的说明，管理员需要在飞书开发者后台处理。错误码统一为 larkInviteCodeNotConfigured，说明按原因区分。
+const (
+	// larkInviteMsgBotNotEnabled 对应飞书 232025：应用没有开启机器人能力。
+	larkInviteMsgBotNotEnabled = "the Feishu app's bot ability is not enabled; enable the bot in the Feishu developer console and publish a new version"
+	// larkInviteMsgScopeMissing 对应飞书 99991672：应用缺少接口需要的权限范围。
+	larkInviteMsgScopeMissing = "the Feishu app is missing a required permission scope; grant im:message:send_as_bot, im:chat:readonly, contact:user.id:readonly, contact:contact.base:readonly, contact:user.base:readonly, contact:user.email:readonly and publish a new version"
+)
+
+// larkInviteConfigMessages 是 lark.ClassifyInviteConfigError 的原因对应的英文说明。
+var larkInviteConfigMessages = map[string]string{
+	lark.InviteConfigBotNotEnabled: larkInviteMsgBotNotEnabled,
+	lark.InviteConfigScopeMissing:  larkInviteMsgScopeMissing,
+}
+
 // 单个接收方失败时返回的固定说明。
 const (
+	// larkInviteMsgSendFailed 是非飞书接口错误导致发送失败的说明，细节只记在日志里。
+	larkInviteMsgSendFailed = "failed to send the Feishu card"
+	// larkInviteMsgFeishuAPIErrorFormat 是归不进分类的飞书接口错误的说明，参数依次是飞书错误码和飞书返回的 msg。
+	larkInviteMsgFeishuAPIErrorFormat = "Feishu API error %d: %s"
+	// larkInviteMsgFeishuAPIErrorNoMsgFormat 用于飞书没有返回 msg 的情况，参数是飞书错误码。
+	larkInviteMsgFeishuAPIErrorNoMsgFormat = "Feishu API error %d"
+
 	// larkInviteMsgKeyNotReplayable 是幂等键命中不可重放的邀请时的说明。
 	larkInviteMsgKeyNotReplayable = "idempotency_key was already used for an invite that is no longer replayable; use a new key"
 	// larkInviteMsgSendPanicked 是发送这个接收方时发生 panic 的说明，细节只记在日志里。
@@ -550,6 +571,9 @@ func (h *Handler) ListLarkChats(w http.ResponseWriter, r *http.Request) {
 
 	chats, err := h.LarkInviteAPI.ListBotChats(r.Context(), h.LarkInviteCreds)
 	if err != nil {
+		if writeLarkInviteConfigError(w, r, err) {
+			return
+		}
 		writeLarkInviteUpstreamError(w, r, errors.Wrap(err, "list lark bot chats"), "failed to list Feishu chats")
 		return
 	}
@@ -590,8 +614,11 @@ func (h *Handler) LookupLarkUser(w http.ResponseWriter, r *http.Request) {
 		user, err = h.LarkInviteAPI.GetUser(r.Context(), h.LarkInviteCreds, openID)
 	}
 	if err != nil {
-		if code := lark.ClassifyInviteError(err); code != "" {
-			writeErrorCode(w, http.StatusNotFound, code, larkInviteErrorMessages[code])
+		if writeLarkInviteConfigError(w, r, err) {
+			return
+		}
+		if rejection, ok := larkInviteBusinessError(err); ok {
+			writeErrorCode(w, http.StatusNotFound, rejection.Code, rejection.Message)
 			return
 		}
 		writeLarkInviteUpstreamError(w, r, errors.Wrap(err, "lookup lark user by email"), "failed to look up Feishu user")
@@ -965,7 +992,7 @@ func (h *Handler) larkInviteNamesFor(ctx context.Context, sc larkInviteSendConte
 }
 
 // deliverLarkInvite 生成邀请中状态的卡片发给接收方，并记下消息 ID。
-// 发送失败时：没有幂等键，或飞书明确拒绝（归进业务错误码）时删除这条邀请；有幂等键而失败原因不明
+// 发送失败时：没有幂等键，或飞书明确拒绝（归进业务错误码或应用配置类错误）时删除这条邀请；有幂等键而失败原因不明
 // （超时、网络、5xx）时保留，卡片可能其实已经送达，重试时用同一个 invite_id 和去重键补发。
 func (h *Handler) deliverLarkInvite(ctx context.Context, sc larkInviteSendContext, inv db.LarkInvite, idType lark.InviteReceiveIDType, receiveID string, names larkInviteCardNames) LarkInviteSendResult {
 	shown := larkInviteTargetOf(inv)
@@ -978,7 +1005,7 @@ func (h *Handler) deliverLarkInvite(ctx context.Context, sc larkInviteSendContex
 
 	messageID, err := h.sendLarkInviteMessage(ctx, sc, inv, idType, receiveID, card)
 	if err != nil {
-		if sc.Input.IdempotencyKey == "" || lark.ClassifyInviteError(err) != "" {
+		if _, classified := classifyLarkInviteError(err); sc.Input.IdempotencyKey == "" || classified {
 			h.deleteUnsentLarkInvite(ctx, sc, inv.ID)
 		}
 		return larkInviteFailedResult(sc, shown, err)
@@ -1385,22 +1412,69 @@ func larkInviteSentResult(inv db.LarkInvite) LarkInviteSendResult {
 	}
 }
 
-// larkInviteFailedResult 把单个接收方的错误转成失败结果。归进飞书错误码分类的返回固定说明；
-// 其余的返回 send_failed 和错误文本（不含堆栈），并记录带堆栈的日志。
-func larkInviteFailedResult(sc larkInviteSendContext, target LarkInviteTarget, err error) LarkInviteSendResult {
+// larkInviteBusinessError 把飞书错误归进 lark.ClassifyInviteError 的四类（机器人不在群、找不到用户等），
+// 返回对应的错误码和固定说明；归不进时 ok 为 false。
+func larkInviteBusinessError(err error) (rejection LarkInviteError, ok bool) {
 	code := lark.ClassifyInviteError(err)
-	msg := larkInviteErrorMessages[code]
 	if code == "" {
-		code = larkInviteCodeSendFailed
-		msg = err.Error()
+		return LarkInviteError{}, false
+	}
+
+	return LarkInviteError{Code: code, Message: larkInviteErrorMessages[code]}, true
+}
+
+// larkInviteConfigError 把飞书错误归进应用配置类错误（没开机器人、缺权限范围）。
+// 错误码统一为 lark_not_configured，说明按原因区分；归不进时 ok 为 false。
+func larkInviteConfigError(err error) (rejection LarkInviteError, ok bool) {
+	cause := lark.ClassifyInviteConfigError(err)
+	if cause == "" {
+		return LarkInviteError{}, false
+	}
+
+	return LarkInviteError{Code: larkInviteCodeNotConfigured, Message: larkInviteConfigMessages[cause]}, true
+}
+
+// classifyLarkInviteError 把飞书错误归成对外的错误码和说明，先看应用配置类，再看业务类；都不是时 ok 为 false。
+func classifyLarkInviteError(err error) (rejection LarkInviteError, ok bool) {
+	if rejection, ok = larkInviteConfigError(err); ok {
+		return rejection, true
+	}
+
+	return larkInviteBusinessError(err)
+}
+
+// larkInviteUnclassifiedMessage 返回归不进分类的发送错误对外的说明：飞书接口错误只带错误码和飞书返回的 msg
+// （不含排查链接和 log_id），其余错误用固定文案。完整错误只记在日志里。
+func larkInviteUnclassifiedMessage(err error) string {
+	code, msg, ok := lark.InviteAPIErrorDetail(err)
+	switch {
+	case !ok:
+		return larkInviteMsgSendFailed
+	case msg == "":
+		return fmt.Sprintf(larkInviteMsgFeishuAPIErrorNoMsgFormat, code)
+	default:
+		return fmt.Sprintf(larkInviteMsgFeishuAPIErrorFormat, code, msg)
+	}
+}
+
+// larkInviteFailedResult 把单个接收方的错误转成失败结果。应用配置类错误返回 lark_not_configured 和对应说明，
+// 并按 Warn 记录日志；归进飞书错误码分类的返回固定说明；其余的返回 send_failed 和 larkInviteUnclassifiedMessage，
+// 并记录带堆栈的日志。
+func larkInviteFailedResult(sc larkInviteSendContext, target LarkInviteTarget, err error) LarkInviteSendResult {
+	rejection, classified := classifyLarkInviteError(err)
+	switch {
+	case !classified:
+		rejection = LarkInviteError{Code: larkInviteCodeSendFailed, Message: larkInviteUnclassifiedMessage(err)}
 		slog.Warn("send lark invite failed", append(sc.LogAttrs, "target_id_type", target.IDType, "error", fmt.Sprintf("%+v", err))...)
+	case rejection.Code == larkInviteCodeNotConfigured:
+		slog.Warn("send lark invite failed: feishu app is not configured", append(sc.LogAttrs, "target_id_type", target.IDType, "error", fmt.Sprintf("%+v", err))...)
 	}
 
 	return LarkInviteSendResult{
 		Target: target,
 		Role:   sc.Input.Role,
 		Status: larkInviteSendStatusFailed,
-		Error:  &LarkInviteError{Code: code, Message: msg},
+		Error:  &rejection,
 	}
 }
 
@@ -1423,6 +1497,20 @@ func writeLarkInvitePermissionDenied(w http.ResponseWriter) {
 func writeLarkInviteInternalError(w http.ResponseWriter, r *http.Request, err error, msg string) {
 	slog.Error(msg, append(logger.RequestAttrs(r), "error", fmt.Sprintf("%+v", err))...)
 	writeError(w, http.StatusInternalServerError, msg)
+}
+
+// writeLarkInviteConfigError 在飞书错误是应用配置类错误（没开机器人、缺权限范围）时按 Warn 记录并写
+// 403 lark_not_configured，与开关关闭同一个状态码；返回是否已处理。需要管理员调整飞书应用，不是服务端故障，不返回 502。
+func writeLarkInviteConfigError(w http.ResponseWriter, r *http.Request, err error) bool {
+	rejection, ok := larkInviteConfigError(err)
+	if !ok {
+		return false
+	}
+
+	slog.Warn("feishu app is not configured for invites", append(logger.RequestAttrs(r), "reason", rejection.Message, "error", fmt.Sprintf("%+v", err))...)
+	writeFeatureDisabled(w, rejection.Code, rejection.Message)
+
+	return true
 }
 
 // writeLarkInviteUpstreamError 记录飞书接口的错误（带堆栈）并返回 502。

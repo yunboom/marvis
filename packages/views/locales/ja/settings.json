@@ -1530,7 +1530,7 @@
       "sent_toast_other": "{{count}} 件のカードを送信しました",
       "submitted_toast": "リクエストを受け付けました。結果は少し後に反映されます",
       "errors": {
-        "lark_not_configured": "サーバーに Feishu ボットが設定されていません",
+        "lark_not_configured": "Feishu アプリの設定が不完全です",
         "permission_denied": "オーナーまたは管理者の権限が必要です",
         "invalid_target": "送信先が無効です",
         "invalid_request": "リクエストが無効です",

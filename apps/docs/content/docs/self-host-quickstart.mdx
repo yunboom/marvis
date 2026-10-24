@@ -303,7 +303,7 @@ Feishu login in Desktop works without the web app. In the Feishu developer conso
 Workspace owners and admins can send an invite card to a Feishu chat or person, and whoever clicks the card joins the workspace. Invites reuse the Feishu login app (`MARVIS_LARK_LOGIN_APP_ID` / `MARVIS_LARK_LOGIN_APP_SECRET`). In the Feishu developer console, for that app:
 
 1. Enable the bot capability.
-2. Request these five permissions: `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:user.base:readonly`, and `contact:user.email:readonly`.
+2. Request these six permissions: `im:message:send_as_bot`, `im:chat:readonly`, `contact:user.id:readonly`, `contact:contact.base:readonly`, `contact:user.base:readonly`, and `contact:user.email:readonly`.
 3. Under events and callbacks, set the callback mode to long connection and add the `card.action.trigger` callback.
 4. Set the availability scope to cover everyone you may invite. People outside it cannot join from a card.
 5. Publish a new version of the app.

@@ -1530,7 +1530,7 @@
       "sent_toast_other": "已发送 {{count}} 张卡片",
       "submitted_toast": "已提交，结果稍后更新",
       "errors": {
-        "lark_not_configured": "服务器未配置飞书机器人",
+        "lark_not_configured": "飞书应用配置不完整",
         "permission_denied": "需要管理员或所有者权限",
         "invalid_target": "接收方无效",
         "invalid_request": "请求参数不正确",

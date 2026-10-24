@@ -1545,7 +1545,7 @@
       "sent_toast_other": "{{count}} cartes envoyées",
       "submitted_toast": "Demande prise en compte, les résultats seront mis à jour sous peu",
       "errors": {
-        "lark_not_configured": "Aucun bot Feishu n’est configuré sur le serveur",
+        "lark_not_configured": "La configuration de l’application Feishu est incomplète",
         "permission_denied": "Rôle propriétaire ou administrateur requis",
         "invalid_target": "Destinataire non valide",
         "invalid_request": "Requête non valide",

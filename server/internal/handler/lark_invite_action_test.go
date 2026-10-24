@@ -795,6 +795,15 @@ func TestLarkInviteAction_ContactRejections(t *testing.T) {
 			want: larkInviteMsgUserNotFound,
 		},
 		{
+			// 飞书应用缺通讯录权限：点击人无从处理，回通用的失败提示，原因由 Warn 日志给管理员。
+			name: "app missing contact scope",
+			register: func(api *fakeInviteAPI) string {
+				api.getUserErr = &lark.APIError{Op: "get user", Code: fakeLarkCodeScopeMissing, Msg: "Access denied"}
+				return uniqueLarkID("ou_noscope_")
+			},
+			want: larkInviteMsgFailed,
+		},
+		{
 			name: "account disabled",
 			register: func(api *fakeInviteAPI) string {
 				openID := uniqueLarkID("ou_disabled_")
