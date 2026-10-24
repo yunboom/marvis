@@ -99,6 +99,8 @@ export function useChatTaskActions(
               attachments: restored.attachments,
               sessionId: restored.chat_session_id,
             });
+            // The message left the transcript; say where it went.
+            toast(t(($) => $.input.restored_to_input));
           }
         }
         qc.invalidateQueries({ queryKey: chatKeys.messages(sessionId) });
@@ -127,7 +129,7 @@ export function useChatTaskActions(
         if (wsId) qc.invalidateQueries({ queryKey: chatKeys.pendingTasks(wsId) });
       }
     },
-    [qc, enqueueLocalRestore, wsId],
+    [qc, enqueueLocalRestore, wsId, t],
   );
 
   const handleEditQueuedTask = useCallback(

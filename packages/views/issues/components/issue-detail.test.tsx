@@ -1265,7 +1265,7 @@ describe("IssueDetail (shared)", () => {
     fireEvent.click(screen.getByTestId("comment-composer-shell"));
     const editor = await screen.findByPlaceholderText("Leave a comment...");
     fireEvent.change(editor, { target: { value: "A new update" } });
-    const composer = editor.closest<HTMLElement>("[aria-busy], .relative.flex.flex-col.rounded-xl")!;
+    const composer = editor.closest<HTMLElement>("[data-slot=\"comment-composer\"]")!;
     fireEvent.click(within(composer).getByRole("button", { name: "Send" }));
 
     expect(scrollToIndexSpy).not.toHaveBeenCalled();
