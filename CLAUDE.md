@@ -70,6 +70,6 @@
    - 上游迁移文本里的旧名由脚本替换；已应用过旧名迁移的库靠 `*_rebrand_marvis`（当前 601）改名，它从系统目录查找旧名对象，幂等。
    - 迁移编号 129 之后必须唯一（`migrations_lint_test.go`）。上游新增编号与 fork 迁移撞号时，fork 迁移整体顺延到上游最大编号之后，`*_rebrand_marvis` 始终排在最后；同步改 `cmd/migrate/main.go` 的并发索引表、脚本 `KEEP` 和引用迁移文件名的测试。版本号按完整文件名记录，改号后会再执行一次：rebrand 迁移幂等，其他 fork 迁移不保证幂等，已跑过的本地库直接重建。
    - 上游新迁移若引入新的旧名数据库对象（列、函数体里的 `multica.*` 设置等），重新执行 589 的改名逻辑（可复制为新编号迁移）。
-4. 依赖与校验：`pnpm install`（工作区包名已变），`make sqlc`，然后 `pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`。
+4. 依赖与校验：`pnpm install`（工作区包名已变），`make sqlc`，`make schema`（重新生成 `server/schema.sql` 完整表结构快照，只读参考，迁移仍是唯一来源），然后 `pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`。
 5. 本地环境：compose 项目名变为 `marvis`，数据卷为 `marvis_pgdata`；改名前创建的 `multica_pgdata` 数据不会自动迁移。`.env` 里的变量名需从 `MULTICA_*` 改为 `MARVIS_*`。旧的 `~/.multica` 里的开发环境与 profile 不会被读取。
 6. 改名会改变字符串长度：依赖固定字节数、哈希或校验和的测试夹具（如 `cursor_stdin_unix_test.go` 的 payload、`worktree-dev-env.test.mjs` 的 cksum 路径）需要重新调整。
