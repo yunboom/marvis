@@ -339,13 +339,16 @@ const taskIssueStatusCap = 30
 // category uses the legacy wire enum for installed daemons (presentation only,
 // not inherited platform behavior), and description is the
 // admin's "when to use me" guidance — the disambiguator when a category holds
-// more than one status. Color/position/id stay off the wire: they carry no
+// more than one status. status_group places the status in the brief's
+// group list (working vs needs attention); older daemons ignore it.
+// Color/position/id stay off the wire: they carry no
 // behavioral meaning for an agent, and the server already emits entries in
 // catalog order (category rank, then position, then key).
 type TaskIssueStatusData struct {
 	Key         string `json:"key"`
 	Name        string `json:"name"`
 	Category    string `json:"category"`
+	StatusGroup string `json:"status_group,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 

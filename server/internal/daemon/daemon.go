@@ -10212,7 +10212,7 @@ func convertIssueStatusesForEnv(statuses []IssueStatusData) []execenv.IssueStatu
 	}
 	result := make([]execenv.IssueStatusForEnv, len(statuses))
 	for i, s := range statuses {
-		result[i] = execenv.IssueStatusForEnv{Key: s.Key, Name: s.Name, Category: s.Category, Description: s.Description}
+		result[i] = execenv.IssueStatusForEnv{Key: s.Key, Name: s.Name, Category: s.Category, StatusGroup: s.StatusGroup, Description: s.Description}
 	}
 	return result
 }

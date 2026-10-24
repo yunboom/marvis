@@ -242,9 +242,12 @@ type TaskContextForEnv struct {
 // storage CHECK to `^[a-z0-9][a-z0-9_]{0,31}$` but is still guarded with
 // sanitizeBriefCodeToken as defense-in-depth.
 type IssueStatusForEnv struct {
-	Key         string
-	Name        string
-	Category    string
+	Key      string
+	Name     string
+	Category string
+	// StatusGroup is empty from a server that predates it; the brief then
+	// uses the category default.
+	StatusGroup string
 	Description string
 }
 
