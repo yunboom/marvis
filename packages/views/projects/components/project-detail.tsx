@@ -36,7 +36,6 @@ import { IssueSurface } from "../../issues/surface/issue-surface";
 import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { Button } from "@marvis/ui/components/ui/button";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
-import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@marvis/ui/components/ui/resizable";
 import { Sheet, SheetContent } from "@marvis/ui/components/ui/sheet";
 import { useIsMobile } from "@marvis/ui/hooks/use-mobile";
@@ -57,7 +56,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@marvis/ui/components/ui/tooltip";
-import { EmojiPicker } from "@marvis/ui/components/common/emoji-picker";
+import { ProjectIconPicker } from "./project-icon-picker";
 import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
 import {
   AnimatedRightSidebar,
@@ -162,7 +161,6 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   const descEditorRef = useRef<ContentEditorRef>(null);
   const isMobile = useIsMobile();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [progressOpen, setProgressOpen] = useState(true);
   const [descriptionOpen, setDescriptionOpen] = useState(true);
@@ -262,29 +260,11 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     <div className="space-y-5">
       {/* Icon + Title */}
       <div>
-        <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
-          <TooltipHint label={t(($) => $.detail.icon_tooltip)}>
-            <PopoverTrigger
-              render={
-                <button
-                  type="button"
-                  className="text-display-sm cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
-                  aria-label={t(($) => $.detail.icon_tooltip)}
-                >
-                  {project.icon || "📁"}
-                </button>
-              }
-            />
-          </TooltipHint>
-          <PopoverContent align="start" className="w-auto p-0">
-            <EmojiPicker
-              onSelect={(emoji) => {
-                handleUpdateField({ icon: emoji });
-                setIconPickerOpen(false);
-              }}
-            />
-          </PopoverContent>
-        </Popover>
+        <ProjectIconPicker
+          icon={project.icon}
+          label={t(($) => $.detail.icon_tooltip)}
+          onChange={(icon) => handleUpdateField({ icon })}
+        />
         <TitleEditor
           key={`title-${projectId}`}
           defaultValue={project.title}

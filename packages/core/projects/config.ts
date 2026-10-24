@@ -37,3 +37,68 @@ export const PROJECT_PRIORITY_CONFIG: Record<
   low: { label: "Low", bars: 1, color: "text-priority-low", badgeBg: "bg-muted", badgeText: "text-muted-foreground" },
   none: { label: "No priority", bars: 0, color: "text-muted-foreground", badgeBg: "bg-muted", badgeText: "text-muted-foreground" },
 };
+
+// Project icons are either an emoji or a line glyph from this curated set,
+// stored in the same `icon` field as `icon:<name>` so the API and older
+// clients keep treating the value as an opaque string.
+export const PROJECT_GLYPH_PREFIX = "icon:";
+
+export const PROJECT_GLYPHS = [
+  "folder",
+  "briefcase",
+  "rocket",
+  "target",
+  "flag",
+  "compass",
+  "layers",
+  "box",
+  "code",
+  "terminal",
+  "git_branch",
+  "database",
+  "server",
+  "cloud",
+  "smartphone",
+  "monitor",
+  "palette",
+  "pen_tool",
+  "book_open",
+  "file_text",
+  "megaphone",
+  "chart_line",
+  "lightbulb",
+  "sparkles",
+  "users",
+  "shield",
+  "bug",
+  "wrench",
+  "calendar",
+  "mountain",
+  "leaf",
+  "feather",
+] as const;
+
+export type ProjectGlyph = (typeof PROJECT_GLYPHS)[number];
+
+export type ProjectIconValue =
+  | { kind: "glyph"; glyph: ProjectGlyph }
+  | { kind: "emoji"; emoji: string };
+
+const GLYPH_SET = new Set<string>(PROJECT_GLYPHS);
+
+export function projectGlyphIcon(glyph: ProjectGlyph): string {
+  return `${PROJECT_GLYPH_PREFIX}${glyph}`;
+}
+
+/** Empty values and unknown glyph keys resolve to null; callers render the default glyph. */
+export function parseProjectIcon(icon: string | null | undefined): ProjectIconValue | null {
+  const value = icon?.trim();
+  if (!value) return null;
+
+  if (value.startsWith(PROJECT_GLYPH_PREFIX)) {
+    const glyph = value.slice(PROJECT_GLYPH_PREFIX.length);
+    return GLYPH_SET.has(glyph) ? { kind: "glyph", glyph: glyph as ProjectGlyph } : null;
+  }
+
+  return { kind: "emoji", emoji: value };
+}
