@@ -4045,6 +4045,7 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 				Key:         entry.Key,
 				Name:        entry.Name,
 				Category:    issuestatus.WireCategory(entry.Key, entry.Category),
+				StatusGroup: entry.StatusGroup,
 				Description: entry.Description,
 			})
 		}

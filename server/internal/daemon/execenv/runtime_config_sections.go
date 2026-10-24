@@ -244,9 +244,24 @@ func writeAvailableCommands(b *strings.Builder, ctx TaskContextForEnv) {
 // leaves the original's duplicates list empty.
 const duplicateOfCommandLine = "- `marvis issue status <id> cancelled --duplicate-of <original>` — cancel an issue that duplicates another and record the mark, so the original lists it; a plain cancel plus a comment leaves no link.\n"
 
-// briefStatusCategoryOrder groups the briefing catalog by internal lifecycle,
-// matching ListIssueStatusEntries. User-facing columns still use status keys.
-var briefStatusCategoryOrder = issuestatus.Categories()
+// briefStatusGroups orders the briefing catalog by status group, the board's
+// columns. Each label is plain text, never a status key.
+var briefStatusGroups = []struct {
+	group string
+	label string
+}{
+	{issuestatus.GroupNotStarted, "not started"},
+	{issuestatus.GroupWorking, "working"},
+	{issuestatus.GroupNeedsAttention, "needs attention (waiting on a person)"},
+	{issuestatus.GroupEnded, "ended"},
+}
+
+// briefEndedLabels names the two lifecycle types inside the ended group, so an
+// agent can tell finishing work from dropping it.
+var briefEndedLabels = map[string]string{
+	issuestatus.CategoryDone:   "completed",
+	issuestatus.CategoryClosed: "closed",
+}
 
 // writeIssueStatusCommand emits the `marvis issue status` bullet.
 //
@@ -254,21 +269,21 @@ var briefStatusCategoryOrder = issuestatus.Categories()
 // emits the fixed built-in status list.
 //
 // With custom statuses it replaces the seven-value enumeration with the
-// workspace's catalog, grouped by lifecycle category. Special workflow rules
-// still name fixed built-in keys; a custom status inherits only lifecycle.
+// workspace's catalog, grouped the way the board shows it: not started,
+// working, needs attention, ended — the last split into completed and closed.
+// The group is what tells an agent that a status waits on a person; special
+// workflow rules still name fixed built-in keys, and a custom status inherits
+// only its lifecycle. A custom status without a usable group (an older
+// server) takes its category's default.
 //
-// Each line leads with the category name as PLAIN TEXT, not a code token.
-// Three of the four category names — unstarted, started, closed — are not
-// status keys at all: ValidateKey reserves them, so no catalog row can hold
-// one, and Resolve returns ErrUnknownStatus. `done` is the exception, being
-// both a lifecycle category and a built-in key. Backticking the group label
-// the way the settable keys beside it are backticked therefore invited
-// `marvis issue status <id> started`, which is a 400, so only keys are
-// backticked here (MUL-7379).
+// Each line leads with the group name as PLAIN TEXT, not a code token. Group
+// and lifecycle names are not status keys, and backticking a label the way
+// the settable keys beside it are backticked invites a command that 400s
+// (MUL-7379), so only keys are backticked here.
 //
 // Name and description ride along because instructions and users refer to
 // statuses by display name ("move it to Human Review"), and the description is
-// the admin's disambiguator when a category holds more than one status.
+// the admin's disambiguator when a group holds more than one status.
 //
 // Name/description are user-authored: they pass through
 // sanitizeNameForBriefMarkdown so a crafted status name cannot inject
@@ -280,7 +295,8 @@ func writeIssueStatusCommand(b *strings.Builder, ctx TaskContextForEnv) {
 		b.WriteString("- `marvis issue status <id> <status>` — flip status (todo / in_progress / in_review / done / blocked / backlog / cancelled).\n")
 		return
 	}
-	byCategory := make(map[string][]IssueStatusForEnv, len(briefStatusCategoryOrder))
+	type slot struct{ group, category string }
+	customs := make(map[slot][]IssueStatusForEnv)
 	unknownCategories := 0
 	for _, s := range ctx.IssueStatuses {
 		if sanitizeBriefCodeToken(s.Key) == "" {
@@ -291,22 +307,38 @@ func writeIssueStatusCommand(b *strings.Builder, ctx TaskContextForEnv) {
 			unknownCategories++
 			continue
 		}
-		byCategory[category] = append(byCategory[category], s)
+		group := s.StatusGroup
+		if !issuestatus.ValidGroup(category, group) {
+			group = issuestatus.DefaultGroup(s.Key, category)
+		}
+		customs[slot{group, category}] = append(customs[slot{group, category}], s)
 	}
-	b.WriteString("- `marvis issue status <id> <status>` — flip status. Available statuses by lifecycle category:\n")
-	for _, category := range briefStatusCategoryOrder {
-		customs := byCategory[category]
-		fmt.Fprintf(b, "  - %s category: `%s` (built-in)", category, strings.Join(issuestatus.BehaviorsForCategory(category), "`, `"))
-		for _, s := range customs {
-			name := sanitizeNameForBriefMarkdown(s.Name)
-			desc := sanitizeNameForBriefMarkdown(s.Description)
-			fmt.Fprintf(b, ", `%s`", sanitizeBriefCodeToken(s.Key))
-			switch {
-			case name != "" && desc != "":
-				fmt.Fprintf(b, " (%s — %s)", name, desc)
-			case name != "":
-				fmt.Fprintf(b, " (%s)", name)
+
+	b.WriteString("- `marvis issue status <id> <status>` — flip status. Available statuses by group:\n")
+	for _, g := range briefStatusGroups {
+		fmt.Fprintf(b, "  - %s", g.label)
+		categories := issuestatus.Categories()
+		parts := 0
+		for _, category := range categories {
+			if !issuestatus.ValidGroup(category, g.group) {
+				continue
 			}
+			var builtIns []string
+			for _, key := range issuestatus.BehaviorsForCategory(category) {
+				if issuestatus.BuiltInGroup(key) == g.group {
+					builtIns = append(builtIns, key)
+				}
+			}
+			switch {
+			case g.group != issuestatus.GroupEnded:
+				b.WriteString(": ")
+			case parts == 0:
+				fmt.Fprintf(b, " — %s: ", briefEndedLabels[category])
+			default:
+				fmt.Fprintf(b, "; %s: ", briefEndedLabels[category])
+			}
+			writeBriefStatusList(b, builtIns, customs[slot{g.group, category}])
+			parts++
 		}
 		b.WriteString("\n")
 	}
@@ -317,6 +349,28 @@ func writeIssueStatusCommand(b *strings.Builder, ctx TaskContextForEnv) {
 	}
 	if ctx.IssueStatusesOmitted > 0 {
 		fmt.Fprintf(b, "  - …and %d more custom statuses not listed; an invalid status errors with the full valid list.\n", ctx.IssueStatusesOmitted)
+	}
+}
+
+// writeBriefStatusList renders one slot of the status list: the built-in keys
+// marked as such, then each custom key with its name and description.
+func writeBriefStatusList(b *strings.Builder, builtIns []string, customs []IssueStatusForEnv) {
+	if len(builtIns) > 0 {
+		fmt.Fprintf(b, "`%s` (built-in)", strings.Join(builtIns, "`, `"))
+	}
+	for i, s := range customs {
+		if len(builtIns) > 0 || i > 0 {
+			b.WriteString(", ")
+		}
+		name := sanitizeNameForBriefMarkdown(s.Name)
+		desc := sanitizeNameForBriefMarkdown(s.Description)
+		fmt.Fprintf(b, "`%s`", sanitizeBriefCodeToken(s.Key))
+		switch {
+		case name != "" && desc != "":
+			fmt.Fprintf(b, " (%s — %s)", name, desc)
+		case name != "":
+			fmt.Fprintf(b, " (%s)", name)
+		}
 	}
 }
 
@@ -610,7 +664,7 @@ func writeWorkflowIssue(b *strings.Builder, ctx TaskContextForEnv) {
 	}
 	// A custom catalog needs one reminder that workflow updates use exact keys.
 	if len(ctx.IssueStatuses) > 0 {
-		b.WriteString("- The workflow rules above refer to exact built-in status keys, not categories. Custom statuses share lifecycle semantics only, not built-in automation behavior.\n")
+		b.WriteString("- The workflow rules above refer to exact built-in status keys, not groups. Custom statuses share lifecycle semantics only, not built-in automation behavior.\n")
 	}
 	b.WriteString("- Your turn produced none of the issue's own deliverable — you answered a question or consulted on work owned elsewhere → write nothing, at any point; questions, discussion, and acknowledgements never touch status. This no-write default is what keeps concurrent runs from flapping the board.\n\n")
 }
