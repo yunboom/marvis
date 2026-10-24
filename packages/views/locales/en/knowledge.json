@@ -70,7 +70,8 @@
   "export": {
     "title": "Export",
     "zip": "Download zip",
-    "hint": "Unzip and open it in Obsidian."
+    "hint": "Unzip and open it in Obsidian.",
+    "failed": "Could not download the knowledge base"
   },
   "delete": {
     "title": "Delete knowledge base",
@@ -386,5 +387,11 @@
     "open_automation": "Open in automations",
     "admin_only": "An owner or admin sets this up",
     "failed": "Could not update the daily knowledge digest"
+  },
+  "graph": {
+    "aria": "Links between pages",
+    "empty": "No pages yet",
+    "orphan": "No links",
+    "open": "Open {{title}}"
   }
 }

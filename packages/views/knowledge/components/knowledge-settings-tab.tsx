@@ -51,6 +51,7 @@ export function KnowledgeSettingsTab({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     setName(kb.name);
@@ -86,6 +87,23 @@ export function KnowledgeSettingsTab({
       toast.error(err instanceof Error ? err.message : t(($) => $.delete.failed));
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const exportZip = async () => {
+    setExporting(true);
+    try {
+      const blob = await api.exportKnowledgeBase(kb.id);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${kb.slug}.zip`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t(($) => $.export.failed));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -155,7 +173,7 @@ export function KnowledgeSettingsTab({
         <section className="flex flex-col gap-2">
           <h2 className="text-title-sm font-semibold">{t(($) => $.export.title)}</h2>
           <div>
-            <Button variant="outline" render={<a href={`/api/knowledge/bases/${encodeURIComponent(kb.id)}/archive`} />}>
+            <Button variant="outline" disabled={exporting} aria-busy={exporting} onClick={() => void exportZip()}>
               {t(($) => $.export.zip)}
             </Button>
           </div>

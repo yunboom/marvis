@@ -4,7 +4,7 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] 关系图 API 与 UI
-- [ ] zip 下载
+- [x] 关系图 API 与 UI
+- [x] zip 下载

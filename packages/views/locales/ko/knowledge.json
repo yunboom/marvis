@@ -70,7 +70,8 @@
   "export": {
     "title": "내보내기",
     "zip": "zip 다운로드",
-    "hint": "압축을 풀면 Obsidian에서 열 수 있습니다."
+    "hint": "압축을 풀면 Obsidian에서 열 수 있습니다.",
+    "failed": "지식 베이스를 다운로드하지 못했습니다"
   },
   "delete": {
     "title": "지식 베이스 삭제",
@@ -386,5 +387,11 @@
     "open_automation": "자동화에서 열기",
     "admin_only": "owner 또는 admin이 설정합니다",
     "failed": "일일 지식 정리를 업데이트하지 못했습니다"
+  },
+  "graph": {
+    "aria": "페이지 간 링크",
+    "empty": "아직 페이지가 없습니다",
+    "orphan": "링크 없음",
+    "open": "{{title}} 열기"
   }
 }

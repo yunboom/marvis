@@ -33,6 +33,7 @@ import { useKnowledgeLauncher } from "./knowledge-launch";
 import { KnowledgePagesWorkspace } from "./knowledge-pages-workspace";
 import { KnowledgeReviewTab, type KnowledgeReviewSlots } from "./knowledge-review-tab";
 import { KnowledgeSearch } from "./knowledge-search";
+import { KnowledgeGraphTab } from "./knowledge-graph-tab";
 import { KnowledgeSettingsTab } from "./knowledge-settings-tab";
 
 export const KNOWLEDGE_TABS = ["pages", "review", "annotations", "gaps", "graph", "history", "settings"] as const;
@@ -274,6 +275,8 @@ function KnowledgeTabBody({
           )}
         />
       );
+    case "graph":
+      return <KnowledgeGraphTab kb={kb} onOpenPage={onOpenPage} />;
     case "history":
       return <KnowledgeHistoryTab bases={bases} onReverted={onOpenChange} />;
     case "settings":

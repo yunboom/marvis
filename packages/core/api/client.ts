@@ -3855,6 +3855,13 @@ export class ApiClient {
     });
   }
 
+  // Zip of one knowledge base directory at the latest main commit. Fetched with
+  // auth headers because a plain link cannot carry them on desktop.
+  async exportKnowledgeBase(id: string): Promise<Blob> {
+    const res = await this.fetchRaw(`/api/knowledge/bases/${encodeURIComponent(id)}/archive`);
+    return res.blob();
+  }
+
   async getKnowledgeDigest(): Promise<KnowledgeDigest> {
     const raw = await this.fetch<unknown>("/api/knowledge/digest");
     return parseWithFallback(raw, kbSchemas.KnowledgeDigestSchema, kbSchemas.EMPTY_KNOWLEDGE_DIGEST, {

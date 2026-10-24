@@ -2430,6 +2430,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 						r.Get("/pages", h.ListKnowledgePages)
 						r.Get("/page", h.GetKnowledgePage)
 						r.Get("/graph", h.GetKnowledgeGraph)
+						r.Get("/archive", h.ExportKnowledgeBase)
 						r.Get("/annotations", h.ListKnowledgeAnnotations)
 						r.Post("/annotations", h.CreateKnowledgeAnnotation)
 					})

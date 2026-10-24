@@ -70,7 +70,8 @@
   "export": {
     "title": "エクスポート",
     "zip": "zip をダウンロード",
-    "hint": "展開すると Obsidian で開けます。"
+    "hint": "展開すると Obsidian で開けます。",
+    "failed": "ナレッジベースをダウンロードできませんでした"
   },
   "delete": {
     "title": "ナレッジベースを削除",
@@ -386,5 +387,11 @@
     "open_automation": "自動化で開く",
     "admin_only": "owner または admin が設定します",
     "failed": "毎日のナレッジ集約を更新できませんでした"
+  },
+  "graph": {
+    "aria": "ページ間のリンク",
+    "empty": "ページはまだありません",
+    "orphan": "リンクなし",
+    "open": "{{title}} を開く"
   }
 }

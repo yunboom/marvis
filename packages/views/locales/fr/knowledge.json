@@ -70,7 +70,8 @@
   "export": {
     "title": "Exporter",
     "zip": "Télécharger le zip",
-    "hint": "Décompressez-le pour l'ouvrir dans Obsidian."
+    "hint": "Décompressez-le pour l'ouvrir dans Obsidian.",
+    "failed": "Impossible de télécharger la base de connaissances"
   },
   "delete": {
     "title": "Supprimer la base de connaissances",
@@ -386,5 +387,11 @@
     "open_automation": "Ouvrir dans les automatisations",
     "admin_only": "Un owner ou un admin la configure",
     "failed": "Impossible de mettre à jour la synthèse quotidienne"
+  },
+  "graph": {
+    "aria": "Liens entre les pages",
+    "empty": "Aucune page pour l’instant",
+    "orphan": "Sans lien",
+    "open": "Ouvrir {{title}}"
   }
 }

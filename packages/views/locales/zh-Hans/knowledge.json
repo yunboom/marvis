@@ -70,7 +70,8 @@
   "export": {
     "title": "导出",
     "zip": "下载 zip",
-    "hint": "解压后可以直接用 Obsidian 打开。"
+    "hint": "解压后可以直接用 Obsidian 打开。",
+    "failed": "知识库下载失败"
   },
   "delete": {
     "title": "删除知识库",
@@ -386,5 +387,11 @@
     "open_automation": "在自动化中打开",
     "admin_only": "由 owner 或 admin 设置",
     "failed": "每日知识沉淀更新失败"
+  },
+  "graph": {
+    "aria": "页面之间的链接",
+    "empty": "还没有页面",
+    "orphan": "无链接",
+    "open": "打开{{title}}"
   }
 }
