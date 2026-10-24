@@ -7,6 +7,7 @@ import {
   useDeferredValue,
   useMemo,
   useRef,
+  type ReactNode,
 } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { ApiError, errorCode } from "@marvis/core/api";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { useModalStore } from "@marvis/core/modals";
+import { useMessageBoxStore } from "@marvis/core/inbox/message-box-store";
 import {
   getShortcut,
   isEditableShortcutTarget,
@@ -90,7 +92,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
 } from "@marvis/ui/components/ui/dropdown-menu";
 import { useIsCompact } from "@marvis/ui/hooks/use-mobile";
 import { cn } from "@marvis/ui/lib/utils";
@@ -111,11 +112,28 @@ import { AutopilotQuotaNotice } from "./autopilot-quota-notice";
 import { useT } from "../../i18n";
 import { useIssueLimitUpgradePrompt } from "../../modals/use-issue-limit-upgrade-prompt";
 
-const INBOX_LIST_DEFAULT_SIZE = 260;
-const INBOX_LIST_MIN_SIZE = 240;
-const INBOX_LIST_MAX_SIZE = 400;
+// The page keeps a narrow list so the open item gets the room. The message box
+// is a wide dialog, so its list can afford the labelled mark-all-read button.
+const LIST_SIZES = {
+  page: { default: 260, min: 240, max: 400 },
+  dialog: { default: 340, min: 300, max: 440 },
+} as const;
 
-export function InboxPage() {
+interface InboxPageProps {
+  /**
+   * `"page"` is the /inbox route: selection and view live in the URL.
+   * `"dialog"` is the message box over another page: they live in local state,
+   * since the URL belongs to the page underneath.
+   */
+  surface?: "page" | "dialog";
+  /** Dialog only: the control that closes the message box. */
+  closeAction?: ReactNode;
+}
+
+/** Marks the message box popup; its own keypresses are not a foreign layer's. */
+export const MESSAGE_BOX_LAYER_ATTR = "data-message-box";
+
+export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}) {
   const queryClient = useQueryClient();
   const { t } = useT("inbox");
   const { t: tCommon } = useT("common");
@@ -123,10 +141,11 @@ export function InboxPage() {
   const showAutopilotQuotaRecoveryPrompt = useIssueLimitUpgradePrompt(
     "autopilot_quota",
   );
+  const isDialog = surface === "dialog";
   const { searchParams, replace } = useNavigation();
-  const urlIssue = searchParams.get("issue") ?? "";
+  const urlIssue = isDialog ? "" : (searchParams.get("issue") ?? "");
   const urlView: InboxView =
-    searchParams.get("view") === ARCHIVED_VIEW_PARAM ? "archived" : "inbox";
+    !isDialog && searchParams.get("view") === ARCHIVED_VIEW_PARAM ? "archived" : "inbox";
   const wsPaths = useWorkspacePaths();
 
   const [selectedKey, setSelectedKeyState] = useState(() => urlIssue);
@@ -265,8 +284,8 @@ export function InboxPage() {
 
   const setSelectedKey = useCallback((key: string) => {
     setSelectedKeyState(key);
-    replace(buildInboxUrl(view, key));
-  }, [replace, buildInboxUrl, view]);
+    if (!isDialog) replace(buildInboxUrl(view, key));
+  }, [isDialog, replace, buildInboxUrl, view]);
 
   // Switching views always clears the selection: the two lists are mutually
   // exclusive, so a key carried across would never resolve, and the fallback
@@ -274,8 +293,8 @@ export function InboxPage() {
   const setView = useCallback((nextView: InboxView) => {
     setViewState(nextView);
     setSelectedKeyState("");
-    replace(buildInboxUrl(nextView, ""));
-  }, [replace, buildInboxUrl]);
+    if (!isDialog) replace(buildInboxUrl(nextView, ""));
+  }, [isDialog, replace, buildInboxUrl]);
 
   // Stable identity: InboxList memoizes the archive entry on this callback, so
   // an inline arrow here would rebuild (and remount) the entry every render.
@@ -306,12 +325,14 @@ export function InboxPage() {
     if (!selectedKey) return;
     if (selected) return;
     if (selectionFilteredOut) return;
-    if (lastResolvedKeyRef.current === selectedKey) {
+    // The dialog only selects rows it listed, so a miss is always a removal.
+    if (isDialog || lastResolvedKeyRef.current === selectedKey) {
       setSelectedKey("");
       return;
     }
     replace(wsPaths.issueDetail(selectedKey));
   }, [
+    isDialog,
     viewLoading,
     isArchivedView,
     archivedError,
@@ -326,8 +347,9 @@ export function InboxPage() {
   ]);
 
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: "marvis_inbox_layout",
+    id: isDialog ? "marvis_message_box_layout" : "marvis_inbox_layout",
   });
+  const listSize = LIST_SIZES[surface];
 
   const isCompact = useIsCompact();
   const unreadCount = useInboxUnreadCount(wsId);
@@ -522,7 +544,13 @@ export function InboxPage() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.repeat || isImeComposing(event)) return;
       if (isEditableShortcutTarget(event.target)) return;
-      if (isPortalLayerShortcutTarget(event.target)) return;
+      // The /inbox page under an open message box leaves E to the box.
+      if (!isDialog && useMessageBoxStore.getState().open) return;
+      const ownLayer =
+        isDialog && event.target instanceof Element
+          ? event.target.closest(`[${MESSAGE_BOX_LAYER_ATTR}]`)
+          : null;
+      if (isPortalLayerShortcutTarget(event.target, ownLayer)) return;
       if (useModalStore.getState().modal) return;
       if (!shortcutMatchesEvent(getShortcut("archiveInboxItem"), event)) return;
       const run = actionOnSelectedRef.current;
@@ -532,7 +560,7 @@ export function InboxPage() {
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [isDialog]);
 
   // Batch operations
   const handleMarkAllRead = () => {
@@ -586,7 +614,8 @@ export function InboxPage() {
   // -- Shared sub-components --------------------------------------------------
 
   const listHeader = (
-    <PageHeader className="h-18 gap-0.5 border-b-0">
+    // The dialog has no sidebar to reopen, so it drops the collapsed-nav trigger.
+    <PageHeader className="h-18 gap-0.5 border-b-0" leading={isDialog ? false : undefined}>
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <h1 className="truncate text-display-sm font-bold">{t(($) => $.page.title)}</h1>
         {unreadCount > 0 && (
@@ -599,6 +628,25 @@ export function InboxPage() {
           />
         )}
       </div>
+      {!isArchivedView && unreadCount > 0 && (
+        // The page's narrow list has no room for the label beside the title.
+        isDialog ? (
+          <Button variant="secondary" size="sm" className="mr-1 gap-1.5" onClick={handleMarkAllRead}>
+            <CheckCheck className="h-4 w-4" />
+            {t(($) => $.menu.mark_all_read)}
+          </Button>
+        ) : (
+          <IconButton
+            label={t(($) => $.menu.mark_all_read)}
+            tooltipSide="bottom"
+            size="icon"
+            className="text-muted-foreground"
+            onClick={handleMarkAllRead}
+          >
+            <CheckCheck className="h-4 w-4" />
+          </IconButton>
+        )
+      )}
       <InboxFilterMenu
         wsId={wsId}
         items={viewItems}
@@ -624,11 +672,6 @@ export function InboxPage() {
           <MoreHorizontal className="h-4 w-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-auto">
-          <DropdownMenuItem onClick={handleMarkAllRead}>
-            <CheckCheck className="h-4 w-4" />
-            {t(($) => $.menu.mark_all_read)}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleArchiveAll}>
             <Archive className="h-4 w-4" />
             {t(($) => $.menu.archive_all)}
@@ -644,6 +687,8 @@ export function InboxPage() {
         </DropdownMenuContent>
       </DropdownMenu>
       )}
+      {/* Compact shows the list alone, so the dialog's close moves up here. */}
+      {isCompact && closeAction}
     </PageHeader>
   );
 
@@ -757,6 +802,15 @@ export function InboxPage() {
   const compactBackBar = compactBackAction ? (
     <div className={cn("flex h-12 shrink-0 items-center gap-2 border-b", PAGE_GUTTER)}>
       {compactBackAction}
+      {closeAction && <div className="ml-auto">{closeAction}</div>}
+    </div>
+  ) : null;
+
+  // Desktop detail states with no issue header of their own (a notification
+  // body, the empty prompt, loading) carry the dialog's close in this bar.
+  const detailCloseBar = closeAction ? (
+    <div className="flex h-12 shrink-0 items-center justify-end px-3">
+      {closeAction}
     </div>
   ) : null;
 
@@ -791,6 +845,7 @@ export function InboxPage() {
           // The split layout already has a nav trigger in the list header.
           // Explicit false suppresses the detail header's fallback trigger.
           leadingAction={compactBackAction ?? false}
+          trailingActions={closeAction}
           onDelete={() => {
             // Issue deletion CASCADE-deletes the inbox item server-side, and the
             // issue:deleted WS event prunes it from the inbox cache. Just clear
@@ -980,9 +1035,9 @@ export function InboxPage() {
       <ResizablePanelGroup orientation="horizontal" className="flex-1 min-h-0" defaultLayout={defaultLayout} onLayoutChanged={onLayoutChanged}>
         <ResizablePanel
           id="list"
-          defaultSize={INBOX_LIST_DEFAULT_SIZE}
-          minSize={INBOX_LIST_MIN_SIZE}
-          maxSize={INBOX_LIST_MAX_SIZE}
+          defaultSize={listSize.default}
+          minSize={listSize.min}
+          maxSize={listSize.max}
           groupResizeBehavior="preserve-pixel-size"
         >
           <div className="flex flex-col border-r h-full">
@@ -1004,6 +1059,7 @@ export function InboxPage() {
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel id="detail" minSize="40%">
+          {detailCloseBar}
           <div className="p-8">
             <Skeleton className="h-6 w-50" />
             <Skeleton className="mt-4 h-4 w-32" />
@@ -1017,9 +1073,9 @@ export function InboxPage() {
     <ResizablePanelGroup orientation="horizontal" className="flex-1 min-h-0" defaultLayout={defaultLayout} onLayoutChanged={onLayoutChanged}>
       <ResizablePanel
         id="list"
-        defaultSize={INBOX_LIST_DEFAULT_SIZE}
-        minSize={INBOX_LIST_MIN_SIZE}
-        maxSize={INBOX_LIST_MAX_SIZE}
+        defaultSize={listSize.default}
+        minSize={listSize.min}
+        maxSize={listSize.max}
         groupResizeBehavior="preserve-pixel-size"
       >
       <div className="flex flex-col border-r h-full">
@@ -1029,8 +1085,9 @@ export function InboxPage() {
       <ResizableHandle />
       <ResizablePanel id="detail" minSize="40%">
       <div className="flex flex-col min-h-0 h-full">
+        {!detailItem?.issue_id && detailCloseBar}
         {detailContent ?? (
-          <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-muted-foreground">
             <Inbox className="mb-3 size-10 text-faint-foreground" strokeWidth={1.4} />
             <p className="text-body">
               {visibleItems.length === 0

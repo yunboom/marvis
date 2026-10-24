@@ -1163,7 +1163,11 @@ interface IssueDetailProps {
    * properties sidebar, and `trailingActions` where the sidebar toggle sits.
    */
   variant?: "page" | "peek";
-  /** Peek only: host controls at the end of the header (open full page, close). */
+  /**
+   * Host controls at the end of the header. The peek puts them where the
+   * sidebar toggle sits (open full page, close); a page puts them after it
+   * (the message box's close button).
+   */
   trailingActions?: ReactNode;
 }
 
@@ -3309,16 +3313,19 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             {isPeek ? (
               trailingActions
             ) : (
-              <IconButton
-                label={t(($) => $.detail.sidebar_tooltip)}
-                shortcut={<ActionShortcutKeycaps action="toggleRightSidebar" />}
-                tooltipSide="bottom"
-                variant={sidebarOpen ? "secondary" : "ghost"}
-                className={sidebarOpen ? "" : "text-muted-foreground"}
-                onClick={handleToggleSidebar}
-              >
-                <PanelRight />
-              </IconButton>
+              <>
+                <IconButton
+                  label={t(($) => $.detail.sidebar_tooltip)}
+                  shortcut={<ActionShortcutKeycaps action="toggleRightSidebar" />}
+                  tooltipSide="bottom"
+                  variant={sidebarOpen ? "secondary" : "ghost"}
+                  className={sidebarOpen ? "" : "text-muted-foreground"}
+                  onClick={handleToggleSidebar}
+                >
+                  <PanelRight />
+                </IconButton>
+                {trailingActions}
+              </>
             )}
             </>
           }
