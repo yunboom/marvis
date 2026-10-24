@@ -431,6 +431,7 @@ type AgentTaskResponse struct {
 	Agent              *TaskAgentData           `json:"agent,omitempty"`
 	ConnectedApps      []ConnectedAppData       `json:"connected_apps,omitempty"` // daemon-claim only: per-run app capabilities mounted through runtime MCP overlays
 	Repos              []RepoData               `json:"repos,omitempty"`
+	KnowledgeBases     []KnowledgeBaseBrief     `json:"knowledge_bases,omitempty"`     // daemon-claim only: listed in the brief so the agent decides whether to consult them. Mirror field: internal/daemon/types.go
 	ProjectID          string                   `json:"project_id,omitempty"`          // issue's project, when present
 	ProjectTitle       string                   `json:"project_title,omitempty"`       // for surfacing in agent context
 	ProjectDescription string                   `json:"project_description,omitempty"` // durable project-level context injected into the brief

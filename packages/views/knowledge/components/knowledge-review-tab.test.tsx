@@ -106,8 +106,32 @@ describe("KnowledgeReviewTab", () => {
         },
       ],
       comments: [],
+      checks: { lint: [], stale: [] },
     };
     vi.clearAllMocks();
+  });
+
+  it("shows lint and stale check results", async () => {
+    detailRef.current = {
+      ...(detailRef.current as object),
+      checks: {
+        lint: [
+          { code: "broken_link", severity: "error", path: "team/wiki/concepts/refund.md", message: "link target gone.md does not exist" },
+          { code: "orphan_page", severity: "warning", path: "team/wiki/concepts/refund.md", message: "no other page links to this page" },
+        ],
+        stale: [{ path: "team/wiki/concepts/refund.md", reason: "expired", claim_id: "", uri: "", version: "2020-01-01" }],
+      },
+    };
+    renderTab();
+    expect(await screen.findByText("Lint: 1 errors, 1 warnings")).toBeTruthy();
+    expect(screen.getByText("Broken link · team/wiki/concepts/refund.md")).toBeTruthy();
+    expect(screen.getByText("Pages past their review date: 1")).toBeTruthy();
+  });
+
+  it("reports clean checks", async () => {
+    renderTab();
+    expect(await screen.findByText("Lint: no issues")).toBeTruthy();
+    expect(screen.getByText("No pages past their review date")).toBeTruthy();
   });
 
   it("disables merge for a plain member and says who can merge", async () => {

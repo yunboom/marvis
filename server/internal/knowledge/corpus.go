@@ -18,6 +18,8 @@ type Corpus struct {
 	Others map[string]bool
 	// Claims 按页面路径索引论断文件的原始内容。
 	Claims map[string][]byte
+	// Indexes 按知识库目录名索引解析后的 index.md，lint 用它核对目录与页面是否一致。
+	Indexes map[string]*Page
 
 	index *searchIndex
 }
@@ -86,36 +88,67 @@ func (s *Store) LoadCorpus(ctx context.Context, workspaceID, commit string) (*Co
 	if err != nil {
 		return nil, err
 	}
-	var pagePaths, claimPaths []string
-	others := map[string]bool{}
-	for _, f := range files {
-		switch {
-		case IsPagePath(f):
-			pagePaths = append(pagePaths, f)
-		case strings.Contains(f, "/.claims/") && strings.HasSuffix(f, ".json"):
-			claimPaths = append(claimPaths, f)
-		default:
-			others[f] = true
-		}
-	}
-	contents, err := s.ReadFiles(ctx, workspaceID, commit, append(pagePaths, claimPaths...))
+	contents, err := s.ReadFiles(ctx, workspaceID, commit, CorpusContentPaths(files))
 	if err != nil {
 		return nil, err
 	}
 
-	c := &Corpus{Commit: commit, Pages: make(map[string]*Page, len(pagePaths)), Others: others, Claims: map[string][]byte{}}
-	for _, p := range pagePaths {
-		page := ParsePage(p, contents[p])
-		c.Pages[p] = &page
-	}
-	for _, p := range claimPaths {
-		pagePath := strings.TrimSuffix(strings.Replace(p, "/.claims/", "/", 1), ".json")
-		c.Claims[pagePath] = contents[p]
-	}
-	c.index = buildSearchIndex(c.Pages)
+	c := NewCorpus(commit, files, contents)
 	corpora.put(key, c)
 
 	return c, nil
+}
+
+// isClaimsPath 判断路径是否是论断文件（<slug>/.claims/**.json）。
+func isClaimsPath(p string) bool {
+	return strings.Contains(p, "/.claims/") && strings.HasSuffix(p, ".json")
+}
+
+// isIndexPath 判断路径是否是知识库目录文件（<slug>/index.md）。
+func isIndexPath(p string) bool {
+	slug := SlugOf(p)
+
+	return slug != "" && p == slug+"/"+indexFile
+}
+
+// CorpusContentPaths 从仓库全部路径里挑出构建语料需要读取内容的文件：页面、论断和各库的 index.md。
+func CorpusContentPaths(files []string) []string {
+	var out []string
+	for _, f := range files {
+		if IsPagePath(f) || isClaimsPath(f) || isIndexPath(f) {
+			out = append(out, f)
+		}
+	}
+
+	return out
+}
+
+// NewCorpus 用仓库路径列表和 CorpusContentPaths 所列文件的内容构建语料。
+// 服务端从提交读取，CLI 从本地克隆读取，两边共用同一套解析与检查。
+func NewCorpus(commit string, files []string, contents map[string][]byte) *Corpus {
+	c := &Corpus{
+		Commit: commit, Pages: map[string]*Page{}, Others: map[string]bool{},
+		Claims: map[string][]byte{}, Indexes: map[string]*Page{},
+	}
+	for _, f := range files {
+		switch {
+		case IsPagePath(f):
+			page := ParsePage(f, contents[f])
+			c.Pages[f] = &page
+		case isClaimsPath(f):
+			pagePath := strings.TrimSuffix(strings.Replace(f, "/.claims/", "/", 1), ".json")
+			c.Claims[pagePath] = contents[f]
+		default:
+			c.Others[f] = true
+			if isIndexPath(f) {
+				page := ParsePage(f, contents[f])
+				c.Indexes[SlugOf(f)] = &page
+			}
+		}
+	}
+	c.index = buildSearchIndex(c.Pages)
+
+	return c
 }
 
 // PagesOf 返回某个知识库的页面，按路径排序。

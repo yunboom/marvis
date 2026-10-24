@@ -203,7 +203,27 @@
     "comment_placeholder": "Que doit modifier l'agent ?",
     "comment": "Commenter",
     "close_title": "Fermer #{{number}} ?",
-    "close_description": "Ses annotations repassent en attente et la branche est supprimée."
+    "close_description": "Ses annotations repassent en attente et la branche est supprimée.",
+    "check_lint_clean": "Lint : aucun problème",
+    "check_lint": "Lint : {{errors}} erreurs, {{warnings}} avertissements",
+    "check_stale_clean": "Aucune page à revérifier",
+    "check_stale": "Pages à revérifier : {{n}}",
+    "lint_codes": {
+      "broken_link": "Lien cassé",
+      "orphan_page": "Aucun lien entrant",
+      "not_in_index": "Absente de l’index",
+      "missing_index": "index.md manquant",
+      "invalid_front_matter": "Front matter invalide",
+      "missing_field": "Champ manquant",
+      "invalid_value": "Valeur invalide",
+      "missing_footnote": "Citation sans note",
+      "unused_footnote": "Note inutilisée",
+      "missing_claims": "Fichier claims manquant",
+      "invalid_claims": "Fichier claims invalide",
+      "claims_without_page": "Claims sans page",
+      "missing_evidence_version": "Preuve sans version",
+      "other": "Autre"
+    }
   },
   "history": {
     "empty": "Rien n'a encore été fusionné",

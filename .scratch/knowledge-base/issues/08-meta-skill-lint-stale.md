@@ -4,7 +4,7 @@
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] meta-skill 新增知识库一节
-- [ ] lint、stale 命令与表驱动测试
+- [x] meta-skill 新增知识库一节
+- [x] lint、stale 命令与表驱动测试

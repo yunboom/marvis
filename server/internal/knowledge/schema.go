@@ -22,6 +22,26 @@ var PageGroups = []string{"entities", "concepts", "howtos", "decisions", "synthe
 // Domains 是页面的领域标签。
 var Domains = []string{"dev", "qa", "product"}
 
+// indexFile 是知识库目录文件名，位于每个知识库目录下。
+const indexFile = "index.md"
+
+// groupPageTypes 是各分类目录下页面 front matter 的 type 取值。
+var groupPageTypes = map[string]string{
+	"entities":  "entity",
+	"concepts":  "concept",
+	"howtos":    "howto",
+	"decisions": "decision",
+	"syntheses": "synthesis",
+	"sources":   "source",
+	"queries":   "query",
+}
+
+// 页面 front matter 的 status 取值。
+const (
+	PageStatusActive     = "active"
+	PageStatusDeprecated = "deprecated"
+)
+
 // SchemaInput 是生成一个知识库内置文件所需的信息。
 type SchemaInput struct {
 	Name    string
@@ -43,7 +63,7 @@ func BuiltinFiles(in SchemaInput) ([]FileChange, error) {
 	files := []FileChange{
 		{Path: in.Slug + "/AGENTS.md", Content: agents.Bytes()},
 		{Path: in.Slug + "/purpose.md", Content: []byte("# " + in.Name + "\n\n" + purpose + "\n")},
-		{Path: in.Slug + "/index.md", Content: []byte("---\nokf_version: \"0.2\"\n---\n\n# " + in.Name + "\n\n")},
+		{Path: in.Slug + "/" + indexFile, Content: []byte("---\nokf_version: \"0.2\"\n---\n\n# " + in.Name + "\n\n")},
 		{Path: in.Slug + "/log.md", Content: []byte("# Log\n\n")},
 		{Path: in.Slug + "/overview.md", Content: []byte("---\ntype: synthesis\ntitle: Overview\ndomains: [dev, qa, product]\n---\n\n# Overview\n")},
 		{Path: in.Slug + "/raw/sources/.gitkeep"},

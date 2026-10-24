@@ -493,6 +493,39 @@ func writeRepositories(b *strings.Builder, ctx TaskContextForEnv) {
 	b.WriteString("\n")
 }
 
+// writeKnowledgeBases lists the workspace knowledge bases with their
+// descriptions and the `marvis kb` commands. The agent decides from the
+// descriptions whether any knowledge base is relevant; nothing is loaded up front.
+func writeKnowledgeBases(b *strings.Builder, ctx TaskContextForEnv) {
+	// Names and descriptions are user-entered; collapse them to one escaped
+	// line so they cannot inject headings into the trusted brief.
+	var lines strings.Builder
+	for _, kb := range ctx.KnowledgeBases {
+		slug := sanitizeBriefCodeToken(kb.Slug)
+		if slug == "" {
+			continue
+		}
+		line := fmt.Sprintf("- `%s` — %s", slug, sanitizeNameForBriefMarkdown(kb.Name))
+		if d := sanitizeNameForBriefMarkdown(kb.Description); d != "" {
+			line += ": " + d
+		}
+		lines.WriteString(line + "\n")
+	}
+	if lines.Len() == 0 {
+		return
+	}
+
+	b.WriteString("## Knowledge Bases\n\n")
+	b.WriteString("The workspace keeps reviewed team knowledge. Check a knowledge base before guessing about systems, rules or processes it covers:\n\n")
+	b.WriteString(lines.String())
+	b.WriteString("\n")
+	b.WriteString("- `marvis kb search <query> [--kb <slug>]` — find pages; a query with no hits is recorded as a knowledge gap.\n")
+	b.WriteString("- `marvis kb page list <slug>` / `marvis kb page get <slug> <path>` — read pages (start from `<slug>/index.md`).\n")
+	b.WriteString("- `marvis kb gap add <question>` — record a question the knowledge bases cannot answer.\n")
+	b.WriteString("- `marvis kb annotate add <slug> --page <path> [--quote <sentence>] --body <text>` — flag a wrong or outdated statement.\n")
+	b.WriteString("- To change pages: `marvis kb clone <dir>`, edit following `<slug>/AGENTS.md`, `marvis kb lint --dir <dir>`, then `marvis kb change create --dir <dir> --title ... --summary ...`. Changes take effect only after a person merges them.\n\n")
+}
+
 // writeProjectContext emits the Project Context section when the task carries
 // an active project. Project context is independent of the task surface: an
 // issue inherits it from its project, while a chat receives it from the
@@ -949,6 +982,7 @@ func buildMetaSkillContentSlim(provider string, ctx TaskContextForEnv) string {
 
 	if kind != kindQuickCreate {
 		writeRepositories(&b, ctx)
+		writeKnowledgeBases(&b, ctx)
 	}
 
 	writeProjectContext(&b, ctx)

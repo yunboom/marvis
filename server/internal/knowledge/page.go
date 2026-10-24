@@ -314,12 +314,15 @@ func SplitSentences(text string) []Sentence {
 	return out
 }
 
+// dateLayout 是 front matter 日期字段（stale_after、verified.at）的格式。
+const dateLayout = "2006-01-02"
+
 // IsStale 判断页面是否已过 stale_after。
 func (fm FrontMatter) IsStale(now time.Time) bool {
 	if fm.StaleAfter == "" {
 		return false
 	}
-	t, err := time.Parse("2006-01-02", fm.StaleAfter)
+	t, err := time.Parse(dateLayout, fm.StaleAfter)
 	if err != nil {
 		return false
 	}

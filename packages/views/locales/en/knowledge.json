@@ -203,7 +203,27 @@
     "comment_placeholder": "What should the agent change?",
     "comment": "Comment",
     "close_title": "Close #{{number}}?",
-    "close_description": "Its annotations go back to pending and the branch is deleted."
+    "close_description": "Its annotations go back to pending and the branch is deleted.",
+    "check_lint_clean": "Lint: no issues",
+    "check_lint": "Lint: {{errors}} errors, {{warnings}} warnings",
+    "check_stale_clean": "No pages past their review date",
+    "check_stale": "Pages past their review date: {{n}}",
+    "lint_codes": {
+      "broken_link": "Broken link",
+      "orphan_page": "No page links here",
+      "not_in_index": "Missing from index",
+      "missing_index": "Missing index.md",
+      "invalid_front_matter": "Invalid front matter",
+      "missing_field": "Missing field",
+      "invalid_value": "Invalid value",
+      "missing_footnote": "Citation without footnote",
+      "unused_footnote": "Unused footnote",
+      "missing_claims": "No claims file",
+      "invalid_claims": "Invalid claims file",
+      "claims_without_page": "Claims without page",
+      "missing_evidence_version": "Evidence without version",
+      "other": "Other"
+    }
   },
   "history": {
     "empty": "Nothing merged yet",

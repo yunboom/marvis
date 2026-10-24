@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -508,6 +509,51 @@ type KnowledgeChangeDetailResponse struct {
 	KnowledgeChangeRequestResponse
 	Groups   []KnowledgeChangeFileGroup `json:"groups"`
 	Comments []KnowledgeChangeComment   `json:"comments"`
+	Checks   KnowledgeChangeChecks      `json:"checks"`
+}
+
+// KnowledgeChangeChecks 是审核时展示的自动检查：变更涉及文件的 lint 问题与已过 stale_after 的页面。
+// 能否合并由 conflict 字段表示；服务端拿不到代码仓库，按证据版本的比对只在 CLI 的 kb stale 里做。
+type KnowledgeChangeChecks struct {
+	Lint  []knowledge.LintIssue `json:"lint"`
+	Stale []knowledge.StaleItem `json:"stale"`
+}
+
+// changeChecks 在变更请求的 head 提交上运行检查，只保留变更涉及的文件。
+func (h *Handler) changeChecks(ctx context.Context, workspaceID string, cr db.KnowledgeChangeRequest, files []knowledge.FileDiff) (KnowledgeChangeChecks, error) {
+	checks := KnowledgeChangeChecks{Lint: []knowledge.LintIssue{}, Stale: []knowledge.StaleItem{}}
+	corpus, err := h.Knowledge.LoadCorpus(ctx, workspaceID, cr.HeadCommit)
+	if err != nil {
+		return checks, err
+	}
+
+	touched := map[string]bool{}
+	slugs := map[string]bool{}
+	for _, f := range files {
+		touched[f.Path] = true
+		slugs[knowledge.SlugOf(f.Path)] = true
+	}
+
+	for s := range slugs {
+		for _, is := range corpus.Lint(s) {
+			if touched[is.Path] {
+				checks.Lint = append(checks.Lint, is)
+			}
+		}
+		items, err := corpus.Stale(s, time.Now(), nil)
+		if err != nil {
+			return checks, err
+		}
+		for _, it := range items {
+			if it.Reason == knowledge.StaleExpired && touched[it.Path] {
+				checks.Stale = append(checks.Stale, it)
+			}
+		}
+	}
+	sort.Slice(checks.Lint, func(i, j int) bool { return checks.Lint[i].Path < checks.Lint[j].Path })
+	sort.Slice(checks.Stale, func(i, j int) bool { return checks.Stale[i].Path < checks.Stale[j].Path })
+
+	return checks, nil
 }
 
 func (h *Handler) changeDetail(ctx context.Context, cr db.KnowledgeChangeRequest, files []knowledge.FileDiff) KnowledgeChangeDetailResponse {
@@ -541,6 +587,7 @@ func (h *Handler) changeDetail(ctx context.Context, cr db.KnowledgeChangeRequest
 		KnowledgeChangeRequestResponse: changeRequestToResponse(cr, names[uuidToString(cr.AuthorID)]),
 		Groups:                         groups,
 		Comments:                       comments,
+		Checks:                         KnowledgeChangeChecks{Lint: []knowledge.LintIssue{}, Stale: []knowledge.StaleItem{}},
 	}
 }
 
@@ -565,5 +612,13 @@ func (h *Handler) GetKnowledgeChangeRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	writeJSON(w, http.StatusOK, h.changeDetail(r.Context(), cr, files))
+	checks, err := h.changeChecks(r.Context(), workspaceID, cr, files)
+	if err != nil {
+		writeKnowledgeError(w, r, err, "failed to run checks")
+		return
+	}
+
+	detail := h.changeDetail(r.Context(), cr, files)
+	detail.Checks = checks
+	writeJSON(w, http.StatusOK, detail)
 }

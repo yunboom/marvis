@@ -7807,6 +7807,7 @@ func (d *Daemon) runTask(ctx context.Context, task Task, provider string, slot i
 		AgentSkills:                      convertSkillsForEnv(skills),
 		DisabledRuntimeSkills:            convertDisabledRuntimeSkillsForEnv(task.Agent, task.RuntimeID, provider),
 		Repos:                            convertReposForEnv(task.Repos),
+		KnowledgeBases:                   convertKnowledgeBasesForEnv(task.KnowledgeBases),
 		ProjectID:                        task.ProjectID,
 		ProjectTitle:                     task.ProjectTitle,
 		ProjectDescription:               task.ProjectDescription,
@@ -10224,6 +10225,17 @@ func convertReposForEnv(repos []RepoData) []execenv.RepoContextForEnv {
 	result := make([]execenv.RepoContextForEnv, len(repos))
 	for i, r := range repos {
 		result[i] = execenv.RepoContextForEnv{URL: r.URL, Description: r.Description, Ref: r.Ref}
+	}
+	return result
+}
+
+func convertKnowledgeBasesForEnv(bases []KnowledgeBaseData) []execenv.KnowledgeBaseForEnv {
+	if len(bases) == 0 {
+		return nil
+	}
+	result := make([]execenv.KnowledgeBaseForEnv, len(bases))
+	for i, b := range bases {
+		result[i] = execenv.KnowledgeBaseForEnv{Slug: b.Slug, Name: b.Name, Description: b.Description}
 	}
 	return result
 }

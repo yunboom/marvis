@@ -203,7 +203,27 @@
     "comment_placeholder": "エージェントへの修正指示",
     "comment": "コメント",
     "close_title": "#{{number}} をクローズしますか？",
-    "close_description": "関連する注釈は未処理に戻り、ブランチは削除されます。"
+    "close_description": "関連する注釈は未処理に戻り、ブランチは削除されます。",
+    "check_lint_clean": "Lint：問題なし",
+    "check_lint": "Lint：エラー {{errors}} 件、警告 {{warnings}} 件",
+    "check_stale_clean": "再確認日を過ぎたページはありません",
+    "check_stale": "再確認日を過ぎたページ：{{n}}",
+    "lint_codes": {
+      "broken_link": "リンク切れ",
+      "orphan_page": "被リンクなし",
+      "not_in_index": "index に未掲載",
+      "missing_index": "index.md がない",
+      "invalid_front_matter": "front matter が無効",
+      "missing_field": "必須項目なし",
+      "invalid_value": "値が無効",
+      "missing_footnote": "脚注のない引用",
+      "unused_footnote": "未使用の脚注",
+      "missing_claims": "claims ファイルなし",
+      "invalid_claims": "claims ファイルが無効",
+      "claims_without_page": "ページのない claims",
+      "missing_evidence_version": "根拠にバージョンなし",
+      "other": "その他"
+    }
   },
   "history": {
     "empty": "マージされた変更はまだありません",

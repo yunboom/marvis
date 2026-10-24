@@ -12,6 +12,7 @@ import {
   type KnowledgeBase,
   type KnowledgeChangeDetail,
   type KnowledgeChangeRequest,
+  type KnowledgeLintIssue,
 } from "@marvis/core/knowledge";
 import { useCurrentMember } from "@marvis/core/permissions";
 import {
@@ -124,6 +125,33 @@ export function KnowledgeReviewTab({ bases, slots = {} }: { bases: KnowledgeBase
   );
 }
 
+const LINT_LIST_LIMIT = 8;
+
+function LintCheck({ issues }: { issues: KnowledgeLintIssue[] }) {
+  const { t } = useT("knowledge");
+  const errors = issues.filter((i) => i.severity === "error").length;
+  const warnings = issues.length - errors;
+  const dot = errors > 0 ? "bg-status-blocked" : warnings > 0 ? "bg-status-progress" : "bg-status-done";
+
+  return (
+    <div className="mt-1.5">
+      <div className="flex items-center gap-2 text-body">
+        <span aria-hidden="true" className={cn("size-1.5 rounded-full", dot)} />
+        {issues.length > 0 ? t(($) => $.review.check_lint, { errors, warnings }) : t(($) => $.review.check_lint_clean)}
+      </div>
+      {issues.length > 0 ? (
+        <ul className="mt-1 space-y-0.5 pl-3.5">
+          {issues.slice(0, LINT_LIST_LIMIT).map((issue, i) => (
+            <li key={`${issue.path}-${issue.code}-${i}`} title={issue.message} className="truncate text-caption text-muted-foreground">
+              {t(($) => $.review.lint_codes[issue.code])} · {issue.path}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 function ChangeDetail({ number, baseNames, slots }: { number: number; baseNames: Record<string, string>; slots: KnowledgeReviewSlots }) {
   const { t } = useT("knowledge");
   const wsId = useWorkspaceId();
@@ -218,6 +246,16 @@ function ChangeDetail({ number, baseNames, slots }: { number: number; baseNames:
           <div className="flex items-center gap-2 text-body">
             <span aria-hidden="true" className={cn("size-1.5 rounded-full", change.conflict ? "bg-status-blocked" : "bg-status-done")} />
             {change.conflict ? t(($) => $.review.check_conflict) : t(($) => $.review.check_mergeable)}
+          </div>
+          <LintCheck issues={change.checks.lint} />
+          <div className="mt-1.5 flex items-center gap-2 text-body">
+            <span
+              aria-hidden="true"
+              className={cn("size-1.5 rounded-full", change.checks.stale.length > 0 ? "bg-status-progress" : "bg-status-done")}
+            />
+            {change.checks.stale.length > 0
+              ? t(($) => $.review.check_stale, { n: change.checks.stale.length })
+              : t(($) => $.review.check_stale_clean)}
           </div>
           {change.annotation_ids.length > 0 ? (
             <div className="mt-2 text-caption text-muted-foreground">

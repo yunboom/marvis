@@ -203,7 +203,27 @@
     "comment_placeholder": "写给智能体的修改意见",
     "comment": "评论",
     "close_title": "关闭 #{{number}}？",
-    "close_description": "关联的批注退回待处理，分支会被删除。"
+    "close_description": "关联的批注退回待处理，分支会被删除。",
+    "check_lint_clean": "Lint 无问题",
+    "check_lint": "Lint：{{errors}} 个错误，{{warnings}} 个警告",
+    "check_stale_clean": "没有过了复核日期的页面",
+    "check_stale": "过了复核日期的页面：{{n}}",
+    "lint_codes": {
+      "broken_link": "死链",
+      "orphan_page": "孤儿页",
+      "not_in_index": "未列入 index",
+      "missing_index": "缺少 index.md",
+      "invalid_front_matter": "front matter 无效",
+      "missing_field": "缺字段",
+      "invalid_value": "取值无效",
+      "missing_footnote": "引用缺脚注",
+      "unused_footnote": "脚注未被引用",
+      "missing_claims": "缺论断文件",
+      "invalid_claims": "论断文件无效",
+      "claims_without_page": "论断没有对应页面",
+      "missing_evidence_version": "证据缺版本",
+      "other": "其他"
+    }
   },
   "history": {
     "empty": "还没有合并过的变更",

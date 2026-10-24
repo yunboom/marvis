@@ -378,7 +378,65 @@ export const KnowledgeChangeCommentSchema = z.object({
 });
 export type KnowledgeChangeComment = z.infer<typeof KnowledgeChangeCommentSchema>;
 
+export const KNOWLEDGE_LINT_CODES = [
+  "broken_link",
+  "orphan_page",
+  "not_in_index",
+  "missing_index",
+  "invalid_front_matter",
+  "missing_field",
+  "invalid_value",
+  "missing_footnote",
+  "unused_footnote",
+  "missing_claims",
+  "invalid_claims",
+  "claims_without_page",
+  "missing_evidence_version",
+  // Fallback for codes added by a newer server.
+  "other",
+] as const;
+export type KnowledgeLintCode = (typeof KNOWLEDGE_LINT_CODES)[number];
+
+export const KnowledgeLintIssueSchema = z.object({
+  code: z.enum(KNOWLEDGE_LINT_CODES).catch("other"),
+  severity: z.enum(["error", "warning"]).catch("warning"),
+  path: z.string().optional().default(""),
+  message: z.string().optional().default(""),
+});
+export type KnowledgeLintIssue = z.infer<typeof KnowledgeLintIssueSchema>;
+
+export const KnowledgeStaleItemSchema = z.object({
+  path: z.string(),
+  reason: z.string().optional().default(""),
+  claim_id: z.string().optional().default(""),
+  uri: z.string().optional().default(""),
+  version: z.string().optional().default(""),
+});
+export type KnowledgeStaleItem = z.infer<typeof KnowledgeStaleItemSchema>;
+
+const emptyChecks = { lint: [], stale: [] };
+
+export const KnowledgeChangeChecksSchema = z
+  .object({
+    lint: z
+      .array(KnowledgeLintIssueSchema)
+      .nullable()
+      .catch([])
+      .transform((v) => v ?? []),
+    stale: z
+      .array(KnowledgeStaleItemSchema)
+      .nullable()
+      .catch([])
+      .transform((v) => v ?? []),
+  })
+  .nullable()
+  .optional()
+  .catch(emptyChecks)
+  .transform((v) => v ?? emptyChecks);
+export type KnowledgeChangeChecks = z.infer<typeof KnowledgeChangeChecksSchema>;
+
 export const KnowledgeChangeDetailSchema = KnowledgeChangeRequestSchema.extend({
+  checks: KnowledgeChangeChecksSchema,
   groups: z
     .array(
       z.object({

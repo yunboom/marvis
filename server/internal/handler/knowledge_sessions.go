@@ -46,7 +46,7 @@ The first message names the operation, the knowledge base(s) and this session's 
 - Never push to main. Submit with "marvis kb change create --dir <clone> --title ... --source <operation> --session <session id> --summary ... --risk low|medium|high",
   adding "--annotations <ids>" when you handle annotations. If the person asks for more changes, edit the same branch and run "marvis kb change update <number> --dir <clone>".
 - Before submitting: run "marvis kb lint --dir <clone> --kb <slug>" and fix findings; remove secrets, tokens, passwords, phone numbers and ID numbers; write the summary as a self-review (what changed, why, what you did not change).
-- Freshness: run "marvis kb lint" and "marvis kb stale"; record each real problem with "marvis kb annotate add" instead of editing.
+- Freshness: run "marvis kb lint" and "marvis kb stale --repo <name>=<path>" (check out the code repositories the claims cite first); record each real problem with "marvis kb annotate add" instead of editing.
 - Merge conflicts reported by "change create" or "change update": run "marvis kb sync", resolve, then update the change request.
 - Creating a knowledge base: do not touch the repository. Talk with the person, then end every reply with exactly one line
   <kb_draft>{"name":"","description":"","purpose":""}</kb_draft> holding compact JSON; the person confirms it in the app.

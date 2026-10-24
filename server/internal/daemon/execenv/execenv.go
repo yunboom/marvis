@@ -23,6 +23,13 @@ type RepoContextForEnv struct {
 	Ref         string // optional default checkout ref for this task
 }
 
+// KnowledgeBaseForEnv is one workspace knowledge base listed in the brief.
+type KnowledgeBaseForEnv struct {
+	Slug        string
+	Name        string
+	Description string
+}
+
 // ProjectResourceForEnv describes a single resource attached to the issue's
 // project. The resource_ref payload is type-specific JSON; the agent reads
 // resources.json on disk for the full structure. This struct only carries
@@ -157,6 +164,7 @@ type TaskContextForEnv struct {
 	AgentSkills                   []SkillContextForEnv
 	DisabledRuntimeSkills         []RuntimeSkillRefForEnv
 	Repos                         []RepoContextForEnv     // workspace repos available for checkout
+	KnowledgeBases                []KnowledgeBaseForEnv   // workspace knowledge bases the agent may consult
 	ProjectID                     string                  // active project for this task, when present
 	ProjectTitle                  string                  // human-readable project title
 	ProjectDescription            string                  // durable project-level context, rendered into the brief's Project Context section

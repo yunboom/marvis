@@ -6,6 +6,7 @@ import {
   EMPTY_KNOWLEDGE_DELETE_IMPACT,
   KnowledgeBaseListSchema,
   KnowledgeBaseSchema,
+  KnowledgeChangeDetailSchema,
   KnowledgeDeleteImpactSchema,
   parseKnowledgeBaseDraft,
   stripKnowledgeBaseDraft,
@@ -35,6 +36,18 @@ describe("knowledge schemas", () => {
     expect(stripKnowledgeBaseDraft('Streaming <kb_draft>{"name":"Q')).toBe("Streaming");
     expect(parseKnowledgeBaseDraft("<kb_draft>{not json}</kb_draft>")).toBeNull();
     expect(parseKnowledgeBaseDraft('<kb_draft>{"name":" "}</kb_draft>')).toBeNull();
+  });
+
+  it("defaults missing checks and maps unknown lint codes to other", () => {
+    const base = { id: "c1", number: 1, title: "t", branch: "kb/x" };
+    expect(KnowledgeChangeDetailSchema.parse(base).checks).toEqual({ lint: [], stale: [] });
+
+    const parsed = KnowledgeChangeDetailSchema.parse({
+      ...base,
+      checks: { lint: [{ code: "future_rule", severity: "fatal", path: "a.md" }], stale: null },
+    });
+    expect(parsed.checks.lint[0]).toMatchObject({ code: "other", severity: "warning", path: "a.md" });
+    expect(parsed.checks.stale).toEqual([]);
   });
 
   it("defaults a malformed delete impact", () => {

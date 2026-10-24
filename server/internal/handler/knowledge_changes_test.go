@@ -150,3 +150,31 @@ func TestKnowledgeGitSmartHTTP(t *testing.T) {
 		t.Fatalf("change from pushed branch = %+v", cr.KnowledgeChangeRequestResponse)
 	}
 }
+
+func TestGetKnowledgeChangeRequestReportsChecksForTouchedFiles(t *testing.T) {
+	wsID, ownerID := knowledgeWorkspace(t)
+	// 主线上已有一个缺字段的页面：它不在本次变更里，不应出现在检查结果中。
+	seedKnowledgePages(t, wsID, ownerID, map[string]string{"team/wiki/concepts/old.md": "# Old\n"})
+
+	pushBranch(t, wsID, "kb/checks", map[string]string{
+		"team/wiki/concepts/refund.md": "---\ntype: concept\ntitle: Refund\ndescription: D.\ndomains: [dev]\nstale_after: 2020-01-01\n---\n\nSee [gone](gone.md).\n",
+	})
+	createChange(t, ownerID, wsID, map[string]any{"branch": "kb/checks", "title": "checks"}, http.StatusCreated)
+
+	var got KnowledgeChangeDetailResponse
+	testutil.Call(t, testHandler.GetKnowledgeChangeRequest, kbRequest(ownerID, wsID, http.MethodGet, "/api/knowledge/changes/1", nil, "number", "1")).Want(http.StatusOK).JSON(&got)
+
+	codes := map[string]bool{}
+	for _, is := range got.Checks.Lint {
+		if is.Path != "team/wiki/concepts/refund.md" {
+			t.Fatalf("lint issue outside the change: %+v", is)
+		}
+		codes[is.Code] = true
+	}
+	if !codes[knowledge.LintBrokenLink] || !codes[knowledge.LintNotInIndex] {
+		t.Fatalf("lint = %+v", got.Checks.Lint)
+	}
+	if len(got.Checks.Stale) != 1 || got.Checks.Stale[0].Reason != knowledge.StaleExpired {
+		t.Fatalf("stale = %+v", got.Checks.Stale)
+	}
+}

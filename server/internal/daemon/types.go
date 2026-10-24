@@ -42,6 +42,13 @@ type RepoData struct {
 	Ref         string `json:"ref,omitempty"`
 }
 
+// KnowledgeBaseData mirrors handler.KnowledgeBaseBrief: one workspace knowledge base.
+type KnowledgeBaseData struct {
+	Slug        string `json:"slug"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
 // ProjectResourceData mirrors handler.ProjectResourceData — a single project
 // resource as delivered to the daemon. resource_ref is type-specific JSON.
 type ProjectResourceData struct {
@@ -111,6 +118,7 @@ type Task struct {
 	Agent                         *AgentData             `json:"agent,omitempty"`
 	ConnectedApps                 []ConnectedAppData     `json:"connected_apps,omitempty"` // per-run app capabilities mounted through runtime MCP overlays
 	Repos                         []RepoData             `json:"repos,omitempty"`
+	KnowledgeBases                []KnowledgeBaseData    `json:"knowledge_bases,omitempty"`                  // workspace knowledge bases listed in the brief; mirror of handler.TaskResponse
 	ProjectID                     string                 `json:"project_id,omitempty"`                       // active project for this task, when present
 	ProjectTitle                  string                 `json:"project_title,omitempty"`                    // human-readable project title for context injection
 	ProjectDescription            string                 `json:"project_description,omitempty"`              // durable project-level context injected into the brief

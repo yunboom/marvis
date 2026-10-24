@@ -203,7 +203,27 @@
     "comment_placeholder": "에이전트에게 보낼 수정 의견",
     "comment": "댓글",
     "close_title": "#{{number}}을(를) 닫을까요?",
-    "close_description": "연결된 주석은 처리 대기로 돌아가고 브랜치는 삭제됩니다."
+    "close_description": "연결된 주석은 처리 대기로 돌아가고 브랜치는 삭제됩니다.",
+    "check_lint_clean": "Lint: 문제 없음",
+    "check_lint": "Lint: 오류 {{errors}}개, 경고 {{warnings}}개",
+    "check_stale_clean": "재확인 날짜가 지난 페이지가 없습니다",
+    "check_stale": "재확인 날짜가 지난 페이지: {{n}}",
+    "lint_codes": {
+      "broken_link": "끊어진 링크",
+      "orphan_page": "연결된 페이지 없음",
+      "not_in_index": "index에 없음",
+      "missing_index": "index.md 없음",
+      "invalid_front_matter": "잘못된 front matter",
+      "missing_field": "필드 누락",
+      "invalid_value": "잘못된 값",
+      "missing_footnote": "각주 없는 인용",
+      "unused_footnote": "사용되지 않은 각주",
+      "missing_claims": "claims 파일 없음",
+      "invalid_claims": "잘못된 claims 파일",
+      "claims_without_page": "페이지 없는 claims",
+      "missing_evidence_version": "근거 버전 없음",
+      "other": "기타"
+    }
   },
   "history": {
     "empty": "아직 병합된 변경이 없습니다",

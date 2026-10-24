@@ -4010,6 +4010,7 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 		if ws.Context.Valid {
 			resp.WorkspaceContext = ws.Context.String
 		}
+		resp.KnowledgeBases = h.knowledgeBriefs(r.Context(), ws.ID)
 	} else {
 		slog.Warn("task claim: failed to load workspace for context injection",
 			"task_id", uuidToString(task.ID),

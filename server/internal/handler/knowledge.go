@@ -682,6 +682,31 @@ func (h *Handler) DeleteKnowledgeBase(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// KnowledgeBaseBrief 是注入智能体 brief 的知识库条目。
+type KnowledgeBaseBrief struct {
+	Slug        string `json:"slug"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
+// knowledgeBriefs 列出工作区知识库供任务 brief 使用；读不到时返回空，不影响认领。
+func (h *Handler) knowledgeBriefs(ctx context.Context, workspaceID pgtype.UUID) []KnowledgeBaseBrief {
+	if h.Knowledge == nil {
+		return nil
+	}
+	bases, err := h.Queries.ListKnowledgeBases(ctx, workspaceID)
+	if err != nil {
+		slog.Warn("task claim: failed to list knowledge bases", "workspace_id", uuidToString(workspaceID), "error", err)
+		return nil
+	}
+	out := make([]KnowledgeBaseBrief, 0, len(bases))
+	for _, b := range bases {
+		out = append(out, KnowledgeBaseBrief{Slug: b.Slug, Name: b.Name, Description: b.Description})
+	}
+
+	return out
+}
+
 func (h *Handler) publishKnowledge(workspaceID, actorType, actorID, kind, id string) {
 	h.publish(protocol.EventKnowledgeChanged, workspaceID, actorType, actorID, map[string]any{"kind": kind, "id": id})
 }
