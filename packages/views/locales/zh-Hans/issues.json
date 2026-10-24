@@ -370,7 +370,7 @@
     "manual_reorder_hint": "切换到“手动”排序后，才能调整同一列内的顺序。",
     "status_column": {
       "not_started": "未开始",
-      "started": "已开始",
+      "started": "工作中",
       "needs_attention": "需介入",
       "ended": "已结束"
     },
