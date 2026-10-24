@@ -30,6 +30,7 @@ func TestClaimTaskByRuntime_PopulatesIssueStatusCatalog(t *testing.T) {
 	createTestCustomStatus(t, "withdrawn", "closed")
 	// Contracted storage must retain the installed daemon wire vocabulary.
 	dbfx.Exec(t, `UPDATE issue_status SET description = 'Custom guidance' WHERE workspace_id = $1 AND key IN ('awaiting_response', 'accepted', 'withdrawn')`, testWorkspaceID)
+	dbfx.Exec(t, `UPDATE issue_status SET status_group = 'needs_attention' WHERE workspace_id = $1 AND key = 'awaiting_response'`, testWorkspaceID)
 	// A different workspace's catalog must never enter this claim.
 	otherWorkspace := dbfx.Workspace(t, "Other catalog", "other-claim-catalog")
 	dbfx.Insert(t, "issue_status", testutil.Cols{
@@ -54,6 +55,7 @@ func TestClaimTaskByRuntime_PopulatesIssueStatusCatalog(t *testing.T) {
 				Key         string `json:"key"`
 				Name        string `json:"name"`
 				Category    string `json:"category"`
+				StatusGroup string `json:"status_group"`
 				Description string `json:"description"`
 			} `json:"issue_statuses"`
 			IssueStatusesOmitted int `json:"issue_statuses_omitted"`
@@ -83,6 +85,12 @@ func TestClaimTaskByRuntime_PopulatesIssueStatusCatalog(t *testing.T) {
 		got := resp.Task.IssueStatuses[i+2]
 		if got.Key != want.key || got.Name != want.key || got.Category != want.category || got.Description != "Custom guidance" {
 			t.Errorf("issue_statuses[%d] = %+v, want key/name=%s category=%s", i+2, got, want.key, want.category)
+		}
+	}
+	// The brief lists statuses by group, so the claim carries each one's.
+	for i, want := range []string{"not_started", "not_started", "needs_attention", "ended", "ended"} {
+		if got := resp.Task.IssueStatuses[i].StatusGroup; got != want {
+			t.Errorf("issue_statuses[%d] (%s) status_group = %q, want %q", i, resp.Task.IssueStatuses[i].Key, got, want)
 		}
 	}
 	if resp.Task.IssueStatusesOmitted != 0 {

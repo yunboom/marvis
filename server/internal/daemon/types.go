@@ -62,6 +62,7 @@ type IssueStatusData struct {
 	Key         string `json:"key"`
 	Name        string `json:"name"`
 	Category    string `json:"category"`
+	StatusGroup string `json:"status_group,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
