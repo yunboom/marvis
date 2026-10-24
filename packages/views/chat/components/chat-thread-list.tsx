@@ -361,16 +361,16 @@ export function ChatThreadList({
         className={cn(
           // Fixed height so nothing (hover actions, confirm prompts) can change
           // the row size and make the list jump. Content is vertically centered.
-          "group/row relative flex h-16 min-w-0 shrink-0 cursor-default items-center gap-3 rounded-lg px-2.5 outline-none transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring",
+          "group/row relative flex h-14 min-w-0 shrink-0 cursor-default items-center gap-2.5 rounded-lg px-2 outline-none transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring",
           isCurrent ? "bg-surface-selected" : "hover:bg-accent",
           isConfirmingAction && "bg-destructive/5 hover:bg-destructive/5",
         )}
       >
-        {/* Two-line row: the 40px avatar sits centred beside both lines. */}
+        {/* Two-line row: the 32px avatar sits centred beside both lines. */}
         {agent ? (
-          <ActorAvatar actorType="agent" actorId={agent.id} size="xl" enableHoverCard />
+          <ActorAvatar actorType="agent" actorId={agent.id} size="lg" enableHoverCard />
         ) : (
-          <span className="size-10 shrink-0" />
+          <span className="size-8 shrink-0" />
         )}
 
         <div className="min-w-0 flex-1">
@@ -382,7 +382,7 @@ export function ChatThreadList({
                 className="size-3 shrink-0 -rotate-45 fill-current text-muted-foreground"
               />
             )}
-            <span className={cn("min-w-0 flex-1 truncate text-body-lg", unread > 0 ? "font-semibold text-foreground" : "font-medium")}>
+            <span className={cn("min-w-0 flex-1 truncate text-body", unread > 0 ? "font-semibold text-foreground" : "font-medium")}>
               {titleText}
             </span>
             <span className="ml-auto shrink-0 text-caption text-muted-foreground">{timeText}</span>
@@ -418,7 +418,7 @@ export function ChatThreadList({
                 />
               ) : (
                 <>
-                  <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-label">
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-caption">
                     {agentName && (
                       <>
                         <span className="max-w-[40%] shrink-0 truncate font-medium text-muted-foreground">
@@ -504,9 +504,9 @@ export function ChatThreadList({
     <button
       type="button"
       onClick={() => setView("archived")}
-      className="mt-1 flex h-11 w-full shrink-0 items-center gap-3 rounded-lg px-2.5 text-left text-label text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring"
+      className="mt-1 flex h-10 w-full shrink-0 items-center gap-2.5 rounded-lg px-2 text-left text-label text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring"
     >
-      <span className="flex w-10 shrink-0 items-center justify-center">
+      <span className="flex w-8 shrink-0 items-center justify-center">
         <Archive className="size-4" />
       </span>
       <span className="min-w-0 flex-1 truncate font-medium">{t(($) => $.list.archived_title)}</span>

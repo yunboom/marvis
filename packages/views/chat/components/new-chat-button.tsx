@@ -185,7 +185,7 @@ export function NewChatButton({
             <Button
               variant="secondary"
               size="icon"
-              className="size-9 [&_svg:not([class*='size-'])]:size-4.5"
+              className="size-8"
               aria-label={label}
               onClick={() => {
                 if (only && !isAgentRuntimeBound(only)) {
@@ -215,7 +215,7 @@ export function NewChatButton({
         <IconButton
           variant="secondary"
           size="icon"
-          className="size-9 [&_svg:not([class*='size-'])]:size-4.5"
+          className="size-8"
           label={label}
           tooltipSide={side === "top" ? "top" : "bottom"}
         />
