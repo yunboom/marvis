@@ -38,8 +38,9 @@ export const PROJECT_PRIORITY_CONFIG: Record<
   none: { label: "No priority", bars: 0, color: "text-muted-foreground", badgeBg: "bg-muted", badgeText: "text-muted-foreground" },
 };
 
-// Project icons are line glyph keys; the server rejects anything else
-// (emoji included). Keep in sync with server/internal/projecticon.
+// Project icons the pickers offer. The API stores `icon` as free text, so
+// values outside this set (emoji set through the CLI or older clients)
+// render as the default glyph.
 export const PROJECT_ICONS = [
   "folder",
   "briefcase",

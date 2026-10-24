@@ -26,24 +26,6 @@ func TestValidateProjectStatus(t *testing.T) {
 	}
 }
 
-func TestValidateProjectIcon(t *testing.T) {
-	for _, icon := range []string{"", "rocket", "git-branch"} {
-		if err := validateProjectIcon(icon); err != nil {
-			t.Errorf("icon %q should be valid, got: %v", icon, err)
-		}
-	}
-
-	for _, icon := range []string{"📁", "Rocket", "git_branch"} {
-		err := validateProjectIcon(icon)
-		if err == nil {
-			t.Fatalf("icon %q should be rejected", icon)
-		}
-		if !strings.Contains(err.Error(), "folder") {
-			t.Errorf("error should list valid icons, got: %v", err)
-		}
-	}
-}
-
 // newProjectResourceUpdateTestCmd mirrors the flag surface of
 // projectResourceUpdateCmd so unit tests can exercise the shortcut-flag plumbing
 // without spinning up a server.

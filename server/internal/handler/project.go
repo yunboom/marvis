@@ -16,7 +16,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/yunboom/marvis/server/internal/issuestatus"
 	"github.com/yunboom/marvis/server/internal/logger"
-	"github.com/yunboom/marvis/server/internal/projecticon"
 	"github.com/yunboom/marvis/server/internal/util"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"github.com/yunboom/marvis/server/pkg/protocol"
@@ -56,7 +55,7 @@ func projectToResponse(p db.Project) ProjectResponse {
 		WorkspaceID: uuidToString(p.WorkspaceID),
 		Title:       p.Title,
 		Description: textToPtr(p.Description),
-		Icon:        projectIconPtr(p.Icon),
+		Icon:        textToPtr(p.Icon),
 		Status:      p.Status,
 		Priority:    p.Priority,
 		LeadType:    textToPtr(p.LeadType),
@@ -237,27 +236,6 @@ func (h *Handler) GetProject(w http.ResponseWriter, r *http.Request) {
 var validProjectStatuses = []string{"planned", "in_progress", "paused", "completed", "cancelled"}
 var validProjectPriorities = []string{"urgent", "high", "medium", "low", "none"}
 
-// projectIconPtr hides legacy free-text icons (emoji written before icons
-// became glyph keys) so clients only ever see valid keys.
-func projectIconPtr(icon pgtype.Text) *string {
-	if !icon.Valid || !projecticon.Valid(icon.String) {
-		return nil
-	}
-	return &icon.String
-}
-
-// projectIconParam converts a request icon to a column value; an empty string
-// clears the icon. It writes a 400 and returns false for unknown keys.
-func projectIconParam(w http.ResponseWriter, icon *string) (pgtype.Text, bool) {
-	if icon == nil || *icon == "" {
-		return pgtype.Text{}, true
-	}
-	if !validateProjectEnum(w, "icon", *icon, projecticon.Keys) {
-		return pgtype.Text{}, false
-	}
-	return pgtype.Text{String: *icon, Valid: true}, true
-}
-
 // validateProjectEnum writes a 400 and returns false when value is not in
 // allowed; the caller returns immediately on false.
 func validateProjectEnum(w http.ResponseWriter, field, value string, allowed []string) bool {
@@ -312,10 +290,6 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		priority = "none"
 	}
 	if !validateProjectEnum(w, "priority", priority, validProjectPriorities) {
-		return
-	}
-	icon, ok := projectIconParam(w, req.Icon)
-	if !ok {
 		return
 	}
 	var leadType pgtype.Text
@@ -423,7 +397,7 @@ func (h *Handler) CreateProject(w http.ResponseWriter, r *http.Request) {
 		WorkspaceID: wsUUID,
 		Title:       req.Title,
 		Description: ptrToText(req.Description),
-		Icon:        icon,
+		Icon:        ptrToText(req.Icon),
 		Status:      status,
 		LeadType:    leadType,
 		LeadID:      leadID,
@@ -586,11 +560,11 @@ func (h *Handler) UpdateProject(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if _, ok := rawFields["icon"]; ok {
-		icon, ok := projectIconParam(w, req.Icon)
-		if !ok {
-			return
+		if req.Icon != nil {
+			params.Icon = pgtype.Text{String: *req.Icon, Valid: true}
+		} else {
+			params.Icon = pgtype.Text{Valid: false}
 		}
-		params.Icon = icon
 	}
 	if _, ok := rawFields["lead_type"]; ok {
 		if req.LeadType != nil {
