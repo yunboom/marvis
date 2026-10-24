@@ -200,20 +200,25 @@ export function InboxList({
 
   if (items.length === 0) {
     return (
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {!onLoadMore && <div className="flex flex-col items-center justify-center pt-16 pb-6 text-muted-foreground">
-          <Inbox className="mb-3 size-8 text-faint-foreground" strokeWidth={1.5} />
-          <p className="text-body">
-            {emptyLabel ??
-              (isArchivedView
-                ? t(($) => $.list.archived_empty)
-                : t(($) => $.list.empty))}
-          </p>
-          {emptyAction && <div className="mt-3">{emptyAction}</div>}
-        </div>}
+      <div className="flex flex-1 min-h-0 flex-col overflow-y-auto">
+        {/* The empty state fills the column, centred a little above the middle,
+            instead of hanging under the header. */}
+        <div className="flex flex-1 flex-col items-center justify-center pb-16 text-muted-foreground">
+          {!onLoadMore && <>
+            <Inbox className="mb-3 size-8 text-faint-foreground" strokeWidth={1.5} />
+            <p className="text-body">
+              {emptyLabel ??
+                (isArchivedView
+                  ? t(($) => $.list.archived_empty)
+                  : t(($) => $.list.empty))}
+            </p>
+            {emptyAction && <div className="mt-3">{emptyAction}</div>}
+          </>}
+        </div>
         {/* Still offer the archive when the main list is empty — that is
-            exactly when a user goes looking for what they filed away. */}
-        <div className="px-3"><Footer /></div>
+            exactly when a user goes looking for what they filed away. Pinned
+            to the bottom so it reads as a way out, not as the list's one row. */}
+        <div className="shrink-0 px-3 pb-3"><Footer /></div>
       </div>
     );
   }

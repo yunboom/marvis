@@ -1086,16 +1086,14 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
       <ResizablePanel id="detail" minSize="40%">
       <div className="flex flex-col min-h-0 h-full">
         {!detailItem?.issue_id && detailCloseBar}
-        {detailContent ?? (
+        {/* An empty list already says so in its own column; the detail stays
+            blank rather than repeating it. */}
+        {detailContent ?? (visibleItems.length > 0 ? (
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center text-muted-foreground">
             <Inbox className="mb-3 size-10 text-faint-foreground" strokeWidth={1.4} />
-            <p className="text-body">
-              {visibleItems.length === 0
-                ? t(($) => $.detail.empty)
-                : t(($) => $.detail.select_prompt)}
-            </p>
+            <p className="text-body">{t(($) => $.detail.select_prompt)}</p>
           </div>
-        )}
+        ) : null)}
       </div>
       </ResizablePanel>
     </ResizablePanelGroup>
