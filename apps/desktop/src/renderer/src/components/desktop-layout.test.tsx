@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nProvider } from "@marvis/core/i18n/react";
 import { useSidebar } from "@marvis/ui/components/ui/sidebar";
 import { RESOURCES } from "@marvis/views/locales";
+import { useTabStore } from "@/stores/tab-store";
 
 // The shell resolves the mocked `getCurrentSlug()` against the workspace list
 // before mounting workspace-scoped chrome, so the list has to contain it or
@@ -41,7 +42,9 @@ vi.mock("@marvis/core/paths", () => ({
   WorkspaceSlugProvider: ({ children }: { children: ReactNode }) => (
     <>{children}</>
   ),
-  paths: { workspace: () => ({ inbox: () => "/acme/inbox" }) },
+  paths: {
+    workspace: () => ({ inbox: () => "/acme/inbox", settings: () => "/acme/settings" }),
+  },
   useCurrentWorkspace: () => null,
 }));
 
@@ -229,6 +232,32 @@ describe("DesktopShell server status", () => {
     return { ...view, retry, push: (status: unknown) => act(() => push(status)) };
   }
 
+  // 让当前标签页停在 url 上；paths 被 mock，不能走 tab store 的导航动作。
+  function showTab(url: string) {
+    useTabStore.setState({
+      activeWorkspaceSlug: "acme",
+      byWorkspace: {
+        acme: {
+          tabs: [
+            {
+              id: "t1",
+              url,
+              resourceKey: url,
+              title: "",
+              pinned: false,
+              history: { stack: [url], index: 0 },
+              memento: { scroll: {}, view: {} },
+            },
+          ],
+          activeTabId: "t1",
+          browsingHistory: [],
+          browsingHistoryTitles: {},
+          recentTabIds: [],
+        },
+      },
+    });
+  }
+
   const dimmedContent = () =>
     document.querySelector('[data-slot="main-canvas-content"]') as HTMLElement;
 
@@ -265,6 +294,20 @@ describe("DesktopShell server status", () => {
     push({ state: "online" });
     expect(document.querySelector('[data-slot="server-status-banner"]')).toBeNull();
     expect(dimmedContent()).not.toHaveClass("opacity-55");
+  });
+
+  it("keeps the settings page undimmed so the server can be switched there", async () => {
+    showTab("/acme/settings?tab=server");
+
+    const { push } = renderWithServer();
+    await act(async () => {});
+
+    push({ state: "unreachable" });
+    expect(document.querySelector('[data-slot="server-status-banner"]')).not.toBeNull();
+    expect(dimmedContent()).not.toHaveClass("opacity-55");
+
+    act(() => showTab("/acme/issues"));
+    expect(dimmedContent()).toHaveClass("opacity-55");
   });
 
   it("retries and opens the server settings from the unreachable banner", async () => {

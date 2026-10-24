@@ -34,6 +34,7 @@ import {
   routeContentLinkPath,
 } from "@/platform/navigation";
 import { OpenPathBridge } from "@/platform/open-path-bridge";
+import { splitTabUrl, useActiveTabUrl } from "@/stores/tab-store";
 import {
   ServerReplacedDialog,
   ServerStatusBanner,
@@ -214,6 +215,13 @@ function DesktopInboxBridge() {
   return null;
 }
 
+function isSettingsUrl(url: string, slug: string): boolean {
+  const { pathname } = splitTabUrl(url);
+  const settings = paths.workspace(slug).settings();
+
+  return pathname === settings || pathname.startsWith(`${settings}/`);
+}
+
 export function DesktopShell() {
   useInternalLinkHandler();
   useNativeNavigationGestures();
@@ -250,6 +258,10 @@ export function DesktopShell() {
     currentSlug && workspaces.some((w) => w.slug === currentSlug)
       ? currentSlug
       : null;
+  // 设置页是横幅“切换服务器”的去处，掉线时不变淡，避免看起来像不能操作。
+  const activeTabUrl = useActiveTabUrl();
+  const onSettings =
+    slug !== null && activeTabUrl !== null && isSettingsUrl(activeTabUrl, slug);
 
   return (
     <DesktopNavigationProvider>
@@ -293,7 +305,7 @@ export function DesktopShell() {
               <MainTopBar sidebarMounted={Boolean(slug)} />
               <MainCanvas
                 showWorkspaceLoading={!slug}
-                dimmed={serverStatus.banner !== null}
+                dimmed={serverStatus.banner !== null && !onSettings}
                 banner={
                   serverStatus.banner !== null && (
                     <ServerStatusBanner
