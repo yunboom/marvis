@@ -638,7 +638,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
           </div>
           <SidebarMenu className="gap-1.5">
             {searchSlot && (
-              <SidebarMenuItem>
+              <SidebarMenuItem className="mb-3">
                 {searchSlot}
               </SidebarMenuItem>
             )}
