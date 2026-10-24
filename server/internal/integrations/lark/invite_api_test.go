@@ -542,3 +542,28 @@ func TestInviteAPIErrorDetail_NotFeishu(t *testing.T) {
 		})
 	}
 }
+
+// TestInviteConfigCauses 确认 InviteConfigCauses 与映射表一致：每个映射值都在列表里、没有重复，
+// 导出的原因常量都有对应的飞书错误码。
+func TestInviteConfigCauses(t *testing.T) {
+	causes := InviteConfigCauses()
+
+	want := map[string]bool{}
+	for _, cause := range inviteConfigByLarkCode {
+		want[cause] = true
+	}
+	if len(causes) != len(want) {
+		t.Fatalf("InviteConfigCauses() = %v, want %d distinct causes", causes, len(want))
+	}
+	for _, cause := range causes {
+		if !want[cause] {
+			t.Errorf("InviteConfigCauses() has %q that no Feishu code maps to", cause)
+		}
+	}
+
+	for _, exported := range []string{InviteConfigBotNotEnabled, InviteConfigScopeMissing} {
+		if !want[exported] {
+			t.Errorf("exported cause %q is not in inviteConfigByLarkCode", exported)
+		}
+	}
+}

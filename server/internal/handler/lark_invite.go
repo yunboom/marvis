@@ -1005,9 +1005,11 @@ func (h *Handler) deliverLarkInvite(ctx context.Context, sc larkInviteSendContex
 
 	messageID, err := h.sendLarkInviteMessage(ctx, sc, inv, idType, receiveID, card)
 	if err != nil {
-		if _, classified := classifyLarkInviteError(err); sc.Input.IdempotencyKey == "" || classified {
+		_, classified := classifyLarkInviteError(err)
+		if sc.Input.IdempotencyKey == "" || classified {
 			h.deleteUnsentLarkInvite(ctx, sc, inv.ID)
 		}
+
 		return larkInviteFailedResult(sc, shown, err)
 	}
 

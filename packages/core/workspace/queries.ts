@@ -1,5 +1,5 @@
 import { queryOptions, type QueryClient } from "@tanstack/react-query";
-import { api } from "../api";
+import { api, ApiError } from "../api";
 import type { Agent, Squad, Workspace } from "../types";
 
 export const workspaceKeys = {
@@ -200,11 +200,25 @@ export function larkInviteListOptions(wsId: string, enabled = true) {
   });
 }
 
+// 列群失败后的重试次数，与 createQueryClient 的全局默认一致。
+const LARK_CHAT_LIST_MAX_RETRIES = 1;
+
+// 列群遇到 4xx（没有权限，或飞书应用没开机器人、缺权限而返回 lark_not_configured）时，
+// 重试不会成功，直接显示错误；其他错误保持全局默认的重试次数。
+function retryUnlessClientError(failureCount: number, error: Error): boolean {
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return false;
+  }
+
+  return failureCount < LARK_CHAT_LIST_MAX_RETRIES;
+}
+
 export function larkChatListOptions(wsId: string, enabled = true) {
   return queryOptions({
     queryKey: workspaceKeys.larkChats(wsId),
     queryFn: () => api.listLarkChats(wsId),
     enabled: enabled && !!wsId,
+    retry: retryUnlessClientError,
   });
 }
 

@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -1688,6 +1689,26 @@ func TestSendLarkInvites_UnclassifiedSendFailureMessages(t *testing.T) {
 				t.Fatalf("log missing the full error %q; log was:\n%s", tc.logged, got)
 			}
 		})
+	}
+}
+
+// TestLarkInviteConfigMessagesComplete 确认每个应用配置类错误的原因都有非空的英文说明，
+// 新增原因时漏写说明会让响应里的 message 为空。
+func TestLarkInviteConfigMessagesComplete(t *testing.T) {
+	causes := lark.InviteConfigCauses()
+	for _, exported := range []string{lark.InviteConfigBotNotEnabled, lark.InviteConfigScopeMissing} {
+		if !slices.Contains(causes, exported) {
+			t.Errorf("lark.InviteConfigCauses() = %v, missing %q", causes, exported)
+		}
+	}
+
+	for _, cause := range causes {
+		if strings.TrimSpace(larkInviteConfigMessages[cause]) == "" {
+			t.Errorf("config cause %q has no message in larkInviteConfigMessages", cause)
+		}
+	}
+	if len(larkInviteConfigMessages) != len(causes) {
+		t.Errorf("larkInviteConfigMessages has %d entries, want %d (one per cause)", len(larkInviteConfigMessages), len(causes))
 	}
 }
 

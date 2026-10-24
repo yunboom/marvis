@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -173,6 +174,18 @@ func ClassifyInviteError(err error) string {
 	}
 
 	return inviteErrorByLarkCode[code]
+}
+
+// InviteConfigCauses 返回全部应用配置类错误的原因（InviteConfig*），顺序固定。
+// 调用方用它核对自己按原因维护的说明表是否齐全，新增原因时不会漏掉说明。
+func InviteConfigCauses() []string {
+	causes := make([]string, 0, len(inviteConfigByLarkCode))
+	for _, cause := range inviteConfigByLarkCode {
+		causes = append(causes, cause)
+	}
+	slices.Sort(causes)
+
+	return causes
 }
 
 // ClassifyInviteConfigError 把飞书错误归类为应用配置类错误的原因（InviteConfig*），
