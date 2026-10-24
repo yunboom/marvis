@@ -23,6 +23,7 @@ import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { KnowledgeIcon } from "../lib/knowledge-icon";
 import { CreateKnowledgeDialog } from "./create-knowledge-dialog";
+import { KnowledgeAnnotationsTab } from "./knowledge-annotations";
 import { KnowledgeGapsTab } from "./knowledge-gaps-tab";
 import { KnowledgeHistoryTab } from "./knowledge-history-tab";
 import { KnowledgePagesWorkspace } from "./knowledge-pages-workspace";
@@ -147,6 +148,7 @@ export function KnowledgePage() {
                 agents={agents}
                 onDeleted={() => setParams({ kb: null, tab: null, page: null })}
                 onOpenChange={(number) => setParams({ tab: "review", change: String(number) })}
+                onOpenPage={(path) => setParams({ tab: null, page: path })}
               />
             </TabsContent>
           ))}
@@ -176,6 +178,7 @@ function KnowledgeTabBody({
   agents,
   onDeleted,
   onOpenChange,
+  onOpenPage,
 }: {
   tab: KnowledgeTab;
   kb: KnowledgeBase;
@@ -183,12 +186,15 @@ function KnowledgeTabBody({
   agents: Agent[];
   onDeleted: () => void;
   onOpenChange: (number: number) => void;
+  onOpenPage: (path: string) => void;
 }) {
   switch (tab) {
     case "pages":
       return <KnowledgePagesWorkspace kb={kb} onOpenChange={onOpenChange} />;
     case "review":
       return <KnowledgeReviewTab bases={bases} />;
+    case "annotations":
+      return <KnowledgeAnnotationsTab kb={kb} onOpenPage={onOpenPage} onOpenChange={onOpenChange} />;
     case "gaps":
       return <KnowledgeGapsTab />;
     case "history":

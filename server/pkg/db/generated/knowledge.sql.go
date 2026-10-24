@@ -163,6 +163,56 @@ func (q *Queries) CountOpenKnowledgeWorkForBase(ctx context.Context, arg CountOp
 	return i, err
 }
 
+const createKnowledgeAnnotation = `-- name: CreateKnowledgeAnnotation :one
+INSERT INTO knowledge_annotation (workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id, status, change_request_id, created_at, updated_at
+`
+
+type CreateKnowledgeAnnotationParams struct {
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	PagePath        string      `json:"page_path"`
+	Quote           string      `json:"quote"`
+	Prefix          string      `json:"prefix"`
+	Suffix          string      `json:"suffix"`
+	Body            string      `json:"body"`
+	AuthorType      string      `json:"author_type"`
+	AuthorID        pgtype.UUID `json:"author_id"`
+}
+
+func (q *Queries) CreateKnowledgeAnnotation(ctx context.Context, arg CreateKnowledgeAnnotationParams) (KnowledgeAnnotation, error) {
+	row := q.db.QueryRow(ctx, createKnowledgeAnnotation,
+		arg.WorkspaceID,
+		arg.KnowledgeBaseID,
+		arg.PagePath,
+		arg.Quote,
+		arg.Prefix,
+		arg.Suffix,
+		arg.Body,
+		arg.AuthorType,
+		arg.AuthorID,
+	)
+	var i KnowledgeAnnotation
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.KnowledgeBaseID,
+		&i.PagePath,
+		&i.Quote,
+		&i.Prefix,
+		&i.Suffix,
+		&i.Body,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Status,
+		&i.ChangeRequestID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createKnowledgeBase = `-- name: CreateKnowledgeBase :one
 INSERT INTO knowledge_base (workspace_id, name, slug, description, maintainer_agent_id, created_by)
 VALUES ($1, $2, $3, $4, $5, $6)
@@ -421,6 +471,37 @@ func (q *Queries) FindOpenKnowledgeGap(ctx context.Context, arg FindOpenKnowledg
 	return i, err
 }
 
+const getKnowledgeAnnotation = `-- name: GetKnowledgeAnnotation :one
+SELECT id, workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id, status, change_request_id, created_at, updated_at FROM knowledge_annotation WHERE id = $1 AND workspace_id = $2
+`
+
+type GetKnowledgeAnnotationParams struct {
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+}
+
+func (q *Queries) GetKnowledgeAnnotation(ctx context.Context, arg GetKnowledgeAnnotationParams) (KnowledgeAnnotation, error) {
+	row := q.db.QueryRow(ctx, getKnowledgeAnnotation, arg.ID, arg.WorkspaceID)
+	var i KnowledgeAnnotation
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.KnowledgeBaseID,
+		&i.PagePath,
+		&i.Quote,
+		&i.Prefix,
+		&i.Suffix,
+		&i.Body,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Status,
+		&i.ChangeRequestID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getKnowledgeBase = `-- name: GetKnowledgeBase :one
 SELECT id, workspace_id, name, slug, description, maintainer_agent_id, created_by, created_at, updated_at FROM knowledge_base WHERE id = $1 AND workspace_id = $2
 `
@@ -591,6 +672,100 @@ func (q *Queries) ListKnowledgeActorNames(ctx context.Context, arg ListKnowledge
 	for rows.Next() {
 		var i ListKnowledgeActorNamesRow
 		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKnowledgeAnnotations = `-- name: ListKnowledgeAnnotations :many
+SELECT id, workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id, status, change_request_id, created_at, updated_at FROM knowledge_annotation
+WHERE knowledge_base_id = $1
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::text IS NULL OR page_path = $3::text)
+ORDER BY created_at DESC
+LIMIT 500
+`
+
+type ListKnowledgeAnnotationsParams struct {
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	Status          pgtype.Text `json:"status"`
+	PagePath        pgtype.Text `json:"page_path"`
+}
+
+func (q *Queries) ListKnowledgeAnnotations(ctx context.Context, arg ListKnowledgeAnnotationsParams) ([]KnowledgeAnnotation, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeAnnotations, arg.KnowledgeBaseID, arg.Status, arg.PagePath)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KnowledgeAnnotation{}
+	for rows.Next() {
+		var i KnowledgeAnnotation
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.KnowledgeBaseID,
+			&i.PagePath,
+			&i.Quote,
+			&i.Prefix,
+			&i.Suffix,
+			&i.Body,
+			&i.AuthorType,
+			&i.AuthorID,
+			&i.Status,
+			&i.ChangeRequestID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKnowledgeAnnotationsByIDs = `-- name: ListKnowledgeAnnotationsByIDs :many
+SELECT id, workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id, status, change_request_id, created_at, updated_at FROM knowledge_annotation WHERE workspace_id = $1 AND id = ANY($2::uuid[])
+`
+
+type ListKnowledgeAnnotationsByIDsParams struct {
+	WorkspaceID pgtype.UUID   `json:"workspace_id"`
+	Ids         []pgtype.UUID `json:"ids"`
+}
+
+func (q *Queries) ListKnowledgeAnnotationsByIDs(ctx context.Context, arg ListKnowledgeAnnotationsByIDsParams) ([]KnowledgeAnnotation, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeAnnotationsByIDs, arg.WorkspaceID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KnowledgeAnnotation{}
+	for rows.Next() {
+		var i KnowledgeAnnotation
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.KnowledgeBaseID,
+			&i.PagePath,
+			&i.Quote,
+			&i.Prefix,
+			&i.Suffix,
+			&i.Body,
+			&i.AuthorType,
+			&i.AuthorID,
+			&i.Status,
+			&i.ChangeRequestID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1027,6 +1202,40 @@ func (q *Queries) SetKnowledgeAnnotationsStatusForChange(ctx context.Context, ar
 		arg.Ids,
 	)
 	return err
+}
+
+const updateKnowledgeAnnotationStatus = `-- name: UpdateKnowledgeAnnotationStatus :one
+UPDATE knowledge_annotation SET status = $1, updated_at = now()
+WHERE id = $2 AND workspace_id = $3
+RETURNING id, workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id, status, change_request_id, created_at, updated_at
+`
+
+type UpdateKnowledgeAnnotationStatusParams struct {
+	Status      string      `json:"status"`
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+}
+
+func (q *Queries) UpdateKnowledgeAnnotationStatus(ctx context.Context, arg UpdateKnowledgeAnnotationStatusParams) (KnowledgeAnnotation, error) {
+	row := q.db.QueryRow(ctx, updateKnowledgeAnnotationStatus, arg.Status, arg.ID, arg.WorkspaceID)
+	var i KnowledgeAnnotation
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.KnowledgeBaseID,
+		&i.PagePath,
+		&i.Quote,
+		&i.Prefix,
+		&i.Suffix,
+		&i.Body,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Status,
+		&i.ChangeRequestID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateKnowledgeBase = `-- name: UpdateKnowledgeBase :one

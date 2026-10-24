@@ -172,6 +172,30 @@ UPDATE knowledge_annotation SET
     updated_at = now()
 WHERE workspace_id = sqlc.arg('workspace_id') AND id = ANY(sqlc.arg('ids')::uuid[]);
 
+-- name: CreateKnowledgeAnnotation :one
+INSERT INTO knowledge_annotation (workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING *;
+
+-- name: ListKnowledgeAnnotations :many
+SELECT * FROM knowledge_annotation
+WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
+  AND (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
+  AND (sqlc.narg('page_path')::text IS NULL OR page_path = sqlc.narg('page_path')::text)
+ORDER BY created_at DESC
+LIMIT 500;
+
+-- name: ListKnowledgeAnnotationsByIDs :many
+SELECT * FROM knowledge_annotation WHERE workspace_id = $1 AND id = ANY(sqlc.arg('ids')::uuid[]);
+
+-- name: GetKnowledgeAnnotation :one
+SELECT * FROM knowledge_annotation WHERE id = $1 AND workspace_id = $2;
+
+-- name: UpdateKnowledgeAnnotationStatus :one
+UPDATE knowledge_annotation SET status = sqlc.arg('status'), updated_at = now()
+WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id')
+RETURNING *;
+
 -- name: ListKnowledgeActorNames :many
 -- Display names for authors that are either members or agents, in one round trip.
 SELECT u.id, u.name FROM "user" u WHERE u.id = ANY(sqlc.arg('user_ids')::uuid[])

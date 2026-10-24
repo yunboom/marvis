@@ -215,5 +215,36 @@
     "change_title": "Edit {{title}}",
     "submitted": "Opened change request #{{number}}",
     "failed": "Couldn't submit"
+  },
+  "annotations": {
+    "filter": "Filter by status",
+    "status": {
+      "pending": "Pending",
+      "processing": "In progress",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "empty": "No annotations here",
+    "page_level": "Page annotation",
+    "anchor_lost": "The sentence changed and can't be found. Kept as a page annotation.",
+    "body_label": "Annotation",
+    "body_placeholder": "What's wrong and what it should say",
+    "add": "Add annotation",
+    "added": "Annotation added",
+    "add_failed": "Couldn't add the annotation",
+    "update_failed": "Couldn't update",
+    "annotate_page": "Annotate page",
+    "rail_label": "Annotations on this page",
+    "rail_title": "On this page",
+    "rail_empty": "Click a sentence to annotate it.",
+    "submit_n": "Send {{n}} to the agent",
+    "submit": "Send to the agent",
+    "selected_n": "Selected: {{n}}",
+    "select": "Select this annotation",
+    "dismiss": "Dismiss",
+    "reopen": "Reopen",
+    "change_n": "#{{number}}",
+    "agent": "Agent",
+    "unknown_author": "Unknown"
   }
 }

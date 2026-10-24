@@ -215,5 +215,36 @@
     "change_title": "Modifier {{title}}",
     "submitted": "Demande de modification #{{number}} ouverte",
     "failed": "Impossible d'envoyer"
+  },
+  "annotations": {
+    "filter": "Filtrer par statut",
+    "status": {
+      "pending": "En attente",
+      "processing": "En cours",
+      "resolved": "Résolue",
+      "dismissed": "Ignorée"
+    },
+    "empty": "Aucune annotation ici",
+    "page_level": "Annotation de page",
+    "anchor_lost": "La phrase a changé et reste introuvable. Conservée comme annotation de page.",
+    "body_label": "Annotation",
+    "body_placeholder": "Ce qui ne va pas et ce qu'il faudrait",
+    "add": "Ajouter l'annotation",
+    "added": "Annotation ajoutée",
+    "add_failed": "Impossible d'ajouter l'annotation",
+    "update_failed": "Impossible de mettre à jour",
+    "annotate_page": "Annoter la page",
+    "rail_label": "Annotations de cette page",
+    "rail_title": "Sur cette page",
+    "rail_empty": "Cliquez sur une phrase pour l'annoter.",
+    "submit_n": "Confier {{n}} à l'agent",
+    "submit": "Confier à l'agent",
+    "selected_n": "Sélection : {{n}}",
+    "select": "Sélectionner cette annotation",
+    "dismiss": "Ignorer",
+    "reopen": "Rouvrir",
+    "change_n": "#{{number}}",
+    "agent": "Agent",
+    "unknown_author": "Inconnu"
   }
 }

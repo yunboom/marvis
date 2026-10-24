@@ -215,5 +215,36 @@
     "change_title": "编辑「{{title}}」",
     "submitted": "已提交变更请求 #{{number}}",
     "failed": "提交失败"
+  },
+  "annotations": {
+    "filter": "按状态筛选",
+    "status": {
+      "pending": "待处理",
+      "processing": "处理中",
+      "resolved": "已解决",
+      "dismissed": "不处理"
+    },
+    "empty": "没有这类批注",
+    "page_level": "页面批注",
+    "anchor_lost": "原文已变更，定位不到，已转为页面批注",
+    "body_label": "批注内容",
+    "body_placeholder": "哪里不对，应该怎样",
+    "add": "添加批注",
+    "added": "已添加批注",
+    "add_failed": "添加失败",
+    "update_failed": "更新失败",
+    "annotate_page": "页面批注",
+    "rail_label": "本页批注",
+    "rail_title": "本页批注",
+    "rail_empty": "点正文里的句子即可批注。",
+    "submit_n": "交给智能体处理 {{n}} 条",
+    "submit": "交给智能体处理",
+    "selected_n": "已选 {{n}} 条",
+    "select": "选择这条批注",
+    "dismiss": "不处理",
+    "reopen": "重新打开",
+    "change_n": "#{{number}}",
+    "agent": "智能体",
+    "unknown_author": "未知"
   }
 }

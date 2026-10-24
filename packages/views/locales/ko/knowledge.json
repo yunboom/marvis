@@ -215,5 +215,36 @@
     "change_title": "{{title}} 편집",
     "submitted": "변경 요청 #{{number}}을(를) 만들었습니다",
     "failed": "제출하지 못했습니다"
+  },
+  "annotations": {
+    "filter": "상태로 필터",
+    "status": {
+      "pending": "처리 대기",
+      "processing": "처리 중",
+      "resolved": "해결됨",
+      "dismissed": "처리 안 함"
+    },
+    "empty": "해당하는 주석이 없습니다",
+    "page_level": "페이지 주석",
+    "anchor_lost": "원문이 바뀌어 찾을 수 없어 페이지 주석으로 바꿨습니다",
+    "body_label": "주석",
+    "body_placeholder": "무엇이 틀렸고 어떻게 고쳐야 하는지",
+    "add": "주석 추가",
+    "added": "주석을 추가했습니다",
+    "add_failed": "추가하지 못했습니다",
+    "update_failed": "업데이트하지 못했습니다",
+    "annotate_page": "페이지 주석",
+    "rail_label": "이 페이지의 주석",
+    "rail_title": "이 페이지의 주석",
+    "rail_empty": "본문 문장을 클릭하면 주석을 남길 수 있습니다.",
+    "submit_n": "{{n}}개를 에이전트에게 맡기기",
+    "submit": "에이전트에게 맡기기",
+    "selected_n": "{{n}}개 선택됨",
+    "select": "이 주석 선택",
+    "dismiss": "처리 안 함",
+    "reopen": "다시 열기",
+    "change_n": "#{{number}}",
+    "agent": "에이전트",
+    "unknown_author": "알 수 없음"
   }
 }

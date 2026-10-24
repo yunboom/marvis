@@ -30,6 +30,9 @@
 22. **克隆地址固定**：所有工作区都用 `/api/knowledge/git/workspace.git`，由鉴权后的工作区决定真实仓库；CLI 每条 git 命令临时带 `http.extraHeader`，凭证不写进本地 clone。
 23. **更新变更请求时强推**：`kb change update` 对自己的 `kb/*` 分支 `--force` 推送，因为 `kb sync` 的 rebase 会改写分支；分支只属于这一个变更请求。
 
+24. **批注状态只有两个可手动设**：成员和智能体只能把批注标为「不处理」或重新打开；「处理中」「已解决」由变更请求的创建 / 合并 / 关闭驱动。CLI 因此是 `kb annotate dismiss/reopen`，没有 spec 草稿里的 `resolve`。
+25. **合并只认人**：合并接口要求 owner/admin 且拒绝任务 token，智能体（哪怕跑在 owner 的运行时上）不能自己合并自己的改动。
+
 ## 范围（本 PR 未做，列为后续 ticket）
 
 11. **关联外部仓库**：一期只做内部托管。外部仓库需要把 PR 读写、合并同步和推送完整历史接到 GitHub / GitLab / Gitea 三套集成上，工作量与本 PR 相当，单独做。设置页显示该选项但不可选。

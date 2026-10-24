@@ -215,5 +215,36 @@
     "change_title": "{{title}} を編集",
     "submitted": "変更リクエスト #{{number}} を作成しました",
     "failed": "送信できませんでした"
+  },
+  "annotations": {
+    "filter": "状態で絞り込む",
+    "status": {
+      "pending": "未処理",
+      "processing": "処理中",
+      "resolved": "解決済み",
+      "dismissed": "対応しない"
+    },
+    "empty": "該当する注釈はありません",
+    "page_level": "ページの注釈",
+    "anchor_lost": "原文が変わり見つからないため、ページの注釈にしました",
+    "body_label": "注釈",
+    "body_placeholder": "どこが違い、どうあるべきか",
+    "add": "注釈を追加",
+    "added": "注釈を追加しました",
+    "add_failed": "追加できませんでした",
+    "update_failed": "更新できませんでした",
+    "annotate_page": "ページに注釈",
+    "rail_label": "このページの注釈",
+    "rail_title": "このページの注釈",
+    "rail_empty": "本文の文をクリックすると注釈できます。",
+    "submit_n": "{{n}} 件をエージェントに依頼",
+    "submit": "エージェントに依頼",
+    "selected_n": "{{n}} 件選択中",
+    "select": "この注釈を選択",
+    "dismiss": "対応しない",
+    "reopen": "再開",
+    "change_n": "#{{number}}",
+    "agent": "エージェント",
+    "unknown_author": "不明"
   }
 }

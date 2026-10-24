@@ -1,30 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import type { KnowledgeBase } from "@marvis/core/knowledge";
+import type { KnowledgeAnnotation, KnowledgeBase } from "@marvis/core/knowledge";
 import { Button } from "@marvis/ui/components/ui/button";
 import { useT } from "../../i18n";
+import { useAnnotationSlots } from "./knowledge-annotations";
 import { KnowledgePageEditor } from "./knowledge-page-editor";
 import { KnowledgePagesTab, type KnowledgeReaderSlots } from "./knowledge-pages-tab";
 
-/** The pages tab with its interactive layers (manual edit; annotations plug in here too). */
+/** The pages tab with its interactive layers: annotations and manual edit. */
 export function KnowledgePagesWorkspace({
   kb,
   onOpenChange,
-  extraSlots,
+  onSubmitAnnotations,
 }: {
   kb: KnowledgeBase;
   onOpenChange: (number: number) => void;
-  extraSlots?: KnowledgeReaderSlots;
+  onSubmitAnnotations?: (annotations: KnowledgeAnnotation[]) => void;
 }) {
   const { t } = useT("knowledge");
   const [editingPath, setEditingPath] = useState<string | null>(null);
+  const annotationSlots = useAnnotationSlots(kb, onSubmitAnnotations);
 
   const slots: KnowledgeReaderSlots = {
-    ...extraSlots,
+    ...annotationSlots,
     headerActions: (page) => (
       <>
-        {extraSlots?.headerActions?.(page)}
+        {annotationSlots.headerActions?.(page)}
         <Button size="xs" variant="ghost" onClick={() => setEditingPath(page.path)}>
           {t(($) => $.edit.action)}
         </Button>

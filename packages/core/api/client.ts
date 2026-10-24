@@ -9,6 +9,8 @@ import { parseQoderConnection, parseQoderCatalog, type QoderInput } from "../run
 import * as kbSchemas from "../knowledge/schemas";
 import type {
   CreateKnowledgeBaseRequest,
+  KnowledgeAnnotation,
+  KnowledgeAnnotationStatus,
   KnowledgeBase,
   KnowledgeChangeDetail,
   KnowledgeChangeRequest,
@@ -3744,6 +3746,38 @@ export class ApiClient {
     const raw = await this.fetch<unknown>("/api/knowledge/gaps", { method: "POST", body: JSON.stringify({ question }) });
     return parseWithFallback<KnowledgeGap | null>(raw, kbSchemas.KnowledgeGapSchema, null, {
       endpoint: "POST /api/knowledge/gaps",
+    });
+  }
+
+  async listKnowledgeAnnotations(ref: string, opts: { status?: KnowledgeAnnotationStatus; page?: string } = {}): Promise<KnowledgeAnnotation[]> {
+    const params = new URLSearchParams();
+    if (opts.status) params.set("status", opts.status);
+    if (opts.page) params.set("page", opts.page);
+    const raw = await this.fetch<unknown>(
+      `/api/knowledge/bases/${encodeURIComponent(ref)}/annotations${params.size ? `?${params}` : ""}`,
+    );
+    return parseWithFallback(raw, kbSchemas.KnowledgeAnnotationListSchema, [], {
+      endpoint: "GET /api/knowledge/bases/:id/annotations",
+    });
+  }
+
+  async createKnowledgeAnnotation(
+    ref: string,
+    data: { page_path: string; quote?: string; prefix?: string; suffix?: string; body: string },
+  ): Promise<KnowledgeAnnotation | null> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/bases/${encodeURIComponent(ref)}/annotations`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback<KnowledgeAnnotation | null>(raw, kbSchemas.KnowledgeAnnotationSchema, null, {
+      endpoint: "POST /api/knowledge/bases/:id/annotations",
+    });
+  }
+
+  async updateKnowledgeAnnotation(id: string, status: "dismissed" | "pending"): Promise<void> {
+    await this.fetch(`/api/knowledge/annotations/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
     });
   }
 

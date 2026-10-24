@@ -241,6 +241,30 @@ export const KnowledgeGraphSchema = z
 export type KnowledgeGraph = z.infer<typeof KnowledgeGraphSchema>;
 export const EMPTY_KNOWLEDGE_GRAPH: KnowledgeGraph = { nodes: [], edges: [] };
 
+export const KNOWLEDGE_ANNOTATION_STATUSES = ["pending", "processing", "resolved", "dismissed"] as const;
+export type KnowledgeAnnotationStatus = (typeof KNOWLEDGE_ANNOTATION_STATUSES)[number];
+
+export const KnowledgeAnnotationSchema = z
+  .object({
+    id: z.string(),
+    knowledge_base_id: z.string().optional().default(""),
+    page_path: z.string().optional().default(""),
+    page_title: z.string().optional().default(""),
+    quote: z.string().optional().default(""),
+    body: z.string().optional().default(""),
+    author_type: z.string().optional().default("member"),
+    author_id: z.string().optional().default(""),
+    author_name: z.string().optional().default(""),
+    status: z.enum(KNOWLEDGE_ANNOTATION_STATUSES).catch("pending"),
+    change_request_id: z.string().nullable().optional().default(null),
+    change_number: z.number().nullable().optional().default(null),
+    anchor_lost: z.boolean().optional().default(false),
+    created_at: z.string().optional().default(""),
+  })
+  .loose();
+export type KnowledgeAnnotation = z.infer<typeof KnowledgeAnnotationSchema>;
+export const KnowledgeAnnotationListSchema = z.array(KnowledgeAnnotationSchema).catch([]);
+
 export const KNOWLEDGE_CHANGE_STATUSES = ["open", "merged", "closed"] as const;
 export type KnowledgeChangeStatus = (typeof KNOWLEDGE_CHANGE_STATUSES)[number];
 

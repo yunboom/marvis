@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
-import type { KnowledgeChangeStatus, KnowledgeGapStatus } from "./schemas";
+import type { KnowledgeAnnotationStatus, KnowledgeChangeStatus, KnowledgeGapStatus } from "./schemas";
 
 // Everything lives under knowledgeKeys.all so one `knowledge:changed` event
 // invalidates the whole knowledge surface of the workspace.
@@ -18,7 +18,21 @@ export const knowledgeKeys = {
     ["workspaces", wsId, "knowledge", "changes", status] as const,
   change: (wsId: string, number: number) => ["workspaces", wsId, "knowledge", "change", number] as const,
   history: (wsId: string) => ["workspaces", wsId, "knowledge", "history"] as const,
+  annotations: (wsId: string, kbId: string, status: KnowledgeAnnotationStatus | "all", page: string) =>
+    ["workspaces", wsId, "knowledge", "annotations", kbId, status, page] as const,
 };
+
+export function knowledgeAnnotationListOptions(
+  wsId: string,
+  kbId: string,
+  opts: { status?: KnowledgeAnnotationStatus; page?: string } = {},
+) {
+  return queryOptions({
+    queryKey: knowledgeKeys.annotations(wsId, kbId, opts.status ?? "all", opts.page ?? ""),
+    queryFn: () => api.listKnowledgeAnnotations(kbId, opts),
+    enabled: !!kbId,
+  });
+}
 
 export function knowledgeChangeListOptions(wsId: string, status: KnowledgeChangeStatus | "all") {
   return queryOptions({

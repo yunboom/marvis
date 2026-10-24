@@ -2430,8 +2430,11 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 						r.Get("/pages", h.ListKnowledgePages)
 						r.Get("/page", h.GetKnowledgePage)
 						r.Get("/graph", h.GetKnowledgeGraph)
+						r.Get("/annotations", h.ListKnowledgeAnnotations)
+						r.Post("/annotations", h.CreateKnowledgeAnnotation)
 					})
 				})
+				r.Patch("/annotations/{annotationId}", h.UpdateKnowledgeAnnotation)
 				r.Get("/search", h.SearchKnowledge)
 				// git smart HTTP (clone / fetch / push of kb/* branches).
 				r.Get("/git/*", h.KnowledgeGit)
