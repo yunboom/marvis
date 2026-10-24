@@ -259,7 +259,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   const sidebarContent = (
     <div className="space-y-5">
       {/* Icon + Title */}
-      <div>
+      <div className="flex items-center gap-3">
         <ProjectIconPicker
           icon={project.icon}
           label={t(($) => $.detail.icon_tooltip)}
@@ -269,7 +269,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
           key={`title-${projectId}`}
           defaultValue={project.title}
           placeholder={t(($) => $.detail.title_placeholder)}
-          className="mt-2 w-full text-title-sm font-semibold leading-snug tracking-tight"
+          className="min-w-0 flex-1 text-title-sm font-semibold leading-snug tracking-tight"
           onBlur={(value) => {
             const trimmed = value.trim();
             if (trimmed && trimmed !== project.title) handleUpdateField({ title: trimmed });

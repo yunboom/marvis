@@ -881,10 +881,10 @@ marvis project get <id> --output json
 ### Create Project
 
 ```bash
-marvis project create --title "2026 Week 16 Sprint" --icon "🏃" --lead "Lambda"
+marvis project create --title "2026 Week 16 Sprint" --icon rocket --lead "Lambda"
 ```
 
-Flags: `--title` (required), `--description`, `--status`, `--icon`, `--lead`, `--start-date`, `--due-date`. Dates are calendar days (`YYYY-MM-DD`).
+Flags: `--title` (required), `--description`, `--status`, `--icon`, `--lead`, `--start-date`, `--due-date`. Dates are calendar days (`YYYY-MM-DD`). `--icon` takes a line icon key, not an emoji: `folder`, `briefcase`, `rocket`, `target`, `flag`, `compass`, `layers`, `box`, `code`, `terminal`, `git-branch`, `database`, `server`, `cloud`, `smartphone`, `monitor`, `palette`, `pen-tool`, `book-open`, `file-text`, `megaphone`, `chart-line`, `lightbulb`, `sparkles`, `users`, `shield`, `bug`, `wrench`, `calendar`, `mountain`, `leaf`, `feather`.
 
 ### Update Project
 
@@ -894,7 +894,7 @@ marvis project update <id> --lead "Lambda"
 marvis project update <id> --due-date 2026-04-15
 ```
 
-Flags: `--title`, `--description`, `--status`, `--icon`, `--lead`, `--start-date`, `--due-date`. For the date flags, pass an empty string (e.g. `--start-date ""`) to clear the date.
+Flags: `--title`, `--description`, `--status`, `--icon`, `--lead`, `--start-date`, `--due-date`. For the date flags and `--icon`, pass an empty string (e.g. `--start-date ""`) to clear the value.
 
 ### Change Status
 

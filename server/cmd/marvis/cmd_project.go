@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/yunboom/marvis/server/internal/cli"
+	"github.com/yunboom/marvis/server/internal/projecticon"
 )
 
 var projectCmd = &cobra.Command{
@@ -107,6 +108,14 @@ func validateProjectStatus(status string) error {
 	return fmt.Errorf("invalid status %q; valid values: %s", status, strings.Join(validProjectStatuses, ", "))
 }
 
+// validateProjectIcon accepts a glyph key or an empty string (clears the icon on update).
+func validateProjectIcon(icon string) error {
+	if icon == "" || projecticon.Valid(icon) {
+		return nil
+	}
+	return fmt.Errorf("invalid icon %q; valid values: %s", icon, strings.Join(projecticon.Keys, ", "))
+}
+
 func init() {
 	projectCmd.AddCommand(projectListCmd)
 	projectCmd.AddCommand(projectGetCmd)
@@ -133,7 +142,7 @@ func init() {
 	projectCreateCmd.Flags().String("title", "", "Project title (required)")
 	projectCreateCmd.Flags().String("description", "", "Project description")
 	projectCreateCmd.Flags().String("status", "", "Project status")
-	projectCreateCmd.Flags().String("icon", "", "Project icon (emoji)")
+	projectCreateCmd.Flags().String("icon", "", "Project icon key: "+strings.Join(projecticon.Keys, ", "))
 	projectCreateCmd.Flags().String("lead", "", "Lead name (member or agent)")
 	projectCreateCmd.Flags().String("start-date", "", "Start date (calendar day, YYYY-MM-DD)")
 	projectCreateCmd.Flags().String("due-date", "", "Due date (calendar day, YYYY-MM-DD)")
@@ -180,7 +189,7 @@ func init() {
 	projectUpdateCmd.Flags().String("title", "", "New title")
 	projectUpdateCmd.Flags().String("description", "", "New description")
 	projectUpdateCmd.Flags().String("status", "", "New status")
-	projectUpdateCmd.Flags().String("icon", "", "New icon (emoji)")
+	projectUpdateCmd.Flags().String("icon", "", "New icon key (pass empty string to clear): "+strings.Join(projecticon.Keys, ", "))
 	projectUpdateCmd.Flags().String("lead", "", "New lead name (member or agent)")
 	projectUpdateCmd.Flags().String("start-date", "", "New start date (calendar day, YYYY-MM-DD; pass empty string to clear)")
 	projectUpdateCmd.Flags().String("due-date", "", "New due date (calendar day, YYYY-MM-DD; pass empty string to clear)")
@@ -326,6 +335,9 @@ func runProjectCreate(cmd *cobra.Command, _ []string) error {
 		body["status"] = v
 	}
 	if v, _ := cmd.Flags().GetString("icon"); v != "" {
+		if err := validateProjectIcon(v); err != nil {
+			return err
+		}
 		body["icon"] = v
 	}
 	if v, _ := cmd.Flags().GetString("lead"); v != "" {
@@ -416,6 +428,9 @@ func runProjectUpdate(cmd *cobra.Command, args []string) error {
 	}
 	if cmd.Flags().Changed("icon") {
 		v, _ := cmd.Flags().GetString("icon")
+		if err := validateProjectIcon(v); err != nil {
+			return err
+		}
 		body["icon"] = v
 	}
 	if cmd.Flags().Changed("lead") {
