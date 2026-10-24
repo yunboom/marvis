@@ -21,6 +21,7 @@ import { Layers,
   ChevronRight,
   LogOut,
   Plus,
+  CirclePlus,
   Check,
   X,
 } from "lucide-react";
@@ -645,14 +646,13 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                 ) : undefined
               }
               tooltipSide="bottom"
-              size="icon"
-              // Ink ring and ink plus on the card colour; the plus is stroked at
-              // the ring's 1.5px (2.25 on lucide's 24-unit grid at 16px). Its
-              // right edge lines up with the search box below.
-              className="relative ml-auto rounded-full border-[1.5px] border-foreground bg-sidebar text-foreground hover:bg-accent"
+              size="icon-sm"
+              // A bare ink-on-white outlined glyph, no button chrome until hover
+              // — the Marvis.app "new" affordance. 20px at a ~1.5px stroke.
+              className="relative ml-auto -mr-1 rounded-full text-foreground hover:bg-accent"
               onClick={() => openCreateIssueWithPreference()}
             >
-              <Plus className="size-4" strokeWidth={2.25} />
+              <CirclePlus className="size-5" strokeWidth={1.75} />
               <DraftDot />
             </IconButton>
           </div>
