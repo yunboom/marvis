@@ -27,12 +27,13 @@ export function PriorityIcon({
 }) {
   const cfg = priority in PRIORITY_CONFIG ? PRIORITY_CONFIG[priority as IssuePriority] : null;
 
-  // "none" — the low ring struck through, so it reads as "no priority".
+  // "none" — the low ring, same colour, struck through.
   if (!cfg || priority === "none") {
     return (
       <svg
+        data-slot="priority-icon"
         viewBox="0 0 16 16"
-        className={`h-3.5 w-3.5 ${inheritColor ? "" : "text-muted-foreground"} shrink-0 ${className}`}
+        className={`h-3.5 w-3.5 ${inheritColor ? "" : PRIORITY_CONFIG.low.color} shrink-0 ${className}`}
         fill="none"
         stroke="currentColor"
         strokeWidth={RING_STROKE_PX}
@@ -52,6 +53,7 @@ export function PriorityIcon({
 
   return (
     <svg
+      data-slot="priority-icon"
       viewBox="0 0 16 16"
       className={`h-3.5 w-3.5 ${inheritColor ? "" : cfg.color} shrink-0 ${className}`}
       fill="none"

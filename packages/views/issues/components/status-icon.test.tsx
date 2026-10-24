@@ -37,10 +37,11 @@ describe("issue icons", () => {
     expect(icon).toHaveClass("text-status-todo");
   });
 
-  it("renders a muted fallback for unknown priority values", () => {
+  it("renders unknown priority values as no priority", () => {
     const { container } = render(<PriorityIcon priority="unexpected_priority" />);
 
     const icon = container.querySelector("svg");
-    expect(icon).toHaveClass("text-muted-foreground");
+    expect(icon).toHaveClass("text-priority-low");
+    expect(icon?.querySelector("line")).not.toBeNull();
   });
 });
