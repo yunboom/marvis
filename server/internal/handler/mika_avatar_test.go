@@ -10,7 +10,7 @@ import (
 // The default agent's avatar is copied onto the row at creation, so swapping
 // mika_avatar.svg leaves existing agents on the old artwork unless a migration
 // moves them. This fails when the embedded artwork changes without one.
-const latestDefaultAvatarMigration = "../../migrations/590_refresh_marvis_default_avatar.up.sql"
+const latestDefaultAvatarMigration = "../../migrations/597_refresh_marvis_default_avatar.up.sql"
 
 func TestDefaultAvatarMigrationTargetsEmbeddedArtwork(t *testing.T) {
 	migration, err := os.ReadFile(latestDefaultAvatarMigration)
