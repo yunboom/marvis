@@ -405,6 +405,7 @@ function IssueFieldsMatrix() {
                 <td className="px-4.5 text-center align-middle">
                   {quickSupported ? (
                     <Checkbox
+                      className="mx-auto"
                       checked={quickFields.includes(field as QuickCreateField)}
                       onCheckedChange={(checked) =>
                         setQuickVisible(field as QuickCreateField, checked === true)
@@ -423,6 +424,7 @@ function IssueFieldsMatrix() {
                 </td>
                 <td className="px-4.5 text-center align-middle">
                   <Checkbox
+                    className="mx-auto"
                     checked={manualFields.includes(field)}
                     onCheckedChange={(checked) =>
                       setManualVisible(field, checked === true)
