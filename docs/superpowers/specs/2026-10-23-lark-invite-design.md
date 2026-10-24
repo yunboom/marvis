@@ -103,7 +103,7 @@ Marvis 部署在办公室局域网里，同事都用飞书登录。邀请成员�
 
 `lark_invite_join`：谁通过哪张卡片加入。字段 `invite_id`、`user_id`、`lark_open_id`、`joined_at`，(`invite_id`, `user_id`) 唯一。
 
-席位容量只在连了 Multica Cloud 时启用，Marvis 自托管不会打开。席位容量开启时飞书邀请整体不可用（返回 `lark_not_configured`），不为它新增席位意图类型。
+席位容量只在连了 Marvis Cloud 时启用，Marvis 自托管不会打开。席位容量开启时飞书邀请整体不可用（返回 `lark_not_configured`），不为它新增席位意图类型。
 
 所有业务词表（状态、目标类型、ID 类型、错误码）定义为具名常量。
 

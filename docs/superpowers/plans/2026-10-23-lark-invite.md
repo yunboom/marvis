@@ -36,14 +36,14 @@
 
 ## 本计划相对设计文档的裁定
 
-- **席位容量**：只有连了 Multica Cloud（`h.SeatCapacity != nil`）才启用席位容量，Marvis 自托管不会打开。飞书邀请在席位容量开启时整体不可用（返回 `lark_not_configured`），不为它新增席位意图类型。设计文档已同步修改。
+- **席位容量**：只有连了 Marvis Cloud（`h.SeatCapacity != nil`）才启用席位容量，Marvis 自托管不会打开。飞书邀请在席位容量开启时整体不可用（返回 `lark_not_configured`），不为它新增席位意图类型。设计文档已同步修改。
 - **卡片已加入人数只显示文字**“{n} 人已加入”，不放头像列表，避免依赖未验证的卡片组件。
 - **首次进入提示**的“只出现一次”记在服务端：`lark_invite_join.welcomed_at`。
 
 ## 文件结构
 
 服务端：
-- `server/migrations/590_lark_invite.{up,down}.sql` 至 `596_*`：两张表和索引。
+- `server/migrations/593_lark_invite.{up,down}.sql` 至 `599_*`：两张表和索引。
 - `server/pkg/db/queries/lark_invite.sql`：sqlc 查询。
 - `server/internal/integrations/lark/invite_api.go`：飞书邀请用到的开放平台接口（群信息、机器人所在群、用户资料、邮箱换 open_id、发卡片、改卡片）和错误码归类。
 - `server/internal/integrations/lark/ws_connector.go`、`ws_frame.go`：卡片回调帧的处理和回应帧。
@@ -162,8 +162,8 @@
 ### Task 3: 数据表和查询
 
 **Files:**
-- Create: `server/migrations/590_lark_invite.up.sql` / `.down.sql`（两张表）
-- Create: `591_lark_invite_pkey_uidx`、`592_lark_invite_primary_key`、`593_lark_invite_workspace_idx`、`594_lark_invite_idempotency_uidx`、`595_lark_invite_join_uidx`、`596_lark_invite_join_user_idx`（各自 `.up.sql` / `.down.sql`）
+- Create: `server/migrations/593_lark_invite.up.sql` / `.down.sql`（两张表）
+- Create: `594_lark_invite_pkey_uidx`、`595_lark_invite_primary_key`、`596_lark_invite_workspace_idx`、`597_lark_invite_idempotency_uidx`、`598_lark_invite_join_uidx`、`599_lark_invite_join_user_idx`（各自 `.up.sql` / `.down.sql`）
 - Create: `server/pkg/db/queries/lark_invite.sql`
 - Regenerate: `server/pkg/db/generated/*`（`make sqlc`）
 - Test: `server/internal/handler/lark_invite_db_test.go`
