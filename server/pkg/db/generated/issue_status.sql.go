@@ -19,7 +19,7 @@ WHERE id = $1::uuid
   AND workspace_id = $2::uuid
   AND is_system = FALSE
   AND archived_at IS NULL
-RETURNING id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon
+RETURNING id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon, status_group
 `
 
 type ArchiveIssueStatusEntryParams struct {
@@ -50,6 +50,7 @@ func (q *Queries) ArchiveIssueStatusEntry(ctx context.Context, arg ArchiveIssueS
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Icon,
+		&i.StatusGroup,
 	)
 	return i, err
 }
@@ -75,15 +76,16 @@ func (q *Queries) CountIssuesUsingStatusKey(ctx context.Context, arg CountIssues
 }
 
 const createIssueStatusEntry = `-- name: CreateIssueStatusEntry :one
-INSERT INTO issue_status (workspace_id, key, name, description, category, color, icon, position)
+INSERT INTO issue_status (workspace_id, key, name, description, category, status_group, color, icon, position)
 VALUES (
     $1::uuid,
     $2::text,
     $3::text,
     $4::text,
     $5::text,
-    $6::text,
+    NULLIF($6::text, ''),
     $7::text,
+    $8::text,
     COALESCE(
         (SELECT MAX(position) + 1 FROM issue_status
          WHERE workspace_id = $1::uuid
@@ -91,7 +93,7 @@ VALUES (
         0
     )
 )
-RETURNING id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon
+RETURNING id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon, status_group
 `
 
 type CreateIssueStatusEntryParams struct {
@@ -100,12 +102,14 @@ type CreateIssueStatusEntryParams struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
 	Category    string      `json:"category"`
+	StatusGroup string      `json:"status_group"`
 	Color       string      `json:"color"`
 	Icon        string      `json:"icon"`
 }
 
 // Custom statuses only: is_system is never set here, so the canonical-key and
-// non-archivable CHECK constraints can only ever apply to seeded rows.
+// non-archivable CHECK constraints can only ever apply to seeded rows. An empty
+// status_group takes the category default from issue_status_fill_group.
 func (q *Queries) CreateIssueStatusEntry(ctx context.Context, arg CreateIssueStatusEntryParams) (IssueStatus, error) {
 	row := q.db.QueryRow(ctx, createIssueStatusEntry,
 		arg.WorkspaceID,
@@ -113,6 +117,7 @@ func (q *Queries) CreateIssueStatusEntry(ctx context.Context, arg CreateIssueSta
 		arg.Name,
 		arg.Description,
 		arg.Category,
+		arg.StatusGroup,
 		arg.Color,
 		arg.Icon,
 	)
@@ -131,6 +136,7 @@ func (q *Queries) CreateIssueStatusEntry(ctx context.Context, arg CreateIssueSta
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Icon,
+		&i.StatusGroup,
 	)
 	return i, err
 }
@@ -146,7 +152,7 @@ func (q *Queries) DeleteIssueStatusEntriesForWorkspace(ctx context.Context, work
 }
 
 const getIssueStatusEntryByID = `-- name: GetIssueStatusEntryByID :one
-SELECT id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon FROM issue_status
+SELECT id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon, status_group FROM issue_status
 WHERE id = $1::uuid
   AND workspace_id = $2::uuid
 `
@@ -173,12 +179,13 @@ func (q *Queries) GetIssueStatusEntryByID(ctx context.Context, arg GetIssueStatu
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Icon,
+		&i.StatusGroup,
 	)
 	return i, err
 }
 
 const getIssueStatusEntryByKey = `-- name: GetIssueStatusEntryByKey :one
-SELECT id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon FROM issue_status
+SELECT id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon, status_group FROM issue_status
 WHERE workspace_id = $1::uuid
   AND key = $2::text
 `
@@ -205,12 +212,13 @@ func (q *Queries) GetIssueStatusEntryByKey(ctx context.Context, arg GetIssueStat
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Icon,
+		&i.StatusGroup,
 	)
 	return i, err
 }
 
 const listActiveCustomIssueStatusEntries = `-- name: ListActiveCustomIssueStatusEntries :many
-SELECT id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon FROM issue_status
+SELECT id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon, status_group FROM issue_status
 WHERE workspace_id = $1::uuid
   AND category = $2::text
   AND is_system = FALSE
@@ -249,6 +257,7 @@ func (q *Queries) ListActiveCustomIssueStatusEntries(ctx context.Context, arg Li
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Icon,
+			&i.StatusGroup,
 		); err != nil {
 			return nil, err
 		}
@@ -261,7 +270,7 @@ func (q *Queries) ListActiveCustomIssueStatusEntries(ctx context.Context, arg Li
 }
 
 const listIssueStatusEntries = `-- name: ListIssueStatusEntries :many
-SELECT id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon FROM issue_status
+SELECT id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon, status_group FROM issue_status
 WHERE workspace_id = $1::uuid
   AND ($2::bool OR archived_at IS NULL)
 ORDER BY
@@ -311,6 +320,7 @@ func (q *Queries) ListIssueStatusEntries(ctx context.Context, arg ListIssueStatu
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Icon,
+			&i.StatusGroup,
 		); err != nil {
 			return nil, err
 		}
@@ -430,15 +440,15 @@ func (q *Queries) ReorderIssueStatusEntries(ctx context.Context, arg ReorderIssu
 
 const seedIssueStatusEntries = `-- name: SeedIssueStatusEntries :exec
 
-INSERT INTO issue_status (workspace_id, key, name, description, category, color, is_system, position)
+INSERT INTO issue_status (workspace_id, key, name, description, category, status_group, color, is_system, position)
 VALUES
-    ($1::uuid, 'backlog', 'Backlog', 'Parked. Assigning an issue here never starts an agent run.', 'unstarted', '#6b7280', TRUE, 0),
-    ($1::uuid, 'todo', 'Todo', 'Queued for work. Moving an issue here starts the assigned agent.', 'unstarted', '#6b7280', TRUE, 0),
-    ($1::uuid, 'in_progress', 'In Progress', 'Actively being worked on.', 'started', '#f59e0b', TRUE, 0),
-    ($1::uuid, 'in_review', 'In Review', 'Work delivered, waiting on human review. Finalizes the autopilot run.', 'started', '#22c55e', TRUE, 0),
-    ($1::uuid, 'done', 'Done', 'Completed.', 'done', '#3b82f6', TRUE, 0),
-    ($1::uuid, 'blocked', 'Blocked', 'Stalled on an external dependency.', 'started', '#ef4444', TRUE, 0),
-    ($1::uuid, 'cancelled', 'Cancelled', 'Decided not to do.', 'closed', '#6b7280', TRUE, 0)
+    ($1::uuid, 'backlog', 'Backlog', 'Parked. Assigning an issue here never starts an agent run.', 'unstarted', 'not_started', '#6b7280', TRUE, 0),
+    ($1::uuid, 'todo', 'Todo', 'Queued for work. Moving an issue here starts the assigned agent.', 'unstarted', 'not_started', '#6b7280', TRUE, 0),
+    ($1::uuid, 'in_progress', 'In Progress', 'Actively being worked on.', 'started', 'working', '#f59e0b', TRUE, 0),
+    ($1::uuid, 'in_review', 'In Review', 'Work delivered, waiting on human review. Finalizes the autopilot run.', 'started', 'needs_attention', '#22c55e', TRUE, 0),
+    ($1::uuid, 'done', 'Done', 'Completed.', 'done', 'ended', '#3b82f6', TRUE, 0),
+    ($1::uuid, 'blocked', 'Blocked', 'Stalled on an external dependency.', 'started', 'needs_attention', '#ef4444', TRUE, 0),
+    ($1::uuid, 'cancelled', 'Cancelled', 'Decided not to do.', 'closed', 'ended', '#6b7280', TRUE, 0)
 ON CONFLICT DO NOTHING
 `
 
@@ -456,20 +466,22 @@ func (q *Queries) SeedIssueStatusEntries(ctx context.Context, workspaceID pgtype
 const updateIssueStatusEntry = `-- name: UpdateIssueStatusEntry :one
 UPDATE issue_status SET
     name = COALESCE($1, name),
-    description = COALESCE($2, description),
-    color = COALESCE($3, color),
-    icon = COALESCE($4, icon),
-    position = COALESCE($5, position),
+    status_group = COALESCE($2, status_group),
+    description = COALESCE($3, description),
+    color = COALESCE($4, color),
+    icon = COALESCE($5, icon),
+    position = COALESCE($6, position),
     updated_at = now()
-WHERE id = $6::uuid
-  AND workspace_id = $7::uuid
+WHERE id = $7::uuid
+  AND workspace_id = $8::uuid
   AND is_system = FALSE
   AND archived_at IS NULL
-RETURNING id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon
+RETURNING id, workspace_id, key, name, description, category, color, is_system, position, archived_at, created_at, updated_at, icon, status_group
 `
 
 type UpdateIssueStatusEntryParams struct {
 	Name        pgtype.Text   `json:"name"`
+	StatusGroup pgtype.Text   `json:"status_group"`
 	Description pgtype.Text   `json:"description"`
 	Color       pgtype.Text   `json:"color"`
 	Icon        pgtype.Text   `json:"icon"`
@@ -480,10 +492,13 @@ type UpdateIssueStatusEntryParams struct {
 
 // key and category are absent on purpose: both are immutable after create.
 // The is_system guard is what enforces "built-in name and color are locked" at
-// the storage layer, so a handler bug cannot rename a built-in.
+// the storage layer, so a handler bug cannot rename a built-in. status_group
+// only moves between working and needs_attention; the group CHECK rejects any
+// other pairing with the row's category.
 func (q *Queries) UpdateIssueStatusEntry(ctx context.Context, arg UpdateIssueStatusEntryParams) (IssueStatus, error) {
 	row := q.db.QueryRow(ctx, updateIssueStatusEntry,
 		arg.Name,
+		arg.StatusGroup,
 		arg.Description,
 		arg.Color,
 		arg.Icon,
@@ -506,6 +521,7 @@ func (q *Queries) UpdateIssueStatusEntry(ctx context.Context, arg UpdateIssueSta
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Icon,
+		&i.StatusGroup,
 	)
 	return i, err
 }

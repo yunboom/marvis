@@ -7844,9 +7844,10 @@ type IssueMapQuerier interface {
 // (MUL-7349). Only a cancelled issue with a pointer costs a read.
 func IssueToMapResolved(ctx context.Context, q IssueMapQuerier, issue db.Issue, issuePrefix string) map[string]any {
 	m := IssueToMap(issue, issuePrefix)
-	category, name := issuestatus.CategoryAndName(ctx, q, issue.WorkspaceID, issue.Status)
+	category, name, group := issuestatus.CategoryNameAndGroup(ctx, q, issue.WorkspaceID, issue.Status)
 	m["status_category"] = issuestatus.WireCategory(issue.Status, category)
 	m["status_name"] = name
+	m["status_group"] = group
 	if ref := resolveDuplicateOf(ctx, q, issue, issuePrefix); ref != nil {
 		m["duplicate_of"] = ref
 	}
@@ -7896,7 +7897,10 @@ func IssueToMap(issue db.Issue, issuePrefix string) map[string]any {
 		// — clients localize those from the key — and a CUSTOM one is filled in
 		// by IssueToMapResolved, which has the catalog. Emitted unconditionally
 		// so this rendering cannot lose a key the HTTP one carries. (MUL-6749)
-		"status_name":     "",
+		"status_name": "",
+		// Mirrors handler.IssueResponse.StatusGroup: fixed for built-ins, filled
+		// for custom statuses by IssueToMapResolved.
+		"status_group":    issuestatus.BuiltInGroup(issue.Status),
 		"priority":        issue.Priority,
 		"assignee_type":   util.TextToPtr(issue.AssigneeType),
 		"assignee_id":     util.UUIDToPtr(issue.AssigneeID),

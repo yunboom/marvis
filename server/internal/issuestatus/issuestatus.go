@@ -42,6 +42,23 @@ const (
 	CategoryClosed    = "closed"
 )
 
+// The four status groups. A group is how a status is arranged on the board and
+// in the status library; it never drives platform behavior, which stays with
+// the lifecycle category.
+const (
+	GroupNotStarted     = "not_started"
+	GroupWorking        = "working"
+	GroupNeedsAttention = "needs_attention"
+	GroupEnded          = "ended"
+)
+
+var groupOrder = []string{
+	GroupNotStarted,
+	GroupWorking,
+	GroupNeedsAttention,
+	GroupEnded,
+}
+
 // canonicalOrder keeps concrete built-ins grouped under the four lifecycle
 // categories. In Progress, In Review, and Blocked remain distinct entries in
 // the Started group; Done belongs to Done, Cancelled to Closed.
@@ -163,6 +180,63 @@ func BehaviorsForCategory(category string) []string {
 	default:
 		return nil
 	}
+}
+
+// Groups returns the four status groups in display order.
+func Groups() []string {
+	out := make([]string, len(groupOrder))
+	copy(out, groupOrder)
+	return out
+}
+
+// GroupsForCategory returns the groups a status of category may sit in. Only
+// started statuses choose between working and needs_attention; every other
+// category has exactly one group.
+func GroupsForCategory(category string) []string {
+	switch category {
+	case CategoryUnstarted:
+		return []string{GroupNotStarted}
+	case CategoryStarted:
+		return []string{GroupWorking, GroupNeedsAttention}
+	case CategoryDone, CategoryClosed:
+		return []string{GroupEnded}
+	default:
+		return nil
+	}
+}
+
+// ValidGroup reports whether group is allowed for category. It mirrors the
+// issue_status_group_check constraint.
+func ValidGroup(category, group string) bool {
+	for _, g := range GroupsForCategory(category) {
+		if g == group {
+			return true
+		}
+	}
+	return false
+}
+
+// DefaultGroup returns the group a status gets when its writer does not choose
+// one: in_review and blocked wait on a person, every other started status is
+// working. Built-ins always carry this group (issue_status_system_group).
+func DefaultGroup(key, category string) string {
+	if category == CategoryStarted && (key == InReview || key == Blocked) {
+		return GroupNeedsAttention
+	}
+	groups := GroupsForCategory(category)
+	if len(groups) == 0 {
+		return ""
+	}
+	return groups[0]
+}
+
+// BuiltInGroup returns a built-in status's fixed group, or "" for any other key.
+func BuiltInGroup(key string) string {
+	category, ok := CategoryForBehavior(key)
+	if !ok {
+		return ""
+	}
+	return DefaultGroup(key, category)
 }
 
 // ParseCategory normalizes API spellings from installed and current clients.
@@ -432,7 +506,7 @@ func Category(ctx context.Context, q Querier, workspaceID pgtype.UUID, status st
 // Category, it preserves catalog failures so a caller can defer work and retry.
 // Built-ins still resolve without reading the catalog.
 func CategoryWithError(ctx context.Context, q Querier, workspaceID pgtype.UUID, status string) (string, error) {
-	category, _, err := categoryAndName(ctx, q, workspaceID, status)
+	category, _, _, err := categoryNameAndGroup(ctx, q, workspaceID, status)
 	return category, err
 }
 
@@ -440,23 +514,30 @@ func CategoryWithError(ctx context.Context, q Querier, workspaceID pgtype.UUID, 
 // It shares one catalog read while returning the public category rather than
 // the internal behavior projection.
 func CategoryAndName(ctx context.Context, q Querier, workspaceID pgtype.UUID, status string) (string, string) {
-	category, name, _ := categoryAndName(ctx, q, workspaceID, status)
+	category, name, _, _ := categoryNameAndGroup(ctx, q, workspaceID, status)
 	return category, name
 }
 
-func categoryAndName(ctx context.Context, q Querier, workspaceID pgtype.UUID, status string) (string, string, error) {
+// CategoryNameAndGroup is CategoryAndName plus the status group, still from
+// one catalog read, for payloads that carry all three.
+func CategoryNameAndGroup(ctx context.Context, q Querier, workspaceID pgtype.UUID, status string) (string, string, string) {
+	category, name, group, _ := categoryNameAndGroup(ctx, q, workspaceID, status)
+	return category, name, group
+}
+
+func categoryNameAndGroup(ctx context.Context, q Querier, workspaceID pgtype.UUID, status string) (string, string, string, error) {
 	if category, ok := CategoryForBehavior(status); ok {
-		return category, "", nil
+		return category, "", DefaultGroup(status, category), nil
 	}
 	entry, err := q.GetIssueStatusEntryByKey(ctx, db.GetIssueStatusEntryByKeyParams{WorkspaceID: workspaceID, Key: status})
 	if err != nil {
-		return "", "", fmt.Errorf("resolve issue status %q category: %w", status, err)
+		return "", "", "", fmt.Errorf("resolve issue status %q category: %w", status, err)
 	}
 	category := entry.Category
 	if !IsCategory(category) {
-		return "", entry.Name, fmt.Errorf("invalid category %q for issue status %q", entry.Category, status)
+		return "", entry.Name, "", fmt.Errorf("invalid category %q for issue status %q", entry.Category, status)
 	}
-	return category, entry.Name, nil
+	return category, entry.Name, entry.StatusGroup, nil
 }
 
 // Resolve validates that status is usable in this workspace, returning the
@@ -506,6 +587,7 @@ func builtInEntry(workspaceID pgtype.UUID, key string) db.IssueStatus {
 		WorkspaceID: workspaceID,
 		Key:         key,
 		Category:    category,
+		StatusGroup: DefaultGroup(key, category),
 		IsSystem:    true,
 	}
 }
@@ -585,6 +667,7 @@ func ActiveKeyLabels(ctx context.Context, q Querier, workspaceID pgtype.UUID) ([
 type Resolver struct {
 	workspaceID pgtype.UUID
 	categories  map[string]string
+	groups      map[string]string
 	names       map[string]string
 	archived    map[string]bool
 	loaded      bool
@@ -615,10 +698,12 @@ func (r *Resolver) load(ctx context.Context, q Querier) {
 		return
 	}
 	r.categories = make(map[string]string, len(entries))
+	r.groups = make(map[string]string, len(entries))
 	r.names = make(map[string]string, len(entries))
 	r.archived = make(map[string]bool)
 	for _, e := range entries {
 		r.categories[e.Key] = e.Category
+		r.groups[e.Key] = e.StatusGroup
 		r.names[e.Key] = e.Name
 		if e.ArchivedAt.Valid {
 			r.archived[e.Key] = true
@@ -660,6 +745,17 @@ func (r *Resolver) Category(ctx context.Context, q Querier, status string) strin
 		return ""
 	}
 	return category
+}
+
+// Group returns a status's group: a built-in's fixed group without I/O, a
+// custom status's stored group from the shared catalog read, or "" when the
+// catalog does not hold the key.
+func (r *Resolver) Group(ctx context.Context, q Querier, status string) string {
+	if group := BuiltInGroup(status); group != "" {
+		return group
+	}
+	r.load(ctx, q)
+	return r.groups[status]
 }
 
 // WritableCategory returns the category of a status a background writer may
