@@ -24,7 +24,9 @@ import { Layers,
   Check,
   X,
 } from "lucide-react";
-import { NotePencil } from "@phosphor-icons/react/ssr";
+import { Bell, PlusCircle } from "@phosphor-icons/react/ssr";
+import { useMessageBoxStore } from "@marvis/core/inbox/message-box-store";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
 import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
@@ -119,7 +121,6 @@ const PIN_REFLOW_TRANSITION = {
 // against the current workspace slug at render time (see AppSidebar body).
 // Only parameterless paths are valid nav destinations.
 type NavKey =
-  | "inbox"
   | "chat"
   | "myIssues"
   | "issues"
@@ -135,7 +136,6 @@ type NavKey =
 // Static schema (key only) — labels resolved at render via useT("layout"),
 // icons derived from the destination path via routeIconForPath.
 type NavLabelKey =
-  | "inbox"
   | "chat"
   | "my_issues"
   | "issues"
@@ -151,8 +151,9 @@ type NavLabelKey =
 // Nav icons are NOT declared here: they are derived from each item's
 // destination path at render time, so the sidebar and the desktop tab bar
 // always agree. See route-icon-components.tsx.
+// The inbox has no nav row: the bell next to the workspace switcher opens it
+// as the message box.
 const personalNav: { key: NavKey; labelKey: NavLabelKey }[] = [
-  { key: "inbox", labelKey: "inbox" },
   { key: "myIssues", labelKey: "my_issues" },
   { key: "chat", labelKey: "chat" },
 ];
@@ -181,7 +182,7 @@ const NAV_ITEM_CLASS_NAME =
 function DraftDot() {
   const hasDraft = useIssueDraftStore((s) => s.hasDraft());
   if (!hasDraft) return null;
-  return <span className="absolute top-0 right-0 size-1.5 rounded-full bg-brand" />;
+  return <span className="absolute top-1 right-1 size-1.5 rounded-full bg-brand ring-1 ring-sidebar" />;
 }
 
 /**
@@ -471,10 +472,11 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   }, [pathname, setOpenMobile]);
 
   const wsId = workspace?.id;
-  // Nav badge. Reads the cross-workspace unread summary fetched just below
+  // Bell dot. Reads the cross-workspace unread summary fetched just below
   // for the switcher dot, so the count costs no request of its own — it used
   // to download the whole inbox list here just to count it (MUL-6967).
   const unreadCount = useInboxUnreadCount(wsId);
+  const setMessageBoxOpen = useMessageBoxStore((s) => s.setOpen);
   // Chat tab unread badge: IM-style total of unread *messages* across chat
   // threads (countUnreadChatMessages is the shared definition — mobile's tab
   // badge derives from the same function, keeping the platforms in agreement).
@@ -627,33 +629,35 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
       <Sidebar variant="floating">
         {topSlot}
         {/* Workspace Switcher */}
-        <SidebarHeader className={cn("gap-2.5 px-3 pt-3.5 pb-1", headerClassName)} style={headerStyle}>
-          <div className="flex h-9 items-center gap-2.5 px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        {/* pb-4 plus the nav group's top padding puts 20px between search and
+            the first nav row; logo to search is the 12px gap. */}
+        <SidebarHeader className={cn("gap-3 px-3 pt-3.5 pb-4", headerClassName)} style={headerStyle}>
+          {/* pl-[9px] centres the 24px logo on the 18px nav icons below, and
+              the 7px gap starts the wordmark where the nav labels start. */}
+          <div className="flex h-9 items-center gap-[7px] pr-0.5 pl-[9px]">
             <MarvisIcon className="size-6 shrink-0 text-foreground" />
-            <MarvisWordmark className="h-[18px] shrink-0 text-foreground group-data-[collapsible=icon]:hidden" />
+            <MarvisWordmark className="h-[18px] shrink-0 text-foreground" />
+            <IconButton
+              label={t(($) => $.sidebar.new_issue)}
+              shortcut={
+                createIssueShortcut ? (
+                  <ShortcutKeycaps shortcut={createIssueShortcut} decorative />
+                ) : undefined
+              }
+              tooltipSide="bottom"
+              size="icon"
+              className="relative ml-auto rounded-full [&_svg]:size-5"
+              onClick={() => openCreateIssueWithPreference()}
+            >
+              <PlusCircle />
+              <DraftDot />
+            </IconButton>
           </div>
-          <SidebarMenu className="gap-1.5">
-            {searchSlot && (
-              <SidebarMenuItem className="mb-3">
-                {searchSlot}
-              </SidebarMenuItem>
-            )}
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                className={NAV_ITEM_CLASS_NAME}
-                onClick={() => openCreateIssueWithPreference()}
-              >
-                <span className="relative">
-                  <NotePencil weight="fill" />
-                  <DraftDot />
-                </span>
-                <span>{t(($) => $.sidebar.new_issue)}</span>
-                {createIssueShortcut ? (
-                  <ShortcutKeycaps shortcut={createIssueShortcut} decorative className="pointer-events-none ml-auto" />
-                ) : null}
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          {searchSlot && (
+            <SidebarMenu>
+              <SidebarMenuItem>{searchSlot}</SidebarMenuItem>
+            </SidebarMenu>
+          )}
         </SidebarHeader>
 
         {/* Navigation */}
@@ -674,13 +678,6 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                       >
                         <Icon />
                         <span>{t(($) => $.nav[item.labelKey])}</span>
-                        {item.key === "inbox" && unreadCount > 0 && (
-                          <CappedNumberFlow
-                            value={unreadCount}
-                            animated={false}
-                            className="ml-auto text-caption"
-                          />
-                        )}
                         {item.key === "chat" && chatUnreadCount > 0 && (
                           <CappedNumberFlow
                             value={chatUnreadCount}
@@ -815,8 +812,8 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
               );
             })}
           </SidebarMenu>
-          <div className="mt-1 border-t border-sidebar-border pt-2">
-            <SidebarMenu>
+          <div className="mt-1 flex items-center gap-0.5 border-t border-sidebar-border pt-2">
+            <SidebarMenu className="min-w-0 flex-1">
               <SidebarMenuItem>
                 <DropdownMenu>
                   <DropdownMenuTrigger
@@ -826,8 +823,8 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                           <WorkspaceAvatar name={workspace?.name ?? "M"} avatarUrl={workspace?.avatar_url} size="sm" />
                           {/* Shared brand dot: a pending invitation OR another
                               workspace with unread inbox items. The active
-                              workspace's own unread stays on the Inbox nav count
-                              (below), so it is deliberately excluded here. */}
+                              workspace's own unread is the bell's red dot
+                              (beside this button), so it is excluded here. */}
                           {(myInvitations.length > 0 || otherWorkspaceUnread) && (
                             <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand ring-1 ring-sidebar" />
                           )}
@@ -946,6 +943,23 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                 </DropdownMenu>
               </SidebarMenuItem>
             </SidebarMenu>
+            <IconButton
+              // The dot alone is not a name; the count rides on the label.
+              label={unreadCount > 0 ? `${t(($) => $.nav.inbox)} (${unreadCount})` : t(($) => $.nav.inbox)}
+              aria-haspopup="dialog"
+              tooltipSide="top"
+              size="icon-lg"
+              className="relative shrink-0 rounded-md text-foreground [&_svg]:size-[18px]"
+              onClick={() => setMessageBoxOpen(true)}
+            >
+              <Bell />
+              {unreadCount > 0 && (
+                <span
+                  data-testid="message-box-unread-dot"
+                  className="absolute top-2 right-2 size-2 rounded-full bg-destructive ring-[1.5px] ring-sidebar"
+                />
+              )}
+            </IconButton>
           </div>
         </SidebarFooter>
         <SidebarRail />
