@@ -416,7 +416,7 @@
     "groups": {
       "personal": "个人",
       "workspace": "工作区",
-      "issues": "任务与工作流",
+      "issues": "任务",
       "connections": "连接与扩展",
       "device": "本设备"
     },

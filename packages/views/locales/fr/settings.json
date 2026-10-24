@@ -418,7 +418,7 @@
     "groups": {
       "personal": "Personnel",
       "workspace": "Espace de travail",
-      "issues": "Tâches et flux de travail",
+      "issues": "Tâches",
       "connections": "Connexions et extensions",
       "device": "Cet appareil"
     },

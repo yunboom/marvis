@@ -1582,7 +1582,7 @@
       "used_by_short": "用于：{{names}}",
       "used_by_nobody": "暂无项目",
       "manage": "管理工作流…",
-      "picker_more": "在「设置 → 工作流」里可以新建更多工作流。"
+      "picker_more": "在侧边栏的「工作流」里可以新建更多工作流。"
     },
     "picker": {
       "header": "{{workflow}} · 跟随项目「{{project}}」",

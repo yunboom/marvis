@@ -85,11 +85,8 @@ import { WorkflowMappingDialog } from "./workflow-mapping-dialog";
 const INLINE_FIELD =
   "-mx-1.5 block w-[calc(100%+0.75rem)] rounded-md bg-transparent px-1.5 outline-none transition-colors placeholder:text-muted-foreground read-only:cursor-default hover:[&:not(:read-only)]:bg-accent/60 focus-visible:[&:not(:read-only)]:bg-accent/60 focus-visible:[&:not(:read-only)]:ring-1 focus-visible:[&:not(:read-only)]:ring-ring/40";
 
-/**
- * 编辑器铺满设置页内容区：抵消 settings-page 内容容器的内边距，
- * 顶部 60px 页头带下描边，下方左右两栏。
- */
-const EDITOR_BLEED = "-mx-4 -my-6 flex flex-col sm:-mx-6 md:-mx-10 md:-mt-8 md:-mb-10";
+/** 编辑器铺满工作流页：顶部 60px 页头带下描边，下方左右两栏。 */
+const EDITOR_BLEED = "flex min-h-full flex-col";
 
 /** 编辑器页头：面包屑在左，操作在右。 */
 const EDITOR_HEADER = "flex h-15 shrink-0 items-center gap-2 border-b border-surface-border pl-7 pr-5";

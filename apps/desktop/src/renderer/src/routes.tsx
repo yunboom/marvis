@@ -17,6 +17,7 @@ import { IssuesPage } from "@marvis/views/issues/components";
 import { ProjectsPage } from "@marvis/views/projects/components";
 import { DashboardPage } from "@marvis/views/dashboard";
 import { AutopilotsPage } from "@marvis/views/autopilots/components";
+import { WorkflowsPage } from "@marvis/views/workflows";
 import { MyIssuesPage } from "@marvis/views/my-issues";
 import { SkillsPage } from "@marvis/views/skills";
 import { DesktopRuntimesPage } from "./components/desktop-runtimes-page";
@@ -160,6 +161,11 @@ export const appRoutes: RouteObject[] = [
             path: "projects/:id",
             element: <ProjectDetailPage />,
             handle: { title: "Project" },
+          },
+          {
+            path: "workflows",
+            element: <WorkflowsPage />,
+            handle: { title: "Workflows" },
           },
           {
             path: "autopilots",

@@ -1582,7 +1582,7 @@
       "used_by_short": "사용 중: {{names}}",
       "used_by_nobody": "아직 프로젝트 없음",
       "manage": "워크플로 관리…",
-      "picker_more": "설정 → 워크플로에서 워크플로를 더 만들 수 있습니다."
+      "picker_more": "사이드바의 워크플로에서 워크플로를 더 만들 수 있습니다."
     },
     "picker": {
       "header": "{{workflow}} · 프로젝트 “{{project}}” 기준",

@@ -416,7 +416,7 @@
     "groups": {
       "personal": "個人",
       "workspace": "ワークスペース",
-      "issues": "タスクとワークフロー",
+      "issues": "タスク",
       "connections": "接続と拡張機能",
       "device": "このデバイス"
     },

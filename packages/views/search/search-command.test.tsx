@@ -230,6 +230,7 @@ vi.mock("@marvis/core/paths", async (importOriginal) => ({
     myIssues: () => "/ws-test/my-issues",
     issues: () => "/ws-test/issues",
     projects: () => "/ws-test/projects",
+    workflows: () => "/ws-test/workflows",
     autopilots: () => "/ws-test/autopilots",
     agents: () => "/ws-test/agents",
     squads: () => "/ws-test/squads",

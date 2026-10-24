@@ -49,6 +49,6 @@ describe("WorkflowPill", () => {
     fireEvent.click(screen.getByRole("button", { name: /Default/ }));
 
     expect(await screen.findByRole("menuitem", { name: /Default/ })).toBeTruthy();
-    expect(screen.getByText(/Settings → Workflows/)).toBeTruthy();
+    expect(screen.getByText(/Workflows page in the sidebar/)).toBeTruthy();
   });
 });

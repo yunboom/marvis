@@ -1582,7 +1582,7 @@
       "used_by_short": "使用中：{{names}}",
       "used_by_nobody": "まだプロジェクトがありません",
       "manage": "ワークフローを管理…",
-      "picker_more": "「設定 → ワークフロー」でワークフローを追加できます。"
+      "picker_more": "サイドバーの「ワークフロー」でワークフローを追加できます。"
     },
     "picker": {
       "header": "{{workflow}} · プロジェクト「{{project}}」に従う",

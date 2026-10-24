@@ -103,10 +103,7 @@ import { StatusIcon } from "../../issues/components/status-icon";
 import { useStatusLabel } from "../../issues/utils/status-label";
 import { useT } from "../../i18n";
 import { AppLink, useNavigation } from "../../navigation";
-import {
-  SettingsReadOnlyNotice,
-  SettingsTab,
-} from "./settings-layout";
+import { SettingsReadOnlyNotice } from "./settings-layout";
 import { settingsHref } from "./settings-navigation";
 
 /**
@@ -148,15 +145,12 @@ const EMPTY_DRAFT: StatusDraft = {
 };
 
 /**
- * The status library. Rendered as its own settings tab, or `embedded` under
- * Settings → Workflows (MUL-7420), where each row also says how many
- * workflows use the status.
+ * The status library, the second tab of the Workflows page (MUL-7420). With
+ * `workflowUsage` each row also says how many workflows use the status.
  */
 export function IssueStatusesTab({
-  embedded,
   workflowUsage,
 }: {
-  embedded?: { title: string };
   workflowUsage?: (statusKey: string) => number;
 } = {}) {
   const { t } = useT("settings");
@@ -295,23 +289,18 @@ export function IssueStatusesTab({
     </>
   );
 
-  return embedded ? (
-    <section id="status-library" className="space-y-3">
-      <div className="flex min-h-7 items-center gap-2.5">
-        <h3 className="text-title font-bold">{embedded.title}</h3>
-        {archivedToggle ? <div className="ml-auto">{archivedToggle}</div> : null}
-      </div>
+  return (
+    <section className="space-y-3">
+      {isAdmin || archivedToggle ? (
+        <div className="flex min-h-7 items-center gap-2.5">
+          {isAdmin ? (
+            <p className="text-label text-muted-foreground">{t(($) => $.issue_statuses.reorder_hint)}</p>
+          ) : null}
+          {archivedToggle ? <div className="ml-auto">{archivedToggle}</div> : null}
+        </div>
+      ) : null}
       {body}
     </section>
-  ) : (
-    <SettingsTab
-      title={t(($) => $.page.tabs.issue_statuses)}
-      description={isAdmin ? t(($) => $.issue_statuses.reorder_hint) : undefined}
-      scope="workspace"
-      actions={archivedToggle}
-    >
-      {body}
-    </SettingsTab>
   );
 }
 

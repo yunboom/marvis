@@ -1648,7 +1648,7 @@
       "used_by_short": "Utilisé par : {{names}}",
       "used_by_nobody": "Aucun projet pour l’instant",
       "manage": "Gérer les workflows…",
-      "picker_more": "Créez d’autres workflows dans Paramètres → Workflows."
+      "picker_more": "Créez d’autres workflows depuis la page Workflows de la barre latérale."
     },
     "picker": {
       "header": "{{workflow}} · selon le projet « {{project}} »",

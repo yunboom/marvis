@@ -1648,7 +1648,7 @@
       "used_by_short": "Used by: {{names}}",
       "used_by_nobody": "No projects yet",
       "manage": "Manage workflows…",
-      "picker_more": "Create more workflows in Settings → Workflows."
+      "picker_more": "Create more workflows on the Workflows page in the sidebar."
     },
     "picker": {
       "header": "{{workflow}} · from project “{{project}}”",

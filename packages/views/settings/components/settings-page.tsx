@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Lock, Search, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Lock, Search, X } from "lucide-react";
 import {
   Alarm,
   Bell,
   ChatCircleDots,
-  CircleDashed,
   CreditCard,
-  FlowArrow,
   GearSix,
   GitBranch,
   HardDrives,
@@ -16,7 +14,9 @@ import {
   Keyboard,
   Laptop,
   Lightning,
+  ListChecks,
   ListPlus,
+  Plug,
   PlugsConnected,
   PuzzlePiece,
   SlidersHorizontal,
@@ -31,7 +31,6 @@ import { useCurrentMember } from "@marvis/core/permissions";
 import {
   BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
   PLUGINS_V1_FLAG,
-  PROJECT_WORKFLOWS_V1_FLAG,
 } from "@marvis/core/feature-flags";
 import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
@@ -50,8 +49,6 @@ import { ChannelsTab } from "./channels-tab";
 import { ConnectedAppsTab, useComposioAvailable } from "./connected-apps-tab";
 import { NotificationsTab } from "./notifications-tab";
 import { LabelsTab } from "./labels-tab";
-import { IssueStatusesTab } from "./issue-statuses-tab";
-import { WorkflowsTab } from "../../workflows/workflows-tab";
 import { PropertiesTab } from "./properties-tab";
 import { QuickActionsTab } from "./quick-actions-tab";
 import { KeyboardShortcutsTab } from "./keyboard-shortcuts-tab";
@@ -88,6 +85,8 @@ type SettingsEntry = ExtraSettingsTab & {
 interface SettingsSubgroup {
   key: string;
   label?: string;
+  /** Labelled subgroups render as a collapsible row with this icon. */
+  icon?: ExtraSettingsTab["icon"];
   entries: SettingsEntry[];
 }
 
@@ -112,8 +111,6 @@ const ICONS = {
   workspace: filled(GearSix),
   members: filled(UsersThree),
   billing: filled(CreditCard),
-  workflows: filled(FlowArrow),
-  statuses: filled(CircleDashed),
   wakeups: filled(Alarm),
   labels: filled(Tag),
   properties: filled(ListPlus),
@@ -122,6 +119,8 @@ const ICONS = {
   chat: filled(ChatCircleDots),
   mcp: filled(HardDrives),
   plugins: filled(PuzzlePiece),
+  issues: filled(ListChecks),
+  connections: filled(Plug),
 };
 
 const FLASH_MS = 1600;
@@ -136,7 +135,6 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
   const isMember = role === "member";
   const navigation = useNavigation();
   const pluginsEnabled = useFeatureEnabled(PLUGINS_V1_FLAG, false);
-  const workflowsEnabled = useFeatureEnabled(PROJECT_WORKFLOWS_V1_FLAG, false);
   const billingEnabled = useFeatureEnabled(
     BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
     false,
@@ -231,15 +229,8 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         {
           key: "issues",
           label: t(($) => $.page.groups.issues),
+          icon: ICONS.issues,
           entries: [
-            ...(workflowsEnabled
-              ? [entry("workflows", t(($) => $.page.tabs.workflows), ICONS.workflows, <WorkflowsTab />, {
-                  wide: true,
-                })]
-              : [entry("issue-statuses", t(($) => $.page.tabs.issue_statuses), ICONS.statuses, <IssueStatusesTab />, {
-                  wide: true,
-                  adminOnly: true,
-                })]),
             entry("wakeups", t(($) => $.page.tabs.wakeups), ICONS.wakeups, <WakeupsTab />, {
               wide: true,
               adminOnly: true,
@@ -266,6 +257,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         {
           key: "connections",
           label: t(($) => $.page.groups.connections),
+          icon: ICONS.connections,
           entries: [
             entry("code", t(($) => $.page.tabs.code), ICONS.code, <CodeTab />, {
               adminOnly: true,
@@ -318,6 +310,19 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         subgroup.entries.some((item) => item.value === value),
       ),
     );
+
+  // 二级分组默认折叠；当前页所在的分组展开，跳转到折叠分组里的页面时自动展开。
+  const activeSubgroup = groups
+    .flatMap((group) => group.subgroups)
+    .find((subgroup) => subgroup.entries.some((item) => item.value === active.value))?.key;
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
+    activeSubgroup ? { [activeSubgroup]: true } : {},
+  );
+  useEffect(() => {
+    if (activeSubgroup) setExpanded((current) => (current[activeSubgroup] ? current : { ...current, [activeSubgroup]: true }));
+  }, [activeSubgroup]);
+  const toggleSubgroup = (key: string) =>
+    setExpanded((current) => ({ ...current, [key]: !current[key] }));
 
   // --- search ---------------------------------------------------------------
   const [query, setQuery] = useState("");
@@ -381,19 +386,21 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
     };
   }, [active.value, location.section]);
 
-  const navItem = (item: SettingsEntry) => (
+  // nested：折叠分组里的子项，不带图标，文字与分组名对齐。
+  const navItem = (item: SettingsEntry, nested = false) => (
     <li key={item.value}>
       <AppLink
         href={href(item.value)}
         aria-current={active.value === item.value ? "page" : undefined}
         className={cn(
           "flex h-7.5 items-center gap-2.5 rounded-row px-2.5 text-body transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:outline-2 focus-visible:outline-ring",
+          nested && "pl-9",
           active.value === item.value
             ? "bg-surface-selected font-medium text-surface-selected-foreground hover:bg-surface-selected"
             : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
         )}
       >
-        <item.icon className="size-4 shrink-0 text-foreground" aria-hidden="true" />
+        {nested ? null : <item.icon className="size-4 shrink-0 text-foreground" aria-hidden="true" />}
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         {isMember && item.adminOnly ? (
           <Lock
@@ -564,25 +571,42 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                       </span>
                     ) : null}
                   </h2>
-                  {group.subgroups.map((subgroup) => (
-                    <div
-                      key={subgroup.key}
-                      role={subgroup.label ? "group" : undefined}
-                      aria-labelledby={
-                        subgroup.label ? `settings-subgroup-${subgroup.key}` : undefined
-                      }
-                    >
-                      {subgroup.label ? (
-                        <h3
-                          id={`settings-subgroup-${subgroup.key}`}
-                          className="px-2.5 pb-0.75 pt-2.5 text-caption font-medium text-muted-foreground"
+                  {group.subgroups.map((subgroup) => {
+                    if (!subgroup.label) {
+                      return (
+                        <ul key={subgroup.key} className="space-y-px">
+                          {subgroup.entries.map((item) => navItem(item))}
+                        </ul>
+                      );
+                    }
+                    const open = Boolean(expanded[subgroup.key]);
+                    const Icon = subgroup.icon;
+                    const Chevron = open ? ChevronUp : ChevronDown;
+                    return (
+                      <div key={subgroup.key} className="mt-px">
+                        <button
+                          type="button"
+                          aria-expanded={open}
+                          aria-controls={`settings-subgroup-${subgroup.key}`}
+                          onClick={() => toggleSubgroup(subgroup.key)}
+                          className="flex h-7.5 w-full items-center gap-2.5 rounded-row px-2.5 text-left text-body text-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-surface-hover hover:duration-(--motion-instant) focus-visible:outline-2 focus-visible:outline-ring"
                         >
-                          {subgroup.label}
-                        </h3>
-                      ) : null}
-                      <ul className="space-y-px">{subgroup.entries.map(navItem)}</ul>
-                    </div>
-                  ))}
+                          {Icon ? <Icon className="size-4 shrink-0 text-foreground" aria-hidden="true" /> : null}
+                          <span className="min-w-0 flex-1 truncate">{subgroup.label}</span>
+                          <Chevron className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        </button>
+                        {open ? (
+                          <ul
+                            id={`settings-subgroup-${subgroup.key}`}
+                            aria-label={subgroup.label}
+                            className="mt-px space-y-px"
+                          >
+                            {subgroup.entries.map((item) => navItem(item, true))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </section>
               ))}
             </div>
