@@ -57,6 +57,7 @@ import {
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
+import { MarvisWordmark } from "@marvis/ui/components/common/marvis-wordmark";
 import { useAuthStore } from "@marvis/core/auth";
 import { issueViewDetailOptions } from "@marvis/core/issue-views/queries";
 import {
@@ -445,9 +446,6 @@ interface AppSidebarProps {
   headerStyle?: React.CSSProperties;
 }
 
-// Product wordmark beside the logo; a brand name, so it is not translated.
-const BRAND_NAME = "Marvis";
-
 export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }: AppSidebarProps = {}) {
   const { t } = useT("layout");
   const { pathname, push } = useNavigation();
@@ -632,9 +630,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
         <SidebarHeader className={cn("gap-2.5 px-3 pt-3.5 pb-1", headerClassName)} style={headerStyle}>
           <div className="flex h-9 items-center gap-2.5 px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
             <MarvisIcon className="size-6 shrink-0 text-foreground" />
-            <span className="text-display-sm font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
-              {BRAND_NAME}
-            </span>
+            <MarvisWordmark className="h-[18px] shrink-0 text-foreground group-data-[collapsible=icon]:hidden" />
           </div>
           <SidebarMenu className="gap-1.5">
             {searchSlot && (
