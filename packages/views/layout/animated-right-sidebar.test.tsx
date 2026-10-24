@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   configureShortcutPlatform,
@@ -7,7 +7,9 @@ import {
 
 import {
   getAnimatedRightSidebarInitialOpen,
-  useAnimatedRightSidebarState,
+  RightSidebarOpenState,
+  useRightSidebarController,
+  useRightSidebarState,
   useRightSidebarShortcut,
 } from "./animated-right-sidebar";
 
@@ -16,7 +18,42 @@ afterEach(() => {
   useShortcutStore.getState().resetAll();
 });
 
+function renderSidebarState(initialOpen: boolean) {
+  return renderHook(() => {
+    const controller = useRightSidebarController(initialOpen);
+    return { ...useRightSidebarState(controller), controller };
+  });
+}
+
 describe("animated right sidebar state", () => {
+  // The owner is a whole detail page; a toggle must re-render only the
+  // subscribers, or every click re-renders the page and the motion stutters.
+  it("re-renders the subscribers on toggle, not the owner", () => {
+    let ownerRenders = 0;
+    let toggleOpen: boolean | null = null;
+    let controller: ReturnType<typeof useRightSidebarController> | null = null;
+    function Owner() {
+      ownerRenders += 1;
+      controller = useRightSidebarController(false);
+      return (
+        <RightSidebarOpenState controller={controller}>
+          {(open) => {
+            toggleOpen = open;
+            return null;
+          }}
+        </RightSidebarOpenState>
+      );
+    }
+    render(<Owner />);
+
+    act(() => {
+      controller!.beginToggle(true);
+    });
+
+    expect(toggleOpen).toBe(true);
+    expect(ownerRenders).toBe(1);
+  });
+
   it("uses a restored collapsed layout before falling back to the default", () => {
     expect(
       getAnimatedRightSidebarInitialOpen(true, {
@@ -41,10 +78,10 @@ describe("animated right sidebar state", () => {
   });
 
   it("treats a non-zero layout percentage as open even before pixels are measured", () => {
-    const { result } = renderHook(() => useAnimatedRightSidebarState(false));
+    const { result } = renderSidebarState(false);
 
     act(() => {
-      result.current.handleResize({
+      result.current.controller.handleResize({
         asPercentage: 30,
         inPixels: 0,
       });
@@ -58,12 +95,12 @@ describe("animated right sidebar state", () => {
   it("enables motion only for an explicit toggle window", () => {
     vi.useFakeTimers();
     try {
-      const { result } = renderHook(() => useAnimatedRightSidebarState(false));
+      const { result } = renderSidebarState(false);
 
       expect(result.current.motionEnabled).toBe(false);
 
       act(() => {
-        result.current.beginToggle(true);
+        result.current.controller.beginToggle(true);
       });
 
       expect(result.current.open).toBe(true);

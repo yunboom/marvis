@@ -183,10 +183,10 @@ import { useInPageFind } from "../hooks/use-in-page-find";
 import { useStickyComposer } from "../hooks/use-sticky-composer";
 import { FindBar } from "./find-bar";
 import {
-  AnimatedRightSidebar,
+  AnimatedRightSidebarPanel,
   getAnimatedRightSidebarInitialOpen,
-  rightSidebarPanelMotionProps,
-  useAnimatedRightSidebarState,
+  RightSidebarOpenState,
+  useRightSidebarController,
   useRightSidebarShortcut,
 } from "../../layout/animated-right-sidebar";
 
@@ -1340,13 +1340,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
     defaultSidebarOpen,
     defaultLayout,
   );
-  const {
-    open: desktopSidebarOpen,
-    visualOpen: desktopSidebarVisualOpen,
-    motionEnabled: desktopSidebarMotionEnabled,
-    beginToggle: beginDesktopSidebarToggle,
-    handleResize: handleDesktopSidebarResize,
-  } = useAnimatedRightSidebarState(desktopSidebarInitialOpen);
+  const desktopSidebar = useRightSidebarController(desktopSidebarInitialOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -1354,7 +1348,6 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
       setMobileSidebarOpen(false);
     }
   }, [isMobile]);
-  const sidebarOpen = isMobile ? mobileSidebarOpen : desktopSidebarOpen;
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [parentIssueOpen, setParentIssueOpen] = useState(true);
@@ -2627,23 +2620,24 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
     const panel = sidebarRef.current;
     if (!panel) return;
     const nextOpen = panel.isCollapsed();
-    beginDesktopSidebarToggle(nextOpen);
+    desktopSidebar.beginToggle(nextOpen);
     window.requestAnimationFrame(() => {
       if (nextOpen) panel.expand();
       else panel.collapse();
     });
-  }, [beginDesktopSidebarToggle, isMobile, sidebarRef]);
+  }, [desktopSidebar, isMobile, sidebarRef]);
 
   // The header's wakeup chip opens the sidebar and brings the Wakeups section
   // into view with focus on its heading.
   const openWakeups = useCallback(() => {
+    const sidebarOpen = isMobile ? mobileSidebarOpen : desktopSidebar.getState().open;
     if (!sidebarOpen) handleToggleSidebar();
     window.requestAnimationFrame(() => {
       const heading = document.getElementById(`issue-wakeups-${id}`);
       heading?.scrollIntoView({ block: "nearest" });
       heading?.focus({ preventScroll: true });
     });
-  }, [handleToggleSidebar, id, sidebarOpen]);
+  }, [desktopSidebar, handleToggleSidebar, id, isMobile, mobileSidebarOpen]);
 
   useRightSidebarShortcut(rightSidebarShortcutTargetRef, handleToggleSidebar);
 
@@ -3314,16 +3308,23 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               trailingActions
             ) : (
               <>
-                <IconButton
-                  label={t(($) => $.detail.sidebar_tooltip)}
-                  shortcut={<ActionShortcutKeycaps action="toggleRightSidebar" />}
-                  tooltipSide="bottom"
-                  variant={sidebarOpen ? "secondary" : "ghost"}
-                  className={sidebarOpen ? "" : "text-muted-foreground"}
-                  onClick={handleToggleSidebar}
-                >
-                  <PanelRight />
-                </IconButton>
+                <RightSidebarOpenState controller={desktopSidebar}>
+                  {(desktopOpen) => {
+                    const sidebarOpen = isMobile ? mobileSidebarOpen : desktopOpen;
+                    return (
+                      <IconButton
+                        label={t(($) => $.detail.sidebar_tooltip)}
+                        shortcut={<ActionShortcutKeycaps action="toggleRightSidebar" />}
+                        tooltipSide="bottom"
+                        variant={sidebarOpen ? "secondary" : "ghost"}
+                        className={sidebarOpen ? "" : "text-muted-foreground"}
+                        onClick={handleToggleSidebar}
+                      >
+                        <PanelRight />
+                      </IconButton>
+                    );
+                  }}
+                </RightSidebarOpenState>
                 {trailingActions}
               </>
             )}
@@ -4039,22 +4040,9 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         {detailContent}
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel
-        id="sidebar"
-        {...rightSidebarPanelMotionProps}
-        data-right-sidebar-motion={desktopSidebarMotionEnabled ? "enabled" : undefined}
-        defaultSize={desktopSidebarOpen ? 320 : 0}
-        minSize={260}
-        maxSize={420}
-        collapsible
-        groupResizeBehavior="preserve-pixel-size"
-        panelRef={sidebarRef}
-        onResize={handleDesktopSidebarResize}
-      >
-        <AnimatedRightSidebar open={desktopSidebarVisualOpen} motionEnabled={desktopSidebarMotionEnabled}>
-          {sidebarContent}
-        </AnimatedRightSidebar>
-      </ResizablePanel>
+      <AnimatedRightSidebarPanel controller={desktopSidebar} panelRef={sidebarRef}>
+        {sidebarContent}
+      </AnimatedRightSidebarPanel>
     </ResizablePanelGroup>,
   );
 }

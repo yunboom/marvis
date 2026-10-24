@@ -59,10 +59,10 @@ import {
 import { ProjectIconPicker } from "./project-icon-picker";
 import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
 import {
-  AnimatedRightSidebar,
+  AnimatedRightSidebarPanel,
   getAnimatedRightSidebarInitialOpen,
-  rightSidebarPanelMotionProps,
-  useAnimatedRightSidebarState,
+  RightSidebarOpenState,
+  useRightSidebarController,
   useRightSidebarShortcut,
 } from "../../layout/animated-right-sidebar";
 import {
@@ -179,15 +179,8 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   // to `true` made the mobile <Sheet> mount in the open position on first render
   // (after `useIsMobile()` flipped from false→true), briefly covering the page
   // with its modal backdrop and locking scroll — leaving the page unresponsive.
-  const {
-    open: desktopSidebarOpen,
-    visualOpen: desktopSidebarVisualOpen,
-    motionEnabled: desktopSidebarMotionEnabled,
-    beginToggle: beginDesktopSidebarToggle,
-    handleResize: handleDesktopSidebarResize,
-  } = useAnimatedRightSidebarState(desktopSidebarInitialOpen);
+  const desktopSidebar = useRightSidebarController(desktopSidebarInitialOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const sidebarOpen = isMobile ? mobileSidebarOpen : desktopSidebarOpen;
 
   useEffect(() => {
     if (isMobile) {
@@ -204,12 +197,12 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     const panel = sidebarRef.current;
     if (!panel) return;
     const nextOpen = panel.isCollapsed();
-    beginDesktopSidebarToggle(nextOpen);
+    desktopSidebar.beginToggle(nextOpen);
     window.requestAnimationFrame(() => {
       if (nextOpen) panel.expand();
       else panel.collapse();
     });
-  }, [beginDesktopSidebarToggle, isMobile, sidebarRef]);
+  }, [desktopSidebar, isMobile, sidebarRef]);
 
   useRightSidebarShortcut(rightSidebarShortcutTargetRef, handleToggleSidebar);
 
@@ -532,21 +525,28 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      variant={sidebarOpen ? "secondary" : "ghost"}
-                      size="icon-sm"
-                      className={sidebarOpen ? "" : "text-muted-foreground"}
-                      onClick={handleToggleSidebar}
-                    >
-                      <PanelRight />
-                    </Button>
-                  }
-                />
-                <TooltipContent side="bottom">{t(($) => $.detail.sidebar_tooltip)}</TooltipContent>
-              </Tooltip>
+              <RightSidebarOpenState controller={desktopSidebar}>
+                {(desktopOpen) => {
+                  const sidebarOpen = isMobile ? mobileSidebarOpen : desktopOpen;
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant={sidebarOpen ? "secondary" : "ghost"}
+                            size="icon-sm"
+                            className={sidebarOpen ? "" : "text-muted-foreground"}
+                            onClick={handleToggleSidebar}
+                          >
+                            <PanelRight />
+                          </Button>
+                        }
+                      />
+                      <TooltipContent side="bottom">{t(($) => $.detail.sidebar_tooltip)}</TooltipContent>
+                    </Tooltip>
+                  );
+                }}
+              </RightSidebarOpenState>
               </>
             }
           />
@@ -559,22 +559,9 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
         </ResizablePanel>
         {!isMobile && <ResizableHandle />}
         {!isMobile && (
-        <ResizablePanel
-          id="sidebar"
-          {...rightSidebarPanelMotionProps}
-          data-right-sidebar-motion={desktopSidebarMotionEnabled ? "enabled" : undefined}
-          defaultSize={desktopSidebarOpen ? 320 : 0}
-          minSize={260}
-          maxSize={420}
-          collapsible
-          groupResizeBehavior="preserve-pixel-size"
-          panelRef={sidebarRef}
-          onResize={handleDesktopSidebarResize}
-        >
-          <AnimatedRightSidebar open={desktopSidebarVisualOpen} motionEnabled={desktopSidebarMotionEnabled}>
-            {sidebarContent}
-          </AnimatedRightSidebar>
-        </ResizablePanel>
+        <AnimatedRightSidebarPanel controller={desktopSidebar} panelRef={sidebarRef}>
+          {sidebarContent}
+        </AnimatedRightSidebarPanel>
         )}
         {isMobile && (
           <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
