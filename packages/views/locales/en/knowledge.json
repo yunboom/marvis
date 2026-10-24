@@ -346,7 +346,7 @@
     "empty": "The agent replies here once it picks up the task.",
     "create_prompt": "Who is this knowledge base for, and what should it cover?",
     "no_changes_yet": "Change requests show up here once the agent submits them.",
-    "change_meta": "#{{number}} · knowledge bases: {{files}}",
+    "change_meta": "#{{number}} · knowledge bases: {{bases}}",
     "review": "Review",
     "findings_n": "Annotations recorded: {{n}}",
     "open_annotations": "Open annotations",

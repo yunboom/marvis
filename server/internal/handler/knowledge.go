@@ -656,7 +656,7 @@ func (h *Handler) DeleteKnowledgeBase(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
-	if err := qtx.DismissKnowledgeAnnotationsForBase(ctx, kb.ID); err != nil {
+	if err := qtx.DismissKnowledgeAnnotationsForBase(ctx, db.DismissKnowledgeAnnotationsForBaseParams{KnowledgeBaseID: kb.ID, WorkspaceID: kb.WorkspaceID}); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to close annotations")
 		return
 	}

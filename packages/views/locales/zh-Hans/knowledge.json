@@ -346,7 +346,7 @@
     "empty": "智能体收到任务后会在这里回复。",
     "create_prompt": "说说这个知识库给谁用、收录什么。",
     "no_changes_yet": "智能体提交变更请求后会出现在这里。",
-    "change_meta": "#{{number}} · {{files}} 个知识库",
+    "change_meta": "#{{number}} · {{bases}} 个知识库",
     "review": "去审核",
     "findings_n": "已记下 {{n}} 条批注",
     "open_annotations": "去批注页",

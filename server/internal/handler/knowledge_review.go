@@ -81,11 +81,11 @@ func (h *Handler) MergeKnowledgeChangeRequest(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if len(conflicts) > 0 {
-		if err := h.Queries.MarkKnowledgeChangeRequestConflict(ctx, db.MarkKnowledgeChangeRequestConflictParams{ID: cr.ID, ConflictFiles: conflicts}); err != nil {
+		if err := h.Queries.MarkKnowledgeChangeRequestConflict(ctx, db.MarkKnowledgeChangeRequestConflictParams{ID: cr.ID, WorkspaceID: cr.WorkspaceID, ConflictFiles: conflicts}); err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to record conflict")
 			return
 		}
-		h.publishKnowledge(workspaceID, "member", userID, knowledgeEventChangeRequest, uuidToString(cr.ID))
+		h.publishKnowledge(workspaceID, actorTypeMember, userID, knowledgeEventChangeRequest, uuidToString(cr.ID))
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "change request conflicts with main", "conflict_files": conflicts})
 		return
 	}
@@ -98,7 +98,7 @@ func (h *Handler) MergeKnowledgeChangeRequest(w http.ResponseWriter, r *http.Req
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
 	merged, err := qtx.MarkKnowledgeChangeRequestMerged(ctx, db.MarkKnowledgeChangeRequestMergedParams{
-		ID: cr.ID, MergeCommit: pgtype.Text{String: commit, Valid: true}, MergedBy: parseUUID(userID),
+		ID: cr.ID, WorkspaceID: cr.WorkspaceID, MergeCommit: pgtype.Text{String: commit, Valid: true}, MergedBy: parseUUID(userID),
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to record merge")
@@ -121,7 +121,7 @@ func (h *Handler) MergeKnowledgeChangeRequest(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	h.publishKnowledge(workspaceID, "member", userID, knowledgeEventChangeRequest, uuidToString(cr.ID))
+	h.publishKnowledge(workspaceID, actorTypeMember, userID, knowledgeEventChangeRequest, uuidToString(cr.ID))
 	writeJSON(w, http.StatusOK, changeRequestToResponse(merged, h.actorNames(ctx, []db.KnowledgeChangeRequest{merged})[uuidToString(merged.AuthorID)]))
 }
 
@@ -162,7 +162,7 @@ func (h *Handler) CloseKnowledgeChangeRequest(w http.ResponseWriter, r *http.Req
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
-	closed, err := qtx.CloseKnowledgeChangeRequest(ctx, cr.ID)
+	closed, err := qtx.CloseKnowledgeChangeRequest(ctx, db.CloseKnowledgeChangeRequestParams{ID: cr.ID, WorkspaceID: cr.WorkspaceID})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to close change request")
 		return
@@ -309,7 +309,7 @@ func (h *Handler) SubmitKnowledgeEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.publishKnowledge(workspaceID, actorType, actorID, knowledgeEventChangeRequest, uuidToString(cr.ID))
-	writeJSON(w, http.StatusCreated, h.changeDetail(ctx, cr, snap.Files))
+	h.writeChangeDetail(w, r, http.StatusCreated, cr, snap.Files)
 }
 
 // ListKnowledgeHistory 列出已合并的变更（GET /api/knowledge/history?limit=）。
@@ -394,5 +394,5 @@ func (h *Handler) RevertKnowledgeChangeRequest(w http.ResponseWriter, r *http.Re
 	}
 
 	h.publishKnowledge(workspaceID, actorType, actorID, knowledgeEventChangeRequest, uuidToString(revert.ID))
-	writeJSON(w, http.StatusCreated, h.changeDetail(ctx, revert, snap.Files))
+	h.writeChangeDetail(w, r, http.StatusCreated, revert, snap.Files)
 }

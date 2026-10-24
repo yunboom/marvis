@@ -129,7 +129,7 @@ func runKBSources(cmd *cobra.Command, _ []string) error {
 
 	fmt.Printf("Page %s of %s (since %s, until %s)", strVal(resp, "page"), strVal(resp, "pages"), strVal(resp, "since"), strVal(resp, "until"))
 	if truncated, _ := resp["truncated"].(bool); truncated {
-		fmt.Print(", truncated")
+		fmt.Printf(", truncated: %s more not shown", strVal(resp, "remaining"))
 	}
 	fmt.Println()
 	items, _ := resp["items"].([]any)

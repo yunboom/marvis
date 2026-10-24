@@ -107,7 +107,7 @@ func changeRequestToResponse(cr db.KnowledgeChangeRequest, authorName string) Kn
 func (h *Handler) actorNames(ctx context.Context, crs []db.KnowledgeChangeRequest) map[string]string {
 	users, agents := []pgtype.UUID{}, []pgtype.UUID{}
 	for _, cr := range crs {
-		if cr.AuthorType == "agent" {
+		if cr.AuthorType == actorTypeAgent {
 			agents = append(agents, cr.AuthorID)
 		} else {
 			users = append(users, cr.AuthorID)
@@ -180,6 +180,21 @@ func (h *Handler) snapshotBranch(ctx context.Context, workspaceID, branch string
 	return changeSnapshot{Head: head, Base: base, Files: files, Slugs: slugs, Conflicts: merge.Conflicts}, nil
 }
 
+// currentConflicts 返回分支头与当前主线试合并的冲突文件。
+func (h *Handler) currentConflicts(ctx context.Context, workspaceID, head string) ([]string, error) {
+	mainHead, err := h.Knowledge.Head(ctx, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	merge, err := h.Knowledge.TryMerge(ctx, workspaceID, mainHead, head)
+	if err != nil {
+		return nil, err
+	}
+
+	return nonNilStrings(merge.Conflicts), nil
+}
+
 // CreateKnowledgeChangeRequestRequest 是创建变更请求的请求体：分支需先推送到仓库。
 type CreateKnowledgeChangeRequestRequest struct {
 	Branch        string   `json:"branch"`
@@ -216,7 +231,7 @@ func (h *Handler) CreateKnowledgeChangeRequest(w http.ResponseWriter, r *http.Re
 	}
 	if in.Source == "" {
 		in.Source = changeSourceEdit
-		if actorType == "agent" {
+		if actorType == actorTypeAgent {
 			in.Source = changeSourceAgent
 		}
 	}
@@ -228,7 +243,7 @@ func (h *Handler) CreateKnowledgeChangeRequest(w http.ResponseWriter, r *http.Re
 	}
 
 	h.publishKnowledge(workspaceID, actorType, actorID, knowledgeEventChangeRequest, uuidToString(cr.ID))
-	writeJSON(w, http.StatusCreated, h.changeDetail(r.Context(), cr, snap.Files))
+	h.writeChangeDetail(w, r, http.StatusCreated, cr, snap.Files)
 }
 
 type changeInput struct {
@@ -435,7 +450,7 @@ func (h *Handler) UpdateKnowledgeChangeRequest(w http.ResponseWriter, r *http.Re
 	updated, err := h.Queries.RefreshKnowledgeChangeRequest(r.Context(), db.RefreshKnowledgeChangeRequestParams{
 		Title: title, Summary: summary, Risk: risk, BaseCommit: snap.Base, HeadCommit: snap.Head,
 		Conflict: len(snap.Conflicts) > 0, ConflictFiles: nonNilStrings(snap.Conflicts), KbSlugs: snap.Slugs,
-		AnnotationIds: annotationIDs, ID: cr.ID,
+		AnnotationIds: annotationIDs, ID: cr.ID, WorkspaceID: cr.WorkspaceID,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to update change request")
@@ -452,7 +467,7 @@ func (h *Handler) UpdateKnowledgeChangeRequest(w http.ResponseWriter, r *http.Re
 
 	actorType, actorID := h.resolveActor(r, userID, workspaceID)
 	h.publishKnowledge(workspaceID, actorType, actorID, knowledgeEventChangeRequest, uuidToString(cr.ID))
-	writeJSON(w, http.StatusOK, h.changeDetail(r.Context(), updated, snap.Files))
+	h.writeChangeDetail(w, r, http.StatusOK, updated, snap.Files)
 }
 
 // ListKnowledgeChangeRequests 列出变更请求（GET /api/knowledge/changes?status=）。
@@ -556,7 +571,7 @@ func (h *Handler) changeChecks(ctx context.Context, workspaceID string, cr db.Kn
 	return checks, nil
 }
 
-func (h *Handler) changeDetail(ctx context.Context, cr db.KnowledgeChangeRequest, files []knowledge.FileDiff) KnowledgeChangeDetailResponse {
+func (h *Handler) changeDetail(ctx context.Context, cr db.KnowledgeChangeRequest, files []knowledge.FileDiff) (KnowledgeChangeDetailResponse, error) {
 	names := h.actorNames(ctx, []db.KnowledgeChangeRequest{cr})
 	bySlug := map[string][]knowledge.FileDiff{}
 	var order []string
@@ -574,13 +589,15 @@ func (h *Handler) changeDetail(ctx context.Context, cr db.KnowledgeChangeRequest
 	}
 
 	comments := []KnowledgeChangeComment{}
-	if rows, err := h.Queries.ListKnowledgeChangeComments(ctx, cr.ID); err == nil {
-		for _, c := range rows {
-			comments = append(comments, KnowledgeChangeComment{
-				ID: uuidToString(c.ID), Path: c.Path, Line: int(c.Line), AuthorType: c.AuthorType, AuthorID: uuidToString(c.AuthorID),
-				Body: c.Body, CreatedAt: timestampToString(c.CreatedAt),
-			})
-		}
+	rows, err := h.Queries.ListKnowledgeChangeComments(ctx, cr.ID)
+	if err != nil {
+		return KnowledgeChangeDetailResponse{}, errors.Wrapf(err, "list change comments change_request_id=%s", uuidToString(cr.ID))
+	}
+	for _, c := range rows {
+		comments = append(comments, KnowledgeChangeComment{
+			ID: uuidToString(c.ID), Path: c.Path, Line: int(c.Line), AuthorType: c.AuthorType, AuthorID: uuidToString(c.AuthorID),
+			Body: c.Body, CreatedAt: timestampToString(c.CreatedAt),
+		})
 	}
 
 	return KnowledgeChangeDetailResponse{
@@ -588,7 +605,18 @@ func (h *Handler) changeDetail(ctx context.Context, cr db.KnowledgeChangeRequest
 		Groups:                         groups,
 		Comments:                       comments,
 		Checks:                         KnowledgeChangeChecks{Lint: []knowledge.LintIssue{}, Stale: []knowledge.StaleItem{}},
+	}, nil
+}
+
+// writeChangeDetail 写出变更请求详情；读取评论失败时返回 500。
+func (h *Handler) writeChangeDetail(w http.ResponseWriter, r *http.Request, status int, cr db.KnowledgeChangeRequest, files []knowledge.FileDiff) {
+	detail, err := h.changeDetail(r.Context(), cr, files)
+	if err != nil {
+		writeKnowledgeError(w, r, err, "failed to load change request")
+		return
 	}
+
+	writeJSON(w, status, detail)
 }
 
 // GetKnowledgeChangeRequest 返回变更请求详情（GET /api/knowledge/changes/{number}）。
@@ -618,7 +646,23 @@ func (h *Handler) GetKnowledgeChangeRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	detail := h.changeDetail(r.Context(), cr, files)
+	// 主线在变更请求创建后可能又前进了：打开的变更请求每次查看都和当前主线重新试合并，
+	// 「能否合并」才不会停留在上次更新时的结论。
+	if cr.Status == changeStatusOpen {
+		conflicts, err := h.currentConflicts(r.Context(), workspaceID, cr.HeadCommit)
+		if err != nil {
+			writeKnowledgeError(w, r, err, "failed to check mergeability")
+			return
+		}
+		cr.Conflict, cr.ConflictFiles = len(conflicts) > 0, conflicts
+	}
+
+	detail, err := h.changeDetail(r.Context(), cr, files)
+	if err != nil {
+		writeKnowledgeError(w, r, err, "failed to load change request")
+		return
+	}
 	detail.Checks = checks
+
 	writeJSON(w, http.StatusOK, detail)
 }

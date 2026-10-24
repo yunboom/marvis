@@ -48,7 +48,7 @@ func (h *Handler) annotationResponses(ctx context.Context, workspaceID string, r
 	}
 	users, agents := []pgtype.UUID{}, []pgtype.UUID{}
 	for _, a := range rows {
-		if a.AuthorType == "agent" {
+		if a.AuthorType == actorTypeAgent {
 			agents = append(agents, a.AuthorID)
 		} else {
 			users = append(users, a.AuthorID)
@@ -102,23 +102,22 @@ func pageContainsQuote(page *knowledge.Page, quote string) bool {
 
 func (h *Handler) changeNumbersByID(ctx context.Context, workspaceID string, rows []db.KnowledgeAnnotation) (map[string]int, error) {
 	out := map[string]int{}
-	seen := map[string]bool{}
+	var ids []pgtype.UUID
 	for _, a := range rows {
 		if a.ChangeRequestID.Valid {
-			seen[uuidToString(a.ChangeRequestID)] = true
+			ids = append(ids, a.ChangeRequestID)
 		}
 	}
-	if len(seen) == 0 {
+	if len(ids) == 0 {
 		return out, nil
 	}
-	crs, err := h.Queries.ListKnowledgeChangeRequests(ctx, db.ListKnowledgeChangeRequestsParams{WorkspaceID: parseUUID(workspaceID)})
+
+	crs, err := h.Queries.ListKnowledgeChangeNumbersByIDs(ctx, db.ListKnowledgeChangeNumbersByIDsParams{WorkspaceID: parseUUID(workspaceID), Ids: ids})
 	if err != nil {
-		return nil, errors.Wrapf(err, "list change requests workspace_id=%s", workspaceID)
+		return nil, errors.Wrapf(err, "list change request numbers workspace_id=%s", workspaceID)
 	}
 	for _, cr := range crs {
-		if seen[uuidToString(cr.ID)] {
-			out[uuidToString(cr.ID)] = int(cr.Number)
-		}
+		out[uuidToString(cr.ID)] = int(cr.Number)
 	}
 
 	return out, nil
@@ -197,7 +196,7 @@ func (h *Handler) ListKnowledgeAnnotations(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-	params := db.ListKnowledgeAnnotationsParams{KnowledgeBaseID: kb.ID}
+	params := db.ListKnowledgeAnnotationsParams{KnowledgeBaseID: kb.ID, WorkspaceID: kb.WorkspaceID}
 	if s := r.URL.Query().Get("status"); s != "" {
 		if !validAnnotationStatus(s) {
 			writeError(w, http.StatusBadRequest, "invalid status")

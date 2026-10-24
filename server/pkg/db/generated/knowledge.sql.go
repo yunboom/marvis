@@ -26,12 +26,17 @@ func (q *Queries) AllocateKnowledgeChangeNumber(ctx context.Context, workspaceID
 
 const closeKnowledgeChangeRequest = `-- name: CloseKnowledgeChangeRequest :one
 UPDATE knowledge_change_request SET status = 'closed', updated_at = now()
-WHERE id = $1 AND status = 'open'
+WHERE id = $1 AND workspace_id = $2 AND status = 'open'
 RETURNING id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at
 `
 
-func (q *Queries) CloseKnowledgeChangeRequest(ctx context.Context, id pgtype.UUID) (KnowledgeChangeRequest, error) {
-	row := q.db.QueryRow(ctx, closeKnowledgeChangeRequest, id)
+type CloseKnowledgeChangeRequestParams struct {
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+}
+
+func (q *Queries) CloseKnowledgeChangeRequest(ctx context.Context, arg CloseKnowledgeChangeRequestParams) (KnowledgeChangeRequest, error) {
+	row := q.db.QueryRow(ctx, closeKnowledgeChangeRequest, arg.ID, arg.WorkspaceID)
 	var i KnowledgeChangeRequest
 	err := row.Scan(
 		&i.ID,
@@ -81,9 +86,14 @@ SELECT page_path,
        count(*)::int AS open_count,
        (count(*) FILTER (WHERE author_type = 'agent'))::int AS agent_count
 FROM knowledge_annotation
-WHERE knowledge_base_id = $1 AND status IN ('pending', 'processing')
+WHERE knowledge_base_id = $1 AND workspace_id = $2 AND status IN ('pending', 'processing')
 GROUP BY page_path
 `
+
+type CountKnowledgeAnnotationsByPageParams struct {
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+}
 
 type CountKnowledgeAnnotationsByPageRow struct {
 	PagePath   string `json:"page_path"`
@@ -93,8 +103,8 @@ type CountKnowledgeAnnotationsByPageRow struct {
 
 // Open annotations per page of one knowledge base; agent-authored ones are the
 // freshness findings the page header calls out.
-func (q *Queries) CountKnowledgeAnnotationsByPage(ctx context.Context, knowledgeBaseID pgtype.UUID) ([]CountKnowledgeAnnotationsByPageRow, error) {
-	rows, err := q.db.Query(ctx, countKnowledgeAnnotationsByPage, knowledgeBaseID)
+func (q *Queries) CountKnowledgeAnnotationsByPage(ctx context.Context, arg CountKnowledgeAnnotationsByPageParams) ([]CountKnowledgeAnnotationsByPageRow, error) {
+	rows, err := q.db.Query(ctx, countKnowledgeAnnotationsByPage, arg.KnowledgeBaseID, arg.WorkspaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -472,11 +482,16 @@ func (q *Queries) DeleteKnowledgeBase(ctx context.Context, arg DeleteKnowledgeBa
 
 const dismissKnowledgeAnnotationsForBase = `-- name: DismissKnowledgeAnnotationsForBase :exec
 UPDATE knowledge_annotation SET status = 'dismissed', updated_at = now()
-WHERE knowledge_base_id = $1 AND status IN ('pending', 'processing')
+WHERE knowledge_base_id = $1 AND workspace_id = $2 AND status IN ('pending', 'processing')
 `
 
-func (q *Queries) DismissKnowledgeAnnotationsForBase(ctx context.Context, knowledgeBaseID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, dismissKnowledgeAnnotationsForBase, knowledgeBaseID)
+type DismissKnowledgeAnnotationsForBaseParams struct {
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+}
+
+func (q *Queries) DismissKnowledgeAnnotationsForBase(ctx context.Context, arg DismissKnowledgeAnnotationsForBaseParams) error {
+	_, err := q.db.Exec(ctx, dismissKnowledgeAnnotationsForBase, arg.KnowledgeBaseID, arg.WorkspaceID)
 	return err
 }
 
@@ -794,21 +809,27 @@ func (q *Queries) ListKnowledgeActorNames(ctx context.Context, arg ListKnowledge
 
 const listKnowledgeAnnotations = `-- name: ListKnowledgeAnnotations :many
 SELECT id, workspace_id, knowledge_base_id, page_path, quote, prefix, suffix, body, author_type, author_id, status, change_request_id, created_at, updated_at FROM knowledge_annotation
-WHERE knowledge_base_id = $1
-  AND ($2::text IS NULL OR status = $2::text)
-  AND ($3::text IS NULL OR page_path = $3::text)
+WHERE knowledge_base_id = $1 AND workspace_id = $2
+  AND ($3::text IS NULL OR status = $3::text)
+  AND ($4::text IS NULL OR page_path = $4::text)
 ORDER BY created_at DESC
 LIMIT 500
 `
 
 type ListKnowledgeAnnotationsParams struct {
 	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
 	Status          pgtype.Text `json:"status"`
 	PagePath        pgtype.Text `json:"page_path"`
 }
 
 func (q *Queries) ListKnowledgeAnnotations(ctx context.Context, arg ListKnowledgeAnnotationsParams) ([]KnowledgeAnnotation, error) {
-	rows, err := q.db.Query(ctx, listKnowledgeAnnotations, arg.KnowledgeBaseID, arg.Status, arg.PagePath)
+	rows, err := q.db.Query(ctx, listKnowledgeAnnotations,
+		arg.KnowledgeBaseID,
+		arg.WorkspaceID,
+		arg.Status,
+		arg.PagePath,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -943,6 +964,41 @@ func (q *Queries) ListKnowledgeChangeComments(ctx context.Context, changeRequest
 			&i.Body,
 			&i.CreatedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKnowledgeChangeNumbersByIDs = `-- name: ListKnowledgeChangeNumbersByIDs :many
+SELECT id, number FROM knowledge_change_request
+WHERE workspace_id = $1 AND id = ANY($2::uuid[])
+`
+
+type ListKnowledgeChangeNumbersByIDsParams struct {
+	WorkspaceID pgtype.UUID   `json:"workspace_id"`
+	Ids         []pgtype.UUID `json:"ids"`
+}
+
+type ListKnowledgeChangeNumbersByIDsRow struct {
+	ID     pgtype.UUID `json:"id"`
+	Number int32       `json:"number"`
+}
+
+func (q *Queries) ListKnowledgeChangeNumbersByIDs(ctx context.Context, arg ListKnowledgeChangeNumbersByIDsParams) ([]ListKnowledgeChangeNumbersByIDsRow, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeChangeNumbersByIDs, arg.WorkspaceID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKnowledgeChangeNumbersByIDsRow{}
+	for rows.Next() {
+		var i ListKnowledgeChangeNumbersByIDsRow
+		if err := rows.Scan(&i.ID, &i.Number); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1349,35 +1405,42 @@ func (q *Queries) ListMergedKnowledgeChangeRequests(ctx context.Context, arg Lis
 }
 
 const markKnowledgeChangeRequestConflict = `-- name: MarkKnowledgeChangeRequestConflict :exec
-UPDATE knowledge_change_request SET conflict = TRUE, conflict_files = $2, updated_at = now()
-WHERE id = $1 AND status = 'open'
+UPDATE knowledge_change_request SET conflict = TRUE, conflict_files = $1, updated_at = now()
+WHERE id = $2 AND workspace_id = $3 AND status = 'open'
 `
 
 type MarkKnowledgeChangeRequestConflictParams struct {
-	ID            pgtype.UUID `json:"id"`
 	ConflictFiles []string    `json:"conflict_files"`
+	ID            pgtype.UUID `json:"id"`
+	WorkspaceID   pgtype.UUID `json:"workspace_id"`
 }
 
 func (q *Queries) MarkKnowledgeChangeRequestConflict(ctx context.Context, arg MarkKnowledgeChangeRequestConflictParams) error {
-	_, err := q.db.Exec(ctx, markKnowledgeChangeRequestConflict, arg.ID, arg.ConflictFiles)
+	_, err := q.db.Exec(ctx, markKnowledgeChangeRequestConflict, arg.ConflictFiles, arg.ID, arg.WorkspaceID)
 	return err
 }
 
 const markKnowledgeChangeRequestMerged = `-- name: MarkKnowledgeChangeRequestMerged :one
 UPDATE knowledge_change_request SET
-    status = 'merged', merge_commit = $2, merged_by = $3, merged_at = now(), conflict = FALSE, conflict_files = '{}', updated_at = now()
-WHERE id = $1 AND status = 'open'
+    status = 'merged', merge_commit = $1, merged_by = $2, merged_at = now(), conflict = FALSE, conflict_files = '{}', updated_at = now()
+WHERE id = $3 AND workspace_id = $4 AND status = 'open'
 RETURNING id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at
 `
 
 type MarkKnowledgeChangeRequestMergedParams struct {
-	ID          pgtype.UUID `json:"id"`
 	MergeCommit pgtype.Text `json:"merge_commit"`
 	MergedBy    pgtype.UUID `json:"merged_by"`
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
 }
 
 func (q *Queries) MarkKnowledgeChangeRequestMerged(ctx context.Context, arg MarkKnowledgeChangeRequestMergedParams) (KnowledgeChangeRequest, error) {
-	row := q.db.QueryRow(ctx, markKnowledgeChangeRequestMerged, arg.ID, arg.MergeCommit, arg.MergedBy)
+	row := q.db.QueryRow(ctx, markKnowledgeChangeRequestMerged,
+		arg.MergeCommit,
+		arg.MergedBy,
+		arg.ID,
+		arg.WorkspaceID,
+	)
 	var i KnowledgeChangeRequest
 	err := row.Scan(
 		&i.ID,
@@ -1437,7 +1500,7 @@ UPDATE knowledge_change_request SET
     kb_slugs = $8,
     annotation_ids = $9,
     updated_at = now()
-WHERE id = $10 AND status = 'open'
+WHERE id = $10 AND workspace_id = $11 AND status = 'open'
 RETURNING id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at
 `
 
@@ -1452,6 +1515,7 @@ type RefreshKnowledgeChangeRequestParams struct {
 	KbSlugs       []string      `json:"kb_slugs"`
 	AnnotationIds []pgtype.UUID `json:"annotation_ids"`
 	ID            pgtype.UUID   `json:"id"`
+	WorkspaceID   pgtype.UUID   `json:"workspace_id"`
 }
 
 func (q *Queries) RefreshKnowledgeChangeRequest(ctx context.Context, arg RefreshKnowledgeChangeRequestParams) (KnowledgeChangeRequest, error) {
@@ -1466,6 +1530,7 @@ func (q *Queries) RefreshKnowledgeChangeRequest(ctx context.Context, arg Refresh
 		arg.KbSlugs,
 		arg.AnnotationIds,
 		arg.ID,
+		arg.WorkspaceID,
 	)
 	var i KnowledgeChangeRequest
 	err := row.Scan(
@@ -1497,16 +1562,17 @@ func (q *Queries) RefreshKnowledgeChangeRequest(ctx context.Context, arg Refresh
 }
 
 const setAutopilotSystemKey = `-- name: SetAutopilotSystemKey :exec
-UPDATE autopilot SET system_key = $1 WHERE id = $2
+UPDATE autopilot SET system_key = $1 WHERE id = $2 AND workspace_id = $3
 `
 
 type SetAutopilotSystemKeyParams struct {
-	SystemKey pgtype.Text `json:"system_key"`
-	ID        pgtype.UUID `json:"id"`
+	SystemKey   pgtype.Text `json:"system_key"`
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
 }
 
 func (q *Queries) SetAutopilotSystemKey(ctx context.Context, arg SetAutopilotSystemKeyParams) error {
-	_, err := q.db.Exec(ctx, setAutopilotSystemKey, arg.SystemKey, arg.ID)
+	_, err := q.db.Exec(ctx, setAutopilotSystemKey, arg.SystemKey, arg.ID, arg.WorkspaceID)
 	return err
 }
 

@@ -18,6 +18,8 @@ import { useT } from "../../i18n";
 import { MaintainerAgentSelect } from "./maintainer-agent-select";
 
 const DEFAULT_TIME = "22:00";
+const AUTOPILOT_ACTIVE = "active";
+const AUTOPILOT_PAUSED = "paused";
 const DAILY_CRON = /^(\d{1,2}) (\d{1,2}) \* \* \*$/;
 
 /** Daily cron "M H * * *" for an "HH:MM" time. */
@@ -92,7 +94,7 @@ export function KnowledgeDigestSection({
       </div>
       {digest.autopilot ? (
         <DigestStatus digest={digest} isAdmin={isAdmin} busy={busy} onToggle={(on) =>
-          void run(() => api.updateAutopilot(digest.autopilot!.id, { status: on ? "active" : "paused" }))
+          void run(() => api.updateAutopilot(digest.autopilot!.id, { status: on ? AUTOPILOT_ACTIVE : AUTOPILOT_PAUSED }))
         } detailHref={wsPaths.autopilotDetail(digest.autopilot.id)} />
       ) : isAdmin ? (
         <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
@@ -138,7 +140,7 @@ function DigestStatus({
 }) {
   const { t } = useT("knowledge");
   const ap = digest.autopilot!;
-  const active = ap.status === "active";
+  const active = ap.status === AUTOPILOT_ACTIVE;
   const noBase = digest.knowledge_base_count === 0;
   const tz = digest.schedule?.timezone ?? "UTC";
   const daily = cronToDailyTime(digest.schedule?.cron_expression ?? null);

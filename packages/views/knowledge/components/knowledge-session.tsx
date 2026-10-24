@@ -191,7 +191,7 @@ export function KnowledgeSessionPanel({
                   <div key={c.id} className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
                     <div className="min-w-0 flex-1">
                       <div className="text-caption text-muted-foreground">
-                        {t(($) => $.session.change_meta, { number: c.number, files: c.kb_slugs.length })}
+                        {t(($) => $.session.change_meta, { number: c.number, bases: c.kb_slugs.length })}
                       </div>
                       <div className="truncate font-medium">{c.title}</div>
                     </div>

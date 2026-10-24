@@ -26,6 +26,19 @@ import (
 )
 
 // computeNextRun delegates to the shared cron helper in the service package.
+// Autopilot vocabulary (matches the CHECK constraints of migration 042).
+const (
+	autopilotStatusActive    = "active"
+	autopilotStatusPaused    = "paused"
+	autopilotStatusArchived  = "archived"
+	autopilotModeRunOnly     = "run_only"
+	autopilotTriggerSchedule = "schedule"
+	autopilotAssigneeAgent   = "agent"
+)
+
+// errMsgBuiltinAutopilotDelete refuses deleting or archiving a built-in autopilot.
+const errMsgBuiltinAutopilotDelete = "built-in autopilots cannot be deleted; pause it instead"
+
 func computeNextRun(cronExpr, timezone string) (time.Time, error) {
 	return service.ComputeNextRun(cronExpr, timezone)
 }
@@ -625,6 +638,10 @@ func autopilotWriteByOwnership(ap db.Autopilot, member db.Member) bool {
 	if roleAllowed(member.Role, "owner", "admin") {
 		return true
 	}
+	// Built-in autopilots belong to the workspace, not to whoever first set them up.
+	if ap.SystemKey.Valid {
+		return false
+	}
 	return ap.CreatedByType == "member" && uuidToString(ap.CreatedByID) == uuidToString(member.UserID)
 }
 
@@ -638,6 +655,10 @@ func autopilotWriteByOwnership(ap db.Autopilot, member db.Member) bool {
 func (h *Handler) memberCanWriteAutopilot(ctx context.Context, ap db.Autopilot, member db.Member) bool {
 	if autopilotWriteByOwnership(ap, member) {
 		return true
+	}
+	// Only owners and admins configure built-in autopilots; collaborator grants do not apply.
+	if ap.SystemKey.Valid {
+		return false
 	}
 	granted, err := h.Queries.IsAutopilotCollaborator(ctx, db.IsAutopilotCollaboratorParams{
 		AutopilotID: ap.ID,
@@ -1069,7 +1090,7 @@ func (h *Handler) UpdateAutopilot(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(bodyBytes, &rawFields)
 	refusal, err := h.systemAutopilotGuard(r.Context(), prev, req.Status, req.ExecutionMode)
 	if err != nil {
-		writeKnowledgeError(w, r, err, "failed to update autopilot")
+		writeError(w, http.StatusInternalServerError, "failed to update autopilot")
 		return
 	}
 	if refusal != "" {
@@ -1375,7 +1396,7 @@ func (h *Handler) DeleteAutopilot(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := uuidToString(actor.UserID)
 	if ap.SystemKey.Valid {
-		writeError(w, http.StatusConflict, "built-in autopilots cannot be deleted; pause it instead")
+		writeError(w, http.StatusConflict, errMsgBuiltinAutopilotDelete)
 		return
 	}
 
@@ -2095,6 +2116,11 @@ func (h *Handler) DeleteAutopilotTrigger(w http.ResponseWriter, r *http.Request)
 	trigger, err := h.Queries.GetAutopilotTrigger(r.Context(), triggerUUID)
 	if err != nil || uuidToString(trigger.AutopilotID) != uuidToString(autopilotUUID) {
 		writeError(w, http.StatusNotFound, "trigger not found")
+		return
+	}
+	// The daily digest runs on its schedule; edit the schedule instead of removing it.
+	if ap.SystemKey.Valid && trigger.Kind == autopilotTriggerSchedule {
+		writeError(w, http.StatusConflict, "the schedule of a built-in autopilot cannot be removed; edit it instead")
 		return
 	}
 

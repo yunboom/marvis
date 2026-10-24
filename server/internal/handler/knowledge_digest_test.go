@@ -60,6 +60,11 @@ func TestKnowledgeDigestLifecycleAndGuards(t *testing.T) {
 	patchDigest(t, ownerID, wsID, ap.ID, map[string]any{"execution_mode": "create_issue"}, http.StatusConflict)
 	patchDigest(t, ownerID, wsID, ap.ID, map[string]any{"description": "custom instructions"}, http.StatusOK)
 
+	// 只有 owner / admin 能改内置自动化；定时触发器只能改不能删。
+	patchDigest(t, memberID, wsID, ap.ID, map[string]any{"description": "member edit"}, http.StatusForbidden)
+	testutil.Call(t, testHandler.DeleteAutopilotTrigger, kbRequest(ownerID, wsID, http.MethodDelete,
+		"/api/autopilots/"+ap.ID+"/triggers/"+created.Schedule.ID, nil, "id", ap.ID, "triggerId", created.Schedule.ID)).Want(http.StatusConflict)
+
 	// 删光知识库后自动停用并记录原因。
 	for _, kb := range bases {
 		testutil.Call(t, testHandler.DeleteKnowledgeBase, kbRequest(ownerID, wsID, http.MethodDelete, "/api/knowledge/bases/"+kb.ID, nil, "id", kb.ID)).Want(http.StatusNoContent)

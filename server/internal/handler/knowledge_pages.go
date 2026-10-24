@@ -84,7 +84,7 @@ func (h *Handler) ListKnowledgePages(w http.ResponseWriter, r *http.Request) {
 		writeKnowledgeError(w, r, err, "failed to read knowledge repository")
 		return
 	}
-	counts, err := h.Queries.CountKnowledgeAnnotationsByPage(r.Context(), kb.ID)
+	counts, err := h.Queries.CountKnowledgeAnnotationsByPage(r.Context(), db.CountKnowledgeAnnotationsByPageParams{KnowledgeBaseID: kb.ID, WorkspaceID: kb.WorkspaceID})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to count annotations")
 		return
@@ -400,7 +400,7 @@ func (h *Handler) CreateKnowledgeGap(w http.ResponseWriter, r *http.Request) {
 	source := req.Source
 	if source == "" {
 		source = knowledgeGapSearchMiss
-		if actorType == "agent" {
+		if actorType == actorTypeAgent {
 			source = knowledgeGapAgent
 		}
 	}

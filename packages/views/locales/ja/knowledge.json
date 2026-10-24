@@ -346,7 +346,7 @@
     "empty": "エージェントがタスクを受け取るとここで返信します。",
     "create_prompt": "誰のためのナレッジベースで、何を収録しますか？",
     "no_changes_yet": "エージェントが変更リクエストを出すとここに表示されます。",
-    "change_meta": "#{{number}} · ナレッジベース {{files}} 件",
+    "change_meta": "#{{number}} · ナレッジベース {{bases}} 件",
     "review": "レビューへ",
     "findings_n": "記録した注釈 {{n}} 件",
     "open_annotations": "注釈を開く",

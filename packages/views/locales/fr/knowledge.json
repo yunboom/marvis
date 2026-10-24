@@ -346,7 +346,7 @@
     "empty": "L'agent répond ici dès qu'il prend la tâche.",
     "create_prompt": "Pour qui est cette base, et que doit-elle couvrir ?",
     "no_changes_yet": "Les demandes de modification apparaissent ici une fois soumises.",
-    "change_meta": "#{{number}} · bases : {{files}}",
+    "change_meta": "#{{number}} · bases : {{bases}}",
     "review": "Revoir",
     "findings_n": "Annotations enregistrées : {{n}}",
     "open_annotations": "Ouvrir les annotations",

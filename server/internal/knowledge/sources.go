@@ -59,8 +59,8 @@ func TrimSourceText(text string) string {
 }
 
 // PaginateSources 按 token 预算把资料切成页：每页不超过窗口的 SourcePageBudgetPercent，
-// 最多 SourceMaxPages 页；装不下的资料丢弃，truncated 为 true。单条超过预算的资料独占一页。
-func PaginateSources(items []SourceItem, contextWindow int) (pages [][]SourceItem, truncated bool) {
+// 最多 SourceMaxPages 页；装不下的资料丢弃，remaining 是丢弃的条数。单条超过预算的资料独占一页。
+func PaginateSources(items []SourceItem, contextWindow int) (pages [][]SourceItem, remaining int) {
 	budget := contextWindow * SourcePageBudgetPercent / 100
 	var cur []SourceItem
 	used := 0
@@ -71,7 +71,7 @@ func PaginateSources(items []SourceItem, contextWindow int) (pages [][]SourceIte
 			cur, used = nil, 0
 		}
 		if len(pages) == SourceMaxPages {
-			return pages, i < len(items)
+			return pages, len(items) - i
 		}
 		cur = append(cur, it)
 		used += cost
@@ -80,5 +80,5 @@ func PaginateSources(items []SourceItem, contextWindow int) (pages [][]SourceIte
 		pages = append(pages, cur)
 	}
 
-	return pages, false
+	return pages, 0
 }

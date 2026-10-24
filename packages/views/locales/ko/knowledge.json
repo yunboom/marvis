@@ -346,7 +346,7 @@
     "empty": "에이전트가 작업을 받으면 여기에서 답합니다.",
     "create_prompt": "누구를 위한 지식 베이스이고 무엇을 담을까요?",
     "no_changes_yet": "에이전트가 변경 요청을 올리면 여기에 표시됩니다.",
-    "change_meta": "#{{number}} · 지식 베이스 {{files}}개",
+    "change_meta": "#{{number}} · 지식 베이스 {{bases}}개",
     "review": "검토하기",
     "findings_n": "기록한 주석 {{n}}개",
     "open_annotations": "주석 열기",

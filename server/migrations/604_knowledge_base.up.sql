@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
     maintainer_agent_id UUID,
     created_by          UUID NOT NULL,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (workspace_id, slug)
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS knowledge_change_request (
@@ -49,9 +48,7 @@ CREATE TABLE IF NOT EXISTS knowledge_change_request (
     merged_by        UUID,
     merged_at        TIMESTAMPTZ,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (workspace_id, number),
-    UNIQUE (workspace_id, branch)
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS knowledge_change_comment (

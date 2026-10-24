@@ -53,7 +53,7 @@ SELECT
 
 -- name: DismissKnowledgeAnnotationsForBase :exec
 UPDATE knowledge_annotation SET status = 'dismissed', updated_at = now()
-WHERE knowledge_base_id = $1 AND status IN ('pending', 'processing');
+WHERE knowledge_base_id = sqlc.arg('knowledge_base_id') AND workspace_id = sqlc.arg('workspace_id') AND status IN ('pending', 'processing');
 
 -- name: CloseKnowledgeChangeRequestsForSlug :exec
 UPDATE knowledge_change_request SET status = 'closed', updated_at = now()
@@ -66,7 +66,7 @@ SELECT page_path,
        count(*)::int AS open_count,
        (count(*) FILTER (WHERE author_type = 'agent'))::int AS agent_count
 FROM knowledge_annotation
-WHERE knowledge_base_id = $1 AND status IN ('pending', 'processing')
+WHERE knowledge_base_id = sqlc.arg('knowledge_base_id') AND workspace_id = sqlc.arg('workspace_id') AND status IN ('pending', 'processing')
 GROUP BY page_path;
 
 -- name: ListKnowledgeChatSources :many
@@ -115,6 +115,10 @@ WHERE workspace_id = $1 AND (sqlc.narg('status')::text IS NULL OR status = sqlc.
 ORDER BY number DESC
 LIMIT 200;
 
+-- name: ListKnowledgeChangeNumbersByIDs :many
+SELECT id, number FROM knowledge_change_request
+WHERE workspace_id = sqlc.arg('workspace_id') AND id = ANY(sqlc.arg('ids')::uuid[]);
+
 -- name: CountOpenKnowledgeChangeRequests :one
 SELECT count(*)::int FROM knowledge_change_request WHERE workspace_id = $1 AND status = 'open';
 
@@ -130,22 +134,22 @@ UPDATE knowledge_change_request SET
     kb_slugs = sqlc.arg('kb_slugs'),
     annotation_ids = sqlc.arg('annotation_ids'),
     updated_at = now()
-WHERE id = sqlc.arg('id') AND status = 'open'
+WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id') AND status = 'open'
 RETURNING *;
 
 -- name: MarkKnowledgeChangeRequestMerged :one
 UPDATE knowledge_change_request SET
-    status = 'merged', merge_commit = $2, merged_by = $3, merged_at = now(), conflict = FALSE, conflict_files = '{}', updated_at = now()
-WHERE id = $1 AND status = 'open'
+    status = 'merged', merge_commit = sqlc.arg('merge_commit'), merged_by = sqlc.arg('merged_by'), merged_at = now(), conflict = FALSE, conflict_files = '{}', updated_at = now()
+WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id') AND status = 'open'
 RETURNING *;
 
 -- name: MarkKnowledgeChangeRequestConflict :exec
-UPDATE knowledge_change_request SET conflict = TRUE, conflict_files = $2, updated_at = now()
-WHERE id = $1 AND status = 'open';
+UPDATE knowledge_change_request SET conflict = TRUE, conflict_files = sqlc.arg('conflict_files'), updated_at = now()
+WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id') AND status = 'open';
 
 -- name: CloseKnowledgeChangeRequest :one
 UPDATE knowledge_change_request SET status = 'closed', updated_at = now()
-WHERE id = $1 AND status = 'open'
+WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id') AND status = 'open'
 RETURNING *;
 
 -- name: ListMergedKnowledgeChangeRequests :many
@@ -179,7 +183,7 @@ RETURNING *;
 
 -- name: ListKnowledgeAnnotations :many
 SELECT * FROM knowledge_annotation
-WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
+WHERE knowledge_base_id = sqlc.arg('knowledge_base_id') AND workspace_id = sqlc.arg('workspace_id')
   AND (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
   AND (sqlc.narg('page_path')::text IS NULL OR page_path = sqlc.narg('page_path')::text)
 ORDER BY created_at DESC
@@ -224,7 +228,7 @@ SELECT * FROM autopilot
 WHERE workspace_id = sqlc.arg('workspace_id') AND system_key = sqlc.arg('system_key');
 
 -- name: SetAutopilotSystemKey :exec
-UPDATE autopilot SET system_key = sqlc.arg('system_key') WHERE id = sqlc.arg('id');
+UPDATE autopilot SET system_key = sqlc.arg('system_key') WHERE id = sqlc.arg('id') AND workspace_id = sqlc.arg('workspace_id');
 
 -- name: PauseSystemAutopilot :exec
 -- Pauses a platform-owned autopilot with a reason the UI explains (e.g. the last

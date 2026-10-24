@@ -15,22 +15,18 @@ import (
 	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
+// 写入者类型（author_type、created_by_type、事件 actor_type 的取值）。
+const (
+	actorTypeMember = "member"
+	actorTypeAgent  = "agent"
+)
+
 // 平台内置 autopilot 的 system_key 与暂停原因。
 const (
 	// autopilotSystemKeyKnowledgeDigest 标记每日知识沉淀：每个工作区一个，不能删除，没有知识库时不能启用。
 	autopilotSystemKeyKnowledgeDigest = "knowledge-digest"
 	// pauseReasonNoKnowledgeBase 是删光知识库后每日知识沉淀被自动停用的原因。
 	pauseReasonNoKnowledgeBase = "no_knowledge_base"
-)
-
-// autopilot 的状态与执行方式取值（与迁移 042 的约束一致）。
-const (
-	autopilotStatusActive    = "active"
-	autopilotStatusPaused    = "paused"
-	autopilotStatusArchived  = "archived"
-	autopilotModeRunOnly     = "run_only"
-	autopilotTriggerSchedule = "schedule"
-	autopilotAssigneeAgent   = "agent"
 )
 
 const (
@@ -182,7 +178,7 @@ func (h *Handler) CreateKnowledgeDigest(w http.ResponseWriter, r *http.Request) 
 		writeKnowledgeError(w, r, err, "failed to load knowledge digest")
 		return
 	}
-	h.publish(protocol.EventAutopilotCreated, workspaceID, "member", uuidToString(member.UserID), map[string]any{"autopilot": autopilotToResponse(ap, nil)})
+	h.publish(protocol.EventAutopilotCreated, workspaceID, actorTypeMember, uuidToString(member.UserID), map[string]any{"autopilot": autopilotToResponse(ap, nil)})
 	writeJSON(w, http.StatusCreated, resp)
 }
 
@@ -192,14 +188,14 @@ func (h *Handler) createKnowledgeDigestRows(
 ) (db.Autopilot, error) {
 	ap, err := qtx.CreateAutopilot(ctx, db.CreateAutopilotParams{
 		WorkspaceID: ws, Title: knowledgeDigestTitle, AssigneeType: autopilotAssigneeAgent, AssigneeID: assigneeID,
-		Status: autopilotStatusPaused, ExecutionMode: autopilotModeRunOnly, CreatedByType: "member", CreatedByID: actorID,
+		Status: autopilotStatusPaused, ExecutionMode: autopilotModeRunOnly, CreatedByType: actorTypeMember, CreatedByID: actorID,
 		Description: pgtype.Text{String: knowledgeDigestInstructions, Valid: true},
 	})
 	if err != nil {
 		return db.Autopilot{}, errors.Wrapf(err, "create digest autopilot workspace_id=%s", uuidToString(ws))
 	}
 	key := pgtype.Text{String: autopilotSystemKeyKnowledgeDigest, Valid: true}
-	if err := qtx.SetAutopilotSystemKey(ctx, db.SetAutopilotSystemKeyParams{ID: ap.ID, SystemKey: key}); err != nil {
+	if err := qtx.SetAutopilotSystemKey(ctx, db.SetAutopilotSystemKeyParams{ID: ap.ID, WorkspaceID: ap.WorkspaceID, SystemKey: key}); err != nil {
 		return db.Autopilot{}, errors.Wrapf(err, "set digest system key autopilot_id=%s", uuidToString(ap.ID))
 	}
 	ap.SystemKey = key
@@ -208,12 +204,12 @@ func (h *Handler) createKnowledgeDigestRows(
 		AutopilotID: ap.ID, Kind: autopilotTriggerSchedule, Enabled: true,
 		CronExpression: pgtype.Text{String: cronExpr, Valid: true}, Timezone: pgtype.Text{String: tz, Valid: true},
 		NextRunAt:       pgtype.Timestamptz{Time: nextRun, Valid: true},
-		PublishedByType: pgtype.Text{String: "member", Valid: true}, PublishedByID: actorID,
-		CreatedByType: pgtype.Text{String: "member", Valid: true}, CreatedByID: actorID,
+		PublishedByType: pgtype.Text{String: actorTypeMember, Valid: true}, PublishedByID: actorID,
+		CreatedByType: pgtype.Text{String: actorTypeMember, Valid: true}, CreatedByID: actorID,
 	}); err != nil {
 		return db.Autopilot{}, errors.Wrapf(err, "create digest trigger autopilot_id=%s", uuidToString(ap.ID))
 	}
-	if err := h.recordAutopilotRuleVersion(ctx, qtx, ap, "member", actorID); err != nil {
+	if err := h.recordAutopilotRuleVersion(ctx, qtx, ap, actorTypeMember, actorID); err != nil {
 		return db.Autopilot{}, errors.Wrapf(err, "record digest rule version autopilot_id=%s", uuidToString(ap.ID))
 	}
 
@@ -268,7 +264,7 @@ func (h *Handler) systemAutopilotGuard(ctx context.Context, ap db.Autopilot, sta
 		return "", nil
 	}
 	if status != nil && *status == autopilotStatusArchived {
-		return "built-in autopilots cannot be deleted; pause it instead", nil
+		return errMsgBuiltinAutopilotDelete, nil
 	}
 	if executionMode != nil && *executionMode != ap.ExecutionMode {
 		return "the execution mode of a built-in autopilot cannot be changed", nil

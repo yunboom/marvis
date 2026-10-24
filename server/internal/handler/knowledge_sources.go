@@ -28,11 +28,13 @@ const (
 
 // KnowledgeSourcesResponse 是一页沉淀资料。since / until 在第一页确定后由调用方原样带回，保证翻页时资料集合不变。
 type KnowledgeSourcesResponse struct {
-	Since     string                 `json:"since"`
-	Until     string                 `json:"until"`
-	Page      int                    `json:"page"`
-	Pages     int                    `json:"pages"`
-	Truncated bool                   `json:"truncated"`
+	Since     string `json:"since"`
+	Until     string `json:"until"`
+	Page      int    `json:"page"`
+	Pages     int    `json:"pages"`
+	Truncated bool   `json:"truncated"`
+	// Remaining 是超出 10 页被丢弃的条数；某类资料达到行数上限时超出部分无法计数，不计入。
+	Remaining int                    `json:"remaining"`
 	Items     []knowledge.SourceItem `json:"items"`
 }
 
@@ -106,11 +108,11 @@ func (h *Handler) ListKnowledgeSources(w http.ResponseWriter, r *http.Request) {
 		writeKnowledgeError(w, r, err, "failed to list sources")
 		return
 	}
-	pages, truncated := knowledge.PaginateSources(items, window)
+	pages, remaining := knowledge.PaginateSources(items, window)
 
 	resp := KnowledgeSourcesResponse{
 		Since: since.Format(time.RFC3339Nano), Until: until.Format(time.RFC3339Nano),
-		Page: page, Pages: len(pages), Truncated: truncated || capped, Items: []knowledge.SourceItem{},
+		Page: page, Pages: len(pages), Truncated: remaining > 0 || capped, Remaining: remaining, Items: []knowledge.SourceItem{},
 	}
 	if page <= len(pages) {
 		resp.Items = pages[page-1]

@@ -57,26 +57,26 @@ func TestPaginateSources(t *testing.T) {
 		items         []SourceItem
 		window        int
 		wantPageSizes []int
-		wantTruncated bool
+		wantRemaining int
 	}{
 		{name: "empty", items: nil, window: 1000},
 		{name: "fits one page", items: items(6), window: 1000, wantPageSizes: []int{6}},
 		{name: "spills to second page", items: items(7), window: 1000, wantPageSizes: []int{6, 1}},
 		{name: "exactly ten pages", items: items(60), window: 1000, wantPageSizes: []int{6, 6, 6, 6, 6, 6, 6, 6, 6, 6}},
-		{name: "truncated after ten pages", items: items(61), window: 1000, wantPageSizes: []int{6, 6, 6, 6, 6, 6, 6, 6, 6, 6}, wantTruncated: true},
+		{name: "truncated after ten pages", items: items(61), window: 1000, wantPageSizes: []int{6, 6, 6, 6, 6, 6, 6, 6, 6, 6}, wantRemaining: 1},
 		{name: "oversized item gets its own page", items: []SourceItem{{Text: strings.Repeat("字", 900)}, item}, window: 1000, wantPageSizes: []int{1, 1}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			pages, truncated := PaginateSources(tc.items, tc.window)
+			pages, remaining := PaginateSources(tc.items, tc.window)
 			sizes := make([]int, 0, len(pages))
 			for _, p := range pages {
 				sizes = append(sizes, len(p))
 			}
-			if len(sizes) != len(tc.wantPageSizes) || truncated != tc.wantTruncated {
-				t.Fatalf("pages = %v truncated = %v, want %v %v", sizes, truncated, tc.wantPageSizes, tc.wantTruncated)
+			if len(sizes) != len(tc.wantPageSizes) || remaining != tc.wantRemaining {
+				t.Fatalf("pages = %v remaining = %d, want %v %d", sizes, remaining, tc.wantPageSizes, tc.wantRemaining)
 			}
 			for i := range sizes {
 				if sizes[i] != tc.wantPageSizes[i] {

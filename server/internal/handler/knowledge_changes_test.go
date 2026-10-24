@@ -178,3 +178,20 @@ func TestGetKnowledgeChangeRequestReportsChecksForTouchedFiles(t *testing.T) {
 		t.Fatalf("stale = %+v", got.Checks.Stale)
 	}
 }
+
+func TestGetKnowledgeChangeRequestRechecksConflictsAgainstCurrentMain(t *testing.T) {
+	wsID, ownerID := knowledgeWorkspace(t)
+	seedKnowledgePages(t, wsID, ownerID, map[string]string{"team/wiki/concepts/refund.md": "# Refund\n\nold\n"})
+	pushBranch(t, wsID, "kb/edit", map[string]string{"team/wiki/concepts/refund.md": "# Refund\n\nmine\n"})
+	if cr := createChange(t, ownerID, wsID, map[string]any{"branch": "kb/edit", "title": "edit"}, http.StatusCreated); cr.Conflict {
+		t.Fatalf("fresh change request already conflicts")
+	}
+
+	// 主线在变更请求创建后改了同一行：查看详情时应当看到冲突，而不是创建时的「可合并」。
+	seedKnowledgePages(t, wsID, ownerID, map[string]string{"team/wiki/concepts/refund.md": "# Refund\n\ntheirs\n"})
+	var got KnowledgeChangeDetailResponse
+	testutil.Call(t, testHandler.GetKnowledgeChangeRequest, kbRequest(ownerID, wsID, http.MethodGet, "/api/knowledge/changes/1", nil, "number", "1")).Want(http.StatusOK).JSON(&got)
+	if !got.Conflict || strings.Join(got.ConflictFiles, ",") != "team/wiki/concepts/refund.md" {
+		t.Fatalf("detail = conflict %v files %v", got.Conflict, got.ConflictFiles)
+	}
+}
