@@ -2433,6 +2433,17 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					})
 				})
 				r.Get("/search", h.SearchKnowledge)
+				// git smart HTTP (clone / fetch / push of kb/* branches).
+				r.Get("/git/*", h.KnowledgeGit)
+				r.Post("/git/*", h.KnowledgeGit)
+				r.Route("/changes", func(r chi.Router) {
+					r.Get("/", h.ListKnowledgeChangeRequests)
+					r.Post("/", h.CreateKnowledgeChangeRequest)
+					r.Route("/{number}", func(r chi.Router) {
+						r.Get("/", h.GetKnowledgeChangeRequest)
+						r.Patch("/", h.UpdateKnowledgeChangeRequest)
+					})
+				})
 				r.Route("/gaps", func(r chi.Router) {
 					r.Get("/", h.ListKnowledgeGaps)
 					r.Post("/", h.CreateKnowledgeGap)

@@ -24,6 +24,43 @@ func (q *Queries) AllocateKnowledgeChangeNumber(ctx context.Context, workspaceID
 	return number, err
 }
 
+const closeKnowledgeChangeRequest = `-- name: CloseKnowledgeChangeRequest :one
+UPDATE knowledge_change_request SET status = 'closed', updated_at = now()
+WHERE id = $1 AND status = 'open'
+RETURNING id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at
+`
+
+func (q *Queries) CloseKnowledgeChangeRequest(ctx context.Context, id pgtype.UUID) (KnowledgeChangeRequest, error) {
+	row := q.db.QueryRow(ctx, closeKnowledgeChangeRequest, id)
+	var i KnowledgeChangeRequest
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Number,
+		&i.Title,
+		&i.Source,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Branch,
+		&i.BaseCommit,
+		&i.HeadCommit,
+		&i.Status,
+		&i.Conflict,
+		&i.ConflictFiles,
+		&i.Summary,
+		&i.Risk,
+		&i.MergeCommit,
+		&i.ChatSessionID,
+		&i.AnnotationIds,
+		&i.KbSlugs,
+		&i.MergedBy,
+		&i.MergedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const closeKnowledgeChangeRequestsForSlug = `-- name: CloseKnowledgeChangeRequestsForSlug :exec
 UPDATE knowledge_change_request SET status = 'closed', updated_at = now()
 WHERE workspace_id = $1 AND $2::text = ANY(kb_slugs) AND status = 'open'
@@ -87,6 +124,17 @@ func (q *Queries) CountKnowledgeBases(ctx context.Context, workspaceID pgtype.UU
 	return count, err
 }
 
+const countOpenKnowledgeChangeRequests = `-- name: CountOpenKnowledgeChangeRequests :one
+SELECT count(*)::int FROM knowledge_change_request WHERE workspace_id = $1 AND status = 'open'
+`
+
+func (q *Queries) CountOpenKnowledgeChangeRequests(ctx context.Context, workspaceID pgtype.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countOpenKnowledgeChangeRequests, workspaceID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const countOpenKnowledgeWorkForBase = `-- name: CountOpenKnowledgeWorkForBase :one
 SELECT
     (SELECT count(*) FROM knowledge_annotation a
@@ -148,6 +196,121 @@ func (q *Queries) CreateKnowledgeBase(ctx context.Context, arg CreateKnowledgeBa
 		&i.Description,
 		&i.MaintainerAgentID,
 		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createKnowledgeChangeComment = `-- name: CreateKnowledgeChangeComment :one
+INSERT INTO knowledge_change_comment (change_request_id, path, line, author_type, author_id, body)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, change_request_id, path, line, author_type, author_id, body, created_at
+`
+
+type CreateKnowledgeChangeCommentParams struct {
+	ChangeRequestID pgtype.UUID `json:"change_request_id"`
+	Path            string      `json:"path"`
+	Line            int32       `json:"line"`
+	AuthorType      string      `json:"author_type"`
+	AuthorID        pgtype.UUID `json:"author_id"`
+	Body            string      `json:"body"`
+}
+
+func (q *Queries) CreateKnowledgeChangeComment(ctx context.Context, arg CreateKnowledgeChangeCommentParams) (KnowledgeChangeComment, error) {
+	row := q.db.QueryRow(ctx, createKnowledgeChangeComment,
+		arg.ChangeRequestID,
+		arg.Path,
+		arg.Line,
+		arg.AuthorType,
+		arg.AuthorID,
+		arg.Body,
+	)
+	var i KnowledgeChangeComment
+	err := row.Scan(
+		&i.ID,
+		&i.ChangeRequestID,
+		&i.Path,
+		&i.Line,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Body,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createKnowledgeChangeRequest = `-- name: CreateKnowledgeChangeRequest :one
+INSERT INTO knowledge_change_request (
+    workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit,
+    conflict, conflict_files, summary, risk, chat_session_id, annotation_ids, kb_slugs
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+)
+RETURNING id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at
+`
+
+type CreateKnowledgeChangeRequestParams struct {
+	WorkspaceID   pgtype.UUID   `json:"workspace_id"`
+	Number        int32         `json:"number"`
+	Title         string        `json:"title"`
+	Source        string        `json:"source"`
+	AuthorType    string        `json:"author_type"`
+	AuthorID      pgtype.UUID   `json:"author_id"`
+	Branch        string        `json:"branch"`
+	BaseCommit    string        `json:"base_commit"`
+	HeadCommit    string        `json:"head_commit"`
+	Conflict      bool          `json:"conflict"`
+	ConflictFiles []string      `json:"conflict_files"`
+	Summary       string        `json:"summary"`
+	Risk          string        `json:"risk"`
+	ChatSessionID pgtype.UUID   `json:"chat_session_id"`
+	AnnotationIds []pgtype.UUID `json:"annotation_ids"`
+	KbSlugs       []string      `json:"kb_slugs"`
+}
+
+func (q *Queries) CreateKnowledgeChangeRequest(ctx context.Context, arg CreateKnowledgeChangeRequestParams) (KnowledgeChangeRequest, error) {
+	row := q.db.QueryRow(ctx, createKnowledgeChangeRequest,
+		arg.WorkspaceID,
+		arg.Number,
+		arg.Title,
+		arg.Source,
+		arg.AuthorType,
+		arg.AuthorID,
+		arg.Branch,
+		arg.BaseCommit,
+		arg.HeadCommit,
+		arg.Conflict,
+		arg.ConflictFiles,
+		arg.Summary,
+		arg.Risk,
+		arg.ChatSessionID,
+		arg.AnnotationIds,
+		arg.KbSlugs,
+	)
+	var i KnowledgeChangeRequest
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Number,
+		&i.Title,
+		&i.Source,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Branch,
+		&i.BaseCommit,
+		&i.HeadCommit,
+		&i.Status,
+		&i.Conflict,
+		&i.ConflictFiles,
+		&i.Summary,
+		&i.Risk,
+		&i.MergeCommit,
+		&i.ChatSessionID,
+		&i.AnnotationIds,
+		&i.KbSlugs,
+		&i.MergedBy,
+		&i.MergedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -310,6 +473,46 @@ func (q *Queries) GetKnowledgeBaseBySlug(ctx context.Context, arg GetKnowledgeBa
 	return i, err
 }
 
+const getKnowledgeChangeRequest = `-- name: GetKnowledgeChangeRequest :one
+SELECT id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at FROM knowledge_change_request WHERE workspace_id = $1 AND number = $2
+`
+
+type GetKnowledgeChangeRequestParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	Number      int32       `json:"number"`
+}
+
+func (q *Queries) GetKnowledgeChangeRequest(ctx context.Context, arg GetKnowledgeChangeRequestParams) (KnowledgeChangeRequest, error) {
+	row := q.db.QueryRow(ctx, getKnowledgeChangeRequest, arg.WorkspaceID, arg.Number)
+	var i KnowledgeChangeRequest
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Number,
+		&i.Title,
+		&i.Source,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Branch,
+		&i.BaseCommit,
+		&i.HeadCommit,
+		&i.Status,
+		&i.Conflict,
+		&i.ConflictFiles,
+		&i.Summary,
+		&i.Risk,
+		&i.MergeCommit,
+		&i.ChatSessionID,
+		&i.AnnotationIds,
+		&i.KbSlugs,
+		&i.MergedBy,
+		&i.MergedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getKnowledgeRepo = `-- name: GetKnowledgeRepo :one
 SELECT workspace_id, next_change_number, created_at FROM knowledge_repo WHERE workspace_id = $1
 `
@@ -319,6 +522,83 @@ func (q *Queries) GetKnowledgeRepo(ctx context.Context, workspaceID pgtype.UUID)
 	var i KnowledgeRepo
 	err := row.Scan(&i.WorkspaceID, &i.NextChangeNumber, &i.CreatedAt)
 	return i, err
+}
+
+const getOpenKnowledgeChangeRequestByBranch = `-- name: GetOpenKnowledgeChangeRequestByBranch :one
+SELECT id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at FROM knowledge_change_request WHERE workspace_id = $1 AND branch = $2 AND status = 'open'
+`
+
+type GetOpenKnowledgeChangeRequestByBranchParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	Branch      string      `json:"branch"`
+}
+
+func (q *Queries) GetOpenKnowledgeChangeRequestByBranch(ctx context.Context, arg GetOpenKnowledgeChangeRequestByBranchParams) (KnowledgeChangeRequest, error) {
+	row := q.db.QueryRow(ctx, getOpenKnowledgeChangeRequestByBranch, arg.WorkspaceID, arg.Branch)
+	var i KnowledgeChangeRequest
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Number,
+		&i.Title,
+		&i.Source,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Branch,
+		&i.BaseCommit,
+		&i.HeadCommit,
+		&i.Status,
+		&i.Conflict,
+		&i.ConflictFiles,
+		&i.Summary,
+		&i.Risk,
+		&i.MergeCommit,
+		&i.ChatSessionID,
+		&i.AnnotationIds,
+		&i.KbSlugs,
+		&i.MergedBy,
+		&i.MergedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listKnowledgeActorNames = `-- name: ListKnowledgeActorNames :many
+SELECT u.id, u.name FROM "user" u WHERE u.id = ANY($1::uuid[])
+UNION ALL
+SELECT a.id, a.name FROM agent a WHERE a.id = ANY($2::uuid[])
+`
+
+type ListKnowledgeActorNamesParams struct {
+	UserIds  []pgtype.UUID `json:"user_ids"`
+	AgentIds []pgtype.UUID `json:"agent_ids"`
+}
+
+type ListKnowledgeActorNamesRow struct {
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+}
+
+// Display names for authors that are either members or agents, in one round trip.
+func (q *Queries) ListKnowledgeActorNames(ctx context.Context, arg ListKnowledgeActorNamesParams) ([]ListKnowledgeActorNamesRow, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeActorNames, arg.UserIds, arg.AgentIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKnowledgeActorNamesRow{}
+	for rows.Next() {
+		var i ListKnowledgeActorNamesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listKnowledgeBases = `-- name: ListKnowledgeBases :many
@@ -342,6 +622,95 @@ func (q *Queries) ListKnowledgeBases(ctx context.Context, workspaceID pgtype.UUI
 			&i.Description,
 			&i.MaintainerAgentID,
 			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKnowledgeChangeComments = `-- name: ListKnowledgeChangeComments :many
+SELECT id, change_request_id, path, line, author_type, author_id, body, created_at FROM knowledge_change_comment WHERE change_request_id = $1 ORDER BY created_at
+`
+
+func (q *Queries) ListKnowledgeChangeComments(ctx context.Context, changeRequestID pgtype.UUID) ([]KnowledgeChangeComment, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeChangeComments, changeRequestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KnowledgeChangeComment{}
+	for rows.Next() {
+		var i KnowledgeChangeComment
+		if err := rows.Scan(
+			&i.ID,
+			&i.ChangeRequestID,
+			&i.Path,
+			&i.Line,
+			&i.AuthorType,
+			&i.AuthorID,
+			&i.Body,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKnowledgeChangeRequests = `-- name: ListKnowledgeChangeRequests :many
+SELECT id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at FROM knowledge_change_request
+WHERE workspace_id = $1 AND ($2::text IS NULL OR status = $2::text)
+ORDER BY number DESC
+LIMIT 200
+`
+
+type ListKnowledgeChangeRequestsParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	Status      pgtype.Text `json:"status"`
+}
+
+func (q *Queries) ListKnowledgeChangeRequests(ctx context.Context, arg ListKnowledgeChangeRequestsParams) ([]KnowledgeChangeRequest, error) {
+	rows, err := q.db.Query(ctx, listKnowledgeChangeRequests, arg.WorkspaceID, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KnowledgeChangeRequest{}
+	for rows.Next() {
+		var i KnowledgeChangeRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.Number,
+			&i.Title,
+			&i.Source,
+			&i.AuthorType,
+			&i.AuthorID,
+			&i.Branch,
+			&i.BaseCommit,
+			&i.HeadCommit,
+			&i.Status,
+			&i.Conflict,
+			&i.ConflictFiles,
+			&i.Summary,
+			&i.Risk,
+			&i.MergeCommit,
+			&i.ChatSessionID,
+			&i.AnnotationIds,
+			&i.KbSlugs,
+			&i.MergedBy,
+			&i.MergedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -444,6 +813,220 @@ func (q *Queries) ListKnowledgeGaps(ctx context.Context, arg ListKnowledgeGapsPa
 		return nil, err
 	}
 	return items, nil
+}
+
+const listMergedKnowledgeChangeRequests = `-- name: ListMergedKnowledgeChangeRequests :many
+SELECT id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at FROM knowledge_change_request
+WHERE workspace_id = $1 AND status = 'merged'
+ORDER BY merged_at DESC
+LIMIT $2
+`
+
+type ListMergedKnowledgeChangeRequestsParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	Limit       int32       `json:"limit"`
+}
+
+func (q *Queries) ListMergedKnowledgeChangeRequests(ctx context.Context, arg ListMergedKnowledgeChangeRequestsParams) ([]KnowledgeChangeRequest, error) {
+	rows, err := q.db.Query(ctx, listMergedKnowledgeChangeRequests, arg.WorkspaceID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KnowledgeChangeRequest{}
+	for rows.Next() {
+		var i KnowledgeChangeRequest
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.Number,
+			&i.Title,
+			&i.Source,
+			&i.AuthorType,
+			&i.AuthorID,
+			&i.Branch,
+			&i.BaseCommit,
+			&i.HeadCommit,
+			&i.Status,
+			&i.Conflict,
+			&i.ConflictFiles,
+			&i.Summary,
+			&i.Risk,
+			&i.MergeCommit,
+			&i.ChatSessionID,
+			&i.AnnotationIds,
+			&i.KbSlugs,
+			&i.MergedBy,
+			&i.MergedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markKnowledgeChangeRequestConflict = `-- name: MarkKnowledgeChangeRequestConflict :exec
+UPDATE knowledge_change_request SET conflict = TRUE, conflict_files = $2, updated_at = now()
+WHERE id = $1 AND status = 'open'
+`
+
+type MarkKnowledgeChangeRequestConflictParams struct {
+	ID            pgtype.UUID `json:"id"`
+	ConflictFiles []string    `json:"conflict_files"`
+}
+
+func (q *Queries) MarkKnowledgeChangeRequestConflict(ctx context.Context, arg MarkKnowledgeChangeRequestConflictParams) error {
+	_, err := q.db.Exec(ctx, markKnowledgeChangeRequestConflict, arg.ID, arg.ConflictFiles)
+	return err
+}
+
+const markKnowledgeChangeRequestMerged = `-- name: MarkKnowledgeChangeRequestMerged :one
+UPDATE knowledge_change_request SET
+    status = 'merged', merge_commit = $2, merged_by = $3, merged_at = now(), conflict = FALSE, conflict_files = '{}', updated_at = now()
+WHERE id = $1 AND status = 'open'
+RETURNING id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at
+`
+
+type MarkKnowledgeChangeRequestMergedParams struct {
+	ID          pgtype.UUID `json:"id"`
+	MergeCommit pgtype.Text `json:"merge_commit"`
+	MergedBy    pgtype.UUID `json:"merged_by"`
+}
+
+func (q *Queries) MarkKnowledgeChangeRequestMerged(ctx context.Context, arg MarkKnowledgeChangeRequestMergedParams) (KnowledgeChangeRequest, error) {
+	row := q.db.QueryRow(ctx, markKnowledgeChangeRequestMerged, arg.ID, arg.MergeCommit, arg.MergedBy)
+	var i KnowledgeChangeRequest
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Number,
+		&i.Title,
+		&i.Source,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Branch,
+		&i.BaseCommit,
+		&i.HeadCommit,
+		&i.Status,
+		&i.Conflict,
+		&i.ConflictFiles,
+		&i.Summary,
+		&i.Risk,
+		&i.MergeCommit,
+		&i.ChatSessionID,
+		&i.AnnotationIds,
+		&i.KbSlugs,
+		&i.MergedBy,
+		&i.MergedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const refreshKnowledgeChangeRequest = `-- name: RefreshKnowledgeChangeRequest :one
+UPDATE knowledge_change_request SET
+    title = $1,
+    summary = $2,
+    risk = $3,
+    base_commit = $4,
+    head_commit = $5,
+    conflict = $6,
+    conflict_files = $7,
+    kb_slugs = $8,
+    annotation_ids = $9,
+    updated_at = now()
+WHERE id = $10 AND status = 'open'
+RETURNING id, workspace_id, number, title, source, author_type, author_id, branch, base_commit, head_commit, status, conflict, conflict_files, summary, risk, merge_commit, chat_session_id, annotation_ids, kb_slugs, merged_by, merged_at, created_at, updated_at
+`
+
+type RefreshKnowledgeChangeRequestParams struct {
+	Title         string        `json:"title"`
+	Summary       string        `json:"summary"`
+	Risk          string        `json:"risk"`
+	BaseCommit    string        `json:"base_commit"`
+	HeadCommit    string        `json:"head_commit"`
+	Conflict      bool          `json:"conflict"`
+	ConflictFiles []string      `json:"conflict_files"`
+	KbSlugs       []string      `json:"kb_slugs"`
+	AnnotationIds []pgtype.UUID `json:"annotation_ids"`
+	ID            pgtype.UUID   `json:"id"`
+}
+
+func (q *Queries) RefreshKnowledgeChangeRequest(ctx context.Context, arg RefreshKnowledgeChangeRequestParams) (KnowledgeChangeRequest, error) {
+	row := q.db.QueryRow(ctx, refreshKnowledgeChangeRequest,
+		arg.Title,
+		arg.Summary,
+		arg.Risk,
+		arg.BaseCommit,
+		arg.HeadCommit,
+		arg.Conflict,
+		arg.ConflictFiles,
+		arg.KbSlugs,
+		arg.AnnotationIds,
+		arg.ID,
+	)
+	var i KnowledgeChangeRequest
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Number,
+		&i.Title,
+		&i.Source,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.Branch,
+		&i.BaseCommit,
+		&i.HeadCommit,
+		&i.Status,
+		&i.Conflict,
+		&i.ConflictFiles,
+		&i.Summary,
+		&i.Risk,
+		&i.MergeCommit,
+		&i.ChatSessionID,
+		&i.AnnotationIds,
+		&i.KbSlugs,
+		&i.MergedBy,
+		&i.MergedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const setKnowledgeAnnotationsStatusForChange = `-- name: SetKnowledgeAnnotationsStatusForChange :exec
+UPDATE knowledge_annotation SET
+    status = $1,
+    change_request_id = $2,
+    updated_at = now()
+WHERE workspace_id = $3 AND id = ANY($4::uuid[])
+`
+
+type SetKnowledgeAnnotationsStatusForChangeParams struct {
+	Status          string        `json:"status"`
+	ChangeRequestID pgtype.UUID   `json:"change_request_id"`
+	WorkspaceID     pgtype.UUID   `json:"workspace_id"`
+	Ids             []pgtype.UUID `json:"ids"`
+}
+
+// Moves the annotations a change request handles in one statement: to
+// processing when it opens, resolved when it merges, back to pending (and
+// unlinked) when it closes.
+func (q *Queries) SetKnowledgeAnnotationsStatusForChange(ctx context.Context, arg SetKnowledgeAnnotationsStatusForChangeParams) error {
+	_, err := q.db.Exec(ctx, setKnowledgeAnnotationsStatusForChange,
+		arg.Status,
+		arg.ChangeRequestID,
+		arg.WorkspaceID,
+		arg.Ids,
+	)
+	return err
 }
 
 const updateKnowledgeBase = `-- name: UpdateKnowledgeBase :one
