@@ -655,7 +655,7 @@ function SwimLaneViewImpl({
 
   const wsId = useWorkspaceId();
   const statusCatalog = useIssueStatuses(wsId);
-  const { categoryOf, entryOf } = statusCatalog;
+  const { groupOf, entryOf } = statusCatalog;
   // Board order for `sort=status`, archived included: an issue can still sit
   // on an archived status and has to rank with the rest (MUL-7379).
   const statusSortOrder = useMemo(() => statusColumnKeys(statusCatalog, true), [statusCatalog]);
@@ -697,11 +697,11 @@ function SwimLaneViewImpl({
 
   // The controller supplies exact status keys in catalog order.
   const sortedStatuses = visibleStatuses;
-  // Columns are the status board's four fixed categories; each cell stacks
-  // one group per concrete status, so droppables stay keyed by status.
+  // Columns are the status board's four fixed groups; each cell stacks one
+  // group per concrete status, so droppables stay keyed by status.
   const boardColumns = useMemo(
-    () => groupStatusesIntoBoardColumns(sortedStatuses, categoryOf),
-    [sortedStatuses, categoryOf],
+    () => groupStatusesIntoBoardColumns(sortedStatuses, groupOf),
+    [sortedStatuses, groupOf],
   );
 
   const laneLabels = useMemo(

@@ -387,7 +387,7 @@ describe("SwimLaneView", () => {
     mockGetAgentTaskSnapshot.mockResolvedValue([]);
   });
 
-  it("renders the four status board categories as column headers", () => {
+  it("renders the four status board groups as column headers", () => {
     renderWithI18n(
       <SwimLaneView
         issues={mockIssues}
@@ -395,7 +395,7 @@ describe("SwimLaneView", () => {
       />,
     );
 
-    for (const name of ["Not started", "Started", "Needs attention", "Ended"]) {
+    for (const name of ["Not started", "Working", "Needs attention", "Ended"]) {
       expect(screen.getByRole("heading", { level: 2, name })).toBeInTheDocument();
     }
     // Concrete statuses head the groups inside each cell.
