@@ -646,12 +646,12 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
               }
               tooltipSide="bottom"
               size="icon"
-              // Solid ink glyph, as large as the logo: the primary action of
-              // the sidebar, in Marvis.app's "new chat" style.
+              // Outlined like the bell, but bold and as large as the logo: the
+              // sidebar's primary action.
               className="relative ml-auto rounded-full text-foreground"
               onClick={() => openCreateIssueWithPreference()}
             >
-              <PlusCircle weight="fill" className="size-6" />
+              <PlusCircle weight="bold" className="size-6" />
               <DraftDot />
             </IconButton>
           </div>
