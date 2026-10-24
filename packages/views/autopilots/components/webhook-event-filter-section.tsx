@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { X, Plus, Filter, ExternalLink } from "lucide-react";
+import { X, Plus, Filter, ExternalLink, CircleAlert } from "lucide-react";
 import { cn } from "@marvis/ui/lib/utils";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@marvis/ui/components/ui/popover";
 import type { WebhookEventFilter } from "@marvis/core/types";
 import { useT } from "../../i18n";
 import { DOCS_LINKS_ENABLED } from "../../common/docs-locale";
@@ -49,6 +54,7 @@ export function WebhookEventFilterSection({
       <div className="flex items-center gap-1.5 text-micro font-semibold tracking-[0.08em] text-muted-foreground uppercase">
         <Filter className="size-3" />
         {t(($) => $.dialog.event_filter_label)}
+        <EventFilterHelp />
         {DOCS_LINKS_ENABLED && (
           <a
             href={docsHref}
@@ -138,6 +144,136 @@ export function WebhookEventFilterSection({
       <p className="text-micro text-muted-foreground">
         {t(($) => $.dialog.event_filter_hint)}
       </p>
+    </div>
+  );
+}
+
+// Field names mirror inferEvent / webhookActionCandidates in
+// server/internal/handler/autopilot_webhook.go; keep them in sync.
+const EVENT_HEADERS = ["X-GitHub-Event", "X-Gitlab-Event", "X-Event-Type"];
+const EVENT_BODY_FIELDS = ["event", "type"];
+const ACTION_BODY_FIELDS = ["action", "state", "conclusion", "status"];
+
+function EventFilterHelp() {
+  const { t } = useT("autopilots");
+  const label = t(($) => $.dialog.event_filter_help_label);
+  const url = t(($) => $.dialog.event_filter_help_url_placeholder);
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        openOnHover
+        delay={150}
+        closeDelay={200}
+        aria-label={label}
+        className="ml-0.5 inline-flex cursor-pointer items-center rounded-full text-faint-foreground transition-colors hover:text-foreground data-popup-open:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+      >
+        <CircleAlert className="size-3.5" />
+      </PopoverTrigger>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        aria-label={label}
+        initialFocus={false}
+        className="w-96 max-w-[calc(100vw-16px)] gap-3 p-3 text-caption"
+      >
+        <p className="text-foreground">
+          {t(($) => $.dialog.event_filter_help_intro)}
+        </p>
+
+        <dl className="grid grid-cols-[auto_auto_1fr] items-baseline gap-x-2 gap-y-1.5">
+          <dt className="row-span-2 font-medium text-foreground">
+            {t(($) => $.dialog.event_filter_help_event_label)}
+          </dt>
+          <dd className="text-muted-foreground">
+            {t(($) => $.dialog.event_filter_help_header)}
+          </dd>
+          <dd>
+            <CodeChips values={EVENT_HEADERS} />
+          </dd>
+          <dd className="text-muted-foreground">
+            {t(($) => $.dialog.event_filter_help_body)}
+          </dd>
+          <dd>
+            <CodeChips values={EVENT_BODY_FIELDS} />
+          </dd>
+          <dt className="font-medium text-foreground">
+            {t(($) => $.dialog.event_filter_help_action_label)}
+          </dt>
+          <dd className="text-muted-foreground">
+            {t(($) => $.dialog.event_filter_help_body)}
+          </dd>
+          <dd>
+            <CodeChips values={ACTION_BODY_FIELDS} />
+          </dd>
+        </dl>
+
+        <HelpExample
+          title={t(($) => $.dialog.event_filter_help_example_custom)}
+          request={`curl -X POST ${url} \\\n  -H "Content-Type: application/json" \\\n  -d '{"event": "deploy", "status": "failed"}'`}
+          event="deploy"
+          action="failed"
+          note={t(($) => $.dialog.event_filter_help_custom_note)}
+        />
+        <HelpExample
+          title={t(($) => $.dialog.event_filter_help_example_github)}
+          request={`X-GitHub-Event: workflow_run\n\n{"action": "completed", "workflow_run": {...}}`}
+          event="workflow_run"
+          action="completed"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function CodeChips({ values }: { values: string[] }) {
+  return (
+    <span className="flex flex-wrap gap-1">
+      {values.map((value) => (
+        <code
+          key={value}
+          className="rounded-sm bg-muted px-1 font-mono text-micro text-foreground"
+        >
+          {value}
+        </code>
+      ))}
+    </span>
+  );
+}
+
+function HelpExample({
+  title,
+  request,
+  event,
+  action,
+  note,
+}: {
+  title: string;
+  request: string;
+  event: string;
+  action: string;
+  note?: string;
+}) {
+  const { t } = useT("autopilots");
+
+  return (
+    <div className="space-y-1.5">
+      <div className="font-medium text-foreground">{title}</div>
+      <pre className="overflow-x-auto rounded-md bg-muted px-2.5 py-2 font-mono text-micro leading-relaxed text-foreground">
+        {request}
+      </pre>
+      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-muted-foreground">
+        <span>{t(($) => $.dialog.event_filter_help_match)}</span>
+        <span>{t(($) => $.dialog.event_filter_help_event_label)}</span>
+        <code className="rounded-sm border bg-background px-1.5 font-mono text-micro text-foreground">
+          {event}
+        </code>
+        <span>{t(($) => $.dialog.event_filter_help_action_label)}</span>
+        <code className="rounded-sm border bg-background px-1.5 font-mono text-micro text-foreground">
+          {action}
+        </code>
+      </div>
+      {note && <p className="text-muted-foreground">{note}</p>}
     </div>
   );
 }

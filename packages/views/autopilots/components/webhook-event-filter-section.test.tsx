@@ -74,4 +74,15 @@ describe("WebhookEventFilterSection", () => {
     );
     expect(onChange).toHaveBeenCalledWith([{ event: "issues" }]);
   });
+
+  it("explains matching with a request example when the help icon is clicked", async () => {
+    renderWithI18n(<WebhookEventFilterSection filters={[]} onChange={vi.fn()} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "How event filters work" }),
+    );
+
+    expect(await screen.findByText(/curl -X POST <webhook URL>/)).toBeInTheDocument();
+    expect(screen.getByText("X-GitHub-Event")).toBeInTheDocument();
+    expect(screen.getByText("deploy")).toBeInTheDocument();
+  });
 });
