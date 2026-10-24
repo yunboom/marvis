@@ -20,6 +20,7 @@ vi.mock("@marvis/core/paths", () => ({
     myIssues: () => "/w/my-issues",
     issues: () => "/w/issues",
     projects: () => "/w/projects",
+    workflows: () => "/w/workflows",
     autopilots: () => "/w/autopilots",
     agents: () => "/w/agents",
     squads: () => "/w/squads",

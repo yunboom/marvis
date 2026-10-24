@@ -94,7 +94,7 @@ export function ProjectWorkflowMenu({ project }: { project: Project }) {
           {canCreateWorkflow && enabled && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigation.push(`${paths.settings()}?tab=workflows`)}>
+              <DropdownMenuItem onClick={() => navigation.push(paths.workflows())}>
                 <Settings className="size-3.5" />
                 {t(($) => $.workflows.project.manage)}
               </DropdownMenuItem>

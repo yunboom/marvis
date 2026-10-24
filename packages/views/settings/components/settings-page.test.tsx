@@ -24,8 +24,6 @@ vi.mock("./code-tab", stub("CodeTab"));
 vi.mock("./channels-tab", stub("ChannelsTab"));
 vi.mock("./notifications-tab", stub("NotificationsTab"));
 vi.mock("./labels-tab", stub("LabelsTab"));
-vi.mock("./issue-statuses-tab", stub("IssueStatusesTab"));
-vi.mock("../../workflows/workflows-tab", stub("WorkflowsTab"));
 vi.mock("./properties-tab", stub("PropertiesTab"));
 vi.mock("./quick-actions-tab", stub("QuickActionsTab"));
 vi.mock("./keyboard-shortcuts-tab", stub("KeyboardShortcutsTab"));
@@ -175,27 +173,16 @@ describe("SettingsPage Plugin feature flag", () => {
   });
 });
 
-describe("SettingsPage workflow feature flag", () => {
-  it("mounts workflows in workspace settings without losing wakeups", () => {
-    navigationState.search = "tab=workflows";
+describe("SettingsPage workflows", () => {
+  it("leaves workflows and statuses to the Workflows page", () => {
     configStore.getState().setFeatureFlags({ [PROJECT_WORKFLOWS_V1_FLAG]: true });
 
     renderWithI18n(<SettingsPage />);
+    fireEvent.click(within(nav()).getByRole("button", { name: "Issues" }));
 
-    expect(screen.getByText("WorkflowsTab")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Workflows" })).toHaveAttribute("aria-current", "page");
-    expect(screen.queryByRole("link", { name: "Issue Statuses" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Wakeups" })).toBeInTheDocument();
-  });
-
-  it("keeps the status catalog when workflows are disabled", () => {
-    navigationState.search = "tab=issue-statuses";
-
-    renderWithI18n(<SettingsPage />);
-
-    expect(screen.getByText("IssueStatusesTab")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Workflows" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Wakeups" })).toBeInTheDocument();
+    expect(within(nav()).queryByRole("link", { name: "Workflows" })).not.toBeInTheDocument();
+    expect(within(nav()).queryByRole("link", { name: "Issue Statuses" })).not.toBeInTheDocument();
+    expect(within(nav()).getByRole("link", { name: "Wakeups" })).toBeInTheDocument();
   });
 });
 
@@ -234,16 +221,27 @@ describe("SettingsPage information architecture", () => {
 
     // The workspace group is named after the workspace it configures.
     const workspace = within(nav()).getByRole("region", { name: /Acme/ });
-    const issues = within(workspace).getByRole("group", { name: "Issues & workflow" });
-    expect(
-      within(issues).getByRole("link", { name: "Issue Statuses" }),
-    ).toBeInTheDocument();
-    const connections = within(workspace).getByRole("group", {
+    fireEvent.click(within(workspace).getByRole("button", { name: "Issues" }));
+    const issues = within(workspace).getByRole("list", { name: "Issues" });
+    expect(within(issues).getByRole("link", { name: "Wakeups" })).toBeInTheDocument();
+    fireEvent.click(within(workspace).getByRole("button", { name: "Connections & extensions" }));
+    const connections = within(workspace).getByRole("list", {
       name: "Connections & extensions",
     });
     for (const name of ["Code", "Messaging", "MCP servers"]) {
       expect(within(connections).getByRole("link", { name })).toBeInTheDocument();
     }
+  });
+
+  it("collapses topic subgroups except the one holding the current page", () => {
+    navigationState.search = "tab=code";
+    renderWithI18n(<SettingsPage />);
+    expect(within(nav()).getByRole("button", { name: "Issues" })).toHaveAttribute("aria-expanded", "false");
+    expect(within(nav()).queryByRole("link", { name: "Wakeups" })).not.toBeInTheDocument();
+    expect(
+      within(nav()).getByRole("button", { name: "Connections & extensions" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(within(nav()).getByRole("link", { name: "Code" })).toHaveAttribute("aria-current", "page");
   });
 
   it("keeps retired pages out of navigation", () => {
@@ -298,6 +296,7 @@ describe("SettingsPage information architecture", () => {
       within(general).getByLabelText("Only owners and admins can change this"),
     ).toBeInTheDocument();
     // Labels stay editable for every member, so they carry no lock.
+    fireEvent.click(within(nav()).getByRole("button", { name: "Issues" }));
     const labels = screen.getByRole("link", { name: "Labels" });
     expect(within(labels).queryByLabelText(/Only owners/)).toBeNull();
   });

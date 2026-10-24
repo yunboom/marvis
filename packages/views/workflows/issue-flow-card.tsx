@@ -95,7 +95,7 @@ export function IssueFlowCard({ projectId, currentStatus }: { projectId: string 
               className="w-full justify-start"
               onClick={() => {
                 setOpen(false);
-                navigation.push(`${paths.settings()}?tab=workflows`);
+                navigation.push(paths.workflows());
               }}
             >
               <Settings aria-hidden className="size-3.5" />

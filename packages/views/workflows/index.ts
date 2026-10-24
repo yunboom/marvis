@@ -1,4 +1,4 @@
-export { WorkflowsTab } from "./workflows-tab";
+export { WorkflowsPage } from "./workflows-page";
 export { WorkflowEditorPage } from "./workflow-editor-page";
 export { WorkflowMappingDialog } from "./workflow-mapping-dialog";
 export { ProjectWorkflowControl } from "./project-workflow-row";
