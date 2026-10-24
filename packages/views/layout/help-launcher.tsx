@@ -23,7 +23,7 @@ import { useConfigStore } from "@marvis/core/config";
 import { isDesktopShell } from "../platform/local-directory";
 import { DISCORD_URL, DiscordIcon } from "./discord";
 import { useT } from "../i18n";
-import { docsLocalePrefix } from "../common/docs-locale";
+import { DOCS_LINKS_ENABLED, docsLocalePrefix } from "../common/docs-locale";
 
 const DOCS_URL = "https://marvis.ai/docs";
 const CHANGELOG_URL = "https://marvis.ai/changelog";
@@ -80,19 +80,21 @@ export function HelpLauncher() {
             <DropdownMenuSeparator />
           </>
         )}
-        <DropdownMenuItem
-          render={
-            <a
-              href={`${DOCS_URL}${docsLocalePrefix(i18n.language)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            />
-          }
-        >
-          <BookOpen className="size-4" />
-          {t(($) => $.help.docs)}
-          <ArrowUpRight className="size-3 translate-y-px text-faint-foreground" />
-        </DropdownMenuItem>
+        {DOCS_LINKS_ENABLED && (
+          <DropdownMenuItem
+            render={
+              <a
+                href={`${DOCS_URL}${docsLocalePrefix(i18n.language)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
+          >
+            <BookOpen className="size-4" />
+            {t(($) => $.help.docs)}
+            <ArrowUpRight className="size-3 translate-y-px text-faint-foreground" />
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           render={
             <a

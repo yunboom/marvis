@@ -6,6 +6,7 @@ import { cn } from "@marvis/ui/lib/utils";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import type { WebhookEventFilter } from "@marvis/core/types";
 import { useT } from "../../i18n";
+import { DOCS_LINKS_ENABLED } from "../../common/docs-locale";
 
 interface WebhookEventFilterSectionProps {
   filters: WebhookEventFilter[];
@@ -48,16 +49,18 @@ export function WebhookEventFilterSection({
       <div className="flex items-center gap-1.5 text-micro font-semibold tracking-[0.08em] text-muted-foreground uppercase">
         <Filter className="size-3" />
         {t(($) => $.dialog.event_filter_label)}
-        <a
-          href={docsHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={t(($) => $.dialog.event_filter_docs_link_label)}
-          title={t(($) => $.dialog.event_filter_docs_link_label)}
-          className="ml-0.5 inline-flex items-center text-faint-foreground hover:text-foreground transition-colors"
-        >
-          <ExternalLink className="size-3" />
-        </a>
+        {DOCS_LINKS_ENABLED && (
+          <a
+            href={docsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t(($) => $.dialog.event_filter_docs_link_label)}
+            title={t(($) => $.dialog.event_filter_docs_link_label)}
+            className="ml-0.5 inline-flex items-center text-faint-foreground hover:text-foreground transition-colors"
+          >
+            <ExternalLink className="size-3" />
+          </a>
+        )}
       </div>
 
       {filters.length > 0 && (

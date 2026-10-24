@@ -61,7 +61,7 @@ import {
 } from "@marvis/ui/components/ui/tooltip";
 import { useNavigation, useRowLink } from "../../navigation";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { docsLocalePrefix } from "../../common/docs-locale";
+import { DOCS_LINKS_ENABLED, docsLocalePrefix } from "../../common/docs-locale";
 import { ProviderLogo } from "../../runtimes/components/provider-logo";
 import {
   COLLECTION_ROW,
@@ -271,10 +271,14 @@ function PageHeaderBar({
       icon={Bot}
       title={t(($) => $.page.title)}
       count={totalCount}
-      learnMore={{
-        href: `https://marvis.ai/docs${docsLocalePrefix(i18n.language)}/agents`,
-        label: t(($) => $.page.learn_more),
-      }}
+      learnMore={
+        DOCS_LINKS_ENABLED
+          ? {
+              href: `https://marvis.ai/docs${docsLocalePrefix(i18n.language)}/agents`,
+              label: t(($) => $.page.learn_more),
+            }
+          : undefined
+      }
       actions={
         <CollectionPageHeaderAction
           icon={Plus}

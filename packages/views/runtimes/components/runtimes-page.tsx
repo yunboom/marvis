@@ -100,6 +100,7 @@ import { pendingRuntimeFromProfile } from "./pending-runtime";
 import { buildRuntimeMachines, type RuntimeMachine } from "./runtime-machines";
 import { HealthDot, useHealthLabel } from "./shared";
 import { useT, useTimeAgo } from "../../i18n";
+import { DOCS_LINKS_ENABLED } from "../../common/docs-locale";
 import { daemonRuntimesDocsHref } from "./runtime-docs";
 
 export interface RuntimesPageProps {
@@ -369,10 +370,14 @@ export function RuntimesPage({
         icon={Server}
         title={t(($) => $.page.title)}
         count={totalCount}
-        learnMore={{
-          href: daemonRuntimesDocsHref(i18n.language),
-          label: t(($) => $.page.learn_more),
-        }}
+        learnMore={
+          DOCS_LINKS_ENABLED
+            ? {
+                href: daemonRuntimesDocsHref(i18n.language),
+                label: t(($) => $.page.learn_more),
+              }
+            : undefined
+        }
         actions={
           <AddRuntimeMenu
             isDesktop={isDesktop}

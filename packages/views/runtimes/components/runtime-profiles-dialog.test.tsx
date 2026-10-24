@@ -253,11 +253,8 @@ describe("RuntimeProfilesDialog", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/from Studio Mac/)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "View setup guide" }),
-    ).toHaveAttribute(
-      "href",
-      "https://marvis.ai/docs/daemon-runtimes#custom-runtime-profiles",
-    );
+      screen.queryByRole("link", { name: "View setup guide" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
     expect(
       screen.queryByText("Create your first custom runtime"),
