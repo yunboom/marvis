@@ -24,7 +24,7 @@ import { Layers,
   Check,
   X,
 } from "lucide-react";
-import { Bell, PlusCircle } from "@phosphor-icons/react/ssr";
+import { Bell, Plus as PlusGlyph } from "@phosphor-icons/react/ssr";
 import { useMessageBoxStore } from "@marvis/core/inbox/message-box-store";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
@@ -634,7 +634,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
         <SidebarHeader className={cn("gap-3 px-3 pt-3.5 pb-4", headerClassName)} style={headerStyle}>
           {/* pl-[9px] centres the 24px logo on the 18px nav icons below, and
               the 7px gap starts the wordmark where the nav labels start. */}
-          <div className="flex h-9 items-center gap-[7px] pr-0.5 pl-[9px]">
+          <div className="flex h-9 items-center gap-[7px] pl-[9px]">
             <MarvisIcon className="size-6 shrink-0 text-foreground" />
             <MarvisWordmark className="h-[18px] shrink-0 text-foreground" />
             <IconButton
@@ -646,12 +646,12 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
               }
               tooltipSide="bottom"
               size="icon"
-              // Outlined like the bell, but bold and as large as the logo: the
-              // sidebar's primary action.
-              className="relative ml-auto rounded-full text-foreground"
+              // Same outline as the search box below, whose right edge it
+              // shares; the glyph keeps the nav icons' 18px regular weight.
+              className="relative ml-auto rounded-lg border border-input text-foreground hover:border-black/20 hover:bg-accent dark:hover:border-white/20"
               onClick={() => openCreateIssueWithPreference()}
             >
-              <PlusCircle weight="bold" className="size-6" />
+              <PlusGlyph className="size-[18px]" />
               <DraftDot />
             </IconButton>
           </div>
