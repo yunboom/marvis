@@ -236,6 +236,7 @@ vi.mock("@marvis/core/paths", async (importOriginal) => ({
     squads: () => "/ws-test/squads",
     usage: () => "/ws-test/usage",
     runtimes: () => "/ws-test/runtimes",
+    knowledge: () => "/ws-test/knowledge",
     skills: () => "/ws-test/skills",
     settings: () => "/ws-test/settings",
     issueDetail: (id: string) => `/ws-test/issues/${id}`,

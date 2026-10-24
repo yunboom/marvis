@@ -20,6 +20,7 @@ import { AutopilotsPage } from "@marvis/views/autopilots/components";
 import { WorkflowsPage } from "@marvis/views/workflows";
 import { MyIssuesPage } from "@marvis/views/my-issues";
 import { SkillsPage } from "@marvis/views/skills";
+import { KnowledgePage } from "@marvis/views/knowledge";
 import { DesktopRuntimesPage } from "./components/desktop-runtimes-page";
 import { DesktopAgentsPage } from "./components/desktop-agents-page";
 import {
@@ -197,6 +198,7 @@ export const appRoutes: RouteObject[] = [
             element: <RuntimeSettingsPage />,
             handle: { title: "Runtime" },
           },
+          { path: "knowledge", element: <KnowledgePage />, handle: { title: "Knowledge" } },
           { path: "skills", element: <SkillsPage />, handle: { title: "Skills" } },
           {
             path: "skills/:id",

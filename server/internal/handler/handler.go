@@ -35,6 +35,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/integrations/telegram"
 	"github.com/yunboom/marvis/server/internal/integrations/wecom"
 	"github.com/yunboom/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/knowledge"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 	"github.com/yunboom/marvis/server/internal/middleware"
 	"github.com/yunboom/marvis/server/internal/realtime"
@@ -266,8 +267,10 @@ type Handler struct {
 	LivenessStore      LivenessStore
 	HeartbeatScheduler HeartbeatScheduler
 	Storage            storage.Storage
-	CFSigner           *auth.CloudFrontSigner
-	Analytics          analytics.Client
+	// Knowledge 是工作区知识库仓库；服务端没有 git 时为 nil，知识库接口返回不可用。
+	Knowledge *knowledge.Store
+	CFSigner  *auth.CloudFrontSigner
+	Analytics analytics.Client
 	// DaemonPendingWork pushes "heartbeat now" hints for queued
 	// heartbeat-carried requests (MUL-5444). Optional: when nil,
 	// requestDaemonPendingWork falls back to the local DaemonHub, which is the

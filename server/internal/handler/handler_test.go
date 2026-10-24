@@ -17,6 +17,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/yunboom/marvis/server/internal/analytics"
 	"github.com/yunboom/marvis/server/internal/events"
+	"github.com/yunboom/marvis/server/internal/knowledge"
 	"github.com/yunboom/marvis/server/internal/realtime"
 	"github.com/yunboom/marvis/server/internal/service"
 	"github.com/yunboom/marvis/server/internal/testutil"
@@ -81,6 +82,16 @@ func TestMain(m *testing.M) {
 		Recipient: SlidingWindowRateLimit{Limit: 1_000_000, Window: time.Minute},
 	})
 	testPool = pool
+	kbDir, err := os.MkdirTemp("", "kb-handler-test-")
+	if err != nil {
+		fmt.Printf("Failed to create knowledge repo dir: %v\n", err)
+		os.Exit(1)
+	}
+	defer os.RemoveAll(kbDir)
+	if testHandler.Knowledge, err = knowledge.NewStore(kbDir); err != nil {
+		fmt.Printf("Failed to create knowledge store: %v\n", err)
+		os.Exit(1)
+	}
 
 	testUserID, testWorkspaceID, err = setupHandlerTestFixture(ctx, pool)
 	if err != nil {

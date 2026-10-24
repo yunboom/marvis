@@ -165,6 +165,7 @@
     "./i18n": "./i18n/index.ts",
     "./i18n/react": "./i18n/react.ts",
     "./i18n/browser": "./i18n/browser.ts",
+    "./knowledge": "./knowledge/index.ts",
     "./skills": "./skills/index.ts",
     "./skills/frontmatter": "./skills/frontmatter.ts",
     "./skills/pack-archive": "./skills/pack-archive.ts",

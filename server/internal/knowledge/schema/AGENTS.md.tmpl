@@ -1,0 +1,90 @@
+# {{.Name}} — maintenance rules
+
+This directory (`{{.Slug}}/`) is one knowledge base of the workspace knowledge repository.
+It follows the LLM Wiki pattern: `raw/` holds immutable sources, `wiki/` holds pages that
+agents write and humans review, and this file is the schema every maintainer follows.
+Read `purpose.md` first: it says who this knowledge base serves and what belongs here.
+
+## Layout
+
+| Path | What lives there |
+| --- | --- |
+| `purpose.md` | Audience and scope, written by people. Never rewrite it. |
+| `index.md` | Catalog of every page: link, one-line summary. Reserved file; keep it in sync. |
+| `log.md` | Append-only operation log. One line per operation: `- YYYY-MM-DD <operation> <title>`. |
+| `overview.md` | One-page synthesis of the whole knowledge base. Rewrite it after each ingest. |
+| `raw/sources/` | Imported source documents, unchanged. |
+| `raw/assets/` | Images and attachments referenced by pages. |
+| `wiki/entities/` | People, teams, systems, services, products, modules, environments, customers. |
+| `wiki/concepts/` | Terms, business rules, architecture concepts, known issues. |
+| `wiki/howtos/` | Runbooks: develop, test, release, troubleshoot. |
+| `wiki/decisions/` | Decision records. |
+| `wiki/syntheses/` | Cross-source analyses and comparisons. |
+| `wiki/sources/` | One summary page per source (task, chat, document, pull request). |
+| `wiki/queries/` | Answers worth keeping, filed back from questions. |
+| `.claims/<page path>.json` | Claims of a page and their evidence. |
+
+## Page format (Open Knowledge Format v0.2)
+
+Every page is Markdown with YAML front matter:
+
+```yaml
+---
+type: entity            # entity | concept | howto | decision | synthesis | source | query
+title: Payment service
+description: One sentence.
+domains: [dev, product] # any of dev, qa, product
+sources:                # projected from the claims' evidence
+  - task://MAR-128
+  - repo://order-api/internal/pay/callback.go#L40-L82@3f2a91c
+verified: {by: <name>, at: 2026-10-20}   # only after every claim was re-checked
+status: active          # active | deprecated
+stale_after: 2027-01-20 # optional; the page needs re-verification after this date
+---
+```
+
+- Write pages in the language of `purpose.md`.
+- Cite with footnotes: a claim ends with `[^n]`, and the page ends with `[^n]: <source uri> <label>`.
+- Link pages with relative Markdown links. Every page must be linked from `index.md`.
+- Source URIs: `task://<KEY>`, `chat://<session id>`, `doc://raw/sources/<file>`, `pr://<repo>#<n>`,
+  `repo://<repo>/<path>#L<a>-L<b>@<commit>`, `https://...`.
+- Chat sources are private to their owner: cite them, never quote them.
+
+## Claims (`.claims/<page path>.json`)
+
+```json
+{"claims": [{"id": "c1", "text": "Callbacks are deduplicated by channel trade number.",
+  "evidence": [{"uri": "repo://order-api/internal/pay/callback.go#L40-L82", "version": "3f2a91c"}]}]}
+```
+
+Every factual sentence of a page maps to a claim. When you change a sentence, update its claim
+and the evidence version you checked. `marvis kb stale` compares evidence versions with the
+current code and lists claims that need re-checking.
+
+## Operations
+
+All work happens in a local clone and ends in one change request:
+
+1. `marvis kb clone <dir>` — clone the workspace repository (all knowledge bases).
+2. Edit files under `{{.Slug}}/` (and other knowledge bases only when the task says so).
+3. `marvis kb lint --kb {{.Slug}}` — fix every finding before submitting.
+4. `marvis kb change create --dir <dir> --title "..." --source <fix|ingest|fresh|merge|gap|digest> --summary "..." --risk <low|medium|high>`
+   — pushes a `kb/*` branch and opens the change request. Fix reported conflicts, then
+   `marvis kb change update <number> --dir <dir>`.
+5. Read review comments with `marvis kb change get <number> --comments` and update the same change request.
+
+- **Ingest**: summarize each source into `wiki/sources/`, update every affected entity / concept page,
+  `index.md`, `overview.md`, and append to `log.md`. One source may touch many pages.
+- **Annotation fix**: each annotation names the page and the quoted sentence. Fix the page, update
+  its claims, and mention every annotation you handled in the summary.
+- **Freshness**: run `marvis kb lint` and `marvis kb stale`; record each real problem with
+  `marvis kb annotate add` instead of editing directly.
+- **Merge**: merge duplicate pages into one, turn the removed page into a short pointer to the kept
+  page, and update every link to it.
+- **Gaps**: answer open questions from `marvis kb gap list` with new or extended pages.
+
+## Before every change request
+
+- Re-read your diff. Remove secrets, tokens, passwords, phone numbers and ID numbers.
+- Write a summary of what changed and why, and a risk level.
+- Keep unrelated pages untouched.

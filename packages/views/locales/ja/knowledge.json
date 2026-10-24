@@ -1,0 +1,79 @@
+{
+  "page": {
+    "title": "ナレッジ",
+    "summary": "{{pages}} ページ · 管理エージェント {{agent}}",
+    "no_maintainer": "未設定"
+  },
+  "switcher": {
+    "label": "ナレッジベースを切り替え",
+    "create": "新しいナレッジベース"
+  },
+  "tabs": {
+    "pages": "ページ",
+    "review": "レビュー",
+    "annotations": "注釈",
+    "gaps": "ギャップ",
+    "graph": "グラフ",
+    "history": "履歴",
+    "settings": "設定"
+  },
+  "empty": {
+    "title": "ナレッジベースがありません",
+    "description": "毎日のナレッジ蓄積は停止中です。ナレッジベースを作成すると有効にできます。",
+    "create": "新しいナレッジベース"
+  },
+  "errors": {
+    "load": "ナレッジベースを読み込めませんでした"
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "save": "保存"
+  },
+  "fields": {
+    "name": "名前",
+    "name_placeholder": "例：決済基盤",
+    "description": "説明",
+    "description_placeholder": "対象者と収録内容",
+    "description_hint": "エージェントは説明を見てこのナレッジベースを使うか判断します。",
+    "maintainer": "管理エージェント",
+    "maintainer_none": "未設定"
+  },
+  "create": {
+    "title": "新しいナレッジベース",
+    "description": "組み込みのスキーマを使います。設定で変更できます。",
+    "submit": "作成",
+    "created": "{{name}} を作成しました",
+    "failed": "作成できませんでした"
+  },
+  "settings": {
+    "title": "ナレッジベース",
+    "saved": "保存しました",
+    "save_failed": "保存できませんでした",
+    "directory": "リポジトリのディレクトリ {{slug}}/",
+    "manage_hint": "作成者、owner、admin のみ変更できます。"
+  },
+  "repo": {
+    "title": "リポジトリ",
+    "shared": "ワークスペースのナレッジベースは 1 つのリポジトリをディレクトリごとに共有します。",
+    "hosted": "ホスト",
+    "hosted_hint": "Marvis サーバーに保存",
+    "external": "外部リポジトリ",
+    "external_unavailable": "まだ利用できません"
+  },
+  "export": {
+    "title": "エクスポート",
+    "zip": "zip をダウンロード",
+    "hint": "展開すると Obsidian で開けます。"
+  },
+  "delete": {
+    "title": "ナレッジベースを削除",
+    "hint": "{{slug}}/ ディレクトリを削除します。アプリからは復元できません。",
+    "action": "削除",
+    "confirm_title": "{{name}} を削除しますか？",
+    "impact": "{{slug}}/ の削除をコミットし、未処理の注釈 {{annotations}} 件と未マージの変更リクエスト {{changes}} 件を閉じます。",
+    "last": "最後のナレッジベースです。毎日のナレッジ蓄積は停止されます。",
+    "type_name": "確認のためナレッジベース名を入力",
+    "deleted": "{{name}} を削除しました",
+    "failed": "削除できませんでした"
+  }
+}

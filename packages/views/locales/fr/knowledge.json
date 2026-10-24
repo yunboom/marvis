@@ -1,0 +1,79 @@
+{
+  "page": {
+    "title": "Connaissances",
+    "summary": "Pages : {{pages}} · Agent responsable : {{agent}}",
+    "no_maintainer": "Non défini"
+  },
+  "switcher": {
+    "label": "Changer de base de connaissances",
+    "create": "Nouvelle base de connaissances"
+  },
+  "tabs": {
+    "pages": "Pages",
+    "review": "Revue",
+    "annotations": "Annotations",
+    "gaps": "Lacunes",
+    "graph": "Graphe",
+    "history": "Historique",
+    "settings": "Paramètres"
+  },
+  "empty": {
+    "title": "Aucune base de connaissances",
+    "description": "La synthèse quotidienne est désactivée. Créez une base de connaissances pour l'activer.",
+    "create": "Nouvelle base de connaissances"
+  },
+  "errors": {
+    "load": "Impossible de charger les bases de connaissances"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "fields": {
+    "name": "Nom",
+    "name_placeholder": "Ex. : Paiements",
+    "description": "Description",
+    "description_placeholder": "Pour qui, et ce qu'elle couvre",
+    "description_hint": "Les agents décident d'utiliser cette base d'après sa description.",
+    "maintainer": "Agent responsable",
+    "maintainer_none": "Non défini"
+  },
+  "create": {
+    "title": "Nouvelle base de connaissances",
+    "description": "Utilise le schéma intégré, modifiable dans les paramètres.",
+    "submit": "Créer",
+    "created": "{{name}} créée",
+    "failed": "Impossible de créer la base de connaissances"
+  },
+  "settings": {
+    "title": "Base de connaissances",
+    "saved": "Enregistré",
+    "save_failed": "Impossible d'enregistrer",
+    "directory": "Répertoire du dépôt {{slug}}/",
+    "manage_hint": "Seuls le créateur, un owner ou un admin peuvent la modifier."
+  },
+  "repo": {
+    "title": "Dépôt",
+    "shared": "Toutes les bases de l'espace de travail partagent un dépôt, un répertoire chacune.",
+    "hosted": "Hébergé",
+    "hosted_hint": "Stocké par le serveur Marvis",
+    "external": "Dépôt externe",
+    "external_unavailable": "Pas encore disponible"
+  },
+  "export": {
+    "title": "Exporter",
+    "zip": "Télécharger le zip",
+    "hint": "Décompressez-le pour l'ouvrir dans Obsidian."
+  },
+  "delete": {
+    "title": "Supprimer la base de connaissances",
+    "hint": "Supprime le répertoire {{slug}}/. Impossible de le restaurer depuis l'application.",
+    "action": "Supprimer",
+    "confirm_title": "Supprimer {{name}} ?",
+    "impact": "Valide la suppression de {{slug}}/ et ferme {{annotations}} annotations en attente et {{changes}} demandes de modification ouvertes.",
+    "last": "C'est la dernière base de connaissances. La synthèse quotidienne sera désactivée.",
+    "type_name": "Saisissez le nom de la base pour confirmer",
+    "deleted": "{{name}} supprimée",
+    "failed": "Impossible de supprimer la base de connaissances"
+  }
+}

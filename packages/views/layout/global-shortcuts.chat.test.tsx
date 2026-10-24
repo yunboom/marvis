@@ -41,6 +41,7 @@ vi.mock("@marvis/core/paths", () => ({
     squads: () => "/acme/squads",
     usage: () => "/acme/usage",
     runtimes: () => "/acme/runtimes",
+    knowledge: () => "/acme/knowledge",
     skills: () => "/acme/skills",
     settings: () => "/acme/settings",
   }),

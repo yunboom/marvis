@@ -6,6 +6,17 @@ import { WorkspaceWakeupPageSchema, IssueWakeupSchema, IssueWakeupSummaryRowSche
 import type { ArchivedInboxFilters } from "../inbox/filter-store";
 import type { ArchivedInboxPage, ArchivedInboxFacets } from "../types/inbox";
 import { parseQoderConnection, parseQoderCatalog, type QoderInput } from "../runtimes/qoder-schema";
+import {
+  EMPTY_KNOWLEDGE_BASE,
+  EMPTY_KNOWLEDGE_DELETE_IMPACT,
+  KnowledgeBaseListSchema,
+  KnowledgeBaseSchema,
+  KnowledgeDeleteImpactSchema,
+  type CreateKnowledgeBaseRequest,
+  type KnowledgeBase,
+  type KnowledgeDeleteImpact,
+  type UpdateKnowledgeBaseRequest,
+} from "../knowledge/schemas";
 import { configStore } from "../config";
 import type {
   Issue,
@@ -3642,6 +3653,41 @@ export class ApiClient {
   async deleteWorkspace(workspaceId: string): Promise<void> {
     await this.fetch(`/api/workspaces/${workspaceId}`, {
       method: "DELETE",
+    });
+  }
+
+  // Knowledge bases
+  async listKnowledgeBases(): Promise<KnowledgeBase[]> {
+    const raw = await this.fetch<unknown>("/api/knowledge/bases");
+    return parseWithFallback(raw, KnowledgeBaseListSchema, [], { endpoint: "GET /api/knowledge/bases" });
+  }
+
+  async getKnowledgeBase(ref: string): Promise<KnowledgeBase> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/bases/${encodeURIComponent(ref)}`);
+    return parseWithFallback(raw, KnowledgeBaseSchema, EMPTY_KNOWLEDGE_BASE, { endpoint: "GET /api/knowledge/bases/:id" });
+  }
+
+  async createKnowledgeBase(data: CreateKnowledgeBaseRequest): Promise<KnowledgeBase> {
+    const raw = await this.fetch<unknown>("/api/knowledge/bases", { method: "POST", body: JSON.stringify(data) });
+    return parseWithFallback(raw, KnowledgeBaseSchema, EMPTY_KNOWLEDGE_BASE, { endpoint: "POST /api/knowledge/bases" });
+  }
+
+  async updateKnowledgeBase(ref: string, data: UpdateKnowledgeBaseRequest): Promise<KnowledgeBase> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/bases/${encodeURIComponent(ref)}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KnowledgeBaseSchema, EMPTY_KNOWLEDGE_BASE, { endpoint: "PATCH /api/knowledge/bases/:id" });
+  }
+
+  async deleteKnowledgeBase(ref: string): Promise<void> {
+    await this.fetch(`/api/knowledge/bases/${encodeURIComponent(ref)}`, { method: "DELETE" });
+  }
+
+  async getKnowledgeDeleteImpact(ref: string): Promise<KnowledgeDeleteImpact> {
+    const raw = await this.fetch<unknown>(`/api/knowledge/bases/${encodeURIComponent(ref)}/delete-impact`);
+    return parseWithFallback(raw, KnowledgeDeleteImpactSchema, EMPTY_KNOWLEDGE_DELETE_IMPACT, {
+      endpoint: "GET /api/knowledge/bases/:id/delete-impact",
     });
   }
 

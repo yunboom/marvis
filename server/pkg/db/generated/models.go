@@ -223,6 +223,7 @@ type Autopilot struct {
 	AssigneeType       string             `json:"assignee_type"`
 	ProjectID          pgtype.UUID        `json:"project_id"`
 	PauseReason        pgtype.Text        `json:"pause_reason"`
+	SystemKey          pgtype.Text        `json:"system_key"`
 }
 
 type AutopilotCollaborator struct {
@@ -1108,6 +1109,100 @@ type IssueWorkflow struct {
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 	IsDefault        bool               `json:"is_default"`
 	OwnerID          pgtype.UUID        `json:"owner_id"`
+}
+
+type KnowledgeAnnotation struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	PagePath        string             `json:"page_path"`
+	Quote           string             `json:"quote"`
+	Prefix          string             `json:"prefix"`
+	Suffix          string             `json:"suffix"`
+	Body            string             `json:"body"`
+	AuthorType      string             `json:"author_type"`
+	AuthorID        pgtype.UUID        `json:"author_id"`
+	Status          string             `json:"status"`
+	ChangeRequestID pgtype.UUID        `json:"change_request_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KnowledgeBase struct {
+	ID                pgtype.UUID        `json:"id"`
+	WorkspaceID       pgtype.UUID        `json:"workspace_id"`
+	Name              string             `json:"name"`
+	Slug              string             `json:"slug"`
+	Description       string             `json:"description"`
+	MaintainerAgentID pgtype.UUID        `json:"maintainer_agent_id"`
+	CreatedBy         pgtype.UUID        `json:"created_by"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KnowledgeChangeComment struct {
+	ID              pgtype.UUID        `json:"id"`
+	ChangeRequestID pgtype.UUID        `json:"change_request_id"`
+	Path            string             `json:"path"`
+	Line            int32              `json:"line"`
+	AuthorType      string             `json:"author_type"`
+	AuthorID        pgtype.UUID        `json:"author_id"`
+	Body            string             `json:"body"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
+type KnowledgeChangeRequest struct {
+	ID            pgtype.UUID        `json:"id"`
+	WorkspaceID   pgtype.UUID        `json:"workspace_id"`
+	Number        int32              `json:"number"`
+	Title         string             `json:"title"`
+	Source        string             `json:"source"`
+	AuthorType    string             `json:"author_type"`
+	AuthorID      pgtype.UUID        `json:"author_id"`
+	Branch        string             `json:"branch"`
+	BaseCommit    string             `json:"base_commit"`
+	HeadCommit    string             `json:"head_commit"`
+	Status        string             `json:"status"`
+	Conflict      bool               `json:"conflict"`
+	ConflictFiles []string           `json:"conflict_files"`
+	Summary       string             `json:"summary"`
+	Risk          string             `json:"risk"`
+	MergeCommit   pgtype.Text        `json:"merge_commit"`
+	ChatSessionID pgtype.UUID        `json:"chat_session_id"`
+	AnnotationIds []pgtype.UUID      `json:"annotation_ids"`
+	KbSlugs       []string           `json:"kb_slugs"`
+	MergedBy      pgtype.UUID        `json:"merged_by"`
+	MergedAt      pgtype.Timestamptz `json:"merged_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KnowledgeGap struct {
+	ID            pgtype.UUID        `json:"id"`
+	WorkspaceID   pgtype.UUID        `json:"workspace_id"`
+	Question      string             `json:"question"`
+	Source        string             `json:"source"`
+	Status        string             `json:"status"`
+	CreatedByType string             `json:"created_by_type"`
+	CreatedByID   pgtype.UUID        `json:"created_by_id"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KnowledgeRepo struct {
+	WorkspaceID      pgtype.UUID        `json:"workspace_id"`
+	NextChangeNumber int32              `json:"next_change_number"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+type KnowledgeSession struct {
+	ChatSessionID   pgtype.UUID        `json:"chat_session_id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	CarrierAgentID  pgtype.UUID        `json:"carrier_agent_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	Kind            string             `json:"kind"`
+	CreatedBy       pgtype.UUID        `json:"created_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
 type LarkBindingToken struct {

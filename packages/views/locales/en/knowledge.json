@@ -1,0 +1,79 @@
+{
+  "page": {
+    "title": "Knowledge",
+    "summary": "Pages: {{pages}} · Maintainer: {{agent}}",
+    "no_maintainer": "Not set"
+  },
+  "switcher": {
+    "label": "Switch knowledge base",
+    "create": "New knowledge base"
+  },
+  "tabs": {
+    "pages": "Pages",
+    "review": "Review",
+    "annotations": "Annotations",
+    "gaps": "Gaps",
+    "graph": "Graph",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "empty": {
+    "title": "No knowledge bases yet",
+    "description": "The daily knowledge digest is off. Create a knowledge base to turn it on.",
+    "create": "New knowledge base"
+  },
+  "errors": {
+    "load": "Couldn't load knowledge bases"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "fields": {
+    "name": "Name",
+    "name_placeholder": "e.g. Payments",
+    "description": "Description",
+    "description_placeholder": "Who it serves and what it covers",
+    "description_hint": "Agents use the description to decide whether to use this knowledge base.",
+    "maintainer": "Maintainer agent",
+    "maintainer_none": "Not set"
+  },
+  "create": {
+    "title": "New knowledge base",
+    "description": "Uses the built-in schema. You can change it in settings.",
+    "submit": "Create",
+    "created": "Created {{name}}",
+    "failed": "Couldn't create the knowledge base"
+  },
+  "settings": {
+    "title": "Knowledge base",
+    "saved": "Saved",
+    "save_failed": "Couldn't save",
+    "directory": "Repository directory {{slug}}/",
+    "manage_hint": "Only the creator, an owner or an admin can change this."
+  },
+  "repo": {
+    "title": "Repository",
+    "shared": "All knowledge bases of the workspace share one repository, one directory each.",
+    "hosted": "Hosted",
+    "hosted_hint": "Stored by the Marvis server",
+    "external": "External repository",
+    "external_unavailable": "Not available yet"
+  },
+  "export": {
+    "title": "Export",
+    "zip": "Download zip",
+    "hint": "Unzip and open it in Obsidian."
+  },
+  "delete": {
+    "title": "Delete knowledge base",
+    "hint": "Removes the {{slug}}/ directory. It can't be restored from the app.",
+    "action": "Delete",
+    "confirm_title": "Delete {{name}}?",
+    "impact": "Commits the removal of {{slug}}/ and closes {{annotations}} open annotations and {{changes}} open change requests.",
+    "last": "This is the last knowledge base. The daily knowledge digest will be turned off.",
+    "type_name": "Type the knowledge base name to confirm",
+    "deleted": "Deleted {{name}}",
+    "failed": "Couldn't delete the knowledge base"
+  }
+}

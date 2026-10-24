@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS idx_knowledge_change_request_status;

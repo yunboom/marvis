@@ -1,0 +1,79 @@
+{
+  "page": {
+    "title": "知识库",
+    "summary": "{{pages}} 页 · 维护智能体 {{agent}}",
+    "no_maintainer": "未设置"
+  },
+  "switcher": {
+    "label": "切换知识库",
+    "create": "新建知识库"
+  },
+  "tabs": {
+    "pages": "页面",
+    "review": "待审核",
+    "annotations": "批注",
+    "gaps": "缺口",
+    "graph": "关系图",
+    "history": "历史",
+    "settings": "设置"
+  },
+  "empty": {
+    "title": "还没有知识库",
+    "description": "每日知识沉淀已停用，新建知识库后可以开启。",
+    "create": "新建知识库"
+  },
+  "errors": {
+    "load": "知识库加载失败"
+  },
+  "common": {
+    "cancel": "取消",
+    "save": "保存"
+  },
+  "fields": {
+    "name": "名称",
+    "name_placeholder": "比如：支付中台",
+    "description": "描述",
+    "description_placeholder": "给谁用、收录什么",
+    "description_hint": "智能体按描述判断要不要使用这个知识库。",
+    "maintainer": "维护智能体",
+    "maintainer_none": "未设置"
+  },
+  "create": {
+    "title": "新建知识库",
+    "description": "使用内置 schema，可在设置里修改。",
+    "submit": "创建",
+    "created": "已创建「{{name}}」",
+    "failed": "创建失败"
+  },
+  "settings": {
+    "title": "知识库",
+    "saved": "已保存",
+    "save_failed": "保存失败",
+    "directory": "仓库目录 {{slug}}/",
+    "manage_hint": "需要创建者、owner 或 admin 修改。"
+  },
+  "repo": {
+    "title": "仓库",
+    "shared": "工作区的所有知识库共用一个仓库，按目录隔离。",
+    "hosted": "内部托管",
+    "hosted_hint": "由 Marvis 服务端保存",
+    "external": "关联外部仓库",
+    "external_unavailable": "暂不支持"
+  },
+  "export": {
+    "title": "导出",
+    "zip": "下载 zip",
+    "hint": "解压后可以直接用 Obsidian 打开。"
+  },
+  "delete": {
+    "title": "删除知识库",
+    "hint": "移除 {{slug}}/ 目录，界面不提供恢复。",
+    "action": "删除",
+    "confirm_title": "删除「{{name}}」？",
+    "impact": "提交一次移除 {{slug}}/ 的 commit；{{annotations}} 条未处理批注和 {{changes}} 个未合并的变更请求一并关闭。",
+    "last": "这是最后一个知识库，每日知识沉淀将停用。",
+    "type_name": "输入知识库名称确认",
+    "deleted": "已删除「{{name}}」",
+    "failed": "删除失败"
+  }
+}

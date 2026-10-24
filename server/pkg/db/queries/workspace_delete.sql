@@ -724,6 +724,30 @@ deleted_lark_invite_joins AS (
 deleted_lark_invites AS (
     DELETE FROM lark_invite
     WHERE lark_invite.workspace_id = $1
+),
+deleted_knowledge_change_comments AS (
+    DELETE FROM knowledge_change_comment
+    WHERE knowledge_change_comment.change_request_id IN (
+        SELECT id FROM knowledge_change_request WHERE knowledge_change_request.workspace_id = $1
+    )
+),
+deleted_knowledge_change_requests AS (
+    DELETE FROM knowledge_change_request WHERE knowledge_change_request.workspace_id = $1
+),
+deleted_knowledge_annotations AS (
+    DELETE FROM knowledge_annotation WHERE knowledge_annotation.workspace_id = $1
+),
+deleted_knowledge_gaps AS (
+    DELETE FROM knowledge_gap WHERE knowledge_gap.workspace_id = $1
+),
+deleted_knowledge_sessions AS (
+    DELETE FROM knowledge_session WHERE knowledge_session.workspace_id = $1
+),
+deleted_knowledge_bases AS (
+    DELETE FROM knowledge_base WHERE knowledge_base.workspace_id = $1
+),
+deleted_knowledge_repos AS (
+    DELETE FROM knowledge_repo WHERE knowledge_repo.workspace_id = $1
 )
 DELETE FROM workspace_invitation
 WHERE workspace_invitation.workspace_id = $1;

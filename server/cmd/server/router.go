@@ -38,6 +38,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/integrations/slack"
 	"github.com/yunboom/marvis/server/internal/integrations/telegram"
 	"github.com/yunboom/marvis/server/internal/integrations/wecom"
+	"github.com/yunboom/marvis/server/internal/knowledge"
 	"github.com/yunboom/marvis/server/internal/landiscovery"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 	"github.com/yunboom/marvis/server/internal/middleware"
@@ -506,6 +507,15 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	invitationRateLimits.Workspace.Limit = envNonNegativeInt("RATE_LIMIT_INVITATION_WORKSPACE_24H", invitationRateLimits.Workspace.Limit)
 	invitationRateLimits.Recipient.Limit = envNonNegativeInt("RATE_LIMIT_INVITATION_RECIPIENT_24H", invitationRateLimits.Recipient.Limit)
 	h.InvitationRateLimiters = handler.NewMemoryInvitationRateLimiters(invitationRateLimits)
+	kbRepoDir := os.Getenv("MARVIS_KB_REPO_DIR")
+	if kbRepoDir == "" {
+		kbRepoDir = "./data/knowledge"
+	}
+	if kbStore, err := knowledge.NewStore(kbRepoDir); err != nil {
+		slog.Error("knowledge base disabled", "error", err)
+	} else {
+		h.Knowledge = kbStore
+	}
 	h.Metrics = opts.BusinessMetrics
 	h.FeatureFlags = opts.FeatureFlags
 	h.TaskService.FeatureFlags = opts.FeatureFlags
@@ -2405,6 +2415,20 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				// Autosaved configuration, including edits the user has typed
 				// but not sent. Read back through the list above.
 				r.Put("/{sessionId}/draft", h.SaveAgentBuilderDraft)
+			})
+
+			// Knowledge base (docs/adr/0002-knowledge-base.md)
+			r.Route("/api/knowledge", func(r chi.Router) {
+				r.Route("/bases", func(r chi.Router) {
+					r.Get("/", h.ListKnowledgeBases)
+					r.Post("/", h.CreateKnowledgeBase)
+					r.Route("/{id}", func(r chi.Router) {
+						r.Get("/", h.GetKnowledgeBase)
+						r.Patch("/", h.UpdateKnowledgeBase)
+						r.Delete("/", h.DeleteKnowledgeBase)
+						r.Get("/delete-impact", h.GetKnowledgeDeleteImpact)
+					})
+				})
 			})
 
 			// Skills

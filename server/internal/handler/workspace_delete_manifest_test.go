@@ -149,6 +149,13 @@ var workspaceDeletionManifest = map[string]workspaceDeleteAction{
 	"workspace_share_link":               workspaceDelete,
 	"lark_invite":                        workspaceDelete,
 	"lark_invite_join":                   workspaceDelete,
+	"knowledge_repo":                     workspaceDelete,
+	"knowledge_base":                     workspaceDelete,
+	"knowledge_change_request":           workspaceDelete,
+	"knowledge_change_comment":           workspaceDelete,
+	"knowledge_annotation":               workspaceDelete,
+	"knowledge_gap":                      workspaceDelete,
+	"knowledge_session":                  workspaceDelete,
 }
 
 func TestWorkspaceDeletionManifestCoversPublicSchema(t *testing.T) {

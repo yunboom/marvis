@@ -71,6 +71,9 @@ const (
 	EventSkillUpdated = "skill:updated"
 	EventSkillDeleted = "skill:deleted"
 
+	// EventKnowledgeChanged 表示知识库、变更请求、批注或缺口有变化，前端据此失效查询。
+	EventKnowledgeChanged = "knowledge:changed"
+
 	// Chat events
 	EventChatMessage = "chat:message"
 	EventChatDone    = "chat:done"

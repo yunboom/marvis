@@ -49,6 +49,7 @@ export type WSEventType =
   | "skill:created"
   | "skill:updated"
   | "skill:deleted"
+  | "knowledge:changed"
   | "subscriber:added"
   | "subscriber:removed"
   | "activity:created"
@@ -641,6 +642,7 @@ export interface WSEventPayloadMap {
   "daemon:heartbeat": unknown;
   "daemon:register": unknown;
   "skill:created": unknown;
+  "knowledge:changed": unknown;
   "skill:updated": unknown;
   "skill:deleted": unknown;
   "squad:created": unknown;
