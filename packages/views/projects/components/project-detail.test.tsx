@@ -243,18 +243,19 @@ vi.mock("../../layout/breadcrumb-header", () => ({
 }));
 
 vi.mock("../../layout/animated-right-sidebar", () => ({
-  AnimatedRightSidebar: ({ children }: { children: React.ReactNode }) => (
+  AnimatedRightSidebarPanel: ({ children }: { children: React.ReactNode }) => (
     <aside>{children}</aside>
   ),
+  RightSidebarOpenState: ({ children }: { children: (open: boolean) => React.ReactNode }) =>
+    children(true),
   getAnimatedRightSidebarInitialOpen: () => true,
-  rightSidebarPanelMotionProps: {},
   useRightSidebarShortcut: vi.fn(),
-  useAnimatedRightSidebarState: () => ({
-    open: true,
-    visualOpen: true,
-    motionEnabled: false,
+  useRightSidebarController: () => ({
+    getState: () => ({ open: true, visualOpen: true, motionEnabled: false }),
+    subscribe: () => () => {},
     beginToggle: vi.fn(),
     handleResize: vi.fn(),
+    dispose: vi.fn(),
   }),
 }));
 
