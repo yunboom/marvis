@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -565,5 +566,24 @@ func TestInviteConfigCauses(t *testing.T) {
 		if !want[exported] {
 			t.Errorf("exported cause %q is not in inviteConfigByLarkCode", exported)
 		}
+	}
+}
+
+// TestInviteConfigCauses_DistinctWhenCodesShareCause 两个飞书错误码映射到同一个原因时，InviteConfigCauses 仍只返回一次。
+// 测试期间临时往映射表里加一个重复的映射，结束时还原；本测试不并行，不会和读映射表的并行测试重叠。
+func TestInviteConfigCauses_DistinctWhenCodesShareCause(t *testing.T) {
+	before := InviteConfigCauses()
+
+	const extraCode = 99999001
+	inviteConfigByLarkCode[extraCode] = InviteConfigScopeMissing
+	t.Cleanup(func() { delete(inviteConfigByLarkCode, extraCode) })
+
+	after := InviteConfigCauses()
+
+	if !slices.Equal(after, before) {
+		t.Errorf("InviteConfigCauses() = %v after a second code maps to %q, want unchanged %v", after, InviteConfigScopeMissing, before)
+	}
+	if got := slices.Compact(slices.Clone(after)); len(got) != len(after) {
+		t.Errorf("InviteConfigCauses() = %v has duplicates", after)
 	}
 }

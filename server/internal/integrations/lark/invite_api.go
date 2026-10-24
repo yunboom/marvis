@@ -176,7 +176,7 @@ func ClassifyInviteError(err error) string {
 	return inviteErrorByLarkCode[code]
 }
 
-// InviteConfigCauses 返回全部应用配置类错误的原因（InviteConfig*），顺序固定。
+// InviteConfigCauses 返回全部应用配置类错误的原因（InviteConfig*），去重，顺序固定。
 // 调用方用它核对自己按原因维护的说明表是否齐全，新增原因时不会漏掉说明。
 func InviteConfigCauses() []string {
 	causes := make([]string, 0, len(inviteConfigByLarkCode))
@@ -185,7 +185,8 @@ func InviteConfigCauses() []string {
 	}
 	slices.Sort(causes)
 
-	return causes
+	// 多个飞书错误码可能对应同一个原因，排序后相邻去重。
+	return slices.Compact(causes)
 }
 
 // ClassifyInviteConfigError 把飞书错误归类为应用配置类错误的原因（InviteConfig*），

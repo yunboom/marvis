@@ -1,7 +1,7 @@
-import { QueryClient } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError, setApiInstance } from "../api";
 import type { ApiClient } from "../api/client";
+import { createQueryClient } from "../query-client";
 import type { Agent, Workspace } from "../types";
 import {
   agentListOptions,
@@ -129,10 +129,11 @@ describe("Feishu invite queries", () => {
   describe("chat list retries against a real query client", () => {
     afterEach(() => setApiInstance(null as unknown as ApiClient));
 
-    // 把重试间隔压到 0，只看请求次数。
+    // 用应用实际的 QueryClient（全局默认重试 1 次），这样没有 4xx 例外时 4xx 也会被重试；
+    // 重试间隔压到 0，只看请求次数。
     async function fetchChats(listLarkChats: () => Promise<never>) {
       setApiInstance({ listLarkChats } as unknown as ApiClient);
-      const client = new QueryClient();
+      const client = createQueryClient();
       const result = await client
         .fetchQuery({ ...larkChatListOptions("ws-1"), retryDelay: 0 })
         .catch((err: unknown) => err);
