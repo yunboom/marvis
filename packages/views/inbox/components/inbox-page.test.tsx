@@ -86,6 +86,7 @@ vi.mock("@marvis/core/inbox/queries", () => ({
 // fresh `vi.fn()` per render would make the effect's deps churn.
 const markReadMutate = vi.fn();
 const markUnreadMutate = vi.fn();
+const markAllReadMutate = vi.fn();
 const archiveMutate = vi.fn();
 const unarchiveMutate = vi.fn();
 const retrySourceContextMutateAsync = vi.fn();
@@ -106,7 +107,7 @@ vi.mock("@marvis/core/inbox/mutations", () => {
     useMarkInboxUnread: () => ({ mutate: markUnreadMutate }),
     useArchiveInbox: () => ({ mutate: archiveMutate }),
     useUnarchiveInbox: () => ({ mutate: unarchiveMutate }),
-    useMarkAllInboxRead: mutation,
+    useMarkAllInboxRead: () => ({ mutate: markAllReadMutate }),
     useArchiveAllInbox: mutation,
     useArchiveAllReadInbox: mutation,
     useArchiveCompletedInbox: mutation,
@@ -286,6 +287,7 @@ function reset() {
   replace.mockClear();
   markReadMutate.mockReset();
   markUnreadMutate.mockClear();
+  markAllReadMutate.mockClear();
   archiveMutate.mockClear();
   unarchiveMutate.mockClear();
   retrySourceContextMutateAsync.mockReset();
@@ -479,11 +481,13 @@ describe("InboxPage", () => {
     render(<InboxPage />);
 
     expect(screen.queryByTestId("row")).toBeNull();
-    // The test's `useT` names every control "Inbox"; the header's batch menu
-    // shares the name, so skip the menu trigger.
+    // The test's `useT` names every control "Inbox"; the header's mark-all-read
+    // button and batch menu share the name, so take the empty state's button,
+    // which renders after the header.
     const clearFilters = screen
       .getAllByRole("button", { name: "Inbox" })
-      .find((button) => !button.hasAttribute("aria-haspopup"));
+      .filter((button) => !button.hasAttribute("aria-haspopup"))
+      .at(-1);
     fireEvent.click(clearFilters!);
     expect(screen.getByTestId("row")).toHaveTextContent("todo-high");
   });
@@ -668,6 +672,36 @@ describe("InboxPage", () => {
     fireEvent.click(screen.getByTestId("row"));
 
     expect(replace).toHaveBeenCalledWith("/acme/inbox?issue=issue-3");
+  });
+
+  // The message box sits over another page whose URL it must not touch, and a
+  // stray `?issue=` on that page is not a selection for the box.
+  it("keeps the dialog's selection out of the URL", () => {
+    reset();
+    searchParams = new URLSearchParams("issue=issue-3");
+    listData.active = [item({ id: "active-1", issue_id: "issue-3" })];
+    issueDetailProps.length = 0;
+
+    const close = <button type="button">Close box</button>;
+    render(<InboxPage surface="dialog" closeAction={close} />);
+    expect(issueDetailProps).toHaveLength(0);
+
+    fireEvent.click(screen.getByTestId("row"));
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(issueDetailProps.at(-1)?.issueId).toBe("issue-3");
+    expect(issueDetailProps.at(-1)?.trailingActions).toBe(close);
+  });
+
+  it("puts mark-all-read in the header, not the batch menu", () => {
+    reset();
+    listData.active = [item({ id: "unread-1", read: false })];
+
+    render(<InboxPage />);
+    const buttons = screen.getAllByRole("button", { name: "Inbox" });
+    fireEvent.click(buttons.find((b) => !b.hasAttribute("aria-haspopup"))!);
+
+    expect(markAllReadMutate).toHaveBeenCalledTimes(1);
   });
 
   // `InboxItem.issue_id` is nullable: a quick-create outcome is a notification,

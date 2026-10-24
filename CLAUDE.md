@@ -33,6 +33,7 @@
 - 字体栈 PingFang SC / Noto Sans SC 优先（`apps/web/app/globals.css`、`apps/desktop/src/renderer/src/globals.css`）。
 - Logo：`packages/ui/components/common/marvis-icon.tsx`（圆角方块 + 镂空 "M"），docs 站、移动端、favicon、桌面/PWA/移动端图标已同步；应用侧栏顶部显示 logo + "Marvis" 字标（`marvis-wordmark.tsx`，Marvis.app 的 SVG 字标）；侧栏默认宽 216px。
 - 状态与优先级色（`tokens.css` 的 `--status-*`、`--priority-*`）：状态用国画颜料（淡墨、藤黄、花青、石绿、朱砂），优先级是小圆点（紧急 / 高 / 中实心，低空心）；浅色值对白底和 `#f7f7f7` 都要保持 3:1。自定义状态 / 标签色板是 `color-picker.tsx` 的 10 色国画色板。
+- 侧栏（`app-sidebar.tsx`）：新建任务是 logo 行右侧的加号按钮，不占导航行；收件箱不在导航里，改名「消息盒子」，入口是工作区行右侧的铃铛（当前工作区有未读时显示红点），点开是 `MessageBox` 弹窗（`inbox/components/message-box.tsx`，内容就是 `InboxPage surface="dialog"`，选中项不写 URL）；`/inbox` 路由和 `?issue=` 深链保留为完整页面；「聊天」中文叫「我的对话」；工作区头像是黑底白字圆角方块（`workspace-avatar.tsx`）。同步上游时侧栏和 `inbox-page.tsx` 易冲突：保留这套入口，合入上游新增的行为。
 - 头像统一浅灰底黑字，成员圆形、智能体和小队圆角方形（`actor-avatar.tsx`）；智能体运行用绿色呼吸灯（`breathing-dot.tsx`、`base.css` 的 `animate-breathe`）。
 - 看板按状态分组时是四列泳道（未开始 / 工作中 / 需介入 / 已结束，按 `status_group` 分列，见决策六；`board-status-columns.ts`、`status-lane-board.tsx`）；泳道视图同样是这四列，每个格子直接渲染看板的 `StatusLane`，只是多了按负责人 / 项目 / 父任务分行（`swimlane-view.tsx`）；新建任务弹窗用「手动创建 / 智能体创建」标签和墨色 `BorderBeam variant="ink"`。同步上游时这些文件冲突，保留本 fork 的样式，只合入上游新增的行为。
 

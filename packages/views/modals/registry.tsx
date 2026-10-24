@@ -14,6 +14,7 @@ import { DeleteIssueConfirmModal } from "./delete-issue-confirm";
 import { RunConfirmModal } from "./run-confirm";
 import { WorkflowHandoffModal } from "./workflow-handoff";
 import { IssueLimitUpgradeDialog } from "./issue-limit-upgrade-dialog";
+import { MessageBox } from "../inbox/components/message-box";
 
 export function ModalRegistry() {
   const modal = useModalStore((s) => s.modal);
@@ -76,6 +77,9 @@ export function ModalRegistry() {
 
   return (
     <>
+      {/* Before the store-driven modal so a modal opened from inside the box
+          (rename, delete) stacks above it. */}
+      <MessageBox />
       {activeModal}
       <IssueLimitUpgradeDialog />
     </>

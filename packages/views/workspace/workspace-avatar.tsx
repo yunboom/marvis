@@ -1,10 +1,12 @@
 import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { cn } from "@marvis/ui/lib/utils";
 
+// Rounded squares, not circles: circles are member avatars. `sm` is 18px so it
+// sits in the sidebar's 18px icon column.
 const sizeMap = {
-  sm: "h-5 w-5 text-caption rounded-full",
-  md: "h-7 w-7 text-caption rounded-full",
-  lg: "h-9 w-9 text-body rounded-full",
+  sm: "size-[18px] text-micro rounded-[5px]",
+  md: "h-7 w-7 text-caption rounded-lg",
+  lg: "h-9 w-9 text-body rounded-[10px]",
 } as const;
 
 interface WorkspaceAvatarProps {
@@ -28,7 +30,7 @@ function WorkspaceAvatar({ name, avatarUrl, size = "sm", className }: WorkspaceA
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center border bg-muted font-semibold text-muted-foreground",
+        "inline-flex shrink-0 items-center justify-center bg-foreground font-bold text-background",
         sizeMap[size],
         className
       )}

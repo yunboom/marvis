@@ -355,6 +355,31 @@ describe("workspace-switcher unread dot", () => {
   });
 });
 
+describe("message box bell", () => {
+  beforeEach(() => {
+    summary.current = [];
+    workspaces.current = [];
+  });
+
+  it("marks the bell when the active workspace has unread items", () => {
+    summary.current = [{ workspace_id: "ws-1", count: 2 }];
+    render(<AppSidebar />);
+    expect(screen.getByTestId("message-box-unread-dot")).toBeInTheDocument();
+  });
+
+  // Other workspaces' unread is the switcher's brand dot, not the bell's.
+  it("leaves the bell plain when only another workspace has unread", () => {
+    summary.current = [{ workspace_id: "ws-2", count: 2 }];
+    render(<AppSidebar />);
+    expect(screen.queryByTestId("message-box-unread-dot")).toBeNull();
+  });
+
+  it("drops the inbox from the nav", () => {
+    const { container } = render(<AppSidebar />);
+    expect(container.querySelector('[data-href="/acme/inbox"]')).toBeNull();
+  });
+});
+
 describe("workspace-switcher dropdown per-workspace dot", () => {
   beforeEach(() => {
     summary.current = [];
@@ -431,16 +456,11 @@ describe("personal nav — Chat", () => {
   const chatBadge = (container: HTMLElement) =>
     chatNav(container)?.querySelector("number-flow-react") ?? null;
 
-  it("keeps persistent Inbox and Chat counters static", () => {
-    summary.current = [{ workspace_id: "ws-1", count: 1 }];
+  it("keeps the persistent Chat counter static", () => {
     chatSessions.current = [{ id: "chat-1", unread_count: 2 }];
     const { container } = render(<AppSidebar />);
-    const inboxBadge = container
-      .querySelector<HTMLElement>('button[data-href="/acme/inbox"]')
-      ?.querySelector("number-flow-react") as (HTMLElement & { animated?: boolean }) | null;
     const currentChatBadge = chatBadge(container) as (HTMLElement & { animated?: boolean }) | null;
 
-    expect(inboxBadge?.animated).toBe(false);
     expect(currentChatBadge?.animated).toBe(false);
   });
 
