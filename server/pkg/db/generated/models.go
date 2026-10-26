@@ -1126,6 +1126,7 @@ type KbAnnotation struct {
 	MergeRequestID  pgtype.UUID        `json:"merge_request_id"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	OriginalQuote   string             `json:"original_quote"`
 }
 
 type KbBase struct {
