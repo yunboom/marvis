@@ -9,8 +9,9 @@ import { ApiError } from "@marvis/core/api";
 import { renderWithI18n } from "../test/i18n";
 import { AppSidebar } from "./app-sidebar";
 
-const { appForeground, chatSessions, chatStore, detail, deletePin, invitationApi, navigation, pins, sidebarState, summary, workspaces } = vi.hoisted(() => ({
+const { appForeground, chatSessions, chatStore, detail, deletePin, invitationApi, knowledgeBases, navigation, pins, sidebarState, summary, workspaces } = vi.hoisted(() => ({
   appForeground: { current: true },
+  knowledgeBases: { current: [] as { id: string; pending: { annotations: number; stale_pages: number; open_mrs: number } }[] },
   sidebarState: { setOpenMobile: vi.fn() },
   chatSessions: { current: [] as { id?: string; unread_count?: number }[] },
   chatStore: { current: { activeSessionId: null as string | null, isOpen: false } },
@@ -169,6 +170,7 @@ vi.mock("@marvis/core/paths", async (importOriginal) => ({
     autopilots: () => "/acme/autopilots",
     agents: () => "/acme/agents",
     squads: () => "/acme/squads",
+    kb: () => "/acme/kb",
     usage: () => "/acme/usage",
     runtimes: () => "/acme/runtimes",
     skills: () => "/acme/skills",
@@ -230,6 +232,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
     if (queryKey[0] === "inbox" && queryKey[1] === "unread-summary") return { data: summary.current };
     if (queryKey[0] === "workspaces") return { data: workspaces.current };
     if (queryKey[0] === "chat" && queryKey[2] === "sessions") return { data: chatSessions.current };
+    if (queryKey[0] === "kb" && queryKey[2] === "bases") return { data: knowledgeBases.current };
     return { data: [] };
   },
   useQueryClient: () => ({ fetchQuery: vi.fn(), invalidateQueries: invitationApi.invalidateQueries }),
@@ -609,6 +612,42 @@ describe("personal nav — Chat", () => {
     appForeground.current = false;
     const { container } = render(<AppSidebar />);
     expect(chatBadge(container)).toHaveAttribute("aria-label", "5");
+  });
+});
+
+describe("AI team nav — Knowledge base", () => {
+  beforeEach(() => {
+    knowledgeBases.current = [];
+    navigation.current = { pathname: "/acme/issues" };
+  });
+
+  const pending = (open_mrs: number) => ({ annotations: 1, stale_pages: 1, open_mrs });
+  const kbNav = (container: HTMLElement) =>
+    container.querySelector<HTMLElement>('button[data-href="/acme/kb"]');
+
+  it("places Knowledge base right after Squads", () => {
+    const { container } = renderWithI18n(<AppSidebar />);
+    const hrefs = Array.from(container.querySelectorAll<HTMLElement>("button[data-href]")).map(
+      (el) => el.dataset.href,
+    );
+    expect(hrefs.indexOf("/acme/kb")).toBe(hrefs.indexOf("/acme/squads") + 1);
+    expect(kbNav(container)).toHaveTextContent("Knowledge base");
+  });
+
+  it("badges the nav with open merge requests summed across knowledge bases", () => {
+    knowledgeBases.current = [
+      { id: "a", pending: pending(2) },
+      { id: "b", pending: pending(1) },
+      { id: "c", pending: pending(0) },
+    ];
+    const { container } = render(<AppSidebar />);
+    expect(kbNav(container)?.querySelector('[data-testid="kb-open-mr-badge"]')).toHaveTextContent("3");
+  });
+
+  it("hides the badge when nothing is waiting for review", () => {
+    knowledgeBases.current = [{ id: "a", pending: pending(0) }];
+    const { container } = render(<AppSidebar />);
+    expect(kbNav(container)?.querySelector('[data-testid="kb-open-mr-badge"]')).toBeNull();
   });
 });
 

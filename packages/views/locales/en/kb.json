@@ -1,0 +1,32 @@
+{
+  "list": {
+    "title": "Knowledge base",
+    "new_button": "New knowledge base",
+    "pending_reviews_one": "{{count}} change to review",
+    "pending_reviews_other": "{{count}} changes to review",
+    "search_placeholder": "Search knowledge bases and pages...",
+    "search_label": "Search knowledge bases",
+    "sort": {
+      "recent": "Recently updated",
+      "name": "Name"
+    },
+    "table": {
+      "name": "Name",
+      "description": "Description",
+      "pages": "Pages",
+      "pending": "Pending",
+      "updated": "Updated"
+    },
+    "pending": {
+      "annotations_one": "{{count}} annotation",
+      "annotations_other": "{{count}} annotations",
+      "stale_pages_one": "{{count}} to re-check",
+      "stale_pages_other": "{{count}} to re-check"
+    },
+    "copy_link": "Copy link",
+    "link_copied": "Link copied",
+    "no_matches": "No matching knowledge bases",
+    "empty_title": "No knowledge bases yet",
+    "empty_description": "Agents write and maintain pages. Team members read, annotate, and review changes."
+  }
+}

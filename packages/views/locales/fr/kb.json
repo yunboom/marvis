@@ -1,0 +1,32 @@
+{
+  "list": {
+    "title": "Base de connaissances",
+    "new_button": "Nouvelle base de connaissances",
+    "pending_reviews_one": "{{count}} modification à valider",
+    "pending_reviews_other": "{{count}} modifications à valider",
+    "search_placeholder": "Rechercher des bases et des pages...",
+    "search_label": "Rechercher des bases de connaissances",
+    "sort": {
+      "recent": "Mises à jour récentes",
+      "name": "Nom"
+    },
+    "table": {
+      "name": "Nom",
+      "description": "Description",
+      "pages": "Pages",
+      "pending": "En attente",
+      "updated": "Mise à jour"
+    },
+    "pending": {
+      "annotations_one": "{{count}} annotation",
+      "annotations_other": "{{count}} annotations",
+      "stale_pages_one": "{{count}} à revérifier",
+      "stale_pages_other": "{{count}} à revérifier"
+    },
+    "copy_link": "Copier le lien",
+    "link_copied": "Lien copié",
+    "no_matches": "Aucune base de connaissances correspondante",
+    "empty_title": "Aucune base de connaissances",
+    "empty_description": "Les agents rédigent et maintiennent les pages. Les membres de l'équipe lisent, annotent et valident les modifications."
+  }
+}

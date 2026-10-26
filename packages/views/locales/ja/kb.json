@@ -1,0 +1,29 @@
+{
+  "list": {
+    "title": "ナレッジベース",
+    "new_button": "ナレッジベースを作成",
+    "pending_reviews_other": "レビュー待ちの変更 {{count}}",
+    "search_placeholder": "ナレッジベースとページを検索...",
+    "search_label": "ナレッジベースを検索",
+    "sort": {
+      "recent": "最近の更新",
+      "name": "名前"
+    },
+    "table": {
+      "name": "名前",
+      "description": "説明",
+      "pages": "ページ",
+      "pending": "未対応",
+      "updated": "更新日時"
+    },
+    "pending": {
+      "annotations_other": "注釈 {{count}}",
+      "stale_pages_other": "再確認 {{count}}"
+    },
+    "copy_link": "リンクをコピー",
+    "link_copied": "リンクをコピーしました",
+    "no_matches": "一致するナレッジベースはありません",
+    "empty_title": "ナレッジベースはまだありません",
+    "empty_description": "エージェントがページを書いて保守し、チームメンバーが読んで注釈し、変更をレビューします。"
+  }
+}
