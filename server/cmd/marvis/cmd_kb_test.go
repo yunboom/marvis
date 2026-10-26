@@ -270,3 +270,45 @@ func TestKbDraftFlagHelp(t *testing.T) {
 		t.Errorf("kb draft create help = %q", kbDraftCreateCmd.Long)
 	}
 }
+
+// The annotation commands send what the annotation endpoints read: the page
+// as a reference under "page", list filters as status / page, and the new
+// status of dismiss / reopen.
+func TestKbAnnotationRequests(t *testing.T) {
+	seen := newKbTestServer(t, http.StatusOK, map[string]any{"id": "a1", "status": "pending"})
+
+	if _, err := runKbTestCmd(t, kbAnnotationAddCmd, "team", "--page", "team:/payment/callback", "--block", "b8Xz",
+		"--quote", "渠道回调按订单号加幂等键去重。", "--body", "去重键已改"); err != nil {
+		t.Fatalf("annotation add: %v", err)
+	}
+	add := (*seen)[0]
+	if add.Method != http.MethodPost || add.Path != "/api/kb/bases/team/annotations" ||
+		add.Body["page"] != "team:/payment/callback" || add.Body["block_id"] != "b8Xz" ||
+		add.Body["quote"] != "渠道回调按订单号加幂等键去重。" || add.Body["body"] != "去重键已改" {
+		t.Errorf("add request = %+v", add)
+	}
+
+	if _, err := runKbTestCmd(t, kbAnnotationAddCmd, "team", "--block", "b8Xz", "--body", "x"); err == nil {
+		t.Error("--block without --page accepted")
+	}
+
+	if _, err := runKbTestCmd(t, kbAnnotationListCmd, "team", "--status", "all", "--page", "-"); err != nil {
+		t.Fatalf("annotation list: %v", err)
+	}
+	if list := (*seen)[1]; list.Method != http.MethodGet || list.Query["status"] != "all" || list.Query["page"] != "-" {
+		t.Errorf("list request = %+v", list)
+	}
+
+	for name, c := range map[string]struct {
+		cmd    *cobra.Command
+		status string
+	}{"dismiss": {kbAnnotationDismissCmd, "dismissed"}, "reopen": {kbAnnotationReopenCmd, "pending"}} {
+		before := len(*seen)
+		if _, err := runKbTestCmd(t, c.cmd, "a1"); err != nil {
+			t.Fatalf("annotation %s: %v", name, err)
+		}
+		if req := (*seen)[before]; req.Method != http.MethodPatch || req.Path != "/api/kb/annotations/a1" || req.Body["status"] != c.status {
+			t.Errorf("%s request = %+v", name, req)
+		}
+	}
+}
