@@ -1833,7 +1833,7 @@ A knowledge base is the team's long-term memory: facts, decisions and lessons th
 
 Each knowledge base has its own writing rules and goals: the `schema` and `purpose` fields of `marvis kb get <slug>`. Read both before you write anything.
 
-## Finding the team's existing knowledge
+## Finding knowledge
 
 There are three ways in. Read the `schema` field that `kb get` returns: which sections the knowledge base has, what each page type covers and what each field means. Reading it first tells you roughly where to look. The table of contents, `kb page list`, lists the top-level pages, or with `--parent` the child pages of the given page, each with a one-line description. Search, `kb search`, looks through titles and page text and tells you which block matched.
 
@@ -1957,7 +1957,7 @@ While the change request waits for review, those annotations show as in progress
 
 每个知识库都有自己的写作规则和目标，在 `marvis kb get <slug>` 输出的 `schema`、`purpose` 字段里。动笔之前先把这两份读一遍。
 
-## 查找团队已有的知识
+## 查找知识
 
 有三个入口。读取 `kb get` 返回的 `schema` 字段：知识库分成哪些区、每类页面写什么、各字段是什么意思，先读它就知道要找的内容大概在哪。目录 `kb page list` 列出最顶层的页面，带上 `--parent` 则列出指定页的子页面，每页附一句说明。检索 `kb search` 覆盖标题和正文，还会告诉你命中的是哪一块。
 
