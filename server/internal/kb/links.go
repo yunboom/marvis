@@ -222,3 +222,27 @@ func replaceBareDestination(content, dest, replacement string) string {
 
 	return b.String()
 }
+
+// PathLinks rewrites stored kb:// links in blocks to the path form agents and
+// diffs read: /a/b.md[#^block]. Links to pages without a path (deleted or
+// unknown) stay as stored.
+func PathLinks(blocks []Block, resolver PageResolver) []Block {
+	out := make([]Block, len(blocks))
+	for i, block := range blocks {
+		out[i] = block
+		out[i].Content = RewriteLinkDestinations(block.Content, func(dest string) (string, bool) {
+			target, ok := ParseLinkTarget(dest)
+			if !ok || target.PageID == "" {
+				return "", false
+			}
+			path, found := resolver.PathByPageID(target.PageID)
+			if !found {
+				return "", false
+			}
+
+			return FormatPathLink(path, target.BlockID), true
+		})
+	}
+
+	return out
+}

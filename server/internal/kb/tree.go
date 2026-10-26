@@ -7,6 +7,8 @@ type TreeNode struct {
 	ID       string
 	ParentID string
 	Slug     string
+	// Title is only needed for breadcrumbs; path resolution ignores it.
+	Title string
 }
 
 // PageTree resolves page paths (/parent/child) within one knowledge base. It
@@ -88,4 +90,37 @@ func (t *PageTree) Add(node TreeNode) {
 		t.paths[node.ID] = path
 		t.byPath[path] = node.ID
 	}
+}
+
+// Ancestors returns the pages above a page, top level first. It stops at a
+// broken or cyclic parent chain.
+func (t *PageTree) Ancestors(pageID string) []TreeNode {
+	chain := make([]TreeNode, 0, 4)
+	visited := map[string]struct{}{pageID: {}}
+
+	node, ok := t.byID[pageID]
+	for ok && node.ParentID != "" {
+		if _, loop := visited[node.ParentID]; loop {
+			break
+		}
+		visited[node.ParentID] = struct{}{}
+
+		node, ok = t.byID[node.ParentID]
+		if ok {
+			chain = append(chain, node)
+		}
+	}
+
+	for i, j := 0, len(chain)-1; i < j; i, j = i+1, j-1 {
+		chain[i], chain[j] = chain[j], chain[i]
+	}
+
+	return chain
+}
+
+// Node returns a page of the tree.
+func (t *PageTree) Node(pageID string) (TreeNode, bool) {
+	node, ok := t.byID[pageID]
+
+	return node, ok
 }
