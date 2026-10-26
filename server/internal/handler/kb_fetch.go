@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -23,16 +21,7 @@ const (
 	kbSearchMaxLimit     = 50
 	kbListDefaultLimit   = 50
 	kbListMaxLimit       = 200
-	// kbExcerptRunes is the length of a search hit excerpt.
-	kbExcerptRunes = 120
-	// kbSearchModeKeyword reports that only the keyword half of the hybrid
-	// search ran; the vector half comes with ticket 06.
-	kbSearchModeKeyword = "keyword"
-	// kbLikeEscape escapes LIKE wildcards in search terms.
-	kbLikeEscape = `\`
 )
-
-var kbLikeEscaper = strings.NewReplacer(kbLikeEscape, kbLikeEscape+kbLikeEscape, "%", kbLikeEscape+"%", "_", kbLikeEscape+"_")
 
 // KbPageRefResponse is a page named next to another: a child or a backlink.
 type KbPageRefResponse struct {
@@ -74,26 +63,6 @@ type KbClaimListItem struct {
 	Text      string        `json:"text"`
 	Evidence  []kb.Evidence `json:"evidence"`
 	CheckedAt string        `json:"checked_at"`
-}
-
-// KbSearchHit is one page a search found.
-type KbSearchHit struct {
-	PageID  string `json:"page_id"`
-	Slug    string `json:"slug"`
-	Path    string `json:"path"`
-	Title   string `json:"title"`
-	Type    string `json:"type"`
-	BlockID string `json:"block_id"`
-	Excerpt string `json:"excerpt"`
-	Mention string `json:"mention"`
-}
-
-// KbSearchResponse is a search result (GET /api/kb/search); Total counts
-// every match, beyond the hits returned.
-type KbSearchResponse struct {
-	Mode  string        `json:"mode"`
-	Hits  []KbSearchHit `json:"hits"`
-	Total int64         `json:"total"`
 }
 
 // KbStalePage is a page past its review date (GET /api/kb/bases/{kb}/stale).
@@ -413,97 +382,6 @@ func (h *Handler) ListKbClaims(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// SearchKb runs a keyword search over page titles and text (GET
-// /api/kb/search). Every space-separated term must match; the top ?limit
-// hits (1-50) come back by relevance with the total, without paging. ?type
-// and ?kb narrow the search.
-func (h *Handler) SearchKb(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	wsUUID, ok := parseUUIDOrBadRequest(w, h.resolveWorkspaceID(r), "workspace_id")
-	if !ok {
-		return
-	}
-
-	terms := strings.Fields(strings.ToLower(query.Get("q")))
-	if len(terms) == 0 {
-		writeErrorCode(w, http.StatusBadRequest, kbCodeInvalidRequest, "q is required")
-		return
-	}
-	limit, _, ok := parseKbPaging(w, query.Get("limit"), "", kbSearchDefaultLimit, kbSearchMaxLimit)
-	if !ok {
-		return
-	}
-
-	var baseID pgtype.UUID
-	if ref := query.Get("kb"); ref != "" {
-		base, ok := h.loadKbBaseForUser(w, r, ref)
-		if !ok {
-			return
-		}
-		baseID = base.ID
-	}
-
-	resp, err := h.searchKbKeyword(r.Context(), wsUUID, baseID, strings.TrimSpace(query.Get("type")), terms, limit)
-	if err != nil {
-		h.writeKbInternalError(w, r, err)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, resp)
-}
-
-func (h *Handler) searchKbKeyword(ctx context.Context, wsUUID, baseID pgtype.UUID, pageType string, terms []string, limit int) (KbSearchResponse, error) {
-	patterns := make([]string, len(terms))
-	for i, term := range terms {
-		patterns[i] = "%" + kbLikeEscaper.Replace(term) + "%"
-	}
-	typeFilter := pgtype.Text{String: pageType, Valid: pageType != ""}
-
-	rows, err := h.Queries.SearchKbPages(ctx, db.SearchKbPagesParams{
-		WorkspaceID: wsUUID, KnowledgeBaseID: baseID, PageType: typeFilter, Patterns: patterns, RowLimit: int32(limit),
-	})
-	if err != nil {
-		return KbSearchResponse{}, errors.Wrap(err, "search knowledge bases")
-	}
-	total, err := h.Queries.CountKbSearchPages(ctx, db.CountKbSearchPagesParams{
-		WorkspaceID: wsUUID, KnowledgeBaseID: baseID, PageType: typeFilter, Patterns: patterns,
-	})
-	if err != nil {
-		return KbSearchResponse{}, errors.Wrap(err, "count search hits")
-	}
-
-	baseIDs := make([]pgtype.UUID, 0)
-	seen := map[pgtype.UUID]bool{}
-	for _, row := range rows {
-		if !seen[row.KnowledgeBaseID] {
-			seen[row.KnowledgeBaseID] = true
-			baseIDs = append(baseIDs, row.KnowledgeBaseID)
-		}
-	}
-	trees, err := h.loadKbTrees(ctx, baseIDs)
-	if err != nil {
-		return KbSearchResponse{}, err
-	}
-
-	resp := KbSearchResponse{Mode: kbSearchModeKeyword, Hits: make([]KbSearchHit, 0, len(rows)), Total: total}
-	for _, row := range rows {
-		blocks, err := kb.ParseBlocks(row.Blocks)
-		if err != nil {
-			return KbSearchResponse{}, errors.Wrapf(err, "page_id=%s", uuidToString(row.ID))
-		}
-		id := uuidToString(row.ID)
-		tree := trees[row.KnowledgeBaseID]
-		path, _ := tree.PathByPageID(id)
-		blockID, excerpt := kbSearchExcerpt(kb.PathLinks(blocks, tree), terms)
-		resp.Hits = append(resp.Hits, KbSearchHit{
-			PageID: id, Slug: row.KbSlug, Path: path, Title: row.Title, Type: row.Type,
-			BlockID: blockID, Excerpt: excerpt, Mention: pageMention(row.Title, id),
-		})
-	}
-
-	return resp, nil
-}
-
 func (h *Handler) loadKbTrees(ctx context.Context, baseIDs []pgtype.UUID) (map[pgtype.UUID]*kb.PageTree, error) {
 	out := make(map[pgtype.UUID]*kb.PageTree, len(baseIDs))
 	if len(baseIDs) == 0 {
@@ -525,44 +403,6 @@ func (h *Handler) loadKbTrees(ctx context.Context, baseIDs []pgtype.UUID) (map[p
 	}
 
 	return out, nil
-}
-
-// kbSearchExcerpt picks the first block whose text matches a term and cuts
-// an excerpt around the match.
-func kbSearchExcerpt(blocks []kb.Block, terms []string) (string, string) {
-	for _, block := range blocks {
-		plain := kb.PlainText(block.Content)
-		lower := strings.ToLower(plain)
-		for _, term := range terms {
-			i := strings.Index(lower, term)
-			if i < 0 {
-				continue
-			}
-
-			return block.ID, excerptAround(plain, i)
-		}
-	}
-
-	return "", ""
-}
-
-func excerptAround(text string, byteIndex int) string {
-	start := byteIndex
-	for back := 0; start > 0 && back < kbExcerptRunes/4; back++ {
-		_, size := utf8.DecodeLastRuneInString(text[:start])
-		start -= size
-	}
-
-	runes := []rune(text[start:])
-	excerpt := string(runes[:min(len(runes), kbExcerptRunes)])
-	if start > 0 {
-		excerpt = "…" + excerpt
-	}
-	if len(runes) > kbExcerptRunes {
-		excerpt += "…"
-	}
-
-	return excerpt
 }
 
 // ListKbStalePages lists pages past their stale_after, oldest first (GET

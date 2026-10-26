@@ -194,7 +194,7 @@ block_replace. Then run kb draft check again.`,
 
 var kbSearchCmd = &cobra.Command{
 	Use:   "search <query>",
-	Short: "Search page titles and text; returns the top hits by relevance with the total",
+	Short: "Hybrid search (keyword + vector) over page titles and text; returns the top hits by relevance with the mode and total",
 	Args:  exactArgs(1),
 	RunE:  runKbSearch,
 }
@@ -1001,6 +1001,7 @@ func runKbSearch(cmd *cobra.Command, args []string) error {
 				h, _ := raw.(map[string]any)
 				rows = append(rows, []string{displayID(strVal(h, "page_id"), kbFullID(cmd)), strVal(h, "slug") + ":" + strVal(h, "path"), strVal(h, "title"), strVal(h, "excerpt")})
 			}
+			fmt.Printf("mode: %s  total: %s\n", strVal(resp, "mode"), strVal(resp, "total"))
 			cli.PrintTable(os.Stdout, []string{"PAGE", "REF", "TITLE", "EXCERPT"}, rows)
 		})
 	})

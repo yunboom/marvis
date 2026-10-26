@@ -243,6 +243,17 @@ func TestKbSearchAndChatQueries(t *testing.T) {
 		t.Error("kb search must not page")
 	}
 
+	newKbTestServer(t, http.StatusOK, map[string]any{"mode": "hybrid", "total": 3, "hits": []any{
+		map[string]any{"page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", "slug": "team", "path": "/pay", "title": "Pay", "excerpt": "dedup", "score": 0.03},
+	}})
+	out, err := runKbTestCmd(t, kbSearchCmd, "dedup")
+	if err != nil {
+		t.Fatalf("search table: %v", err)
+	}
+	if !strings.Contains(out, "mode: hybrid  total: 3") || !strings.Contains(out, "team:/pay") {
+		t.Errorf("table output = %q", out)
+	}
+
 	seen = newKbTestServer(t, http.StatusOK, []any{})
 	if _, err := runKbTestCmd(t, chatListCmd, "--scope", "workspace", "--agent", "11111111-1111-4111-8111-111111111111", "--since", "2026-10-24T00:00:00Z"); err != nil {
 		t.Fatalf("chat list: %v", err)

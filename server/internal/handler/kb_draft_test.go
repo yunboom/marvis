@@ -618,7 +618,7 @@ func TestKbSearchStaleAndClaims(t *testing.T) {
 	var search KbSearchResponse
 	req := newRequest(http.MethodGet, "/api/kb/search?q="+url.QueryEscape("去重 worker")+"&kb="+f.slug, nil)
 	testutil.Call(t, testHandler.SearchKb, req).Want(http.StatusOK).JSON(&search)
-	if search.Mode != kbSearchModeKeyword || len(search.Hits) != 1 || search.Hits[0].PageID != stalePage || search.Hits[0].Path != "/old" || search.Hits[0].Mention == "" || search.Hits[0].Excerpt == "" || search.Total != 1 {
+	if search.Mode != kb.SearchModeKeyword || len(search.Hits) != 1 || search.Hits[0].PageID != stalePage || search.Hits[0].Path != "/old" || search.Hits[0].Mention == "" || search.Hits[0].Excerpt == "" || search.Total != 1 {
 		t.Errorf("search = %+v", search)
 	}
 	req = newRequest(http.MethodGet, "/api/kb/search?q=worker&type=guide&kb="+f.slug, nil)
