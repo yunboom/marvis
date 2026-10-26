@@ -311,3 +311,52 @@
 12. **配置保存后的去向（票 03 缺口 b，用户定）**：保存后提示「已保存」、留在配置页、不归档、可以继续对话；「未完成的配置」只列 `kbBuilderSessionHasUnsavedChanges` 为真的会话：保存过的右侧配置和知识库当前配置不同，或从没保存过、但智能体最后一条回复的 `<kb_draft>` 提议和当前配置不同。创建成功仍归档并跳首页显示上手引导。
 13. **embedding 单批条数（票 06 缺口 c）**：`MARVIS_EMBEDDING_BATCH_SIZE`，默认 10，范围 1–100，非数字取默认、越界截到边界（`embedding.ParseBatchSize`）；`Embedder` 接口加 `BatchSize()`，`IndexPages` 按它切批。写进 `.env.example`、`docker-compose.selfhost.yml` 和 `selfhost-config.test.sh` 的漂移检查。
 14. **端到端**：`e2e/kb-jobs.spec.ts` 在浏览器里新建作业，智能体一侧（带 job_id 建草稿、写一页）用接口模拟，不跑智能体 CLI；草稿经 `kb.job.updated` / `kb.draft.updated` 不刷新就出现在右侧，一轮结束后提交审核、开出变更请求。各边界状态在 views 组件测试，接口契约在 Go 的 handler 测试（`kb_job_test.go`）。
+
+
+## 票 08
+
+1. **评论启动了谁要落库**
+   - 问题：spec 7.9 评论响应有 `triggered`（启动的智能体与原因），DDL 的 `kb_mr_comment` 没有这一列；审核页还要显示「正在工作 · 查看执行过程」。
+   - 选择：迁移 632 `kb_mr_comment.triggered JSONB`（`[{agent_id, reason, task_id, chat_session_id}]`），rebrand 顺延到 633（脚本 `KEEP`、CLAUDE.md 同步；没有新索引，`concurrentIndexCleanups` 不变）。已跑过的本地库照常 `migrate up`：633 是 rebrand，幂等。
+   - 响应里的 `running` 按 `task_id` 实时查任务状态（排队、派发、运行、等本地目录算在跑）。
+2. **合并写主线**（`kb.WriteMainline`，`internal/kb/mainline.go`）
+   - 加锁顺序：草稿行 → 变更请求行 → 改动页（`LockKbPagesByIDs` 按页面 id 排序 `FOR UPDATE`）；同一草稿并发合并后到的看到 merged 返回 409 `merge_request_not_open`，两份草稿改同一块后到的看到新 head 走三方合并、冲突 409 `merge_conflict`。
+   - 修订、页面（upsert，新页面直接插入）、`kb_link`、`kb_claim`、`search_text` 各一条批量语句；主线已删页面被草稿恢复时 `deleted_at` 清空；草稿删页写一条 `deleted` 修订并置 `deleted_at`，链接和论断一并删掉。
+   - 别的页面原来写成路径、`to_page_id` 为空的链接，路径上有了新页面后一并指过去（`ResolveKbDanglingLinks`）。
+   - 合并后同级重名（包括恢复的页面撞上后来新建的同名页）按位置冲突报 409；并发情况下唯一索引兜底时返回 409 `duplicate_slug`。
+   - `generated` 写 `{by: 作者显示名, at: 合并时间}`：spec 写 `<智能体>/<版本>`，服务端拿不到智能体版本，只写名称。`stale_after` 列按合并后的页头写回（RFC3339 或日期，读不出为空），系统不改它的值。
+   - 草稿里已解决的冲突在合并时必须为空，否则 409 `unresolved_conflict`（带 `conflicts`）；三方合并出的新冲突、存量冲突、重名冲突都按 `{page_id, path, kind, block_id, key, main_lines, draft_lines}` 返回。
+   - 重定位只传主线上已有的页面（新页面没有批注），删页传 nil 全部改挂整页；`ResolveAnnotations` 同一事务。提交后 `Enqueue` 全部页面，发 `kb.mr.merged`（多带 `status`、`page_ids`）、`kb.annotation.changed`（重定位和解决的并集）、有作业时 `kb.job.updated`。
+   - 「知识库作业中」按作业的对话有没有在跑的任务判断（409 `job_running`）；评论启动的智能体在跑时界面禁用合并，服务端靠 `draft_version` 兜底，不再额外拦。
+3. **审核详情的试合并**：open 状态每次读详情都用不加锁的主线页面跑一遍 `planKbMerge`（与合并共用），`checks.conflicts` 是存量冲突 + 试合并冲突 + 重名；非 open 的不跑检查，`checks` 为空。文件卡片沿用草稿 diff（基准修订 → 草稿，已合并的变更请求也照这份显示）。
+4. **详情多返回的字段**（只增不改）：`knowledge_base_slug`、`knowledge_base_name`、`review_agent`（评论框「X 发送后开始」：作者智能体，否则作业或建草稿任务的智能体）、`agent_running`、`can_merge` / `can_close` / `can_revert`（服务端按同一规则算，前端不再拿成员列表自己判断）；列表和详情都多返回 `merged_by_name`、`closed_by_name`、`mention`（`[#16 标题](mention://kb_mr/<id>)`，8.1 CLI 输出要用）。
+5. **来源 origin**（spec 7.13）
+   - `label` 只放对象自己的名字（作业名、被回滚请求「#15 标题」、自动化标题、任务标题、对话标题），类型前缀「知识库作业 · 」等由前端按 `type` 本地化，服务端不做国际化。
+   - 第 3 步按任务表反查时的顺序：自动化运行 → 任务 → 对话（自动化运行常带任务，取更具体的）。
+   - `autopilot_run` 的 `ref_id` 放自动化 id 而不是运行 id：前端没有单次运行的页面，跳自动化详情。`revert` 的 `ref_id` 放被回滚请求的 id（spec 示例为 null），跳转用 `reverts` 编号。
+6. **列表**：`status` 除 open / merged / closed / all 外接受逗号列表（审核页「已结束」= `merged,closed`）；多接受 `offset`（`kb history` 不带 `--page` 时 CLI 会传）；按 `COALESCE(merged_at, updated_at)` 倒序，变更记录即按合并时间；不带 `kb` 时列全工作区。列表不跑试合并，所以列表行不显示设计稿里的「有冲突」状态，只在详情里显示。
+7. **关闭**：作者能关自己的（作者是智能体时按调用方是不是这个智能体判断）；草稿是 submitted 时改回 open（作业可以重新提交），`ReleaseAnnotations` 同一事务；发 `kb.mr.closed`。关闭弹窗加了选填的「关闭理由」：spec 有 `reason`、作业页横幅 9.14 要显示它，设计稿 8.7 没画输入框。
+8. **回滚**
+   - 每页：合并后修订为基准、合并前修订为目标（变更请求新建的页面目标是「已删除」）、当前主线为另一侧；主线 head 仍是合并后修订时直接取合并前修订，不跑三方合并（否则「回滚删页」会被判成一边删一边改的冲突）。
+   - 有任一页冲突整体 409 `revert_conflict`（带 `conflicts`），什么都不建；已经和合并前一样的页面跳过（比较时忽略 `generated`、`sources`），全部跳过时 409 `nothing_to_revert`。
+   - 新草稿由调用人创建（智能体令牌时记 `task_id`），版本 1；变更请求标题 `Revert #15: <原标题>`（spec 原文），说明 `Reverts #15.`，风险沿用原请求；不跑格式检查拦截（回滚的是曾经合并过的内容）。
+9. **PATCH 改标题 / 说明 / 风险**（`kb mr update`，票 04 已接 CLI）：作者或知识库创建者 / owner / admin，只能改 open 的，发 `kb.mr.updated`。
+10. **评论与触发**
+    - 回复只有一层：回复一条回复时挂到它的根评论下，智能体按 8.6 带的 `--parent` 回复也落在触发评论下。
+    - 引用既接受 spec 的 `quote {page_id, block_id, text}`，也接受 CLI 的 `quote_page`（页面引用，按变更请求的草稿解析）+ `quote_block_id`；没给原文时取这一块的第一行（200 字内）。
+    - 触发规则照任务评论：@ 了智能体就只启动被 @ 的（小队 @ 暂不处理）；@all 或 @ 了成员不启动；成员的普通评论启动 `review_agent`；智能体自己的评论只启动它 @ 的别的智能体，不唤醒自己。被启动的智能体须在工作区、不是 system、没归档、绑了运行时、评论人有调用权限，否则跳过。
+    - 派发：作业的智能体 → 发进原作业的对话（复用作业，不新建、不重新关联）；建草稿的任务在对话里、且是同一个智能体 → 发进那段对话；否则复用同一评论人之前在本变更请求上给这个智能体开的对话；都没有时以评论人为发起人新建一段对话「#16 标题」。消息都是 8.6 英文原文。
+    - 来自任务（issue）的变更请求也走新对话，不往任务里发评论或派任务：避免审核内容写进任务时间线，也不改任务评论代码。
+11. **审核页的路由与位置**
+    - `/kb/{slug}/reviews`（没有编号时右侧显示列表第一条）和 `/kb/{slug}/reviews/{number}`，像作业页一样占满宽度、不画知识库导航（设计稿 8.1 是左列表右详情）。设计稿的列表跨知识库（「团队知识库 · 支付中台」），但入口和票 07 的链接都在知识库里，这里只列当前知识库。
+    - 变更记录 `/kb/{slug}/changes[/{number}]` 在知识库导航里（设计稿 2.7）；列表行是「#15 · 来源 · 作者 · 日期」，不画设计稿的 commit 短哈希（没有这个概念）。
+    - 入口：知识库「…」菜单加「审核」「变更记录」；首页「待审核修改」卡片链到审核页；阅读页待审核横幅加「查看修改」；单次修改页加「回滚这次修改」（只对知识库创建者和 owner / admin 显示）。知识库列表页顶部的「待审核修改 N」是全工作区合计，没有工作区级审核页，仍是文字。
+12. **审核页的交互细节**
+    - 检查卡片显示格式检查和「可以合并到主线 / 与主线冲突」，不画「没有引用过期的论断」（服务端不算这一项）。
+    - 合并按钮在没有权限、有冲突、有格式错误、智能体在工作时禁用，提示照设计稿（无权限的提示写「知识库创建者或 owner / admin 合并」）；合并失败按错误码提示（草稿变了、冲突、作业在跑、已结束）。
+    - 冲突横幅的「让智能体基于主线更新」发一条评论，正文用作业页同一句 `rebase_message`，按评论规则交给 `review_agent`。
+    - diff 行点一下选中，出「加入评论」，引用进底部评论框（页面标题 + 行号）；评论框是普通多行输入，Cmd/Ctrl+Enter 发送，暂不做 @ 选择器（手写 `[@名字](mention://agent/id)` 服务端照样识别）。
+    - 触发行的「查看执行过程」：作业的智能体链到作业页（作业对话不在聊天列表里），其他链到那段对话。
+    - 回滚确认照 7.3，省略「之后的修改（#14）不受影响」半句（要另算后续变更请求）；成功提示「已生成回滚变更请求 #18」带「去审核」，冲突提示照 2.9。
+13. **前端失效**：`kb.mr.created / updated` 失效作业、首页、读页、知识库列表和审核列表 / 详情；`kb.mr.merged / closed` 再失效页面、树、历史、检索（`kbKeys.searches`）和批注；`kb.mr.commented` 失效该变更请求的详情和评论；`kb.draft.updated` 一并失效所有审核详情（详情键里没有草稿 id）。
+14. **共用组件**：作业页右侧的文件卡片、diff 行、状态点、格式检查文案抽到 `kb/components/kb-diff.tsx`，审核页、变更记录和作业页共用；`kbErrorCode` 抽到 `kb/utils/kb-api-error.ts`。
