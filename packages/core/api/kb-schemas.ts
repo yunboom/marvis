@@ -28,6 +28,10 @@ import type {
   KbMergeRequestDetail,
   KbMergeRequestOriginType,
   KbMrComment,
+  KbRawFileItem,
+  KbRawUploadedFile,
+  KbGraph,
+  KbDeleteResult,
 } from "../types/kb";
 
 // Knowledge base response schemas. Kept out of schemas.ts so the knowledge
@@ -943,3 +947,83 @@ export function kbMrCommentFallback(id = ""): KbMrComment {
     created_at: "",
   };
 }
+
+// Knowledge base management: raw files, the relationship graph, deletion.
+
+const KB_RAW_KINDS = ["source", "asset"] as const;
+
+const KbRawFileItemSchema = z
+  .object({
+    id: z.string(),
+    kind: z.enum(KB_RAW_KINDS).catch("source"),
+    name: text,
+    uri: text,
+    content_type: text,
+    size: countSchema,
+    uploaded_by: text,
+    uploaded_by_name: text,
+    created_at: text,
+    cited_pages: countSchema,
+  })
+  .loose();
+
+export const KbRawFileListSchema = lenientArray(KbRawFileItemSchema);
+
+export const EMPTY_KB_RAW_FILE_LIST: KbRawFileItem[] = [];
+
+const KbRawUploadedFileSchema = z
+  .object({
+    id: z.string(),
+    kind: z.enum(KB_RAW_KINDS).catch("source"),
+    name: text,
+    uri: text,
+    size: countSchema,
+  })
+  .loose();
+
+export const KbRawUploadSchema = z
+  .object({ files: lenientArray(KbRawUploadedFileSchema) })
+  .loose()
+  .transform((v): KbRawUploadedFile[] => v.files);
+
+export const EMPTY_KB_RAW_UPLOAD: KbRawUploadedFile[] = [];
+
+export const KbRawContentURLSchema = z.object({ url: text }).loose();
+
+const KbGraphNodeSchema = z
+  .object({
+    key: z.string(),
+    id: nullableId,
+    title: text,
+    path: text,
+    group: text,
+    degree: countSchema,
+    missing: flag,
+  })
+  .loose();
+
+const KbGraphEdgeSchema = z.object({ from: z.string(), to: z.string() }).loose();
+
+export const KbGraphSchema = z
+  .object({
+    nodes: lenientArray(KbGraphNodeSchema),
+    edges: lenientArray(KbGraphEdgeSchema),
+  })
+  .loose()
+  .transform((graph): KbGraph => {
+    // An edge to a node the response left out has nothing to draw.
+    const keys = new Set(graph.nodes.map((node) => node.key));
+    return { nodes: graph.nodes, edges: graph.edges.filter((edge) => keys.has(edge.from) && keys.has(edge.to)) };
+  });
+
+export const EMPTY_KB_GRAPH: KbGraph = { nodes: [], edges: [] };
+
+export const KbDeleteResultSchema = z
+  .object({
+    deleted: flag,
+    closed_mrs: lenientArray(z.number()),
+  })
+  .loose();
+
+/** A delete that answered 2xx removed the knowledge base, whatever the body says. */
+export const KB_DELETE_RESULT_FALLBACK: KbDeleteResult = { deleted: true, closed_mrs: [] };

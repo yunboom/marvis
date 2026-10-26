@@ -440,4 +440,11 @@ export type {
   KbMrCommentTrigger,
   KbMrComment,
   CreateKbMrCommentRequest,
+  KbRawKind,
+  KbRawFileItem,
+  KbRawUploadedFile,
+  KbGraphNode,
+  KbGraphEdge,
+  KbGraph,
+  KbDeleteResult,
 } from "./kb";

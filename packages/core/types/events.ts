@@ -99,7 +99,8 @@ export type WSEventType =
   | "kb.mr.updated"
   | "kb.mr.merged"
   | "kb.mr.closed"
-  | "kb.mr.commented";
+  | "kb.mr.commented"
+  | "kb.base.changed";
 
 /** A job was started, or its draft linked, submitted or discarded (spec 9). */
 export interface KbJobUpdatedPayload {
@@ -139,6 +140,13 @@ export interface KbMrCommentedPayload {
   number: number;
   knowledge_base_id: string;
   comment_id: string;
+}
+
+/** A knowledge base was created, configured or deleted (spec 9). */
+export interface KbBaseChangedPayload {
+  knowledge_base_id: string;
+  slug: string;
+  action: "created" | "updated" | "deleted" | (string & {});
 }
 
 /** A knowledge base annotation was created or changed status (spec 9). */
@@ -720,6 +728,7 @@ export interface WSEventPayloadMap {
   "kb.mr.merged": KbMrChangedPayload;
   "kb.mr.closed": KbMrChangedPayload;
   "kb.mr.commented": KbMrCommentedPayload;
+  "kb.base.changed": KbBaseChangedPayload;
 }
 
 /**

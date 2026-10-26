@@ -7,6 +7,7 @@ import type {
   CreateKbMrCommentRequest,
   CreateKnowledgeBaseRequest,
   KbAnnotationStatus,
+  KbRawKind,
   UpdateKnowledgeBaseRequest,
 } from "../types/kb";
 import { kbKeys } from "./queries";
@@ -157,5 +158,38 @@ export function useCreateKbMrComment() {
     mutationFn: ({ number, data }: { number: number; data: CreateKbMrCommentRequest }) =>
       api.createKnowledgeBaseMrComment(number, data),
     onSettled: (_comment, _error, { number }) => invalidateKbMrComments(qc, wsId, number),
+  });
+}
+
+/**
+ * Uploads raw files to a knowledge base. Awaits the server: a name already
+ * taken is refused (409) and nothing is written.
+ */
+export function useUploadKbRawFiles() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ kb, files, kind }: { kb: string; files: readonly File[]; kind?: KbRawKind }) =>
+      api.uploadKnowledgeBaseRawFiles(kb, files, kind),
+    onSettled: (_files, _error, { kb }) => {
+      void qc.invalidateQueries({ queryKey: kbKeys.raws(wsId, kb) });
+      // Citations of a file that now exists become openable.
+      void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "page"] });
+    },
+  });
+}
+
+/**
+ * Deletes a knowledge base. Awaits the server; the caller leaves the
+ * knowledge base's pages once it answers.
+ */
+export function useDeleteKnowledgeBase() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ kb, confirmName }: { kb: string; confirmName: string }) => api.deleteKnowledgeBase(kb, confirmName),
+    onSettled: () => qc.invalidateQueries({ queryKey: kbKeys.bases(wsId) }),
   });
 }

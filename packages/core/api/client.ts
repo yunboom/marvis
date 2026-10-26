@@ -296,6 +296,11 @@ import type {
   KbMergeRequestListStatus,
   KbMrComment,
   CreateKbMrCommentRequest,
+  KbRawKind,
+  KbRawFileItem,
+  KbRawUploadedFile,
+  KbGraph,
+  KbDeleteResult,
 } from "../types/kb";
 import {
   EMPTY_KB_MERGE_REQUEST_LIST,
@@ -308,6 +313,15 @@ import {
   kbMergeRequestDetailFallback,
   kbMergeRequestFallback,
   kbMrCommentFallback,
+  EMPTY_KB_GRAPH,
+  EMPTY_KB_RAW_FILE_LIST,
+  EMPTY_KB_RAW_UPLOAD,
+  KB_DELETE_RESULT_FALLBACK,
+  KbDeleteResultSchema,
+  KbGraphSchema,
+  KbRawContentURLSchema,
+  KbRawFileListSchema,
+  KbRawUploadSchema,
   EMPTY_KB_JOB_LIST,
   EMPTY_KB_MERGE_REQUEST_CREATED,
   KbJobDetailSchema,
@@ -5223,6 +5237,70 @@ export class ApiClient {
     });
     return parseWithFallback(raw, KbMrCommentSchema, kbMrCommentFallback(), {
       endpoint: "POST /api/kb/merge-requests/:number/comments",
+    });
+  }
+
+  /** Raw files of a knowledge base, newest first; `kind` narrows to sources or assets. */
+  async listKnowledgeBaseRawFiles(kb: string, kind?: KbRawKind): Promise<KbRawFileItem[]> {
+    const qs = kind ? `?kind=${kind}` : "";
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/raw${qs}`);
+    return parseWithFallback(raw, KbRawFileListSchema, EMPTY_KB_RAW_FILE_LIST, {
+      endpoint: "GET /api/kb/bases/:kb/raw",
+    });
+  }
+
+  /** Uploads raw files; a name already taken answers 409 `raw_name_taken`. */
+  async uploadKnowledgeBaseRawFiles(kb: string, files: readonly File[], kind?: KbRawKind): Promise<KbRawUploadedFile[]> {
+    const formData = new FormData();
+    if (kind) formData.append("kind", kind);
+    for (const file of files) formData.append("file", file);
+
+    const res = await this.fetchRaw(`/api/kb/bases/${encodeURIComponent(kb)}/raw`, {
+      method: "POST",
+      body: formData,
+    });
+    const raw = (await res.json()) as unknown;
+    return parseWithFallback(raw, KbRawUploadSchema, EMPTY_KB_RAW_UPLOAD, {
+      endpoint: "POST /api/kb/bases/:kb/raw",
+    });
+  }
+
+  /**
+   * A URL that loads a raw file without credentials (a signed storage URL or
+   * a short-lived capability), for previews and downloads; empty when the
+   * server gave none.
+   */
+  async getKnowledgeBaseRawFileUrl(id: string, opts: { download?: boolean } = {}): Promise<string> {
+    const search = new URLSearchParams({ format: "url" });
+    if (opts.download) search.set("download", "1");
+    const raw = await this.fetch<unknown>(`/api/kb/raw/${encodeURIComponent(id)}/content?${search.toString()}`);
+    const { url } = parseWithFallback(raw, KbRawContentURLSchema, { url: "" }, {
+      endpoint: "GET /api/kb/raw/:id/content",
+    });
+    return url && url.startsWith("/") ? `${this.baseUrl.replace(/\/+$/, "")}${url}` : url;
+  }
+
+  /** The OKF bundle of a knowledge base as a zip. */
+  async exportKnowledgeBase(kb: string): Promise<Blob> {
+    const res = await this.fetchRaw(`/api/kb/bases/${encodeURIComponent(kb)}/export`);
+    return res.blob();
+  }
+
+  async getKnowledgeBaseGraph(kb: string): Promise<KbGraph> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/graph`);
+    return parseWithFallback(raw, KbGraphSchema, EMPTY_KB_GRAPH, {
+      endpoint: "GET /api/kb/bases/:kb/graph",
+    });
+  }
+
+  /** Deletes a knowledge base; `confirmName` must be its name. */
+  async deleteKnowledgeBase(kb: string, confirmName: string): Promise<KbDeleteResult> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}`, {
+      method: "DELETE",
+      body: JSON.stringify({ confirm_name: confirmName }),
+    });
+    return parseWithFallback(raw, KbDeleteResultSchema, KB_DELETE_RESULT_FALLBACK, {
+      endpoint: "DELETE /api/kb/bases/:kb",
     });
   }
 

@@ -4,6 +4,8 @@ import type {
   KbAnnotation,
   KbAnnotationStatusFilter,
   KbBuilderMode,
+  KbGraph,
+  KbRawFileItem,
   KbBuilderSession,
   KbTemplates,
   KbHome,
@@ -69,6 +71,10 @@ export const kbKeys = {
   /** One merge request by its workspace number, and its comments under it. */
   review: (wsId: string, number: number) => [...kbKeys.all(wsId), "review", number] as const,
   reviewComments: (wsId: string, number: number) => [...kbKeys.review(wsId, number), "comments"] as const,
+  /** Raw files of a knowledge base. */
+  raws: (wsId: string, kb: string) => [...kbKeys.all(wsId), "raws", kb] as const,
+  /** The relationship graph; merges change it. */
+  graph: (wsId: string, kb: string) => [...kbKeys.all(wsId), "graph", kb] as const,
 };
 
 /** How many merge requests the review list and the change log show. */
@@ -97,6 +103,24 @@ export function kbMrCommentListOptions(wsId: string, number: number) {
     queryKey: kbKeys.reviewComments(wsId, number),
     queryFn: () => api.listKnowledgeBaseMrComments(number),
     enabled: !!wsId && number > 0,
+  });
+}
+
+/** Raw files of a knowledge base, newest first. */
+export function kbRawFileListOptions(wsId: string, kb: string) {
+  return queryOptions<KbRawFileItem[]>({
+    queryKey: kbKeys.raws(wsId, kb),
+    queryFn: () => api.listKnowledgeBaseRawFiles(kb),
+    enabled: !!wsId && !!kb,
+  });
+}
+
+/** Pages and links of a knowledge base; kb.mr.merged refreshes it. */
+export function kbGraphOptions(wsId: string, kb: string) {
+  return queryOptions<KbGraph>({
+    queryKey: kbKeys.graph(wsId, kb),
+    queryFn: () => api.getKnowledgeBaseGraph(kb),
+    enabled: !!wsId && !!kb,
   });
 }
 

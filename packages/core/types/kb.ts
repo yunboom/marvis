@@ -646,3 +646,62 @@ export interface CreateKbMrCommentRequest {
   parent_id?: string | null;
   quote?: KbMrCommentQuote | null;
 }
+
+/** Kinds of raw files: uploaded source documents and images pages embed. */
+export type KbRawKind = "source" | "asset";
+
+/** A row of the raw files tab. */
+export interface KbRawFileItem {
+  id: string;
+  kind: KbRawKind;
+  name: string;
+  /** Address pages cite it by: raw://sources/<name>. */
+  uri: string;
+  content_type: string;
+  size: number;
+  uploaded_by: string;
+  uploaded_by_name: string;
+  created_at: string;
+  /** Live pages whose claims cite the file. */
+  cited_pages: number;
+}
+
+/** A file an upload wrote. */
+export interface KbRawUploadedFile {
+  id: string;
+  kind: KbRawKind;
+  name: string;
+  uri: string;
+  size: number;
+}
+
+/** A page of the relationship graph, or a linked page not yet written. */
+export interface KbGraphNode {
+  /** What edges reference: the page id, or the path of a missing page. */
+  key: string;
+  /** Null for a page not yet written. */
+  id: string | null;
+  title: string;
+  path: string;
+  /** Title of the top-level page it sits under; decides its color. */
+  group: string;
+  degree: number;
+  missing: boolean;
+}
+
+export interface KbGraphEdge {
+  from: string;
+  to: string;
+}
+
+export interface KbGraph {
+  nodes: KbGraphNode[];
+  edges: KbGraphEdge[];
+}
+
+/** What deleting a knowledge base removed. */
+export interface KbDeleteResult {
+  deleted: boolean;
+  /** Numbers of the open merge requests deleted with it. */
+  closed_mrs: number[];
+}

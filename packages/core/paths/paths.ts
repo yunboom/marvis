@@ -35,6 +35,10 @@ export interface KbNewJobContext {
   message?: string;
 }
 
+/** Tabs of knowledge base management; raw files is the default route. */
+export const KB_MANAGE_TABS = ["raw", "export", "delete"] as const;
+export type KbManageTab = (typeof KB_MANAGE_TABS)[number];
+
 /** Query keys of the new job route; the page reads them back. */
 export const KB_NEW_JOB_PARAMS = {
   starter: "starter",
@@ -114,6 +118,11 @@ function workspaceScoped(slug: string) {
     kbChanges: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/changes`,
     kbChange: (kbSlug: string, number: number | string) =>
       `${ws}/kb/${encode(kbSlug)}/changes/${encode(String(number))}`,
+    /** Knowledge base management (design 11.x): raw files, export, delete. */
+    kbManage: (kbSlug: string, tab: KbManageTab = "raw") =>
+      `${ws}/kb/${encode(kbSlug)}/manage${tab === "raw" ? "" : `/${tab}`}`,
+    /** The relationship graph of a knowledge base (design 2.10). */
+    kbGraph: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/graph`,
     kbPage: (kbSlug: string, pageId: string) => `${ws}/kb/${encode(kbSlug)}/p/${encode(pageId)}`,
     kbRevision: (kbSlug: string, pageId: string, revisionId: string) =>
       `${ws}/kb/${encode(kbSlug)}/p/${encode(pageId)}/history/${encode(revisionId)}`,

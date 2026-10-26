@@ -18,6 +18,7 @@ import {
   invalidateKbMainline,
   invalidateKbMergeRequests,
   invalidateKbMrComments,
+  invalidateKbBase,
 } from "../kb/ws-updaters";
 import { projectKeys } from "../projects/queries";
 import { pinKeys } from "../pins/queries";
@@ -132,6 +133,7 @@ import type {
   InvitationCreatedPayload,
   KbDraftUpdatedPayload,
   KbMrCommentedPayload,
+  KbBaseChangedPayload,
 } from "../types";
 
 const chatWsLogger = createLogger("chat.ws");
@@ -1391,6 +1393,13 @@ export function useRealtimeSync(
     const unsubKbMrMerged = ws.on("kb.mr.merged", onKbMrSettled);
     const unsubKbMrClosed = ws.on("kb.mr.closed", onKbMrSettled);
 
+    // Knowledge base list and details; a deletion drops everything under it.
+    const unsubKbBaseChanged = ws.on("kb.base.changed", (p) => {
+      const wsId = getCurrentWsId();
+      const { action } = p as KbBaseChangedPayload;
+      if (wsId) invalidateKbBase(qc, wsId, action === "deleted");
+    });
+
     const unsubKbMrCommented = ws.on("kb.mr.commented", (p) => {
       const wsId = getCurrentWsId();
       const { number } = p as KbMrCommentedPayload;
@@ -1917,6 +1926,7 @@ export function useRealtimeSync(
       unsubKbMrMerged();
       unsubKbMrClosed();
       unsubKbMrCommented();
+      unsubKbBaseChanged();
       unsubWsDeleted();
       unsubMemberRemoved();
       unsubMemberAdded();

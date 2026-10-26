@@ -60,6 +60,19 @@ export function invalidateKbMainline(qc: QueryClient, wsId: string) {
   invalidateKbAnnotations(qc, wsId);
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "history"] });
   void qc.invalidateQueries({ queryKey: kbKeys.searches(wsId) });
+  void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "graph"] });
+}
+
+/**
+ * A knowledge base was created, configured or deleted: the list and the
+ * detail. A deleted one also drops everything cached under it.
+ */
+export function invalidateKbBase(qc: QueryClient, wsId: string, deleted: boolean) {
+  if (deleted) {
+    void qc.invalidateQueries({ queryKey: kbKeys.all(wsId) });
+    return;
+  }
+  void qc.invalidateQueries({ queryKey: kbKeys.bases(wsId) });
 }
 
 /** A review comment: the thread, and the detail's agent-at-work state. */
