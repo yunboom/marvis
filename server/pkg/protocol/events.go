@@ -54,6 +54,10 @@ const (
 	EventKbJobUpdated        = "kb.job.updated"
 	EventKbDraftUpdated      = "kb.draft.updated"
 	EventKbMrCreated         = "kb.mr.created"
+	EventKbMrUpdated         = "kb.mr.updated"
+	EventKbMrMerged          = "kb.mr.merged"
+	EventKbMrClosed          = "kb.mr.closed"
+	EventKbMrCommented       = "kb.mr.commented"
 	EventKbAnnotationChanged = "kb.annotation.changed"
 
 	// Workspace events

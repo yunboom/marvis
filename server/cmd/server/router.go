@@ -2304,6 +2304,17 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Post("/jobs/{jobId}/submit", h.SubmitKbJob)
 				r.Post("/jobs/{jobId}/discard", h.DiscardKbJob)
 				r.Post("/merge-requests", h.CreateKbMergeRequest)
+				// Review: merge requests are listed and read by every
+				// member; merge, revert and close check the knowledge base
+				// creator or an owner / admin (the author may close).
+				r.Get("/merge-requests", h.ListKbMergeRequests)
+				r.Get("/merge-requests/{number}", h.GetKbMergeRequest)
+				r.Patch("/merge-requests/{number}", h.UpdateKbMergeRequest)
+				r.Post("/merge-requests/{number}/merge", h.MergeKbMergeRequest)
+				r.Post("/merge-requests/{number}/close", h.CloseKbMergeRequest)
+				r.Post("/merge-requests/{number}/revert", h.RevertKbMergeRequest)
+				r.Get("/merge-requests/{number}/comments", h.ListKbMrComments)
+				r.Post("/merge-requests/{number}/comments", h.CreateKbMrComment)
 			})
 
 			// Squads

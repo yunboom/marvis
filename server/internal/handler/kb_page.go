@@ -23,8 +23,8 @@ const draftVersionPrefix = "d"
 
 // Actor types of merge request authors and annotation authors.
 const (
-	kbActorAgent  = "agent"
-	kbActorMember = "member"
+	kbActorAgent  = kb.ActorAgent
+	kbActorMember = kb.ActorMember
 )
 
 // Where a draft came from, shown in the reading page's draft switcher.

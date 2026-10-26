@@ -71,11 +71,12 @@ func (q *Queries) CreateKbJob(ctx context.Context, arg CreateKbJobParams) (KbJob
 const createKbMergeRequest = `-- name: CreateKbMergeRequest :one
 INSERT INTO kb_merge_request (
     workspace_id, number, knowledge_base_id, title, summary, source, risk,
-    author_type, author_id, draft_id, job_id, annotation_ids
+    author_type, author_id, draft_id, job_id, annotation_ids, reverts_id
 ) VALUES (
     $1, $2, $3, $4,
     $5, $6, $7, $8,
-    $9, $10, $11, $12::uuid[]
+    $9, $10, $11, $12::uuid[],
+    $13
 )
 RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at
 `
@@ -93,6 +94,7 @@ type CreateKbMergeRequestParams struct {
 	DraftID         pgtype.UUID   `json:"draft_id"`
 	JobID           pgtype.UUID   `json:"job_id"`
 	AnnotationIds   []pgtype.UUID `json:"annotation_ids"`
+	RevertsID       pgtype.UUID   `json:"reverts_id"`
 }
 
 func (q *Queries) CreateKbMergeRequest(ctx context.Context, arg CreateKbMergeRequestParams) (KbMergeRequest, error) {
@@ -109,6 +111,7 @@ func (q *Queries) CreateKbMergeRequest(ctx context.Context, arg CreateKbMergeReq
 		arg.DraftID,
 		arg.JobID,
 		arg.AnnotationIds,
+		arg.RevertsID,
 	)
 	var i KbMergeRequest
 	err := row.Scan(

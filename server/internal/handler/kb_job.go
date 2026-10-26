@@ -148,48 +148,6 @@ type CreateKbMergeRequestRequest struct {
 	AnnotationIDs []string `json:"annotation_ids"`
 }
 
-// KbMergeRequestOriginResponse says where a merge request was started.
-type KbMergeRequestOriginResponse struct {
-	Type  string  `json:"type"`
-	Label string  `json:"label"`
-	RefID *string `json:"ref_id"`
-}
-
-// Merge request origin types (spec 7.13); ticket 08 adds the task-based
-// ones.
-const (
-	kbOriginJob  = "kb_job"
-	kbOriginNone = "none"
-)
-
-// KbMergeRequestResponse is a merge request as created.
-type KbMergeRequestResponse struct {
-	ID              string                       `json:"id"`
-	Number          int                          `json:"number"`
-	KnowledgeBaseID string                       `json:"knowledge_base_id"`
-	Title           string                       `json:"title"`
-	Summary         string                       `json:"summary"`
-	Source          string                       `json:"source"`
-	Status          string                       `json:"status"`
-	Risk            string                       `json:"risk"`
-	AuthorType      string                       `json:"author_type"`
-	AuthorID        string                       `json:"author_id"`
-	AuthorName      string                       `json:"author_name"`
-	DraftID         string                       `json:"draft_id"`
-	DraftVersion    int64                        `json:"draft_version"`
-	AnnotationIDs   []string                     `json:"annotation_ids"`
-	Origin          KbMergeRequestOriginResponse `json:"origin"`
-	JobID           *string                      `json:"job_id"`
-	Reverts         *int                         `json:"reverts"`
-	MergedBy        *string                      `json:"merged_by"`
-	MergedAt        *string                      `json:"merged_at"`
-	ClosedBy        *string                      `json:"closed_by"`
-	ClosedAt        *string                      `json:"closed_at"`
-	CloseReason     string                       `json:"close_reason"`
-	CreatedAt       string                       `json:"created_at"`
-	UpdatedAt       string                       `json:"updated_at"`
-}
-
 // ListKbJobs lists the caller's jobs of a knowledge base (GET
 // /api/kb/bases/{kb}/jobs), newest first; state=running|failed narrows it.
 func (h *Handler) ListKbJobs(w http.ResponseWriter, r *http.Request) {
@@ -812,7 +770,7 @@ func (h *Handler) SubmitKbJob(w http.ResponseWriter, r *http.Request) {
 
 	h.publishKbMergeRequestCreated(created, draft, &job, kbActorMember, userID)
 
-	resp, err := h.kbMergeRequestResponse(ctx, created.MergeRequest, draft, &job)
+	resp, err := h.kbMergeRequestResponseOf(ctx, created.MergeRequest)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -1034,7 +992,7 @@ func (h *Handler) CreateKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 
 	h.publishKbMergeRequestCreated(created, locked, job, actorType, actorID)
 
-	resp, err := h.kbMergeRequestResponse(ctx, created.MergeRequest, locked, job)
+	resp, err := h.kbMergeRequestResponseOf(ctx, created.MergeRequest)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -1149,52 +1107,4 @@ func (h *Handler) publishKbMergeRequestCreated(created kb.CreatedMergeRequest, d
 			"page_ids":          []string{},
 		})
 	}
-}
-
-func (h *Handler) kbMergeRequestResponse(ctx context.Context, mr db.KbMergeRequest, draft db.KbDraft, job *db.KbJob) (KbMergeRequestResponse, error) {
-	names, err := h.loadKbActorNames(ctx, mr.WorkspaceID, []kbActor{{kind: mr.AuthorType, id: mr.AuthorID}})
-	if err != nil {
-		return KbMergeRequestResponse{}, err
-	}
-
-	origin := KbMergeRequestOriginResponse{Type: kbOriginNone}
-	if job != nil {
-		origin = KbMergeRequestOriginResponse{Type: kbOriginJob, Label: job.Name, RefID: uuidToPtr(job.ID)}
-	}
-	resp := KbMergeRequestResponse{
-		ID:              uuidToString(mr.ID),
-		Number:          int(mr.Number),
-		KnowledgeBaseID: uuidToString(mr.KnowledgeBaseID),
-		Title:           mr.Title,
-		Summary:         mr.Summary,
-		Source:          mr.Source,
-		Status:          mr.Status,
-		Risk:            mr.Risk,
-		AuthorType:      mr.AuthorType,
-		AuthorID:        uuidToString(mr.AuthorID),
-		AuthorName:      names.name(mr.AuthorType, mr.AuthorID),
-		DraftID:         uuidToString(mr.DraftID),
-		DraftVersion:    draft.Version,
-		AnnotationIDs:   make([]string, len(mr.AnnotationIds)),
-		Origin:          origin,
-		JobID:           uuidToPtr(mr.JobID),
-		MergedBy:        uuidToPtr(mr.MergedBy),
-		ClosedBy:        uuidToPtr(mr.ClosedBy),
-		CloseReason:     mr.CloseReason,
-		CreatedAt:       timestampToString(mr.CreatedAt),
-		UpdatedAt:       timestampToString(mr.UpdatedAt),
-	}
-	for i, id := range mr.AnnotationIds {
-		resp.AnnotationIDs[i] = uuidToString(id)
-	}
-	if mr.MergedAt.Valid {
-		at := timestampToString(mr.MergedAt)
-		resp.MergedAt = &at
-	}
-	if mr.ClosedAt.Valid {
-		at := timestampToString(mr.ClosedAt)
-		resp.ClosedAt = &at
-	}
-
-	return resp, nil
 }

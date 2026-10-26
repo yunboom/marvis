@@ -106,11 +106,12 @@ RETURNING (next_mr_number - 1)::int AS number;
 -- name: CreateKbMergeRequest :one
 INSERT INTO kb_merge_request (
     workspace_id, number, knowledge_base_id, title, summary, source, risk,
-    author_type, author_id, draft_id, job_id, annotation_ids
+    author_type, author_id, draft_id, job_id, annotation_ids, reverts_id
 ) VALUES (
     sqlc.arg('workspace_id'), sqlc.arg('number'), sqlc.arg('knowledge_base_id'), sqlc.arg('title'),
     sqlc.arg('summary'), sqlc.arg('source'), sqlc.arg('risk'), sqlc.arg('author_type'),
-    sqlc.arg('author_id'), sqlc.arg('draft_id'), sqlc.narg('job_id'), sqlc.arg('annotation_ids')::uuid[]
+    sqlc.arg('author_id'), sqlc.arg('draft_id'), sqlc.narg('job_id'), sqlc.arg('annotation_ids')::uuid[],
+    sqlc.narg('reverts_id')
 )
 RETURNING *;
 

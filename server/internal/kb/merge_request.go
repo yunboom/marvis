@@ -22,6 +22,8 @@ type NewMergeRequest struct {
 	AuthorType    string
 	AuthorID      pgtype.UUID
 	AnnotationIDs []pgtype.UUID
+	// RevertsID is the merged request a revert undoes; invalid otherwise.
+	RevertsID pgtype.UUID
 }
 
 // CreatedMergeRequest is an opened merge request and the annotations it took
@@ -61,6 +63,7 @@ func CreateMergeRequest(ctx context.Context, q *db.Queries, in NewMergeRequest) 
 		DraftID:         in.Draft.ID,
 		JobID:           in.JobID,
 		AnnotationIds:   annotationIDs,
+		RevertsID:       in.RevertsID,
 	})
 	if err != nil {
 		return CreatedMergeRequest{}, errors.Wrapf(err, "create merge request draft_id=%s", draftID)
