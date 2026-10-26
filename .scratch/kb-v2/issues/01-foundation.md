@@ -12,3 +12,4 @@
 - [x] `GET /api/kb/bases`、`GET /api/kb/bases/{kb}` 与 core 的 schema / query hooks（parseWithFallback）
 - [x] web 与 desktop 都接入知识库列表页（侧栏入口、列表、空状态），照设计稿 Main / home-empty
 - [x] 块切分、链接解析单测；接口测试
+- [ ] 决策 104：迁移删 `kb_job.draft_id`，新建 `kb_job_draft` 及两个唯一索引（由票 04 / 07 完成）

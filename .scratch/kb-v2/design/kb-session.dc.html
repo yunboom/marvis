@@ -86,6 +86,7 @@
         <div style="flex: 1; min-height: 0; overflow: hidden; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
           <div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 600; flex: 1">草稿改动</span><span class="tag"><span class="{{stateDot}}"></span>{{stateText}}</span></div>
           <sc-if value="{{s.empty}}" hint-placeholder-val="{{ false }}"><div class="muted" style="font-size: 13.5px; padding: 40px 0; text-align: center">智能体推送改动后显示在这里。</div></sc-if>
+          <sc-if value="{{s.nodraft}}" hint-placeholder-val="{{ false }}"><div class="muted" style="font-size: 13.5px; padding: 40px 0; text-align: center">智能体建好草稿后，在这里显示改动。</div></sc-if>
           <sc-if value="{{s.nochange}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 0; text-align: center; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 14px; font-weight: 500">这次没有需要修改的内容</span><span class="faint" style="font-size: 12.5px">运行结果记为「无需修改」，不生成变更请求</span></div></sc-if>
           <sc-if value="{{s.hasFiles}}" hint-placeholder-val="{{ true }}">
             <sc-if value="{{s.banner}}" hint-placeholder-val="{{ false }}"><div class="{{bannerCls}}" style="padding: 10px 12px; font-size: 13px; display: flex; align-items: center; gap: 8px"><span class="{{bannerDot}}"></span><span style="flex: 1">{{bannerText}}</span><sc-if value="{{s.bannerLink}}" hint-placeholder-val="{{ false }}"><a href="#" style="color: #4f6f8a; text-decoration: none">{{bannerLink}}</a></sc-if></div></sc-if>
@@ -126,10 +127,12 @@
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"op":{"editor":"enum","default":"ann","options":["ann","page"]},"state":{"editor":"enum","default":"running","options":["new","welcome","prefill","auto","lintfail","autosub","queue","busy","conflict","nochange","closed","merged","ingest","running","draft","followup","submitted"]},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"op":{"editor":"enum","default":"ann","options":["ann","page"]},"state":{"editor":"enum","default":"running","options":["new","welcome","prefill","auto","lintfail","autosub","queue","busy","conflict","nochange","closed","merged","ingest","running","draft","followup","submitted","nodraft"]},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     var st = this.props.state ?? 'running';
+    var nodraft = st === 'nodraft';
+    if (nodraft) st = 'running';
     var welcome = st === 'welcome';
     if (welcome) st = 'new';
     var auto = st === 'autosub';
@@ -198,15 +201,15 @@ class Component extends DCLogic {
       title: st === 'new' ? '新对话' : pre ? (page ? '新页面' : '处理批注') : (st === 'auto' ? '创建定时收录' : (ingest ? '收录资料' : (page ? '新页面' : '处理批注'))),
       firstAsk: page ? '在「产品与业务 / 支付」下新增一页：回调人工处理的操作步骤。' : '处理团队知识库的全部 4 条待处理批注。',
       firstReply: nochange ? '核对完 4 条批注涉及的内容，页面都已经是对的，不需要修改。2 条批注我标成了不处理。' : st === 'running' || busy ? (busy ? '改好了「支付回调」，正在补「回调人工处理」这一页…' : (page ? '好的，先看「支付」下已有的页面，再起草。' : '好的，先核对 MAR-142 和回调代码，再按批注修改。')) : st === 'running' ? (page ? '好的，先看「支付」下已有的页面，再起草。' : '好的，先核对 MAR-142 和回调代码，再按批注修改。') : '按王芳和李雷的批注改好了「支付回调」的去重一节，右边是草稿。另外 2 条需要你确认是否保留。',
-      stateText: st === 'submitted' ? '已提交审核' : merged ? '已合并' : closed ? '已关闭 · 可重新提交' : nochange ? '无需修改' : (diff ? '草稿 · 未提交' : '暂无改动'),
+      stateText: nodraft ? '暂无草稿' : st === 'submitted' ? '已提交审核' : merged ? '已合并' : closed ? '已关闭 · 可重新提交' : nochange ? '无需修改' : (diff ? '草稿 · 未提交' : '暂无改动'),
       stateDot: st === 'submitted' ? 'dot d-blue' : merged ? 'dot d-green' : closed ? 'dot d-amber' : 'dot d-gray',
       addCount: st === 'followup' || st === 'submitted' ? '+2' : '+1',
-      footHint: hints[st] || '',
+      footHint: nodraft ? '' : (hints[st] || ''),
       files: files, lines: lines, checks: checks,
       summary: '2 个页面 · ' + (later ? '+20 −1' : '+19 −1'),
       segDiff: st === 'preview' ? '' : 'on', segPrev: st === 'preview' ? 'on' : '',
       annDot: st === 'submitted' ? 'dot d-blue' : 'dot d-amber',
-      submitDisabled: lintFail || busy,
+      submitDisabled: lintFail || busy || nodraft,
       submitText: closed ? '重新提交审核' : '提交审核',
       fixText: conflict ? '让智能体基于主线更新' : '让智能体修复',
       bannerCls: closed ? 'banner b-amber' : (merged ? 'banner b-green' : 'banner b-blue'),
@@ -220,9 +223,9 @@ class Component extends DCLogic {
         fresh: st === 'new' || st === 'prefill', starters: st === 'new', auto: st === 'auto',
         ingestStart: ingest, thread: !ingest && st !== 'new' && st !== 'prefill' && st !== 'auto', running: st === 'running' || busy,
         followup: ['followup', 'quote', 'preview', 'lintfail', 'submitted'].indexOf(st) >= 0, followupDiff: false,
-        submitted: st === 'submitted', nochange: nochange, banner: st === 'submitted' || closed || merged, bannerLink: true, goReview: st === 'submitted', fixBtn: lintFail || conflict, empty: ingest || st === 'new' || st === 'prefill' || st === 'auto' || st === 'running', hasDiff: diff, hasFiles: drafted,
+        submitted: st === 'submitted', nochange: nochange, banner: st === 'submitted' || closed || merged, bannerLink: true, goReview: st === 'submitted', fixBtn: lintFail || conflict, empty: ingest || st === 'new' || st === 'prefill' || st === 'auto' || (st === 'running' && !nodraft), nodraft: nodraft, hasDiff: diff, hasFiles: drafted,
         diffView: st !== 'preview', preview: st === 'preview', quote: st === 'quote', writing: st === 'running', lintFail: lintFail,
-        canDiscard: drafted && !readonly, showSubmit: drafted && !readonly,
+        canDiscard: drafted && !readonly, showSubmit: (drafted && !readonly) || nodraft,
         canSubmit: false
       }
     };

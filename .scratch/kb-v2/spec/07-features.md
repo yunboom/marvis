@@ -414,8 +414,8 @@ GET`/api/kb/merge-requests`
     "annotation_ids": [                                       // 本次处理的批注
       "a1b2c3d4-0000-4000-8000-000000000001"
     ],
-    "origin": {                                               // 来源追溯：变更请求是从哪里发起的
-      "type": "kb_job",                                       // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+    "origin": {                                               // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+      "type": "kb_job",                                       // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
       "label": "知识库作业 · 处理批注",                                // 来源的显示文字
       "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"        // 来源对象 id，用于跳转
     },
@@ -459,8 +459,8 @@ POST`/api/kb/merge-requests/{number}/revert`
   "draft_id": "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
   "draft_version": 1,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [],                                       // 本次处理的批注
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "none",                                           // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "revert",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "回滚 #15",                                        // 来源的显示文字
     "ref_id": null                                            // 来源对象 id，用于跳转
   },
@@ -943,11 +943,11 @@ sequenceDiagram
   U->>API: POST /merge-requests/16/comments（引用块 b8Xz）
   API->>API: 判定接手的智能体：@ 了谁就是谁，否则是作者
   alt 变更请求来自知识库作业
-    API->>CHAT: 把评论（8.6 模板）作为一条消息发进这个作业的对话
+    API->>CHAT: 把评论（8.6 模板）作为一条消息发进原作业的对话
+    CHAT->>AG: 派任务（任务令牌），草稿是原作业关联的那份
   else 来自对话 / 自动化 / 任务
-    API->>CHAT: 为作者智能体新建一个作业，草稿沿用 #16 的，首条消息是评论
+    API->>AG: 照任务评论的规则派任务（任务令牌），不新建作业
   end
-  CHAT->>AG: 派任务（任务令牌）
   AG->>API: page fetch → page patch --draft（草稿版本 +1）
   API-->>U: kb.mr.updated（diff 刷新）
   AG->>API: kb mr comment 16 --parent …
@@ -982,8 +982,8 @@ GET`/api/kb/merge-requests/{number}`
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
   ],
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "kb_job",                                         // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
     "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
   },
@@ -1205,8 +1205,8 @@ POST`/api/kb/merge-requests/{number}/merge`
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
   ],
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "kb_job",                                         // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
     "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
   },
@@ -1265,8 +1265,8 @@ POST`/api/kb/merge-requests/{number}/close`
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
   ],
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "kb_job",                                         // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
     "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
   },
@@ -1292,9 +1292,10 @@ POST`/api/kb/merge-requests/{number}/close`
 
 设计稿 · 9.1 列表 · 9.2 新建对话 · 9.3–9.6 作业到提交 · 9.7 定时收录 · 9.8 批注带入 · 9.9–9.16 边界情况
 
-- 一个作业 = 一个现有聊天会话 + 一份草稿 + 一行 `kb_job`（决策 34）。左侧整块复用聊天消息列表和输入框（`packages/views/chat/components/chat-message-list.tsx:181`、`chat-input.tsx:152`），发送 / 停止 / 排队发送沿用同一个按钮位（`chat-input.tsx:828`，决策 47）。
+- 一个作业 = 一个现有聊天会话 + 一行 `kb_job`，草稿由智能体用 `kb draft create` 建好后，用 `kb job link-draft` 关联到作业，关联记在 `kb_job_draft`；一个作业只关联一份草稿，一份草稿只属于一个作业（决策 34、104）。左侧整块复用聊天消息列表和输入框（`packages/views/chat/components/chat-message-list.tsx:181`、`chat-input.tsx:152`），发送 / 停止 / 排队发送沿用同一个按钮位（`chat-input.tsx:828`，决策 47）。
 - 执行智能体由用户选，选择器复用自动化的执行者选择器，没有运行时的置灰（决策 39、28）。
-- 首条消息由服务端拼：通用部分（8.4）+ 开场白附加段（8.5）+ 用户输入。之后的消息原样转发。
+- 首条消息由服务端拼：通用部分（8.4，带作业 id）+ 开场白附加段（8.5）+ 用户输入。之后的消息原样转发。
+- 关联草稿之前，右侧是空状态，提交审核不可用；关联之后，右侧显示这份草稿，提交、放弃都作用于它（设计稿 9.17）。
 - 右侧草稿随写入刷新（`kb.draft.updated` 1 秒内合并发送），diff 与检查复用变更请求详情的计算（决策 43）。
 - 提交：用草稿建变更请求；智能体自己执行了 `kb mr create` 也算已提交，右侧自动转只读（决策 44）。
 - 定时收录 / 健康检查：开场白引导智能体用现有 `marvis autopilot create`（`server/cmd/marvis/cmd_autopilot.go:38`）建普通自动化（8.5 schedule）。
@@ -1306,9 +1307,11 @@ sequenceDiagram
   participant CHAT as 聊天服务
   participant AG as 执行智能体
   U->>API: POST /bases/team/jobs（智能体、开场白、首条消息）
-  API->>API: 建草稿 kb_draft
-  API->>CHAT: 建会话，发首条消息（8.4 + 8.5 模板）
+  API->>CHAT: 建会话，发首条消息（8.4 + 8.5 模板，带作业 id）
   CHAT->>AG: 派任务（任务令牌）
+  AG->>API: kb draft create
+  AG->>API: kb job link-draft（PUT /jobs/{id}/draft）
+  API-->>U: kb.job.updated → 右侧显示关联的草稿
   AG->>API: kb get / page fetch / page patch --draft
   API-->>U: kb.draft.updated → 右侧刷新改动与检查
   U->>CHAT: 继续对话（与现有聊天一致，可排队、可停止）
@@ -1351,11 +1354,11 @@ GET`/api/kb/bases/{kb}/jobs`
     "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",       // 执行智能体（工作区普通智能体）
     "agent_name": "通用开发助手",                                   // 执行智能体名称
     "chat_session_id": "d1e2f3a4-5b6c-4d7e-8f9a-0b1c2d3e4f5a",  // 这个作业的对话（现有聊天会话）
-    "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",       // 这个作业的草稿，新建作业时一起建
+    "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",       // 这个作业关联的草稿，取自 kb_job_draft；智能体还没关联时为 null
     "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",     // 发起人
     "state": "idle",                                          // running 运行中 / idle 等待输入 / failed 失败 / stopped 已停止，取自对话最近一次任务
     "last_reply": "按王芳的批注改好了「支付回调」的去重一节，右边是草稿。",              // 智能体最后一条回复的片段，列表第二行
-    "draft": {                                                // 草稿概况
+    "draft": {                                                // 草稿概况；还没关联草稿时为 null
       "version": 9,                                           // 草稿版本，每次写入 +1
       "pages": 2,                                             // 改动页面数
       "added": 3,                                             // 新增行数
@@ -1371,7 +1374,7 @@ GET`/api/kb/bases/{kb}/jobs`
  
 POST`/api/kb/bases/{kb}/jobs`
  
-新建一个作业：建草稿、建聊天会话、发首条消息。
+新建一个作业：建聊天会话、发首条消息。不建草稿，草稿由智能体建好后关联。
 
  
 权限 工作区成员，且有该智能体的使用权限
@@ -1405,16 +1408,11 @@ POST`/api/kb/bases/{kb}/jobs`
   "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",         // 执行智能体（工作区普通智能体）
   "agent_name": "通用开发助手",                                     // 执行智能体名称
   "chat_session_id": "d1e2f3a4-5b6c-4d7e-8f9a-0b1c2d3e4f5a",  // 这个作业的对话（现有聊天会话）
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 这个作业的草稿，新建作业时一起建
+  "draft_id": null,                                           // 这个作业关联的草稿，取自 kb_job_draft；智能体还没关联时为 null
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 发起人
   "state": "running",                                         // running 运行中 / idle 等待输入 / failed 失败 / stopped 已停止，取自对话最近一次任务
   "last_reply": "",                                           // 智能体最后一条回复的片段，列表第二行
-  "draft": {                                                  // 草稿概况
-    "version": 0,                                             // 草稿版本，每次写入 +1
-    "pages": 0,                                               // 改动页面数
-    "added": 0,                                               // 新增行数
-    "deleted": 0                                              // 删除行数
-  },
+  "draft": null,                                              // 草稿概况；还没关联草稿时为 null
   "merge_request": null,                                      // 这个作业的变更请求（没有为 null）
   "created_at": "2026-10-25T10:20:00Z",                       // RFC3339
   "updated_at": "2026-10-25T10:29:00Z"                        // RFC3339
@@ -1429,7 +1427,7 @@ POST`/api/kb/bases/{kb}/jobs`
  
 GET`/api/kb/jobs/{id}`
  
-作业详情：右侧草稿改动。
+作业详情：右侧草稿改动。还没关联草稿时 `draft_id`、`draft` 为 null，`pages`、`checks` 为空。
 
  
 权限 作业发起人
@@ -1446,11 +1444,11 @@ GET`/api/kb/jobs/{id}`
   "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",         // 执行智能体（工作区普通智能体）
   "agent_name": "通用开发助手",                                     // 执行智能体名称
   "chat_session_id": "d1e2f3a4-5b6c-4d7e-8f9a-0b1c2d3e4f5a",  // 这个作业的对话（现有聊天会话）
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 这个作业的草稿，新建作业时一起建
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 这个作业关联的草稿，取自 kb_job_draft；智能体还没关联时为 null
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 发起人
   "state": "idle",                                            // running 运行中 / idle 等待输入 / failed 失败 / stopped 已停止，取自对话最近一次任务
   "last_reply": "按王芳的批注改好了「支付回调」的去重一节，右边是草稿。",                // 智能体最后一条回复的片段，列表第二行
-  "draft": {                                                  // 草稿概况
+  "draft": {                                                  // 草稿概况；还没关联草稿时为 null
     "version": 9,                                             // 草稿版本，每次写入 +1
     "pages": 2,                                               // 改动的页面（GitLab MR 式文件卡片，每页一张）
     "added": 3,                                               // 新增行数
@@ -1542,9 +1540,64 @@ GET`/api/kb/jobs/{id}`
 ```
 
  
+PUT`/api/kb/jobs/{id}/draft`
+ 
+把草稿关联到作业（`kb job link-draft`）。
+
+ 
+权限 作业发起人，或这个作业里执行的智能体（按任务令牌）
+
+ 
+请求体
+
+```
+{
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a"          // 必填，草稿 id；草稿须属于同一个知识库，且 status = open
+}
+```
+
+ 
+响应 200
+
+```
+{
+  "id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f",               // 作业 id（UUID）
+  "knowledge_base_id": "5b1f0c2e-8a6d-4e1b-9f7a-2c3d4e5f6a7b",  // 知识库 id
+  "name": "处理批注",                                             // 作业名称，列表第一列
+  "starter": "annotations",                                   // 开场白类型，决定默认名称、附加提示词和变更请求来源；自由描述为 custom
+  "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",         // 执行智能体（工作区普通智能体）
+  "agent_name": "通用开发助手",                                     // 执行智能体名称
+  "chat_session_id": "d1e2f3a4-5b6c-4d7e-8f9a-0b1c2d3e4f5a",  // 这个作业的对话（现有聊天会话）
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 这个作业关联的草稿，取自 kb_job_draft；智能体还没关联时为 null
+  "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 发起人
+  "state": "running",                                         // running 运行中 / idle 等待输入 / failed 失败 / stopped 已停止，取自对话最近一次任务
+  "last_reply": "",                                           // 智能体最后一条回复的片段，列表第二行
+  "draft": {                                                  // 草稿概况；还没关联草稿时为 null
+    "version": 0,                                             // 草稿版本，每次写入 +1
+    "pages": 0,                                               // 改动页面数
+    "added": 0,                                               // 新增行数
+    "deleted": 0                                              // 删除行数
+  },
+  "merge_request": null,                                      // 这个作业的变更请求（没有为 null）
+  "created_at": "2026-10-25T10:20:00Z",                       // RFC3339
+  "updated_at": "2026-10-25T10:29:00Z"                        // RFC3339
+}
+```
+
+ 
+| 状态码 | 情况 | 
+| 404 | 草稿不存在，或不属于这个知识库 | 
+| 409 | `job_draft_exists`：作业已关联另一份草稿，响应带已关联的 `draft_id` | 
+| 409 | `draft_linked`：草稿已属于别的作业 | 
+| 409 | 草稿不是 open | 
+
+ 
+重复关联同一份草稿返回 200，不改数据。关联成功后发 `kb.job.updated`。
+
+ 
 POST`/api/kb/jobs/{id}/submit`
  
-提交审核：用草稿建变更请求，带入的批注 → processing。
+提交审核：用关联的草稿建变更请求，带入的批注 → processing。
 
  
 权限 作业发起人
@@ -1580,8 +1633,8 @@ POST`/api/kb/jobs/{id}/submit`
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
   ],
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "kb_job",                                         // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
     "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
   },
@@ -1599,12 +1652,12 @@ POST`/api/kb/jobs/{id}/submit`
 
  
 | 状态码 | 情况 | 
-| 409 | 这一轮还在运行；检查有 error；草稿没有改动；已有打开的变更请求 | 
+| 409 | 还没关联草稿；这一轮还在运行；检查有 error；草稿没有改动；已有打开的变更请求 | 
 
  
 POST`/api/kb/jobs/{id}/discard`
  
-放弃草稿；作业保留在列表里，结果显示「已放弃」。
+放弃关联的草稿；作业保留在列表里，结果显示「已放弃」。
 
  
 权限 作业发起人
@@ -1621,11 +1674,11 @@ POST`/api/kb/jobs/{id}/discard`
   "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",         // 执行智能体（工作区普通智能体）
   "agent_name": "通用开发助手",                                     // 执行智能体名称
   "chat_session_id": "d1e2f3a4-5b6c-4d7e-8f9a-0b1c2d3e4f5a",  // 这个作业的对话（现有聊天会话）
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 这个作业的草稿，新建作业时一起建
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 这个作业关联的草稿，取自 kb_job_draft；智能体还没关联时为 null
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 发起人
   "state": "idle",                                            // running 运行中 / idle 等待输入 / failed 失败 / stopped 已停止，取自对话最近一次任务
   "last_reply": "按王芳的批注改好了「支付回调」的去重一节，右边是草稿。",                // 智能体最后一条回复的片段，列表第二行
-  "draft": {                                                  // 草稿概况
+  "draft": {                                                  // 草稿概况；还没关联草稿时为 null
     "version": 9,                                             // 草稿版本，每次写入 +1
     "pages": 0,                                               // 改动页面数
     "added": 0,                                               // 新增行数
@@ -1639,10 +1692,11 @@ POST`/api/kb/jobs/{id}/discard`
 
  
 | 状态码 | 情况 | 
-| 409 | 已提交审核 | 
+| 409 | 还没关联草稿；已提交审核 | 
 
  
 | 边界情况（设计稿） | 服务端判断 | 界面 | 
+| 还没关联草稿（9.17） | `kb_job_draft` 里没有这个作业 | 右侧空状态，提交审核不可用 | 
 | 这一轮还在运行（9.11） | 对话最近任务未结束 | 提交按钮不可用；输入框按钮变「停止」 | 
 | 智能体自己提交（9.10） | 草稿有 open 变更请求 | 右侧只读，「去审核 #16」 | 
 | 检查有 error（9.9） | `checks.lint` 含 error | 不可提交，「让智能体修复」 | 
@@ -1930,7 +1984,7 @@ GET`/api/kb/pages/{ref}/fetch`
  
 POST`/api/kb/drafts`
  
-建一份草稿（对话、任务、自动化里改知识库时用；作业里的草稿由作业接口建）。
+建一份草稿。
 
  
 权限 工作区成员（智能体按令牌绑定的人）
@@ -1958,7 +2012,7 @@ POST`/api/kb/drafts`
 ```
 
  
-任务令牌调用时，服务端把当前任务记进 `kb_draft.task_id`，提交后带到变更请求，用于审核页「来源」跳回那次任务；不在响应里返回。
+任务令牌调用时，服务端把当前任务记进 `kb_draft.task_id`，成员调用时为空；用于追溯草稿由哪次运行建的，便于排查问题，不参与作业关联和变更请求来源判定，不在响应里返回。
 
  
 POST`/api/kb/drafts/{id}/pages`
@@ -2254,7 +2308,7 @@ POST`/api/kb/drafts/{id}/sync`
  
 POST`/api/kb/merge-requests`
  
-用草稿建变更请求（作业外由智能体调用；作业里的提交走 7.10）。
+用草稿建变更请求（作业里的提交走 7.10）。
 
  
 权限 能写这份草稿
@@ -2292,8 +2346,8 @@ POST`/api/kb/merge-requests`
   "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [],                                       // 本次处理的批注
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "autopilot_run",                                  // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "autopilot_run",                                  // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "自动化 · 每日收录",                                    // 来源的显示文字
     "ref_id": "f0e1d2c3-b4a5-4968-8776-5a4b3c2d1e0f"          // 来源对象 id，用于跳转
   },
@@ -2314,6 +2368,15 @@ POST`/api/kb/merge-requests`
 | 409 | 检查有 error；草稿没有改动；已有打开的变更请求 | 
 
  
+任务令牌调用时，服务端把当前任务记进 `kb_merge_request.task_id`，不在响应里返回。作业页「提交审核」和审核页「回滚」不经 CLI，请求没有任务令牌，`task_id` 为空。
+
+ 
+| 顺序 | 条件 | `origin.type` | 审核页「来源」跳到 | 
+| 1 | 草稿在 `kb_job_draft` 里关联了作业（作业页「提交审核」，或作业里的智能体执行 `kb mr create`） | `kb_job` | 作业页 | 
+| 2 | `reverts_id` 不为空 | `revert` | 被回滚的变更请求 | 
+| 3 | `task_id` 不为空，反查任务表 | `chat` / `issue` / `autopilot_run` | 对话 / 任务 / 自动化运行 | 
+| 4 | 以上都没有 | `none` | 不跳转，只显示作者 | 
+
 GET`/api/kb/sources`
  
 列出可收录的资料：任务、评论、对话、原始资料。

@@ -689,6 +689,14 @@
    "x": 13680,
    "y": 0,
    "title": "3.10 多份草稿改了同一页 · 草稿条默认显示最近更新的一份，下拉切换，每项标明来自哪段对话或哪个任务"
+  },
+  "kb-session-nodraft.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.17 智能体还没关联草稿 · 右侧为空，提交审核不可点",
+   "w": 1440,
+   "x": 24320,
+   "y": 0
   }
  },
  "createdOnFiles": {
@@ -870,6 +878,7 @@
   "kb-session-closed.dc.html",
   "kb-session-merged.dc.html",
   "kb-session-queue.dc.html",
+  "kb-session-nodraft.dc.html",
   "kb-session.dc.html",
   "kb-session-draft.dc.html",
   "kb-session-followup.dc.html",

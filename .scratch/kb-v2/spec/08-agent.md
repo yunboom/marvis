@@ -2,7 +2,7 @@
 
 8.1 CLI
 
-所有命令输出 JSON；能渲染成对话卡片的对象都带 `mention` 字段（7.14），智能体原样贴进回复。写操作沿用现有权限，人和智能体不做区分（决策 46）；不提供作业命令（决策 38），作业在界面上新建。出错时退出码非 0，输出 `{"error": {"code": "...", "message": "..."}}`。
+所有命令输出 JSON；能渲染成对话卡片的对象都带 `mention` 字段（7.14），智能体原样贴进回复。写操作沿用现有权限，人和智能体不做区分（决策 46）；作业在界面上新建（决策 38），作业命令只有 `kb job link-draft`，用来把草稿关联到作业（决策 104）。出错时退出码非 0，输出 `{"error": {"code": "...", "message": "..."}}`。
 
 | 命令 | 用途 | 类型 | 
 | kb list / get | 列出 / 查看知识库；`get` 返回 PURPOSE、SCHEMA 全文 | 读 | 
@@ -16,7 +16,8 @@
 | kb sources list | 还没收录的资料（读内容用各自现有命令） | 读 | 
 | kb raw list / get | 原始资料；`get` 下载到本地给智能体读 | 读 | 
 | kb annotation add / list / dismiss / reopen | 批注；发现缺内容或写错用 `add` | 写批注 | 
-| kb draft create / check | 建草稿（作业外）；看草稿改动与检查 | 写 / 读 | 
+| kb draft create / check | 建草稿；看草稿改动与检查 | 写 / 读 | 
+| kb job link-draft | 把草稿关联到知识库作业 | 写 | 
 | kb mr create / update / list / get / comment / merge / close / revert | 审核相关；合并、关闭按现有权限（决策 46） | 写 | 
 | kb history | 已合并的改动 | 读 | 
 | chat list / get | 读对话（现有 `marvis chat` 命令组新增）；owner 读全员对话见 8.7 | 读 | 
@@ -482,7 +483,7 @@ marvis kb stale team
 
 CLI`marvis kb draft create`
  
-建一份草稿（对话、任务、自动化里改知识库时用；知识库作业里的草稿由作业自动建）。一次变更基于一份草稿：从建草稿到提交，读取和写入都带同一个草稿 id；不同的变更各建各的，同一段对话里提两次改动就建两份。
+建一份草稿。一个变更请求对应一份草稿：从建草稿、提交，到按审核意见修改，读写都带同一个草稿 id；分几次改、改了几个页面，都写进这份草稿。
 
  
 对应接口 `POST /api/kb/drafts`
@@ -519,6 +520,64 @@ marvis kb draft create team --title "每日收录 · 10-25"
 ```
 
  
+CLI`marvis kb job link-draft`
+ 
+把草稿关联到知识库作业。关联后，作业页右侧显示这份草稿的改动，成员提交或放弃的就是这份草稿。一个作业只关联一份草稿。
+
+ 
+对应接口 `PUT /api/kb/jobs/{id}/draft`
+
+ 
+
+```
+marvis kb job link-draft <job> --draft <草稿> [--output table|json]
+```
+
+ 
+| 参数 | 必填 | 传什么 | 示例 | 
+| `<job>` | 是 | 作业 id（完整 UUID），首条消息里给出 | `c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f` | 
+| `--draft` | 是 | 草稿 id（完整 UUID），`kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
+| `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
+
+ 
+示例
+
+```
+marvis kb job link-draft c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f --draft 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+```
+
+ 
+输出（JSON）
+
+```
+{
+  "id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f",               // 作业 id（UUID）
+  "knowledge_base_id": "5b1f0c2e-8a6d-4e1b-9f7a-2c3d4e5f6a7b",  // 知识库 id
+  "name": "处理批注",                                             // 作业名称，列表第一列
+  "starter": "annotations",                                   // 开场白类型，决定默认名称、附加提示词和变更请求来源；自由描述为 custom
+  "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",         // 执行智能体（工作区普通智能体）
+  "agent_name": "通用开发助手",                                     // 执行智能体名称
+  "chat_session_id": "d1e2f3a4-5b6c-4d7e-8f9a-0b1c2d3e4f5a",  // 这个作业的对话（现有聊天会话）
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 这个作业关联的草稿，取自 kb_job_draft；智能体还没关联时为 null
+  "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 发起人
+  "state": "running",                                         // running 运行中 / idle 等待输入 / failed 失败 / stopped 已停止，取自对话最近一次任务
+  "last_reply": "",                                           // 智能体最后一条回复的片段，列表第二行
+  "draft": {                                                  // 草稿概况；还没关联草稿时为 null
+    "version": 0,                                             // 草稿版本，每次写入 +1
+    "pages": 0,                                               // 改动页面数
+    "added": 0,                                               // 新增行数
+    "deleted": 0                                              // 删除行数
+  },
+  "merge_request": null,                                      // 这个作业的变更请求（没有为 null）
+  "created_at": "2026-10-25T10:20:00Z",                       // RFC3339
+  "updated_at": "2026-10-25T10:29:00Z"                        // RFC3339
+}
+```
+
+ 
+作业已关联另一份草稿时返回错误 `job_draft_exists`，草稿已属于别的作业时返回 `draft_linked`；重复关联同一份草稿不报错。
+
+ 
 CLI`marvis kb page create`
  
 在草稿里新建页面。
@@ -535,7 +594,7 @@ marvis kb page create --draft <草稿> --parent <页面> [--after <页面>] --sl
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
-| `--draft` | 是 | 草稿 id（完整 UUID）。作业里写在首条消息里；作业外是 `kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
+| `--draft` | 是 | 草稿 id（完整 UUID），`kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
 | `--parent` | 是 | 父页面引用；建在顶层写 `team:/` | `team:/payment` | 
 | `--after` | 否 | 兄弟页面引用，新页排在它后面；不传排最后 | `team:/payment/callback` | 
 | `--slug` | 是 | 路径段：小写字母、数字、连字符，同级唯一 | `callback-manual` | 
@@ -587,7 +646,7 @@ marvis kb page patch <页面> --draft <草稿> --version <版本> [--output tabl
  
 | 参数 | 必填 | 传什么 | 示例 | 
 | `<页面>` | 是 | 页面引用：`知识库 slug:/路径`，或页面 id（UUID） | `team:/payment/callback` | 
-| `--draft` | 是 | 草稿 id（完整 UUID）。作业里写在首条消息里；作业外是 `kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
+| `--draft` | 是 | 草稿 id（完整 UUID），`kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
 | `--version` | 是 | 这一页最近一次 fetch 或写入返回的 `version`：已在草稿里的页是 `d` + 数字；还没进草稿的页是主线修订 id（UUID） | `d9` | 
 | `--op` | 是 | `block_replace` 替换块 / `block_insert_after` 在块后插入 / `block_delete` 删块 / `block_move_after` 移动块 / `str_replace` 文本替换 / `append` 追加到页尾 / `set_meta` 改页头 | `block_replace` | 
 | `--block` | 按块操作时是 | 目标块 id（4 位，`fetch --detail with-ids` 输出里的 `id`）；`block_insert_after` 插到最前写 `start` | `b8Xz` | 
@@ -646,7 +705,7 @@ marvis kb page delete <页面> --draft <草稿> --version <版本> [--output tab
  
 | 参数 | 必填 | 传什么 | 示例 | 
 | `<页面>` | 是 | 页面引用：`知识库 slug:/路径`，或页面 id（UUID） | `team:/payment/callback-manual` | 
-| `--draft` | 是 | 草稿 id（完整 UUID）。作业里写在首条消息里；作业外是 `kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
+| `--draft` | 是 | 草稿 id（完整 UUID），`kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
 | `--version` | 是 | 这一页最近一次 fetch 或写入返回的 `version`：已在草稿里的页是 `d` + 数字；还没进草稿的页是主线修订 id（UUID） | `d10` | 
 | `--parent` | move 时是 | 新的父页面引用 | `team:/operations` | 
 | `--after` | 否 | 兄弟页面引用，排在它后面；不传排最后 | `team:/operations/release` | 
@@ -1142,7 +1201,7 @@ marvis kb annotation list team
 
 CLI`marvis kb mr create`
  
-用草稿建变更请求（作业外用；作业里由成员点提交，除非成员要求智能体提交）。
+用草稿建变更请求（作业里由成员点提交，除非成员要求智能体提交）。
 
  
 对应接口 `POST /api/kb/merge-requests`
@@ -1156,7 +1215,7 @@ marvis kb mr create --draft <草稿> --title <标题> (--summary <文本> | --su
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
-| `--draft` | 是 | 草稿 id（完整 UUID）。作业里写在首条消息里；作业外是 `kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
+| `--draft` | 是 | 草稿 id（完整 UUID），`kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
 | `--title` | 是 | 变更请求标题，描述这次合并 | `"每日收录 · 10-25"` | 
 | `--summary / --summary-file / --summary-stdin` | 是 | 变更说明 Markdown：改了什么、为什么、处理了哪些批注；三选一 | `--summary-file ./summary.md` | 
 | `--risk` | 是 | `low` / `medium` / `high`，审核人据此决定看多细 | `medium` | 
@@ -1192,8 +1251,8 @@ marvis kb mr create --draft 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a --title "每日
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
   ],
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "kb_job",                                         // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
     "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
   },
@@ -1260,8 +1319,8 @@ marvis kb mr get 16
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
   ],
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "kb_job",                                         // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
     "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
   },
@@ -1407,8 +1466,8 @@ marvis kb mr update 16 --risk low
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
   ],
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "kb_job",                                         // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
     "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
   },
@@ -1535,8 +1594,8 @@ marvis kb mr merge 16 --draft-version 9
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
   ],
-  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的
-    "type": "kb_job",                                         // kb_job 知识库作业 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
     "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
     "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
   },
@@ -2168,11 +2227,10 @@ English · 代码原文
 
 ```
 Knowledge base: {{.Name}} (`{{.Slug}}`)
-Draft: {{.DraftID}}
-Job: {{.StarterTitle}}
+Job: {{.StarterTitle}} (`{{.JobID}}`)
 
 How to work:
-- Write every change of this job into the draft above; do not create another draft.
+- Create a draft with `marvis kb draft create {{.Slug}}`, then link it to this job with `marvis kb job link-draft {{.JobID}} --draft <draft id>`. Once it is linked, the member sees the draft on the right. Write every change of this job into that draft.
 - For how to read and write the knowledge base, load the `marvis-platform` skill and open `references/knowledge-bases.md`.
 - The member reviews the draft on the right and submits it. Submit the change request yourself only when the member asks you to.
 - End each turn with a short summary: pages changed, anything unresolved.
@@ -2186,10 +2244,10 @@ Member's message:
 中文对照
 
 ```
-知识库：{{.Name}}（`{{.Slug}}`）草稿：{{.DraftID}}作业：{{.StarterTitle}}
+知识库：{{.Name}}（`{{.Slug}}`）作业：{{.StarterTitle}}（`{{.JobID}}`）
 
 工作方式：
-- 这次作业的所有改动都写进上面这份草稿，不要另建草稿。
+- 用 `marvis kb draft create {{.Slug}}` 建一份草稿，再用`marvis kb job link-draft {{.JobID}} --draft <草稿 id>` 把它关联到这个作业。关联后，成员在右侧看到这份草稿。这次作业的所有改动都写进这份草稿。
 - 怎么读写知识库，加载 `marvis-platform` skill，打开 `references/knowledge-bases.md`。
 - 成员在右侧审阅草稿并提交。只有成员要求时，才由你提交变更请求。
 - 每一轮结束时写一段简短总结：改了哪些页面，哪些没解决。
@@ -2369,7 +2427,7 @@ English · 代码原文
 
 8.6 审核评论转交给智能体
 
-变更请求来自作业时，作为一条消息发进那个作业的对话；否则为作者智能体新建一个作业，这段作为首条消息里的 `{{.Message}}`，草稿沿用变更请求的。
+变更请求来自作业时，复用原作业：这段作为一条消息发进原作业的对话，智能体接着改这个作业已关联的草稿，不新建作业、不重新关联（决策 104）。变更请求来自对话、任务或自动化时，照任务评论的规则给作者智能体派任务，这段作为任务的指令，不新建作业。
 
 评论转交
 English · 代码原文
