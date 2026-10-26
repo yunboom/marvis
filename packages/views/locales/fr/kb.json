@@ -53,6 +53,14 @@
       "deleted": "Brouillon · Supprimé"
     }
   },
+  "search": {
+    "placeholder": "Rechercher dans cette base",
+    "pages_one": "{{count}} page",
+    "pages_other": "{{count}} pages",
+    "no_results": "Aucun résultat pour « {{query}} »",
+    "no_results_hint": "Essayez d’autres mots-clés.",
+    "failed": "La recherche a échoué"
+  },
   "home": {
     "pending_title": "En attente",
     "pending_reviews": "Modifications à valider",

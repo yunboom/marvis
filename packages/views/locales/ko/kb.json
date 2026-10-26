@@ -50,6 +50,13 @@
       "deleted": "초안 · 삭제"
     }
   },
+  "search": {
+    "placeholder": "이 지식 베이스에서 검색",
+    "pages_other": "페이지 {{count}}개",
+    "no_results": "“{{query}}”에 대한 결과가 없습니다",
+    "no_results_hint": "다른 키워드로 검색해 보세요.",
+    "failed": "검색에 실패했습니다"
+  },
   "home": {
     "pending_title": "대기 중",
     "pending_reviews": "검토 대기 변경",

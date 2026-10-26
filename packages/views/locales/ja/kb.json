@@ -50,6 +50,13 @@
       "deleted": "下書き · 削除"
     }
   },
+  "search": {
+    "placeholder": "このナレッジベースを検索",
+    "pages_other": "{{count}} ページ",
+    "no_results": "「{{query}}」は見つかりませんでした",
+    "no_results_hint": "別のキーワードをお試しください。",
+    "failed": "検索に失敗しました"
+  },
   "home": {
     "pending_title": "未対応",
     "pending_reviews": "レビュー待ちの変更",

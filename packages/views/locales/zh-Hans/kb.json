@@ -50,6 +50,13 @@
       "deleted": "草稿 · 删"
     }
   },
+  "search": {
+    "placeholder": "在本知识库搜索",
+    "pages_other": "{{count}} 个页面",
+    "no_results": "没有找到「{{query}}」",
+    "no_results_hint": "换个关键词试试。",
+    "failed": "搜索失败"
+  },
   "home": {
     "pending_title": "待处理",
     "pending_reviews": "待审核修改",

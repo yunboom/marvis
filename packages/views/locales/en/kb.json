@@ -53,6 +53,14 @@
       "deleted": "Draft · Deleted"
     }
   },
+  "search": {
+    "placeholder": "Search this knowledge base",
+    "pages_one": "{{count}} page",
+    "pages_other": "{{count}} pages",
+    "no_results": "No results for “{{query}}”",
+    "no_results_hint": "Try different keywords.",
+    "failed": "Search failed"
+  },
   "home": {
     "pending_title": "Pending",
     "pending_reviews": "Changes to review",

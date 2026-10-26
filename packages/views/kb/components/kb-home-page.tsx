@@ -13,6 +13,7 @@ import { AppLink, useNavigation } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
 import { parseKbRoute } from "../utils/kb-markdown";
 import { KbAnnotationPanel } from "./kb-annotations";
+import { KbSearchBox } from "./kb-search";
 
 function PendingCard({
   tone,
@@ -145,6 +146,7 @@ export function KbHomePage() {
             {base.name}
           </span>
         </nav>
+        <KbSearchBox kbSlug={kbSlug} />
         <button
           type="button"
           aria-label={t(($) => $.annotation.kb_panel)}
