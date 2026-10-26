@@ -727,3 +727,69 @@ deleted_lark_invites AS (
 )
 DELETE FROM workspace_invitation
 WHERE workspace_invitation.workspace_id = $1;
+
+-- name: DeleteWorkspaceKnowledgeBases :exec
+-- Knowledge base tables carry no foreign keys. Child tables without a
+-- workspace_id go through their parent before the parent rows are removed.
+-- kb_block_embedding is optional (migration 606) and swept separately.
+WITH deleted_kb_config_revisions AS (
+    DELETE FROM kb_config_revision
+    USING kb_base
+    WHERE kb_config_revision.knowledge_base_id = kb_base.id
+      AND kb_base.workspace_id = $1
+),
+deleted_kb_draft_pages AS (
+    DELETE FROM kb_draft_page
+    USING kb_draft
+    WHERE kb_draft_page.draft_id = kb_draft.id
+      AND kb_draft.workspace_id = $1
+),
+deleted_kb_mr_comments AS (
+    DELETE FROM kb_mr_comment
+    USING kb_merge_request
+    WHERE kb_mr_comment.merge_request_id = kb_merge_request.id
+      AND kb_merge_request.workspace_id = $1
+),
+deleted_kb_builder_sessions AS (
+    DELETE FROM kb_builder_session WHERE kb_builder_session.workspace_id = $1
+),
+deleted_kb_raws AS (
+    DELETE FROM kb_raw WHERE kb_raw.workspace_id = $1
+),
+deleted_kb_pages AS (
+    DELETE FROM kb_page WHERE kb_page.workspace_id = $1
+),
+deleted_kb_page_revisions AS (
+    DELETE FROM kb_page_revision WHERE kb_page_revision.workspace_id = $1
+),
+deleted_kb_claims AS (
+    DELETE FROM kb_claim WHERE kb_claim.workspace_id = $1
+),
+deleted_kb_links AS (
+    DELETE FROM kb_link WHERE kb_link.workspace_id = $1
+),
+deleted_kb_drafts AS (
+    DELETE FROM kb_draft WHERE kb_draft.workspace_id = $1
+),
+deleted_kb_jobs AS (
+    DELETE FROM kb_job WHERE kb_job.workspace_id = $1
+),
+deleted_kb_annotations AS (
+    DELETE FROM kb_annotation WHERE kb_annotation.workspace_id = $1
+),
+deleted_kb_merge_requests AS (
+    DELETE FROM kb_merge_request WHERE kb_merge_request.workspace_id = $1
+),
+deleted_kb_workspace AS (
+    DELETE FROM kb_workspace WHERE kb_workspace.workspace_id = $1
+)
+DELETE FROM kb_base
+WHERE kb_base.workspace_id = $1;
+
+-- name: KbBlockEmbeddingTableExists :one
+-- kb_block_embedding exists only where pgvector is installed (migration 606).
+SELECT (to_regclass('public.kb_block_embedding') IS NOT NULL)::boolean AS present;
+
+-- name: DeleteWorkspaceKbBlockEmbeddings :exec
+DELETE FROM kb_block_embedding
+WHERE kb_block_embedding.workspace_id = $1;

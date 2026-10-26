@@ -1363,6 +1363,24 @@ func (h *Handler) DeleteWorkspace(w http.ResponseWriter, r *http.Request) {
 			run:  func() error { return qtx.DeleteWorkspacePluginData(ctx, requester.WorkspaceID) },
 		},
 		{
+			// Knowledge base tables have no foreign keys; the optional
+			// embedding table only exists where pgvector is installed.
+			name: "delete knowledge bases",
+			run: func() error {
+				hasEmbeddings, err := qtx.KbBlockEmbeddingTableExists(ctx)
+				if err != nil {
+					return err
+				}
+				if hasEmbeddings {
+					if err := qtx.DeleteWorkspaceKbBlockEmbeddings(ctx, requester.WorkspaceID); err != nil {
+						return err
+					}
+				}
+
+				return qtx.DeleteWorkspaceKnowledgeBases(ctx, requester.WorkspaceID)
+			},
+		},
+		{
 			name: "delete agents",
 			run:  func() error { return qtx.DeleteWorkspaceAgents(ctx, requester.WorkspaceID) },
 		},

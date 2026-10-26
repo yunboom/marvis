@@ -224,3 +224,90 @@ func TestCreateKbPageWritesRevisionAndLinks(t *testing.T) {
 		t.Errorf("blocks = %s, want resolved kb:// link and unresolved path kept", blocks)
 	}
 }
+
+// Knowledge base tables have no foreign keys, so workspace teardown must sweep
+// every one of them itself.
+func TestDeleteWorkspaceRemovesKnowledgeBases(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	wsID := dbfx.Workspace(t, "KB Teardown", fmt.Sprintf("kb-teardown-%d", time.Now().UnixNano()))
+	dbfx.Exec(t, `INSERT INTO member (workspace_id, user_id, role) VALUES ($1, $2, 'owner')`, wsID, testUserID)
+
+	var baseID string
+	dbfx.QueryRow(t, `
+		INSERT INTO kb_base (workspace_id, name, slug, schema_mode, schema, created_by)
+		VALUES ($1, 'Teardown', 'teardown', 'default', '# Schema', $2) RETURNING id`, wsID, testUserID).Scan(&baseID)
+	if _, err := kb.CreatePage(context.Background(), testHandler.Queries, kb.NewPage{
+		WorkspaceID: wsID, KnowledgeBaseID: baseID, Position: "a0", Slug: "quickstart",
+		Reserved: kb.ReservedQuickstart, Type: "Guide", Title: "Quickstart", Markdown: "see [x](/missing.md)",
+	}); err != nil {
+		t.Fatalf("CreatePage: %+v", err)
+	}
+	dbfx.Exec(t, `
+		WITH d AS (
+			INSERT INTO kb_draft (workspace_id, knowledge_base_id, created_by) VALUES ($1, $2, $3) RETURNING id
+		), dp AS (
+			INSERT INTO kb_draft_page (draft_id, page_id, op, position, slug, frontmatter, blocks, claims)
+			SELECT id, gen_random_uuid(), 'create', 'a1', 'new', '{}', '[]', '[]' FROM d
+		), mr AS (
+			INSERT INTO kb_merge_request (workspace_id, number, knowledge_base_id, title, source, author_type, author_id, draft_id)
+			SELECT $1, 1, $2, 'Change', 'custom', 'member', $3, id FROM d RETURNING id
+		), c AS (
+			INSERT INTO kb_mr_comment (merge_request_id, body, author_type, author_id)
+			SELECT id, 'ok', 'member', $3 FROM mr
+		), j AS (
+			INSERT INTO kb_job (workspace_id, knowledge_base_id, name, starter, agent_id, chat_session_id, draft_id, created_by)
+			SELECT $1, $2, 'Job', 'custom', gen_random_uuid(), gen_random_uuid(), id, $3 FROM d
+		)
+		INSERT INTO kb_config_revision (knowledge_base_id, name, description, schema_mode, purpose, schema, saved_by)
+		VALUES ($2, 'Teardown', '', 'default', '', '# Schema', $3)`, wsID, baseID, testUserID)
+	dbfx.Exec(t, `
+		WITH a AS (
+			INSERT INTO kb_annotation (workspace_id, knowledge_base_id, body, author_type, author_id)
+			VALUES ($1, $2, 'note', 'member', $3)
+		), r AS (
+			INSERT INTO kb_raw (workspace_id, knowledge_base_id, kind, name, storage_key, size, content_type, uploaded_by)
+			VALUES ($1, $2, 'source', 'a.pdf', 'kb/a.pdf', 1, 'application/pdf', $3)
+		), b AS (
+			INSERT INTO kb_builder_session (chat_session_id, workspace_id, mode) VALUES (gen_random_uuid(), $1, 'create')
+		), cl AS (
+			INSERT INTO kb_claim (workspace_id, knowledge_base_id, page_id, block_id, key, text, evidence, checked_at)
+			VALUES ($1, $2, gen_random_uuid(), 'b000', 'c1', 'fact', '[]', now())
+		)
+		INSERT INTO kb_workspace (workspace_id) VALUES ($1)`, wsID, baseID, testUserID)
+
+	req := withURLParam(newRequest(http.MethodDelete, "/api/workspaces/"+wsID, nil), "id", wsID)
+	testutil.Call(t, testHandler.DeleteWorkspace, req).Want(http.StatusNoContent)
+
+	for _, table := range []string{
+		"kb_base", "kb_page", "kb_page_revision", "kb_link", "kb_draft", "kb_merge_request", "kb_job",
+		"kb_annotation", "kb_raw", "kb_builder_session", "kb_claim",
+	} {
+		if n := dbfx.Count(t, fmt.Sprintf(`SELECT count(*) FROM %s WHERE workspace_id = $1`, table), wsID); n != 0 {
+			t.Errorf("%s still has %d rows after workspace delete", table, n)
+		}
+	}
+	for table, sql := range map[string]string{
+		"kb_workspace":       `SELECT count(*) FROM kb_workspace WHERE workspace_id = $1`,
+		"kb_config_revision": `SELECT count(*) FROM kb_config_revision WHERE knowledge_base_id = $1`,
+		"kb_draft_page":      `SELECT count(*) FROM kb_draft_page dp WHERE NOT EXISTS (SELECT 1 FROM kb_draft d WHERE d.id = dp.draft_id)`,
+		"kb_mr_comment":      `SELECT count(*) FROM kb_mr_comment c WHERE NOT EXISTS (SELECT 1 FROM kb_merge_request m WHERE m.id = c.merge_request_id)`,
+	} {
+		arg := wsID
+		if table == "kb_config_revision" {
+			arg = baseID
+		}
+		query := sql
+		if !strings.Contains(sql, "$1") {
+			if n := dbfx.Count(t, query); n != 0 {
+				t.Errorf("%s has %d orphaned rows after workspace delete", table, n)
+			}
+			continue
+		}
+		if n := dbfx.Count(t, query, arg); n != 0 {
+			t.Errorf("%s still has %d rows after workspace delete", table, n)
+		}
+	}
+}
