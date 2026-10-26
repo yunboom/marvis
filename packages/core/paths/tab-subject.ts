@@ -98,6 +98,10 @@ export function parseTabSubject(url: string): TabSubject {
       return id
         ? { kind: "actor", actorType: "squad", id }
         : { kind: "page", page: "squads" };
+    case "kb":
+      // Knowledge base sub-routes have no resource presentation yet; they
+      // read as the knowledge base page.
+      return { kind: "page", page: "kb" };
     case "usage":
       return { kind: "page", page: "usage" };
     case "inbox":

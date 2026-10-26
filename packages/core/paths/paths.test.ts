@@ -34,6 +34,9 @@ describe("paths.workspace(slug)", () => {
     expect(ws.skillDetail("skl_123")).toBe("/acme/skills/skl_123");
     expect(ws.squads()).toBe("/acme/squads");
     expect(ws.squadDetail("sq_1")).toBe("/acme/squads/sq_1");
+    expect(ws.kb()).toBe("/acme/kb");
+    expect(ws.kbBase("team docs")).toBe("/acme/kb/team%20docs");
+    expect(ws.kbNew()).toBe("/acme/kb/new");
     expect(ws.settings()).toBe("/acme/settings");
     expect(ws.attachmentPreview("att_42")).toBe("/acme/attachments/att_42/preview");
   });

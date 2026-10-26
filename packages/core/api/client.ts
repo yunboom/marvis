@@ -263,6 +263,13 @@ import { type Logger, noopLogger } from "../logger";
 import { createRequestId, createSafeId } from "../utils";
 import { getCurrentSlug } from "../platform/workspace-storage";
 import { parseWithFallback } from "./schema";
+import type { KnowledgeBase, KnowledgeBaseDetail } from "../types/kb";
+import {
+  EMPTY_KNOWLEDGE_BASE_DETAIL,
+  EMPTY_KNOWLEDGE_BASE_LIST,
+  KnowledgeBaseDetailSchema,
+  KnowledgeBaseListSchema,
+} from "./kb-schemas";
 import {
   RuntimeProfileSchema,
   RuntimeProfileListSchema,
@@ -4805,6 +4812,22 @@ export class ApiClient {
     await this.fetch("/api/pins/reorder", {
       method: "PUT",
       body: JSON.stringify(data),
+    });
+  }
+
+  // Knowledge bases
+  async listKnowledgeBases(): Promise<KnowledgeBase[]> {
+    const raw = await this.fetch<unknown>("/api/kb/bases");
+    return parseWithFallback(raw, KnowledgeBaseListSchema, EMPTY_KNOWLEDGE_BASE_LIST, {
+      endpoint: "GET /api/kb/bases",
+    });
+  }
+
+  /** `kb` is the knowledge base id or slug. */
+  async getKnowledgeBase(kb: string): Promise<KnowledgeBaseDetail> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}`);
+    return parseWithFallback(raw, KnowledgeBaseDetailSchema, EMPTY_KNOWLEDGE_BASE_DETAIL, {
+      endpoint: "GET /api/kb/bases/:kb",
     });
   }
 
