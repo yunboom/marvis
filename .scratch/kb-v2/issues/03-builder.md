@@ -6,7 +6,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] `/api/kb/builder/sessions*`、`POST /api/kb/bases`（slug 必填、schema_mode）、`PATCH /api/kb/bases/{kb}`、配置修订，按 spec 07.1 / 07.x
-- [ ] 默认 Schema、目标模板、构建器指令（英文原文）落成常量
-- [ ] 前端复用 builder-conversation 组件；web / desktop 都接入
-- [ ] 复用创建智能体的测试方式
+- [x] `/api/kb/builder/sessions*`、`POST /api/kb/bases`（slug 必填、schema_mode）、`PATCH /api/kb/bases/{kb}`、配置修订，按 spec 07.1 / 07.x
+- [x] 默认 Schema、目标模板、构建器指令（英文原文）落成常量
+- [x] 前端复用 builder-conversation 组件；web / desktop 都接入
+- [x] 复用创建智能体的测试方式

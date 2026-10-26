@@ -118,3 +118,38 @@
    - 删掉 `kb_page.reserved` 列及 CHECK（直接改迁移 604，分支未上线；已跑过的本地库手动 `ALTER TABLE kb_page DROP COLUMN reserved` 或重建）、sqlc 里所有 `reserved` 条件和 `GetKbQuickstartPage`、`kb.Reserved*` 常量、`NewPage.Reserved`、页面 / 树响应的 `reserved` 字段；名为 quickstart 的页面和其他页面一样进页面树、计入 page_count、可删可移。
    - 前端去掉 `KbPage.reserved` / `KbTreePage.reserved` / `KbHome.quickstart`、首页写 quickstart 缓存的逻辑、`KbPageBody` 的 `bare` 属性。
    - 默认 Schema 常量保留 quickstart 作为建议的普通页面（任务导航 + 待补），去掉「是首页」「Agent 依赖，不能删除、不能移动」以及 Agent 依赖清单里的 quickstart；构建器指令不出现 quickstart。
+   - 已知：构建器指令末尾按 spec 08.3 嵌入 `{{.DefaultSchema}}` 全文，所以拼好的提示词里会以「普通页面」出现 quickstart；指令自身的文字不出现（`builder_test.go` 断言）。
+2. **隐藏构建器智能体的 system_key**
+   - 问题：spec 写 `kb-builder:<流程 id>`，创建智能体用的是 `agent_builder:`。
+   - 选择：`kb_builder:`（`kb.BuilderSystemKeyPrefix`），与现有前缀同一写法；`DeleteSystemAgentByID`、`RebindAgentBuilderRuntime` 的守卫改为 `starts_with` 同时覆盖两种前缀（原来的 `LIKE 'agent_builder:%'` 里 `_` 是通配符）。
+   - 运行时删除的阻塞提示里，知识库构建器归为 other_system（「Marvis 内置」），没有单独的文案，留作缺口。
+3. **放弃与清理**
+   - `DELETE /api/kb/builder/sessions/{id}` 先确认是知识库构建器会话（否则 404），再直接走现有的删除聊天会话逻辑；聊天删除路径里加了删 `kb_builder_session`，运行时下线（`pruneRuntimeSystemAgentChatDraftRestores`）也一并清理。
+   - 创建成功 / 配置保存后，照创建智能体把构建器会话归档（不删），它就不再出现在「未完成」里。
+4. **构建器会话接口细节**
+   - 列表响应是数组（spec 原样），只列有消息或保存过右侧配置（`draft <> '{}'`）的会话；没保存过时 `draft` 为 null，前端回放最后一条 `<kb_draft>`。
+   - `kb` 查询参数接受 id 或 slug；`mode` 不合法 400。
+   - 配置模式建会话要求知识库创建者或 owner / admin（403），`schema_mode` 不传时取知识库当前值。
+   - 更换运行时与创建智能体共用 `rebindBuilderCarrier`（锁顺序、在线检查、回复进行中 409 都一致）。
+5. **默认 Schema 与目标模板的存放**
+   - 问题：要求「落成 Go 常量」，但默认 Schema 含 ``` 代码块，Go 原始字符串放不下反引号。
+   - 选择：英文原文放在 `server/internal/kb/templates/*.md`，用 `go:embed` 读成包级变量 `kb.DefaultSchema`、`kb.PurposeTemplate`；构建器指令是 `text/template`，建会话时按模式、slug、初始 Schema 模式渲染。
+   - 新增 `GET /api/kb/templates`（返回 `default_schema`、`purpose_template`）：新建时右侧要只读显示内置 Schema，切到「自定义」也要从它起步，前端不再复制一份文本。
+6. **slug 保留字**：`new` 不能作为知识库 slug（与 `/kb/new` 路由冲突），前后端一致校验。
+7. **PATCH 配置**
+   - `base_updated_at` 选填；传了就在行锁下比对，`updated_at` 返回到客户端只有秒级精度，所以按秒比较，同一秒内的两次保存不判冲突。
+   - 一直是默认模式时保留创建时写入的模板，不随平台模板更新；从自定义切回默认时写入当前内置模板；切到自定义必须带 `schema`；名称不能改成空。
+   - 创建和每次保存都写一行 `kb_config_revision`。
+8. **创建后的去向（1.10）**
+   - 作业页属于票 07，现在跳到 `/kb/{slug}?welcome=1`：首页上方显示「已创建」提示和四步上手引导，「收录资料」标「建议先做」，点「知道了」去掉参数。引导第一步的文字改成「新建知识库作业」，不说「在这里」。
+   - 票 07 做好作业页后，把跳转改成 `/kb/{slug}/jobs/new?welcome=1` 并把引导移过去。
+9. **配置保存后的去向**：设计稿 10.4 停留在配置页显示「已保存」；但保存后这段对话已经结束，留在页面会让它一直挂在「未完成的配置」里。选择：提示「已保存」、归档会话、回到知识库首页。
+10. **路由**：`/kb/new`（选运行时）、`/kb/new/{会话}`、`/kb/{slug}/config`、`/kb/{slug}/config/{会话}`；选运行时这一步复用 `BuilderSetup`。配置页在 `[kbSlug]` layout 下，`KbShell` 遇到 config 路由不画知识库导航，占满宽度（设计稿 10.x）。
+11. **消息信封与回填**
+   - 用户消息包成 `MARVIS_KB_BUILDER_INPUT\n{user_request, schema_mode, current_draft}`，`current_draft.schema` 只在自定义模式带。
+   - 回填：Schema 只在自定义模式采用构建器给的；配置模式不改 slug；新建时 slug 转小写。上一条回复改动过的字段在卡片上标「刚更新」，用户改这一项后去掉。
+   - 右侧配置保存时，默认模式不存 Schema 正文；恢复时默认模式显示知识库自己的 Schema（配置且原本是默认）或当前内置模板。自定义 → 默认 → 自定义在本页内能找回刚才手写的 Schema（不持久化）。
+12. **开场白**：新建的四个方向点了直接发送「{标题}：{说明}」；配置的四个问题点了直接发送问题原文。「有未保存的修改」只在配置模式显示（对比打开时的配置）。
+13. **更换运行时**：设计稿在顶栏运行时旁放「更换」；做成下拉，只列在线且本人能用的运行时，先改服务端绑定再更新显示（同创建智能体）。
+14. **「…」菜单里的配置入口**：只对知识库创建者和 owner / admin 显示（成员列表 + 当前用户判断，与服务端规则一致）；「知识库管理」「变更记录」「关系图」仍等票 08、09。
+15. **mention**：`[名称](mention://kb/<id>)`，名称里的 `[`、`]`、`\` 转义。
