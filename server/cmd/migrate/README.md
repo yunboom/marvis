@@ -183,3 +183,28 @@ Confirm the statistics landed:
 ```sql
 SELECT count(*) FROM pg_statistic WHERE starelid = 'idx_issue_properties_bigm'::regclass;
 ```
+
+## Enable knowledge base vector search after installing pgvector
+
+Migrations 605, 606, 627 and 628 install the `vector` extension, create
+`kb_block_embedding` and build its indexes. The runner executes them only where
+pgvector is available (the `pgvector/pgvector` images ship it; the desktop
+standalone Postgres does not). Elsewhere they are recorded with their SQL
+skipped and knowledge base search stays keyword-only, which the search code
+treats as the normal degraded mode.
+
+The records are permanent, so a database that gains pgvector later has to run
+the statements out of band, each separately and outside a transaction:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+-- then the CREATE TABLE in server/migrations/606_kb_block_embedding.up.sql
+CREATE INDEX CONCURRENTLY IF NOT EXISTS kb_block_embedding_hnsw
+    ON kb_block_embedding USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS kb_block_embedding_base_idx
+    ON kb_block_embedding (knowledge_base_id);
+```
+
+Migrations 625 / 626 pick the knowledge base page keyword index the same way
+as the issue search indexes: `kb_page_search_bigm` where `gin_bigm_ops` is
+installed, otherwise the `kb_page_search_trgm` fallback.

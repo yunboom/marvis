@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS kb_page_stale_idx;

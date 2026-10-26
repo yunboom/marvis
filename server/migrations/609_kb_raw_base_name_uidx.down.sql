@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS kb_raw_base_name_uidx;

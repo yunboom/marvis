@@ -14,7 +14,7 @@
 - 范围是全部被 git 跟踪的文本和路径：代码标识符、注释、文案、文档、CLI 命令（`marvis`）、Go module（`github.com/yunboom/marvis/server`）、npm scope（`@marvis/*`）、环境变量（`MARVIS_*`）、docker compose 项目名、外部域名（`multica.ai` → `marvis.ai`）。本地项目目录也叫 `marvis`。
 - 仓库地址指向本 fork：主仓库 `multica-ai/multica` → `yunboom/marvis`（clone / issue / release / raw 安装脚本 / Releases API），本仓库 CI 发布的 ghcr 镜像与 Helm chart、Homebrew tap、桌面端更新源、release 工作流的 owner 判断都改为 `yunboom`。上游的其他仓库（`marvis-cli`、`dsh-marvis-runtime`）、npm 包 `@marvis-ai/*` 和测试夹具里的仓库名保持改名后的 `marvis-ai`，它们在 yunboom 下不存在。
 - 规则：大小写保持替换（`multica`/`Multica`/`MULTICA` → `marvis`/`Marvis`/`MARVIS`），`multicast` 不替换。
-- 改名由 `scripts/rebrand-marvis.py` 完成，脚本幂等，只保留以下文件里的旧名：脚本本身、本文件、`server/migrations/603_rebrand_marvis.*.sql`。新增必须保留旧名的文件时，同步加进脚本的 `KEEP`。
+- 改名由 `scripts/rebrand-marvis.py` 完成，脚本幂等，只保留以下文件里的旧名：脚本本身、本文件、`server/migrations/629_rebrand_marvis.*.sql`。新增必须保留旧名的文件时，同步加进脚本的 `KEEP`。
 - `marvis.ai` 等域名需自行持有，否则对应链接失效。
 
 ## 决策一补充：机器级标识统一用 marvis（2026-10-23 撤回 marvis-studio）
@@ -77,7 +77,7 @@
    - 上游新增路径（含 `multica`）由脚本 `git mv`，跑完检查 `git status`。
    - 上表列出的样式文件冲突：保留本 fork 的 Marvis 取值，只合入上游新增的 token / 组件 / 变体，并按上面的规则改成 Marvis 风格。
 3. 数据库迁移：
-   - 上游迁移文本里的旧名由脚本替换；已应用过旧名迁移的库靠 `*_rebrand_marvis`（当前 603）改名，它从系统目录查找旧名对象，幂等。
+   - 上游迁移文本里的旧名由脚本替换；已应用过旧名迁移的库靠 `*_rebrand_marvis`（当前 629）改名，它从系统目录查找旧名对象，幂等。
    - 迁移编号 129 之后必须唯一（`migrations_lint_test.go`）。上游新增编号与 fork 迁移撞号时，fork 迁移整体顺延到上游最大编号之后，`*_rebrand_marvis` 始终排在最后；同步改 `cmd/migrate/main.go` 的并发索引表、脚本 `KEEP` 和引用迁移文件名的测试。版本号按完整文件名记录，改号后会再执行一次：rebrand 迁移幂等，其他 fork 迁移不保证幂等，已跑过的本地库直接重建。
    - 上游新迁移若引入新的旧名数据库对象（列、函数体里的 `multica.*` 设置等），重新执行 589 的改名逻辑（可复制为新编号迁移）。
 4. 依赖与校验：`pnpm install`（工作区包名已变），`make sqlc`，`make schema`（重新生成 `server/schema.sql` 完整表结构快照，只读参考，迁移仍是唯一来源），然后 `pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`。
