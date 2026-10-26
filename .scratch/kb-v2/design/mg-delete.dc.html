@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>删除确认</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f">
+  <dc-import name="mg-raw" section="danger" hint-size="1440px,900px"></dc-import>
+  <div class="overlay" style="border-radius: 0">
+    <div class="dialog" role="alertdialog" aria-label="删除团队知识库" style="width: 460px">
+      <h3>删除「团队知识库」？</h3>
+      <div class="muted" style="font-size: 14px; line-height: 1.7">移除 <span class="mono">team/</span> 目录，关闭它的 4 条批注和 2 个待审核修改。</div>
+      <div class="banner b-red" style="padding: 10px 12px"><span class="dot d-red"></span><span>这是最后一个知识库，每日知识沉淀会停用。</span></div>
+      <div><label class="lbl" for="dn">输入知识库名称确认</label><input id="dn" class="field focus" value="团队知识库"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px"><button class="btn btn-g">取消</button><button class="btn btn-d">删除</button></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

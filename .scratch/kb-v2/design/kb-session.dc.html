@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>通用开发助手对话</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main" style="flex-direction: column">
+    <div style="height: 72px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid rgba(0,0,0,.06)">
+      <button class="ib" aria-label="返回"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+      <div style="display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 16px">{{title}}</span><span class="faint" style="font-size: 12.5px">{{kbName}} · 知识库作业</span></div>
+      <div style="flex: 1"></div>
+      <span class="tag" style="height: 28px; padding: 0 12px; font-size: 12.5px">Claude（DJ-mayunpeng.local）</span>
+    </div>
+    <div style="flex: 1; min-height: 0; display: flex">
+      <section aria-label="通用开发助手" style="flex: 1; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid rgba(0,0,0,.06)">
+        <div style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 24px; border-bottom: 1px solid rgba(0,0,0,.05)"><sc-if value="{{s.fresh}}" hint-placeholder-val="{{ false }}"><span class="faint" style="font-size: 12.5px">执行智能体</span></sc-if><span class="av bot">通</span><span style="font-weight: 600">通用开发助手</span><sc-if value="{{s.fresh}}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="2" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg></sc-if><span style="flex: 1"></span><span class="muted" style="font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px"><span class="dot d-green"></span>运行时在线</span></div>
+        <div style="flex: 1; min-height: 0; overflow: hidden; padding: 24px 28px; display: flex; flex-direction: column; gap: 16px">
+          <sc-if value="{{s.welcome}}" hint-placeholder-val="{{ false }}">
+            <div class="banner b-green" style="padding: 10px 14px"><span class="dot d-green"></span><span style="flex: 1">知识库「支付排障手册」已创建。先看看怎么用，再选一个开场白开始。</span></div>
+            <div class="card" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+              <div style="font-weight: 600">这个知识库怎么用</div>
+              <sc-for list="{{guide}}" as="g" hint-placeholder-count="4">
+                <div style="display: flex; gap: 12px; align-items: flex-start"><span style="width: 22px; height: 22px; border-radius: 11px; background: #0f0f0f; color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; flex: none; margin-top: 1px">{{g.n}}</span><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">{{g.t}}</span><span class="muted" style="font-size: 13px; line-height: 1.6">{{g.d}}</span></span></div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{s.starters}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 24px"><span class="av bot" style="width: 40px; height: 40px; font-size: 16px; border-radius: 10px">通</span><div style="font-size: 18px; font-weight: 600">{{startQ}}</div></div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><button class="card" style="border: 0; font: inherit; text-align: left; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px"><span style="display: flex; align-items: center; gap: 8px"><span style="font-weight: 500">收录资料</span><sc-if value="{{s.welcome}}" hint-placeholder-val="{{ false }}"><span class="tag" style="height: 20px; font-size: 11.5px">建议先做</span></sc-if></span><span class="faint" style="font-size: 12.5px; line-height: 1.5">读取任务、对话或网页，把知识写进页面</span></button><button class="card" style="border: 0; font: inherit; text-align: left; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">健康检查</span><span class="faint" style="font-size: 12.5px; line-height: 1.5">检查过期页面、互相矛盾的内容、孤立页面和代码已变的论断</span></button><button class="card" style="border: 0; font: inherit; text-align: left; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">知识合并</span><span class="faint" style="font-size: 12.5px; line-height: 1.5">找出内容重复的页面并合成一页</span></button><button class="card" style="border: 0; font: inherit; text-align: left; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">处理批注</span><span class="faint" style="font-size: 12.5px; line-height: 1.5">按待处理的批注修改页面</span></button><button class="card" style="border: 0; font: inherit; text-align: left; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">创建定时收录</span><span class="faint" style="font-size: 12.5px; line-height: 1.5">建一个自动化，每天收录当天的任务、评论和聊天</span></button><button class="card" style="border: 0; font: inherit; text-align: left; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500">创建定时健康检查</span><span class="faint" style="font-size: 12.5px; line-height: 1.5">建一个自动化，每周做一次健康检查</span></button></div>
+            <div class="faint" style="font-size: 12.5px; text-align: center">也可以直接描述你的需求。定时任务建成自动化后，在「自动化」页管理。</div>
+          </sc-if>
+          <sc-if value="{{s.auto}}" hint-placeholder-val="{{ false }}">
+            <div class="bubble" style="align-self: flex-end; max-width: 80%">创建定时收录，每天晚上 10 点把当天的任务、评论和对话收录进团队知识库。</div>
+            <div style="display: flex; gap: 10px"><span class="av bot">通</span><div style="font-size: 14px; line-height: 1.8; flex: 1; display: flex; flex-direction: column; gap: 10px">
+              <span>已建好自动化，每天 22:00 运行，每次产出一个变更请求。启停、时间和执行者在「自动化」页调整。</span>
+              <div class="card" style="padding: 12px; display: flex; align-items: center; gap: 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M13 3 4 14h7l-1 7 9-11h-7z"></path></svg><span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 500">每日收录</span><span class="faint" style="font-size: 12.5px">每天 22:00 · 仅运行</span></span><a class="btn btn-o" href="#" style="height: 30px">在自动化中查看</a></div>
+            </div></div>
+          </sc-if>
+          <sc-if value="{{s.ingestStart}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; gap: 10px"><span class="av bot">通</span><div style="font-size: 14px; line-height: 1.8; flex: 1">要整理什么资料进团队知识库？可以贴链接、任务编号，或直接上传文件。</div></div>
+          </sc-if>
+          <sc-if value="{{s.thread}}" hint-placeholder-val="{{ true }}">
+            <div class="bubble" style="align-self: flex-end; max-width: 80%">{{firstAsk}}</div>
+            <div style="display: flex; gap: 10px"><span class="av bot">通</span><div style="font-size: 14px; line-height: 1.8; flex: 1; display: flex; flex-direction: column; gap: 6px">
+              <sc-if value="{{s.running}}" hint-placeholder-val="{{ false }}"><span class="muted" style="font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px"><span class="dot d-green"></span>正在工作 · 3 步</span></sc-if>
+              <sc-if value="{{s.doneFirst}}" hint-placeholder-val="{{ true }}"><span class="muted" style="font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>8 步 · 5 个工具 · 查看详情</span></sc-if>
+              <span>{{firstReply}}</span>
+              <sc-if value="{{s.doneFirst}}" hint-placeholder-val="{{ true }}"><span class="faint" style="font-size: 12px; display: inline-flex; gap: 10px">2 分 14 秒内回复<span style="cursor: pointer">复制</span></span></sc-if>
+            </div></div>
+          </sc-if>
+          <sc-if value="{{s.quick}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 32px"><span class="faint" style="font-size: 12px">后续提问</span><div style="display: flex; gap: 6px; flex-wrap: wrap"><button class="tag" style="height: 28px; padding: 0 12px; border: 0; cursor: pointer">另外 2 条批注先不处理</button><button class="tag" style="height: 28px; padding: 0 12px; border: 0; cursor: pointer">再核对一遍引用</button></div></div>
+          </sc-if>
+          <sc-if value="{{s.followup}}" hint-placeholder-val="{{ false }}">
+            <div class="bubble" style="align-self: flex-end; max-width: 80%">生效时间也写上，从 10 月 20 日起。</div>
+            <div style="display: flex; gap: 10px"><span class="av bot">通</span><div style="font-size: 14px; line-height: 1.8; flex: 1; display: flex; flex-direction: column; gap: 6px"><span class="muted" style="font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>3 步 · 2 个工具 · 查看详情</span><span>已在「去重」一节补上生效时间，右边草稿已更新。</span><span class="faint" style="font-size: 12px; display: inline-flex; gap: 10px">38 秒内回复<span style="cursor: pointer">复制</span></span></div></div>
+          </sc-if>
+          <sc-if value="{{s.submitted}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; gap: 10px"><span class="av bot">通</span><div style="font-size: 14px; line-height: 1.8; flex: 1; display: flex; flex-direction: column; gap: 8px"><span>{{subMsg}}</span>
+              <div><a href="#" style="display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 1px solid #e6e6e6; border-radius: 6px; background: #fff; font-size: 12.5px; color: #0f0f0f; text-decoration: none; vertical-align: middle"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="6" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="M6 8v8M18 16V9a3 3 0 0 0-3-3h-4"></path></svg><span style="color: #5c5c5c">#16</span>去重键改为渠道交易号</a></div>
+            </div></div>
+          </sc-if>
+        </div>
+        <sc-if value="{{s.queued}}" hint-placeholder-val="{{ false }}"><div style="margin: 0 28px -4px; padding: 8px 12px; border-radius: 12px; background: #f5f5f5; font-size: 12.5px; display: flex; flex-direction: column; gap: 2px"><span class="faint">1 条排队消息</span><span>补一下值班表的链接</span></div></sc-if>
+        <div style="padding: 12px 28px 20px"><div style="border: 1px solid #e3e3e3; border-radius: 26px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05); display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 6px">
+          <button class="ib" aria-label="添加" style="width: 36px; height: 36px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+          <label for="km" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">给通用开发助手发消息</label>
+          <textarea id="km" rows="1" style="flex: 1; border: 0; outline: none; resize: none; background: none; font: inherit; font-size: 14px; line-height: 1.7; padding: 8px 4px" placeholder="{{composerHint}}" value="{{composerText}}"></textarea>
+          <span style="position: relative; display: inline-flex">
+            <button aria-label="{{actLabel}}" title="{{actLabel}}" style="width: 36px; height: 36px; border-radius: 18px; border: 0; background: {{actBg}}; color: {{actFg}}; display: inline-flex; align-items: center; justify-content: center">
+              <sc-if value="{{actStop}}" hint-placeholder-val="{{ false }}"><span style="width: 11px; height: 11px; border-radius: 2px; background: currentColor"></span></sc-if>
+              <sc-if value="{{actArrow}}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></sc-if>
+            </button>
+            <sc-if value="{{actTip}}" hint-placeholder-val="{{ false }}"><span role="tooltip" style="position: absolute; right: 0; bottom: 44px; white-space: nowrap; background: #1c1c1c; color: #fff; font-size: 12.5px; padding: 5px 9px; border-radius: 8px">{{actLabel}}</span></sc-if>
+          </span>
+        </div></div>
+      </section>
+      <section aria-label="草稿改动" style="width: 560px; flex: none; display: flex; flex-direction: column; background: #fcfcfc">
+        <div style="flex: 1; min-height: 0; overflow: hidden; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 600; flex: 1">草稿改动</span><span class="tag"><span class="{{stateDot}}"></span>{{stateText}}</span></div>
+          <sc-if value="{{s.empty}}" hint-placeholder-val="{{ false }}"><div class="muted" style="font-size: 13.5px; padding: 40px 0; text-align: center">智能体推送改动后显示在这里。</div></sc-if>
+          <sc-if value="{{s.nochange}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 0; text-align: center; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 14px; font-weight: 500">这次没有需要修改的内容</span><span class="faint" style="font-size: 12.5px">运行结果记为「无需修改」，不生成变更请求</span></div></sc-if>
+          <sc-if value="{{s.hasFiles}}" hint-placeholder-val="{{ true }}">
+            <sc-if value="{{s.banner}}" hint-placeholder-val="{{ false }}"><div class="{{bannerCls}}" style="padding: 10px 12px; font-size: 13px; display: flex; align-items: center; gap: 8px"><span class="{{bannerDot}}"></span><span style="flex: 1">{{bannerText}}</span><sc-if value="{{s.bannerLink}}" hint-placeholder-val="{{ false }}"><a href="#" style="color: #4f6f8a; text-decoration: none">{{bannerLink}}</a></sc-if></div></sc-if>
+            <div style="display: flex; align-items: center"><span class="faint" style="font-size: 12.5px; flex: 1">{{summary}}</span><a href="#" style="font-size: 12.5px; color: #4f6f8a; text-decoration: none">全部折叠</a></div>
+            <sc-for list="{{files}}" as="f" hint-placeholder-count="2">
+              <div class="card" style="overflow: hidden">
+                <div style="{{f.rowStyle}}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="2" aria-hidden="true" style="{{f.caret}}"><path d="m9 6 6 6-6 6"></path></svg>
+                  <span class="tag">{{f.kind}}</span>
+                  <span style="font-size: 13px; font-weight: 500">{{f.title}}</span>
+                  <span class="faint" style="font-size: 12px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{f.path}}</span>
+                  <span style="font-size: 12px"><span style="color: #3f7a5d">{{f.add}}</span> <span style="color: #a33d29">{{f.del}}</span></span>
+                  <a href="#" style="font-size: 12px; color: #4f6f8a; text-decoration: none; margin-left: 4px">在页面中查看</a>
+                </div>
+                <sc-if value="{{f.open}}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{f.lines}}" as="l" hint-placeholder-count="4">
+                    <div class="{{l.cls}}" style="{{l.style}}"><span class="ln">{{l.ln}}</span><span class="sg">{{l.sg}}</span><span class="tx">{{l.tx}}</span></div>
+                  </sc-for>
+                </sc-if>
+              </div>
+            </sc-for>
+            <div>
+              <div class="soft" style="padding: 10px 12px; display: flex; flex-direction: column; gap: 5px"><span class="faint" style="font-size: 12px">提交前检查</span>
+                <sc-for list="{{checks}}" as="c" hint-placeholder-count="2"><span style="font-size: 12.5px; display: flex; gap: 6px"><span class="{{c.dot}}" style="margin-top: 7px"></span><span style="flex: 1">{{c.text}}</span></span></sc-for>
+                <sc-if value="{{s.fixBtn}}" hint-placeholder-val="{{ false }}"><button class="btn btn-o" style="align-self: flex-start; height: 26px; font-size: 12px">{{fixText}}</button></sc-if>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="padding: 14px 24px 18px; border-top: 1px solid rgba(0,0,0,.06); display: flex; align-items: center; gap: 8px">
+          <span class="faint" style="font-size: 12.5px; flex: 1">{{footHint}}</span>
+          <sc-if value="{{s.canDiscard}}" hint-placeholder-val="{{ false }}"><button class="btn btn-g">放弃草稿</button></sc-if>
+          <sc-if value="{{s.showSubmit}}" hint-placeholder-val="{{ false }}"><button class="btn btn-p" disabled="{{submitDisabled}}">{{submitText}}</button></sc-if>
+          <sc-if value="{{s.goReview}}" hint-placeholder-val="{{ false }}"><a class="btn btn-p" href="#">去审核 #16</a></sc-if>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"op":{"editor":"enum","default":"ann","options":["ann","page"]},"state":{"editor":"enum","default":"running","options":["new","welcome","prefill","auto","lintfail","autosub","queue","busy","conflict","nochange","closed","merged","ingest","running","draft","followup","submitted"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.props.state ?? 'running';
+    var welcome = st === 'welcome';
+    if (welcome) st = 'new';
+    var auto = st === 'autosub';
+    var queue = st === 'queue';
+    if (queue) st = 'busy';
+    if (auto) st = 'submitted';
+    var ingest = st === 'ingest';
+    var page = this.props.op === 'page';
+    var pre = st === 'prefill';
+    var preText = page ? '在「产品与业务 / 支付」下新增一页：回调人工处理的操作步骤。' : '处理团队知识库的全部 4 条待处理批注。';
+    var diff = ['draft', 'followup', 'quote', 'preview', 'lintfail', 'submitted', 'busy', 'conflict', 'closed', 'merged'].indexOf(st) >= 0;
+    var drafted = diff;
+    var busy = st === 'busy', conflict = st === 'conflict', nochange = st === 'nochange', closed = st === 'closed', merged = st === 'merged';
+    var readonly = st === 'submitted' || merged;
+    var later = ['followup', 'quote', 'preview', 'lintfail', 'submitted'].indexOf(st) >= 0;
+    var rowBase = 'display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid rgba(0,0,0,.05); cursor: pointer';
+    var hl = 'box-shadow: inset 3px 0 0 #3f7a5d';
+    var lines = [
+      { cls: 'dl', ln: 14, sg: '', tx: '## 去重', style: '' },
+      { cls: 'dl del', ln: 15, sg: '−', tx: '渠道回调按订单号加幂等键去重，重复回调直接返回成功。[^3]', style: '' },
+      { cls: 'dl add', ln: 15, sg: '+', tx: '渠道回调按渠道交易号加幂等键去重，重复回调直接返回成功。[^5]', style: '' }
+    ];
+    if (later) lines.push({ cls: 'dl add', ln: 16, sg: '+', tx: '自 10 月 20 日起生效（MAR-142）。', style: '' });
+    var head = 'display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer; background: #fafafa';
+    var files = [
+      { kind: '修改', title: '支付回调', path: '产品与业务 / 支付', add: later ? '+2' : '+1', del: '−1', open: true, lines: lines, rowStyle: head + '; border-bottom: 1px solid rgba(0,0,0,.06)', caret: 'transform: rotate(90deg)' },
+      { kind: '新增', title: '回调人工处理', path: '产品与业务 / 支付', add: '+18', del: '', open: false, lines: [], rowStyle: head, caret: '' }
+    ];
+    var lintFail = st === 'lintfail';
+    var checks = st === 'running'
+      ? [{ dot: 'dot d-gray', text: '改完后自动检查' }]
+      : lintFail
+        ? [{ dot: 'dot d-red', text: '「回调人工处理」页头缺少 description' }, { dot: 'dot d-green', text: '没有引用过期的论断' }]
+        : conflict
+          ? [{ dot: 'dot d-green', text: '格式检查通过' }, { dot: 'dot d-amber', text: '与主线冲突：支付回调 · 去重，主线已改同一段' }]
+          : [{ dot: 'dot d-green', text: '格式检查通过' }, { dot: 'dot d-green', text: '没有引用过期的论断' }];
+    var hints = {
+      running: '可以随时在左边补充要求',
+      draft: '只有你能看到草稿，提交后进入审核',
+      followup: '已按最新一次推送刷新',
+      quote: '已把这一行引用到左边，接着说要怎么改',
+      preview: '预览是页面合并后的样子',
+      lintfail: '有 1 个错误，修复后才能提交',
+      submitted: '之后的修改在审核页评论里继续，也可以在这里接着说',
+      busy: '等智能体这一轮结束再提交',
+      conflict: '可以直接提交，审核时再处理冲突',
+      nochange: '',
+      closed: '调整后可重新提交，会开一个新的变更请求',
+      merged: '这段对话已结束'
+    };
+    return {
+      kbName: welcome ? '支付排障手册' : '团队知识库',
+      startQ: welcome ? '从哪里开始？' : '要对团队知识库做什么？',
+      guide: [
+        { n: '1', t: '收录资料', d: '在这里新建作业，把任务、对话、上传的文件或网页交给智能体，它把知识整理进页面，每条事实都标来源。' },
+        { n: '2', t: '审核后生效', d: '智能体的改动先进草稿，你在右侧看过后提交审核，owner 或 admin 合并后才生效。' },
+        { n: '3', t: '阅读和批注', d: '发现写错或过时，选中那句话加一条批注；批注可以一键交给智能体处理。' },
+        { n: '4', t: '定时维护', d: '建一个定时收录和定时健康检查，知识库会自己跟上最新的任务和代码。' }
+      ],
+      actStop: (st === 'running' || st === 'busy') && !queue, actArrow: !((st === 'running' || st === 'busy') && !queue),
+      actLabel: (st === 'running' || st === 'busy') ? (queue ? '排队发送' : '停止') : '发送',
+      actBg: ((st === 'running' || st === 'busy') || pre || queue) ? '#0f0f0f' : '#ececec',
+      actFg: ((st === 'running' || st === 'busy') || pre || queue) ? '#fff' : '#9a9a9a',
+      actTip: (st === 'running' || st === 'busy'),
+      composerText: queue ? '回调人工处理里再写一下谁来值班' : pre ? preText : '', composerHint: st === 'new' ? '描述要做什么...' : merged ? '这段对话已结束' : '继续说要怎么调整...', sendCls: pre ? 'send' : 'send off',
+      title: st === 'new' ? '新对话' : pre ? (page ? '新页面' : '处理批注') : (st === 'auto' ? '创建定时收录' : (ingest ? '收录资料' : (page ? '新页面' : '处理批注'))),
+      firstAsk: page ? '在「产品与业务 / 支付」下新增一页：回调人工处理的操作步骤。' : '处理团队知识库的全部 4 条待处理批注。',
+      firstReply: nochange ? '核对完 4 条批注涉及的内容，页面都已经是对的，不需要修改。2 条批注我标成了不处理。' : st === 'running' || busy ? (busy ? '改好了「支付回调」，正在补「回调人工处理」这一页…' : (page ? '好的，先看「支付」下已有的页面，再起草。' : '好的，先核对 MAR-142 和回调代码，再按批注修改。')) : st === 'running' ? (page ? '好的，先看「支付」下已有的页面，再起草。' : '好的，先核对 MAR-142 和回调代码，再按批注修改。') : '按王芳和李雷的批注改好了「支付回调」的去重一节，右边是草稿。另外 2 条需要你确认是否保留。',
+      stateText: st === 'submitted' ? '已提交审核' : merged ? '已合并' : closed ? '已关闭 · 可重新提交' : nochange ? '无需修改' : (diff ? '草稿 · 未提交' : '暂无改动'),
+      stateDot: st === 'submitted' ? 'dot d-blue' : merged ? 'dot d-green' : closed ? 'dot d-amber' : 'dot d-gray',
+      addCount: st === 'followup' || st === 'submitted' ? '+2' : '+1',
+      footHint: hints[st] || '',
+      files: files, lines: lines, checks: checks,
+      summary: '2 个页面 · ' + (later ? '+20 −1' : '+19 −1'),
+      segDiff: st === 'preview' ? '' : 'on', segPrev: st === 'preview' ? 'on' : '',
+      annDot: st === 'submitted' ? 'dot d-blue' : 'dot d-amber',
+      submitDisabled: lintFail || busy,
+      submitText: closed ? '重新提交审核' : '提交审核',
+      fixText: conflict ? '让智能体基于主线更新' : '让智能体修复',
+      bannerCls: closed ? 'banner b-amber' : (merged ? 'banner b-green' : 'banner b-blue'),
+      bannerDot: closed ? 'dot d-amber' : (merged ? 'dot d-green' : 'dot d-blue'),
+      bannerText: closed ? '#16 已被王芳关闭：「去重的例子和失败处理对不上」。草稿还在，可以继续调整。' : (merged ? '#16 已由王芳合并，改动已生效。' : (auto ? '通用开发助手已提交变更请求 #16，草稿转为待审核，这里只读。' : '你已提交变更请求 #16，草稿转为待审核，这里只读。')),
+      bannerLink: closed ? '查看评论' : (merged ? '查看页面' : '去审核'),
+      subMsg: auto ? '按批注改完，格式检查通过，已直接提交变更请求 #16。还要调整的话接着说，我会更新这个变更请求。' : '已提交变更请求 #16，等待 owner 或 admin 合并。审核时的评论我也会接着处理。',
+      subBanner: auto ? '通用开发助手已提交变更请求 #16，草稿转为待审核，这里只读。' : '你已提交变更请求 #16，草稿转为待审核，这里只读。',
+      s: { welcome: welcome,
+        doneFirst: st !== 'running' && st !== 'busy', quick: st === 'draft', queued: queue,
+        fresh: st === 'new' || st === 'prefill', starters: st === 'new', auto: st === 'auto',
+        ingestStart: ingest, thread: !ingest && st !== 'new' && st !== 'prefill' && st !== 'auto', running: st === 'running' || busy,
+        followup: ['followup', 'quote', 'preview', 'lintfail', 'submitted'].indexOf(st) >= 0, followupDiff: false,
+        submitted: st === 'submitted', nochange: nochange, banner: st === 'submitted' || closed || merged, bannerLink: true, goReview: st === 'submitted', fixBtn: lintFail || conflict, empty: ingest || st === 'new' || st === 'prefill' || st === 'auto' || st === 'running', hasDiff: diff, hasFiles: drafted,
+        diffView: st !== 'preview', preview: st === 'preview', quote: st === 'quote', writing: st === 'running', lintFail: lintFail,
+        canDiscard: drafted && !readonly, showSubmit: drafted && !readonly,
+        canSubmit: false
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

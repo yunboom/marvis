@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>知识库首页</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <dc-import name="KbNav" home="{{ true }}" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar"><div class="crumb"><span>知识库</span><span>/</span><b>团队知识库</b></div><div style="flex: 1"></div>
+        <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">在本知识库搜索</label>
+        <div style="position: relative; width: 220px"><input id="q" class="field" placeholder="在本知识库搜索" style="padding-left: 32px; height: 34px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#757575" stroke-width="2" aria-hidden="true" style="position: absolute; left: 11px; top: 10px"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></div>
+      </div>
+      <div style="padding: 32px 56px; max-width: 900px; display: flex; flex-direction: column; gap: 28px">
+        <div>
+          <h1 style="font-size: 28px; font-weight: 600; margin: 0 0 8px">团队知识库</h1>
+          <p class="muted" style="margin: 0; font-size: 14px">订单、支付、发布与测试流程，团队共用的业务和系统知识。</p>
+        </div>
+        <div style="font-size: 15px; line-height: 1.85">下单后订单服务创建支付单，支付服务对接各渠道并处理异步回调；退款走原路退回，次日批量提交渠道。发布按灰度 5% → 30% → 100% 推进，测试环境每个工作日 21:00 从主干重新部署。</div>
+        <section>
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px">待处理</div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <a class="card" href="#" style="padding: 16px; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 6px"><span style="display: flex; align-items: center; gap: 6px; font-size: 13px" class="muted"><span class="dot d-blue"></span>待审核修改</span><span style="font-size: 26px; font-weight: 600">3</span><span class="faint" style="font-size: 12px">最近：去重键改为渠道交易号</span></a>
+            <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 6px"><a href="#" style="display: flex; align-items: center; gap: 6px; font-size: 13px; text-decoration: none" class="muted"><span class="dot d-amber"></span>批注</a><span style="display: flex; align-items: center; gap: 8px"><span style="font-size: 26px; font-weight: 600; flex: 1">4</span><button class="btn btn-o" style="height: 28px; font-size: 12.5px">全部处理</button></span><span class="faint" style="font-size: 12px">含 1 条智能体上报的缺口</span></div>
+            <a class="card" href="#" style="padding: 16px; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 6px"><span style="display: flex; align-items: center; gap: 6px; font-size: 13px" class="muted"><span class="dot d-amber"></span>需要复核的页面</span><span style="font-size: 26px; font-weight: 600">2</span><span class="faint" style="font-size: 12px">代码改动或过了复核日期</span></a>
+          </div>
+        </section>
+        <section>
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px">最近更新</div>
+          <sc-for list="{{recent}}" as="r" hint-placeholder-count="4">
+            <a href="#" style="display: flex; align-items: center; gap: 12px; padding: 11px 4px; border-bottom: 1px solid rgba(0,0,0,.05); text-decoration: none; color: inherit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="1.8" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg>
+              <span style="font-weight: 500">{{r.title}}</span><span class="faint" style="font-size: 12.5px">{{r.path}}</span>
+              <span style="flex: 1"></span><span class="faint" style="font-size: 12.5px">{{r.how}}</span><span class="faint" style="font-size: 12.5px; width: 76px; text-align: right">{{r.when}}</span>
+            </a>
+          </sc-for>
+        </section>
+      </div>
+    </div>
+    <button aria-label="问 Marvis" style="position: absolute; right: 24px; bottom: 24px; width: 48px; height: 48px; border-radius: 24px; border: 0; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 0 0 1px #e8e8e8; display: inline-flex; align-items: center; justify-content: center; color: #666; z-index: 3"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></button>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      recent: [
+      { title: '测试环境', path: '测试', how: '#15 合并 · 处理 1 条批注', when: '10 分钟前' },
+      { title: '支付回调', path: '产品与业务 / 支付', how: '#14 每日知识沉淀', when: '昨天 22:06' },
+      { title: '回归清单', path: '测试', how: '#13 每日知识沉淀', when: '10-23' },
+      { title: '幂等键', path: '产品与业务 / 支付', how: '#11 知识合并', when: '10-22' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

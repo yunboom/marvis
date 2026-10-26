@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>写批注</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f">
+  <dc-import name="read-default" mark="select" hint-size="1440px,900px"></dc-import>
+  <div class="menu" role="dialog" aria-label="写批注" style="top: 500px; left: 602px; width: 400px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <label for="an" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">批注内容</label>
+    <textarea id="an" class="field focus" rows="3">去重键已经改成渠道交易号，不是订单号。</textarea>
+    <div style="display: flex; align-items: center; gap: 8px"><span class="faint" style="font-size: 12px; flex: 1">智能体处理时会看到这句原文</span><button class="btn btn-g">取消</button><button class="btn btn-p">批注</button></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

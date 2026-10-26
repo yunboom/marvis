@@ -1,0 +1,956 @@
+{
+ "v": 3,
+ "attachments": {},
+ "boards": {
+  "KbNav.dc.html": {
+   "h": 868,
+   "page": "comp",
+   "title": "知识库导航（页面树）",
+   "w": 260,
+   "x": 334,
+   "y": 0
+  },
+  "Main.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.1 知识库列表",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "PageDoc.dc.html": {
+   "h": 812,
+   "page": "comp",
+   "title": "页面正文",
+   "w": 760,
+   "x": 674,
+   "y": 0
+  },
+  "Sidebar.dc.html": {
+   "h": 868,
+   "page": "comp",
+   "title": "侧栏",
+   "w": 254,
+   "x": 0,
+   "y": 0
+  },
+  "ann-compose.dc.html": {
+   "h": 900,
+   "page": "ann",
+   "title": "5.2 写批注",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "ann-kb-add.dc.html": {
+   "h": 900,
+   "page": "ann",
+   "title": "5.6 点「添加批注」· 挂在整个知识库",
+   "w": 1440,
+   "x": 7600,
+   "y": 0
+  },
+  "ann-kb.dc.html": {
+   "h": 900,
+   "page": "ann",
+   "title": "5.5 知识库批注 · 最后一条后面是「添加批注」",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
+  "ann-moved.dc.html": {
+   "h": 900,
+   "page": "ann",
+   "title": "5.7 跟随改写与原句删除",
+   "w": 1440,
+   "x": 9120,
+   "y": 0
+  },
+  "ann-panel-add.dc.html": {
+   "h": 900,
+   "page": "ann",
+   "title": "5.4 点「添加批注」· 原地展开，挂在本页",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "ann-panel.dc.html": {
+   "h": 900,
+   "page": "ann",
+   "title": "5.3 本页批注 · 最后一条后面是「添加批注」",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "ann-select.dc.html": {
+   "h": 900,
+   "page": "ann",
+   "title": "5.1 划选一行",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "cfg-edit.dc.html": {
+   "h": 900,
+   "page": "config",
+   "title": "10.3 直接修改右侧",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "cfg-empty.dc.html": {
+   "h": 900,
+   "page": "config",
+   "title": "10.1 开场引导",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "cfg-expand.dc.html": {
+   "h": 900,
+   "page": "config",
+   "title": "10.5 放大编辑 · 左边 markdown，右边预览（目标、Schema 都可放大；新建知识库同样适用）",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
+  "cfg-save.dc.html": {
+   "h": 900,
+   "page": "config",
+   "title": "10.4 保存 · 立即生效",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "cfg-talk.dc.html": {
+   "h": 900,
+   "page": "config",
+   "title": "10.2 对话中 · 右侧实时更新",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "hist-diff.dc.html": {
+   "h": 900,
+   "page": "hist",
+   "title": "7.2 查看一次修改",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "hist-panel.dc.html": {
+   "h": 900,
+   "page": "hist",
+   "title": "7.1 页面历史",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "hist-revert.dc.html": {
+   "h": 900,
+   "page": "hist",
+   "title": "7.3 回滚确认",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "home-empty.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.4 没有知识库",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "home-new-manual.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.3 新建知识库 · 对话中，右侧实时生成（Schema 为「自定义」）",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "home-new-menu.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.2 新建知识库 · 开场引导",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "kb-anns-jump.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.4 点批注 · 跳到页面对应句子",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "kb-anns.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.3 待处理 · 批注",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "kb-copied.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.12 「…」→ 复制链接 · 已复制提示",
+   "w": 1440,
+   "x": 16720,
+   "y": 0
+  },
+  "kb-graph-hover.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.11 悬停 · 高亮相邻页面，点击打开",
+   "w": 1440,
+   "x": 15200,
+   "y": 0
+  },
+  "kb-graph.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.10 「…」→ 关系图 · 页面之间的链接",
+   "w": 1440,
+   "x": 13680,
+   "y": 0
+  },
+  "kb-history-conflict.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.9 回滚冲突 · 需要手动处理",
+   "w": 1440,
+   "x": 12160,
+   "y": 0
+  },
+  "kb-history-reverted.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.8 回滚此次变更 · 生成回滚变更请求",
+   "w": 1440,
+   "x": 10640,
+   "y": 0
+  },
+  "kb-history.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.7 「…」→ 变更记录 · 左边已合并的改动，右边详情和 diff",
+   "w": 1440,
+   "x": 9120,
+   "y": 0
+  },
+  "kb-menu.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.2 知识库「…」菜单 · 配置 → 第 10 页，管理 → 第 11 页，变更记录 → 2.7，关系图 → 2.10，复制链接 → 2.12",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "kb-overview.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.1 知识库首页",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "kb-runs.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.1 「知识库作业」· 右上角「新建作业」，每行点进去是这个作业的对话",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "kb-session-auto.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.7 开场白「创建定时收录」· 智能体建好自动化，在自动化页管理",
+   "w": 1440,
+   "x": 9120,
+   "y": 0
+  },
+  "kb-session-autosub.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.10 智能体自己提交了变更请求 · 右侧自动转为只读，回复里是变更请求卡片（同 12.2）",
+   "w": 1440,
+   "x": 13680,
+   "y": 0
+  },
+  "kb-session-draft.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.4 智能体推送后：摘要、改动页面列表（点开看 diff）、在页面中查看、提交前检查、放弃 / 提交审核",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "kb-session-followup.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.5 多轮调整 · 每次推送后右侧整体刷新",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
+  "kb-session-lintfail.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.9 检查未通过 · 提交审核不可点，可让智能体修复",
+   "w": 1440,
+   "x": 12160,
+   "y": 0
+  },
+  "kb-session-new.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.2 「＋」新建作业 · 先选执行智能体，开场白：收录、健康检查、合并、批注、定时收录、定时健康检查",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "kb-session-pre-ann.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.8 批注「全部交给智能体」· 新建作业，要求已填好，选智能体后发送",
+   "w": 1440,
+   "x": 10640,
+   "y": 0
+  },
+  "kb-session-submitted.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.6 提交审核 · 草稿转为只读，显示 #16 待审核",
+   "w": 1440,
+   "x": 7600,
+   "y": 0
+  },
+  "kb-session.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.3 点一个作业 · 进入它的对话，运行中输入框按钮为「停止」；推送改动前右侧为空",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "kb-stale-jump.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.6 点复核页面 · 看原因和过期句子",
+   "w": 1440,
+   "x": 7600,
+   "y": 0
+  },
+  "kb-stale.dc.html": {
+   "h": 900,
+   "page": "kb",
+   "title": "2.5 待处理 · 需要复核的页面",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
+  "mg-delete.dc.html": {
+   "h": 900,
+   "page": "manage",
+   "title": "11.3 删除确认",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "mg-export.dc.html": {
+   "h": 900,
+   "page": "manage",
+   "title": "11.2 导出 · 只导出 OKF bundle",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "mg-raw.dc.html": {
+   "h": 900,
+   "page": "manage",
+   "title": "11.1 原始资料 · 上传后可交给智能体收录；每一行点开是文件预览（同 3.8）",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "read-cite.dc.html": {
+   "h": 900,
+   "page": "read",
+   "title": "3.4 悬停引用来源",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "read-default.dc.html": {
+   "h": 900,
+   "page": "read",
+   "title": "3.1 阅读页",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "read-info.dc.html": {
+   "h": 900,
+   "page": "read",
+   "title": "3.2 信息面板",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "read-more.dc.html": {
+   "h": 900,
+   "page": "read",
+   "title": "3.6 页面「…」菜单",
+   "w": 1440,
+   "x": 7600,
+   "y": 0
+  },
+  "read-pending.dc.html": {
+   "h": 900,
+   "page": "read",
+   "title": "3.5 本页有待审核的修改",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
+  "read-toc.dc.html": {
+   "h": 900,
+   "page": "read",
+   "title": "3.3 目录面板",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "rv-comment.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.3 选中一行「加入评论」· 引用进底部评论框",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "rv-conflict.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.6 与主线冲突",
+   "w": 1440,
+   "x": 7600,
+   "y": 0
+  },
+  "rv-detail.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.2 变更详情",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "rv-list.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.1 待审核",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "rv-live-done.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.5 改完回复 · diff 实时更新",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
+  "rv-live.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.4 评论后 · 作者智能体在本变更请求上修改",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "rv-member.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.8 普通成员视角",
+   "w": 1440,
+   "x": 10640,
+   "y": 0
+  },
+  "rv-merge.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.7 关闭确认",
+   "w": 1440,
+   "x": 9120,
+   "y": 0
+  },
+  "search-miss.dc.html": {
+   "h": 900,
+   "page": "search",
+   "title": "6.2 没有结果",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "search-results.dc.html": {
+   "h": 900,
+   "page": "search",
+   "title": "6.1 搜索结果",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "tree-chat.dc.html": {
+   "h": 900,
+   "page": "tree",
+   "title": "4.3 新建作业 · 新页面要求已填好，选执行智能体后发送",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "tree-hover.dc.html": {
+   "h": 900,
+   "page": "tree",
+   "title": "4.1 悬停页面出现＋",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "tree-write.dc.html": {
+   "h": 900,
+   "page": "tree",
+   "title": "4.2 让智能体在这里写一页",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "kb-session-busy.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.11 智能体这一轮还在运行 · 输入框按钮变「停止」，提交审核等这一轮结束",
+   "w": 1440,
+   "x": 15200,
+   "y": 0
+  },
+  "kb-session-conflict.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.12 与主线冲突 · 可以直接提交，也可让智能体基于主线更新",
+   "w": 1440,
+   "x": 16720,
+   "y": 0
+  },
+  "kb-session-nochange.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.13 没有改动 · 记为「无需修改」，不显示提交和放弃",
+   "w": 1440,
+   "x": 18240,
+   "y": 0
+  },
+  "kb-session-closed.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.14 变更请求被关闭 · 回到草稿，可调整后重新提交",
+   "w": 1440,
+   "x": 19760,
+   "y": 0
+  },
+  "kb-session-merged.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.15 变更请求已合并 · 改动生效，对话结束",
+   "w": 1440,
+   "x": 21280,
+   "y": 0
+  },
+  "kb-session-queue.dc.html": {
+   "h": 900,
+   "page": "session",
+   "title": "9.16 运行中输入了内容 · 按钮变「排队发送」，这一轮结束后发出（与现有聊天一致）",
+   "w": 1440,
+   "x": 22800,
+   "y": 0
+  },
+  "home-new-default.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.5 新建知识库 · Schema 选「默认」：只读（标「只读」，不能编辑，构建器也不改）；切「自定义」才能编辑",
+   "w": 1440,
+   "x": 6080,
+   "y": 0
+  },
+  "home-new-default-view.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.6 默认 Schema 放大查看 · 只有预览，底部只有「关闭」",
+   "w": 1440,
+   "x": 7600,
+   "y": 0
+  },
+  "chat-kb-cards.dc.html": {
+   "h": 900,
+   "page": "chat",
+   "title": "12.1 对话里建知识库 · 回复带知识库卡片，悬停看简介和规模",
+   "w": 1440,
+   "x": 0,
+   "y": 0
+  },
+  "chat-kb-card-change.dc.html": {
+   "h": 900,
+   "page": "chat",
+   "title": "12.2 对话里改知识库 · 提交后回复带变更请求卡片（#16），悬停看状态与改动规模",
+   "w": 1440,
+   "x": 1520,
+   "y": 0
+  },
+  "chat-kb-card-page.dc.html": {
+   "h": 900,
+   "page": "chat",
+   "title": "12.3 回答引用知识库 · 页面卡片可带块（支付回调 › 去重），点击定位到该块",
+   "w": 1440,
+   "x": 3040,
+   "y": 0
+  },
+  "chat-kb-card-ann.dc.html": {
+   "h": 900,
+   "page": "chat",
+   "title": "12.4 知识库缺内容或写错 · 智能体记批注，回复带批注卡片",
+   "w": 1440,
+   "x": 4560,
+   "y": 0
+  },
+  "home-new-drafts.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.7 有未完成的创建 · 顶部横幅「您有 N 条未完成的创建」；只有 1 条时点了直接进入（与创建智能体一致）",
+   "w": 1440,
+   "x": 9120,
+   "y": 0
+  },
+  "home-new-drafts-pick.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.8 多条未完成 · 弹窗选一条继续",
+   "w": 1440,
+   "x": 10640,
+   "y": 0
+  },
+  "home-new-discard.dc.html": {
+   "h": 900,
+   "page": "home",
+   "title": "1.9 放弃创建 · 确认后对话和右侧配置一起删除；运行时旁「更换」可换运行时（与创建智能体一致）",
+   "w": 1440,
+   "x": 12160,
+   "y": 0
+  },
+  "home-new-welcome.dc.html": {
+   "h": 900,
+   "page": "home",
+   "w": 1440,
+   "x": 13680,
+   "y": 0,
+   "title": "1.10 点「创建」后 · 跳到新知识库的「知识库作业」并新建一个作业：顶部提示已创建，开场白上方是四步上手引导，「收录资料」标「建议先做」"
+  },
+  "read-cite-raw.dc.html": {
+   "h": 900,
+   "page": "read",
+   "title": "3.7 悬停原始文件引用 · 显示文件名、上传人、页码，「打开文件」和「下载」",
+   "w": 1440,
+   "x": 9120,
+   "y": 0
+  },
+  "read-raw-preview.dc.html": {
+   "h": 900,
+   "page": "read",
+   "title": "3.8 点「打开文件」· 现有附件预览弹窗，PDF 直接翻到引用的那一页；原始资料标签页每一行点开也是它",
+   "w": 1440,
+   "x": 10640,
+   "y": 0
+  },
+  "read-draft.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 12160,
+   "y": 0,
+   "title": "3.9 草稿视图 · 自己的草稿改了这一页：顶部草稿条，可切回已发布；行内显示改动；页面树标「草稿」"
+  },
+  "read-drafts.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 13680,
+   "y": 0,
+   "title": "3.10 多份草稿改了同一页 · 草稿条默认显示最近更新的一份，下拉切换，每项标明来自哪段对话或哪个任务"
+  }
+ },
+ "createdOnFiles": {
+  "at": "2026-10-25T08:30:00Z",
+  "v": 1
+ },
+ "designSystems": [],
+ "launch": {
+  "page": "home",
+  "view": "canvas"
+ },
+ "notes": {
+  "t-ann": {
+   "kind": "title1",
+   "maxW": 8000,
+   "page": "ann",
+   "text": "批注：挂在某一行、本页，或整个知识库",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-comp": {
+   "kind": "title1",
+   "maxW": 1434,
+   "page": "comp",
+   "text": "公共组件",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-config": {
+   "kind": "title1",
+   "maxW": 5960,
+   "page": "config",
+   "text": "配置知识库：左边对话，右边配置",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-hist": {
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "hist",
+   "text": "页面历史与回滚",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-home": {
+   "kind": "title1",
+   "maxW": 5960,
+   "page": "home",
+   "text": "知识库列表与新建：只能通过对话创建",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-kb": {
+   "kind": "title1",
+   "maxW": 8000,
+   "page": "kb",
+   "text": "知识库首页：简介、最近更新、待处理；「…」菜单的变更记录、关系图、复制链接",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-manage": {
+   "kind": "title1",
+   "maxW": 8000,
+   "page": "manage",
+   "text": "知识库管理",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-read": {
+   "kind": "title1",
+   "maxW": 8000,
+   "page": "read",
+   "text": "页面阅读：人只读、只批注",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-review": {
+   "kind": "title1",
+   "maxW": 8000,
+   "page": "review",
+   "text": "变更审核",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-search": {
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "search",
+   "text": "搜索",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-session": {
+   "kind": "title1",
+   "maxW": 8000,
+   "page": "session",
+   "text": "知识库作业：新建作业选开场白，智能体在后台执行，点进去多轮调整后提交审核；定时任务建成普通自动化",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t-tree": {
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "tree",
+   "text": "页面树：嵌套页面，新页面交给智能体写",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "home-new-menu.dc.html",
+  "home-new-manual.dc.html",
+  "home-empty.dc.html",
+  "home-new-default.dc.html",
+  "home-new-default-view.dc.html",
+  "kb-overview.dc.html",
+  "kb-menu.dc.html",
+  "kb-anns.dc.html",
+  "kb-anns-jump.dc.html",
+  "kb-stale.dc.html",
+  "kb-stale-jump.dc.html",
+  "kb-history.dc.html",
+  "kb-history-reverted.dc.html",
+  "kb-history-conflict.dc.html",
+  "kb-graph.dc.html",
+  "kb-graph-hover.dc.html",
+  "kb-copied.dc.html",
+  "read-default.dc.html",
+  "read-info.dc.html",
+  "read-toc.dc.html",
+  "read-cite.dc.html",
+  "read-pending.dc.html",
+  "read-more.dc.html",
+  "tree-hover.dc.html",
+  "tree-write.dc.html",
+  "tree-chat.dc.html",
+  "ann-select.dc.html",
+  "ann-compose.dc.html",
+  "ann-panel.dc.html",
+  "ann-panel-add.dc.html",
+  "ann-kb.dc.html",
+  "ann-kb-add.dc.html",
+  "ann-moved.dc.html",
+  "search-results.dc.html",
+  "search-miss.dc.html",
+  "hist-panel.dc.html",
+  "hist-diff.dc.html",
+  "hist-revert.dc.html",
+  "rv-list.dc.html",
+  "rv-detail.dc.html",
+  "rv-comment.dc.html",
+  "rv-live.dc.html",
+  "rv-live-done.dc.html",
+  "rv-conflict.dc.html",
+  "rv-merge.dc.html",
+  "rv-member.dc.html",
+  "kb-runs.dc.html",
+  "kb-session-new.dc.html",
+  "kb-session-auto.dc.html",
+  "kb-session-pre-ann.dc.html",
+  "kb-session-lintfail.dc.html",
+  "kb-session-autosub.dc.html",
+  "kb-session-busy.dc.html",
+  "kb-session-conflict.dc.html",
+  "kb-session-nochange.dc.html",
+  "kb-session-closed.dc.html",
+  "kb-session-merged.dc.html",
+  "kb-session-queue.dc.html",
+  "kb-session.dc.html",
+  "kb-session-draft.dc.html",
+  "kb-session-followup.dc.html",
+  "kb-session-submitted.dc.html",
+  "cfg-empty.dc.html",
+  "cfg-talk.dc.html",
+  "cfg-edit.dc.html",
+  "cfg-save.dc.html",
+  "cfg-expand.dc.html",
+  "mg-raw.dc.html",
+  "mg-export.dc.html",
+  "mg-delete.dc.html",
+  "Sidebar.dc.html",
+  "KbNav.dc.html",
+  "PageDoc.dc.html",
+  "chat-kb-cards.dc.html",
+  "chat-kb-card-change.dc.html",
+  "chat-kb-card-page.dc.html",
+  "chat-kb-card-ann.dc.html",
+  "home-new-drafts.dc.html",
+  "home-new-drafts-pick.dc.html",
+  "home-new-discard.dc.html",
+  "home-new-welcome.dc.html",
+  "read-cite-raw.dc.html",
+  "read-raw-preview.dc.html",
+  "read-draft.dc.html",
+  "read-drafts.dc.html"
+ ],
+ "pages": [
+  {
+   "id": "home",
+   "name": "1 知识库列表"
+  },
+  {
+   "id": "kb",
+   "name": "2 知识库首页与待处理"
+  },
+  {
+   "id": "read",
+   "name": "3 页面阅读"
+  },
+  {
+   "id": "tree",
+   "name": "4 页面树"
+  },
+  {
+   "id": "ann",
+   "name": "5 批注"
+  },
+  {
+   "id": "search",
+   "name": "6 搜索"
+  },
+  {
+   "id": "hist",
+   "name": "7 页面历史"
+  },
+  {
+   "id": "review",
+   "name": "8 变更审核"
+  },
+  {
+   "id": "session",
+   "name": "9 知识库作业"
+  },
+  {
+   "id": "config",
+   "name": "10 配置知识库"
+  },
+  {
+   "id": "manage",
+   "name": "11 知识库管理"
+  },
+  {
+   "id": "chat",
+   "name": "12 对话里的知识库卡片"
+  },
+  {
+   "id": "comp",
+   "name": "组件"
+  }
+ ],
+ "title": "Marvis 知识库设计稿 v2"
+}
