@@ -246,3 +246,45 @@ func PathLinks(blocks []Block, resolver PageResolver) []Block {
 
 	return out
 }
+
+// PageLinks resolves the page links of blocks against a tree. It returns the
+// distinct pages linked (the page itself excluded) and the distinct paths no
+// page answers to yet, both in document order.
+func PageLinks(blocks []Block, selfID string, resolver PageResolver) (pageIDs, unresolved []string) {
+	seenPages := make(map[string]struct{})
+	seenPaths := make(map[string]struct{})
+	pageIDs = make([]string, 0)
+	unresolved = make([]string, 0)
+
+	for _, block := range blocks {
+		for _, dest := range linkDestinations(block.Content) {
+			target, ok := ParseLinkTarget(dest)
+			if !ok {
+				continue
+			}
+
+			pageID := target.PageID
+			if pageID == "" {
+				pageID, _ = resolver.PageIDByPath(target.Path)
+			} else if _, live := resolver.PathByPageID(pageID); !live {
+				pageID = ""
+			}
+
+			switch {
+			case pageID == selfID:
+			case pageID != "":
+				if _, dup := seenPages[pageID]; !dup {
+					seenPages[pageID] = struct{}{}
+					pageIDs = append(pageIDs, pageID)
+				}
+			case target.Path != "":
+				if _, dup := seenPaths[target.Path]; !dup {
+					seenPaths[target.Path] = struct{}{}
+					unresolved = append(unresolved, target.Path)
+				}
+			}
+		}
+	}
+
+	return pageIDs, unresolved
+}
