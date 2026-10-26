@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -32,6 +33,7 @@ type KbTreePageResponse struct {
 	Stale           bool   `json:"stale"`
 	OpenAnnotations int64  `json:"open_annotations"`
 	DraftChange     string `json:"draft_change"`
+	Mention         string `json:"mention"`
 }
 
 // KbTreeLevelResponse is one page of one tree level (GET
@@ -41,6 +43,9 @@ type KbTreeLevelResponse struct {
 	Parent     *KbTreeParentResponse `json:"parent"`
 	Pages      []KbTreePageResponse  `json:"pages"`
 	NextCursor string                `json:"next_cursor"`
+	// Total is the number of pages on this level, across every page of the
+	// listing; with a draft, as the draft has the level.
+	Total int64 `json:"total"`
 }
 
 // kbLevelEntry is a tree level entry with the fields the response needs,
@@ -56,6 +61,7 @@ type kbLevelEntry struct {
 // ListKbPages lists one level of the page tree: the children of ?parent (top
 // level when absent), keyset-paginated by (position, id). ?draft overlays the
 // caller's draft: pages it adds, edits, moves or deletes carry draft_change.
+// ?type keeps only the pages of that type on the level (decision 105).
 func (h *Handler) ListKbPages(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	query := r.URL.Query()
@@ -103,7 +109,8 @@ func (h *Handler) ListKbPages(w http.ResponseWriter, r *http.Request) {
 	if hasCursor {
 		cursorPtr = &cursor
 	}
-	entries, hasMore, placements, err := h.loadKbLevel(ctx, base, draft, parent, cursorPtr, limit)
+	pageType := strings.TrimSpace(query.Get("type"))
+	entries, hasMore, placements, total, err := h.loadKbLevel(ctx, base, draft, parent, pageType, cursorPtr, limit)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -115,7 +122,7 @@ func (h *Handler) ListKbPages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := KbTreeLevelResponse{Version: base.ContentVersion, Parent: parent, Pages: pages}
+	resp := KbTreeLevelResponse{Version: base.ContentVersion, Parent: parent, Pages: pages, Total: total}
 	if hasMore && len(entries) > 0 {
 		last := entries[len(entries)-1]
 		resp.NextCursor = kb.EncodeCursor(kb.PageCursor{Position: last.Position, ID: last.ID})
@@ -177,8 +184,9 @@ func (h *Handler) resolveKbTreeParent(w http.ResponseWriter, r *http.Request, ba
 	return &KbTreeParentResponse{ID: node.ID, Path: path, Title: node.Title}, true
 }
 
-// loadKbLevel loads one page of a tree level with the draft laid over it.
-func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbDraft, parent *KbTreeParentResponse, cursor *kb.PageCursor, limit int) ([]kbLevelEntry, bool, []kb.DraftPlacement, error) {
+// loadKbLevel loads one page of a tree level with the draft laid over it,
+// and the number of pages on the whole level.
+func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbDraft, parent *KbTreeParentResponse, pageType string, cursor *kb.PageCursor, limit int) ([]kbLevelEntry, bool, []kb.DraftPlacement, int64, error) {
 	parentID := pgtype.UUID{}
 	parentText := ""
 	if parent != nil {
@@ -194,7 +202,7 @@ func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbD
 	if draft != nil {
 		rows, err := h.Queries.ListKbDraftPages(ctx, db.ListKbDraftPagesParams{KnowledgeBaseID: base.ID, DraftID: draft.ID})
 		if err != nil {
-			return nil, false, nil, errors.Wrapf(err, "list draft pages draft_id=%s", uuidToString(draft.ID))
+			return nil, false, nil, 0, errors.Wrapf(err, "list draft pages draft_id=%s", uuidToString(draft.ID))
 		}
 
 		for _, row := range rows {
@@ -214,7 +222,10 @@ func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbD
 
 			_, header, err := kb.ParseFrontmatter(row.Frontmatter)
 			if err != nil {
-				return nil, false, nil, errors.Wrapf(err, "draft page page_id=%s", id)
+				return nil, false, nil, 0, errors.Wrapf(err, "draft page page_id=%s", id)
+			}
+			if pageType != "" && !strings.EqualFold(header.Type, pageType) {
+				continue
 			}
 			level := kb.LevelPage{ID: id, Position: row.Position, DraftChange: kb.DraftChange(row.Op)}
 			draftLevel = append(draftLevel, level)
@@ -232,6 +243,7 @@ func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbD
 		KnowledgeBaseID: base.ID,
 		ParentID:        parentID,
 		ExcludeIds:      excluded,
+		PageType:        pgtype.Text{String: pageType, Valid: pageType != ""},
 		RowLimit:        int32(limit + 1),
 	}
 	if cursor != nil {
@@ -240,7 +252,17 @@ func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbD
 	}
 	rows, err := h.Queries.ListKbChildPages(ctx, params)
 	if err != nil {
-		return nil, false, nil, errors.Wrapf(err, "list child pages knowledge_base_id=%s parent_id=%s", uuidToString(base.ID), parentText)
+		return nil, false, nil, 0, errors.Wrapf(err, "list child pages knowledge_base_id=%s parent_id=%s", uuidToString(base.ID), parentText)
+	}
+
+	mainCount, err := h.Queries.CountKbLevelPages(ctx, db.CountKbLevelPagesParams{
+		KnowledgeBaseID: base.ID,
+		ParentID:        parentID,
+		ExcludeIds:      excluded,
+		PageType:        pgtype.Text{String: pageType, Valid: pageType != ""},
+	})
+	if err != nil {
+		return nil, false, nil, 0, errors.Wrapf(err, "count level pages knowledge_base_id=%s parent_id=%s", uuidToString(base.ID), parentText)
 	}
 
 	mainLevel := make([]kb.LevelPage, len(rows))
@@ -262,7 +284,7 @@ func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbD
 		entries[i] = byID[page.ID]
 	}
 
-	return entries, hasMore, placements, nil
+	return entries, hasMore, placements, mainCount + int64(len(draftLevel)), nil
 }
 
 // kbLevelToResponse adds paths, child counts and open annotations, each
@@ -316,6 +338,7 @@ func (h *Handler) kbLevelToResponse(ctx context.Context, base db.KbBase, tree *k
 			Stale:           entry.stale,
 			OpenAnnotations: annotations[entry.ID],
 			DraftChange:     entry.DraftChange,
+			Mention:         pageMention(entry.title, entry.ID),
 		}
 	}
 

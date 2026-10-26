@@ -88,10 +88,12 @@ type KbSearchHit struct {
 	Mention string `json:"mention"`
 }
 
-// KbSearchResponse is a search result (GET /api/kb/search).
+// KbSearchResponse is a search result (GET /api/kb/search); Total counts
+// every match, beyond the hits returned.
 type KbSearchResponse struct {
-	Mode string        `json:"mode"`
-	Hits []KbSearchHit `json:"hits"`
+	Mode  string        `json:"mode"`
+	Hits  []KbSearchHit `json:"hits"`
+	Total int64         `json:"total"`
 }
 
 // KbStalePage is a page past its review date (GET /api/kb/bases/{kb}/stale).
@@ -412,10 +414,10 @@ func (h *Handler) ListKbClaims(w http.ResponseWriter, r *http.Request) {
 }
 
 // SearchKb runs a keyword search over page titles and text (GET
-// /api/kb/search). Every space-separated term must match; ?kb narrows it to
-// one knowledge base and ?type to one page type.
+// /api/kb/search). Every space-separated term must match; the top ?limit
+// hits (1-50) come back by relevance with the total, without paging. ?type
+// and ?kb narrow the search.
 func (h *Handler) SearchKb(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 	query := r.URL.Query()
 	wsUUID, ok := parseUUIDOrBadRequest(w, h.resolveWorkspaceID(r), "workspace_id")
 	if !ok {
@@ -427,30 +429,47 @@ func (h *Handler) SearchKb(w http.ResponseWriter, r *http.Request) {
 		writeErrorCode(w, http.StatusBadRequest, kbCodeInvalidRequest, "q is required")
 		return
 	}
-	limit, offset, ok := parseKbPaging(w, query.Get("limit"), query.Get("offset"), kbSearchDefaultLimit, kbSearchMaxLimit)
+	limit, _, ok := parseKbPaging(w, query.Get("limit"), "", kbSearchDefaultLimit, kbSearchMaxLimit)
 	if !ok {
 		return
 	}
 
-	params := db.SearchKbPagesParams{WorkspaceID: wsUUID, RowLimit: int32(limit), RowOffset: int32(offset)}
+	var baseID pgtype.UUID
 	if ref := query.Get("kb"); ref != "" {
 		base, ok := h.loadKbBaseForUser(w, r, ref)
 		if !ok {
 			return
 		}
-		params.KnowledgeBaseID = base.ID
-	}
-	if pageType := query.Get("type"); pageType != "" {
-		params.PageType = pgtype.Text{String: pageType, Valid: true}
-	}
-	for _, term := range terms {
-		params.Patterns = append(params.Patterns, "%"+kbLikeEscaper.Replace(term)+"%")
+		baseID = base.ID
 	}
 
-	rows, err := h.Queries.SearchKbPages(ctx, params)
+	resp, err := h.searchKbKeyword(r.Context(), wsUUID, baseID, strings.TrimSpace(query.Get("type")), terms, limit)
 	if err != nil {
-		h.writeKbInternalError(w, r, errors.Wrap(err, "search knowledge bases"))
+		h.writeKbInternalError(w, r, err)
 		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *Handler) searchKbKeyword(ctx context.Context, wsUUID, baseID pgtype.UUID, pageType string, terms []string, limit int) (KbSearchResponse, error) {
+	patterns := make([]string, len(terms))
+	for i, term := range terms {
+		patterns[i] = "%" + kbLikeEscaper.Replace(term) + "%"
+	}
+	typeFilter := pgtype.Text{String: pageType, Valid: pageType != ""}
+
+	rows, err := h.Queries.SearchKbPages(ctx, db.SearchKbPagesParams{
+		WorkspaceID: wsUUID, KnowledgeBaseID: baseID, PageType: typeFilter, Patterns: patterns, RowLimit: int32(limit),
+	})
+	if err != nil {
+		return KbSearchResponse{}, errors.Wrap(err, "search knowledge bases")
+	}
+	total, err := h.Queries.CountKbSearchPages(ctx, db.CountKbSearchPagesParams{
+		WorkspaceID: wsUUID, KnowledgeBaseID: baseID, PageType: typeFilter, Patterns: patterns,
+	})
+	if err != nil {
+		return KbSearchResponse{}, errors.Wrap(err, "count search hits")
 	}
 
 	baseIDs := make([]pgtype.UUID, 0)
@@ -463,34 +482,26 @@ func (h *Handler) SearchKb(w http.ResponseWriter, r *http.Request) {
 	}
 	trees, err := h.loadKbTrees(ctx, baseIDs)
 	if err != nil {
-		h.writeKbInternalError(w, r, err)
-		return
+		return KbSearchResponse{}, err
 	}
 
-	resp := KbSearchResponse{Mode: kbSearchModeKeyword, Hits: make([]KbSearchHit, 0, len(rows))}
+	resp := KbSearchResponse{Mode: kbSearchModeKeyword, Hits: make([]KbSearchHit, 0, len(rows)), Total: total}
 	for _, row := range rows {
 		blocks, err := kb.ParseBlocks(row.Blocks)
 		if err != nil {
-			h.writeKbInternalError(w, r, errors.Wrapf(err, "page_id=%s", uuidToString(row.ID)))
-			return
+			return KbSearchResponse{}, errors.Wrapf(err, "page_id=%s", uuidToString(row.ID))
 		}
 		id := uuidToString(row.ID)
 		tree := trees[row.KnowledgeBaseID]
 		path, _ := tree.PathByPageID(id)
 		blockID, excerpt := kbSearchExcerpt(kb.PathLinks(blocks, tree), terms)
 		resp.Hits = append(resp.Hits, KbSearchHit{
-			PageID:  id,
-			Slug:    row.KbSlug,
-			Path:    path,
-			Title:   row.Title,
-			Type:    row.Type,
-			BlockID: blockID,
-			Excerpt: excerpt,
-			Mention: pageMention(row.Title, id),
+			PageID: id, Slug: row.KbSlug, Path: path, Title: row.Title, Type: row.Type,
+			BlockID: blockID, Excerpt: excerpt, Mention: pageMention(row.Title, id),
 		})
 	}
 
-	writeJSON(w, http.StatusOK, resp)
+	return resp, nil
 }
 
 func (h *Handler) loadKbTrees(ctx context.Context, baseIDs []pgtype.UUID) (map[pgtype.UUID]*kb.PageTree, error) {

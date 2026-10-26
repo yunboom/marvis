@@ -147,8 +147,9 @@ ORDER BY from_block_id, to_path;
 
 -- name: ListKbChildPages :many
 -- One page of one tree level, keyset-paginated on (position, id). A NULL
--- parent_id lists the top level. exclude_ids drops pages a draft overlay
--- replaces; the caller merges the draft's version back in.
+-- parent_id lists the top level; page_type keeps one page type only.
+-- exclude_ids drops pages a draft overlay replaces; the caller merges the
+-- draft's version back in.
 SELECT id, parent_id, position, slug, type, title, description, stale_after
 FROM kb_page
 WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
@@ -158,9 +159,20 @@ WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
     sqlc.narg('after_position')::text IS NULL
     OR (position, id) > (sqlc.narg('after_position')::text, sqlc.arg('after_id')::uuid)
   )
+  AND (sqlc.narg('page_type')::text IS NULL OR lower(type) = lower(sqlc.narg('page_type')::text))
   AND NOT (id = ANY(sqlc.arg('exclude_ids')::uuid[]))
 ORDER BY position, id
 LIMIT sqlc.arg('row_limit');
+
+-- name: CountKbLevelPages :one
+-- How many live pages one tree level has, leaving out the pages a draft
+-- overlay replaces (the caller adds the draft's own pages of the level).
+SELECT count(*)::bigint FROM kb_page
+WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
+  AND parent_id IS NOT DISTINCT FROM sqlc.narg('parent_id')::uuid
+  AND deleted_at IS NULL
+  AND (sqlc.narg('page_type')::text IS NULL OR lower(type) = lower(sqlc.narg('page_type')::text))
+  AND NOT (id = ANY(sqlc.arg('exclude_ids')::uuid[]));
 
 -- name: CountKbChildPagesByParent :many
 SELECT parent_id, count(*)::bigint AS child_count
@@ -514,7 +526,7 @@ LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
 
 -- name: SearchKbPages :many
 -- Keyword search over titles and body text: every pattern must match.
--- Title hits rank first.
+-- Title hits rank first; only the top row_limit hits are returned.
 SELECT p.id, p.knowledge_base_id, b.slug AS kb_slug, p.title, p.type, p.blocks
 FROM kb_page p
 JOIN kb_base b ON b.id = p.knowledge_base_id
@@ -524,7 +536,17 @@ WHERE p.workspace_id = sqlc.arg('workspace_id')
   AND (sqlc.narg('page_type')::text IS NULL OR lower(p.type) = lower(sqlc.narg('page_type')::text))
   AND lower(p.search_text) LIKE ALL (sqlc.arg('patterns')::text[])
 ORDER BY (lower(p.title) LIKE ANY (sqlc.arg('patterns')::text[])) DESC, p.updated_at DESC, p.id
-LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
+LIMIT sqlc.arg('row_limit');
+
+-- name: CountKbSearchPages :one
+-- The number of pages SearchKbPages finds across all its pages.
+SELECT count(*)::bigint
+FROM kb_page p
+WHERE p.workspace_id = sqlc.arg('workspace_id')
+  AND p.deleted_at IS NULL
+  AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR p.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
+  AND (sqlc.narg('page_type')::text IS NULL OR lower(p.type) = lower(sqlc.narg('page_type')::text))
+  AND lower(p.search_text) LIKE ALL (sqlc.arg('patterns')::text[]);
 
 -- name: ListKbPageTreesByBases :many
 -- The live page trees of several knowledge bases, for search hit paths.

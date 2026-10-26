@@ -558,6 +558,50 @@ func TestKbDraftOnlyCreatorWrites(t *testing.T) {
 	testutil.Call(t, testHandler.GetKbDraft, req).Want(http.StatusForbidden)
 }
 
+func TestListKbPagesTypeFilterAndTotal(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	f := newKbDraftFixture(t)
+	createTestKbPage(t, f.baseID, kb.NewPage{Slug: "r1", Title: "R1", Type: "Runbook", Position: "a2", Markdown: "x"})
+	createTestKbPage(t, f.baseID, kb.NewPage{Slug: "r2", Title: "R2", Type: "Runbook", Position: "a3", Markdown: "x"})
+	createTestKbPage(t, f.baseID, kb.NewPage{ParentID: f.pageA, Slug: "c1", Title: "C1", Type: "Runbook", Position: "a0", Markdown: "x"})
+	createTestKbPage(t, f.baseID, kb.NewPage{ParentID: f.pageA, Slug: "c2", Title: "C2", Type: "Guide", Position: "a1", Markdown: "x"})
+
+	all := listKbLevel(t, f.slug, "", http.StatusOK)
+	if all.Total != 4 || len(all.Pages) != 4 {
+		t.Errorf("top level total = %d pages = %s", all.Total, kbLevelTitles(all))
+	}
+
+	first := listKbLevel(t, f.slug, "type=runbook&limit=1", http.StatusOK)
+	if kbLevelTitles(first) != "R1" || first.Total != 2 || first.NextCursor == "" {
+		t.Fatalf("first runbook page = %s total=%d next=%q", kbLevelTitles(first), first.Total, first.NextCursor)
+	}
+	second := listKbLevel(t, f.slug, "type=runbook&limit=1&cursor="+url.QueryEscape(first.NextCursor), http.StatusOK)
+	if kbLevelTitles(second) != "R2" || second.Total != 2 || second.NextCursor != "" {
+		t.Errorf("second runbook page = %s total=%d next=%q", kbLevelTitles(second), second.Total, second.NextCursor)
+	}
+
+	children := listKbLevel(t, f.slug, "type=Runbook&parent="+url.QueryEscape(f.slug+":/callback"), http.StatusOK)
+	if kbLevelTitles(children) != "C1" || children.Total != 1 {
+		t.Errorf("runbooks under callback = %s total=%d", kbLevelTitles(children), children.Total)
+	}
+
+	req := testutil.WithURLParams(newRequest(http.MethodPost, "/api/kb/drafts/x/pages", map[string]any{
+		"parent": f.slug + ":/", "slug": "r3", "content": "x",
+		"frontmatter": map[string]any{"type": "Runbook", "title": "R3", "description": "d"},
+	}), "draftId", f.draftID)
+	testutil.Call(t, testHandler.CreateKbDraftPage, req).Want(http.StatusCreated)
+	withDraft := listKbLevel(t, f.slug, "type=runbook&draft="+f.draftID, http.StatusOK)
+	if withDraft.Total != 3 || kbLevelTitles(withDraft) != "R1,R2,R3(added)" {
+		t.Errorf("runbooks with draft = %s total=%d", kbLevelTitles(withDraft), withDraft.Total)
+	}
+	if levelAll := listKbLevel(t, f.slug, "draft="+f.draftID, http.StatusOK); levelAll.Total != 5 {
+		t.Errorf("top level with draft total = %d", levelAll.Total)
+	}
+}
+
 func TestKbSearchStaleAndClaims(t *testing.T) {
 	if testHandler == nil || testPool == nil {
 		t.Skip("database not available")
@@ -574,7 +618,7 @@ func TestKbSearchStaleAndClaims(t *testing.T) {
 	var search KbSearchResponse
 	req := newRequest(http.MethodGet, "/api/kb/search?q="+url.QueryEscape("去重 worker")+"&kb="+f.slug, nil)
 	testutil.Call(t, testHandler.SearchKb, req).Want(http.StatusOK).JSON(&search)
-	if search.Mode != kbSearchModeKeyword || len(search.Hits) != 1 || search.Hits[0].PageID != stalePage || search.Hits[0].Path != "/old" || search.Hits[0].Mention == "" || search.Hits[0].Excerpt == "" {
+	if search.Mode != kbSearchModeKeyword || len(search.Hits) != 1 || search.Hits[0].PageID != stalePage || search.Hits[0].Path != "/old" || search.Hits[0].Mention == "" || search.Hits[0].Excerpt == "" || search.Total != 1 {
 		t.Errorf("search = %+v", search)
 	}
 	req = newRequest(http.MethodGet, "/api/kb/search?q=worker&type=guide&kb="+f.slug, nil)

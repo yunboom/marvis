@@ -233,6 +233,36 @@ func (q *Queries) CountKbInboundLinks(ctx context.Context, arg CountKbInboundLin
 	return items, nil
 }
 
+const countKbLevelPages = `-- name: CountKbLevelPages :one
+SELECT count(*)::bigint FROM kb_page
+WHERE knowledge_base_id = $1
+  AND parent_id IS NOT DISTINCT FROM $2::uuid
+  AND deleted_at IS NULL
+  AND ($3::text IS NULL OR lower(type) = lower($3::text))
+  AND NOT (id = ANY($4::uuid[]))
+`
+
+type CountKbLevelPagesParams struct {
+	KnowledgeBaseID pgtype.UUID   `json:"knowledge_base_id"`
+	ParentID        pgtype.UUID   `json:"parent_id"`
+	PageType        pgtype.Text   `json:"page_type"`
+	ExcludeIds      []pgtype.UUID `json:"exclude_ids"`
+}
+
+// How many live pages one tree level has, leaving out the pages a draft
+// overlay replaces (the caller adds the draft's own pages of the level).
+func (q *Queries) CountKbLevelPages(ctx context.Context, arg CountKbLevelPagesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countKbLevelPages,
+		arg.KnowledgeBaseID,
+		arg.ParentID,
+		arg.PageType,
+		arg.ExcludeIds,
+	)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const countKbMergeRequestsByBase = `-- name: CountKbMergeRequestsByBase :many
 SELECT knowledge_base_id, count(*)::bigint AS merge_request_count
 FROM kb_merge_request
@@ -326,6 +356,36 @@ type CountKbRunningJobsParams struct {
 // is the state of the chat's latest task.
 func (q *Queries) CountKbRunningJobs(ctx context.Context, arg CountKbRunningJobsParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countKbRunningJobs, arg.KnowledgeBaseID, arg.Statuses)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const countKbSearchPages = `-- name: CountKbSearchPages :one
+SELECT count(*)::bigint
+FROM kb_page p
+WHERE p.workspace_id = $1
+  AND p.deleted_at IS NULL
+  AND ($2::uuid IS NULL OR p.knowledge_base_id = $2::uuid)
+  AND ($3::text IS NULL OR lower(p.type) = lower($3::text))
+  AND lower(p.search_text) LIKE ALL ($4::text[])
+`
+
+type CountKbSearchPagesParams struct {
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	PageType        pgtype.Text `json:"page_type"`
+	Patterns        []string    `json:"patterns"`
+}
+
+// The number of pages SearchKbPages finds across all its pages.
+func (q *Queries) CountKbSearchPages(ctx context.Context, arg CountKbSearchPagesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countKbSearchPages,
+		arg.WorkspaceID,
+		arg.KnowledgeBaseID,
+		arg.PageType,
+		arg.Patterns,
+	)
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -1425,9 +1485,10 @@ WHERE knowledge_base_id = $1
     $3::text IS NULL
     OR (position, id) > ($3::text, $4::uuid)
   )
-  AND NOT (id = ANY($5::uuid[]))
+  AND ($5::text IS NULL OR lower(type) = lower($5::text))
+  AND NOT (id = ANY($6::uuid[]))
 ORDER BY position, id
-LIMIT $6
+LIMIT $7
 `
 
 type ListKbChildPagesParams struct {
@@ -1435,6 +1496,7 @@ type ListKbChildPagesParams struct {
 	ParentID        pgtype.UUID   `json:"parent_id"`
 	AfterPosition   pgtype.Text   `json:"after_position"`
 	AfterID         pgtype.UUID   `json:"after_id"`
+	PageType        pgtype.Text   `json:"page_type"`
 	ExcludeIds      []pgtype.UUID `json:"exclude_ids"`
 	RowLimit        int32         `json:"row_limit"`
 }
@@ -1451,14 +1513,16 @@ type ListKbChildPagesRow struct {
 }
 
 // One page of one tree level, keyset-paginated on (position, id). A NULL
-// parent_id lists the top level. exclude_ids drops pages a draft overlay
-// replaces; the caller merges the draft's version back in.
+// parent_id lists the top level; page_type keeps one page type only.
+// exclude_ids drops pages a draft overlay replaces; the caller merges the
+// draft's version back in.
 func (q *Queries) ListKbChildPages(ctx context.Context, arg ListKbChildPagesParams) ([]ListKbChildPagesRow, error) {
 	rows, err := q.db.Query(ctx, listKbChildPages,
 		arg.KnowledgeBaseID,
 		arg.ParentID,
 		arg.AfterPosition,
 		arg.AfterID,
+		arg.PageType,
 		arg.ExcludeIds,
 		arg.RowLimit,
 	)
@@ -2464,7 +2528,7 @@ WHERE p.workspace_id = $1
   AND ($3::text IS NULL OR lower(p.type) = lower($3::text))
   AND lower(p.search_text) LIKE ALL ($4::text[])
 ORDER BY (lower(p.title) LIKE ANY ($4::text[])) DESC, p.updated_at DESC, p.id
-LIMIT $6 OFFSET $5
+LIMIT $5
 `
 
 type SearchKbPagesParams struct {
@@ -2472,7 +2536,6 @@ type SearchKbPagesParams struct {
 	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
 	PageType        pgtype.Text `json:"page_type"`
 	Patterns        []string    `json:"patterns"`
-	RowOffset       int32       `json:"row_offset"`
 	RowLimit        int32       `json:"row_limit"`
 }
 
@@ -2486,14 +2549,13 @@ type SearchKbPagesRow struct {
 }
 
 // Keyword search over titles and body text: every pattern must match.
-// Title hits rank first.
+// Title hits rank first; only the top row_limit hits are returned.
 func (q *Queries) SearchKbPages(ctx context.Context, arg SearchKbPagesParams) ([]SearchKbPagesRow, error) {
 	rows, err := q.db.Query(ctx, searchKbPages,
 		arg.WorkspaceID,
 		arg.KnowledgeBaseID,
 		arg.PageType,
 		arg.Patterns,
-		arg.RowOffset,
 		arg.RowLimit,
 	)
 	if err != nil {
