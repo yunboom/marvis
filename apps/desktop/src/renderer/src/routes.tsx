@@ -29,7 +29,13 @@ import {
 import { DesktopChooseRuntimePage } from "./components/desktop-choose-runtime-page";
 import { AgentCreatedPage } from "./pages/agent-created-page";
 import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@marvis/views/squads/components";
-import { KbListPage } from "@marvis/views/kb";
+import {
+  KbHomePage,
+  KbListPage,
+  KbPageView,
+  KbRevisionDiffPage,
+  KbShell,
+} from "@marvis/views/kb";
 import { InboxPage } from "@marvis/views/inbox";
 import { ChatPage } from "@marvis/views/chat";
 import { SettingsPage } from "@marvis/views/settings";
@@ -107,6 +113,15 @@ function PageShell() {
       <TitleSync />
       <Outlet />
     </>
+  );
+}
+
+/** Knowledge base frame: the page tree stays mounted while pages change. */
+function KbShellRoute() {
+  return (
+    <KbShell>
+      <Outlet />
+    </KbShell>
   );
 }
 
@@ -247,6 +262,19 @@ export const appRoutes: RouteObject[] = [
             handle: { title: "Squad" },
           },
           { path: "kb", element: <KbListPage />, handle: { title: "Knowledge base" } },
+          {
+            path: "kb/:kbSlug",
+            element: <KbShellRoute />,
+            children: [
+              { index: true, element: <KbHomePage />, handle: { title: "Knowledge base" } },
+              { path: "p/:pageId", element: <KbPageView />, handle: { title: "Knowledge base" } },
+              {
+                path: "p/:pageId/history/:revisionId",
+                element: <KbRevisionDiffPage />,
+                handle: { title: "Page history" },
+              },
+            ],
+          },
           { path: "inbox", element: <InboxPage />, handle: { title: "Inbox" } },
           { path: "chat", element: <ChatPage />, handle: { title: "Chat" } },
           {
