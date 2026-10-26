@@ -6,6 +6,6 @@
 
 **Status:** ready-for-agent
 
-- [ ] 批注接口与锚点重定位（原块 → 32 字模糊匹配 → anchor_lost），状态流转 pending/processing/resolved/dismissed
-- [ ] 前端划选、批注面板、批注列表，web / desktop 接入
-- [ ] 重定位单测、接口测试
+- [x] 批注接口与锚点重定位（原块 → 32 字模糊匹配 → anchor_lost），状态流转 pending/processing/resolved/dismissed
+- [x] 前端划选、批注面板、批注列表，web / desktop 接入
+- [x] 重定位单测、接口测试
