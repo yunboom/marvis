@@ -7,7 +7,7 @@
 **Status:** ready-for-agent
 
 - [ ] 草稿接口：`/api/kb/drafts*`、`/api/kb/pages/{ref}/fetch`、ops、claims、check、sync（git 式冲突标记），乐观锁 version、stale_version、conflict_markers，按 spec 06 / 07.13
-- [ ] 建草稿时从任务令牌记录 `kb_draft.task_id`（仅用于溯源，成员调用为空，不在响应里返回）
+- [ ] 建草稿时从任务令牌记录 `kb_draft.task_id`（用于来源判定与溯源，成员调用为空，不在响应里返回）
 - [ ] CLI 命令与参数照 spec 08.1（四列参数表），`--output table|json`、`--full-id`、游标翻页
 - [ ] `kb draft create` 说明为「建一份草稿。一个变更请求对应一份草稿：从建草稿、提交，到按审核意见修改，读写都带同一个草稿 id；分几次改、改了几个页面，都写进这份草稿。」；所有 `--draft` 参数说明为「草稿 id（完整 UUID），`kb draft create` 输出的 `id`」（决策 104）
 - [ ] 格式检查规则（spec 04 LINT；不含 `reserved_page_changed`、`quickstart_not_updated`，决策 103）

@@ -44,7 +44,7 @@ flowchart LR
 | KB 服务 | 块模型、草稿写入、三方合并、格式检查、链接表、检索、OKF 导出 | 新增 `server/internal/kb/` | 
 | 聊天服务 | 「知识库作业」的对话就是一个聊天会话；消息、执行过程、停止、排队全部沿用 | 复用 | 
 | 构建器智能体 | 创建 / 配置知识库的隐藏智能体 | 复用创建智能体的模式（`9a7f600b6` `server/internal/handler/agent_builder.go:19` 指令常量、`:57` 建会话、`:124` 写入指令） | 
-| 任务令牌 | 智能体调用 CLI 的凭证，按令牌绑定的人判权限；记下发起变更请求的任务 | 复用（`server/internal/handler/daemon.go:4278-4330`） | 
+| 任务令牌 | 智能体调用 CLI 的凭证，按令牌绑定的人判权限；记下建草稿的任务 | 复用（`server/internal/handler/daemon.go:4278-4330`） | 
 | 运行时说明 | 执行任务 / 聊天 / 自动化时注入「Knowledge Bases」一节 | 在现有拼装函数里加一节（`9a7f600b6` `server/internal/daemon/execenv/runtime_config_sections.go:923`） | 
 | 对象存储 | 原始资料文件 | 复用（`server/cmd/server/router.go:459`） | 
 | 自动化 | 定时收录 / 健康检查由用户在对话里让智能体建普通自动化 | 复用，零改动 |

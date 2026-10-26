@@ -2012,7 +2012,7 @@ POST`/api/kb/drafts`
 ```
 
  
-任务令牌调用时，服务端把当前任务记进 `kb_draft.task_id`，成员调用时为空；用于追溯草稿由哪次运行建的，便于排查问题，不参与作业关联和变更请求来源判定，不在响应里返回。
+任务令牌调用时，服务端把当前任务记进 `kb_draft.task_id`，成员调用时为空；记录草稿由哪次运行建的，用于审核页来源判定和排查溯源，不在响应里返回。
 
  
 POST`/api/kb/drafts/{id}/pages`
@@ -2368,13 +2368,13 @@ POST`/api/kb/merge-requests`
 | 409 | 检查有 error；草稿没有改动；已有打开的变更请求 | 
 
  
-任务令牌调用时，服务端把当前任务记进 `kb_merge_request.task_id`，不在响应里返回。作业页「提交审核」和审核页「回滚」不经 CLI，请求没有任务令牌，`task_id` 为空。
+审核页「来源」按下表顺序判定：
 
  
 | 顺序 | 条件 | `origin.type` | 审核页「来源」跳到 | 
 | 1 | 草稿在 `kb_job_draft` 里关联了作业（作业页「提交审核」，或作业里的智能体执行 `kb mr create`） | `kb_job` | 作业页 | 
 | 2 | `reverts_id` 不为空 | `revert` | 被回滚的变更请求 | 
-| 3 | `task_id` 不为空，反查任务表 | `chat` / `issue` / `autopilot_run` | 对话 / 任务 / 自动化运行 | 
+| 3 | 草稿的 `task_id` 不为空，反查任务表 | `chat` / `issue` / `autopilot_run` | 对话 / 任务 / 自动化运行 | 
 | 4 | 以上都没有 | `none` | 不跳转，只显示作者 | 
 
 GET`/api/kb/sources`
