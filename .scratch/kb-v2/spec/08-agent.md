@@ -230,7 +230,7 @@ marvis kb update team --purpose-file ./purpose.md
 
 CLI`marvis kb page list`
  
-列出一级页面；子页面只给 `has_child`，用 `--parent` 往下钻。游标翻页，每页最多 200 条：输出有 `next_cursor` 时用 `--cursor` 接着取，直到为空串。
+列出一级页面；子页面只给 `has_child`，用 `--parent` 往下钻。游标翻页，每页最多 200 条：输出有 `next_cursor` 时用 `--cursor` 接着取，直到为空串。带 `--type` 时列出该类型的全部页面，范围是整个知识库，带 `--parent` 时是该页下面的所有后代，按路径排序，游标翻页。
 
  
 对应接口 `GET /api/kb/bases/{kb}/pages`
@@ -238,13 +238,14 @@ CLI`marvis kb page list`
  
 
 ```
-marvis kb page list <kb> [--parent <页面>] [--limit <n>] [--cursor <游标>] [--draft <草稿>] [--output table|json]
+marvis kb page list <kb> [--parent <页面>] [--type <类型>] [--limit <n>] [--cursor <游标>] [--draft <草稿>] [--output table|json]
 ```
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
 | `<kb>` | 是 | 知识库 slug，或知识库 id（UUID） | `team` | 
 | `--parent` | 否 | 父页面引用（`知识库 slug:/路径` 或页面 id）；不传列顶层 | `team:/payment` | 
+| `--type` | 否 | 页面类型，同 Schema 里的 `type`；带上时列出这一类的全部页面，不再只列一层：范围是整个知识库，带 `--parent` 时是该页下面的所有后代，按路径排序，游标翻页 | `Runbook` | 
 | `--limit` | 否 | 整数 1–200，每页条数，默认 200 | `200` | 
 | `--cursor` | 否 | 上一页输出里的 `next_cursor`，原样传回；不传从第一条开始 | `eyJwb3MiOiJhMCIsImlkIjoiMGMxZCJ9` | 
 | `--draft` | 否 | 草稿 id（完整 UUID）。带上后按这份草稿里的样子列，能看到草稿新建、移过来的页面，每页的 `draft_change` 标出草稿对它的改动；不带只列主线 | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
@@ -295,7 +296,7 @@ marvis kb page list team --parent team:/payment
       "draft_change": "added"                                 // 带 --draft 时，这份草稿对这一页的改动：added / modified / moved / deleted；没动为空串
     }
   ],
-  "total": 2,                                                 // 这一层的页面总数，不含已删除；带 --draft 时按叠加草稿后计数
+  "total": 2,                                                 // 符合条件的页面总数，不含已删除；带 --draft 时按叠加草稿后计数
   "next_cursor": ""                                           // 还有下一页时为游标，传给 --cursor；取完为空串
 }
 ```
@@ -386,7 +387,7 @@ marvis kb page fetch team:/payment/callback --scope section --start-block-id b7K
  
 CLI`marvis kb search`
  
-混合检索（关键字 + 向量），搜标题和正文；带 `--type` 不带关键词时，按类型列出整个知识库的该类页面。
+混合检索（关键字 + 向量），搜标题和正文；按相关度返回前 `--limit` 条，不翻页。
 
  
 对应接口 `GET /api/kb/search`
@@ -394,16 +395,15 @@ CLI`marvis kb search`
  
 
 ```
-marvis kb search [<关键词>] [--kb <kb>] [--type <类型>] [--limit <n>] [--cursor <游标>] [--output table|json]
+marvis kb search <关键词> [--kb <kb>] [--type <类型>] [--limit <n>] [--output table|json]
 ```
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
-| `<关键词>` | 否 | 搜索词，空格分隔多个词；搜标题和正文。带 `--type` 时可不填，此时按类型列出整个知识库的该类页面 | `"回调 去重"` | 
+| `<关键词>` | 是 | 搜索词，空格分隔多个词；搜标题和正文 | `"回调 去重"` | 
 | `--kb` | 否 | 知识库 slug 或 id；不传搜全部知识库 | `team` | 
-| `--type` | 否 | 页面类型，同 Schema 里的 `type` | `Runbook` | 
-| `--limit` | 否 | 整数。带关键词时 1–50，默认 10，按相关度返回前 n 条，不翻页；只按 `--type` 列出时 1–200，默认 200 | `20` | 
-| `--cursor` | 否 | 上一页输出里的 `next_cursor`，原样传回；只在不带关键词、按 `--type` 列出时有效，按路径排序翻页，同 `kb page list` | `eyJwb3MiOiJhMCIsImlkIjoiMGMxZCJ9` | 
+| `--type` | 否 | 按页面类型过滤，同 Schema 里的 `type` | `Runbook` | 
+| `--limit` | 否 | 整数 1–50，默认 10；按相关度返回前 n 条，不翻页 | `20` | 
 | `--output` | 否 | `table` 或 `json`；默认 `table`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
 | `--full-id` | 否 | 开关，不带值；表格里显示完整 UUID（默认只显示前 8 位） | `--full-id` | 
 
@@ -431,8 +431,7 @@ marvis kb search "回调 去重" --kb team
       "excerpt": "渠道回调按渠道交易号加幂等键去重……",                        // 命中片段
       "mention": "[支付回调](mention://kb_page/0c1d2e3f…)"        // 原样贴进回复，渲染成卡片（7.14），不通知人；示例里的 id 截短了
     }
-  ],
-  "next_cursor": ""                                           // 只按 --type 列出时，还有下一页为游标，传给 --cursor 接着取；带关键词或已取完为空串
+  ]
 }
 ```
 
