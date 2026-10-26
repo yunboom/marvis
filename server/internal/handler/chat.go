@@ -169,6 +169,18 @@ func (h *Handler) ListChatSessions(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	scope, ok := h.chatReadScope(w, r, userID, workspaceID, member)
+	if !ok {
+		return
+	}
+	filter, ok := parseChatListFilter(w, r)
+	if !ok {
+		return
+	}
+	if scope == chatScopeWorkspace {
+		h.listWorkspaceChatSessions(w, r, workspaceID, filter)
+		return
+	}
 	actorType, actorID := h.resolveActor(r, userID, workspaceID)
 	allowed, ok := h.accessibleAgentIDs(r.Context(), workspaceID, actorType, actorID, member.Role)
 	if !ok {
@@ -242,6 +254,7 @@ func (h *Handler) ListChatSessions(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
+	resp = filter.apply(resp)
 	if err := h.hydrateChatSessionChannelMetadata(r.Context(), resp); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to load chat channel metadata")
 		return
@@ -1228,7 +1241,11 @@ func (h *Handler) ListChatMessagesPage(w http.ResponseWriter, r *http.Request) {
 	workspaceID := ctxWorkspaceID(r.Context())
 	sessionID := chi.URLParam(r, "sessionId")
 
-	session, ok := h.gatePublicChatSessionForUser(w, r, userID, workspaceID, sessionID)
+	session, ok := h.gateChatMessagesPageSession(w, r, userID, workspaceID, sessionID)
+	if !ok {
+		return
+	}
+	since, ok := parseChatSince(w, r)
 	if !ok {
 		return
 	}
@@ -1256,6 +1273,11 @@ func (h *Handler) ListChatMessagesPage(w http.ResponseWriter, r *http.Request) {
 	hasMore := len(messages) > limit
 	if hasMore {
 		messages = messages[:limit]
+	}
+	if since.Valid {
+		kept, cut := chatMessagesSince(messages, since.Time)
+		messages = kept
+		hasMore = hasMore && !cut
 	}
 	var nextCursor *ChatMessagesCursorResponse
 	if hasMore && len(messages) > 0 {
@@ -1516,6 +1538,18 @@ func (h *Handler) ListPendingChatTasks(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	scope, ok := h.chatReadScope(w, r, userID, workspaceID, member)
+	if !ok {
+		return
+	}
+	filter, ok := parseChatListFilter(w, r)
+	if !ok {
+		return
+	}
+	if scope == chatScopeWorkspace {
+		h.listWorkspaceChatSessions(w, r, workspaceID, filter)
+		return
+	}
 	actorType, actorID := h.resolveActor(r, userID, workspaceID)
 	allowed, ok := h.accessibleAgentIDs(r.Context(), workspaceID, actorType, actorID, member.Role)
 	if !ok {
@@ -1584,6 +1618,18 @@ func (h *Handler) HasPendingChatTasks(w http.ResponseWriter, r *http.Request) {
 
 	member, ok := h.workspaceMember(w, r, workspaceID)
 	if !ok {
+		return
+	}
+	scope, ok := h.chatReadScope(w, r, userID, workspaceID, member)
+	if !ok {
+		return
+	}
+	filter, ok := parseChatListFilter(w, r)
+	if !ok {
+		return
+	}
+	if scope == chatScopeWorkspace {
+		h.listWorkspaceChatSessions(w, r, workspaceID, filter)
 		return
 	}
 	actorType, actorID := h.resolveActor(r, userID, workspaceID)
