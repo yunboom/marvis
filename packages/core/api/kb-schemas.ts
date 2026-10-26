@@ -1,5 +1,9 @@
 import { z } from "zod";
 import type {
+  KbBuilderSession,
+  KbBuilderSessionStart,
+  KnowledgeBaseMutation,
+  KbTemplates,
   KbHome,
   KbPage,
   KbRevision,
@@ -359,3 +363,81 @@ export const EMPTY_KB_REVISION_DIFF: KbRevisionDiff = {
   prev_revision_id: "",
   hunks: [],
 };
+
+// Builder conversations and configuration writes.
+
+const schemaModeSchema = z.enum(["default", "custom"]).catch("default");
+
+const nullableText = z
+  .string()
+  .nullable()
+  .optional()
+  .catch(null)
+  .transform((v) => v ?? null);
+
+/** A stored right-hand configuration; unknown or broken fields fall back. */
+export const StoredKbDraftSchema = z
+  .object({
+    name: text,
+    slug: text,
+    description: text,
+    purpose: text,
+    schema_mode: schemaModeSchema,
+    schema: text,
+    applied_message_id: nullableText,
+  })
+  .loose();
+
+const KbBuilderSessionSchema = z
+  .object({
+    session_id: z.string(),
+    mode: z.string().catch("create"),
+    knowledge_base_id: nullableText,
+    title: text,
+    runtime_id: text,
+    last_message_content: text,
+    last_message_role: text,
+    last_message_at: nullableText,
+    draft: nullableObject(StoredKbDraftSchema),
+    updated_at: text,
+  })
+  .loose();
+
+export const KbBuilderSessionListSchema = lenientArray(KbBuilderSessionSchema);
+
+export const KbBuilderSessionStartSchema = z
+  .object({ session_id: z.string(), builder_agent_id: text, runtime_id: text })
+  .loose();
+
+export const KbBuilderRuntimeSwitchSchema = z
+  .object({ session_id: text, runtime_id: z.string() })
+  .loose();
+
+export const KnowledgeBaseMutationSchema = KnowledgeBaseSchema.extend({ mention: text }).loose();
+
+export const KbTemplatesSchema = z
+  .object({ default_schema: text, purpose_template: text })
+  .loose();
+
+export const EMPTY_KB_TEMPLATES: KbTemplates = { default_schema: "", purpose_template: "" };
+
+export const EMPTY_KB_BUILDER_SESSION_LIST: KbBuilderSession[] = [];
+
+export const EMPTY_KB_BUILDER_SESSION_START: KbBuilderSessionStart = {
+  session_id: "",
+  builder_agent_id: "",
+  runtime_id: "",
+};
+
+/** A rebind that answered 2xx committed `runtimeId`, whatever the body says. */
+export function kbBuilderRuntimeSwitchFallback(runtimeId: string): { session_id: string; runtime_id: string } {
+  return { session_id: "", runtime_id: runtimeId };
+}
+
+/**
+ * A write that answered 2xx committed; when its body does not parse, the
+ * caller still knows the slug it sent, which is all navigation needs.
+ */
+export function knowledgeBaseMutationFallback(slug: string): KnowledgeBaseMutation {
+  return { ...EMPTY_KNOWLEDGE_BASE_DETAIL, slug, mention: "" };
+}

@@ -264,6 +264,11 @@ import { createRequestId, createSafeId } from "../utils";
 import { getCurrentSlug } from "../platform/workspace-storage";
 import { parseWithFallback } from "./schema";
 import type {
+  CreateKbBuilderSessionRequest,
+  CreateKnowledgeBaseRequest,
+  KbBuilderMode,
+  KbBuilderSession,
+  KbBuilderSessionStart,
   KbHome,
   KbPage,
   KbRevision,
@@ -271,8 +276,22 @@ import type {
   KbTreeLevel,
   KnowledgeBase,
   KnowledgeBaseDetail,
+  KnowledgeBaseMutation,
+  StoredKbDraft,
+  KbTemplates,
+  UpdateKnowledgeBaseRequest,
 } from "../types/kb";
 import {
+  EMPTY_KB_BUILDER_SESSION_LIST,
+  EMPTY_KB_BUILDER_SESSION_START,
+  KbBuilderRuntimeSwitchSchema,
+  KbBuilderSessionListSchema,
+  KbBuilderSessionStartSchema,
+  kbBuilderRuntimeSwitchFallback,
+  knowledgeBaseMutationFallback,
+  KnowledgeBaseMutationSchema,
+  KbTemplatesSchema,
+  EMPTY_KB_TEMPLATES,
   EMPTY_KB_HOME,
   EMPTY_KB_PAGE,
   EMPTY_KB_REVISION_DIFF,
@@ -4847,6 +4866,82 @@ export class ApiClient {
     return parseWithFallback(raw, KnowledgeBaseDetailSchema, EMPTY_KNOWLEDGE_BASE_DETAIL, {
       endpoint: "GET /api/kb/bases/:kb",
     });
+  }
+
+  /** Creates a knowledge base; `schema` only in the custom schema mode. */
+  async createKnowledgeBase(data: CreateKnowledgeBaseRequest): Promise<KnowledgeBaseMutation> {
+    const raw = await this.fetch<unknown>("/api/kb/bases", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KnowledgeBaseMutationSchema, knowledgeBaseMutationFallback(data.slug), {
+      endpoint: "POST /api/kb/bases",
+    });
+  }
+
+  /** Saves a knowledge base's configuration; 409 when someone saved after `base_updated_at`. */
+  async updateKnowledgeBase(kb: string, data: UpdateKnowledgeBaseRequest): Promise<KnowledgeBaseMutation> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KnowledgeBaseMutationSchema, knowledgeBaseMutationFallback(kb), {
+      endpoint: "PATCH /api/kb/bases/:kb",
+    });
+  }
+
+  /** The built-in default schema and purpose outline. */
+  async getKnowledgeBaseTemplates(): Promise<KbTemplates> {
+    const raw = await this.fetch<unknown>("/api/kb/templates");
+    return parseWithFallback(raw, KbTemplatesSchema, EMPTY_KB_TEMPLATES, {
+      endpoint: "GET /api/kb/templates",
+    });
+  }
+
+  /** The caller's unfinished builder conversations, optionally of one mode or knowledge base. */
+  async listKbBuilderSessions(params: { mode?: KbBuilderMode; kb?: string } = {}): Promise<KbBuilderSession[]> {
+    const search = new URLSearchParams();
+    if (params.mode) search.set("mode", params.mode);
+    if (params.kb) search.set("kb", params.kb);
+    const qs = search.toString();
+    const raw = await this.fetch<unknown>(`/api/kb/builder/sessions${qs ? `?${qs}` : ""}`);
+    return parseWithFallback(raw, KbBuilderSessionListSchema, EMPTY_KB_BUILDER_SESSION_LIST, {
+      endpoint: "GET /api/kb/builder/sessions",
+    });
+  }
+
+  async createKbBuilderSession(data: CreateKbBuilderSessionRequest): Promise<KbBuilderSessionStart> {
+    const raw = await this.fetch<unknown>("/api/kb/builder/sessions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbBuilderSessionStartSchema, EMPTY_KB_BUILDER_SESSION_START, {
+      endpoint: "POST /api/kb/builder/sessions",
+    });
+  }
+
+  /** Rebinds a builder conversation; reaching the parse means `runtime_id` is bound. */
+  async switchKbBuilderRuntime(sessionId: string, data: { runtime_id: string }): Promise<{ runtime_id: string }> {
+    const raw = await this.fetch<unknown>(`/api/kb/builder/sessions/${encodeURIComponent(sessionId)}/runtime`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbBuilderRuntimeSwitchSchema, kbBuilderRuntimeSwitchFallback(data.runtime_id), {
+      endpoint: "PATCH /api/kb/builder/sessions/:id/runtime",
+    });
+  }
+
+  /** Stores the right-hand configuration (whole-object, last write wins). */
+  async saveKbBuilderDraft(sessionId: string, draft: StoredKbDraft): Promise<void> {
+    await this.fetch(`/api/kb/builder/sessions/${encodeURIComponent(sessionId)}/draft`, {
+      method: "PUT",
+      body: JSON.stringify({ draft }),
+    });
+  }
+
+  /** Discards a builder conversation with its configuration. */
+  async deleteKbBuilderSession(sessionId: string): Promise<void> {
+    await this.fetch(`/api/kb/builder/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
   }
 
   /** Home overview of a knowledge base. */

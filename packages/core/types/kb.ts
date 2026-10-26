@@ -242,3 +242,86 @@ export interface KbRevisionDiff {
   prev_revision_id: string;
   hunks: KbDiffHunk[];
 }
+
+/** What a knowledge base builder conversation works on. */
+export type KbBuilderMode = "create" | "config";
+
+/**
+ * The right-hand configuration of a builder conversation as stored on the
+ * server (opaque there). `schema` matters only in the custom schema mode.
+ */
+export interface StoredKbDraft {
+  name: string;
+  slug: string;
+  description: string;
+  purpose: string;
+  schema_mode: KnowledgeBaseSchemaMode;
+  schema: string;
+  /** The last builder reply already applied to the form. */
+  applied_message_id: string | null;
+}
+
+/** One unfinished builder conversation. */
+export interface KbBuilderSession {
+  session_id: string;
+  mode: KbBuilderMode | (string & {});
+  /** The configured knowledge base; null when creating. */
+  knowledge_base_id: string | null;
+  title: string;
+  /** Where the carrier runs, i.e. where the next message is answered. */
+  runtime_id: string;
+  /** Raw stored message in the builder wire format. */
+  last_message_content: string;
+  last_message_role: string;
+  last_message_at: string | null;
+  /** Saved configuration; null when never saved. */
+  draft: StoredKbDraft | null;
+  updated_at: string;
+}
+
+/** A started builder conversation. */
+export interface KbBuilderSessionStart {
+  session_id: string;
+  builder_agent_id: string;
+  runtime_id: string;
+}
+
+export interface CreateKbBuilderSessionRequest {
+  mode: KbBuilderMode;
+  knowledge_base_id?: string;
+  schema_mode: KnowledgeBaseSchemaMode;
+  runtime_id: string;
+  model?: string;
+}
+
+export interface CreateKnowledgeBaseRequest {
+  name: string;
+  slug: string;
+  description: string;
+  purpose: string;
+  schema_mode: KnowledgeBaseSchemaMode;
+  /** Only (and then required) in the custom schema mode. */
+  schema?: string;
+}
+
+export interface UpdateKnowledgeBaseRequest {
+  name?: string;
+  description?: string;
+  purpose?: string;
+  schema_mode?: KnowledgeBaseSchemaMode;
+  /** Only when the effective schema mode is custom. */
+  schema?: string;
+  /** The updated_at the editor opened; a newer save answers 409. */
+  base_updated_at?: string;
+}
+
+/** The built-in texts the configuration form shows. */
+export interface KbTemplates {
+  default_schema: string;
+  purpose_template: string;
+}
+
+/** A created or updated knowledge base, with its mention Markdown. */
+export interface KnowledgeBaseMutation extends KnowledgeBase {
+  mention: string;
+}

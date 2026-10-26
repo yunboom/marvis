@@ -400,4 +400,13 @@ export type {
   KbTreeLevel,
   KbTreePage,
   KbTreeParent,
+  KbBuilderMode,
+  KbBuilderSession,
+  KbBuilderSessionStart,
+  CreateKbBuilderSessionRequest,
+  CreateKnowledgeBaseRequest,
+  KnowledgeBaseMutation,
+  StoredKbDraft,
+  KbTemplates,
+  UpdateKnowledgeBaseRequest,
 } from "./kb";

@@ -1,6 +1,9 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
 import type {
+  KbBuilderMode,
+  KbBuilderSession,
+  KbTemplates,
   KbHome,
   KbPage,
   KbRevision,
@@ -27,7 +30,31 @@ export const kbKeys = {
   history: (wsId: string, pageId: string) => [...kbKeys.all(wsId), "history", pageId] as const,
   revisionDiff: (wsId: string, pageId: string, revisionId: string) =>
     [...kbKeys.history(wsId, pageId), revisionId] as const,
+  builderSessions: (wsId: string) => [...kbKeys.all(wsId), "builder-sessions"] as const,
+  /** Unfinished builder conversations of one mode; `kb` narrows config ones. */
+  builderSessionList: (wsId: string, mode: KbBuilderMode, kb: string) =>
+    [...kbKeys.builderSessions(wsId), mode, kb] as const,
+  templates: () => ["kb-templates"] as const,
 };
+
+export function kbBuilderSessionListOptions(wsId: string, mode: KbBuilderMode, kb = "") {
+  return queryOptions<KbBuilderSession[]>({
+    queryKey: kbKeys.builderSessionList(wsId, mode, kb),
+    queryFn: () => api.listKbBuilderSessions({ mode, kb: kb || undefined }),
+    enabled: !!wsId && (mode === "create" || !!kb),
+    // Changes through work on other screens (starting, sending, creating), and
+    // the banner mounts on demand: never trust a cached copy.
+    staleTime: 0,
+  });
+}
+
+/** The built-in templates only change with a deploy. */
+export function kbTemplatesOptions() {
+  return queryOptions<KbTemplates>({
+    queryKey: kbKeys.templates(),
+    queryFn: () => api.getKnowledgeBaseTemplates(),
+  });
+}
 
 export function kbBaseListOptions(wsId: string) {
   return queryOptions<KnowledgeBase[]>({

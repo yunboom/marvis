@@ -44,6 +44,9 @@ describe("bucketDiagnosticPath", () => {
     expect(bucketDiagnosticPath("/acme/squads/sq.4")).toBe("/:slug/squads/:id");
     expect(bucketDiagnosticPath("/acme/kb")).toBe("/:slug/kb");
     expect(bucketDiagnosticPath("/acme/kb/new")).toBe("/:slug/kb/new");
+    expect(bucketDiagnosticPath("/acme/kb/new/sess-1")).toBe("/:slug/kb/new/:sessionId");
+    expect(bucketDiagnosticPath("/acme/kb/team/config")).toBe("/:slug/kb/:kb/config");
+    expect(bucketDiagnosticPath("/acme/kb/team/config/sess-1")).toBe("/:slug/kb/:kb/config/:sessionId");
     expect(bucketDiagnosticPath("/acme/kb/team")).toBe("/:slug/kb/:kb");
     expect(bucketDiagnosticPath("/acme/kb/team/p/page-1")).toBe("/:slug/kb/:kb/p/:pageId");
     expect(bucketDiagnosticPath("/acme/kb/team/p/page-1/history/rev-1")).toBe(
