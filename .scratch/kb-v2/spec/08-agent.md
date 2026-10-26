@@ -2,7 +2,7 @@
 
 8.1 CLI
 
-所有命令输出 JSON；能渲染成对话卡片的对象都带 `mention` 字段（7.14），智能体原样贴进回复。写操作沿用现有权限，人和智能体不做区分（决策 46）；作业在界面上新建（决策 38），作业命令只有 `kb job link-draft`，用来把草稿关联到作业（决策 104）。出错时退出码非 0，输出 `{"error": {"code": "...", "message": "..."}}`。
+所有命令输出 JSON；能渲染成对话卡片的对象都带 `mention` 字段（7.14），智能体原样贴进回复。写操作沿用现有权限，人和智能体不做区分（决策 46）；不提供作业命令（决策 38），作业在界面上新建。出错时退出码非 0，输出 `{"error": {"code": "...", "message": "..."}}`。
 
 | 命令 | 用途 | 类型 | 
 | kb list / get | 列出 / 查看知识库；`get` 返回 PURPOSE、SCHEMA 全文 | 读 | 
@@ -16,8 +16,7 @@
 | kb sources list | 还没收录的资料（读内容用各自现有命令） | 读 | 
 | kb raw list / get | 原始资料；`get` 下载到本地给智能体读 | 读 | 
 | kb annotation add / list / dismiss / reopen | 批注；发现缺内容或写错用 `add` | 写批注 | 
-| kb draft create / check | 建草稿；看草稿改动与检查 | 写 / 读 | 
-| kb job link-draft | 把草稿关联到知识库作业 | 写 | 
+| kb draft create / check | 建草稿（`--job` 关联到作业）；看草稿改动与检查 | 写 / 读 | 
 | kb mr create / update / list / get / comment / merge / close / revert | 审核相关；合并、关闭按现有权限（决策 46） | 写 | 
 | kb history | 已合并的改动 | 读 | 
 | chat list / get | 读对话（现有 `marvis chat` 命令组新增）；owner 读全员对话见 8.7 | 读 | 
@@ -483,7 +482,7 @@ marvis kb stale team
 
 CLI`marvis kb draft create`
  
-建一份草稿。一个变更请求对应一份草稿：从建草稿、提交，到按审核意见修改，读写都带同一个草稿 id；分几次改、改了几个页面，都写进这份草稿。
+建一份草稿，传 `--job` 时关联到该作业。一个变更请求对应一份草稿：从建草稿、提交，到按审核意见修改，读写都带同一个草稿 id；分几次改、改了几个页面，都写进这份草稿。
 
  
 对应接口 `POST /api/kb/drafts`
@@ -491,13 +490,14 @@ CLI`marvis kb draft create`
  
 
 ```
-marvis kb draft create <kb> [--title <标题>] [--output table|json]
+marvis kb draft create <kb> [--title <标题>] [--job <作业 id>] [--output table|json]
 ```
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
 | `<kb>` | 是 | 知识库 slug，或知识库 id（UUID） | `team` | 
 | `--title` | 否 | 草稿标题，说明这份草稿改了什么；和变更请求标题无关 | `"每日收录 · 10-25"` | 
+| `--job` | 否 | 作业 id（完整 UUID），首条消息里给出；传了就把新草稿关联到这个作业 | `c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f` | 
 | `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
 
  
@@ -518,64 +518,6 @@ marvis kb draft create team --title "每日收录 · 10-25"
   "status": "open"                                            // 状态
 }
 ```
-
- 
-CLI`marvis kb job link-draft`
- 
-把草稿关联到知识库作业。关联后，作业页右侧显示这份草稿的改动，成员提交或放弃的就是这份草稿。一个作业只关联一份草稿。
-
- 
-对应接口 `PUT /api/kb/jobs/{id}/draft`
-
- 
-
-```
-marvis kb job link-draft <job> --draft <草稿> [--output table|json]
-```
-
- 
-| 参数 | 必填 | 传什么 | 示例 | 
-| `<job>` | 是 | 作业 id（完整 UUID），首条消息里给出 | `c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f` | 
-| `--draft` | 是 | 草稿 id（完整 UUID），`kb draft create` 输出的 `id` | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
-| `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
-
- 
-示例
-
-```
-marvis kb job link-draft c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f --draft 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
-```
-
- 
-输出（JSON）
-
-```
-{
-  "id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f",               // 作业 id（UUID）
-  "knowledge_base_id": "5b1f0c2e-8a6d-4e1b-9f7a-2c3d4e5f6a7b",  // 知识库 id
-  "name": "处理批注",                                             // 作业名称，列表第一列
-  "starter": "annotations",                                   // 开场白类型，决定默认名称、附加提示词和变更请求来源；自由描述为 custom
-  "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",         // 执行智能体（工作区普通智能体）
-  "agent_name": "通用开发助手",                                     // 执行智能体名称
-  "chat_session_id": "d1e2f3a4-5b6c-4d7e-8f9a-0b1c2d3e4f5a",  // 这个作业的对话（现有聊天会话）
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 这个作业关联的草稿，取自 kb_job_draft；智能体还没关联时为 null
-  "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 发起人
-  "state": "running",                                         // running 运行中 / idle 等待输入 / failed 失败 / stopped 已停止，取自对话最近一次任务
-  "last_reply": "",                                           // 智能体最后一条回复的片段，列表第二行
-  "draft": {                                                  // 草稿概况；还没关联草稿时为 null
-    "version": 0,                                             // 草稿版本，每次写入 +1
-    "pages": 0,                                               // 改动页面数
-    "added": 0,                                               // 新增行数
-    "deleted": 0                                              // 删除行数
-  },
-  "merge_request": null,                                      // 这个作业的变更请求（没有为 null）
-  "created_at": "2026-10-25T10:20:00Z",                       // RFC3339
-  "updated_at": "2026-10-25T10:29:00Z"                        // RFC3339
-}
-```
-
- 
-作业已关联另一份草稿时返回错误 `job_draft_exists`，草稿已属于别的作业时返回 `draft_linked`；重复关联同一份草稿不报错。
 
  
 CLI`marvis kb page create`
@@ -1806,7 +1748,7 @@ These knowledge bases are the team's shared memory: reviewed facts, decisions an
 Judge from the descriptions above which knowledge base, if any, helps with the current work, and load only what you need:
 
 - `marvis kb search "<query>" [--kb <slug>]` — find pages by keyword.
-- `marvis kb page list <slug> [--parent <slug>:<path>]` — the table of contents. Without `--parent` it lists the top-level pages; with it, the pages directly under that page. Each comes with a one-line description. Up to 200 pages per call; when the output has a `next_cursor`, call again with `--cursor <next_cursor>` until it is empty. Find the pages you need here, then read them.
+- `marvis kb page list <slug> [--parent <slug>:<path>]` — the table of contents. Without `--parent` it lists the top-level pages; with it, the pages directly under that page. Each comes with a one-line description.
 - `marvis kb page fetch <slug>:<path>` — read a page.
 
 More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:
@@ -1832,7 +1774,7 @@ More operations are in the `marvis-platform` skill, under `references/knowledge-
 根据上面的简介判断哪个知识库对当前工作有用，只加载需要的部分：
 
 - `marvis kb search "<关键词>" [--kb <slug>]` — 按关键词找页面。
-- `marvis kb page list <slug> [--parent <slug>:<路径>]` — 像一本书的目录：不带 `--parent` 列出最顶层的页面，带上则列出那一页下面直接的子页面，每页附一句说明。一次最多返回 200 条，输出里有 `next_cursor` 时用 `--cursor <next_cursor>`接着取，直到它为空。按目录找到需要的页面再读。
+- `marvis kb page list <slug> [--parent <slug>:<路径>]` — 像一本书的目录：不带 `--parent` 列出最顶层的页面，带上则列出那一页下面直接的子页面，每页附一句说明。
 - `marvis kb page fetch <slug>:<路径>` — 读页面。
 
 更多操作见 `marvis-platform` skill 的 `references/knowledge-bases.md`：
@@ -2230,7 +2172,7 @@ Knowledge base: {{.Name}} (`{{.Slug}}`)
 Job: {{.StarterTitle}} (`{{.JobID}}`)
 
 How to work:
-- Create a draft with `marvis kb draft create {{.Slug}}`, then link it to this job with `marvis kb job link-draft {{.JobID}} --draft <draft id>`. Once it is linked, the member sees the draft on the right. Write every change of this job into that draft.
+- Create a draft with `marvis kb draft create {{.Slug}} --job {{.JobID}}`; the member sees it on the right. Write every change of this job into that draft.
 - For how to read and write the knowledge base, load the `marvis-platform` skill and open `references/knowledge-bases.md`.
 - The member reviews the draft on the right and submits it. Submit the change request yourself only when the member asks you to.
 - End each turn with a short summary: pages changed, anything unresolved.
@@ -2247,7 +2189,7 @@ Member's message:
 知识库：{{.Name}}（`{{.Slug}}`）作业：{{.StarterTitle}}（`{{.JobID}}`）
 
 工作方式：
-- 用 `marvis kb draft create {{.Slug}}` 建一份草稿，再用`marvis kb job link-draft {{.JobID}} --draft <草稿 id>` 把它关联到这个作业。关联后，成员在右侧看到这份草稿。这次作业的所有改动都写进这份草稿。
+- 用 `marvis kb draft create {{.Slug}} --job {{.JobID}}` 建一份草稿，成员会在右侧看到它。这次作业的所有改动都写进这份草稿。
 - 怎么读写知识库，加载 `marvis-platform` skill，打开 `references/knowledge-bases.md`。
 - 成员在右侧审阅草稿并提交。只有成员要求时，才由你提交变更请求。
 - 每一轮结束时写一段简短总结：改了哪些页面，哪些没解决。
