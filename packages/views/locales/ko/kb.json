@@ -25,5 +25,118 @@
     "no_matches": "일치하는 지식 베이스가 없습니다",
     "empty_title": "아직 지식 베이스가 없습니다",
     "empty_description": "에이전트가 페이지를 작성하고 관리하며, 팀원은 읽고 주석을 달고 변경을 검토합니다."
+  },
+  "nav": {
+    "label": "지식 베이스 탐색",
+    "switch": "지식 베이스 전환",
+    "more_actions": "지식 베이스 작업",
+    "home": "홈",
+    "pending": "대기 {{count}}",
+    "pages": "페이지",
+    "breadcrumb": "현재 위치"
+  },
+  "tree": {
+    "expand": "{{title}} 펼치기",
+    "collapse": "{{title}} 접기",
+    "load_more": "더 불러오기",
+    "stale": "재검토 필요",
+    "empty": "아직 페이지가 없습니다",
+    "draft": {
+      "added": "초안 · 새 페이지",
+      "modified": "초안",
+      "moved": "초안 · 이동",
+      "deleted": "초안 · 삭제"
+    }
+  },
+  "home": {
+    "pending_title": "대기 중",
+    "pending_reviews": "검토 대기 변경",
+    "latest_review": "최근: {{title}}",
+    "annotations": "주석",
+    "agent_reported_other": "에이전트가 보고한 누락 {{count}}건 포함",
+    "stale_pages": "재검토가 필요한 페이지",
+    "stale_hint": "코드가 바뀌었거나 검토 기한이 지났습니다",
+    "recent_title": "최근 업데이트",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "병합된 변경이 아직 없습니다",
+    "not_found": "지식 베이스가 없거나 삭제되었습니다"
+  },
+  "page": {
+    "toc": "목차",
+    "info": "페이지 정보",
+    "more": "더 보기",
+    "history": "페이지 기록",
+    "updated_by": "{{name}} 업데이트 · {{time}}",
+    "updated": "{{time}} 업데이트",
+    "verified": "확인됨 · {{name}} · {{date}}",
+    "stale": "재검토 필요",
+    "pending_mr_other": "이 페이지에 검토 대기 중인 변경이 {{count}}건 있습니다: {{title}} (#{{number}})",
+    "not_found": "페이지가 없거나 삭제되었습니다",
+    "sources": "출처",
+    "missing_page": "아직 작성되지 않은 페이지입니다",
+    "close_panel": "닫기"
+  },
+  "draft": {
+    "label": "초안",
+    "single": "내 초안이 이 페이지를 변경했으며 아직 병합되지 않았습니다. 다른 사람에게는 게시된 버전이 보입니다.",
+    "multi_other": "이 페이지를 변경한 초안이 {{count}}개 있으며 모두 병합되지 않았습니다. 다른 사람에게는 게시된 버전이 보입니다.",
+    "published": "게시됨",
+    "draft": "초안",
+    "choose": "초안 선택",
+    "origin": {
+      "chat": "대화 「{{label}}」",
+      "issue": "작업 「{{label}}」",
+      "kb_job": "잡 「{{label}}」",
+      "none": "초안"
+    },
+    "meta_other": "{{time}} · {{count}}개 블록 변경",
+    "removed": "초안에서 삭제됨",
+    "added": "초안에서 추가됨"
+  },
+  "cite": {
+    "kind": {
+      "task": "작업",
+      "chat": "대화",
+      "pr": "풀 리퀘스트",
+      "repo": "코드",
+      "raw": "파일",
+      "web": "웹",
+      "other": "출처"
+    },
+    "checked_at": "{{version}} 기준 확인",
+    "lines": "{{from}}–{{to}}행",
+    "uploaded": "업로드 · {{name}} · {{date}}",
+    "page": "{{page}}페이지",
+    "open_file": "파일 열기",
+    "download": "다운로드",
+    "open_issue": "작업 열기",
+    "open_chat": "대화 열기",
+    "open_link": "링크 열기",
+    "chat_private": "시작한 사람만 볼 수 있습니다",
+    "file_missing": "파일이 더 이상 지식 베이스에 없습니다"
+  },
+  "info": {
+    "verified": "확인",
+    "verified_by": "{{name}} · {{date}} 확인",
+    "next_review": "다음 검토 {{date}}",
+    "tags": "영역",
+    "sources": "출처 {{count}}",
+    "backlinks": "이 페이지로 연결된 페이지",
+    "none": "없음"
+  },
+  "toc": {
+    "empty": "제목이 없습니다"
+  },
+  "history": {
+    "current": "현재 버전",
+    "initial": "초기 버전",
+    "meta": "{{author}} · {{merger}} 병합 · {{time}}",
+    "submitted_by": "{{author}} 제출,",
+    "merged_by": "{{merger}} {{date}} 병합",
+    "annotations_other": "주석 {{count}}건 처리",
+    "close": "기록 닫기",
+    "no_changes": "이 버전에는 본문 변경이 없습니다",
+    "not_found": "리비전이 없습니다",
+    "empty": "아직 기록이 없습니다"
   }
 }

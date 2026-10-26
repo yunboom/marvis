@@ -25,5 +25,118 @@
     "no_matches": "一致するナレッジベースはありません",
     "empty_title": "ナレッジベースはまだありません",
     "empty_description": "エージェントがページを書いて保守し、チームメンバーが読んで注釈し、変更をレビューします。"
+  },
+  "nav": {
+    "label": "ナレッジベースのナビゲーション",
+    "switch": "ナレッジベースを切り替え",
+    "more_actions": "ナレッジベースの操作",
+    "home": "ホーム",
+    "pending": "未対応 {{count}}",
+    "pages": "ページ",
+    "breadcrumb": "現在地"
+  },
+  "tree": {
+    "expand": "{{title}}を展開",
+    "collapse": "{{title}}を折りたたむ",
+    "load_more": "さらに読み込む",
+    "stale": "要再確認",
+    "empty": "ページはまだありません",
+    "draft": {
+      "added": "下書き · 新規",
+      "modified": "下書き",
+      "moved": "下書き · 移動",
+      "deleted": "下書き · 削除"
+    }
+  },
+  "home": {
+    "pending_title": "未対応",
+    "pending_reviews": "レビュー待ちの変更",
+    "latest_review": "最新：{{title}}",
+    "annotations": "注釈",
+    "agent_reported_other": "エージェントが報告した不足 {{count}} 件を含む",
+    "stale_pages": "再確認が必要なページ",
+    "stale_hint": "コードが変更されたか、確認期限を過ぎました",
+    "recent_title": "最近の更新",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "マージされた変更はまだありません",
+    "not_found": "ナレッジベースが存在しないか削除されました"
+  },
+  "page": {
+    "toc": "目次",
+    "info": "ページ情報",
+    "more": "その他",
+    "history": "ページ履歴",
+    "updated_by": "{{name}} が更新 · {{time}}",
+    "updated": "{{time}} に更新",
+    "verified": "確認済み · {{name}} · {{date}}",
+    "stale": "要再確認",
+    "pending_mr_other": "このページにはレビュー待ちの変更が {{count}} 件あります：{{title}}（#{{number}}）",
+    "not_found": "ページが存在しないか削除されました",
+    "sources": "出典",
+    "missing_page": "このページはまだ書かれていません",
+    "close_panel": "閉じる"
+  },
+  "draft": {
+    "label": "下書き",
+    "single": "あなたの下書きがこのページを変更しています（未マージ）。他のメンバーには公開版が表示されます。",
+    "multi_other": "このページを変更している下書きが {{count}} 件あります（いずれも未マージ）。他のメンバーには公開版が表示されます。",
+    "published": "公開版",
+    "draft": "下書き",
+    "choose": "下書きを選択",
+    "origin": {
+      "chat": "チャット「{{label}}」",
+      "issue": "タスク「{{label}}」",
+      "kb_job": "ジョブ「{{label}}」",
+      "none": "下書き"
+    },
+    "meta_other": "{{time}} · {{count}} ブロックを変更",
+    "removed": "下書きで削除",
+    "added": "下書きで追加"
+  },
+  "cite": {
+    "kind": {
+      "task": "タスク",
+      "chat": "チャット",
+      "pr": "プルリクエスト",
+      "repo": "コード",
+      "raw": "ファイル",
+      "web": "Web",
+      "other": "出典"
+    },
+    "checked_at": "{{version}} で確認",
+    "lines": "{{from}}–{{to}} 行",
+    "uploaded": "アップロード · {{name}} · {{date}}",
+    "page": "{{page}} ページ",
+    "open_file": "ファイルを開く",
+    "download": "ダウンロード",
+    "open_issue": "タスクを開く",
+    "open_chat": "チャットを開く",
+    "open_link": "リンクを開く",
+    "chat_private": "開始した本人のみ閲覧できます",
+    "file_missing": "ファイルはナレッジベースにありません"
+  },
+  "info": {
+    "verified": "確認",
+    "verified_by": "{{name}} · {{date}} に確認",
+    "next_review": "次回確認 {{date}}",
+    "tags": "領域",
+    "sources": "出典 {{count}}",
+    "backlinks": "このページへのリンク",
+    "none": "なし"
+  },
+  "toc": {
+    "empty": "見出しがありません"
+  },
+  "history": {
+    "current": "現在のバージョン",
+    "initial": "初版",
+    "meta": "{{author}} · {{merger}} がマージ · {{time}}",
+    "submitted_by": "{{author}} が提出、",
+    "merged_by": "{{merger}} が {{date}} にマージ",
+    "annotations_other": "注釈 {{count}} 件を処理",
+    "close": "履歴を閉じる",
+    "no_changes": "この版では本文の変更はありません",
+    "not_found": "リビジョンが存在しません",
+    "empty": "履歴はまだありません"
   }
 }

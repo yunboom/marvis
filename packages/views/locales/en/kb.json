@@ -28,5 +28,123 @@
     "no_matches": "No matching knowledge bases",
     "empty_title": "No knowledge bases yet",
     "empty_description": "Agents write and maintain pages. Team members read, annotate, and review changes."
+  },
+  "nav": {
+    "label": "Knowledge base navigation",
+    "switch": "Switch knowledge base",
+    "more_actions": "Knowledge base actions",
+    "home": "Home",
+    "pending": "{{count}} pending",
+    "pages": "Pages",
+    "breadcrumb": "Breadcrumb"
+  },
+  "tree": {
+    "expand": "Expand {{title}}",
+    "collapse": "Collapse {{title}}",
+    "load_more": "Load more",
+    "stale": "Needs review",
+    "empty": "No pages yet",
+    "draft": {
+      "added": "Draft · New",
+      "modified": "Draft",
+      "moved": "Draft · Moved",
+      "deleted": "Draft · Deleted"
+    }
+  },
+  "home": {
+    "pending_title": "Pending",
+    "pending_reviews": "Changes to review",
+    "latest_review": "Latest: {{title}}",
+    "annotations": "Annotations",
+    "agent_reported_one": "Includes {{count}} gap reported by agents",
+    "agent_reported_other": "Includes {{count}} gaps reported by agents",
+    "stale_pages": "Pages to re-check",
+    "stale_hint": "Code changed or the review date passed",
+    "recent_title": "Recently updated",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "No merged changes yet",
+    "not_found": "This knowledge base does not exist or was deleted"
+  },
+  "page": {
+    "toc": "Contents",
+    "info": "Page info",
+    "more": "More",
+    "history": "Page history",
+    "updated_by": "Updated by {{name}} · {{time}}",
+    "updated": "Updated {{time}}",
+    "verified": "Verified · {{name}} · {{date}}",
+    "stale": "Needs review",
+    "pending_mr_one": "{{count}} change to this page is waiting for review: {{title}} (#{{number}})",
+    "pending_mr_other": "{{count}} changes to this page are waiting for review, latest: {{title}} (#{{number}})",
+    "not_found": "This page does not exist or was deleted",
+    "sources": "Sources",
+    "missing_page": "This page has not been written yet",
+    "close_panel": "Close"
+  },
+  "draft": {
+    "label": "Draft",
+    "single": "Your draft changes this page and is not merged yet. Others still see the published version.",
+    "multi_one": "You have {{count}} draft changing this page, not merged yet. Others still see the published version.",
+    "multi_other": "You have {{count}} drafts changing this page, none merged yet. Others still see the published version.",
+    "published": "Published",
+    "draft": "Draft",
+    "choose": "Choose draft",
+    "origin": {
+      "chat": "Chat “{{label}}”",
+      "issue": "Issue “{{label}}”",
+      "kb_job": "Job “{{label}}”",
+      "none": "Draft"
+    },
+    "meta_one": "{{time}} · {{count}} block changed",
+    "meta_other": "{{time}} · {{count}} blocks changed",
+    "removed": "Removed in the draft",
+    "added": "Added in the draft"
+  },
+  "cite": {
+    "kind": {
+      "task": "Issue",
+      "chat": "Chat",
+      "pr": "Pull request",
+      "repo": "Code",
+      "raw": "File",
+      "web": "Web",
+      "other": "Source"
+    },
+    "checked_at": "Checked at {{version}}",
+    "lines": "Lines {{from}}–{{to}}",
+    "uploaded": "Uploaded · {{name}} · {{date}}",
+    "page": "Page {{page}}",
+    "open_file": "Open file",
+    "download": "Download",
+    "open_issue": "Open issue",
+    "open_chat": "Open chat",
+    "open_link": "Open link",
+    "chat_private": "Only the person who started it can view it",
+    "file_missing": "The file is no longer in the knowledge base"
+  },
+  "info": {
+    "verified": "Verified",
+    "verified_by": "{{name}} · verified {{date}}",
+    "next_review": "Next review {{date}}",
+    "tags": "Tags",
+    "sources": "Sources {{count}}",
+    "backlinks": "Linked from",
+    "none": "None"
+  },
+  "toc": {
+    "empty": "No headings"
+  },
+  "history": {
+    "current": "Current version",
+    "initial": "Initial version",
+    "meta": "{{author}} · merged by {{merger}} · {{time}}",
+    "submitted_by": "{{author}} submitted,",
+    "merged_by": "{{merger}} merged {{date}}",
+    "annotations_one": "{{count}} annotation handled",
+    "annotations_other": "{{count}} annotations handled",
+    "close": "Close history",
+    "no_changes": "No text changes in this revision",
+    "not_found": "This revision does not exist",
+    "empty": "No history yet"
   }
 }

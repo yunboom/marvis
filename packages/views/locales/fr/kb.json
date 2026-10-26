@@ -28,5 +28,123 @@
     "no_matches": "Aucune base de connaissances correspondante",
     "empty_title": "Aucune base de connaissances",
     "empty_description": "Les agents rédigent et maintiennent les pages. Les membres de l'équipe lisent, annotent et valident les modifications."
+  },
+  "nav": {
+    "label": "Navigation de la base",
+    "switch": "Changer de base de connaissances",
+    "more_actions": "Actions de la base",
+    "home": "Accueil",
+    "pending": "{{count}} en attente",
+    "pages": "Pages",
+    "breadcrumb": "Fil d’Ariane"
+  },
+  "tree": {
+    "expand": "Déplier {{title}}",
+    "collapse": "Replier {{title}}",
+    "load_more": "Charger plus",
+    "stale": "À revérifier",
+    "empty": "Aucune page",
+    "draft": {
+      "added": "Brouillon · Nouveau",
+      "modified": "Brouillon",
+      "moved": "Brouillon · Déplacé",
+      "deleted": "Brouillon · Supprimé"
+    }
+  },
+  "home": {
+    "pending_title": "En attente",
+    "pending_reviews": "Modifications à valider",
+    "latest_review": "Dernière : {{title}}",
+    "annotations": "Annotations",
+    "agent_reported_one": "Dont {{count}} lacune signalée par les agents",
+    "agent_reported_other": "Dont {{count}} lacunes signalées par les agents",
+    "stale_pages": "Pages à revérifier",
+    "stale_hint": "Code modifié ou date de revue dépassée",
+    "recent_title": "Mises à jour récentes",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "Aucune modification fusionnée",
+    "not_found": "Cette base de connaissances n’existe pas ou a été supprimée"
+  },
+  "page": {
+    "toc": "Sommaire",
+    "info": "Infos de la page",
+    "more": "Plus",
+    "history": "Historique de la page",
+    "updated_by": "Mise à jour par {{name}} · {{time}}",
+    "updated": "Mise à jour {{time}}",
+    "verified": "Vérifiée · {{name}} · {{date}}",
+    "stale": "À revérifier",
+    "pending_mr_one": "{{count}} modification de cette page attend une validation : {{title}} (#{{number}})",
+    "pending_mr_other": "{{count}} modifications de cette page attendent une validation, dernière : {{title}} (#{{number}})",
+    "not_found": "Cette page n’existe pas ou a été supprimée",
+    "sources": "Sources",
+    "missing_page": "Cette page n’est pas encore écrite",
+    "close_panel": "Fermer"
+  },
+  "draft": {
+    "label": "Brouillon",
+    "single": "Votre brouillon modifie cette page et n’est pas encore fusionné. Les autres voient toujours la version publiée.",
+    "multi_one": "Vous avez {{count}} brouillon qui modifie cette page, non fusionné. Les autres voient toujours la version publiée.",
+    "multi_other": "Vous avez {{count}} brouillons qui modifient cette page, aucun fusionné. Les autres voient toujours la version publiée.",
+    "published": "Publié",
+    "draft": "Brouillon",
+    "choose": "Choisir un brouillon",
+    "origin": {
+      "chat": "Discussion « {{label}} »",
+      "issue": "Tâche « {{label}} »",
+      "kb_job": "Travail « {{label}} »",
+      "none": "Brouillon"
+    },
+    "meta_one": "{{time}} · {{count}} bloc modifié",
+    "meta_other": "{{time}} · {{count}} blocs modifiés",
+    "removed": "Supprimé dans le brouillon",
+    "added": "Ajouté dans le brouillon"
+  },
+  "cite": {
+    "kind": {
+      "task": "Tâche",
+      "chat": "Discussion",
+      "pr": "Pull request",
+      "repo": "Code",
+      "raw": "Fichier",
+      "web": "Web",
+      "other": "Source"
+    },
+    "checked_at": "Vérifié à {{version}}",
+    "lines": "Lignes {{from}}–{{to}}",
+    "uploaded": "Importé · {{name}} · {{date}}",
+    "page": "Page {{page}}",
+    "open_file": "Ouvrir le fichier",
+    "download": "Télécharger",
+    "open_issue": "Ouvrir la tâche",
+    "open_chat": "Ouvrir la discussion",
+    "open_link": "Ouvrir le lien",
+    "chat_private": "Visible uniquement par la personne qui l’a lancée",
+    "file_missing": "Le fichier n’est plus dans la base"
+  },
+  "info": {
+    "verified": "Vérification",
+    "verified_by": "{{name}} · vérifiée le {{date}}",
+    "next_review": "Prochaine revue {{date}}",
+    "tags": "Domaines",
+    "sources": "Sources {{count}}",
+    "backlinks": "Pages qui y renvoient",
+    "none": "Aucune"
+  },
+  "toc": {
+    "empty": "Aucun titre"
+  },
+  "history": {
+    "current": "Version actuelle",
+    "initial": "Version initiale",
+    "meta": "{{author}} · fusionnée par {{merger}} · {{time}}",
+    "submitted_by": "{{author}} a proposé,",
+    "merged_by": "{{merger}} a fusionné le {{date}}",
+    "annotations_one": "{{count}} annotation traitée",
+    "annotations_other": "{{count}} annotations traitées",
+    "close": "Fermer l’historique",
+    "no_changes": "Aucune modification du texte dans cette révision",
+    "not_found": "Cette révision n’existe pas",
+    "empty": "Aucun historique"
   }
 }

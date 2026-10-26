@@ -25,5 +25,118 @@
     "no_matches": "没有匹配的知识库",
     "empty_title": "还没有知识库",
     "empty_description": "智能体负责写和维护页面，团队成员阅读、批注、审核修改。"
+  },
+  "nav": {
+    "label": "知识库导航",
+    "switch": "切换知识库",
+    "more_actions": "知识库更多操作",
+    "home": "首页",
+    "pending": "待处理 {{count}}",
+    "pages": "页面",
+    "breadcrumb": "位置"
+  },
+  "tree": {
+    "expand": "展开{{title}}",
+    "collapse": "收起{{title}}",
+    "load_more": "加载更多",
+    "stale": "需要复核",
+    "empty": "还没有页面",
+    "draft": {
+      "added": "草稿 · 新",
+      "modified": "草稿",
+      "moved": "草稿 · 移",
+      "deleted": "草稿 · 删"
+    }
+  },
+  "home": {
+    "pending_title": "待处理",
+    "pending_reviews": "待审核修改",
+    "latest_review": "最近：{{title}}",
+    "annotations": "批注",
+    "agent_reported_other": "含 {{count}} 条智能体上报的缺口",
+    "stale_pages": "需要复核的页面",
+    "stale_hint": "代码改动或过了复核日期",
+    "recent_title": "最近更新",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "还没有合并的修改",
+    "not_found": "知识库不存在或已删除"
+  },
+  "page": {
+    "toc": "目录",
+    "info": "页面信息",
+    "more": "更多",
+    "history": "页面历史",
+    "updated_by": "{{name}} 更新 · 更新于 {{time}}",
+    "updated": "更新于 {{time}}",
+    "verified": "已核实 · {{name}} · {{date}}",
+    "stale": "需要复核",
+    "pending_mr_other": "本页有 {{count}} 个待审核的修改：{{title}}（#{{number}}）",
+    "not_found": "页面不存在或已删除",
+    "sources": "引用来源",
+    "missing_page": "这一页还没有写",
+    "close_panel": "关闭"
+  },
+  "draft": {
+    "label": "草稿",
+    "single": "你的草稿改了这一页，还没有合并。其他人看到的仍是已发布版本。",
+    "multi_other": "你有 {{count}} 份草稿改了这一页，都还没有合并。其他人看到的仍是已发布版本。",
+    "published": "已发布",
+    "draft": "草稿",
+    "choose": "选择草稿",
+    "origin": {
+      "chat": "对话「{{label}}」",
+      "issue": "任务「{{label}}」",
+      "kb_job": "作业「{{label}}」",
+      "none": "草稿"
+    },
+    "meta_other": "{{time}} · 改了 {{count}} 段",
+    "removed": "草稿中删除",
+    "added": "草稿中新增"
+  },
+  "cite": {
+    "kind": {
+      "task": "任务",
+      "chat": "对话",
+      "pr": "合并请求",
+      "repo": "代码",
+      "raw": "文件",
+      "web": "网页",
+      "other": "来源"
+    },
+    "checked_at": "核对于 {{version}}",
+    "lines": "第 {{from}}–{{to}} 行",
+    "uploaded": "上传 · {{name}} · {{date}}",
+    "page": "第 {{page}} 页",
+    "open_file": "打开文件",
+    "download": "下载",
+    "open_issue": "打开任务",
+    "open_chat": "打开对话",
+    "open_link": "打开链接",
+    "chat_private": "仅发起人可查看",
+    "file_missing": "文件已不在知识库中"
+  },
+  "info": {
+    "verified": "核实",
+    "verified_by": "{{name}} · {{date}} 核实",
+    "next_review": "下次复核 {{date}}",
+    "tags": "领域",
+    "sources": "引用来源 {{count}}",
+    "backlinks": "链接到本页",
+    "none": "无"
+  },
+  "toc": {
+    "empty": "没有标题"
+  },
+  "history": {
+    "current": "当前版本",
+    "initial": "初始版本",
+    "meta": "{{author}} · {{merger}}合并 · {{time}}",
+    "submitted_by": "{{author}} 提交，",
+    "merged_by": "{{merger}} {{date}} 合并",
+    "annotations_other": "处理批注 {{count}} 条",
+    "close": "关闭历史",
+    "no_changes": "这次修改没有改动正文",
+    "not_found": "修订不存在",
+    "empty": "还没有历史"
   }
 }
