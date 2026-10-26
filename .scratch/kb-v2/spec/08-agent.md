@@ -230,7 +230,7 @@ marvis kb update team --purpose-file ./purpose.md
 
 CLI`marvis kb page list`
  
-列出一级页面；子页面只给 `has_child`，用 `--parent` 往下钻。游标翻页，每页最多 200 条：输出有 `next_cursor` 时用 `--cursor` 接着取，直到为空串。带 `--type` 时列出该类型的全部页面，范围是整个知识库，带 `--parent` 时是该页下面的所有后代，按路径排序，游标翻页。
+列出一级页面；子页面只给 `has_child`，用 `--parent` 往下钻。游标翻页，每页最多 200 条：输出有 `next_cursor` 时用 `--cursor` 接着取，直到为空串。带 `--type` 时只列这一层里该类型的页面：不带 `--parent` 是一级页面，带了是该页的直接子页面；排序和翻页同不带 `--type` 时。
 
  
 对应接口 `GET /api/kb/bases/{kb}/pages`
@@ -245,7 +245,7 @@ marvis kb page list <kb> [--parent <页面>] [--type <类型>] [--limit <n>] [--
 | 参数 | 必填 | 传什么 | 示例 | 
 | `<kb>` | 是 | 知识库 slug，或知识库 id（UUID） | `team` | 
 | `--parent` | 否 | 父页面引用（`知识库 slug:/路径` 或页面 id）；不传列顶层 | `team:/payment` | 
-| `--type` | 否 | 页面类型，同 Schema 里的 `type`；带上时列出这一类的全部页面，不再只列一层：范围是整个知识库，带 `--parent` 时是该页下面的所有后代，按路径排序，游标翻页 | `Runbook` | 
+| `--type` | 否 | 页面类型，同 Schema 里的 `type`；只列这一层里该类型的页面 | `Runbook` | 
 | `--limit` | 否 | 整数 1–200，每页条数，默认 200 | `200` | 
 | `--cursor` | 否 | 上一页输出里的 `next_cursor`，原样传回；不传从第一条开始 | `eyJwb3MiOiJhMCIsImlkIjoiMGMxZCJ9` | 
 | `--draft` | 否 | 草稿 id（完整 UUID）。带上后按这份草稿里的样子列，能看到草稿新建、移过来的页面，每页的 `draft_change` 标出草稿对它的改动；不带只列主线 | `9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a` | 
@@ -296,7 +296,7 @@ marvis kb page list team --parent team:/payment
       "draft_change": "added"                                 // 带 --draft 时，这份草稿对这一页的改动：added / modified / moved / deleted；没动为空串
     }
   ],
-  "total": 2,                                                 // 符合条件的页面总数，不含已删除；带 --draft 时按叠加草稿后计数
+  "total": 2,                                                 // 符合条件的这一层页面总数，不含已删除；带 --draft 时按叠加草稿后计数
   "next_cursor": ""                                           // 还有下一页时为游标，传给 --cursor；取完为空串
 }
 ```

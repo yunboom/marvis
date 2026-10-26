@@ -642,7 +642,7 @@ GET`/api/kb/bases/{kb}/pages`
 | `parent` | query | string | 否 | 父页面 id 或 `team:/payment`；不传为顶层 | 
 | `cursor` | query | string | 否 | 上一页返回的 `next_cursor`；不传从第一条开始 | 
 | `limit` | query | int | 否 | 每页条数，1–200，默认 200 | 
-| `type` | query | string | 否 | 页面类型，同 Schema 里的 `type`；带上时列出这一类的全部页面，不再只列一层：范围是整个知识库，带 `parent` 时是该页下面的所有后代，按路径排序，游标翻页；页面树不用它 | 
+| `type` | query | string | 否 | 页面类型，同 Schema 里的 `type`；只列这一层里该类型的页面；排序和翻页同不带 `type` 时；页面树不用它 | 
 | `draft` | query | uuid | 否 | 草稿 id，如 `9d8c7b6a-…`。带上后按这份草稿里的样子列：草稿新建、移到这一级的页面也列出，草稿删掉的仍列出并标 `deleted`；不带只列主线。界面上发起人看自己的草稿时，用它画页面树的「草稿 · 新 / 改 / 删」标记；智能体用它看到自己在草稿里刚建的页面，避免重复新建 | 
 
  
@@ -682,7 +682,7 @@ GET`/api/kb/bases/{kb}/pages`
       "draft_change": "added"                                 // 请求带 draft 时，这份草稿对这一页做了什么：added / modified / moved / deleted；没动或没带 draft 为空串（页面树上显示「草稿 · 新」等标签）
     }
   ],
-  "total": 2,                                                 // 符合条件的页面总数，不含已删除；带 draft 时按叠加草稿后计数
+  "total": 2,                                                 // 符合条件的这一层页面总数，不含已删除；带 draft 时按叠加草稿后计数
   "next_cursor": ""                                           // 还有下一页时为游标，传给 cursor 接着取；取完为空串
 }
 ```
