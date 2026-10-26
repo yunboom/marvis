@@ -7,4 +7,5 @@
 **Status:** ready-for-agent
 
 - [ ] 从 feat/kb-v2 拉独立分支，只含提示词与 skill 改动
+- [ ] 构建器指令按决策 106 精简，建知识库的方法进 `references/knowledge-bases.md`
 - [ ] 快照测试更新

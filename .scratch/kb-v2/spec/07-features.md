@@ -71,6 +71,24 @@ GET`/api/kb/bases/{kb}`
 ```
 
  
+GET`/api/kb/templates`
+ 
+内置的默认 Schema 和目标模板：界面用两者，`kb schema templates` 只取 `schema`。默认 Schema 只在服务端保留一份，构建器和平台 skill 都通过它取，提示词里不另存。
+
+ 
+权限 工作区成员
+
+ 
+响应 200
+
+```
+{
+  "schema": "# Schema\n\nThis file tells agents……\n",         // 默认 Schema 全文（4.5）
+  "purpose": "# 目标\n\n## 读者\n研发和测试……\n"                       // 目标模板（4.6）
+}
+```
+
+ 
 GET`/api/kb/builder/sessions`
  
 发起人自己未完成的构建器对话（「未完成的创建 / 配置」横幅用）。

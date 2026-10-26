@@ -5,8 +5,9 @@
 所有命令输出 JSON；能渲染成对话卡片的对象都带 `mention` 字段（7.14），智能体原样贴进回复。写操作沿用现有权限，人和智能体不做区分（决策 46）；不提供作业命令（决策 38），作业在界面上新建。出错时退出码非 0，输出 `{"error": {"code": "...", "message": "..."}}`。
 
 | 命令 | 用途 | 类型 | 
-| kb list / get | 列出 / 查看知识库；`get` 返回 PURPOSE、SCHEMA 全文 | 读 | 
-| kb create / update | 建知识库；改名称、简介、PURPOSE、SCHEMA，直接生效 | 写 | 
+| kb list / get | 列出 / 查看知识库；`get` 返回目标、Schema 全文 | 读 | 
+| kb create / update | 建知识库；改名称、简介、目标、Schema，直接生效 | 写 | 
+| kb schema templates | 取内置的默认 Schema，写 Schema 时作参考 | 读 | 
 | kb page list | 列出一级页面，游标翻页每页最多 200 条，取完即这一级完整的目录（`--parent` 往下钻；子页面只给 `has_child`），代替 index.md | 读 | 
 | kb page fetch | 按范围读页面（7.13） | 读 | 
 | kb page create / patch / move / delete | 写进草稿；`--draft` 必填 | 写草稿 | 
@@ -75,7 +76,7 @@ marvis kb list
  
 CLI`marvis kb get`
  
-读一个知识库，含 PURPOSE、SCHEMA 全文。智能体改页面前先读它。
+读一个知识库，含目标、Schema 全文。智能体改页面前先读它。
 
  
 对应接口 `GET /api/kb/bases/{kb}`
@@ -142,7 +143,7 @@ marvis kb create --name <名称> --slug <slug> [--description <简介>] [--outpu
 | `--slug` | 是 | 英文标识，用在页面引用和链接里：小写字母、数字、连字符，工作区内唯一 | `pay-troubleshoot` | 
 | `--description` | 否 | 一句话简介；显示在知识库列表和智能体的知识库清单里 | `"支付、订单链路与排障步骤"` | 
 | `--purpose / --purpose-file / --purpose-stdin` | 否 | 目标正文 Markdown（这个知识库给谁用、收什么），三选一：文本 / 文件路径 / 标准输入；文件不在当前目录时加 `--allow-external-file` | `--purpose-file ./purpose.md` | 
-| `--schema-mode` | 是 | `default` 用内置 SCHEMA / `custom` 用自己写的 | `default` | 
+| `--schema-mode` | 是 | `default` 用内置的默认 Schema / `custom` 用自己写的 | `default` | 
 | `--schema / --schema-file / --schema-stdin` | custom 时是 | Schema 正文 Markdown，三选一；`default` 时不能带 | `--schema-file ./schema.md` | 
 | `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
 
@@ -176,7 +177,7 @@ marvis kb create --name 支付排障手册 --slug pay-troubleshoot --purpose-fil
  
 CLI`marvis kb update`
  
-修改名称、简介、PURPOSE、SCHEMA，保存即生效。
+修改名称、简介、目标、Schema，保存即生效。
 
  
 对应接口 `PATCH /api/kb/bases/{kb}`
@@ -222,6 +223,40 @@ marvis kb update team --purpose-file ./purpose.md
   "created_at": "2026-10-08T09:12:03Z",                       // RFC3339
   "updated_at": "2026-10-25T14:20:11Z",                       // RFC3339
   "mention": "[团队知识库](mention://kb/5b1f0c2e…)"                // 原样贴进回复，渲染成卡片（7.14），不通知人；示例里的 id 截短了
+}
+```
+
+ 
+CLI`marvis kb schema templates`
+ 
+取平台内置的默认 Schema，写 Schema 时作参考。
+
+ 
+对应接口 `GET /api/kb/templates`（只取其中的 `schema`）
+
+ 
+
+```
+marvis kb schema templates [--output table|json]
+```
+
+ 
+| 参数 | 必填 | 传什么 | 示例 | 
+| `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
+
+ 
+示例
+
+```
+marvis kb schema templates
+```
+
+ 
+输出（JSON）
+
+```
+{
+  "schema": "# Schema\n\nThis file tells agents……\n"          // 默认 Schema 全文（4.5）
 }
 ```
 
@@ -542,7 +577,7 @@ marvis kb page create --draft <草稿> --parent <页面> [--after <页面>] --sl
 | `--parent` | 是 | 父页面引用；建在顶层写 `team:/` | `team:/payment` | 
 | `--after` | 否 | 兄弟页面引用，新页排在它后面；不传排最后 | `team:/payment/callback` | 
 | `--slug` | 是 | 路径段：小写字母、数字、连字符，同级唯一 | `callback-manual` | 
-| `--type` | 是 | 页面类型，按 SCHEMA 分区表里的常用 type 写 | `Runbook` | 
+| `--type` | 是 | 页面类型，按 Schema 分区表里的常用 type 写 | `Runbook` | 
 | `--title` | 是 | 页面标题 | `回调人工处理` | 
 | `--description` | 是 | 一句话说明；页面树和 `kb page list` 里显示 | `"回调失败后如何人工补单"` | 
 | `--content / --content-file / --content-stdin` | 是 | 正文 Markdown，三选一；长内容用 `--content-file` | `--content-file ./page.md` | 
@@ -1814,13 +1849,13 @@ SKILL.md Routing 表新增一行
 English · 代码原文
 
 ```
-| `references/knowledge-bases.md` | Knowledge bases: ingesting new knowledge through a draft and a change request, health checks, reading pages in parts, recording gaps and wrong statements |
+| `references/knowledge-bases.md` | Creating and evolving knowledge bases: creating and configuring a knowledge base (name, purpose, schema); finding knowledge; writing new knowledge, lessons and key decisions back through a draft and a change request, following the knowledge base's schema (sections, page types, fields, claims and evidence), then addressing review comments and resolving merge conflicts; ingesting sources others hand over (issues, chats, documents, uploaded files); health checks for outdated, contradictory or missing content; recording problems as annotations and resolving them in change requests |
 ```
 
 中文对照
 
 ```
-| `references/knowledge-bases.md` | 知识库：通过草稿和变更请求收录新知识、健康检查、按范围读页面、记录缺失和错误 |
+| `references/knowledge-bases.md` | 知识库的创建与迭代：创建和修改知识库（名称、目标、Schema）；查找知识；按知识库 Schema 的规范（分区、页面类型、字段、论断与证据）把工作中得到的新知识、经验教训和重要决策通过草稿和变更请求写回知识库，按审核意见修改、解决合并冲突；收录别人交来的资料（任务、对话、文档、上传的文件）；健康检查，找出过期、矛盾和缺失的内容；用批注记录问题，并在变更请求里关闭已解决的批注 |
 ```
 
 references/knowledge-bases.md
@@ -1832,6 +1867,27 @@ English · 代码原文
 A knowledge base is the team's long-term memory: facts, decisions and lessons that were checked against evidence and reviewed by a person. Agents write the pages; people read them, annotate them and merge changes. Nothing you write reaches the knowledge base directly. It goes into a draft, the draft becomes a change request, and a person merges it. That review is what lets the team trust what they read, so every page you write should be easy to check.
 
 Each knowledge base has its own writing rules and goals: the `schema` and `purpose` fields of `marvis kb get <slug>`. Read both before you write anything.
+
+## Creating and configuring a knowledge base
+
+Before you create a knowledge base, find out four things: who reads it, what belongs in it, what does not, and which questions readers come to it to answer. Do not ask again about what the member has already said, and ask at most two questions at a time.
+
+The slug identifies the knowledge base in commands and links. It uses only lowercase letters, digits and hyphens, and cannot change once the knowledge base exists. The description says in one sentence what the knowledge base covers; other agents read it to decide whether to use this knowledge base.
+
+People own the purpose, and agents read it before every change. Write it in four sections of plain sentences, under 40 lines: who the readers are and what they use it for; what belongs here; what does not belong here and where it lives instead; 3 to 8 questions readers come here to answer. Write it in the member's language; pages are written in the same language.
+
+The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema: start from the default, change only what needs changing, and keep its nine sections (roles, sections, page format, evidence, contradictions and outdated content, links, operations, before submitting, changing this schema). Also keep the `type`, `title` and `description` fields and claims with footnotes; agents depend on them. Divide sections by system, domain and workflow, not by code layout or page type, and give each section one line on what goes there. Adapt common types, page skeletons, tags and review periods to the team. Get the default schema with the command below and use it as a reference when you write one.
+
+    marvis kb schema templates
+
+Pages follow Open Knowledge Format v0.2, and a knowledge base can be exported as an OKF bundle. Spec: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
+
+    marvis kb create --name "Payment troubleshooting" --slug pay-troubleshoot \
+        --description "Payment and order flows, with troubleshooting steps" --purpose-file ./purpose.md --schema-mode default
+
+Change the name, description, purpose or schema with `kb update`. Changes take effect on save, without a change request, and only the knowledge base's creator and the workspace's owners and admins can make them. The schema decides how every later page is written, so confirm with the member before you change it; existing pages are not adjusted to a new schema automatically.
+
+    marvis kb update pay-troubleshoot --schema-mode custom --schema-file ./schema.md
 
 ## Finding knowledge
 
@@ -1957,6 +2013,27 @@ While the change request waits for review, those annotations show as in progress
 
 每个知识库都有自己的写作规则和目标，在 `marvis kb get <slug>` 输出的 `schema`、`purpose` 字段里。动笔之前先把这两份读一遍。
 
+## 创建和修改知识库
+
+建知识库之前先弄清四件事：谁读它，收什么，不收什么，读者来这里要回答哪些问题。成员已经说过的不要再问，一次最多问两个。
+
+slug 是知识库在命令和链接里的标识，只用小写字母、数字和连字符，建好后不能改。简介用一句话写清这个知识库覆盖什么，其他智能体靠它判断要不要用这个知识库。
+
+目标由人定，智能体每次改动前都会读。分四节，用平实的句子，40 行以内：读者是谁、读了用来做什么；收录哪些内容；不收哪些内容，以及这些内容在哪里；读者常来查的 3 到8 个问题。用成员的语言写，页面也用同一种语言。
+
+Schema 告诉维护知识库的智能体怎么组织和书写页面。多数知识库直接用内置的默认 Schema，它只读，随平台更新。团队需要自己的分区或页面类型时，改用自定义 Schema：从默认 Schema出发，只改需要改的部分，保留九节结构（分工、分区、页面格式、证据、矛盾与过时、链接、维护操作、提交前、修改本 Schema），也保留 `type`、`title`、`description` 三个字段和论断、脚注，智能体依赖它们。分区按系统、领域和流程划分，不照搬代码目录，也不按页面类型分，每个分区写一句放什么。常用类型、页面骨架、标签、复核周期按团队调整。默认Schema 用下面的命令取出，可以当作写 Schema 的参考示例。
+
+    marvis kb schema templates
+
+页面遵循 Open Knowledge Format v0.2，知识库可以导出为 OKF bundle，规范见https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md 。
+
+    marvis kb create --name "支付排障手册" --slug pay-troubleshoot \
+        --description "支付、订单链路与排障步骤" --purpose-file ./purpose.md --schema-mode default
+
+修改名称、简介、目标或 Schema 用 `kb update`，保存即生效，不走变更请求，只有知识库创建者和工作区的 owner、admin 能改。Schema 决定之后每一页怎么写，改之前先和成员确认；已有的页面不会自动按新 Schema 调整。
+
+    marvis kb update pay-troubleshoot --schema-mode custom --schema-file ./schema.md
+
 ## 查找知识
 
 有三个入口。读取 `kb get` 返回的 `schema` 字段：知识库分成哪些区、每类页面写什么、各字段是什么意思，先读它就知道要找的内容大概在哪。目录 `kb page list` 列出最顶层的页面，带上 `--parent` 则列出指定页的子页面，每页附一句说明。检索 `kb search` 覆盖标题和正文，还会告诉你命中的是哪一块。
@@ -2072,98 +2149,55 @@ While the change request waits for review, those annotations show as in progress
 
 8.3 构建器（创建 / 配置知识库）
 
-写成隐藏构建器智能体的指令常量，照 `9a7f600b6` `agent_builder.go:19` 的 `agentBuilderInstructions`；`{{.Mode}}` 等变量在建会话时用 `text/template` 填入，`{{.DefaultSchema}}` 是 4.5 的全文（决策 56）。
+写成隐藏构建器智能体的指令常量，照 `9a7f600b6` `agent_builder.go:19` 的 `agentBuilderInstructions`；`{{.Mode}}` 等变量在建会话时用 `text/template` 填入。指令只留会话特有的部分；怎么了解需求、起名、写目标和 Schema 引用平台 skill 的「创建和修改知识库」一节，默认 Schema 由构建器用 `kb schema templates` 取，不嵌进指令（决策 106）。
 
 构建器指令
 English · 代码原文
 
 ```
-You are the Marvis Knowledge Base Builder. Help a member set up one knowledge base through a short conversation. The member sees your replies on the left and the configuration you draft on the right.
+You are the Marvis Knowledge Base Builder. Through a short conversation, help a member create a knowledge base or change the configuration of an existing one. The member sees your replies on the left and the configuration you draft on the right.
+
+For how to learn what the member needs, name the knowledge base and write its purpose and schema, follow the "Creating and configuring a knowledge base" section of `references/knowledge-bases.md` in the `marvis-platform` skill.
 
 ## This session
 - Mode: {{.Mode}} (create = a new knowledge base; config = change `{{.Slug}}`)
-- Schema mode at start: {{.SchemaMode}} (default = the platform template, read-only; custom = this knowledge base's own schema). The member picks it on the right and may switch it; every member message carries the current `schema_mode`. Follow the latest one.
+- Schema mode at start: {{.SchemaMode}} (default = the default schema, read-only; custom = this knowledge base's own schema). The member picks it on the right and may switch it; every member message carries the current `schema_mode`. Follow the latest one.
 {{- if eq .Mode "config"}}
 - Read the current configuration with `marvis kb get {{.Slug}}` before your first reply.
 {{- end}}
 
-## Workflow
-1. Find out who reads this knowledge base, what belongs in it, what does not, and which questions it must answer. Ask at most two questions per reply; skip what the member already said.
-2. Draft the purpose as described in "Writing the purpose".
-3. Schema
-   - default: do not draft or change the schema. If the member wants rules the template lacks, tell them to switch to Custom on the right.
-   - custom: start from the default schema below. Change only what the member asks for; keep every part marked "required by agents".
-4. Propose a name, a slug (lowercase letters, digits, hyphens) and a one-sentence description. Agents read the description to decide whether to use this knowledge base: say what it covers.
-5. End every reply with exactly one line:
-   <kb_draft>{"name":"","slug":"","description":"","purpose":""}</kb_draft>
-   - Escape line breaks inside strings as \n.
-   - Add a `schema` field only when the current schema mode is custom.
-   - In config mode keep `slug` unchanged.
-6. The member clicks Create or Save. Never create or change a knowledge base yourself. You may only read: `marvis kb list`, `marvis kb get`.
-
-## Open Knowledge Format v0.2
-Marvis pages follow OKF v0.2 so a knowledge base exports as an OKF bundle.
-Spec: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
-
-## Writing the purpose
-People write the purpose; agents read it before every change. Four sections, plain sentences, under 40 lines:
-- Readers: who reads this knowledge base and what they do with it.
-- In scope: what belongs here, concretely.
-- Out of scope: what does not belong here and where it lives instead.
-- Common questions: 3 to 8 questions readers come here to answer. Write it in the member's language. Pages are written in the same language.
-
-## Writing the schema
-The schema tells the agents that maintain this knowledge base how to organise and write pages. Keep its nine sections: roles, sections, page format, evidence, contradictions and outdated content, links, operations, before submitting, changing this schema.
-- Required by agents: the `type`, `title` and `description` fields, and claims with footnotes. Keep these in every custom schema.
-- Sections are by system, domain and workflow, not by code layout or by page type. Give each section one line on what goes there.
-- Adapt the rest to the team: sections, common types, page skeletons, tags, review periods.
-
-## Default schema
-{{.DefaultSchema}}
+## Drafting the configuration
+- default: do not draft or change the schema. If the member wants rules the default schema lacks, tell them to switch to Custom on the right.
+- custom: get the default schema with `marvis kb schema templates` and start from it.
+- End every reply with exactly one line:
+  <kb_draft>{"name":"","slug":"","description":"","purpose":""}</kb_draft>
+  - Escape line breaks inside strings as \n.
+  - Add a `schema` field only when the current schema mode is custom.
+  - In config mode keep `slug` unchanged.
+- The member clicks Create or Save. You do not run `kb create` or `kb update`; you may only read: `marvis kb list`, `marvis kb get`, `marvis kb schema templates`.
 ```
 
 中文对照
 
 ```
-你是 Marvis 知识库构建器。通过一段简短的对话帮成员建好一个知识库。成员在左边看到你的回复，在右边看到你起草的配置。
+你是 Marvis 知识库构建器。通过一段简短的对话帮成员新建一个知识库，或者修改已有知识库的配置。成员在左边看到你的回复，在右边看到你起草的配置。
+
+怎么了解需求、起名、写目标和 Schema，按 `marvis-platform` skill 的`references/knowledge-bases.md`「创建和修改知识库」一节。
 
 ## 本次会话
 - 模式：{{.Mode}}（create = 新建知识库；config = 修改 `{{.Slug}}`）
-- 初始 Schema 模式：{{.SchemaMode}}（default = 平台模板，只读；custom = 这个知识库自己的 Schema）。由成员在右侧选择，可以中途切换；成员的每条消息都带当前的 `schema_mode`，以最新的为准。
+- 初始 Schema 模式：{{.SchemaMode}}（default = 默认 Schema，只读；custom = 这个知识库自己的 Schema）。成员在右侧选择，可以中途切换；成员的每条消息都带当前的`schema_mode`，以最新的为准。
 - （config 模式）第一次回复前先用 `marvis kb get {{.Slug}}` 读当前配置。
 
-## 流程
-1. 弄清谁读这个知识库、收什么、不收什么、要回答哪些问题。每次最多问两个问题；成员已经说过的不再问。
-2. 按「怎么写目标」起草目标。
-3. Schema
-   - default：不起草、不修改 Schema。成员想要模板里没有的规则时，告诉他在右侧切到「自定义」。
-   - custom：从下面的默认 Schema 开始，只改成员要求的部分；标着「Agent 依赖」的部分保留。
-4. 建议名称、slug（小写字母、数字、连字符）和一句话简介。智能体靠简介判断要不要用这个知识库：写清楚它覆盖什么。
-5. 每次回复以且只以一行结尾：
-   <kb_draft>{…}</kb_draft>
-   - 字符串里的换行转义为 \n。
-   - 只有当前是自定义模式时才加 `schema` 字段。
-   - config 模式下 `slug` 不变。
-6. 由成员点「创建」或「保存」。你自己不创建、不修改知识库，只能读：`marvis kb list`、`marvis kb get`。
-
-## Open Knowledge Format v0.2
-Marvis 页面遵循 OKF v0.2，知识库可以导出为 OKF bundle。规范原文：https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
-
-## 怎么写目标
-目标由人写，智能体每次改动前读。四节，平实的句子，40 行以内：
-- 读者：谁读这个知识库，读了用来做什么。
-- 收录：具体收什么。
-- 不收：不收什么，这些内容在哪里。
-- 常查问题：读者来这里要回答的 3–8 个问题。用成员的语言写。页面也用同一种语言写。
-
-## 怎么写 Schema
-Schema 告诉维护这个知识库的智能体怎么组织和书写页面。保留九节：分工、分区、页面格式、证据、矛盾与过时、链接、维护操作、提交前、修改本 Schema。
-- Agent 依赖：`type`、`title`、`description` 三个字段，论断和脚注。自定义 Schema 也必须保留。
-- 分区按系统、领域和流程划分，不照搬代码目录，也不按页面类型分。每个分区写一句放什么。
-- 其余按团队调整：分区、常用类型、页面骨架、标签、复核周期。
-
-## 默认 Schema
-{{.DefaultSchema}}
+## 起草配置
+- default 模式：不起草、不修改 Schema。成员想要默认 Schema 里没有的规则时，告诉他在右侧切到「自定义」。
+- custom 模式：先用 `marvis kb schema templates` 取默认 Schema，从它开始改。
+- 每次回复以且只以一行结尾：
+  <kb_draft>{"name":"","slug":"","description":"","purpose":""}</kb_draft>
+  - 字符串里的换行转义为 \n。
+  - 只有当前是 custom 模式时才加 `schema` 字段。
+  - config 模式下 `slug` 不变。
+- 由成员点「创建」或「保存」。你不执行 `kb create`、`kb update`，只能读：`marvis kb list`、`marvis kb get`、`marvis kb schema templates`。
 ```
 
 8.4 知识库作业：首条消息的通用部分
