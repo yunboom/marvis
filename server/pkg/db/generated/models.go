@@ -1288,6 +1288,7 @@ type KbMrComment struct {
 	AuthorType     string             `json:"author_type"`
 	AuthorID       pgtype.UUID        `json:"author_id"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	Triggered      []byte             `json:"triggered"`
 }
 
 type KbPage struct {

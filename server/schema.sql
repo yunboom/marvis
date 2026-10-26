@@ -3012,6 +3012,7 @@ CREATE TABLE public.kb_mr_comment (
     author_type text NOT NULL,
     author_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    triggered jsonb DEFAULT '[]'::jsonb NOT NULL,
     CONSTRAINT kb_mr_comment_author_type_check CHECK ((author_type = ANY (ARRAY['member'::text, 'agent'::text])))
 );
 
