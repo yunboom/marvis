@@ -1,14 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Check, ChevronDown, House, Link2, MessageSquareText, MoreHorizontal } from "lucide-react";
+import { Bot, Check, ChevronDown, House, Link2, MessageSquareText, MoreHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthStore } from "@marvis/core/auth";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { memberListOptions } from "@marvis/core/workspace/queries";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import { kbBaseDetailOptions, kbBaseListOptions, kbPageOptions } from "@marvis/core/kb/queries";
+import { kbBaseDetailOptions, kbBaseListOptions, kbJobListOptions, kbPageOptions } from "@marvis/core/kb/queries";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +22,7 @@ import { AppLink, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { parseKbBuilderRoute } from "../builder/kb-builder-route";
 import { parseKbRoute } from "../utils/kb-markdown";
+import { parseKbJobRoute } from "../jobs/kb-job-state";
 import { KbPageTree } from "./kb-page-tree";
 
 export function KbInitial({ name, className }: { name: string; className?: string }) {
@@ -135,7 +136,7 @@ function KbMoreMenu({ kbSlug, canConfigure }: { kbSlug: string; canConfigure: bo
   );
 }
 
-function KbNav({ kbSlug, pageId, draft }: { kbSlug: string; pageId: string; draft: string }) {
+function KbNav({ kbSlug, pageId, draft, onJobs }: { kbSlug: string; pageId: string; draft: string; onJobs: boolean }) {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
@@ -145,9 +146,11 @@ function KbNav({ kbSlug, pageId, draft }: { kbSlug: string; pageId: string; draf
   // costs no extra request.
   const { data: page } = useQuery(kbPageOptions(wsId, pageId, draft));
 
+  const { data: runningJobs = [] } = useQuery(kbJobListOptions(wsId, kbSlug, "running"));
+
   const pending = base ? base.pending.annotations + base.pending.stale_pages + base.pending.open_mrs : 0;
   const ancestorIds = page?.id === pageId ? page.breadcrumb.map((crumb) => crumb.id) : [];
-  const onHome = !pageId;
+  const onHome = !pageId && !onJobs;
 
   return (
     <aside
@@ -170,6 +173,20 @@ function KbNav({ kbSlug, pageId, draft }: { kbSlug: string; pageId: string; draf
             <span className="text-caption text-faint-foreground">{t(($) => $.nav.pending, { count: pending })}</span>
           )}
         </AppLink>
+        <AppLink
+          href={p.kbJobs(kbSlug)}
+          aria-current={onJobs ? "page" : undefined}
+          className={cn(NAV_ROW, onJobs && "bg-surface-selected font-medium text-foreground")}
+        >
+          <Bot aria-hidden="true" className="size-4" />
+          <span className="flex-1">{t(($) => $.job.nav)}</span>
+          {runningJobs.length > 0 && (
+            <span className="flex items-center gap-1.5 text-caption text-faint-foreground">
+              <span aria-hidden="true" className="size-1.5 rounded-full bg-success" />
+              {t(($) => $.job.nav_running, { count: runningJobs.length })}
+            </span>
+          )}
+        </AppLink>
       </div>
       <div className="px-4 pt-2 pb-1 text-caption text-muted-foreground">{t(($) => $.nav.pages)}</div>
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
@@ -190,14 +207,17 @@ export function KbShell({ children }: { children: ReactNode }) {
   const { kbSlug, pageId } = parseKbRoute(pathname);
   const draft = searchParams.get("draft") ?? "";
 
-  // The configuration builder is a full-width flow of its own (design 10.x).
-  if (parseKbBuilderRoute(pathname).mode === "config") {
+  const jobView = parseKbJobRoute(pathname).view;
+
+  // The configuration builder (design 10.x) and a job's conversation (9.2–9.17)
+  // are full-width flows of their own.
+  if (parseKbBuilderRoute(pathname).mode === "config" || jobView === "new" || jobView === "job") {
     return <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>;
   }
 
   return (
     <div className="flex min-h-0 flex-1">
-      {kbSlug && <KbNav key={kbSlug} kbSlug={kbSlug} pageId={pageId} draft={draft} />}
+      {kbSlug && <KbNav key={kbSlug} kbSlug={kbSlug} pageId={pageId} draft={draft} onJobs={jobView === "list"} />}
       <div className="flex min-w-0 flex-1 flex-col">{children}</div>
     </div>
   );

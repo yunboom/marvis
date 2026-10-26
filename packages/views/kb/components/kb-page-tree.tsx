@@ -10,6 +10,7 @@ import type { KbTreePage } from "@marvis/core/types";
 import { cn } from "@marvis/ui/lib/utils";
 import { AppLink } from "../../navigation";
 import { useT } from "../../i18n";
+import { KbNewPagePopover } from "../jobs/kb-new-page-popover";
 
 const DRAFT_CHANGES = ["added", "modified", "moved", "deleted"] as const;
 type DraftChange = (typeof DRAFT_CHANGES)[number];
@@ -90,6 +91,7 @@ function TreeRow({ page, depth, ctx }: { page: KbTreePage; depth: number; ctx: T
           />
         )}
         {change && <DraftTag change={change} />}
+        {!ctx.draft && <KbNewPagePopover kbSlug={ctx.kbSlug} parentId={page.id} parentTitle={page.title || page.path} />}
       </div>
       {open && page.has_child && <TreeLevel parentId={page.id} depth={depth + 1} ctx={ctx} />}
     </li>

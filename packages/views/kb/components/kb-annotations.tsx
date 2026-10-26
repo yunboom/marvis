@@ -259,6 +259,10 @@ export function KbAnnotationPanel({
   const { data: all = [] } = useQuery(kbAnnotationListOptions(wsId, kbSlug, "all", pageId || ANNOTATION_KB_LEVEL));
   const open = all.filter(isOpenAnnotation);
   const title = pageId ? t(($) => $.annotation.page_panel) : t(($) => $.annotation.kb_panel);
+  const p = useWorkspacePaths();
+  const { push } = useNavigation();
+  const pendingIds = open.filter((annotation) => annotation.status === "pending").map((annotation) => annotation.id);
+  const pageTitle = open.find((annotation) => annotation.page_title)?.page_title ?? "";
 
   return (
     <KbPanel
@@ -266,8 +270,23 @@ export function KbAnnotationPanel({
       onClose={onClose}
       className="w-[340px]"
       actions={
-        // Handing annotations to an agent starts a job (ticket 07).
-        <Button type="button" variant="outline" size="xs" disabled>
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          disabled={pendingIds.length === 0}
+          onClick={() =>
+            push(
+              p.kbNewJob(kbSlug, {
+                starter: "annotations",
+                annotations: pendingIds,
+                message: pageId
+                  ? t(($) => $.job.entry.annotations_page_message, { count: pendingIds.length, title: pageTitle })
+                  : t(($) => $.job.entry.annotations_kb_message, { count: pendingIds.length }),
+              }),
+            )
+          }
+        >
           {t(($) => $.annotation.hand_off)}
         </Button>
       }
@@ -380,7 +399,7 @@ export function KbAnnotationsPage() {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
-  const { pathname } = useNavigation();
+  const { pathname, push } = useNavigation();
   const { kbSlug } = parseKbRoute(pathname);
   const [tab, setTab] = useState<KbAnnotationStatus>("pending");
   const { data: base } = useQuery(kbBaseDetailOptions(wsId, kbSlug));
@@ -420,8 +439,19 @@ export function KbAnnotationsPage() {
           </TabsList>
         </Tabs>
         <span className="flex-1" />
-        {/* Handing annotations to an agent starts a job (ticket 07). */}
-        <Button type="button" disabled>
+        <Button
+          type="button"
+          disabled={counts.pending === 0}
+          onClick={() =>
+            push(
+              p.kbNewJob(kbSlug, {
+                starter: "annotations",
+                annotations: all.filter((annotation) => annotation.status === "pending").map((annotation) => annotation.id),
+                message: t(($) => $.job.entry.annotations_all_message, { count: counts.pending, name: base?.name ?? kbSlug }),
+              }),
+            )
+          }
+        >
           {t(($) => $.annotation.hand_off_all, { n: counts.pending })}
         </Button>
       </div>

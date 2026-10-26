@@ -33,6 +33,8 @@ import {
   KbBuilderPage,
   KbAnnotationsPage,
   KbHomePage,
+  KbJobPage,
+  KbJobsPage,
   KbListPage,
   KbPageView,
   KbRevisionDiffPage,
@@ -278,6 +280,9 @@ export const appRoutes: RouteObject[] = [
                 handle: { title: "Configure knowledge base" },
               },
               { path: "annotations", element: <KbAnnotationsPage />, handle: { title: "Annotations" } },
+              { path: "jobs", element: <KbJobsPage />, handle: { title: "Knowledge base jobs" } },
+              { path: "jobs/new", element: <KbJobPage />, handle: { title: "New job" } },
+              { path: "jobs/:jobId", element: <KbJobPage />, handle: { title: "Knowledge base job" } },
               { path: "p/:pageId", element: <KbPageView />, handle: { title: "Knowledge base" } },
               {
                 path: "p/:pageId/history/:revisionId",

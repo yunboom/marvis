@@ -29,6 +29,7 @@ export function AgentPicker({
   triggerRender,
   emptyOption,
   align = "start",
+  agentsOnly = false,
 }: {
   assignee: AssigneeSelection | null;
   onChange: (next: AssigneeSelection) => void;
@@ -36,6 +37,8 @@ export function AgentPicker({
   triggerRender?: React.ReactElement;
   emptyOption?: { label: string; onSelect: () => void };
   align?: "start" | "center" | "end";
+  /** Leave squads out: the caller runs one agent (a knowledge base job). */
+  agentsOnly?: boolean;
 }) {
   const { t } = useT("autopilots");
   const wsId = useWorkspaceId();
@@ -61,7 +64,7 @@ export function AgentPicker({
   const matches = (name: string) =>
     !query || name.toLowerCase().includes(query) || matchesPinyin(name, query);
   const filteredAgents = activeAgents.filter((a) => matches(a.name));
-  const filteredSquads = activeSquads.filter((s) => matches(s.name));
+  const filteredSquads = agentsOnly ? [] : activeSquads.filter((s) => matches(s.name));
 
   const isSelected = (type: AutopilotAssigneeType, id: string) =>
     assignee?.type === type && assignee?.id === id;

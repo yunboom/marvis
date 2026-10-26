@@ -316,5 +316,155 @@
     "quote_not_found": "Phrase introuvable",
     "update_failed": "Impossible de modifier l'annotation",
     "panel_empty": "Aucune annotation pour l'instant"
+  },
+  "job": {
+    "nav": "Tâches de la base",
+    "nav_running": "{{count}} en cours",
+    "list_title": "Tâches de la base",
+    "new": "Nouvelle tâche",
+    "tabs": {
+      "all": "Toutes",
+      "running": "En cours",
+      "failed": "Échouées"
+    },
+    "state": {
+      "running": "En cours",
+      "idle": "En attente",
+      "failed": "Échouée",
+      "stopped": "Arrêtée"
+    },
+    "empty": "Aucune tâche pour l’instant",
+    "subtitle": "{{name}} · Tâche de base de connaissances",
+    "new_title": "Nouvelle conversation",
+    "back": "Retour",
+    "executor": "Agent",
+    "pick_agent": "Choisir un agent",
+    "pick_agent_first": "Choisissez d’abord l’agent",
+    "runtime_online": "Runtime en ligne",
+    "runtime_offline": "Runtime hors ligne",
+    "start_question": "Que faire dans {{name}} ?",
+    "start_hint": "Vous pouvez aussi décrire votre besoin. Les exécutions planifiées deviennent des automatisations, gérées sur la page Automatisations.",
+    "start_failed": "Impossible de lancer la tâche",
+    "not_found": "La tâche n’existe pas ou vous ne pouvez pas l’ouvrir",
+    "ended": "Cette conversation est terminée",
+    "starters": {
+      "ingest": {
+        "title": "Intégrer des sources",
+        "description": "Lire des tickets, conversations ou pages web et écrire les connaissances dans des pages"
+      },
+      "health": {
+        "title": "Bilan de santé",
+        "description": "Repérer les pages périmées, les contradictions, les pages orphelines et les affirmations dont le code a changé"
+      },
+      "merge": {
+        "title": "Fusionner les doublons",
+        "description": "Trouver les pages qui se répètent et les fusionner en une seule"
+      },
+      "annotations": {
+        "title": "Traiter les annotations",
+        "description": "Modifier les pages selon les annotations en attente"
+      },
+      "schedule_ingest": {
+        "title": "Planifier l’intégration",
+        "description": "Créer une automatisation qui intègre chaque jour les tickets, commentaires et conversations"
+      },
+      "schedule_health": {
+        "title": "Planifier un bilan de santé",
+        "description": "Créer une automatisation qui fait un bilan de santé chaque semaine"
+      }
+    },
+    "starter_message": "{{title}} : {{description}}",
+    "names": {
+      "ingest": "Intégrer des sources",
+      "health": "Bilan de santé",
+      "merge": "Fusionner les doublons",
+      "annotations": "Traiter les annotations",
+      "new_page": "Nouvelle page",
+      "schedule": "Exécution planifiée",
+      "custom": "Nouvelle conversation"
+    },
+    "draft": {
+      "title": "Modifications du brouillon",
+      "state": {
+        "none": "Pas encore de brouillon",
+        "empty": "Aucune modification",
+        "open": "Brouillon · non soumis",
+        "submitted": "En revue",
+        "merged": "Fusionné",
+        "closed": "Fermé · peut être resoumis",
+        "nochange": "Aucun changement nécessaire",
+        "discarded": "Abandonné"
+      },
+      "nodraft": "Les modifications s’affichent ici une fois le brouillon créé par l’agent.",
+      "empty": "Les modifications s’affichent ici dès que l’agent les écrit.",
+      "nochange_title": "Rien à modifier cette fois",
+      "nochange_hint": "Enregistré comme sans changement ; aucune demande de modification n’est ouverte",
+      "discarded": "Le brouillon a été abandonné ; ses modifications ne seront pas fusionnées.",
+      "summary": "{{pages}} pages · +{{added}} −{{deleted}}",
+      "collapse_all": "Tout replier",
+      "expand_all": "Tout déplier",
+      "change": {
+        "added": "Ajoutée",
+        "modified": "Modifiée",
+        "moved": "Déplacée",
+        "deleted": "Supprimée"
+      },
+      "view_in_page": "Voir dans la page",
+      "checks": "Vérifications avant soumission",
+      "checks_pending": "Vérifié quand l’agent a terminé",
+      "lint_ok": "Vérification du format réussie",
+      "conflict": "Conflit avec la branche principale : {{path}}",
+      "fix": "Demander à l’agent de corriger",
+      "rebase": "Demander à l’agent de se mettre à jour",
+      "fix_message": "Corrige les erreurs signalées par `marvis kb draft check {{draft}}`, puis vérifie à nouveau.",
+      "rebase_message": "Le brouillon est en conflit avec la branche principale. Mets-le à jour avec `marvis kb draft sync {{draft}}`, résous les conflits, puis vérifie à nouveau.",
+      "hint": {
+        "open": "Vous seul voyez le brouillon ; le soumettre l’envoie en revue",
+        "busy": "Soumettez quand l’agent a fini ce tour",
+        "lint_one": "{{count}} erreur à corriger avant de soumettre",
+        "lint_other": "{{count}} erreurs à corriger avant de soumettre",
+        "conflict": "Vous pouvez soumettre maintenant et résoudre les conflits en revue",
+        "submitted": "Continuez dans les commentaires de revue, ou ici",
+        "closed": "Ajustez puis resoumettez ; cela ouvre une nouvelle demande de modification",
+        "merged": "Cette conversation est terminée",
+        "running": "Complétez la demande à gauche à tout moment"
+      },
+      "banner": {
+        "submitted_self": "Vous avez soumis la demande de modification #{{number}}. Le brouillon est en revue et en lecture seule ici.",
+        "submitted_agent": "{{name}} a soumis la demande de modification #{{number}}. Le brouillon est en revue et en lecture seule ici.",
+        "closed": "{{name}} a fermé #{{number}} : « {{reason}} ». Le brouillon est conservé ; vous pouvez continuer à l’ajuster.",
+        "closed_no_reason": "{{name}} a fermé #{{number}}. Le brouillon est conservé ; vous pouvez continuer à l’ajuster.",
+        "merged": "{{name}} a fusionné #{{number}}. Les modifications sont en ligne."
+      },
+      "banner_review": "Examiner",
+      "banner_view_page": "Voir la page",
+      "banner_comments": "Voir les commentaires",
+      "discard": "Abandonner le brouillon",
+      "keep": "Garder",
+      "discard_confirm_title": "Abandonner ce brouillon ?",
+      "discard_confirm_description": "Ses modifications sont perdues. La tâche reste dans la liste.",
+      "discard_failed": "Impossible d’abandonner le brouillon",
+      "submit": "Soumettre en revue",
+      "resubmit": "Resoumettre en revue",
+      "submit_failed": "Impossible de soumettre le brouillon",
+      "go_review": "Examiner #{{number}}",
+      "submitted_toast": "Demande de modification #{{number}} soumise"
+    },
+    "entry": {
+      "check_page": "Demander à un agent de vérifier cette page",
+      "check_page_message": "Vérifie la page « {{title}} ».",
+      "write_here": "Demander à un agent d’écrire une page ici",
+      "write_under": "Écrire une page sous {{title}}",
+      "write_label": "Contenu à écrire",
+      "write_submit": "Confier à un agent",
+      "cancel": "Annuler",
+      "new_page_message": "Ajoute une page sous « {{title}} » : {{text}}",
+      "annotations_all_message_one": "Traite l’annotation en attente de {{name}} ({{count}}).",
+      "annotations_all_message_other": "Traite les {{count}} annotations en attente de {{name}}.",
+      "annotations_page_message_one": "Traite l’annotation en attente de « {{title}} » ({{count}}).",
+      "annotations_page_message_other": "Traite les {{count}} annotations en attente de « {{title}} ».",
+      "annotations_kb_message_one": "Traite l’annotation en attente sur toute la base ({{count}}).",
+      "annotations_kb_message_other": "Traite les {{count}} annotations en attente sur toute la base."
+    }
   }
 }

@@ -305,5 +305,151 @@
     "quote_not_found": "原文が見つかりません",
     "update_failed": "更新できませんでした",
     "panel_empty": "まだ注釈はありません"
+  },
+  "job": {
+    "nav": "ナレッジベースのジョブ",
+    "nav_running": "{{count}} 件実行中",
+    "list_title": "ナレッジベースのジョブ",
+    "new": "新しいジョブ",
+    "tabs": {
+      "all": "すべて",
+      "running": "実行中",
+      "failed": "失敗"
+    },
+    "state": {
+      "running": "実行中",
+      "idle": "入力待ち",
+      "failed": "失敗",
+      "stopped": "停止済み"
+    },
+    "empty": "ジョブはまだありません",
+    "subtitle": "{{name}} · ナレッジベースのジョブ",
+    "new_title": "新しい会話",
+    "back": "戻る",
+    "executor": "実行エージェント",
+    "pick_agent": "エージェントを選択",
+    "pick_agent_first": "先に実行エージェントを選んでください",
+    "runtime_online": "ランタイム オンライン",
+    "runtime_offline": "ランタイム オフライン",
+    "start_question": "{{name}}で何をしますか？",
+    "start_hint": "やりたいことを直接書いてもかまいません。定期実行は自動化として作成され、「自動化」ページで管理します。",
+    "start_failed": "ジョブを作成できませんでした",
+    "not_found": "ジョブが存在しないか、閲覧できません",
+    "ended": "この会話は終了しました",
+    "starters": {
+      "ingest": {
+        "title": "資料を取り込む",
+        "description": "タスク、会話、Web ページを読み、知識をページに書き込みます"
+      },
+      "health": {
+        "title": "ヘルスチェック",
+        "description": "古いページ、矛盾する内容、孤立ページ、コードが変わった主張を確認します"
+      },
+      "merge": {
+        "title": "知識を統合",
+        "description": "内容が重複するページを見つけて 1 ページにまとめます"
+      },
+      "annotations": {
+        "title": "注釈を処理",
+        "description": "未対応の注釈に従ってページを修正します"
+      },
+      "schedule_ingest": {
+        "title": "定期取り込みを作成",
+        "description": "その日のタスク、コメント、チャットを毎日取り込む自動化を作ります"
+      },
+      "schedule_health": {
+        "title": "定期ヘルスチェックを作成",
+        "description": "毎週ヘルスチェックを行う自動化を作ります"
+      }
+    },
+    "starter_message": "{{title}}：{{description}}",
+    "names": {
+      "ingest": "資料を取り込む",
+      "health": "ヘルスチェック",
+      "merge": "知識を統合",
+      "annotations": "注釈を処理",
+      "new_page": "新しいページ",
+      "schedule": "定期実行",
+      "custom": "新しい会話"
+    },
+    "draft": {
+      "title": "下書きの変更",
+      "state": {
+        "none": "下書きなし",
+        "empty": "変更なし",
+        "open": "下書き · 未提出",
+        "submitted": "レビュー中",
+        "merged": "マージ済み",
+        "closed": "クローズ済み · 再提出可",
+        "nochange": "変更不要",
+        "discarded": "破棄済み"
+      },
+      "nodraft": "エージェントが下書きを作ると、ここに変更が表示されます。",
+      "empty": "エージェントが変更を書き込むと、ここに表示されます。",
+      "nochange_title": "今回は変更が必要な内容はありません",
+      "nochange_hint": "「変更不要」として記録され、変更リクエストは作成されません",
+      "discarded": "下書きは破棄されました。変更はマージされません。",
+      "summary": "{{pages}} ページ · +{{added}} −{{deleted}}",
+      "collapse_all": "すべて折りたたむ",
+      "expand_all": "すべて展開",
+      "change": {
+        "added": "追加",
+        "modified": "変更",
+        "moved": "移動",
+        "deleted": "削除"
+      },
+      "view_in_page": "ページで表示",
+      "checks": "提出前チェック",
+      "checks_pending": "変更後に自動でチェックします",
+      "lint_ok": "形式チェックに合格",
+      "conflict": "メインラインと競合：{{path}}",
+      "fix": "エージェントに修正させる",
+      "rebase": "エージェントにメインラインから更新させる",
+      "fix_message": "`marvis kb draft check {{draft}}` が報告したエラーを修正し、もう一度チェックしてください。",
+      "rebase_message": "下書きがメインラインと競合しています。`marvis kb draft sync {{draft}}` でメインラインから更新し、競合を解消してからもう一度チェックしてください。",
+      "hint": {
+        "open": "下書きはあなただけに見えます。提出するとレビューに進みます",
+        "busy": "エージェントのこのターンが終わってから提出してください",
+        "lint_other": "{{count}} 件のエラーを修正すると提出できます",
+        "conflict": "そのまま提出し、レビューで競合を解消することもできます",
+        "submitted": "以降の修正はレビューのコメントで、またはここで続けられます",
+        "closed": "調整して再提出すると、新しい変更リクエストが作成されます",
+        "merged": "この会話は終了しました",
+        "running": "左側でいつでも要件を追加できます"
+      },
+      "banner": {
+        "submitted_self": "変更リクエスト #{{number}} を提出しました。下書きはレビュー中で、ここでは読み取り専用です。",
+        "submitted_agent": "{{name}}が変更リクエスト #{{number}} を提出しました。下書きはレビュー中で、ここでは読み取り専用です。",
+        "closed": "#{{number}} は{{name}}によりクローズされました：「{{reason}}」。下書きは残っているので、調整を続けられます。",
+        "closed_no_reason": "#{{number}} は{{name}}によりクローズされました。下書きは残っているので、調整を続けられます。",
+        "merged": "#{{number}} は{{name}}によりマージされ、変更が反映されました。"
+      },
+      "banner_review": "レビューへ",
+      "banner_view_page": "ページを表示",
+      "banner_comments": "コメントを表示",
+      "discard": "下書きを破棄",
+      "keep": "残す",
+      "discard_confirm_title": "この下書きを破棄しますか？",
+      "discard_confirm_description": "下書きの変更は破棄されます。ジョブは一覧に残ります。",
+      "discard_failed": "破棄できませんでした",
+      "submit": "レビューに提出",
+      "resubmit": "レビューに再提出",
+      "submit_failed": "提出できませんでした",
+      "go_review": "#{{number}} をレビュー",
+      "submitted_toast": "変更リクエスト #{{number}} を提出しました"
+    },
+    "entry": {
+      "check_page": "このページをエージェントにチェックさせる",
+      "check_page_message": "「{{title}}」のページをチェックしてください。",
+      "write_here": "ここにエージェントにページを書かせる",
+      "write_under": "{{title}} の下にページを書く",
+      "write_label": "書く内容",
+      "write_submit": "エージェントに任せる",
+      "cancel": "キャンセル",
+      "new_page_message": "「{{title}}」の下に新しいページを追加：{{text}}",
+      "annotations_all_message_other": "{{name}}の未対応の注釈 {{count}} 件をすべて処理してください。",
+      "annotations_page_message_other": "「{{title}}」の未対応の注釈 {{count}} 件を処理してください。",
+      "annotations_kb_message_other": "ナレッジベース全体の未対応の注釈 {{count}} 件を処理してください。"
+    }
   }
 }

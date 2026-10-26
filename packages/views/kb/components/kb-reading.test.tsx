@@ -356,6 +356,20 @@ describe("KbPageView", () => {
     expect(screen.getByText("Current version")).toBeInTheDocument();
   });
 
+  it("asks an agent to check the page through a health-check job", async () => {
+    const adapter = makeAdapter("/acme/kb/team/p/page-cb");
+    mount(<KbPageView />, adapter);
+
+    await userEvent.click(await screen.findByRole("button", { name: "More" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Ask an agent to check this page" }));
+
+    const target = new URL(vi.mocked(adapter.push).mock.calls[0]![0], "https://app.example");
+    expect(target.pathname).toBe("/acme/kb/team/jobs/new");
+    expect(target.searchParams.get("starter")).toBe("health");
+    expect(target.searchParams.get("page")).toBe("page-cb");
+    expect(target.searchParams.get("message")).toMatch(/^Check the page “.+”\.$/);
+  });
+
   it("switches between the published page and the viewer's drafts", async () => {
     const drafts = [
       { id: "d-1", title: "", status: "open", updated_at: new Date().toISOString(), draft_change: "modified", changed_blocks: 1, origin: { type: "chat", label: "回调去重键", ref_id: "s-1" } },

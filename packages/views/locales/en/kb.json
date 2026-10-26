@@ -316,5 +316,155 @@
     "quote_not_found": "The sentence was not found",
     "update_failed": "Could not update the annotation",
     "panel_empty": "No annotations yet"
+  },
+  "job": {
+    "nav": "Knowledge base jobs",
+    "nav_running": "{{count}} running",
+    "list_title": "Knowledge base jobs",
+    "new": "New job",
+    "tabs": {
+      "all": "All",
+      "running": "Running",
+      "failed": "Failed"
+    },
+    "state": {
+      "running": "Running",
+      "idle": "Waiting for input",
+      "failed": "Failed",
+      "stopped": "Stopped"
+    },
+    "empty": "No jobs yet",
+    "subtitle": "{{name}} · Knowledge base job",
+    "new_title": "New conversation",
+    "back": "Back",
+    "executor": "Agent",
+    "pick_agent": "Choose an agent",
+    "pick_agent_first": "Choose the agent first",
+    "runtime_online": "Runtime online",
+    "runtime_offline": "Runtime offline",
+    "start_question": "What should happen in {{name}}?",
+    "start_hint": "Or describe what you need. Scheduled runs become automations, managed on the Automations page.",
+    "start_failed": "Could not start the job",
+    "not_found": "The job does not exist or you cannot open it",
+    "ended": "This conversation has ended",
+    "starters": {
+      "ingest": {
+        "title": "Ingest sources",
+        "description": "Read issues, chats or web pages and write the knowledge into pages"
+      },
+      "health": {
+        "title": "Health check",
+        "description": "Find stale pages, contradictions, orphan pages and claims whose code changed"
+      },
+      "merge": {
+        "title": "Merge duplicates",
+        "description": "Find pages that repeat each other and merge them into one"
+      },
+      "annotations": {
+        "title": "Handle annotations",
+        "description": "Change pages as the pending annotations ask"
+      },
+      "schedule_ingest": {
+        "title": "Schedule ingestion",
+        "description": "Create an automation that ingests the day's issues, comments and chats"
+      },
+      "schedule_health": {
+        "title": "Schedule a health check",
+        "description": "Create an automation that runs a health check every week"
+      }
+    },
+    "starter_message": "{{title}}: {{description}}",
+    "names": {
+      "ingest": "Ingest sources",
+      "health": "Health check",
+      "merge": "Merge duplicates",
+      "annotations": "Handle annotations",
+      "new_page": "New page",
+      "schedule": "Scheduled run",
+      "custom": "New conversation"
+    },
+    "draft": {
+      "title": "Draft changes",
+      "state": {
+        "none": "No draft yet",
+        "empty": "No changes yet",
+        "open": "Draft · not submitted",
+        "submitted": "In review",
+        "merged": "Merged",
+        "closed": "Closed · can resubmit",
+        "nochange": "No change needed",
+        "discarded": "Discarded"
+      },
+      "nodraft": "The agent's changes show here once it creates the draft.",
+      "empty": "Changes show here once the agent writes them.",
+      "nochange_title": "Nothing needed changing this time",
+      "nochange_hint": "Recorded as no change needed; no change request is opened",
+      "discarded": "The draft was discarded; its changes will not be merged.",
+      "summary": "{{pages}} pages · +{{added}} −{{deleted}}",
+      "collapse_all": "Collapse all",
+      "expand_all": "Expand all",
+      "change": {
+        "added": "Added",
+        "modified": "Modified",
+        "moved": "Moved",
+        "deleted": "Deleted"
+      },
+      "view_in_page": "View in page",
+      "checks": "Checks before submitting",
+      "checks_pending": "Checked once the agent finishes",
+      "lint_ok": "Format check passed",
+      "conflict": "Conflicts with the mainline: {{path}}",
+      "fix": "Ask the agent to fix",
+      "rebase": "Ask the agent to update from the mainline",
+      "fix_message": "Fix the errors `marvis kb draft check {{draft}}` reports, then check again.",
+      "rebase_message": "The draft conflicts with the mainline. Update it with `marvis kb draft sync {{draft}}`, resolve the conflicts, then check again.",
+      "hint": {
+        "open": "Only you see the draft; submitting sends it to review",
+        "busy": "Submit once the agent finishes this turn",
+        "lint_one": "{{count}} error to fix before submitting",
+        "lint_other": "{{count}} errors to fix before submitting",
+        "conflict": "You can submit now and resolve the conflicts in review",
+        "submitted": "Keep going in the review comments, or here",
+        "closed": "Adjust and resubmit; that opens a new change request",
+        "merged": "This conversation has ended",
+        "running": "Add to the request on the left at any time"
+      },
+      "banner": {
+        "submitted_self": "You submitted change request #{{number}}. The draft is in review and read-only here.",
+        "submitted_agent": "{{name}} submitted change request #{{number}}. The draft is in review and read-only here.",
+        "closed": "{{name}} closed #{{number}}: “{{reason}}”. The draft is kept; you can keep adjusting it.",
+        "closed_no_reason": "{{name}} closed #{{number}}. The draft is kept; you can keep adjusting it.",
+        "merged": "{{name}} merged #{{number}}. The changes are live."
+      },
+      "banner_review": "Review",
+      "banner_view_page": "View page",
+      "banner_comments": "View comments",
+      "discard": "Discard draft",
+      "keep": "Keep",
+      "discard_confirm_title": "Discard this draft?",
+      "discard_confirm_description": "Its changes are dropped. The job stays in the list.",
+      "discard_failed": "Could not discard the draft",
+      "submit": "Submit for review",
+      "resubmit": "Resubmit for review",
+      "submit_failed": "Could not submit the draft",
+      "go_review": "Review #{{number}}",
+      "submitted_toast": "Change request #{{number}} submitted"
+    },
+    "entry": {
+      "check_page": "Ask an agent to check this page",
+      "check_page_message": "Check the page “{{title}}”.",
+      "write_here": "Ask an agent to write a page here",
+      "write_under": "Write a page under {{title}}",
+      "write_label": "What to write",
+      "write_submit": "Hand to an agent",
+      "cancel": "Cancel",
+      "new_page_message": "Add a page under “{{title}}”: {{text}}",
+      "annotations_all_message_one": "Handle the {{count}} pending annotation in {{name}}.",
+      "annotations_all_message_other": "Handle all {{count}} pending annotations in {{name}}.",
+      "annotations_page_message_one": "Handle the {{count}} pending annotation on “{{title}}”.",
+      "annotations_page_message_other": "Handle the {{count}} pending annotations on “{{title}}”.",
+      "annotations_kb_message_one": "Handle the {{count}} pending annotation on the whole knowledge base.",
+      "annotations_kb_message_other": "Handle the {{count}} pending annotations on the whole knowledge base."
+    }
   }
 }

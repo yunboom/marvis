@@ -217,13 +217,22 @@ describe("KbAnnotationsPage", () => {
   });
 
   it("lists pending annotations with where they sit and how they followed the page", async () => {
-    mount(<KbAnnotationsPage />, makeAdapter("/acme/kb/team/annotations"));
+    const adapter = makeAdapter("/acme/kb/team/annotations");
+    mount(<KbAnnotationsPage />, adapter);
 
     expect(await screen.findByText("去重键已经改成渠道交易号。")).toBeInTheDocument();
     expect(mocked.listKnowledgeBaseAnnotations).toHaveBeenCalledWith("team", { status: "all", page: undefined });
     expect(screen.getByRole("tab", { name: /Pending\s*4/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tab", { name: /In progress\s*1/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Hand all to an agent (4)" })).toBeDisabled();
+
+    // Handing every pending annotation to an agent opens a new job with them
+    // brought in and the request written out.
+    await userEvent.click(screen.getByRole("button", { name: "Hand all to an agent (4)" }));
+    const target = new URL(vi.mocked(adapter.push).mock.calls[0]![0], "https://app.example");
+    expect(target.pathname).toBe("/acme/kb/team/jobs/new");
+    expect(target.searchParams.get("starter")).toBe("annotations");
+    expect(target.searchParams.get("annotations")?.split(",").sort()).toEqual(["a-followed", "a-kb", "a-lost", "a-mine"]);
+    expect(target.searchParams.get("message")).toBe("Handle all 4 pending annotations in 团队知识库.");
 
     const mine = screen.getByText("去重键已经改成渠道交易号。").closest("li")!;
     expect(within(mine).getByRole("link", { name: "支付回调 · paragraph 2" })).toHaveAttribute(
@@ -269,14 +278,19 @@ describe("KbAnnotationsPage", () => {
 describe("page annotations", () => {
   it("opens the page panel and adds a page annotation", async () => {
     mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, DISMISSED]);
-    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+    const adapter = makeAdapter("/acme/kb/team/p/page-cb");
+    mount(<KbPageView />, adapter);
 
     await userEvent.click(await screen.findByRole("button", { name: "Page annotations" }));
     const panel = await screen.findByRole("complementary", { name: "Page annotations 1" });
     expect(mocked.listKnowledgeBaseAnnotations).toHaveBeenCalledWith("team", { status: "all", page: "page-cb" });
     expect(within(panel).getByText("去重键已经改成渠道交易号。")).toBeInTheDocument();
     expect(within(panel).queryByText("不用管")).not.toBeInTheDocument();
-    expect(within(panel).getByRole("button", { name: "Hand off to an agent" })).toBeDisabled();
+    await userEvent.click(within(panel).getByRole("button", { name: "Hand off to an agent" }));
+    expect(adapter.push).toHaveBeenCalledWith(
+      "/acme/kb/team/jobs/new?starter=annotations&annotations=a-mine&message=" +
+        encodeURIComponent("Handle the 1 pending annotation on “支付回调”.").replace(/%20/g, "+"),
+    );
     // The annotated sentence is marked on the page while the panel is open.
     await waitFor(() => expect(document.querySelector("[data-block-id='b4'] mark")?.textContent).toBe("渠道回调按订单号加幂等键去重。"));
 

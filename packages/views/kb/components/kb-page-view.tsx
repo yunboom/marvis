@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown, Clock, Info, Link2, List, MessageSquare, MoreHorizontal } from "lucide-react";
+import { ChevronDown, Clock, Info, Link2, List, MessageSquare, MoreHorizontal, ShieldCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useWorkspaceId } from "@marvis/core/hooks";
@@ -139,7 +139,7 @@ function PendingReviewBanner({ page }: { page: KbPage }) {
   );
 }
 
-function PageMenu({ onHistory, shareHref }: { onHistory: () => void; shareHref: string }) {
+function PageMenu({ onHistory, onCheck, shareHref }: { onHistory: () => void; onCheck?: () => void; shareHref: string }) {
   const { t } = useT("kb");
   const { getShareableUrl } = useNavigation();
 
@@ -163,6 +163,12 @@ function PageMenu({ onHistory, shareHref }: { onHistory: () => void; shareHref: 
           <Clock className="size-4" />
           {t(($) => $.page.history)}
         </DropdownMenuItem>
+        {onCheck && (
+          <DropdownMenuItem onClick={onCheck}>
+            <ShieldCheck className="size-4" />
+            {t(($) => $.job.entry.check_page)}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={copyLink}>
           <Link2 className="size-4" />
@@ -305,7 +311,22 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
         >
           <Info className="size-4" />
         </button>
-        <PageMenu onHistory={() => setPanel("history")} shareHref={p.kbPage(kbSlug, page.id)} />
+        <PageMenu
+          onHistory={() => setPanel("history")}
+          onCheck={
+            draft
+              ? undefined
+              : () =>
+                  push(
+                    p.kbNewJob(kbSlug, {
+                      starter: "health",
+                      page: page.id,
+                      message: t(($) => $.job.entry.check_page_message, { title }),
+                    }),
+                  )
+          }
+          shareHref={p.kbPage(kbSlug, page.id)}
+        />
       </PageHeader>
 
       <div className="flex min-h-0 flex-1">

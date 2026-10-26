@@ -305,5 +305,151 @@
     "quote_not_found": "원문을 찾을 수 없습니다",
     "update_failed": "업데이트하지 못했습니다",
     "panel_empty": "아직 주석이 없습니다"
+  },
+  "job": {
+    "nav": "지식 베이스 작업",
+    "nav_running": "{{count}}개 실행 중",
+    "list_title": "지식 베이스 작업",
+    "new": "새 작업",
+    "tabs": {
+      "all": "전체",
+      "running": "실행 중",
+      "failed": "실패"
+    },
+    "state": {
+      "running": "실행 중",
+      "idle": "입력 대기",
+      "failed": "실패",
+      "stopped": "중지됨"
+    },
+    "empty": "아직 작업이 없습니다",
+    "subtitle": "{{name}} · 지식 베이스 작업",
+    "new_title": "새 대화",
+    "back": "뒤로",
+    "executor": "실행 에이전트",
+    "pick_agent": "에이전트 선택",
+    "pick_agent_first": "먼저 실행 에이전트를 선택하세요",
+    "runtime_online": "런타임 온라인",
+    "runtime_offline": "런타임 오프라인",
+    "start_question": "{{name}}에서 무엇을 할까요?",
+    "start_hint": "원하는 내용을 직접 설명해도 됩니다. 예약 실행은 자동화로 만들어지며 「자동화」 페이지에서 관리합니다.",
+    "start_failed": "작업을 만들지 못했습니다",
+    "not_found": "작업이 없거나 볼 수 없습니다",
+    "ended": "이 대화는 종료되었습니다",
+    "starters": {
+      "ingest": {
+        "title": "자료 수집",
+        "description": "작업, 대화, 웹 페이지를 읽고 지식을 페이지에 씁니다"
+      },
+      "health": {
+        "title": "상태 점검",
+        "description": "오래된 페이지, 서로 모순되는 내용, 고립된 페이지, 코드가 바뀐 주장을 확인합니다"
+      },
+      "merge": {
+        "title": "지식 병합",
+        "description": "내용이 중복되는 페이지를 찾아 한 페이지로 합칩니다"
+      },
+      "annotations": {
+        "title": "주석 처리",
+        "description": "대기 중인 주석에 따라 페이지를 수정합니다"
+      },
+      "schedule_ingest": {
+        "title": "예약 수집 만들기",
+        "description": "매일 그날의 작업, 댓글, 채팅을 수집하는 자동화를 만듭니다"
+      },
+      "schedule_health": {
+        "title": "예약 상태 점검 만들기",
+        "description": "매주 상태 점검을 하는 자동화를 만듭니다"
+      }
+    },
+    "starter_message": "{{title}}: {{description}}",
+    "names": {
+      "ingest": "자료 수집",
+      "health": "상태 점검",
+      "merge": "지식 병합",
+      "annotations": "주석 처리",
+      "new_page": "새 페이지",
+      "schedule": "예약 실행",
+      "custom": "새 대화"
+    },
+    "draft": {
+      "title": "초안 변경",
+      "state": {
+        "none": "초안 없음",
+        "empty": "변경 없음",
+        "open": "초안 · 미제출",
+        "submitted": "검토 중",
+        "merged": "병합됨",
+        "closed": "닫힘 · 다시 제출 가능",
+        "nochange": "변경 불필요",
+        "discarded": "버림"
+      },
+      "nodraft": "에이전트가 초안을 만들면 여기에 변경이 표시됩니다.",
+      "empty": "에이전트가 변경을 쓰면 여기에 표시됩니다.",
+      "nochange_title": "이번에는 바꿀 내용이 없습니다",
+      "nochange_hint": "「변경 불필요」로 기록되며 변경 요청은 만들어지지 않습니다",
+      "discarded": "초안을 버렸습니다. 변경은 병합되지 않습니다.",
+      "summary": "페이지 {{pages}}개 · +{{added}} −{{deleted}}",
+      "collapse_all": "모두 접기",
+      "expand_all": "모두 펼치기",
+      "change": {
+        "added": "추가",
+        "modified": "수정",
+        "moved": "이동",
+        "deleted": "삭제"
+      },
+      "view_in_page": "페이지에서 보기",
+      "checks": "제출 전 검사",
+      "checks_pending": "변경 후 자동으로 검사합니다",
+      "lint_ok": "형식 검사 통과",
+      "conflict": "메인라인과 충돌: {{path}}",
+      "fix": "에이전트에게 수정 요청",
+      "rebase": "에이전트에게 메인라인 기준 업데이트 요청",
+      "fix_message": "`marvis kb draft check {{draft}}`가 보고한 오류를 고친 뒤 다시 검사하세요.",
+      "rebase_message": "초안이 메인라인과 충돌합니다. `marvis kb draft sync {{draft}}`로 메인라인 기준으로 업데이트하고 충돌을 해결한 뒤 다시 검사하세요.",
+      "hint": {
+        "open": "초안은 나만 볼 수 있으며 제출하면 검토로 넘어갑니다",
+        "busy": "에이전트의 이번 턴이 끝난 뒤 제출하세요",
+        "lint_other": "오류 {{count}}개를 고쳐야 제출할 수 있습니다",
+        "conflict": "바로 제출하고 검토에서 충돌을 해결해도 됩니다",
+        "submitted": "이후 수정은 검토 댓글이나 여기에서 이어갈 수 있습니다",
+        "closed": "조정 후 다시 제출하면 새 변경 요청이 만들어집니다",
+        "merged": "이 대화는 종료되었습니다",
+        "running": "왼쪽에서 언제든 요청을 보탤 수 있습니다"
+      },
+      "banner": {
+        "submitted_self": "변경 요청 #{{number}}을(를) 제출했습니다. 초안은 검토 중이며 여기서는 읽기 전용입니다.",
+        "submitted_agent": "{{name}}이(가) 변경 요청 #{{number}}을(를) 제출했습니다. 초안은 검토 중이며 여기서는 읽기 전용입니다.",
+        "closed": "{{name}}이(가) #{{number}}을(를) 닫았습니다: 「{{reason}}」. 초안은 남아 있어 계속 조정할 수 있습니다.",
+        "closed_no_reason": "{{name}}이(가) #{{number}}을(를) 닫았습니다. 초안은 남아 있어 계속 조정할 수 있습니다.",
+        "merged": "{{name}}이(가) #{{number}}을(를) 병합해 변경이 반영되었습니다."
+      },
+      "banner_review": "검토하기",
+      "banner_view_page": "페이지 보기",
+      "banner_comments": "댓글 보기",
+      "discard": "초안 버리기",
+      "keep": "유지",
+      "discard_confirm_title": "이 초안을 버릴까요?",
+      "discard_confirm_description": "초안의 변경은 버려지고 작업은 목록에 남습니다.",
+      "discard_failed": "초안을 버리지 못했습니다",
+      "submit": "검토 제출",
+      "resubmit": "다시 검토 제출",
+      "submit_failed": "제출하지 못했습니다",
+      "go_review": "#{{number}} 검토",
+      "submitted_toast": "변경 요청 #{{number}}을(를) 제출했습니다"
+    },
+    "entry": {
+      "check_page": "에이전트에게 이 페이지 점검 요청",
+      "check_page_message": "「{{title}}」 페이지를 점검하세요.",
+      "write_here": "에이전트에게 여기에 페이지 작성 요청",
+      "write_under": "{{title}} 아래에 페이지 작성",
+      "write_label": "쓸 내용",
+      "write_submit": "에이전트에게 맡기기",
+      "cancel": "취소",
+      "new_page_message": "「{{title}}」 아래에 새 페이지 추가: {{text}}",
+      "annotations_all_message_other": "{{name}}의 대기 중인 주석 {{count}}개를 모두 처리하세요.",
+      "annotations_page_message_other": "「{{title}}」의 대기 중인 주석 {{count}}개를 처리하세요.",
+      "annotations_kb_message_other": "지식 베이스 전체의 대기 중인 주석 {{count}}개를 처리하세요."
+    }
   }
 }
