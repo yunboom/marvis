@@ -2278,6 +2278,10 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Get("/pages/{id}/claims", h.GetKbPageClaims)
 				r.Get("/bases/{kb}/claims", h.ListKbClaims)
 				r.Get("/bases/{kb}/stale", h.ListKbStalePages)
+				r.Get("/bases/{kb}/annotations", h.ListKbAnnotations)
+				r.Post("/bases/{kb}/annotations", h.CreateKbAnnotation)
+				r.Get("/annotations/{id}", h.GetKbAnnotation)
+				r.Patch("/annotations/{id}", h.UpdateKbAnnotation)
 				r.Get("/search", h.SearchKb)
 				// Drafts: agents write pages here; a merge request merges
 				// one draft. Only the draft creator reads or writes it.

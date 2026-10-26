@@ -51,7 +51,8 @@ const (
 	EventInboxBatchArchived = "inbox:batch-archived"
 
 	// Knowledge base events (spec 9). Names follow the spec's dotted form.
-	EventKbJobUpdated = "kb.job.updated"
+	EventKbJobUpdated        = "kb.job.updated"
+	EventKbAnnotationChanged = "kb.annotation.changed"
 
 	// Workspace events
 	EventWorkspaceUpdated = "workspace:updated"
