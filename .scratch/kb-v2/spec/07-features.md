@@ -681,6 +681,7 @@ GET`/api/kb/bases/{kb}/pages`
       "draft_change": "added"                                 // 请求带 draft 时，这份草稿对这一页做了什么：added / modified / moved / deleted；没动或没带 draft 为空串（页面树上显示「草稿 · 新」等标签）
     }
   ],
+  "total": 2,                                                 // 这一层的页面总数，不含已删除；带 draft 时按叠加草稿后计数
   "next_cursor": ""                                           // 还有下一页时为游标，传给 cursor 接着取；取完为空串
 }
 ```
@@ -862,9 +863,9 @@ GET`/api/kb/search`
 
  
 | 参数 | 位置 | 类型 | 必填 | 说明 / 示例 | 
-| `q` | query | string | 是 | `回调 去重` | 
+| `q` | query | string | 否 | `回调 去重`；带 `type` 时可不填，此时按类型列出整个知识库的该类页面 | 
 | `kb` | query | string | 否 | 只搜某知识库 | 
-| `type` | query | string | 否 | 按页头 `type` 过滤 | 
+| `type` | query | string | 否 | 页面类型，同 Schema 里的 `type`，如 `Runbook` | 
 | `limit` | query | int | 否 | 默认 10，1–50 | 
 
  
@@ -873,6 +874,7 @@ GET`/api/kb/search`
 ```
 {
   "mode": "hybrid",                                           // hybrid 关键字 + 向量 / keyword 只用了关键字（没配模型或向量一路失败）
+  "total": 1,                                                 // 命中的页面总数
   "hits": [                                                   // 命中，按得分排序；没有结果为空数组
     {
       "page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",      // 页面

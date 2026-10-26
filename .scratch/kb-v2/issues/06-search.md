@@ -9,4 +9,5 @@
 - [ ] `server/pkg/embedding`（OpenAI 兼容 /v1/embeddings，`MARVIS_EMBEDDING_BASE_URL/API_KEY/MODEL`，.env.example 与 selfhost compose）
 - [ ] 合并后异步建向量（content_hash 去重、每批 ≤100、补算存量），HNSW + iterative_scan relaxed_order + materialized CTE
 - [ ] `GET /api/kb/search` 返回 mode / score；CLI `kb search` 走同一接口
+- [ ] 混合检索支持 `type` 过滤（带 `type` 时关键词可空，按类型列出该类页面），响应带 `total`（决策 105）
 - [ ] RRF 融合单测、降级测试

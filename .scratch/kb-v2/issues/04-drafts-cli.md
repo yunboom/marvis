@@ -12,6 +12,7 @@
 - [ ] CLI 命令与参数照 spec 08.1（四列参数表），`--output table|json`、`--full-id`、游标翻页
 - [ ] `kb draft create` 说明为「建一份草稿。一个变更请求对应一份草稿：从建草稿、提交，到按审核意见修改，读写都带同一个草稿 id；分几次改、改了几个页面，都写进这份草稿。」；所有 `--draft` 参数说明为「草稿 id（完整 UUID），`kb draft create` 输出的 `id`」（决策 104）
 - [ ] 格式检查规则（spec 04 LINT；不含 `reserved_page_changed`、`quickstart_not_updated`，决策 103）
+- [ ] `kb page list` 返回 `total`（这一层页面总数，不含已删除，带 `--draft` 按叠加后计数）；`kb search --type` 可选，带 `--type` 时关键词可空（决策 105）
 - [ ] chat list/get 的 scope 规则（spec 08.7）
 - [ ] CLI 单测（假服务端）、乐观锁并发测试、草稿 sync 冲突测试
 - [ ] 论断与页头 sources 的生成（claims set 后重算 sources、脚注校验），块的插入 / 删除 / 移动（票 01 只做了 ReplaceBlock）

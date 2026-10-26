@@ -295,6 +295,7 @@ marvis kb page list team --parent team:/payment
       "draft_change": "added"                                 // 带 --draft 时，这份草稿对这一页的改动：added / modified / moved / deleted；没动为空串
     }
   ],
+  "total": 2,                                                 // 这一层的页面总数，不含已删除；带 --draft 时按叠加草稿后计数
   "next_cursor": ""                                           // 还有下一页时为游标，传给 --cursor；取完为空串
 }
 ```
@@ -385,7 +386,7 @@ marvis kb page fetch team:/payment/callback --scope section --start-block-id b7K
  
 CLI`marvis kb search`
  
-混合检索（关键字 + 向量），搜标题和正文。
+混合检索（关键字 + 向量），搜标题和正文；带 `--type` 不带关键词时，按类型列出整个知识库的该类页面。
 
  
 对应接口 `GET /api/kb/search`
@@ -393,14 +394,14 @@ CLI`marvis kb search`
  
 
 ```
-marvis kb search <关键词> [--kb <kb>] [--type <type>] [--limit <n>] [--output table|json]
+marvis kb search [<关键词>] [--kb <kb>] [--type <类型>] [--limit <n>] [--output table|json]
 ```
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
-| `<关键词>` | 是 | 搜索词，空格分隔多个词；搜标题和正文 | `"回调 去重"` | 
+| `<关键词>` | 否 | 搜索词，空格分隔多个词；搜标题和正文。带 `--type` 时可不填，此时按类型列出整个知识库的该类页面 | `"回调 去重"` | 
 | `--kb` | 否 | 知识库 slug 或 id；不传搜全部知识库 | `team` | 
-| `--type` | 否 | 页头 `type`，大小写不敏感 | `Runbook` | 
+| `--type` | 否 | 页面类型，同 Schema 里的 `type` | `Runbook` | 
 | `--limit` | 否 | 整数 1–50，默认 10 | `20` | 
 | `--output` | 否 | `table` 或 `json`；默认 `table`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
 | `--offset` | 否 | 整数，跳过前 n 条，默认 0 | `50` | 
@@ -419,6 +420,7 @@ marvis kb search "回调 去重" --kb team
 ```
 {
   "mode": "hybrid",                                           // hybrid 关键字 + 向量 / keyword 只用了关键字
+  "total": 1,                                                 // 命中的页面总数
   "hits": [                                                   // 命中，按得分排序
     {
       "page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",      // 页面
@@ -1747,8 +1749,9 @@ These knowledge bases are the team's shared memory: reviewed facts, decisions an
 
 Judge from the descriptions above which knowledge base, if any, helps with the current work, and load only what you need:
 
+- `marvis kb get <slug>` — read the `schema` field it returns: how pages are laid out and what each page type and field means.
 - `marvis kb search "<query>" [--kb <slug>]` — find pages by keyword.
-- `marvis kb page list <slug> [--parent <slug>:<path>]` — the table of contents. Without `--parent` it lists the top-level pages; with it, the pages directly under that page. Each comes with a one-line description.
+- `marvis kb page list <slug> [--parent <slug>:<path>]` — the table of contents. Without `--parent` it lists the top-level pages; with it, the child pages of the given page. Each comes with a one-line description.
 - `marvis kb page fetch <slug>:<path>` — read a page.
 
 More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:
@@ -1773,8 +1776,9 @@ More operations are in the `marvis-platform` skill, under `references/knowledge-
 
 根据上面的简介判断哪个知识库对当前工作有用，只加载需要的部分：
 
+- `marvis kb get <slug>` — 读取返回的 `schema` 字段：知识库的页面结构和各类页面、字段的定义。
 - `marvis kb search "<关键词>" [--kb <slug>]` — 按关键词找页面。
-- `marvis kb page list <slug> [--parent <slug>:<路径>]` — 像一本书的目录：不带 `--parent` 列出最顶层的页面，带上则列出那一页下面直接的子页面，每页附一句说明。
+- `marvis kb page list <slug> [--parent <slug>:<路径>]` — 像一本书的目录：不带 `--parent` 列出最顶层的页面，带上则列出指定页的子页面，每页附一句说明。
 - `marvis kb page fetch <slug>:<路径>` — 读页面。
 
 更多操作见 `marvis-platform` skill 的 `references/knowledge-bases.md`：
@@ -1831,8 +1835,9 @@ Each knowledge base has its own writing rules and goals: the `schema` and `purpo
 
 ## Finding what the team already knows
 
-There are two ways in. The table of contents, `kb page list`, lists the top-level pages, or with `--parent` the pages directly under a page, each with a one-line description. Search, `kb search`, looks through titles and page text and tells you which block matched.
+There are three ways in. Read the `schema` field that `kb get` returns: which sections the knowledge base has, what each page type covers and what each field means. Reading it first tells you roughly where to look. The table of contents, `kb page list`, lists the top-level pages, or with `--parent` the child pages of the given page, each with a one-line description. Search, `kb search`, looks through titles and page text and tells you which block matched.
 
+    marvis kb get team
     marvis kb page list team --parent team:/payment
     marvis kb search "callback dedup" --kb team
 
@@ -1952,10 +1957,11 @@ While the change request waits for review, those annotations show as in progress
 
 每个知识库都有自己的写作规则和目标，在 `marvis kb get <slug>` 输出的 `schema`、`purpose` 字段里。动笔之前先把这两份读一遍。
 
-## 找到团队已经知道的
+## 查找知识
 
-有两个入口。目录 `kb page list` 列出最顶层的页面，带上 `--parent` 则列出那一页下面直接的子页面，每页附一句说明。检索 `kb search` 覆盖标题和正文，还会告诉你命中的是哪一块。
+有三个入口。读取 `kb get` 返回的 `schema` 字段：知识库分成哪些区、每类页面写什么、各字段是什么意思，先读它就知道要找的内容大概在哪。目录 `kb page list` 列出最顶层的页面，带上 `--parent` 则列出指定页的子页面，每页附一句说明。检索 `kb search` 覆盖标题和正文，还会告诉你命中的是哪一块。
 
+    marvis kb get team
     marvis kb page list team --parent team:/payment
     marvis kb search "回调 去重" --kb team
 
