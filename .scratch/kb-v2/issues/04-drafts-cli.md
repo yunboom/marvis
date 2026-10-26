@@ -8,7 +8,7 @@
 
 - [ ] 草稿接口：`/api/kb/drafts*`、`/api/kb/pages/{ref}/fetch`、ops、claims、check、sync（git 式冲突标记），乐观锁 version、stale_version、conflict_markers，按 spec 06 / 07.13
 - [ ] CLI 命令与参数照 spec 08.1（四列参数表），`--output table|json`、`--full-id`、游标翻页
-- [ ] 格式检查规则（spec 04 LINT）
+- [ ] 格式检查规则（spec 04 LINT；不含 `reserved_page_changed`、`quickstart_not_updated`，决策 103）
 - [ ] chat list/get 的 scope 规则（spec 08.7）
 - [ ] CLI 单测（假服务端）、乐观锁并发测试、草稿 sync 冲突测试
 - [ ] 论断与页头 sources 的生成（claims set 后重算 sources、脚注校验），块的插入 / 删除 / 移动（票 01 只做了 ReplaceBlock）

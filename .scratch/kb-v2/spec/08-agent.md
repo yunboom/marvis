@@ -63,7 +63,7 @@ marvis kb list
     "description": "订单、支付、发布与测试流程，团队共用的业务和系统知识。",             // 简介；智能体据此判断要不要用这个知识库
     "schema_mode": "default",                                 // default 内置模板（只读）/ custom 自定义
     "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",     // 创建人
-    "page_count": 42,                                         // 页面数（不含保留页）
+    "page_count": 42,                                         // 页面数
     "content_version": 87,                                    // 内容版本，每次合并 +1；ETag 和检索索引以它为准
     "created_at": "2026-10-08T09:12:03Z",                     // RFC3339
     "updated_at": "2026-10-25T14:20:11Z",                     // RFC3339
@@ -110,7 +110,7 @@ marvis kb get team
   "description": "订单、支付、发布与测试流程，团队共用的业务和系统知识。",               // 简介；智能体据此判断要不要用这个知识库
   "schema_mode": "default",                                   // default 内置模板（只读）/ custom 自定义
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 创建人
-  "page_count": 42,                                           // 页面数（不含保留页）
+  "page_count": 42,                                           // 页面数
   "content_version": 87,                                      // 内容版本，每次合并 +1；ETag 和检索索引以它为准
   "created_at": "2026-10-08T09:12:03Z",                       // RFC3339
   "updated_at": "2026-10-25T14:20:11Z",                       // RFC3339
@@ -165,7 +165,7 @@ marvis kb create --name 支付排障手册 --slug pay-troubleshoot --purpose-fil
   "description": "支付、订单链路与排障步骤，给研发和测试用。",                     // 简介；智能体据此判断要不要用这个知识库
   "schema_mode": "default",                                   // default 内置模板（只读）/ custom 自定义
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 创建人
-  "page_count": 0,                                            // 页面数（不含保留页）
+  "page_count": 0,                                            // 页面数
   "content_version": 0,                                       // 内容版本，每次合并 +1；ETag 和检索索引以它为准
   "created_at": "2026-10-26T09:20:00Z",                       // RFC3339
   "updated_at": "2026-10-26T09:20:00Z",                       // RFC3339
@@ -217,7 +217,7 @@ marvis kb update team --purpose-file ./purpose.md
   "description": "订单、支付、发布与测试流程，团队共用的业务和系统知识。",               // 简介；智能体据此判断要不要用这个知识库
   "schema_mode": "default",                                   // default 内置模板（只读）/ custom 自定义
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 创建人
-  "page_count": 42,                                           // 页面数（不含保留页）
+  "page_count": 42,                                           // 页面数
   "content_version": 87,                                      // 内容版本，每次合并 +1；ETag 和检索索引以它为准
   "created_at": "2026-10-08T09:12:03Z",                       // RFC3339
   "updated_at": "2026-10-25T14:20:11Z",                       // RFC3339
@@ -276,7 +276,6 @@ marvis kb page list team --parent team:/payment
       "title": "支付回调",                                        // 标题
       "type": "Workflow",                                     // 类型
       "description": "渠道异步回调的接收、去重与失败处理",                     // 说明
-      "reserved": "",                                         // 保留页标记
       "has_child": true,                                      // 有没有子页面
       "child_count": 2,                                       // 子页面数
       "stale": true,                                          // 需要复核
@@ -289,7 +288,6 @@ marvis kb page list team --parent team:/payment
       "title": "回调人工处理",                                      // 标题
       "type": "Workflow",                                     // 类型
       "description": "回调失败后如何人工补单",                           // 说明
-      "reserved": "",                                         // 保留页标记
       "has_child": false,                                     // 有没有子页面
       "child_count": 0,                                       // 子页面数
       "stale": false,                                         // 需要复核
@@ -672,9 +670,6 @@ marvis kb page move team:/payment/callback-manual --draft 9d8c7b6a-5f4e-4d3c-8b2
   "version": "d12"                                            // 新版本
 }
 ```
-
- 
-不能移动或删除 quickstart。
 
  
 CLI`marvis kb claims get / set`
@@ -1732,7 +1727,7 @@ marvis chat get d1e2f3a4-5b6c-4d7e-8f9a-0b1c2d3e4f5a --scope workspace
 - 聊天的工作流说明（`writeWorkflowChat`，`:585`）不改；这一节自带「先查知识库」的要求。
 
 - 写法照现有运行时说明：「Available Commands」只列核心命令，其余让智能体看 `marvis <command> --help`，或加载 `marvis-platform` skill 打开对应领域的 reference（`9a7f600b6` `runtime_config_sections.go:212`、`:740`）。
-- 这一节只给读知识的命令：先读首页 quickstart（它不进页面树，`kb page list` 列不到，所以单独给出），再按需检索、逐级浏览、读页面。批注、改页面、解决冲突这些低频操作放进 skill 的新 reference，不占每次运行的提示词。
+- 这一节只给读知识的命令：检索、逐级浏览、读页面。批注、改页面、解决冲突这些低频操作放进 skill 的新 reference，不占每次运行的提示词。
 
 「Knowledge Bases」一节（示例：工作区有两个知识库）
 English · 代码原文
@@ -1751,7 +1746,6 @@ These knowledge bases are the team's shared memory: reviewed facts, decisions an
 
 Judge from the descriptions above which knowledge base, if any, helps with the current work, and load only what you need:
 
-- `marvis kb page fetch <slug>:/quickstart` — the home page: a task-routing map that tells you where to look.
 - `marvis kb search "<query>" [--kb <slug>]` — find pages by keyword.
 - `marvis kb page list <slug> [--parent <slug>:<path>]` — the table of contents. Without `--parent` it lists the top-level pages; with it, the pages directly under that page. Each comes with a one-line description. Up to 200 pages per call; when the output has a `next_cursor`, call again with `--cursor <next_cursor>` until it is empty. Find the pages you need here, then read them.
 - `marvis kb page fetch <slug>:<path>` — read a page.
@@ -1778,7 +1772,6 @@ More operations are in the `marvis-platform` skill, under `references/knowledge-
 
 根据上面的简介判断哪个知识库对当前工作有用，只加载需要的部分：
 
-- `marvis kb page fetch <slug>:/quickstart` — 首页：任务导航，告诉你要做的事该去哪里找。
 - `marvis kb search "<关键词>" [--kb <slug>]` — 按关键词找页面。
 - `marvis kb page list <slug> [--parent <slug>:<路径>]` — 像一本书的目录：不带 `--parent` 列出最顶层的页面，带上则列出那一页下面直接的子页面，每页附一句说明。一次最多返回 200 条，输出里有 `next_cursor` 时用 `--cursor <next_cursor>`接着取，直到它为空。按目录找到需要的页面再读。
 - `marvis kb page fetch <slug>:<路径>` — 读页面。
@@ -1837,9 +1830,8 @@ Each knowledge base has its own writing rules and goals: the `schema` and `purpo
 
 ## Finding what the team already knows
 
-There are three ways in. The home page, `quickstart`, is a task-routing map: it tells you which part of the knowledge base your work belongs to. The table of contents, `kb page list`, lists the top-level pages, or with `--parent` the pages directly under a page, each with a one-line description. Search, `kb search`, looks through titles and page text and tells you which block matched.
+There are two ways in. The table of contents, `kb page list`, lists the top-level pages, or with `--parent` the pages directly under a page, each with a one-line description. Search, `kb search`, looks through titles and page text and tells you which block matched.
 
-    marvis kb page fetch team:/quickstart
     marvis kb page list team --parent team:/payment
     marvis kb search "callback dedup" --kb team
 
@@ -1961,9 +1953,8 @@ While the change request waits for review, those annotations show as in progress
 
 ## 找到团队已经知道的
 
-有三个入口。首页 `quickstart` 是任务导航，告诉你眼前的工作属于知识库的哪一部分。目录 `kb page list` 列出最顶层的页面，带上 `--parent` 则列出那一页下面直接的子页面，每页附一句说明。检索 `kb search` 覆盖标题和正文，还会告诉你命中的是哪一块。
+有两个入口。目录 `kb page list` 列出最顶层的页面，带上 `--parent` 则列出那一页下面直接的子页面，每页附一句说明。检索 `kb search` 覆盖标题和正文，还会告诉你命中的是哪一块。
 
-    marvis kb page fetch team:/quickstart
     marvis kb page list team --parent team:/payment
     marvis kb search "回调 去重" --kb team
 
@@ -2116,7 +2107,7 @@ People write the purpose; agents read it before every change. Four sections, pla
 
 ## Writing the schema
 The schema tells the agents that maintain this knowledge base how to organise and write pages. Keep its nine sections: roles, sections, page format, evidence, contradictions and outdated content, links, operations, before submitting, changing this schema.
-- Required by agents: the `quickstart` home page (task routing and Backlog), the `type`, `title` and `description` fields, and claims with footnotes. Keep these in every custom schema.
+- Required by agents: the `type`, `title` and `description` fields, and claims with footnotes. Keep these in every custom schema.
 - Sections are by system, domain and workflow, not by code layout or by page type. Give each section one line on what goes there.
 - Adapt the rest to the team: sections, common types, page skeletons, tags, review periods.
 
@@ -2160,7 +2151,7 @@ Marvis 页面遵循 OKF v0.2，知识库可以导出为 OKF bundle。规范原�
 
 ## 怎么写 Schema
 Schema 告诉维护这个知识库的智能体怎么组织和书写页面。保留九节：分工、分区、页面格式、证据、矛盾与过时、链接、维护操作、提交前、修改本 Schema。
-- Agent 依赖：首页 `quickstart`（任务导航和待补），`type`、`title`、`description` 三个字段，论断和脚注。自定义 Schema 也必须保留。
+- Agent 依赖：`type`、`title`、`description` 三个字段，论断和脚注。自定义 Schema 也必须保留。
 - 分区按系统、领域和流程划分，不照搬代码目录，也不按页面类型分。每个分区写一句放什么。
 - 其余按团队调整：分区、常用类型、页面骨架、标签、复核周期。
 

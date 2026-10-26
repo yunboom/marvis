@@ -7,5 +7,5 @@
 **Status:** ready-for-agent
 
 - [ ] mention 类型 kb / kb_page / kb_mr / kb_annotation 的前端卡片与悬停，失效时退回文字
-- [ ] 任务认领响应带 knowledge_bases，daemon 写入 `writeKnowledgeBases`（文案按 spec 08.2，英文）
+- [ ] 任务认领响应带 knowledge_bases，daemon 写入 `writeKnowledgeBases`（文案按 spec 08.2，英文；不出现 quickstart，决策 103）
 - [ ] 运行时说明快照测试

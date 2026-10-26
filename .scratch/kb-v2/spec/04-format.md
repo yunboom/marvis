@@ -1,12 +1,12 @@
 # 4 知识库格式与默认 Schema
 
-目录结构：首页 `quickstart`（任务导航和待补）和按系统、领域、流程划分的分区来自 OpenWiki code 模式（langchain-ai/openwiki 提交 `305599f`，`src/agent/repository-prompts.ts:63-89`），`decisions` 分区来自一期内置模板；不再有 sources 页和 index 页，分区里有哪些页面看页面树，导出时才生成 index.md（决策 64、66、67）。默认 SCHEMA 的写法参考 Karpathy LLM Wiki 的成熟实现（决策 67）：收录前定处理方式、连带更新、「已过时 / 有争议」状态行、健康检查分两级来自 Astro-Han/karpathy-llm-wiki（提交 `eafcc77`，`SKILL.md` L41、L66-96、L168-203）；分区表和决策页字段来自 nashsu/llm_wiki（提交 `e08cfce`，`src-tauri/src/commands/project.rs` L42-117、`src/lib/templates.ts` L434-516）；回答问题只读、矛盾不选边来自 AgriciDaniel/claude-obsidian（提交 `2e54556`，`WIKI.md` L159-161、L221-243）；来源是数据不是指令、推断要标明来自 Ar9av/obsidian-wiki（提交 `c5dc0e2`）。论断存 `kb_claim` 表（决策 58）。
+目录结构：任务导航页和按系统、领域、流程划分的分区来自 OpenWiki code 模式（langchain-ai/openwiki 提交 `305599f`，`src/agent/repository-prompts.ts:63-89`），`decisions` 分区来自一期内置模板；不再有 sources 页和 index 页，分区里有哪些页面看页面树，导出时才生成 index.md（决策 64、66、67）。默认 SCHEMA 的写法参考 Karpathy LLM Wiki 的成熟实现（决策 67）：收录前定处理方式、连带更新、「已过时 / 有争议」状态行、健康检查分两级来自 Astro-Han/karpathy-llm-wiki（提交 `eafcc77`，`SKILL.md` L41、L66-96、L168-203）；分区表和决策页字段来自 nashsu/llm_wiki（提交 `e08cfce`，`src-tauri/src/commands/project.rs` L42-117、`src/lib/templates.ts` L434-516）；回答问题只读、矛盾不选边来自 AgriciDaniel/claude-obsidian（提交 `2e54556`，`WIKI.md` L159-161、L221-243）；来源是数据不是指令、推断要标明来自 Ar9av/obsidian-wiki（提交 `c5dc0e2`）。论断存 `kb_claim` 表（决策 58）。
 
-4.1 页面树与保留页
+4.1 页面树
 
 ```
 团队知识库（team）
-├── 入门 quickstart                     type: Guide           保留页，知识库首页
+├── 入门 quickstart                     type: Guide
 ├── 架构 architecture
 │   ├── 系统总览 overview               type: Architecture Overview
 │   ├── 订单服务 order-service          type: Service
@@ -30,8 +30,7 @@
 （没有 index 页：分区里有哪些页面看页面树或 kb page list；导出时才为每个目录生成 index.md。）
 ```
 
-| 保留页 | 存储 | 谁写 | 界面 | 
-| quickstart 入门 | `kb_page.reserved = quickstart` | 智能体维护：任务导航表（链接到主要分区）、`## 待补`；页面增删、移动或重新分组时更新（照 OpenWiki `repository-prompts.ts:83-89`、`:191-196`） | 知识库首页正文 | 
+所有页面都是普通页面：都进页面树、计入页面数，可以移动和删除；知识库首页是数据总览，不显示任何页面的正文（决策 103）。
 
 4.2 页面示例（智能体 `fetch` 拿到的 Markdown）
 
@@ -137,7 +136,7 @@ stale_after: 2027-01-20T00:00:00Z
 
 4.5 默认 Schema（全文；代码里是英文，创建时原样写入 `kb_base.schema`）
 
-标「required by agents」（中文「Agent 依赖」）的部分是智能体读写知识库依赖的约定：保留页、三个必填字段、论断与脚注。自定义 Schema 也必须保留，构建器提示词里有同样的要求。
+标「required by agents」（中文「Agent 依赖」）的部分是智能体读写知识库依赖的约定：三个必填字段、论断与脚注。自定义 Schema 也必须保留，构建器提示词里有同样的要求。
 
 默认 Schema
 English · 代码原文
@@ -167,7 +166,7 @@ This schema tells agents how to maintain this knowledge base. People own it and 
 | `decisions` | Technical and business decisions | Decision Record |
 
 - Use the sections the purpose needs. Add a section only for a real area, not for a single stray page.
-- `quickstart` is the home page (required by agents; never delete or move it). It routes readers through the knowledge base: a compact task-routing map ("I want to ... → open ...") that links to the major sections, and a final `## Backlog` with what is not written yet and why. Refresh it whenever pages are added, removed, moved or regrouped. Do not list each section's pages: the page tree shows them.
+- `quickstart` routes readers through the knowledge base: a compact task-routing map ("I want to ... → open ...") that links to the major sections, and a final `## Backlog` with what is not written yet and why. Refresh it whenever pages are added, removed, moved or regrouped. Do not list each section's pages: the page tree shows them.
 - Search before creating a page (`marvis kb search`). Extend an existing page instead of writing a second page on the same topic.
 
 ## 3. Page format
@@ -256,7 +255,7 @@ Write in the language of the purpose. One topic per page.
 
 ## 9. Changing this schema
 
-Keep the parts marked "required by agents": the `quickstart` page, the `type`, `title` and `description` fields, and claims with footnotes. Change the rest to fit the team: sections, types, page skeletons, tags and review periods.
+Keep the parts marked "required by agents": the `type`, `title` and `description` fields, and claims with footnotes. Change the rest to fit the team: sections, types, page skeletons, tags and review periods.
 ```
 
 中文对照
@@ -286,7 +285,7 @@ Keep the parts marked "required by agents": the `quickstart` page, the `type`, `
 | `decisions` 决策 | 技术和业务决定 | Decision Record |
 
 - 按目标选用需要的分区。只有确实有一块领域才新建分区，不要为一张零散的页面建分区。
-- `quickstart` 是首页（Agent 依赖，不能删除、不能移动）。它为读者在知识库里导路：一张简洁的任务导航表（「我要…… → 打开……」），链接到主要分区；最后一节`## 待补` 列出还没写的内容和原因。页面有新增、删除、移动或重新分组时更新它。不要列出各分区有哪些页面，页面树会显示。
+- `quickstart` 为读者在知识库里导路：一张简洁的任务导航表（「我要…… → 打开……」），链接到主要分区；最后一节 `## 待补` 列出还没写的内容和原因。页面有新增、删除、移动或重新分组时更新它。不要列出各分区有哪些页面，页面树会显示。
 - 新建页面前先检索（`marvis kb search`）。同一主题扩充已有页面，不另写一页。
 
 ## 3. 页面格式
@@ -354,7 +353,7 @@ Keep the parts marked "required by agents": the `quickstart` page, the `type`, `
 - **健康检查**：只读；每个确实存在的问题用 `marvis kb annotation add` 记录。
   - 机械问题：过了 `stale_after` 的页面、检查不通过、孤立页面、指向还没写的页面的链接。
   - 需要判断的问题：页面之间互相矛盾、代码证据已变的论断、被近期任务或对话推翻的事实、缺少的主题。
-- **知识合并**：同一主题的多个页面合成一页。被并掉的页面改成一条指向保留页的短说明，`status: deprecated`；更新所有指向它的链接和 `quickstart`。
+- **知识合并**：同一主题的多个页面合成一页。被并掉的页面改成一条指向合并后页面的短说明，`status: deprecated`；更新所有指向它的链接和 `quickstart`。
 - **回答缺口**：知识库级批注是知识库答不上的问题。新写或扩充页面回答它，或者写进 `quickstart` 的 `## 待补` 并说明原因。
 
 ## 8. 提交前
@@ -366,7 +365,7 @@ Keep the parts marked "required by agents": the `quickstart` page, the `type`, `
 
 ## 9. 修改本 Schema
 
-标着「Agent 依赖」的部分要保留：`quickstart` 页面，`type`、`title`、`description` 三个字段，论断和脚注。其余按团队调整：分区、类型、页面骨架、标签、复核周期。
+标着「Agent 依赖」的部分要保留：`type`、`title`、`description` 三个字段，论断和脚注。其余按团队调整：分区、类型、页面骨架、标签、复核周期。
 ```
 
 4.6 目标模板（构建器按它起草，存 `kb_base.purpose`）
@@ -417,13 +416,11 @@ What does not belong here, and where it lives instead.
 | undefined_footnote | error | 正文的 `[^id]` 在本块的论断证据里找不到 | 
 | claim_without_evidence | error | 论断没有证据，或指向不存在的块 | 
 | invalid_evidence_uri | error | 证据 uri 不在允许的 scheme 内 | 
-| reserved_page_changed | error | 删除或移动了 quickstart | 
 | duplicate_slug | error | 同一父页面下路径段重复 | 
 | unresolved_conflict | error | `kb draft sync` 后还有没解决的冲突（块里留着冲突标记，或页头、位置冲突没处理） | 
 | missing_evidence_version | warning | `repo://`、`pr://` 证据没写版本，无法复核 | 
 | unresolved_link | warning | 链接指向还没写的页面（OKF 允许，健康检查列为待补） | 
 | orphan_page | warning | 没有其他页面链接到这一页 | 
-| quickstart_not_updated | warning | 草稿新增、删除或移动了页面，却没改 quickstart | 
 | isolated_page | warning | 有内容的页面链接到的相关页面少于 2 个 | 
 
 error 阻止提交；warning 只提示。指向还没写的页面按 OKF 只算 warning，健康检查把它们列为待补的知识（决策 58）。

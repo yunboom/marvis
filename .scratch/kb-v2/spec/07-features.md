@@ -4,13 +4,13 @@
 
 设计稿 · 1.1 列表 · 1.2–1.3 对话创建 · 1.4 空状态 · 1.5–1.6 默认 / 自定义 Schema
 
-- 列表：读 `kb_base`，页面数按知识库 `count(*)`（不含保留页、已删除）。
+- 列表：读 `kb_base`，页面数按知识库 `count(*)`（不含已删除）。
 - 创建只有对话一种方式（决策 7）：前端复用创建智能体的 `BuilderSetup` / `BuilderConversation`（`packages/views/agents/create/builder-conversation.tsx:37`、`:136`），没有运行时的选择卡片和「连接运行时」也一起复用（决策 28）。
 - 照创建智能体做（决策 69，`9a7f600b6` `server/internal/handler/agent_builder.go:57-162`、`server/cmd/server/router.go:2398-2407`）：每开一次对话新建一个隐藏构建器智能体（`kind = system`，`system_key = kb-builder:<流程 id>`，指令是 8.3 的构建器提示词）和一个聊天会话。聊天列表只列 `kind = user` 的智能体，所以构建器对话不出现在聊天页面，只能从知识库的创建 / 配置入口回到它，且只有发起人可见。
 - 构建器回复末尾带一行 `<kb_draft>{…}</kb_draft>`，前端解析后填右侧；用户在右侧手改的内容通过「保存右侧配置」存到 `kb_builder_session.draft`，刷新、切页不丢（同 `agent_builder_draft`，迁移 252）。
 - 复用组件自带的三样，界面保持一致：「您有 N 条未完成的创建」横幅（1 条直接进入，多条弹窗选，`packages/views/agents/create/unfinished-drafts.tsx`）；「放弃创建」及确认弹窗（「对话和右侧配置都会被永久删除」）；运行时旁的「更换」。配置模式同样适用，横幅文案为「未完成的配置」。
 - Schema「默认 / 自定义」（决策 49）：默认时右侧只读，创建时服务端写入当时的内置模板（4.5），平台升级模板不覆盖已有知识库；Schema 模式是用户的输入：用户在右侧选「默认 / 自定义」，决定构建器要不要起草 Schema；构建器的输出不带模式。建会话时带初始模式，用户中途切换后，下一条消息的 JSON 信封里带上当前模式（创建智能体的构建器本来就把用户消息包成 JSON 信封），右侧配置保存时也存它。创建 / 更新时 `default` 不传 `schema`，`custom` 才传（决策 70）。
-- 创建在一个事务里：写 `kb_base`、`kb_config_revision`，建保留页 quickstart（正文为简介和空的「待补」）并写初始修订。
+- 创建在一个事务里：写 `kb_base`、`kb_config_revision`；不建页面（决策 103）。
 - 创建成功后前端跳到新知识库的「知识库作业」并打开一个新对话（`/kb/{slug}/jobs/new?welcome=1`，设计稿 1.10）：顶部提示已创建，开场白上方是四步上手引导（收录资料、审核后生效、阅读和批注、定时维护），「收录资料」标「建议先做」。引导是前端文案，不调接口、不启动智能体；用户选开场白或直接输入后，才按 7.10 新建作业（决策 71）。
 
 GET`/api/kb/bases`
@@ -33,7 +33,7 @@ GET`/api/kb/bases`
     "description": "订单、支付、发布与测试流程，团队共用的业务和系统知识。",             // 简介；智能体据此判断要不要用这个知识库
     "schema_mode": "default",                                 // default 内置模板（只读）/ custom 自定义
     "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",     // 创建人
-    "page_count": 42,                                         // 页面数（不含保留页）
+    "page_count": 42,                                         // 页面数
     "content_version": 87,                                    // 内容版本，每次合并 +1；ETag 和检索索引以它为准
     "created_at": "2026-10-08T09:12:03Z",                     // RFC3339
     "updated_at": "2026-10-25T14:20:11Z"                      // RFC3339
@@ -61,7 +61,7 @@ GET`/api/kb/bases/{kb}`
   "description": "订单、支付、发布与测试流程，团队共用的业务和系统知识。",               // 简介；智能体据此判断要不要用这个知识库
   "schema_mode": "default",                                   // default 内置模板（只读）/ custom 自定义
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 创建人
-  "page_count": 42,                                           // 页面数（不含保留页）
+  "page_count": 42,                                           // 页面数
   "content_version": 87,                                      // 内容版本，每次合并 +1；ETag 和检索索引以它为准
   "created_at": "2026-10-08T09:12:03Z",                       // RFC3339
   "updated_at": "2026-10-25T14:20:11Z",                       // RFC3339
@@ -276,7 +276,7 @@ POST`/api/kb/bases`
   "description": "支付、订单链路与排障步骤，给研发和测试用。",                     // 简介；智能体据此判断要不要用这个知识库
   "schema_mode": "default",                                   // default 内置模板（只读）/ custom 自定义
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 创建人
-  "page_count": 0,                                            // 页面数（不含保留页）
+  "page_count": 0,                                            // 页面数
   "content_version": 0,                                       // 内容版本，每次合并 +1；ETag 和检索索引以它为准
   "created_at": "2026-10-26T09:20:00Z",                       // RFC3339
   "updated_at": "2026-10-26T09:20:00Z",                       // RFC3339
@@ -295,7 +295,7 @@ POST`/api/kb/bases`
 
 设计稿 · 2.1 首页 · 2.3–2.4 批注 · 2.5–2.6 需要复核
 
-- 首页正文是 quickstart 页。首页接口一起返回 quickstart 的页面对象，结构与读页面接口（7.4）完全相同，一次请求出首屏；前端用渲染普通页面的组件渲染它（块链接、批注、引用悬停都复用），并把它写进该页面的查询缓存，之后点进 quickstart 不再请求（决策 74）。
+- 首页是知识库的数据总览：知识库信息、待处理、最近更新和运行中的作业，一次请求出首屏；不显示任何页面的正文（决策 103）。
 - 待处理卡片：批注数（其中智能体上报的单独计数）、需要复核的页面数（过了 `stale_after`）、待审核数。
 - 「最近更新」最多 5 条：取最近合并的变更请求改动的页面，同一页面只出现一次（取最近那次），按合并时间倒序；服务端固定截取，不开放参数。更早的记录在「变更记录」里看（7.3）。
 - 「需要复核」点进页面时，本页的论断全部标黄，悬停显示核实时间和证据（2.6）。代码证据是否落后由健康检查的智能体判断，问题记成批注。
@@ -318,40 +318,13 @@ GET`/api/kb/bases/{kb}/home`
     "workspace_id": "ws_8f2a1c",                              // 工作区 id
     "name": "团队知识库",                                          // 名称
     "slug": "team",                                           // 工作区内唯一，小写字母 / 数字 / 连字符；页面引用写 slug:/路径
-    "description": "订单、支付、发布与测试流程，团队共用的业务和系统知识。",             // 说明
+    "description": "订单、支付、发布与测试流程，团队共用的业务和系统知识。",             // 简介；智能体据此判断要不要用这个知识库
     "schema_mode": "default",                                 // default 内置模板（只读）/ custom 自定义
     "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",     // 创建人
-    "page_count": 42,                                         // 页面数（不含保留页）
+    "page_count": 42,                                         // 页面数
     "content_version": 87,                                    // 内容版本，每次合并 +1；ETag 和检索索引以它为准
     "created_at": "2026-10-08T09:12:03Z",                     // RFC3339
     "updated_at": "2026-10-25T14:20:11Z"                      // RFC3339
-  },
-  "quickstart": {                                             // quickstart 页面对象，字段同 GET /api/kb/pages/{id}（节选）
-    "id": "f1e2d3c4-b5a6-4978-8a9b-0c1d2e3f4a5b",             // 知识库 id（UUID）
-    "path": "/quickstart",                                    // 路径
-    "version": "44556677-8899-4aab-9ccd-deeff0011223",        // 修订
-    "frontmatter": {                                          // 页头
-      "type": "Guide",                                        // 类型
-      "title": "入门",                                          // 标题
-      "description": "团队知识库的入口"                               // 说明
-    },
-    "blocks": [                                               // 正文块
-      {
-        "id": "bQ01",                                         // 知识库 id（UUID）
-        "kind": "text",                                       // 块类型，目前只有 text（内容是一段 Markdown）
-        "content": "团队知识库记录订单与支付链路……"                         // 块内容：一段 Markdown
-      },
-      {
-        "id": "bQ02",                                         // 知识库 id（UUID）
-        "kind": "text",                                       // 块类型，目前只有 text（内容是一段 Markdown）
-        "content": "| 我要…… | 打开 |\n| --- | --- |……"           // 块内容：一段 Markdown
-      }
-    ],
-    "sources": [],                                            // 引用来源
-    "claims": [],                                             // 论断位置
-    "backlinks": [],                                          // 反向链接
-    "pending_mr": null,                                       // 待审核修改
-    "annotations_open": 0                                     // 待处理批注数
   },
   "pending": {                                                // 待处理计数
     "annotations": 4,                                         // 待处理批注
@@ -651,7 +624,7 @@ GET`/api/kb/pages/{id}`
 
 照飞书 `wiki +node-list`：一次只列一级，带 `has_child`，要看下一级再按父页面取。游标翻页：按排序键返回，每页最多 200 条；还有下一页时带 `next_cursor`，传回 `cursor` 接着取，直到为空串，就拿到了这一级完整的目录（子页面不展开，只给 `has_child` 和 `child_count`），相当于原来的 index.md，据此决定往哪钻（决策 94，修正决策 79 的不分页）。界面和智能体用同一个接口（决策 60）。
 
-- 界面：页面树初始只取顶层；展开节点时取它的子级；一级超过 200 页时，滚动到底再用 `next_cursor` 取下一页。打开某个页面时，按阅读接口返回的 `breadcrumb` 并发取各级祖先的子级，把树展开到当前页。quickstart 不进树（是首页）。
+- 界面：页面树初始只取顶层；展开节点时取它的子级；一级超过 200 页时，滚动到底再用 `next_cursor` 取下一页。打开某个页面时，按阅读接口返回的 `breadcrumb` 并发取各级祖先的子级，把树展开到当前页。
 - 智能体：`marvis kb page list team` 看顶层，`--parent team:/payment` 往下钻，输出有 `next_cursor` 时用 `--cursor` 取完这一级；找具体内容优先 `marvis kb search`，不需要遍历。导出时每个目录的 `index.md` 也是按这一级的输出生成的。
 - 查询：`WHERE knowledge_base_id = ? AND parent_id IS NOT DISTINCT FROM ? AND deleted_at IS NULL AND (position, id) > (游标里的 position, id) ORDER BY position, id LIMIT 201`（键集分页，多取 1 条判断有没有下一页；游标是 position 和 id 的不透明编码），走 `kb_page_parent_idx`；`has_child` / `child_count` 对这一页的页面用同一索引一次 `GROUP BY parent_id` 批量算出，不逐页查。
 - 「＋」新页面：新建一个作业，`starter = new_page`，`page_id` 为所在页面，首条消息预填「在『支付』下新增一页：……」（4.3）。
@@ -689,7 +662,6 @@ GET`/api/kb/bases/{kb}/pages`
       "title": "支付回调",                                        // 标题
       "type": "Workflow",                                     // 类型
       "description": "渠道异步回调的接收、去重与失败处理",                     // 一句话说明
-      "reserved": "",                                         // 普通页面为空串（quickstart 不进树）
       "has_child": true,                                      // 有没有子页面（决定显示展开箭头）
       "child_count": 2,                                       // 子页面数
       "stale": true,                                          // 需要复核（树上黄点）
@@ -702,7 +674,6 @@ GET`/api/kb/bases/{kb}/pages`
       "title": "回调人工处理",                                      // 标题
       "type": "Workflow",                                     // 类型
       "description": "回调失败后如何人工补单",                           // 一句话说明
-      "reserved": "",                                         // 普通页面为空串（quickstart 不进树）
       "has_child": false,                                     // 有没有子页面（决定显示展开箭头）
       "child_count": 0,                                       // 子页面数
       "stale": false,                                         // 需要复核（树上黄点）
@@ -1721,7 +1692,7 @@ PATCH`/api/kb/bases/{kb}`
   "description": "订单、支付、发布与测试流程，团队共用的业务和系统知识。",               // 简介；智能体据此判断要不要用这个知识库
   "schema_mode": "default",                                   // default 内置模板（只读）/ custom 自定义
   "created_by": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 创建人
-  "page_count": 42,                                           // 页面数（不含保留页）
+  "page_count": 42,                                           // 页面数
   "content_version": 87,                                      // 内容版本，每次合并 +1；ETag 和检索索引以它为准
   "created_at": "2026-10-08T09:12:03Z",                       // RFC3339
   "updated_at": "2026-10-25T14:20:11Z",                       // RFC3339
@@ -2093,7 +2064,6 @@ POST`/api/kb/drafts/{id}/pages/{ref}/ops`
 | 状态码 | 情况 | 
 | 404 | 块不存在 | 
 | 409 | `stale_version`：页面在你读取后被改过；`str_replace` 匹配到 0 处或多处 | 
-| 422 | 改了保留页的位置、删除了保留页 | 
 
  
 PUT`/api/kb/drafts/{id}/pages/{ref}/claims`
