@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,8 +27,14 @@ import (
 // vector(1024) column of kb_block_embedding.
 const Dimensions = 1024
 
-// MaxBatchSize is the most inputs one request carries.
-const MaxBatchSize = 100
+// Batch sizes: how many inputs one request carries. Gateways differ (Qwen
+// text-embedding-v3 takes at most 10), so the size is configurable through
+// MARVIS_EMBEDDING_BATCH_SIZE within [MinBatchSize, MaxBatchSize].
+const (
+	DefaultBatchSize = 10
+	MinBatchSize     = 1
+	MaxBatchSize     = 100
+)
 
 // defaultTimeout bounds a request whose context has no deadline.
 const defaultTimeout = 60 * time.Second
@@ -54,16 +61,31 @@ type Config struct {
 	APIKey string
 	// Model names the embedding model. Maps to MARVIS_EMBEDDING_MODEL.
 	Model string
+	// BatchSize is the most inputs one request carries; 0 means
+	// DefaultBatchSize. Maps to MARVIS_EMBEDDING_BATCH_SIZE.
+	BatchSize int
 	// HTTPClient replaces the default transport; a test seam.
 	HTTPClient *http.Client
 }
 
 // Client embeds texts through an OpenAI-compatible endpoint.
 type Client struct {
-	endpoint string
-	apiKey   string
-	model    string
-	http     *http.Client
+	endpoint  string
+	apiKey    string
+	model     string
+	batchSize int
+	http      *http.Client
+}
+
+// ParseBatchSize reads MARVIS_EMBEDDING_BATCH_SIZE: empty or not a number is
+// DefaultBatchSize, anything outside [MinBatchSize, MaxBatchSize] is clamped.
+func ParseBatchSize(raw string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil {
+		return DefaultBatchSize
+	}
+
+	return min(max(n, MinBatchSize), MaxBatchSize)
 }
 
 // New builds a client; it is disabled unless the config is complete.
@@ -73,10 +95,16 @@ func New(cfg Config) *Client {
 		httpClient = &http.Client{}
 	}
 
+	batchSize := cfg.BatchSize
+	if batchSize == 0 {
+		batchSize = DefaultBatchSize
+	}
+
 	c := &Client{
-		apiKey: strings.TrimSpace(cfg.APIKey),
-		model:  strings.TrimSpace(cfg.Model),
-		http:   httpClient,
+		apiKey:    strings.TrimSpace(cfg.APIKey),
+		model:     strings.TrimSpace(cfg.Model),
+		batchSize: min(max(batchSize, MinBatchSize), MaxBatchSize),
+		http:      httpClient,
 	}
 	if base := strings.TrimRight(strings.TrimSpace(cfg.BaseURL), "/"); base != "" {
 		c.endpoint = base + embeddingsPath
@@ -100,6 +128,15 @@ func (c *Client) Model() string {
 	return c.model
 }
 
+// BatchSize is the most inputs one Embed call accepts.
+func (c *Client) BatchSize() int {
+	if c == nil {
+		return DefaultBatchSize
+	}
+
+	return c.batchSize
+}
+
 type embeddingsRequest struct {
 	Model          string   `json:"model"`
 	Input          []string `json:"input"`
@@ -115,7 +152,7 @@ type embeddingsResponse struct {
 }
 
 // Embed returns one Dimensions-long vector per input, in input order. At most
-// MaxBatchSize inputs go in one call.
+// BatchSize inputs go in one call.
 func (c *Client) Embed(ctx context.Context, inputs []string) ([][]float32, error) {
 	if !c.Enabled() {
 		return nil, ErrNotConfigured
@@ -123,8 +160,8 @@ func (c *Client) Embed(ctx context.Context, inputs []string) ([][]float32, error
 	if len(inputs) == 0 {
 		return [][]float32{}, nil
 	}
-	if len(inputs) > MaxBatchSize {
-		return nil, errors.Errorf("embedding: %d inputs exceed the batch size of %d", len(inputs), MaxBatchSize)
+	if len(inputs) > c.batchSize {
+		return nil, errors.Errorf("embedding: %d inputs exceed the batch size of %d", len(inputs), c.batchSize)
 	}
 
 	if _, ok := ctx.Deadline(); !ok {

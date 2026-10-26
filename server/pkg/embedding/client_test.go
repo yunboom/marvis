@@ -102,7 +102,34 @@ func TestEmbedErrors(t *testing.T) {
 
 func TestEmbedRejectsOversizedBatch(t *testing.T) {
 	c := New(Config{BaseURL: "http://127.0.0.1:1", APIKey: "k", Model: "m"})
-	if _, err := c.Embed(context.Background(), make([]string, MaxBatchSize+1)); err == nil {
+	if c.BatchSize() != DefaultBatchSize {
+		t.Fatalf("default batch size = %d, want %d", c.BatchSize(), DefaultBatchSize)
+	}
+	if _, err := c.Embed(context.Background(), make([]string, DefaultBatchSize+1)); err == nil {
 		t.Error("oversized batch accepted")
+	}
+
+	small := New(Config{BaseURL: "http://127.0.0.1:1", APIKey: "k", Model: "m", BatchSize: 3})
+	if _, err := small.Embed(context.Background(), make([]string, 4)); err == nil {
+		t.Error("batch over the configured size accepted")
+	}
+}
+
+func TestParseBatchSize(t *testing.T) {
+	cases := map[string]int{
+		"":     DefaultBatchSize,
+		"abc":  DefaultBatchSize,
+		"25":   25,
+		" 7 ":  7,
+		"0":    MinBatchSize,
+		"-3":   MinBatchSize,
+		"1":    1,
+		"100":  100,
+		"5000": MaxBatchSize,
+	}
+	for raw, want := range cases {
+		if got := ParseBatchSize(raw); got != want {
+			t.Errorf("ParseBatchSize(%q) = %d, want %d", raw, got, want)
+		}
 	}
 }

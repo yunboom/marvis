@@ -49,6 +49,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/util/secretbox"
 	composiosdk "github.com/yunboom/marvis/server/pkg/composio"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/embedding"
 	"github.com/yunboom/marvis/server/pkg/featureflag"
 	"github.com/yunboom/marvis/server/pkg/llm"
 	publicapiv1 "github.com/yunboom/marvis/server/pkg/publicapi/v1"
@@ -493,6 +494,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		EmbeddingBaseURL:               strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_BASE_URL")),
 		EmbeddingAPIKey:                strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_API_KEY")),
 		EmbeddingModel:                 strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_MODEL")),
+		EmbeddingBatchSize:             embedding.ParseBatchSize(os.Getenv("MARVIS_EMBEDDING_BATCH_SIZE")),
 		ServerVersion:                  normalizeServerVersion(version),
 		ServerName:                     opts.LAN.Name,
 		InstanceID:                     opts.InstanceID,

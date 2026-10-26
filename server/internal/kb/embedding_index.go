@@ -22,6 +22,8 @@ import (
 type Embedder interface {
 	Enabled() bool
 	Model() string
+	// BatchSize is the most inputs one Embed call takes.
+	BatchSize() int
 	Embed(ctx context.Context, inputs []string) ([][]float32, error)
 }
 
@@ -204,7 +206,7 @@ type embedTarget struct {
 
 // IndexPages brings the vectors of the given pages up to date: blocks whose
 // text hash or model changed are re-embedded in batches of at most
-// embedding.MaxBatchSize, vectors of removed blocks and deleted pages are
+// the embedder's batch size, vectors of removed blocks and deleted pages are
 // dropped. Unchanged blocks cost no embedding call.
 func (x *EmbeddingIndexer) IndexPages(ctx context.Context, pageIDs []pgtype.UUID) error {
 	if !x.Enabled() || len(pageIDs) == 0 {
@@ -237,10 +239,11 @@ func (x *EmbeddingIndexer) IndexPages(ctx context.Context, pageIDs []pgtype.UUID
 		}
 	}
 
-	// The upstream takes at most MaxBatchSize inputs per call, so the targets
-	// go out in chunks: one bulk embedding call and one bulk upsert per chunk.
-	for start := 0; start < len(targets); start += embedding.MaxBatchSize {
-		chunk := targets[start:min(start+embedding.MaxBatchSize, len(targets))]
+	// The upstream takes at most BatchSize inputs per call, so the targets go
+	// out in chunks: one bulk embedding call and one bulk upsert per chunk.
+	batch := max(x.embedder.BatchSize(), embedding.MinBatchSize)
+	for start := 0; start < len(targets); start += batch {
+		chunk := targets[start:min(start+batch, len(targets))]
 		if err := x.embedChunk(ctx, model, chunk); err != nil {
 			return err
 		}

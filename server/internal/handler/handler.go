@@ -166,9 +166,11 @@ type Config struct {
 	//   - EmbeddingBaseURL -> MARVIS_EMBEDDING_BASE_URL
 	//   - EmbeddingAPIKey  -> MARVIS_EMBEDDING_API_KEY
 	//   - EmbeddingModel   -> MARVIS_EMBEDDING_MODEL
-	EmbeddingBaseURL string
-	EmbeddingAPIKey  string
-	EmbeddingModel   string
+	//   - EmbeddingBatchSize -> MARVIS_EMBEDDING_BATCH_SIZE (inputs per request)
+	EmbeddingBaseURL   string
+	EmbeddingAPIKey    string
+	EmbeddingModel     string
+	EmbeddingBatchSize int
 	// ServerVersion is the build version of the running API binary (the same
 	// value main.go stamps via -X main.version and reports on /metrics).
 	// Surfaced through /api/config so self-hosted operators can confirm which
@@ -539,12 +541,13 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 	)
 
 	embedder := embedding.New(embedding.Config{
-		BaseURL: cfg.EmbeddingBaseURL,
-		APIKey:  cfg.EmbeddingAPIKey,
-		Model:   cfg.EmbeddingModel,
+		BaseURL:   cfg.EmbeddingBaseURL,
+		APIKey:    cfg.EmbeddingAPIKey,
+		Model:     cfg.EmbeddingModel,
+		BatchSize: cfg.EmbeddingBatchSize,
 	})
 	// The model only; never the key or the base URL, which may embed a token.
-	slog.Info("kb embedding", "enabled", embedder.Enabled(), "model", embedder.Model())
+	slog.Info("kb embedding", "enabled", embedder.Enabled(), "model", embedder.Model(), "batch_size", embedder.BatchSize())
 
 	taskSvc := service.NewTaskService(queries, txStarter, hub, bus, daemonHub)
 	taskSvc.Analytics = analyticsClient

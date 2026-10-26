@@ -24,25 +24,37 @@ import (
 type kbStubEmbedder struct {
 	model string
 	err   error
+	// batch is the batch size it reports; 0 means embedding.DefaultBatchSize.
+	batch int
 
-	mu     sync.Mutex
-	inputs []string
+	mu      sync.Mutex
+	inputs  []string
+	batches []int
 }
 
 func (s *kbStubEmbedder) Enabled() bool { return true }
 
 func (s *kbStubEmbedder) Model() string { return s.model }
 
+func (s *kbStubEmbedder) BatchSize() int {
+	if s.batch == 0 {
+		return embedding.DefaultBatchSize
+	}
+
+	return s.batch
+}
+
 func (s *kbStubEmbedder) Embed(_ context.Context, inputs []string) ([][]float32, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
-	if len(inputs) > embedding.MaxBatchSize {
+	if len(inputs) > s.BatchSize() {
 		return nil, errors.Errorf("batch of %d", len(inputs))
 	}
 
 	s.mu.Lock()
 	s.inputs = append(s.inputs, inputs...)
+	s.batches = append(s.batches, len(inputs))
 	s.mu.Unlock()
 
 	out := make([][]float32, len(inputs))
@@ -205,6 +217,32 @@ func TestKbEmbeddingIndexerDedupesAndFollowsModel(t *testing.T) {
 	rows.Close()
 	if len(models) != 1 || models[0] != "stub-b" {
 		t.Errorf("models after backfill = %v", models)
+	}
+}
+
+func TestKbEmbeddingIndexerHonoursBatchSize(t *testing.T) {
+	requireKbVectors(t)
+
+	f := newKbSearchFixture(t)
+	// The fixture has seven blocks with text; a gateway that takes two per
+	// request gets four requests, none over the limit.
+	stub := &kbStubEmbedder{model: "stub-batch", batch: 2}
+	if err := kb.NewEmbeddingIndexer(testHandler.Queries, stub).IndexPages(context.Background(), f.pageIDs()); err != nil {
+		t.Fatalf("index: %+v", err)
+	}
+
+	stub.mu.Lock()
+	batches := append([]int(nil), stub.batches...)
+	stub.mu.Unlock()
+	total := 0
+	for _, n := range batches {
+		if n > 2 {
+			t.Errorf("batch of %d exceeds the configured 2", n)
+		}
+		total += n
+	}
+	if total != stub.calls() || len(batches) != (total+1)/2 {
+		t.Errorf("batches = %v for %d inputs", batches, total)
 	}
 }
 
