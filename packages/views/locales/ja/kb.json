@@ -33,7 +33,9 @@
     "home": "ホーム",
     "pending": "未対応 {{count}}",
     "pages": "ページ",
-    "breadcrumb": "現在地"
+    "breadcrumb": "現在地",
+    "configure": "ナレッジベースを設定",
+    "configure_hint": "目的とスキーマ"
   },
   "tree": {
     "expand": "{{title}}を展開",
@@ -138,5 +140,128 @@
     "no_changes": "この版では本文の変更はありません",
     "not_found": "リビジョンが存在しません",
     "empty": "履歴はまだありません"
+  },
+  "builder": {
+    "create_title": "新しいナレッジベース",
+    "create_sub": "会話で作成",
+    "config_title": "ナレッジベースを設定",
+    "via_chat": "会話で設定",
+    "setup_create_title": "会話でナレッジベースを作成",
+    "setup_config_title": "会話でナレッジベースを設定",
+    "setup_description": "ビルダーを実行するランタイムとモデルを選びます。",
+    "chat_title": "ナレッジベースビルダー",
+    "change_runtime": "変更",
+    "change_runtime_label": "ランタイムを変更",
+    "intro_create": "どんなナレッジベースを作りますか？方向を選ぶと、名前・目的・スキーマを下書きし、一緒に調整します。",
+    "intro_config": "必要に合わせて目的とスキーマを変更します。下の質問から始めるか、変えたい点を伝えてください。",
+    "describe_hint": "やりたいことを直接書いても構いません。",
+    "starters": {
+      "dev": {
+        "title": "開発ナレッジベース",
+        "description": "システム構成、サービスとインターフェース、障害対応手順、技術的な決定"
+      },
+      "qa": {
+        "title": "テストナレッジベース",
+        "description": "テスト設計手法、テスト環境、回帰チェックリスト、不具合の振り返り"
+      },
+      "product": {
+        "title": "プロダクトナレッジベース",
+        "description": "機能説明、業務ルール、課金ルール、顧客向けの回答"
+      },
+      "team": {
+        "title": "チーム共通ナレッジベース",
+        "description": "開発・テスト・プロダクトで共用、領域タグで区別"
+      }
+    },
+    "starter_message": "{{title}}を作成：{{description}}",
+    "questions": {
+      "readers": "このナレッジベースは誰が読み、何を最もよく調べますか？",
+      "scope": "何を収録し、何を収録しませんか？",
+      "structure": "ページの構成は？システムモジュール別、業務フロー別、チーム別のどれですか？",
+      "writing": "引用や書き方のルールはありますか？"
+    },
+    "drafts_create_other": "未完了の作成が {{count}} 件あります",
+    "drafts_config_other": "未完了の設定が {{count}} 件あります",
+    "pick_create": "作成の下書き",
+    "pick_config": "設定の下書き",
+    "panel": {
+      "title": "ナレッジベースの設定",
+      "basics": "基本情報",
+      "name": "名前",
+      "description": "概要",
+      "slug": "ディレクトリ名",
+      "generated_placeholder": "要件を伝えると自動生成されます",
+      "slug_placeholder": "名前から生成",
+      "slug_invalid": "小文字の英字・数字・ハイフンのみ使えます",
+      "purpose": "目的",
+      "purpose_placeholder": "# 目的",
+      "just_updated": "更新済み",
+      "expand_edit": "拡大して編集",
+      "expand_view": "拡大して表示",
+      "schema": "スキーマ",
+      "schema_mode": "スキーマモード",
+      "schema_default": "デフォルト",
+      "schema_custom": "カスタム",
+      "read_only": "読み取り専用",
+      "schema_default_hint": "組み込みのメンテナンスルールを使います。編集できず、ビルダーも変更しません。チームに合わせるには「カスタム」に切り替えてください。",
+      "schema_placeholder": "要件を伝えると組み込みスキーマから下書きします"
+    },
+    "footer": {
+      "unsaved": "未保存の変更があります",
+      "discard_create": "作成を破棄",
+      "discard_config": "変更を破棄",
+      "create": "作成",
+      "save": "保存"
+    },
+    "discard": {
+      "create_title": "この作成を破棄しますか？",
+      "config_title": "この変更を破棄しますか？",
+      "description": "会話と右側の設定は完全に削除されます。",
+      "keep": "編集を続ける"
+    },
+    "expand": {
+      "edit": "編集",
+      "split": "分割",
+      "preview": "プレビュー",
+      "read_only": "デフォルト · 読み取り専用",
+      "edit_hint": "変更は右側の設定に戻り、保存すると反映されます",
+      "read_only_hint": "デフォルトのスキーマは表示のみです。変更するには右側で「カスタム」に切り替えてください",
+      "cancel": "キャンセル",
+      "done": "完了",
+      "close": "閉じる"
+    },
+    "saved": "保存しました",
+    "errors": {
+      "name_required": "名前を入力してください",
+      "slug_taken": "このディレクトリ名はワークスペースで使用済みです",
+      "conflict": "設定を開いた後に他の人が保存しました。再読み込みして確認してください。",
+      "forbidden": "ナレッジベースの作成者、またはワークスペースのオーナー・管理者のみ設定できます",
+      "create_failed": "ナレッジベースを作成できませんでした",
+      "save_failed": "設定を保存できませんでした"
+    }
+  },
+  "welcome": {
+    "created": "ナレッジベース「{{name}}」を作成しました。使い方を確認しましょう。",
+    "guide_title": "このナレッジベースの使い方",
+    "suggested": "最初におすすめ",
+    "dismiss": "わかりました",
+    "steps": {
+      "ingest": {
+        "title": "資料を収録",
+        "description": "ナレッジベースジョブを作成し、タスク・会話・アップロードしたファイル・Web ページをエージェントに渡します。知識をページにまとめ、各事実に出典を付けます。"
+      },
+      "review": {
+        "title": "レビュー後に反映",
+        "description": "エージェントの変更はまず下書きに入ります。確認してレビューに出し、作成者またはオーナー・管理者がマージすると反映されます。"
+      },
+      "read": {
+        "title": "読む・注釈を付ける",
+        "description": "誤りや古い内容に気づいたら、その文を選んで注釈を付けます。注釈はワンクリックでエージェントに任せられます。"
+      },
+      "maintain": {
+        "title": "定期メンテナンス",
+        "description": "定期収録と定期ヘルスチェックを設定すると、ナレッジベースが最新のタスクとコードに追従します。"
+      }
+    }
   }
 }

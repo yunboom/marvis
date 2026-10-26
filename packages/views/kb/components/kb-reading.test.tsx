@@ -21,10 +21,20 @@ vi.mock("@marvis/core/api", () => ({
     getKnowledgeBasePage: vi.fn(),
     listKnowledgeBasePageHistory: vi.fn(),
     getKnowledgeBaseRevisionDiff: vi.fn(),
+    listMembers: vi.fn().mockResolvedValue([]),
   },
 }));
 
 vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+
+vi.mock("@marvis/core/auth", () => {
+  const state = { user: { id: "user-1" } };
+  const useAuthStore = Object.assign(
+    (selector?: (s: typeof state) => unknown) => (selector ? selector(state) : state),
+    { getState: () => state },
+  );
+  return { useAuthStore };
+});
 
 vi.mock("@marvis/core/paths", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@marvis/core/paths")>();
@@ -447,6 +457,35 @@ describe("KbHomePage", () => {
     expect(screen.getByText("Includes 1 gap reported by agents")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /支付回调/ })).toHaveAttribute("href", "/acme/kb/team/p/page-cb");
     expect(screen.getByText("#14 每日知识沉淀")).toBeInTheDocument();
+  });
+
+  it("shows the onboarding guide right after creation and dismisses it", async () => {
+    mocked.getKnowledgeBaseHome.mockResolvedValue(home);
+    const { adapter } = mount(<KbHomePage />, makeAdapter("/acme/kb/team", "welcome=1"));
+
+    expect(await screen.findByText("Knowledge base “团队知识库” has been created. Here is how to use it.")).toBeInTheDocument();
+    expect(screen.getByText("Ingest sources")).toBeInTheDocument();
+    expect(screen.getByText("Suggested first")).toBeInTheDocument();
+    expect(screen.getByText("Scheduled maintenance")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Got it" }));
+    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team");
+  });
+
+  it("offers configuration in the knowledge base menu to its creator", async () => {
+    mocked.getKnowledgeBaseHome.mockResolvedValue(home);
+    mount(
+      <KbShell>
+        <span />
+      </KbShell>,
+      makeAdapter("/acme/kb/team"),
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Knowledge base actions" }));
+    expect(await screen.findByRole("menuitem", { name: /Configure knowledge base/ })).toHaveAttribute(
+      "href",
+      "/acme/kb/team/config",
+    );
   });
 
   it("reports a missing knowledge base", async () => {

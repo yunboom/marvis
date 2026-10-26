@@ -36,7 +36,9 @@
     "home": "Accueil",
     "pending": "{{count}} en attente",
     "pages": "Pages",
-    "breadcrumb": "Fil d’Ariane"
+    "breadcrumb": "Fil d’Ariane",
+    "configure": "Configurer la base",
+    "configure_hint": "Objectif et schéma"
   },
   "tree": {
     "expand": "Déplier {{title}}",
@@ -146,5 +148,130 @@
     "no_changes": "Aucune modification du texte dans cette révision",
     "not_found": "Cette révision n’existe pas",
     "empty": "Aucun historique"
+  },
+  "builder": {
+    "create_title": "Nouvelle base de connaissances",
+    "create_sub": "Créer par conversation",
+    "config_title": "Configurer la base de connaissances",
+    "via_chat": "Configuré par conversation",
+    "setup_create_title": "Créer une base de connaissances par conversation",
+    "setup_config_title": "Configurer la base de connaissances par conversation",
+    "setup_description": "Choisissez l'environnement d'exécution et le modèle du constructeur.",
+    "chat_title": "Constructeur de base de connaissances",
+    "change_runtime": "Changer",
+    "change_runtime_label": "Changer d'environnement d'exécution",
+    "intro_create": "Quelle base de connaissances voulez-vous ? Choisissez une direction : je rédige le nom, l'objectif et le schéma, puis nous les affinons ensemble.",
+    "intro_config": "Je modifie l'objectif et le schéma selon vos besoins. Partez d'une question ci-dessous ou dites ce que vous voulez changer.",
+    "describe_hint": "Vous pouvez aussi décrire votre besoin.",
+    "starters": {
+      "dev": {
+        "title": "Base de connaissances technique",
+        "description": "Architecture, services et interfaces, procédures de dépannage, décisions techniques"
+      },
+      "qa": {
+        "title": "Base de connaissances de test",
+        "description": "Méthodes de conception de tests, environnements, listes de régression, analyses de défauts"
+      },
+      "product": {
+        "title": "Base de connaissances produit",
+        "description": "Descriptions des fonctions, règles métier, règles de facturation, réponses clients"
+      },
+      "team": {
+        "title": "Base de connaissances d'équipe",
+        "description": "Partagée par le développement, les tests et le produit, organisée par étiquettes de domaine"
+      }
+    },
+    "starter_message": "{{title}} : {{description}}",
+    "questions": {
+      "readers": "Qui lit cette base de connaissances et que cherche-t-on le plus ?",
+      "scope": "Qu'est-ce qui y entre, et qu'est-ce qui n'y entre pas ?",
+      "structure": "Comment organiser les pages : par module système, processus métier ou équipe ?",
+      "writing": "Quelles règles pour les citations et la rédaction ?"
+    },
+    "drafts_create_one": "Vous avez {{count}} création inachevée",
+    "drafts_create_other": "Vous avez {{count}} créations inachevées",
+    "drafts_config_one": "Vous avez {{count}} configuration inachevée",
+    "drafts_config_other": "Vous avez {{count}} configurations inachevées",
+    "pick_create": "Brouillons de création",
+    "pick_config": "Brouillons de configuration",
+    "panel": {
+      "title": "Configuration de la base",
+      "basics": "Informations de base",
+      "name": "Nom",
+      "description": "Description",
+      "slug": "Nom de répertoire",
+      "generated_placeholder": "Généré après la description de vos besoins",
+      "slug_placeholder": "Généré à partir du nom",
+      "slug_invalid": "Utilisez des minuscules, des chiffres et des traits d'union",
+      "purpose": "Objectif",
+      "purpose_placeholder": "# Objectif",
+      "just_updated": "Mis à jour",
+      "expand_edit": "Agrandir pour modifier",
+      "expand_view": "Agrandir pour consulter",
+      "schema": "Schéma",
+      "schema_mode": "Mode du schéma",
+      "schema_default": "Par défaut",
+      "schema_custom": "Personnalisé",
+      "read_only": "Lecture seule",
+      "schema_default_hint": "Utilise les règles de maintenance intégrées, non modifiables et que le constructeur ne change pas. Passez à Personnalisé pour les adapter à votre équipe.",
+      "schema_placeholder": "Rédigé à partir du schéma intégré après la description de vos besoins"
+    },
+    "footer": {
+      "unsaved": "Modifications non enregistrées",
+      "discard_create": "Abandonner la création",
+      "discard_config": "Abandonner les modifications",
+      "create": "Créer",
+      "save": "Enregistrer"
+    },
+    "discard": {
+      "create_title": "Abandonner cette création ?",
+      "config_title": "Abandonner ces modifications ?",
+      "description": "La conversation et la configuration à droite seront supprimées définitivement.",
+      "keep": "Continuer"
+    },
+    "expand": {
+      "edit": "Modifier",
+      "split": "Côte à côte",
+      "preview": "Aperçu",
+      "read_only": "Par défaut · lecture seule",
+      "edit_hint": "Les modifications reviennent dans la configuration à droite et s'appliquent à l'enregistrement",
+      "read_only_hint": "Le schéma par défaut est en lecture seule. Pour le modifier, passez d'abord à Personnalisé à droite",
+      "cancel": "Annuler",
+      "done": "Terminé",
+      "close": "Fermer"
+    },
+    "saved": "Enregistré",
+    "errors": {
+      "name_required": "Saisissez un nom",
+      "slug_taken": "Ce nom de répertoire est déjà utilisé dans l'espace de travail",
+      "conflict": "Quelqu'un a enregistré cette configuration après votre ouverture. Rechargez pour voir ses modifications.",
+      "forbidden": "Seul le créateur de la base ou un propriétaire ou administrateur peut la configurer",
+      "create_failed": "Impossible de créer la base de connaissances",
+      "save_failed": "Impossible d'enregistrer la configuration"
+    }
+  },
+  "welcome": {
+    "created": "La base de connaissances « {{name}} » a été créée. Voici comment l'utiliser.",
+    "guide_title": "Utiliser cette base de connaissances",
+    "suggested": "À faire en premier",
+    "dismiss": "Compris",
+    "steps": {
+      "ingest": {
+        "title": "Intégrer des sources",
+        "description": "Lancez une tâche de base de connaissances et confiez à un agent des tickets, conversations, fichiers ou pages web. Il rédige les pages et cite une source pour chaque fait."
+      },
+      "review": {
+        "title": "Effectif après revue",
+        "description": "Les modifications d'un agent passent d'abord par un brouillon. Vous le relisez et le soumettez ; il s'applique une fois fusionné par le créateur de la base, un propriétaire ou un administrateur."
+      },
+      "read": {
+        "title": "Lire et annoter",
+        "description": "Si une information est fausse ou obsolète, sélectionnez la phrase et ajoutez une annotation. Les annotations peuvent être confiées à un agent en un clic."
+      },
+      "maintain": {
+        "title": "Maintenance planifiée",
+        "description": "Planifiez une intégration et un contrôle de santé réguliers pour que la base suive les derniers tickets et le code."
+      }
+    }
   }
 }

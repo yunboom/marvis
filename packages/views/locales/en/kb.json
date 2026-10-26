@@ -36,7 +36,9 @@
     "home": "Home",
     "pending": "{{count}} pending",
     "pages": "Pages",
-    "breadcrumb": "Breadcrumb"
+    "breadcrumb": "Breadcrumb",
+    "configure": "Configure knowledge base",
+    "configure_hint": "Purpose and schema"
   },
   "tree": {
     "expand": "Expand {{title}}",
@@ -146,5 +148,130 @@
     "no_changes": "No text changes in this revision",
     "not_found": "This revision does not exist",
     "empty": "No history yet"
+  },
+  "builder": {
+    "create_title": "New knowledge base",
+    "create_sub": "Create through conversation",
+    "config_title": "Configure knowledge base",
+    "via_chat": "Configured through conversation",
+    "setup_create_title": "Create a knowledge base through conversation",
+    "setup_config_title": "Configure the knowledge base through conversation",
+    "setup_description": "Choose the runtime and model the builder runs on.",
+    "chat_title": "Knowledge base builder",
+    "change_runtime": "Change",
+    "change_runtime_label": "Change runtime",
+    "intro_create": "What kind of knowledge base do you want? Pick a direction and I will draft the name, purpose and schema, then we refine them together.",
+    "intro_config": "I will change the purpose and schema to match what you need. Start from a question below, or say what you want to change.",
+    "describe_hint": "Or describe what you need.",
+    "starters": {
+      "dev": {
+        "title": "Engineering knowledge base",
+        "description": "System architecture, services and interfaces, runbooks, technical decisions"
+      },
+      "qa": {
+        "title": "Testing knowledge base",
+        "description": "Test design methods, test environments, regression checklists, defect reviews"
+      },
+      "product": {
+        "title": "Product knowledge base",
+        "description": "Feature descriptions, business rules, billing rules, customer replies"
+      },
+      "team": {
+        "title": "Team knowledge base",
+        "description": "Shared by engineering, testing and product, separated by domain tags"
+      }
+    },
+    "starter_message": "{{title}}: {{description}}",
+    "questions": {
+      "readers": "Who reads this knowledge base, and what do they look up most?",
+      "scope": "What belongs here, and what does not?",
+      "structure": "How should pages be organised: by system module, business flow or team?",
+      "writing": "What are the rules for citations and writing?"
+    },
+    "drafts_create_one": "You have {{count}} unfinished creation",
+    "drafts_create_other": "You have {{count}} unfinished creations",
+    "drafts_config_one": "You have {{count}} unfinished configuration",
+    "drafts_config_other": "You have {{count}} unfinished configurations",
+    "pick_create": "Creation drafts",
+    "pick_config": "Configuration drafts",
+    "panel": {
+      "title": "Knowledge base configuration",
+      "basics": "Basics",
+      "name": "Name",
+      "description": "Description",
+      "slug": "Directory name",
+      "generated_placeholder": "Generated after you describe your needs",
+      "slug_placeholder": "Generated from the name",
+      "slug_invalid": "Use lowercase letters, digits and hyphens",
+      "purpose": "Purpose",
+      "purpose_placeholder": "# Purpose",
+      "just_updated": "Just updated",
+      "expand_edit": "Expand to edit",
+      "expand_view": "Expand to view",
+      "schema": "Schema",
+      "schema_mode": "Schema mode",
+      "schema_default": "Default",
+      "schema_custom": "Custom",
+      "read_only": "Read-only",
+      "schema_default_hint": "Uses the built-in maintenance rules, which cannot be edited and the builder does not change. Switch to Custom to adapt them to your team.",
+      "schema_placeholder": "Drafted from the built-in schema after you describe your needs"
+    },
+    "footer": {
+      "unsaved": "Unsaved changes",
+      "discard_create": "Discard creation",
+      "discard_config": "Discard changes",
+      "create": "Create",
+      "save": "Save"
+    },
+    "discard": {
+      "create_title": "Discard this creation?",
+      "config_title": "Discard these changes?",
+      "description": "The conversation and the configuration on the right will be deleted permanently.",
+      "keep": "Keep editing"
+    },
+    "expand": {
+      "edit": "Edit",
+      "split": "Split",
+      "preview": "Preview",
+      "read_only": "Default · read-only",
+      "edit_hint": "Changes go back to the configuration on the right and take effect when saved",
+      "read_only_hint": "The default schema can only be viewed. To change it, switch to Custom on the right first",
+      "cancel": "Cancel",
+      "done": "Done",
+      "close": "Close"
+    },
+    "saved": "Saved",
+    "errors": {
+      "name_required": "Enter a name",
+      "slug_taken": "This directory name is already used in the workspace",
+      "conflict": "Someone else saved this configuration after you opened it. Reload to see their changes.",
+      "forbidden": "Only the knowledge base creator or a workspace owner or admin can configure it",
+      "create_failed": "Could not create the knowledge base",
+      "save_failed": "Could not save the configuration"
+    }
+  },
+  "welcome": {
+    "created": "Knowledge base “{{name}}” has been created. Here is how to use it.",
+    "guide_title": "How to use this knowledge base",
+    "suggested": "Suggested first",
+    "dismiss": "Got it",
+    "steps": {
+      "ingest": {
+        "title": "Ingest sources",
+        "description": "Start a knowledge base job and hand issues, chats, uploaded files or web pages to an agent. It writes the knowledge into pages and cites a source for every fact."
+      },
+      "review": {
+        "title": "Takes effect after review",
+        "description": "An agent's changes go into a draft first. You review it and submit it; it takes effect once the knowledge base creator or an owner or admin merges it."
+      },
+      "read": {
+        "title": "Read and annotate",
+        "description": "When something is wrong or outdated, select the sentence and add an annotation. Annotations can be handed to an agent in one click."
+      },
+      "maintain": {
+        "title": "Scheduled maintenance",
+        "description": "Set up a scheduled ingest and a scheduled health check, and the knowledge base keeps up with the latest issues and code."
+      }
+    }
   }
 }

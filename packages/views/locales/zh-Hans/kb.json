@@ -33,7 +33,9 @@
     "home": "首页",
     "pending": "待处理 {{count}}",
     "pages": "页面",
-    "breadcrumb": "位置"
+    "breadcrumb": "位置",
+    "configure": "配置知识库",
+    "configure_hint": "目标与 Schema"
   },
   "tree": {
     "expand": "展开{{title}}",
@@ -138,5 +140,128 @@
     "no_changes": "这次修改没有改动正文",
     "not_found": "修订不存在",
     "empty": "还没有历史"
+  },
+  "builder": {
+    "create_title": "新建知识库",
+    "create_sub": "通过对话创建",
+    "config_title": "配置知识库",
+    "via_chat": "通过对话配置",
+    "setup_create_title": "通过对话创建知识库",
+    "setup_config_title": "通过对话配置知识库",
+    "setup_description": "选择构建器运行的运行时和模型。",
+    "chat_title": "知识库构建器",
+    "change_runtime": "更换",
+    "change_runtime_label": "更换运行时",
+    "intro_create": "想建一个什么样的知识库？选一个方向开始，我来起草名称、目标和 Schema，再一起细调。",
+    "intro_config": "我会根据你的需求修改目标和 Schema。可以从下面的问题开始，也可以直接说想改什么。",
+    "describe_hint": "也可以直接描述你的需求。",
+    "starters": {
+      "dev": {
+        "title": "研发知识库",
+        "description": "系统架构、服务与接口、排障手册、技术决策"
+      },
+      "qa": {
+        "title": "测试知识库",
+        "description": "用例设计方法、测试环境、回归清单、缺陷复盘"
+      },
+      "product": {
+        "title": "产品知识库",
+        "description": "功能说明、业务规则、计费规则、对客话术"
+      },
+      "team": {
+        "title": "团队综合知识库",
+        "description": "研发、测试、产品共用，按领域标签区分"
+      }
+    },
+    "starter_message": "建一个{{title}}：{{description}}",
+    "questions": {
+      "readers": "这个知识库给谁看？他们最常查什么？",
+      "scope": "收录哪些内容，哪些不收？",
+      "structure": "页面怎么组织：按系统模块、业务流程，还是团队？",
+      "writing": "引用和写法有什么要求？"
+    },
+    "drafts_create_other": "您有 {{count}} 条未完成的创建",
+    "drafts_config_other": "您有 {{count}} 条未完成的配置",
+    "pick_create": "创建草稿",
+    "pick_config": "配置草稿",
+    "panel": {
+      "title": "知识库配置",
+      "basics": "基本信息",
+      "name": "名称",
+      "description": "简介",
+      "slug": "目录名",
+      "generated_placeholder": "说完需求后自动生成",
+      "slug_placeholder": "按名称生成",
+      "slug_invalid": "只能用小写字母、数字和连字符",
+      "purpose": "目标",
+      "purpose_placeholder": "# 目标",
+      "just_updated": "刚更新",
+      "expand_edit": "放大编辑",
+      "expand_view": "放大查看",
+      "schema": "Schema",
+      "schema_mode": "Schema 模式",
+      "schema_default": "默认",
+      "schema_custom": "自定义",
+      "read_only": "只读",
+      "schema_default_hint": "使用平台内置的维护规则，不能编辑，构建器也不会改它；要按团队习惯调整，切到「自定义」。",
+      "schema_placeholder": "说完需求后按内置 Schema 起草"
+    },
+    "footer": {
+      "unsaved": "有未保存的修改",
+      "discard_create": "放弃创建",
+      "discard_config": "放弃修改",
+      "create": "创建",
+      "save": "保存"
+    },
+    "discard": {
+      "create_title": "放弃这次创建？",
+      "config_title": "放弃这次修改？",
+      "description": "对话和右侧配置都会被永久删除。",
+      "keep": "继续编辑"
+    },
+    "expand": {
+      "edit": "编辑",
+      "split": "分栏",
+      "preview": "预览",
+      "read_only": "默认 · 只读",
+      "edit_hint": "改动回到右侧配置，保存后生效",
+      "read_only_hint": "默认 Schema 只能查看；要修改，先在右侧切到「自定义」",
+      "cancel": "取消",
+      "done": "完成",
+      "close": "关闭"
+    },
+    "saved": "已保存",
+    "errors": {
+      "name_required": "请填写名称",
+      "slug_taken": "工作区里已有这个目录名",
+      "conflict": "打开配置后有人保存过，刷新后再修改。",
+      "forbidden": "只有知识库创建者或工作区 owner、admin 可以配置",
+      "create_failed": "创建知识库失败",
+      "save_failed": "保存配置失败"
+    }
+  },
+  "welcome": {
+    "created": "知识库「{{name}}」已创建。先看看怎么用。",
+    "guide_title": "这个知识库怎么用",
+    "suggested": "建议先做",
+    "dismiss": "知道了",
+    "steps": {
+      "ingest": {
+        "title": "收录资料",
+        "description": "新建知识库作业，把任务、对话、上传的文件或网页交给智能体，它把知识整理进页面，每条事实都标来源。"
+      },
+      "review": {
+        "title": "审核后生效",
+        "description": "智能体的改动先进草稿，你看过后提交审核，知识库创建者或 owner、admin 合并后才生效。"
+      },
+      "read": {
+        "title": "阅读和批注",
+        "description": "发现写错或过时，选中那句话加一条批注；批注可以一键交给智能体处理。"
+      },
+      "maintain": {
+        "title": "定时维护",
+        "description": "建一个定时收录和定时健康检查，知识库会自己跟上最新的任务和代码。"
+      }
+    }
   }
 }

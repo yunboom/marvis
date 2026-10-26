@@ -30,6 +30,7 @@ import { DesktopChooseRuntimePage } from "./components/desktop-choose-runtime-pa
 import { AgentCreatedPage } from "./pages/agent-created-page";
 import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@marvis/views/squads/components";
 import {
+  KbBuilderPage,
   KbHomePage,
   KbListPage,
   KbPageView,
@@ -262,11 +263,19 @@ export const appRoutes: RouteObject[] = [
             handle: { title: "Squad" },
           },
           { path: "kb", element: <KbListPage />, handle: { title: "Knowledge base" } },
+          { path: "kb/new", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
+          { path: "kb/new/:sessionId", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
           {
             path: "kb/:kbSlug",
             element: <KbShellRoute />,
             children: [
               { index: true, element: <KbHomePage />, handle: { title: "Knowledge base" } },
+              { path: "config", element: <KbBuilderPage />, handle: { title: "Configure knowledge base" } },
+              {
+                path: "config/:sessionId",
+                element: <KbBuilderPage />,
+                handle: { title: "Configure knowledge base" },
+              },
               { path: "p/:pageId", element: <KbPageView />, handle: { title: "Knowledge base" } },
               {
                 path: "p/:pageId/history/:revisionId",

@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbHomeOptions } from "@marvis/core/kb/queries";
+import { Button } from "@marvis/ui/components/ui/button";
 import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
@@ -35,6 +36,56 @@ function PendingCard({
   );
 }
 
+const WELCOME_STEPS = ["ingest", "review", "read", "maintain"] as const;
+
+/**
+ * Onboarding shown once after a knowledge base is created: the four steps of
+ * using it, ingesting first. Front-end copy only; nothing is started.
+ */
+function KbWelcomeGuide({ name, onDismiss }: { name: string; onDismiss: () => void }) {
+  const { t } = useT("kb");
+
+  return (
+    <section className="flex flex-col gap-3" aria-label={t(($) => $.welcome.guide_title)}>
+      <div role="status" className="flex items-center gap-2 rounded-xl bg-success/10 px-3.5 py-2.5 text-body">
+        <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-success" />
+        <span className="min-w-0 flex-1">{t(($) => $.welcome.created, { name })}</span>
+        <Button type="button" variant="ghost" size="xs" onClick={onDismiss}>
+          {t(($) => $.welcome.dismiss)}
+        </Button>
+      </div>
+      <div className="flex flex-col gap-3 rounded-xl border bg-card px-4.5 py-4">
+        <h2 className="text-body font-semibold">{t(($) => $.welcome.guide_title)}</h2>
+        <ol className="flex flex-col gap-3">
+          {WELCOME_STEPS.map((step, index) => (
+            <li key={step} className="flex items-start gap-3">
+              <span
+                aria-hidden="true"
+                className="mt-px flex size-[22px] shrink-0 items-center justify-center rounded-full bg-primary text-caption text-primary-foreground"
+              >
+                {index + 1}
+              </span>
+              <span className="flex flex-col gap-0.5">
+                <span className="flex items-center gap-2 font-medium">
+                  {t(($) => $.welcome.steps[step].title)}
+                  {step === "ingest" && (
+                    <span className="rounded-full bg-muted px-2 py-px text-micro font-normal text-muted-foreground">
+                      {t(($) => $.welcome.suggested)}
+                    </span>
+                  )}
+                </span>
+                <span className="text-label leading-6 text-muted-foreground">
+                  {t(($) => $.welcome.steps[step].description)}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
 /**
  * The home page of a knowledge base is an overview: the base, its pending
  * work and recently merged pages. It embeds no page body.
@@ -44,8 +95,11 @@ export function KbHomePage() {
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
   const timeAgo = useTimeAgo();
-  const { pathname } = useNavigation();
+  const navigation = useNavigation();
+  const { pathname } = navigation;
   const { kbSlug } = parseKbRoute(pathname);
+  // Set by the builder right after creation (design 1.10).
+  const welcome = navigation.searchParams.get("welcome") === "1";
   const { data: home, isLoading, isError } = useQuery(kbHomeOptions(wsId, kbSlug));
 
   if (!home?.knowledge_base.id) {
@@ -84,6 +138,7 @@ export function KbHomePage() {
             {base.description && <p className="text-body text-muted-foreground">{base.description}</p>}
           </div>
 
+          {welcome && <KbWelcomeGuide name={base.name} onDismiss={() => navigation.replace(p.kbBase(kbSlug))} />}
 
           <section>
             <h2 className="mb-2.5 text-label font-semibold">{t(($) => $.home.pending_title)}</h2>

@@ -1,22 +1,26 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Check, ChevronDown, House, Link2, MoreHorizontal } from "lucide-react";
+import { Check, ChevronDown, House, Link2, MessageSquareText, MoreHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuthStore } from "@marvis/core/auth";
 import { useWorkspaceId } from "@marvis/core/hooks";
+import { memberListOptions } from "@marvis/core/workspace/queries";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbBaseDetailOptions, kbBaseListOptions, kbPageOptions } from "@marvis/core/kb/queries";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
 import { copyText } from "@marvis/ui/lib/clipboard";
 import { cn } from "@marvis/ui/lib/utils";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
+import { parseKbBuilderRoute } from "../builder/kb-builder-route";
 import { parseKbRoute } from "../utils/kb-markdown";
 import { KbPageTree } from "./kb-page-tree";
 
@@ -74,7 +78,20 @@ function KbSwitcher({ kbSlug, name }: { kbSlug: string; name: string }) {
   );
 }
 
-function KbMoreMenu({ kbSlug }: { kbSlug: string }) {
+/**
+ * Whether the current member may configure a knowledge base: its creator or
+ * a workspace owner / admin (the server enforces the same rule).
+ */
+function useCanConfigureKb(createdBy: string | undefined): boolean {
+  const wsId = useWorkspaceId();
+  const userId = useAuthStore((state) => state.user?.id ?? "");
+  const { data: members = [] } = useQuery(memberListOptions(wsId));
+  const role = members.find((member) => member.user_id === userId)?.role;
+
+  return !!userId && (createdBy === userId || role === "owner" || role === "admin");
+}
+
+function KbMoreMenu({ kbSlug, canConfigure }: { kbSlug: string; canConfigure: boolean }) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
   const { getShareableUrl } = useNavigation();
@@ -98,7 +115,17 @@ function KbMoreMenu({ kbSlug }: { kbSlug: string }) {
           </button>
         }
       />
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent align="end" className="w-60">
+        {canConfigure && (
+          <>
+            <DropdownMenuItem render={<AppLink href={p.kbConfig(kbSlug)} />}>
+              <MessageSquareText className="size-3.5" />
+              <span className="flex-1">{t(($) => $.nav.configure)}</span>
+              <span className="text-caption text-faint-foreground">{t(($) => $.nav.configure_hint)}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem onClick={copyLink}>
           <Link2 className="size-3.5" />
           {t(($) => $.list.copy_link)}
@@ -113,6 +140,7 @@ function KbNav({ kbSlug, pageId, draft }: { kbSlug: string; pageId: string; draf
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
   const { data: base } = useQuery(kbBaseDetailOptions(wsId, kbSlug));
+  const canConfigure = useCanConfigureKb(base?.created_by);
   // Shares the reading page's query, so the breadcrumb that expands the tree
   // costs no extra request.
   const { data: page } = useQuery(kbPageOptions(wsId, pageId, draft));
@@ -128,7 +156,7 @@ function KbNav({ kbSlug, pageId, draft }: { kbSlug: string; pageId: string; draf
     >
       <div className="flex h-14 shrink-0 items-center gap-1 border-b pr-2 pl-3">
         <KbSwitcher kbSlug={kbSlug} name={base?.name ?? kbSlug} />
-        <KbMoreMenu kbSlug={kbSlug} />
+        <KbMoreMenu kbSlug={kbSlug} canConfigure={canConfigure} />
       </div>
       <div className="flex flex-col gap-0.5 px-2 pt-2.5 pb-1">
         <AppLink
@@ -161,6 +189,11 @@ export function KbShell({ children }: { children: ReactNode }) {
   const { pathname, searchParams } = useNavigation();
   const { kbSlug, pageId } = parseKbRoute(pathname);
   const draft = searchParams.get("draft") ?? "";
+
+  // The configuration builder is a full-width flow of its own (design 10.x).
+  if (parseKbBuilderRoute(pathname).mode === "config") {
+    return <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>;
+  }
 
   return (
     <div className="flex min-h-0 flex-1">
