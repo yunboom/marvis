@@ -146,7 +146,20 @@ function KbMoreMenu({ kbSlug, canConfigure }: { kbSlug: string; canConfigure: bo
   );
 }
 
-function KbNav({ kbSlug, pageId, draft, onJobs }: { kbSlug: string; pageId: string; draft: string; onJobs: boolean }) {
+function KbNav({
+  kbSlug,
+  pageId,
+  draft,
+  onJobs,
+  onChanges,
+}: {
+  kbSlug: string;
+  pageId: string;
+  draft: string;
+  onJobs: boolean;
+  /** The change log, reached from the "…" menu: no nav row is current. */
+  onChanges: boolean;
+}) {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
@@ -160,7 +173,7 @@ function KbNav({ kbSlug, pageId, draft, onJobs }: { kbSlug: string; pageId: stri
 
   const pending = base ? base.pending.annotations + base.pending.stale_pages + base.pending.open_mrs : 0;
   const ancestorIds = page?.id === pageId ? page.breadcrumb.map((crumb) => crumb.id) : [];
-  const onHome = !pageId && !onJobs;
+  const onHome = !pageId && !onJobs && !onChanges;
 
   return (
     <aside
@@ -228,7 +241,14 @@ export function KbShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-0 flex-1">
-      {kbSlug && <KbNav key={kbSlug} kbSlug={kbSlug} pageId={pageId} draft={draft} onJobs={jobView === "list"} />}
+      {kbSlug && <KbNav
+          key={kbSlug}
+          kbSlug={kbSlug}
+          pageId={pageId}
+          draft={draft}
+          onJobs={jobView === "list"}
+          onChanges={reviewView === "changes"}
+        />}
       <div className="flex min-w-0 flex-1 flex-col">{children}</div>
     </div>
   );
