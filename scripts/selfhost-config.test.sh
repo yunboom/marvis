@@ -42,6 +42,7 @@ trap 'rm -f "$tmp_env"; rm -rf "$tmp_dir"' EXIT
 sed 's/^FRONTEND_PORT=.*/FRONTEND_PORT=3100/' .env.example >"$tmp_env"
 printf '\nBACKEND_PORT=9100\nSMTP_FROM_EMAIL=marvis@example.com\n' >>"$tmp_env"
 printf 'MARVIS_LLM_API_KEY=llm-key-from-env\nMARVIS_LLM_BASE_URL=http://gateway.example/v1\nMARVIS_LLM_DEFAULT_MODEL=model-from-env\nMARVIS_LLM_MAX_RETRIES=3\n' >>"$tmp_env"
+printf 'MARVIS_EMBEDDING_BASE_URL=http://embed.example/v1\nMARVIS_EMBEDDING_API_KEY=embed-key-from-env\nMARVIS_EMBEDDING_MODEL=embed-model-from-env\n' >>"$tmp_env"
 printf 'DATABASE_REPLICA_URL=postgres://reader:secret@replica.example.com:5432/marvis?sslmode=require\nDATABASE_REPLICA_MAX_CONNS=12\nDATABASE_REPLICA_MIN_CONNS=1\n' >>"$tmp_env"
 
 config="$(
@@ -90,6 +91,9 @@ require_config "$config" 'MARVIS_LLM_API_KEY: llm-key-from-env'
 require_config "$config" 'MARVIS_LLM_BASE_URL: http://gateway.example/v1'
 require_config "$config" 'MARVIS_LLM_DEFAULT_MODEL: model-from-env'
 require_config "$config" 'MARVIS_LLM_MAX_RETRIES: "3"'
+require_config "$config" 'MARVIS_EMBEDDING_BASE_URL: http://embed.example/v1'
+require_config "$config" 'MARVIS_EMBEDDING_API_KEY: embed-key-from-env'
+require_config "$config" 'MARVIS_EMBEDDING_MODEL: embed-model-from-env'
 
 while IFS= read -r llm_var; do
   if ! grep -Eq "^[[:space:]]+${llm_var}: \\\$\{${llm_var}:-" docker-compose.selfhost.yml; then
@@ -97,7 +101,7 @@ while IFS= read -r llm_var; do
     echo "service in docker-compose.selfhost.yml, so self-hosted deployments cannot set it."
     exit 1
   fi
-done < <(grep -oE '^MARVIS_LLM_[A-Z_]+' .env.example)
+done < <(grep -oE '^MARVIS_(LLM|EMBEDDING)_[A-Z_]+' .env.example)
 
 # The same drift for integration encryption keys, keyed on the server rather
 # than on .env.example: each secretbox.LoadKey() gates an integration that

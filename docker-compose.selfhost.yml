@@ -173,6 +173,12 @@ services:
       MARVIS_LLM_DEFAULT_MODEL: ${MARVIS_LLM_DEFAULT_MODEL:-}
       MARVIS_LLM_MAX_RETRIES: ${MARVIS_LLM_MAX_RETRIES:-}
       MARVIS_LLM_DISABLE_THINKING: ${MARVIS_LLM_DISABLE_THINKING:-}
+      # Embedding model for the vector half of knowledge base search, any
+      # OpenAI-compatible /v1/embeddings endpoint returning 1024 dimensions.
+      # All three set = hybrid search; any one empty = keyword search only.
+      MARVIS_EMBEDDING_BASE_URL: ${MARVIS_EMBEDDING_BASE_URL:-}
+      MARVIS_EMBEDDING_API_KEY: ${MARVIS_EMBEDDING_API_KEY:-}
+      MARVIS_EMBEDDING_MODEL: ${MARVIS_EMBEDDING_MODEL:-}
       # Lark / Feishu bot integration. MARVIS_LARK_SECRET_KEY is the
       # opt-in: unset = integration disabled. Mainland 飞书 and international
       # Lark are auto-detected per installation and served side by side, so
