@@ -125,7 +125,7 @@
    - 运行时删除的阻塞提示里，知识库构建器归为 other_system（「Marvis 内置」），没有单独的文案，留作缺口。
 3. **放弃与清理**
    - `DELETE /api/kb/builder/sessions/{id}` 先确认是知识库构建器会话（否则 404），再直接走现有的删除聊天会话逻辑；聊天删除路径里加了删 `kb_builder_session`，运行时下线（`pruneRuntimeSystemAgentChatDraftRestores`）也一并清理。
-   - 创建成功 / 配置保存后，照创建智能体把构建器会话归档（不删），它就不再出现在「未完成」里。
+   - 创建成功后，照创建智能体把构建器会话归档（不删），它就不再出现在「未完成」里。配置保存后不归档（票 07 按用户决定修正，见票 07 第 12 条）。
 4. **构建器会话接口细节**
    - 列表响应是数组（spec 原样），只列有消息或保存过右侧配置（`draft <> '{}'`）的会话；没保存过时 `draft` 为 null，前端回放最后一条 `<kb_draft>`。
    - `kb` 查询参数接受 id 或 slug；`mode` 不合法 400。
@@ -142,8 +142,8 @@
    - 创建和每次保存都写一行 `kb_config_revision`。
 8. **创建后的去向（1.10）**
    - 作业页属于票 07，现在跳到 `/kb/{slug}?welcome=1`：首页上方显示「已创建」提示和四步上手引导，「收录资料」标「建议先做」，点「知道了」去掉参数。引导第一步的文字改成「新建知识库作业」，不说「在这里」。
-   - 票 07 做好作业页后，把跳转改成 `/kb/{slug}/jobs/new?welcome=1` 并把引导移过去。
-9. **配置保存后的去向**：设计稿 10.4 停留在配置页显示「已保存」；但保存后这段对话已经结束，留在页面会让它一直挂在「未完成的配置」里。选择：提示「已保存」、归档会话、回到知识库首页。
+   - 用户改定：作业页做好后仍跳知识库首页、引导留在首页，不移到作业页（票 07）。
+9. **配置保存后的去向**（用户改定，票 07 实现）：照设计稿 10.4 停留在配置页、提示「已保存」，会话不归档、可以继续对话；「未完成的配置」只列有未保存改动的会话（见票 07 第 12 条）。
 10. **路由**：`/kb/new`（选运行时）、`/kb/new/{会话}`、`/kb/{slug}/config`、`/kb/{slug}/config/{会话}`；选运行时这一步复用 `BuilderSetup`。配置页在 `[kbSlug]` layout 下，`KbShell` 遇到 config 路由不画知识库导航，占满宽度（设计稿 10.x）。
 11. **消息信封与回填**
    - 用户消息包成 `MARVIS_KB_BUILDER_INPUT\n{user_request, schema_mode, current_draft}`，`current_draft.schema` 只在自定义模式带。
@@ -202,7 +202,7 @@
    - 只有 `X-Actor-Source = task_token`（或通过 resolveActor 校验的智能体）时才记 `task_id`，响应不返回。
    - `job_id`：作业须在同一知识库（否则 404 `job_not_found`）；调用人是作业创建人，或调用方是作业的执行智能体且任务属于作业的对话（否则 403）；作业已有草稿 409 `job_draft_exists` 并带已关联的 `draft_id`，整个请求回滚（不留下新草稿）。
    - 成功后发 `kb.job.updated`（`protocol.EventKbJobUpdated`，payload `{job_id, knowledge_base_id, draft_id}`）。前端订阅与 `kb.draft.updated`（1 秒合并发送）留给票 07。
-10. **读写权限**：草稿的读写只认 `created_by` = 调用人（任务令牌按令牌绑定的人）；草稿由智能体以令牌绑定的人建，所以和作业发起人不同人时作业发起人看不到它——票 07 做作业页时按 `kb_job_draft` 放开作业发起人。
+10. **读写权限**：草稿的写入只认 `created_by` = 调用人（任务令牌按令牌绑定的人）；读取另外放开关联作业的发起人（票 07 第 3 条）。
 11. **检索（决策 105）**：本票只做关键字一路：按空格分词，每个词都要命中 `search_text`（ILIKE，转义通配符），标题命中排前，返回前 `limit` 条（1–50，默认 10）和 `total`，不翻页；`type` 不区分大小写过滤；`mode` 为 `keyword`。命中块和摘录取第一个含查询词的块，摘录约 120 字。
 12. **页面列表（决策 105）**：`total` 是这一层（`parent` 的直接子页面或顶层）的页面数，主线用一条 COUNT（排除草稿改过的页）加上草稿在这一层的页面数；草稿删除的页面照常列出并计数（与票 02 树的展示一致）。`type` 只在这一层过滤，主线在 SQL 里过滤，草稿页按页头 `type` 过滤，排序和游标不变。
 13. **chat scope（spec 8.7）**
@@ -249,7 +249,7 @@
 2. **embedding 客户端不用 OpenAI SDK**
    - 问题：`pkg/llm` 的测试锁住「只有 llm 包能 import openai-go」。
    - 选择：`pkg/embedding` 直接用 `net/http` 调 `{BASE_URL}/embeddings`，`BASE_URL` 与 `MARVIS_LLM_BASE_URL` 同样含 `/v1`；请求带 `dimensions: 1024`、`encoding_format: float`；按 `index` 排回输入顺序，条数或维度不对报错；客户端本身不重试（检索路径 2 秒超时直接降级，建向量由 worker 退避重试）。错误信息带状态码和上游正文前 300 字节，不含密钥；启动日志只打 `enabled` 和模型名，不打地址（地址可能带令牌）。
-   - 一批固定 100 条（spec）。少数网关单批上限更小（如通义 text-embedding-v3 是 10 条），这种情况会一直报错、退回关键字，暂不加配置项，留作缺口。
+   - 单批条数由 `MARVIS_EMBEDDING_BATCH_SIZE` 配置（票 07 补，见票 07 第 13 条），默认 10。
 3. **建向量的入口与时机**
    - `kb.EmbeddingIndexer`：`Enqueue(页面 id...)` 不阻塞，只把 id 放进待办集合；`Run` 在后台消费。写主线的调用方（票 08 合并、`kb.CreatePage` 的调用方）在事务提交后调 `h.KbEmbeddings.Enqueue`，`CreatePage` 的注释写明了这一点。目前主线没有生产调用方（票 03 去掉了 quickstart 页），所以本票只提供入口。
    - `IndexPages(页面 id)` 是可复用的同步入口：一次查页面、一次查已有 hash，内存里比对；块纯文本（`kb.PlainText`，截到 4000 字）的 sha256 与模型都没变就跳过；删掉的块、删除的页面一条批量 DELETE；需要重算的块按 100 条一批，一批一次 embedding 调用加一次 unnest 批量 upsert（循环只按批次走，注释写明是上游单批上限）。最后把这些页的向量 `updated_at` 刷成 now()，作为「已建到这一版」的标记。
@@ -270,3 +270,44 @@
    - 输入停顿 250ms 后查询，只搜当前知识库（`kb=slug`），取前 10 条；面板头是「N 个页面」（`total`），每条是标题、上级路径、摘录（查询词加粗），点开跳到页面并定位到命中块（`#块id`），只有标题命中时跳到页面顶部；回车打开第一条，Esc 或焦点离开关闭；没有结果显示「没有找到「q」」「换个关键词试试。」；请求失败显示「搜索失败」。`mode` 不在界面显示。
    - 搜索框 220px，聚焦时展开到 300px（设计稿 2.1 与 6.1 的宽度）；面板 460px 右对齐。
    - 查询键在 `kbKeys.searches(wsId)` 下，票 08 合并事件要一并失效它（spec 09「检索」）。
+
+
+## 票 07
+
+1. **首条消息模板**
+   - spec 08.4 / 08.5 的英文原文放在 `server/internal/kb/templates/job_message.md.tmpl`（`{{define}}` 分段，`go:embed` 读入，原因同票 03 第 5 条：含反引号）；`kb.JobFirstMessage` 先渲染开场白附加段，再填进通用部分。custom 没有附加段，通用部分用 `{{if}}` 去掉多出的空行。快照在 `internal/kb/testdata/job_message/*.golden`（`-update-job-golden` 重写）。
+   - 带入的上下文写法：批注 `- <id> · \`<slug>:/路径#^块\` · "原句"`，整库批注 Where 是 `knowledge base`；检查本页 / 合并的页面是 `标题 (\`<slug>:/路径\`)`；新页面父页面是页面标题和 `<slug>:/路径`，没带父页面时是知识库名称和 `<slug>:/`；原始资料的 Title 取 uri 的最后一段。
+   - 首条消息整段存为聊天的第一条用户消息（spec 原话）；作业页只显示 `\nMember's message:\n` 之后成员写的部分（`memberPartOfJobMessage`），停止第一轮时恢复到输入框的也是这一部分。
+2. **作业名**
+   - 问题：spec 默认名是中文（收录资料、处理批注……），但服务端不做国际化。
+   - 选择：前端按开场白发本地化的名称（新建对话、带入上下文时都发）；服务端只在没传名称时兜底，用英文开场白标题（与首条消息 `Job:` 行一致），custom 取首条消息前 20 字。两张定时卡片都是 starter `schedule`，名称分别是「创建定时收录」「创建定时健康检查」。
+3. **草稿读权限放开（票 04 缺口 a）**：`loadKbDraftForReader` 允许草稿创建人，或 `kb_job_draft` 关联作业的发起人；草稿检查（`GET /api/kb/drafts/{id}`）、`?draft=` 读页和页面树走读权限，所以「在页面中查看」能打开智能体建的草稿。写入（ops、建页、claims、sync、建变更请求）仍只认草稿创建人。阅读页的草稿条也列出关联到自己作业的草稿。
+4. **提交中的草稿可写**
+   - 问题：票 04 只允许 `open` 的草稿写入，但 spec 7.9 / 8.6 要求审核评论后智能体接着改这份草稿、diff 随之刷新。
+   - 选择：`submitted` 的草稿也接受写入；`merged`、`discarded` 仍 409 `draft_not_open`。
+5. **变更请求的最小实现（票 08 扩展）**
+   - `kb.CreateMergeRequest`（`internal/kb/merge_request.go`）在调用方事务里：`kb_workspace` upsert 分配工作区内编号、插入 `kb_merge_request`、草稿置 `submitted`、带入的批注 pending → processing。
+   - handler 的 `openKbMergeRequest` 先在草稿行锁下检查：已有打开的变更请求 409 `merge_request_open`、草稿不是 open 409 `draft_not_open`、没有改动 409 `draft_empty`、格式检查有 error 409 `draft_check_failed`；与主线冲突不阻止提交。
+   - 作业提交 `POST /api/kb/jobs/{id}/submit` 和 `POST /api/kb/merge-requests`（`kb mr create`）共用它；后者的 source 不传时按关联作业的开场白取，没有作业为 custom，不接受 revert。
+   - 响应的 `origin` 目前只判断「关联了作业 → kb_job（label 为作业名）」和 `none`；按 `task_id` 反查任务表的对话 / 任务 / 自动化来源由票 08 补。`draft_version` 取建变更请求时的草稿版本（表里没有这一列，票 08 合并时带上即可）。
+   - 发 `kb.mr.created`（`{merge_request_id, number, knowledge_base_id, draft_id, job_id}`）、`kb.job.updated`，带入的批注变化时发 `kb.annotation.changed`。
+6. **作业页提交的作者**
+   - 问题：spec 7.10 的提交响应示例作者是智能体；但设计稿 9.6「你已提交」和 9.10「通用开发助手已提交」要区分是谁提交的，且「作者能关闭自己的」需要提交的人能关。
+   - 选择：作业页「提交审核」作者记为提交的成员；智能体自己 `kb mr create` 作者记为智能体（resolveActor）。标题不传时取智能体最后一条回复的第一行（去掉 Markdown 标题、强调符号，120 字内），再没有取作业名；说明取最后一条回复全文。
+7. **作业状态与列表**
+   - 状态不落列，按对话的任务算：有排队 / 派发 / 运行中 / 等待本地目录的任务为 running，否则看最近一个任务：failed → failed、cancelled → stopped、其余 idle（一次 `ListKbJobStates` 批量查，列表和详情共用）。
+   - 列表只返回自己发起的，最多 200 条，`state` 在内存里过滤；`updated_at` 取作业、最后回复、草稿三者最新。列表里 `draft.added / deleted` 为 0（要逐份草稿 diff），详情才算；`draft` 多返回 `status`（「已放弃」要用）。`merge_request` 返回最近一个变更请求的编号、标题、状态、作者和合并人 / 关闭人名称、关闭理由（横幅 9.14 / 9.15 用）。
+   - 作业的对话不进「我的对话」等聊天列表（`ListChatSessionsByCreator` / `ListAllChatSessionsByCreator` 排除 `kb_job.chat_session_id`），只从知识库作业进入；全员对话（收录用的 `scope=workspace`）照常包含。
+8. **新建作业的失败处理**：先校验智能体（不存在 / system 404、归档 422、无调用权限 403、没有绑定运行时 422），再在一个事务里建聊天会话和 `kb_job`，提交后发首条消息；首条消息发送失败时删掉刚建的作业和会话再报错，不在列表里留下空作业。带入的批注必须属于这个知识库（否则 400 `annotation_not_found`），`page_id` 必须是本库主线页面（否则 400 `page_not_found`），`sources` 不落库，只进首条消息。
+9. **kb.draft.updated 的合并**：handler 上的 `kbDraftNotifier` 按草稿合并，第一次写入开 1 秒窗口，窗口内的页面 id 取并集、版本取最大，窗口结束发一次；写入（建页、ops、claims、sync 有合并时）提交后调用，放弃草稿也发一次。job_id 在调用时按 `kb_job_draft` 查。
+10. **前端失效**：`kb.job.updated` 失效作业列表和详情；`kb.draft.updated` 失效作业详情、列表和以这份草稿读的树和页面（查询键末尾是草稿 id）；`kb.mr.created` 再失效首页、读页、知识库列表；`chat:done` 也失效作业查询（状态和最后回复来自对话，只有挂载着的查询会重取）；作业页在一轮结束时主动失效详情。
+11. **界面**
+    - 路由：列表 `/kb/{slug}/jobs`（在知识库导航里，「知识库作业」一项带运行中数量），新建 `/kb/{slug}/jobs/new`，作业页 `/kb/{slug}/jobs/{id}`；新建和作业页像配置页一样占满宽度，不画知识库导航（设计稿 9.2–9.17）。
+    - 新建：上方选执行智能体（自动化的 AgentPicker，加了 `agentsOnly` 去掉小队，没有运行时的置灰），默认第一个绑定了运行时的智能体；没带上下文时显示 6 张开场白卡片，点卡片直接用「标题：说明」作为首条消息建作业；也可以直接描述（custom）。入口带入的上下文放在 URL（`starter`、`annotations`、`page`、`sources`、`message`，`KB_NEW_JOB_PARAMS`），要求写进输入框，成员选好智能体后发送。
+    - 作业页左侧复用 ChatMessageList、ChatQueue、ChatInput（运行中「停止」、可排队时「排队发送」，与聊天页同一套 send / stop / 队列操作）；右侧 560px，窄屏改为上下排列。状态由 `kbJobPanelState` 推出：没草稿（9.17，提交不可用）、有草稿没改动且在运行（暂无改动）、一轮结束没改动（9.13 无需修改，不显示提交和放弃）、有改动（运行中或有 error 时提交不可用，error 时「让智能体修复」，冲突时可提交并「让智能体基于主线更新」，关闭过的显示「重新提交审核」）、已提交只读（9.6 / 9.10，「去审核 #N」）、已合并（9.15，对话结束、不再显示输入框）、已放弃（对话结束）。「让智能体修复 / 基于主线更新」发一条带草稿 id 和 `marvis kb draft check / sync` 的消息。放弃草稿先确认。
+    - 「去审核 #N」链接 `/kb/{slug}/reviews/{number}`（`paths.kbMergeRequest`），路由由票 08 注册；诊断路径表已登记。
+    - 入口：批注列表「全部交给智能体（N）」带入全部待处理批注；批注栏「交给智能体处理」带入这一栏的待处理批注（票 05 的禁用按钮）；页面「…」菜单「让智能体检查本页」（health，带页面，草稿视图下不显示）；页面树每行悬停出「＋」，弹出「在 X 下写一页」，交给智能体后打开 new_page 作业（草稿视图下不显示）。原始资料「交给智能体收录」在票 09 的原始资料页接 `paths.kbNewJob(slug, {starter: "ingest", sources})`，接口已支持 `sources`。
+    - 设计稿 9.3 的欢迎引导（建库后首次进入）按用户决定留在知识库首页，作业页不画。
+12. **配置保存后的去向（票 03 缺口 b，用户定）**：保存后提示「已保存」、留在配置页、不归档、可以继续对话；「未完成的配置」只列 `kbBuilderSessionHasUnsavedChanges` 为真的会话：保存过的右侧配置和知识库当前配置不同，或从没保存过、但智能体最后一条回复的 `<kb_draft>` 提议和当前配置不同。创建成功仍归档并跳首页显示上手引导。
+13. **embedding 单批条数（票 06 缺口 c）**：`MARVIS_EMBEDDING_BATCH_SIZE`，默认 10，范围 1–100，非数字取默认、越界截到边界（`embedding.ParseBatchSize`）；`Embedder` 接口加 `BatchSize()`，`IndexPages` 按它切批。写进 `.env.example`、`docker-compose.selfhost.yml` 和 `selfhost-config.test.sh` 的漂移检查。
+14. **端到端**：`e2e/kb-jobs.spec.ts` 在浏览器里新建作业，智能体一侧（带 job_id 建草稿、写一页）用接口模拟，不跑智能体 CLI；草稿经 `kb.job.updated` / `kb.draft.updated` 不刷新就出现在右侧，一轮结束后提交审核、开出变更请求。各边界状态在 views 组件测试，接口契约在 Go 的 handler 测试（`kb_job_test.go`）。
