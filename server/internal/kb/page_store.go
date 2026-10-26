@@ -39,7 +39,9 @@ type NewPage struct {
 
 // CreatePage writes a new page to the mainline: its first revision, the page
 // row with blocks and search text, and its outgoing links. Run it with
-// queries bound to the caller's transaction so the write is atomic.
+// queries bound to the caller's transaction so the write is atomic. Once that
+// transaction commits, pass the page id to EmbeddingIndexer.Enqueue so its
+// blocks are embedded for search.
 func CreatePage(ctx context.Context, q *db.Queries, in NewPage) (db.KbPage, error) {
 	baseID, err := util.ParseUUID(in.KnowledgeBaseID)
 	if err != nil {
