@@ -115,7 +115,9 @@ describe("knowledge base tree level schema", () => {
       parent: { id: "p", path: "/payment", title: "支付" },
       pages: [{ id: "c", path: "/payment/callback", title: "支付回调", has_child: true, child_count: 2, draft_change: "added" }],
       next_cursor: "abc",
+      total: 7,
     });
+    expect(parsed.total).toBe(7);
     expect(parsed.parent?.title).toBe("支付");
     expect(parsed.pages[0]).toMatchObject({ has_child: true, child_count: 2, draft_change: "added", stale: false });
     expect(parsed.next_cursor).toBe("abc");
@@ -125,6 +127,11 @@ describe("knowledge base tree level schema", () => {
     const parsed = parse({ pages: [] });
     expect(parsed.parent).toBeNull();
     expect(parsed.next_cursor).toBe("");
+    expect(parsed.total).toBe(0);
+  });
+
+  it("defaults a malformed total to 0", () => {
+    expect(parse({ pages: [], total: "many" }).total).toBe(0);
   });
 
   it("falls back for a malformed response", () => {

@@ -174,6 +174,8 @@ export interface KbTreeLevel {
   pages: KbTreePage[];
   /** Empty when the level is complete. */
   next_cursor: string;
+  /** Pages on the whole level (of the requested type), across all cursor pages. */
+  total: number;
 }
 
 /** Pending work counts on the home page. */

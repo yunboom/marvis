@@ -100,7 +100,7 @@ function treePage(overrides: Partial<KbTreePage>): KbTreePage {
 }
 
 function level(pages: KbTreePage[], nextCursor = ""): KbTreeLevel {
-  return { version: 9, parent: null, pages, next_cursor: nextCursor };
+  return { version: 9, parent: null, pages, next_cursor: nextCursor, total: pages.length };
 }
 
 const CALLBACK: KbPage = {

@@ -223,6 +223,7 @@ export const KbTreeLevelSchema = z
     parent: nullableObject(z.object({ id: z.string(), path: text, title: text }).loose()),
     pages: lenientArray(KbTreePageSchema),
     next_cursor: text,
+    total: countSchema,
   })
   .loose();
 
@@ -332,6 +333,7 @@ export const EMPTY_KB_TREE_LEVEL: KbTreeLevel = {
   parent: null,
   pages: [],
   next_cursor: "",
+  total: 0,
 };
 
 export const EMPTY_KB_HOME: KbHome = {
