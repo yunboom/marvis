@@ -89,8 +89,11 @@ RETURNING *;
 -- Builder sessions own their hidden execution agent. Deleting the session
 -- removes that carrier and its task rows; the kind guard prevents this cleanup
 -- path from ever deleting a user-authored agent.
+-- Covers both builder carriers: the agent builder and the knowledge base
+-- builder.
 DELETE FROM agent
-WHERE id = $1 AND kind = 'system' AND system_key LIKE 'agent_builder:%';
+WHERE id = $1 AND kind = 'system'
+  AND (starts_with(system_key, 'agent_builder:') OR starts_with(system_key, 'kb_builder:'));
 
 -- name: RebindAgentBuilderRuntime :one
 -- Re-points a builder carrier at another runtime mid-conversation. The carrier
@@ -114,7 +117,8 @@ SET runtime_id = @runtime_id,
     runtime_mode = @runtime_mode,
     model = sqlc.narg('model'),
     updated_at = now()
-WHERE id = @id AND kind = 'system' AND system_key LIKE 'agent_builder:%'
+WHERE id = @id AND kind = 'system'
+  AND (starts_with(system_key, 'agent_builder:') OR starts_with(system_key, 'kb_builder:'))
 RETURNING *;
 
 -- name: UpdateAgent :one

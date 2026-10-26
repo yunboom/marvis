@@ -341,3 +341,89 @@ WHERE workspace_id = $1 AND id = $2;
 -- name: GetKbDraftInWorkspace :one
 SELECT * FROM kb_draft
 WHERE workspace_id = $1 AND id = $2;
+
+-- name: GetKbBaseForUpdate :one
+-- Locks a knowledge base for a configuration save so the stale-config check
+-- and the update are one step.
+SELECT * FROM kb_base
+WHERE workspace_id = $1 AND id = $2
+FOR UPDATE;
+
+-- name: UpdateKbBaseConfig :one
+UPDATE kb_base
+SET name = sqlc.arg('name'),
+    description = sqlc.arg('description'),
+    schema_mode = sqlc.arg('schema_mode'),
+    purpose = sqlc.arg('purpose'),
+    schema = sqlc.arg('schema'),
+    updated_at = now()
+WHERE id = sqlc.arg('id')
+RETURNING *;
+
+-- name: CreateKbBuilderSession :one
+-- The builder's own row beside its chat session (mirrors agent_builder_draft):
+-- what the conversation creates or configures, and the right-hand draft.
+INSERT INTO kb_builder_session (chat_session_id, workspace_id, mode, knowledge_base_id)
+VALUES (sqlc.arg('chat_session_id'), sqlc.arg('workspace_id'), sqlc.arg('mode'), sqlc.narg('knowledge_base_id'))
+RETURNING *;
+
+-- name: GetKbBuilderSession :one
+SELECT * FROM kb_builder_session
+WHERE chat_session_id = $1;
+
+-- name: UpdateKbBuilderDraft :one
+-- Whole-object last write wins: one editor on one screen autosaves the full
+-- configuration. Callers hold LockChatSessionForDraftWrite.
+UPDATE kb_builder_session
+SET draft = sqlc.arg('draft'),
+    updated_at = now()
+WHERE chat_session_id = sqlc.arg('chat_session_id')
+RETURNING *;
+
+-- name: DeleteKbBuilderSession :exec
+-- kb_builder_session has no chat_session FK (repo rule), so every path that
+-- removes a conversation says so explicitly.
+DELETE FROM kb_builder_session WHERE chat_session_id = $1;
+
+-- name: DeleteKbBuilderSessionsBySystemRuntimeAgents :exec
+-- A runtime teardown hard-deletes its system carriers and their sessions
+-- cascade away; prune the builder rows first, while the join still resolves.
+DELETE FROM kb_builder_session
+WHERE chat_session_id IN (
+    SELECT cs.id FROM chat_session cs
+    JOIN agent a ON a.id = cs.agent_id
+    WHERE a.runtime_id = $1 AND a.kind = 'system'
+);
+
+-- name: ListKbBuilderSessionsByCreator :many
+-- The caller's unfinished builder conversations, newest activity first. Same
+-- rules as ListAgentBuilderSessionsByCreator: active sessions holding a
+-- message or a saved draft. The runtime is the carrier's, not
+-- chat_session.runtime_id (the daemon's resume pointer, stale after a switch).
+SELECT cs.id,
+       cs.title,
+       a.runtime_id,
+       s.mode,
+       s.knowledge_base_id,
+       s.draft,
+       s.updated_at,
+       COALESCE(lm.content, '')::text AS last_message_content,
+       COALESCE(lm.role, '')::text AS last_message_role,
+       lm.created_at AS last_message_at
+FROM kb_builder_session s
+JOIN chat_session cs ON cs.id = s.chat_session_id
+JOIN agent a ON a.id = cs.agent_id
+LEFT JOIN LATERAL (
+  SELECT content, role, created_at
+    FROM chat_message m
+   WHERE m.chat_session_id = cs.id
+   ORDER BY m.created_at DESC
+   LIMIT 1
+) lm ON true
+WHERE s.workspace_id = sqlc.arg('workspace_id')
+  AND cs.creator_id = sqlc.arg('creator_id')
+  AND cs.status = 'active'
+  AND (sqlc.narg('mode')::text IS NULL OR s.mode = sqlc.narg('mode')::text)
+  AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR s.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
+  AND (lm.created_at IS NOT NULL OR s.draft <> '{}'::jsonb)
+ORDER BY COALESCE(lm.created_at, s.updated_at) DESC;

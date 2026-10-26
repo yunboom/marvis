@@ -347,6 +347,40 @@ func (q *Queries) CreateKbBase(ctx context.Context, arg CreateKbBaseParams) (KbB
 	return i, err
 }
 
+const createKbBuilderSession = `-- name: CreateKbBuilderSession :one
+INSERT INTO kb_builder_session (chat_session_id, workspace_id, mode, knowledge_base_id)
+VALUES ($1, $2, $3, $4)
+RETURNING chat_session_id, workspace_id, mode, knowledge_base_id, draft, updated_at
+`
+
+type CreateKbBuilderSessionParams struct {
+	ChatSessionID   pgtype.UUID `json:"chat_session_id"`
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+	Mode            string      `json:"mode"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+}
+
+// The builder's own row beside its chat session (mirrors agent_builder_draft):
+// what the conversation creates or configures, and the right-hand draft.
+func (q *Queries) CreateKbBuilderSession(ctx context.Context, arg CreateKbBuilderSessionParams) (KbBuilderSession, error) {
+	row := q.db.QueryRow(ctx, createKbBuilderSession,
+		arg.ChatSessionID,
+		arg.WorkspaceID,
+		arg.Mode,
+		arg.KnowledgeBaseID,
+	)
+	var i KbBuilderSession
+	err := row.Scan(
+		&i.ChatSessionID,
+		&i.WorkspaceID,
+		&i.Mode,
+		&i.KnowledgeBaseID,
+		&i.Draft,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createKbConfigRevision = `-- name: CreateKbConfigRevision :one
 INSERT INTO kb_config_revision (
     knowledge_base_id, name, description, schema_mode, purpose, schema, saved_by
@@ -555,6 +589,33 @@ func (q *Queries) CreateKbPageRevision(ctx context.Context, arg CreateKbPageRevi
 	return i, err
 }
 
+const deleteKbBuilderSession = `-- name: DeleteKbBuilderSession :exec
+DELETE FROM kb_builder_session WHERE chat_session_id = $1
+`
+
+// kb_builder_session has no chat_session FK (repo rule), so every path that
+// removes a conversation says so explicitly.
+func (q *Queries) DeleteKbBuilderSession(ctx context.Context, chatSessionID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteKbBuilderSession, chatSessionID)
+	return err
+}
+
+const deleteKbBuilderSessionsBySystemRuntimeAgents = `-- name: DeleteKbBuilderSessionsBySystemRuntimeAgents :exec
+DELETE FROM kb_builder_session
+WHERE chat_session_id IN (
+    SELECT cs.id FROM chat_session cs
+    JOIN agent a ON a.id = cs.agent_id
+    WHERE a.runtime_id = $1 AND a.kind = 'system'
+)
+`
+
+// A runtime teardown hard-deletes its system carriers and their sessions
+// cascade away; prune the builder rows first, while the join still resolves.
+func (q *Queries) DeleteKbBuilderSessionsBySystemRuntimeAgents(ctx context.Context, runtimeID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteKbBuilderSessionsBySystemRuntimeAgents, runtimeID)
+	return err
+}
+
 const deleteKbLinksFromPage = `-- name: DeleteKbLinksFromPage :exec
 DELETE FROM kb_link
 WHERE knowledge_base_id = $1 AND from_page_id = $2
@@ -625,6 +686,58 @@ func (q *Queries) GetKbBaseBySlug(ctx context.Context, arg GetKbBaseBySlugParams
 		&i.ContentVersion,
 		&i.CreatedBy,
 		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getKbBaseForUpdate = `-- name: GetKbBaseForUpdate :one
+SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at FROM kb_base
+WHERE workspace_id = $1 AND id = $2
+FOR UPDATE
+`
+
+type GetKbBaseForUpdateParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	ID          pgtype.UUID `json:"id"`
+}
+
+// Locks a knowledge base for a configuration save so the stale-config check
+// and the update are one step.
+func (q *Queries) GetKbBaseForUpdate(ctx context.Context, arg GetKbBaseForUpdateParams) (KbBase, error) {
+	row := q.db.QueryRow(ctx, getKbBaseForUpdate, arg.WorkspaceID, arg.ID)
+	var i KbBase
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.SchemaMode,
+		&i.Purpose,
+		&i.Schema,
+		&i.ContentVersion,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getKbBuilderSession = `-- name: GetKbBuilderSession :one
+SELECT chat_session_id, workspace_id, mode, knowledge_base_id, draft, updated_at FROM kb_builder_session
+WHERE chat_session_id = $1
+`
+
+func (q *Queries) GetKbBuilderSession(ctx context.Context, chatSessionID pgtype.UUID) (KbBuilderSession, error) {
+	row := q.db.QueryRow(ctx, getKbBuilderSession, chatSessionID)
+	var i KbBuilderSession
+	err := row.Scan(
+		&i.ChatSessionID,
+		&i.WorkspaceID,
+		&i.Mode,
+		&i.KnowledgeBaseID,
+		&i.Draft,
 		&i.UpdatedAt,
 	)
 	return i, err
@@ -968,6 +1081,96 @@ func (q *Queries) ListKbBases(ctx context.Context, workspaceID pgtype.UUID) ([]K
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbBuilderSessionsByCreator = `-- name: ListKbBuilderSessionsByCreator :many
+SELECT cs.id,
+       cs.title,
+       a.runtime_id,
+       s.mode,
+       s.knowledge_base_id,
+       s.draft,
+       s.updated_at,
+       COALESCE(lm.content, '')::text AS last_message_content,
+       COALESCE(lm.role, '')::text AS last_message_role,
+       lm.created_at AS last_message_at
+FROM kb_builder_session s
+JOIN chat_session cs ON cs.id = s.chat_session_id
+JOIN agent a ON a.id = cs.agent_id
+LEFT JOIN LATERAL (
+  SELECT content, role, created_at
+    FROM chat_message m
+   WHERE m.chat_session_id = cs.id
+   ORDER BY m.created_at DESC
+   LIMIT 1
+) lm ON true
+WHERE s.workspace_id = $1
+  AND cs.creator_id = $2
+  AND cs.status = 'active'
+  AND ($3::text IS NULL OR s.mode = $3::text)
+  AND ($4::uuid IS NULL OR s.knowledge_base_id = $4::uuid)
+  AND (lm.created_at IS NOT NULL OR s.draft <> '{}'::jsonb)
+ORDER BY COALESCE(lm.created_at, s.updated_at) DESC
+`
+
+type ListKbBuilderSessionsByCreatorParams struct {
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+	CreatorID       pgtype.UUID `json:"creator_id"`
+	Mode            pgtype.Text `json:"mode"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+}
+
+type ListKbBuilderSessionsByCreatorRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	Title              string             `json:"title"`
+	RuntimeID          pgtype.UUID        `json:"runtime_id"`
+	Mode               string             `json:"mode"`
+	KnowledgeBaseID    pgtype.UUID        `json:"knowledge_base_id"`
+	Draft              []byte             `json:"draft"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	LastMessageContent string             `json:"last_message_content"`
+	LastMessageRole    string             `json:"last_message_role"`
+	LastMessageAt      pgtype.Timestamptz `json:"last_message_at"`
+}
+
+// The caller's unfinished builder conversations, newest activity first. Same
+// rules as ListAgentBuilderSessionsByCreator: active sessions holding a
+// message or a saved draft. The runtime is the carrier's, not
+// chat_session.runtime_id (the daemon's resume pointer, stale after a switch).
+func (q *Queries) ListKbBuilderSessionsByCreator(ctx context.Context, arg ListKbBuilderSessionsByCreatorParams) ([]ListKbBuilderSessionsByCreatorRow, error) {
+	rows, err := q.db.Query(ctx, listKbBuilderSessionsByCreator,
+		arg.WorkspaceID,
+		arg.CreatorID,
+		arg.Mode,
+		arg.KnowledgeBaseID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKbBuilderSessionsByCreatorRow{}
+	for rows.Next() {
+		var i ListKbBuilderSessionsByCreatorRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.RuntimeID,
+			&i.Mode,
+			&i.KnowledgeBaseID,
+			&i.Draft,
+			&i.UpdatedAt,
+			&i.LastMessageContent,
+			&i.LastMessageRole,
+			&i.LastMessageAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1633,6 +1836,83 @@ func (q *Queries) ListKbUserDraftsForPage(ctx context.Context, arg ListKbUserDra
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateKbBaseConfig = `-- name: UpdateKbBaseConfig :one
+UPDATE kb_base
+SET name = $1,
+    description = $2,
+    schema_mode = $3,
+    purpose = $4,
+    schema = $5,
+    updated_at = now()
+WHERE id = $6
+RETURNING id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at
+`
+
+type UpdateKbBaseConfigParams struct {
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	SchemaMode  string      `json:"schema_mode"`
+	Purpose     string      `json:"purpose"`
+	Schema      string      `json:"schema"`
+	ID          pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateKbBaseConfig(ctx context.Context, arg UpdateKbBaseConfigParams) (KbBase, error) {
+	row := q.db.QueryRow(ctx, updateKbBaseConfig,
+		arg.Name,
+		arg.Description,
+		arg.SchemaMode,
+		arg.Purpose,
+		arg.Schema,
+		arg.ID,
+	)
+	var i KbBase
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.SchemaMode,
+		&i.Purpose,
+		&i.Schema,
+		&i.ContentVersion,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateKbBuilderDraft = `-- name: UpdateKbBuilderDraft :one
+UPDATE kb_builder_session
+SET draft = $1,
+    updated_at = now()
+WHERE chat_session_id = $2
+RETURNING chat_session_id, workspace_id, mode, knowledge_base_id, draft, updated_at
+`
+
+type UpdateKbBuilderDraftParams struct {
+	Draft         []byte      `json:"draft"`
+	ChatSessionID pgtype.UUID `json:"chat_session_id"`
+}
+
+// Whole-object last write wins: one editor on one screen autosaves the full
+// configuration. Callers hold LockChatSessionForDraftWrite.
+func (q *Queries) UpdateKbBuilderDraft(ctx context.Context, arg UpdateKbBuilderDraftParams) (KbBuilderSession, error) {
+	row := q.db.QueryRow(ctx, updateKbBuilderDraft, arg.Draft, arg.ChatSessionID)
+	var i KbBuilderSession
+	err := row.Scan(
+		&i.ChatSessionID,
+		&i.WorkspaceID,
+		&i.Mode,
+		&i.KnowledgeBaseID,
+		&i.Draft,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateKbPageHead = `-- name: UpdateKbPageHead :one

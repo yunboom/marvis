@@ -3084,12 +3084,15 @@ func (q *Queries) CreateSystemUserAgent(ctx context.Context, arg CreateSystemUse
 
 const deleteSystemAgentByID = `-- name: DeleteSystemAgentByID :exec
 DELETE FROM agent
-WHERE id = $1 AND kind = 'system' AND system_key LIKE 'agent_builder:%'
+WHERE id = $1 AND kind = 'system'
+  AND (starts_with(system_key, 'agent_builder:') OR starts_with(system_key, 'kb_builder:'))
 `
 
 // Builder sessions own their hidden execution agent. Deleting the session
 // removes that carrier and its task rows; the kind guard prevents this cleanup
 // path from ever deleting a user-authored agent.
+// Covers both builder carriers: the agent builder and the knowledge base
+// builder.
 func (q *Queries) DeleteSystemAgentByID(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteSystemAgentByID, id)
 	return err
@@ -7699,7 +7702,8 @@ SET runtime_id = $1,
     runtime_mode = $2,
     model = $3,
     updated_at = now()
-WHERE id = $4 AND kind = 'system' AND system_key LIKE 'agent_builder:%'
+WHERE id = $4 AND kind = 'system'
+  AND (starts_with(system_key, 'agent_builder:') OR starts_with(system_key, 'kb_builder:'))
 RETURNING id, workspace_id, name, avatar_url, runtime_mode, runtime_config, visibility, status, max_concurrent_tasks, owner_id, created_at, updated_at, description, runtime_id, instructions, archived_at, archived_by, custom_env, custom_args, mcp_config, model, thinking_level, composio_toolkit_allowlist, permission_mode, kind, system_key, disabled_runtime_skills, service_tier, conversation_starters
 `
 

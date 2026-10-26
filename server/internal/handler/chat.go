@@ -770,6 +770,11 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to delete agent builder draft")
 		return
 	}
+	// And for the knowledge base builder's row; a no-op for other chats.
+	if err := qtx.DeleteKbBuilderSession(r.Context(), session.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete knowledge base builder session")
+		return
+	}
 
 	if err := qtx.DeleteChatSession(r.Context(), db.DeleteChatSessionParams{
 		ID:          session.ID,
