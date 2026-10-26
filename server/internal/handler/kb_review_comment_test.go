@@ -114,7 +114,7 @@ func TestKbMrCommentsFromJob(t *testing.T) {
 
 	// While the agent works, merging waits.
 	detail := getKbMR(t, mr.Number, nil)
-	if !detail.AgentRunning {
+	if !detail.AgentRunning || detail.ReviewAgent == nil || detail.ReviewAgent.ID != f.agentID {
 		t.Error("agent_running = false while the job's agent works on the comment")
 	}
 	if got := mergeKbMR(t, mr.Number, detail.DraftVersion, nil, http.StatusConflict); got["code"] != kbCodeJobRunning {

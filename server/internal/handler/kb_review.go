@@ -88,12 +88,21 @@ type KbMergeRequestDetailResponse struct {
 	KnowledgeBaseName string                      `json:"knowledge_base_name"`
 	Pages             []KbDraftPageChangeResponse `json:"pages"`
 	Checks            KbDraftChecksResponse       `json:"checks"`
+	// ReviewAgent is the agent a plain review comment goes to (the author
+	// agent, else the job's or the draft task's agent); null when none.
+	ReviewAgent *KbReviewAgentResponse `json:"review_agent"`
 	// AgentRunning is set while the job's agent, or an agent a review comment
 	// started, is still working on the draft.
 	AgentRunning bool `json:"agent_running"`
 	CanMerge     bool `json:"can_merge"`
 	CanClose     bool `json:"can_close"`
 	CanRevert    bool `json:"can_revert"`
+}
+
+// KbReviewAgentResponse names the agent behind a merge request.
+type KbReviewAgentResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 // UpdateKbMergeRequestRequest changes a merge request's title, summary or
@@ -294,6 +303,12 @@ func (h *Handler) kbMergeRequestDetail(ctx context.Context, base db.KbBase, mr d
 	}
 	detail.Pages = pages
 
+	reviewAgent, err := h.kbReviewAgent(ctx, mr)
+	if err != nil {
+		return KbMergeRequestDetailResponse{}, err
+	}
+	detail.ReviewAgent = reviewAgent
+
 	if mr.Status != kb.MergeRequestStatusOpen {
 		return detail, nil
 	}
@@ -329,6 +344,43 @@ func (h *Handler) kbMergeRequestDetail(ctx context.Context, base db.KbBase, mr d
 	detail.AgentRunning = running
 
 	return detail, nil
+}
+
+// kbReviewAgent names the agent a plain review comment starts.
+func (h *Handler) kbReviewAgent(ctx context.Context, mr db.KbMergeRequest) (*KbReviewAgentResponse, error) {
+	origins, err := h.Queries.ListKbMergeRequestOrigins(ctx, db.ListKbMergeRequestOriginsParams{WorkspaceID: mr.WorkspaceID, DraftIds: []pgtype.UUID{mr.DraftID}})
+	if err != nil {
+		return nil, errors.Wrapf(err, "load merge request origin merge_request_id=%s", uuidToString(mr.ID))
+	}
+	var origin db.ListKbMergeRequestOriginsRow
+	if len(origins) > 0 {
+		origin = origins[0]
+	}
+	agentID := kbReviewAgentID(mr, origin)
+	if !agentID.Valid {
+		return nil, nil
+	}
+
+	names, err := h.loadKbActorNames(ctx, mr.WorkspaceID, []kbActor{{kind: kbActorAgent, id: agentID}})
+	if err != nil {
+		return nil, err
+	}
+
+	return &KbReviewAgentResponse{ID: uuidToString(agentID), Name: names.name(kbActorAgent, agentID)}, nil
+}
+
+// kbReviewAgentID is the agent behind a merge request: its author when an
+// agent wrote it, else the agent of the job it came from or of the task
+// that created its draft.
+func kbReviewAgentID(mr db.KbMergeRequest, origin db.ListKbMergeRequestOriginsRow) pgtype.UUID {
+	switch {
+	case mr.AuthorType == kbActorAgent:
+		return mr.AuthorID
+	case origin.JobAgentID.Valid:
+		return origin.JobAgentID
+	}
+
+	return origin.TaskAgentID
 }
 
 // kbMergeRequestResponseOf renders one merge request.

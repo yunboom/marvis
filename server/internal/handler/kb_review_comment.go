@@ -347,13 +347,8 @@ func (h *Handler) dispatchKbMrComment(ctx context.Context, r *http.Request, d kb
 	}
 
 	authorAgent := ""
-	switch {
-	case mr.AuthorType == kbActorAgent:
-		authorAgent = uuidToString(mr.AuthorID)
-	case origin.JobAgentID.Valid:
-		authorAgent = uuidToString(origin.JobAgentID)
-	case origin.TaskAgentID.Valid:
-		authorAgent = uuidToString(origin.TaskAgentID)
+	if id := kbReviewAgentID(mr, origin); id.Valid {
+		authorAgent = uuidToString(id)
 	}
 	planned := kb.ReviewCommentTriggers(kb.ReviewTriggerInput{
 		Body:          d.comment.Body,
