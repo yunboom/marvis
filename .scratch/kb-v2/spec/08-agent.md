@@ -1833,7 +1833,7 @@ A knowledge base is the team's long-term memory: facts, decisions and lessons th
 
 Each knowledge base has its own writing rules and goals: the `schema` and `purpose` fields of `marvis kb get <slug>`. Read both before you write anything.
 
-## Finding what the team already knows
+## Finding the team's existing knowledge
 
 There are three ways in. Read the `schema` field that `kb get` returns: which sections the knowledge base has, what each page type covers and what each field means. Reading it first tells you roughly where to look. The table of contents, `kb page list`, lists the top-level pages, or with `--parent` the child pages of the given page, each with a one-line description. Search, `kb search`, looks through titles and page text and tells you which block matched.
 
