@@ -82,7 +82,7 @@ function KbSwitcher({ kbSlug, name }: { kbSlug: string; name: string }) {
  * Whether the current member may configure a knowledge base: its creator or
  * a workspace owner / admin (the server enforces the same rule).
  */
-function useCanConfigureKb(createdBy: string | undefined): boolean {
+export function useCanConfigureKb(createdBy: string | undefined): boolean {
   const wsId = useWorkspaceId();
   const userId = useAuthStore((state) => state.user?.id ?? "");
   const { data: members = [] } = useQuery(memberListOptions(wsId));

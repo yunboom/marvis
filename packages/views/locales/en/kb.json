@@ -273,5 +273,40 @@
         "description": "Set up a scheduled ingest and a scheduled health check, and the knowledge base keeps up with the latest issues and code."
       }
     }
+  },
+  "annotation": {
+    "action": "Annotate",
+    "compose_label": "Annotation",
+    "compose_hint": "Agents see this sentence when they handle it",
+    "cancel": "Cancel",
+    "submit": "Annotate",
+    "add": "Add annotation",
+    "page_panel": "Page annotations",
+    "kb_panel": "Knowledge base annotations",
+    "page_compose_label": "Annotate this page",
+    "kb_compose_label": "Annotate the whole knowledge base",
+    "hand_off": "Hand off to an agent",
+    "hand_off_all": "Hand all to an agent ({{n}})",
+    "status": {
+      "pending": "Pending",
+      "processing": "In progress",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "dismiss": "Dismiss",
+    "reopen": "Reopen",
+    "where_block": "{{title}} · paragraph {{n}}",
+    "where_page": "{{title}} · whole page",
+    "where_kb": "Whole knowledge base",
+    "followed": "Followed a rewrite",
+    "lost": "Sentence deleted",
+    "original": "Sentence when annotated: {{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "Annotations",
+    "empty": "No annotations",
+    "create_failed": "Could not save the annotation",
+    "quote_not_found": "The sentence was not found",
+    "update_failed": "Could not update the annotation",
+    "panel_empty": "No annotations yet"
   }
 }

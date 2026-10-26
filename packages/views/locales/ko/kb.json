@@ -263,5 +263,40 @@
         "description": "정기 수록과 정기 상태 점검을 만들면 지식 베이스가 최신 작업과 코드를 따라갑니다."
       }
     }
+  },
+  "annotation": {
+    "action": "주석",
+    "compose_label": "주석 내용",
+    "compose_hint": "에이전트가 처리할 때 이 원문을 봅니다",
+    "cancel": "취소",
+    "submit": "주석",
+    "add": "주석 추가",
+    "page_panel": "이 페이지의 주석",
+    "kb_panel": "지식 베이스 주석",
+    "page_compose_label": "이 페이지에 주석",
+    "kb_compose_label": "지식 베이스 전체에 주석",
+    "hand_off": "에이전트에게 맡기기",
+    "hand_off_all": "모두 에이전트에게 맡기기 ({{n}})",
+    "status": {
+      "pending": "대기",
+      "processing": "처리 중",
+      "resolved": "해결됨",
+      "dismissed": "처리 안 함"
+    },
+    "dismiss": "처리 안 함",
+    "reopen": "되돌리기",
+    "where_block": "{{title}} · {{n}}번째 문단",
+    "where_page": "{{title}} · 페이지 전체",
+    "where_kb": "지식 베이스 전체",
+    "followed": "수정된 문장을 따라감",
+    "lost": "원문 삭제됨",
+    "original": "주석 당시 원문: {{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "주석",
+    "empty": "주석이 없습니다",
+    "create_failed": "주석을 저장하지 못했습니다",
+    "quote_not_found": "원문을 찾을 수 없습니다",
+    "update_failed": "업데이트하지 못했습니다",
+    "panel_empty": "아직 주석이 없습니다"
   }
 }

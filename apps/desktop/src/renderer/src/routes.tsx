@@ -31,6 +31,7 @@ import { AgentCreatedPage } from "./pages/agent-created-page";
 import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@marvis/views/squads/components";
 import {
   KbBuilderPage,
+  KbAnnotationsPage,
   KbHomePage,
   KbListPage,
   KbPageView,
@@ -276,6 +277,7 @@ export const appRoutes: RouteObject[] = [
                 element: <KbBuilderPage />,
                 handle: { title: "Configure knowledge base" },
               },
+              { path: "annotations", element: <KbAnnotationsPage />, handle: { title: "Annotations" } },
               { path: "p/:pageId", element: <KbPageView />, handle: { title: "Knowledge base" } },
               {
                 path: "p/:pageId/history/:revisionId",

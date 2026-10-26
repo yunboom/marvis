@@ -1,4 +1,5 @@
 export {
+  KbAnnotationsPage,
   KbHomePage,
   KbListPage,
   KbPageView,

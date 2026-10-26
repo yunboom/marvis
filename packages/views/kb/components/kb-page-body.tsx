@@ -121,6 +121,8 @@ interface BlockViewProps {
   highlights: readonly string[];
 }
 
+const NO_QUOTES: readonly string[] = [];
+
 function BlockView({ change, numbers, highlights }: BlockViewProps) {
   const { t } = useT("kb");
   const prepare = (block: KbBlock) =>
@@ -172,6 +174,8 @@ interface KbPageBodyProps {
   /** Banners shown under the meta row. */
   banners?: ReactNode;
   rawFileActions?: KbRawFileActions;
+  /** Annotated sentences to mark, by block id. */
+  annotatedQuotes?: ReadonlyMap<string, readonly string[]>;
 }
 
 /**
@@ -179,7 +183,7 @@ interface KbPageBodyProps {
  * become numbered citations with a hover card; a draft copy is compared with
  * the published page block by block.
  */
-export function KbPageBody({ page, published, banners, rawFileActions }: KbPageBodyProps) {
+export function KbPageBody({ page, published, banners, rawFileActions, annotatedQuotes }: KbPageBodyProps) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
   const { push } = useNavigation();
@@ -271,7 +275,7 @@ export function KbPageBody({ page, published, banners, rawFileActions }: KbPageB
             key={`${change.kind}-${change.block.id}-${i}`}
             change={change}
             numbers={numbers}
-            highlights={highlights}
+            highlights={blockHighlights(highlights, annotatedQuotes?.get(change.block.id) ?? NO_QUOTES)}
           />
         ))}
       </div>
@@ -310,4 +314,9 @@ export function KbPageBody({ page, published, banners, rawFileActions }: KbPageB
       )}
     </div>
   );
+}
+
+function blockHighlights(claims: readonly string[], quotes: readonly string[]): readonly string[] {
+  if (quotes.length === 0) return claims;
+  return [...claims, ...quotes];
 }

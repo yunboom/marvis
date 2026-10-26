@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown, Clock, Info, Link2, List, MoreHorizontal } from "lucide-react";
+import { ChevronDown, Clock, Info, Link2, List, MessageSquare, MoreHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import { kbBaseDetailOptions, kbPageOptions } from "@marvis/core/kb/queries";
-import type { KbPage, KbPageDraft, KbSource } from "@marvis/core/types";
+import { isOpenAnnotation, kbAnnotationListOptions, kbBaseDetailOptions, kbPageOptions } from "@marvis/core/kb/queries";
+import type { KbAnnotation, KbPage, KbPageDraft, KbSource } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -26,10 +26,11 @@ import { useT, useTimeAgo } from "../../i18n";
 import { parseKbRoute } from "../utils/kb-markdown";
 import { sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
 import { KbPageBody, pageTitle } from "./kb-page-body";
+import { KbAnnotationPanel, KbSelectionAnnotator } from "./kb-annotations";
 import { KbHistoryPanel, KbInfoPanel, KbTocPanel } from "./kb-page-panels";
 import { withDraft } from "./kb-page-tree";
 
-type Panel = "none" | "info" | "toc" | "history";
+type Panel = "none" | "info" | "toc" | "history" | "annotations";
 
 const ICON_BUTTON =
   "flex h-8 min-w-8 items-center justify-center gap-1 rounded-lg px-1.5 text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground aria-pressed:bg-surface-selected aria-pressed:text-foreground data-popup-open:bg-surface-selected";
@@ -212,6 +213,11 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
     enabled: !!wsId && !!pageId && !!draft && page?.draft_change === "modified",
   });
   const loaded = !!page && page.id === pageId;
+  // Annotated sentences are marked while the annotation panel is open.
+  const { data: annotations = [] } = useQuery({
+    ...kbAnnotationListOptions(wsId, kbSlug, "all", pageId),
+    enabled: !!wsId && !!kbSlug && !!pageId && panel === "annotations",
+  });
 
   useBlockAnchor(hash, loaded);
 
@@ -273,6 +279,16 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
         </nav>
         <button
           type="button"
+          aria-label={t(($) => $.annotation.page_panel)}
+          aria-pressed={panel === "annotations"}
+          onClick={() => togglePanel("annotations")}
+          className={ICON_BUTTON}
+        >
+          <MessageSquare className="size-4" />
+          {page.annotations_open > 0 && <span className="text-label tabular-nums">{page.annotations_open}</span>}
+        </button>
+        <button
+          type="button"
           aria-label={t(($) => $.page.toc)}
           aria-pressed={panel === "toc"}
           onClick={() => togglePanel("toc")}
@@ -293,7 +309,7 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
       </PageHeader>
 
       <div className="flex min-h-0 flex-1">
-        <div ref={scroller} className="min-w-0 flex-1 overflow-y-auto">
+        <div ref={scroller} className="relative min-w-0 flex-1 overflow-y-auto">
           <article
             className={cn(
               "mx-auto w-full max-w-[760px] pb-10",
@@ -304,6 +320,7 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
               page={page}
               published={published?.id === page.id ? published : null}
               rawFileActions={rawFileActions}
+              annotatedQuotes={panel === "annotations" ? annotatedQuotes(annotations) : undefined}
               banners={
                 <>
                   {drafts.length > 0 && <KbDraftBar drafts={drafts} activeDraft={draft} />}
@@ -312,7 +329,23 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
               }
             />
           </article>
+          <KbSelectionAnnotator
+            container={scroller}
+            kbSlug={kbSlug}
+            pageId={page.id}
+            enabled={!draft}
+            onCreated={() => setPanel("annotations")}
+          />
         </div>
+        {panel === "annotations" && (
+          <KbAnnotationPanel
+            kbSlug={kbSlug}
+            createdBy={base?.created_by}
+            pageId={page.id}
+            onJump={jumpTo}
+            onClose={() => setPanel("none")}
+          />
+        )}
         {panel === "info" && (
           <KbInfoPanel page={page} kbSlug={kbSlug} onClose={() => setPanel("none")} onOpenSource={openSource} />
         )}
@@ -325,6 +358,16 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
       </div>
     </div>
   );
+}
+
+/** The sentences of open annotations, by block, to mark on the page. */
+function annotatedQuotes(annotations: readonly KbAnnotation[]): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const annotation of annotations) {
+    if (!isOpenAnnotation(annotation) || !annotation.block_id || !annotation.quote) continue;
+    out.set(annotation.block_id, [...(out.get(annotation.block_id) ?? []), annotation.quote]);
+  }
+  return out;
 }
 
 /** The draft being viewed when the page response cannot list drafts. */

@@ -16,11 +16,14 @@ import { formatShortDate, pageTags, pageVerifications, useVerifierName } from ".
 
 export function KbPanel({
   title,
+  actions,
   onClose,
   children,
   className,
 }: {
   title: string;
+  /** Controls shown in the header, before the close button. */
+  actions?: ReactNode;
   onClose?: () => void;
   children: ReactNode;
   className?: string;
@@ -30,7 +33,8 @@ export function KbPanel({
   return (
     <aside aria-label={title} className={cn("flex w-[300px] shrink-0 flex-col border-l bg-background", className)}>
       <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4 text-body font-medium">
-        <span className="flex-1">{title}</span>
+        <span className="min-w-0 flex-1 truncate">{title}</span>
+        {actions}
         {onClose && (
           <button
             type="button"

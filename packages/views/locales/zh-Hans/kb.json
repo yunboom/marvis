@@ -263,5 +263,40 @@
         "description": "建一个定时收录和定时健康检查，知识库会自己跟上最新的任务和代码。"
       }
     }
+  },
+  "annotation": {
+    "action": "批注",
+    "compose_label": "批注内容",
+    "compose_hint": "智能体处理时会看到这句原文",
+    "cancel": "取消",
+    "submit": "批注",
+    "add": "添加批注",
+    "page_panel": "本页批注",
+    "kb_panel": "知识库批注",
+    "page_compose_label": "批注本页",
+    "kb_compose_label": "批注整个知识库",
+    "hand_off": "交给智能体处理",
+    "hand_off_all": "全部交给智能体（{{n}}）",
+    "status": {
+      "pending": "待处理",
+      "processing": "处理中",
+      "resolved": "已解决",
+      "dismissed": "不处理"
+    },
+    "dismiss": "不处理",
+    "reopen": "恢复",
+    "where_block": "{{title}} · 第 {{n}} 段",
+    "where_page": "{{title}} · 整页",
+    "where_kb": "整个知识库",
+    "followed": "已跟随改写",
+    "lost": "原句已删除",
+    "original": "批注时的原句：{{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "批注",
+    "empty": "没有批注",
+    "create_failed": "批注失败",
+    "quote_not_found": "没有找到这句原文",
+    "update_failed": "操作失败",
+    "panel_empty": "还没有批注"
   }
 }

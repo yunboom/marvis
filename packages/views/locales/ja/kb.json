@@ -263,5 +263,40 @@
         "description": "定期収録と定期ヘルスチェックを設定すると、ナレッジベースが最新のタスクとコードに追従します。"
       }
     }
+  },
+  "annotation": {
+    "action": "注釈",
+    "compose_label": "注釈の内容",
+    "compose_hint": "エージェントは処理時にこの原文を参照します",
+    "cancel": "キャンセル",
+    "submit": "注釈",
+    "add": "注釈を追加",
+    "page_panel": "このページの注釈",
+    "kb_panel": "ナレッジベースの注釈",
+    "page_compose_label": "このページに注釈",
+    "kb_compose_label": "ナレッジベース全体に注釈",
+    "hand_off": "エージェントに任せる",
+    "hand_off_all": "すべてエージェントに任せる（{{n}}）",
+    "status": {
+      "pending": "未対応",
+      "processing": "対応中",
+      "resolved": "解決済み",
+      "dismissed": "対応しない"
+    },
+    "dismiss": "対応しない",
+    "reopen": "戻す",
+    "where_block": "{{title}} · 第 {{n}} 段落",
+    "where_page": "{{title}} · ページ全体",
+    "where_kb": "ナレッジベース全体",
+    "followed": "書き換えに追従",
+    "lost": "原文は削除済み",
+    "original": "注釈時の原文：{{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "注釈",
+    "empty": "注釈はありません",
+    "create_failed": "注釈を保存できませんでした",
+    "quote_not_found": "原文が見つかりません",
+    "update_failed": "更新できませんでした",
+    "panel_empty": "まだ注釈はありません"
   }
 }

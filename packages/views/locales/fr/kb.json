@@ -273,5 +273,40 @@
         "description": "Planifiez une intégration et un contrôle de santé réguliers pour que la base suive les derniers tickets et le code."
       }
     }
+  },
+  "annotation": {
+    "action": "Annoter",
+    "compose_label": "Annotation",
+    "compose_hint": "Les agents voient cette phrase lorsqu'ils la traitent",
+    "cancel": "Annuler",
+    "submit": "Annoter",
+    "add": "Ajouter une annotation",
+    "page_panel": "Annotations de la page",
+    "kb_panel": "Annotations de la base",
+    "page_compose_label": "Annoter cette page",
+    "kb_compose_label": "Annoter toute la base de connaissances",
+    "hand_off": "Confier à un agent",
+    "hand_off_all": "Tout confier à un agent ({{n}})",
+    "status": {
+      "pending": "En attente",
+      "processing": "En cours",
+      "resolved": "Résolue",
+      "dismissed": "Ignorée"
+    },
+    "dismiss": "Ignorer",
+    "reopen": "Rouvrir",
+    "where_block": "{{title}} · paragraphe {{n}}",
+    "where_page": "{{title}} · page entière",
+    "where_kb": "Toute la base",
+    "followed": "Suit la réécriture",
+    "lost": "Phrase supprimée",
+    "original": "Phrase annotée : {{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "Annotations",
+    "empty": "Aucune annotation",
+    "create_failed": "Impossible d'enregistrer l'annotation",
+    "quote_not_found": "Phrase introuvable",
+    "update_failed": "Impossible de modifier l'annotation",
+    "panel_empty": "Aucune annotation pour l'instant"
   }
 }

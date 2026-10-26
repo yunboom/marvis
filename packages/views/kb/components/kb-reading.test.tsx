@@ -21,6 +21,7 @@ vi.mock("@marvis/core/api", () => ({
     getKnowledgeBasePage: vi.fn(),
     listKnowledgeBasePageHistory: vi.fn(),
     getKnowledgeBaseRevisionDiff: vi.fn(),
+    listKnowledgeBaseAnnotations: vi.fn().mockResolvedValue([]),
     listMembers: vi.fn().mockResolvedValue([]),
   },
 }));
