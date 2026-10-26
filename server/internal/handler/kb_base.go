@@ -37,6 +37,8 @@ type KbBaseResponse struct {
 	CreatedAt      string            `json:"created_at"`
 	UpdatedAt      string            `json:"updated_at"`
 	Pending        KbPendingResponse `json:"pending"`
+	// Mention is pasted into a reply to render the knowledge base card.
+	Mention string `json:"mention"`
 }
 
 // KbBaseDetailResponse is a knowledge base with its purpose and schema text.
@@ -74,6 +76,7 @@ func kbBaseToResponse(base db.KbBase, stats kbBaseStats) KbBaseResponse {
 			StalePages:  stats.staleCounts[id],
 			OpenMRs:     stats.openMRCounts[id],
 		},
+		Mention: kbMention(base),
 	}
 }
 

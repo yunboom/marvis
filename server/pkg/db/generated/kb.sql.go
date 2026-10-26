@@ -1996,13 +1996,14 @@ func (q *Queries) ListKbPageRevisionsByIDs(ctx context.Context, arg ListKbPageRe
 }
 
 const listKbPageTree = `-- name: ListKbPageTree :many
-SELECT id, parent_id, slug, title FROM kb_page
+SELECT id, parent_id, position, slug, title FROM kb_page
 WHERE knowledge_base_id = $1 AND deleted_at IS NULL
 `
 
 type ListKbPageTreeRow struct {
 	ID       pgtype.UUID `json:"id"`
 	ParentID pgtype.UUID `json:"parent_id"`
+	Position string      `json:"position"`
 	Slug     string      `json:"slug"`
 	Title    string      `json:"title"`
 }
@@ -2020,6 +2021,49 @@ func (q *Queries) ListKbPageTree(ctx context.Context, knowledgeBaseID pgtype.UUI
 		if err := rows.Scan(
 			&i.ID,
 			&i.ParentID,
+			&i.Position,
+			&i.Slug,
+			&i.Title,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbPageTreesByBases = `-- name: ListKbPageTreesByBases :many
+SELECT id, knowledge_base_id, parent_id, position, slug, title FROM kb_page
+WHERE knowledge_base_id = ANY($1::uuid[]) AND deleted_at IS NULL
+`
+
+type ListKbPageTreesByBasesRow struct {
+	ID              pgtype.UUID `json:"id"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	ParentID        pgtype.UUID `json:"parent_id"`
+	Position        string      `json:"position"`
+	Slug            string      `json:"slug"`
+	Title           string      `json:"title"`
+}
+
+// The live page trees of several knowledge bases, for search hit paths.
+func (q *Queries) ListKbPageTreesByBases(ctx context.Context, baseIds []pgtype.UUID) ([]ListKbPageTreesByBasesRow, error) {
+	rows, err := q.db.Query(ctx, listKbPageTreesByBases, baseIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKbPageTreesByBasesRow{}
+	for rows.Next() {
+		var i ListKbPageTreesByBasesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.KnowledgeBaseID,
+			&i.ParentID,
+			&i.Position,
 			&i.Slug,
 			&i.Title,
 		); err != nil {

@@ -359,7 +359,13 @@ func (h *Handler) kbBaseIDOfPage(ctx context.Context, wsUUID, pageID pgtype.UUID
 // loadKbTree builds the page tree of a knowledge base, with a draft's
 // moves, renames and new pages laid over the mainline when a draft is given.
 func (h *Handler) loadKbTree(ctx context.Context, baseID pgtype.UUID, draft *db.KbDraft) (*kb.PageTree, error) {
-	rows, err := h.Queries.ListKbPageTree(ctx, baseID)
+	return loadKbTreeWith(ctx, h.Queries, baseID, draft)
+}
+
+// loadKbTreeWith is loadKbTree on the given queries, so a write transaction
+// sees its own draft rows.
+func loadKbTreeWith(ctx context.Context, q *db.Queries, baseID pgtype.UUID, draft *db.KbDraft) (*kb.PageTree, error) {
+	rows, err := q.ListKbPageTree(ctx, baseID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "list page tree knowledge_base_id=%s", uuidToString(baseID))
 	}
@@ -368,12 +374,12 @@ func (h *Handler) loadKbTree(ctx context.Context, baseID pgtype.UUID, draft *db.
 	order := make([]string, 0, len(rows))
 	for _, row := range rows {
 		id := uuidToString(row.ID)
-		nodes[id] = kb.TreeNode{ID: id, ParentID: uuidOrEmpty(row.ParentID), Slug: row.Slug, Title: row.Title}
+		nodes[id] = kb.TreeNode{ID: id, ParentID: uuidOrEmpty(row.ParentID), Slug: row.Slug, Title: row.Title, Position: row.Position}
 		order = append(order, id)
 	}
 
 	if draft != nil {
-		pages, err := h.Queries.ListKbDraftPages(ctx, db.ListKbDraftPagesParams{KnowledgeBaseID: baseID, DraftID: draft.ID})
+		pages, err := q.ListKbDraftPages(ctx, db.ListKbDraftPagesParams{KnowledgeBaseID: baseID, DraftID: draft.ID})
 		if err != nil {
 			return nil, errors.Wrapf(err, "list draft pages draft_id=%s", uuidToString(draft.ID))
 		}
@@ -386,7 +392,7 @@ func (h *Handler) loadKbTree(ctx context.Context, baseID pgtype.UUID, draft *db.
 			if _, known := nodes[id]; !known {
 				order = append(order, id)
 			}
-			nodes[id] = kb.TreeNode{ID: id, ParentID: uuidOrEmpty(page.ParentID), Slug: page.Slug, Title: header.Title}
+			nodes[id] = kb.TreeNode{ID: id, ParentID: uuidOrEmpty(page.ParentID), Slug: page.Slug, Title: header.Title, Position: page.Position}
 		}
 	}
 

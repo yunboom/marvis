@@ -9,6 +9,8 @@ type TreeNode struct {
 	Slug     string
 	// Title is only needed for breadcrumbs; path resolution ignores it.
 	Title string
+	// Position is the sibling sort key; only placing pages needs it.
+	Position string
 }
 
 // PageTree resolves page paths (/parent/child) within one knowledge base. It

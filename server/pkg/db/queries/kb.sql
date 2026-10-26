@@ -80,7 +80,7 @@ WHERE d.knowledge_base_id = sqlc.arg('knowledge_base_id')::uuid;
 
 -- name: ListKbPageTree :many
 -- What page paths are built from: every live page of a knowledge base.
-SELECT id, parent_id, slug, title FROM kb_page
+SELECT id, parent_id, position, slug, title FROM kb_page
 WHERE knowledge_base_id = $1 AND deleted_at IS NULL;
 
 -- name: CreateKbPage :one
@@ -525,6 +525,11 @@ WHERE p.workspace_id = sqlc.arg('workspace_id')
   AND lower(p.search_text) LIKE ALL (sqlc.arg('patterns')::text[])
 ORDER BY (lower(p.title) LIKE ANY (sqlc.arg('patterns')::text[])) DESC, p.updated_at DESC, p.id
 LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
+
+-- name: ListKbPageTreesByBases :many
+-- The live page trees of several knowledge bases, for search hit paths.
+SELECT id, knowledge_base_id, parent_id, position, slug, title FROM kb_page
+WHERE knowledge_base_id = ANY(sqlc.arg('base_ids')::uuid[]) AND deleted_at IS NULL;
 
 -- name: ListKbStalePages :many
 SELECT p.id, p.title, p.stale_after,

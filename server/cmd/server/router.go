@@ -2274,6 +2274,19 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Get("/pages/{id}", h.GetKbPage)
 				r.Get("/pages/{id}/history", h.ListKbPageHistory)
 				r.Get("/pages/{id}/history/{revisionId}", h.GetKbRevisionDiff)
+				r.Get("/pages/{id}/fetch", h.FetchKbPage)
+				r.Get("/pages/{id}/claims", h.GetKbPageClaims)
+				r.Get("/bases/{kb}/claims", h.ListKbClaims)
+				r.Get("/bases/{kb}/stale", h.ListKbStalePages)
+				r.Get("/search", h.SearchKb)
+				// Drafts: agents write pages here; a merge request merges
+				// one draft. Only the draft creator reads or writes it.
+				r.Post("/drafts", h.CreateKbDraft)
+				r.Get("/drafts/{draftId}", h.GetKbDraft)
+				r.Post("/drafts/{draftId}/sync", h.SyncKbDraft)
+				r.Post("/drafts/{draftId}/pages", h.CreateKbDraftPage)
+				r.Post("/drafts/{draftId}/pages/{id}/ops", h.ApplyKbPageOps)
+				r.Put("/drafts/{draftId}/pages/{id}/claims", h.PutKbDraftClaims)
 			})
 
 			// Squads

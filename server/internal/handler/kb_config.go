@@ -47,11 +47,9 @@ type UpdateKbBaseRequest struct {
 	BaseUpdatedAt *string `json:"base_updated_at"`
 }
 
-// KbBaseMutationResponse is a created or updated knowledge base with the
-// mention a reply can paste to render its card.
+// KbBaseMutationResponse is a created or updated knowledge base.
 type KbBaseMutationResponse struct {
 	KbBaseResponse
-	Mention string `json:"mention"`
 }
 
 // KbTemplatesResponse carries the built-in texts the configuration form
@@ -148,10 +146,7 @@ func (h *Handler) CreateKbBase(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, KbBaseMutationResponse{
-		KbBaseResponse: kbBaseToResponse(base, kbBaseStats{}),
-		Mention:        kbMention(base),
-	})
+	writeJSON(w, http.StatusCreated, KbBaseMutationResponse{KbBaseResponse: kbBaseToResponse(base, kbBaseStats{})})
 }
 
 // UpdateKbBase saves a knowledge base's configuration (name, description,
@@ -245,10 +240,7 @@ func (h *Handler) UpdateKbBase(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, KbBaseMutationResponse{
-		KbBaseResponse: kbBaseToResponse(updated, stats),
-		Mention:        kbMention(updated),
-	})
+	writeJSON(w, http.StatusOK, KbBaseMutationResponse{KbBaseResponse: kbBaseToResponse(updated, stats)})
 }
 
 // kbSchemaFor resolves the schema text a new knowledge base stores. It
