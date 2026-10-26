@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Bot, Check, ChevronDown, House, Link2, MessageSquareText, MoreHorizontal } from "lucide-react";
+import { Bot, Check, ChevronDown, GitMerge, History, House, Link2, MessageSquareText, MoreHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthStore } from "@marvis/core/auth";
@@ -23,6 +23,7 @@ import { useT } from "../../i18n";
 import { parseKbBuilderRoute } from "../builder/kb-builder-route";
 import { parseKbRoute } from "../utils/kb-markdown";
 import { parseKbJobRoute } from "../jobs/kb-job-state";
+import { parseKbReviewRoute } from "../review/kb-review-route";
 import { KbPageTree } from "./kb-page-tree";
 
 export function KbInitial({ name, className }: { name: string; className?: string }) {
@@ -127,6 +128,15 @@ function KbMoreMenu({ kbSlug, canConfigure }: { kbSlug: string; canConfigure: bo
             <DropdownMenuSeparator />
           </>
         )}
+        <DropdownMenuItem render={<AppLink href={p.kbReviews(kbSlug)} />}>
+          <GitMerge className="size-3.5" />
+          {t(($) => $.review.title)}
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<AppLink href={p.kbChanges(kbSlug)} />}>
+          <History className="size-3.5" />
+          {t(($) => $.review.changes.title)}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={copyLink}>
           <Link2 className="size-3.5" />
           {t(($) => $.list.copy_link)}
@@ -208,10 +218,11 @@ export function KbShell({ children }: { children: ReactNode }) {
   const draft = searchParams.get("draft") ?? "";
 
   const jobView = parseKbJobRoute(pathname).view;
+  const reviewView = parseKbReviewRoute(pathname).view;
 
-  // The configuration builder (design 10.x) and a job's conversation (9.2–9.17)
-  // are full-width flows of their own.
-  if (parseKbBuilderRoute(pathname).mode === "config" || jobView === "new" || jobView === "job") {
+  // The configuration builder (design 10.x), a job's conversation (9.2–9.17)
+  // and review (8.x) are full-width flows of their own.
+  if (parseKbBuilderRoute(pathname).mode === "config" || jobView === "new" || jobView === "job" || reviewView === "reviews") {
     return <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>;
   }
 

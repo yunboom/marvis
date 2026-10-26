@@ -89,7 +89,8 @@
     "not_found": "Cette page n’existe pas ou a été supprimée",
     "sources": "Sources",
     "missing_page": "Cette page n’est pas encore écrite",
-    "close_panel": "Fermer"
+    "close_panel": "Fermer",
+    "view_change": "Voir la modification"
   },
   "draft": {
     "label": "Brouillon",
@@ -155,7 +156,8 @@
     "close": "Fermer l’historique",
     "no_changes": "Aucune modification du texte dans cette révision",
     "not_found": "Cette révision n’existe pas",
-    "empty": "Aucun historique"
+    "empty": "Aucun historique",
+    "revert": "Annuler cette modification"
   },
   "builder": {
     "create_title": "Nouvelle base de connaissances",
@@ -480,6 +482,118 @@
       "annotations_page_message_other": "Traite les {{count}} annotations en attente de « {{title}} ».",
       "annotations_kb_message_one": "Traite l’annotation en attente sur toute la base ({{count}}).",
       "annotations_kb_message_other": "Traite les {{count}} annotations en attente sur toute la base."
+    }
+  },
+  "review": {
+    "title": "Revue",
+    "list_label": "Demandes de modification",
+    "select": "Choisissez une demande de modification",
+    "not_found": "Cette demande de modification n’existe pas",
+    "conflict_banner": "La branche principale a modifié le même contenu.",
+    "conflict_main": "Principale, lignes {{lines}}",
+    "conflict_draft": "Branche, lignes {{lines}}",
+    "working": "En cours",
+    "view_run": "Voir l’exécution",
+    "remove_quote": "Retirer la citation",
+    "reply": "Répondre",
+    "replying_to": "Réponse à {{name}}",
+    "quote_line": "{{page}}, ligne {{line}}",
+    "comment_label": "Commentaire",
+    "comment_placeholder": "Laisser un commentaire...",
+    "trigger_hint": "démarre à l’envoi",
+    "send": "Envoyer",
+    "hint_member": "Le créateur de la base ou un owner / admin fusionne",
+    "hint_conflict": "Résolvez d’abord les conflits",
+    "hint_running": "Fusionnez quand l’agent a terminé",
+    "comment_failed": "Le commentaire n’a pas été envoyé",
+    "merged_toast": "#{{number}} fusionnée",
+    "close_failed": "Impossible de fermer",
+    "agent_working": "{{name}} travaille",
+    "close": "Fermer",
+    "merge": "Fusionner",
+    "revert": "Annuler cette modification",
+    "merged_by": "Fusionnée par {{name}} · {{time}}",
+    "closed_by": "Fermée par {{name}} · {{time}}",
+    "closed_by_reason": "Fermée par {{name}} · {{time}} · {{reason}}",
+    "self_check": "Résumé de l’agent",
+    "summary": "Résumé",
+    "checks": "Vérifications",
+    "conflicting": "En conflit avec la branche principale",
+    "mergeable": "Peut être fusionnée",
+    "add_comment": "Commenter",
+    "activity": "Activité",
+    "close_confirm_title": "Fermer cette demande de modification ?",
+    "close_reason": "Motif (facultatif)",
+    "cancel": "Annuler",
+    "reverted": "Demande d’annulation #{{number}} ouverte",
+    "go_review": "Revoir",
+    "revert_conflict": "Des modifications ultérieures touchent le même contenu ; annulez à la main",
+    "revert_failed": "Impossible d’annuler",
+    "revert_confirm_title": "Annuler #{{number}} « {{title}} » ?",
+    "revert_confirm_description": "Une demande de modification inverse est ouverte ; elle s’applique une fois fusionnée.",
+    "revert_submit": "Soumettre l’annulation",
+    "meta_one": "Risque {{risk}} · {{count}} page modifiée",
+    "meta_other": "Risque {{risk}} · {{count}} pages modifiées",
+    "meta_annotations_one": "{{count}} annotation traitée",
+    "meta_annotations_other": "{{count}} annotations traitées",
+    "activity_count_one": "{{count}} élément",
+    "activity_count_other": "{{count}} éléments",
+    "close_confirm_annotations_one": "L’annotation traitée repasse en attente.",
+    "close_confirm_annotations_other": "Les {{count}} annotations traitées repassent en attente.",
+    "tabs": {
+      "open": "À revoir",
+      "ended": "Terminées",
+      "all": "Toutes"
+    },
+    "status": {
+      "open": "À revoir",
+      "merged": "Fusionnée",
+      "closed": "Fermée"
+    },
+    "empty": {
+      "open": "Rien à revoir",
+      "ended": "Aucune demande terminée",
+      "all": "Aucune demande de modification"
+    },
+    "source": {
+      "ingest": "Collecte",
+      "health": "Contrôle",
+      "merge": "Fusion de pages",
+      "annotations": "Annotations",
+      "new_page": "Nouvelle page",
+      "revert": "Annulation",
+      "custom": "Autre"
+    },
+    "origin": {
+      "kb_job": "Tâche de base · {{label}}",
+      "revert": "Annule #{{number}}",
+      "autopilot_run": "Autopilote · {{label}}",
+      "issue": "Ticket · {{label}}",
+      "chat": "Conversation · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "Traite le commentaire",
+      "mention": "Démarré par mention"
+    },
+    "merge_error": {
+      "stale": "Le brouillon a changé depuis l’ouverture ; rechargez avant de fusionner",
+      "conflict": "En conflit avec la branche principale ; résolvez d’abord",
+      "running": "Fusionnez quand l’agent a terminé",
+      "not_open": "Cette demande est terminée",
+      "failed": "Impossible de fusionner"
+    },
+    "risk": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "élevé"
+    },
+    "changes": {
+      "title": "Historique des modifications",
+      "list_label": "Modifications fusionnées",
+      "empty": "Aucune modification fusionnée",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · fusionnée par {{merger}}",
+      "revert_hint": "L’annulation ouvre une nouvelle demande ; elle s’applique une fois fusionnée."
     }
   }
 }

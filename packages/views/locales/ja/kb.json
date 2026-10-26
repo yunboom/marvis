@@ -83,7 +83,8 @@
     "not_found": "ページが存在しないか削除されました",
     "sources": "出典",
     "missing_page": "このページはまだ書かれていません",
-    "close_panel": "閉じる"
+    "close_panel": "閉じる",
+    "view_change": "変更を見る"
   },
   "draft": {
     "label": "下書き",
@@ -146,7 +147,8 @@
     "close": "履歴を閉じる",
     "no_changes": "この版では本文の変更はありません",
     "not_found": "リビジョンが存在しません",
-    "empty": "履歴はまだありません"
+    "empty": "履歴はまだありません",
+    "revert": "この変更を取り消す"
   },
   "builder": {
     "create_title": "新しいナレッジベース",
@@ -464,6 +466,114 @@
       "annotations_all_message_other": "{{name}}の未対応の注釈 {{count}} 件をすべて処理してください。",
       "annotations_page_message_other": "「{{title}}」の未対応の注釈 {{count}} 件を処理してください。",
       "annotations_kb_message_other": "ナレッジベース全体の未対応の注釈 {{count}} 件を処理してください。"
+    }
+  },
+  "review": {
+    "title": "レビュー",
+    "list_label": "変更リクエスト",
+    "select": "変更リクエストを選択",
+    "not_found": "変更リクエストが存在しません",
+    "conflict_banner": "メインラインが同じ内容を変更しました。",
+    "conflict_main": "メインライン {{lines}} 行",
+    "conflict_draft": "ブランチ {{lines}} 行",
+    "working": "作業中",
+    "view_run": "実行を見る",
+    "remove_quote": "引用を外す",
+    "reply": "返信",
+    "replying_to": "{{name}} への返信",
+    "quote_line": "{{page}} {{line}} 行目",
+    "comment_label": "コメント",
+    "comment_placeholder": "コメントを残す...",
+    "trigger_hint": "送信後に開始",
+    "send": "送信",
+    "hint_member": "ナレッジベースの作成者または owner / admin がマージします",
+    "hint_conflict": "先に競合を解決してください",
+    "hint_running": "エージェントの作業後にマージ",
+    "comment_failed": "コメントを送信できませんでした",
+    "merged_toast": "#{{number}} をマージしました",
+    "close_failed": "クローズできませんでした",
+    "agent_working": "{{name}} が作業中",
+    "close": "クローズ",
+    "merge": "マージ",
+    "revert": "この変更を取り消す",
+    "merged_by": "{{name}} がマージ · {{time}}",
+    "closed_by": "{{name}} がクローズ · {{time}}",
+    "closed_by_reason": "{{name}} がクローズ · {{time}} · {{reason}}",
+    "self_check": "エージェントの説明",
+    "summary": "変更の説明",
+    "checks": "チェック",
+    "conflicting": "メインラインと競合",
+    "mergeable": "メインラインにマージできます",
+    "add_comment": "コメントする",
+    "activity": "アクティビティ",
+    "close_confirm_title": "この変更リクエストをクローズしますか？",
+    "close_reason": "理由（任意）",
+    "cancel": "キャンセル",
+    "reverted": "取り消しの変更リクエスト #{{number}} を作成しました",
+    "go_review": "レビューへ",
+    "revert_conflict": "後の変更が同じ内容を変更しています。手動で取り消してください",
+    "revert_failed": "取り消せませんでした",
+    "revert_confirm_title": "#{{number}}「{{title}}」を取り消しますか？",
+    "revert_confirm_description": "逆向きの変更リクエストを作成します。マージ後に反映されます。",
+    "revert_submit": "取り消しを提出",
+    "meta_other": "リスク {{risk}} · {{count}} ページに影響",
+    "meta_annotations_other": "注釈 {{count}} 件を処理",
+    "activity_count_other": "{{count}} 件",
+    "close_confirm_annotations_other": "処理中の注釈 {{count}} 件は未処理に戻ります。",
+    "tabs": {
+      "open": "レビュー待ち",
+      "ended": "終了",
+      "all": "すべて"
+    },
+    "status": {
+      "open": "レビュー待ち",
+      "merged": "マージ済み",
+      "closed": "クローズ"
+    },
+    "empty": {
+      "open": "レビュー待ちの変更はありません",
+      "ended": "終了した変更リクエストはまだありません",
+      "all": "変更リクエストはまだありません"
+    },
+    "source": {
+      "ingest": "資料の取り込み",
+      "health": "ヘルスチェック",
+      "merge": "ページ統合",
+      "annotations": "注釈の処理",
+      "new_page": "新規ページ",
+      "revert": "取り消し",
+      "custom": "その他"
+    },
+    "origin": {
+      "kb_job": "ナレッジベースジョブ · {{label}}",
+      "revert": "#{{number}} の取り消し",
+      "autopilot_run": "自動化 · {{label}}",
+      "issue": "タスク · {{label}}",
+      "chat": "会話 · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "コメントに対応",
+      "mention": "メンションで開始"
+    },
+    "merge_error": {
+      "stale": "開いた後に下書きが変更されました。再読み込みしてからマージしてください",
+      "conflict": "メインラインと競合しています。先に解決してください",
+      "running": "エージェントの作業後にマージ",
+      "not_open": "この変更リクエストは終了しています",
+      "failed": "マージできませんでした"
+    },
+    "risk": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "changes": {
+      "title": "変更履歴",
+      "list_label": "マージ済みの変更",
+      "empty": "マージ済みの変更はまだありません",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · {{merger}} がマージ",
+      "revert_hint": "取り消すと新しい変更リクエストが作成され、マージ後に反映されます。"
     }
   }
 }

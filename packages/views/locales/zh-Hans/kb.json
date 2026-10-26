@@ -83,7 +83,8 @@
     "not_found": "页面不存在或已删除",
     "sources": "引用来源",
     "missing_page": "这一页还没有写",
-    "close_panel": "关闭"
+    "close_panel": "关闭",
+    "view_change": "查看修改"
   },
   "draft": {
     "label": "草稿",
@@ -146,7 +147,8 @@
     "close": "关闭历史",
     "no_changes": "这次修改没有改动正文",
     "not_found": "修订不存在",
-    "empty": "还没有历史"
+    "empty": "还没有历史",
+    "revert": "回滚这次修改"
   },
   "builder": {
     "create_title": "新建知识库",
@@ -464,6 +466,114 @@
       "annotations_all_message_other": "处理{{name}}的全部 {{count}} 条待处理批注。",
       "annotations_page_message_other": "处理「{{title}}」的 {{count}} 条待处理批注。",
       "annotations_kb_message_other": "处理整个知识库的 {{count}} 条待处理批注。"
+    }
+  },
+  "review": {
+    "title": "审核",
+    "list_label": "变更请求",
+    "select": "选择一个变更请求",
+    "not_found": "变更请求不存在",
+    "conflict_banner": "主线改了同一段内容。",
+    "conflict_main": "主线第 {{lines}} 行",
+    "conflict_draft": "本分支第 {{lines}} 行",
+    "working": "正在工作",
+    "view_run": "查看执行过程",
+    "remove_quote": "移除引用",
+    "reply": "回复",
+    "replying_to": "回复 {{name}}",
+    "quote_line": "{{page}} 第 {{line}} 行",
+    "comment_label": "评论",
+    "comment_placeholder": "留下评论...",
+    "trigger_hint": "发送后开始",
+    "send": "发送",
+    "hint_member": "知识库创建者或 owner / admin 合并",
+    "hint_conflict": "先解决冲突",
+    "hint_running": "智能体改完后再合并",
+    "comment_failed": "评论没有发出",
+    "merged_toast": "已合并 #{{number}}",
+    "close_failed": "没有关闭成功",
+    "agent_working": "{{name}} 在工作",
+    "close": "关闭",
+    "merge": "合并",
+    "revert": "回滚此次变更",
+    "merged_by": "{{name}} 合并 · {{time}}",
+    "closed_by": "{{name}} 关闭 · {{time}}",
+    "closed_by_reason": "{{name}} 关闭 · {{time}} · {{reason}}",
+    "self_check": "智能体自查",
+    "summary": "变更说明",
+    "checks": "检查",
+    "conflicting": "与主线冲突",
+    "mergeable": "可以合并到主线",
+    "add_comment": "加入评论",
+    "activity": "动态",
+    "close_confirm_title": "关闭这个变更请求？",
+    "close_reason": "关闭理由（选填）",
+    "cancel": "取消",
+    "reverted": "已生成回滚变更请求 #{{number}}",
+    "go_review": "去审核",
+    "revert_conflict": "之后的改动动了同样的内容，需要手动处理",
+    "revert_failed": "没有回滚成功",
+    "revert_confirm_title": "回滚 #{{number}}「{{title}}」？",
+    "revert_confirm_description": "会生成一个反向修改的变更请求，合并后生效。",
+    "revert_submit": "提交回滚",
+    "meta_other": "风险 {{risk}} · 影响 {{count}} 个页面",
+    "meta_annotations_other": "处理 {{count}} 条批注",
+    "activity_count_other": "{{count}} 条动态",
+    "close_confirm_annotations_other": "处理的 {{count}} 条批注会退回待处理。",
+    "tabs": {
+      "open": "待审核",
+      "ended": "已结束",
+      "all": "全部"
+    },
+    "status": {
+      "open": "待审核",
+      "merged": "已合并",
+      "closed": "已关闭"
+    },
+    "empty": {
+      "open": "没有待审核的修改",
+      "ended": "还没有结束的变更请求",
+      "all": "还没有变更请求"
+    },
+    "source": {
+      "ingest": "收录资料",
+      "health": "健康检查",
+      "merge": "知识合并",
+      "annotations": "处理批注",
+      "new_page": "新页面",
+      "revert": "回滚",
+      "custom": "其他"
+    },
+    "origin": {
+      "kb_job": "知识库作业 · {{label}}",
+      "revert": "回滚 #{{number}}",
+      "autopilot_run": "自动化 · {{label}}",
+      "issue": "任务 · {{label}}",
+      "chat": "对话 · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "按评论修改",
+      "mention": "被 @ 后开始"
+    },
+    "merge_error": {
+      "stale": "草稿在你打开后又改过，刷新后再合并",
+      "conflict": "与主线冲突，先解决冲突",
+      "running": "智能体改完后再合并",
+      "not_open": "这个变更请求已经结束",
+      "failed": "没有合并成功"
+    },
+    "risk": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "changes": {
+      "title": "变更记录",
+      "list_label": "已合并的变更",
+      "empty": "还没有合并的修改",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · {{merger}}合并",
+      "revert_hint": "回滚会生成新的变更请求，合并后生效。"
     }
   }
 }

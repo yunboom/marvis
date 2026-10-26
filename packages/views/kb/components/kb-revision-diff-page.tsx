@@ -1,11 +1,13 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import { kbPageOptions, kbRevisionDiffOptions } from "@marvis/core/kb/queries";
+import { kbBaseDetailOptions, kbPageOptions, kbRevisionDiffOptions } from "@marvis/core/kb/queries";
 import type { KbDiffHunk, KbDiffLine } from "@marvis/core/types";
+import { Button } from "@marvis/ui/components/ui/button";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { PageHeader } from "../../layout/page-header";
@@ -14,6 +16,8 @@ import { useT } from "../../i18n";
 import { parseKbRoute } from "../utils/kb-markdown";
 import { formatShortDate, pageTitle } from "./kb-page-body";
 import { KbHistoryPanel } from "./kb-page-panels";
+import { useCanConfigureKb } from "./kb-shell";
+import { KbRevertDialog, type KbRevertTarget } from "../review/kb-revert-dialog";
 
 const LINE_SIGN: Record<string, string> = { added: "+", deleted: "−" };
 
@@ -70,6 +74,9 @@ export function KbRevisionDiffPage() {
   const { kbSlug, pageId, revisionId } = parseKbRoute(pathname);
   const { data: page } = useQuery(kbPageOptions(wsId, pageId, ""));
   const { data: diff, isLoading, isError } = useQuery(kbRevisionDiffOptions(wsId, pageId, revisionId));
+  const { data: base } = useQuery(kbBaseDetailOptions(wsId, kbSlug));
+  const canRevert = useCanConfigureKb(base?.created_by);
+  const [reverting, setReverting] = useState<KbRevertTarget | null>(null);
 
   const revision = diff?.revision.revision_id === revisionId ? diff.revision : null;
   const title = revision
@@ -92,6 +99,16 @@ export function KbRevisionDiffPage() {
             {title}
           </span>
         </nav>
+        {revision?.mr_number && canRevert && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setReverting({ number: revision.mr_number ?? 0, title: revision.mr_title })}
+          >
+            {t(($) => $.history.revert)}
+          </Button>
+        )}
         <AppLink
           href={p.kbPage(kbSlug, pageId)}
           aria-label={t(($) => $.history.close)}
@@ -148,6 +165,7 @@ export function KbRevisionDiffPage() {
         </div>
         <KbHistoryPanel kbSlug={kbSlug} pageId={pageId} selectedRevisionId={revisionId} />
       </div>
+      <KbRevertDialog kbSlug={kbSlug} target={reverting} onClose={() => setReverting(null)} />
     </div>
   );
 }

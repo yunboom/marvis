@@ -121,8 +121,9 @@ export function KbDraftBar({ drafts, activeDraft }: { drafts: KbPageDraft[]; act
   );
 }
 
-function PendingReviewBanner({ page }: { page: KbPage }) {
+function PendingReviewBanner({ kbSlug, page }: { kbSlug: string; page: KbPage }) {
   const { t } = useT("kb");
+  const p = useWorkspacePaths();
   if (!page.pending_mr) return null;
 
   return (
@@ -135,6 +136,9 @@ function PendingReviewBanner({ page }: { page: KbPage }) {
           number: page.pending_mr.number,
         })}
       </span>
+      <AppLink href={p.kbMergeRequest(kbSlug, page.pending_mr.number)} className="shrink-0 text-info hover:underline">
+        {t(($) => $.page.view_change)}
+      </AppLink>
     </div>
   );
 }
@@ -345,7 +349,7 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
               banners={
                 <>
                   {drafts.length > 0 && <KbDraftBar drafts={drafts} activeDraft={draft} />}
-                  <PendingReviewBanner page={page} />
+                  <PendingReviewBanner kbSlug={kbSlug} page={page} />
                 </>
               }
             />

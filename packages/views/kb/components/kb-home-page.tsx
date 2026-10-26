@@ -176,6 +176,7 @@ export function KbHomePage() {
                   tone="info"
                   label={t(($) => $.home.pending_reviews)}
                   count={pending.open_mrs}
+                  href={p.kbReviews(kbSlug)}
                   hint={pending.latest_mr ? t(($) => $.home.latest_review, { title: pending.latest_mr.title }) : undefined}
                 />
                 <PendingCard

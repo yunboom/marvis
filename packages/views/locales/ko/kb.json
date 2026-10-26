@@ -83,7 +83,8 @@
     "not_found": "페이지가 없거나 삭제되었습니다",
     "sources": "출처",
     "missing_page": "아직 작성되지 않은 페이지입니다",
-    "close_panel": "닫기"
+    "close_panel": "닫기",
+    "view_change": "변경 보기"
   },
   "draft": {
     "label": "초안",
@@ -146,7 +147,8 @@
     "close": "기록 닫기",
     "no_changes": "이 버전에는 본문 변경이 없습니다",
     "not_found": "리비전이 없습니다",
-    "empty": "아직 기록이 없습니다"
+    "empty": "아직 기록이 없습니다",
+    "revert": "이 변경 되돌리기"
   },
   "builder": {
     "create_title": "새 지식 베이스",
@@ -464,6 +466,114 @@
       "annotations_all_message_other": "{{name}}의 대기 중인 주석 {{count}}개를 모두 처리하세요.",
       "annotations_page_message_other": "「{{title}}」의 대기 중인 주석 {{count}}개를 처리하세요.",
       "annotations_kb_message_other": "지식 베이스 전체의 대기 중인 주석 {{count}}개를 처리하세요."
+    }
+  },
+  "review": {
+    "title": "검토",
+    "list_label": "변경 요청",
+    "select": "변경 요청을 선택하세요",
+    "not_found": "변경 요청이 없습니다",
+    "conflict_banner": "메인라인이 같은 내용을 바꿨습니다.",
+    "conflict_main": "메인라인 {{lines}}행",
+    "conflict_draft": "브랜치 {{lines}}행",
+    "working": "작업 중",
+    "view_run": "실행 보기",
+    "remove_quote": "인용 제거",
+    "reply": "답글",
+    "replying_to": "{{name}}에게 답글",
+    "quote_line": "{{page}} {{line}}행",
+    "comment_label": "댓글",
+    "comment_placeholder": "댓글 남기기...",
+    "trigger_hint": "보내면 시작",
+    "send": "보내기",
+    "hint_member": "지식 베이스 작성자 또는 owner / admin이 병합합니다",
+    "hint_conflict": "먼저 충돌을 해결하세요",
+    "hint_running": "에이전트 작업이 끝난 뒤 병합",
+    "comment_failed": "댓글을 보내지 못했습니다",
+    "merged_toast": "#{{number}} 병합됨",
+    "close_failed": "닫지 못했습니다",
+    "agent_working": "{{name}} 작업 중",
+    "close": "닫기",
+    "merge": "병합",
+    "revert": "이 변경 되돌리기",
+    "merged_by": "{{name}} 병합 · {{time}}",
+    "closed_by": "{{name}} 닫음 · {{time}}",
+    "closed_by_reason": "{{name}} 닫음 · {{time}} · {{reason}}",
+    "self_check": "에이전트 설명",
+    "summary": "변경 설명",
+    "checks": "검사",
+    "conflicting": "메인라인과 충돌",
+    "mergeable": "메인라인에 병합할 수 있습니다",
+    "add_comment": "댓글 달기",
+    "activity": "활동",
+    "close_confirm_title": "이 변경 요청을 닫을까요?",
+    "close_reason": "사유(선택)",
+    "cancel": "취소",
+    "reverted": "되돌리기 변경 요청 #{{number}}을 만들었습니다",
+    "go_review": "검토하기",
+    "revert_conflict": "이후 변경이 같은 내용을 건드렸습니다. 직접 되돌리세요",
+    "revert_failed": "되돌리지 못했습니다",
+    "revert_confirm_title": "#{{number}} 「{{title}}」을 되돌릴까요?",
+    "revert_confirm_description": "반대로 바꾸는 변경 요청을 만들고, 병합되면 적용됩니다.",
+    "revert_submit": "되돌리기 제출",
+    "meta_other": "위험 {{risk}} · 페이지 {{count}}개 변경",
+    "meta_annotations_other": "주석 {{count}}개 처리",
+    "activity_count_other": "{{count}}개",
+    "close_confirm_annotations_other": "처리 중인 주석 {{count}}개가 대기로 돌아갑니다.",
+    "tabs": {
+      "open": "검토 대기",
+      "ended": "종료",
+      "all": "전체"
+    },
+    "status": {
+      "open": "검토 대기",
+      "merged": "병합됨",
+      "closed": "닫힘"
+    },
+    "empty": {
+      "open": "검토할 변경이 없습니다",
+      "ended": "종료된 변경 요청이 아직 없습니다",
+      "all": "변경 요청이 아직 없습니다"
+    },
+    "source": {
+      "ingest": "자료 수집",
+      "health": "상태 점검",
+      "merge": "페이지 병합",
+      "annotations": "주석 처리",
+      "new_page": "새 페이지",
+      "revert": "되돌리기",
+      "custom": "기타"
+    },
+    "origin": {
+      "kb_job": "지식 베이스 작업 · {{label}}",
+      "revert": "#{{number}} 되돌리기",
+      "autopilot_run": "자동화 · {{label}}",
+      "issue": "작업 · {{label}}",
+      "chat": "대화 · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "댓글 반영 중",
+      "mention": "멘션으로 시작"
+    },
+    "merge_error": {
+      "stale": "연 뒤에 초안이 바뀌었습니다. 새로고침한 뒤 병합하세요",
+      "conflict": "메인라인과 충돌합니다. 먼저 해결하세요",
+      "running": "에이전트 작업이 끝난 뒤 병합",
+      "not_open": "이 변경 요청은 종료되었습니다",
+      "failed": "병합하지 못했습니다"
+    },
+    "risk": {
+      "low": "낮음",
+      "medium": "중간",
+      "high": "높음"
+    },
+    "changes": {
+      "title": "변경 기록",
+      "list_label": "병합된 변경",
+      "empty": "병합된 변경이 아직 없습니다",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · {{merger}} 병합",
+      "revert_hint": "되돌리면 새 변경 요청이 만들어지고, 병합되면 적용됩니다."
     }
   }
 }
