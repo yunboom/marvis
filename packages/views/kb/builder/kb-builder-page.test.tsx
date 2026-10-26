@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { api, ApiError } from "@marvis/core/api";
 import { EMPTY_AGENT_DRAFT } from "@marvis/core/agents";
 import type { ChatMessage, KbBuilderSession, KnowledgeBaseDetail, RuntimeDevice } from "@marvis/core/types";
@@ -418,7 +419,28 @@ describe("KbBuilderPage · configuration", () => {
         base_updated_at: "2026-10-25T14:20:11Z",
       }),
     );
-    await waitFor(() => expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team"));
+    // Saving keeps the conversation open on the configuration page.
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Saved"));
+    expect(adapter.replace).not.toHaveBeenCalled();
+    expect(mocked.setChatSessionArchived).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Purpose")).toHaveValue("# 目标\n\n读者：研发。");
+  });
+
+  it("lists only the configuration conversations with unsaved changes", async () => {
+    mocked.listKbBuilderSessions.mockResolvedValue([
+      session({ session_id: "s-saved", mode: "config", knowledge_base_id: "kb-1", title: "Saved one", draft: null }),
+      session({
+        session_id: "s-open",
+        mode: "config",
+        knowledge_base_id: "kb-1",
+        title: "Open one",
+        draft: { name: "团队知识库", slug: "team", description: "订单与支付", purpose: "改过的目标", schema_mode: "default", schema: "", applied_message_id: null },
+      }),
+    ]);
+    mount(makeAdapter("/acme/kb/team/config"));
+
+    await waitFor(() => expect(mocked.listKbBuilderSessions).toHaveBeenCalled());
+    expect(await screen.findByText(/1 unfinished/)).toBeInTheDocument();
   });
 
   it("keeps the edits when someone else saved first", async () => {

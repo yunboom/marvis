@@ -1,6 +1,7 @@
 import { parseDraftBlock, stripDraftBlock } from "../agents/builder-protocol";
 import type {
   KbBuilderMode,
+  KbBuilderSession,
   KnowledgeBaseDetail,
   KnowledgeBaseSchemaMode,
   StoredKbDraft,
@@ -179,6 +180,21 @@ export function isKbDraftChanged(draft: KbDraft, base: KbDraft): boolean {
     draft.schemaMode !== base.schemaMode ||
     (draft.schemaMode === "custom" && draft.schema !== base.schema)
   );
+}
+
+/**
+ * Whether a configuration conversation holds changes the knowledge base does
+ * not have yet: its saved right-hand configuration, or, when it never saved
+ * one, the builder's last proposal. Only those are "unfinished"; a
+ * conversation whose configuration was saved stays open but is not listed.
+ */
+export function kbBuilderSessionHasUnsavedChanges(session: KbBuilderSession, base: KnowledgeBaseDetail): boolean {
+  const current = kbDraftFromBase(base);
+  if (session.draft) return isKbDraftChanged(fromStoredKbDraft(session.draft, base.schema), current);
+
+  const proposal = session.last_message_role === "assistant" ? parseKbDraft(session.last_message_content, { completed: true }) : null;
+
+  return !!proposal && isKbDraftChanged(mergeKbDraft(current, proposal, "config"), current);
 }
 
 /** A configuration save; null when the form cannot be saved. */

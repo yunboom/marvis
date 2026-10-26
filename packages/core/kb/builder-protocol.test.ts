@@ -7,6 +7,7 @@ import {
   fromStoredKbDraft,
   isKbDraftChanged,
   isValidKbSlug,
+  kbBuilderSessionHasUnsavedChanges,
   kbCreateRequest,
   kbUpdateRequest,
   mergeKbDraft,
@@ -108,5 +109,24 @@ describe("stored drafts and requests", () => {
     expect(isKbDraftChanged({ ...base }, base)).toBe(false);
     expect(isKbDraftChanged({ ...base, purpose: "x" }, base)).toBe(true);
     expect(isKbDraftChanged({ ...base, schemaMode: "custom" }, base)).toBe(true);
+  });
+
+  it("lists a configuration conversation only while it holds unsaved changes", () => {
+    const base = {
+      id: "kb-1", workspace_id: "ws", name: "Team", slug: "team", description: "", schema_mode: "default", created_by: "u",
+      page_count: 0, content_version: 0, created_at: "", updated_at: "", pending: { annotations: 0, stale_pages: 0, open_mrs: 0 },
+      purpose: "Answers.", schema: "# B",
+    };
+    const session = {
+      session_id: "s", mode: "config", knowledge_base_id: "kb-1", title: "", runtime_id: "rt", last_message_content: "",
+      last_message_role: "user", last_message_at: null, draft: null, updated_at: "",
+    };
+    const saved = { name: "Team", slug: "team", description: "", purpose: "Answers.", schema_mode: "default" as const, schema: "", applied_message_id: null };
+
+    expect(kbBuilderSessionHasUnsavedChanges(session, base)).toBe(false);
+    expect(kbBuilderSessionHasUnsavedChanges({ ...session, draft: saved }, base)).toBe(false);
+    expect(kbBuilderSessionHasUnsavedChanges({ ...session, draft: { ...saved, purpose: "More." } }, base)).toBe(true);
+    const proposal = 'Done.\n<kb_draft>{"name":"Team","slug":"team","description":"Payments","purpose":"Answers."}</kb_draft>';
+    expect(kbBuilderSessionHasUnsavedChanges({ ...session, last_message_role: "assistant", last_message_content: proposal }, base)).toBe(true);
   });
 });

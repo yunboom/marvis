@@ -15,6 +15,7 @@ import {
   isKbDraftChanged,
   isValidKbSlug,
   kbBaseDetailOptions,
+  kbBuilderSessionHasUnsavedChanges,
   kbBuilderSessionListOptions,
   kbCreateRequest,
   kbDraftFromBase,
@@ -66,6 +67,8 @@ const KB_BUILDER_TRANSPORT: BuilderSessionTransport = {
 };
 
 /** Starter directions of a new knowledge base (design 1.2). */
+const NO_SESSIONS: KbBuilderSession[] = [];
+
 const CREATE_STARTERS = ["dev", "qa", "product", "team"] as const;
 /** Opening questions of a configuration (design 10.1). */
 const CONFIG_QUESTIONS = ["readers", "scope", "structure", "writing"] as const;
@@ -396,9 +399,10 @@ function KbBuilderWorkspace({
       ? t(($) => $.builder.panel.slug_invalid)
       : null;
 
-  // The conversation is finished once the base exists or the save landed:
-  // archive it so it leaves the unfinished list. Best-effort, like the agent
-  // builder — the write is already committed.
+  // Creating finishes the conversation once the base exists: archive it so
+  // it leaves the unfinished list. Best-effort, like the agent builder — the
+  // write is already committed. A configuration save keeps the conversation
+  // open; it drops out of the list because nothing is left unsaved.
   const retire = async () => {
     cancelPending();
     try {
@@ -439,9 +443,8 @@ function KbBuilderWorkspace({
     if (!request) return;
     try {
       await updateBase.mutateAsync({ kb: kbSlug, data: request });
-      await retire();
       toast.success(t(($) => $.builder.saved));
-      navigation.replace(paths.kbBase(kbSlug));
+      void qc.invalidateQueries({ queryKey: kbKeys.builderSessions(wsId) });
     } catch (err) {
       setFormError(
         err instanceof ApiError && err.status === 409
@@ -606,8 +609,14 @@ export function KbBuilderPage() {
 
   const { data: base } = useQuery({ ...kbBaseDetailOptions(wsId, kbSlug), enabled: mode === "config" && !!wsId && !!kbSlug });
   const sessionsQuery = useQuery(kbBuilderSessionListOptions(wsId, mode, mode === "config" ? kbSlug : ""));
-  const sessions = sessionsQuery.data ?? [];
+  const sessions = sessionsQuery.data ?? NO_SESSIONS;
   const sessionsSettled = sessionsQuery.isSuccess || sessionsQuery.isError;
+  // Configuration conversations stay open after a save; only those still
+  // holding unsaved changes count as unfinished.
+  const unfinished = useMemo(
+    () => (mode === "config" ? (base ? sessions.filter((row) => kbBuilderSessionHasUnsavedChanges(row, base)) : []) : sessions),
+    [base, mode, sessions],
+  );
 
   const homePath = mode === "create" ? paths.kb() : paths.kbBase(kbSlug);
   const setupPath = mode === "create" ? paths.kbNew() : paths.kbConfig(kbSlug);
@@ -631,7 +640,7 @@ export function KbBuilderPage() {
         subtitle={mode === "create" ? t(($) => $.builder.create_sub) : (base?.name ?? kbSlug)}
         onBack={() => backOrReplace(homePath)}
       >
-        <KbBuilderSetupStep mode={mode} base={base} sessions={sessions} onOpen={open} />
+        <KbBuilderSetupStep mode={mode} base={base} sessions={unfinished} onOpen={open} />
       </KbBuilderShell>
     );
   }
@@ -644,7 +653,7 @@ export function KbBuilderPage() {
       sessionId={sessionId}
       base={base}
       session={sessions.find((row) => row.session_id === sessionId)}
-      sessions={sessions}
+      sessions={unfinished}
       sessionsSettled={sessionsSettled}
       fallbackRuntimeId={startedRuntimeId}
       onResume={(id) => open(id, null)}
