@@ -59,6 +59,7 @@ const (
 	EventKbMrClosed          = "kb.mr.closed"
 	EventKbMrCommented       = "kb.mr.commented"
 	EventKbAnnotationChanged = "kb.annotation.changed"
+	EventKbBaseChanged       = "kb.base.changed"
 
 	// Workspace events
 	EventWorkspaceUpdated = "workspace:updated"

@@ -145,6 +145,7 @@ func (h *Handler) CreateKbBase(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, errors.Wrap(err, "commit knowledge base create"))
 		return
 	}
+	h.publishKbBaseChanged(r, base, kbBaseActionCreated)
 
 	writeJSON(w, http.StatusCreated, KbBaseMutationResponse{KbBaseResponse: kbBaseToResponse(base, kbBaseStats{})})
 }
@@ -233,6 +234,7 @@ func (h *Handler) UpdateKbBase(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, errors.Wrap(err, "commit knowledge base update"))
 		return
 	}
+	h.publishKbBaseChanged(r, updated, kbBaseActionUpdated)
 
 	stats, err := h.loadKbBaseStats(r.Context(), updated.WorkspaceID, []db.KbBase{updated})
 	if err != nil {

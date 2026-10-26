@@ -468,6 +468,10 @@ func (h *Handler) buildKbPageView(ctx context.Context, src kbPageSource, userID 
 	if err != nil {
 		return KbPageResponse{}, err
 	}
+	rawIDs, err := h.loadKbBodyRawIDs(ctx, src.base.ID, blocks)
+	if err != nil {
+		return KbPageResponse{}, err
+	}
 
 	view := KbPageResponse{
 		ID:              pageIDText,
@@ -476,7 +480,7 @@ func (h *Handler) buildKbPageView(ctx context.Context, src kbPageSource, userID 
 		Version:         src.version,
 		Breadcrumb:      breadcrumb,
 		Frontmatter:     header,
-		Blocks:          kbBlocksToResponse(kb.RouteLinks(blocks, src.base.Slug)),
+		Blocks:          kbBlocksToResponse(kb.RawLinks(kb.RouteLinks(blocks, src.base.Slug), rawIDs)),
 		Sources:         sources,
 		Claims:          kbClaimsToResponse(claims),
 		UpdatedAt:       timestampToString(src.updatedAt),
@@ -742,6 +746,27 @@ func (h *Handler) kbSourceViews(ctx context.Context, base db.KbBase, userID stri
 	}
 
 	return views, nil
+}
+
+// loadKbBodyRawIDs maps the raw files that links and images of a page body
+// point at (kb.RawFileKey) to their ids, for kb.RawLinks.
+func (h *Handler) loadKbBodyRawIDs(ctx context.Context, baseID pgtype.UUID, blocks []kb.Block) (map[string]string, error) {
+	refs := kb.RawRefsInBlocks(blocks)
+	names := make([]string, len(refs))
+	for i, ref := range refs {
+		names[i] = ref.Name
+	}
+
+	raws, err := h.loadKbRawFiles(ctx, baseID, names)
+	if err != nil {
+		return nil, err
+	}
+	ids := make(map[string]string, len(raws))
+	for key, raw := range raws {
+		ids[key] = uuidToString(raw.ID)
+	}
+
+	return ids, nil
 }
 
 func (h *Handler) loadKbRawFiles(ctx context.Context, baseID pgtype.UUID, names []string) (map[string]db.KbRaw, error) {

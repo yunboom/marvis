@@ -1546,6 +1546,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	// The authenticated /api/attachments/{id}/download route below is
 	// unchanged — this one is purely additive.
 	r.Get("/api/attachments/{id}/signed-download", h.DownloadAttachmentWithCapability)
+	r.Get("/api/kb/raw/{id}/signed-content", h.GetKbRawContentWithCapability)
 
 	// Avatar serving. Public for the same reason as the capability download
 	// above: the auth cookie is SameSite=Strict, so an auth-gated URL cannot
@@ -2266,6 +2267,14 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Post("/bases", h.CreateKbBase)
 				r.Get("/bases/{kb}", h.GetKbBase)
 				r.Patch("/bases/{kb}", h.UpdateKbBase)
+				r.Delete("/bases/{kb}", h.DeleteKbBase)
+				// Management: raw files (any member uploads), the OKF
+				// export and the relationship graph.
+				r.Get("/bases/{kb}/raw", h.ListKbRaw)
+				r.Post("/bases/{kb}/raw", h.UploadKbRaw)
+				r.Get("/raw/{id}/content", h.GetKbRawContent)
+				r.Get("/bases/{kb}/export", h.ExportKb)
+				r.Get("/bases/{kb}/graph", h.GetKbGraph)
 				r.Get("/templates", h.GetKbTemplates)
 				// Builder conversations (create / configure). Hidden from
 				// every chat list; messages go through /api/chat.
