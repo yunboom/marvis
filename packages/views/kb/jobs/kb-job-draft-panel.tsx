@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import type { KbDraftDiffLine, KbDraftPageChange, KbJobDetail } from "@marvis/core/types";
+import type { KbJobDetail } from "@marvis/core/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,120 +19,9 @@ import { cn } from "@marvis/ui/lib/utils";
 import { AppLink } from "../../navigation";
 import { useT } from "../../i18n";
 import { KB_TAG } from "../components/kb-cite-card";
+import { KbFileCard, KbStateDot as StateDot, useLintText, type KbDot as Dot } from "../components/kb-diff";
 import { withDraft } from "../components/kb-page-tree";
 import { kbJobPanelState, type KbJobDraftView } from "./kb-job-state";
-
-const LINE_SIGN: Record<KbDraftDiffLine["kind"], string> = { add: "+", delete: "−", context: "" };
-
-/** Format check codes the job page words itself; others show the server's message. */
-const LINT_CODES = [
-  "missing_type",
-  "missing_title",
-  "missing_description",
-  "undefined_footnote",
-  "claim_without_evidence",
-  "invalid_evidence_uri",
-  "duplicate_slug",
-  "unresolved_conflict",
-  "missing_evidence_version",
-  "unresolved_link",
-  "orphan_page",
-  "isolated_page",
-] as const;
-
-type LintCode = (typeof LINT_CODES)[number];
-
-function isLintCode(code: string): code is LintCode {
-  return (LINT_CODES as readonly string[]).includes(code);
-}
-
-type Dot = "gray" | "blue" | "green" | "amber" | "red";
-
-const DOT_CLASS: Record<Dot, string> = {
-  gray: "bg-faint-foreground",
-  blue: "bg-info",
-  green: "bg-success",
-  amber: "bg-warning",
-  red: "bg-destructive",
-};
-
-function StateDot({ dot }: { dot: Dot }) {
-  return <span aria-hidden="true" className={cn("inline-block size-1.5 shrink-0 rounded-full", DOT_CLASS[dot])} />;
-}
-
-function DiffLine({ line }: { line: KbDraftDiffLine }) {
-  return (
-    <div
-      data-kind={line.kind}
-      className={cn(
-        "grid grid-cols-[2.5rem_1rem_1fr] font-mono text-caption leading-5",
-        line.kind === "add" && "bg-success/10",
-        line.kind === "delete" && "bg-destructive/8",
-      )}
-    >
-      <span className="pr-1.5 text-right text-faint-foreground select-none">{line.new_line || line.old_line}</span>
-      <span
-        className={cn(
-          "text-center select-none",
-          line.kind === "add" && "text-success",
-          line.kind === "delete" && "text-destructive",
-        )}
-      >
-        {LINE_SIGN[line.kind]}
-      </span>
-      <span className="pr-3 break-words whitespace-pre-wrap">{line.text || " "}</span>
-    </div>
-  );
-}
-
-function FileCard({
-  kbSlug,
-  draftId,
-  page,
-  open,
-  onToggle,
-}: {
-  kbSlug: string;
-  draftId: string;
-  page: KbDraftPageChange;
-  open: boolean;
-  onToggle: () => void;
-}) {
-  const { t } = useT("kb");
-  const p = useWorkspacePaths();
-  const change = page.change || "modified";
-
-  return (
-    <div className="overflow-hidden rounded-xl border bg-card">
-      <div className={cn("flex items-center gap-2 bg-surface-sunken/40 px-3 py-2", open && "border-b")}>
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={onToggle}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
-        >
-          <ChevronRight aria-hidden="true" className={cn("size-3.5 shrink-0 text-faint-foreground transition-transform", open && "rotate-90")} />
-          <span className={KB_TAG}>{t(($) => $.job.draft.change[change])}</span>
-          <span className="shrink-0 text-label font-medium">{page.title || page.path}</span>
-          <span className="min-w-0 truncate text-caption text-faint-foreground">{page.old_path ? `${page.old_path} → ${page.path}` : page.path}</span>
-        </button>
-        <span className="shrink-0 text-caption tabular-nums">
-          {page.added > 0 && <span className="text-success">+{page.added}</span>}{" "}
-          {page.deleted > 0 && <span className="text-destructive">−{page.deleted}</span>}
-        </span>
-        {change !== "deleted" && (
-          <AppLink
-            href={withDraft(p.kbPage(kbSlug, page.page_id), draftId)}
-            className="shrink-0 text-caption text-info hover:underline"
-          >
-            {t(($) => $.job.draft.view_in_page)}
-          </AppLink>
-        )}
-      </div>
-      {open && page.lines.map((line, index) => <DiffLine key={index} line={line} />)}
-    </div>
-  );
-}
 
 function StateTag({ view, reopened, running }: { view: KbJobDraftView; reopened: boolean; running: boolean }) {
   const { t } = useT("kb");
@@ -203,6 +92,7 @@ export function KbJobDraftPanel({
 }) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
+  const lintText = useLintText();
   const state = kbJobPanelState(job, running);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
@@ -289,7 +179,7 @@ export function KbJobDraftPanel({
                 <StateDot dot={finding.severity === "error" ? "red" : "amber"} />
               </span>
               <span className="min-w-0 flex-1 break-words">
-                {finding.path} · {isLintCode(finding.code) ? t(($) => $.job.draft.lint[finding.code as LintCode]) : finding.message}
+                {lintText(finding)}
               </span>
             </span>
           ))}
@@ -388,10 +278,9 @@ export function KbJobDraftPanel({
               </button>
             </div>
             {job.pages.map((page) => (
-              <FileCard
+              <KbFileCard
                 key={page.page_id}
-                kbSlug={kbSlug}
-                draftId={draftId}
+                href={withDraft(p.kbPage(kbSlug, page.page_id), draftId)}
                 page={page}
                 open={!collapsed.has(page.page_id)}
                 onToggle={() => toggle(page.page_id)}

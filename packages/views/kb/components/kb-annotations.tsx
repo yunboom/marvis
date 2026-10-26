@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type RefObject } from "react";
 import { MessageSquare, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ApiError } from "@marvis/core/api";
 import { useAuthStore } from "@marvis/core/auth";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
@@ -18,6 +17,7 @@ import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
+import { kbErrorCode } from "../utils/kb-api-error";
 import { useT, useTimeAgo } from "../../i18n";
 import { parseKbRoute } from "../utils/kb-markdown";
 import { KB_TAG } from "./kb-cite-card";
@@ -41,11 +41,6 @@ const STATUS_DOT: Record<KbAnnotationStatus, string> = {
 
 const API_CODE_QUOTE_NOT_FOUND = "quote_not_found";
 
-function errorCode(error: unknown): string {
-  if (!(error instanceof ApiError) || !error.body || typeof error.body !== "object") return "";
-  const code = (error.body as Record<string, unknown>).code;
-  return typeof code === "string" ? code : "";
-}
 
 /**
  * Whether the viewer may dismiss or reopen an annotation: its author, the
@@ -156,7 +151,7 @@ export function useSubmitAnnotation(kbSlug: string) {
       return true;
     } catch (error) {
       toast.error(
-        errorCode(error) === API_CODE_QUOTE_NOT_FOUND
+        kbErrorCode(error) === API_CODE_QUOTE_NOT_FOUND
           ? t(($) => $.annotation.quote_not_found)
           : t(($) => $.annotation.create_failed),
       );
