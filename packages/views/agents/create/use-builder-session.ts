@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   agentBuilderSessionKeys,
@@ -26,6 +26,24 @@ import { useT } from "../../i18n";
 const EMPTY_CHAT_MESSAGES: ChatMessage[] = [];
 
 /**
+ * The endpoints a builder conversation is managed through. Messages always go
+ * through the chat API; discarding and rebinding are builder-specific.
+ */
+export interface BuilderSessionTransport {
+  /** The unfinished-drafts list to refresh after a change. */
+  listKey: (wsId: string) => QueryKey;
+  switchRuntime: (sessionId: string, runtimeId: string) => Promise<{ runtime_id: string }>;
+  destroy: (sessionId: string) => Promise<void>;
+}
+
+const AGENT_BUILDER_TRANSPORT: BuilderSessionTransport = {
+  listKey: (wsId) => agentBuilderSessionKeys.list(wsId),
+  switchRuntime: (sessionId, runtimeId) =>
+    api.switchAgentBuilderRuntime(sessionId, { runtime_id: runtimeId }),
+  destroy: (sessionId) => api.deleteChatSession(sessionId),
+};
+
+/**
  * Lifecycle of one AI-builder conversation: create the hidden carrier session,
  * exchange messages on it, rebind its runtime, and destroy it on request.
  *
@@ -46,17 +64,20 @@ export function useBuilderSession(options: {
   sessionId: string;
   /** Encodes composer text into the builder wire format for the current draft. */
   encodeInput: (text: string) => string;
+  /** The builder's own endpoints; defaults to the agent builder's. */
+  transport?: BuilderSessionTransport;
 }) {
   const { t } = useT("agents");
   const wsId = useWorkspaceId();
   const qc = useQueryClient();
   const { sessionId } = options;
+  const transport = options.transport ?? AGENT_BUILDER_TRANSPORT;
 
   // Anything that changes whether this conversation is listable, or what its
   // row says, has to reach the drafts list — it is rendered on other screens
   // that are already mounted or will mount from cache.
   const invalidateDraftList = () =>
-    qc.invalidateQueries({ queryKey: agentBuilderSessionKeys.list(wsId) });
+    qc.invalidateQueries({ queryKey: transport.listKey(wsId) });
 
   const [starting, setStarting] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -137,7 +158,7 @@ export function useBuilderSession(options: {
     setClosing(true);
     setError(null);
     try {
-      await api.deleteChatSession(sessionId);
+      await transport.destroy(sessionId);
       qc.removeQueries({ queryKey: chatKeys.messages(sessionId) });
       // The send seeds both caches, so both must be dropped here. Leaving the
       // paged one behind would keep a deleted session's transcript sitting
@@ -189,9 +210,7 @@ export function useBuilderSession(options: {
     setSwitchingRuntime(true);
     setError(null);
     try {
-      const result = await api.switchAgentBuilderRuntime(sessionId, {
-        runtime_id: runtimeId,
-      });
+      const result = await transport.switchRuntime(sessionId, runtimeId);
       toast.success(
         t(($) => $.creation_studio.builder.switch_runtime_success),
       );
