@@ -644,26 +644,65 @@ func (q *Queries) ListKbLinksFromPage(ctx context.Context, arg ListKbLinksFromPa
 }
 
 const listKbPageBlockIDs = `-- name: ListKbPageBlockIDs :many
-SELECT DISTINCT b->>'id' AS block_id
-FROM kb_page p, jsonb_array_elements(p.blocks) AS b
-WHERE p.knowledge_base_id = $1
+SELECT (b.value->>'id')::text AS block_id
+FROM kb_page p
+CROSS JOIN LATERAL jsonb_array_elements(p.blocks) AS b(value)
+WHERE p.knowledge_base_id = $1::uuid
+UNION
+SELECT (b.value->>'id')::text AS block_id
+FROM kb_draft d
+JOIN kb_draft_page dp ON dp.draft_id = d.id
+CROSS JOIN LATERAL jsonb_array_elements(dp.blocks) AS b(value)
+WHERE d.knowledge_base_id = $1::uuid
 `
 
-// Every block id in use on the mainline of a knowledge base, so new block ids
-// stay unique within it.
-func (q *Queries) ListKbPageBlockIDs(ctx context.Context, knowledgeBaseID pgtype.UUID) ([]interface{}, error) {
+// Every block id in use in a knowledge base, on the mainline and in its
+// drafts, so new block ids stay unique within it.
+func (q *Queries) ListKbPageBlockIDs(ctx context.Context, knowledgeBaseID pgtype.UUID) ([]string, error) {
 	rows, err := q.db.Query(ctx, listKbPageBlockIDs, knowledgeBaseID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []interface{}{}
+	items := []string{}
 	for rows.Next() {
-		var block_id interface{}
+		var block_id string
 		if err := rows.Scan(&block_id); err != nil {
 			return nil, err
 		}
 		items = append(items, block_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbPageTree = `-- name: ListKbPageTree :many
+SELECT id, parent_id, slug FROM kb_page
+WHERE knowledge_base_id = $1 AND deleted_at IS NULL
+`
+
+type ListKbPageTreeRow struct {
+	ID       pgtype.UUID `json:"id"`
+	ParentID pgtype.UUID `json:"parent_id"`
+	Slug     string      `json:"slug"`
+}
+
+// What page paths are built from: every live page of a knowledge base.
+func (q *Queries) ListKbPageTree(ctx context.Context, knowledgeBaseID pgtype.UUID) ([]ListKbPageTreeRow, error) {
+	rows, err := q.db.Query(ctx, listKbPageTree, knowledgeBaseID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKbPageTreeRow{}
+	for rows.Next() {
+		var i ListKbPageTreeRow
+		if err := rows.Scan(&i.ID, &i.ParentID, &i.Slug); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

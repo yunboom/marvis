@@ -67,11 +67,23 @@ SELECT * FROM kb_page
 WHERE knowledge_base_id = $1 AND id = $2;
 
 -- name: ListKbPageBlockIDs :many
--- Every block id in use on the mainline of a knowledge base, so new block ids
--- stay unique within it.
-SELECT DISTINCT b->>'id' AS block_id
-FROM kb_page p, jsonb_array_elements(p.blocks) AS b
-WHERE p.knowledge_base_id = $1;
+-- Every block id in use in a knowledge base, on the mainline and in its
+-- drafts, so new block ids stay unique within it.
+SELECT (b.value->>'id')::text AS block_id
+FROM kb_page p
+CROSS JOIN LATERAL jsonb_array_elements(p.blocks) AS b(value)
+WHERE p.knowledge_base_id = sqlc.arg('knowledge_base_id')::uuid
+UNION
+SELECT (b.value->>'id')::text AS block_id
+FROM kb_draft d
+JOIN kb_draft_page dp ON dp.draft_id = d.id
+CROSS JOIN LATERAL jsonb_array_elements(dp.blocks) AS b(value)
+WHERE d.knowledge_base_id = sqlc.arg('knowledge_base_id')::uuid;
+
+-- name: ListKbPageTree :many
+-- What page paths are built from: every live page of a knowledge base.
+SELECT id, parent_id, slug FROM kb_page
+WHERE knowledge_base_id = $1 AND deleted_at IS NULL;
 
 -- name: CreateKbPage :one
 INSERT INTO kb_page (
