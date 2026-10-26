@@ -414,3 +414,135 @@ export interface KbSearchParams {
   /** 1-50; the server defaults to 10. */
   limit?: number;
 }
+
+/** The opener a knowledge base job was started from (spec 7.10). */
+export type KbJobStarter =
+  | "ingest"
+  | "health"
+  | "merge"
+  | "annotations"
+  | "new_page"
+  | "schedule"
+  | "custom";
+
+/** Read off the job's chat: its latest agent turn. */
+export type KbJobState = "running" | "idle" | "failed" | "stopped";
+
+/** Draft statuses (kb_draft.status). */
+export type KbDraftStatus = "open" | "submitted" | "merged" | "discarded";
+
+/** Merge request statuses. */
+export type KbMergeRequestStatus = "open" | "merged" | "closed";
+
+/** The linked draft at a glance; added / deleted are only counted on the detail. */
+export interface KbJobDraft {
+  version: number;
+  status: KbDraftStatus;
+  pages: number;
+  added: number;
+  deleted: number;
+}
+
+/** The latest merge request made from the job's draft. */
+export interface KbJobMergeRequest {
+  id: string;
+  number: number;
+  title: string;
+  status: KbMergeRequestStatus;
+  author_type: string;
+  author_id: string;
+  author_name: string;
+  merged_by_name: string;
+  closed_by_name: string;
+  close_reason: string;
+}
+
+/** A knowledge base job: a chat with an agent that writes one draft. */
+export interface KbJob {
+  id: string;
+  knowledge_base_id: string;
+  name: string;
+  starter: KbJobStarter;
+  agent_id: string;
+  agent_name: string;
+  chat_session_id: string;
+  /** Null until the agent creates the job's draft. */
+  draft_id: string | null;
+  created_by: string;
+  state: KbJobState;
+  last_reply: string;
+  draft: KbJobDraft | null;
+  merge_request: KbJobMergeRequest | null;
+  annotation_ids: string[];
+  page_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** One line of a changed page's diff. */
+export interface KbDraftDiffLine {
+  kind: "context" | "add" | "delete";
+  text: string;
+  block_id: string;
+  old_line: number;
+  new_line: number;
+}
+
+/** One changed page of a draft: a file card. */
+export interface KbDraftPageChange {
+  page_id: string;
+  path: string;
+  old_path: string;
+  title: string;
+  change: KbDraftChange;
+  added: number;
+  deleted: number;
+  lines: KbDraftDiffLine[];
+}
+
+/** A format check finding. */
+export interface KbLintFinding {
+  code: string;
+  severity: "error" | "warning";
+  page_id: string;
+  path: string;
+  block_id: string;
+  message: string;
+}
+
+/** An unresolved conflict with the mainline. */
+export interface KbDraftConflict {
+  page_id: string;
+  path: string;
+  kind: string;
+  block_id: string;
+  main_lines: string;
+  draft_lines: string;
+}
+
+/** A job with its draft's changes and checks. */
+export interface KbJobDetail extends KbJob {
+  pages: KbDraftPageChange[];
+  checks: { lint: KbLintFinding[]; conflicts: KbDraftConflict[] };
+}
+
+export interface CreateKbJobRequest {
+  agent_id: string;
+  starter: KbJobStarter;
+  name?: string;
+  message: string;
+  annotation_ids?: string[];
+  page_id?: string | null;
+  sources?: string[];
+}
+
+/** A merge request as created by a job submit. */
+export interface KbMergeRequestCreated {
+  id: string;
+  number: number;
+  knowledge_base_id: string;
+  title: string;
+  status: KbMergeRequestStatus;
+  draft_id: string;
+  job_id: string | null;
+}

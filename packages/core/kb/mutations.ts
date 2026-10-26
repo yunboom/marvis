@@ -3,12 +3,52 @@ import { api } from "../api";
 import { useWorkspaceId } from "../hooks";
 import type {
   CreateKbAnnotationRequest,
+  CreateKbJobRequest,
   CreateKnowledgeBaseRequest,
   KbAnnotationStatus,
   UpdateKnowledgeBaseRequest,
 } from "../types/kb";
 import { kbKeys } from "./queries";
-import { invalidateKbAnnotations } from "./ws-updaters";
+import { invalidateKbAnnotations, invalidateKbJobs, invalidateKbMergeRequests } from "./ws-updaters";
+
+/**
+ * Starts a job. Awaits the server: the job page needs the job and its chat
+ * session, which only exist once the first message is sent.
+ */
+export function useCreateKbJob() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ kb, data }: { kb: string; data: CreateKbJobRequest }) => api.createKnowledgeBaseJob(kb, data),
+    onSettled: (_job, _error, { kb }) => qc.invalidateQueries({ queryKey: kbKeys.jobs(wsId, kb) }),
+  });
+}
+
+/** Submits a job's draft for review; the job turns read-only. */
+export function useSubmitKbJob() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: (jobId: string) => api.submitKnowledgeBaseJob(jobId),
+    onSettled: () => {
+      invalidateKbMergeRequests(qc, wsId);
+      invalidateKbAnnotations(qc, wsId);
+    },
+  });
+}
+
+/** Discards a job's draft; the job stays listed. */
+export function useDiscardKbJob() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: (jobId: string) => api.discardKnowledgeBaseJob(jobId),
+    onSettled: () => invalidateKbJobs(qc, wsId),
+  });
+}
 
 /** Creates a knowledge base; the list and its counters refetch afterwards. */
 export function useCreateKnowledgeBase() {

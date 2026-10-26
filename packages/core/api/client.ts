@@ -286,8 +286,21 @@ import type {
   StoredKbDraft,
   KbTemplates,
   UpdateKnowledgeBaseRequest,
+  CreateKbJobRequest,
+  KbJob,
+  KbJobDetail,
+  KbJobState,
+  KbMergeRequestCreated,
 } from "../types/kb";
 import {
+  EMPTY_KB_JOB_LIST,
+  EMPTY_KB_MERGE_REQUEST_CREATED,
+  KbJobDetailSchema,
+  KbJobListSchema,
+  KbJobSchema,
+  KbMergeRequestCreatedSchema,
+  kbJobDetailFallback,
+  kbJobFallback,
   EMPTY_KB_BUILDER_SESSION_LIST,
   EMPTY_KB_BUILDER_SESSION_START,
   KbBuilderRuntimeSwitchSchema,
@@ -5065,6 +5078,51 @@ export class ApiClient {
     const raw = await this.fetch<unknown>(`/api/kb/search?${search.toString()}`);
     return parseWithFallback(raw, KbSearchResultSchema, EMPTY_KB_SEARCH_RESULT, {
       endpoint: "GET /api/kb/search",
+    });
+  }
+
+  /** The caller's jobs of a knowledge base, newest first. */
+  async listKnowledgeBaseJobs(kb: string, params: { state?: Extract<KbJobState, "running" | "failed"> } = {}): Promise<KbJob[]> {
+    const qs = params.state ? `?state=${params.state}` : "";
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/jobs${qs}`);
+    return parseWithFallback(raw, KbJobListSchema, EMPTY_KB_JOB_LIST, {
+      endpoint: "GET /api/kb/bases/:kb/jobs",
+    });
+  }
+
+  /** Starts a job: the server opens its chat and sends the first message. */
+  async createKnowledgeBaseJob(kb: string, data: CreateKbJobRequest): Promise<KbJob> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/jobs`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbJobSchema, kbJobFallback(), {
+      endpoint: "POST /api/kb/bases/:kb/jobs",
+    });
+  }
+
+  async getKnowledgeBaseJob(id: string): Promise<KbJobDetail> {
+    const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}`);
+    return parseWithFallback(raw, KbJobDetailSchema, kbJobDetailFallback(id), {
+      endpoint: "GET /api/kb/jobs/:id",
+    });
+  }
+
+  /** Opens a merge request from the job's draft. */
+  async submitKnowledgeBaseJob(id: string, data: { title?: string; summary?: string } = {}): Promise<KbMergeRequestCreated> {
+    const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}/submit`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbMergeRequestCreatedSchema, EMPTY_KB_MERGE_REQUEST_CREATED, {
+      endpoint: "POST /api/kb/jobs/:id/submit",
+    });
+  }
+
+  async discardKnowledgeBaseJob(id: string): Promise<KbJob> {
+    const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}/discard`, { method: "POST" });
+    return parseWithFallback(raw, KbJobSchema, kbJobFallback(id), {
+      endpoint: "POST /api/kb/jobs/:id/discard",
     });
   }
 

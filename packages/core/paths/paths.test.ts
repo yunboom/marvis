@@ -42,6 +42,13 @@ describe("paths.workspace(slug)", () => {
     expect(ws.kbConfigSession("team", "s1")).toBe("/acme/kb/team/config/s1");
     expect(ws.kbPage("team", "p 1")).toBe("/acme/kb/team/p/p%201");
     expect(ws.kbAnnotations("team")).toBe("/acme/kb/team/annotations");
+    expect(ws.kbJobs("team")).toBe("/acme/kb/team/jobs");
+    expect(ws.kbJob("team", "j1")).toBe("/acme/kb/team/jobs/j1");
+    expect(ws.kbNewJob("team")).toBe("/acme/kb/team/jobs/new");
+    expect(ws.kbNewJob("team", { starter: "annotations", annotations: ["a1", "a2"], message: "处理 4 条" })).toBe(
+      "/acme/kb/team/jobs/new?starter=annotations&annotations=a1%2Ca2&message=%E5%A4%84%E7%90%86+4+%E6%9D%A1",
+    );
+    expect(ws.kbMergeRequest("team", 16)).toBe("/acme/kb/team/reviews/16");
     expect(ws.kbRevision("team", "p1", "r1")).toBe("/acme/kb/team/p/p1/history/r1");
     expect(ws.settings()).toBe("/acme/settings");
     expect(ws.attachmentPreview("att_42")).toBe("/acme/attachments/att_42/preview");

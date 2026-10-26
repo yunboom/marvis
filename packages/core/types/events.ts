@@ -92,7 +92,35 @@ export type WSEventType =
   | "pull_request:linked"
   | "pull_request:updated"
   | "pull_request:unlinked"
-  | "kb.annotation.changed";
+  | "kb.annotation.changed"
+  | "kb.job.updated"
+  | "kb.draft.updated"
+  | "kb.mr.created";
+
+/** A job was started, or its draft linked, submitted or discarded (spec 9). */
+export interface KbJobUpdatedPayload {
+  job_id: string;
+  knowledge_base_id: string;
+  draft_id: string | null;
+}
+
+/** A draft took writes; folded per draft within one second (spec 9). */
+export interface KbDraftUpdatedPayload {
+  draft_id: string;
+  job_id: string | null;
+  knowledge_base_id: string;
+  version: number;
+  page_ids: string[];
+}
+
+/** A merge request was opened for a draft. */
+export interface KbMrCreatedPayload {
+  merge_request_id: string;
+  number: number;
+  knowledge_base_id: string;
+  draft_id: string;
+  job_id: string | null;
+}
 
 /** A knowledge base annotation was created or changed status (spec 9). */
 export interface KbAnnotationChangedPayload {
@@ -666,6 +694,9 @@ export interface WSEventPayloadMap {
   "pull_request:updated": unknown;
   "pull_request:unlinked": unknown;
   "kb.annotation.changed": KbAnnotationChangedPayload;
+  "kb.job.updated": KbJobUpdatedPayload;
+  "kb.draft.updated": KbDraftUpdatedPayload;
+  "kb.mr.created": KbMrCreatedPayload;
 }
 
 /**

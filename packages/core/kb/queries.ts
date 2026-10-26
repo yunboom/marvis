@@ -7,6 +7,9 @@ import type {
   KbBuilderSession,
   KbTemplates,
   KbHome,
+  KbJob,
+  KbJobDetail,
+  KbJobState,
   KbPage,
   KbRevision,
   KbRevisionDiff,
@@ -48,7 +51,34 @@ export const kbKeys = {
   /** One search; an empty kb searches every knowledge base. */
   search: (wsId: string, kb: string, q: string, type: string, limit: number) =>
     [...kbKeys.searches(wsId), kb, q, type, limit] as const,
+  /** Every job list of a knowledge base. */
+  jobs: (wsId: string, kb: string) => [...kbKeys.all(wsId), "jobs", kb] as const,
+  /** One job list; an empty state lists every job. */
+  jobList: (wsId: string, kb: string, state: KbJobListState | "") => [...kbKeys.jobs(wsId, kb), state] as const,
+  /** A job with its draft's changes and checks. */
+  job: (wsId: string, jobId: string) => [...kbKeys.all(wsId), "job", jobId] as const,
 };
+
+/** The job list filters the server takes. */
+export type KbJobListState = Extract<KbJobState, "running" | "failed">;
+
+/** The caller's jobs of a knowledge base. */
+export function kbJobListOptions(wsId: string, kb: string, state: KbJobListState | "" = "") {
+  return queryOptions<KbJob[]>({
+    queryKey: kbKeys.jobList(wsId, kb, state),
+    queryFn: () => api.listKnowledgeBaseJobs(kb, { state: state || undefined }),
+    enabled: !!wsId && !!kb,
+  });
+}
+
+/** A job and its draft; draft writes refresh it through kb.draft.updated. */
+export function kbJobOptions(wsId: string, jobId: string) {
+  return queryOptions<KbJobDetail>({
+    queryKey: kbKeys.job(wsId, jobId),
+    queryFn: () => api.getKnowledgeBaseJob(jobId),
+    enabled: !!wsId && !!jobId,
+  });
+}
 
 /** Hits shown in a search dropdown. */
 export const KB_SEARCH_LIMIT = 10;

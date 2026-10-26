@@ -16,6 +16,14 @@ import type {
   KnowledgeBasePending,
   KbSearchMode,
   KbSearchResult,
+  KbDraftDiffLine,
+  KbDraftStatus,
+  KbJob,
+  KbJobDetail,
+  KbJobStarter,
+  KbJobState,
+  KbMergeRequestCreated,
+  KbMergeRequestStatus,
 } from "../types/kb";
 
 // Knowledge base response schemas. Kept out of schemas.ts so the knowledge
@@ -561,3 +569,185 @@ export const KbSearchResultSchema = z
   .loose();
 
 export const EMPTY_KB_SEARCH_RESULT: KbSearchResult = { mode: "keyword", total: 0, hits: [] };
+
+// Jobs (spec 7.10). Unknown enums fall back to the value that keeps the job
+// page usable: a custom starter, an idle state, an open draft.
+
+const KB_JOB_STARTERS = [
+  "ingest",
+  "health",
+  "merge",
+  "annotations",
+  "new_page",
+  "schedule",
+  "custom",
+] as const satisfies readonly KbJobStarter[];
+const KB_JOB_STATES = ["running", "idle", "failed", "stopped"] as const satisfies readonly KbJobState[];
+const KB_DRAFT_STATUSES = ["open", "submitted", "merged", "discarded"] as const satisfies readonly KbDraftStatus[];
+const KB_MR_STATUSES = ["open", "merged", "closed"] as const satisfies readonly KbMergeRequestStatus[];
+const KB_DIFF_KINDS = ["context", "add", "delete"] as const satisfies readonly KbDraftDiffLine["kind"][];
+const KB_DRAFT_CHANGES = ["added", "modified", "moved", "deleted"] as const;
+
+const KbJobDraftSchema = z
+  .object({
+    version: countSchema,
+    status: z.enum(KB_DRAFT_STATUSES).catch("open"),
+    pages: countSchema,
+    added: countSchema,
+    deleted: countSchema,
+  })
+  .loose();
+
+const KbJobMergeRequestSchema = z
+  .object({
+    id: z.string(),
+    number: countSchema,
+    title: text,
+    status: z.enum(KB_MR_STATUSES).catch("open"),
+    author_type: text,
+    author_id: text,
+    author_name: text,
+    merged_by_name: text,
+    closed_by_name: text,
+    close_reason: text,
+  })
+  .loose();
+
+export const KbJobSchema = z
+  .object({
+    id: z.string(),
+    knowledge_base_id: text,
+    name: text,
+    starter: z.enum(KB_JOB_STARTERS).catch("custom"),
+    agent_id: text,
+    agent_name: text,
+    chat_session_id: text,
+    draft_id: nullableId,
+    created_by: text,
+    state: z.enum(KB_JOB_STATES).catch("idle"),
+    last_reply: text,
+    draft: KbJobDraftSchema.nullable().optional().catch(null).transform((v) => v ?? null),
+    merge_request: KbJobMergeRequestSchema.nullable().optional().catch(null).transform((v) => v ?? null),
+    annotation_ids: z
+      .array(z.unknown())
+      .nullable()
+      .optional()
+      .catch([])
+      .transform((items) => (items ?? []).filter((item): item is string => typeof item === "string")),
+    page_id: nullableId,
+    created_at: text,
+    updated_at: text,
+  })
+  .loose();
+
+export const KbJobListSchema = lenientArray(KbJobSchema);
+
+const KbDraftDiffLineSchema = z
+  .object({
+    kind: z.enum(KB_DIFF_KINDS).catch("context"),
+    text: text,
+    block_id: text,
+    old_line: countSchema,
+    new_line: countSchema,
+  })
+  .loose();
+
+const KbDraftPageChangeSchema = z
+  .object({
+    page_id: z.string(),
+    path: text,
+    old_path: text,
+    title: text,
+    change: z.enum(KB_DRAFT_CHANGES).catch("modified"),
+    added: countSchema,
+    deleted: countSchema,
+    lines: lenientArray(KbDraftDiffLineSchema),
+  })
+  .loose();
+
+const KbLintFindingSchema = z
+  .object({
+    code: text,
+    // An unknown severity does not block: only "error" does.
+    severity: z.enum(["error", "warning"]).catch("warning"),
+    page_id: text,
+    path: text,
+    block_id: text,
+    message: text,
+  })
+  .loose();
+
+const KbDraftConflictSchema = z
+  .object({
+    page_id: text,
+    path: text,
+    kind: text,
+    block_id: text,
+    main_lines: text,
+    draft_lines: text,
+  })
+  .loose();
+
+export const KbJobDetailSchema = KbJobSchema.extend({
+  pages: lenientArray(KbDraftPageChangeSchema),
+  checks: z
+    .object({
+      lint: lenientArray(KbLintFindingSchema),
+      conflicts: lenientArray(KbDraftConflictSchema),
+    })
+    .loose()
+    .nullable()
+    .optional()
+    .catch(null)
+    .transform((v) => v ?? { lint: [], conflicts: [] }),
+}).loose();
+
+export const KbMergeRequestCreatedSchema = z
+  .object({
+    id: z.string(),
+    number: countSchema,
+    knowledge_base_id: text,
+    title: text,
+    status: z.enum(KB_MR_STATUSES).catch("open"),
+    draft_id: text,
+    job_id: nullableId,
+  })
+  .loose();
+
+export const EMPTY_KB_JOB_LIST: KbJob[] = [];
+
+export function kbJobFallback(id = ""): KbJob {
+  return {
+    id,
+    knowledge_base_id: "",
+    name: "",
+    starter: "custom",
+    agent_id: "",
+    agent_name: "",
+    chat_session_id: "",
+    draft_id: null,
+    created_by: "",
+    state: "idle",
+    last_reply: "",
+    draft: null,
+    merge_request: null,
+    annotation_ids: [],
+    page_id: null,
+    created_at: "",
+    updated_at: "",
+  };
+}
+
+export function kbJobDetailFallback(id = ""): KbJobDetail {
+  return { ...kbJobFallback(id), pages: [], checks: { lint: [], conflicts: [] } };
+}
+
+export const EMPTY_KB_MERGE_REQUEST_CREATED: KbMergeRequestCreated = {
+  id: "",
+  number: 0,
+  knowledge_base_id: "",
+  title: "",
+  status: "open",
+  draft_id: "",
+  job_id: null,
+};

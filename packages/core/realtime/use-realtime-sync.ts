@@ -11,7 +11,12 @@ import { clearWorkspaceStorage } from "../platform/storage-cleanup";
 import { defaultStorage } from "../platform/storage";
 import { getCurrentWsId, getCurrentSlug } from "../platform/workspace-storage";
 import { issueKeys } from "../issues/queries";
-import { invalidateKbAnnotations } from "../kb/ws-updaters";
+import {
+  invalidateKbAnnotations,
+  invalidateKbDraft,
+  invalidateKbJobs,
+  invalidateKbMergeRequests,
+} from "../kb/ws-updaters";
 import { projectKeys } from "../projects/queries";
 import { pinKeys } from "../pins/queries";
 import { autopilotKeys } from "../autopilots/queries";
@@ -123,6 +128,7 @@ import type {
   ChatSession,
   ChatSessionCreatedPayload,
   InvitationCreatedPayload,
+  KbDraftUpdatedPayload,
 } from "../types";
 
 const chatWsLogger = createLogger("chat.ws");
@@ -1348,6 +1354,26 @@ export function useRealtimeSync(
       if (wsId) invalidateKbAnnotations(qc, wsId);
     });
 
+    // Job lists and job pages: a job started, linked a draft, was submitted
+    // or discarded.
+    const unsubKbJobUpdated = ws.on("kb.job.updated", () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbJobs(qc, wsId);
+    });
+
+    // A draft's writes, folded per second: the job page's diff and checks,
+    // and the tree and pages read through that draft.
+    const unsubKbDraftUpdated = ws.on("kb.draft.updated", (p) => {
+      const wsId = getCurrentWsId();
+      const { draft_id } = p as KbDraftUpdatedPayload;
+      if (wsId && draft_id) invalidateKbDraft(qc, wsId, draft_id);
+    });
+
+    const unsubKbMrCreated = ws.on("kb.mr.created", () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbMergeRequests(qc, wsId);
+    });
+
     const unsubWsUpdated = ws.on("workspace:updated", (p) => {
       applyWorkspaceUpdatedToCache(qc, p as WorkspaceUpdatedPayload);
     });
@@ -1611,6 +1637,10 @@ export function useRealtimeSync(
       // the aggregate on every turn (MUL-4159).
       // Assistant message just landed → has_unread may have flipped to true.
       invalidateSessionLists();
+      // A job's state and last reply come from its chat; only mounted job
+      // lists and pages refetch.
+      const kbWsId = getCurrentWsId();
+      if (kbWsId) invalidateKbJobs(qc, kbWsId);
     });
 
     // Late quick-actions supplement from the daemon's background suggestion
@@ -1857,6 +1887,9 @@ export function useRealtimeSync(
       unsubSubscriberRemoved();
       unsubWsUpdated();
       unsubKbAnnotationChanged();
+      unsubKbJobUpdated();
+      unsubKbDraftUpdated();
+      unsubKbMrCreated();
       unsubWsDeleted();
       unsubMemberRemoved();
       unsubMemberAdded();
