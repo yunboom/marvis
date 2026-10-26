@@ -27,7 +27,6 @@ type KbTreePageResponse struct {
 	Title           string `json:"title"`
 	Type            string `json:"type"`
 	Description     string `json:"description"`
-	Reserved        string `json:"reserved"`
 	HasChild        bool   `json:"has_child"`
 	ChildCount      int64  `json:"child_count"`
 	Stale           bool   `json:"stale"`
@@ -209,7 +208,7 @@ func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbD
 			if row.OnMainline {
 				excluded = append(excluded, row.PageID)
 			}
-			if uuidOrEmpty(row.ParentID) != parentText || row.MainReserved != kb.ReservedNone {
+			if uuidOrEmpty(row.ParentID) != parentText {
 				continue
 			}
 
@@ -232,7 +231,6 @@ func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbD
 	params := db.ListKbChildPagesParams{
 		KnowledgeBaseID: base.ID,
 		ParentID:        parentID,
-		Reserved:        kb.ReservedNone,
 		ExcludeIds:      excluded,
 		RowLimit:        int32(limit + 1),
 	}
@@ -313,7 +311,6 @@ func (h *Handler) kbLevelToResponse(ctx context.Context, base db.KbBase, tree *k
 			Title:           entry.title,
 			Type:            entry.pageType,
 			Description:     entry.description,
-			Reserved:        kb.ReservedNone,
 			HasChild:        counts[entry.ID] > 0,
 			ChildCount:      counts[entry.ID],
 			Stale:           entry.stale,

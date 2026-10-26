@@ -111,7 +111,6 @@ func TestListKbPagesLevels(t *testing.T) {
 
 	slug := fmt.Sprintf("tree-%d", time.Now().UnixNano())
 	base := insertTestKbBase(t, "Tree KB", slug)
-	createTestKbPage(t, base, kb.NewPage{Slug: "quickstart", Reserved: kb.ReservedQuickstart, Title: "入门", Position: "0", Markdown: "intro"})
 	overdue := time.Now().Add(-time.Hour)
 	createTestKbPage(t, base, kb.NewPage{Slug: "a", Title: "A", Position: "a0", Markdown: "a", StaleAfter: &overdue})
 	b := createTestKbPage(t, base, kb.NewPage{Slug: "b", Title: "B", Position: "a1", Markdown: "b"})
@@ -284,8 +283,8 @@ func TestGetKbPage(t *testing.T) {
 	if page.Path != "/payment/callback" || len(page.Breadcrumb) != 1 || page.Breadcrumb[0].Title != "支付" {
 		t.Fatalf("path/breadcrumb = %q %+v", page.Path, page.Breadcrumb)
 	}
-	if page.Frontmatter["type"] != "Workflow" || page.Reserved != "" || page.DraftChange != "" {
-		t.Errorf("frontmatter = %+v reserved=%q change=%q", page.Frontmatter, page.Reserved, page.DraftChange)
+	if page.Frontmatter["type"] != "Workflow" || page.DraftChange != "" {
+		t.Errorf("frontmatter = %+v change=%q", page.Frontmatter, page.DraftChange)
 	}
 	wantLink := "](/kb/" + slug + "/p/" + idem + "#b9Lm)"
 	if len(page.Blocks) != 3 || !strings.Contains(page.Blocks[2].Content, wantLink) {
@@ -421,10 +420,6 @@ func TestGetKbHome(t *testing.T) {
 	slug := fmt.Sprintf("home-%d", time.Now().UnixNano())
 	base := insertTestKbBase(t, "Home KB", slug)
 	payment := createTestKbPage(t, base, kb.NewPage{Slug: "payment", Title: "支付", Position: "a0", Markdown: "p"})
-	quickstart := createTestKbPage(t, base, kb.NewPage{
-		Slug: "quickstart", Reserved: kb.ReservedQuickstart, Title: "入门", Position: "0",
-		Markdown: "团队知识库。\n\n见[支付](/payment.md)。",
-	})
 	release := createTestKbPage(t, base, kb.NewPage{Slug: "release", Title: "发布", Position: "a1", Markdown: "r"})
 
 	now := time.Now()
@@ -450,10 +445,6 @@ func TestGetKbHome(t *testing.T) {
 	if home.KnowledgeBase.ID != base || home.KnowledgeBase.PageCount != 2 {
 		t.Errorf("knowledge_base = %+v", home.KnowledgeBase)
 	}
-	if home.Quickstart == nil || home.Quickstart.ID != quickstart || home.Quickstart.Reserved != kb.ReservedQuickstart ||
-		!strings.Contains(home.Quickstart.Blocks[1].Content, "/kb/"+slug+"/p/"+payment) {
-		t.Fatalf("quickstart = %+v", home.Quickstart)
-	}
 	if home.Pending.Annotations != 2 || home.Pending.AgentReported != 1 || home.Pending.OpenMRs != 1 ||
 		home.Pending.LatestMR == nil || home.Pending.LatestMR.Number != 14 {
 		t.Errorf("pending = %+v", home.Pending)
@@ -470,7 +461,7 @@ func TestGetKbHome(t *testing.T) {
 	req = withURLParam(newRequest(http.MethodGet, "/", nil), "kb", empty)
 	var bare KbHomeResponse
 	testutil.Call(t, testHandler.GetKbHome, req).Want(http.StatusOK).JSON(&bare)
-	if bare.Quickstart != nil || len(bare.Recent) != 0 || bare.Pending.LatestMR != nil {
+	if len(bare.Recent) != 0 || bare.Pending.LatestMR != nil {
 		t.Errorf("empty home = %+v", bare)
 	}
 }

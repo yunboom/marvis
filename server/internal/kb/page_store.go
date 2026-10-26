@@ -16,8 +16,8 @@ import (
 // emptyClaims is the claims snapshot of a page without claims.
 var emptyClaims = []byte("[]")
 
-// NewPage describes a page written straight to the mainline: the quickstart
-// page at creation, and later merged pages that did not exist before.
+// NewPage describes a page written straight to the mainline, such as a
+// merged page that did not exist before.
 type NewPage struct {
 	WorkspaceID     string
 	KnowledgeBaseID string
@@ -25,7 +25,6 @@ type NewPage struct {
 	ParentID    string
 	Position    string
 	Slug        string
-	Reserved    string
 	Type        string
 	Title       string
 	Description string
@@ -34,7 +33,7 @@ type NewPage struct {
 	// Markdown is the page body; it is split into blocks with new ids.
 	Markdown   string
 	StaleAfter *time.Time
-	// MergeRequestID is empty for the initial revision written at creation.
+	// MergeRequestID is empty for a revision written without a merge request.
 	MergeRequestID string
 }
 
@@ -109,7 +108,6 @@ func CreatePage(ctx context.Context, q *db.Queries, in NewPage) (db.KbPage, erro
 		ParentID:        parentID,
 		Position:        in.Position,
 		Slug:            in.Slug,
-		Reserved:        in.Reserved,
 		Type:            in.Type,
 		Title:           in.Title,
 		Description:     in.Description,

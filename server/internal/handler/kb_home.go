@@ -46,11 +46,10 @@ type KbRecentPageResponse struct {
 }
 
 // KbHomeResponse is the knowledge base home page (GET
-// /api/kb/bases/{kb}/home): the base, its quickstart page in the reading page
-// shape, pending work, recent merges and running jobs.
+// /api/kb/bases/{kb}/home), an overview: the base, pending work, recent
+// merges and running jobs. It embeds no page body.
 type KbHomeResponse struct {
 	KnowledgeBase KbBaseResponse         `json:"knowledge_base"`
-	Quickstart    *KbPageResponse        `json:"quickstart"`
 	Pending       KbHomePendingResponse  `json:"pending"`
 	Recent        []KbRecentPageResponse `json:"recent"`
 	RunningJobs   int64                  `json:"running_jobs"`
@@ -71,13 +70,6 @@ func (h *Handler) GetKbHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := KbHomeResponse{KnowledgeBase: kbBaseToResponse(base, stats)}
-
-	quickstart, err := h.loadKbQuickstart(ctx, base, requestUserID(r))
-	if err != nil {
-		h.writeKbInternalError(w, r, err)
-		return
-	}
-	resp.Quickstart = quickstart
 
 	pending, err := h.loadKbHomePending(ctx, base, resp.KnowledgeBase.Pending)
 	if err != nil {
@@ -101,36 +93,6 @@ func (h *Handler) GetKbHome(w http.ResponseWriter, r *http.Request) {
 	resp.RunningJobs = running
 
 	writeJSON(w, http.StatusOK, resp)
-}
-
-// loadKbQuickstart builds the quickstart page view, nil when the knowledge
-// base has none.
-func (h *Handler) loadKbQuickstart(ctx context.Context, base db.KbBase, userID string) (*KbPageResponse, error) {
-	page, err := h.Queries.GetKbQuickstartPage(ctx, db.GetKbQuickstartPageParams{KnowledgeBaseID: base.ID, Reserved: kb.ReservedQuickstart})
-	if err != nil {
-		if isNotFound(err) {
-			return nil, nil
-		}
-
-		return nil, errors.Wrapf(err, "load quickstart knowledge_base_id=%s", uuidToString(base.ID))
-	}
-
-	view, err := h.buildKbPageView(ctx, kbPageSource{
-		base:       base,
-		pageID:     page.ID,
-		reserved:   page.Reserved,
-		version:    uuidToString(page.HeadRevisionID),
-		updatedAt:  page.UpdatedAt,
-		staleAfter: page.StaleAfter,
-		header:     page.Frontmatter,
-		blocks:     page.Blocks,
-		mainline:   &page,
-	}, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &view, nil
 }
 
 func (h *Handler) loadKbHomePending(ctx context.Context, base db.KbBase, counts KbPendingResponse) (KbHomePendingResponse, error) {
@@ -172,7 +134,6 @@ func (h *Handler) loadKbRecentPages(ctx context.Context, base db.KbBase) ([]KbRe
 	rows, err := h.Queries.ListKbRecentMergedPages(ctx, db.ListKbRecentMergedPagesParams{
 		KnowledgeBaseID: base.ID,
 		Status:          kb.MergeRequestStatusMerged,
-		Reserved:        kb.ReservedNone,
 		RowLimit:        kbRecentLimit,
 	})
 	if err != nil {

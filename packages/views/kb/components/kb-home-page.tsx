@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { FileText } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import { kbHomeOptions, kbKeys } from "@marvis/core/kb/queries";
+import { kbHomeOptions } from "@marvis/core/kb/queries";
 import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
 import { parseKbRoute } from "../utils/kb-markdown";
-import type { KbRawFileActions } from "./kb-cite-card";
-import { KbPageBody } from "./kb-page-body";
 
 function PendingCard({
   tone,
@@ -38,25 +36,17 @@ function PendingCard({
 }
 
 /**
- * The home page of a knowledge base: its quickstart page as the body,
- * pending work and recently merged pages. The quickstart arrives with the
- * home response and is written into its page query, so opening it from the
- * tree needs no request.
+ * The home page of a knowledge base is an overview: the base, its pending
+ * work and recently merged pages. It embeds no page body.
  */
-export function KbHomePage({ rawFileActions }: { rawFileActions?: KbRawFileActions }) {
+export function KbHomePage() {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
-  const qc = useQueryClient();
   const timeAgo = useTimeAgo();
   const { pathname } = useNavigation();
   const { kbSlug } = parseKbRoute(pathname);
   const { data: home, isLoading, isError } = useQuery(kbHomeOptions(wsId, kbSlug));
-
-  const quickstart = home?.quickstart ?? null;
-  useEffect(() => {
-    if (quickstart) qc.setQueryData(kbKeys.page(wsId, quickstart.id, ""), quickstart);
-  }, [qc, wsId, quickstart]);
 
   if (!home?.knowledge_base.id) {
     return (
@@ -94,7 +84,6 @@ export function KbHomePage({ rawFileActions }: { rawFileActions?: KbRawFileActio
             {base.description && <p className="text-body text-muted-foreground">{base.description}</p>}
           </div>
 
-          {quickstart && <KbPageBody page={quickstart} bare rawFileActions={rawFileActions} />}
 
           <section>
             <h2 className="mb-2.5 text-label font-semibold">{t(($) => $.home.pending_title)}</h2>

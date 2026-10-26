@@ -169,8 +169,6 @@ interface KbPageBodyProps {
   page: KbPage;
   /** The published page, when `page` is a draft copy; edits show inline. */
   published?: KbPage | null;
-  /** Hides the title and meta row (the home page shows its own heading). */
-  bare?: boolean;
   /** Banners shown under the meta row. */
   banners?: ReactNode;
   rawFileActions?: KbRawFileActions;
@@ -181,7 +179,7 @@ interface KbPageBodyProps {
  * become numbered citations with a hover card; a draft copy is compared with
  * the published page block by block.
  */
-export function KbPageBody({ page, published, bare, banners, rawFileActions }: KbPageBodyProps) {
+export function KbPageBody({ page, published, banners, rawFileActions }: KbPageBodyProps) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
   const { push } = useNavigation();
@@ -262,12 +260,9 @@ export function KbPageBody({ page, published, bare, banners, rawFileActions }: K
       }}
       onBlur={scheduleHide}
     >
-      {!bare && (
-        <>
-          <h1 className="mb-2 text-[28px] leading-tight font-semibold">{pageTitle(page)}</h1>
-          <PageMeta page={page} />
-        </>
-      )}
+      <h1 className="mb-2 text-[28px] leading-tight font-semibold">{pageTitle(page)}</h1>
+      <PageMeta page={page} />
+
       {banners}
 
       <div className="flex flex-col">

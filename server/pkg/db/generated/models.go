@@ -1288,7 +1288,6 @@ type KbPage struct {
 	ParentID        pgtype.UUID        `json:"parent_id"`
 	Position        string             `json:"position"`
 	Slug            string             `json:"slug"`
-	Reserved        string             `json:"reserved"`
 	Type            string             `json:"type"`
 	Title           string             `json:"title"`
 	Description     string             `json:"description"`

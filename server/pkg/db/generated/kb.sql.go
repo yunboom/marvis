@@ -210,7 +210,6 @@ const countKbPagesByBase = `-- name: CountKbPagesByBase :many
 SELECT knowledge_base_id, count(*)::bigint AS page_count
 FROM kb_page
 WHERE knowledge_base_id = ANY($1::uuid[])
-  AND reserved = ''
   AND deleted_at IS NULL
 GROUP BY knowledge_base_id
 `
@@ -220,8 +219,7 @@ type CountKbPagesByBaseRow struct {
 	PageCount       int64       `json:"page_count"`
 }
 
-// Page counts shown on the list exclude reserved pages (quickstart) and
-// deleted pages.
+// Page counts shown on the list exclude deleted pages.
 func (q *Queries) CountKbPagesByBase(ctx context.Context, baseIds []pgtype.UUID) ([]CountKbPagesByBaseRow, error) {
 	rows, err := q.db.Query(ctx, countKbPagesByBase, baseIds)
 	if err != nil {
@@ -432,11 +430,11 @@ func (q *Queries) CreateKbLinks(ctx context.Context, arg CreateKbLinksParams) er
 
 const createKbPage = `-- name: CreateKbPage :one
 INSERT INTO kb_page (
-    id, workspace_id, knowledge_base_id, parent_id, position, slug, reserved,
+    id, workspace_id, knowledge_base_id, parent_id, position, slug,
     type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
-) RETURNING id, workspace_id, knowledge_base_id, parent_id, position, slug, reserved, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+) RETURNING id, workspace_id, knowledge_base_id, parent_id, position, slug, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at
 `
 
 type CreateKbPageParams struct {
@@ -446,7 +444,6 @@ type CreateKbPageParams struct {
 	ParentID        pgtype.UUID        `json:"parent_id"`
 	Position        string             `json:"position"`
 	Slug            string             `json:"slug"`
-	Reserved        string             `json:"reserved"`
 	Type            string             `json:"type"`
 	Title           string             `json:"title"`
 	Description     string             `json:"description"`
@@ -465,7 +462,6 @@ func (q *Queries) CreateKbPage(ctx context.Context, arg CreateKbPageParams) (KbP
 		arg.ParentID,
 		arg.Position,
 		arg.Slug,
-		arg.Reserved,
 		arg.Type,
 		arg.Title,
 		arg.Description,
@@ -483,7 +479,6 @@ func (q *Queries) CreateKbPage(ctx context.Context, arg CreateKbPageParams) (KbP
 		&i.ParentID,
 		&i.Position,
 		&i.Slug,
-		&i.Reserved,
 		&i.Type,
 		&i.Title,
 		&i.Description,
@@ -694,7 +689,7 @@ func (q *Queries) GetKbDraftPage(ctx context.Context, arg GetKbDraftPageParams) 
 }
 
 const getKbPage = `-- name: GetKbPage :one
-SELECT id, workspace_id, knowledge_base_id, parent_id, position, slug, reserved, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at FROM kb_page
+SELECT id, workspace_id, knowledge_base_id, parent_id, position, slug, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at FROM kb_page
 WHERE knowledge_base_id = $1 AND id = $2
 `
 
@@ -713,7 +708,6 @@ func (q *Queries) GetKbPage(ctx context.Context, arg GetKbPageParams) (KbPage, e
 		&i.ParentID,
 		&i.Position,
 		&i.Slug,
-		&i.Reserved,
 		&i.Type,
 		&i.Title,
 		&i.Description,
@@ -730,7 +724,7 @@ func (q *Queries) GetKbPage(ctx context.Context, arg GetKbPageParams) (KbPage, e
 }
 
 const getKbPageInWorkspace = `-- name: GetKbPageInWorkspace :one
-SELECT id, workspace_id, knowledge_base_id, parent_id, position, slug, reserved, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at FROM kb_page
+SELECT id, workspace_id, knowledge_base_id, parent_id, position, slug, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at FROM kb_page
 WHERE workspace_id = $1 AND id = $2
 `
 
@@ -749,7 +743,6 @@ func (q *Queries) GetKbPageInWorkspace(ctx context.Context, arg GetKbPageInWorks
 		&i.ParentID,
 		&i.Position,
 		&i.Slug,
-		&i.Reserved,
 		&i.Type,
 		&i.Title,
 		&i.Description,
@@ -793,46 +786,6 @@ func (q *Queries) GetKbPageRevision(ctx context.Context, arg GetKbPageRevisionPa
 		&i.Claims,
 		&i.Deleted,
 		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const getKbQuickstartPage = `-- name: GetKbQuickstartPage :one
-SELECT id, workspace_id, knowledge_base_id, parent_id, position, slug, reserved, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at FROM kb_page
-WHERE knowledge_base_id = $1
-  AND reserved = $2::text
-  AND deleted_at IS NULL
-ORDER BY created_at
-LIMIT 1
-`
-
-type GetKbQuickstartPageParams struct {
-	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
-	Reserved        string      `json:"reserved"`
-}
-
-func (q *Queries) GetKbQuickstartPage(ctx context.Context, arg GetKbQuickstartPageParams) (KbPage, error) {
-	row := q.db.QueryRow(ctx, getKbQuickstartPage, arg.KnowledgeBaseID, arg.Reserved)
-	var i KbPage
-	err := row.Scan(
-		&i.ID,
-		&i.WorkspaceID,
-		&i.KnowledgeBaseID,
-		&i.ParentID,
-		&i.Position,
-		&i.Slug,
-		&i.Reserved,
-		&i.Type,
-		&i.Title,
-		&i.Description,
-		&i.Frontmatter,
-		&i.Blocks,
-		&i.SearchText,
-		&i.HeadRevisionID,
-		&i.StaleAfter,
-		&i.DeletedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -1027,25 +980,23 @@ func (q *Queries) ListKbBases(ctx context.Context, workspaceID pgtype.UUID) ([]K
 }
 
 const listKbChildPages = `-- name: ListKbChildPages :many
-SELECT id, parent_id, position, slug, reserved, type, title, description, stale_after
+SELECT id, parent_id, position, slug, type, title, description, stale_after
 FROM kb_page
 WHERE knowledge_base_id = $1
   AND parent_id IS NOT DISTINCT FROM $2::uuid
   AND deleted_at IS NULL
-  AND reserved = $3::text
   AND (
-    $4::text IS NULL
-    OR (position, id) > ($4::text, $5::uuid)
+    $3::text IS NULL
+    OR (position, id) > ($3::text, $4::uuid)
   )
-  AND NOT (id = ANY($6::uuid[]))
+  AND NOT (id = ANY($5::uuid[]))
 ORDER BY position, id
-LIMIT $7
+LIMIT $6
 `
 
 type ListKbChildPagesParams struct {
 	KnowledgeBaseID pgtype.UUID   `json:"knowledge_base_id"`
 	ParentID        pgtype.UUID   `json:"parent_id"`
-	Reserved        string        `json:"reserved"`
 	AfterPosition   pgtype.Text   `json:"after_position"`
 	AfterID         pgtype.UUID   `json:"after_id"`
 	ExcludeIds      []pgtype.UUID `json:"exclude_ids"`
@@ -1057,7 +1008,6 @@ type ListKbChildPagesRow struct {
 	ParentID    pgtype.UUID        `json:"parent_id"`
 	Position    string             `json:"position"`
 	Slug        string             `json:"slug"`
-	Reserved    string             `json:"reserved"`
 	Type        string             `json:"type"`
 	Title       string             `json:"title"`
 	Description string             `json:"description"`
@@ -1071,7 +1021,6 @@ func (q *Queries) ListKbChildPages(ctx context.Context, arg ListKbChildPagesPara
 	rows, err := q.db.Query(ctx, listKbChildPages,
 		arg.KnowledgeBaseID,
 		arg.ParentID,
-		arg.Reserved,
 		arg.AfterPosition,
 		arg.AfterID,
 		arg.ExcludeIds,
@@ -1089,7 +1038,6 @@ func (q *Queries) ListKbChildPages(ctx context.Context, arg ListKbChildPagesPara
 			&i.ParentID,
 			&i.Position,
 			&i.Slug,
-			&i.Reserved,
 			&i.Type,
 			&i.Title,
 			&i.Description,
@@ -1152,7 +1100,6 @@ SELECT
     dp.page_id, dp.op, dp.parent_id, dp.position, dp.slug, dp.frontmatter,
     p.parent_id AS main_parent_id,
     (p.id IS NOT NULL AND p.deleted_at IS NULL)::boolean AS on_mainline,
-    COALESCE(p.reserved, '')::text AS main_reserved,
     p.stale_after AS main_stale_after
 FROM kb_draft_page dp
 LEFT JOIN kb_page p ON p.id = dp.page_id AND p.knowledge_base_id = $1
@@ -1173,7 +1120,6 @@ type ListKbDraftPagesRow struct {
 	Frontmatter    []byte             `json:"frontmatter"`
 	MainParentID   pgtype.UUID        `json:"main_parent_id"`
 	OnMainline     bool               `json:"on_mainline"`
-	MainReserved   string             `json:"main_reserved"`
 	MainStaleAfter pgtype.Timestamptz `json:"main_stale_after"`
 }
 
@@ -1197,7 +1143,6 @@ func (q *Queries) ListKbDraftPages(ctx context.Context, arg ListKbDraftPagesPara
 			&i.Frontmatter,
 			&i.MainParentID,
 			&i.OnMainline,
-			&i.MainReserved,
 			&i.MainStaleAfter,
 		); err != nil {
 			return nil, err
@@ -1556,17 +1501,15 @@ SELECT page_id, title, number, mr_title, merged_at FROM (
       AND mr.status = $2::text
       AND mr.merged_at IS NOT NULL
       AND p.deleted_at IS NULL
-      AND p.reserved = $3::text
     ORDER BY r.page_id, mr.merged_at DESC
 ) recent
 ORDER BY recent.merged_at DESC, recent.page_id
-LIMIT $4
+LIMIT $3
 `
 
 type ListKbRecentMergedPagesParams struct {
 	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
 	Status          string      `json:"status"`
-	Reserved        string      `json:"reserved"`
 	RowLimit        int32       `json:"row_limit"`
 }
 
@@ -1579,14 +1522,9 @@ type ListKbRecentMergedPagesRow struct {
 }
 
 // Pages changed by the most recent merges, one row per page (its latest
-// merge), newest merge first. Deleted and reserved pages are left out.
+// merge), newest merge first. Deleted pages are left out.
 func (q *Queries) ListKbRecentMergedPages(ctx context.Context, arg ListKbRecentMergedPagesParams) ([]ListKbRecentMergedPagesRow, error) {
-	rows, err := q.db.Query(ctx, listKbRecentMergedPages,
-		arg.KnowledgeBaseID,
-		arg.Status,
-		arg.Reserved,
-		arg.RowLimit,
-	)
+	rows, err := q.db.Query(ctx, listKbRecentMergedPages, arg.KnowledgeBaseID, arg.Status, arg.RowLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -1713,7 +1651,7 @@ UPDATE kb_page SET
     deleted_at = $14,
     updated_at = now()
 WHERE knowledge_base_id = $1 AND id = $2
-RETURNING id, workspace_id, knowledge_base_id, parent_id, position, slug, reserved, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at
+RETURNING id, workspace_id, knowledge_base_id, parent_id, position, slug, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at
 `
 
 type UpdateKbPageHeadParams struct {
@@ -1759,7 +1697,6 @@ func (q *Queries) UpdateKbPageHead(ctx context.Context, arg UpdateKbPageHeadPara
 		&i.ParentID,
 		&i.Position,
 		&i.Slug,
-		&i.Reserved,
 		&i.Type,
 		&i.Title,
 		&i.Description,

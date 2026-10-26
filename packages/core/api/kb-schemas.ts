@@ -175,7 +175,6 @@ export const KbPageSchema = z
     id: z.string(),
     knowledge_base_id: text,
     path: text,
-    reserved: text,
     version: text,
     breadcrumb: lenientArray(KbPageRefSchema),
     frontmatter: z
@@ -206,7 +205,6 @@ const KbTreePageSchema = z
     title: text,
     type: text,
     description: text,
-    reserved: text,
     has_child: flag,
     child_count: countSchema,
     stale: flag,
@@ -235,7 +233,6 @@ const EMPTY_HOME_PENDING = {
 export const KbHomeSchema = z
   .object({
     knowledge_base: KnowledgeBaseSchema,
-    quickstart: nullableObject(KbPageSchema),
     pending: z
       .object({
         annotations: countSchema,
@@ -309,7 +306,6 @@ export const EMPTY_KB_PAGE: KbPage = {
   id: "",
   knowledge_base_id: "",
   path: "",
-  reserved: "",
   version: "",
   breadcrumb: [],
   frontmatter: {},
@@ -336,7 +332,6 @@ export const EMPTY_KB_TREE_LEVEL: KbTreeLevel = {
 
 export const EMPTY_KB_HOME: KbHome = {
   knowledge_base: EMPTY_KNOWLEDGE_BASE_DETAIL,
-  quickstart: null,
   pending: EMPTY_HOME_PENDING,
   recent: [],
   running_jobs: 0,

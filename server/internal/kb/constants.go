@@ -11,14 +11,6 @@ const (
 	SchemaModeCustom = "custom"
 )
 
-// Reserved page markers (kb_page.reserved).
-const (
-	// ReservedNone marks an ordinary page.
-	ReservedNone = ""
-	// ReservedQuickstart marks the quickstart page shown as the home body.
-	ReservedQuickstart = "quickstart"
-)
-
 // Annotation statuses (kb_annotation.status).
 const (
 	// AnnotationStatusPending is an annotation nobody has handled yet.

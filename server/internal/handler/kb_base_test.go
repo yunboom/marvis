@@ -77,7 +77,6 @@ func TestListKbBases(t *testing.T) {
 	})
 	newer := insertTestKbBase(t, "Newer KB", fmt.Sprintf("newer-%d", suffix))
 
-	createTestKbPage(t, newer, kb.NewPage{Slug: "quickstart", Reserved: kb.ReservedQuickstart, Title: "Quickstart", Markdown: "intro"})
 	overdue := time.Now().Add(-24 * time.Hour)
 	createTestKbPage(t, newer, kb.NewPage{Slug: "payment", Title: "Payment", Markdown: "body", StaleAfter: &overdue})
 	deleted := createTestKbPage(t, newer, kb.NewPage{Slug: "gone", Title: "Gone", Markdown: "body"})
@@ -115,7 +114,7 @@ func TestListKbBases(t *testing.T) {
 
 	n := byID[newer]
 	if n.PageCount != 1 {
-		t.Errorf("page_count = %d, want 1 (quickstart and deleted pages excluded)", n.PageCount)
+		t.Errorf("page_count = %d, want 1 (deleted pages excluded)", n.PageCount)
 	}
 	if n.Pending != (KbPendingResponse{Annotations: 1, StalePages: 1, OpenMRs: 1}) {
 		t.Errorf("pending = %+v, want 1 annotation, 1 stale page, 1 open MR", n.Pending)
@@ -245,8 +244,8 @@ func TestDeleteWorkspaceRemovesKnowledgeBases(t *testing.T) {
 		INSERT INTO kb_base (workspace_id, name, slug, schema_mode, schema, created_by)
 		VALUES ($1, 'Teardown', 'teardown', 'default', '# Schema', $2) RETURNING id`, wsID, testUserID).Scan(&baseID)
 	if _, err := kb.CreatePage(context.Background(), testHandler.Queries, kb.NewPage{
-		WorkspaceID: wsID, KnowledgeBaseID: baseID, Position: "a0", Slug: "quickstart",
-		Reserved: kb.ReservedQuickstart, Type: "Guide", Title: "Quickstart", Markdown: "see [x](/missing.md)",
+		WorkspaceID: wsID, KnowledgeBaseID: baseID, Position: "a0", Slug: "intro",
+		Type: "Guide", Title: "Intro", Markdown: "see [x](/missing.md)",
 	}); err != nil {
 		t.Fatalf("CreatePage: %+v", err)
 	}

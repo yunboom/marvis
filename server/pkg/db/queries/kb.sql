@@ -29,12 +29,10 @@ INSERT INTO kb_config_revision (
 ) RETURNING *;
 
 -- name: CountKbPagesByBase :many
--- Page counts shown on the list exclude reserved pages (quickstart) and
--- deleted pages.
+-- Page counts shown on the list exclude deleted pages.
 SELECT knowledge_base_id, count(*)::bigint AS page_count
 FROM kb_page
 WHERE knowledge_base_id = ANY(sqlc.arg('base_ids')::uuid[])
-  AND reserved = ''
   AND deleted_at IS NULL
 GROUP BY knowledge_base_id;
 
@@ -87,10 +85,10 @@ WHERE knowledge_base_id = $1 AND deleted_at IS NULL;
 
 -- name: CreateKbPage :one
 INSERT INTO kb_page (
-    id, workspace_id, knowledge_base_id, parent_id, position, slug, reserved,
+    id, workspace_id, knowledge_base_id, parent_id, position, slug,
     type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
 ) RETURNING *;
 
 -- name: UpdateKbPageHead :one
@@ -147,24 +145,15 @@ SELECT * FROM kb_link
 WHERE knowledge_base_id = $1 AND from_page_id = $2
 ORDER BY from_block_id, to_path;
 
--- name: GetKbQuickstartPage :one
-SELECT * FROM kb_page
-WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
-  AND reserved = sqlc.arg('reserved')::text
-  AND deleted_at IS NULL
-ORDER BY created_at
-LIMIT 1;
-
 -- name: ListKbChildPages :many
 -- One page of one tree level, keyset-paginated on (position, id). A NULL
 -- parent_id lists the top level. exclude_ids drops pages a draft overlay
 -- replaces; the caller merges the draft's version back in.
-SELECT id, parent_id, position, slug, reserved, type, title, description, stale_after
+SELECT id, parent_id, position, slug, type, title, description, stale_after
 FROM kb_page
 WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
   AND parent_id IS NOT DISTINCT FROM sqlc.narg('parent_id')::uuid
   AND deleted_at IS NULL
-  AND reserved = sqlc.arg('reserved')::text
   AND (
     sqlc.narg('after_position')::text IS NULL
     OR (position, id) > (sqlc.narg('after_position')::text, sqlc.arg('after_id')::uuid)
@@ -203,7 +192,6 @@ SELECT
     dp.page_id, dp.op, dp.parent_id, dp.position, dp.slug, dp.frontmatter,
     p.parent_id AS main_parent_id,
     (p.id IS NOT NULL AND p.deleted_at IS NULL)::boolean AS on_mainline,
-    COALESCE(p.reserved, '')::text AS main_reserved,
     p.stale_after AS main_stale_after
 FROM kb_draft_page dp
 LEFT JOIN kb_page p ON p.id = dp.page_id AND p.knowledge_base_id = sqlc.arg('knowledge_base_id')
@@ -279,7 +267,7 @@ LIMIT 1;
 
 -- name: ListKbRecentMergedPages :many
 -- Pages changed by the most recent merges, one row per page (its latest
--- merge), newest merge first. Deleted and reserved pages are left out.
+-- merge), newest merge first. Deleted pages are left out.
 SELECT * FROM (
     SELECT DISTINCT ON (r.page_id)
         r.page_id, p.title, mr.number, mr.title AS mr_title, mr.merged_at
@@ -290,7 +278,6 @@ SELECT * FROM (
       AND mr.status = sqlc.arg('status')::text
       AND mr.merged_at IS NOT NULL
       AND p.deleted_at IS NULL
-      AND p.reserved = sqlc.arg('reserved')::text
     ORDER BY r.page_id, mr.merged_at DESC
 ) recent
 ORDER BY recent.merged_at DESC, recent.page_id

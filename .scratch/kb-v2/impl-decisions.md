@@ -108,3 +108,13 @@
     - 改动碰到 Markdown 语法字符（链接、强调、换行等）时不做行内 diff，改为上下两块整段对照，避免拆坏 Markdown。
 11. **页面树的状态**：展开状态放在 KbShell 的组件状态里（web 是路由 layout，desktop 是父路由元素，切页面不重置）；打开页面时按 breadcrumb 把各级祖先一起展开，各级同时请求。一级超过 200 条时末尾有「加载更多」，滚动到可见时自动加载。
 12. **kb:// 改回路径**：新增 `kb.PathLinks(blocks, tree)`，历史 diff 已在用；票 04 的 fetch 直接用它即可。
+
+
+## 票 03
+
+1. **决策 103：quickstart 去特殊化（用户要求）**
+   - 首页即总览页（知识库信息、待处理、最近变更），不再嵌入任何页面正文；首页接口去掉 `quickstart` 字段。
+   - 创建知识库不再建 quickstart 保留页，也不写它的初始修订。
+   - 删掉 `kb_page.reserved` 列及 CHECK（直接改迁移 604，分支未上线；已跑过的本地库手动 `ALTER TABLE kb_page DROP COLUMN reserved` 或重建）、sqlc 里所有 `reserved` 条件和 `GetKbQuickstartPage`、`kb.Reserved*` 常量、`NewPage.Reserved`、页面 / 树响应的 `reserved` 字段；名为 quickstart 的页面和其他页面一样进页面树、计入 page_count、可删可移。
+   - 前端去掉 `KbPage.reserved` / `KbTreePage.reserved` / `KbHome.quickstart`、首页写 quickstart 缓存的逻辑、`KbPageBody` 的 `bare` 属性。
+   - 默认 Schema 常量保留 quickstart 作为建议的普通页面（任务导航 + 待补），去掉「是首页」「Agent 依赖，不能删除、不能移动」以及 Agent 依赖清单里的 quickstart；构建器指令不出现 quickstart。

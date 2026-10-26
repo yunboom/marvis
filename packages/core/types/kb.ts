@@ -24,7 +24,7 @@ export interface KnowledgeBase {
    */
   schema_mode: KnowledgeBaseSchemaMode | (string & {});
   created_by: string;
-  /** Visible pages; excludes the reserved quickstart page and deleted pages. */
+  /** Live pages; deleted pages are not counted. */
   page_count: number;
   content_version: number;
   created_at: string;
@@ -127,8 +127,6 @@ export interface KbPage {
   id: string;
   knowledge_base_id: string;
   path: string;
-  /** "" for ordinary pages, "quickstart" for the home body. */
-  reserved: string;
   /** Revision id, or d<version> when read from a draft. */
   version: string;
   breadcrumb: KbPageRef[];
@@ -155,7 +153,6 @@ export interface KbTreePage {
   title: string;
   type: string;
   description: string;
-  reserved: string;
   has_child: boolean;
   child_count: number;
   stale: boolean;
@@ -201,7 +198,6 @@ export interface KbRecentPage {
 /** The knowledge base home page. */
 export interface KbHome {
   knowledge_base: KnowledgeBase;
-  quickstart: KbPage | null;
   pending: KbHomePending;
   recent: KbRecentPage[];
   running_jobs: number;

@@ -4849,7 +4849,7 @@ export class ApiClient {
     });
   }
 
-  /** Home page of a knowledge base, with its quickstart page. */
+  /** Home overview of a knowledge base. */
   async getKnowledgeBaseHome(kb: string): Promise<KbHome> {
     const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/home`);
     return parseWithFallback(raw, KbHomeSchema, EMPTY_KB_HOME, {

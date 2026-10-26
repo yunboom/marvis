@@ -1,10 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { api } from "@marvis/core/api";
-import { kbKeys } from "@marvis/core/kb/queries";
 import type { KbHome, KbPage, KbRevision, KbTreeLevel, KbTreePage, KnowledgeBaseDetail } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
@@ -81,7 +80,6 @@ function treePage(overrides: Partial<KbTreePage>): KbTreePage {
     title: "P",
     type: "Guide",
     description: "",
-    reserved: "",
     has_child: false,
     child_count: 0,
     stale: false,
@@ -99,7 +97,6 @@ const CALLBACK: KbPage = {
   id: "page-cb",
   knowledge_base_id: "kb-1",
   path: "/product/payment/callback",
-  reserved: "",
   version: "rev-2",
   breadcrumb: [
     { id: "page-product", title: "产品与业务" },
@@ -436,23 +433,20 @@ function revision(overrides: Partial<KbRevision>): KbRevision {
 describe("KbHomePage", () => {
   const home: KbHome = {
     knowledge_base: BASE,
-    quickstart: { ...CALLBACK, id: "page-qs", reserved: "quickstart", blocks: [{ id: "q1", kind: "text", content: "下单后订单服务创建支付单。" }], sources: [], pending_mr: null },
     pending: { annotations: 4, agent_reported: 1, stale_pages: 2, open_mrs: 3, latest_mr: { number: 16, title: "去重键改为渠道交易号" } },
     recent: [{ page_id: "page-cb", path: "/product/payment/callback", title: "支付回调", mr_number: 14, mr_title: "每日知识沉淀", merged_at: new Date().toISOString() }],
     running_jobs: 0,
   };
 
-  it("renders quickstart, pending work and recent pages, and caches the quickstart", async () => {
+  it("renders the overview: pending work and recent pages", async () => {
     mocked.getKnowledgeBaseHome.mockResolvedValue(home);
-    const { client } = mount(<KbHomePage />, makeAdapter("/acme/kb/team"));
+    mount(<KbHomePage />, makeAdapter("/acme/kb/team"));
 
     expect(await screen.findByRole("heading", { level: 1, name: "团队知识库" })).toBeInTheDocument();
-    expect(screen.getByText("下单后订单服务创建支付单。")).toBeInTheDocument();
     expect(screen.getByText("Latest: 去重键改为渠道交易号")).toBeInTheDocument();
     expect(screen.getByText("Includes 1 gap reported by agents")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /支付回调/ })).toHaveAttribute("href", "/acme/kb/team/p/page-cb");
     expect(screen.getByText("#14 每日知识沉淀")).toBeInTheDocument();
-    await waitFor(() => expect(client.getQueryData(kbKeys.page("ws-1", "page-qs", ""))).toEqual(home.quickstart));
   });
 
   it("reports a missing knowledge base", async () => {

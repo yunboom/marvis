@@ -117,13 +117,11 @@ type KbPageDraftResponse struct {
 }
 
 // KbPageResponse is a page as the reading page shows it (GET
-// /api/kb/pages/{id}); the home endpoint embeds the quickstart page in the
-// same shape.
+// /api/kb/pages/{id}).
 type KbPageResponse struct {
 	ID              string                     `json:"id"`
 	KnowledgeBaseID string                     `json:"knowledge_base_id"`
 	Path            string                     `json:"path"`
-	Reserved        string                     `json:"reserved"`
 	Version         string                     `json:"version"`
 	Breadcrumb      []KbPageLinkResponse       `json:"breadcrumb"`
 	Frontmatter     map[string]any             `json:"frontmatter"`
@@ -148,7 +146,6 @@ type KbPageResponse struct {
 type kbPageSource struct {
 	base       db.KbBase
 	pageID     pgtype.UUID
-	reserved   string
 	version    string
 	updatedAt  pgtype.Timestamptz
 	staleAfter pgtype.Timestamptz
@@ -224,7 +221,6 @@ func (h *Handler) loadKbPageSource(w http.ResponseWriter, r *http.Request, ref, 
 			return kbPageSource{
 				base:        base,
 				pageID:      pageID,
-				reserved:    reservedOf(mainline),
 				version:     fmt.Sprintf("%s%d", draftVersionPrefix, draft.Version),
 				updatedAt:   dp.UpdatedAt,
 				staleAfter:  staleAfterOf(mainline),
@@ -249,7 +245,6 @@ func (h *Handler) loadKbPageSource(w http.ResponseWriter, r *http.Request, ref, 
 	return kbPageSource{
 		base:       base,
 		pageID:     pageID,
-		reserved:   mainline.Reserved,
 		version:    uuidToString(mainline.HeadRevisionID),
 		updatedAt:  mainline.UpdatedAt,
 		staleAfter: mainline.StaleAfter,
@@ -445,7 +440,6 @@ func (h *Handler) buildKbPageView(ctx context.Context, src kbPageSource, userID 
 		ID:              pageIDText,
 		KnowledgeBaseID: uuidToString(src.base.ID),
 		Path:            path,
-		Reserved:        src.reserved,
 		Version:         src.version,
 		Breadcrumb:      breadcrumb,
 		Frontmatter:     header,
@@ -852,14 +846,6 @@ func kbClaimsToResponse(claims []kb.Claim) []KbClaimResponse {
 
 func kbIsStale(staleAfter pgtype.Timestamptz) bool {
 	return staleAfter.Valid && staleAfter.Time.Before(time.Now())
-}
-
-func reservedOf(page *db.KbPage) string {
-	if page == nil {
-		return kb.ReservedNone
-	}
-
-	return page.Reserved
 }
 
 func staleAfterOf(page *db.KbPage) pgtype.Timestamptz {

@@ -19,7 +19,6 @@ const page = {
   id: "page-1",
   knowledge_base_id: "kb-1",
   path: "/payment/callback",
-  reserved: "",
   version: "rev-1",
   breadcrumb: [{ id: "page-0", title: "支付" }],
   frontmatter: { type: "Workflow", title: "支付回调", tags: ["dev"] },
@@ -137,23 +136,20 @@ describe("knowledge base home schema", () => {
   const parse = (raw: unknown): KbHome =>
     parseWithFallback(raw, KbHomeSchema, EMPTY_KB_HOME, { endpoint: "GET /api/kb/bases/:kb/home" });
 
-  it("parses the home page with its quickstart", () => {
+  it("parses the home overview", () => {
     const parsed = parse({
       knowledge_base: { id: "kb-1", name: "团队知识库", slug: "team" },
-      quickstart: { ...page, reserved: "quickstart" },
       pending: { annotations: 4, agent_reported: 1, stale_pages: 2, open_mrs: 1, latest_mr: { number: 16, title: "t" } },
       recent: [{ page_id: "p", path: "/a", title: "A", mr_number: 15, mr_title: "m", merged_at: "x" }],
       running_jobs: 1,
     });
-    expect(parsed.quickstart?.reserved).toBe("quickstart");
     expect(parsed.pending.latest_mr?.number).toBe(16);
     expect(parsed.recent).toHaveLength(1);
     expect(parsed.knowledge_base.pending.open_mrs).toBe(0);
   });
 
-  it("defaults pending work and a missing quickstart", () => {
+  it("defaults pending work", () => {
     const parsed = parse({ knowledge_base: { id: "kb-1", name: "n", slug: "s" }, pending: "bad" });
-    expect(parsed.quickstart).toBeNull();
     expect(parsed.pending).toEqual(EMPTY_KB_HOME.pending);
     expect(parsed.recent).toEqual([]);
   });

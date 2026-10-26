@@ -3013,7 +3013,6 @@ CREATE TABLE public.kb_page (
     parent_id uuid,
     "position" text NOT NULL,
     slug text NOT NULL,
-    reserved text DEFAULT ''::text NOT NULL,
     type text NOT NULL,
     title text NOT NULL,
     description text NOT NULL,
@@ -3024,8 +3023,7 @@ CREATE TABLE public.kb_page (
     stale_after timestamp with time zone,
     deleted_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT kb_page_reserved_check CHECK ((reserved = ANY (ARRAY[''::text, 'quickstart'::text])))
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 --

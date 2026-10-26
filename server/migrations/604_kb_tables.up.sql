@@ -76,7 +76,6 @@ CREATE TABLE IF NOT EXISTS kb_page (
     parent_id         UUID,
     position          TEXT NOT NULL,
     slug              TEXT NOT NULL,
-    reserved          TEXT NOT NULL DEFAULT '' CHECK (reserved IN ('', 'quickstart')),
     type              TEXT NOT NULL,
     title             TEXT NOT NULL,
     description       TEXT NOT NULL,
@@ -90,8 +89,8 @@ CREATE TABLE IF NOT EXISTS kb_page (
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Append-only page history. merge_request_id is NULL for the initial
--- revision written when the knowledge base is created.
+-- Append-only page history. merge_request_id is NULL for a revision
+-- written straight to the mainline without a merge request.
 CREATE TABLE IF NOT EXISTS kb_page_revision (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id      UUID NOT NULL,
