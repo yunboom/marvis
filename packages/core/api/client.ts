@@ -263,10 +263,28 @@ import { type Logger, noopLogger } from "../logger";
 import { createRequestId, createSafeId } from "../utils";
 import { getCurrentSlug } from "../platform/workspace-storage";
 import { parseWithFallback } from "./schema";
-import type { KnowledgeBase, KnowledgeBaseDetail } from "../types/kb";
+import type {
+  KbHome,
+  KbPage,
+  KbRevision,
+  KbRevisionDiff,
+  KbTreeLevel,
+  KnowledgeBase,
+  KnowledgeBaseDetail,
+} from "../types/kb";
 import {
+  EMPTY_KB_HOME,
+  EMPTY_KB_PAGE,
+  EMPTY_KB_REVISION_DIFF,
+  EMPTY_KB_REVISION_LIST,
+  EMPTY_KB_TREE_LEVEL,
   EMPTY_KNOWLEDGE_BASE_DETAIL,
   EMPTY_KNOWLEDGE_BASE_LIST,
+  KbHomeSchema,
+  KbPageSchema,
+  KbRevisionDiffSchema,
+  KbRevisionListSchema,
+  KbTreeLevelSchema,
   KnowledgeBaseDetailSchema,
   KnowledgeBaseListSchema,
 } from "./kb-schemas";
@@ -4828,6 +4846,58 @@ export class ApiClient {
     const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}`);
     return parseWithFallback(raw, KnowledgeBaseDetailSchema, EMPTY_KNOWLEDGE_BASE_DETAIL, {
       endpoint: "GET /api/kb/bases/:kb",
+    });
+  }
+
+  /** Home page of a knowledge base, with its quickstart page. */
+  async getKnowledgeBaseHome(kb: string): Promise<KbHome> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/home`);
+    return parseWithFallback(raw, KbHomeSchema, EMPTY_KB_HOME, {
+      endpoint: "GET /api/kb/bases/:kb/home",
+    });
+  }
+
+  /** One cursor page of a page tree level; no parent lists the top level. */
+  async listKnowledgeBasePages(
+    kb: string,
+    params: { parent?: string; cursor?: string; limit?: number; draft?: string } = {},
+  ): Promise<KbTreeLevel> {
+    const search = new URLSearchParams();
+    if (params.parent) search.set("parent", params.parent);
+    if (params.cursor) search.set("cursor", params.cursor);
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.draft) search.set("draft", params.draft);
+    const qs = search.toString();
+    const raw = await this.fetch<unknown>(
+      `/api/kb/bases/${encodeURIComponent(kb)}/pages${qs ? `?${qs}` : ""}`,
+    );
+    return parseWithFallback(raw, KbTreeLevelSchema, EMPTY_KB_TREE_LEVEL, {
+      endpoint: "GET /api/kb/bases/:kb/pages",
+    });
+  }
+
+  /** A page by id or `<kb>:/<path>`; `draft` reads the caller's draft copy. */
+  async getKnowledgeBasePage(ref: string, draft?: string): Promise<KbPage> {
+    const qs = draft ? `?draft=${encodeURIComponent(draft)}` : "";
+    const raw = await this.fetch<unknown>(`/api/kb/pages/${encodeURIComponent(ref)}${qs}`);
+    return parseWithFallback(raw, KbPageSchema, EMPTY_KB_PAGE, {
+      endpoint: "GET /api/kb/pages/:id",
+    });
+  }
+
+  async listKnowledgeBasePageHistory(pageId: string): Promise<KbRevision[]> {
+    const raw = await this.fetch<unknown>(`/api/kb/pages/${encodeURIComponent(pageId)}/history`);
+    return parseWithFallback(raw, KbRevisionListSchema, EMPTY_KB_REVISION_LIST, {
+      endpoint: "GET /api/kb/pages/:id/history",
+    });
+  }
+
+  async getKnowledgeBaseRevisionDiff(pageId: string, revisionId: string): Promise<KbRevisionDiff> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/pages/${encodeURIComponent(pageId)}/history/${encodeURIComponent(revisionId)}`,
+    );
+    return parseWithFallback(raw, KbRevisionDiffSchema, EMPTY_KB_REVISION_DIFF, {
+      endpoint: "GET /api/kb/pages/:id/history/:revision",
     });
   }
 

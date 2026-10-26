@@ -1,12 +1,32 @@
-import { queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
-import type { KnowledgeBase, KnowledgeBaseDetail } from "../types/kb";
+import type {
+  KbHome,
+  KbPage,
+  KbRevision,
+  KbRevisionDiff,
+  KnowledgeBase,
+  KnowledgeBaseDetail,
+} from "../types/kb";
+
+/** Page size of a page tree level; the server caps it at 200. */
+export const KB_TREE_PAGE_SIZE = 200;
 
 export const kbKeys = {
   all: (wsId: string) => ["kb", wsId] as const,
   bases: (wsId: string) => [...kbKeys.all(wsId), "bases"] as const,
   /** `kb` is the id or slug the caller addressed the knowledge base by. */
   base: (wsId: string, kb: string) => [...kbKeys.bases(wsId), kb] as const,
+  home: (wsId: string, kb: string) => [...kbKeys.all(wsId), "home", kb] as const,
+  /** One tree level; an empty parent is the top level, an empty draft the mainline. */
+  level: (wsId: string, kb: string, parent: string, draft: string) =>
+    [...kbKeys.all(wsId), "level", kb, parent, draft] as const,
+  /** A page as read; an empty draft is the mainline. */
+  page: (wsId: string, pageId: string, draft: string) =>
+    [...kbKeys.all(wsId), "page", pageId, draft] as const,
+  history: (wsId: string, pageId: string) => [...kbKeys.all(wsId), "history", pageId] as const,
+  revisionDiff: (wsId: string, pageId: string, revisionId: string) =>
+    [...kbKeys.history(wsId, pageId), revisionId] as const,
 };
 
 export function kbBaseListOptions(wsId: string) {
@@ -22,6 +42,55 @@ export function kbBaseDetailOptions(wsId: string, kb: string) {
     queryKey: kbKeys.base(wsId, kb),
     queryFn: () => api.getKnowledgeBase(kb),
     enabled: !!wsId && !!kb,
+  });
+}
+
+export function kbHomeOptions(wsId: string, kb: string) {
+  return queryOptions<KbHome>({
+    queryKey: kbKeys.home(wsId, kb),
+    queryFn: () => api.getKnowledgeBaseHome(kb),
+    enabled: !!wsId && !!kb,
+  });
+}
+
+/** One tree level, fetched cursor page by cursor page. */
+export function kbTreeLevelOptions(wsId: string, kb: string, parent: string, draft: string) {
+  return infiniteQueryOptions({
+    queryKey: kbKeys.level(wsId, kb, parent, draft),
+    initialPageParam: "",
+    queryFn: ({ pageParam }) =>
+      api.listKnowledgeBasePages(kb, {
+        parent: parent || undefined,
+        cursor: pageParam || undefined,
+        limit: KB_TREE_PAGE_SIZE,
+        draft: draft || undefined,
+      }),
+    getNextPageParam: (lastPage) => lastPage.next_cursor || undefined,
+    enabled: !!wsId && !!kb,
+  });
+}
+
+export function kbPageOptions(wsId: string, pageId: string, draft: string) {
+  return queryOptions<KbPage>({
+    queryKey: kbKeys.page(wsId, pageId, draft),
+    queryFn: () => api.getKnowledgeBasePage(pageId, draft || undefined),
+    enabled: !!wsId && !!pageId,
+  });
+}
+
+export function kbPageHistoryOptions(wsId: string, pageId: string) {
+  return queryOptions<KbRevision[]>({
+    queryKey: kbKeys.history(wsId, pageId),
+    queryFn: () => api.listKnowledgeBasePageHistory(pageId),
+    enabled: !!wsId && !!pageId,
+  });
+}
+
+export function kbRevisionDiffOptions(wsId: string, pageId: string, revisionId: string) {
+  return queryOptions<KbRevisionDiff>({
+    queryKey: kbKeys.revisionDiff(wsId, pageId, revisionId),
+    queryFn: () => api.getKnowledgeBaseRevisionDiff(pageId, revisionId),
+    enabled: !!wsId && !!pageId && !!revisionId,
   });
 }
 

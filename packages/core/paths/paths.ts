@@ -61,6 +61,9 @@ function workspaceScoped(slug: string) {
     kb: () => `${ws}/kb`,
     kbBase: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}`,
     kbNew: () => `${ws}/kb/new`,
+    kbPage: (kbSlug: string, pageId: string) => `${ws}/kb/${encode(kbSlug)}/p/${encode(pageId)}`,
+    kbRevision: (kbSlug: string, pageId: string, revisionId: string) =>
+      `${ws}/kb/${encode(kbSlug)}/p/${encode(pageId)}/history/${encode(revisionId)}`,
     inbox: () => `${ws}/inbox`,
     chat: () => `${ws}/chat`,
     chatWithAgent: (agentId: string) =>
