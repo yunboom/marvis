@@ -409,4 +409,8 @@ export type {
   StoredKbDraft,
   KbTemplates,
   UpdateKnowledgeBaseRequest,
+  KbAnnotation,
+  KbAnnotationStatus,
+  KbAnnotationStatusFilter,
+  CreateKbAnnotationRequest,
 } from "./kb";

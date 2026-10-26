@@ -41,6 +41,7 @@ describe("paths.workspace(slug)", () => {
     expect(ws.kbConfig("team")).toBe("/acme/kb/team/config");
     expect(ws.kbConfigSession("team", "s1")).toBe("/acme/kb/team/config/s1");
     expect(ws.kbPage("team", "p 1")).toBe("/acme/kb/team/p/p%201");
+    expect(ws.kbAnnotations("team")).toBe("/acme/kb/team/annotations");
     expect(ws.kbRevision("team", "p1", "r1")).toBe("/acme/kb/team/p/p1/history/r1");
     expect(ws.settings()).toBe("/acme/settings");
     expect(ws.attachmentPreview("att_42")).toBe("/acme/attachments/att_42/preview");

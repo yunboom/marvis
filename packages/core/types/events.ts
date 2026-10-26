@@ -91,7 +91,15 @@ export type WSEventType =
   | "github_installation:deleted"
   | "pull_request:linked"
   | "pull_request:updated"
-  | "pull_request:unlinked";
+  | "pull_request:unlinked"
+  | "kb.annotation.changed";
+
+/** A knowledge base annotation was created or changed status (spec 9). */
+export interface KbAnnotationChangedPayload {
+  knowledge_base_id: string;
+  annotation_ids: string[];
+  page_ids: string[];
+}
 
 export interface WSMessage<T = unknown> {
   type: WSEventType;
@@ -657,6 +665,7 @@ export interface WSEventPayloadMap {
   "pull_request:linked": unknown;
   "pull_request:updated": unknown;
   "pull_request:unlinked": unknown;
+  "kb.annotation.changed": KbAnnotationChangedPayload;
 }
 
 /**

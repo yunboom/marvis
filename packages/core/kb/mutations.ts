@@ -1,8 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import { useWorkspaceId } from "../hooks";
-import type { CreateKnowledgeBaseRequest, UpdateKnowledgeBaseRequest } from "../types/kb";
+import type {
+  CreateKbAnnotationRequest,
+  CreateKnowledgeBaseRequest,
+  KbAnnotationStatus,
+  UpdateKnowledgeBaseRequest,
+} from "../types/kb";
 import { kbKeys } from "./queries";
+import { invalidateKbAnnotations } from "./ws-updaters";
 
 /** Creates a knowledge base; the list and its counters refetch afterwards. */
 export function useCreateKnowledgeBase() {
@@ -30,5 +36,29 @@ export function useUpdateKnowledgeBase() {
       void qc.invalidateQueries({ queryKey: kbKeys.bases(wsId) });
       void qc.invalidateQueries({ queryKey: kbKeys.home(wsId, kb) });
     },
+  });
+}
+
+/** Records an annotation; awaits the server (the anchor is checked there). */
+export function useCreateKbAnnotation() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ kb, data }: { kb: string; data: CreateKbAnnotationRequest }) =>
+      api.createKnowledgeBaseAnnotation(kb, data),
+    onSettled: () => invalidateKbAnnotations(qc, wsId),
+  });
+}
+
+/** Dismisses an annotation or reopens a dismissed one. */
+export function useUpdateKbAnnotationStatus() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: Extract<KbAnnotationStatus, "pending" | "dismissed"> }) =>
+      api.updateKnowledgeBaseAnnotation(id, { status }),
+    onSettled: () => invalidateKbAnnotations(qc, wsId),
   });
 }

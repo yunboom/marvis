@@ -1,6 +1,8 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
 import type {
+  KbAnnotation,
+  KbAnnotationStatusFilter,
   KbBuilderMode,
   KbBuilderSession,
   KbTemplates,
@@ -35,6 +37,11 @@ export const kbKeys = {
   builderSessionList: (wsId: string, mode: KbBuilderMode, kb: string) =>
     [...kbKeys.builderSessions(wsId), mode, kb] as const,
   templates: () => ["kb-templates"] as const,
+  /** Every annotation list of a knowledge base. */
+  annotations: (wsId: string, kb: string) => [...kbKeys.all(wsId), "annotations", kb] as const,
+  /** One annotation list; an empty page is every page, `-` the knowledge base level. */
+  annotationList: (wsId: string, kb: string, status: KbAnnotationStatusFilter, page: string) =>
+    [...kbKeys.annotations(wsId, kb), status, page] as const,
 };
 
 export function kbBuilderSessionListOptions(wsId: string, mode: KbBuilderMode, kb = "") {
@@ -119,6 +126,20 @@ export function kbRevisionDiffOptions(wsId: string, pageId: string, revisionId: 
     queryFn: () => api.getKnowledgeBaseRevisionDiff(pageId, revisionId),
     enabled: !!wsId && !!pageId && !!revisionId,
   });
+}
+
+/** Annotations of a knowledge base, newest first. */
+export function kbAnnotationListOptions(wsId: string, kb: string, status: KbAnnotationStatusFilter, page = "") {
+  return queryOptions<KbAnnotation[]>({
+    queryKey: kbKeys.annotationList(wsId, kb, status, page),
+    queryFn: () => api.listKnowledgeBaseAnnotations(kb, { status, page: page || undefined }),
+    enabled: !!wsId && !!kb,
+  });
+}
+
+/** Annotations still waiting on someone: pending or held by a merge request. */
+export function isOpenAnnotation(annotation: KbAnnotation): boolean {
+  return annotation.status === "pending" || annotation.status === "processing";
 }
 
 /** Merge requests waiting for review across the given knowledge bases. */

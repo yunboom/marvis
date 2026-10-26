@@ -11,6 +11,7 @@ import { clearWorkspaceStorage } from "../platform/storage-cleanup";
 import { defaultStorage } from "../platform/storage";
 import { getCurrentWsId, getCurrentSlug } from "../platform/workspace-storage";
 import { issueKeys } from "../issues/queries";
+import { invalidateKbAnnotations } from "../kb/ws-updaters";
 import { projectKeys } from "../projects/queries";
 import { pinKeys } from "../pins/queries";
 import { autopilotKeys } from "../autopilots/queries";
@@ -1340,6 +1341,13 @@ export function useRealtimeSync(
       }
     };
 
+    // Annotation lists, counts and page panels refetch; the payload only
+    // names what changed.
+    const unsubKbAnnotationChanged = ws.on("kb.annotation.changed", () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbAnnotations(qc, wsId);
+    });
+
     const unsubWsUpdated = ws.on("workspace:updated", (p) => {
       applyWorkspaceUpdatedToCache(qc, p as WorkspaceUpdatedPayload);
     });
@@ -1848,6 +1856,7 @@ export function useRealtimeSync(
       unsubSubscriberAdded();
       unsubSubscriberRemoved();
       unsubWsUpdated();
+      unsubKbAnnotationChanged();
       unsubWsDeleted();
       unsubMemberRemoved();
       unsubMemberAdded();

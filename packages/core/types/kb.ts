@@ -327,3 +327,53 @@ export interface KbTemplates {
 export interface KnowledgeBaseMutation extends KnowledgeBase {
   mention: string;
 }
+
+/** Status of an annotation (spec 7.6). */
+export type KbAnnotationStatus = "pending" | "processing" | "resolved" | "dismissed";
+
+/** Status filter of the annotation list; `all` lists every status. */
+export type KbAnnotationStatusFilter = KbAnnotationStatus | "all";
+
+/**
+ * A note on a sentence, a page or a whole knowledge base. `page_id` null is
+ * the whole knowledge base; an empty `block_id` on a page is the whole page.
+ */
+export interface KbAnnotation {
+  id: string;
+  knowledge_base_id: string;
+  page_id: string | null;
+  page_path: string;
+  page_title: string;
+  block_id: string;
+  /** 1-based position of the block on the page, 0 when not on a block. */
+  block_index: number;
+  /** The sentence as it reads now. */
+  quote: string;
+  /** The sentence when annotated, once a merge reworded it; empty otherwise. */
+  original_quote: string;
+  prefix: string;
+  suffix: string;
+  body: string;
+  author_type: "member" | "agent";
+  author_id: string;
+  author_name: string;
+  status: KbAnnotationStatus;
+  /** The sentence is gone; the annotation now reads as one on the page. */
+  anchor_lost: boolean;
+  merge_request_id: string | null;
+  mr_number: number | null;
+  created_at: string;
+  updated_at: string;
+  mention: string;
+}
+
+export interface CreateKbAnnotationRequest {
+  /** Omitted for an annotation on the whole knowledge base. */
+  page_id?: string;
+  /** With `quote`, the sentence's block. */
+  block_id?: string;
+  quote?: string;
+  prefix?: string;
+  suffix?: string;
+  body: string;
+}

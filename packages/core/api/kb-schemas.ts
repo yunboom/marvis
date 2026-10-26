@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type {
+  KbAnnotation,
+  KbAnnotationStatus,
   KbBuilderSession,
   KbBuilderSessionStart,
   KnowledgeBaseMutation,
@@ -442,4 +444,83 @@ export function kbBuilderRuntimeSwitchFallback(runtimeId: string): { session_id:
  */
 export function knowledgeBaseMutationFallback(slug: string): KnowledgeBaseMutation {
   return { ...EMPTY_KNOWLEDGE_BASE_DETAIL, slug, mention: "" };
+}
+
+// Annotations (spec 7.6).
+
+const ANNOTATION_STATUSES: readonly KbAnnotationStatus[] = ["pending", "processing", "resolved", "dismissed"];
+
+/** An unknown status reads as pending: still waiting for someone. */
+const annotationStatus = z
+  .string()
+  .catch("pending")
+  .transform((v): KbAnnotationStatus => (ANNOTATION_STATUSES.includes(v as KbAnnotationStatus) ? (v as KbAnnotationStatus) : "pending"));
+
+const nullableId = z
+  .string()
+  .nullable()
+  .optional()
+  .catch(null)
+  .transform((v) => (v ? v : null));
+
+export const KbAnnotationSchema = z
+  .object({
+    id: z.string(),
+    knowledge_base_id: text,
+    page_id: nullableId,
+    page_path: text,
+    page_title: text,
+    block_id: text,
+    block_index: countSchema,
+    quote: text,
+    original_quote: text,
+    prefix: text,
+    suffix: text,
+    body: text,
+    author_type: z
+      .string()
+      .catch("member")
+      .transform((v): "member" | "agent" => (v === "agent" ? "agent" : "member")),
+    author_id: text,
+    author_name: text,
+    status: annotationStatus,
+    anchor_lost: flag,
+    merge_request_id: nullableId,
+    mr_number: z.number().nullable().optional().catch(null).transform((v) => v ?? null),
+    created_at: text,
+    updated_at: text,
+    mention: text,
+  })
+  .loose();
+
+export const KbAnnotationListSchema = lenientArray(KbAnnotationSchema);
+
+export const EMPTY_KB_ANNOTATION_LIST: KbAnnotation[] = [];
+
+/** What a write answers with when its response cannot be read. */
+export function kbAnnotationFallback(id = ""): KbAnnotation {
+  return {
+    id,
+    knowledge_base_id: "",
+    page_id: null,
+    page_path: "",
+    page_title: "",
+    block_id: "",
+    block_index: 0,
+    quote: "",
+    original_quote: "",
+    prefix: "",
+    suffix: "",
+    body: "",
+    author_type: "member",
+    author_id: "",
+    author_name: "",
+    status: "pending",
+    anchor_lost: false,
+    merge_request_id: null,
+    mr_number: null,
+    created_at: "",
+    updated_at: "",
+    mention: "",
+  };
 }

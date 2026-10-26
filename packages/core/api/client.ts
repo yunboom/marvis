@@ -274,6 +274,10 @@ import type {
   KbRevision,
   KbRevisionDiff,
   KbTreeLevel,
+  KbAnnotation,
+  KbAnnotationStatus,
+  KbAnnotationStatusFilter,
+  CreateKbAnnotationRequest,
   KnowledgeBase,
   KnowledgeBaseDetail,
   KnowledgeBaseMutation,
@@ -304,6 +308,10 @@ import {
   KbRevisionDiffSchema,
   KbRevisionListSchema,
   KbTreeLevelSchema,
+  KbAnnotationListSchema,
+  KbAnnotationSchema,
+  EMPTY_KB_ANNOTATION_LIST,
+  kbAnnotationFallback,
   KnowledgeBaseDetailSchema,
   KnowledgeBaseListSchema,
 } from "./kb-schemas";
@@ -4993,6 +5001,54 @@ export class ApiClient {
     );
     return parseWithFallback(raw, KbRevisionDiffSchema, EMPTY_KB_REVISION_DIFF, {
       endpoint: "GET /api/kb/pages/:id/history/:revision",
+    });
+  }
+
+  /** Annotations of a knowledge base; `page` is a page id or `-` for the knowledge base ones. */
+  async listKnowledgeBaseAnnotations(
+    kb: string,
+    params: { status?: KbAnnotationStatusFilter; page?: string } = {},
+  ): Promise<KbAnnotation[]> {
+    const search = new URLSearchParams();
+    if (params.status) search.set("status", params.status);
+    if (params.page) search.set("page", params.page);
+    const qs = search.toString();
+    const raw = await this.fetch<unknown>(
+      `/api/kb/bases/${encodeURIComponent(kb)}/annotations${qs ? `?${qs}` : ""}`,
+    );
+    return parseWithFallback(raw, KbAnnotationListSchema, EMPTY_KB_ANNOTATION_LIST, {
+      endpoint: "GET /api/kb/bases/:kb/annotations",
+    });
+  }
+
+  async createKnowledgeBaseAnnotation(kb: string, data: CreateKbAnnotationRequest): Promise<KbAnnotation> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/annotations`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbAnnotationSchema, kbAnnotationFallback(), {
+      endpoint: "POST /api/kb/bases/:kb/annotations",
+    });
+  }
+
+  async getKnowledgeBaseAnnotation(id: string): Promise<KbAnnotation> {
+    const raw = await this.fetch<unknown>(`/api/kb/annotations/${encodeURIComponent(id)}`);
+    return parseWithFallback(raw, KbAnnotationSchema, kbAnnotationFallback(id), {
+      endpoint: "GET /api/kb/annotations/:id",
+    });
+  }
+
+  /** Dismisses an annotation, or puts a dismissed one back to pending. */
+  async updateKnowledgeBaseAnnotation(
+    id: string,
+    data: { status: Extract<KbAnnotationStatus, "pending" | "dismissed"> },
+  ): Promise<KbAnnotation> {
+    const raw = await this.fetch<unknown>(`/api/kb/annotations/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbAnnotationSchema, kbAnnotationFallback(id), {
+      endpoint: "PATCH /api/kb/annotations/:id",
     });
   }
 
