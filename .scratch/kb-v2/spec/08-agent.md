@@ -394,7 +394,7 @@ CLI`marvis kb search`
  
 
 ```
-marvis kb search [<关键词>] [--kb <kb>] [--type <类型>] [--limit <n>] [--output table|json]
+marvis kb search [<关键词>] [--kb <kb>] [--type <类型>] [--limit <n>] [--cursor <游标>] [--output table|json]
 ```
 
  
@@ -402,9 +402,9 @@ marvis kb search [<关键词>] [--kb <kb>] [--type <类型>] [--limit <n>] [--ou
 | `<关键词>` | 否 | 搜索词，空格分隔多个词；搜标题和正文。带 `--type` 时可不填，此时按类型列出整个知识库的该类页面 | `"回调 去重"` | 
 | `--kb` | 否 | 知识库 slug 或 id；不传搜全部知识库 | `team` | 
 | `--type` | 否 | 页面类型，同 Schema 里的 `type` | `Runbook` | 
-| `--limit` | 否 | 整数 1–50，默认 10 | `20` | 
+| `--limit` | 否 | 整数。带关键词时 1–50，默认 10，按相关度返回前 n 条，不翻页；只按 `--type` 列出时 1–200，默认 200 | `20` | 
+| `--cursor` | 否 | 上一页输出里的 `next_cursor`，原样传回；只在不带关键词、按 `--type` 列出时有效，按路径排序翻页，同 `kb page list` | `eyJwb3MiOiJhMCIsImlkIjoiMGMxZCJ9` | 
 | `--output` | 否 | `table` 或 `json`；默认 `table`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
-| `--offset` | 否 | 整数，跳过前 n 条，默认 0 | `50` | 
 | `--full-id` | 否 | 开关，不带值；表格里显示完整 UUID（默认只显示前 8 位） | `--full-id` | 
 
  
@@ -431,7 +431,8 @@ marvis kb search "回调 去重" --kb team
       "excerpt": "渠道回调按渠道交易号加幂等键去重……",                        // 命中片段
       "mention": "[支付回调](mention://kb_page/0c1d2e3f…)"        // 原样贴进回复，渲染成卡片（7.14），不通知人；示例里的 id 截短了
     }
-  ]
+  ],
+  "next_cursor": ""                                           // 只按 --type 列出时，还有下一页为游标，传给 --cursor 接着取；带关键词或已取完为空串
 }
 ```
 

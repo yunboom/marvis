@@ -866,7 +866,8 @@ GET`/api/kb/search`
 | `q` | query | string | 否 | `回调 去重`；带 `type` 时可不填，此时按类型列出整个知识库的该类页面 | 
 | `kb` | query | string | 否 | 只搜某知识库 | 
 | `type` | query | string | 否 | 页面类型，同 Schema 里的 `type`，如 `Runbook` | 
-| `limit` | query | int | 否 | 默认 10，1–50 | 
+| `limit` | query | int | 否 | 带关键词时 1–50，默认 10，按相关度返回前 `limit` 条，不翻页；只按 `type` 列出时 1–200，默认 200 | 
+| `cursor` | query | string | 否 | 上一页返回的 `next_cursor`；只在不带关键词、按 `type` 列出时有效，按路径排序翻页，同 `kb page list` | 
 
  
 响应 200
@@ -885,7 +886,8 @@ GET`/api/kb/search`
       "excerpt": "渠道回调按渠道交易号加幂等键去重……",                        // 命中片段
       "score": 0.0325                                         // RRF 融合分，只用于排序
     }
-  ]
+  ],
+  "next_cursor": ""                                           // 只按 type 列出时，还有下一页为游标，传给 cursor 接着取；带关键词或已取完为空串
 }
 ```
 
