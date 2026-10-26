@@ -12,6 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/yunboom/marvis/server/internal/events"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"github.com/yunboom/marvis/server/pkg/protocol"
 )
@@ -125,7 +126,10 @@ func (h *Handler) notifyKbDraftWrite(r *http.Request, draft db.KbDraft, version 
 // write. Failing to find the draft's job only drops job_id from the event;
 // the write itself already succeeded.
 func (h *Handler) notifyKbDraftUpdated(ctx context.Context, draft db.KbDraft, version int64, actorType, actorID string, pageIDs ...string) {
-	if h.kbDraftEvents == nil {
+	// The flush runs on a timer goroutine; it holds its own references
+	// instead of reading the handler's fields later.
+	notifier, bus := h.kbDraftEvents, h.Bus
+	if notifier == nil || bus == nil {
 		return
 	}
 
@@ -147,15 +151,21 @@ func (h *Handler) notifyKbDraftUpdated(ctx context.Context, draft db.KbDraft, ve
 		jobID:       jobID,
 		version:     version,
 	}
-	if !h.kbDraftEvents.add(update, pageIDs) {
+	if !notifier.add(update, pageIDs) {
 		return
 	}
 
-	time.AfterFunc(h.kbDraftEvents.delay(), func() {
-		u := h.kbDraftEvents.take(update.draftID)
+	time.AfterFunc(notifier.delay(), func() {
+		u := notifier.take(update.draftID)
 		if u == nil {
 			return
 		}
-		h.publish(protocol.EventKbDraftUpdated, u.workspaceID, u.actorType, u.actorID, kbDraftUpdatedPayload(u))
+		bus.Publish(events.Event{
+			Type:        protocol.EventKbDraftUpdated,
+			WorkspaceID: u.workspaceID,
+			ActorType:   u.actorType,
+			ActorID:     u.actorID,
+			Payload:     kbDraftUpdatedPayload(u),
+		})
 	})
 }
