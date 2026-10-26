@@ -41,7 +41,8 @@ func insertTestKbBase(t *testing.T, name, slug string, over ...testutil.Cols) st
 	} {
 		dbfx.Cleanup(t, fmt.Sprintf(`DELETE FROM %s WHERE knowledge_base_id = $1`, table), id)
 	}
-	// Registered last so it runs before kb_draft is emptied.
+	// Registered last so they run before kb_draft is emptied.
+	dbfx.Cleanup(t, `DELETE FROM kb_job_draft WHERE draft_id IN (SELECT id FROM kb_draft WHERE knowledge_base_id = $1)`, id)
 	dbfx.Cleanup(t, `DELETE FROM kb_draft_page WHERE draft_id IN (SELECT id FROM kb_draft WHERE knowledge_base_id = $1)`, id)
 
 	return id
@@ -262,8 +263,11 @@ func TestDeleteWorkspaceRemovesKnowledgeBases(t *testing.T) {
 			INSERT INTO kb_mr_comment (merge_request_id, body, author_type, author_id)
 			SELECT id, 'ok', 'member', $3 FROM mr
 		), j AS (
-			INSERT INTO kb_job (workspace_id, knowledge_base_id, name, starter, agent_id, chat_session_id, draft_id, created_by)
-			SELECT $1, $2, 'Job', 'custom', gen_random_uuid(), gen_random_uuid(), id, $3 FROM d
+			INSERT INTO kb_job (workspace_id, knowledge_base_id, name, starter, agent_id, chat_session_id, created_by)
+			VALUES ($1, $2, 'Job', 'custom', gen_random_uuid(), gen_random_uuid(), $3) RETURNING id
+		), jd AS (
+			INSERT INTO kb_job_draft (workspace_id, job_id, draft_id, created_by)
+			SELECT $1, j.id, d.id, $3 FROM j, d
 		)
 		INSERT INTO kb_config_revision (knowledge_base_id, name, description, schema_mode, purpose, schema, saved_by)
 		VALUES ($2, 'Teardown', '', 'default', '', '# Schema', $3)`, wsID, baseID, testUserID)
@@ -287,7 +291,7 @@ func TestDeleteWorkspaceRemovesKnowledgeBases(t *testing.T) {
 
 	for _, table := range []string{
 		"kb_base", "kb_page", "kb_page_revision", "kb_link", "kb_draft", "kb_merge_request", "kb_job",
-		"kb_annotation", "kb_raw", "kb_builder_session", "kb_claim",
+		"kb_job_draft", "kb_annotation", "kb_raw", "kb_builder_session", "kb_claim",
 	} {
 		if n := dbfx.Count(t, fmt.Sprintf(`SELECT count(*) FROM %s WHERE workspace_id = $1`, table), wsID); n != 0 {
 			t.Errorf("%s still has %d rows after workspace delete", table, n)

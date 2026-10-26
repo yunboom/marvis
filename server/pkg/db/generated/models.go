@@ -1213,6 +1213,7 @@ type KbDraftPage struct {
 	Blocks         []byte             `json:"blocks"`
 	Claims         []byte             `json:"claims"`
 	Conflicts      []byte             `json:"conflicts"`
+	Version        int64              `json:"version"`
 	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }
 
@@ -1224,12 +1225,20 @@ type KbJob struct {
 	Starter         string             `json:"starter"`
 	AgentID         pgtype.UUID        `json:"agent_id"`
 	ChatSessionID   pgtype.UUID        `json:"chat_session_id"`
-	DraftID         pgtype.UUID        `json:"draft_id"`
 	AnnotationIds   []pgtype.UUID      `json:"annotation_ids"`
 	PageID          pgtype.UUID        `json:"page_id"`
 	CreatedBy       pgtype.UUID        `json:"created_by"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbJobDraft struct {
+	ID          pgtype.UUID        `json:"id"`
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	JobID       pgtype.UUID        `json:"job_id"`
+	DraftID     pgtype.UUID        `json:"draft_id"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type KbLink struct {
@@ -1255,7 +1264,6 @@ type KbMergeRequest struct {
 	AuthorID        pgtype.UUID        `json:"author_id"`
 	DraftID         pgtype.UUID        `json:"draft_id"`
 	JobID           pgtype.UUID        `json:"job_id"`
-	TaskID          pgtype.UUID        `json:"task_id"`
 	AnnotationIds   []pgtype.UUID      `json:"annotation_ids"`
 	RevertsID       pgtype.UUID        `json:"reverts_id"`
 	Status          string             `json:"status"`

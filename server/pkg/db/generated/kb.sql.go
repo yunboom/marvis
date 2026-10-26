@@ -11,6 +11,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const bumpKbDraftVersion = `-- name: BumpKbDraftVersion :one
+UPDATE kb_draft SET version = version + 1, updated_at = now()
+WHERE id = $1
+RETURNING id, workspace_id, knowledge_base_id, title, version, status, created_by, task_id, created_at, updated_at
+`
+
+func (q *Queries) BumpKbDraftVersion(ctx context.Context, id pgtype.UUID) (KbDraft, error) {
+	row := q.db.QueryRow(ctx, bumpKbDraftVersion, id)
+	var i KbDraft
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.KnowledgeBaseID,
+		&i.Title,
+		&i.Version,
+		&i.Status,
+		&i.CreatedBy,
+		&i.TaskID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const countKbAnnotationsByAuthorType = `-- name: CountKbAnnotationsByAuthorType :many
 SELECT author_type, count(*)::bigint AS annotation_count
 FROM kb_annotation
@@ -156,6 +180,49 @@ func (q *Queries) CountKbChildPagesByParent(ctx context.Context, arg CountKbChil
 	for rows.Next() {
 		var i CountKbChildPagesByParentRow
 		if err := rows.Scan(&i.ParentID, &i.ChildCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countKbInboundLinks = `-- name: CountKbInboundLinks :many
+SELECT to_page_id, count(DISTINCT from_page_id)::bigint AS link_count
+FROM kb_link
+WHERE knowledge_base_id = $1
+  AND to_page_id = ANY($2::uuid[])
+  AND from_page_id <> to_page_id
+  AND NOT (from_page_id = ANY($3::uuid[]))
+GROUP BY to_page_id
+`
+
+type CountKbInboundLinksParams struct {
+	KnowledgeBaseID pgtype.UUID   `json:"knowledge_base_id"`
+	PageIds         []pgtype.UUID `json:"page_ids"`
+	ExcludeIds      []pgtype.UUID `json:"exclude_ids"`
+}
+
+type CountKbInboundLinksRow struct {
+	ToPageID  pgtype.UUID `json:"to_page_id"`
+	LinkCount int64       `json:"link_count"`
+}
+
+// Mainline pages linking to each page, not counting the page itself and the
+// pages a draft rewrites (their links are counted from the draft copy).
+func (q *Queries) CountKbInboundLinks(ctx context.Context, arg CountKbInboundLinksParams) ([]CountKbInboundLinksRow, error) {
+	rows, err := q.db.Query(ctx, countKbInboundLinks, arg.KnowledgeBaseID, arg.PageIds, arg.ExcludeIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountKbInboundLinksRow{}
+	for rows.Next() {
+		var i CountKbInboundLinksRow
+		if err := rows.Scan(&i.ToPageID, &i.LinkCount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -424,6 +491,76 @@ func (q *Queries) CreateKbConfigRevision(ctx context.Context, arg CreateKbConfig
 	return i, err
 }
 
+const createKbDraft = `-- name: CreateKbDraft :one
+INSERT INTO kb_draft (workspace_id, knowledge_base_id, title, created_by, task_id)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, workspace_id, knowledge_base_id, title, version, status, created_by, task_id, created_at, updated_at
+`
+
+type CreateKbDraftParams struct {
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	Title           string      `json:"title"`
+	CreatedBy       pgtype.UUID `json:"created_by"`
+	TaskID          pgtype.UUID `json:"task_id"`
+}
+
+func (q *Queries) CreateKbDraft(ctx context.Context, arg CreateKbDraftParams) (KbDraft, error) {
+	row := q.db.QueryRow(ctx, createKbDraft,
+		arg.WorkspaceID,
+		arg.KnowledgeBaseID,
+		arg.Title,
+		arg.CreatedBy,
+		arg.TaskID,
+	)
+	var i KbDraft
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.KnowledgeBaseID,
+		&i.Title,
+		&i.Version,
+		&i.Status,
+		&i.CreatedBy,
+		&i.TaskID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createKbJobDraft = `-- name: CreateKbJobDraft :one
+INSERT INTO kb_job_draft (workspace_id, job_id, draft_id, created_by)
+VALUES ($1, $2, $3, $4)
+RETURNING id, workspace_id, job_id, draft_id, created_by, created_at
+`
+
+type CreateKbJobDraftParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	JobID       pgtype.UUID `json:"job_id"`
+	DraftID     pgtype.UUID `json:"draft_id"`
+	CreatedBy   pgtype.UUID `json:"created_by"`
+}
+
+func (q *Queries) CreateKbJobDraft(ctx context.Context, arg CreateKbJobDraftParams) (KbJobDraft, error) {
+	row := q.db.QueryRow(ctx, createKbJobDraft,
+		arg.WorkspaceID,
+		arg.JobID,
+		arg.DraftID,
+		arg.CreatedBy,
+	)
+	var i KbJobDraft
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.JobID,
+		&i.DraftID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createKbLinks = `-- name: CreateKbLinks :exec
 INSERT INTO kb_link (
     workspace_id, knowledge_base_id, from_page_id, from_block_id, to_page_id, to_block_id, to_path
@@ -616,6 +753,21 @@ func (q *Queries) DeleteKbBuilderSessionsBySystemRuntimeAgents(ctx context.Conte
 	return err
 }
 
+const deleteKbDraftPage = `-- name: DeleteKbDraftPage :exec
+DELETE FROM kb_draft_page
+WHERE draft_id = $1 AND page_id = $2
+`
+
+type DeleteKbDraftPageParams struct {
+	DraftID pgtype.UUID `json:"draft_id"`
+	PageID  pgtype.UUID `json:"page_id"`
+}
+
+func (q *Queries) DeleteKbDraftPage(ctx context.Context, arg DeleteKbDraftPageParams) error {
+	_, err := q.db.Exec(ctx, deleteKbDraftPage, arg.DraftID, arg.PageID)
+	return err
+}
+
 const deleteKbLinksFromPage = `-- name: DeleteKbLinksFromPage :exec
 DELETE FROM kb_link
 WHERE knowledge_base_id = $1 AND from_page_id = $2
@@ -743,6 +895,36 @@ func (q *Queries) GetKbBuilderSession(ctx context.Context, chatSessionID pgtype.
 	return i, err
 }
 
+const getKbDraftForUpdate = `-- name: GetKbDraftForUpdate :one
+SELECT id, workspace_id, knowledge_base_id, title, version, status, created_by, task_id, created_at, updated_at FROM kb_draft
+WHERE workspace_id = $1 AND id = $2
+FOR UPDATE
+`
+
+type GetKbDraftForUpdateParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	ID          pgtype.UUID `json:"id"`
+}
+
+// Locks a draft so its writes run one at a time.
+func (q *Queries) GetKbDraftForUpdate(ctx context.Context, arg GetKbDraftForUpdateParams) (KbDraft, error) {
+	row := q.db.QueryRow(ctx, getKbDraftForUpdate, arg.WorkspaceID, arg.ID)
+	var i KbDraft
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.KnowledgeBaseID,
+		&i.Title,
+		&i.Version,
+		&i.Status,
+		&i.CreatedBy,
+		&i.TaskID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getKbDraftInWorkspace = `-- name: GetKbDraftInWorkspace :one
 SELECT id, workspace_id, knowledge_base_id, title, version, status, created_by, task_id, created_at, updated_at FROM kb_draft
 WHERE workspace_id = $1 AND id = $2
@@ -772,7 +954,7 @@ func (q *Queries) GetKbDraftInWorkspace(ctx context.Context, arg GetKbDraftInWor
 }
 
 const getKbDraftPage = `-- name: GetKbDraftPage :one
-SELECT draft_id, page_id, op, base_revision_id, parent_id, position, slug, frontmatter, blocks, claims, conflicts, updated_at FROM kb_draft_page
+SELECT draft_id, page_id, op, base_revision_id, parent_id, position, slug, frontmatter, blocks, claims, conflicts, version, updated_at FROM kb_draft_page
 WHERE draft_id = $1 AND page_id = $2
 `
 
@@ -796,6 +978,58 @@ func (q *Queries) GetKbDraftPage(ctx context.Context, arg GetKbDraftPageParams) 
 		&i.Blocks,
 		&i.Claims,
 		&i.Conflicts,
+		&i.Version,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getKbJobDraftByJob = `-- name: GetKbJobDraftByJob :one
+SELECT id, workspace_id, job_id, draft_id, created_by, created_at FROM kb_job_draft
+WHERE job_id = $1
+`
+
+func (q *Queries) GetKbJobDraftByJob(ctx context.Context, jobID pgtype.UUID) (KbJobDraft, error) {
+	row := q.db.QueryRow(ctx, getKbJobDraftByJob, jobID)
+	var i KbJobDraft
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.JobID,
+		&i.DraftID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getKbJobForUpdate = `-- name: GetKbJobForUpdate :one
+SELECT id, workspace_id, knowledge_base_id, name, starter, agent_id, chat_session_id, annotation_ids, page_id, created_by, created_at, updated_at FROM kb_job
+WHERE workspace_id = $1 AND id = $2
+FOR UPDATE
+`
+
+type GetKbJobForUpdateParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	ID          pgtype.UUID `json:"id"`
+}
+
+// Locks a job so two drafts cannot be linked to it at once.
+func (q *Queries) GetKbJobForUpdate(ctx context.Context, arg GetKbJobForUpdateParams) (KbJob, error) {
+	row := q.db.QueryRow(ctx, getKbJobForUpdate, arg.WorkspaceID, arg.ID)
+	var i KbJob
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.KnowledgeBaseID,
+		&i.Name,
+		&i.Starter,
+		&i.AgentID,
+		&i.ChatSessionID,
+		&i.AnnotationIds,
+		&i.PageID,
+		&i.CreatedBy,
+		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
@@ -904,7 +1138,7 @@ func (q *Queries) GetKbPageRevision(ctx context.Context, arg GetKbPageRevisionPa
 }
 
 const getKbRevisionMergeRequest = `-- name: GetKbRevisionMergeRequest :one
-SELECT mr.id, mr.workspace_id, mr.number, mr.knowledge_base_id, mr.title, mr.summary, mr.source, mr.risk, mr.author_type, mr.author_id, mr.draft_id, mr.job_id, mr.task_id, mr.annotation_ids, mr.reverts_id, mr.status, mr.merged_by, mr.merged_at, mr.closed_by, mr.closed_at, mr.close_reason, mr.created_at, mr.updated_at FROM kb_page_revision r
+SELECT mr.id, mr.workspace_id, mr.number, mr.knowledge_base_id, mr.title, mr.summary, mr.source, mr.risk, mr.author_type, mr.author_id, mr.draft_id, mr.job_id, mr.annotation_ids, mr.reverts_id, mr.status, mr.merged_by, mr.merged_at, mr.closed_by, mr.closed_at, mr.close_reason, mr.created_at, mr.updated_at FROM kb_page_revision r
 JOIN kb_merge_request mr ON mr.id = r.merge_request_id
 WHERE r.page_id = $1 AND r.id = $2
 `
@@ -931,7 +1165,6 @@ func (q *Queries) GetKbRevisionMergeRequest(ctx context.Context, arg GetKbRevisi
 		&i.AuthorID,
 		&i.DraftID,
 		&i.JobID,
-		&i.TaskID,
 		&i.AnnotationIds,
 		&i.RevertsID,
 		&i.Status,
@@ -1057,7 +1290,7 @@ WHERE workspace_id = $1
 ORDER BY updated_at DESC, id
 `
 
-// Knowledge base v2 (migrations 604-628). Enum values such as statuses are
+// Knowledge base v2 (migrations 604-630). Enum values such as statuses are
 // passed as parameters from the constants in server/internal/kb.
 func (q *Queries) ListKbBases(ctx context.Context, workspaceID pgtype.UUID) ([]KbBase, error) {
 	rows, err := q.db.Query(ctx, listKbBases, workspaceID)
@@ -1256,6 +1489,69 @@ func (q *Queries) ListKbChildPages(ctx context.Context, arg ListKbChildPagesPara
 	return items, nil
 }
 
+const listKbClaimsByEvidence = `-- name: ListKbClaimsByEvidence :many
+SELECT c.id, c.workspace_id, c.knowledge_base_id, c.page_id, c.block_id, c.key, c.text, c.evidence, c.checked_at, c.updated_at FROM kb_claim c
+JOIN kb_page p ON p.id = c.page_id AND p.deleted_at IS NULL
+WHERE c.knowledge_base_id = $1
+  AND (
+    $2::text IS NULL
+    OR EXISTS (
+      SELECT 1 FROM jsonb_array_elements(c.evidence) AS e(value)
+      WHERE starts_with(e.value->>'uri', $2::text)
+    )
+  )
+  AND ($3::timestamptz IS NULL OR c.checked_at < $3::timestamptz)
+ORDER BY c.page_id, c.key
+LIMIT $5 OFFSET $4
+`
+
+type ListKbClaimsByEvidenceParams struct {
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	Evidence        pgtype.Text        `json:"evidence"`
+	CheckedBefore   pgtype.Timestamptz `json:"checked_before"`
+	RowOffset       int32              `json:"row_offset"`
+	RowLimit        int32              `json:"row_limit"`
+}
+
+// Claims of live pages, optionally only those citing an evidence uri prefix
+// or checked before a time.
+func (q *Queries) ListKbClaimsByEvidence(ctx context.Context, arg ListKbClaimsByEvidenceParams) ([]KbClaim, error) {
+	rows, err := q.db.Query(ctx, listKbClaimsByEvidence,
+		arg.KnowledgeBaseID,
+		arg.Evidence,
+		arg.CheckedBefore,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KbClaim{}
+	for rows.Next() {
+		var i KbClaim
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.KnowledgeBaseID,
+			&i.PageID,
+			&i.BlockID,
+			&i.Key,
+			&i.Text,
+			&i.Evidence,
+			&i.CheckedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listKbClaimsByPage = `-- name: ListKbClaimsByPage :many
 SELECT id, workspace_id, knowledge_base_id, page_id, block_id, key, text, evidence, checked_at, updated_at FROM kb_claim
 WHERE knowledge_base_id = $1 AND page_id = $2
@@ -1286,6 +1582,46 @@ func (q *Queries) ListKbClaimsByPage(ctx context.Context, arg ListKbClaimsByPage
 			&i.Text,
 			&i.Evidence,
 			&i.CheckedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbDraftPageRows = `-- name: ListKbDraftPageRows :many
+SELECT draft_id, page_id, op, base_revision_id, parent_id, position, slug, frontmatter, blocks, claims, conflicts, version, updated_at FROM kb_draft_page
+WHERE draft_id = $1
+ORDER BY page_id
+`
+
+func (q *Queries) ListKbDraftPageRows(ctx context.Context, draftID pgtype.UUID) ([]KbDraftPage, error) {
+	rows, err := q.db.Query(ctx, listKbDraftPageRows, draftID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KbDraftPage{}
+	for rows.Next() {
+		var i KbDraftPage
+		if err := rows.Scan(
+			&i.DraftID,
+			&i.PageID,
+			&i.Op,
+			&i.BaseRevisionID,
+			&i.ParentID,
+			&i.Position,
+			&i.Slug,
+			&i.Frontmatter,
+			&i.Blocks,
+			&i.Claims,
+			&i.Conflicts,
+			&i.Version,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -1613,6 +1949,52 @@ func (q *Queries) ListKbPageRevisions(ctx context.Context, arg ListKbPageRevisio
 	return items, nil
 }
 
+const listKbPageRevisionsByIDs = `-- name: ListKbPageRevisionsByIDs :many
+SELECT id, workspace_id, knowledge_base_id, page_id, prev_revision_id, merge_request_id, parent_id, position, slug, frontmatter, blocks, claims, deleted, created_at FROM kb_page_revision
+WHERE knowledge_base_id = $1
+  AND id = ANY($2::uuid[])
+`
+
+type ListKbPageRevisionsByIDsParams struct {
+	KnowledgeBaseID pgtype.UUID   `json:"knowledge_base_id"`
+	Ids             []pgtype.UUID `json:"ids"`
+}
+
+func (q *Queries) ListKbPageRevisionsByIDs(ctx context.Context, arg ListKbPageRevisionsByIDsParams) ([]KbPageRevision, error) {
+	rows, err := q.db.Query(ctx, listKbPageRevisionsByIDs, arg.KnowledgeBaseID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KbPageRevision{}
+	for rows.Next() {
+		var i KbPageRevision
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.KnowledgeBaseID,
+			&i.PageID,
+			&i.PrevRevisionID,
+			&i.MergeRequestID,
+			&i.ParentID,
+			&i.Position,
+			&i.Slug,
+			&i.Frontmatter,
+			&i.Blocks,
+			&i.Claims,
+			&i.Deleted,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listKbPageTree = `-- name: ListKbPageTree :many
 SELECT id, parent_id, slug, title FROM kb_page
 WHERE knowledge_base_id = $1 AND deleted_at IS NULL
@@ -1640,6 +2022,55 @@ func (q *Queries) ListKbPageTree(ctx context.Context, knowledgeBaseID pgtype.UUI
 			&i.ParentID,
 			&i.Slug,
 			&i.Title,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbPagesByIDs = `-- name: ListKbPagesByIDs :many
+SELECT id, workspace_id, knowledge_base_id, parent_id, position, slug, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at FROM kb_page
+WHERE knowledge_base_id = $1
+  AND id = ANY($2::uuid[])
+`
+
+type ListKbPagesByIDsParams struct {
+	KnowledgeBaseID pgtype.UUID   `json:"knowledge_base_id"`
+	Ids             []pgtype.UUID `json:"ids"`
+}
+
+func (q *Queries) ListKbPagesByIDs(ctx context.Context, arg ListKbPagesByIDsParams) ([]KbPage, error) {
+	rows, err := q.db.Query(ctx, listKbPagesByIDs, arg.KnowledgeBaseID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KbPage{}
+	for rows.Next() {
+		var i KbPage
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.KnowledgeBaseID,
+			&i.ParentID,
+			&i.Position,
+			&i.Slug,
+			&i.Type,
+			&i.Title,
+			&i.Description,
+			&i.Frontmatter,
+			&i.Blocks,
+			&i.SearchText,
+			&i.HeadRevisionID,
+			&i.StaleAfter,
+			&i.DeletedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1752,6 +2183,56 @@ func (q *Queries) ListKbRecentMergedPages(ctx context.Context, arg ListKbRecentM
 	return items, nil
 }
 
+const listKbStalePages = `-- name: ListKbStalePages :many
+SELECT p.id, p.title, p.stale_after,
+    (SELECT count(*) FROM kb_claim c WHERE c.page_id = p.id)::bigint AS claim_count
+FROM kb_page p
+WHERE p.knowledge_base_id = $1
+  AND p.deleted_at IS NULL
+  AND p.stale_after IS NOT NULL
+  AND p.stale_after < now()
+ORDER BY p.stale_after, p.id
+LIMIT $3 OFFSET $2
+`
+
+type ListKbStalePagesParams struct {
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	RowOffset       int32       `json:"row_offset"`
+	RowLimit        int32       `json:"row_limit"`
+}
+
+type ListKbStalePagesRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	Title      string             `json:"title"`
+	StaleAfter pgtype.Timestamptz `json:"stale_after"`
+	ClaimCount int64              `json:"claim_count"`
+}
+
+func (q *Queries) ListKbStalePages(ctx context.Context, arg ListKbStalePagesParams) ([]ListKbStalePagesRow, error) {
+	rows, err := q.db.Query(ctx, listKbStalePages, arg.KnowledgeBaseID, arg.RowOffset, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKbStalePagesRow{}
+	for rows.Next() {
+		var i ListKbStalePagesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.StaleAfter,
+			&i.ClaimCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listKbUserDraftsForPage = `-- name: ListKbUserDraftsForPage :many
 SELECT
     d.id, d.title, d.status, d.updated_at,
@@ -1763,7 +2244,8 @@ SELECT
     COALESCE(i.title, '')::text AS issue_title
 FROM kb_draft d
 JOIN kb_draft_page dp ON dp.draft_id = d.id
-LEFT JOIN kb_job j ON j.draft_id = d.id
+LEFT JOIN kb_job_draft jd ON jd.draft_id = d.id
+LEFT JOIN kb_job j ON j.id = jd.job_id
 LEFT JOIN agent_task_queue atq ON atq.id = d.task_id
 LEFT JOIN issue i ON i.id = atq.issue_id
 LEFT JOIN chat_session cs ON cs.id = COALESCE(j.chat_session_id, atq.chat_session_id)
@@ -1827,6 +2309,163 @@ func (q *Queries) ListKbUserDraftsForPage(ctx context.Context, arg ListKbUserDra
 			&i.ChatTitle,
 			&i.IssueNumber,
 			&i.IssueTitle,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbWorkspaceChatSessions = `-- name: ListKbWorkspaceChatSessions :many
+SELECT cs.id, cs.workspace_id, cs.agent_id, cs.creator_id, cs.project_id, cs.title, cs.status,
+    cs.pinned_at, cs.created_at, cs.updated_at,
+    COALESCE(lm.content, '')::text AS last_message_content,
+    COALESCE(lm.role, '')::text AS last_message_role,
+    lm.created_at AS last_message_at
+FROM chat_session cs
+JOIN agent a ON a.id = cs.agent_id AND a.kind <> 'system'
+JOIN LATERAL (
+  SELECT content, role, created_at
+    FROM chat_message m
+   WHERE m.chat_session_id = cs.id
+     AND m.message_kind != 'channel_command'
+   ORDER BY m.created_at DESC
+   LIMIT 1
+) lm ON true
+WHERE cs.workspace_id = $1
+  AND cs.status = 'active'
+  AND ($2::timestamptz IS NULL OR lm.created_at > $2::timestamptz)
+  AND ($3::uuid IS NULL OR cs.agent_id = $3::uuid)
+ORDER BY lm.created_at DESC, cs.id
+LIMIT $5 OFFSET $4
+`
+
+type ListKbWorkspaceChatSessionsParams struct {
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	Since       pgtype.Timestamptz `json:"since"`
+	AgentID     pgtype.UUID        `json:"agent_id"`
+	RowOffset   int32              `json:"row_offset"`
+	RowLimit    int32              `json:"row_limit"`
+}
+
+type ListKbWorkspaceChatSessionsRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	WorkspaceID        pgtype.UUID        `json:"workspace_id"`
+	AgentID            pgtype.UUID        `json:"agent_id"`
+	CreatorID          pgtype.UUID        `json:"creator_id"`
+	ProjectID          pgtype.UUID        `json:"project_id"`
+	Title              string             `json:"title"`
+	Status             string             `json:"status"`
+	PinnedAt           pgtype.Timestamptz `json:"pinned_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	LastMessageContent string             `json:"last_message_content"`
+	LastMessageRole    string             `json:"last_message_role"`
+	LastMessageAt      pgtype.Timestamptz `json:"last_message_at"`
+}
+
+// Every member's public chat sessions, for owners reading chats to ingest
+// (scope=workspace); hidden system carriers are left out.
+func (q *Queries) ListKbWorkspaceChatSessions(ctx context.Context, arg ListKbWorkspaceChatSessionsParams) ([]ListKbWorkspaceChatSessionsRow, error) {
+	rows, err := q.db.Query(ctx, listKbWorkspaceChatSessions,
+		arg.WorkspaceID,
+		arg.Since,
+		arg.AgentID,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListKbWorkspaceChatSessionsRow{}
+	for rows.Next() {
+		var i ListKbWorkspaceChatSessionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.AgentID,
+			&i.CreatorID,
+			&i.ProjectID,
+			&i.Title,
+			&i.Status,
+			&i.PinnedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.LastMessageContent,
+			&i.LastMessageRole,
+			&i.LastMessageAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchKbPages = `-- name: SearchKbPages :many
+SELECT p.id, p.knowledge_base_id, b.slug AS kb_slug, p.title, p.type, p.blocks
+FROM kb_page p
+JOIN kb_base b ON b.id = p.knowledge_base_id
+WHERE p.workspace_id = $1
+  AND p.deleted_at IS NULL
+  AND ($2::uuid IS NULL OR p.knowledge_base_id = $2::uuid)
+  AND ($3::text IS NULL OR lower(p.type) = lower($3::text))
+  AND lower(p.search_text) LIKE ALL ($4::text[])
+ORDER BY (lower(p.title) LIKE ANY ($4::text[])) DESC, p.updated_at DESC, p.id
+LIMIT $6 OFFSET $5
+`
+
+type SearchKbPagesParams struct {
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	PageType        pgtype.Text `json:"page_type"`
+	Patterns        []string    `json:"patterns"`
+	RowOffset       int32       `json:"row_offset"`
+	RowLimit        int32       `json:"row_limit"`
+}
+
+type SearchKbPagesRow struct {
+	ID              pgtype.UUID `json:"id"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	KbSlug          string      `json:"kb_slug"`
+	Title           string      `json:"title"`
+	Type            string      `json:"type"`
+	Blocks          []byte      `json:"blocks"`
+}
+
+// Keyword search over titles and body text: every pattern must match.
+// Title hits rank first.
+func (q *Queries) SearchKbPages(ctx context.Context, arg SearchKbPagesParams) ([]SearchKbPagesRow, error) {
+	rows, err := q.db.Query(ctx, searchKbPages,
+		arg.WorkspaceID,
+		arg.KnowledgeBaseID,
+		arg.PageType,
+		arg.Patterns,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SearchKbPagesRow{}
+	for rows.Next() {
+		var i SearchKbPagesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.KnowledgeBaseID,
+			&i.KbSlug,
+			&i.Title,
+			&i.Type,
+			&i.Blocks,
 		); err != nil {
 			return nil, err
 		}
@@ -1990,4 +2629,58 @@ func (q *Queries) UpdateKbPageHead(ctx context.Context, arg UpdateKbPageHeadPara
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const upsertKbDraftPage = `-- name: UpsertKbDraftPage :exec
+INSERT INTO kb_draft_page (
+    draft_id, page_id, op, base_revision_id, parent_id, position, slug,
+    frontmatter, blocks, claims, conflicts, version, updated_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now()
+)
+ON CONFLICT (draft_id, page_id) DO UPDATE SET
+    op = EXCLUDED.op,
+    base_revision_id = EXCLUDED.base_revision_id,
+    parent_id = EXCLUDED.parent_id,
+    position = EXCLUDED.position,
+    slug = EXCLUDED.slug,
+    frontmatter = EXCLUDED.frontmatter,
+    blocks = EXCLUDED.blocks,
+    claims = EXCLUDED.claims,
+    conflicts = EXCLUDED.conflicts,
+    version = EXCLUDED.version,
+    updated_at = now()
+`
+
+type UpsertKbDraftPageParams struct {
+	DraftID        pgtype.UUID `json:"draft_id"`
+	PageID         pgtype.UUID `json:"page_id"`
+	Op             string      `json:"op"`
+	BaseRevisionID pgtype.UUID `json:"base_revision_id"`
+	ParentID       pgtype.UUID `json:"parent_id"`
+	Position       string      `json:"position"`
+	Slug           string      `json:"slug"`
+	Frontmatter    []byte      `json:"frontmatter"`
+	Blocks         []byte      `json:"blocks"`
+	Claims         []byte      `json:"claims"`
+	Conflicts      []byte      `json:"conflicts"`
+	Version        int64       `json:"version"`
+}
+
+func (q *Queries) UpsertKbDraftPage(ctx context.Context, arg UpsertKbDraftPageParams) error {
+	_, err := q.db.Exec(ctx, upsertKbDraftPage,
+		arg.DraftID,
+		arg.PageID,
+		arg.Op,
+		arg.BaseRevisionID,
+		arg.ParentID,
+		arg.Position,
+		arg.Slug,
+		arg.Frontmatter,
+		arg.Blocks,
+		arg.Claims,
+		arg.Conflicts,
+		arg.Version,
+	)
+	return err
 }

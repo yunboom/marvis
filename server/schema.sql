@@ -2911,6 +2911,7 @@ CREATE TABLE public.kb_draft_page (
     blocks jsonb NOT NULL,
     claims jsonb NOT NULL,
     conflicts jsonb DEFAULT '[]'::jsonb NOT NULL,
+    version bigint DEFAULT 0 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT kb_draft_page_op_check CHECK ((op = ANY (ARRAY['create'::text, 'update'::text, 'move'::text, 'delete'::text])))
 );
@@ -2927,13 +2928,25 @@ CREATE TABLE public.kb_job (
     starter text NOT NULL,
     agent_id uuid NOT NULL,
     chat_session_id uuid NOT NULL,
-    draft_id uuid NOT NULL,
     annotation_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
     page_id uuid,
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT kb_job_starter_check CHECK ((starter = ANY (ARRAY['ingest'::text, 'health'::text, 'merge'::text, 'annotations'::text, 'new_page'::text, 'schedule'::text, 'custom'::text])))
+);
+
+--
+-- Name: kb_job_draft; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_job_draft (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    job_id uuid NOT NULL,
+    draft_id uuid NOT NULL,
+    created_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 --
@@ -2967,7 +2980,6 @@ CREATE TABLE public.kb_merge_request (
     author_id uuid NOT NULL,
     draft_id uuid NOT NULL,
     job_id uuid,
-    task_id uuid,
     annotation_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
     reverts_id uuid,
     status text DEFAULT 'open'::text NOT NULL,
@@ -4695,6 +4707,13 @@ ALTER TABLE ONLY public.kb_draft_page
 
 ALTER TABLE ONLY public.kb_draft
     ADD CONSTRAINT kb_draft_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_job_draft kb_job_draft_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_job_draft
+    ADD CONSTRAINT kb_job_draft_pkey PRIMARY KEY (id);
 
 --
 -- Name: kb_job kb_job_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -7077,6 +7096,18 @@ CREATE INDEX kb_job_base_created_idx ON public.kb_job USING btree (knowledge_bas
 --
 
 CREATE UNIQUE INDEX kb_job_chat_session_uidx ON public.kb_job USING btree (chat_session_id);
+
+--
+-- Name: kb_job_draft_draft_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_job_draft_draft_id_key ON public.kb_job_draft USING btree (draft_id);
+
+--
+-- Name: kb_job_draft_job_id_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_job_draft_job_id_key ON public.kb_job_draft USING btree (job_id);
 
 --
 -- Name: kb_link_from_idx; Type: INDEX; Schema: public; Owner: -

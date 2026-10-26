@@ -216,6 +216,8 @@ var concurrentIndexCleanups = map[string]string{
 	"626_kb_page_search_trgm_index":                             "kb_page_search_trgm",
 	"627_kb_block_embedding_hnsw":                               "kb_block_embedding_hnsw",
 	"628_kb_block_embedding_base_idx":                           "kb_block_embedding_base_idx",
+	"629_kb_job_draft_job_id_key":                               "kb_job_draft_job_id_key",
+	"630_kb_job_draft_draft_id_key":                             "kb_job_draft_draft_id_key",
 	"035_task_queue_issue_id_index":                             "idx_agent_task_queue_issue_id",
 	"067_task_queue_claim_candidate_index":                      "idx_agent_task_queue_claim_candidates",
 	"074_task_usage_updated_at_index":                           "idx_task_usage_updated_at",

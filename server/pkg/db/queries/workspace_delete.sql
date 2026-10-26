@@ -771,6 +771,9 @@ deleted_kb_links AS (
 deleted_kb_drafts AS (
     DELETE FROM kb_draft WHERE kb_draft.workspace_id = $1
 ),
+deleted_kb_job_drafts AS (
+    DELETE FROM kb_job_draft WHERE kb_job_draft.workspace_id = $1
+),
 deleted_kb_jobs AS (
     DELETE FROM kb_job WHERE kb_job.workspace_id = $1
 ),

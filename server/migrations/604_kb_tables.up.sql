@@ -161,11 +161,14 @@ CREATE TABLE IF NOT EXISTS kb_draft_page (
     blocks           JSONB NOT NULL,
     claims           JSONB NOT NULL,
     conflicts        JSONB NOT NULL DEFAULT '[]'::jsonb,
+    -- Draft version of the last write to this page; a write carrying an
+    -- older d<version> than this is stale.
+    version          BIGINT NOT NULL DEFAULT 0,
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (draft_id, page_id)
 );
 
--- A knowledge base job: one chat conversation plus one draft.
+-- A knowledge base job: one chat conversation; its draft is linked in kb_job_draft.
 CREATE TABLE IF NOT EXISTS kb_job (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id      UUID NOT NULL,
@@ -175,12 +178,22 @@ CREATE TABLE IF NOT EXISTS kb_job (
         ('ingest', 'health', 'merge', 'annotations', 'new_page', 'schedule', 'custom')),
     agent_id          UUID NOT NULL,
     chat_session_id   UUID NOT NULL,
-    draft_id          UUID NOT NULL,
     annotation_ids    UUID[] NOT NULL DEFAULT '{}',
     page_id           UUID,
     created_by        UUID NOT NULL,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- The draft a knowledge base job writes into: one draft per job and one job
+-- per draft (unique indexes 629 and 630).
+CREATE TABLE IF NOT EXISTS kb_job_draft (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID NOT NULL,
+    job_id       UUID NOT NULL,
+    draft_id     UUID NOT NULL,
+    created_by   UUID NOT NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Annotations on a sentence, a page, or the whole knowledge base (page_id NULL).
@@ -219,7 +232,6 @@ CREATE TABLE IF NOT EXISTS kb_merge_request (
     author_id         UUID NOT NULL,
     draft_id          UUID NOT NULL,
     job_id            UUID,
-    task_id           UUID,
     annotation_ids    UUID[] NOT NULL DEFAULT '{}',
     reverts_id        UUID,
     status            TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'merged', 'closed')),

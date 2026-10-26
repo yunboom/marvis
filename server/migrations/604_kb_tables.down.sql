@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS kb_mr_comment;
 DROP TABLE IF EXISTS kb_merge_request;
 DROP TABLE IF EXISTS kb_annotation;
+DROP TABLE IF EXISTS kb_job_draft;
 DROP TABLE IF EXISTS kb_job;
 DROP TABLE IF EXISTS kb_draft_page;
 DROP TABLE IF EXISTS kb_draft;
