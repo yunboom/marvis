@@ -345,3 +345,12 @@ func TestUpdateKbBase(t *testing.T) {
 		t.Errorf("first revision is not attributed to its saver")
 	}
 }
+
+func TestGetKbTemplates(t *testing.T) {
+	var got KbTemplatesResponse
+	testutil.Call(t, (&Handler{}).GetKbTemplates, newRequest(http.MethodGet, "/api/kb/templates", nil)).
+		Want(http.StatusOK).JSON(&got)
+	if got.DefaultSchema != kb.DefaultSchema || got.PurposeTemplate != kb.PurposeTemplate {
+		t.Errorf("templates = %+v", got)
+	}
+}

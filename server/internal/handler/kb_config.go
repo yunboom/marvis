@@ -54,6 +54,22 @@ type KbBaseMutationResponse struct {
 	Mention string `json:"mention"`
 }
 
+// KbTemplatesResponse carries the built-in texts the configuration form
+// shows: the read-only default schema, and the outline a purpose follows.
+type KbTemplatesResponse struct {
+	DefaultSchema   string `json:"default_schema"`
+	PurposeTemplate string `json:"purpose_template"`
+}
+
+// GetKbTemplates returns the built-in schema and purpose templates as they
+// are today; a new knowledge base in the default mode stores this schema.
+func (h *Handler) GetKbTemplates(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, KbTemplatesResponse{
+		DefaultSchema:   kb.DefaultSchema,
+		PurposeTemplate: kb.PurposeTemplate,
+	})
+}
+
 func kbMention(base db.KbBase) string {
 	return "[" + mentionLabelEscaper.Replace(base.Name) + "](mention://kb/" + uuidToString(base.ID) + ")"
 }

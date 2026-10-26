@@ -2261,6 +2261,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Post("/bases", h.CreateKbBase)
 				r.Get("/bases/{kb}", h.GetKbBase)
 				r.Patch("/bases/{kb}", h.UpdateKbBase)
+				r.Get("/templates", h.GetKbTemplates)
 				// Builder conversations (create / configure). Hidden from
 				// every chat list; messages go through /api/chat.
 				r.Get("/builder/sessions", h.ListKbBuilderSessions)
