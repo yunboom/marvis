@@ -72,6 +72,8 @@ const WORKSPACE_ROUTES: readonly RoutePattern[] = [
   ["kb"],
   ["kb", "new"],
   ["kb", ":kb"],
+  ["kb", ":kb", "p", ":pageId"],
+  ["kb", ":kb", "p", ":pageId", "history", ":revisionId"],
   ["inbox"],
   ["chat"],
   ["my-issues"],
