@@ -6,6 +6,6 @@
 
 **Status:** ready-for-agent
 
-- [ ] `GET /api/kb/bases/{kb}/home`（带 quickstart 页面对象）、`GET /api/kb/bases/{kb}/pages`（cursor/limit/next_cursor、draft 叠加、draft_change）、页面读取、历史接口，按 spec 07 的契约
-- [ ] 阅读页、页面树、信息面板、目录面板、引用悬停、草稿条（含多份草稿下拉）组件在 packages/views，web 路由与 desktop 路由都接入
-- [ ] 接口测试 + 前端组件测试
+- [x] `GET /api/kb/bases/{kb}/home`（带 quickstart 页面对象）、`GET /api/kb/bases/{kb}/pages`（cursor/limit/next_cursor、draft 叠加、draft_change）、页面读取、历史接口，按 spec 07 的契约
+- [x] 阅读页、页面树、信息面板、目录面板、引用悬停、草稿条（含多份草稿下拉）组件在 packages/views，web 路由与 desktop 路由都接入
+- [x] 接口测试 + 前端组件测试
