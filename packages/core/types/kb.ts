@@ -377,3 +377,40 @@ export interface CreateKbAnnotationRequest {
   suffix?: string;
   body: string;
 }
+
+/** How a search ran: `hybrid` fused keyword and vector hits, `keyword` used keywords only. */
+export type KbSearchMode = "hybrid" | "keyword";
+
+/** A page a search found, with its best-matching block. */
+export interface KbSearchHit {
+  page_id: string;
+  /** Knowledge base slug. */
+  slug: string;
+  path: string;
+  /** Titles of the pages above, top level first. */
+  parents: string[];
+  title: string;
+  type: string;
+  /** Empty when only the title matched. */
+  block_id: string;
+  excerpt: string;
+  /** RRF score; only meaningful for ordering. */
+  score: number;
+  mention: string;
+}
+
+export interface KbSearchResult {
+  mode: KbSearchMode;
+  /** Pages found, beyond the hits returned. */
+  total: number;
+  hits: KbSearchHit[];
+}
+
+export interface KbSearchParams {
+  q: string;
+  /** Knowledge base id or slug; every knowledge base when omitted. */
+  kb?: string;
+  type?: string;
+  /** 1-50; the server defaults to 10. */
+  limit?: number;
+}

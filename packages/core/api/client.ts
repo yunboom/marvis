@@ -278,6 +278,8 @@ import type {
   KbAnnotationStatus,
   KbAnnotationStatusFilter,
   CreateKbAnnotationRequest,
+  KbSearchParams,
+  KbSearchResult,
   KnowledgeBase,
   KnowledgeBaseDetail,
   KnowledgeBaseMutation,
@@ -312,6 +314,8 @@ import {
   KbAnnotationSchema,
   EMPTY_KB_ANNOTATION_LIST,
   kbAnnotationFallback,
+  KbSearchResultSchema,
+  EMPTY_KB_SEARCH_RESULT,
   KnowledgeBaseDetailSchema,
   KnowledgeBaseListSchema,
 } from "./kb-schemas";
@@ -5049,6 +5053,18 @@ export class ApiClient {
     });
     return parseWithFallback(raw, KbAnnotationSchema, kbAnnotationFallback(id), {
       endpoint: "PATCH /api/kb/annotations/:id",
+    });
+  }
+
+  /** Hybrid search over mainline pages; the top `limit` hits by relevance, no paging. */
+  async searchKnowledgeBases(params: KbSearchParams): Promise<KbSearchResult> {
+    const search = new URLSearchParams({ q: params.q });
+    if (params.kb) search.set("kb", params.kb);
+    if (params.type) search.set("type", params.type);
+    if (params.limit) search.set("limit", String(params.limit));
+    const raw = await this.fetch<unknown>(`/api/kb/search?${search.toString()}`);
+    return parseWithFallback(raw, KbSearchResultSchema, EMPTY_KB_SEARCH_RESULT, {
+      endpoint: "GET /api/kb/search",
     });
   }
 

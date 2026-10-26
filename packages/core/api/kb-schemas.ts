@@ -14,6 +14,8 @@ import type {
   KnowledgeBase,
   KnowledgeBaseDetail,
   KnowledgeBasePending,
+  KbSearchMode,
+  KbSearchResult,
 } from "../types/kb";
 
 // Knowledge base response schemas. Kept out of schemas.ts so the knowledge
@@ -524,3 +526,38 @@ export function kbAnnotationFallback(id = ""): KbAnnotation {
     mention: "",
   };
 }
+
+// Search.
+
+const KB_SEARCH_MODES = ["hybrid", "keyword"] as const satisfies readonly KbSearchMode[];
+
+export const KbSearchHitSchema = z
+  .object({
+    page_id: z.string(),
+    slug: text,
+    path: text,
+    parents: z
+      .array(z.unknown())
+      .nullable()
+      .optional()
+      .catch([])
+      .transform((items) => (items ?? []).filter((item): item is string => typeof item === "string")),
+    title: text,
+    type: text,
+    block_id: text,
+    excerpt: text,
+    score: z.number().catch(0),
+    mention: text,
+  })
+  .loose();
+
+export const KbSearchResultSchema = z
+  .object({
+    // An unknown mode reads as keyword: the hits are still usable.
+    mode: z.enum(KB_SEARCH_MODES).catch("keyword"),
+    total: countSchema,
+    hits: lenientArray(KbSearchHitSchema),
+  })
+  .loose();
+
+export const EMPTY_KB_SEARCH_RESULT: KbSearchResult = { mode: "keyword", total: 0, hits: [] };

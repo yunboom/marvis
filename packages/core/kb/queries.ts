@@ -10,6 +10,7 @@ import type {
   KbPage,
   KbRevision,
   KbRevisionDiff,
+  KbSearchResult,
   KnowledgeBase,
   KnowledgeBaseDetail,
 } from "../types/kb";
@@ -42,7 +43,25 @@ export const kbKeys = {
   /** One annotation list; an empty page is every page, `-` the knowledge base level. */
   annotationList: (wsId: string, kb: string, status: KbAnnotationStatusFilter, page: string) =>
     [...kbKeys.annotations(wsId, kb), status, page] as const,
+  /** Every search; merges change what they find. */
+  searches: (wsId: string) => [...kbKeys.all(wsId), "search"] as const,
+  /** One search; an empty kb searches every knowledge base. */
+  search: (wsId: string, kb: string, q: string, type: string, limit: number) =>
+    [...kbKeys.searches(wsId), kb, q, type, limit] as const,
 };
+
+/** Hits shown in a search dropdown. */
+export const KB_SEARCH_LIMIT = 10;
+
+/** Search mainline pages; `q` is trimmed and an empty one does not run. */
+export function kbSearchOptions(wsId: string, q: string, { kb = "", type = "", limit = KB_SEARCH_LIMIT } = {}) {
+  const query = q.trim();
+  return queryOptions<KbSearchResult>({
+    queryKey: kbKeys.search(wsId, kb, query, type, limit),
+    queryFn: () => api.searchKnowledgeBases({ q: query, kb: kb || undefined, type: type || undefined, limit }),
+    enabled: !!wsId && query !== "",
+  });
+}
 
 export function kbBuilderSessionListOptions(wsId: string, mode: KbBuilderMode, kb = "") {
   return queryOptions<KbBuilderSession[]>({

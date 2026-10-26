@@ -413,4 +413,8 @@ export type {
   KbAnnotationStatus,
   KbAnnotationStatusFilter,
   CreateKbAnnotationRequest,
+  KbSearchHit,
+  KbSearchMode,
+  KbSearchParams,
+  KbSearchResult,
 } from "./kb";
