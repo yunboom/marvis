@@ -2259,6 +2259,11 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 			r.Route("/api/kb", func(r chi.Router) {
 				r.Get("/bases", h.ListKbBases)
 				r.Get("/bases/{kb}", h.GetKbBase)
+				r.Get("/bases/{kb}/home", h.GetKbHome)
+				r.Get("/bases/{kb}/pages", h.ListKbPages)
+				r.Get("/pages/{id}", h.GetKbPage)
+				r.Get("/pages/{id}/history", h.ListKbPageHistory)
+				r.Get("/pages/{id}/history/{revisionId}", h.GetKbRevisionDiff)
 			})
 
 			// Squads

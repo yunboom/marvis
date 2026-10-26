@@ -35,9 +35,14 @@ func insertTestKbBase(t *testing.T, name, slug string, over ...testutil.Cols) st
 	}
 	id := dbfx.Insert(t, "kb_base", cols)
 
-	for _, table := range []string{"kb_page", "kb_page_revision", "kb_link", "kb_annotation", "kb_merge_request"} {
+	for _, table := range []string{
+		"kb_page", "kb_page_revision", "kb_link", "kb_annotation", "kb_merge_request",
+		"kb_claim", "kb_raw", "kb_job", "kb_draft",
+	} {
 		dbfx.Cleanup(t, fmt.Sprintf(`DELETE FROM %s WHERE knowledge_base_id = $1`, table), id)
 	}
+	// Registered last so it runs before kb_draft is emptied.
+	dbfx.Cleanup(t, `DELETE FROM kb_draft_page WHERE draft_id IN (SELECT id FROM kb_draft WHERE knowledge_base_id = $1)`, id)
 
 	return id
 }
