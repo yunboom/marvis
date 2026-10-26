@@ -2255,6 +2255,12 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				})
 			})
 
+			// Knowledge bases
+			r.Route("/api/kb", func(r chi.Router) {
+				r.Get("/bases", h.ListKbBases)
+				r.Get("/bases/{kb}", h.GetKbBase)
+			})
+
 			// Squads
 			r.Route("/api/squads", func(r chi.Router) {
 				r.Get("/", h.ListSquads)
