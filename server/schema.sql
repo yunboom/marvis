@@ -41,6 +41,18 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 --
+-- Name: vector; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
+
+--
+-- Name: EXTENSION vector; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access methods';
+
+--
 -- Name: capture_attachment_wakeup(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2759,6 +2771,313 @@ CREATE TABLE public.issue_workflow (
 );
 
 --
+-- Name: kb_annotation; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_annotation (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    page_id uuid,
+    block_id text DEFAULT ''::text NOT NULL,
+    quote text DEFAULT ''::text NOT NULL,
+    prefix text DEFAULT ''::text NOT NULL,
+    suffix text DEFAULT ''::text NOT NULL,
+    body text NOT NULL,
+    author_type text NOT NULL,
+    author_id uuid NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    merge_request_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_annotation_author_type_check CHECK ((author_type = ANY (ARRAY['member'::text, 'agent'::text]))),
+    CONSTRAINT kb_annotation_check CHECK (((page_id IS NOT NULL) OR (quote = ''::text))),
+    CONSTRAINT kb_annotation_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'resolved'::text, 'dismissed'::text])))
+);
+
+--
+-- Name: kb_base; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_base (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    name text NOT NULL,
+    slug text NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    schema_mode text NOT NULL,
+    purpose text DEFAULT ''::text NOT NULL,
+    schema text NOT NULL,
+    content_version bigint DEFAULT 0 NOT NULL,
+    created_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_base_schema_mode_check CHECK ((schema_mode = ANY (ARRAY['default'::text, 'custom'::text])))
+);
+
+--
+-- Name: kb_block_embedding; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_block_embedding (
+    page_id uuid NOT NULL,
+    block_id text NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    workspace_id uuid NOT NULL,
+    content_hash text NOT NULL,
+    model text NOT NULL,
+    embedding public.vector(1024) NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: kb_builder_session; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_builder_session (
+    chat_session_id uuid NOT NULL,
+    workspace_id uuid NOT NULL,
+    mode text NOT NULL,
+    knowledge_base_id uuid,
+    draft jsonb DEFAULT '{}'::jsonb NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_builder_session_mode_check CHECK ((mode = ANY (ARRAY['create'::text, 'config'::text])))
+);
+
+--
+-- Name: kb_claim; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_claim (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    page_id uuid NOT NULL,
+    block_id text NOT NULL,
+    key text NOT NULL,
+    text text NOT NULL,
+    evidence jsonb NOT NULL,
+    checked_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: kb_config_revision; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_config_revision (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    name text NOT NULL,
+    description text NOT NULL,
+    schema_mode text NOT NULL,
+    purpose text NOT NULL,
+    schema text NOT NULL,
+    saved_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: kb_draft; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_draft (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    title text DEFAULT ''::text NOT NULL,
+    version bigint DEFAULT 0 NOT NULL,
+    status text DEFAULT 'open'::text NOT NULL,
+    created_by uuid NOT NULL,
+    task_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_draft_status_check CHECK ((status = ANY (ARRAY['open'::text, 'submitted'::text, 'merged'::text, 'discarded'::text])))
+);
+
+--
+-- Name: kb_draft_page; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_draft_page (
+    draft_id uuid NOT NULL,
+    page_id uuid NOT NULL,
+    op text NOT NULL,
+    base_revision_id uuid,
+    parent_id uuid,
+    "position" text NOT NULL,
+    slug text NOT NULL,
+    frontmatter jsonb NOT NULL,
+    blocks jsonb NOT NULL,
+    claims jsonb NOT NULL,
+    conflicts jsonb DEFAULT '[]'::jsonb NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_draft_page_op_check CHECK ((op = ANY (ARRAY['create'::text, 'update'::text, 'move'::text, 'delete'::text])))
+);
+
+--
+-- Name: kb_job; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_job (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    name text NOT NULL,
+    starter text NOT NULL,
+    agent_id uuid NOT NULL,
+    chat_session_id uuid NOT NULL,
+    draft_id uuid NOT NULL,
+    annotation_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
+    page_id uuid,
+    created_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_job_starter_check CHECK ((starter = ANY (ARRAY['ingest'::text, 'health'::text, 'merge'::text, 'annotations'::text, 'new_page'::text, 'schedule'::text, 'custom'::text])))
+);
+
+--
+-- Name: kb_link; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_link (
+    workspace_id uuid NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    from_page_id uuid NOT NULL,
+    from_block_id text NOT NULL,
+    to_page_id uuid,
+    to_block_id text DEFAULT ''::text NOT NULL,
+    to_path text NOT NULL
+);
+
+--
+-- Name: kb_merge_request; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_merge_request (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    number integer NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    title text NOT NULL,
+    summary text DEFAULT ''::text NOT NULL,
+    source text NOT NULL,
+    risk text DEFAULT 'low'::text NOT NULL,
+    author_type text NOT NULL,
+    author_id uuid NOT NULL,
+    draft_id uuid NOT NULL,
+    job_id uuid,
+    task_id uuid,
+    annotation_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
+    reverts_id uuid,
+    status text DEFAULT 'open'::text NOT NULL,
+    merged_by uuid,
+    merged_at timestamp with time zone,
+    closed_by uuid,
+    closed_at timestamp with time zone,
+    close_reason text DEFAULT ''::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_merge_request_author_type_check CHECK ((author_type = ANY (ARRAY['member'::text, 'agent'::text]))),
+    CONSTRAINT kb_merge_request_risk_check CHECK ((risk = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text]))),
+    CONSTRAINT kb_merge_request_source_check CHECK ((source = ANY (ARRAY['ingest'::text, 'health'::text, 'merge'::text, 'annotations'::text, 'new_page'::text, 'revert'::text, 'custom'::text]))),
+    CONSTRAINT kb_merge_request_status_check CHECK ((status = ANY (ARRAY['open'::text, 'merged'::text, 'closed'::text])))
+);
+
+--
+-- Name: kb_mr_comment; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_mr_comment (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    merge_request_id uuid NOT NULL,
+    parent_id uuid,
+    quote_page_id uuid,
+    quote_block_id text DEFAULT ''::text NOT NULL,
+    quote_text text DEFAULT ''::text NOT NULL,
+    body text NOT NULL,
+    author_type text NOT NULL,
+    author_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_mr_comment_author_type_check CHECK ((author_type = ANY (ARRAY['member'::text, 'agent'::text])))
+);
+
+--
+-- Name: kb_page; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_page (
+    id uuid NOT NULL,
+    workspace_id uuid NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    parent_id uuid,
+    "position" text NOT NULL,
+    slug text NOT NULL,
+    reserved text DEFAULT ''::text NOT NULL,
+    type text NOT NULL,
+    title text NOT NULL,
+    description text NOT NULL,
+    frontmatter jsonb NOT NULL,
+    blocks jsonb NOT NULL,
+    search_text text DEFAULT ''::text NOT NULL,
+    head_revision_id uuid NOT NULL,
+    stale_after timestamp with time zone,
+    deleted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_page_reserved_check CHECK ((reserved = ANY (ARRAY[''::text, 'quickstart'::text])))
+);
+
+--
+-- Name: kb_page_revision; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_page_revision (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    page_id uuid NOT NULL,
+    prev_revision_id uuid,
+    merge_request_id uuid,
+    parent_id uuid,
+    "position" text NOT NULL,
+    slug text NOT NULL,
+    frontmatter jsonb NOT NULL,
+    blocks jsonb NOT NULL,
+    claims jsonb NOT NULL,
+    deleted boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: kb_raw; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_raw (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    knowledge_base_id uuid NOT NULL,
+    kind text NOT NULL,
+    name text NOT NULL,
+    storage_key text NOT NULL,
+    size bigint NOT NULL,
+    content_type text NOT NULL,
+    uploaded_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_raw_kind_check CHECK ((kind = ANY (ARRAY['source'::text, 'asset'::text])))
+);
+
+--
+-- Name: kb_workspace; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_workspace (
+    workspace_id uuid NOT NULL,
+    next_mr_number integer DEFAULT 1 NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
 -- Name: lark_binding_token; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4322,6 +4641,111 @@ ALTER TABLE public.issue_wakeup
 
 ALTER TABLE ONLY public.issue_workflow
     ADD CONSTRAINT issue_workflow_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_annotation kb_annotation_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_annotation
+    ADD CONSTRAINT kb_annotation_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_base kb_base_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_base
+    ADD CONSTRAINT kb_base_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_block_embedding kb_block_embedding_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_block_embedding
+    ADD CONSTRAINT kb_block_embedding_pkey PRIMARY KEY (page_id, block_id);
+
+--
+-- Name: kb_builder_session kb_builder_session_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_builder_session
+    ADD CONSTRAINT kb_builder_session_pkey PRIMARY KEY (chat_session_id);
+
+--
+-- Name: kb_claim kb_claim_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_claim
+    ADD CONSTRAINT kb_claim_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_config_revision kb_config_revision_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_config_revision
+    ADD CONSTRAINT kb_config_revision_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_draft_page kb_draft_page_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_draft_page
+    ADD CONSTRAINT kb_draft_page_pkey PRIMARY KEY (draft_id, page_id);
+
+--
+-- Name: kb_draft kb_draft_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_draft
+    ADD CONSTRAINT kb_draft_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_job kb_job_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_job
+    ADD CONSTRAINT kb_job_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_merge_request kb_merge_request_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_merge_request
+    ADD CONSTRAINT kb_merge_request_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_mr_comment kb_mr_comment_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_mr_comment
+    ADD CONSTRAINT kb_mr_comment_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_page kb_page_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_page
+    ADD CONSTRAINT kb_page_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_page_revision kb_page_revision_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_page_revision
+    ADD CONSTRAINT kb_page_revision_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_raw kb_raw_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_raw
+    ADD CONSTRAINT kb_raw_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_workspace kb_workspace_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_workspace
+    ADD CONSTRAINT kb_workspace_pkey PRIMARY KEY (workspace_id);
 
 --
 -- Name: lark_binding_token lark_binding_token_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -6601,6 +7025,132 @@ CREATE UNIQUE INDEX issue_wakeup_system_rule_idx ON public.issue_wakeup USING bt
 --
 
 CREATE INDEX issue_wakeup_workspace_history_idx ON public.issue_wakeup USING btree (workspace_id, created_at DESC, id DESC);
+
+--
+-- Name: kb_annotation_base_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_annotation_base_status_idx ON public.kb_annotation USING btree (knowledge_base_id, status);
+
+--
+-- Name: kb_base_ws_slug_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_base_ws_slug_uidx ON public.kb_base USING btree (workspace_id, slug);
+
+--
+-- Name: kb_block_embedding_base_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_block_embedding_base_idx ON public.kb_block_embedding USING btree (knowledge_base_id);
+
+--
+-- Name: kb_block_embedding_hnsw; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_block_embedding_hnsw ON public.kb_block_embedding USING hnsw (embedding public.vector_cosine_ops);
+
+--
+-- Name: kb_claim_evidence_gin; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_claim_evidence_gin ON public.kb_claim USING gin (evidence jsonb_path_ops);
+
+--
+-- Name: kb_claim_page_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_claim_page_idx ON public.kb_claim USING btree (page_id);
+
+--
+-- Name: kb_draft_page_page_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_draft_page_page_idx ON public.kb_draft_page USING btree (page_id);
+
+--
+-- Name: kb_job_base_created_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_job_base_created_idx ON public.kb_job USING btree (knowledge_base_id, created_at DESC);
+
+--
+-- Name: kb_job_chat_session_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_job_chat_session_uidx ON public.kb_job USING btree (chat_session_id);
+
+--
+-- Name: kb_link_from_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_link_from_idx ON public.kb_link USING btree (from_page_id);
+
+--
+-- Name: kb_link_to_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_link_to_idx ON public.kb_link USING btree (to_page_id);
+
+--
+-- Name: kb_mr_comment_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_mr_comment_idx ON public.kb_mr_comment USING btree (merge_request_id, created_at);
+
+--
+-- Name: kb_mr_open_draft_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_mr_open_draft_uidx ON public.kb_merge_request USING btree (draft_id) WHERE (status = 'open'::text);
+
+--
+-- Name: kb_mr_ws_number_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_mr_ws_number_uidx ON public.kb_merge_request USING btree (workspace_id, number);
+
+--
+-- Name: kb_mr_ws_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_mr_ws_status_idx ON public.kb_merge_request USING btree (workspace_id, status, updated_at DESC);
+
+--
+-- Name: kb_page_parent_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_page_parent_idx ON public.kb_page USING btree (knowledge_base_id, parent_id, "position");
+
+--
+-- Name: kb_page_search_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_page_search_trgm ON public.kb_page USING gin (lower(search_text) public.gin_trgm_ops);
+
+--
+-- Name: kb_page_sibling_slug_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_page_sibling_slug_uidx ON public.kb_page USING btree (knowledge_base_id, COALESCE(parent_id, '00000000-0000-0000-0000-000000000000'::uuid), slug) WHERE (deleted_at IS NULL);
+
+--
+-- Name: kb_page_stale_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_page_stale_idx ON public.kb_page USING btree (knowledge_base_id, stale_after) WHERE (deleted_at IS NULL);
+
+--
+-- Name: kb_raw_base_name_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_raw_base_name_uidx ON public.kb_raw USING btree (knowledge_base_id, kind, name);
+
+--
+-- Name: kb_revision_page_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_revision_page_idx ON public.kb_page_revision USING btree (page_id, created_at DESC);
 
 --
 -- Name: skill_to_label_label_idx; Type: INDEX; Schema: public; Owner: -
