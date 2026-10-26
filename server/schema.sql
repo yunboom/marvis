@@ -2790,6 +2790,7 @@ CREATE TABLE public.kb_annotation (
     merge_request_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    original_quote text DEFAULT ''::text NOT NULL,
     CONSTRAINT kb_annotation_author_type_check CHECK ((author_type = ANY (ARRAY['member'::text, 'agent'::text]))),
     CONSTRAINT kb_annotation_check CHECK (((page_id IS NOT NULL) OR (quote = ''::text))),
     CONSTRAINT kb_annotation_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'resolved'::text, 'dismissed'::text])))
