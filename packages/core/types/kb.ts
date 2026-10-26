@@ -546,3 +546,103 @@ export interface KbMergeRequestCreated {
   draft_id: string;
   job_id: string | null;
 }
+
+/** Where a merge request came from (spec 7.13), in the order it is decided. */
+export type KbMergeRequestOriginType = "kb_job" | "revert" | "autopilot_run" | "issue" | "chat" | "none";
+
+export interface KbMergeRequestOrigin {
+  type: KbMergeRequestOriginType;
+  /** The origin's own name (job, reverted request, autopilot, issue or chat). */
+  label: string;
+  /** What to open: the job, reverted request, autopilot, issue or chat id. */
+  ref_id: string | null;
+}
+
+/** A merge request: one draft under review. */
+export interface KbMergeRequest {
+  id: string;
+  number: number;
+  knowledge_base_id: string;
+  title: string;
+  summary: string;
+  source: string;
+  status: KbMergeRequestStatus;
+  risk: string;
+  author_type: string;
+  author_id: string;
+  author_name: string;
+  draft_id: string;
+  /** The draft version to merge with; the server refuses a newer draft. */
+  draft_version: number;
+  annotation_ids: string[];
+  origin: KbMergeRequestOrigin;
+  job_id: string | null;
+  /** The number of the request this one reverts. */
+  reverts: number | null;
+  merged_by: string | null;
+  merged_by_name: string;
+  merged_at: string | null;
+  closed_by: string | null;
+  closed_by_name: string;
+  closed_at: string | null;
+  close_reason: string;
+  created_at: string;
+  updated_at: string;
+  mention: string;
+}
+
+/** A merge request with its file cards, checks and what the viewer may do. */
+export interface KbMergeRequestDetail extends KbMergeRequest {
+  knowledge_base_slug: string;
+  knowledge_base_name: string;
+  pages: KbDraftPageChange[];
+  checks: { lint: KbLintFinding[]; conflicts: KbDraftConflict[] };
+  /** The agent a plain review comment goes to; null when no agent stands behind it. */
+  review_agent: { id: string; name: string } | null;
+  /** The job's agent, or one a comment started, is still working. */
+  agent_running: boolean;
+  can_merge: boolean;
+  can_close: boolean;
+  can_revert: boolean;
+}
+
+/** Review list filters; "merged,closed" is every ended request. */
+export type KbMergeRequestListStatus = KbMergeRequestStatus | "all" | "merged,closed";
+
+/** The diff line a review comment quotes. */
+export interface KbMrCommentQuote {
+  page_id: string;
+  block_id: string;
+  text: string;
+}
+
+/** An agent a review comment started. */
+export interface KbMrCommentTrigger {
+  agent_id: string;
+  agent_name: string;
+  /** author: the request's agent picked it up; mention: it was @-named. */
+  reason: string;
+  chat_session_id: string | null;
+  task_id: string | null;
+  running: boolean;
+}
+
+/** A review comment. */
+export interface KbMrComment {
+  id: string;
+  merge_request_id: string;
+  parent_id: string | null;
+  quote: KbMrCommentQuote | null;
+  body: string;
+  author_type: string;
+  author_id: string;
+  author_name: string;
+  triggered: KbMrCommentTrigger[];
+  created_at: string;
+}
+
+export interface CreateKbMrCommentRequest {
+  body: string;
+  parent_id?: string | null;
+  quote?: KbMrCommentQuote | null;
+}

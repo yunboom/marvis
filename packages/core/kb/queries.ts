@@ -10,6 +10,10 @@ import type {
   KbJob,
   KbJobDetail,
   KbJobState,
+  KbMergeRequest,
+  KbMergeRequestDetail,
+  KbMergeRequestListStatus,
+  KbMrComment,
   KbPage,
   KbRevision,
   KbRevisionDiff,
@@ -57,7 +61,44 @@ export const kbKeys = {
   jobList: (wsId: string, kb: string, state: KbJobListState | "") => [...kbKeys.jobs(wsId, kb), state] as const,
   /** A job with its draft's changes and checks. */
   job: (wsId: string, jobId: string) => [...kbKeys.all(wsId), "job", jobId] as const,
+  /** Every merge request list (the review list and the change log). */
+  reviews: (wsId: string) => [...kbKeys.all(wsId), "reviews"] as const,
+  /** One merge request list; an empty kb lists every knowledge base. */
+  reviewList: (wsId: string, kb: string, status: KbMergeRequestListStatus) =>
+    [...kbKeys.reviews(wsId), kb, status] as const,
+  /** One merge request by its workspace number, and its comments under it. */
+  review: (wsId: string, number: number) => [...kbKeys.all(wsId), "review", number] as const,
+  reviewComments: (wsId: string, number: number) => [...kbKeys.review(wsId, number), "comments"] as const,
 };
+
+/** How many merge requests the review list and the change log show. */
+export const KB_REVIEW_LIST_LIMIT = 100;
+
+/** Merge requests of a knowledge base, most recently updated first. */
+export function kbMergeRequestListOptions(wsId: string, kb: string, status: KbMergeRequestListStatus) {
+  return queryOptions<KbMergeRequest[]>({
+    queryKey: kbKeys.reviewList(wsId, kb, status),
+    queryFn: () => api.listKnowledgeBaseMergeRequests({ status, kb: kb || undefined, limit: KB_REVIEW_LIST_LIMIT }),
+    enabled: !!wsId,
+  });
+}
+
+/** A merge request with its file cards and checks; draft writes refresh it. */
+export function kbMergeRequestOptions(wsId: string, number: number) {
+  return queryOptions<KbMergeRequestDetail>({
+    queryKey: kbKeys.review(wsId, number),
+    queryFn: () => api.getKnowledgeBaseMergeRequest(number),
+    enabled: !!wsId && number > 0,
+  });
+}
+
+export function kbMrCommentListOptions(wsId: string, number: number) {
+  return queryOptions<KbMrComment[]>({
+    queryKey: kbKeys.reviewComments(wsId, number),
+    queryFn: () => api.listKnowledgeBaseMrComments(number),
+    enabled: !!wsId && number > 0,
+  });
+}
 
 /** The job list filters the server takes. */
 export type KbJobListState = Extract<KbJobState, "running" | "failed">;

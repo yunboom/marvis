@@ -26,6 +26,8 @@ export function invalidateKbJobs(qc: QueryClient, wsId: string) {
  */
 export function invalidateKbDraft(qc: QueryClient, wsId: string, draftId: string) {
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "job"] });
+  // A merge request's diff follows its draft; its key has no draft id.
+  void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "review"] });
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "jobs"] });
   for (const scope of ["level", "page"] as const) {
     void qc.invalidateQueries({
@@ -41,7 +43,26 @@ export function invalidateKbDraft(qc: QueryClient, wsId: string, draftId: string
  */
 export function invalidateKbMergeRequests(qc: QueryClient, wsId: string) {
   invalidateKbJobs(qc, wsId);
+  void qc.invalidateQueries({ queryKey: kbKeys.reviews(wsId) });
+  void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "review"] });
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "home"] });
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "page"] });
   void qc.invalidateQueries({ queryKey: kbKeys.bases(wsId) });
+}
+
+/**
+ * A merge request was merged or closed: on top of what an opened one moves,
+ * the mainline changed (pages, tree levels, history, search) and the
+ * annotations it handled moved on.
+ */
+export function invalidateKbMainline(qc: QueryClient, wsId: string) {
+  invalidateKbMergeRequests(qc, wsId);
+  invalidateKbAnnotations(qc, wsId);
+  void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "history"] });
+  void qc.invalidateQueries({ queryKey: kbKeys.searches(wsId) });
+}
+
+/** A review comment: the thread, and the detail's agent-at-work state. */
+export function invalidateKbMrComments(qc: QueryClient, wsId: string, number: number) {
+  void qc.invalidateQueries({ queryKey: kbKeys.review(wsId, number) });
 }

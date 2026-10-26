@@ -291,8 +291,23 @@ import type {
   KbJobDetail,
   KbJobState,
   KbMergeRequestCreated,
+  KbMergeRequest,
+  KbMergeRequestDetail,
+  KbMergeRequestListStatus,
+  KbMrComment,
+  CreateKbMrCommentRequest,
 } from "../types/kb";
 import {
+  EMPTY_KB_MERGE_REQUEST_LIST,
+  EMPTY_KB_MR_COMMENT_LIST,
+  KbMergeRequestDetailSchema,
+  KbMergeRequestListSchema,
+  KbMergeRequestSchema,
+  KbMrCommentListSchema,
+  KbMrCommentSchema,
+  kbMergeRequestDetailFallback,
+  kbMergeRequestFallback,
+  kbMrCommentFallback,
   EMPTY_KB_JOB_LIST,
   EMPTY_KB_MERGE_REQUEST_CREATED,
   KbJobDetailSchema,
@@ -5123,6 +5138,91 @@ export class ApiClient {
     const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}/discard`, { method: "POST" });
     return parseWithFallback(raw, KbJobSchema, kbJobFallback(id), {
       endpoint: "POST /api/kb/jobs/:id/discard",
+    });
+  }
+
+  /** Merge requests; the change log is `status: "merged"`. */
+  async listKnowledgeBaseMergeRequests(
+    params: { status?: KbMergeRequestListStatus; kb?: string; limit?: number; offset?: number } = {},
+  ): Promise<KbMergeRequest[]> {
+    const search = new URLSearchParams();
+    if (params.status) search.set("status", params.status);
+    if (params.kb) search.set("kb", params.kb);
+    if (params.limit !== undefined) search.set("limit", String(params.limit));
+    if (params.offset !== undefined) search.set("offset", String(params.offset));
+    const qs = search.toString();
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests${qs ? `?${qs}` : ""}`);
+    return parseWithFallback(raw, KbMergeRequestListSchema, EMPTY_KB_MERGE_REQUEST_LIST, {
+      endpoint: "GET /api/kb/merge-requests",
+    });
+  }
+
+  /** `ref` is the workspace merge request number or its id. */
+  async getKnowledgeBaseMergeRequest(ref: string | number): Promise<KbMergeRequestDetail> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}`);
+    return parseWithFallback(raw, KbMergeRequestDetailSchema, kbMergeRequestDetailFallback(), {
+      endpoint: "GET /api/kb/merge-requests/:number",
+    });
+  }
+
+  async updateKnowledgeBaseMergeRequest(
+    ref: string | number,
+    data: { title?: string; summary?: string; risk?: string },
+  ): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "PATCH /api/kb/merge-requests/:number",
+    });
+  }
+
+  /** Merges with the draft version the reviewer saw; a newer draft is refused (409). */
+  async mergeKnowledgeBaseMergeRequest(ref: string | number, draftVersion: number): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/merge`, {
+      method: "POST",
+      body: JSON.stringify({ draft_version: draftVersion }),
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/merge",
+    });
+  }
+
+  async closeKnowledgeBaseMergeRequest(ref: string | number, reason = ""): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/close`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/close",
+    });
+  }
+
+  /** Opens a merge request that undoes a merged one. */
+  async revertKnowledgeBaseMergeRequest(ref: string | number): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/revert`, {
+      method: "POST",
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/revert",
+    });
+  }
+
+  async listKnowledgeBaseMrComments(ref: string | number): Promise<KbMrComment[]> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments`);
+    return parseWithFallback(raw, KbMrCommentListSchema, EMPTY_KB_MR_COMMENT_LIST, {
+      endpoint: "GET /api/kb/merge-requests/:number/comments",
+    });
+  }
+
+  async createKnowledgeBaseMrComment(ref: string | number, data: CreateKbMrCommentRequest): Promise<KbMrComment> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbMrCommentSchema, kbMrCommentFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/comments",
     });
   }
 

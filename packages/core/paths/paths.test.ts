@@ -49,6 +49,9 @@ describe("paths.workspace(slug)", () => {
       "/acme/kb/team/jobs/new?starter=annotations&annotations=a1%2Ca2&message=%E5%A4%84%E7%90%86+4+%E6%9D%A1",
     );
     expect(ws.kbMergeRequest("team", 16)).toBe("/acme/kb/team/reviews/16");
+    expect(ws.kbReviews("team")).toBe("/acme/kb/team/reviews");
+    expect(ws.kbChanges("team")).toBe("/acme/kb/team/changes");
+    expect(ws.kbChange("team", 15)).toBe("/acme/kb/team/changes/15");
     expect(ws.kbRevision("team", "p1", "r1")).toBe("/acme/kb/team/p/p1/history/r1");
     expect(ws.settings()).toBe("/acme/settings");
     expect(ws.attachmentPreview("att_42")).toBe("/acme/attachments/att_42/preview");

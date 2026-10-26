@@ -105,9 +105,15 @@ function workspaceScoped(slug: string) {
     kbNewJob: (kbSlug: string, context: KbNewJobContext = {}) =>
       `${ws}/kb/${encode(kbSlug)}/jobs/new${kbNewJobQuery(context)}`,
     kbJob: (kbSlug: string, jobId: string) => `${ws}/kb/${encode(kbSlug)}/jobs/${encode(jobId)}`,
-    /** A merge request under review; the route is registered with review (ticket 08). */
+    /** The review list of a knowledge base. */
+    kbReviews: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/reviews`,
+    /** A merge request under review. */
     kbMergeRequest: (kbSlug: string, number: number | string) =>
       `${ws}/kb/${encode(kbSlug)}/reviews/${encode(String(number))}`,
+    /** The change log: merged requests, newest first (design 2.7). */
+    kbChanges: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/changes`,
+    kbChange: (kbSlug: string, number: number | string) =>
+      `${ws}/kb/${encode(kbSlug)}/changes/${encode(String(number))}`,
     kbPage: (kbSlug: string, pageId: string) => `${ws}/kb/${encode(kbSlug)}/p/${encode(pageId)}`,
     kbRevision: (kbSlug: string, pageId: string, revisionId: string) =>
       `${ws}/kb/${encode(kbSlug)}/p/${encode(pageId)}/history/${encode(revisionId)}`,

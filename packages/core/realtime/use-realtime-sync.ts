@@ -15,7 +15,9 @@ import {
   invalidateKbAnnotations,
   invalidateKbDraft,
   invalidateKbJobs,
+  invalidateKbMainline,
   invalidateKbMergeRequests,
+  invalidateKbMrComments,
 } from "../kb/ws-updaters";
 import { projectKeys } from "../projects/queries";
 import { pinKeys } from "../pins/queries";
@@ -129,6 +131,7 @@ import type {
   ChatSessionCreatedPayload,
   InvitationCreatedPayload,
   KbDraftUpdatedPayload,
+  KbMrCommentedPayload,
 } from "../types";
 
 const chatWsLogger = createLogger("chat.ws");
@@ -1374,6 +1377,26 @@ export function useRealtimeSync(
       if (wsId) invalidateKbMergeRequests(qc, wsId);
     });
 
+    // Title, summary or risk changed: the lists and the review page.
+    const unsubKbMrUpdated = ws.on("kb.mr.updated", () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbMergeRequests(qc, wsId);
+    });
+
+    // A merge or close moves the mainline and the handled annotations.
+    const onKbMrSettled = () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbMainline(qc, wsId);
+    };
+    const unsubKbMrMerged = ws.on("kb.mr.merged", onKbMrSettled);
+    const unsubKbMrClosed = ws.on("kb.mr.closed", onKbMrSettled);
+
+    const unsubKbMrCommented = ws.on("kb.mr.commented", (p) => {
+      const wsId = getCurrentWsId();
+      const { number } = p as KbMrCommentedPayload;
+      if (wsId && number) invalidateKbMrComments(qc, wsId, number);
+    });
+
     const unsubWsUpdated = ws.on("workspace:updated", (p) => {
       applyWorkspaceUpdatedToCache(qc, p as WorkspaceUpdatedPayload);
     });
@@ -1890,6 +1913,10 @@ export function useRealtimeSync(
       unsubKbJobUpdated();
       unsubKbDraftUpdated();
       unsubKbMrCreated();
+      unsubKbMrUpdated();
+      unsubKbMrMerged();
+      unsubKbMrClosed();
+      unsubKbMrCommented();
       unsubWsDeleted();
       unsubMemberRemoved();
       unsubMemberAdded();

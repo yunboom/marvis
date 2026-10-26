@@ -24,6 +24,10 @@ import type {
   KbJobState,
   KbMergeRequestCreated,
   KbMergeRequestStatus,
+  KbMergeRequest,
+  KbMergeRequestDetail,
+  KbMergeRequestOriginType,
+  KbMrComment,
 } from "../types/kb";
 
 // Knowledge base response schemas. Kept out of schemas.ts so the knowledge
@@ -751,3 +755,191 @@ export const EMPTY_KB_MERGE_REQUEST_CREATED: KbMergeRequestCreated = {
   draft_id: "",
   job_id: null,
 };
+
+// Review: merge requests and their comments.
+
+const KB_ORIGIN_TYPES = [
+  "kb_job",
+  "revert",
+  "autopilot_run",
+  "issue",
+  "chat",
+  "none",
+] as const satisfies readonly KbMergeRequestOriginType[];
+
+const nullableCount = z
+  .number()
+  .nullable()
+  .optional()
+  .catch(null)
+  .transform((v) => v ?? null);
+
+const KbMergeRequestOriginSchema = z
+  .object({
+    // An origin this client does not know shows as none: author only.
+    type: z.enum(KB_ORIGIN_TYPES).catch("none"),
+    label: text,
+    ref_id: nullableId,
+  })
+  .loose();
+
+const NO_ORIGIN = { type: "none", label: "", ref_id: null } as const;
+
+export const KbMergeRequestSchema = z
+  .object({
+    id: z.string(),
+    number: countSchema,
+    knowledge_base_id: text,
+    title: text,
+    summary: text,
+    source: text,
+    status: z.enum(KB_MR_STATUSES).catch("open"),
+    risk: text,
+    author_type: text,
+    author_id: text,
+    author_name: text,
+    draft_id: text,
+    draft_version: countSchema,
+    annotation_ids: z
+      .array(z.unknown())
+      .nullable()
+      .optional()
+      .catch([])
+      .transform((items) => (items ?? []).filter((item): item is string => typeof item === "string")),
+    origin: KbMergeRequestOriginSchema.nullable()
+      .optional()
+      .catch(null)
+      .transform((v) => v ?? { ...NO_ORIGIN }),
+    job_id: nullableId,
+    reverts: nullableCount,
+    merged_by: nullableId,
+    merged_by_name: text,
+    merged_at: nullableId,
+    closed_by: nullableId,
+    closed_by_name: text,
+    closed_at: nullableId,
+    close_reason: text,
+    created_at: text,
+    updated_at: text,
+    mention: text,
+  })
+  .loose();
+
+export const KbMergeRequestListSchema = lenientArray(KbMergeRequestSchema);
+
+export const KbMergeRequestDetailSchema = KbMergeRequestSchema.extend({
+  knowledge_base_slug: text,
+  knowledge_base_name: text,
+  pages: lenientArray(KbDraftPageChangeSchema),
+  checks: z
+    .object({
+      lint: lenientArray(KbLintFindingSchema),
+      conflicts: lenientArray(KbDraftConflictSchema),
+    })
+    .loose()
+    .nullable()
+    .optional()
+    .catch(null)
+    .transform((v) => v ?? { lint: [], conflicts: [] }),
+  review_agent: nullableObject(z.object({ id: z.string(), name: text }).loose()),
+  agent_running: flag,
+  can_merge: flag,
+  can_close: flag,
+  can_revert: flag,
+}).loose();
+
+const KbMrCommentQuoteSchema = z.object({ page_id: text, block_id: text, text: text }).loose();
+
+const KbMrCommentTriggerSchema = z
+  .object({
+    agent_id: z.string(),
+    agent_name: text,
+    reason: text,
+    chat_session_id: nullableId,
+    task_id: nullableId,
+    running: flag,
+  })
+  .loose();
+
+export const KbMrCommentSchema = z
+  .object({
+    id: z.string(),
+    merge_request_id: text,
+    parent_id: nullableId,
+    quote: nullableObject(KbMrCommentQuoteSchema),
+    body: text,
+    author_type: text,
+    author_id: text,
+    author_name: text,
+    triggered: lenientArray(KbMrCommentTriggerSchema),
+    created_at: text,
+  })
+  .loose();
+
+export const KbMrCommentListSchema = lenientArray(KbMrCommentSchema);
+
+export const EMPTY_KB_MERGE_REQUEST_LIST: KbMergeRequest[] = [];
+export const EMPTY_KB_MR_COMMENT_LIST: KbMrComment[] = [];
+
+export function kbMergeRequestFallback(id = ""): KbMergeRequest {
+  return {
+    id,
+    number: 0,
+    knowledge_base_id: "",
+    title: "",
+    summary: "",
+    source: "",
+    status: "open",
+    risk: "",
+    author_type: "",
+    author_id: "",
+    author_name: "",
+    draft_id: "",
+    draft_version: 0,
+    annotation_ids: [],
+    origin: { ...NO_ORIGIN },
+    job_id: null,
+    reverts: null,
+    merged_by: null,
+    merged_by_name: "",
+    merged_at: null,
+    closed_by: null,
+    closed_by_name: "",
+    closed_at: null,
+    close_reason: "",
+    created_at: "",
+    updated_at: "",
+    mention: "",
+  };
+}
+
+/** What a broken detail response degrades to: nothing the viewer can act on. */
+export function kbMergeRequestDetailFallback(id = ""): KbMergeRequestDetail {
+  return {
+    ...kbMergeRequestFallback(id),
+    knowledge_base_slug: "",
+    knowledge_base_name: "",
+    pages: [],
+    checks: { lint: [], conflicts: [] },
+    review_agent: null,
+    agent_running: false,
+    can_merge: false,
+    can_close: false,
+    can_revert: false,
+  };
+}
+
+export function kbMrCommentFallback(id = ""): KbMrComment {
+  return {
+    id,
+    merge_request_id: "",
+    parent_id: null,
+    quote: null,
+    body: "",
+    author_type: "",
+    author_id: "",
+    author_name: "",
+    triggered: [],
+    created_at: "",
+  };
+}

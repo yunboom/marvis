@@ -431,4 +431,13 @@ export type {
   KbDraftConflict,
   CreateKbJobRequest,
   KbMergeRequestCreated,
+  KbMergeRequestOriginType,
+  KbMergeRequestOrigin,
+  KbMergeRequest,
+  KbMergeRequestDetail,
+  KbMergeRequestListStatus,
+  KbMrCommentQuote,
+  KbMrCommentTrigger,
+  KbMrComment,
+  CreateKbMrCommentRequest,
 } from "./kb";

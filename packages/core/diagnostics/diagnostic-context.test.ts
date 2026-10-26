@@ -52,6 +52,10 @@ describe("bucketDiagnosticPath", () => {
     expect(bucketDiagnosticPath("/acme/kb/team/jobs")).toBe("/:slug/kb/:kb/jobs");
     expect(bucketDiagnosticPath("/acme/kb/team/jobs/new")).toBe("/:slug/kb/:kb/jobs/new");
     expect(bucketDiagnosticPath("/acme/kb/team/jobs/job-1")).toBe("/:slug/kb/:kb/jobs/:jobId");
+    expect(bucketDiagnosticPath("/acme/kb/team/reviews")).toBe("/:slug/kb/:kb/reviews");
+    expect(bucketDiagnosticPath("/acme/kb/team/reviews/16")).toBe("/:slug/kb/:kb/reviews/:number");
+    expect(bucketDiagnosticPath("/acme/kb/team/changes")).toBe("/:slug/kb/:kb/changes");
+    expect(bucketDiagnosticPath("/acme/kb/team/changes/15")).toBe("/:slug/kb/:kb/changes/:number");
     expect(bucketDiagnosticPath("/acme/kb/team/p/page-1")).toBe("/:slug/kb/:kb/p/:pageId");
     expect(bucketDiagnosticPath("/acme/kb/team/p/page-1/history/rev-1")).toBe(
       "/:slug/kb/:kb/p/:pageId/history/:revisionId",

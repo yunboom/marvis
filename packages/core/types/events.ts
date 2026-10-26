@@ -95,7 +95,11 @@ export type WSEventType =
   | "kb.annotation.changed"
   | "kb.job.updated"
   | "kb.draft.updated"
-  | "kb.mr.created";
+  | "kb.mr.created"
+  | "kb.mr.updated"
+  | "kb.mr.merged"
+  | "kb.mr.closed"
+  | "kb.mr.commented";
 
 /** A job was started, or its draft linked, submitted or discarded (spec 9). */
 export interface KbJobUpdatedPayload {
@@ -120,6 +124,21 @@ export interface KbMrCreatedPayload {
   knowledge_base_id: string;
   draft_id: string;
   job_id: string | null;
+}
+
+/** A merge request's text changed, or it was merged or closed (spec 9). */
+export interface KbMrChangedPayload extends KbMrCreatedPayload {
+  status: string;
+  /** The pages a merge wrote; empty for other changes. */
+  page_ids: string[];
+}
+
+/** A review comment was posted. */
+export interface KbMrCommentedPayload {
+  merge_request_id: string;
+  number: number;
+  knowledge_base_id: string;
+  comment_id: string;
 }
 
 /** A knowledge base annotation was created or changed status (spec 9). */
@@ -697,6 +716,10 @@ export interface WSEventPayloadMap {
   "kb.job.updated": KbJobUpdatedPayload;
   "kb.draft.updated": KbDraftUpdatedPayload;
   "kb.mr.created": KbMrCreatedPayload;
+  "kb.mr.updated": KbMrChangedPayload;
+  "kb.mr.merged": KbMrChangedPayload;
+  "kb.mr.closed": KbMrChangedPayload;
+  "kb.mr.commented": KbMrCommentedPayload;
 }
 
 /**

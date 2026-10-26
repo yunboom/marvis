@@ -4,12 +4,19 @@ import { useWorkspaceId } from "../hooks";
 import type {
   CreateKbAnnotationRequest,
   CreateKbJobRequest,
+  CreateKbMrCommentRequest,
   CreateKnowledgeBaseRequest,
   KbAnnotationStatus,
   UpdateKnowledgeBaseRequest,
 } from "../types/kb";
 import { kbKeys } from "./queries";
-import { invalidateKbAnnotations, invalidateKbJobs, invalidateKbMergeRequests } from "./ws-updaters";
+import {
+  invalidateKbAnnotations,
+  invalidateKbJobs,
+  invalidateKbMainline,
+  invalidateKbMergeRequests,
+  invalidateKbMrComments,
+} from "./ws-updaters";
 
 /**
  * Starts a job. Awaits the server: the job page needs the job and its chat
@@ -100,5 +107,55 @@ export function useUpdateKbAnnotationStatus() {
     mutationFn: ({ id, status }: { id: string; status: Extract<KbAnnotationStatus, "pending" | "dismissed"> }) =>
       api.updateKnowledgeBaseAnnotation(id, { status }),
     onSettled: () => invalidateKbAnnotations(qc, wsId),
+  });
+}
+
+/**
+ * Merges a merge request with the draft version the reviewer saw. Awaits the
+ * server: a newer draft or a conflict is refused (409) and nothing changes.
+ */
+export function useMergeKbMergeRequest() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ number, draftVersion }: { number: number; draftVersion: number }) =>
+      api.mergeKnowledgeBaseMergeRequest(number, draftVersion),
+    onSettled: () => invalidateKbMainline(qc, wsId),
+  });
+}
+
+/** Closes a merge request; its annotations go back to pending. */
+export function useCloseKbMergeRequest() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ number, reason }: { number: number; reason?: string }) =>
+      api.closeKnowledgeBaseMergeRequest(number, reason),
+    onSettled: () => invalidateKbMainline(qc, wsId),
+  });
+}
+
+/** Opens a merge request that undoes a merged one. */
+export function useRevertKbMergeRequest() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: (number: number) => api.revertKnowledgeBaseMergeRequest(number),
+    onSettled: () => invalidateKbMergeRequests(qc, wsId),
+  });
+}
+
+/** Posts a review comment; the agents it starts show on the comment. */
+export function useCreateKbMrComment() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ number, data }: { number: number; data: CreateKbMrCommentRequest }) =>
+      api.createKnowledgeBaseMrComment(number, data),
+    onSettled: (_comment, _error, { number }) => invalidateKbMrComments(qc, wsId, number),
   });
 }
