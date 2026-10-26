@@ -153,3 +153,66 @@
 13. **更换运行时**：设计稿在顶栏运行时旁放「更换」；做成下拉，只列在线且本人能用的运行时，先改服务端绑定再更新显示（同创建智能体）。
 14. **「…」菜单里的配置入口**：只对知识库创建者和 owner / admin 显示（成员列表 + 当前用户判断，与服务端规则一致）；「知识库管理」「变更记录」「关系图」仍等票 08、09。
 15. **mention**：`[名称](mention://kb/<id>)`，名称里的 `[`、`]`、`\` 转义。
+
+
+## 票 04
+
+1. **决策 104 的表结构**
+   - `kb_job.draft_id`、`kb_merge_request.task_id` 直接从迁移 604 删掉，`kb_job_draft` 也并进 604；两个唯一索引是 629 `kb_job_draft_job_id_key`、630 `kb_job_draft_draft_id_key`，rebrand 顺延到 631（脚本 `KEEP`、CLAUDE.md、`concurrentIndexCleanups` 同步）。
+   - 已跑过的本地库手动执行：删两列、建 `kb_job_draft`、`kb_draft_page` 加 `version`、`UPDATE schema_migrations SET version='631_rebrand_marvis' WHERE version='629_rebrand_marvis'`，再 `migrate up` 建 629 / 630。
+   - 删除工作区时一并清理 `kb_job_draft`。
+2. **乐观锁按页判断**
+   - 问题：spec 说草稿页的 version 是 `d<草稿版本>`。如果严格要求等于当前草稿版本，智能体改完 A 页再改 B 页就会因为草稿版本变了而 `stale_version`，一份草稿改多页时几乎每次都冲突。
+   - 选择：`kb_draft_page` 加 `version` 列，记这一页最后一次写入时的草稿版本；写入带 `d<n>` 时，`n` 不小于这一页的 `version`、不大于草稿当前版本就算有效。还没进草稿的页必须带主线 head 修订 id。fetch 返回的仍是 `d<草稿当前版本>`。
+   - 同一草稿的写入用 `SELECT … FOR UPDATE` 锁 `kb_draft` 行串行执行；并发测试里同一版本 4 个写入只有 1 个成功。
+3. **ops 的细节**
+   - 一次请求里的 ops 按顺序在内存里执行，全部成功才写库；`delete` 之后不能再有操作。
+   - `str_replace` 在整页里必须恰好出现一次（409 `str_replace_match`）；替换后这一块按 `block_replace` 重新切块并保留块 id，内容变空就删掉这一块。
+   - `set_meta` 的值为 `null` 表示删除这个键；`stale_after` 接受日期或 RFC3339，统一存 RFC3339 UTC；改 `sources`、`generated` 返回 400 `protected_meta_key`。
+   - `move` 带 `parent`（`<kb>:/` 为顶层）、可选 `after`、`slug`；不能移到自己或后代下面；同级重名 409 `duplicate_slug`；排序键用分数索引（rocicorp/fractional-indexing 的 midpoint 算法，`kb.PositionBetween`），不重排兄弟。
+   - `delete` 有子页面时 409 `page_has_children`，先移走或删掉子页面；删除草稿新建的页面直接去掉这一行。
+   - 写入时把路径链接按草稿的页面树解析成 `kb://`，解析不到的保留路径。
+   - op 记录：新建页保持 `create`；改内容或页头为 `update`；只移动为 `move`；之后再改内容升为 `update`。
+4. **冲突标记**
+   - 标记行照 spec 原文 `<<<<<<< 主线` / `=======` / `>>>>>>> 草稿`；判断「还留着标记」只看以 `<<<<<<<` 或 `>>>>>>>` 开头的行，单独的 `=======` 是 setext 标题下划线，不算。
+   - 写入内容含标记行返回 409 `conflict_markers`；改过冲突块（`block_replace` / `block_delete` / `str_replace` 命中）就清掉这一条，`set_meta` 清掉对应键的页头冲突，`move` 清掉位置冲突，页级冲突（一边删页一边改页）被任意块写入或删页清掉。
+5. **kb draft sync 的合并规则（`kb.MergePage`，票 08 合并可复用）**
+   - 块按 id 三方合并，结果以草稿顺序为主，主线独有的块插在它在主线里的前一块之后，两边在同一位置插入时主线的在前；块移动只跟草稿。
+   - 页头按键三方合并，`generated` 取主线，`sources` 合并后按论断重算。
+   - 论断按 `key` 三方合并，两边都改时取草稿（论断由 `claims set` 整页写入）；挂在已不存在的块上的论断丢弃。
+   - `parent_id`、`position`、`slug` 逐字段合并，两边改成不同值时保留草稿并记位置冲突；合并后与同级重名也记位置冲突。
+   - 冲突写进 `kb_draft_page.conflicts`：`{kind, block_id?, key?, main_value?, main_lines?, draft_lines?}`；行范围按块渲染成 Markdown 后的行号算。上一次 sync 没解决的冲突保留。
+   - 只有主线动过的页才合并并推进 `base_revision_id`；有页合并时草稿版本 +1。草稿不是 open 时 409 `draft_not_open`。
+6. **draft check（`GET /api/kb/drafts/{id}`）**
+   - diff：基准修订和草稿各自按块拼成 Markdown（链接显示成路径）后逐行比较，每行带所在块 id；页头改动不进 diff。`change` 为 added / deleted / moved（路径变了、正文没变）/ modified，路径变了时给 `old_path`。
+   - `checks.conflicts` 只列已经 sync 进草稿、还没解决的冲突（多返回 `kind`、`key`）；不做「还没 sync 时预判冲突」，那要等合并时报。
+   - 格式检查只看草稿里改动过、没删除的页面。消息是英文（面向智能体，界面按 code 翻译）。
+   - 链出、链入的计算：草稿页按草稿的页面树解析；链入 = 主线 `kb_link` 里来自草稿没改动的页面的链接 + 草稿页之间的链接。`isolated_page` 按「链到的其他页面数（含还没写的）少于 2」判断。
+   - 写入接口（ops、新建页、claims）返回的 `warnings` 是这一页的全部检查结果（含 error）。
+7. **claims**
+   - `PUT …/claims` 校验 key 唯一、有 `block_id`、每条证据有 `source` 和 `uri`；`checked_at` 不传取当前时间。证据 `version` 不在写入时强制，`repo://`、`pr://` 缺版本由检查报 `missing_evidence_version` warning（与 spec 4.7 一致）。
+   - 重算的 sources 写进草稿页的 `frontmatter.sources`（`{id, resource, title}`），合并时随页头进主线。
+   - 新增 `GET /api/kb/pages/{ref}/claims?draft=` 给 `kb claims get` 用（spec 只给了 PUT）。
+   - `undefined_footnote`：正文 `[^id]` 必须是这一块论断证据的 `source`；`[^id]:` 定义行不算引用。
+8. **fetch**
+   - `simple` 返回 `content`，`with-ids` 返回 `blocks`，两者互斥；`children` 是草稿叠加后的直接子页面（带 id、路径、标题）；`backlinks=true` 返回主线反向链接。
+   - `section` 的起始块必须是标题块，范围到下一个同级或更高级标题前；`keyword` 不区分大小写；`context_before/after` 对 section、keyword、range 生效；超过 200 块截断。
+   - `revision_id` 读历史修订，version 为修订 id；与 `draft` 同时带 400。
+9. **建草稿与作业关联（决策 104 补充）**
+   - 只有 `X-Actor-Source = task_token`（或通过 resolveActor 校验的智能体）时才记 `task_id`，响应不返回。
+   - `job_id`：作业须在同一知识库（否则 404 `job_not_found`）；调用人是作业创建人，或调用方是作业的执行智能体且任务属于作业的对话（否则 403）；作业已有草稿 409 `job_draft_exists` 并带已关联的 `draft_id`，整个请求回滚（不留下新草稿）。
+   - 成功后发 `kb.job.updated`（`protocol.EventKbJobUpdated`，payload `{job_id, knowledge_base_id, draft_id}`）。前端订阅与 `kb.draft.updated`（1 秒合并发送）留给票 07。
+10. **读写权限**：草稿的读写只认 `created_by` = 调用人（任务令牌按令牌绑定的人）；草稿由智能体以令牌绑定的人建，所以和作业发起人不同人时作业发起人看不到它——票 07 做作业页时按 `kb_job_draft` 放开作业发起人。
+11. **检索（决策 105）**：本票只做关键字一路：按空格分词，每个词都要命中 `search_text`（ILIKE，转义通配符），标题命中排前，返回前 `limit` 条（1–50，默认 10）和 `total`，不翻页；`type` 不区分大小写过滤；`mode` 为 `keyword`。命中块和摘录取第一个含查询词的块，摘录约 120 字。
+12. **页面列表（决策 105）**：`total` 是这一层（`parent` 的直接子页面或顶层）的页面数，主线用一条 COUNT（排除草稿改过的页）加上草稿在这一层的页面数；草稿删除的页面照常列出并计数（与票 02 树的展示一致）。`type` 只在这一层过滤，主线在 SQL 里过滤，草稿页按页头 `type` 过滤，排序和游标不变。
+13. **chat scope（spec 8.7）**
+    - `scope=workspace` 不被允许时返回 403 `chat_scope_forbidden`，不静默退回只读自己的，免得智能体以为读到了全员对话。
+    - 智能体调用时按 `agent.permission_mode = private` 且智能体主人在工作区的角色是 owner 判断。
+    - 列表新增可选 `since`、`agent_id`、`limit`、`offset`：`scope=workspace` 在 SQL 里过滤分页（不含隐藏的 system 智能体会话、只列有消息的会话）；不带 scope 时只有传了这些参数才在原列表结果上过滤分页，不传时行为完全不变。消息分页加 `since`，命中更早的消息后 `has_more` 置 false。
+14. **CLI**
+    - 帮助文字是英文（工具描述用英文）；`kb draft create` 的说明和所有 `--draft` 说明按决策 104 的中文原文译成英文，测试锁住。
+    - 出错时把服务端的 `{error, code}` 打成 `{"error": {"code", "message"}}` 输出到 stdout，退出码仍按 HTTP 状态分级；`main.go` 里 `errSilent` 改用 `errors.Is` 判断，已经打印过的错误不再往 stderr 重复。`kb draft check` 有 error 或未解决冲突、`kb draft sync` 有未解决冲突时退出码 1。
+    - `kb page patch --op set_meta`：`--meta k=v` 可重复，也接受跟在页面引用后的 `k=v` 参数；`k=` 删除这个键，值以 `[` / `{` 开头按 JSON 解析，其余按字符串。
+    - 服务端不分页的列表（`kb list`、`kb history --page`）在客户端按 `--limit` / `--offset` 截取。
+    - `mention`：知识库对象 `[名称](mention://kb/<id>)`（列表和详情也带了），页面对象 `[标题](mention://kb_page/<id>)`（fetch、树、检索、过期页、新建页）。
+    - 后续票才有服务端接口的命令（annotation、mr、raw、sources、`kb history` 不带 `--page`）先按 spec 契约接好，接口缺失时按 404 输出错误。
