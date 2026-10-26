@@ -304,11 +304,12 @@ describe("KbJobPage", () => {
 
   it("blocks submitting on a check error and asks the agent to fix it (9.9)", async () => {
     const panel = await openJob(
-      job({ checks: { lint: [{ code: "missing_meta", severity: "error", page_id: "p", path: "/payment/manual", block_id: "", message: "the page header has no description" }], conflicts: [] } }),
+      job({ checks: { lint: [{ code: "missing_description", severity: "error", page_id: "p", path: "/payment/manual", block_id: "", message: "the page header has no description" }], conflicts: [] } }),
     );
 
     expect(within(panel).getByRole("button", { name: "Submit for review" })).toBeDisabled();
     expect(within(panel).getByText("1 error to fix before submitting")).toBeInTheDocument();
+    expect(within(panel).getByText("/payment/manual · The page header has no description")).toBeInTheDocument();
     await userEvent.click(within(panel).getByRole("button", { name: "Ask the agent to fix" }));
     expect(conversation.send).toHaveBeenCalledWith("Fix the errors `marvis kb draft check draft-1` reports, then check again.");
   });

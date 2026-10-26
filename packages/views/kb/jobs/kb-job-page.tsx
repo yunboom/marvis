@@ -105,7 +105,7 @@ function AgentRow({ agentId, onPick }: { agentId: string; onPick?: (agentId: str
 
   const identity = agent ? (
     <>
-      <ActorAvatar actorType="agent" actorId={agent.id} size="sm" />
+      <ActorAvatar actorType="agent" actorId={agent.id} size="sm" profileLink={false} />
       <span className="truncate font-semibold">{agent.name}</span>
     </>
   ) : (
@@ -232,7 +232,7 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
           {!starter && (
             <>
               <div className="flex flex-col items-center gap-2 pt-6">
-                {chosen && <ActorAvatar actorType="agent" actorId={chosen} size="lg" />}
+                {chosen && <ActorAvatar actorType="agent" actorId={chosen} size="lg" profileLink={false} />}
                 <h2 className="text-title-lg font-semibold">{t(($) => $.job.start_question, { name: kbName })}</h2>
               </div>
               <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">

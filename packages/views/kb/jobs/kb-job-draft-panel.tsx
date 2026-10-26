@@ -24,6 +24,28 @@ import { kbJobPanelState, type KbJobDraftView } from "./kb-job-state";
 
 const LINE_SIGN: Record<KbDraftDiffLine["kind"], string> = { add: "+", delete: "−", context: "" };
 
+/** Format check codes the job page words itself; others show the server's message. */
+const LINT_CODES = [
+  "missing_type",
+  "missing_title",
+  "missing_description",
+  "undefined_footnote",
+  "claim_without_evidence",
+  "invalid_evidence_uri",
+  "duplicate_slug",
+  "unresolved_conflict",
+  "missing_evidence_version",
+  "unresolved_link",
+  "orphan_page",
+  "isolated_page",
+] as const;
+
+type LintCode = (typeof LINT_CODES)[number];
+
+function isLintCode(code: string): code is LintCode {
+  return (LINT_CODES as readonly string[]).includes(code);
+}
+
 type Dot = "gray" | "blue" | "green" | "amber" | "red";
 
 const DOT_CLASS: Record<Dot, string> = {
@@ -35,7 +57,7 @@ const DOT_CLASS: Record<Dot, string> = {
 };
 
 function StateDot({ dot }: { dot: Dot }) {
-  return <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", DOT_CLASS[dot])} />;
+  return <span aria-hidden="true" className={cn("inline-block size-1.5 shrink-0 rounded-full", DOT_CLASS[dot])} />;
 }
 
 function DiffLine({ line }: { line: KbDraftDiffLine }) {
@@ -267,7 +289,7 @@ export function KbJobDraftPanel({
                 <StateDot dot={finding.severity === "error" ? "red" : "amber"} />
               </span>
               <span className="min-w-0 flex-1 break-words">
-                {finding.path} · {finding.message}
+                {finding.path} · {isLintCode(finding.code) ? t(($) => $.job.draft.lint[finding.code as LintCode]) : finding.message}
               </span>
             </span>
           ))}
@@ -355,7 +377,7 @@ export function KbJobDraftPanel({
             )}
             <div className="flex items-center">
               <span className="flex-1 text-caption text-faint-foreground">
-                {t(($) => $.job.draft.summary, { pages: job.pages.length, added: draft?.added ?? 0, deleted: draft?.deleted ?? 0 })}
+                {t(($) => $.job.draft.summary, { count: job.pages.length, added: draft?.added ?? 0, deleted: draft?.deleted ?? 0 })}
               </span>
               <button
                 type="button"
@@ -381,7 +403,7 @@ export function KbJobDraftPanel({
       </div>
 
       {(hint || state.showSubmit || state.canDiscard || state.view === "submitted") && (
-        <div className="flex items-center gap-2 border-t px-6 pt-3.5 pb-4">
+        <div className="flex items-center gap-2 border-t pt-3.5 pr-20 pb-4 pl-6">
           <span className="min-w-0 flex-1 text-caption text-faint-foreground">{hint}</span>
           {state.canDiscard && (
             <Button type="button" variant="ghost" disabled={discarding || submitting} onClick={() => setConfirmingDiscard(true)}>

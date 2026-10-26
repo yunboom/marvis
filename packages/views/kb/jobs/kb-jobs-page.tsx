@@ -33,7 +33,7 @@ function JobRow({ kbSlug, job }: { kbSlug: string; job: KbJob }) {
         href={p.kbJob(kbSlug, job.id)}
         className="flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-colors hover:bg-surface-hover"
       >
-        <ActorAvatar actorType="agent" actorId={job.agent_id} name={job.agent_name || undefined} size="lg" />
+        <ActorAvatar actorType="agent" actorId={job.agent_id} name={job.agent_name || undefined} size="lg" profileLink={false} />
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex items-center gap-2">
             <span className="min-w-0 truncate text-body font-semibold">{job.name}</span>
