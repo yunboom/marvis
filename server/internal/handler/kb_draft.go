@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 
@@ -263,8 +264,23 @@ func linkKbJobDraft(ctx context.Context, q *db.Queries, base db.KbBase, draft db
 }
 
 // loadKbDraftForWriter loads a draft and the knowledge base it belongs to;
-// only the draft creator may read or write it.
+// only the draft creator may write it.
 func (h *Handler) loadKbDraftForWriter(w http.ResponseWriter, r *http.Request) (db.KbDraft, db.KbBase, bool) {
+	draft, base, ok := h.loadKbDraftWithBase(w, r)
+	if !ok {
+		return db.KbDraft{}, db.KbBase{}, false
+	}
+	if uuidToString(draft.CreatedBy) != requestUserID(r) {
+		writeError(w, http.StatusForbidden, "only the draft creator can write it")
+		return db.KbDraft{}, db.KbBase{}, false
+	}
+
+	return draft, base, true
+}
+
+// loadKbDraftWithBase loads a draft the caller may read and the knowledge
+// base it belongs to.
+func (h *Handler) loadKbDraftWithBase(w http.ResponseWriter, r *http.Request) (db.KbDraft, db.KbBase, bool) {
 	wsUUID, ok := parseUUIDOrBadRequest(w, h.resolveWorkspaceID(r), "workspace_id")
 	if !ok {
 		return db.KbDraft{}, db.KbBase{}, false
@@ -291,7 +307,7 @@ func (h *Handler) loadKbDraftForWriter(w http.ResponseWriter, r *http.Request) (
 // (GET /api/kb/drafts/{id}; kb draft check).
 func (h *Handler) GetKbDraft(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	draft, base, ok := h.loadKbDraftForWriter(w, r)
+	draft, base, ok := h.loadKbDraftWithBase(w, r)
 	if !ok {
 		return
 	}
@@ -472,19 +488,37 @@ func (h *Handler) SyncKbDraft(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, errors.Wrap(err, "commit draft sync"))
 		return
 	}
+	if len(resp.Pages) > 0 {
+		pageIDs := make([]string, len(resp.Pages))
+		for i, page := range resp.Pages {
+			pageIDs[i] = page.PageID
+		}
+		h.notifyKbDraftWrite(r, draft, kbDraftVersion(resp.Version), pageIDs...)
+	}
 
 	writeJSON(w, http.StatusOK, resp)
 }
 
 // lockKbOpenDraft locks the draft row for a write and checks it still takes
-// writes.
+// writes: an open draft, or one under review, which the agent keeps changing
+// to answer review comments (spec 08.6); the merge request's diff follows.
 func lockKbOpenDraft(ctx context.Context, q *db.Queries, draft db.KbDraft) (db.KbDraft, error) {
+	locked, err := lockKbDraft(ctx, q, draft)
+	if err != nil {
+		return db.KbDraft{}, err
+	}
+	if !slices.Contains(liveDraftStatuses, locked.Status) {
+		return db.KbDraft{}, kbFail(http.StatusConflict, kbCodeDraftNotOpen, "the draft is "+locked.Status+" and takes no more writes")
+	}
+
+	return locked, nil
+}
+
+// lockKbDraft locks the draft row whatever its status.
+func lockKbDraft(ctx context.Context, q *db.Queries, draft db.KbDraft) (db.KbDraft, error) {
 	locked, err := q.GetKbDraftForUpdate(ctx, db.GetKbDraftForUpdateParams{WorkspaceID: draft.WorkspaceID, ID: draft.ID})
 	if err != nil {
 		return db.KbDraft{}, errors.Wrapf(err, "lock draft draft_id=%s", uuidToString(draft.ID))
-	}
-	if locked.Status != kb.DraftStatusOpen {
-		return db.KbDraft{}, kbFail(http.StatusConflict, kbCodeDraftNotOpen, "the draft is "+locked.Status+" and takes no more writes")
 	}
 
 	return locked, nil

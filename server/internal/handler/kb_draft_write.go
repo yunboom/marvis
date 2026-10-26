@@ -143,6 +143,7 @@ func (h *Handler) CreateKbDraftPage(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, err)
 		return
 	}
+	h.notifyKbDraftWrite(r, draft, resp.Version, resp.PageID)
 
 	writeJSON(w, http.StatusCreated, resp)
 }
@@ -290,6 +291,7 @@ func (h *Handler) ApplyKbPageOps(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, err)
 		return
 	}
+	h.notifyKbDraftWrite(r, draft, resp.Version, resp.PageID)
 
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -616,6 +618,7 @@ func (h *Handler) PutKbDraftClaims(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, err)
 		return
 	}
+	h.notifyKbDraftWrite(r, draft, kbDraftVersion(version), page.pageID)
 
 	resp := PutKbClaimsResponse{PageID: page.pageID, Version: kbDraftVersion(version), Sources: []KbHeaderSourceResponse{}, Warnings: warnings}
 	for _, s := range sources {

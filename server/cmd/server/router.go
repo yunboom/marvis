@@ -2296,6 +2296,14 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Post("/drafts/{draftId}/pages", h.CreateKbDraftPage)
 				r.Post("/drafts/{draftId}/pages/{id}/ops", h.ApplyKbPageOps)
 				r.Put("/drafts/{draftId}/pages/{id}/claims", h.PutKbDraftClaims)
+				// Jobs: a chat with an agent that writes one draft. Only
+				// the member who started a job sees it.
+				r.Get("/bases/{kb}/jobs", h.ListKbJobs)
+				r.Post("/bases/{kb}/jobs", h.CreateKbJob)
+				r.Get("/jobs/{jobId}", h.GetKbJob)
+				r.Post("/jobs/{jobId}/submit", h.SubmitKbJob)
+				r.Post("/jobs/{jobId}/discard", h.DiscardKbJob)
+				r.Post("/merge-requests", h.CreateKbMergeRequest)
 			})
 
 			// Squads

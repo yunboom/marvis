@@ -255,7 +255,8 @@ func (h *Handler) loadKbPageSource(w http.ResponseWriter, r *http.Request, ref, 
 	}, true
 }
 
-// loadKbDraftForReader loads a draft only its creator may read.
+// loadKbDraftForReader loads a draft its creator, or the creator of the job
+// it is linked to, may read.
 func (h *Handler) loadKbDraftForReader(w http.ResponseWriter, r *http.Request, wsUUID pgtype.UUID, draftParam string) (db.KbDraft, bool) {
 	draftID, ok := parseUUIDOrBadRequest(w, draftParam, "draft")
 	if !ok {
@@ -271,12 +272,38 @@ func (h *Handler) loadKbDraftForReader(w http.ResponseWriter, r *http.Request, w
 		h.writeKbInternalError(w, r, errors.Wrapf(err, "load draft draft_id=%s", draftParam))
 		return db.KbDraft{}, false
 	}
-	if uuidToString(draft.CreatedBy) != requestUserID(r) {
-		writeError(w, http.StatusForbidden, "only the draft creator can read it")
+	readable, err := h.canReadKbDraft(r.Context(), draft, requestUserID(r))
+	if err != nil {
+		h.writeKbInternalError(w, r, err)
+		return db.KbDraft{}, false
+	}
+	if !readable {
+		writeError(w, http.StatusForbidden, "only the draft creator or the creator of its job can read it")
 		return db.KbDraft{}, false
 	}
 
 	return draft, true
+}
+
+// canReadKbDraft reports whether a user may read a draft: its creator, or the
+// creator of the job it is linked to. An agent creates a job's draft as the
+// person its task token is bound to (the runtime owner), who need not be the
+// member who started the job.
+func (h *Handler) canReadKbDraft(ctx context.Context, draft db.KbDraft, userID string) (bool, error) {
+	if uuidToString(draft.CreatedBy) == userID {
+		return true, nil
+	}
+
+	job, err := h.Queries.GetKbJobByDraft(ctx, draft.ID)
+	if err != nil {
+		if isNotFound(err) {
+			return false, nil
+		}
+
+		return false, errors.Wrapf(err, "load job of draft draft_id=%s", uuidToString(draft.ID))
+	}
+
+	return uuidToString(job.CreatedBy) == userID, nil
 }
 
 // resolveKbPageRef finds the knowledge base and page id a reference names.

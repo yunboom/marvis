@@ -245,7 +245,8 @@ WHERE mr.knowledge_base_id = sqlc.arg('knowledge_base_id')
 ORDER BY mr.updated_at DESC, mr.number DESC;
 
 -- name: ListKbUserDraftsForPage :many
--- The caller's live drafts that change a page, most recently updated first,
+-- The caller's live drafts (their own, or linked to their jobs) that change a
+-- page, most recently updated first,
 -- with where each draft came from: a knowledge base job's chat, or the task
 -- (issue or chat) that created it.
 SELECT
@@ -265,7 +266,7 @@ LEFT JOIN issue i ON i.id = atq.issue_id
 LEFT JOIN chat_session cs ON cs.id = COALESCE(j.chat_session_id, atq.chat_session_id)
 WHERE d.workspace_id = sqlc.arg('workspace_id')
   AND d.knowledge_base_id = sqlc.arg('knowledge_base_id')
-  AND d.created_by = sqlc.arg('created_by')
+  AND (d.created_by = sqlc.arg('created_by') OR j.created_by = sqlc.arg('created_by'))
   AND d.status = ANY(sqlc.arg('statuses')::text[])
   AND dp.page_id = sqlc.arg('page_id')
 ORDER BY d.updated_at DESC, d.id;

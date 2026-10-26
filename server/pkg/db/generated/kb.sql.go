@@ -2359,7 +2359,7 @@ LEFT JOIN issue i ON i.id = atq.issue_id
 LEFT JOIN chat_session cs ON cs.id = COALESCE(j.chat_session_id, atq.chat_session_id)
 WHERE d.workspace_id = $1
   AND d.knowledge_base_id = $2
-  AND d.created_by = $3
+  AND (d.created_by = $3 OR j.created_by = $3)
   AND d.status = ANY($4::text[])
   AND dp.page_id = $5
 ORDER BY d.updated_at DESC, d.id
@@ -2387,7 +2387,8 @@ type ListKbUserDraftsForPageRow struct {
 	IssueTitle    string             `json:"issue_title"`
 }
 
-// The caller's live drafts that change a page, most recently updated first,
+// The caller's live drafts (their own, or linked to their jobs) that change a
+// page, most recently updated first,
 // with where each draft came from: a knowledge base job's chat, or the task
 // (issue or chat) that created it.
 func (q *Queries) ListKbUserDraftsForPage(ctx context.Context, arg ListKbUserDraftsForPageParams) ([]ListKbUserDraftsForPageRow, error) {

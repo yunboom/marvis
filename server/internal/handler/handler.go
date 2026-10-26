@@ -461,6 +461,10 @@ type Handler struct {
 	// Mainline writes call KbEmbeddings.Enqueue after they commit; main.go
 	// runs it.
 	KbEmbeddings *kb.EmbeddingIndexer
+	// kbDraftEvents coalesces kb.draft.updated per draft (one event per
+	// second of writes). Nil on handlers not built by New; events are then
+	// dropped.
+	kbDraftEvents *kbDraftNotifier
 	// VCSSecretBox encrypts/decrypts per-workspace Git provider access tokens and
 	// webhook secrets at rest (Forgejo / Gitea / GitLab). Nil when
 	// MARVIS_VCS_SECRET_KEY is unset; connect returns 403 and webhook returns 404
@@ -594,6 +598,7 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 		LLM:               llmClient,
 		KbEmbedder:        embedder,
 		KbEmbeddings:      kb.NewEmbeddingIndexer(queries, embedder),
+		kbDraftEvents:     &kbDraftNotifier{},
 		cfg:               cfg,
 		bootstrapUsed:     &atomic.Bool{},
 		larkDesktopStates: &larkDesktopStateStore{},

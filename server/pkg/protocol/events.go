@@ -52,6 +52,8 @@ const (
 
 	// Knowledge base events (spec 9). Names follow the spec's dotted form.
 	EventKbJobUpdated        = "kb.job.updated"
+	EventKbDraftUpdated      = "kb.draft.updated"
+	EventKbMrCreated         = "kb.mr.created"
 	EventKbAnnotationChanged = "kb.annotation.changed"
 
 	// Workspace events
