@@ -95,6 +95,7 @@
               <div style="display: flex; gap: 8px"><span class="av">王</span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12.5px; color: #5c5c5c; background: #f7f7f7; border-radius: 8px; padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">支付回调 第 15 行 · 渠道回调按渠道交易号加幂等键去重，重复回调直接返回成功。</span><span style="font-size: 13.5px">补一下改成交易号的原因和生效时间。</span></div></div>
               <div style="display: flex; gap: 8px"><span class="av">王</span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span class="faint" style="font-size: 12.5px">回调人工处理</span><span style="font-size: 13.5px">缺少值班联系人和升级路径。</span></div></div>
               <div style="display: flex; gap: 8px"><span class="av">王</span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span class="faint" style="font-size: 12.5px">幂等键</span><span style="font-size: 13.5px">链接还指向旧路径 /payment/idempotency。</span></div></div>
+              <div style="display: flex; justify-content: flex-end"><button class="btn btn-o">交给智能体处理</button></div>
             </div>
           </sc-if>
           <sc-if value="{{s.hasFiles}}" hint-placeholder-val="{{ true }}">
