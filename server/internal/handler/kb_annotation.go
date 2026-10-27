@@ -34,7 +34,6 @@ const kbAnnotationBaseLevelPage = "-"
 const (
 	kbCodeQuoteNotFound    = "quote_not_found"
 	kbCodeAnnotationLocked = "annotation_locked"
-	kbCodeAnnotationNF     = "annotation_not_found"
 )
 
 // CreateKbAnnotationRequest is POST /api/kb/bases/{kb}/annotations. A page
@@ -440,7 +439,7 @@ func (h *Handler) loadKbAnnotation(w http.ResponseWriter, r *http.Request) (db.K
 	annotation, err := h.Queries.GetKbAnnotationInWorkspace(ctx, db.GetKbAnnotationInWorkspaceParams{WorkspaceID: wsUUID, ID: id})
 	if err != nil {
 		if isNotFound(err) {
-			h.writeKbError(w, r, kbFail(http.StatusNotFound, kbCodeAnnotationNF, "annotation not found"))
+			h.writeKbError(w, r, kbFail(http.StatusNotFound, kbCodeAnnotationNotFound, "annotation not found"))
 			return db.KbAnnotation{}, db.KbBase{}, false
 		}
 		h.writeKbInternalError(w, r, errors.Wrapf(err, "load annotation annotation_id=%s", uuidToString(id)))
@@ -450,7 +449,7 @@ func (h *Handler) loadKbAnnotation(w http.ResponseWriter, r *http.Request) (db.K
 	base, err := h.Queries.GetKbBaseByID(ctx, db.GetKbBaseByIDParams{WorkspaceID: wsUUID, ID: annotation.KnowledgeBaseID})
 	if err != nil {
 		if isNotFound(err) {
-			h.writeKbError(w, r, kbFail(http.StatusNotFound, kbCodeAnnotationNF, "annotation not found"))
+			h.writeKbError(w, r, kbFail(http.StatusNotFound, kbCodeAnnotationNotFound, "annotation not found"))
 			return db.KbAnnotation{}, db.KbBase{}, false
 		}
 		h.writeKbInternalError(w, r, errors.Wrapf(err, "load knowledge base of annotation annotation_id=%s", uuidToString(id)))

@@ -27,14 +27,6 @@ const (
 	kbActorMember = kb.ActorMember
 )
 
-// Where a draft came from, shown in the reading page's draft switcher.
-const (
-	kbDraftOriginJob   = "kb_job"
-	kbDraftOriginChat  = "chat"
-	kbDraftOriginIssue = "issue"
-	kbDraftOriginNone  = "none"
-)
-
 // liveDraftStatuses are the draft states whose changes are still pending.
 var liveDraftStatuses = []string{kb.DraftStatusOpen, kb.DraftStatusSubmitted}
 
@@ -652,13 +644,13 @@ func (h *Handler) loadKbPageDrafts(ctx context.Context, base db.KbBase, page *db
 func kbDraftOrigin(row db.ListKbUserDraftsForPageRow) KbDraftOriginResponse {
 	switch {
 	case row.JobName.Valid:
-		return KbDraftOriginResponse{Type: kbDraftOriginJob, Label: row.JobName.String, RefID: uuidToString(row.ChatSessionID)}
+		return KbDraftOriginResponse{Type: kbOriginJob, Label: row.JobName.String, RefID: uuidToString(row.ChatSessionID)}
 	case row.IssueNumber > 0:
-		return KbDraftOriginResponse{Type: kbDraftOriginIssue, Label: row.IssueTitle, RefID: fmt.Sprintf("%d", row.IssueNumber)}
+		return KbDraftOriginResponse{Type: kbOriginIssue, Label: row.IssueTitle, RefID: fmt.Sprintf("%d", row.IssueNumber)}
 	case row.ChatSessionID.Valid:
-		return KbDraftOriginResponse{Type: kbDraftOriginChat, Label: row.ChatTitle, RefID: uuidToString(row.ChatSessionID)}
+		return KbDraftOriginResponse{Type: kbOriginChat, Label: row.ChatTitle, RefID: uuidToString(row.ChatSessionID)}
 	default:
-		return KbDraftOriginResponse{Type: kbDraftOriginNone, Label: row.Title}
+		return KbDraftOriginResponse{Type: kbOriginNone, Label: row.Title}
 	}
 }
 

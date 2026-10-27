@@ -91,7 +91,7 @@ func canConfigureKb(member db.Member, base db.KbBase) bool {
 // isKbBuilderCarrier reports whether an agent is a hidden knowledge base
 // builder carrier.
 func isKbBuilderCarrier(agent db.Agent) bool {
-	return agent.Kind == "system" &&
+	return agent.Kind == kbAgentKindSystem &&
 		agent.SystemKey.Valid &&
 		strings.HasPrefix(agent.SystemKey.String, kb.BuilderSystemKeyPrefix)
 }
@@ -372,7 +372,7 @@ func (h *Handler) SwitchKbBuilderRuntime(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	if session.Status != "active" {
+	if session.Status != kbChatStatusActive {
 		writeError(w, http.StatusBadRequest, "chat session is archived")
 		return
 	}
@@ -444,7 +444,7 @@ func (h *Handler) SaveKbBuilderDraft(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, errors.Wrapf(err, "lock chat session session_id=%s", uuidToString(session.ID)))
 		return
 	}
-	if locked.Status != "active" {
+	if locked.Status != kbChatStatusActive {
 		writeError(w, http.StatusBadRequest, "chat session is archived")
 		return
 	}
