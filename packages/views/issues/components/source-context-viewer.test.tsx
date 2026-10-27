@@ -99,7 +99,7 @@ describe("SourceContextBadge", () => {
     });
 
     const summary = screen.getByText("Sub-issue of").closest('[data-slot="source-context-summary"]');
-    expect(summary).toHaveClass("border-border/60", "bg-muted/30");
+    expect(summary).toHaveClass("border-border", "bg-surface-sunken");
     expect(screen.getByRole("link", { name: /MUL-7 Current source title/ })).toHaveAttribute(
       "href",
       "/acme/issues/source-issue",
@@ -257,7 +257,7 @@ describe("SourceContextBadge", () => {
     expect(within(details).getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getByRole("button", { name: "Hide issue attachment details" })).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("Captured comment").closest("[data-source-context-change-kind='changed']")).toHaveClass(
-      "bg-amber-500/5",
+      "bg-warning/5",
     );
     expect(screen.getByRole("button", { name: "Go to source comment" })).toBeTruthy();
   });
@@ -301,7 +301,7 @@ describe("SourceContextBadge", () => {
       "bg-success/5",
     );
     expect(screen.getByText("Changed comment").closest("[data-source-context-change-kind='changed']")).toHaveClass(
-      "bg-amber-500/5",
+      "bg-warning/5",
     );
     expect(screen.getByText("Removed comment").closest("[data-source-context-change-kind='deleted']")).toHaveClass(
       "bg-destructive/5",
@@ -460,7 +460,7 @@ describe("SourceContextBadge", () => {
       "bg-destructive/5",
     );
     expect(screen.getByText("Earlier changed comment").closest("[data-source-context-change-kind='changed']")).toHaveClass(
-      "bg-amber-500/5",
+      "bg-warning/5",
     );
     expect(screen.queryByRole("button", { name: "Go to source comment" })).toBeNull();
   });

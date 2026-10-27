@@ -279,7 +279,7 @@ func TestRunWorkspaceSwitch(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	// Isolate HOME so the test never touches the developer's ~/.marvis-studio.
+	// Isolate HOME so the test never touches the developer's ~/.marvis.
 	redirectTestHome(t, t.TempDir())
 	t.Setenv("MARVIS_SERVER_URL", srv.URL)
 	t.Setenv("MARVIS_TOKEN", "test-token")
@@ -337,7 +337,7 @@ func TestRunWorkspaceSwitch(t *testing.T) {
 
 		// Verify the staging profile config landed in the expected path.
 		path, _ := cli.CLIConfigPathForProfile("staging")
-		wantSuffix := filepath.Join(".marvis-studio", "profiles", "staging", "config.json")
+		wantSuffix := filepath.Join(".marvis", "profiles", "staging", "config.json")
 		if !strings.HasSuffix(path, wantSuffix) {
 			t.Errorf("staging config path = %q, want suffix %q", path, wantSuffix)
 		}

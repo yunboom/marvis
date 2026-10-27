@@ -10,6 +10,7 @@ import {
 import { PageHeader } from "../../layout/page-header";
 import { RefreshablePageIcon } from "../../layout/refreshable-page-icon";
 import { IssueSurface } from "../../issues/surface/issue-surface";
+import { ISSUES_PAGE_HEADER } from "../../issues/components/issues-page";
 import { useT } from "../../i18n";
 import { MyIssuesHeader } from "./my-issues-header";
 
@@ -20,11 +21,11 @@ export function MyIssuesPage() {
   const setScope = useStore(myIssuesViewStore, (s) => s.setScope);
 
   const renderTitle = (refreshing = false) => (
-    <PageHeader>
+    <PageHeader className={ISSUES_PAGE_HEADER}>
       <RefreshablePageIcon refreshing={refreshing}>
-        <ListTodo className="size-4" />
+        <ListTodo />
       </RefreshablePageIcon>
-      <h1 className="text-body font-medium">{t(($) => $.page.breadcrumb)}</h1>
+      <h1 className="truncate text-display-sm font-bold">{t(($) => $.page.breadcrumb)}</h1>
     </PageHeader>
   );
 
@@ -54,10 +55,10 @@ export function MyIssuesPage() {
             </>
           )}
           renderEmpty={() => (
-            <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-2 text-muted-foreground">
-              <ListTodo className="h-10 w-10 text-faint-foreground" />
-              <p className="text-body">{t(($) => $.page.empty_title)}</p>
-              <p className="text-caption">{t(($) => $.page.empty_description)}</p>
+            <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-2 text-muted-foreground animate-content-rise">
+              <ListTodo className="size-10 text-faint-foreground" />
+              <p className="text-body-lg">{t(($) => $.page.empty_title)}</p>
+              <p className="text-label">{t(($) => $.page.empty_description)}</p>
             </div>
           )}
         />

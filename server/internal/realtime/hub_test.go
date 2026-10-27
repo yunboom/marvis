@@ -478,13 +478,13 @@ func TestCheckOrigin(t *testing.T) {
 		want       bool
 	}{
 		{"empty origin allowed", "api.marvis.ai", "", "", "1.2.3.4:5678", true},
-		{"same-origin allowed (native client default)", "localhost:8080", "http://localhost:8080", "", "1.2.3.4:5678", true},
+		{"same-origin allowed (native client default)", "localhost:13840", "http://localhost:13840", "", "1.2.3.4:5678", true},
 		{"same-origin allowed (https)", "api.marvis.ai", "https://api.marvis.ai", "", "1.2.3.4:5678", true},
 		{"same-origin allowed (case-insensitive host, RFC 7230)", "API.Marvis.AI", "https://api.marvis.ai", "", "1.2.3.4:5678", true},
-		{"whitelisted origin allowed (web cross-origin)", "localhost:8080", "http://localhost:3000", "", "1.2.3.4:5678", true},
+		{"whitelisted origin allowed (web cross-origin)", "localhost:13840", "http://localhost:3000", "", "1.2.3.4:5678", true},
 		{"whitelisted origin allowed (prod web)", "api.marvis.ai", "https://marvis.ai", "", "1.2.3.4:5678", true},
 		{"unknown origin rejected (CSWSH defense)", "api.marvis.ai", "https://evil.com", "", "1.2.3.4:5678", false},
-		{"different port rejected", "localhost:8080", "http://localhost:9999", "", "1.2.3.4:5678", false},
+		{"different port rejected", "localhost:13840", "http://localhost:9999", "", "1.2.3.4:5678", false},
 		{"X-Forwarded-Host from trusted proxy matches origin", "internal.proxy", "https://marvis.ai", "marvis.ai", "127.0.0.1:5678", true},
 		{"X-Forwarded-Host from trusted proxy case-insensitive", "internal.proxy", "https://Marvis.AI", "marvis.ai", "10.0.0.1:5678", true},
 		{"X-Forwarded-Host from untrusted source rejected", "internal.proxy", "https://example.com", "example.com", "1.2.3.4:5678", false},

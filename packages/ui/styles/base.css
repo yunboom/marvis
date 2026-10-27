@@ -66,28 +66,50 @@
   animation: logo-intro 0.566s linear;
 }
 
-/* Marvis motion vocabulary. Menus unfold vertically from the edge nearest
- * their trigger (Base UI sets --transform-origin); context menus and
- * floating panels pop with a slight scale; cards and input bars rise on a
- * springy overshoot; toasts drop in from the top. */
+/* Marvis motion vocabulary (durations and curves live in tokens.css).
+ * Menus unfold vertically from the edge nearest their trigger (Base UI sets
+ * --transform-origin); popovers and hover cards pop with a slight scale;
+ * dialog cards grow from 96%; tooltips fade in with a 2px nudge toward their
+ * trigger; cards and input bars rise on a springy overshoot. Leaving is
+ * always faster than entering and uses --ease-in. */
 @keyframes menu-unfold {
-  from { opacity: 0; transform: scaleY(0.8); }
+  from { opacity: 0; transform: scaleY(0.9); }
   to { opacity: 1; transform: scaleY(1); }
 }
 
 @keyframes menu-fold {
   from { opacity: 1; transform: scaleY(1); }
-  to { opacity: 0; transform: scaleY(0.8); }
+  to { opacity: 0; transform: scaleY(0.9); }
 }
 
 @keyframes popover-pop-in {
-  from { opacity: 0; transform: scale(0.92); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes popover-pop-out {
   from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.92); }
+  to { opacity: 0; transform: scale(0.96); }
+}
+
+@keyframes dialog-card-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes dialog-card-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
+
+/* --tooltip-nudge-x / -y point away from the trigger; the popup slides the
+ * last 2px toward it. Set per side on the tooltip popup. */
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--tooltip-nudge-x, 0), var(--tooltip-nudge-y, 0));
+  }
+  to { opacity: 1; transform: translate(0, 0); }
 }
 
 @keyframes overlay-fade-in {
@@ -105,14 +127,34 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes toast-drop-in {
-  from { opacity: 0.6; transform: translateY(-100%) scale(0.6); }
+/* New content (filter chips, queued messages, form errors): 4px rise from
+ * 96%, 200ms ease-out. */
+@keyframes content-rise {
+  from { opacity: 0; transform: translateY(4px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes toast-lift-out {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(-120%); }
+.animate-content-rise {
+  animation: content-rise var(--motion-base) var(--ease-out) both;
+}
+
+/* Skeleton loading: a low-contrast band sweeps across the placeholder, in the
+ * same language as ShimmerText. */
+@keyframes skeleton-shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+
+.animate-skeleton-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skeleton-highlight) 50%,
+    transparent 100%
+  );
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  animation: skeleton-shimmer 1.4s linear infinite;
 }
 
 .animate-spring-rise {
@@ -275,6 +317,24 @@
   animation: border-beam-rotate 3.2s linear infinite;
 }
 
+/* Ink variant: a monochrome stroke for the black-and-white theme. A single
+ * foreground-colored head with a fading tail circles the host, like a brush
+ * tracing its edge. */
+.border-beam-ring[data-variant="ink"] {
+  padding: 1.5px;
+}
+
+.border-beam-ring[data-variant="ink"] .border-beam-light {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 250deg,
+    color-mix(in oklab, var(--foreground) 25%, transparent) 300deg,
+    var(--foreground) 345deg,
+    transparent 360deg
+  );
+  animation-duration: 3.6s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .border-beam-ring {
     background: linear-gradient(
@@ -287,8 +347,53 @@
     );
   }
 
+  .border-beam-ring[data-variant="ink"] {
+    background: color-mix(in oklab, var(--foreground) 35%, transparent);
+  }
+
   .border-beam-light {
     display: none;
+  }
+}
+
+/* Scan relay: a row of placeholders takes turns carrying an ink beam while
+ * the result count is still unknown. Each row sets `--scan-relay-delay` to its
+ * slot; one beam lap per slot keeps the hand-off on the same corner. The
+ * order is decorative — detection results arrive all at once. */
+@keyframes scan-relay-beam {
+  0% { opacity: 0; }
+  5%, 28% { opacity: 1; }
+  33%, 100% { opacity: 0; }
+}
+
+@keyframes scan-relay-content {
+  0% { opacity: 0.55; }
+  5%, 28% { opacity: 1; }
+  33%, 100% { opacity: 0.55; }
+}
+
+.scan-relay-row .border-beam-ring {
+  opacity: 0;
+  animation: scan-relay-beam 3.6s linear infinite;
+  animation-delay: var(--scan-relay-delay, 0s);
+}
+
+.scan-relay-row .border-beam-light {
+  animation-duration: 1.2s;
+}
+
+.scan-relay-content {
+  animation: scan-relay-content 3.6s linear infinite;
+  animation-delay: var(--scan-relay-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-relay-row .border-beam-ring {
+    display: none;
+  }
+
+  .scan-relay-content {
+    animation: none;
   }
 }
 
@@ -358,12 +463,76 @@ html[data-dnd-dragging="true"] * {
   }
 }
 
+/* Reduced motion: overlays keep a plain fade; scale, slide, and nudge are
+ * dropped; looping indicators stand still. Keyframes redeclared inside the
+ * query replace the full versions, so every component that names them is
+ * covered without its own motion-reduce variant. */
 @media (prefers-reduced-motion: reduce) {
+  @keyframes menu-unfold {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes menu-fold {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes popover-pop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes popover-pop-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes dialog-card-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes dialog-card-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes tooltip-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes spring-rise {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes content-rise {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* tw-animate-css (animate-in / animate-out): keep the fade, drop the
+     zoom, slide, and spin parts. */
+  *,
+  ::before,
+  ::after {
+    --tw-enter-scale: 1 !important;
+    --tw-enter-rotate: 0 !important;
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-exit-rotate: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+  }
+
   .animate-entrance-spin,
   .animate-logo-intro,
-  .animate-spring-rise,
-  .animate-onboarding-enter,
   .animate-chat-impulse,
+  .animate-pulse,
+  .animate-skeleton-shimmer,
   .shimmer-text-window,
   .shimmer-text-copy,
   .animate-nav-progress-sweep {
@@ -377,6 +546,11 @@ html[data-dnd-dragging="true"] * {
   [data-comment-actions],
   [data-right-sidebar-panel] {
     transition: none;
+  }
+
+  /* Sheets keep their fade but no longer slide. */
+  [data-slot="sheet-content"] {
+    translate: none !important;
   }
 }
 
@@ -400,6 +574,25 @@ html[data-dnd-dragging="true"] * {
   align-items: flex-start !important;
 }
 
+/* Sonner toast motion and surface. Sonner slides toasts in from the bottom
+ * edge with a transform/opacity transition; only its timing changes: enter
+ * 240ms ease-out, leave 150ms ease-in. Stacking (older toasts lift 14px and
+ * shrink 5%) is left to sonner. */
+[data-sonner-toaster] [data-sonner-toast] {
+  transition-duration: var(--motion-slow), var(--motion-slow), var(--motion-slow), var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-removed="true"] {
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-in);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  padding: 14px 16px;
+  box-shadow: var(--toast-shadow);
+}
+
 [data-sonner-toast] [data-icon] {
   margin-top: 2.5px;
 }
@@ -416,6 +609,10 @@ html[data-dnd-dragging="true"] * {
   *::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
   body {
     @apply bg-background text-foreground;
+  }
+  /* 设计稿的线性图标统一 1.8 描边；只覆盖 lucide 默认的 2，显式指定其他粗细的图标不受影响 */
+  :where(svg.lucide[stroke-width="2"]) {
+    stroke-width: 1.8;
   }
   html {
     @apply font-sans;
@@ -466,4 +663,45 @@ html[data-dnd-dragging="true"] * {
 ::highlight(marvis-find-active) {
   background-color: var(--find-match-active);
   color: var(--find-match-foreground);
+}
+
+/* Agent-running "breathing" dot (board cards, agents-working chip). The core
+ * fades 1 -> .45 -> 1 while a halo ring scales out and fades, both on a 1.8s
+ * loop. Reduced motion keeps a static dot and hides the halo. */
+:root {
+  --agent-running: #2f9e6a;
+}
+
+.dark {
+  --agent-running: #3fb57f;
+}
+
+@keyframes breathe {
+  0%,
+  100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes breathe-halo {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+.animate-breathe {
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+.animate-breathe-halo {
+  animation: breathe-halo 1.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-breathe {
+    animation: none;
+  }
+
+  .animate-breathe-halo {
+    animation: none;
+    opacity: 0;
+  }
 }

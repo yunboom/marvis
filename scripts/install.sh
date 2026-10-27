@@ -16,7 +16,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 REPO_URL="https://github.com/yunboom/marvis.git"
 REPO_WEB_URL="https://github.com/yunboom/marvis"  # without .git, for GitHub web APIs
-INSTALL_DIR="${MARVIS_INSTALL_DIR:-$HOME/.marvis-studio/server}"
+INSTALL_DIR="${MARVIS_INSTALL_DIR:-$HOME/.marvis/server}"
 BREW_PACKAGE="yunboom/tap/marvis"
 
 # Host ports Compose reported after `up -d`; set by setup_server and reused by
@@ -390,7 +390,7 @@ setup_server() {
 
   # Read the ports Compose actually published, once, and reuse them for both the
   # health check and the summary so the two can never disagree.
-  if ! SELFHOST_BACKEND_PORT="$(compose_published_port backend 8080)"; then
+  if ! SELFHOST_BACKEND_PORT="$(compose_published_port backend 13840)"; then
     fail "Started the stack but could not read the backend host port from Docker Compose.
   Check it with: cd $INSTALL_DIR && docker compose -f docker-compose.selfhost.yml ps"
   fi
@@ -528,7 +528,7 @@ main() {
         echo ""
         echo "Environment variables:"
         echo "  MARVIS_INSTALL_DIR   Self-host server install directory"
-        echo "                        (default: \$HOME/.marvis-studio/server)"
+        echo "                        (default: \$HOME/.marvis/server)"
         echo "  MARVIS_BIN_DIR       Target directory for the CLI binary when"
         echo "                        installing from GitHub Releases"
         echo "                        (default: /usr/local/bin, then \$HOME/.local/bin)"

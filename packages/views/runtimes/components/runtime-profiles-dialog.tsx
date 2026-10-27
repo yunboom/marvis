@@ -55,6 +55,7 @@ import {
   type RuntimeCatalogSections,
 } from "./runtime-profile-catalog";
 import { useT } from "../../i18n";
+import { DOCS_LINKS_ENABLED } from "../../common/docs-locale";
 import { customRuntimeDocsHref } from "./runtime-docs";
 
 // The dialog runs in two surfaces that swap inside one Popup:
@@ -169,16 +170,21 @@ export function RuntimeProfilesDialog({
                     machine: machineName ?? t(($) => $.profiles.this_machine),
                   })
                 : t(($) => $.profiles.dialog_description)}
-            </span>{" "}
-            <a
-              href={docsHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center gap-1 rounded-sm font-medium text-foreground underline underline-offset-2 transition-colors hover:text-foreground/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {t(($) => $.profiles.learn_more)}
-              <ExternalLink aria-hidden="true" className="h-3 w-3" />
-            </a>
+            </span>
+            {DOCS_LINKS_ENABLED && (
+              <>
+                {" "}
+                <a
+                  href={docsHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 rounded-sm font-medium text-foreground underline underline-offset-2 transition-colors hover:text-foreground/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {t(($) => $.profiles.learn_more)}
+                  <ExternalLink aria-hidden="true" className="h-3 w-3" />
+                </a>
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
 

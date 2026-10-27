@@ -19,7 +19,6 @@ const releaseWorkflow = {
 
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: [] }) }));
 vi.mock("@marvis/core/api", () => ({ api: {}, clientErrorMessage: () => null }));
-vi.mock("@marvis/core/config", () => ({ useFeatureEnabled: () => true }));
 vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
 vi.mock("@marvis/core/paths", () => ({ useWorkspacePaths: () => ({ settings: () => "/settings" }) }));
 vi.mock("@marvis/core/projects/queries", () => ({ projectListOptions: () => ({}) }));

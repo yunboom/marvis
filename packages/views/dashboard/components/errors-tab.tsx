@@ -40,7 +40,7 @@ const TOP_OFFENDER_LIMIT = 8;
 // Shared by the offender column header and every offender row, so the two
 // cannot drift out of alignment.
 const OFFENDER_GRID =
-  "grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_4rem_4rem_4rem] items-center gap-3";
+  "grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.6fr)_4rem_4rem_4rem] items-center gap-4";
 
 // Translated label for a failure class. The mapping is a switch rather than
 // an index into a lookup object so the type checker flags a class added to
@@ -115,8 +115,8 @@ export function ErrorsTab({
     : null;
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 divide-y rounded-lg border bg-card sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 divide-y rounded-xl border bg-card sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         <KpiCard
           label={t(($) => $.errors.kpi_failed_label, { days })}
           value={
@@ -165,9 +165,9 @@ export function ErrorsTab({
       </div>
 
       {totals.failed === 0 ? (
-        <div className="flex flex-col items-center rounded-lg border border-dashed py-12 text-center">
-          <BarChart3 className="h-6 w-6 text-faint-foreground" />
-          <p className="mt-3 text-caption text-muted-foreground">
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-input px-6 py-12 text-center">
+          <BarChart3 className="size-6 text-faint-foreground" />
+          <p className="mt-3 text-label text-muted-foreground">
             {t(($) => $.errors.no_data)}
           </p>
         </div>
@@ -213,9 +213,9 @@ function ErrorTrendCard({
   const weekly = effectiveDim === "weekly";
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h4 className="text-body font-semibold">
+    <div className="rounded-xl border bg-card px-5 py-4">
+      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2.5">
+        <h4 className="text-body-lg font-semibold">
           {weekly ? t(($) => $.weekly.title_errors) : t(($) => $.daily.title_errors)}
         </h4>
         <DimSegmented allowedDims={allowedDims} value={effectiveDim} onChange={setDim} />
@@ -248,24 +248,24 @@ function FailureMixCard({
   const [showReasons, setShowReasons] = useState(false);
 
   return (
-    <div className="rounded-lg border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 pt-4 pb-3">
+    <div className="rounded-xl border bg-card">
+      <div className="flex min-h-13 flex-wrap items-center justify-between gap-3 border-b px-5 py-2.5">
         {/* Spells out its own denominator: the rate tile above quotes a rate
             over every run, this section splits the failures alone. */}
-        <h4 className="text-body font-semibold">
+        <h4 className="text-body-lg font-semibold">
           {t(($) => $.errors.mix_title, { failed: totals.failed })}
         </h4>
         <button
           type="button"
           onClick={() => setShowReasons((v) => !v)}
-          className="text-caption text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className="text-label text-muted-foreground underline underline-offset-3 transition-colors duration-(--motion-fast) hover:text-foreground"
         >
           {showReasons
             ? t(($) => $.errors.hide_reasons)
             : t(($) => $.errors.show_reasons)}
         </button>
       </div>
-      <div className="p-4">
+      <div className="px-5 py-4">
         {showReasons ? (
           <ReasonList rows={reasonRows} />
         ) : (
@@ -316,9 +316,9 @@ function OffendersCard({
     : sortedAgents.slice(0, TOP_OFFENDER_LIMIT);
 
   return (
-    <div className="rounded-lg border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 pt-4 pb-3">
-        <h4 className="text-body font-semibold">{t(($) => $.errors.by_agent)}</h4>
+    <div className="overflow-hidden rounded-xl border bg-card">
+      <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b px-5 py-2.5">
+        <h4 className="text-body-lg font-semibold">{t(($) => $.errors.by_agent)}</h4>
         <div className="flex flex-wrap items-center justify-end gap-3">
           <Segmented
             label={t(($) => $.errors.sort_label)}
@@ -330,7 +330,7 @@ function OffendersCard({
             <button
               type="button"
               onClick={() => setShowAllAgents((v) => !v)}
-              className="text-caption text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              className="text-label text-muted-foreground underline underline-offset-3 transition-colors duration-(--motion-fast) hover:text-foreground"
             >
               {showAllAgents
                 ? t(($) => $.errors.show_less, { count: TOP_OFFENDER_LIMIT })
@@ -339,25 +339,25 @@ function OffendersCard({
           ) : null}
         </div>
       </div>
-      <div className="p-4 pt-0">
+      <div>
         {/* Column headers, as on the leaderboard: `4 / 10 · 40%` was one
             unlabelled blob and the reader had to guess which number was
             which. The active metric's column is emphasised so it is
             obvious what the ranking and the bars measure. */}
         {sortedAgents.length > 0 ? (
           <div
-            className={`${OFFENDER_GRID} border-b py-2 text-caption font-medium text-muted-foreground`}
+            className={`${OFFENDER_GRID} h-9 border-b px-5 text-caption text-muted-foreground`}
           >
             <span>{t(($) => $.errors.header_agent)}</span>
             <span />
             <span
-              className={`text-right ${sortBy === "failed" ? "text-foreground" : ""}`}
+              className={`text-right ${sortBy === "failed" ? "font-medium text-foreground" : ""}`}
             >
               {t(($) => $.errors.header_failed)}
             </span>
             <span className="text-right">{t(($) => $.errors.header_runs)}</span>
             <span
-              className={`text-right ${sortBy === "rate" ? "text-foreground" : ""}`}
+              className={`text-right ${sortBy === "rate" ? "font-medium text-foreground" : ""}`}
             >
               {t(($) => $.errors.header_rate)}
             </span>
@@ -399,14 +399,14 @@ function ClassComposition({
   if (total === 0) return null;
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       {/* Segments are ordered by count desc (the aggregator's order), so the
           bar reads heaviest-first left to right. */}
       <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
         {rows.map((row) => (
           <div
             key={row.failureClass}
-            className="h-full transition-[width] duration-300 ease-out"
+            className="h-full border-r-2 border-card transition-[width] duration-300 ease-out last:border-r-0"
             style={{
               width: `${(row.count / total) * 100}%`,
               backgroundColor: FAILURE_CLASS_COLOR[row.failureClass],
@@ -416,17 +416,17 @@ function ClassComposition({
       </div>
       <ul
         aria-label={t(($) => $.errors.mix_label)}
-        className="flex flex-wrap items-center gap-x-4 gap-y-1.5"
+        className="flex flex-wrap items-center gap-x-4.5 gap-y-1.5"
       >
         {rows.map((row) => (
           <li key={row.failureClass} className="flex items-center gap-1.5">
             <span
               aria-hidden
-              className="h-2 w-2 shrink-0 rounded-[2px]"
+              className="size-2 shrink-0 rounded-[2px]"
               style={{ backgroundColor: FAILURE_CLASS_COLOR[row.failureClass] }}
             />
-            <span className="text-caption">{classLabel(row.failureClass)}</span>
-            <span className="text-caption tabular-nums text-muted-foreground">
+            <span className="text-label">{classLabel(row.failureClass)}</span>
+            <span className="text-label tabular-nums text-muted-foreground">
               {row.count}
             </span>
           </li>
@@ -446,21 +446,21 @@ function ReasonList({ rows }: { rows: FailureReasonRow[] }) {
   return (
     <ul
       aria-label={t(($) => $.errors.codes_label)}
-      className="grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2"
+      className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2"
     >
       {rows.map((row) => (
         <li key={row.reason} className="flex items-center justify-between gap-2">
           <span className="flex min-w-0 items-center gap-2">
             <span
               aria-hidden
-              className="h-2 w-2 shrink-0 rounded-[2px]"
+              className="size-2 shrink-0 rounded-[2px]"
               style={{ backgroundColor: FAILURE_CLASS_COLOR[row.failureClass] }}
             />
-            <code className="truncate text-caption text-muted-foreground">
+            <code className="truncate font-mono text-caption text-muted-foreground">
               {row.reason}
             </code>
           </span>
-          <span className="shrink-0 text-caption tabular-nums">{row.count}</span>
+          <span className="shrink-0 text-label tabular-nums">{row.count}</span>
         </li>
       ))}
     </ul>
@@ -525,14 +525,14 @@ function AgentFailureItem({
   // existence and failure profile to a member who cannot see it.
   const label = (
     <span
-      className={`block truncate text-caption${name ? "" : " italic text-muted-foreground"}`}
+      className={`block truncate text-label${name ? "" : " italic text-muted-foreground"}`}
     >
       {name ?? t(($) => $.errors.other_agents)}
     </span>
   );
 
   return (
-    <li className={`${OFFENDER_GRID} py-2`}>
+    <li className={`${OFFENDER_GRID} min-h-10 px-5 py-1.5`}>
       {name ? (
         <AppLink
           href={`${wsPaths.agentDetail(row.agentId)}?view=overview`}
@@ -565,11 +565,11 @@ function AgentFailureItem({
         </div>
       </div>
       <span
-        className={`text-right text-caption tabular-nums ${sortBy === "failed" ? "font-medium text-foreground" : "text-muted-foreground"}`}
+        className={`text-right text-label tabular-nums ${sortBy === "failed" ? "font-semibold text-foreground" : "text-muted-foreground"}`}
       >
         {row.failed}
       </span>
-      <span className="text-right text-caption tabular-nums text-muted-foreground">
+      <span className="text-right text-label tabular-nums text-muted-foreground">
         {row.total}
       </span>
       <span
@@ -578,9 +578,9 @@ function AgentFailureItem({
             ? t(($) => $.errors.low_sample, { count: MIN_RATE_SAMPLE })
             : undefined
         }
-        className={`text-right text-caption tabular-nums ${
+        className={`text-right text-label tabular-nums ${
           sortBy === "rate" && !weakSample
-            ? "font-medium text-foreground"
+            ? "font-semibold text-foreground"
             : "text-muted-foreground"
         }`}
       >

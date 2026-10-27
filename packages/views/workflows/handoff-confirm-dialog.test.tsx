@@ -17,8 +17,8 @@ vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
 vi.mock("@marvis/core/issue-statuses/hooks", () => ({
   useIssueStatuses: () =>
     buildIssueStatusCatalog([
-      { id: "a", workspace_id: "ws-1", key: "implement", name: "Implement", description: "", category: "started", color: "#3b82f6", is_system: false, position: 1, archived_at: null, created_at: "", updated_at: "" },
-      { id: "b", workspace_id: "ws-1", key: "code_review", name: "Code review", description: "", category: "started", color: "#a855f7", is_system: false, position: 2, archived_at: null, created_at: "", updated_at: "" },
+      { id: "a", workspace_id: "ws-1", key: "implement", name: "Implement", description: "", category: "started", status_group: "working", color: "#3b82f6", is_system: false, position: 1, archived_at: null, created_at: "", updated_at: "" },
+      { id: "b", workspace_id: "ws-1", key: "code_review", name: "Code review", description: "", category: "started", status_group: "working", color: "#a855f7", is_system: false, position: 2, archived_at: null, created_at: "", updated_at: "" },
     ]),
 }));
 vi.mock("@marvis/core/workspace/hooks", () => ({

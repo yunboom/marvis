@@ -17,6 +17,7 @@ import { IssuesPage } from "@marvis/views/issues/components";
 import { ProjectsPage } from "@marvis/views/projects/components";
 import { DashboardPage } from "@marvis/views/dashboard";
 import { AutopilotsPage } from "@marvis/views/autopilots/components";
+import { WorkflowsPage } from "@marvis/views/workflows";
 import { MyIssuesPage } from "@marvis/views/my-issues";
 import { SkillsPage } from "@marvis/views/skills";
 import { DesktopRuntimesPage } from "./components/desktop-runtimes-page";
@@ -28,12 +29,30 @@ import {
 import { DesktopChooseRuntimePage } from "./components/desktop-choose-runtime-page";
 import { AgentCreatedPage } from "./pages/agent-created-page";
 import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@marvis/views/squads/components";
+import {
+  KbBuilderPage,
+  KbAnnotationsPage,
+  KbStalePagesPage,
+  KbHomePage,
+  KbChangesPage,
+  KbGraphPage,
+  KbManagePage,
+  KbJobPage,
+  KbJobsPage,
+  KbReviewPage,
+  KbListPage,
+  KbPageView,
+  KbRevisionDiffPage,
+  KbShell,
+} from "@marvis/views/kb";
 import { InboxPage } from "@marvis/views/inbox";
 import { ChatPage } from "@marvis/views/chat";
 import { SettingsPage } from "@marvis/views/settings";
 import { useT } from "@marvis/views/i18n";
-import { Download, Server } from "lucide-react";
+import { Cpu, DownloadSimple, HardDrives } from "@phosphor-icons/react/ssr";
+import { filled } from "@marvis/views/layout/route-icon-components";
 import { DaemonSettingsTab } from "./components/daemon-settings-tab";
+import { ServerSettingsTab } from "./components/server/server-settings-tab";
 import { UpdatesSettingsTab } from "./components/updates-settings-tab";
 import { WorkspaceRouteLayout } from "./components/workspace-route-layout";
 import { DesktopRouteErrorPage } from "./components/route-error-page";
@@ -43,21 +62,32 @@ import { DesktopRouteErrorPage } from "./components/route-error-page";
  * from i18n. The route element has to be a component (not a literal JSX
  * value) for `useT` to run.
  */
+// Device tabs share the settings nav's solid glyph style.
+const SERVER_ICON = filled(HardDrives);
+const DAEMON_ICON = filled(Cpu);
+const UPDATES_ICON = filled(DownloadSimple);
+
 function DesktopSettingsRoute() {
   const { t } = useT("settings");
   return (
     <SettingsPage
       extraDeviceTabs={[
         {
+          value: "server",
+          label: t(($) => $.desktop.server.tab_label),
+          icon: SERVER_ICON,
+          content: <ServerSettingsTab />,
+        },
+        {
           value: "daemon",
           label: t(($) => $.desktop.daemon.title),
-          icon: Server,
+          icon: DAEMON_ICON,
           content: <DaemonSettingsTab />,
         },
         {
           value: "updates",
           label: t(($) => $.desktop.tabs.updates),
-          icon: Download,
+          icon: UPDATES_ICON,
           content: <UpdatesSettingsTab />,
         },
       ]}
@@ -92,6 +122,15 @@ function PageShell() {
       <TitleSync />
       <Outlet />
     </>
+  );
+}
+
+/** Knowledge base frame: the page tree stays mounted while pages change. */
+function KbShellRoute() {
+  return (
+    <KbShell>
+      <Outlet />
+    </KbShell>
   );
 }
 
@@ -147,6 +186,11 @@ export const appRoutes: RouteObject[] = [
             path: "projects/:id",
             element: <ProjectDetailPage />,
             handle: { title: "Project" },
+          },
+          {
+            path: "workflows",
+            element: <WorkflowsPage />,
+            handle: { title: "Workflows" },
           },
           {
             path: "autopilots",
@@ -225,6 +269,41 @@ export const appRoutes: RouteObject[] = [
             path: "squads/:id",
             element: <SquadDetailPageView />,
             handle: { title: "Squad" },
+          },
+          { path: "kb", element: <KbListPage />, handle: { title: "Knowledge base" } },
+          { path: "kb/new", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
+          { path: "kb/new/:sessionId", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
+          {
+            path: "kb/:kbSlug",
+            element: <KbShellRoute />,
+            children: [
+              { index: true, element: <KbHomePage />, handle: { title: "Knowledge base" } },
+              { path: "config", element: <KbBuilderPage />, handle: { title: "Configure knowledge base" } },
+              {
+                path: "config/:sessionId",
+                element: <KbBuilderPage />,
+                handle: { title: "Configure knowledge base" },
+              },
+              { path: "annotations", element: <KbAnnotationsPage />, handle: { title: "Annotations" } },
+              { path: "stale", element: <KbStalePagesPage />, handle: { title: "Pages to re-check" } },
+              { path: "jobs", element: <KbJobsPage />, handle: { title: "Knowledge base jobs" } },
+              { path: "jobs/new", element: <KbJobPage />, handle: { title: "New job" } },
+              { path: "jobs/:jobId", element: <KbJobPage />, handle: { title: "Knowledge base job" } },
+              { path: "reviews", element: <KbReviewPage />, handle: { title: "Review" } },
+              { path: "reviews/:number", element: <KbReviewPage />, handle: { title: "Change request" } },
+              { path: "changes", element: <KbChangesPage />, handle: { title: "Change log" } },
+              { path: "changes/:number", element: <KbChangesPage />, handle: { title: "Change log" } },
+              { path: "manage", element: <KbManagePage />, handle: { title: "Manage knowledge base" } },
+              { path: "manage/export", element: <KbManagePage />, handle: { title: "Manage knowledge base" } },
+              { path: "manage/delete", element: <KbManagePage />, handle: { title: "Manage knowledge base" } },
+              { path: "graph", element: <KbGraphPage />, handle: { title: "Knowledge base graph" } },
+              { path: "p/:pageId", element: <KbPageView />, handle: { title: "Knowledge base" } },
+              {
+                path: "p/:pageId/history/:revisionId",
+                element: <KbRevisionDiffPage />,
+                handle: { title: "Page history" },
+              },
+            ],
           },
           { path: "inbox", element: <InboxPage />, handle: { title: "Inbox" } },
           { path: "chat", element: <ChatPage />, handle: { title: "Chat" } },

@@ -21,8 +21,8 @@ import { useT } from "../../i18n";
 export function NoAgentBanner() {
   const { t } = useT("chat");
   return (
-    <div className={cn(CHAT_GUTTER, "mb-1.5")}>
-      <div className={cn(CHAT_COLUMN, "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-caption bg-muted text-muted-foreground ring-1 ring-border")}>
+    <div className={cn(CHAT_GUTTER, "mb-2")}>
+      <div className={cn(CHAT_COLUMN, "flex items-center gap-2 rounded-lg bg-surface-sunken px-3 py-2 text-label text-muted-foreground ring-1 ring-inset ring-border")}>
         <Bot className="size-3.5 shrink-0" />
         <span className="truncate">{t(($) => $.no_agent_banner)}</span>
       </div>

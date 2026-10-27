@@ -9,15 +9,9 @@ import { workspaceListOptions } from "@marvis/core/workspace/queries";
 import { CliInstallInstructions, OnboardingFlow } from "@marvis/views/onboarding";
 
 /**
- * Creating a workspace runs the onboarding flow, entered at the workspace
- * step. A second workspace needs everything the first one needed — a runtime
- * connected to it, and its own Mika — so the only honest difference is that
- * this member has already met the product. Running one flow is what keeps the
- * two paths from drifting apart.
- *
- * `/onboarding` keeps its own guard and stays first-run only; this route is
- * the explicit already-onboarded entry point, so nothing has to bypass that
- * guard.
+ * Creating a workspace: the create page, then connecting a runtime so the new
+ * workspace gets its own Mika. A user with no workspace lands here right after
+ * login.
  */
 export default function Page() {
   const router = useRouter();
@@ -36,14 +30,13 @@ export default function Page() {
 
   // Cancel goes to the root path — the workspace layout redirects from there
   // to the user's default workspace. Only offered when there is somewhere to
-  // return to; a user with no workspaces at all has to finish.
+  // return to.
   const onCancel =
     wsList.length > 0 ? () => router.push(paths.root()) : undefined;
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
+    <div className="h-full overflow-y-auto bg-app-shell">
       <OnboardingFlow
-        mode="new_workspace"
         onCancel={onCancel}
         onComplete={(ws, destination) => {
           if (ws && destination?.kind === "chat") {

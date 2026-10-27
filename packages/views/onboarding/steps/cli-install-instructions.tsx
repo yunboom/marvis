@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Check, Copy, Terminal } from "lucide-react";
-import { Card, CardContent } from "@marvis/ui/components/ui/card";
+import { Check, Copy } from "lucide-react";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { CODE_LIGATURE_CLASS } from "@marvis/ui/lib/code-style";
 import { cn } from "@marvis/ui/lib/utils";
@@ -29,7 +28,7 @@ function CopyButton({ text }: { text: string }) {
       <button
         type="button"
         onClick={handleCopy}
-        className="shrink-0 rounded-xs p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="flex size-[22px] shrink-0 items-center justify-center rounded-xs text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
         aria-label={t(($) => $.cli_install.copy_aria)}
       >
         {copied ? (
@@ -44,8 +43,7 @@ function CopyButton({ text }: { text: string }) {
 
 function CommandRow({ cmd }: { cmd: string }) {
   return (
-    <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 font-mono text-body">
-      <Terminal className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+    <div className="mt-1.5 flex items-start gap-2 rounded-lg bg-field px-3 py-2.5 font-mono text-label">
       <code
         className={cn(
           "min-w-0 flex-1 whitespace-pre-wrap break-all",
@@ -69,11 +67,17 @@ function Step({
   children: ReactNode;
 }) {
   return (
-    <div>
-      <p className="mb-1.5 text-caption font-medium text-foreground">
-        {n}. {label}
-      </p>
-      {children}
+    <div className="flex gap-3">
+      <span
+        aria-hidden
+        className="flex size-[22px] shrink-0 items-center justify-center rounded-full bg-surface-sunken text-caption font-semibold"
+      >
+        {n}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="mt-px text-label text-muted-foreground">{label}</p>
+        {children}
+      </div>
     </div>
   );
 }
@@ -89,26 +93,22 @@ function Step({
 export function CliInstallInstructions() {
   const { t } = useT("onboarding");
   return (
-    <Card className="w-full">
-      <CardContent className="space-y-4 pt-4">
-        <p className="text-caption leading-[1.55] text-muted-foreground">
-          {t(($) => $.cli_install.intro)}
-        </p>
-        <Step n={1} label={t(($) => $.cli_install.step1_label)}>
-          <CliInstallCommand
-            labels={{
-              group: t(($) => $.cli_install.platform_group),
-              macosLinux: t(($) => $.cli_install.platform_macos_linux),
-              windows: t(($) => $.cli_install.platform_windows),
-            }}
-          >
-            {(cmd) => <CommandRow cmd={cmd} />}
-          </CliInstallCommand>
-        </Step>
-        <Step n={2} label={t(($) => $.cli_install.step2_label)}>
-          <CommandRow cmd={SETUP_CMD} />
-        </Step>
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-4">
+      <Step n={1} label={t(($) => $.cli_install.step1_label)}>
+        <CliInstallCommand
+          labels={{
+            group: t(($) => $.cli_install.platform_group),
+            macosLinux: t(($) => $.cli_install.platform_macos_linux),
+            windows: t(($) => $.cli_install.platform_windows),
+          }}
+          classNames={{ list: "mt-1.5" }}
+        >
+          {(cmd) => <CommandRow cmd={cmd} />}
+        </CliInstallCommand>
+      </Step>
+      <Step n={2} label={t(($) => $.cli_install.step2_label)}>
+        <CommandRow cmd={SETUP_CMD} />
+      </Step>
+    </div>
   );
 }

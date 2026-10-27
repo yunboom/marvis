@@ -9,8 +9,9 @@ import { ApiError } from "@marvis/core/api";
 import { renderWithI18n } from "../test/i18n";
 import { AppSidebar } from "./app-sidebar";
 
-const { appForeground, chatSessions, chatStore, detail, deletePin, invitationApi, navigation, pins, sidebarState, summary, workspaces } = vi.hoisted(() => ({
+const { appForeground, chatSessions, chatStore, detail, deletePin, invitationApi, knowledgeBases, navigation, pins, sidebarState, summary, workspaces } = vi.hoisted(() => ({
   appForeground: { current: true },
+  knowledgeBases: { current: [] as { id: string; pending: { annotations: number; stale_pages: number; open_mrs: number } }[] },
   sidebarState: { setOpenMobile: vi.fn() },
   chatSessions: { current: [] as { id?: string; unread_count?: number }[] },
   chatStore: { current: { activeSessionId: null as string | null, isOpen: false } },
@@ -80,7 +81,29 @@ vi.mock("@marvis/ui/components/ui/sidebar", () => ({
       {children}
     </button>
   ),
+  SidebarMenuAction: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  ),
   SidebarMenuItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SidebarMenuSub: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sidebar-menu-sub">{children}</div>
+  ),
+  SidebarMenuSubItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SidebarMenuSubButton: ({
+    children,
+    isActive,
+    render,
+  }: {
+    children: React.ReactNode;
+    isActive?: boolean;
+    render?: React.ReactElement<{ href?: string }>;
+  }) => (
+    <button type="button" data-active={isActive ? "true" : undefined} data-href={render?.props.href}>
+      {children}
+    </button>
+  ),
   SidebarRail: () => null,
   useSidebar: () => ({ setOpenMobile: sidebarState.setOpenMobile }),
 }));
@@ -106,7 +129,9 @@ vi.mock("@marvis/ui/components/ui/tooltip", () => ({
 vi.mock("../common/use-app-foreground", () => ({
   useAppForeground: () => appForeground.current,
 }));
-vi.mock("./help-launcher", () => ({ HelpLauncher: () => null }));
+vi.mock("./help-launcher", () => ({
+  HelpLauncher: () => <span data-testid="help-launcher" />,
+}));
 vi.mock("../auth", () => ({ useLogout: () => vi.fn() }));
 vi.mock("../issues/components/status-icon", () => ({ StatusIcon: () => <span /> }));
 vi.mock("../navigation", () => ({
@@ -141,9 +166,11 @@ vi.mock("@marvis/core/paths", async (importOriginal) => ({
     myIssues: () => "/acme/my-issues",
     issues: () => "/acme/issues",
     projects: () => "/acme/projects",
+    workflows: () => "/acme/workflows",
     autopilots: () => "/acme/autopilots",
     agents: () => "/acme/agents",
     squads: () => "/acme/squads",
+    kb: () => "/acme/kb",
     usage: () => "/acme/usage",
     runtimes: () => "/acme/runtimes",
     skills: () => "/acme/skills",
@@ -158,7 +185,7 @@ vi.mock("@marvis/core/api", async (importOriginal) => {
     ...actual,
     api: {
       ...actual.api,
-      getBaseUrl: () => "http://127.0.0.1:8080",
+      getBaseUrl: () => "http://127.0.0.1:13840",
       acceptInvitation: invitationApi.accept,
       declineInvitation: invitationApi.decline,
     },
@@ -189,6 +216,7 @@ vi.mock("@marvis/core/pins/mutations", () => ({ useDeletePin: () => ({ mutate: d
 vi.mock("@marvis/core/pins/queries", () => ({ pinListOptions: () => ({ queryKey: ["pins"] }) }));
 vi.mock("@marvis/core/projects/queries", () => ({ projectDetailOptions: () => ({ queryKey: ["project"] }) }));
 vi.mock("@marvis/core/workspace/queries", () => ({
+  agentListOptions: () => ({ queryKey: ["agents"] }),
   myInvitationListOptions: () => ({ queryKey: ["invitations"] }),
   workspaceKeys: { myInvitations: () => ["invitations"] },
   workspaceListOptions: () => ({ queryKey: ["workspaces"] }),
@@ -205,6 +233,7 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
     if (queryKey[0] === "inbox" && queryKey[1] === "unread-summary") return { data: summary.current };
     if (queryKey[0] === "workspaces") return { data: workspaces.current };
     if (queryKey[0] === "chat" && queryKey[2] === "sessions") return { data: chatSessions.current };
+    if (queryKey[0] === "kb" && queryKey[2] === "bases") return { data: knowledgeBases.current };
     return { data: [] };
   },
   useQueryClient: () => ({ fetchQuery: vi.fn(), invalidateQueries: invitationApi.invalidateQueries }),
@@ -353,6 +382,31 @@ describe("workspace-switcher unread dot", () => {
   });
 });
 
+describe("message box bell", () => {
+  beforeEach(() => {
+    summary.current = [];
+    workspaces.current = [];
+  });
+
+  it("marks the bell when the active workspace has unread items", () => {
+    summary.current = [{ workspace_id: "ws-1", count: 2 }];
+    render(<AppSidebar />);
+    expect(screen.getByTestId("message-box-unread-dot")).toBeInTheDocument();
+  });
+
+  // Other workspaces' unread is the switcher's brand dot, not the bell's.
+  it("leaves the bell plain when only another workspace has unread", () => {
+    summary.current = [{ workspace_id: "ws-2", count: 2 }];
+    render(<AppSidebar />);
+    expect(screen.queryByTestId("message-box-unread-dot")).toBeNull();
+  });
+
+  it("drops the inbox from the nav", () => {
+    const { container } = render(<AppSidebar />);
+    expect(container.querySelector('[data-href="/acme/inbox"]')).toBeNull();
+  });
+});
+
 describe("workspace-switcher dropdown per-workspace dot", () => {
   beforeEach(() => {
     summary.current = [];
@@ -405,6 +459,79 @@ describe("navigation item presentation", () => {
       );
     }
   });
+
+  it("nests Workflows under Projects as a second-level row", () => {
+    navigation.current = { pathname: "/acme/workflows" };
+    const { container } = render(<AppSidebar />);
+    const workflows = screen
+      .getByTestId("sidebar-menu-sub")
+      .querySelector<HTMLElement>('button[data-href="/acme/workflows"]');
+
+    expect(workflows?.dataset.active).toBe("true");
+    expect(container.querySelectorAll('button[data-href="/acme/workflows"]')).toHaveLength(1);
+    expect(container.querySelector('button[data-href="/acme/projects"]')?.getAttribute("data-active")).toBeNull();
+    navigation.current = { pathname: "/acme/issues" };
+  });
+
+  it("starts the Projects sub-nav collapsed and toggles it", () => {
+    const { container } = render(<AppSidebar />);
+    const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-projects"]');
+
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+
+    fireEvent.click(toggle!);
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+
+    fireEvent.click(toggle!);
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+  });
+
+  it("starts the Projects sub-nav open on one of its sub routes", () => {
+    navigation.current = { pathname: "/acme/workflows" };
+    const { container } = render(<AppSidebar />);
+    const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-projects"]');
+
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+    navigation.current = { pathname: "/acme/issues" };
+  });
+
+  it("toggles the sub-nav when Projects is clicked on its own page", () => {
+    navigation.current = { pathname: "/acme/projects" };
+    const { container } = render(<AppSidebar />);
+    const projects = container.querySelector<HTMLElement>('button[data-href="/acme/projects"]')!;
+
+    fireEvent.click(projects);
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+
+    fireEvent.click(projects);
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+    navigation.current = { pathname: "/acme/issues" };
+  });
+
+  it("expands but never collapses when Projects is clicked from another page", () => {
+    const { container } = render(<AppSidebar />);
+    const projects = container.querySelector<HTMLElement>('button[data-href="/acme/projects"]')!;
+    const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-projects"]')!;
+
+    fireEvent.click(projects);
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+
+    fireEvent.click(toggle);
+    fireEvent.click(projects, { metaKey: true });
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+
+    fireEvent.click(projects);
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+  });
+
+  it("keeps Help out of the sidebar", () => {
+    render(<AppSidebar />);
+
+    expect(screen.queryByTestId("help-launcher")).toBeNull();
+  });
 });
 
 describe("personal nav — Chat", () => {
@@ -423,16 +550,11 @@ describe("personal nav — Chat", () => {
   const chatBadge = (container: HTMLElement) =>
     chatNav(container)?.querySelector("number-flow-react") ?? null;
 
-  it("keeps persistent Inbox and Chat counters static", () => {
-    summary.current = [{ workspace_id: "ws-1", count: 1 }];
+  it("keeps the persistent Chat counter static", () => {
     chatSessions.current = [{ id: "chat-1", unread_count: 2 }];
     const { container } = render(<AppSidebar />);
-    const inboxBadge = container
-      .querySelector<HTMLElement>('button[data-href="/acme/inbox"]')
-      ?.querySelector("number-flow-react") as (HTMLElement & { animated?: boolean }) | null;
     const currentChatBadge = chatBadge(container) as (HTMLElement & { animated?: boolean }) | null;
 
-    expect(inboxBadge?.animated).toBe(false);
     expect(currentChatBadge?.animated).toBe(false);
   });
 
@@ -501,6 +623,42 @@ describe("personal nav — Chat", () => {
     appForeground.current = false;
     const { container } = render(<AppSidebar />);
     expect(chatBadge(container)).toHaveAttribute("aria-label", "5");
+  });
+});
+
+describe("AI team nav — Knowledge base", () => {
+  beforeEach(() => {
+    knowledgeBases.current = [];
+    navigation.current = { pathname: "/acme/issues" };
+  });
+
+  const pending = (open_mrs: number) => ({ annotations: 1, stale_pages: 1, open_mrs });
+  const kbNav = (container: HTMLElement) =>
+    container.querySelector<HTMLElement>('button[data-href="/acme/kb"]');
+
+  it("places Knowledge base right after Squads", () => {
+    const { container } = renderWithI18n(<AppSidebar />);
+    const hrefs = Array.from(container.querySelectorAll<HTMLElement>("button[data-href]")).map(
+      (el) => el.dataset.href,
+    );
+    expect(hrefs.indexOf("/acme/kb")).toBe(hrefs.indexOf("/acme/squads") + 1);
+    expect(kbNav(container)).toHaveTextContent("Knowledge base");
+  });
+
+  it("badges the nav with open merge requests summed across knowledge bases", () => {
+    knowledgeBases.current = [
+      { id: "a", pending: pending(2) },
+      { id: "b", pending: pending(1) },
+      { id: "c", pending: pending(0) },
+    ];
+    const { container } = render(<AppSidebar />);
+    expect(kbNav(container)?.querySelector('[data-testid="kb-open-mr-badge"]')).toHaveTextContent("3");
+  });
+
+  it("hides the badge when nothing is waiting for review", () => {
+    knowledgeBases.current = [{ id: "a", pending: pending(0) }];
+    const { container } = render(<AppSidebar />);
+    expect(kbNav(container)?.querySelector('[data-testid="kb-open-mr-badge"]')).toBeNull();
   });
 });
 

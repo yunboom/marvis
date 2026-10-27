@@ -22,15 +22,38 @@ import { useT, useTimeAgo } from "../../i18n";
  * question with one answer. Several open a dialog, because picking between them
  * needs to show what each one is about, which does not fit in a banner.
  */
-export function UnfinishedDraftsBanner({
+/** What the banner needs of an unfinished builder conversation. */
+export interface UnfinishedDraft {
+  session_id: string;
+  last_message_at?: string | null;
+}
+
+export function UnfinishedDraftsBanner<S extends UnfinishedDraft = AgentBuilderSessionSummary>({
   sessions,
   onResume,
+  bannerLabel,
+  dialogTitle,
+  describe,
+  className,
 }: {
-  sessions: AgentBuilderSessionSummary[];
+  sessions: S[];
   onResume: (sessionId: string) => void;
+  /** Copy for other builders (the knowledge base builder); defaults to the
+   *  agent builder's. */
+  bannerLabel?: string;
+  dialogTitle?: string;
+  /** Title and preview of one row; defaults to the agent builder's decoding. */
+  describe?: (session: S) => { title: string; preview: string };
+  className?: string;
 }) {
   const { t } = useT("agents");
   const [picking, setPicking] = useState(false);
+  const describeRow =
+    describe ??
+    ((session: S) => {
+      const agentSession = session as unknown as AgentBuilderSessionSummary;
+      return { title: draftTitle(agentSession), preview: draftPreview(agentSession) };
+    });
 
   if (sessions.length === 0) return null;
 
@@ -52,15 +75,17 @@ export function UnfinishedDraftsBanner({
           "mb-5 flex w-full items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3 text-left transition-colors",
           "hover:border-primary/40 hover:bg-accent/30",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          className,
         )}
       >
         <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground">
           <MessageSquare className="size-4" aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1 text-body">
-          {t(($) => $.creation_studio.drafts.banner, {
-            count: sessions.length,
-          })}
+          {bannerLabel ??
+            t(($) => $.creation_studio.drafts.banner, {
+              count: sessions.length,
+            })}
         </span>
         <ChevronRight
           className="size-4 shrink-0 text-muted-foreground"
@@ -71,13 +96,15 @@ export function UnfinishedDraftsBanner({
       <Dialog open={picking} onOpenChange={setPicking}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t(($) => $.creation_studio.drafts.title)}</DialogTitle>
+            <DialogTitle>{dialogTitle ?? t(($) => $.creation_studio.drafts.title)}</DialogTitle>
             <DialogDescription>
               {t(($) => $.creation_studio.drafts.pick_hint)}
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-96 space-y-2 overflow-y-auto">
-            {sessions.map((session) => (
+            {sessions.map((session) => {
+              const row = describeRow(session);
+              return (
               <button
                 key={session.session_id}
                 type="button"
@@ -94,7 +121,7 @@ export function UnfinishedDraftsBanner({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline gap-2">
                     <span className="truncate text-body font-medium">
-                      {draftTitle(session) ||
+                      {row.title ||
                         t(($) => $.creation_studio.drafts.untitled)}
                     </span>
                     {session.last_message_at ? (
@@ -105,11 +132,12 @@ export function UnfinishedDraftsBanner({
                       short enough that a long reply cannot push the next row
                       off the dialog. */}
                   <span className="mt-1 line-clamp-2 block text-caption leading-5 text-muted-foreground">
-                    {draftPreview(session)}
+                    {row.preview}
                   </span>
                 </span>
               </button>
-            ))}
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>

@@ -28,7 +28,11 @@ import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
 import { Loader2 } from "lucide-react";
 import { setLoggedInCookie } from "@/features/auth/auth-cookie";
 import Link from "next/link";
-import { LoginPage, validateCliCallback } from "@marvis/views/auth";
+import {
+  LARK_PROVIDER_STATE,
+  LoginPage,
+  validateCliCallback,
+} from "@marvis/views/auth";
 import { useT } from "@marvis/views/i18n";
 
 /**
@@ -57,11 +61,19 @@ async function resolveLoggedInDestination(
   return resolvePostAuthDestination(workspaces, hasOnboarded);
 }
 
+// 桌面登录跳转卡片：384 宽、24 圆角，和登录卡同一套外壳。
+const HANDOFF_SHELL_CLASS =
+  "flex min-h-svh items-center justify-center bg-app-shell px-4";
+const HANDOFF_CARD_CLASS =
+  "w-full max-w-[384px] gap-0 rounded-2xl border-0 px-8 py-9 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border dark:shadow-none";
+const HANDOFF_DESCRIPTION_CLASS = "text-body-lg leading-relaxed";
+
 function LoginPageContent() {
   const router = useRouter();
   const qc = useQueryClient();
   const { t } = useT("auth");
   const googleClientId = useConfigStore((state) => state.googleClientId);
+  const larkLoginAppId = useConfigStore((state) => state.larkLoginAppId);
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
   const searchParams = useSearchParams();
@@ -104,7 +116,7 @@ function LoginPageContent() {
         .issueCliToken()
         .then(({ token }) => {
           setDesktopToken(token);
-          window.location.href = `marvis-studio://auth/callback?token=${encodeURIComponent(token)}`;
+          window.location.href = `marvis://auth/callback?token=${encodeURIComponent(token)}`;
         })
         .catch((err) => {
           setDesktopError(
@@ -165,6 +177,8 @@ function LoginPageContent() {
   ]
     .filter(Boolean)
     .join(",") || undefined;
+  // 飞书授权沿用同一份 state，多带 provider:lark 让回调页区分登录方式。
+  const larkState = [LARK_PROVIDER_STATE, googleState].filter(Boolean).join(",");
 
   // While the desktop handoff is in progress (or has produced a token/error),
   // render a dedicated screen instead of flashing the login form or redirecting
@@ -172,43 +186,46 @@ function LoginPageContent() {
   if (isDesktopHandoff && user) {
     if (desktopError) {
       return (
-        <div className="flex min-h-screen items-center justify-center">
-          <Card className="w-full max-w-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-display-sm">
+        <div className={HANDOFF_SHELL_CLASS}>
+          <Card className={HANDOFF_CARD_CLASS}>
+            <CardHeader className="gap-2 px-0 text-center">
+              <CardTitle className="text-display-sm font-bold">
                 {t(($) => $.web.desktop_handoff.failed_title)}
               </CardTitle>
-              <CardDescription>{desktopError}</CardDescription>
+              <CardDescription className={HANDOFF_DESCRIPTION_CLASS}>
+                {desktopError}
+              </CardDescription>
             </CardHeader>
           </Card>
         </div>
       );
     }
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Card className="w-full max-w-sm">
-          <CardHeader className="text-center">
-            <CardTitle className="text-display-sm">
+      <div className={HANDOFF_SHELL_CLASS}>
+        <Card className={HANDOFF_CARD_CLASS}>
+          <CardHeader className="gap-2 px-0 text-center">
+            <CardTitle className="text-display-sm font-bold">
               {t(($) => $.web.desktop_handoff.opening_title)}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className={HANDOFF_DESCRIPTION_CLASS}>
               {desktopToken
                 ? t(($) => $.web.desktop_handoff.opening_description)
                 : t(($) => $.web.desktop_handoff.preparing)}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center">
+          <CardContent className="mt-6 flex justify-center px-0">
             {desktopToken ? (
               <Button
                 variant="outline"
+                className="h-11 px-5.5 text-body-lg"
                 onClick={() => {
-                  window.location.href = `marvis-studio://auth/callback?token=${encodeURIComponent(desktopToken)}`;
+                  window.location.href = `marvis://auth/callback?token=${encodeURIComponent(desktopToken)}`;
                 }}
               >
                 {t(($) => $.web.desktop_handoff.open_button)}
               </Button>
             ) : (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
             )}
           </CardContent>
         </Card>
@@ -229,6 +246,15 @@ function LoginPageContent() {
             }
           : undefined
       }
+      lark={
+        larkLoginAppId
+          ? {
+              appId: larkLoginAppId,
+              redirectUri: `${window.location.origin}/auth/callback`,
+              state: larkState,
+            }
+          : undefined
+      }
       cliCallback={
         cliCallbackRaw && validateCliCallback(cliCallbackRaw)
           ? { url: cliCallbackRaw, state: cliState }
@@ -236,7 +262,7 @@ function LoginPageContent() {
       }
       onTokenObtained={setLoggedInCookie}
       extra={
-        <span className="text-caption text-muted-foreground">
+        <span className="text-label text-muted-foreground">
           {t(($) => $.web.prefer_desktop)}{" "}
           <Link
             href="/download"

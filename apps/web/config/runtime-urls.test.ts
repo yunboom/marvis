@@ -15,11 +15,11 @@ describe("resolveRemoteApiUrl", () => {
   it("prefers REMOTE_API_URL when explicitly configured", () => {
     expect(
       resolveRemoteApiUrl({
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
         NEXT_PUBLIC_API_URL: "http://localhost:19000",
         PORT: "18080",
       }),
-    ).toBe("http://backend:8080");
+    ).toBe("http://backend:13840");
   });
 
   it("uses NEXT_PUBLIC_API_URL when REMOTE_API_URL is unset", () => {
@@ -56,8 +56,8 @@ describe("resolveRemoteApiUrl", () => {
   // configured `/api` suffix would double it (MUL-5922).
   it("strips a trailing /api from server-side rewrite targets", () => {
     expect(
-      resolveRemoteApiUrl({ REMOTE_API_URL: "http://backend:8080/api" }),
-    ).toBe("http://backend:8080");
+      resolveRemoteApiUrl({ REMOTE_API_URL: "http://backend:13840/api" }),
+    ).toBe("http://backend:13840");
     expect(
       runtimeRewriteDestination("/api/config", {
         NEXT_PUBLIC_API_URL: "https://app.example.com/api",
@@ -141,8 +141,8 @@ describe("browser runtime URLs", () => {
 
   it("does not mistake an `api` host for an /api path suffix", () => {
     expect(
-      resolveBrowserApiBaseUrl({ NEXT_PUBLIC_API_URL: "http://api:8080" }),
-    ).toBe("http://api:8080");
+      resolveBrowserApiBaseUrl({ NEXT_PUBLIC_API_URL: "http://api:13840" }),
+    ).toBe("http://api:13840");
   });
 
   // The XHR base doubles as the base for `/uploads/**` (avatars, attachment
@@ -241,24 +241,24 @@ describe("runtimeRewriteDestination", () => {
   it("maps backend HTTP paths to the runtime API origin", () => {
     expect(
       runtimeRewriteDestination("/api/config", {
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
       }),
-    ).toBe("http://backend:8080/api/config");
+    ).toBe("http://backend:13840/api/config");
     expect(
       runtimeRewriteDestination("/v1/issues/MUL-6581", {
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
       }),
-    ).toBe("http://backend:8080/v1/issues/MUL-6581");
+    ).toBe("http://backend:13840/v1/issues/MUL-6581");
     expect(
       runtimeRewriteDestination("/auth/send-code", {
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
       }),
-    ).toBe("http://backend:8080/auth/send-code");
+    ).toBe("http://backend:13840/auth/send-code");
     expect(
       runtimeRewriteDestination("/uploads/workspaces/a.png", {
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
       }),
-    ).toBe("http://backend:8080/uploads/workspaces/a.png");
+    ).toBe("http://backend:13840/uploads/workspaces/a.png");
   });
 
   it("does not rewrite frontend auth callback pages", () => {
@@ -279,20 +279,20 @@ describe("runtimeRewriteDestination", () => {
   it("maps the CLI health probe to the runtime API origin", () => {
     expect(
       runtimeRewriteDestination("/health", {
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
       }),
-    ).toBe("http://backend:8080/health");
+    ).toBe("http://backend:13840/health");
     expect(runtimeRewriteDestination("/health", {})).toBeUndefined();
     // Probe variants stay unproxied: /healthz is the k8s alias and /readyz
     // the deep check — both go to the backend directly in every topology.
     expect(
       runtimeRewriteDestination("/healthz", {
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
       }),
     ).toBeUndefined();
     expect(
       runtimeRewriteDestination("/readyz", {
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
       }),
     ).toBeUndefined();
   });
@@ -300,15 +300,15 @@ describe("runtimeRewriteDestination", () => {
   it("maps websocket paths to the runtime API origin", () => {
     expect(
       runtimeRewriteDestination("/ws", {
-        REMOTE_API_URL: "http://backend:8080",
+        REMOTE_API_URL: "http://backend:13840",
       }),
-    ).toBe("http://backend:8080/ws");
+    ).toBe("http://backend:13840/ws");
   });
 });
 
 describe("dev-only fallbacks", () => {
   it("falls back to the conventional local backend port", () => {
-    expect(resolveDevRemoteApiUrl({})).toBe("http://localhost:8080");
+    expect(resolveDevRemoteApiUrl({})).toBe("http://localhost:13840");
   });
 
   it("honors BACKEND_PORT for the dev backend fallback", () => {
@@ -319,7 +319,7 @@ describe("dev-only fallbacks", () => {
 
   it("ignores the frontend process PORT while honoring backend-specific aliases", () => {
     expect(resolveDevRemoteApiUrl({ PORT: "3000" })).toBe(
-      "http://localhost:8080",
+      "http://localhost:13840",
     );
     expect(resolveDevRemoteApiUrl({ API_PORT: "19082", PORT: "3000" })).toBe(
       "http://localhost:19082",
@@ -334,8 +334,8 @@ describe("dev-only fallbacks", () => {
 
   it("prefers configured origins over the dev fallbacks", () => {
     expect(
-      resolveDevRemoteApiUrl({ REMOTE_API_URL: "http://backend:8080" }),
-    ).toBe("http://backend:8080");
+      resolveDevRemoteApiUrl({ REMOTE_API_URL: "http://backend:13840" }),
+    ).toBe("http://backend:13840");
     expect(resolveDevDocsUrl({ DOCS_URL: "http://docs:4000" })).toBe(
       "http://docs:4000",
     );

@@ -446,7 +446,7 @@ function Install-Server {
 
     # Read the ports Compose actually published, once, and reuse them for both
     # the health check and the summary so the two can never disagree.
-    $script:SelfHostBackendPort = Get-ComposePublishedPort -Service "backend" -ContainerPort 8080
+    $script:SelfHostBackendPort = Get-ComposePublishedPort -Service "backend" -ContainerPort 13840
     if (-not $script:SelfHostBackendPort) {
         Write-Fail "Started the stack but could not read the backend host port from Docker Compose.`n  Check it with: cd $InstallDir; docker compose -f docker-compose.selfhost.yml ps"
     }

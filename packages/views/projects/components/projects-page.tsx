@@ -101,6 +101,17 @@ import type {
   UpdateProjectRequest,
 } from "@marvis/core/types";
 import {
+  COLLECTION_BATCH_ACTION,
+  COLLECTION_BATCH_BAR,
+  COLLECTION_BATCH_DIVIDER,
+  COLLECTION_CARD,
+  COLLECTION_ROW,
+  COLLECTION_ROW_SELECTED,
+  COLLECTION_SEARCH_ICON,
+  COLLECTION_SEARCH_INPUT,
+  COLLECTION_TABLE_INSET,
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
   CollectionPageHeader,
   CollectionPageHeaderAction,
   CollectionPageState,
@@ -146,17 +157,17 @@ function leadFilterValue(p: Project): string | null {
 // navigation; inline controls stop propagation so edit/menu clicks stay local.
 
 const COLUMN_WIDTHS: Record<ProjectColumnKey, number> = {
-  priority: 116,
-  progress: 88,
+  priority: 108,
+  progress: 112,
   lead: 132,
   issues: 80,
-  created: 104,
+  created: 96,
 };
 
-// Fixed tracks: edges 12+12, checkbox 16, name min 200, status 116,
-// kebab 28 = 384, plus the 10 gap-x-3 gaps between the wide template's
+// Fixed tracks: edges 4+4, checkbox 16, name min 200, status 116,
+// kebab 28 = 368, plus the 10 gap-x-3 gaps between the wide template's
 // 11 tracks.
-const FIXED_TRACKS_WIDTH = 384 + 10 * 12;
+const FIXED_TRACKS_WIDTH = 368 + 10 * 12;
 
 // Render/track order: checkbox, name, status (core, fixed 116px), priority,
 // progress, lead, issues, created, kebab. MUST be a literal string —
@@ -164,8 +175,12 @@ const FIXED_TRACKS_WIDTH = 384 + 10 * 12;
 // interpolated width silently drops the whole template and the grid
 // collapses to one column.
 const GRID_COLS =
-  "grid-cols-[0.75rem_1rem_minmax(120px,1fr)_116px_1.75rem_0.75rem] " +
-  "@2xl:grid-cols-[0.75rem_1rem_minmax(200px,1fr)_116px_var(--pjc-priority)_var(--pjc-progress)_var(--pjc-lead)_var(--pjc-issues)_var(--pjc-created)_1.75rem_0.75rem]";
+  "grid-cols-[0.25rem_1rem_minmax(120px,1fr)_116px_1.75rem_0.25rem] " +
+  "@2xl:grid-cols-[0.25rem_1rem_minmax(200px,1fr)_116px_var(--pjc-priority)_var(--pjc-progress)_var(--pjc-lead)_var(--pjc-issues)_var(--pjc-created)_1.75rem_0.25rem]";
+
+// 表头：40px 灰色圆角带，取代 ListGridHeader 默认的白底 + 渐隐。
+const TABLE_HEAD_BAND =
+  "h-10 rounded-lg bg-surface-sunken after:hidden [&_[role=columnheader]]:text-label [&_[role=columnheader]_button]:text-label";
 
 const stopRowNavigation = (e: MouseEvent) => e.stopPropagation();
 
@@ -196,12 +211,12 @@ function ProgressRing({ project }: { project: Project }) {
   }
   const pct = Math.round((project.done_count / project.issue_count) * 100);
   return (
-    <span className="flex items-center gap-1.5">
-      <span className="relative h-3.5 w-3.5">
-        <svg className="h-3.5 w-3.5 -rotate-90" viewBox="0 0 16 16">
-          <circle className="text-muted" strokeWidth="2" stroke="currentColor" fill="none" r="6" cx="8" cy="8" />
+    <span className="flex items-center gap-2">
+      <span className="relative size-4">
+        <svg className="size-4 -rotate-90" viewBox="0 0 16 16">
+          <circle className="stroke-foreground/10" strokeWidth="2" fill="none" r="6" cx="8" cy="8" />
           <circle
-            className="text-emerald-500"
+            className="text-foreground"
             strokeWidth="2"
             stroke="currentColor"
             fill="none"
@@ -226,10 +241,12 @@ function ProjectRowActions({
   project,
   pinned,
   canDelete,
+  triggerClassName,
 }: {
   project: Project;
   pinned: boolean;
   canDelete: boolean;
+  triggerClassName?: string;
 }) {
   const { t } = useT("projects");
   const { t: tCommon } = useT("common");
@@ -256,7 +273,7 @@ function ProjectRowActions({
                 <button
                   type="button"
                   aria-label={t(($) => $.page.row_menu)}
-                  className="flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-accent-foreground group-hover/row:opacity-100 data-popup-open:bg-accent data-popup-open:opacity-100 data-popup-open:text-accent-foreground"
+                  className={cn("flex size-7 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-[opacity,background-color] duration-(--motion-fast) ease-out hover:bg-accent hover:text-accent-foreground hover:duration-(--motion-instant) group-hover/row:opacity-100 focus-visible:opacity-100 data-popup-open:bg-accent data-popup-open:opacity-100 data-popup-open:text-accent-foreground", triggerClassName)}
                 >
                   <MoreHorizontal className="size-4" />
                 </button>
@@ -358,9 +375,11 @@ function CheckboxCell({
           onToggle();
         }}
         onAuxClick={stopRowNavigation}
-        className={`-m-1.5 flex items-center p-1.5 ${
-          checked ? "" : "opacity-0 transition-opacity group-hover/row:opacity-100"
-        }`}
+        className={cn(
+          "-m-1.5 flex items-center p-1.5",
+          !checked &&
+            "opacity-0 transition-opacity duration-(--motion-fast) ease-out group-hover/row:opacity-100 group-hover/row:duration-(--motion-instant)",
+        )}
       >
         <Checkbox checked={checked} tabIndex={-1} className="pointer-events-none" />
       </button>
@@ -396,12 +415,12 @@ function ProjectTableRow({
 
   return (
     <ListGridRow
-      className={`h-11 cursor-pointer ${selected ? "bg-accent/30" : ""}`}
+      className={cn(COLLECTION_ROW, "cursor-pointer", selected && COLLECTION_ROW_SELECTED)}
       {...rowLink(rowHref, project.title)}
     >
       <CheckboxCell checked={selected} onToggle={onToggleSelect} />
-      <ListGridCell className="gap-2">
-        <ProjectIcon project={project} size="sm" />
+      <ListGridCell className="gap-2.5">
+        <ProjectIcon project={project} size="md" className="size-4.5 text-body-lg" />
         <span className="min-w-0 truncate text-body font-medium">
           {project.title}
         </span>
@@ -437,14 +456,14 @@ function ProjectTableRow({
             renderTrigger={(leadName) => (
               <button
                 type="button"
-                className="flex min-w-0 items-center gap-1.5 rounded-xs px-1 py-0.5 transition-colors hover:bg-accent/60"
+                className="-ml-1.5 flex h-7 min-w-0 max-w-full items-center gap-2 rounded-row px-1.5 transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant) data-popup-open:bg-accent"
               >
                 {project.lead_type && project.lead_id ? (
                   <ActorAvatar actorType={project.lead_type} actorId={project.lead_id} size="sm" enableHoverCard />
                 ) : (
-                  <span className="inline-flex h-[18px] w-[18px] rounded-full border border-dashed border-muted-foreground/30" />
+                  <span className="inline-flex size-5 shrink-0 rounded-full border border-dashed border-faint-foreground" />
                 )}
-                <span className="min-w-0 truncate text-caption text-muted-foreground">
+                <span className="min-w-0 truncate text-label text-muted-foreground">
                   {leadName ?? "—"}
                 </span>
               </button>
@@ -456,7 +475,7 @@ function ProjectTableRow({
       )}
 
       {isColVisible("issues") ? (
-        <ListGridCell className="hidden justify-end font-mono text-caption tabular-nums text-muted-foreground @2xl:flex">
+        <ListGridCell className="hidden justify-end font-mono text-label tabular-nums text-muted-foreground @2xl:flex">
           {project.issue_count}
         </ListGridCell>
       ) : (
@@ -464,7 +483,7 @@ function ProjectTableRow({
       )}
 
       {isColVisible("created") ? (
-        <ListGridCell className="hidden whitespace-nowrap text-caption tabular-nums text-muted-foreground @2xl:flex">
+        <ListGridCell className="hidden whitespace-nowrap text-label tabular-nums text-muted-foreground @2xl:flex">
           {formatRelativeDate(project.created_at)}
         </ListGridCell>
       ) : (
@@ -502,7 +521,7 @@ function ProjectTableHeader({
     sortField === field ? sortDirection : false;
   const anySelected = allSelected || someSelected;
   return (
-    <ListGridHeader>
+    <ListGridHeader className={TABLE_HEAD_BAND}>
       <div className="flex items-center justify-center">
         <button
           type="button"
@@ -603,27 +622,27 @@ function ProjectCard({
       : 0;
 
   return (
-    <div className="group/card group/row flex flex-col rounded-md border bg-card transition-colors hover:border-primary/50">
-      <div className="p-3 pb-2">
-        <div className="flex items-center gap-2">
+    <div className={cn("group/card group/row flex flex-col", COLLECTION_CARD)}>
+      <div className="flex flex-col gap-3 px-3.5 pt-3.5 pb-3">
+        <div className="flex min-w-0 items-center gap-2">
           <AppLink
             href={wsPaths.projectDetail(project.id)}
             className="flex min-w-0 flex-1 items-center gap-2"
           >
-            <ProjectIcon project={project} size="sm" />
-            <h3 className="truncate text-body font-medium">{project.title}</h3>
+            <ProjectIcon project={project} size="md" className="size-4.5 text-body-lg" />
+            <h3 className="truncate text-body font-semibold">{project.title}</h3>
           </AppLink>
-          <ProjectRowActions project={project} pinned={pinned} canDelete={canDelete} />
+          <ProjectRowActions project={project} pinned={pinned} canDelete={canDelete} triggerClassName="size-6 shrink-0" />
           <ProjectStatusBadge project={project} handleUpdate={handleUpdate} triggerClassName="shrink-0" />
         </div>
 
         {project.issue_count > 0 ? (
-          <div className="flex items-center justify-end gap-1.5 pt-2">
-            <div className="relative h-4 w-4">
-              <svg className="h-4 w-4 -rotate-90" viewBox="0 0 16 16">
-                <circle className="text-muted" strokeWidth="2" stroke="currentColor" fill="none" r="6" cx="8" cy="8" />
+          <div className="flex h-4 items-center justify-end gap-1.5">
+            <div className="relative size-4">
+              <svg className="size-4 -rotate-90" viewBox="0 0 16 16">
+                <circle className="stroke-foreground/10" strokeWidth="2" fill="none" r="6" cx="8" cy="8" />
                 <circle
-                  className="text-emerald-500"
+                  className="text-foreground"
                   strokeWidth="2"
                   stroke="currentColor"
                   fill="none"
@@ -635,37 +654,37 @@ function ProjectCard({
                 />
               </svg>
             </div>
-            <span className="text-micro tabular-nums text-muted-foreground">
+            <span className="text-caption tabular-nums text-muted-foreground">
               {project.done_count}/{project.issue_count}
             </span>
           </div>
         ) : (
-          <span className="flex justify-end pt-2 text-micro text-muted-foreground">
+          <span className="flex h-4 items-center justify-end text-caption text-muted-foreground">
             {t(($) => $.detail.no_issues_yet)}
           </span>
         )}
       </div>
 
-      <div className="mt-0 flex items-center justify-between border-t px-3 pb-3 pt-2">
+      <div className="flex items-center justify-between gap-2 border-t border-border px-3.5 pt-2.5 pb-3">
         <ProjectLeadPicker
           project={project}
           handleUpdate={handleUpdate}
           renderTrigger={(leadName) => (
-            <button type="button" className="-mx-1.5 flex items-center gap-1.5 rounded-xs px-1.5 py-0.5 transition-colors hover:bg-accent/60">
+            <button type="button" className="-ml-1.5 flex h-6.5 min-w-0 items-center gap-1.5 rounded-row px-1.5 transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant) data-popup-open:bg-accent">
               {project.lead_type && project.lead_id ? (
                 <ActorAvatar actorType={project.lead_type} actorId={project.lead_id} size="sm" enableHoverCard />
               ) : (
-                <span className="inline-flex h-5 w-5 rounded-full border border-dashed border-muted-foreground/30" />
+                <span className="inline-flex size-5 shrink-0 rounded-full border border-dashed border-faint-foreground" />
               )}
-              <span className="max-w-[60px] truncate text-micro text-muted-foreground">
+              <span className="max-w-26 truncate text-caption text-muted-foreground">
                 {leadName ?? t(($) => $.lead.no_lead)}
               </span>
             </button>
           )}
         />
-        <div className="flex items-center gap-2">
-          <ProjectPriorityBadge project={project} handleUpdate={handleUpdate} align="start" />
-          <span className="text-micro text-muted-foreground">
+        <div className="flex shrink-0 items-center gap-2">
+          <ProjectPriorityBadge project={project} handleUpdate={handleUpdate} align="start" triggerClassName="ml-0 h-5.5" />
+          <span className="whitespace-nowrap text-caption tabular-nums text-muted-foreground">
             {formatRelativeDate(project.created_at)}
           </span>
         </div>
@@ -719,26 +738,26 @@ function ProjectBatchToolbar({
 
   return (
     <>
-      <div className="absolute bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-lg border bg-background px-2 py-1.5 shadow-lg max-md:above-chat-launcher">
-        <div className="mr-1 flex items-center gap-1.5 border-r pl-1 pr-2">
-          <span className="text-body font-medium">
-            {t(($) => $.page.selected, { count: rows.length })}
-          </span>
-          <TooltipHint label={t(($) => $.page.clear_selection)}>
-            <button
-              type="button"
-              aria-label={t(($) => $.page.clear_selection)}
-              onClick={onClear}
-              className="rounded-xs p-0.5 transition-colors hover:bg-accent"
-            >
-              <X className="size-3.5 text-muted-foreground" />
-            </button>
-          </TooltipHint>
-        </div>
+      <div role="toolbar" className={COLLECTION_BATCH_BAR}>
+        <span className="whitespace-nowrap text-body font-medium">
+          {t(($) => $.page.selected, { count: rows.length })}
+        </span>
+        <TooltipHint label={t(($) => $.page.clear_selection)}>
+          <button
+            type="button"
+            aria-label={t(($) => $.page.clear_selection)}
+            onClick={onClear}
+            className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant)"
+          >
+            <X className="size-3.5" />
+          </button>
+        </TooltipHint>
+        <span aria-hidden="true" className={COLLECTION_BATCH_DIVIDER} />
         {anyUnpinned && (
           <Button
             variant="ghost"
             size="sm"
+            className={COLLECTION_BATCH_ACTION}
             onClick={() => {
               for (const p of rows) {
                 if (!pinnedIds.has(p.id)) {
@@ -748,7 +767,7 @@ function ProjectBatchToolbar({
               onClear();
             }}
           >
-            <Pin className="mr-1 size-3.5" />
+            <Pin className="size-3.5" />
             {t(($) => $.page.pin)}
           </Button>
         )}
@@ -756,10 +775,10 @@ function ProjectBatchToolbar({
           <Button
             variant="ghost"
             size="sm"
-            className="text-destructive hover:text-destructive"
+            className={cn(COLLECTION_BATCH_ACTION, "text-destructive hover:text-destructive aria-expanded:text-destructive")}
             onClick={() => setConfirmDelete(true)}
           >
-            <Trash2 className="mr-1 size-3.5" />
+            <Trash2 className="size-3.5" />
             {t(($) => $.page.delete)}
           </Button>
         )}
@@ -948,6 +967,7 @@ export function ProjectsPage() {
         actions={
           <CollectionPageHeaderAction
             icon={Plus}
+            variant="default"
             label={t(($) => $.page.new_project)}
             onClick={openCreateProject}
           />
@@ -967,41 +987,43 @@ export function ProjectsPage() {
       ) : (
         <>
           {/* Toolbar */}
-          <div className={PAGE_TOOLBAR}>
-            <div className="flex min-w-0 items-center gap-2">
+          <div className={cn(PAGE_TOOLBAR, "gap-3 pb-2")}>
+            <div className="flex min-w-0 items-center gap-3">
               <div className="relative hidden md:block">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Search className={COLLECTION_SEARCH_ICON} />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   aria-label={t(($) => $.page.search_placeholder)}
                   placeholder={t(($) => $.page.search_placeholder)}
-                  className="h-8 w-56 pl-8 text-body"
+                  className={COLLECTION_SEARCH_INPUT}
                 />
               </div>
               {(hasActiveFilters || search.trim().length > 0) && (
                 <span
                   title={t(($) => $.toolbar.result_count_title)}
-                  className="hidden shrink-0 text-caption tabular-nums text-muted-foreground md:inline"
+                  className="hidden shrink-0 text-label tabular-nums text-muted-foreground md:inline"
                 >
                   {visible.length} / {projects.length}
                 </span>
               )}
             </div>
 
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1.5">
               {/* Filter */}
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
                     <Button
-                      variant={hasActiveFilters ? "default" : "outline"}
+                      variant={hasActiveFilters ? "brand" : "outline"}
                       size="sm"
-                      className={
+                      className={cn(
+                        COLLECTION_TOOLBAR_BUTTON,
+                        "w-8 px-0 md:w-auto",
                         hasActiveFilters
-                          ? "h-8 w-8 gap-1 bg-brand px-0 text-white hover:bg-brand/90 md:w-auto md:px-2.5"
-                          : "h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
-                      }
+                          ? "font-medium md:pr-2 md:pl-3"
+                          : cn(COLLECTION_TOOLBAR_BUTTON_IDLE, "md:px-3"),
+                      )}
                     >
                       <Filter className="size-3.5" />
                       {hasActiveFilters ? (
@@ -1019,7 +1041,7 @@ export function ProjectsPage() {
                           role="button"
                           tabIndex={-1}
                           aria-label={t(($) => $.toolbar.clear_filters)}
-                          className="-mr-1 ml-0.5 hidden rounded-sm p-0.5 hover:bg-white/20 md:inline-flex"
+                          className="hidden size-4.5 items-center justify-center rounded-full bg-brand-foreground/18 transition-colors hover:bg-brand-foreground/30 md:inline-flex"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1027,7 +1049,7 @@ export function ProjectsPage() {
                           }}
                           onPointerDown={(e) => e.stopPropagation()}
                         >
-                          <X className="size-3" />
+                          <X className="size-2.75" />
                         </span>
                       )}
                     </Button>
@@ -1112,7 +1134,7 @@ export function ProjectsPage() {
                       render={
                         <TooltipTrigger
                           render={
-                            <Button variant="outline" size="sm" className="h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5">
+                            <Button variant="outline" size="sm" className={cn(COLLECTION_TOOLBAR_BUTTON, COLLECTION_TOOLBAR_BUTTON_IDLE, "w-8 px-0 md:w-auto md:px-3")}>
                               {sortDirection === "asc" ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />}
                               <span className="hidden md:inline">{sortLabel(sortField)}</span>
                             </Button>
@@ -1187,7 +1209,7 @@ export function ProjectsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
+                            className={cn(COLLECTION_TOOLBAR_BUTTON, COLLECTION_TOOLBAR_BUTTON_IDLE, "w-8 px-0 md:w-auto md:px-3")}
                           >
                             {isCompact ? (
                               <Rows3 className="size-3.5" />
@@ -1230,12 +1252,12 @@ export function ProjectsPage() {
           {isLoading ? (
             <LoadingState isCompact={isCompact} />
           ) : visible.length === 0 ? (
-            <div className="flex flex-1 flex-col items-center justify-center py-24 text-muted-foreground">
-              <Search className="mb-3 h-10 w-10 opacity-30" />
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 pb-18 text-muted-foreground">
+              <Search className="size-10 opacity-35" />
               <p className="text-body">{t(($) => $.page.no_matches)}</p>
             </div>
           ) : isCompact ? (
-            <div className="min-h-0 flex-1 overflow-auto @container">
+            <div className={cn("min-h-0 flex-1 overflow-auto @container", COLLECTION_TABLE_INSET)}>
               <ListGrid
                 className={`${GRID_COLS} @2xl:min-w-[var(--pjc-minw)]`}
                 style={{
@@ -1268,7 +1290,7 @@ export function ProjectsPage() {
               </ListGrid>
             </div>
           ) : (
-            <div className={cn("min-h-0 flex-1 overflow-y-auto pt-4", PAGE_GUTTER)}>
+            <div className={cn("min-h-0 flex-1 overflow-y-auto pt-2", PAGE_GUTTER)}>
               <div
                 className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
                 style={{ paddingBottom: LIST_GRID_BOTTOM_CLEARANCE }}
@@ -1300,26 +1322,26 @@ export function ProjectsPage() {
 function LoadingState({ isCompact }: { isCompact: boolean }) {
   if (isCompact) {
     return (
-      <div className={cn("min-h-0 flex-1 overflow-auto pt-4", PAGE_GUTTER)}>
-        <div className="space-y-2">
+      <div className={cn("min-h-0 flex-1 overflow-auto pt-2", PAGE_GUTTER)} aria-busy="true">
+        <div className="flex flex-col gap-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-11 w-full rounded-md" />
+            <Skeleton key={i} className="h-11 w-full rounded-lg" />
           ))}
         </div>
       </div>
     );
   }
   return (
-    <div className={cn("grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-4", PAGE_GUTTER)}>
+    <div className={cn("grid grid-cols-1 content-start gap-3 pt-2 sm:grid-cols-2 lg:grid-cols-4", PAGE_GUTTER)} aria-busy="true">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-2 rounded-md border p-3">
+        <div key={i} className="flex flex-col gap-2.5 rounded-xl border border-border p-3.5">
           <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-8 rounded-xs" />
-            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="size-8 rounded-row" />
+            <Skeleton className="h-3.5 w-3/4 rounded-full" />
           </div>
           <div className="flex gap-1.5">
-            <Skeleton className="h-5 w-16 rounded-xs" />
-            <Skeleton className="h-5 w-20 rounded-xs" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-full" />
           </div>
         </div>
       ))}

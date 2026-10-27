@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { act, render } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import {
   bindWorkspaceSlugLookup,
   createQueryClient,
@@ -33,7 +33,14 @@ vi.mock("@marvis/core/auth", () => ({
 }));
 
 import { DesktopNavigationProvider, routeContentLinkPath } from "./navigation";
-import { currentPath, useNavigation } from "@marvis/views/navigation";
+import {
+  AppLink,
+  currentPath,
+  useAppOrigin,
+  useIntentNavigate,
+  useNavigation,
+  useRowLink,
+} from "@marvis/views/navigation";
 import { useTabStore, getActiveTab } from "@/stores/tab-store";
 
 let unbindWorkspaces: () => void = () => {};
@@ -398,5 +405,271 @@ describe("existing reserved workspace navigation", () => {
     act(() => adapter().push("/invite/issues/MUL-123"));
     expect(overlay.open).not.toHaveBeenCalled();
     expect(getActiveTab(useTabStore.getState())?.url).toBe("/invite/issues/MUL-123");
+  });
+});
+
+// 服务器没有网页端时 appUrl 为空串：分享链接改用 marvis://open 深链，
+// 而 packages/views 里依赖 getShareableUrl 的站内行为必须仍留在桌面端内导航。
+describe("without a web app (empty appUrl)", () => {
+  const openExternal = vi.fn();
+  let openSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    openExternal.mockReset();
+    openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    Object.defineProperty(window, "desktopAPI", {
+      configurable: true,
+      value: {
+        runtimeConfig: { ok: true, config: { appUrl: "" } },
+        openExternal,
+      },
+    });
+  });
+
+  afterEach(() => {
+    openSpy.mockRestore();
+  });
+
+  /** 站内导航不能把任何地址交给浏览器或系统。 */
+  function expectNothingOpenedExternally() {
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(openExternal).not.toHaveBeenCalled();
+  }
+
+  function renderInProvider(ui: React.ReactNode) {
+    return render(<DesktopNavigationProvider>{ui}</DesktopNavigationProvider>);
+  }
+
+  describe("getShareableUrl", () => {
+    it("returns a marvis://open deep link for an in-app path", () => {
+      const getAdapter = renderProvider();
+
+      expect(getAdapter().getShareableUrl("/dev/issues/DEV-1")).toBe(
+        "marvis://open?path=%2Fdev%2Fissues%2FDEV-1",
+      );
+    });
+
+    it("keeps the query and fragment of the current page inside the path", () => {
+      const getAdapter = renderProvider();
+
+      act(() => getAdapter().push("/acme/issues/MUL-1?tab=activity#comment-c1"));
+
+      const adapter = getAdapter();
+      expect(adapter.getShareableUrl(currentPath(adapter))).toBe(
+        "marvis://open?path=%2Facme%2Fissues%2FMUL-1%3Ftab%3Dactivity%23comment-c1",
+      );
+    });
+
+    it("still prefixes the web app URL when there is one", () => {
+      Object.defineProperty(window, "desktopAPI", {
+        configurable: true,
+        value: {
+          runtimeConfig: { ok: true, config: { appUrl: "https://app.example" } },
+          openExternal,
+        },
+      });
+      const getAdapter = renderProvider();
+
+      expect(getAdapter().getShareableUrl("/dev/issues/DEV-1")).toBe(
+        "https://app.example/dev/issues/DEV-1",
+      );
+    });
+  });
+
+  // useAppOrigin 用 getShareableUrl("/") 探测网页端 origin。深链的 origin 是 "null"，
+  // 若原样交出去，相对链接会因无效基址而无法解析成站内实体。
+  describe("useAppOrigin", () => {
+    function renderOrigin() {
+      let origin: string | null | undefined;
+      function Probe() {
+        origin = useAppOrigin();
+        return null;
+      }
+      renderInProvider(<Probe />);
+      return () => origin;
+    }
+
+    it("reports no app origin", () => {
+      expect(renderOrigin()()).toBeNull();
+    });
+
+    it("reports the web app origin when there is one", () => {
+      Object.defineProperty(window, "desktopAPI", {
+        configurable: true,
+        value: {
+          runtimeConfig: { ok: true, config: { appUrl: "https://app.example" } },
+          openExternal,
+        },
+      });
+
+      expect(renderOrigin()()).toBe("https://app.example");
+    });
+  });
+
+  describe("AppLink", () => {
+    function renderLink() {
+      renderInProvider(
+        <AppLink href="/acme/projects" newTabTitle="Projects">
+          Projects
+        </AppLink>,
+      );
+      return screen.getByRole("link", { name: "Projects" });
+    }
+
+    it("renders the deep link as the anchor href", () => {
+      expect(renderLink()).toHaveAttribute(
+        "href",
+        "marvis://open?path=%2Facme%2Fprojects",
+      );
+    });
+
+    it("navigates in place on a plain click", () => {
+      fireEvent.click(renderLink());
+
+      expect(getActiveTab(useTabStore.getState())?.url).toBe("/acme/projects");
+      expectNothingOpenedExternally();
+    });
+
+    it("opens a background tab on cmd-click", () => {
+      const activeBefore = acmeGroup().activeTabId;
+
+      fireEvent.click(renderLink(), { metaKey: true });
+
+      const group = acmeGroup();
+      expect(group.tabs.map((t) => t.url)).toEqual([
+        "/acme/issues",
+        "/acme/projects",
+      ]);
+      expect(group.activeTabId).toBe(activeBefore);
+      expectNothingOpenedExternally();
+    });
+
+    it("opens a foreground tab on cmd+shift-click", () => {
+      fireEvent.click(renderLink(), { metaKey: true, shiftKey: true });
+
+      const group = acmeGroup();
+      const opened = group.tabs.find((t) => t.url === "/acme/projects")!;
+      expect(group.activeTabId).toBe(opened.id);
+      expectNothingOpenedExternally();
+    });
+
+    it("opens a background tab on middle click", () => {
+      const activeBefore = acmeGroup().activeTabId;
+
+      fireEvent(
+        renderLink(),
+        new MouseEvent("auxclick", { bubbles: true, cancelable: true, button: 1 }),
+      );
+
+      const group = acmeGroup();
+      expect(group.tabs.map((t) => t.url)).toContain("/acme/projects");
+      expect(group.activeTabId).toBe(activeBefore);
+      expectNothingOpenedExternally();
+    });
+
+    it('opens a foreground tab for target="_blank"', () => {
+      renderInProvider(
+        <AppLink href="/acme/agents" target="_blank">
+          Agents
+        </AppLink>,
+      );
+
+      fireEvent.click(screen.getByRole("link", { name: "Agents" }));
+
+      const group = acmeGroup();
+      const opened = group.tabs.find((t) => t.url === "/acme/agents")!;
+      expect(group.activeTabId).toBe(opened.id);
+      expectNothingOpenedExternally();
+    });
+  });
+
+  describe("useRowLink", () => {
+    function Row() {
+      const rowLink = useRowLink();
+      return (
+        <div data-testid="row" {...rowLink("/acme/agents", "Agents")}>
+          row
+        </div>
+      );
+    }
+
+    it("navigates in place on a plain click", () => {
+      renderInProvider(<Row />);
+
+      fireEvent.click(screen.getByTestId("row"));
+
+      expect(getActiveTab(useTabStore.getState())?.url).toBe("/acme/agents");
+      expectNothingOpenedExternally();
+    });
+
+    it("opens a background tab on cmd-click", () => {
+      renderInProvider(<Row />);
+      const activeBefore = acmeGroup().activeTabId;
+
+      fireEvent.click(screen.getByTestId("row"), { metaKey: true });
+
+      const group = acmeGroup();
+      expect(group.tabs.map((t) => t.url)).toContain("/acme/agents");
+      expect(group.activeTabId).toBe(activeBefore);
+      expectNothingOpenedExternally();
+    });
+
+    it("opens a background tab on middle click", () => {
+      renderInProvider(<Row />);
+
+      fireEvent(
+        screen.getByTestId("row"),
+        new MouseEvent("auxclick", { bubbles: true, cancelable: true, button: 1 }),
+      );
+
+      expect(acmeGroup().tabs.map((t) => t.url)).toContain("/acme/agents");
+      expectNothingOpenedExternally();
+    });
+  });
+
+  describe("useIntentNavigate", () => {
+    function renderIntent() {
+      let navigate: ReturnType<typeof useIntentNavigate> | null = null;
+      function Probe() {
+        navigate = useIntentNavigate();
+        return null;
+      }
+      renderInProvider(<Probe />);
+      return navigate! as ReturnType<typeof useIntentNavigate>;
+    }
+
+    it("opens a background tab for a background-tab intent", () => {
+      const navigate = renderIntent();
+      const activeBefore = acmeGroup().activeTabId;
+
+      act(() => navigate("/acme/agents", "background-tab", "Agents"));
+
+      const group = acmeGroup();
+      expect(group.tabs.map((t) => t.url)).toContain("/acme/agents");
+      expect(group.activeTabId).toBe(activeBefore);
+      expectNothingOpenedExternally();
+    });
+
+    it("opens a foreground tab for a foreground-tab intent", () => {
+      const navigate = renderIntent();
+
+      act(() => navigate("/acme/agents", "foreground-tab", "Agents"));
+
+      const group = acmeGroup();
+      const opened = group.tabs.find((t) => t.url === "/acme/agents")!;
+      expect(group.activeTabId).toBe(opened.id);
+      expectNothingOpenedExternally();
+    });
+  });
+
+  it("openInNewTab opens the path as a tab", () => {
+    const getAdapter = renderProvider();
+
+    getAdapter().openInNewTab!("/acme/agents", "Agents", { activate: true });
+
+    const group = acmeGroup();
+    const opened = group.tabs.find((t) => t.url === "/acme/agents")!;
+    expect(group.activeTabId).toBe(opened.id);
+    expectNothingOpenedExternally();
   });
 });

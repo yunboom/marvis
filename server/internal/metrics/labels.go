@@ -35,6 +35,7 @@ const (
 	labelGate         = "gate"
 	labelOutcome      = "outcome"
 	labelStage        = "stage"
+	labelClaimPath    = "claim_path"
 )
 
 var businessMetricLabels = map[string][]string{
@@ -45,6 +46,7 @@ var businessMetricLabels = map[string][]string{
 	"marvis_agent_task_failed_total":                  {labelSource, labelRuntimeMode, labelFailureReason},
 	"marvis_agent_task_queue_wait_seconds":            {labelSource, labelRuntimeMode},
 	"marvis_agent_task_claimable_wait_seconds":        {labelSource, labelRuntimeMode},
+	"marvis_agent_task_claim_decision_total":          {labelClaimPath, labelOutcome, labelReason},
 	"marvis_agent_task_run_seconds":                   {labelSource, labelRuntimeMode, labelTerminalStatus},
 	"marvis_agent_task_total_seconds":                 {labelSource, labelRuntimeMode, labelTerminalStatus},
 	"marvis_agent_task_in_progress":                   {labelSource, labelRuntimeMode},
@@ -158,6 +160,7 @@ var (
 		"kimi":         "kimi",
 		"reasonix":     "reasonix",
 		"dim":          "dim",
+		"devin":        "devin",
 		"mcode":        "mcode",
 		"muse":         "muse",
 		"zeroclaw":     "zeroclaw",

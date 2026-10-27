@@ -153,7 +153,7 @@ const {
 
 vi.mock("@marvis/core/api", () => ({
   api: {
-    getBaseUrl: () => "http://127.0.0.1:8080",
+    getBaseUrl: () => "http://127.0.0.1:13840",
     searchIssues: mockSearchIssues,
     searchProjects: mockSearchProjects,
   },
@@ -230,9 +230,11 @@ vi.mock("@marvis/core/paths", async (importOriginal) => ({
     myIssues: () => "/ws-test/my-issues",
     issues: () => "/ws-test/issues",
     projects: () => "/ws-test/projects",
+    workflows: () => "/ws-test/workflows",
     autopilots: () => "/ws-test/autopilots",
     agents: () => "/ws-test/agents",
     squads: () => "/ws-test/squads",
+    kb: () => "/ws-test/kb",
     usage: () => "/ws-test/usage",
     runtimes: () => "/ws-test/runtimes",
     skills: () => "/ws-test/skills",

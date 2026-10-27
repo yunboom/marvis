@@ -12,6 +12,7 @@ import (
 	"net/netip"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -34,6 +35,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/integrations/telegram"
 	"github.com/yunboom/marvis/server/internal/integrations/wecom"
 	"github.com/yunboom/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/kb"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 	"github.com/yunboom/marvis/server/internal/middleware"
 	"github.com/yunboom/marvis/server/internal/realtime"
@@ -43,6 +45,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/util"
 	"github.com/yunboom/marvis/server/internal/util/secretbox"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/embedding"
 	"github.com/yunboom/marvis/server/pkg/featureflag"
 	"github.com/yunboom/marvis/server/pkg/llm"
 )
@@ -157,16 +160,42 @@ type Config struct {
 	// cmd/server validates the raw value before the boot continues, so a
 	// non-boolean never reaches this struct.
 	LLMDisableThinking bool
+	// Embedding* configure the embedding model behind the vector half of
+	// knowledge base search (pkg/embedding). All three must be set to enable
+	// it; otherwise search is keyword only.
+	//   - EmbeddingBaseURL -> MARVIS_EMBEDDING_BASE_URL
+	//   - EmbeddingAPIKey  -> MARVIS_EMBEDDING_API_KEY
+	//   - EmbeddingModel   -> MARVIS_EMBEDDING_MODEL
+	//   - EmbeddingBatchSize -> MARVIS_EMBEDDING_BATCH_SIZE (inputs per request)
+	EmbeddingBaseURL   string
+	EmbeddingAPIKey    string
+	EmbeddingModel     string
+	EmbeddingBatchSize int
 	// ServerVersion is the build version of the running API binary (the same
 	// value main.go stamps via -X main.version and reports on /metrics).
 	// Surfaced through /api/config so self-hosted operators can confirm which
 	// server build is deployed. Empty in dev builds.
 	ServerVersion string
+	// ServerName 是展示给局域网用户的服务器名称，对应 MARVIS_LAN_NAME。
+	// 经 /api/config 下发，客户端用它核实"这是哪一台服务器"；空时不下发。
+	ServerName string
+	// InstanceID 是本部署的实例 ID（instance_telemetry_state.instance_id）。
+	// 经 /api/config 下发，客户端用它判断服务器版本是否支持局域网发现并去重；空时不下发。
+	InstanceID string
+	// LANHostname 返回局域网广播当前使用的主机名（如 marvis.local），没有在广播时返回空串；
+	// nil 表示不广播。桌面端飞书登录用它和 LANPort 推导回调地址。
+	LANHostname func() string
+	// LANPort 是局域网广播的端口，即服务端监听端口。
+	LANPort int
 	// GitExtraCACerts is the PEM of the private CAs the operator added to the
 	// backend's trust store through SSL_CERT_DIR (see internal/gitca). It is
 	// handed to daemons with the workspace repos so their git can reach a
 	// repository host the backend already trusts. Empty when none are set.
 	GitExtraCACerts []byte
+	// BootstrapToken is the one-time token (MARVIS_BOOTSTRAP_TOKEN) the desktop
+	// app passes to a standalone server it starts, so it can sign the host's
+	// admin in through POST /auth/bootstrap. Empty disables that endpoint.
+	BootstrapToken string
 }
 
 type cloudRuntimeProxy interface {
@@ -280,6 +309,11 @@ type Handler struct {
 	CloudRuntime                 cloudRuntimeProxy
 	// Test-only HTTP override; nil uses the default client in production.
 	googleOAuthHTTPClient *http.Client
+	// 飞书登录的测试注入点：nil / 空串时分别使用默认 HTTP client 与 https://open.feishu.cn。
+	larkLoginHTTPClient *http.Client
+	larkLoginAPIBaseURL string
+	// larkDesktopStates 保存桌面端飞书登录的一次性 state，由 New 创建；为 nil 时桌面端飞书登录不可用。
+	larkDesktopStates *larkDesktopStateStore
 	// Lark integration. All three are nil when the Lark master key
 	// (MARVIS_LARK_SECRET_KEY) is unset; the corresponding HTTP
 	// handlers return 403 in that case so a misconfigured self-host
@@ -333,6 +367,14 @@ type Handler struct {
 	ChannelMediaReconciler *service.ChannelMediaReconciler
 	// LarkTyping owns the durable reaction cleanup worker, started under sweepCtx.
 	LarkTyping *lark.TypingIndicatorManager
+	// LarkInviteAPI 是飞书邀请卡片用到的开放平台接口；nil 表示飞书邀请不可用，相关接口返回 lark_not_configured。
+	LarkInviteAPI lark.InviteAPIClient
+	// LarkInviteCreds 是飞书登录应用的凭据，飞书邀请的所有开放平台调用都用它。
+	LarkInviteCreds lark.InstallationCredentials
+	// LarkInviteDownloadURL 是卡片上“下载 Marvis”按钮的链接，为空时不显示该按钮。
+	LarkInviteDownloadURL string
+	// LarkInviteConn 是飞书登录应用的卡片回调长连接，由 main 在 sweepCtx 下启动；nil 表示飞书邀请不可用。
+	LarkInviteConn *lark.InviteConnection
 	// SlackInstall owns the bring-your-own-app Slack install lifecycle (register
 	// pasted tokens / list / revoke) and the at-rest encryption of each app's bot
 	// + app tokens (MUL-3666). Nil unless MARVIS_SLACK_SECRET_KEY is set.
@@ -412,6 +454,17 @@ type Handler struct {
 	// Config); when unconfigured its Enabled() reports false and callers fall
 	// back silently.
 	LLM *llm.Client
+	// KbEmbedder embeds knowledge base search queries. Always non-nil; when
+	// unconfigured its Enabled() reports false and search is keyword only.
+	KbEmbedder kb.Embedder
+	// KbEmbeddings indexes mainline blocks for the vector half of search.
+	// Mainline writes call KbEmbeddings.Enqueue after they commit; main.go
+	// runs it.
+	KbEmbeddings *kb.EmbeddingIndexer
+	// kbDraftEvents coalesces kb.draft.updated per draft (one event per
+	// second of writes). Nil on handlers not built by New; events are then
+	// dropped.
+	kbDraftEvents *kbDraftNotifier
 	// VCSSecretBox encrypts/decrypts per-workspace Git provider access tokens and
 	// webhook secrets at rest (Forgejo / Gitea / GitLab). Nil when
 	// MARVIS_VCS_SECRET_KEY is unset; connect returns 403 and webhook returns 404
@@ -430,6 +483,9 @@ type Handler struct {
 	// Wired in cmd/server/router.go after New.
 	PRRefresh *ghsnapshot.Manager
 	cfg       Config
+	// bootstrapUsed flips once the bootstrap token has signed someone in. A
+	// pointer because Handler is copied by value; copies share the flag.
+	bootstrapUsed *atomic.Bool
 }
 
 func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *events.Bus, emailService *service.EmailService, store storage.Storage, cfSigner *auth.CloudFrontSigner, analyticsClient analytics.Client, cfg Config, daemonHubs ...*daemonws.Hub) *Handler {
@@ -488,6 +544,15 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 		"disable_thinking", llmClient.DisableThinking(),
 	)
 
+	embedder := embedding.New(embedding.Config{
+		BaseURL:   cfg.EmbeddingBaseURL,
+		APIKey:    cfg.EmbeddingAPIKey,
+		Model:     cfg.EmbeddingModel,
+		BatchSize: cfg.EmbeddingBatchSize,
+	})
+	// The model only; never the key or the base URL, which may embed a token.
+	slog.Info("kb embedding", "enabled", embedder.Enabled(), "model", embedder.Model(), "batch_size", embedder.BatchSize())
+
 	taskSvc := service.NewTaskService(queries, txStarter, hub, bus, daemonHub)
 	taskSvc.Analytics = analyticsClient
 	taskSvc.SourceContextStorage = store
@@ -530,8 +595,13 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 			BaseURL: cfg.CloudURL,
 			Timeout: cfg.CloudTimeout,
 		}),
-		LLM: llmClient,
-		cfg: cfg,
+		LLM:               llmClient,
+		KbEmbedder:        embedder,
+		KbEmbeddings:      kb.NewEmbeddingIndexer(queries, embedder),
+		kbDraftEvents:     &kbDraftNotifier{},
+		cfg:               cfg,
+		bootstrapUsed:     &atomic.Bool{},
+		larkDesktopStates: &larkDesktopStateStore{},
 	}
 	h.WebhookDeliveryWorker = NewWebhookDeliveryWorker(h)
 	// The default passthrough scheduler reports sweeper-race recoveries so the

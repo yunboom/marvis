@@ -63,7 +63,7 @@ vi.mock("@marvis/core/workspace/mutations", () => ({
 vi.mock("@marvis/core/api", () => ({
   api: {
     updateWorkspace: mockUpdateWorkspace,
-    getBaseUrl: () => "http://127.0.0.1:8080",
+    getBaseUrl: () => "http://127.0.0.1:13840",
   },
 }));
 

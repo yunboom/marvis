@@ -13,13 +13,14 @@ import {
   type ChartConfig,
 } from "@marvis/ui/components/ui/chart";
 import { useT } from "../../../i18n";
+import { CHART_MONO, monoBarFill } from "./chart-tones";
 
 // Weekly counterpart of DailyTimeChart — same single-series bar, but each
 // bar represents Mon–Sun run-time totals. Partial weeks render at half
 // opacity and tag their tooltip with "(partial · N / 7 days)" so the user
 // can't misread an in-progress week as a sudden drop.
 const weeklyTimeChartConfig = {
-  totalSeconds: { label: "Run time", color: "var(--chart-1)" },
+  totalSeconds: { label: "Run time", color: CHART_MONO[1] },
 } satisfies ChartConfig;
 
 export interface WeeklyTimeData {
@@ -47,7 +48,7 @@ export function WeeklyTimeChart({
       config={weeklyTimeChartConfig}
       className="aspect-[3/1] w-full"
     >
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -64,6 +65,7 @@ export function WeeklyTimeChart({
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               labelKey="rangeLabel"
@@ -87,7 +89,7 @@ export function WeeklyTimeChart({
         />
         <Bar
           dataKey="totalSeconds"
-          fill="var(--color-totalSeconds)"
+          {...monoBarFill("totalSeconds")}
           radius={[3, 3, 0, 0]}
         >
           {data.map((d) => (

@@ -6,15 +6,15 @@
 -- pods during a rolling deploy: the unique (workspace_id, key) index makes a
 -- losing racer a no-op rather than an error. Initial positions are 0; the list's
 -- built-in tiebreak preserves the seed order until an admin reorders the group.
-INSERT INTO issue_status (workspace_id, key, name, description, category, color, is_system, position)
+INSERT INTO issue_status (workspace_id, key, name, description, category, status_group, color, is_system, position)
 VALUES
-    (sqlc.arg('workspace_id')::uuid, 'backlog', 'Backlog', 'Parked. Assigning an issue here never starts an agent run.', 'unstarted', '#6b7280', TRUE, 0),
-    (sqlc.arg('workspace_id')::uuid, 'todo', 'Todo', 'Queued for work. Moving an issue here starts the assigned agent.', 'unstarted', '#6b7280', TRUE, 0),
-    (sqlc.arg('workspace_id')::uuid, 'in_progress', 'In Progress', 'Actively being worked on.', 'started', '#f59e0b', TRUE, 0),
-    (sqlc.arg('workspace_id')::uuid, 'in_review', 'In Review', 'Work delivered, waiting on human review. Finalizes the autopilot run.', 'started', '#22c55e', TRUE, 0),
-    (sqlc.arg('workspace_id')::uuid, 'done', 'Done', 'Completed.', 'done', '#3b82f6', TRUE, 0),
-    (sqlc.arg('workspace_id')::uuid, 'blocked', 'Blocked', 'Stalled on an external dependency.', 'started', '#ef4444', TRUE, 0),
-    (sqlc.arg('workspace_id')::uuid, 'cancelled', 'Cancelled', 'Decided not to do.', 'closed', '#6b7280', TRUE, 0)
+    (sqlc.arg('workspace_id')::uuid, 'backlog', 'Backlog', 'Parked. Assigning an issue here never starts an agent run.', 'unstarted', 'not_started', '#6b7280', TRUE, 0),
+    (sqlc.arg('workspace_id')::uuid, 'todo', 'Todo', 'Queued for work. Moving an issue here starts the assigned agent.', 'unstarted', 'not_started', '#6b7280', TRUE, 0),
+    (sqlc.arg('workspace_id')::uuid, 'in_progress', 'In Progress', 'Actively being worked on.', 'started', 'working', '#f59e0b', TRUE, 0),
+    (sqlc.arg('workspace_id')::uuid, 'in_review', 'In Review', 'Work delivered, waiting on human review. Finalizes the autopilot run.', 'started', 'needs_attention', '#22c55e', TRUE, 0),
+    (sqlc.arg('workspace_id')::uuid, 'done', 'Done', 'Completed.', 'done', 'ended', '#3b82f6', TRUE, 0),
+    (sqlc.arg('workspace_id')::uuid, 'blocked', 'Blocked', 'Stalled on an external dependency.', 'started', 'needs_attention', '#ef4444', TRUE, 0),
+    (sqlc.arg('workspace_id')::uuid, 'cancelled', 'Cancelled', 'Decided not to do.', 'closed', 'ended', '#6b7280', TRUE, 0)
 ON CONFLICT DO NOTHING;
 
 -- name: ListIssueStatusEntries :many
@@ -51,14 +51,16 @@ WHERE id = sqlc.arg('id')::uuid
 
 -- name: CreateIssueStatusEntry :one
 -- Custom statuses only: is_system is never set here, so the canonical-key and
--- non-archivable CHECK constraints can only ever apply to seeded rows.
-INSERT INTO issue_status (workspace_id, key, name, description, category, color, icon, position)
+-- non-archivable CHECK constraints can only ever apply to seeded rows. An empty
+-- status_group takes the category default from issue_status_fill_group.
+INSERT INTO issue_status (workspace_id, key, name, description, category, status_group, color, icon, position)
 VALUES (
     sqlc.arg('workspace_id')::uuid,
     sqlc.arg('key')::text,
     sqlc.arg('name')::text,
     sqlc.arg('description')::text,
     sqlc.arg('category')::text,
+    NULLIF(sqlc.arg('status_group')::text, ''),
     sqlc.arg('color')::text,
     sqlc.arg('icon')::text,
     COALESCE(
@@ -73,9 +75,12 @@ RETURNING *;
 -- name: UpdateIssueStatusEntry :one
 -- key and category are absent on purpose: both are immutable after create.
 -- The is_system guard is what enforces "built-in name and color are locked" at
--- the storage layer, so a handler bug cannot rename a built-in.
+-- the storage layer, so a handler bug cannot rename a built-in. status_group
+-- only moves between working and needs_attention; the group CHECK rejects any
+-- other pairing with the row's category.
 UPDATE issue_status SET
     name = COALESCE(sqlc.narg('name'), name),
+    status_group = COALESCE(sqlc.narg('status_group'), status_group),
     description = COALESCE(sqlc.narg('description'), description),
     color = COALESCE(sqlc.narg('color'), color),
     icon = COALESCE(sqlc.narg('icon'), icon),

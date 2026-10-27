@@ -40,7 +40,7 @@ export function AgentOverviewSummary({
         <h2 className="text-body font-medium">
           {t(($) => $.overview.agent_context)}
         </h2>
-        <dl className="mt-4 space-y-3 text-caption">
+        <dl className="mt-4 space-y-3 text-label">
           {owner && (
             <SummaryRow label={t(($) => $.inspector.prop_owner)}>
               <span className="flex min-w-0 items-center gap-1.5">
@@ -97,7 +97,7 @@ export function AgentOverviewSummary({
       </section>
 
       {qoderRuntime ? null : (
-      <section className="mt-5 border-t pt-5">
+      <section className="mt-5 border-t border-border pt-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-body font-medium">
             {t(($) => $.inspector.section_skills)}
@@ -111,7 +111,7 @@ export function AgentOverviewSummary({
             {agent.skills.map((skill) => (
               <span
                 key={skill.id}
-                className="max-w-full truncate rounded-md border border-surface-border bg-surface-hover px-2 py-1 text-caption text-muted-foreground"
+                className="max-w-full truncate rounded-full bg-surface-sunken px-2.5 py-1 text-caption text-muted-foreground"
               >
                 {skill.name}
               </span>

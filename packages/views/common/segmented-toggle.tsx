@@ -20,7 +20,7 @@ export function SegmentedToggle<T extends string>({
   buttonClassName?: string;
 }) {
   return (
-    <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-md bg-muted p-1">
+    <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-lg bg-field p-1">
       {options.map(([key, label]) => (
         <button
           key={key}
@@ -30,10 +30,10 @@ export function SegmentedToggle<T extends string>({
             if (key !== value) onChange(key);
           }}
           className={cn(
-            "rounded-sm font-medium transition-colors",
+            "rounded-row font-medium transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant)",
             buttonClassName ?? "px-2 py-1 text-caption",
             value === key
-              ? "bg-background text-foreground shadow-sm"
+              ? "bg-surface text-foreground shadow-control dark:bg-white/12"
               : "text-muted-foreground hover:text-foreground",
           )}
         >

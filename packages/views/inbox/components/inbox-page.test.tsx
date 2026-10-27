@@ -86,6 +86,7 @@ vi.mock("@marvis/core/inbox/queries", () => ({
 // fresh `vi.fn()` per render would make the effect's deps churn.
 const markReadMutate = vi.fn();
 const markUnreadMutate = vi.fn();
+const markAllReadMutate = vi.fn();
 const archiveMutate = vi.fn();
 const unarchiveMutate = vi.fn();
 const retrySourceContextMutateAsync = vi.fn();
@@ -106,7 +107,7 @@ vi.mock("@marvis/core/inbox/mutations", () => {
     useMarkInboxUnread: () => ({ mutate: markUnreadMutate }),
     useArchiveInbox: () => ({ mutate: archiveMutate }),
     useUnarchiveInbox: () => ({ mutate: unarchiveMutate }),
-    useMarkAllInboxRead: mutation,
+    useMarkAllInboxRead: () => ({ mutate: markAllReadMutate }),
     useArchiveAllInbox: mutation,
     useArchiveAllReadInbox: mutation,
     useArchiveCompletedInbox: mutation,
@@ -147,13 +148,15 @@ vi.mock("../../navigation", () => ({
 // about actioning a row WHILE it is open need the two-panel desktop layout,
 // since a single column swaps the list out for the detail on selection.
 const PHONE = 390;
-const FOLD_INNER = 851;
-const TABLET = 1024;
+// iPhone Duo's inner screen: 669px wide held upright, 951px held sideways.
+const FOLD_INNER_PORTRAIT = 669;
+const FOLD_INNER_LANDSCAPE = 951;
+const TABLET = 768;
 const DESKTOP = 1440;
 const layout = { width: PHONE };
 vi.mock("@marvis/ui/hooks/use-mobile", () => ({
   useIsMobile: () => layout.width < 768,
-  useIsCompact: () => layout.width < 1024,
+  useIsCompact: () => layout.width < 768,
 }));
 vi.mock("@marvis/ui/components/ui/resizable", () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
@@ -286,6 +289,7 @@ function reset() {
   replace.mockClear();
   markReadMutate.mockReset();
   markUnreadMutate.mockClear();
+  markAllReadMutate.mockClear();
   archiveMutate.mockClear();
   unarchiveMutate.mockClear();
   retrySourceContextMutateAsync.mockReset();
@@ -479,11 +483,13 @@ describe("InboxPage", () => {
     render(<InboxPage />);
 
     expect(screen.queryByTestId("row")).toBeNull();
-    // The test's `useT` names every control "Inbox"; the header's batch menu
-    // shares the name, so skip the menu trigger.
+    // The test's `useT` names every control "Inbox"; the header's mark-all-read
+    // button and batch menu share the name, so take the empty state's button,
+    // which renders after the header.
     const clearFilters = screen
       .getAllByRole("button", { name: "Inbox" })
-      .find((button) => !button.hasAttribute("aria-haspopup"));
+      .filter((button) => !button.hasAttribute("aria-haspopup"))
+      .at(-1);
     fireEvent.click(clearFilters!);
     expect(screen.getByTestId("row")).toHaveTextContent("todo-high");
   });
@@ -668,6 +674,36 @@ describe("InboxPage", () => {
     fireEvent.click(screen.getByTestId("row"));
 
     expect(replace).toHaveBeenCalledWith("/acme/inbox?issue=issue-3");
+  });
+
+  // The message box sits over another page whose URL it must not touch, and a
+  // stray `?issue=` on that page is not a selection for the box.
+  it("keeps the dialog's selection out of the URL", () => {
+    reset();
+    searchParams = new URLSearchParams("issue=issue-3");
+    listData.active = [item({ id: "active-1", issue_id: "issue-3" })];
+    issueDetailProps.length = 0;
+
+    const close = <button type="button">Close box</button>;
+    render(<InboxPage surface="dialog" closeAction={close} />);
+    expect(issueDetailProps).toHaveLength(0);
+
+    fireEvent.click(screen.getByTestId("row"));
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(issueDetailProps.at(-1)?.issueId).toBe("issue-3");
+    expect(issueDetailProps.at(-1)?.trailingActions).toBe(close);
+  });
+
+  it("puts mark-all-read in the header, not the batch menu", () => {
+    reset();
+    listData.active = [item({ id: "unread-1", read: false })];
+
+    render(<InboxPage />);
+    const buttons = screen.getAllByRole("button", { name: "Inbox" });
+    fireEvent.click(buttons.find((b) => !b.hasAttribute("aria-haspopup"))!);
+
+    expect(markAllReadMutate).toHaveBeenCalledTimes(1);
   });
 
   // `InboxItem.issue_id` is nullable: a quick-create outcome is a notification,
@@ -878,12 +914,11 @@ describe("InboxPage", () => {
     expect(markReadMutate).toHaveBeenCalledWith("inbox-a", expect.anything());
   });
 
-  it("folds to a single column on a folded inner screen", () => {
-    // 851px — the reported Pixel Fold inner screen. Above the phone breakpoint
-    // but far too narrow for nav + list + detail, so it takes the same single
-    // column: opening a row replaces the list rather than sharing the width.
+  it("folds to a single column on a foldable's inner screen held upright", () => {
+    // Below the compact breakpoint the list and detail cannot share the
+    // width: opening a row replaces the list.
     reset();
-    layout.width = FOLD_INNER;
+    layout.width = FOLD_INNER_PORTRAIT;
     listData.active = [item({ id: "inbox-a", issue_id: "issue-a" })];
 
     render(<InboxPage />);
@@ -894,12 +929,13 @@ describe("InboxPage", () => {
     expect(screen.queryByTestId("list")).toBeNull();
   });
 
-  it("keeps both panes at the compact breakpoint", () => {
-    // 1024px is the first width that keeps the two-pane layout. The nav
+  it.each([TABLET, FOLD_INNER_LANDSCAPE])("keeps both panes at %spx", (width) => {
+    // 768px is the first width that keeps the two-pane layout. The nav
     // auto-collapses there instead (see the sidebar), so the list has to stay
-    // on screen next to an open item.
+    // on screen next to an open item — on a foldable's inner screen held
+    // sideways as much as on a tablet.
     reset();
-    layout.width = TABLET;
+    layout.width = width;
     listData.active = [item({ id: "inbox-a", issue_id: "issue-a" })];
 
     render(<InboxPage />);

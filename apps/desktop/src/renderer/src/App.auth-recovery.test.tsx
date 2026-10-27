@@ -178,6 +178,7 @@ beforeEach(() => {
       onInviteOpen: () => () => {},
       onSystemLocaleChanged: () => () => {},
       reportAuthSession: vi.fn(),
+      server: { current: vi.fn().mockResolvedValue(null) },
       runtimeConfig: {
         config: { apiUrl: "http://localhost", wsUrl: "ws://localhost" },
         ok: true,
@@ -189,21 +190,21 @@ beforeEach(() => {
 });
 
 describe("App main-window auth recovery", () => {
-  it("keeps auth recovery ahead of the desktop shell while the session recovers", () => {
+  it("keeps auth recovery ahead of the desktop shell while the session recovers", async () => {
     state.auth.status = "recovering";
 
     render(<App />);
 
-    expect(screen.getByTestId("auth-recovery")).toBeInTheDocument();
+    expect(await screen.findByTestId("auth-recovery")).toBeInTheDocument();
     expect(screen.queryByTestId("desktop-shell")).toBeNull();
   });
 
-  it("uses recovery with retry when the workspace list is unavailable", () => {
+  it("uses recovery with retry when the workspace list is unavailable", async () => {
     state.workspaceListUnavailable = true;
 
     render(<App />);
 
-    expect(screen.getByTestId("auth-recovery")).toBeInTheDocument();
+    expect(await screen.findByTestId("auth-recovery")).toBeInTheDocument();
     expect(screen.queryByTestId("desktop-shell")).toBeNull();
 
     fireEvent.click(

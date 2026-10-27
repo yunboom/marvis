@@ -118,19 +118,19 @@ marvis daemon start
 ```
 
 By default, the daemon runs in the background and writes its log into the state
-directory of the profile it was started with — **not always `~/.marvis-studio/`**:
+directory of the profile it was started with — **not always `~/.marvis/`**:
 
 | Profile | State directory |
 | --- | --- |
-| Default (no `--profile`) | `~/.marvis-studio/` |
-| Named (`--profile <name>`) | `~/.marvis-studio/profiles/<name>/` |
+| Default (no `--profile`) | `~/.marvis/` |
+| Named (`--profile <name>`) | `~/.marvis/profiles/<name>/` |
 
 That directory holds `daemon.log` (the log), `daemon.pid` (the background
 daemon's PID), and `daemon.err.log` (raw crash output; near-empty on a healthy
 daemon, since normal logging goes to `daemon.log`).
 
 The Desktop app runs its own named profile, so on a machine that has ever run
-both, `~/.marvis-studio/daemon.log` and `~/.marvis-studio/profiles/<name>/daemon.log` both
+both, `~/.marvis/daemon.log` and `~/.marvis/profiles/<name>/daemon.log` both
 exist and both read as plausible logs — only one is being written to. Don't
 guess: `marvis daemon logs` prints the absolute path it resolved (see
 [Logs](#logs)).
@@ -287,6 +287,7 @@ The daemon auto-detects these AI CLIs on your PATH:
 | Kimi | `kimi` | Moonshot coding agent |
 | [Reasonix](https://github.com/esengine/DeepSeek-Reasonix) | `reasonix` | DeepSeek-focused ACP coding agent (run `reasonix setup` first) |
 | Dim | `dim` | DimCode ACP coding agent (speaks the ACP protocol via `dim acp`) |
+| [Devin CLI](https://docs.devin.ai/cli/quickstart) | `devin` | Version 3000.3.22+. Host-local ACP (`devin acp`), not cloud Devin VMs. Run `devin auth login` first. |
 | Kiro CLI | `kiro-cli` | Kiro ACP coding agent |
 | [Qoder CLI](https://docs.qoder.com/) | `qodercli` | Qoder ACP coding agent |
 | [Qoder CN CLI](https://help.aliyun.com/en/lingma/qodercli-cn/product-overview/what-is-qoder-cli-cn) | `qoderclicn` | Qoder CN ACP coding agent |
@@ -390,7 +391,7 @@ Agent-specific overrides:
 | `MARVIS_OPENCODE_PATH` | Custom path to the `opencode` binary |
 | `MARVIS_OPENCODE_MODEL` | Override the OpenCode model used |
 | `MARVIS_OPENCLAW_PATH` | Custom path to the `openclaw` binary |
-| `MARVIS_OPENCLAW_MODEL` | Override the OpenClaw model used |
+| `MARVIS_OPENCLAW_MODEL` | Select the registered OpenClaw agent ID used by default; the agent's `runtime_config.model_override` persistently overrides its underlying model for all newly claimed runs until changed or cleared |
 | `MARVIS_OPENCLAW_CLI_TIMEOUT` | Deadline for each `openclaw config ...` call during task preparation (default 30s; accepts `45s` or `45`). Raise it when the local CLI is slow to start; the daemon also reads it from `backends.openclaw.cli_timeout` in the CLI config |
 | `MARVIS_HERMES_PATH` | Custom path to the `hermes` binary |
 | `MARVIS_HERMES_MODEL` | Override the Hermes model used |
@@ -404,6 +405,8 @@ Agent-specific overrides:
 | `MARVIS_REASONIX_MODEL` | Override the Reasonix model used |
 | `MARVIS_DIM_PATH` | Custom path to the `dim` binary |
 | `MARVIS_DIM_MODEL` | Override the Dim model used |
+| `MARVIS_DEVIN_PATH` | Custom path to the `devin` binary |
+| `MARVIS_DEVIN_MODEL` | Override the Devin model used |
 | `MARVIS_KIRO_PATH` | Custom path to the `kiro-cli` binary |
 | `MARVIS_KIRO_MODEL` | Override the Kiro model used |
 | `MARVIS_QODER_PATH` | Custom path to the `qodercli` binary |
@@ -423,7 +426,7 @@ Agent-specific overrides:
 | `MARVIS_DSH_PATH` | Custom path to the `dsh` binary |
 | `MARVIS_DSH_MODEL` | Override the DeepSeek Harness model used (a model id from the dsh catalog, e.g. `deepseek-official/deepseek-chat`) |
 
-If a previously generated `~/.marvis-studio/hooks` wrapper is first on `PATH` and calls the same command name again, the daemon skips that hooks directory during built-in agent discovery and records the real binary path behind it. If your interactive shell still recurses when you run `claude`, `codex`, or `hermes` manually, remove the hooks entry from your shell startup file or replace the wrapper body with an absolute `exec /path/to/real-binary "$@"`.
+If a previously generated `~/.marvis/hooks` wrapper is first on `PATH` and calls the same command name again, the daemon skips that hooks directory during built-in agent discovery and records the real binary path behind it. If your interactive shell still recurses when you run `claude`, `codex`, or `hermes` manually, remove the hooks entry from your shell startup file or replace the wrapper body with an absolute `exec /path/to/real-binary "$@"`.
 
 The daemon launches Qoder and Qoder CN as `qodercli --yolo --acp` and `qoderclicn --yolo --acp`, respectively, matching their ACP “bypass permissions” mode so tool runs do not block on interactive approval in headless runs.
 The daemon launches Qwen Code as `qwen -p <prompt> --output-format stream-json`. It writes the task brief to `QWEN.md`; when an agent has managed `mcp_config`, the daemon writes a 0600 per-run JSON file and passes it through `--mcp-config <path>`, then removes it after the process exits. A null config preserves Qwen Code native MCP settings.
@@ -482,7 +485,7 @@ Or configure manually:
 
 ```bash
 # Set URLs individually
-marvis config set server_url http://localhost:8080
+marvis config set server_url http://localhost:13840
 marvis config set app_url http://localhost:3000
 
 # For production with TLS:
@@ -508,7 +511,7 @@ marvis daemon start --profile staging
 marvis daemon start
 ```
 
-Each profile gets its own config directory (`~/.marvis-studio/profiles/<name>/`), daemon state, health port, and workspace root. Daemon state means that profile's own `daemon.log`, `daemon.err.log`, `daemon.pid`, and `daemon.port` live in that directory too — see [Start](#start) for the layout, and pass `--profile <name>` to `daemon status` / `daemon logs` to act on it. The daemon normally uses the profile-derived health port. If the OS refuses that port, it binds an available loopback port and records the actual port in `daemon.port` for lifecycle commands. The record is valid only while its daemon is alive; do not edit it to configure a port.
+Each profile gets its own config directory (`~/.marvis/profiles/<name>/`), daemon state, health port, and workspace root. Daemon state means that profile's own `daemon.log`, `daemon.err.log`, `daemon.pid`, and `daemon.port` live in that directory too — see [Start](#start) for the layout, and pass `--profile <name>` to `daemon status` / `daemon logs` to act on it. The daemon normally uses the profile-derived health port. If the OS refuses that port, it binds an available loopback port and records the actual port in `daemon.port` for lifecycle commands. The record is valid only while its daemon is alive; do not edit it to configure a port.
 
 ## Workspaces
 

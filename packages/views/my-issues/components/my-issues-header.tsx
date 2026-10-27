@@ -22,9 +22,9 @@ import { useT } from "../../i18n";
 import { WorkspaceAgentWorkingChip } from "../../issues/components/workspace-agent-working-chip";
 import {
   IssueDisplayControls,
+  ISSUES_SCOPE_MENU_BUTTON,
+  ISSUES_TOOLBAR_ROW,
 } from "../../issues/components/issues-header";
-import { cn } from "@marvis/ui/lib/utils";
-import { PAGE_GUTTER } from "../../layout/page-header";
 import { FilterChipsBar } from "../../issues/components/filter-chips-bar";
 import { toast } from "sonner";
 import { SaveViewDialog, type SaveViewScope } from "../../issues/components/save-view-dialog";
@@ -97,7 +97,7 @@ export function MyIssuesHeader({
 
   return (
     <>
-    <div className={cn("min-h-12 shrink-0 py-2 [-webkit-overflow-scrolling:touch]", PAGE_GUTTER)}>
+    <div className={ISSUES_TOOLBAR_ROW}>
       <div className="flex w-full min-w-0 items-start justify-between gap-2">
         <div className="hidden min-w-0 flex-1 md:block">
           <ViewBar
@@ -134,7 +134,7 @@ export function MyIssuesHeader({
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 gap-1 text-muted-foreground md:hidden"
+                className={ISSUES_SCOPE_MENU_BUTTON}
               >
                 <span className="truncate">{scopeLabel}</span>
                 <ChevronDown className="size-3 text-muted-foreground" />
@@ -155,9 +155,9 @@ export function MyIssuesHeader({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1.5">
           {agentRunningFilter && (
-            <span className="mr-1 hidden text-caption text-muted-foreground md:inline">
+            <span className="mr-1 hidden text-label text-muted-foreground md:inline">
               {tIssues(($) => $.agent_activity.filter_active_label)}
             </span>
           )}

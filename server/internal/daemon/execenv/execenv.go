@@ -23,6 +23,13 @@ type RepoContextForEnv struct {
 	Ref         string // optional default checkout ref for this task
 }
 
+// KnowledgeBaseForEnv describes a workspace knowledge base the brief lists.
+type KnowledgeBaseForEnv struct {
+	Slug        string // identifier the kb commands take
+	Name        string // user-entered name
+	Description string // user-entered one-line description; may be empty
+}
+
 // ProjectResourceForEnv describes a single resource attached to the issue's
 // project. The resource_ref payload is type-specific JSON; the agent reads
 // resources.json on disk for the full structure. This struct only carries
@@ -156,12 +163,20 @@ type TaskContextForEnv struct {
 	AgentInstructions             string // agent identity/persona instructions, injected into CLAUDE.md
 	AgentSkills                   []SkillContextForEnv
 	DisabledRuntimeSkills         []RuntimeSkillRefForEnv
-	Repos                         []RepoContextForEnv     // workspace repos available for checkout
-	ProjectID                     string                  // active project for this task, when present
-	ProjectTitle                  string                  // human-readable project title
-	ProjectDescription            string                  // durable project-level context, rendered into the brief's Project Context section
-	ProjectResources              []ProjectResourceForEnv // resources attached to the project
-	ChatSessionID                 string                  // non-empty for chat tasks
+	Repos                         []RepoContextForEnv // workspace repos available for checkout
+	// KnowledgeBases are the workspace's knowledge bases, rendered as the
+	// brief's Knowledge Bases section (spec 8.2). Durable workspace
+	// configuration like Repos: it changes only when knowledge bases are
+	// added, renamed or removed, so it keeps the prompt-cache prefix stable.
+	// Empty (no knowledge bases, or an old server) leaves the section out.
+	KnowledgeBases []KnowledgeBaseForEnv
+	// KnowledgeBasesTruncated is set when the server cut the list at its cap.
+	KnowledgeBasesTruncated bool
+	ProjectID               string                  // active project for this task, when present
+	ProjectTitle            string                  // human-readable project title
+	ProjectDescription      string                  // durable project-level context, rendered into the brief's Project Context section
+	ProjectResources        []ProjectResourceForEnv // resources attached to the project
+	ChatSessionID           string                  // non-empty for chat tasks
 	// ChatChannelType is the IM platform behind a chat session ("slack",
 	// "feishu", "wecom"); empty for a web/mobile chat. It names the surface in
 	// the brief's copy; what that surface can DELIVER is the separate field
@@ -214,6 +229,12 @@ type TaskContextForEnv struct {
 	// cap dropped from IssueStatuses, so the brief can disclose truncation
 	// instead of presenting a partial catalog as complete.
 	IssueStatusesOmitted int
+	// HasProjectWorkflow is true when the claim carried a project workflow
+	// brief for this issue (MUL-7420). The brief then swaps its built-in
+	// in_progress / in_review rules for a pointer at that per-turn block, whose
+	// statuses and commands are the issue's real contract (MUL-8145). Servers
+	// that send no workflow leave it false and the brief unchanged.
+	HasProjectWorkflow bool
 	// ConnectedApps lists per-run external app capabilities mounted through
 	// MCP overlays. Rendered briefly so the agent can map app names such as
 	// Notion to the actual MCP server name (`composio`).
@@ -242,9 +263,12 @@ type TaskContextForEnv struct {
 // storage CHECK to `^[a-z0-9][a-z0-9_]{0,31}$` but is still guarded with
 // sanitizeBriefCodeToken as defense-in-depth.
 type IssueStatusForEnv struct {
-	Key         string
-	Name        string
-	Category    string
+	Key      string
+	Name     string
+	Category string
+	// StatusGroup is empty from a server that predates it; the brief then
+	// uses the category default.
+	StatusGroup string
 	Description string
 }
 
@@ -281,7 +305,7 @@ type Environment struct {
 	LocalDirectory bool
 	// MarvisConfigRoot is the private per-task config directory exported to
 	// child CLI invocations. It prevents implicit discovery of the daemon
-	// owner's ~/.marvis-studio profile without changing the provider-facing HOME.
+	// owner's ~/.marvis profile without changing the provider-facing HOME.
 	MarvisConfigRoot string
 	// LocalWorktree is set when the task runs in worktree mode against a
 	// local_directory resource. The daemon calls Finalize on it after the

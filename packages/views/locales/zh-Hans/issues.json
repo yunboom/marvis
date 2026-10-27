@@ -367,7 +367,19 @@
     "empty_grouping": "没有匹配的任务",
     "no_value": "未设置",
     "ordered_by": "按{{field}}排序",
-    "manual_reorder_hint": "切换到“手动”排序后，才能调整同一列内的顺序。"
+    "manual_reorder_hint": "切换到“手动”排序后，才能调整同一列内的顺序。",
+    "status_column": {
+      "not_started": "未开始",
+      "working": "工作中",
+      "needs_attention": "需介入",
+      "ended": "已结束"
+    },
+    "lane_more_other": "还有 {{count}} 张",
+    "lane_collapse": "收起",
+    "lane_focus": "聚焦 {{status}}",
+    "focusing": "聚焦中",
+    "exit_focus": "退出聚焦",
+    "below_fold_other": "还有 {{count}} 张"
   },
   "peek": {
     "panel_label": "任务预览",
@@ -522,6 +534,7 @@
     "pr_auto_complete_disabled": "设置此任务合并后不改状态",
     "pr_auto_complete_enabled": "恢复了此任务合并后改状态",
     "wakeup_created": "添加了唤醒：{{condition}}唤醒 {{agent}}",
+    "wakeup_created_scheduled": "为 {{agent}} 添加了唤醒：{{condition}}",
     "wakeup_triggered": "{{condition}}，唤醒了 {{agent}}",
     "wakeup_triggered_merged": "{{condition}}，并入了 {{agent}} 待开始的运行",
     "wakeup_triggered_acknowledged": "{{condition}}，由 {{agent}} 自己触发，未重复唤醒",
@@ -635,6 +648,7 @@
     "recipient_count_other": "{{count}} 个智能体会收到",
     "steer_attachment_notice": "插话只支持文字，带附件的消息会在本轮结束后处理。",
     "restart_send": "停止并发送",
+    "restart_stopping": "停止中…",
     "restart_failed": "没能停止当前运行，消息还没有发送。"
   },
   "reply": {
@@ -664,6 +678,7 @@
     "hover_header_queued_other": "{{count}} 个智能体排队中",
     "status_running": "正在工作",
     "status_queued": "排队中",
+    "status_working": "工作中",
     "empty_hover": "当前没有智能体在工作",
     "unknown_hover": "工作中的智能体：尚未加载",
     "filter_active_label": "正在查看有智能体在工作的任务",
@@ -697,6 +712,7 @@
     "retry_failed": "重试运行失败",
     "retry_blocked": "未重试——你没有该智能体的使用权限",
     "transcript_tooltip": "查看记录",
+    "jump_to_run": "跳转到运行",
     "cancel_failed": "取消运行失败",
     "trigger_retry": "重试",
     "trigger_retry_attempt": "重试 #{{attempt}}",
@@ -823,7 +839,8 @@
   },
   "card": {
     "update_failed": "更新任务失败",
-    "updated_ago": "更新于 {{time}}"
+    "updated_ago": "更新于 {{time}}",
+    "overdue_days_other": "逾期 {{count}} 天"
   },
   "actions": {
     "rename_issue": "重命名任务",
@@ -1258,6 +1275,7 @@
       "other_done": "完成",
       "other_ended": "完成或取消",
       "other_in_review": "进入审核中",
+      "other_blocked": "进入 blocked",
       "max_fires": "最多触发",
       "max_fires_times_other": "{{count}} 次",
       "missing_value": "请选择一个值。",
@@ -1273,7 +1291,7 @@
       "wake_assignee": "唤醒负责人 {{name}}",
       "remaining_other": "还差 {{count}} 个",
       "blocked_backlog": "任务在待规划中，暂不唤醒",
-      "blocked_member": "负责人是成员，会收到收件箱通知",
+      "blocked_member": "负责人是成员，会收到消息通知",
       "blocked_none": "没有智能体负责人，不会唤醒",
       "turned_off": "已在此任务上关闭",
       "target_title": "唤醒",
@@ -1290,7 +1308,7 @@
       "save_error": "无法保存系统规则。",
       "default_on": "工作区默认开启，可在「设置 → 唤醒」中修改默认值。",
       "default_off": "工作区默认关闭，可在「设置 → 唤醒」中修改默认值。",
-      "notify_member": "通过收件箱通知 {{name}}",
+      "notify_member": "通过消息通知 {{name}}",
       "instruction": "唤醒后要做什么",
       "instruction_edit": "编辑指令",
       "instruction_default": "此任务未设置，使用默认指令：",
@@ -1311,6 +1329,7 @@
       "other_done": "当 {{issue}} 完成时",
       "other_ended": "当 {{issue}} 完成或取消时",
       "other_in_review": "当 {{issue}} 进入审核中时",
+      "other_blocked": "当 {{issue}} 进入 blocked 时",
       "another_issue": "另一个任务",
       "unknown_label": "已删除的标签",
       "unknown_property": "已删除的属性",
@@ -1334,6 +1353,7 @@
       "other_done": "等 {{issue}} 完成",
       "other_ended": "等 {{issue}} 结束",
       "other_in_review": "等 {{issue}} 进入审核",
+      "other_blocked": "等 {{issue}} 进入 blocked",
       "time": "{{time}} 唤醒 {{agent}}",
       "header": "{{agent}} 在{{what}}",
       "paused": "唤醒已自动暂停",
@@ -1485,7 +1505,7 @@
       "set_start": "设为起始步骤",
       "move_up": "上移",
       "move_down": "下移",
-      "remove": "移除列",
+      "remove": "移除这一步",
       "on_enter": "进入时交给",
       "choose_target": "请选择…",
       "instructions": "交接说明",
@@ -1504,7 +1524,7 @@
       "duplicate": "复制为新工作流",
       "copy_name": "{{name}} 副本",
       "more": "更多操作",
-      "steps_hint": "拖动调整中间列的顺序。Backlog 和 Blocked 可以关闭。新建的状态会在保存时创建。",
+      "steps_hint": "新建的状态会在保存时加入状态库。",
       "status_needs_admin": "{{names}} 是新的状态。只有工作区管理员可以添加状态：请移除这些列，或请管理员先添加这些状态。",
       "reorder": "调整「{{name}}」的顺序",
       "card_hand_to": "交给",
@@ -1527,7 +1547,6 @@
       "select_step": "选择一列，设置任务进入时交给谁。",
       "unsaved": "有未保存的修改",
       "not_found": "这个工作流已不存在。",
-      "default_note": "Default 是所有未选择工作流的项目、以及项目之外视图使用的看板。",
       "new_badge": "新建",
       "columns": "列",
       "include_status": "包含「{{status}}」",
@@ -1535,7 +1554,42 @@
       "step_off": "已关闭：这个工作流不使用这个状态。在左侧列表打开开关即可使用。",
       "status_new_hint": "新状态，保存时加入状态库。",
       "no_other_status": "所有状态都已经是步骤了。",
-      "no_handoff_step": "这一步不交接：任务进入时负责人不变，也不会启动运行。"
+      "no_handoff_step": "这一步不交接：任务进入时负责人不变，也不会启动运行。",
+      "zone": {
+        "start": "开始",
+        "middle": "中间步骤",
+        "middle_caption_other": "{{count}} 步 · 由你安排",
+        "blocked": "受阻",
+        "blocked_caption": "任何一步都能进入",
+        "end": "结束",
+        "fixed": "位置固定"
+      },
+      "why": {
+        "todo": "新任务都从待办开始，指派了智能体的任务在这里启动运行。每个工作流都必须有它，位置固定。",
+        "done": "任务完成的终点。完成统计依赖它，所以不能删除。",
+        "cancelled": "任务不做了的终点。和已完成一起用来判断任务已结束，所以不能删除。",
+        "backlog": "搁置区：任务放在这里不会启动智能体。不需要搁置时可以关掉，看板就不显示这一列。",
+        "blocked": "旁路状态：任何一步受阻都可以进入，「完成后进入」会自动跳过它。不需要时可以关掉。"
+      },
+      "kind": {
+        "locked": "固定步骤",
+        "optional": "可选步骤",
+        "optional_off": "可选步骤 · 已关闭",
+        "middle": "中间步骤",
+        "new": "新建状态"
+      },
+      "lock_why": "为什么不能删除「{{name}}」",
+      "remove_named": "移除「{{name}}」",
+      "card_no_run": "不启动运行",
+      "card_ends": "任务结束",
+      "search_status": "搜索状态库",
+      "library": "状态库",
+      "no_match": "状态库里没有匹配的状态",
+      "new_status_named": "新建状态「{{name}}」",
+      "key_on_save": "保存时创建",
+      "rule_locked": "必须保留",
+      "rule_optional": "可以关闭，位置固定",
+      "default_note": "Default 是所有未选择工作流的项目、以及项目之外视图使用的看板。"
     },
     "mapping": {
       "title": "将任务移入「{{name}}」",
@@ -1567,7 +1621,7 @@
       "used_by_short": "用于：{{names}}",
       "used_by_nobody": "暂无项目",
       "manage": "管理工作流…",
-      "picker_more": "在「设置 → 工作流」里可以新建更多工作流。"
+      "picker_more": "在侧边栏的「工作流」里可以新建更多工作流。"
     },
     "picker": {
       "header": "{{workflow}} · 跟随项目「{{project}}」",

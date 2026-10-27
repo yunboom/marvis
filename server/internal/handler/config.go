@@ -28,6 +28,10 @@ type AppConfig struct {
 	// toggle signup or wire Google OAuth.
 	AllowSignup    bool   `json:"allow_signup"`
 	GoogleClientID string `json:"google_client_id,omitempty"`
+	// LarkLoginAppID 是飞书登录应用的 App ID，app id 与 secret 都配置时才下发。
+	LarkLoginAppID string `json:"lark_login_app_id,omitempty"`
+	// LarkDesktopLogin 表示桌面端没有网页端时也能用飞书登录：飞书登录已配置且有桌面端回调地址。
+	LarkDesktopLogin bool `json:"lark_desktop_login,omitempty"`
 	// WorkspaceCreationDisabled mirrors the server-side
 	// DISABLE_WORKSPACE_CREATION env var so the UI can hide every
 	// "Create workspace" affordance on self-hosted instances. Omitted
@@ -103,6 +107,12 @@ type AppConfig struct {
 	// which is continuously deployed so its users can't act on the version —
 	// and empty for dev builds that aren't stamped via -X main.version.
 	ServerVersion string `json:"server_version,omitempty"`
+
+	// ServerName 和 InstanceID 让局域网内发现的候选服务器能被核实：
+	// 客户端据此确认这是 Marvis、是哪一台。响应里没有 instance_id 的服务端视为版本过旧。
+	// 与 ServerVersion 一样，官方云部署不下发。
+	ServerName string `json:"server_name,omitempty"`
+	InstanceID string `json:"instance_id,omitempty"`
 }
 
 // GetConfig is mounted on the public (unauthenticated) route group because
@@ -121,6 +131,10 @@ func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
 		GoogleClientID:                     os.Getenv("GOOGLE_CLIENT_ID"),
 		WorkspaceCreationDisabled:          os.Getenv("DISABLE_WORKSPACE_CREATION") == "true",
 	}
+	if os.Getenv(larkLoginAppSecretEnv) != "" {
+		config.LarkLoginAppID = os.Getenv(larkLoginAppIDEnv)
+	}
+	config.LarkDesktopLogin = h.larkDesktopLoginAvailable()
 	if h.Storage != nil {
 		config.CdnDomain = h.Storage.CdnDomain()
 	}
@@ -134,6 +148,10 @@ func (h *Handler) GetConfig(w http.ResponseWriter, r *http.Request) {
 	// the Help popover's version row would just be noise there (MUL-4108).
 	if !isOfficialCloudDeployment() {
 		config.ServerVersion = h.cfg.ServerVersion
+		// 服务器名称和实例 ID 只用于局域网内核实自托管服务器；
+		// 官方云上两者都是机器自身信息，不通过匿名接口公开。
+		config.ServerName = h.cfg.ServerName
+		config.InstanceID = h.cfg.InstanceID
 	}
 
 	// Re-read from env on every request so operators can rotate keys via

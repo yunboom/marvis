@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   MainRendererMessageQueue,
+  OPEN_PATH_CHANNEL,
   parseMainRendererChannelState,
   parseTabSelectionShortcutKey,
   TAB_SELECTION_SHORTCUT_CHANNEL,
@@ -43,6 +44,20 @@ describe("MainRendererMessageQueue", () => {
     expect(send).toHaveBeenCalledWith("invite:open", "invite-1");
   });
 
+  it("holds a deep-link path that arrives before the renderer listens", () => {
+    const queue = new MainRendererMessageQueue();
+    const send = vi.fn();
+
+    queue.enqueue(OPEN_PATH_CHANNEL, "/dev/issues/DEV-1", send);
+    expect(send).not.toHaveBeenCalled();
+
+    queue.setReady(OPEN_PATH_CHANNEL, true, send);
+    expect(send).toHaveBeenCalledExactlyOnceWith(
+      OPEN_PATH_CHANNEL,
+      "/dev/issues/DEV-1",
+    );
+  });
+
   it("can discard account-scoped pending messages", () => {
     const queue = new MainRendererMessageQueue();
     const send = vi.fn();
@@ -72,6 +87,9 @@ describe("parseMainRendererChannelState", () => {
         ready: true,
       }),
     ).toEqual({ channel: TAB_SELECTION_SHORTCUT_CHANNEL, ready: true });
+    expect(
+      parseMainRendererChannelState({ channel: OPEN_PATH_CHANNEL, ready: true }),
+    ).toEqual({ channel: OPEN_PATH_CHANNEL, ready: true });
   });
 });
 

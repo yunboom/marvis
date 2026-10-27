@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 
 	// Redirect both home environment variables to one scratch directory for the
 	// whole binary. On Windows os.UserHomeDir reads USERPROFILE, not HOME, so a
-	// test that redirects only HOME still resolves ~/.marvis-studio against the real
+	// test that redirects only HOME still resolves ~/.marvis against the real
 	// home — which is how a full-suite run wrote SaveCLIConfig fixtures over a
 	// real default-profile config.json. Process-wide redirection isolates tests
 	// that forget their own redirect on every platform; per-test t.Setenv
@@ -106,7 +106,7 @@ func TestResolveCallbackBinding(t *testing.T) {
 		{
 			name:         "localhost app URL stays on loopback",
 			appURL:       "http://localhost:3000",
-			serverURL:    "http://localhost:8080",
+			serverURL:    "http://localhost:13840",
 			detect:       failing,
 			wantCallback: "localhost",
 			wantBind:     "127.0.0.1",
@@ -114,7 +114,7 @@ func TestResolveCallbackBinding(t *testing.T) {
 		{
 			name:         "same-machine self-host uses loopback (CLI IP matches app IP)",
 			appURL:       "http://192.168.0.28:3000",
-			serverURL:    "http://192.168.0.28:8080",
+			serverURL:    "http://192.168.0.28:13840",
 			detect:       fixed("192.168.0.28"),
 			wantCallback: "localhost",
 			wantBind:     "127.0.0.1",
@@ -122,7 +122,7 @@ func TestResolveCallbackBinding(t *testing.T) {
 		{
 			name:         "cross-machine self-host points callback at CLI's LAN IP",
 			appURL:       "http://192.168.0.28:3000",
-			serverURL:    "http://192.168.0.28:8080",
+			serverURL:    "http://192.168.0.28:13840",
 			detect:       fixed("192.168.0.47"),
 			wantCallback: "192.168.0.47",
 			wantBind:     "0.0.0.0",
@@ -130,7 +130,7 @@ func TestResolveCallbackBinding(t *testing.T) {
 		{
 			name:         "outbound detection failure falls back to app IP",
 			appURL:       "http://192.168.0.28:3000",
-			serverURL:    "http://192.168.0.28:8080",
+			serverURL:    "http://192.168.0.28:13840",
 			detect:       failing,
 			wantCallback: "192.168.0.28",
 			wantBind:     "0.0.0.0",
@@ -397,7 +397,7 @@ func TestRunAuthStatusTaskContextRequiresTaskToken(t *testing.T) {
 	t.Setenv("MARVIS_TASK_ID", "task-test")
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", filepath.Join(t.TempDir(), "task-marvis"))
 
-	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -460,7 +460,7 @@ func TestHumanAuthCommandsFailClosedInTaskContext(t *testing.T) {
 	t.Setenv("MARVIS_SERVER_URL", "https://task.invalid")
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", filepath.Join(t.TempDir(), "task-marvis"))
 
-	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -498,8 +498,8 @@ func TestNormalizeAPIBaseURL(t *testing.T) {
 	})
 
 	t.Run("keeps http base URL", func(t *testing.T) {
-		if got := normalizeAPIBaseURL("http://localhost:8080"); got != "http://localhost:8080" {
-			t.Fatalf("normalizeAPIBaseURL() = %q, want %q", got, "http://localhost:8080")
+		if got := normalizeAPIBaseURL("http://localhost:13840"); got != "http://localhost:13840" {
+			t.Fatalf("normalizeAPIBaseURL() = %q, want %q", got, "http://localhost:13840")
 		}
 	})
 

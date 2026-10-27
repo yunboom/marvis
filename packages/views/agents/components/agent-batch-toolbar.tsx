@@ -22,7 +22,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@marvis/ui/components/ui/dialog";
-import { Archive, ArchiveRestore, Loader2, X } from "lucide-react";
+import { Archive, ArchiveRestore, Loader2, Users, X } from "lucide-react";
+import { cn } from "@marvis/ui/lib/utils";
+import {
+  COLLECTION_BATCH_ACTION,
+  COLLECTION_BATCH_DIVIDER,
+} from "../../layout/collection-page";
 import { useT } from "../../i18n";
 import { AccessPicker, type AccessChange } from "./inspector/access-picker";
 import type { AgentListRow } from "./agents-page";
@@ -144,7 +149,7 @@ export function AgentBatchToolbar({
             className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 max-md:above-chat-launcher"
           >
             <motion.div
-              className="flex items-center gap-1 rounded-lg border bg-background px-2 py-1.5 shadow-lg"
+              className="flex h-11 items-center gap-1 rounded-full border border-border bg-popover pr-1.5 pl-4 text-popover-foreground shadow-menu"
               initial={{
                 opacity: 0,
                 transform: shouldReduceMotion
@@ -172,8 +177,8 @@ export function AgentBatchToolbar({
                 },
               }}
             >
-        <div className="mr-1 flex items-center gap-1.5 border-r pl-1 pr-2">
-          <span className="text-body font-medium">
+        <div className="flex items-center gap-1">
+          <span className="whitespace-nowrap text-body font-medium">
             {t(($) => $.actions.selected, { count: rows.length })}
           </span>
           <TooltipHint label={t(($) => $.actions.clear_selection)}>
@@ -181,17 +186,19 @@ export function AgentBatchToolbar({
               type="button"
               aria-label={t(($) => $.actions.clear_selection)}
               onClick={onClear}
-              className="rounded-xs p-0.5 transition-colors hover:bg-accent"
+              className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant)"
             >
-              <X className="size-3.5 text-muted-foreground" />
+              <X className="size-3.25" />
             </button>
           </TooltipHint>
         </div>
+        <span aria-hidden="true" className={COLLECTION_BATCH_DIVIDER} />
 
         {anyArchived && (
           <Button
             variant="ghost"
             size="sm"
+            className={COLLECTION_BATCH_ACTION}
             disabled={!allManageable || busy}
             onClick={() =>
               runBatch(
@@ -200,7 +207,7 @@ export function AgentBatchToolbar({
               )
             }
           >
-            <ArchiveRestore className="mr-1 size-3.5" />
+            <ArchiveRestore className="size-3.5" />
             {t(($) => $.row_actions.restore)}
           </Button>
         )}
@@ -208,9 +215,11 @@ export function AgentBatchToolbar({
           <Button
             variant="ghost"
             size="sm"
+            className={COLLECTION_BATCH_ACTION}
             disabled={!anyOwned || busy}
             onClick={() => setAccessDialogOpen(true)}
           >
+            <Users className="size-3.5" />
             {t(($) => $.row_actions.set_access)}
           </Button>
         )}
@@ -220,10 +229,14 @@ export function AgentBatchToolbar({
           <Button
             variant="ghost"
             size="sm"
+            className={cn(
+              COLLECTION_BATCH_ACTION,
+              "text-destructive hover:text-destructive",
+            )}
             disabled={!allManageable || busy}
             onClick={() => setConfirmArchive(true)}
           >
-            <Archive className="mr-1 size-3.5" />
+            <Archive className="size-3.5" />
             {t(($) => $.row_actions.archive)}
           </Button>
         )}

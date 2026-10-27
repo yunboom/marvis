@@ -320,3 +320,56 @@ func TestGoogleLoginSuccessfulExistingUser(t *testing.T) {
 		t.Fatal("Google login cookies must allow authenticated browser writes")
 	}
 }
+
+// TestGoogleLogin_AvatarOnlyWhenEmpty 保证 Google 登录对头像保持“为空才写”，不因飞书头像同步的改动而变化。
+func TestGoogleLogin_AvatarOnlyWhenEmpty(t *testing.T) {
+	const googleAvatar = "https://lh3.googleusercontent.com/a/new.png"
+
+	tests := []struct {
+		name string
+		// current 是登录前用户的头像，空串表示 NULL。
+		current string
+		want    string
+	}{
+		{name: "empty", current: "", want: googleAvatar},
+		{name: "third-party url", current: "https://lh3.googleusercontent.com/a/old.png", want: "https://lh3.googleusercontent.com/a/old.png"},
+		{name: "emoji", current: "emoji:🦊", want: "emoji:🦊"},
+	}
+
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("GOOGLE_CLIENT_ID", "test-client")
+			t.Setenv("GOOGLE_CLIENT_SECRET", "test-secret")
+			email := fmt.Sprintf("google-avatar-only-when-empty-%d@example.com", i)
+			cols := testutil.Cols{}
+			if tt.current != "" {
+				cols["avatar_url"] = tt.current
+			}
+			userID := dbfx.User(t, "Google Avatar User", email, cols)
+
+			h := newTestHandler(Config{AllowSignup: false})
+			h.Queries = testHandler.Queries
+			h.googleOAuthHTTPClient = &http.Client{Transport: googleRoundTripper(func(req *http.Request) (*http.Response, error) {
+				switch req.URL.Host {
+				case "oauth2.googleapis.com":
+					return googleResponse(req, http.StatusOK, `{"access_token":"test-token"}`), nil
+				case "www.googleapis.com":
+					return googleResponse(req, http.StatusOK, fmt.Sprintf(`{"email":%q,"picture":%q}`, email, googleAvatar)), nil
+				default:
+					t.Fatalf("unexpected Google OAuth request: %s", req.URL)
+					return nil, nil
+				}
+			})}
+
+			req := httptest.NewRequest(http.MethodPost, "/auth/google", strings.NewReader(`{"code":"test-code","redirect_uri":"http://localhost/auth/callback"}`))
+			var got LoginResponse
+			testutil.Call(t, h.GoogleLogin, req).Want(http.StatusOK).JSON(&got)
+
+			var stored string
+			dbfx.QueryRow(t, `SELECT COALESCE(avatar_url, '') FROM "user" WHERE id = $1`, userID).Scan(&stored)
+			if stored != tt.want {
+				t.Fatalf("stored avatar_url = %q, want %q", stored, tt.want)
+			}
+		})
+	}
+}

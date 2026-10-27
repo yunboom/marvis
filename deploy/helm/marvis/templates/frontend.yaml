@@ -1,5 +1,5 @@
 {{- $frontendImageTag := default .Chart.AppVersion .Values.images.frontend.tag -}}
-{{- $remoteApiUrl := default (printf "http://%s:8080" (include "marvis.backend.fullname" .)) .Values.frontend.config.remoteApiUrl -}}
+{{- $remoteApiUrl := default (printf "http://%s:13840" (include "marvis.backend.fullname" .)) .Values.frontend.config.remoteApiUrl -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -45,6 +45,10 @@ spec:
             {{- if .Values.frontend.config.publicWsUrl }}
             - name: NEXT_PUBLIC_WS_URL
               value: {{ .Values.frontend.config.publicWsUrl | quote }}
+            {{- end }}
+            {{- if .Values.frontend.config.googleAnalyticsId }}
+            - name: GOOGLE_ANALYTICS_ID
+              value: {{ .Values.frontend.config.googleAnalyticsId | quote }}
             {{- end }}
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}

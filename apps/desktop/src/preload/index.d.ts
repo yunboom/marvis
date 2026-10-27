@@ -17,6 +17,70 @@ import type {
   LocalRuntimeProbe,
 } from "../shared/daemon-types";
 import type { TabSelectionShortcutKey } from "../shared/main-renderer-messages";
+import type {
+  DiscoveredServer,
+  ProbeResult,
+  SelectedServer,
+  ServerStatus,
+} from "../shared/server-discovery";
+import type {
+  StandaloneBackup,
+  StandaloneConfigView,
+  StandaloneSetupInput,
+  StandaloneStatus,
+  StandaloneSubmitResult,
+} from "../shared/standalone";
+
+interface ServerAPI {
+  /** 订阅局域网里发现的 Marvis 服务器，列表变化时回调。返回取消订阅函数。 */
+  discover: (onChange: (list: DiscoveredServer[]) => void) => () => void;
+  /** 重新扫描局域网，并重新核实已发现的服务器。 */
+  rescan: () => void;
+  /** 请求 `<url>/api/config` 核实对方是不是 Marvis 服务器。 */
+  probe: (url: string) => Promise<ProbeResult>;
+  /** 已保存的服务器选择；没有选择过时为 null。 */
+  current: () => Promise<SelectedServer | null>;
+  /** 保存所选服务器并重载所有窗口。 */
+  select: (server: SelectedServer) => Promise<void>;
+  /** 订阅已选服务器的连接状态：先回调一次当前状态，之后每次变化回调。返回取消订阅函数。 */
+  onStatus: (callback: (status: ServerStatus) => void) => () => void;
+  /** 请求主进程立即重试连接已选服务器。 */
+  retry: () => void;
+}
+
+interface StandaloneAPI {
+  /** 订阅单机模式状态：先回调一次当前状态，之后每次变化回调。返回取消订阅函数。 */
+  onStatus: (callback: (status: StandaloneStatus) => void) => () => void;
+  /** 「完成设置」页的预填值。 */
+  defaults: () => Promise<StandaloneSetupInput>;
+  /** 当前保存的配置；敏感值只告诉是否已设置。未安装时为 null。 */
+  config: () => Promise<StandaloneConfigView | null>;
+  /** 保存配置并开始准备资源。 */
+  install: (input: StandaloneSetupInput) => Promise<StandaloneSubmitResult>;
+  /** 保存配置；运行中会重新加载生效。 */
+  saveSettings: (input: StandaloneSetupInput) => Promise<StandaloneSubmitResult>;
+  pause: () => void;
+  resume: () => void;
+  cancel: () => Promise<void>;
+  retry: () => Promise<void>;
+  /** 选定本机并以管理员身份登录。 */
+  enter: () => Promise<void>;
+  restart: () => Promise<void>;
+  stop: () => Promise<void>;
+  setLan: (enabled: boolean) => Promise<void>;
+  autoDownloadUpdates: () => Promise<boolean>;
+  setAutoDownloadUpdates: (enabled: boolean) => Promise<void>;
+  checkForUpdate: () => Promise<void>;
+  downloadUpdate: () => Promise<void>;
+  installUpdate: () => Promise<void>;
+  listBackups: () => Promise<StandaloneBackup[]>;
+  backupNow: () => Promise<void>;
+  restoreBackup: (fileName: string) => Promise<void>;
+  openDataDir: () => Promise<void>;
+  openLogs: () => Promise<void>;
+  /** 已探测通过的远程服务器：切换过去并停止单机模式。 */
+  switchRemote: (server: SelectedServer) => Promise<void>;
+}
 
 interface DesktopAPI {
   /** App version + normalized OS, captured synchronously at preload time. */
@@ -45,8 +109,12 @@ interface DesktopAPI {
   onAuthToken: (callback: (token: string) => void) => () => void;
   /** Listen for invitation IDs delivered via deep link. Returns an unsubscribe function. */
   onInviteOpen: (callback: (invitationId: string) => void) => () => void;
+  /** 监听深链 marvis://open 解出的站内路径。返回取消订阅函数。 */
+  onOpenPath: (callback: (path: string) => void) => () => void;
   /** Open a URL in the default browser. */
   openExternal: (url: string) => Promise<void>;
+  /** 没有网页端时的飞书登录：主进程生成一次性 nonce，用浏览器打开服务端的飞书登录地址。 */
+  startLarkDesktopLogin: () => Promise<void>;
   /** Download a file by URL through Electron's native download system.
    *  Shows a native save dialog. On non-desktop platforms this is undefined. */
   downloadURL: (url: string) => Promise<void>;
@@ -120,6 +188,10 @@ interface DesktopAPI {
   openIssueWindow: (
     request: IssueWindowRequest,
   ) => Promise<{ ok: true } | { ok: false; reason: "invalid_request" }>;
+  /** 服务器发现、探测与选择。 */
+  server: ServerAPI;
+  /** 单机模式：准备资源、启停、更新与备份。 */
+  standalone: StandaloneAPI;
 }
 
 type DaemonReauthResult =

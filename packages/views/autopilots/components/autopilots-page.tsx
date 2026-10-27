@@ -54,11 +54,16 @@ import { WorkspaceWakeupCreate, WorkspaceWakeups } from "./workspace-wakeups";
 import { useNavigation, useRowLink } from "../../navigation";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { formatInTimeZone } from "../../common/format-in-time-zone";
+import { cn } from "@marvis/ui/lib/utils";
 import {
+  COLLECTION_ROW,
+  COLLECTION_ROW_SELECTED,
+  COLLECTION_TABLE_INSET,
   CollectionPageHeader,
   CollectionPageHeaderAction,
   CollectionPageState,
 } from "../../layout/collection-page";
+import { PAGE_GUTTER } from "../../layout/page-header";
 import { AutopilotDialog } from "./autopilot-dialog";
 import {
   AutopilotListToolbar,
@@ -82,8 +87,12 @@ import { useLocale, useT, useTimeAgo } from "../../i18n";
 // - Container < @2xl: static core set (name + assignee), no horizontal
 //   scroll, column toggles don't apply.
 const GRID_COLS =
-  "grid-cols-[0.75rem_1rem_minmax(120px,1fr)_var(--apc-assignee)_1.75rem_0.75rem] " +
-  "@2xl:grid-cols-[0.75rem_1rem_minmax(200px,1fr)_var(--apc-assignee)_var(--apc-trigger)_var(--apc-lastrun)_var(--apc-nextrun)_var(--apc-mode)_var(--apc-creator)_var(--apc-created)_1.75rem_0.75rem]";
+  "grid-cols-[0.25rem_1rem_minmax(120px,1fr)_var(--apc-assignee)_1.75rem_0.25rem] " +
+  "@2xl:grid-cols-[0.25rem_1rem_minmax(200px,1fr)_var(--apc-assignee)_var(--apc-trigger)_var(--apc-lastrun)_var(--apc-nextrun)_var(--apc-mode)_var(--apc-creator)_var(--apc-created)_1.75rem_0.25rem]";
+
+// 表头：40px 灰色圆角带，取代 ListGridHeader 默认的白底 + 渐隐。
+const TABLE_HEAD_BAND =
+  "h-10 rounded-lg bg-surface-sunken after:hidden [&_[role=columnheader]]:text-label [&_[role=columnheader]_button]:text-label";
 
 // h-12 rows; the virtualizer's fixed-size contract.
 const ROW_HEIGHT = 48;
@@ -91,19 +100,19 @@ const ROW_HEIGHT = 48;
 // Single source for hideable column widths: track vars and the grid's
 // min-width derive from the same numbers.
 const COLUMN_WIDTHS: Record<AutopilotColumnKey, number> = {
-  assignee: 144,
-  trigger: 144,
-  lastRun: 120,
-  nextRun: 104,
+  assignee: 160,
+  trigger: 176,
+  lastRun: 128,
+  nextRun: 128,
   mode: 104,
   creator: 144,
   created: 104,
 };
 
-// Fixed tracks (edges 12+12, checkbox 16, name min 200, kebab 28) plus the
+// Fixed tracks (edges 4+4, checkbox 16, name min 200, kebab 28) plus the
 // 11 gap-x-3 gaps between the wide template's 12 tracks (zero-width tracks
 // still carry gaps).
-const FIXED_TRACKS_WIDTH = 268 + 11 * 12;
+const FIXED_TRACKS_WIDTH = 252 + 11 * 12;
 
 function columnTrackVars(
   isVisible: (key: AutopilotColumnKey) => boolean,
@@ -217,6 +226,10 @@ const TEMPLATES: AutopilotTemplate[] = [
   },
 ];
 
+// 页内 Tab：40px 高，文字两侧留 2px，下划线压在分隔线上。
+const PAGE_TAB_TRIGGER =
+  "h-full flex-none rounded-none px-0.5 group-data-horizontal/tabs:after:-bottom-px";
+
 // Cells
 
 function CheckboxCell({
@@ -235,11 +248,11 @@ function CheckboxCell({
           e.stopPropagation();
           onToggle();
         }}
-        className={`-m-1.5 flex items-center p-1.5 ${
-          checked
-            ? ""
-            : "opacity-0 transition-opacity group-hover/row:opacity-100"
-        }`}
+        className={cn(
+          "-m-1.5 flex items-center p-1.5",
+          !checked &&
+            "opacity-0 transition-opacity duration-(--motion-fast) ease-out group-hover/row:opacity-100 group-hover/row:duration-(--motion-instant)",
+        )}
       >
         <Checkbox
           checked={checked}
@@ -267,7 +280,7 @@ function NameCell({ autopilot }: { autopilot: Autopilot }) {
               ? t(($) => $.status.paused_runtime_required)
               : t(($) => $.status.paused)
           }
-          className="flex shrink-0 items-center text-amber-500"
+          className="flex shrink-0 items-center text-warning"
         >
           <Pause className="size-3" />
         </span>
@@ -279,7 +292,7 @@ function NameCell({ autopilot }: { autopilot: Autopilot }) {
 function AssigneeCell({ autopilot }: { autopilot: Autopilot }) {
   const { getActorName } = useActorName();
   return (
-    <ListGridCell className="gap-1.5">
+    <ListGridCell className="gap-2">
       <ActorAvatar
         actorType={autopilot.assignee_type}
         actorId={autopilot.assignee_id}
@@ -287,7 +300,7 @@ function AssigneeCell({ autopilot }: { autopilot: Autopilot }) {
         enableHoverCard={autopilot.assignee_type === "agent"}
         showStatusDot={autopilot.assignee_type === "agent"}
       />
-      <span className="min-w-0 truncate text-caption text-muted-foreground">
+      <span className="min-w-0 truncate text-label text-muted-foreground">
         {getActorName(autopilot.assignee_type, autopilot.assignee_id)}
       </span>
     </ListGridCell>
@@ -306,12 +319,12 @@ function TriggerCell({ autopilot }: { autopilot: Autopilot }) {
   if (kinds.length === 0) {
     return (
       <ListGridCell className="hidden @2xl:flex">
-        <span className="text-caption text-faint-foreground">—</span>
+        <span className="text-label text-faint-foreground">—</span>
       </ListGridCell>
     );
   }
   return (
-    <ListGridCell className="hidden gap-2 @2xl:flex">
+    <ListGridCell className="hidden gap-3 @2xl:flex">
       {kinds.map((kind) => {
         // Server-driven enum: unknown kinds get a generic icon + raw label.
         const Icon = TRIGGER_ICONS[kind] ?? Zap;
@@ -322,9 +335,9 @@ function TriggerCell({ autopilot }: { autopilot: Autopilot }) {
         return (
           <span
             key={kind}
-            className="flex min-w-0 items-center gap-1 text-caption text-muted-foreground"
+            className="flex min-w-0 items-center gap-1 whitespace-nowrap text-label text-muted-foreground"
           >
-            <Icon className="size-3 shrink-0" />
+            <Icon className="size-3.25 shrink-0" />
             <span className="truncate">{label}</span>
           </span>
         );
@@ -339,15 +352,15 @@ function runStatusDotClass(status: string | null | undefined): string {
   switch (status) {
     case "completed":
     case "issue_created":
-      return "bg-emerald-500";
+      return "bg-success";
     case "failed":
-      return "bg-red-500";
+      return "bg-destructive";
     case "skipped":
-      return "bg-amber-500";
+      return "bg-warning";
     case "running":
-      return "bg-blue-500";
+      return "bg-info";
     default:
-      return "bg-muted-foreground/40";
+      return "bg-faint-foreground";
   }
 }
 
@@ -357,7 +370,7 @@ function LastRunCell({ autopilot }: { autopilot: Autopilot }) {
   if (!autopilot.last_run_at) {
     return (
       <ListGridCell className="hidden @2xl:flex">
-        <span className="text-caption text-faint-foreground">—</span>
+        <span className="text-label text-faint-foreground">—</span>
       </ListGridCell>
     );
   }
@@ -371,7 +384,7 @@ function LastRunCell({ autopilot }: { autopilot: Autopilot }) {
       ? status
       : null;
   return (
-    <ListGridCell className="hidden gap-1.5 @2xl:flex">
+    <ListGridCell className="hidden gap-2 @2xl:flex">
       <span
         title={
           knownStatus
@@ -380,7 +393,7 @@ function LastRunCell({ autopilot }: { autopilot: Autopilot }) {
         }
         className={`size-1.5 shrink-0 rounded-full ${runStatusDotClass(status)}`}
       />
-      <span className="whitespace-nowrap text-caption tabular-nums text-muted-foreground">
+      <span className="whitespace-nowrap text-label tabular-nums text-muted-foreground">
         {timeAgo(autopilot.last_run_at)}
       </span>
     </ListGridCell>
@@ -393,11 +406,11 @@ function NextRunCell({ autopilot }: { autopilot: Autopilot }) {
   return (
     <ListGridCell className="hidden @2xl:flex">
       {next ? (
-        <span className="whitespace-nowrap text-caption tabular-nums text-muted-foreground">
+        <span className="whitespace-nowrap text-label tabular-nums text-muted-foreground">
           {formatInTimeZone(next, undefined, i18n.language)}
         </span>
       ) : (
-        <span className="text-caption text-faint-foreground">—</span>
+        <span className="text-label text-faint-foreground">—</span>
       )}
     </ListGridCell>
   );
@@ -412,7 +425,7 @@ function ModeCell({ autopilot }: { autopilot: Autopilot }) {
       : mode;
   return (
     <ListGridCell className="hidden @2xl:flex">
-      <span className="truncate text-caption text-muted-foreground">
+      <span className="truncate text-label text-muted-foreground">
         {label}
       </span>
     </ListGridCell>
@@ -422,13 +435,13 @@ function ModeCell({ autopilot }: { autopilot: Autopilot }) {
 function CreatorCell({ autopilot }: { autopilot: Autopilot }) {
   const { getActorName } = useActorName();
   return (
-    <ListGridCell className="hidden gap-1.5 @2xl:flex">
+    <ListGridCell className="hidden gap-2 @2xl:flex">
       <ActorAvatar
         actorType={autopilot.created_by_type}
         actorId={autopilot.created_by_id}
         size="sm"
       />
-      <span className="min-w-0 truncate text-caption text-muted-foreground">
+      <span className="min-w-0 truncate text-label text-muted-foreground">
         {getActorName(autopilot.created_by_type, autopilot.created_by_id)}
       </span>
     </ListGridCell>
@@ -459,7 +472,7 @@ function AutopilotListHeader({
     sortField === field ? sortDirection : false;
   const anySelected = allSelected || someSelected;
   return (
-    <ListGridHeader>
+    <ListGridHeader className={TABLE_HEAD_BAND}>
       <div className="flex items-center justify-center">
         <button
           type="button"
@@ -548,6 +561,9 @@ function AutopilotListHeader({
   );
 }
 
+// 骨架行名称宽度交错，避免整齐划一的条纹感。
+const SKELETON_NAME_WIDTHS = ["w-40", "w-32", "w-44", "w-28", "w-36", "w-34"];
+
 function LoadingSkeleton() {
   return (
     <ListGrid
@@ -556,22 +572,22 @@ function LoadingSkeleton() {
         (key) => !AUTOPILOT_DEFAULT_HIDDEN_COLUMNS.includes(key),
       )}
     >
-      <ListGridHeader>
+      <ListGridHeader className={TABLE_HEAD_BAND}>
         <span aria-hidden="true" />
         <ListGridHeaderCell>
-          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-12 rounded-full" />
         </ListGridHeaderCell>
         <ListGridHeaderCell>
-          <Skeleton className="h-3 w-14" />
+          <Skeleton className="h-3 w-12 rounded-full" />
         </ListGridHeaderCell>
         <ListGridHeaderCell className="hidden @2xl:flex">
-          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-14 rounded-full" />
         </ListGridHeaderCell>
         <ListGridHeaderCell className="hidden @2xl:flex">
-          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-14 rounded-full" />
         </ListGridHeaderCell>
         <ListGridHeaderCell className="hidden @2xl:flex">
-          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-14 rounded-full" />
         </ListGridHeaderCell>
         {/* mode/creator/created are hidden by default — keep their tracks
             mapped with empty placeholders. */}
@@ -580,24 +596,24 @@ function LoadingSkeleton() {
         <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
         <span aria-hidden="true" />
       </ListGridHeader>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <ListGridRow key={i} className="hover:bg-transparent">
+      {SKELETON_NAME_WIDTHS.map((width, i) => (
+        <ListGridRow key={i} className={cn(COLLECTION_ROW, "hover:bg-transparent")}>
           <span aria-hidden="true" />
           <ListGridCell>
-            <Skeleton className="h-3.5 w-40 max-w-full" />
+            <Skeleton className={cn("h-3.25 max-w-full rounded-full", width)} />
           </ListGridCell>
-          <ListGridCell className="gap-1.5">
+          <ListGridCell className="gap-2">
             <Skeleton className="size-5 rounded-full" />
-            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-2.75 w-12 rounded-full" />
           </ListGridCell>
           <ListGridCell className="hidden @2xl:flex">
-            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-2.75 w-16 rounded-full" />
           </ListGridCell>
           <ListGridCell className="hidden @2xl:flex">
-            <Skeleton className="h-3 w-14" />
+            <Skeleton className="h-2.75 w-14 rounded-full" />
           </ListGridCell>
           <ListGridCell className="hidden @2xl:flex">
-            <Skeleton className="h-3 w-14" />
+            <Skeleton className="h-2.75 w-14 rounded-full" />
           </ListGridCell>
           <ListGridCell className="hidden px-0 @2xl:flex" />
           <ListGridCell className="hidden px-0 @2xl:flex" />
@@ -805,12 +821,14 @@ export function AutopilotsPage() {
           tab === "autopilots" ? (
             <CollectionPageHeaderAction
               icon={Plus}
+              variant="default"
               label={t(($) => $.page.new_autopilot)}
               onClick={() => openCreate()}
             />
           ) : (
             <CollectionPageHeaderAction
               icon={Plus}
+              variant="default"
               label={t(($) => $.wakeups.create)}
               onClick={() => setWakeupCreateOpen(true)}
             />
@@ -818,10 +836,18 @@ export function AutopilotsPage() {
         }
       />
 
-      <div className="shrink-0 border-b px-4 py-1">
-        <TabsList variant="line" aria-label={t(($) => $.page.title)}>
-          <TabsTrigger value="autopilots">{t(($) => $.page.title)}</TabsTrigger>
-          <TabsTrigger value="wakeups">{t(($) => $.wakeups.title)}</TabsTrigger>
+      <div className={cn("shrink-0 border-b border-border", PAGE_GUTTER)}>
+        <TabsList
+          variant="line"
+          aria-label={t(($) => $.page.title)}
+          className="gap-5 p-0 group-data-horizontal/tabs:h-10"
+        >
+          <TabsTrigger value="autopilots" className={PAGE_TAB_TRIGGER}>
+            {t(($) => $.page.title)}
+          </TabsTrigger>
+          <TabsTrigger value="wakeups" className={PAGE_TAB_TRIGGER}>
+            {t(($) => $.wakeups.title)}
+          </TabsTrigger>
         </TabsList>
       </div>
       <TabsContent
@@ -855,34 +881,39 @@ export function AutopilotsPage() {
             }
           />
         ) : isLoading ? (
-          <div className="flex-1 overflow-y-auto @container">
+          <div
+            aria-busy="true"
+            className={cn("flex-1 overflow-y-auto pt-3 @container", COLLECTION_TABLE_INSET)}
+          >
             <LoadingSkeleton />
           </div>
         ) : showEmpty ? (
-          <div className="flex flex-col items-center px-5 py-16">
-            <Zap className="mb-3 h-10 w-10 text-faint-foreground" />
-            <p className="text-body text-muted-foreground">
+          <div className={cn("flex flex-col items-center pt-16 pb-16", PAGE_GUTTER)}>
+            <span className="flex size-12 items-center justify-center rounded-full bg-surface-sunken text-muted-foreground">
+              <Zap aria-hidden="true" className="size-6" />
+            </span>
+            <p className="mt-3.5 text-body-lg font-semibold">
               {t(($) => $.page.empty.title)}
             </p>
-            <p className="mb-6 mt-1 text-caption text-muted-foreground">
+            <p className="mt-1.5 text-label text-muted-foreground">
               {t(($) => $.page.empty.hint)}
             </p>
-            <div className="grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-7 grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {TEMPLATES.map((tpl) => {
                 const Icon = tpl.icon;
                 return (
                   <button
                     key={tpl.id}
                     type="button"
-                    className="flex items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-accent/40"
+                    className="flex items-start gap-3 rounded-xl border border-border p-3.5 text-left transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)"
                     onClick={() => openCreate(tpl)}
                   >
-                    <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-                    <div className="min-w-0">
+                    <Icon className="mt-px size-5 shrink-0 text-muted-foreground" />
+                    <div className="flex min-w-0 flex-col gap-1">
                       <div className="text-body font-medium">
                         {t(($) => $.templates[tpl.id].title)}
                       </div>
-                      <div className="mt-0.5 line-clamp-2 text-caption text-muted-foreground">
+                      <div className="line-clamp-2 text-label leading-normal text-muted-foreground">
                         {t(($) => $.templates[tpl.id].summary)}
                       </div>
                     </div>
@@ -893,10 +924,10 @@ export function AutopilotsPage() {
             <Button
               size="sm"
               variant="outline"
-              className="mt-4"
+              className="mt-5 gap-1.5 pr-3.5 pl-3"
               onClick={() => openCreate()}
             >
-              <Plus className="mr-1 h-3.5 w-3.5" />
+              <Plus className="size-3.5" />
               {t(($) => $.page.start_blank)}
             </Button>
           </div>
@@ -920,7 +951,7 @@ export function AutopilotsPage() {
             />
             <div
               ref={listScrollRef}
-              className="min-h-0 flex-1 overflow-auto @container"
+              className={cn("min-h-0 flex-1 overflow-auto @container", COLLECTION_TABLE_INSET)}
             >
               <ListGrid
                 className={`${GRID_COLS} @2xl:min-w-[var(--apc-minw)]`}
@@ -953,9 +984,11 @@ export function AutopilotsPage() {
                     return (
                       <ListGridRow
                         key={autopilot.id}
-                        className={`cursor-pointer ${
-                          selectedIds.has(autopilot.id) ? "bg-accent/30" : ""
-                        }`}
+                        className={cn(
+                          COLLECTION_ROW,
+                          "cursor-pointer",
+                          selectedIds.has(autopilot.id) && COLLECTION_ROW_SELECTED,
+                        )}
                         {...rowLink(
                           wsPaths.autopilotDetail(autopilot.id),
                           autopilot.title,
@@ -997,7 +1030,7 @@ export function AutopilotsPage() {
                           <ListGridCell className="hidden px-0 @2xl:flex" />
                         )}
                         {isColVisible("created") ? (
-                          <ListGridCell className="hidden whitespace-nowrap text-caption tabular-nums text-muted-foreground @2xl:flex">
+                          <ListGridCell className="hidden whitespace-nowrap text-label tabular-nums text-muted-foreground @2xl:flex">
                             {new Date(autopilot.created_at).toLocaleDateString(
                               locale,
                             )}

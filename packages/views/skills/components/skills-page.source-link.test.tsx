@@ -222,11 +222,11 @@ describe("SkillsPage source link vs row navigation", () => {
 });
 
 describe("SkillsPage docs link", () => {
-  it("points Learn more at the viewer's docs locale", () => {
+  it("hides Learn more while the docs site is offline", () => {
     renderPage(makeAdapter(), "fr");
 
     expect(
-      screen.getByRole("link", { name: "En savoir plus →" }),
-    ).toHaveAttribute("href", "https://marvis.ai/docs/fr/skills");
+      screen.queryByRole("link", { name: "En savoir plus →" }),
+    ).not.toBeInTheDocument();
   });
 });

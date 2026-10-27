@@ -19,7 +19,6 @@ function workflow(id: string, name: string, isDefault: boolean): IssueWorkflow {
   };
 }
 
-vi.mock("@marvis/core/config", () => ({ useFeatureEnabled: () => true }));
 vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "workspace-1" }));
 const workflows = vi.hoisted(() => ({ list: [] as IssueWorkflow[] }));
 vi.mock("@marvis/core/issue-workflows", () => ({
@@ -49,6 +48,6 @@ describe("WorkflowPill", () => {
     fireEvent.click(screen.getByRole("button", { name: /Default/ }));
 
     expect(await screen.findByRole("menuitem", { name: /Default/ })).toBeTruthy();
-    expect(screen.getByText(/Settings → Workflows/)).toBeTruthy();
+    expect(screen.getByText(/Workflows page in the sidebar/)).toBeTruthy();
   });
 });

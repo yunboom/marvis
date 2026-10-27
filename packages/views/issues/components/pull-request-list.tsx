@@ -124,7 +124,7 @@ export function PullRequestList({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="block w-[calc(100%+1rem)] -mx-2 rounded-md px-2 py-1.5 text-left text-micro text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+            className="block w-[calc(100%+1rem)] -mx-2 rounded-row px-2 py-1.5 text-left text-caption text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             {expanded
               ? t(($) => $.detail.pull_request_card_show_less)
@@ -215,7 +215,7 @@ function PullRequestRowMenu({ pr, actions }: { pr: GitHubPullRequest; actions: R
             variant="ghost"
             size="icon-xs"
             label={t(($) => $.pr_automation.row_menu)}
-            className="absolute top-0.5 right-0 opacity-0 group-hover/pr:opacity-100 group-focus-within/pr:opacity-100 data-popup-open:opacity-100 [@media(pointer:coarse)]:opacity-100"
+            className="absolute top-1.5 right-1.5 opacity-0 group-hover/pr:opacity-100 group-focus-within/pr:opacity-100 data-popup-open:opacity-100 [@media(pointer:coarse)]:opacity-100"
           >
             <MoreHorizontal />
           </IconButton>
@@ -431,7 +431,7 @@ function PullRequestRow({
   // The row link and its menu are siblings: a button inside an anchor is
   // invalid HTML, and the menu must not open the PR.
   return (
-    <div className="group/pr relative -mx-2 rounded-md transition-colors hover:bg-accent/50">
+    <div className="group/pr relative rounded-lg border border-border transition-colors duration-(--motion-fast) ease-out hover:bg-accent">
       <Tooltip>
         <TooltipTrigger
           render={
@@ -440,13 +440,13 @@ function PullRequestRow({
               href={pr.html_url}
               target="_blank"
               rel="noreferrer noopener"
-              className="flex items-start gap-2 rounded-md px-2 py-1.5"
+              className="flex items-start gap-2 rounded-lg px-3 py-2.5"
             />
           }
         >
           <StateIcon className={cn("mt-px size-3.5 shrink-0", cfg.className)} />
           <div className="min-w-0 flex-1">
-            <p className={cn("truncate text-caption font-medium", actions ? "pr-5" : null)}>
+            <p className={cn("truncate text-label font-medium", actions ? "pr-5" : null)}>
               {stripIssueKeyFromTitle(pr.title, identifier)}
             </p>
             <div className="mt-1 flex items-center gap-2">
@@ -560,7 +560,7 @@ function PullRequestProblems({
   const shown = items.slice(0, PROBLEM_LIMIT);
   const remaining = items.length - shown.length;
   return (
-    <ul className={cn("mt-1.5 rounded-md bg-muted/70 px-2 py-1 text-micro", stale ? "opacity-60" : null)}>
+    <ul className={cn("mt-1.5 rounded-row bg-field px-2 py-1 text-micro", stale ? "opacity-60" : null)}>
       {shown.map(({ key, icon: Icon, className, label }) => (
         <li key={key} className="flex items-center gap-1.5 py-px">
           <Icon className={cn("size-3 shrink-0", className)} />

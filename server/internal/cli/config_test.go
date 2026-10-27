@@ -18,7 +18,7 @@ func TestCLIConfig_BackwardCompat_OldFileLoadsWithNilBackends(t *testing.T) {
 	redirectTestHome(t, tmp)
 
 	// Write a 4-field config exactly as the historical daemon would have.
-	cfgDir := filepath.Join(tmp, ".marvis-studio")
+	cfgDir := filepath.Join(tmp, ".marvis")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestCLIConfig_BackwardCompat_NilBackendsOmittedFromJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(tmp, ".marvis-studio", "config.json"))
+	data, err := os.ReadFile(filepath.Join(tmp, ".marvis", "config.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,7 +144,7 @@ func TestCLIConfig_OpenClawOverride_PartialFieldsOmitted(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(tmp, ".marvis-studio", "config.json"))
+	data, err := os.ReadFile(filepath.Join(tmp, ".marvis", "config.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +239,7 @@ func TestCLIConfig_ProfileCommandOverrides_OmittedWhenEmpty(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	data, err := os.ReadFile(filepath.Join(tmp, ".marvis-studio", "config.json"))
+	data, err := os.ReadFile(filepath.Join(tmp, ".marvis", "config.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -267,7 +267,7 @@ func TestCLIConfig_UnknownFieldsArePreserved(t *testing.T) {
 	tmp := t.TempDir()
 	redirectTestHome(t, tmp)
 
-	cfgDir := filepath.Join(tmp, ".marvis-studio")
+	cfgDir := filepath.Join(tmp, ".marvis")
 	if err := os.MkdirAll(cfgDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -343,7 +343,7 @@ func TestCLIConfig_TaskRootOverridesOwnerHome(t *testing.T) {
 	redirectTestHome(t, ownerHome)
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", taskRoot)
 
-	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -408,7 +408,7 @@ func TestCLIConfig_NoTaskRootKeepsInteractiveHomeResolution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CLIConfigPathForProfile: %v", err)
 	}
-	want := filepath.Join(home, ".marvis-studio", "profiles", "dev", "config.json")
+	want := filepath.Join(home, ".marvis", "profiles", "dev", "config.json")
 	if path != want {
 		t.Fatalf("path = %q, want interactive path %q", path, want)
 	}

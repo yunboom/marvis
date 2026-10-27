@@ -36,6 +36,7 @@ import {
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { cn } from "@marvis/ui/lib/utils";
+import { BorderBeam } from "@marvis/ui/components/common/border-beam";
 import { copyText } from "@marvis/ui/lib/clipboard";
 import { api } from "@marvis/core/api";
 import { useConfigStore } from "@marvis/core/config";
@@ -498,6 +499,7 @@ function ImageAttachmentView({
           className={cn("image-content", uploading && "image-uploading")}
           draggable={false}
         />
+        {uploading && <BorderBeam variant="ink" />}
         {!uploading && src && (
           <span
             className="image-toolbar"

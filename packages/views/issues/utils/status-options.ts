@@ -5,11 +5,15 @@ import {
   ALL_STATUSES,
   BUILT_IN_STATUS_CATEGORY,
   BUILT_IN_STATUS_ORDER,
+  STATUS_GROUP_ORDER,
+  defaultStatusGroup,
+  statusCategoriesForGroup,
 } from "@marvis/core/issues/config";
 import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { useProjectWithWorkflow } from "@marvis/core/issue-workflows";
 import {
   issueStatusColor,
+  issueStatusGroup,
   normalizeIssueStatusCategory,
 } from "@marvis/core/issue-statuses/queries";
 import type { IssueStatus, IssueStatusCategory, IssueWorkflow, Project } from "@marvis/core/types";
@@ -26,8 +30,9 @@ export interface StatusOption {
 }
 
 /**
- * The statuses a user can pick or filter by, as one flat list in canonical
- * category order (MUL-6243, MUL-6399).
+ * The statuses a user can pick or filter by, as one flat list in status-group
+ * order — the board's columns — and catalog order inside a group (MUL-6243,
+ * MUL-6399).
  *
  * Category is carried per option rather than expressed as a heading. Shape
  * and color belong to the concrete status and convey no automation behavior.
@@ -53,33 +58,40 @@ export function useStatusOptions(
   return useMemo(
     () => {
       const includedArchived = new Set(includeArchivedKeys);
-      return ALL_STATUSES.flatMap<StatusOption>((category) => {
-        const entries = statuses.filter(
-          (entry) =>
-            normalizeIssueStatusCategory(entry.category) === category &&
-            (!entry.archived_at || includedArchived.has(entry.key)),
-        );
-        // No catalog row for this category: the fetch is still in flight, or
-        // this workspace predates the seed. Offer every built-in in the
-        // category so the seven concrete status choices remain available.
-        if (entries.length === 0) {
-          return BUILT_IN_STATUS_ORDER.filter(
-            (key) => BUILT_IN_STATUS_CATEGORY[key] === category,
-          ).map((key) => ({
-            key,
-            category,
-            label: labelOf(key),
-            color: null,
-          }));
-        }
-        return entries.map((e) => ({
-          key: e.key as IssueStatus,
-          category,
-          label: labelOf(e.key),
-          color: issueStatusColor(e),
-          icon: e.icon,
-        }));
-      });
+      return STATUS_GROUP_ORDER.flatMap<StatusOption>((group) =>
+        statusCategoriesForGroup(group).flatMap<StatusOption>((category) => {
+          const inCategory = statuses.filter(
+            (entry) =>
+              normalizeIssueStatusCategory(entry.category) === category &&
+              (!entry.archived_at || includedArchived.has(entry.key)),
+          );
+          // No catalog row for this category: the fetch is still in flight, or
+          // this workspace predates the seed. Offer every built-in of the
+          // category, each in its own group, so the seven concrete status
+          // choices remain available.
+          if (inCategory.length === 0) {
+            return BUILT_IN_STATUS_ORDER.filter(
+              (key) =>
+                BUILT_IN_STATUS_CATEGORY[key] === category &&
+                defaultStatusGroup(key, category) === group,
+            ).map((key) => ({
+              key,
+              category,
+              label: labelOf(key),
+              color: null,
+            }));
+          }
+          return inCategory
+            .filter((e) => issueStatusGroup(e) === group)
+            .map((e) => ({
+              key: e.key as IssueStatus,
+              category,
+              label: labelOf(e.key),
+              color: issueStatusColor(e),
+              icon: e.icon,
+            }));
+        }),
+      );
     },
     [includeArchivedKeys, labelOf, statuses],
   );

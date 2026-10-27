@@ -65,6 +65,13 @@ import {
 import { useT } from "../../i18n";
 import type { SkillRow } from "./skill-list-filter";
 import { PAGE_TOOLBAR } from "../../layout/page-header";
+import {
+  COLLECTION_SEARCH_ICON,
+  COLLECTION_SEARCH_INPUT,
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
+} from "../../layout/collection-page";
+import { cn } from "@marvis/ui/lib/utils";
 
 export type OriginType = SkillOriginType;
 
@@ -207,34 +214,34 @@ export function SkillListToolbar({
   );
 
   return (
-    <div className={PAGE_TOOLBAR}>
+    <div className={cn(PAGE_TOOLBAR, "h-14 gap-2.5")}>
       {/* Left: name search + result count. The count only appears while
           search/filters narrow the list — in the idle state it would just
           duplicate the total already shown in the page header. Below md the
           search (and its count) disappear entirely, following the issues
           header's small-screen treatment. */}
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2.5">
         <div className="relative hidden md:block">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className={cn(COLLECTION_SEARCH_ICON, "size-4")} />
           <Input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             aria-label={t(($) => $.page.search_placeholder)}
             placeholder={t(($) => $.page.search_placeholder)}
-            className="h-8 w-64 pl-8 text-body"
+            className={cn(COLLECTION_SEARCH_INPUT, "h-9 w-66 pl-9 text-body")}
           />
         </div>
         {(hasActiveFilters || search.trim().length > 0) && (
           <span
             title={t(($) => $.toolbar.result_count_title)}
-            className="hidden shrink-0 text-caption tabular-nums text-muted-foreground md:inline"
+            className="hidden shrink-0 text-label tabular-nums text-muted-foreground md:inline"
           >
             {visibleCount} / {allRows.length}
           </span>
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-2">
         {/* Filter */}
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -242,11 +249,13 @@ export function SkillListToolbar({
               <Button
                 variant={hasActiveFilters ? "default" : "outline"}
                 size="sm"
-                className={
+                className={cn(
+                  COLLECTION_TOOLBAR_BUTTON,
+                  "w-8 px-0 md:w-auto md:px-3",
                   hasActiveFilters
-                    ? "h-8 w-8 gap-1 bg-brand px-0 text-white hover:bg-brand/90 md:w-auto md:px-2.5"
-                    : "h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
-                }
+                    ? "font-medium md:pr-2"
+                    : COLLECTION_TOOLBAR_BUTTON_IDLE,
+                )}
               >
                 <Filter className="size-3.5" />
                 {hasActiveFilters ? (
@@ -270,7 +279,7 @@ export function SkillListToolbar({
                     role="button"
                     tabIndex={-1}
                     aria-label={t(($) => $.toolbar.clear_filters)}
-                    className="-mr-1 ml-0.5 hidden rounded-sm p-0.5 hover:bg-white/20 md:inline-flex"
+                    className="hidden size-4.5 items-center justify-center rounded-full bg-primary-foreground/20 transition-colors duration-(--motion-fast) ease-out hover:bg-primary-foreground/30 md:inline-flex"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -491,7 +500,11 @@ export function SkillListToolbar({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
+                      className={cn(
+                        COLLECTION_TOOLBAR_BUTTON,
+                        COLLECTION_TOOLBAR_BUTTON_IDLE,
+                        "w-8 px-0 md:w-auto md:px-3",
+                      )}
                     >
                       {sortDirection === "asc" ? (
                         <ArrowUp className="size-3.5" />

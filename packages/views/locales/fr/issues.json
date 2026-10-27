@@ -371,7 +371,21 @@
     "empty_grouping": "Aucune tâche correspondante",
     "no_value": "Aucune valeur",
     "ordered_by": "Tableau trié par {{field}}",
-    "manual_reorder_hint": "Passez au tri Manuel pour réorganiser les tâches dans une colonne."
+    "manual_reorder_hint": "Passez au tri Manuel pour réorganiser les tâches dans une colonne.",
+    "status_column": {
+      "not_started": "Non commencé",
+      "working": "En cours",
+      "needs_attention": "À traiter",
+      "ended": "Terminé"
+    },
+    "lane_more_one": "{{count}} de plus",
+    "lane_more_other": "{{count}} de plus",
+    "lane_collapse": "Réduire",
+    "lane_focus": "Se concentrer sur {{status}}",
+    "focusing": "Mode focus",
+    "exit_focus": "Quitter le focus",
+    "below_fold_one": "{{count}} de plus en dessous",
+    "below_fold_other": "{{count}} de plus en dessous"
   },
   "peek": {
     "panel_label": "Aperçu de la tâche",
@@ -532,6 +546,7 @@
     "pr_auto_complete_disabled": "a configuré cette tâche pour garder son statut à la fusion des PR",
     "pr_auto_complete_enabled": "a de nouveau fait changer le statut de cette tâche à la fusion des PR",
     "wakeup_created": "a ajouté un réveil : {{condition}} · réveiller {{agent}}",
+    "wakeup_created_scheduled": "a ajouté un réveil pour {{agent}} : {{condition}}",
     "wakeup_triggered": "{{condition}} · {{agent}} réveillé",
     "wakeup_triggered_merged": "{{condition}} · ajouté à l’exécution en attente de {{agent}}",
     "wakeup_triggered_acknowledged": "{{condition}} · déclenché par {{agent}} lui-même ; pas de nouveau réveil",
@@ -655,6 +670,7 @@
     "recipient_count_other": "{{count}} agents recevront ce message",
     "steer_attachment_notice": "Seul du texte peut rejoindre une exécution en cours : un message avec des fichiers sera traité après.",
     "restart_send": "Arrêter et envoyer",
+    "restart_stopping": "Arrêt en cours…",
     "restart_failed": "Impossible d'arrêter l'exécution en cours. Votre message n'a pas été envoyé."
   },
   "reply": {
@@ -688,6 +704,7 @@
     "hover_header_queued_other": "{{count}} agents en attente",
     "status_running": "Au travail",
     "status_queued": "En file d'attente",
+    "status_working": "Au travail",
     "empty_hover": "Aucun agent au travail pour l'instant",
     "unknown_hover": "Agents au travail : pas encore chargé",
     "filter_active_label": "Affichage des tâches avec des agents au travail",
@@ -725,6 +742,7 @@
     "retry_failed": "Échec de la relance de l'exécution",
     "retry_blocked": "Non relancée — vous n'avez pas la permission d'utiliser cet agent",
     "transcript_tooltip": "Voir la transcription",
+    "jump_to_run": "Aller à l'exécution",
     "cancel_failed": "Échec de l'annulation de l'exécution",
     "trigger_retry": "Relance",
     "trigger_retry_attempt": "Relance n° {{attempt}}",
@@ -865,7 +883,9 @@
   },
   "card": {
     "update_failed": "Échec de la mise à jour de la tâche",
-    "updated_ago": "Mis à jour {{time}}"
+    "updated_ago": "Mis à jour {{time}}",
+    "overdue_days_one": "En retard de {{count}} jour",
+    "overdue_days_other": "En retard de {{count}} jours"
   },
   "actions": {
     "rename_issue": "Renommer la tâche",
@@ -1301,6 +1321,7 @@
       "other_done": "est terminée",
       "other_ended": "est terminée ou annulée",
       "other_in_review": "passe en revue",
+      "other_blocked": "passe à Bloqué",
       "max_fires": "Au plus",
       "max_fires_times_one": "{{count}} fois",
       "max_fires_times_other": "{{count}} fois",
@@ -1356,6 +1377,7 @@
       "other_done": "Quand {{issue}} est terminée",
       "other_ended": "Quand {{issue}} est terminée ou annulée",
       "other_in_review": "Quand {{issue}} passe en revue",
+      "other_blocked": "Quand {{issue}} passe à Bloqué",
       "another_issue": "une autre tâche",
       "unknown_label": "un libellé supprimé",
       "unknown_property": "une propriété supprimée",
@@ -1379,6 +1401,7 @@
       "other_done": "Attend {{issue}}",
       "other_ended": "Attend la fin de {{issue}}",
       "other_in_review": "Attend la revue de {{issue}}",
+      "other_blocked": "Attend que {{issue}} passe à Bloqué",
       "time": "{{time}} · réveille {{agent}}",
       "header": "{{agent}} : {{what}}",
       "paused": "Réveil en pause",
@@ -1540,7 +1563,7 @@
       "set_start": "Définir comme étape de départ",
       "move_up": "Monter",
       "move_down": "Descendre",
-      "remove": "Retirer la colonne",
+      "remove": "Retirer l’étape",
       "on_enter": "À l’entrée, confier à",
       "choose_target": "Choisir…",
       "instructions": "Instructions de passage",
@@ -1560,7 +1583,7 @@
       "duplicate": "Dupliquer en nouveau workflow",
       "copy_name": "Copie de {{name}}",
       "more": "Plus d’actions",
-      "steps_hint": "Faites glisser pour réordonner les colonnes du milieu. Backlog et Blocked sont facultatives. Un nouveau statut est créé à l’enregistrement.",
+      "steps_hint": "Les nouveaux statuts sont ajoutés à la bibliothèque à l’enregistrement.",
       "status_needs_admin": "{{names}} seraient de nouveaux statuts. Seuls les administrateurs de l’espace peuvent ajouter des statuts : retirez ces colonnes ou demandez d’abord à un administrateur de les ajouter.",
       "reorder": "Réordonner {{name}}",
       "card_hand_to": "Confier à",
@@ -1583,7 +1606,6 @@
       "select_step": "Sélectionnez une colonne pour choisir à qui elle transmet les tickets.",
       "unsaved": "Modifications non enregistrées",
       "not_found": "Ce workflow n’existe plus.",
-      "default_note": "Default est le tableau de tout projet sans workflow choisi, et des vues hors projet.",
       "new_badge": "Nouveau",
       "columns": "Colonnes",
       "include_status": "Inclure {{status}}",
@@ -1591,7 +1613,43 @@
       "step_off": "Désactivé : ce workflow n’utilise pas ce statut. Activez-le dans la liste des étapes pour l’utiliser.",
       "status_new_hint": "Nouveau statut. Il sera ajouté à la bibliothèque de statuts à l’enregistrement.",
       "no_other_status": "Tous les statuts sont déjà des étapes.",
-      "no_handoff_step": "Cette étape ne relaie pas : le responsable ne change pas et aucune exécution ne démarre."
+      "no_handoff_step": "Cette étape ne relaie pas : le responsable ne change pas et aucune exécution ne démarre.",
+      "zone": {
+        "start": "Début",
+        "middle": "Étapes intermédiaires",
+        "middle_caption_one": "{{count}} étape · à vous de l’ordonner",
+        "middle_caption_other": "{{count}} étapes · à vous de les ordonner",
+        "blocked": "Bloqué",
+        "blocked_caption": "Accessible depuis toute étape",
+        "end": "Fin",
+        "fixed": "Position fixe"
+      },
+      "why": {
+        "todo": "Chaque nouveau ticket commence dans À faire, et un ticket assigné à un agent y lance son exécution. Chaque workflow le garde, en position fixe.",
+        "done": "Là où se terminent les tickets finis. Le décompte des tickets terminés en dépend, il ne peut donc pas être retiré.",
+        "cancelled": "Là où se terminent les tickets abandonnés. Avec Terminé, il indique qu’un ticket est clos ; il ne peut donc pas être retiré.",
+        "backlog": "Une zone d’attente : les tickets ici ne lancent pas d’agent. Désactivez-la si l’équipe n’en a pas besoin, le tableau masque alors la colonne.",
+        "blocked": "Un statut à part : toute étape bloquée peut y passer, et « Une fois terminé, passer à » l’ignore. Désactivez-le si vous n’en avez pas besoin."
+      },
+      "kind": {
+        "locked": "Étape fixe",
+        "optional": "Étape facultative",
+        "optional_off": "Étape facultative · désactivée",
+        "middle": "Étape intermédiaire",
+        "new": "Nouveau statut"
+      },
+      "lock_why": "Pourquoi {{name}} ne peut pas être retiré",
+      "remove_named": "Retirer {{name}}",
+      "card_no_run": "Aucune exécution",
+      "card_ends": "Fin du ticket",
+      "search_status": "Rechercher un statut",
+      "library": "Bibliothèque de statuts",
+      "no_match": "Aucun statut ne correspond",
+      "new_status_named": "Nouveau statut « {{name}} »",
+      "key_on_save": "Créé à l’enregistrement",
+      "rule_locked": "Toujours conservée",
+      "rule_optional": "Facultative, position fixe",
+      "default_note": "Default est le tableau de tout projet sans workflow choisi, et des vues hors projet."
     },
     "mapping": {
       "title": "Déplacer les tâches vers {{name}}",
@@ -1630,7 +1688,7 @@
       "used_by_short": "Utilisé par : {{names}}",
       "used_by_nobody": "Aucun projet pour l’instant",
       "manage": "Gérer les workflows…",
-      "picker_more": "Créez d’autres workflows dans Paramètres → Workflows."
+      "picker_more": "Créez d’autres workflows depuis la page Workflows de la barre latérale."
     },
     "picker": {
       "header": "{{workflow}} · selon le projet « {{project}} »",

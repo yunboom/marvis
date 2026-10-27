@@ -205,6 +205,26 @@ describe("RuntimeProfilesDialog", () => {
     );
   });
 
+  it("creates a custom Devin runtime from the protocol picker", async () => {
+    renderDialog({ intent: "create" });
+    fireEvent.click(screen.getByRole("button", { name: /^devin$/i }));
+    fireEvent.change(screen.getByLabelText("Display name"), {
+      target: { value: "Team Devin" },
+    });
+    fireEvent.change(screen.getByLabelText("Command"), {
+      target: { value: "team-devin" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create runtime" }));
+    await waitFor(() =>
+      expect(mutationState.createProfile).toHaveBeenCalledWith({
+        display_name: "Team Devin",
+        runtime_type: "devin",
+        command_name: "team-devin",
+        fixed_args: [],
+      }),
+    );
+  });
+
   it("parses a pasted command line into fixed_args on create", async () => {
     renderDialog();
 
@@ -253,11 +273,8 @@ describe("RuntimeProfilesDialog", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/from Studio Mac/)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "View setup guide" }),
-    ).toHaveAttribute(
-      "href",
-      "https://marvis.ai/docs/daemon-runtimes#custom-runtime-profiles",
-    );
+      screen.queryByRole("link", { name: "View setup guide" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Step 1 of 2")).toBeInTheDocument();
     expect(
       screen.queryByText("Create your first custom runtime"),

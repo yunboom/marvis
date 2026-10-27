@@ -233,10 +233,12 @@ export function AgentDetailPage({ agentId }: AgentDetailPageProps) {
       <div className="flex flex-1 min-h-0 flex-col">
         <BackHeader paths={paths.agents()} title={t(($) => $.detail.back_to_agents)} />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-          <Lock className="h-8 w-8 text-muted-foreground" />
+          <span className="mb-1 flex size-12 items-center justify-center rounded-full bg-surface-sunken text-muted-foreground">
+            <Lock className="size-6" aria-hidden="true" />
+          </span>
           <div>
-            <p className="text-body font-medium">{t(($) => $.detail.no_access_title)}</p>
-            <p className="mt-1 text-caption text-muted-foreground">
+            <p className="text-body-lg font-semibold">{t(($) => $.detail.no_access_title)}</p>
+            <p className="mt-1 text-label text-muted-foreground">
               {t(($) => $.detail.no_access_hint)}
             </p>
           </div>
@@ -259,14 +261,16 @@ export function AgentDetailPage({ agentId }: AgentDetailPageProps) {
       <div className="flex flex-1 min-h-0 flex-col">
         <BackHeader paths={paths.agents()} title={t(($) => $.detail.back_to_agents)} />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
+          <span className="mb-1 flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+            <AlertCircle className="size-6" aria-hidden="true" />
+          </span>
           <div>
-            <p className="text-body font-medium">
+            <p className="text-body-lg font-semibold">
               {isNotFound
                 ? t(($) => $.detail.not_found_title)
                 : t(($) => $.detail.load_failed_title)}
             </p>
-            <p className="mt-1 text-caption text-muted-foreground">
+            <p className="mt-1 text-label text-muted-foreground">
               {isNotFound
                 ? t(($) => $.detail.not_found_default)
                 : loadError instanceof Error
@@ -369,9 +373,9 @@ export function AgentDetailPage({ agentId }: AgentDetailPageProps) {
       )}
 
       {isArchived && (
-        <div className="shrink-0 border-b bg-muted/50 py-2 text-caption text-muted-foreground">
-          <div className={cn(PAGE_RAIL, PAGE_GUTTER, "flex items-center gap-2")}>
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+        <div className={cn(PAGE_RAIL, PAGE_GUTTER, "shrink-0 pt-3")}>
+          <div className="flex items-center gap-2.5 rounded-lg bg-surface-sunken py-2 pr-2 pl-3.5 text-label text-muted-foreground animate-content-rise">
+            <AlertCircle className="size-4 shrink-0" />
             <span className="flex-1">
               {t(($) => $.detail.archived_banner)}
             </span>
@@ -379,7 +383,7 @@ export function AgentDetailPage({ agentId }: AgentDetailPageProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-6 text-caption"
+                className="h-7 bg-background px-3"
                 onClick={() => handleRestore(agent.id)}
               >
                 {t(($) => $.detail.restore)}
@@ -390,9 +394,9 @@ export function AgentDetailPage({ agentId }: AgentDetailPageProps) {
       )}
 
       {!isArchived && !runtimeBound && (
-        <div className="shrink-0 border-b border-amber-500/30 bg-amber-500/10 py-2 text-caption text-amber-900 dark:text-amber-100">
-          <div className={cn(PAGE_RAIL, PAGE_GUTTER, "flex items-center gap-2")}>
-            <Server className="h-3.5 w-3.5 shrink-0" />
+        <div className={cn(PAGE_RAIL, PAGE_GUTTER, "shrink-0 pt-3")}>
+          <div className="flex items-center gap-2.5 rounded-lg bg-warning/12 py-2 pr-2 pl-3.5 text-label text-foreground animate-content-rise">
+            <Server className="size-4 shrink-0 text-warning" />
             <span className="flex-1">
               {t(($) => $.detail.runtime_required_banner)}
             </span>
@@ -400,7 +404,7 @@ export function AgentDetailPage({ agentId }: AgentDetailPageProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-6 border-amber-500/40 bg-background/70 text-caption"
+                className="h-7 bg-background px-3"
                 onClick={() => setTabNavIntent("general")}
               >
                 {t(($) => $.detail.bind_runtime)}
@@ -507,17 +511,17 @@ function DetailHeader({
 
   return (
     <header
-      className="shrink-0 border-b bg-background pb-5 pt-3"
+      className="shrink-0 bg-background pb-5 pt-4"
     >
       <div className={cn(PAGE_RAIL, PAGE_GUTTER)}>
-        <div className="flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground">
+        <div className="flex min-w-0 items-center gap-1.5 text-label text-muted-foreground">
           <AppLink
             href={backHref}
-            className="rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded-sm transition-colors duration-(--motion-fast) ease-out hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t(($) => $.page.title)}
           </AppLink>
-          <span aria-hidden="true">/</span>
+          <span aria-hidden="true" className="text-faint-foreground">/</span>
           <span className="truncate text-foreground">{agent.name}</span>
         </div>
 
@@ -532,7 +536,7 @@ function DetailHeader({
             />
             <div className="min-w-0 pt-0.5">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                <h1 className="min-w-0 text-balance text-title-lg font-semibold tracking-tight sm:text-display-sm">
+                <h1 className="min-w-0 text-balance text-title-lg font-bold tracking-tight sm:text-display-sm">
                   {agent.name}
                 </h1>
                 <AgentPresenceIndicator detail={presence} />
@@ -541,7 +545,7 @@ function DetailHeader({
                 {agent.description ||
                   t(($) => $.inspector.no_description_placeholder)}
               </ExpandableDescription>
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-caption text-muted-foreground">
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-label text-muted-foreground">
                 {runtime?.provider === "qoder_cloud" ? null : (
                   <span className="inline-flex min-w-0 items-center gap-1.5">
                     <Bot className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -574,7 +578,7 @@ function DetailHeader({
                 // An anchor never matches `:disabled`, so the base variant's
                 // `disabled:` rules never fire here — Base UI's data-disabled
                 // is what carries the dimmed, inert look.
-                className="data-disabled:pointer-events-none data-disabled:opacity-50"
+                className="h-9 px-4 text-body data-disabled:pointer-events-none data-disabled:opacity-50"
                 render={<AppLink href={dmHref} onClick={onDm} />}
                 nativeButton={false}
               >
@@ -583,7 +587,12 @@ function DetailHeader({
               </Button>
             )}
             {!isArchived && canAssign && (
-              <Button type="button" size="sm" onClick={onAssign}>
+              <Button
+                type="button"
+                size="sm"
+                className="h-9 px-4 text-body"
+                onClick={onAssign}
+              >
                 <Plus className="h-4 w-4" aria-hidden="true" />
                 {t(($) => $.detail.assign_work)}
               </Button>
@@ -627,7 +636,7 @@ function BackHeader({ paths, title }: { paths: string; title: string }) {
     <PageHeader>
       <AppLink
         href={paths}
-        className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-caption text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant)"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         {title}
@@ -639,11 +648,11 @@ function BackHeader({ paths, title }: { paths: string; title: string }) {
 function DetailLoadingSkeleton() {
   return (
     <div className="flex flex-1 min-h-0 flex-col">
-      <div className="shrink-0 border-b pb-5 pt-3">
+      <div className="shrink-0 pb-5 pt-4">
         <div className={cn(PAGE_RAIL, PAGE_GUTTER)}>
           <Skeleton className="h-4 w-48" />
           <div className="mt-4 flex items-start gap-4">
-            <Skeleton className="h-14 w-14 rounded-full" />
+            <Skeleton className="size-18 rounded-full" />
             <div className="flex-1 space-y-3">
               <Skeleton className="h-7 w-64" />
               <Skeleton className="h-4 w-full max-w-xl" />
@@ -653,13 +662,13 @@ function DetailLoadingSkeleton() {
         </div>
       </div>
       <div className={cn(PAGE_RAIL, PAGE_GUTTER, "flex flex-1 flex-col py-6")}>
-        <Skeleton className="h-9 w-96" />
+        <Skeleton className="h-9 w-96 rounded-full" />
         <div className="mt-6 grid flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-5">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-48 w-full rounded-xl" />
+            <Skeleton className="h-64 w-full rounded-xl" />
           </div>
-          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-96 w-full rounded-xl" />
         </div>
       </div>
     </div>

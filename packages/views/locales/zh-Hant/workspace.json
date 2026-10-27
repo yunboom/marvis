@@ -1,0 +1,66 @@
+{
+  "create_page": {
+    "title": "建立工作區",
+    "subtitle": "成員、任務和智慧體都在工作區裡協作。",
+    "preview_empty_name": "新工作區",
+    "preview_empty_hint": "填寫名稱後生成 URL 和任務編號",
+    "name_label": "工作區名稱",
+    "name_placeholder": "Acme Inc",
+    "random_name": "隨機",
+    "url_label": "URL",
+    "slug_placeholder": "acme",
+    "issue_prefix_label": "任務字首",
+    "submit": "建立工作區",
+    "submitting": "建立中...",
+    "cancel": "取消",
+    "log_out": "退出登入",
+    "disabled_title": "無法建立工作區",
+    "disabled_description": "該例項已禁止建立工作區，請聯絡管理員邀請你加入。",
+    "errors": {
+      "slug_format": "只能包含小寫字母、數字和連字元",
+      "slug_taken": "該工作區 URL 已被佔用。",
+      "slug_reserved": "該工作區 URL 是系統保留的，無法使用。",
+      "slug_conflict_toast": "請換一個工作區 URL",
+      "create_failed": "建立工作區失敗"
+    },
+    "about": {
+      "label": "關於你",
+      "edit": "修改",
+      "dialog_hint": "Marvis 會據此安排第一次對話",
+      "multi": "可多選",
+      "done": "完成",
+      "uses_more": "{{first}} 等 {{count}} 項",
+      "uses_none": "未選擇用途",
+      "role": {
+        "question": "哪一項最符合你？",
+        "engineer": "工程師 / 開發者",
+        "product": "產品經理",
+        "designer": "設計師",
+        "founder": "創始人 / 高管",
+        "marketing": "市場 / 增長",
+        "writer": "寫作 / 內容",
+        "research": "研究員 / 分析師",
+        "ops": "運營 / 專案管理",
+        "student": "學生 / 個人使用",
+        "other": "其他"
+      },
+      "use_case": {
+        "question": "你打算用 Marvis 做什麼？",
+        "ship_code": "讓 AI 智慧體幫我寫程式碼",
+        "manage_team": "給團隊做任務管理",
+        "personal_tasks": "管理我自己的任務",
+        "plan_research": "計劃、頭腦風暴、調研",
+        "write_publish": "寫作、編輯、釋出",
+        "automate_ops": "自動化日常運營",
+        "evaluate": "只是隨便看看",
+        "other": "其他"
+      }
+    }
+  },
+  "no_access": {
+    "title": "工作區不可用",
+    "description": "該工作區不存在，或你沒有訪問權限。",
+    "go_to_workspaces": "前往我的工作區",
+    "sign_in_different": "使用其他帳號登入"
+  }
+}

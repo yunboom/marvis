@@ -28,8 +28,8 @@ export function OfflineBanner({ agentName, availability }: Props) {
   const name = agentName?.trim() || t(($) => $.offline_banner.fallback_name);
   if (availability === "unstable") {
     return (
-      <div className={cn(CHAT_GUTTER, "mb-1.5")}>
-        <div className={cn(CHAT_COLUMN, "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-caption bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 ring-1 ring-amber-200/60 dark:ring-amber-900/40")}>
+      <div className={cn(CHAT_GUTTER, "mb-2")}>
+        <div className={cn(CHAT_COLUMN, "flex items-center gap-2 rounded-lg bg-warning/10 px-3 py-2 text-label text-amber-900 ring-1 ring-inset ring-warning/30 dark:bg-warning/12 dark:text-amber-200 dark:ring-warning/24")}>
           <AlertCircle className="size-3.5 shrink-0" />
           <span className="truncate">
             {t(($) => $.offline_banner.unstable, { name })}
@@ -39,8 +39,8 @@ export function OfflineBanner({ agentName, availability }: Props) {
     );
   }
   return (
-    <div className={cn(CHAT_GUTTER, "mb-1.5")}>
-      <div className={cn(CHAT_COLUMN, "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-caption bg-muted text-muted-foreground ring-1 ring-border")}>
+    <div className={cn(CHAT_GUTTER, "mb-2")}>
+      <div className={cn(CHAT_COLUMN, "flex items-center gap-2 rounded-lg bg-surface-sunken px-3 py-2 text-label text-muted-foreground ring-1 ring-inset ring-border")}>
         <WifiOff className="size-3.5 shrink-0" />
         <span className="truncate">
           {t(($) => $.offline_banner.offline, { name })}

@@ -45,8 +45,8 @@ interface BreadcrumbHeaderProps {
  */
 export function BreadcrumbHeader({ segments, leaf, actions, leading, className }: BreadcrumbHeaderProps) {
   return (
-    <PageHeader leading={leading} className={cn("bg-background text-body", className)}>
-      <div className="flex flex-1 items-center gap-1.5 min-w-0">
+    <PageHeader leading={leading} className={cn("h-13 bg-background text-body", className)}>
+      <div className="flex flex-1 items-center gap-1 min-w-0">
         {segments.map((segment) => (
           <Fragment key={segment.href}>
             <AppLink
@@ -55,13 +55,13 @@ export function BreadcrumbHeader({ segments, leaf, actions, leading, className }
                 typeof segment.label === "string" ? segment.label : undefined
               }
               className={cn(
-                "text-muted-foreground hover:text-foreground transition-colors",
+                "flex h-7 items-center rounded-row px-2 text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant)",
                 segment.className ?? "shrink-0",
               )}
             >
               {segment.label}
             </AppLink>
-            <ChevronRight className="h-3 w-3 text-faint-foreground shrink-0" />
+            <ChevronRight className="size-3.5 text-faint-foreground shrink-0" />
           </Fragment>
         ))}
         {leaf}

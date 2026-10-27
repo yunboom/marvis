@@ -111,9 +111,9 @@ export function UsageTrendCard({
           : t(($) => $.daily.title_tasks);
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h4 className="text-body font-semibold">{title}</h4>
+    <div className="rounded-xl border bg-card px-5 py-4">
+      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2.5">
+        <h4 className="text-body-lg font-semibold">{title}</h4>
         <div className="flex flex-wrap items-center gap-2">
           <Segmented
             label={t(($) => $.daily.metric_label)}
@@ -131,9 +131,9 @@ export function UsageTrendCard({
       </div>
       <div className="min-h-[240px]">
         {isEmpty ? (
-          <div className="flex aspect-[3/1] flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-muted/20 p-6 text-center">
-            <BarChart3 className="h-5 w-5 text-faint-foreground" />
-            <p className="text-caption text-muted-foreground">
+          <div className="flex aspect-[3/1] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input p-6 text-center">
+            <BarChart3 className="size-5 text-faint-foreground" />
+            <p className="text-label text-muted-foreground">
               {t(($) => $.daily.no_data)}
             </p>
           </div>

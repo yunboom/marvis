@@ -5,9 +5,11 @@
     "my_issues": "My Issues",
     "issues": "Issues",
     "projects": "Projects",
+    "workflows": "Workflows",
     "autopilots": "Autopilot",
     "agents": "Agents",
     "squads": "Squads",
+    "knowledge_base": "Knowledge base",
     "usage": "Analytics",
     "runtimes": "Runtimes",
     "skills": "Skills",
@@ -63,10 +65,12 @@
     "ai_team_group": "AI Team",
     "show_more_pins": "Show {{count}} more…",
     "show_fewer_pins": "Show fewer",
-    "unread_overflow": "99+",
-    "discord_card": {
-      "title": "Join our Discord",
-      "dismiss": "Dismiss"
-    }
+    "expand_sub_nav": "Expand {{label}}",
+    "collapse_sub_nav": "Collapse {{label}}",
+    "unread_overflow": "99+"
+  },
+  "lark_invite_welcome": {
+    "title": "Joined {{workspace}}",
+    "description": "Joined through {{inviter}}’s Feishu invite as {{role}}."
   }
 }

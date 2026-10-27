@@ -102,7 +102,7 @@ Run in PowerShell (no admin required):
 irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex
 ```
 
-This downloads the latest Windows binary from GitHub Releases, installs it to `%USERPROFILE%\.marvis-studio\bin\`, and adds it to your user PATH.
+This downloads the latest Windows binary from GitHub Releases, installs it to `%USERPROFILE%\.marvis\bin\`, and adds it to your user PATH.
 
 Verify:
 

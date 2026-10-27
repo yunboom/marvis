@@ -10,7 +10,7 @@ import pg from "pg";
 // `||` (not `??`) so an empty `NEXT_PUBLIC_API_URL=` in .env still falls
 // back to localhost. dotenv sets unset-vs-empty both as "" — treating them
 // the same matches user intent.
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || `http://localhost:${process.env.PORT || "8080"}`;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || `http://localhost:${process.env.PORT || "13840"}`;
 const DATABASE_URL = process.env.DATABASE_URL ?? "postgres://marvis:marvis@localhost:5432/marvis?sslmode=disable";
 
 interface TestWorkspace {
@@ -344,6 +344,32 @@ export class TestApiClient {
       throw new Error(`create comment failed: ${res.status} ${await res.text()}`);
     }
     return (await res.json()) as { id: string };
+  }
+
+  /** An authenticated JSON request in this client's workspace; throws on a non-2xx answer. */
+  async requestJSON<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const res = await this.authedFetch(path, { method, body: body === undefined ? undefined : JSON.stringify(body) });
+    if (!res.ok) {
+      throw new Error(`${method} ${path} failed: ${res.status} ${await res.text()}`);
+    }
+    return (await res.json()) as T;
+  }
+
+  /** Seed an owned runtime without launching an actual agent tool. */
+  async seedRuntime(name: string): Promise<string> {
+    if (!this.workspaceId || !this.email) throw new Error("Select a workspace before seeding a runtime");
+    const client = new pg.Client(DATABASE_URL);
+    await client.connect();
+    try {
+      const result = await client.query(
+        `INSERT INTO agent_runtime (workspace_id, name, runtime_mode, provider, status, owner_id, last_seen_at)
+         SELECT $1, $2, 'local', 'claude', 'online', id, now() FROM "user" WHERE email = $3 RETURNING id`,
+        [this.workspaceId, name, this.email],
+      );
+      return result.rows[0].id as string;
+    } finally {
+      await client.end();
+    }
   }
 
   /** Adds an existing user to this client's workspace and returns the member id. */

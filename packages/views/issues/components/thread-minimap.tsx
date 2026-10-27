@@ -604,7 +604,7 @@ export function ThreadMinimap({
           onPointerLeave={scheduleClose}
           onFocusCapture={cancelClose}
           onBlurCapture={scheduleClose}
-          className="pointer-events-auto absolute right-8 top-1/2 max-h-[calc(100%-3rem)] w-80 max-w-[calc(100vw-4rem)] -translate-y-1/2 overflow-y-auto overscroll-contain rounded-xl bg-popover p-2 text-body text-popover-foreground shadow-lg ring-1 ring-foreground/10"
+          className="pointer-events-auto absolute right-8 top-1/2 max-h-[calc(100%-3rem)] w-80 max-w-[calc(100vw-4rem)] -translate-y-1/2 overflow-y-auto overscroll-contain rounded-lg border border-border bg-popover p-1.5 text-body text-popover-foreground shadow-menu"
         >
           {/* One <li> per item, replies included, so row index === item index. */}
           <ul>
@@ -629,7 +629,7 @@ export function ThreadMinimap({
                   >
                     <button
                       {...rowProps}
-                      className="flex w-full items-center gap-2 rounded-md py-1 pl-3 pr-3 text-left text-label text-muted-foreground transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-active:font-medium data-active:text-brand"
+                      className="flex w-full items-center gap-2 rounded-row py-1 pl-3 pr-3 text-left text-label text-muted-foreground transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-active:font-medium data-active:text-brand"
                     >
                       <span className="inline-flex shrink-0" aria-hidden="true">
                         {avatarFor(item.entry, "xs")}
@@ -658,7 +658,7 @@ export function ThreadMinimap({
                   <button
                     {...rowProps}
                     aria-description={participantNames.join(", ") || undefined}
-                    className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 py-2 text-left text-body text-muted-foreground transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-active:font-medium data-active:text-brand"
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-row px-3 py-2 text-left text-body text-muted-foreground transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-active:font-medium data-active:text-brand"
                   >
                     <span className="flex min-w-0 flex-1 items-center gap-1.5">
                       <span className="truncate">{title}</span>
@@ -707,7 +707,7 @@ export function ThreadMinimap({
                         }
                         toggleThreadReplies(thread.id);
                       }}
-                      className="flex h-7 shrink-0 items-center gap-0.5 rounded-md pl-1.5 pr-1 text-micro tabular-nums text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex h-7 shrink-0 items-center gap-0.5 rounded-row pl-1.5 pr-1 text-micro tabular-nums text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {thread.replies.length}
                       <ChevronRight

@@ -250,7 +250,7 @@ export function DaemonPanel({
         showCloseButton={false}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b px-5">
           <div className="flex min-w-0 items-center gap-2">
             <Server className="size-4 shrink-0 text-muted-foreground" />
             <DialogTitle className="text-body font-medium">
@@ -263,7 +263,7 @@ export function DaemonPanel({
               type="button"
               onClick={() => onOpenChange(false)}
               aria-label={t(($) => $.desktop.daemon.close)}
-              className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="size-4" />
             </button>
@@ -271,15 +271,15 @@ export function DaemonPanel({
         </div>
 
         {/* Toolbar */}
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b px-4 py-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b px-5 py-2.5">
           {/* Search */}
           <div className="relative w-56">
-            <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t(($) => $.desktop.daemon.search)}
-              className="h-7 w-full rounded-md border bg-background pl-7 pr-2 text-caption placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="h-8 w-full rounded-lg bg-field pl-9 pr-3 text-caption transition-colors duration-(--motion-fast) ease-out placeholder:text-muted-foreground hover:bg-field-hover focus:bg-field-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -300,25 +300,25 @@ export function DaemonPanel({
           </div>
 
           {/* Right-aligned actions */}
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-1.5">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7"
+              className="h-8"
               onClick={handleCopy}
               disabled={filtered.length === 0}
             >
-              <CopyIcon className="size-3.5 mr-1.5" />
+              <CopyIcon className="size-3.5" />
               {t(($) => $.desktop.daemon.copy)}
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7"
+              className="h-8"
               onClick={handleClear}
               disabled={logs.length === 0}
             >
-              <Trash2 className="size-3.5 mr-1.5" />
+              <Trash2 className="size-3.5" />
               {t(($) => $.desktop.daemon.clear)}
             </Button>
           </div>
@@ -328,7 +328,7 @@ export function DaemonPanel({
         <div
           ref={logContainerRef}
           onScroll={handleScroll}
-          className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-2 py-1 font-mono text-caption"
+          className="min-h-0 flex-1 overflow-y-auto bg-surface-sunken px-3 py-2 font-mono text-caption"
         >
           {displayed.length === 0 ? (
             <EmptyState
@@ -368,7 +368,7 @@ export function DaemonPanel({
             communicated implicitly by the presence of the Jump-to-latest
             button below; an explicit "Paused" word read as "log stream is
             paused" (it isn't — data keeps flowing into the buffer). */}
-        <div className="flex shrink-0 items-center justify-between border-t bg-muted/30 px-4 py-1.5 text-caption text-muted-foreground">
+        <div className="flex h-10 shrink-0 items-center justify-between border-t px-5 text-caption text-muted-foreground">
           <span className="tabular-nums">
             {t(($) => $.desktop.daemon.showing_logs, {
               shown: filtered.length,
@@ -384,7 +384,7 @@ export function DaemonPanel({
             <button
               type="button"
               onClick={handleResume}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 hover:bg-muted hover:text-foreground"
+              className="inline-flex h-7 items-center gap-1 rounded-full px-3 transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant)"
             >
               <ArrowDown className="size-3" />
               {t(($) => $.desktop.daemon.jump_latest)}
@@ -408,7 +408,7 @@ function ContextBadge({
   const { t } = useT("settings");
   const isRunning = status.state === "running";
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border bg-background px-1.5 py-0.5 text-caption font-normal">
+    <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-field px-2.5 text-caption font-normal">
       <span
         className={cn(
           "size-1.5 rounded-full",
@@ -455,7 +455,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-7 items-center gap-1 rounded-md border bg-background px-2 text-caption transition-colors hover:bg-accent",
+        "inline-flex h-8 items-center gap-1.5 rounded-full border bg-background px-3 text-caption transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)",
         active
           ? variant
             ? LEVEL_BADGE_CLASS[variant]
@@ -516,7 +516,7 @@ function LogLineRow({
   return (
     <div
       className={cn(
-        "grid grid-cols-[auto_auto_minmax(0,1fr)] items-baseline gap-2 rounded-xs px-2 py-0.5 hover:bg-accent/30",
+        "grid grid-cols-[auto_auto_minmax(0,1fr)] items-baseline gap-2 rounded-md px-2 py-0.5 hover:bg-surface-hover",
         hasFields && "cursor-pointer",
       )}
       onClick={hasFields ? onToggle : undefined}
@@ -585,7 +585,7 @@ function GroupRows({
         <button
           type="button"
           onClick={onToggle}
-          className="my-0.5 ml-2 inline-flex w-fit items-center gap-2 rounded-xs border border-dashed border-muted-foreground/25 bg-muted/30 px-2 py-0.5 text-micro italic text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          className="my-0.5 ml-2 inline-flex w-fit items-center gap-2 rounded-full border border-dashed border-input bg-background px-2.5 py-0.5 text-micro italic text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
         >
           <span>···</span>
           <span>
@@ -621,7 +621,7 @@ function GroupRows({
       <button
         type="button"
         onClick={onToggle}
-        className="my-0.5 ml-2 inline-flex w-fit items-center gap-2 rounded-xs border border-dashed border-muted-foreground/25 px-2 py-0.5 text-micro italic text-muted-foreground hover:text-foreground"
+        className="my-0.5 ml-2 inline-flex w-fit items-center gap-2 rounded-full border border-dashed border-input px-2.5 py-0.5 text-micro italic text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
       >
         <span>···</span>
         <span>

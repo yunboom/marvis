@@ -23,10 +23,16 @@ const url = vi.hoisted(() => {
     },
   };
 });
+// 导航适配器的 getShareableUrl；undefined 表示网页端（取 window.location.origin）。
+const shareable = vi.hoisted(() => ({
+  url: undefined as ((path: string) => string) | undefined,
+}));
 const data = vi.hoisted(() => ({
   members: [] as Array<Record<string, unknown>>,
   invitations: [] as Array<Record<string, unknown>>,
   shareLinks: [] as Array<Record<string, unknown>>,
+  larkStatus: undefined as { enabled: boolean } | undefined,
+  larkInvites: [] as Array<Record<string, unknown>>,
   summary: null as Record<string, unknown> | null,
 }));
 
@@ -34,6 +40,9 @@ vi.mock("@tanstack/react-query", () => ({
   queryOptions: <T,>(opts: T) => opts,
   useQuery: (opts: { queryKey: unknown[] }) => {
     const key = JSON.stringify(opts.queryKey);
+    if (key.includes("invite-status")) return { data: data.larkStatus };
+    if (key.includes("lark-invites")) return { data: data.larkInvites };
+    if (key.includes("lark-chats")) return { data: [] };
     if (key.includes("invitations")) return { data: data.invitations };
     if (key.includes("share-links")) return { data: data.shareLinks };
     if (key.includes("members")) return { data: data.members };
@@ -82,10 +91,11 @@ vi.mock("../../navigation", () => ({
       searchParams: new URLSearchParams(search),
       push: go,
       replace: go,
+      getShareableUrl: shareable.url,
     };
   },
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 import { MembersTab } from "./members-tab";
 
@@ -123,7 +133,10 @@ beforeEach(() => {
     },
   ];
   data.shareLinks = [];
+  data.larkStatus = undefined;
+  data.larkInvites = [];
   data.summary = null;
+  shareable.url = undefined;
   configStore.getState().setFeatureFlags({});
 });
 
@@ -254,5 +267,172 @@ describe("MembersTab", () => {
     expect(screen.queryByRole("button", { name: "Invite member" })).toBeNull();
     expect(screen.queryByRole("tab", { name: /Share links/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
+  });
+
+  it("hides share-link invites when the shareable URL cannot open in a browser", () => {
+    // 没有网页端的桌面端只能给出 marvis:// 深链，对方打开后没有加入页面。
+    shareable.url = (path) => `marvis://open?path=${encodeURIComponent(path)}`;
+    url.set("tab=members&section=links");
+    renderWithI18n(<MembersTab />);
+
+    expect(screen.queryByRole("tab", { name: /Share links/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Create share link" })).toBeNull();
+    // 邮件邀请不受影响，深链指向的分享链接页回到成员列表。
+    expect(screen.getByRole("button", { name: "Invite member" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Members\s*3/ })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("keeps share-link invites when the shareable URL is a web address", () => {
+    shareable.url = (path) => `https://app.example.com${path}`;
+    url.set("tab=members&section=links");
+    renderWithI18n(<MembersTab />);
+
+    expect(screen.getByRole("tab", { name: /Share links\s*0/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  describe("Feishu invites", () => {
+    const larkInvite = (id: string, status: string, expiresAt = "2099-01-01T00:00:00Z") => ({
+      id,
+      target: { type: "chat", id: `oc_${id}`, id_type: "chat_id", name: `Group ${id}`, avatar_url: null },
+      role: "member",
+      status,
+      use_count: 0,
+      max_uses: null,
+      expires_at: expiresAt,
+      revoked_at: null,
+      note: "",
+      sent_by: { id: "user-1", name: "Ada Lovelace", avatar_url: null },
+      sent_by_agent: null,
+      created_at: "2026-10-20T00:00:00Z",
+      joined: [],
+    });
+
+    it("shows the tab with the number of active invites to admins when the server has the bot", () => {
+      data.larkStatus = { enabled: true };
+      data.larkInvites = [
+        larkInvite("a", "active"),
+        larkInvite("b", "active"),
+        larkInvite("c", "expired"),
+        // 到期时间已过的有效邀请不再算有效。
+        larkInvite("d", "active", "2020-01-01T00:00:00Z"),
+      ];
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.getByRole("tab", { name: /Feishu invites\s*2/ })).toHaveAttribute(
+        "aria-selected",
+        "false",
+      );
+    });
+
+    it("hides the tab from plain members even when the server has the bot", () => {
+      data.larkStatus = { enabled: true };
+      data.members = [
+        member("user-1", "Ada Lovelace", "member"),
+        member("user-2", "Grace Hopper", "owner"),
+      ];
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("tab", { name: /Feishu invites/ })).toBeNull();
+    });
+
+    it("hides the tab from plain members when the server has no Feishu bot", () => {
+      data.larkStatus = { enabled: false };
+      data.members = [
+        member("user-1", "Ada Lovelace", "member"),
+        member("user-2", "Grace Hopper", "owner"),
+      ];
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("tab", { name: /Feishu invites/ })).toBeNull();
+    });
+
+    it("waits for the status before showing the tab", () => {
+      data.larkStatus = undefined;
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("tab", { name: /Feishu invites/ })).toBeNull();
+    });
+
+    it("shows admins the tab with the not-configured panel and no send button when the server has no Feishu bot", async () => {
+      data.larkStatus = { enabled: false };
+      data.larkInvites = [larkInvite("a", "active")];
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      // 没有可发的邀请，标签上不显示数字。
+      const tab = screen.getByRole("tab", { name: /Feishu invites/ });
+      expect(tab).not.toHaveTextContent(/\d/);
+
+      await user.click(tab);
+
+      expect(url.get()).toBe("tab=members&section=lark");
+      expect(
+        screen.getByText("Feishu bot is not configured on this server"),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Group a")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Send Feishu invite" })).toBeNull();
+    });
+
+    it("keeps the tab when share links are unavailable on this client", () => {
+      data.larkStatus = { enabled: true };
+      shareable.url = (path) => `marvis://open?path=${encodeURIComponent(path)}`;
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("tab", { name: /Share links/ })).toBeNull();
+      expect(screen.getByRole("tab", { name: /Feishu invites/ })).toBeInTheDocument();
+    });
+
+    it("lists the invites under the tab, keeps it in the URL and offers the send button there only", async () => {
+      data.larkStatus = { enabled: true };
+      data.larkInvites = [larkInvite("a", "active")];
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("button", { name: "Send Feishu invite" })).toBeNull();
+      await user.click(screen.getByRole("tab", { name: /Feishu invites/ }));
+
+      expect(url.get()).toBe("tab=members&section=lark");
+      expect(await screen.findByText("Group a")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Send Feishu invite" })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("tab", { name: /Members\s*3/ }));
+      expect(screen.queryByRole("button", { name: "Send Feishu invite" })).toBeNull();
+    });
+
+    it("opens the send dialog from the toolbar button", async () => {
+      data.larkStatus = { enabled: true };
+      url.set("tab=members&section=lark");
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      await user.click(screen.getByRole("button", { name: "Send Feishu invite" }));
+
+      expect(await screen.findByRole("dialog", { name: "Send Feishu invite" })).toBeInTheDocument();
+    });
+
+    it("opens the tab a deep link names once the status has resolved, and falls back before that", () => {
+      data.larkStatus = { enabled: true };
+      url.set("tab=members&section=lark");
+      const { unmount } = renderWithI18n(<MembersTab />);
+      expect(screen.getByRole("tab", { name: /Feishu invites/ })).toHaveAttribute("aria-selected", "true");
+      unmount();
+
+      // 配置状态也要等查询返回，之前先回到成员列表。
+      data.larkStatus = undefined;
+      renderWithI18n(<MembersTab />);
+      expect(screen.getByRole("tab", { name: /Members\s*3/ })).toHaveAttribute("aria-selected", "true");
+    });
+
+    it("opens the not-configured panel from a deep link", () => {
+      data.larkStatus = { enabled: false };
+      url.set("tab=members&section=lark");
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.getByRole("tab", { name: /Feishu invites/ })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByText("Feishu bot is not configured on this server")).toBeInTheDocument();
+    });
   });
 });

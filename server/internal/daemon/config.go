@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	DefaultServerURL    = "ws://localhost:8080/ws"
+	DefaultServerURL    = "ws://localhost:13840/ws"
 	DefaultPollInterval = 30 * time.Second
 	// DefaultWSClaimPollInterval is the upper bound for missed-event safety
 	// polls while task availability and claims use a healthy WebSocket. The
@@ -113,7 +113,6 @@ type Config struct {
 	Profile                        string                // profile name (empty = default)
 	Agents                         map[string]AgentEntry // keyed by provider: claude, codebuddy, codex, copilot, opencode, codearts, deveco, openclaw, hermes, pi, cursor, kimi, reasonix, dsh, kiro, antigravity, qoder, qoderclicn, traecli, grok, qwen, qwenpaw, mcode, dim, zeroclaw (plus built-in runtime identities from agent.BuiltinRuntimes, e.g. omp)
 	WorkspacesRoot                 string                // base path for execution envs (default: ~/marvis_workspaces)
-	KeepEnvAfterTask               bool                  // preserve env after task for debugging
 	HealthPort                     int                   // local HTTP port for health checks (default: 19514)
 	MaxConcurrentTasks             int                   // max tasks running in parallel (default: 20)
 	GCEnabled                      bool                  // enable periodic workspace garbage collection (default: true)
@@ -266,7 +265,7 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	// can re-run the same discovery on a live daemon (MUL-5439).
 	agents := probeAgentCLIs()
 	if len(agents) == 0 && !overrides.AllowNoAgents {
-		return Config{}, fmt.Errorf("no agent CLI found: install claude, codebuddy, codearts, codex, copilot, opencode, deveco, openclaw, hermes, pi, omp, cursor-agent, kimi, reasonix, dsh, kiro-cli, agy, qodercli, qoderclicn, traecli, grok, qwen, qwenpaw, mcode, muse, dim, or zeroclaw and ensure it is on PATH")
+		return Config{}, fmt.Errorf("no agent CLI found: install claude, codebuddy, codearts, codex, copilot, opencode, deveco, openclaw, hermes, pi, omp, cursor-agent, kimi, reasonix, dsh, kiro-cli, agy, qodercli, qoderclicn, traecli, grok, qwen, qwenpaw, mcode, muse, devin, dim, or zeroclaw and ensure it is on PATH")
 	}
 
 	claudeArgs, err := shellArgsFromEnv("MARVIS_CLAUDE_ARGS")
@@ -506,7 +505,7 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	legacyDaemonIDs := LegacyDaemonIDs(host, profile)
 	// Pre-change (#1220) daemon identity was stored per profile, which means
 	// the same machine could end up with multiple leftover daemon.id files
-	// — e.g. ~/.marvis-studio/daemon.id (default) plus ~/.marvis-studio/profiles/<x>/
+	// — e.g. ~/.marvis/daemon.id (default) plus ~/.marvis/profiles/<x>/
 	// daemon.id. Surface those UUIDs so the server can merge their runtime
 	// rows into the canonical machine UUID. Fatal-free: a broken profiles
 	// dir shouldn't block startup.
@@ -539,9 +538,6 @@ func LoadConfig(overrides Overrides) (Config, error) {
 	if overrides.HealthPort > 0 {
 		healthPort = overrides.HealthPort
 	}
-
-	// Keep env after task: env > default (false)
-	keepEnv := os.Getenv("MARVIS_KEEP_ENV_AFTER_TASK") == "true" || os.Getenv("MARVIS_KEEP_ENV_AFTER_TASK") == "1"
 
 	// GC config: env > defaults
 	gcEnabled := true
@@ -632,7 +628,6 @@ func LoadConfig(overrides Overrides) (Config, error) {
 		Profile:                         profile,
 		Agents:                          agents,
 		WorkspacesRoot:                  workspacesRoot,
-		KeepEnvAfterTask:                keepEnv,
 		GCEnabled:                       gcEnabled,
 		GCInterval:                      gcInterval,
 		GCTTL:                           gcTTL,
@@ -830,7 +825,7 @@ func shellArgsFromEnv(name string) ([]string, error) {
 // On Windows this deliberately keeps the stable discovered junction path;
 // resolveAgentEntryWithHeal follows it for each launch so installer upgrades
 // that retarget a still-live junction take effect without a daemon restart.
-// When ~/.marvis-studio/hooks shadows a real agent binary, skip that hooks directory:
+// When ~/.marvis/hooks shadows a real agent binary, skip that hooks directory:
 // previously generated hook wrappers can execute the same command name and
 // recurse forever if the daemon records or launches the wrapper.
 func resolveAgentExecutablePath(cmd string) (string, error) {
@@ -864,7 +859,7 @@ func agentExecutablePresent(path string) bool {
 
 // reresolveAgentCommand re-runs the startup resolution for a single agent
 // command name, returning the freshly resolved absolute path. It mirrors the
-// probe() order in LoadConfig: exec.LookPath (with the ~/.marvis-studio/hooks
+// probe() order in LoadConfig: exec.LookPath (with the ~/.marvis/hooks
 // exclusion preserved via resolveAgentExecutablePath) first, then the login
 // shell fallback for a bare command name a GUI-launched daemon can't see on
 // its own PATH. It is only called on the miss path — when a previously pinned
@@ -918,7 +913,7 @@ func isMarvisHooksDir(dir string) bool {
 	if err != nil || home == "" {
 		return false
 	}
-	return samePathDir(dir, filepath.Join(home, ".marvis-studio", "hooks"))
+	return samePathDir(dir, filepath.Join(home, ".marvis", "hooks"))
 }
 
 func samePathDir(a, b string) bool {
@@ -974,7 +969,7 @@ func isExecutableFile(path string) bool {
 // doesn't require editing this list by hand.
 var defaultAgentCommandNames = append([]string{
 	"claude", "codex", "opencode", "codearts", "deveco", "openclaw", "hermes",
-	"pi", "cursor-agent", "copilot", "kimi", "reasonix", "dsh", "kiro-cli", "codebuddy", "agy", "qodercli", "qoderclicn", "traecli", "grok", "qwen", "qwenpaw", "mcode", "muse", "dim", "zeroclaw",
+	"pi", "cursor-agent", "copilot", "kimi", "reasonix", "dsh", "kiro-cli", "codebuddy", "agy", "qodercli", "qoderclicn", "traecli", "grok", "qwen", "qwenpaw", "mcode", "muse", "devin", "dim", "zeroclaw",
 }, agent.BuiltinRuntimeCommands()...)
 
 // codexDesktopAppBundlePaths returns candidate macOS app-bundle locations for
@@ -1392,7 +1387,7 @@ var resolveAgentsViaLoginShell = func(names []string) map[string]string {
 //  5. canonicalises the directory via `cd ... && pwd -P` so symlinked prefix
 //     dirs (fnm/nvm/volta) collapse to stable paths while the invoked command
 //     name is kept,
-//  6. if the resolved path lives in ~/.marvis-studio/hooks, searches the same
+//  6. if the resolved path lives in ~/.marvis/hooks, searches the same
 //     shell-expanded PATH for the first executable outside that hooks dir,
 //  7. prints `<name>\t<canonical_path>` one entry per line for the caller.
 //
@@ -1424,7 +1419,7 @@ func buildLoginShellResolveScript(names []string) string {
 	b.WriteString("  case \"$p\" in /*) ;; *) continue ;; esac\n")
 	b.WriteString("  d=$(dirname \"$p\") && f=$(basename \"$p\") && c=$(cd \"$d\" 2>/dev/null && pwd -P) || continue\n")
 	b.WriteString("  hc=\"\"\n")
-	b.WriteString("  if [ -n \"${HOME:-}\" ]; then hd=\"$HOME/.marvis-studio/hooks\"; hc=$(cd \"$hd\" 2>/dev/null && pwd -P) || hc=\"\"; fi\n")
+	b.WriteString("  if [ -n \"${HOME:-}\" ]; then hd=\"$HOME/.marvis/hooks\"; hc=$(cd \"$hd\" 2>/dev/null && pwd -P) || hc=\"\"; fi\n")
 	b.WriteString("  if [ -n \"$hc\" ] && [ \"$c\" = \"$hc\" ]; then\n")
 	b.WriteString("    oldIFS=$IFS; IFS=:\n")
 	b.WriteString("    for d2 in $PATH; do\n")

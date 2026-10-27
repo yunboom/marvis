@@ -48,7 +48,7 @@ export function IssueDuplicateBanner({
   if (issue.status !== "cancelled" || !original) return null;
 
   return (
-    <div className="mb-4 flex items-center gap-1 rounded-md border bg-muted/40 py-1 pl-3 pr-1 text-body">
+    <div className="mb-4 flex items-center gap-2 rounded-lg bg-field py-1 pl-3.5 pr-1 text-label">
       <AppLink
         href={paths.issueDetail(original.id)}
         newTabTitle={original.identifier}
@@ -72,9 +72,9 @@ export function IssueDuplicateBanner({
       </AppLink>
       <Button
         type="button"
-        variant="ghost"
+        variant="secondary"
         size="sm"
-        className="shrink-0 text-muted-foreground"
+        className="h-7 shrink-0 px-3 font-normal"
         onClick={onUnmark}
       >
         {t(($) => $.duplicates.unmark)}
@@ -101,11 +101,11 @@ export function IssueDuplicatesSection({ issueId }: { issueId: string }) {
     <div>
       <button
         type="button"
-        className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors mb-2 hover:bg-accent/70 ${open ? "" : "text-muted-foreground hover:text-foreground"}`}
+        className={`flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors mb-1.5 hover:bg-accent ${open ? "" : "text-muted-foreground hover:text-foreground"}`}
         onClick={() => setOpen(!open)}
       >
         {t(($) => $.duplicates.section_title)}{" "}
-        <span className="rounded-xs bg-muted px-1 text-micro font-medium tabular-nums text-muted-foreground">
+        <span className="rounded-full bg-field px-1.5 text-micro font-medium tabular-nums text-muted-foreground">
           {duplicates.length}
         </span>
         <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`} />
@@ -116,7 +116,7 @@ export function IssueDuplicatesSection({ issueId }: { issueId: string }) {
             <AppLink
               key={duplicate.id}
               href={paths.issueDetail(duplicate.id)}
-              className="group flex items-center gap-1.5 rounded-md px-2 -mx-2 py-1.5 text-caption hover:bg-accent/50 transition-colors"
+              className="group -mx-2 flex h-7.5 items-center gap-1.5 rounded-row px-2 text-label transition-colors hover:bg-accent"
             >
               <ActorAvatar
                 actorType={duplicate.creator_type}

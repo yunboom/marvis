@@ -11,12 +11,13 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@marvis/ui/components/ui/chart";
+import { CHART_MONO, monoBarFill } from "./chart-tones";
 
 // Single-series bar — total daily run time in seconds. The y-axis tick
 // formatter and tooltip both use the same `formatDuration` so the user
 // reads the same unit ladder (h / m / s) everywhere.
 const timeChartConfig = {
-  totalSeconds: { label: "Run time", color: "var(--chart-1)" },
+  totalSeconds: { label: "Run time", color: CHART_MONO[1] },
 } satisfies ChartConfig;
 
 export interface DailyTimeData {
@@ -38,7 +39,7 @@ export function DailyTimeChart({
 }) {
   return (
     <ChartContainer config={timeChartConfig} className="aspect-[3/1] w-full">
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -55,6 +56,7 @@ export function DailyTimeChart({
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               formatter={(value, name) =>
@@ -67,7 +69,7 @@ export function DailyTimeChart({
         />
         <Bar
           dataKey="totalSeconds"
-          fill="var(--color-totalSeconds)"
+          {...monoBarFill("totalSeconds")}
           radius={[3, 3, 0, 0]}
         />
       </BarChart>

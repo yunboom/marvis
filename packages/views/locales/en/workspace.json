@@ -1,29 +1,61 @@
 {
-  "create_form": {
-    "name_label": "Workspace Name",
-    "name_placeholder": "My Workspace",
-    "url_label": "Workspace URL",
-    "url_placeholder": "my-workspace",
+  "create_page": {
+    "title": "Create a workspace",
+    "subtitle": "Members, issues, and agents work together in a workspace.",
+    "preview_empty_name": "New workspace",
+    "preview_empty_hint": "Enter a name to get the URL and issue numbers",
+    "name_label": "Workspace name",
+    "name_placeholder": "Acme Inc",
+    "random_name": "Random",
+    "url_label": "URL",
+    "slug_placeholder": "acme",
+    "issue_prefix_label": "Issue prefix",
     "submit": "Create workspace",
-    "submitting": "Creating...",
+    "submitting": "Creating…",
+    "cancel": "Cancel",
+    "log_out": "Log out",
+    "disabled_title": "Can't create a workspace",
+    "disabled_description": "This instance doesn't allow new workspaces. Ask an administrator to invite you.",
     "errors": {
       "slug_format": "Only lowercase letters, numbers, and hyphens",
       "slug_taken": "That workspace URL is already taken.",
       "slug_reserved": "That workspace URL is reserved and cannot be used.",
       "slug_conflict_toast": "Choose a different workspace URL",
       "create_failed": "Failed to create workspace"
+    },
+    "about": {
+      "label": "About you",
+      "edit": "Edit",
+      "dialog_hint": "Marvis uses this to plan your first conversation.",
+      "multi": "Select all that apply",
+      "done": "Done",
+      "uses_more": "{{first}} +{{rest}}",
+      "uses_none": "No use selected",
+      "role": {
+        "question": "Which best describes you?",
+        "engineer": "Engineer / developer",
+        "product": "Product manager",
+        "designer": "Designer",
+        "founder": "Founder / exec",
+        "marketing": "Marketing / growth",
+        "writer": "Writer / content",
+        "research": "Researcher / analyst",
+        "ops": "Operations / project mgmt",
+        "student": "Student / personal use",
+        "other": "Other"
+      },
+      "use_case": {
+        "question": "What do you want to use Marvis for?",
+        "ship_code": "Ship code with AI agents",
+        "manage_team": "Manage tasks for my team",
+        "personal_tasks": "Organize my own tasks",
+        "plan_research": "Plan, brainstorm, research",
+        "write_publish": "Write, edit, publish",
+        "automate_ops": "Automate ops & workflows",
+        "evaluate": "Just exploring",
+        "other": "Other"
+      }
     }
-  },
-  "new_page": {
-    "back": "Back",
-    "log_out": "Log out",
-    "title": "Welcome to Marvis",
-    "description": "One workspace where you and your AI teammates work side by side — taking issues, leaving comments, sharing the same context.",
-    "invite_hint": "You can invite teammates once your workspace is ready."
-  },
-  "creation_disabled": {
-    "title": "Workspace creation is disabled",
-    "description": "This Marvis instance does not allow new workspaces to be created. Ask your administrator for an invitation to an existing workspace."
   },
   "no_access": {
     "title": "Workspace not available",

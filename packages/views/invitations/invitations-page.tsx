@@ -21,6 +21,12 @@ import { Checkbox } from "@marvis/ui/components/ui/checkbox";
 import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { LogOut, Mail, Users } from "lucide-react";
 
+// 邀请页卡片：与登录卡同一外观（24 圆角、细描边、浅投影，暗色无投影）。
+const INVITE_CARD_BASE =
+  "w-full rounded-2xl border-0 ring-1 ring-surface-border shadow-[0_24px_32px_rgba(0,0,0,0.06)] dark:shadow-none";
+const INVITE_CARD_MD = `${INVITE_CARD_BASE} max-w-md`;
+const INVITE_CARD_LG = `${INVITE_CARD_BASE} max-w-lg`;
+
 /**
  * Batch invitation handling page for first-contact users who land here
  * because callback / login detected pending invitations on their email.
@@ -140,8 +146,8 @@ export function InvitationsPage() {
   if (isLoading) {
     return (
       <InvitationsShell>
-        <Card className="w-full max-w-lg">
-          <CardContent className="flex flex-col gap-4 py-12">
+        <Card className={INVITE_CARD_LG}>
+          <CardContent className="flex flex-col gap-4 px-10 py-12">
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-72" />
             <Skeleton className="h-16 w-full" />
@@ -158,8 +164,8 @@ export function InvitationsPage() {
   if (fetchError || !invitations || invitations.length === 0) {
     return (
       <InvitationsShell>
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center gap-4 py-12">
+        <Card className={INVITE_CARD_MD}>
+          <CardContent className="flex flex-col items-center gap-4 px-10 py-12">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <Mail className="h-6 w-6 text-muted-foreground" />
             </div>
@@ -186,8 +192,8 @@ export function InvitationsPage() {
 
   return (
     <InvitationsShell>
-      <Card className="w-full max-w-lg">
-        <CardContent className="flex flex-col gap-6 py-10">
+      <Card className={INVITE_CARD_LG}>
+        <CardContent className="flex flex-col gap-6 px-10 py-10">
           <div className="flex flex-col items-center gap-3 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Users className="h-6 w-6 text-primary" />
@@ -251,7 +257,7 @@ function InvitationRow({
   return (
     <li>
       <label
-        className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-card p-4 hover:bg-accent/40"
+        className="flex cursor-pointer items-start gap-3 rounded-lg border border-surface-border bg-background p-4 transition-colors duration-(--motion-fast) ease-out hover:bg-accent"
       >
         <Checkbox
           checked={checked}
@@ -275,7 +281,7 @@ function InvitationsShell({ children }: { children: ReactNode }) {
   const { t } = useT("invite");
   const logout = useLogout();
   return (
-    <div className="relative flex min-h-svh flex-col bg-background">
+    <div className="relative flex min-h-svh flex-col bg-app-shell">
       <DragStrip />
       <Button
         variant="ghost"

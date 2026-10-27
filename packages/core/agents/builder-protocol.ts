@@ -34,32 +34,48 @@ export interface BuilderDraftPayload {
   member_ids?: unknown;
 }
 
-function isBuilderDraftPayload(value: unknown): value is BuilderDraftPayload {
+function isJsonObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 export function parseBuilderDraft(
   content: string,
-  { completed = false }: { completed?: boolean } = {},
+  options: { completed?: boolean } = {},
 ): BuilderDraftPayload | null {
-  const match = content.match(/<agent_draft>([\s\S]*?)<\/agent_draft>/);
+  return parseDraftBlock(content, "agent_draft", options);
+}
+
+/**
+ * Extracts the JSON object of the `<tag>{…}</tag>` block a builder
+ * appends to its reply. Shared by the agent builder (`agent_draft`) and the
+ * knowledge base builder (`kb_draft`); returns null when there is no block or
+ * it is not a JSON object.
+ */
+export function parseDraftBlock(
+  content: string,
+  tag: string,
+  { completed = false }: { completed?: boolean } = {},
+): Record<string, unknown> | null {
+  const open = `<${tag}>`;
+  const close = `</${tag}>`;
+  const match = content.match(new RegExp(`${open}([\\s\\S]*?)${close}`));
   if (!match?.[1]) {
     // Completed CLI replies can omit the closing tag and include literal
     // string control characters. Apply the same repair as closed blocks,
     // but never recover a live stream or truncate trailing text.
-    if (!completed || content.includes("</agent_draft>")) return null;
-    const parts = content.split("<agent_draft>");
+    if (!completed || content.includes(close)) return null;
+    const parts = content.split(open);
     if (parts.length !== 2 || !parts[1]) return null;
     try {
       const value = JSON.parse(escapeJsonStringControlCharacters(parts[1]));
-      return isBuilderDraftPayload(value) ? value : null;
+      return isJsonObject(value) ? value : null;
     } catch {
       return null;
     }
   }
   try {
     const value = JSON.parse(match[1]);
-    return isBuilderDraftPayload(value) ? value : null;
+    return isJsonObject(value) ? value : null;
   } catch {
     // Some CLI-backed models emit literal newlines in the Markdown
     // instructions string even when asked for compact JSON. Repair only JSON
@@ -67,7 +83,7 @@ export function parseBuilderDraft(
     // other syntax still have to pass JSON.parse.
     try {
       const value = JSON.parse(escapeJsonStringControlCharacters(match[1]));
-      return isBuilderDraftPayload(value) ? value : null;
+      return isJsonObject(value) ? value : null;
     } catch {
       return null;
     }
@@ -129,9 +145,14 @@ function escapeJsonStringControlCharacters(value: string): string {
  * the block, so removing it does not strand a blank line.
  */
 export function stripBuilderDraft(content: string): string {
+  return stripDraftBlock(content, "agent_draft");
+}
+
+/** Removes `<tag>…</tag>` blocks, closed or still streaming; see stripBuilderDraft. */
+export function stripDraftBlock(content: string, tag: string): string {
   return content
-    .replace(/\s*<agent_draft>[\s\S]*?<\/agent_draft>/g, "")
-    .replace(/\s*<agent_draft>[\s\S]*$/, "")
+    .replace(new RegExp(`\\s*<${tag}>[\\s\\S]*?<\\/${tag}>`, "g"), "")
+    .replace(new RegExp(`\\s*<${tag}>[\\s\\S]*$`), "")
     .trim();
 }
 

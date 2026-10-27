@@ -19,11 +19,13 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { Virtuoso } from "react-virtuoso";
+import { useReducedMotion } from "motion/react";
 import { Button } from "@marvis/ui/components/ui/button";
 import type { Issue, IssueStatus, Project } from "@marvis/core/types";
 import { useViewStore } from "@marvis/core/issues/stores/view-store-context";
 import { StatusHeading } from "./status-heading";
 import { ListRow, DraggableListRow, type ChildProgress } from "./list-row";
+import { DragLift, issueDropAnimation } from "./board-card";
 import { useDragSettle } from "./use-drag-settle";
 import { ListLoadMoreFooter } from "./list-load-more-footer";
 import { useT } from "../../i18n";
@@ -55,6 +57,10 @@ import { toast } from "sonner";
 // The seed must use the same CSS height as ListRow before scroll restoration
 // runs at ref-attach. Virtuoso receives the seed's resolved pixel height below.
 const LIST_ROW_HEIGHT = "var(--issue-row-height)";
+
+// 列表滚动区：左右与主区内容对齐；任务列表的行高在这里放到 48px
+const LIST_SCROLLER_CLASS =
+  "flex-1 min-h-0 overflow-y-auto px-4 pt-2 pb-4 [--issue-row-height:3rem]";
 
 const EMPTY_PROGRESS_MAP = new Map<string, ChildProgress>();
 const EMPTY_IDS: string[] = [];
@@ -182,6 +188,8 @@ function ListViewImpl({
       activationConstraint: { distance: 5 },
     })
   );
+  const reducedMotion = useReducedMotion() ?? false;
+  const dropAnimation = useMemo(() => issueDropAnimation(reducedMotion), [reducedMotion]);
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -386,7 +394,7 @@ function ListViewImpl({
     <>
       <Accordion.Root
         multiple
-        className="space-y-1"
+        className="space-y-2"
         value={expandedStatuses}
         onValueChange={(value: string[]) => {
           if (isDraggingRef.current) return;
@@ -426,7 +434,7 @@ function ListViewImpl({
 
   if (!dragEnabled) {
     return (
-      <div ref={attachScroller} data-tab-scroll-root="list" className="flex-1 min-h-0 overflow-y-auto p-2 pt-0">
+      <div ref={attachScroller} data-tab-scroll-root="list" className={LIST_SCROLLER_CLASS}>
         {content}
       </div>
     );
@@ -441,16 +449,18 @@ function ListViewImpl({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div ref={attachScroller} data-tab-scroll-root="list" className="flex-1 min-h-0 overflow-y-auto p-2 pt-0">
+      <div ref={attachScroller} data-tab-scroll-root="list" className={LIST_SCROLLER_CLASS}>
         {content}
       </div>
 
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={dropAnimation}>
         {activeIssue ? (
-          <div className="max-w-2xl rotate-1 cursor-grabbing opacity-90 shadow-lg shadow-black/10 rounded-md border border-border bg-card px-4 py-2">
-            <span className="text-caption text-muted-foreground mr-2">{activeIssue.identifier}</span>
-            <span className="text-body">{activeIssue.title}</span>
-          </div>
+          <DragLift className="max-w-2xl">
+            <div className="flex h-12 items-center gap-2 rounded-lg border border-border bg-card pr-3 pl-3.5">
+              <span className="min-w-16 shrink-0 text-label text-muted-foreground">{activeIssue.identifier}</span>
+              <span className="truncate text-body-lg">{activeIssue.title}</span>
+            </div>
+          </DragLift>
         ) : null}
       </DragOverlay>
     </DndContext>
@@ -591,7 +601,7 @@ function StatusAccordionItem({
   return (
     <Accordion.Item value={status} ref={dragEnabled ? setDroppableRef : undefined}>
       <Accordion.Header
-        className={`group/header sticky top-0 z-10 flex h-10 items-center rounded-lg bg-muted transition-colors hover:bg-accent ${
+        className={`group/header sticky top-0 z-10 flex h-10 items-center rounded-lg bg-surface-sunken transition-colors duration-(--motion-fast) ease-out hover:bg-surface-hover hover:duration-(--motion-instant) ${
           isOver && !isExpanded
             ? "ring-2 ring-brand/25 bg-accent/15"
             : ""
@@ -611,7 +621,7 @@ function StatusAccordionItem({
                 select(issueIds);
               }
             }}
-            className="cursor-pointer accent-primary"
+            className="size-4 cursor-pointer accent-primary"
           />
         </div>
         <Accordion.Trigger className="group/trigger flex flex-1 items-center gap-2 px-2 h-full text-left outline-none cursor-pointer">
@@ -627,7 +637,7 @@ function StatusAccordionItem({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-muted-foreground opacity-0 group-hover/header:opacity-100 transition-opacity"
+                  className="size-7 rounded-full text-muted-foreground opacity-0 transition-opacity duration-(--motion-fast) group-hover/header:opacity-100 focus-visible:opacity-100"
                   onClick={() => {
                     const defaults = {
                       status: status,
@@ -653,7 +663,7 @@ function StatusAccordionItem({
             rows
           )
         ) : (
-          <p className="py-6 text-center text-caption text-muted-foreground">
+          <p className="py-5 text-center text-label text-muted-foreground">
             {t(($) => $.list.empty_status)}
           </p>
         )}

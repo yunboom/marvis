@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>打开原始文件</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f">
+  <dc-import name="read-default" hint-size="1440px,900px"></dc-import>
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 20"></div>
+  <div role="dialog" aria-label="渠道接入规范 v3.pdf" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 1040px; height: 820px; background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(0,0,0,.25); display: flex; flex-direction: column; overflow: hidden; z-index: 21">
+    <div style="height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 20px; border-bottom: 1px solid rgba(0,0,0,.06)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="1.8" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg><span style="font-weight: 600">渠道接入规范 v3.pdf</span><span class="faint" style="font-size: 12.5px">470 KB · 上传 · 王芳 · 10-08</span>
+      <span style="flex: 1"></span>
+      <span class="muted" style="font-size: 12.5px">12 / 36</span>
+      <button class="btn btn-g" style="height: 30px">下载</button>
+      <button class="ib" aria-label="关闭"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+    </div>
+    <div style="flex: 1; min-height: 0; background: #f2f2f2; display: flex; justify-content: center; padding: 24px; overflow: hidden">
+      <div style="width: 600px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.08); padding: 48px 56px; display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.8; color: #333">
+        <div class="faint" style="font-size: 11.5px">渠道接入规范 v3 · 第 12 页</div>
+        <div style="font-size: 17px; font-weight: 600; color: #0f0f0f">5.2 回调签名校验</div>
+        <div>渠道在支付结果确定后，向商户配置的回调地址发送 POST 请求，请求体为 JSON，签名放在请求头 X-Signature。</div>
+        <div style="background: #fff4c2; padding: 2px 4px; border-radius: 4px">商户应先校验签名，再按渠道交易号判断是否已处理；重复通知必须返回成功，否则渠道会按 1、5、30 分钟重试。</div>
+        <div>签名算法为 HMAC-SHA256，密钥在渠道后台「开发配置」中生成，每个商户号一份。</div>
+        <div style="height: 8px; border-radius: 4px; background: #eee; width: 80%"></div>
+        <div style="height: 8px; border-radius: 4px; background: #eee; width: 92%"></div>
+        <div style="height: 8px; border-radius: 4px; background: #eee; width: 70%"></div>
+      </div>
+    </div>
+    <div style="height: 44px; flex: none; display: flex; align-items: center; padding: 0 20px; border-top: 1px solid rgba(0,0,0,.06)"><span class="faint" style="font-size: 12.5px">由「支付回调 · 去重」的脚注打开，已翻到引用的第 12 页</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

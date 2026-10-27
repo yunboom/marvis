@@ -86,10 +86,16 @@ import { ActorAvatar } from "../../common/actor-avatar";
 import { FILTER_ITEM_CLASS, HoverCheck } from "../../common/hover-check";
 import { useIntentNavigate, useRowLink } from "../../navigation";
 import {
+  COLLECTION_ROW,
+  COLLECTION_ROW_TALL,
+  COLLECTION_TABLE_INSET,
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
   CollectionPageHeader,
   CollectionPageHeaderAction,
   CollectionPageState,
 } from "../../layout/collection-page";
+import { cn } from "@marvis/ui/lib/utils";
 import { useLocale, useT } from "../../i18n";
 import { PAGE_TOOLBAR } from "../../layout/page-header";
 import { DeferredTooltip } from "@marvis/ui/components/common/deferred-tooltip";
@@ -106,6 +112,11 @@ const GRID_COLS =
   "@2xl:grid-cols-[0.75rem_minmax(200px,1fr)_var(--sqc-leader)_var(--sqc-members)_var(--sqc-creator)_var(--sqc-created)_var(--sqc-kebab)_0.75rem]";
 
 const LEADER_WIDTH = 160;
+
+// Header band: the collection table head (40px grey band, rounded ends) on
+// the ListGrid header row; the 13px label size is pushed down to the cells.
+const LIST_HEAD =
+  "h-10 rounded-lg bg-surface-sunken [&_[role=columnheader]]:text-label [&_[role=columnheader]_button]:text-label";
 const COLUMN_WIDTHS: Record<SquadColumnKey, number> = {
   members: 120,
   creator: 144,
@@ -155,7 +166,7 @@ function SquadAvatar({ squad }: { squad: Squad }) {
         name={squad.name}
         initials={initials}
         avatarUrl={resolvePublicFileUrl(squad.avatar_url)}
-        size="lg"
+        size="xl"
         className="shrink-0"
       />
     );
@@ -165,7 +176,7 @@ function SquadAvatar({ squad }: { squad: Squad }) {
       name={squad.name}
       initials={initials}
       isSquad
-      size="lg"
+      size="xl"
       className="shrink-0"
     />
   );
@@ -181,7 +192,7 @@ function NameCell({ squad }: { squad: Squad }) {
           {squad.name}
         </span>
         {squad.description ? (
-          <span className="block min-w-0 truncate text-caption text-muted-foreground">
+          <span className="mt-0.5 block min-w-0 truncate text-label text-muted-foreground">
             {squad.description}
           </span>
         ) : null}
@@ -198,9 +209,9 @@ function LeaderCell({
   leader: Agent | undefined;
 }) {
   return (
-    <ListGridCell className="gap-1.5">
+    <ListGridCell className="gap-2">
       <ActorAvatar actorType="agent" actorId={leaderId} size="sm" />
-      <span className="min-w-0 truncate text-caption text-muted-foreground">
+      <span className="min-w-0 truncate text-label text-muted-foreground">
         {leader?.name ?? leaderId.slice(0, 8)}
       </span>
     </ListGridCell>
@@ -216,7 +227,7 @@ function MembersCell({ squad }: { squad: Squad }) {
   if (count === 0) {
     return (
       <ListGridCell className="hidden @2xl:flex">
-        <span className="text-caption text-faint-foreground">—</span>
+        <span className="text-label text-faint-foreground">—</span>
       </ListGridCell>
     );
   }
@@ -228,7 +239,7 @@ function MembersCell({ squad }: { squad: Squad }) {
         {visible.map((m) => (
           <span
             key={`${m.member_type}-${m.member_id}`}
-            className="inline-flex rounded-full ring-2 ring-background"
+            className={`inline-flex ${m.member_type === "member" ? "rounded-full" : "rounded-[28%]"} ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent`}
           >
             <ActorAvatar
               actorType={m.member_type}
@@ -239,7 +250,7 @@ function MembersCell({ squad }: { squad: Squad }) {
           </span>
         ))}
         {overflow > 0 && (
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted text-caption font-medium text-muted-foreground ring-2 ring-background">
+          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-muted px-1.5 text-caption font-medium tabular-nums text-muted-foreground ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent">
             +{overflow}
           </span>
         )}
@@ -335,7 +346,7 @@ function SquadRowActions({ squad }: { squad: Squad }) {
                 <button
                   type="button"
                   aria-label={t(($) => $.page.row_menu)}
-                  className="flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-accent-foreground group-hover/row:opacity-100 data-popup-open:bg-accent data-popup-open:opacity-100 data-popup-open:text-accent-foreground"
+                  className="flex size-7 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-[opacity,background-color] duration-(--motion-fast) ease-out hover:bg-surface-selected hover:text-foreground group-hover/row:opacity-100 data-popup-open:bg-surface-selected data-popup-open:opacity-100 data-popup-open:text-foreground"
                 >
                   <MoreHorizontal className="size-4" />
                 </button>
@@ -392,7 +403,7 @@ function SquadListHeader({
   const sorted = (field: SquadSortField) =>
     sortField === field ? sortDirection : false;
   return (
-    <ListGridHeader>
+    <ListGridHeader className={LIST_HEAD}>
       <ListGridHeaderCell sorted={sorted("name")} onSort={() => onSort("name")}>
         {t(($) => $.page.table.name)}
       </ListGridHeaderCell>
@@ -501,23 +512,24 @@ function SquadListToolbar({
   const sortLabel = SORT_LABELS[sortField];
 
   return (
-    <div className={PAGE_TOOLBAR}>
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="hidden shrink-0 items-center gap-1 md:flex">
+    <div className={cn(PAGE_TOOLBAR, "pb-2")}>
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="hidden shrink-0 items-center gap-0.5 rounded-full bg-field p-0.75 md:flex">
           {SQUAD_SCOPES.map((s) => (
             <Button
               key={s}
-              variant="outline"
+              variant="ghost"
               size="sm"
+              aria-pressed={scope === s}
               className={
                 scope === s
-                  ? "gap-1.5 bg-accent text-accent-foreground hover:bg-accent/80"
-                  : "gap-1.5 text-muted-foreground"
+                  ? "h-6.5 gap-1.5 px-3 text-label font-medium text-foreground shadow-control bg-surface hover:bg-surface dark:bg-white/12 dark:hover:bg-white/12"
+                  : "h-6.5 gap-1.5 px-3 text-label font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
               }
               onClick={() => onScopeChange(s)}
             >
               {SCOPE_LABELS[s]}
-              <span className="tabular-nums text-caption text-muted-foreground">
+              <span className="font-normal tabular-nums text-muted-foreground">
                 {scopeCounts[s]}
               </span>
             </Button>
@@ -529,7 +541,11 @@ function SquadListToolbar({
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 gap-1 text-muted-foreground md:hidden"
+                className={cn(
+                  COLLECTION_TOOLBAR_BUTTON,
+                  COLLECTION_TOOLBAR_BUTTON_IDLE,
+                  "shrink-0 gap-1 md:hidden",
+                )}
               >
                 <span className="truncate">{SCOPE_LABELS[scope]}</span>
                 <ChevronDown className="size-3 text-muted-foreground" />
@@ -556,26 +572,28 @@ function SquadListToolbar({
         {hasActiveFilters && (
           <span
             title={t(($) => $.toolbar.result_count_title)}
-            className="hidden shrink-0 text-caption tabular-nums text-muted-foreground md:inline"
+            className="hidden shrink-0 text-label tabular-nums text-muted-foreground md:inline"
           >
             {visibleCount} / {totalCount}
           </span>
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1.5">
       {/* Filter */}
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
             <Button
-              variant={hasActiveFilters ? "default" : "outline"}
+              variant={hasActiveFilters ? "brand" : "outline"}
               size="sm"
-              className={
+              className={cn(
+                COLLECTION_TOOLBAR_BUTTON,
+                "w-8 px-0 md:w-auto md:px-3",
                 hasActiveFilters
-                  ? "h-8 w-8 gap-1 bg-brand px-0 text-white hover:bg-brand/90 md:w-auto md:px-2.5"
-                  : "h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
-              }
+                  ? "font-medium md:pr-2"
+                  : COLLECTION_TOOLBAR_BUTTON_IDLE,
+              )}
             >
               <Filter className="size-3.5" />
               {hasActiveFilters ? (
@@ -593,7 +611,7 @@ function SquadListToolbar({
                   role="button"
                   tabIndex={-1}
                   aria-label={t(($) => $.toolbar.clear_filters)}
-                  className="-mr-1 ml-0.5 hidden rounded-sm p-0.5 hover:bg-white/20 md:inline-flex"
+                  className="hidden size-4.5 items-center justify-center rounded-full bg-white/18 transition-colors duration-(--motion-fast) ease-out hover:bg-white/28 md:inline-flex"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -601,7 +619,7 @@ function SquadListToolbar({
                   }}
                   onPointerDown={(e) => e.stopPropagation()}
                 >
-                  <X className="size-3" />
+                  <X className="size-2.75" />
                 </span>
               )}
             </Button>
@@ -667,7 +685,11 @@ function SquadListToolbar({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 w-8 gap-1 px-0 text-muted-foreground md:w-auto md:px-2.5"
+                    className={cn(
+                      COLLECTION_TOOLBAR_BUTTON,
+                      COLLECTION_TOOLBAR_BUTTON_IDLE,
+                      "w-8 px-0 md:w-auto md:px-3",
+                    )}
                   >
                     {sortDirection === "asc" ? (
                       <ArrowUp className="size-3.5" />
@@ -919,6 +941,7 @@ export function SquadsPage() {
             icon={Plus}
             label={t(($) => $.page.new_button)}
             onClick={() => useModalStore.getState().open("create-squad")}
+            variant="default"
           />
         }
       />
@@ -959,7 +982,12 @@ export function SquadsPage() {
             hiddenColumns={hiddenColumns}
             onToggleColumn={toggleColumn}
           />
-          <div className="min-h-0 flex-1 overflow-auto @container">
+          <div
+            className={cn(
+              "min-h-0 flex-1 overflow-auto @container",
+              COLLECTION_TABLE_INSET,
+            )}
+          >
             <ListGrid
               className={`${GRID_COLS} @2xl:min-w-[var(--sqc-minw)]`}
               style={{
@@ -981,7 +1009,11 @@ export function SquadsPage() {
                 rows.map((squad) => (
                   <ListGridRow
                     key={squad.id}
-                    className="cursor-pointer"
+                    className={cn(
+                      COLLECTION_ROW,
+                      COLLECTION_ROW_TALL,
+                      "cursor-pointer",
+                    )}
                     {...rowLink(p.squadDetail(squad.id), squad.name)}
                   >
                     <NameCell squad={squad} />
@@ -995,13 +1027,13 @@ export function SquadsPage() {
                       <ListGridCell className="hidden px-0 @2xl:flex" />
                     )}
                     {isColVisible("creator") ? (
-                      <ListGridCell className="hidden gap-1.5 @2xl:flex">
+                      <ListGridCell className="hidden gap-2 @2xl:flex">
                         <ActorAvatar
                           actorType="member"
                           actorId={squad.creator_id}
                           size="sm"
                         />
-                        <span className="min-w-0 truncate text-caption text-muted-foreground">
+                        <span className="min-w-0 truncate text-label text-muted-foreground">
                           {membersById.get(squad.creator_id)?.name ??
                             squad.creator_id.slice(0, 8)}
                         </span>
@@ -1010,7 +1042,7 @@ export function SquadsPage() {
                       <ListGridCell className="hidden px-0 @2xl:flex" />
                     )}
                     {isColVisible("created") ? (
-                      <ListGridCell className="hidden whitespace-nowrap text-caption tabular-nums text-muted-foreground @2xl:flex">
+                      <ListGridCell className="hidden whitespace-nowrap text-label tabular-nums text-muted-foreground @2xl:flex">
                         {new Date(squad.created_at).toLocaleDateString(locale)}
                       </ListGridCell>
                     ) : (
@@ -1035,7 +1067,12 @@ export function SquadsPage() {
 
 function LoadingSkeleton() {
   return (
-    <div className="min-h-0 flex-1 overflow-auto @container">
+    <div
+      className={cn(
+        "min-h-0 flex-1 overflow-auto @container",
+        COLLECTION_TABLE_INSET,
+      )}
+    >
       <ListGrid
         className={GRID_COLS}
         style={columnTrackVars(
@@ -1043,7 +1080,7 @@ function LoadingSkeleton() {
           true,
         )}
       >
-        <ListGridHeader>
+        <ListGridHeader className={LIST_HEAD}>
           <ListGridHeaderCell>
             <Skeleton className="h-3 w-12" />
           </ListGridHeaderCell>
@@ -1058,20 +1095,23 @@ function LoadingSkeleton() {
           <span aria-hidden="true" />
         </ListGridHeader>
         {Array.from({ length: 4 }).map((_, i) => (
-          <ListGridRow key={i} className="h-16 hover:bg-transparent">
+          <ListGridRow
+            key={i}
+            className={cn(COLLECTION_ROW, COLLECTION_ROW_TALL, "hover:bg-transparent")}
+          >
             <ListGridCell className="gap-3">
-              <Skeleton className="size-8 rounded-full" />
+              <Skeleton className="size-10 rounded-full" />
               <div className="min-w-0 flex-1 space-y-1.5">
                 <Skeleton className="h-3.5 w-32 max-w-full" />
                 <Skeleton className="h-3 w-48 max-w-full" />
               </div>
             </ListGridCell>
-            <ListGridCell className="gap-1.5">
+            <ListGridCell className="gap-2">
               <Skeleton className="size-5 rounded-full" />
               <Skeleton className="h-3 w-16" />
             </ListGridCell>
             <ListGridCell className="hidden @2xl:flex">
-              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-7 w-19 rounded-full" />
             </ListGridCell>
             <ListGridCell className="hidden px-0 @2xl:flex" />
             <ListGridCell className="hidden px-0 @2xl:flex" />

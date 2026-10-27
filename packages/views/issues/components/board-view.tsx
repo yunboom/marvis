@@ -16,6 +16,7 @@ import {
   type DragOverEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
+import { useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import type {
   Issue,
@@ -42,9 +43,10 @@ import {
 import { WorkflowHandoffConfirmDialog } from "../../workflows/handoff-confirm-dialog";
 import { stepHandlerActor, useStepHandlerLabel } from "../../workflows/step-handler";
 import { projectListOptions } from "@marvis/core/projects/queries";
-import { BoardCardContent } from "./board-card";
+import { BoardCardContent, DragLift, issueDropAnimation } from "./board-card";
 import { InfiniteScrollSentinel } from "./infinite-scroll-sentinel";
 import { ListLoadMoreFooter } from "./list-load-more-footer";
+import { StatusLaneBoard } from "./status-lane-board";
 import type { ChildProgress } from "./list-row";
 import type { IssueCreateDefaults } from "../surface/types";
 import type {
@@ -467,6 +469,10 @@ function BoardViewImpl({
     },
     [hydratedAssigneeGroups, hydratedProjectGroups, issues, visibleStatuses, grouping, getActorName, groupingProperty, projectMap, projectColumnLabels, groupPagination, t],
   );
+  const statusGroups = useMemo(
+    () => groups.filter((group): group is typeof group & { status: IssueStatus } => isStatusGroup(group)),
+    [groups],
+  );
   const groupIds = useMemo(
     () => new Set(groups.map((group) => group.id)),
     [groups],
@@ -580,6 +586,8 @@ function BoardViewImpl({
   // #6700: drag empty board background with the left button to pan horizontally
   // (Trello/Linear). Card drags start on `[data-board-card]` and are ignored.
   const pan = useBoardDragPan<HTMLDivElement>();
+  const reducedMotion = useReducedMotion() ?? false;
+  const dropAnimation = useMemo(() => issueDropAnimation(reducedMotion), [reducedMotion]);
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -830,13 +838,28 @@ function BoardViewImpl({
         onLostPointerCapture={pan.onLostPointerCapture}
         data-board-scroller=""
         className={cn(
-          "flex flex-1 min-h-0 gap-4 overflow-x-auto p-2",
+          "flex flex-1 min-h-0 gap-3 overflow-x-auto px-6 pt-2 pb-4",
           // While a side peek is open, a trailing spacer as wide as the panel
           // lets every column scroll clear of it (IssuePeekHost).
           "group-data-[peek-open]/peek:after:w-(--issue-peek-width) group-data-[peek-open]/peek:after:shrink-0 group-data-[peek-open]/peek:after:content-['']",
         )}
       >
-        {groups.length === 0 ? (
+        {grouping === "status" ? (
+          // Status board: four fixed columns of per-status lanes. Lanes keep
+          // the status droppable ids, so the drag handlers above apply as-is.
+          <StatusLaneBoard
+            groups={statusGroups}
+            columns={columns}
+            issueMap={issueMapRef.current}
+            childProgressMap={childProgressMap}
+            projectMap={projectMap}
+            statusPagination={statusPagination}
+            projectId={projectId}
+            onCreateIssue={onCreateIssue}
+            sortLabel={sortLabel}
+            activeIssueId={activeIssue?.id ?? null}
+          />
+        ) : groups.length === 0 ? (
           groupBranches?.isError ? (
             <button
               type="button"
@@ -852,7 +875,7 @@ function BoardViewImpl({
           )
         ) : (
           groups.map((group) =>
-            isStatusGroup(group) ? (
+            groupPagination?.[group.id] ? (
               <ServerPaginatedBoardColumn
                 key={group.id}
                 group={group}
@@ -860,39 +883,24 @@ function BoardViewImpl({
                 issueMap={issueMapRef.current}
                 childProgressMap={childProgressMap}
                 projectMap={projectMap}
-                page={statusPagination?.[group.status]}
+                page={groupPagination[group.id]!}
                 projectId={projectId}
                 onCreateIssue={onCreateIssue}
                 sortLabel={sortLabel}
               />
             ) : (
-              groupPagination?.[group.id] ? (
-                <ServerPaginatedBoardColumn
-                  key={group.id}
-                  group={group}
-                  issueIds={columns[group.id] ?? EMPTY_IDS}
-                  issueMap={issueMapRef.current}
-                  childProgressMap={childProgressMap}
-                  projectMap={projectMap}
-                  page={groupPagination[group.id]!}
-                  projectId={projectId}
-                  onCreateIssue={onCreateIssue}
-                  sortLabel={sortLabel}
-                />
-              ) : (
-                <BoardColumn
-                  key={group.id}
-                  group={group}
-                  issueIds={columns[group.id] ?? EMPTY_IDS}
-                  issueMap={issueMapRef.current}
-                  childProgressMap={childProgressMap}
-                  projectMap={projectMap}
-                  projectId={projectId}
-                  onCreateIssue={onCreateIssue}
-                  totalCount={group.totalCount}
-                  sortLabel={sortLabel}
-                />
-              )
+              <BoardColumn
+                key={group.id}
+                group={group}
+                issueIds={columns[group.id] ?? EMPTY_IDS}
+                issueMap={issueMapRef.current}
+                childProgressMap={childProgressMap}
+                projectMap={projectMap}
+                projectId={projectId}
+                onCreateIssue={onCreateIssue}
+                totalCount={group.totalCount}
+                sortLabel={sortLabel}
+              />
             ),
           )
         )}
@@ -906,18 +914,20 @@ function BoardViewImpl({
         )}
       </div>
 
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={dropAnimation}>
         {activeIssue ? (
-          <div style={{ width: BOARD_CARD_WIDTH }} className="rotate-1 cursor-grabbing opacity-90 shadow-lg shadow-black/10">
-            <BoardCardContent
-              issue={activeIssue}
-              childProgress={childProgressMap.get(activeIssue.id)}
-              project={
-                activeIssue.project_id
-                  ? projectMap?.get(activeIssue.project_id)
-                  : undefined
-              }
-            />
+          <div style={{ width: BOARD_CARD_WIDTH }}>
+            <DragLift>
+              <BoardCardContent
+                issue={activeIssue}
+                childProgress={childProgressMap.get(activeIssue.id)}
+                project={
+                  activeIssue.project_id
+                    ? projectMap?.get(activeIssue.project_id)
+                    : undefined
+                }
+              />
+            </DragLift>
           </div>
         ) : null}
       </DragOverlay>

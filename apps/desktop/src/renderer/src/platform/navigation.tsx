@@ -13,6 +13,7 @@ import {
   useActiveTabUrl,
 } from "@/stores/tab-store";
 import { useWindowOverlayStore } from "@/stores/window-overlay-store";
+import { buildShareableUrl } from "./shareable-url";
 
 function requireRuntimeAppUrl(scope: string): string {
   const runtimeConfig = window.desktopAPI.runtimeConfig;
@@ -239,7 +240,7 @@ export function DesktopNavigationProvider({
         }
         store.openTab(path, title ?? "", { activate: opts?.activate });
       },
-      getShareableUrl: (path: string) => `${appUrl}${path}`,
+      getShareableUrl: (path: string) => buildShareableUrl(appUrl, path),
     }),
     [appUrl, location],
   );

@@ -25,10 +25,7 @@ import type { Issue } from "@marvis/core/types";
 import { resolveWorkdirCopyTarget } from "@marvis/core/issues";
 import { todayDateOnly, addDaysDateOnly } from "@marvis/core/issues/date";
 import { api } from "@marvis/core/api";
-import {
-  PRIORITY_DISPLAY_ORDER,
-  PRIORITY_CONFIG,
-} from "@marvis/core/issues/config";
+import { PRIORITY_DISPLAY_ORDER } from "@marvis/core/issues/config";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { stepHandsOff, workflowAllowsStatus, workflowStep } from "@marvis/core/issue-workflows";
@@ -243,12 +240,8 @@ export function IssueActionsMenuItems({
         <P.SubContent>
           {PRIORITY_DISPLAY_ORDER.map((p) => (
             <P.Item key={p} onClick={() => updateField({ priority: p })}>
-              <span
-                className={`inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-caption font-medium ${PRIORITY_CONFIG[p].badgeBg} ${PRIORITY_CONFIG[p].badgeText}`}
-              >
-                <PriorityIcon priority={p} className="h-3 w-3" inheritColor />
-                {t(($) => $.priority[p])}
-              </span>
+              <PriorityIcon priority={p} />
+              {t(($) => $.priority[p])}
               {issue.priority === p && (
                 <span className="ml-auto text-caption text-muted-foreground">{"✓"}</span>
               )}
@@ -351,6 +344,14 @@ export function IssueActionsMenuItems({
 
       <P.Separator />
 
+      {/* Top level rather than under Relations: on a long issue the
+          sub-issues section's own "+" is scrolled far out of reach, and this
+          menu is pinned in the header. */}
+      <P.Item onClick={openCreateSubIssue}>
+        <Plus className="h-3.5 w-3.5" />
+        {t(($) => $.actions.create_sub_issue)}
+      </P.Item>
+
       {/* Relationship actions live under "Relations" — a semantically explicit
           label (unlike the old "More") so the first level tells you what the
           submenu does. Holds parent/sub-issue links today, and will grow
@@ -361,10 +362,6 @@ export function IssueActionsMenuItems({
           {t(($) => $.actions.relations)}
         </P.SubTrigger>
         <P.SubContent>
-          <P.Item onClick={openCreateSubIssue}>
-            <Plus className="h-3.5 w-3.5" />
-            {t(($) => $.actions.create_sub_issue)}
-          </P.Item>
           <P.Item onClick={openSetParent}>
             <ArrowUp className="h-3.5 w-3.5" />
             {t(($) => $.actions.set_parent_issue)}

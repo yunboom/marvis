@@ -172,6 +172,43 @@ describe("IssueAgentActivityIndicator", () => {
   });
 });
 
+describe("IssueAgentActivityIndicator status variant", () => {
+  it("shows a breathing dot and a short label instead of the avatar stack", () => {
+    const { container } = render(
+      <IssueAgentActivityIndicator issueId="issue-1" variant="status" />,
+    );
+
+    expect(screen.getByText("Working")).toBeInTheDocument();
+    expect(container.querySelector(".animate-breathe")).not.toBeNull();
+    expect(screen.queryByTestId("agent-avatar-stack")).toBeNull();
+    // The activity details stay one hover away.
+    expect(screen.getByTestId("hover-card")).not.toBeNull();
+  });
+
+  it("shows a still dot for queued work", () => {
+    mockState.snapshot = [makeTask({ status: "queued" })];
+    const { container } = render(
+      <IssueAgentActivityIndicator issueId="issue-1" variant="status" />,
+    );
+
+    expect(screen.getByText("Queued")).toBeInTheDocument();
+    expect(container.querySelector(".animate-breathe")).toBeNull();
+  });
+
+  it("renders the fallback when nothing is running or waiting", () => {
+    mockState.snapshot = [];
+    render(
+      <IssueAgentActivityIndicator
+        issueId="issue-1"
+        variant="status"
+        fallback={<span>Updated 4h ago</span>}
+      />,
+    );
+
+    expect(screen.getByText("Updated 4h ago")).toBeInTheDocument();
+  });
+});
+
 const eventSummary = {
   id: "wake-1",
   issue_id: "issue-1",

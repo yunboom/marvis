@@ -22,6 +22,7 @@ import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { IssueMentionCard } from "../../issues/components/issue-mention-card";
 import { ProjectMentionCard } from "../../projects/components/project-mention-card";
+import { KbMention, isKbMentionType } from "../../kb/components/kb-mention-cards";
 
 export function MentionView({ node }: NodeViewProps) {
   const { type, id, label } = node.attrs;
@@ -48,6 +49,18 @@ export function MentionView({ node }: NodeViewProps) {
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         <ProjectMentionCard projectId={id} fallbackLabel={label} />
+      </NodeViewWrapper>
+    );
+  }
+
+  if (isKbMentionType(type)) {
+    return (
+      <NodeViewWrapper
+        as="span"
+        className="inline"
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      >
+        <KbMention type={type} id={id} label={label} />
       </NodeViewWrapper>
     );
   }

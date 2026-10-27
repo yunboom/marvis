@@ -243,7 +243,7 @@ export function WindowToolbar() {
       ? t(($) => $.window.forward_history)
       : t(($) => $.window.back_history);
   const navButtonClassName =
-    "flex size-7 items-center justify-center rounded-md text-faint-foreground transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-30 motion-reduce:transition-none";
+    "flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-surface-hover hover:text-foreground hover:duration-(--motion-instant) focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-30 motion-reduce:transition-none";
 
   const selectHistoryIndex = useCallback(
     (index: number) => {
@@ -362,7 +362,7 @@ export function WindowToolbar() {
           </TooltipContent>
         </Tooltip>
         <SidebarTrigger
-          className="size-7 text-faint-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className="size-7 rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-surface-hover hover:text-foreground hover:duration-(--motion-instant)"
           shortcut={<ActionShortcutKeycaps action="toggleSidebar" />}
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         />

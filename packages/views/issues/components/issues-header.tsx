@@ -4,6 +4,7 @@ import { cloneElement, useCallback, useEffect, useMemo, useRef, useState } from 
 import {
   CalendarDays,
   ChartGantt,
+  Check,
   ChevronDown,
   CircleDashed,
   CircleDot,
@@ -120,6 +121,10 @@ import { actorKindForViewVariant } from "@marvis/core/issues/surface/scope";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
 import { cn } from "@marvis/ui/lib/utils";
 import { PAGE_GUTTER } from "../../layout/page-header";
+import {
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
+} from "../../layout/collection-page";
 import { useT } from "../../i18n";
 import { useStatusOptions } from "../utils/status-options";
 import { useColumnStatuses } from "../surface/column-statuses-context";
@@ -1164,6 +1169,26 @@ function DateSubContent({
  * (NN/g: sub-second responses need no feedback) while slow ones get a
  * "working on it" signal instead of a dead click.
  */
+// 视图栏所在的 44px 工具行，任务页与我的任务共用
+export const ISSUES_TOOLBAR_ROW = cn(
+  "min-h-11 shrink-0 py-1.5 [-webkit-overflow-scrolling:touch]",
+  PAGE_GUTTER,
+);
+
+// 工具栏药丸按钮：32px 描边、次要文字；md 以下只显示图标
+export const ISSUES_TOOLBAR_BUTTON = cn(
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
+  "w-8 px-0 md:w-auto md:px-3",
+);
+
+// md 以下替代视图栏的范围下拉
+export const ISSUES_SCOPE_MENU_BUTTON = cn(
+  COLLECTION_TOOLBAR_BUTTON,
+  COLLECTION_TOOLBAR_BUTTON_IDLE,
+  "shrink-0 gap-1 md:hidden",
+);
+
 export function ViewRefreshIndicator({ active }: { active: boolean }) {
   return (
     <span className="flex w-4 shrink-0 items-center justify-center">
@@ -1296,7 +1321,7 @@ export function IssuesHeader({
 
   return (
     <>
-    <div className={cn("min-h-12 shrink-0 py-2 [-webkit-overflow-scrolling:touch]", PAGE_GUTTER)}>
+    <div className={ISSUES_TOOLBAR_ROW}>
       <div className="flex w-full min-w-0 items-start justify-between gap-2">
         {/* Left: the view bar — built-in tabs and saved views as one flat,
             per-user ordered row; wraps instead of overflowing. */}
@@ -1339,7 +1364,7 @@ export function IssuesHeader({
               <Button
                 variant="outline"
                 size="sm"
-                className="shrink-0 gap-1 text-muted-foreground md:hidden"
+                className={ISSUES_SCOPE_MENU_BUTTON}
               >
                 <span className="truncate">{scopeLabel}</span>
                 <ChevronDown className="size-3 text-muted-foreground" />
@@ -1357,9 +1382,9 @@ export function IssuesHeader({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1.5">
           {agentRunningFilter && (
-            <span className="mr-1 hidden text-caption text-muted-foreground md:inline">
+            <span className="mr-1 hidden text-label text-muted-foreground md:inline">
               {t(($) => $.agent_activity.filter_active_label)}
             </span>
           )}
@@ -1869,6 +1894,10 @@ export function IssueFilterMenu({
   );
 }
 
+// Card-property toggle chip: ink fill with a check when on, muted fill when off.
+const CARD_PROPERTY_CHIP_CLASS =
+  "h-6 gap-1 rounded-full bg-muted px-2.5 text-caption text-muted-foreground hover:bg-muted hover:text-foreground aria-pressed:bg-foreground aria-pressed:text-background aria-pressed:hover:bg-foreground/85 aria-pressed:hover:text-background";
+
 export function IssueDisplayControls({
   scopedIssues,
   hideViewToggle = false,
@@ -2057,18 +2086,18 @@ export function IssueDisplayControls({
         : effectiveTableGrouping === "project"
           ? t(($) => $.table.columns.project)
           : t(($) => $.table.group_none);
-  const controlButtonClass = "h-8 w-8 gap-1 px-0 text-muted-foreground md:h-7 md:w-auto md:px-2.5";
+  const controlButtonClass = ISSUES_TOOLBAR_BUTTON;
 
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <div className="flex shrink-0 items-center gap-1.5">
         <IssueFilterMenu
           trigger={
             <Button
-              variant={hasActiveFilters ? "default" : "outline"}
+              variant={hasActiveFilters ? "brand" : "outline"}
               size="sm"
               className={
                 hasActiveFilters
-                  ? "h-8 w-8 gap-1 bg-brand px-0 text-white hover:bg-brand/90 md:h-7 md:w-auto md:px-2.5"
+                  ? cn(COLLECTION_TOOLBAR_BUTTON, "w-8 px-0 font-medium md:w-auto md:px-3")
                   : controlButtonClass
               }
             >
@@ -2394,18 +2423,18 @@ export function IssueDisplayControls({
                   <span className="text-caption font-medium text-muted-foreground">
                     {t(($) => $.display.card_properties_section)}
                   </span>
-                  {/* Chip toggles (pressed = shown on cards). Unpressed chips
-                      dim so the active set reads at a glance. */}
+                  {/* Chip toggles (pressed = shown on cards): ink fill plus a
+                      check when on, muted fill when off. */}
                   <div className="mt-2 flex flex-wrap gap-1">
                     {availableCardPropertyOptions.map((opt) => (
                       <Toggle
                         key={opt.key}
                         size="sm"
-                        variant="outline"
                         pressed={cardProperties[opt.key]}
                         onPressedChange={() => act.toggleCardProperty(opt.key)}
-                        className="h-6 rounded-md px-2 text-caption text-muted-foreground hover:bg-muted/60 aria-pressed:border-transparent aria-pressed:bg-accent aria-pressed:text-accent-foreground aria-pressed:hover:bg-accent/80"
+                        className={CARD_PROPERTY_CHIP_CLASS}
                       >
+                        <Check aria-hidden="true" className="hidden size-3 group-aria-pressed/toggle:block" />
                         {t(($) => $.display[CARD_PROPERTY_LABEL_KEY[opt.key]])}
                       </Toggle>
                     ))}
@@ -2413,11 +2442,11 @@ export function IssueDisplayControls({
                       <Toggle
                         key={property.id}
                         size="sm"
-                        variant="outline"
                         pressed={cardPropertyIds.includes(property.id)}
                         onPressedChange={() => act.toggleCardPropertyId(property.id)}
-                        className="h-6 max-w-40 rounded-md px-2 text-caption text-muted-foreground hover:bg-muted/60 aria-pressed:border-transparent aria-pressed:bg-accent aria-pressed:text-accent-foreground aria-pressed:hover:bg-accent/80"
+                        className={cn(CARD_PROPERTY_CHIP_CLASS, "max-w-40")}
                       >
+                        <Check aria-hidden="true" className="hidden size-3 group-aria-pressed/toggle:block" />
                         <span className="truncate">{property.name}</span>
                       </Toggle>
                     ))}
@@ -2438,7 +2467,7 @@ export function IssueDisplayControls({
                 render={
                   <TooltipTrigger
                     render={
-                      <Button variant="outline" size="sm" className={controlButtonClass}>
+                      <Button variant="outline" size="sm" className={cn(controlButtonClass, "md:pr-2.5")}>
                         {viewMode === "board" ? (
                           <Columns3 className="size-3.5" />
                         ) : viewMode === "table" ? (
@@ -2461,6 +2490,7 @@ export function IssueDisplayControls({
                             ? t(($) => $.view.gantt)
                             : t(($) => $.view.list)}
                         </span>
+                        <ChevronDown className="hidden size-3 md:inline" />
                       </Button>
                     }
                   />

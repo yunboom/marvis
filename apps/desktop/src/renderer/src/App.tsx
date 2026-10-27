@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { CoreProvider } from "@marvis/core/platform";
 import { pickLocale, type SupportedLocale } from "@marvis/core/i18n";
+import { I18nProvider } from "@marvis/core/i18n/react";
 import { useAuthStore } from "@marvis/core/auth";
 import { workspaceKeys } from "@marvis/core/workspace/queries";
 import { useWorkspaceList } from "@marvis/core/workspace";
@@ -14,6 +15,8 @@ import { Toaster } from "@marvis/ui/components/ui/sonner";
 import { DesktopLoginPage } from "./pages/login";
 import { DesktopAuthRecoveryPage } from "./pages/auth-recovery";
 import { DesktopShell } from "./components/desktop-layout";
+import { ConnectServerScreen } from "./components/server/connect-server-screen";
+import { StandaloneGate } from "./components/standalone/standalone-gate";
 import { UpdateNotification } from "./components/update-notification";
 import { IssueWindow } from "./components/issue-window";
 import { useTabStore } from "./stores/tab-store";
@@ -30,10 +33,9 @@ import { DiagnosticRouteReporter } from "./platform/diagnostic-route-reporter";
 import { flushFreezeBreadcrumb } from "./freeze-flush";
 import { DesktopAuthSessionBridge } from "./platform/auth-session-bridge";
 import {
-  tearDownOnLogout,
-  tearDownOnSessionExpiry,
-  type SessionTeardown,
-} from "./platform/session-teardown";
+  handleDaemonLogout,
+  handleSessionExpired,
+} from "./platform/desktop-session-teardown";
 
 // BCP-47 region tags for the <html lang> attribute, mirroring
 // apps/web/app/layout.tsx HTML_LANG. index.html ships a static lang="en";
@@ -43,6 +45,7 @@ import {
 const HTML_LANG: Record<SupportedLocale, string> = {
   en: "en",
   "zh-Hans": "zh-CN",
+  "zh-Hant": "zh-TW",
   ko: "ko-KR",
   ja: "ja-JP",
   fr: "fr-FR",
@@ -95,7 +98,7 @@ function IssueWindowContent() {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <MarvisIcon className="size-6 animate-pulse" />
+        <MarvisIcon className="size-12 animate-pulse" />
       </div>
     );
   }
@@ -123,13 +126,13 @@ function AppContent() {
     : null;
 
   // Tell the main process which backend URL we talk to, so daemon-manager
-  // can pick the matching CLI profile (server_url from ~/.marvis-studio config).
+  // can pick the matching CLI profile (server_url from ~/.marvis config).
   useEffect(() => {
     if (!runtimeConfig) return;
     window.daemonAPI.setTargetApiUrl(runtimeConfig.apiUrl);
   }, [runtimeConfig]);
 
-  // Listen for invite IDs delivered via deep link (marvis-studio://invite/<id>).
+  // Listen for invite IDs delivered via deep link (marvis://invite/<id>).
   // We open the overlay regardless of login state — if the user isn't logged
   // in, InvitePage's queries will fail and render the "not found" state,
   // which is acceptable; the expected pre-flight happens in the web app
@@ -140,7 +143,7 @@ function AppContent() {
     });
   }, []);
 
-  // Listen for auth token delivered via deep link (marvis-studio://auth/callback?token=...).
+  // Listen for auth token delivered via deep link (marvis://auth/callback?token=...).
   // daemonAPI.syncToken is handled separately by the [user] effect below, which
   // fires whenever a user logs in (deep link, session restore, account switch).
   useEffect(() => {
@@ -320,7 +323,7 @@ function AppContent() {
   if (isLoading || bootstrapping) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <MarvisIcon className="size-6 animate-pulse" />
+        <MarvisIcon className="size-12 animate-pulse" />
       </div>
     );
   }
@@ -345,7 +348,7 @@ function BlockingRuntimeConfigError({ message }: { message: string }) {
       <div className="max-w-xl rounded-lg border bg-card p-6 shadow-sm">
         <h1 className="text-title font-semibold">Desktop configuration error</h1>
         <p className="mt-3 text-body text-muted-foreground">
-          Marvis Desktop could not load <code>~/.marvis-studio/desktop.json</code>. Fix or remove the file and restart the app.
+          Marvis Desktop could not load <code>~/.marvis/desktop.json</code>. Fix or remove the file and restart the app.
         </p>
         <pre className="mt-4 whitespace-pre-wrap rounded-md bg-muted p-3 text-caption text-muted-foreground">
           {message}
@@ -353,26 +356,6 @@ function BlockingRuntimeConfigError({ message }: { message: string }) {
       </div>
     </div>
   );
-}
-
-// Binds the teardown steps to this renderer's real stores and IPC. Which of
-// them each path runs — and why logout stops the daemon while an expiry
-// leaves it running — lives in platform/session-teardown.
-const sessionTeardown: SessionTeardown = {
-  reportAuthSession: (userId) =>
-    window.desktopAPI.reportAuthSession?.(userId),
-  resetTabs: () => useTabStore.getState().reset(),
-  closeOverlay: () => useWindowOverlayStore.getState().close(),
-  clearDaemonToken: () => window.daemonAPI.clearToken(),
-  stopDaemon: () => window.daemonAPI.stop(),
-};
-
-function handleDaemonLogout() {
-  return tearDownOnLogout(sessionTeardown);
-}
-
-function handleSessionExpired() {
-  tearDownOnSessionExpiry(sessionTeardown);
 }
 
 export default function App() {
@@ -478,9 +461,18 @@ export default function App() {
           {windowContext.kind === "issue" ? (
             <IssueWindowContent />
           ) : (
-            <AppContent />
+            // 选的是单机模式且本机服务还没运行时，先显示启动状态页。
+            <StandaloneGate>
+              <AppContent />
+            </StandaloneGate>
           )}
         </CoreProvider>
+      ) : "unconfigured" in runtimeConfigResult ? (
+        // 还没有选择服务器：这个分支没有挂 CoreProvider，单独提供 i18n。
+        // 选定服务器后主进程会重载窗口，随后进入登录页。
+        <I18nProvider locale={locale} resources={resources}>
+          <ConnectServerScreen suggestedAddress={runtimeConfigResult.suggestedAddress} />
+        </I18nProvider>
       ) : (
         <BlockingRuntimeConfigError message={runtimeConfigResult.error.message} />
       )}

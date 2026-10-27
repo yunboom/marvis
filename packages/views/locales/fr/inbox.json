@@ -1,7 +1,8 @@
 {
   "page": {
     "title": "Boîte de réception",
-    "back": "Boîte de réception"
+    "back": "Boîte de réception",
+    "close": "Fermer"
   },
   "menu": {
     "mark_all_read": "Tout marquer comme lu",
@@ -51,7 +52,6 @@
   },
   "detail": {
     "select_prompt": "Sélectionnez une notification pour afficher les détails",
-    "empty": "Votre boîte de réception est vide",
     "original_input": "Saisie d'origine",
     "retry_with_context": "Réessayer avec le contexte",
     "edit_advanced": "Modifier en mode avancé",

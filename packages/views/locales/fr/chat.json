@@ -21,6 +21,7 @@
     "send_tooltip": "Envoyer",
     "queue_send_tooltip": "Mettre le message en file d'attente",
     "stop_tooltip": "Arrêter",
+    "restored_to_input": "Message replacé dans la zone de saisie",
     "send_failed_toast": "Échec de l'envoi du message",
     "send_blocked_toast": "Message non envoyé — vous n'avez plus la permission d'utiliser cet agent",
     "runtime_required_toast": "Message non envoyé — associez d'abord un runtime à cet agent",
@@ -88,7 +89,8 @@
     "quick_actions_heading": "Questions de suivi",
     "quick_actions_aria": "Suggestions pour continuer",
     "quick_actions_regenerate": "Régénérer les suggestions",
-    "quick_actions_regenerate_failed": "Impossible d'actualiser les suggestions. Veuillez réessayer."
+    "quick_actions_regenerate_failed": "Impossible d'actualiser les suggestions. Veuillez réessayer.",
+    "stopped": "Arrêté"
   },
   "session_history": {
     "untitled": "Sans titre",

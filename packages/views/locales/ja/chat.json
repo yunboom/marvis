@@ -20,6 +20,7 @@
     "send_tooltip": "送信",
     "queue_send_tooltip": "キューに追加",
     "stop_tooltip": "停止",
+    "restored_to_input": "メッセージを入力欄に戻しました",
     "send_failed_toast": "メッセージを送信できませんでした",
     "send_blocked_toast": "メッセージは送信されませんでした — このエージェントを使用する権限がありません",
     "runtime_required_toast": "メッセージは送信されませんでした — 先にこのエージェントのランタイムを設定してください",
@@ -84,7 +85,8 @@
     "quick_actions_heading": "フォローアップ質問",
     "quick_actions_aria": "フォローアップの候補",
     "quick_actions_regenerate": "候補を再生成",
-    "quick_actions_regenerate_failed": "候補を再生成できませんでした。もう一度お試しください。"
+    "quick_actions_regenerate_failed": "候補を再生成できませんでした。もう一度お試しください。",
+    "stopped": "停止しました"
   },
   "session_history": {
     "untitled": "無題",

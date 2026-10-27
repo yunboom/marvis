@@ -55,11 +55,11 @@ export const SubIssuesAgentWorkingChip = memo(
       <HoverCard>
         <HoverCardTrigger
           render={
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted/60 px-2 py-0.5" />
+            <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full bg-brand/6 pr-2 pl-[3px] dark:bg-brand/10" />
           }
         >
           <AgentAvatarStack agentIds={agentIds} size="xs" max={3} />
-          <ShimmerText className="text-micro font-medium tabular-nums">
+          <ShimmerText className="text-caption tabular-nums">
             {t(($) => $.agent_activity.chip_agents_working, {
               count: agentIds.length,
             })}

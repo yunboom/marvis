@@ -315,14 +315,14 @@ function IssueSurfaceContent({
           ) : renderEmpty ? (
             renderEmpty(renderContext)
           ) : (
-            <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-3 text-muted-foreground">
-              <ListTodo className="h-10 w-10 text-faint-foreground" />
-              <p className="text-body">{t(($) => $.detail.empty_issues_title)}</p>
-              <p className="text-caption">{t(($) => $.detail.empty_issues_hint)}</p>
+            <div className={SURFACE_STATE}>
+              <ListTodo className={SURFACE_STATE_ICON} />
+              <p className="text-body-lg">{t(($) => $.detail.empty_issues_title)}</p>
+              <p className="text-label">{t(($) => $.detail.empty_issues_hint)}</p>
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-1"
+                className={SURFACE_STATE_BUTTON}
                 onClick={() => controller.openCreateIssue()}
               >
                 <Plus className="size-3.5 mr-1.5" />
@@ -407,6 +407,12 @@ function IssueSurfaceContent({
  * Missing filter dependencies must offer recovery instead of claiming that
  * the filter matched no issues.
  */
+// 空状态 / 错误 / 筛选为空的居中提示：40px 弱图标、15px 标题、13px 说明、32px 药丸按钮
+const SURFACE_STATE =
+  "flex flex-1 min-h-0 flex-col items-center justify-center gap-3 text-muted-foreground animate-content-rise";
+const SURFACE_STATE_ICON = "size-10 text-faint-foreground";
+const SURFACE_STATE_BUTTON = "mt-1 h-8 px-3.5 text-label";
+
 function FilterDependencyErrorState({
   kind,
   onRetry,
@@ -418,18 +424,18 @@ function FilterDependencyErrorState({
   return (
     <div
       role="alert"
-      className="flex flex-1 min-h-0 flex-col items-center justify-center gap-3 text-muted-foreground"
+      className={SURFACE_STATE}
     >
-      <AlertTriangle className="h-10 w-10 text-faint-foreground" />
-      <p className="text-body">
+      <AlertTriangle className={SURFACE_STATE_ICON} />
+      <p className="text-body-lg">
         {kind === "working"
           ? t(($) => $.working_filter_error.title)
           : t(($) => $.status_catalog_error.title)}
       </p>
       {kind === "status" && (
-        <p className="text-caption">{t(($) => $.status_catalog_error.hint)}</p>
+        <p className="text-label">{t(($) => $.status_catalog_error.hint)}</p>
       )}
-      <Button variant="outline" size="sm" className="mt-1" onClick={onRetry}>
+      <Button variant="outline" size="sm" className={SURFACE_STATE_BUTTON} onClick={onRetry}>
         {t(($) => $.status_catalog_error.retry)}
       </Button>
     </div>
@@ -448,10 +454,10 @@ function FilteredEmptyState() {
     : clearFilters;
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-3 text-muted-foreground">
-      <FilterX className="h-10 w-10 text-faint-foreground" />
-      <p className="text-body">{t(($) => $.filtered_empty.title)}</p>
-      <Button variant="outline" size="sm" className="mt-1" onClick={handleClear}>
+    <div className={SURFACE_STATE}>
+      <FilterX className={SURFACE_STATE_ICON} />
+      <p className="text-body-lg">{t(($) => $.filtered_empty.title)}</p>
+      <Button variant="outline" size="sm" className={SURFACE_STATE_BUTTON} onClick={handleClear}>
         {t(($) => $.filtered_empty.clear_button)}
       </Button>
     </div>
@@ -465,7 +471,7 @@ function FilteredEmptyState() {
 function IssueSurfaceSkeleton({ mode }: { mode: string }) {
   if (mode === "list") {
     return (
-      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 py-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-10 w-full rounded-lg" />
         ))}
@@ -474,10 +480,10 @@ function IssueSurfaceSkeleton({ mode }: { mode: string }) {
   }
 
   return (
-    <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto p-4">
+    <div className="flex flex-1 min-h-0 gap-4 overflow-x-auto px-6 py-4">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex min-w-52 flex-1 flex-col gap-2">
-          <Skeleton className="h-4 w-20" />
+        <div key={i} className="flex min-w-40 flex-1 flex-col gap-2">
+          <Skeleton className="h-4 w-20 rounded-sm" />
           <Skeleton className="h-24 w-full rounded-lg" />
           <Skeleton className="h-24 w-full rounded-lg" />
         </div>

@@ -367,7 +367,19 @@
     "empty_grouping": "一致するタスクがありません",
     "no_value": "値なし",
     "ordered_by": "{{field}} 順に並べたボード",
-    "manual_reorder_hint": "列内の順序を変更するには、並び順を「手動」に切り替えてください。"
+    "manual_reorder_hint": "列内の順序を変更するには、並び順を「手動」に切り替えてください。",
+    "status_column": {
+      "not_started": "未着手",
+      "working": "作業中",
+      "needs_attention": "要対応",
+      "ended": "終了"
+    },
+    "lane_more_other": "他 {{count}} 件",
+    "lane_collapse": "折りたたむ",
+    "lane_focus": "{{status}} にフォーカス",
+    "focusing": "フォーカス中",
+    "exit_focus": "フォーカスを終了",
+    "below_fold_other": "下に {{count}} 件"
   },
   "peek": {
     "panel_label": "タスクのプレビュー",
@@ -522,6 +534,7 @@
     "pr_auto_complete_disabled": "このタスクを PR マージでステータスを変えないように設定しました",
     "pr_auto_complete_enabled": "このタスクの PR マージ後のステータス変更を再開しました",
     "wakeup_created": "起動を追加しました：{{condition}} · {{agent}} を起こす",
+    "wakeup_created_scheduled": "{{agent}} の起動を追加しました：{{condition}}",
     "wakeup_triggered": "{{condition}} · {{agent}} を起こしました",
     "wakeup_triggered_merged": "{{condition}}（{{agent}} の開始待ちの実行に合流しました）",
     "wakeup_triggered_acknowledged": "{{condition}}（{{agent}} 自身の操作のため、再度は起こしていません）",
@@ -635,6 +648,7 @@
     "recipient_count_other": "{{count}} 個のエージェントが受け取ります",
     "steer_attachment_notice": "実行中に追加できるのはテキストのみのため、ファイル付きのメッセージはこの実行の後に処理されます。",
     "restart_send": "停止して送信",
+    "restart_stopping": "停止中…",
     "restart_failed": "現在の実行を停止できませんでした。メッセージは送信されていません。"
   },
   "reply": {
@@ -664,6 +678,7 @@
     "hover_header_queued_other": "待機中のエージェント {{count}} 件",
     "status_running": "作業中",
     "status_queued": "待機中",
+    "status_working": "作業中",
     "empty_hover": "現在作業中のエージェントはありません",
     "unknown_hover": "作業中のエージェント: まだ読み込まれていません",
     "filter_active_label": "エージェントが作業中のタスクを表示中",
@@ -697,6 +712,7 @@
     "retry_failed": "実行を再試行できませんでした",
     "retry_blocked": "再試行されませんでした — このエージェントを使用する権限がありません",
     "transcript_tooltip": "トランスクリプトを表示",
+    "jump_to_run": "実行に移動",
     "cancel_failed": "実行をキャンセルできませんでした",
     "trigger_retry": "再試行",
     "trigger_retry_attempt": "再試行 #{{attempt}}",
@@ -823,7 +839,8 @@
   },
   "card": {
     "update_failed": "タスクを更新できませんでした",
-    "updated_ago": "{{time}} に更新"
+    "updated_ago": "{{time}} に更新",
+    "overdue_days_other": "{{count}}日超過"
   },
   "actions": {
     "rename_issue": "タスク名を変更",
@@ -1258,6 +1275,7 @@
       "other_done": "完了",
       "other_ended": "完了またはキャンセル",
       "other_in_review": "レビュー中になる",
+      "other_blocked": "ブロック中になる",
       "max_fires": "最大",
       "max_fires_times_other": "{{count}} 回",
       "missing_value": "値を選択してください。",
@@ -1311,6 +1329,7 @@
       "other_done": "{{issue}} が完了したとき",
       "other_ended": "{{issue}} が完了またはキャンセルされたとき",
       "other_in_review": "{{issue}} がレビュー中になったとき",
+      "other_blocked": "{{issue}} がブロック中になったとき",
       "another_issue": "別のタスク",
       "unknown_label": "削除されたラベル",
       "unknown_property": "削除されたプロパティ",
@@ -1334,6 +1353,7 @@
       "other_done": "{{issue}} の完了待ち",
       "other_ended": "{{issue}} の終了待ち",
       "other_in_review": "{{issue}} のレビュー待ち",
+      "other_blocked": "{{issue}} のブロック待ち",
       "time": "{{time}} に {{agent}} を起こす",
       "header": "{{agent}}：{{what}}",
       "paused": "起動を一時停止中",
@@ -1485,7 +1505,7 @@
       "set_start": "開始ステップにする",
       "move_up": "上へ移動",
       "move_down": "下へ移動",
-      "remove": "列を削除",
+      "remove": "このステップを削除",
       "on_enter": "このステップに入ったら引き継ぐ相手",
       "choose_target": "選択…",
       "instructions": "引き継ぎの指示",
@@ -1504,7 +1524,7 @@
       "duplicate": "新しいワークフローとして複製",
       "copy_name": "{{name}} のコピー",
       "more": "その他の操作",
-      "steps_hint": "ドラッグで中間の列を並べ替えます。Backlog と Blocked は任意です。新しいステータスは保存時に作成されます。",
+      "steps_hint": "新しいステータスは保存時にステータスライブラリへ追加されます。",
       "status_needs_admin": "{{names}} は新しいステータスになります。ステータスを追加できるのはワークスペース管理者のみです。これらの列を削除するか、先に管理者にステータスの追加を依頼してください。",
       "reorder": "「{{name}}」を並べ替え",
       "card_hand_to": "引き継ぎ先",
@@ -1527,7 +1547,6 @@
       "select_step": "列を選択して、課題の引き継ぎ先を設定します。",
       "unsaved": "未保存の変更があります",
       "not_found": "このワークフローはもう存在しません。",
-      "default_note": "Default は、ワークフローを選んでいないプロジェクトと、プロジェクト外のビューで使うボードです。",
       "new_badge": "新規",
       "columns": "列",
       "include_status": "{{status}} を含める",
@@ -1535,7 +1554,42 @@
       "step_off": "オフ：このワークフローはこのステータスを使いません。左のリストでオンにすると使えます。",
       "status_new_hint": "新しいステータスです。保存時にステータスライブラリに追加されます。",
       "no_other_status": "すべてのステータスがすでにステップです。",
-      "no_handoff_step": "このステップは引き継ぎません。入っても担当者は変わらず、実行も始まりません。"
+      "no_handoff_step": "このステップは引き継ぎません。入っても担当者は変わらず、実行も始まりません。",
+      "zone": {
+        "start": "開始",
+        "middle": "中間ステップ",
+        "middle_caption_other": "{{count}} ステップ · 自由に並べ替え",
+        "blocked": "ブロック",
+        "blocked_caption": "どのステップからも移動可能",
+        "end": "終了",
+        "fixed": "位置固定"
+      },
+      "why": {
+        "todo": "新しい課題はすべて Todo から始まり、エージェントに割り当てた課題はここで実行を開始します。すべてのワークフローに必須で、位置は固定です。",
+        "done": "完了した課題の終点です。完了数の集計がこれに依存するため、削除できません。",
+        "cancelled": "中止した課題の終点です。完了とあわせて課題の終了判定に使うため、削除できません。",
+        "backlog": "保留エリア：ここにある課題はエージェントを起動しません。不要ならオフにすると、ボードからこの列が消えます。",
+        "blocked": "脇道のステータス：どのステップでも行き詰まったら移動でき、「完了後の移動先」では自動的に飛ばされます。不要ならオフにできます。"
+      },
+      "kind": {
+        "locked": "固定ステップ",
+        "optional": "任意ステップ",
+        "optional_off": "任意ステップ · オフ",
+        "middle": "中間ステップ",
+        "new": "新しいステータス"
+      },
+      "lock_why": "「{{name}}」を削除できない理由",
+      "remove_named": "「{{name}}」を削除",
+      "card_no_run": "実行しない",
+      "card_ends": "課題を終了",
+      "search_status": "ステータスを検索",
+      "library": "ステータスライブラリ",
+      "no_match": "一致するステータスがありません",
+      "new_status_named": "新しいステータス「{{name}}」",
+      "key_on_save": "保存時に作成",
+      "rule_locked": "常に残る",
+      "rule_optional": "オフにできる・位置固定",
+      "default_note": "Default は、ワークフローを選んでいないプロジェクトと、プロジェクト外のビューで使うボードです。"
     },
     "mapping": {
       "title": "タスクを「{{name}}」に移動",
@@ -1567,7 +1621,7 @@
       "used_by_short": "使用中：{{names}}",
       "used_by_nobody": "まだプロジェクトがありません",
       "manage": "ワークフローを管理…",
-      "picker_more": "「設定 → ワークフロー」でワークフローを追加できます。"
+      "picker_more": "サイドバーの「ワークフロー」でワークフローを追加できます。"
     },
     "picker": {
       "header": "{{workflow}} · プロジェクト「{{project}}」に従う",

@@ -15,7 +15,18 @@ import { installNavigationGestures } from "./navigation-gestures";
 import { installNavigationGuard } from "./navigation-guard";
 import { createRendererWebPreferences } from "./renderer-web-preferences";
 import { getAppVersion } from "./app-version";
-import { loadRuntimeConfig } from "./runtime-config-loader";
+import {
+  devRuntimeConfig,
+  loadRuntimeConfig,
+  preferDevConfig,
+} from "./runtime-config-loader";
+import { browseBonjour, createLanBrowser, listLocalAddresses } from "./lan-browser";
+import { browseDnsSd } from "./dns-sd-browse";
+import { probeServer } from "./server-probe";
+import { readSelectedServer, writeSelectedServer } from "./server-selection";
+import { createServerController, registerServerIpc } from "./server-ipc";
+import { setupStandalone } from "./standalone/setup";
+import { createServerWatchRunner } from "./server-watch-runner";
 import type { RuntimeConfigResult } from "../shared/runtime-config";
 import {
   RENDERER_ROUTE_CONTEXT_CHANNEL,
@@ -54,11 +65,19 @@ import {
 import {
   MAIN_RENDERER_CHANNEL_STATE_CHANNEL,
   MainRendererMessageQueue,
+  OPEN_PATH_CHANNEL,
   parseMainRendererChannelState,
   TAB_SELECTION_SHORTCUT_CHANNEL,
   type MainRendererMessageChannel,
 } from "../shared/main-renderer-messages";
+import {
+  DEEP_LINK_PROTOCOL,
+  OPEN_LINK_HOST,
+  parseOpenLinkPath,
+} from "../shared/open-link";
 import { AuthSessionCoordinator } from "./auth-session-coordinator";
+import { createLarkDesktopLogin } from "./lark-desktop-login";
+import { LARK_DESKTOP_LOGIN_START_CHANNEL } from "../shared/lark-desktop-login";
 import {
   NotificationGate,
   parseNativeNotificationPayload,
@@ -124,7 +143,7 @@ if (process.platform !== "win32") {
   ]);
 }
 
-const PROTOCOL = "marvis-studio";
+const PROTOCOL = DEEP_LINK_PROTOCOL;
 const devLog = is.dev ? createBestEffortDevLog() : undefined;
 
 // Where the main process parks a freeze/crash breadcrumb until the next
@@ -143,6 +162,8 @@ const authSessionCoordinator = new AuthSessionCoordinator<BrowserWindow>(
   },
 );
 const notificationGate = new NotificationGate();
+// 没有网页端时的飞书登录：保存待完成登录的 nonce，校验深链带回的凭证。
+const larkDesktopLogin = createLarkDesktopLogin({ openExternal: openExternalSafely });
 const mainRendererMessages = new MainRendererMessageQueue();
 let desktopInitialized = false;
 let authSessionGeneration = 0;
@@ -193,14 +214,24 @@ function handleDeepLink(url: string): void {
     const parsed = new URL(url);
     if (parsed.protocol !== `${PROTOCOL}:`) return;
 
-    // marvis-studio://auth/callback?token=<jwt>
+    // marvis://auth/callback?token=<jwt>[&nonce=<nonce>]
+    // 带 nonce 时只有与待完成的飞书登录一致才接受，不带 nonce 的是网页端跳回来的旧流程。
     if (parsed.hostname === "auth" && parsed.pathname === "/callback") {
-      const token = parsed.searchParams.get("token");
+      const token = larkDesktopLogin.acceptCallback(parsed.searchParams);
       if (token) dispatchToMainRenderer("auth:token", token);
       return;
     }
 
-    // marvis-studio://invite/<invitationId>
+    // marvis://open?path=<站内路径>
+    // 没有网页端时的分享链接。只放行站内路径，其余一律忽略；路径经队列交给
+    // 主窗口，渲染进程就绪前到达的链接不会丢。
+    if (parsed.hostname === OPEN_LINK_HOST) {
+      const path = parseOpenLinkPath(parsed);
+      if (path) dispatchToMainRenderer(OPEN_PATH_CHANNEL, path);
+      return;
+    }
+
+    // marvis://invite/<invitationId>
     // Dispatched from the web invite page when the user chooses "Open in
     // desktop app". The renderer opens the invite overlay — no tab, no
     // route persistence, so deep-linking the same invite twice stays safe.
@@ -574,7 +605,7 @@ if (is.dev) {
   // to "Marvis", but anchoring it here makes WM_CLASS ↔ StartupWMClass
   // (declared in electron-builder.yml) survive a regression in
   // productName / the build pipeline. Must run before requestSingleInstanceLock().
-  app.setName("Marvis Studio");
+  app.setName("Marvis");
 }
 
 // --- Protocol registration -----------------------------------------------
@@ -628,16 +659,19 @@ if (!gotTheLock) {
       readonly VITE_APP_URL?: string;
     };
 
+    // electron-vite exposes VITE_* on import.meta.env for the main process;
+    // keep dev URL overrides on the same source the renderer used before
+    // runtime config moved endpoint resolution into main/preload.
+    const runtimeEnv = {
+      apiUrl: viteEnv.VITE_API_URL,
+      wsUrl: viteEnv.VITE_WS_URL,
+      appUrl: viteEnv.VITE_APP_URL,
+    };
+    const devConfig = devRuntimeConfig(is.dev, runtimeEnv);
     runtimeConfigResult = await loadRuntimeConfig({
       isDev: is.dev,
-      // electron-vite exposes VITE_* on import.meta.env for the main process;
-      // keep dev URL overrides on the same source the renderer used before
-      // runtime config moved endpoint resolution into main/preload.
-      env: {
-        apiUrl: viteEnv.VITE_API_URL,
-        wsUrl: viteEnv.VITE_WS_URL,
-        appUrl: viteEnv.VITE_APP_URL,
-      },
+      userDataDir: app.getPath("userData"),
+      env: runtimeEnv,
     });
 
     electronApp.setAppUserModelId(
@@ -663,6 +697,14 @@ if (!gotTheLock) {
     // (the renderer itself runs sandboxed).
     ipcMain.handle("shell:openExternal", (_event, url: string) => {
       return openExternalSafely(url);
+    });
+
+    // 没有网页端时的飞书登录：只接受主窗口的请求，地址取当前运行配置里的服务器，
+    // 不接受渲染进程传入的地址。
+    ipcMain.handle(LARK_DESKTOP_LOGIN_START_CHANNEL, async (event) => {
+      if (!mainWindow || event.sender !== mainWindow.webContents) return;
+      if (!runtimeConfigResult.ok) return;
+      await larkDesktopLogin.start(runtimeConfigResult.config.apiUrl);
     });
 
     // Renderer requests its own window close (e.g. Cmd+W on the last main
@@ -720,10 +762,99 @@ if (!gotTheLock) {
     });
 
     // Sync IPC: preload exposes the validated runtime config before renderer
-    // boot. If desktop.json exists but is invalid, renderer receives the
-    // blocking error and must not silently fall back to the cloud defaults.
+    // boot. If server.json / desktop.json exists but is invalid, renderer
+    // receives the blocking error; if no server was selected yet, it receives
+    // the unconfigured branch instead of any built-in default server.
     ipcMain.on("runtime-config:get", (event) => {
       event.returnValue = runtimeConfigResult;
+    });
+
+    // 服务器发现、探测与选定。选定后更新上面这份运行配置并重载所有窗口，
+    // 窗口重新启动时 preload 会同步拿到新的配置。
+    const applyRuntimeConfig = (result: RuntimeConfigResult): void => {
+      runtimeConfigResult = result.ok
+        ? { ok: true, config: preferDevConfig(result.config, devConfig) }
+        : result;
+    };
+    const reloadAllWindows = (): void => {
+      for (const target of BrowserWindow.getAllWindows()) {
+        if (!target.isDestroyed()) target.webContents.reload();
+      }
+    };
+
+    // macOS 经系统 Bonjour 发现：防火墙开着“阻止所有传入连接”时，应用自己收组播会被拦。
+    const browseLan = process.platform === "darwin" ? browseDnsSd : browseBonjour;
+
+    // 掉线监测：监测已选服务器（没有保存过选择时监测运行配置里的地址），
+    // 掉线时在局域网里找同一台服务器的新地址。监测专用一个局域网浏览器，
+    // 与设置页订阅用的互不影响。
+    const serverWatch = createServerWatchRunner({
+      userDataDir: app.getPath("userData"),
+      getRuntimeConfig: () => runtimeConfigResult,
+      readSelected: readSelectedServer,
+      writeSelected: writeSelectedServer,
+      applyRuntimeConfig,
+      probe: probeServer,
+      lanBrowser: createLanBrowser({
+        browse: browseLan,
+        probe: probeServer,
+        localAddresses: listLocalAddresses,
+      }),
+      publish: (status) => serverIpc.publishStatus(status),
+      reloadAll: reloadAllWindows,
+    });
+
+    const serverIpc = registerServerIpc({
+      ipcMain,
+      userDataDir: app.getPath("userData"),
+      lanBrowser: createLanBrowser({
+        browse: browseLan,
+        probe: probeServer,
+        localAddresses: listLocalAddresses,
+      }),
+      probe: probeServer,
+      readSelected: readSelectedServer,
+      writeSelected: writeSelectedServer,
+      applyRuntimeConfig: (result) => {
+        applyRuntimeConfig(result);
+        // 选定了新服务器：监测改为盯着它。
+        void serverWatch.restart();
+      },
+      reloadAll: reloadAllWindows,
+      broadcast: (channel, payload) => {
+        for (const target of BrowserWindow.getAllWindows()) {
+          if (!target.isDestroyed()) target.webContents.send(channel, payload);
+        }
+      },
+      onRetry: () => serverWatch.retryNow(),
+      currentStatus: () => serverWatch.currentStatus(),
+    });
+
+    void serverWatch.restart();
+
+    // 单机模式：选定本机服务器、切换到远程服务器都走与设置页相同的选定流程。
+    // 创建窗口前完成初始化，界面一启动就能查询单机模式的状态。
+    const standaloneServerController = createServerController({
+      userDataDir: app.getPath("userData"),
+      probe: probeServer,
+      readSelected: readSelectedServer,
+      writeSelected: writeSelectedServer,
+      applyRuntimeConfig: (result) => {
+        applyRuntimeConfig(result);
+        void serverWatch.restart();
+      },
+      reloadAll: reloadAllWindows,
+    });
+    await setupStandalone({
+      isDev: is.dev,
+      userDataDir: app.getPath("userData"),
+      broadcast: (channel, payload) => {
+        for (const target of BrowserWindow.getAllWindows()) {
+          if (!target.isDestroyed()) target.webContents.send(channel, payload);
+        }
+      },
+      selectServer: (server) => standaloneServerController.select(server),
+      deliverToken: (token) => dispatchToMainRenderer("auth:token", token),
     });
 
     ipcMain.on(RENDERER_ROUTE_CONTEXT_CHANNEL, (event, context: unknown) => {

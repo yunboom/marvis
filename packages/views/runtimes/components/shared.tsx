@@ -1,5 +1,6 @@
 import { Cloud, Monitor, Wifi, WifiHigh, WifiOff } from "lucide-react";
 import { Badge } from "@marvis/ui/components/ui/badge";
+import { cn } from "@marvis/ui/lib/utils";
 import type { RuntimeHealth } from "@marvis/core/runtimes";
 import { ProviderLogo } from "./provider-logo";
 import { useT } from "../../i18n";
@@ -42,16 +43,19 @@ export function HealthDot({
   health: RuntimeHealth | "loading";
   className?: string;
 }) {
+  // cn() so a caller's size overrides the default 8px instead of racing it.
   if (health === "loading") {
     return (
-      <span
-        className={`inline-block h-2 w-2 rounded-full bg-muted ${className}`}
-      />
+      <span className={cn("inline-block size-2 rounded-full bg-muted", className)} />
     );
   }
   return (
     <span
-      className={`inline-block h-2 w-2 rounded-full ${HEALTH_VISUAL[health].dot} ${className}`}
+      className={cn(
+        "inline-block size-2 rounded-full",
+        HEALTH_VISUAL[health].dot,
+        className,
+      )}
     />
   );
 }
@@ -189,15 +193,17 @@ export function KpiCard({
         ? "text-success"
         : "";
   return (
-    <div className="flex flex-col gap-2 p-5">
-      <div className="text-micro font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-      <div className={`text-display font-semibold leading-none tabular-nums ${valueClass}`}>
+    <div className="flex min-w-0 flex-col px-6 py-4.5">
+      <div className="truncate text-label text-muted-foreground">{label}</div>
+      <div
+        className={`mt-2 text-[1.75rem] leading-9 font-bold tracking-[-0.01em] tabular-nums ${valueClass}`}
+      >
         {value}
       </div>
       {hint != null && (
-        <div className="text-caption text-muted-foreground">{hint}</div>
+        <div className="mt-1 truncate text-caption leading-4.5 text-muted-foreground">
+          {hint}
+        </div>
       )}
     </div>
   );

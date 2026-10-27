@@ -13,7 +13,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/cli"
 )
 
-// mkProfiles creates ~/.marvis-studio/profiles/<name> for each name under a fresh
+// mkProfiles creates ~/.marvis/profiles/<name> for each name under a fresh
 // temp HOME and returns that HOME. It also moves the test off the current
 // working directory: inDaemonManagedExecutionContext() detects a daemon task
 // from a workdir marker as well as from env, so a suite running inside a
@@ -24,7 +24,7 @@ func mkProfiles(t *testing.T, names ...string) string {
 	home := t.TempDir()
 	redirectTestHome(t, home)
 	for _, name := range names {
-		dir := filepath.Join(home, ".marvis-studio", "profiles", filepath.FromSlash(name))
+		dir := filepath.Join(home, ".marvis", "profiles", filepath.FromSlash(name))
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			t.Fatalf("create profile %q: %v", name, err)
 		}
@@ -95,7 +95,7 @@ func TestRequireKnownProfile(t *testing.T) {
 	})
 
 	// Regression: profile names may contain separators. `marvis --profile
-	// team/dev config set ...` creates ~/.marvis-studio/profiles/team/dev, so
+	// team/dev config set ...` creates ~/.marvis/profiles/team/dev, so
 	// validating against a flat top-level listing would reject a profile the
 	// same CLI had just created, and suggest its parent "team" instead.
 	t.Run("nested profile created by the CLI is accepted", func(t *testing.T) {
@@ -251,7 +251,7 @@ func TestDaemonStatusNestedProfileStillProbes(t *testing.T) {
 	}
 }
 
-// The default profile owns ~/.marvis-studio directly and has no profiles/ entry, so
+// The default profile owns ~/.marvis directly and has no profiles/ entry, so
 // it must never be validated — scripts calling plain `daemon status` are the
 // most common caller and must be untouched.
 func TestDaemonStatusDefaultProfileNeverValidated(t *testing.T) {

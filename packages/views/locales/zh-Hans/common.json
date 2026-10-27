@@ -29,7 +29,19 @@
     "hex": "十六进制颜色",
     "eyedropper": "从屏幕取色",
     "presets": "预设颜色",
-    "random": "随机"
+    "random": "随机",
+    "swatches": {
+      "ink": "淡墨",
+      "ochre": "赭石",
+      "gamboge": "藤黄",
+      "malachite": "石绿",
+      "celadon": "青瓷",
+      "slate_blue": "花青",
+      "indigo": "靛青",
+      "lotus": "藕紫",
+      "cinnabar": "朱砂",
+      "brand_brown": "品牌棕"
+    }
   },
   "save": "保存",
   "cancel": "取消",

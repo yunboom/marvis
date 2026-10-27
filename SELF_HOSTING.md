@@ -14,9 +14,9 @@ Each user who runs AI agents locally also installs the **`marvis` CLI** and runs
 
 ## Anonymous Deployment Telemetry
 
-The self-hosted API server sends one first-party, deployment-level anonymous snapshot per UTC day to the fixed Marvis endpoint `https://telemetry.marvis.ai/v1/telemetry/events`. This helps maintainers understand which release versions are in use, deployment-size ranges, and aggregate run volume. The endpoint is compiled into the server and cannot be redirected through configuration.
+The self-hosted API server sends one first-party, deployment-level anonymous snapshot per UTC day to the fixed Marvis endpoint `https://telemetry.marvis.ai/v1/telemetry/events`. This helps maintainers understand which release versions are in use, deployment-size ranges, aggregate run volume, and how many members actively use a deployment. The endpoint is compiled into the server and cannot be redirected through configuration.
 
-The snapshot contains only the release version; bucketed counts of workspaces, distinct human members, active agents, and daemons seen in the previous 24 hours; and aggregate counts of runs started, completed, failed, and cancelled in that window. It does not include names, email addresses or domains, IP addresses, business IDs, host/device details, repository or organization details, model/plugin data, prompts or output, comments or chats, paths, token/cost data, credentials, errors, stacks, or logs. This telemetry is not used for billing, licensing, authentication, or security decisions.
+The snapshot contains only the release version; bucketed counts of workspaces, distinct human members, active agents, and daemons seen in the previous 24 hours; aggregate counts of runs started, completed, failed, and cancelled in that window; and bucketed counts of members who opened the signed-in web or desktop app, and of members who personally started an agent run (assign, mention, comment, chat, manual run, or rerun — not autopilot or agent-to-agent delegation), in the previous 1, 7, and 28 complete UTC days. Members are counted per deployment and are never identified. It does not include names, email addresses or domains, IP addresses, business IDs, host/device details, repository or organization details, model/plugin data, prompts or output, comments or chats, paths, token/cost data, credentials, errors, stacks, or logs. This telemetry is not used for billing, licensing, authentication, or security decisions.
 
 Telemetry is enabled by default. To stop both collection and network delivery, set `DO_NOT_TRACK=1` or `DO_NOT_TRACK=true` on the API server and recreate/restart the backend. The deployment identity remains in PostgreSQL, so enabling it again does not create a new identity. `ANALYTICS_DISABLED` controls the separate PostHog integration and does not disable this first-party telemetry.
 
@@ -90,7 +90,7 @@ If the selected GHCR tag has not been published yet, `make selfhost` now tells y
 Once ready:
 
 - **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8080
+- **Backend API:** http://localhost:13840
 
 > **Note:** If you prefer to run the Docker Compose steps manually, see [Manual Docker Compose Setup](#manual-docker-compose-setup) below.
 
@@ -151,7 +151,7 @@ marvis setup self-host
 ```
 
 This automatically:
-1. Configures the CLI to connect to `localhost` (ports 8080/3000)
+1. Configures the CLI to connect to `localhost` (ports 13840/3000)
 2. Opens your browser for authentication
 3. Discovers your workspaces
 4. Starts the daemon in the background
@@ -193,7 +193,7 @@ The chart creates the following resources in the target namespace:
 
 The `marvis-secrets` Secret is **not** managed by the chart — you create it once with `kubectl` so real values never need to land in git.
 
-> **Runtime frontend upstreams:** current `marvis-web` images read `REMOTE_API_URL` and `DOCS_URL` when the Next.js server runs, so API/docs upstream changes do not require a web rebuild. The chart defaults `REMOTE_API_URL` to this release's backend Service. `frontend.compatibility.backendAlias` exists only for legacy images that still baked `REMOTE_API_URL=http://backend:8080` at build time.
+> **Runtime frontend upstreams:** current `marvis-web` images read `REMOTE_API_URL` and `DOCS_URL` when the Next.js server runs, so API/docs upstream changes do not require a web rebuild. The chart defaults `REMOTE_API_URL` to this release's backend Service. `frontend.compatibility.backendAlias` exists only for legacy images that still baked `REMOTE_API_URL=http://backend:13840` at build time.
 
 > **Prerequisites:** `kubectl` and `helm` (v3.13+ for `--take-ownership`, or v4+) configured for the target cluster, an Ingress controller (Traefik / NGINX), and a default StorageClass.
 
@@ -513,7 +513,7 @@ If you prefer configuring the CLI step by step instead of `marvis setup`:
 
 ```bash
 # Point CLI to your local server
-marvis config set server_url http://localhost:8080
+marvis config set server_url http://localhost:13840
 marvis config set app_url http://localhost:3000
 
 # Login (opens browser)

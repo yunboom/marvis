@@ -13,6 +13,7 @@ import {
   type FailureBucketTotals,
   type FailureClassCounts,
 } from "./failure-class-visuals";
+import { monoBarFill } from "./chart-tones";
 
 export interface DailyErrorsData extends FailureClassCounts, FailureBucketTotals {
   date: string;
@@ -34,7 +35,7 @@ export function DailyErrorsChart({ data }: { data: DailyErrorsData[] }) {
 
   return (
     <ChartContainer config={config} className="aspect-[3/1] w-full">
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -51,6 +52,7 @@ export function DailyErrorsChart({ data }: { data: DailyErrorsData[] }) {
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               // `name` is the Recharts dataKey — the raw class id
@@ -77,7 +79,7 @@ export function DailyErrorsChart({ data }: { data: DailyErrorsData[] }) {
             key={c}
             dataKey={c}
             stackId="errors"
-            fill={`var(--color-${c})`}
+            {...monoBarFill(c)}
             // Only the topmost segment gets rounded corners, so the stack
             // reads as one bar rather than a pile of pills.
             radius={i === classes.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]}

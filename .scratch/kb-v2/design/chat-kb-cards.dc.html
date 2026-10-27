@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>对话里的知识库卡片</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>
+body{margin:0}
+.chip{display:inline-flex;align-items:center;gap:5px;height:24px;max-width:18rem;padding:0 8px;margin:0 2px;border:1px solid #e6e6e6;border-radius:6px;background:#fff;font-size:12.5px;line-height:1;vertical-align:middle;color:#0f0f0f;text-decoration:none;cursor:pointer;white-space:nowrap}
+.chip.on{background:#f5f5f5;border-color:#d6d6d6}
+.chip .k{color:#5c5c5c}
+.chip .t{overflow:hidden;text-overflow:ellipsis}
+.hc{position:absolute;width:420px;padding:0;display:flex;flex-direction:column;background:#fff;border-radius:14px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.12);font-size:13px;z-index:5}
+.hc .sec{padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.hc .sec+.sec{border-top:1px solid rgba(0,0,0,.06)}
+.hc .row{display:flex;align-items:center;gap:8px;color:#5c5c5c;font-size:12.5px}
+.hc .ttl{font-size:16px;font-weight:600;color:#0f0f0f}
+.hc .desc{color:#666;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qt{border-left:3px solid #e3e3e3;padding-left:10px;color:#666;line-height:1.6}
+.note{position:absolute;right:24px;bottom:24px;width:300px;padding:12px 14px;border-radius:12px;background:#fffbe8;box-shadow:0 0 0 1px #f0e2a8;font-size:12.5px;line-height:1.7;color:#5c4a00}
+</style></helmet>
+<div class="app" style="position: relative">
+  <dc-import name="Sidebar" active="chat" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main" style="flex-direction: column; position: relative">
+    <div style="height: 72px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 24px; border-bottom: 1px solid rgba(0,0,0,.06)">
+      <span class="av bot">通</span><span style="font-weight: 600; font-size: 16px">{{chatTitle}}</span>
+      <span style="flex: 1"></span>
+      <span class="tag" style="height: 28px; padding: 0 12px; font-size: 12.5px">Claude（DJ-mayunpeng.local）</span>
+    </div>
+    <div style="flex: 1; min-height: 0; overflow: hidden; padding: 28px 0; display: flex; justify-content: center">
+      <div style="width: 760px; display: flex; flex-direction: column; gap: 18px">
+        <div class="bubble" style="align-self: flex-end; max-width: 80%">{{ask}}</div>
+        <div style="display: flex; gap: 10px"><span class="av bot">通</span><div style="font-size: 14px; line-height: 1.9; flex: 1; display: flex; flex-direction: column; gap: 6px">
+          <span class="muted" style="font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>{{steps}}</span>
+
+          <sc-if value="{{is.kb}}" hint-placeholder-val="{{ true }}">
+            <div>知识库建好了：<a class="chip on" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM13 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5z"></path></svg><span class="t">支付排障手册</span></a>，用默认 Schema；目标写了读者是研发和测试，收支付、订单链路的设计和排障步骤，不收需求文档。</div>
+            <div>现在还没有页面。要把 <a class="chip" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="#3f7a5d" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m8 12 3 3 5-6" stroke="#fff" stroke-width="2" fill="none"></path></svg><span class="k">MAR-142</span><span class="t">回调改用渠道交易号去重</span></a> 这类排障记录收进来，可以在知识库的「知识库作业」里新建一个收录资料作业。</div>
+          </sc-if>
+
+          <sc-if value="{{is.change}}" hint-placeholder-val="{{ false }}">
+            <div>改好了，已提交审核：<a class="chip on" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="6" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="M6 8v8M18 16V9a3 3 0 0 0-3-3h-4"></path></svg><span class="k">#16</span><span class="t">去重键改为渠道交易号</span></a></div>
+            <div>改了 <a class="chip" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg><span class="t">支付回调</span></a> 的「去重」一节，引用 <a class="chip" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="#3f7a5d" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m8 12 3 3 5-6" stroke="#fff" stroke-width="2" fill="none"></path></svg><span class="k">MAR-142</span></a>；新增了「回调人工处理」。合并需要 owner 或 admin。</div>
+          </sc-if>
+
+          <sc-if value="{{is.page}}" hint-placeholder-val="{{ false }}">
+            <div>重复回调直接返回成功，不会重复入账：渠道回调按渠道交易号加幂等键去重，幂等键在 Redis 里保存 24 小时。</div>
+            <div>依据：<a class="chip on" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg><span class="t">支付回调</span><span class="k">› 去重</span></a>、<a class="chip" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg><span class="t">幂等键</span></a>。如果重复回调已经入账，按 <a class="chip" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg><span class="t">回调人工处理</span></a> 的步骤补单。</div>
+          </sc-if>
+
+          <sc-if value="{{is.ann}}" hint-placeholder-val="{{ false }}">
+            <div>团队知识库里没有退款回调的说明，「支付回调」写的还是旧的去重键。我记了两条批注，知识库负责人处理时会看到：</div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding-left: 4px">
+              <span>· <a class="chip on" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="k">批注</span><span class="t">支付回调 · 去重键已改为渠道交易号</span></a></span>
+              <span>· <a class="chip" href="#"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg><span class="k">批注</span><span class="t">团队知识库 · 缺少退款回调的处理</span></a></span>
+            </div>
+          </sc-if>
+
+          <span class="faint" style="font-size: 12px; display: inline-flex; gap: 10px">{{took}}<span style="cursor: pointer">复制</span></span>
+        </div></div>
+      </div>
+    </div>
+    <div style="padding: 0 0 20px; display: flex; justify-content: center"><div style="width: 760px; border: 1px solid #e3e3e3; border-radius: 26px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05); display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 6px">
+      <button class="ib" aria-label="添加" style="width: 36px; height: 36px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+      <span class="faint" style="flex: 1; font-size: 14px; padding: 8px 4px">给通用开发助手发消息</span>
+      <span style="width: 36px; height: 36px; border-radius: 18px; background: #ededed; color: #a3a3a3; display: inline-flex; align-items: center; justify-content: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></span>
+    </div></div>
+
+    <sc-if value="{{is.kb}}" hint-placeholder-val="{{ true }}">
+      <div class="hc" style="top: 214px; left: 300px">
+        <div class="sec">
+          <div class="row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM13 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5z"></path></svg>知识库 · pay-troubleshoot</div>
+          <div class="ttl">支付排障手册</div>
+          <div class="desc">支付、订单链路与排障步骤，给研发和测试用。</div>
+        </div>
+        <div class="sec"><div class="row">0 个页面<span>·</span>默认 Schema<span>·</span>没有待处理</div></div>
+        <div class="sec"><div class="row"><span class="av" style="width: 20px; height: 20px; font-size: 11px">木</span>木卫五 创建于 刚刚</div></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{is.change}}" hint-placeholder-val="{{ false }}">
+      <div class="hc" style="top: 214px; left: 330px">
+        <div class="sec">
+          <div class="row"><span class="dot d-blue"></span>#16 · 待审核</div>
+          <div class="ttl">去重键改为渠道交易号，补回调人工处理</div>
+          <div class="desc">按 MAR-142 把去重键改为渠道交易号并写上生效时间；新增「回调人工处理」。</div>
+        </div>
+        <div class="sec"><div class="row">团队知识库<span>·</span>2 个页面<span style="color: #3f7a5d">+20</span><span style="color: #b4442c">−1</span><span>·</span>风险 中</div></div>
+        <div class="sec"><div class="row"><span class="av bot" style="width: 20px; height: 20px; font-size: 11px">通</span>通用开发助手 提交于 2 分钟前<span>·</span>来源：对话</div></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{is.page}}" hint-placeholder-val="{{ false }}">
+      <div class="hc" style="top: 272px; left: 330px">
+        <div class="sec">
+          <div class="row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg>团队知识库 / 支付<span>·</span>howto</div>
+          <div class="ttl">支付回调 › 去重</div>
+          <div class="qt">渠道回调按渠道交易号加幂等键去重，重复回调直接返回成功。</div>
+        </div>
+        <div class="sec"><div class="row">3 条论断<span>·</span>2 条待处理批注<span>·</span>复核期 2027-01-20</div></div>
+        <div class="sec"><div class="row">最近修改 #15<span>·</span>韩梅梅 合并于 1 天前</div></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{is.ann}}" hint-placeholder-val="{{ false }}">
+      <div class="hc" style="top: 300px; left: 330px">
+        <div class="sec">
+          <div class="row"><span class="dot d-amber"></span>批注 · 待处理<span>·</span>团队知识库 / 支付回调</div>
+          <div class="qt">渠道回调按订单号加幂等键去重，重复回调直接返回成功。</div>
+          <div style="color: #0f0f0f; line-height: 1.6">去重键已经改成渠道交易号（MAR-142），这句是旧的。</div>
+        </div>
+        <div class="sec"><div class="row"><span class="av bot" style="width: 20px; height: 20px; font-size: 11px">通</span>通用开发助手 记于 刚刚<span>·</span>来源：对话</div></div>
+      </div>
+    </sc-if>
+
+    <div class="note">{{note}}</div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","default":"kb","options":["kb","change","page","ann"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.props.state ?? 'kb';
+    var is = { kb: st === 'kb', change: st === 'change', page: st === 'page', ann: st === 'ann' };
+    var asks = {
+      kb: '建一个支付排障的知识库，给研发和测试看，把支付和订单链路的排障经验放进去',
+      change: '团队知识库里支付回调的去重键写错了，按 MAR-142 改成渠道交易号',
+      page: '支付回调重复了会怎么样？',
+      ann: '退款回调重复了怎么处理？'
+    };
+    var titles = { kb: '建支付排障知识库', change: '修正支付回调去重键', page: '回调重复', ann: '退款回调重复' };
+    var steps = { kb: '3 步 · 2 个工具', change: '7 步 · 5 个工具', page: '4 步 · 3 个工具', ann: '5 步 · 4 个工具' };
+    var took = { kb: '18 秒内回复', change: '1 分 42 秒内回复', page: '12 秒内回复', ann: '31 秒内回复' };
+    var notes = {
+      kb: '智能体执行 marvis kb create 后，在回复里写知识库链接，渲染成知识库卡片；悬停显示简介、页面数、Schema 模式和创建人，点击打开知识库首页。和任务卡片一样只是链接，不通知任何人。',
+      change: '智能体执行 marvis kb mr create 后写变更请求链接，渲染成 #16 卡片；悬停显示状态、说明、改动规模和风险，点击打开审核页。状态随审核实时变化（待审核 / 已合并 / 已关闭）。',
+      page: '回答引用知识库时写页面链接，可以带块：「支付回调 › 去重」。悬停显示路径、类型和那一块的原文，点击打开页面并滚动到该块、高亮。页面被删或没有权限时退回普通文字。',
+      ann: '智能体发现知识库缺内容或写错时用 marvis kb annotation add 记批注，回复里写批注链接；悬停显示原句和批注内容，点击打开页面并定位到原句。'
+    };
+    return { is: is, ask: asks[st], chatTitle: titles[st], steps: steps[st], took: took[st], note: notes[st] };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,19 +1,8 @@
 import { FAILURE_CLASSES, type FailureClass } from "@marvis/core/dashboard";
 import type { ChartConfig } from "@marvis/ui/components/ui/chart";
 import { useT } from "../../../i18n";
+import { FAILURE_MONO } from "./chart-tones";
 
-// The design system ships five `--chart-*` tokens and they are a single-hue
-// blue ramp, so there is no seven-hue categorical palette to borrow here —
-// and borrowing the blue one would make failures read like token spend.
-// Instead every class is a step down a `--destructive` ramp mixed toward
-// `--card`: the whole stack reads as "errors" at a glance, and the steps stay
-// distinguishable side by side. Mixing toward `--card` rather than a fixed
-// white keeps the ramp legible in dark mode too.
-//
-// The ramp bottoms out at 30% rather than fading to nothing so the least
-// prominent class is still visible against the card it sits on. Order follows
-// FAILURE_CLASSES (most-actionable first), so the darkest segment is always
-// the one worth looking at first.
 // One bucket's failure counts, keyed by display class. Every class is always
 // present (0 when unused) so a bucket can be read without existence checks;
 // which of them actually get drawn is `activeFailureClasses`' call.
@@ -27,14 +16,17 @@ export interface FailureBucketTotals {
   total: number;
 }
 
+// 单色方案：失败类别按 FAILURE_MONO 灰阶由深到浅区分，顺序跟随
+// FAILURE_CLASSES（最需处理的最深）。色值由前景色向 `--card` 混合，暗色模式
+// 同样可读；状态色不进图表。
 export const FAILURE_CLASS_COLOR: Record<FailureClass, string> = {
-  auth: "var(--destructive)",
-  rate_limit: "color-mix(in oklch, var(--destructive) 86%, var(--card))",
-  timeout: "color-mix(in oklch, var(--destructive) 72%, var(--card))",
-  provider: "color-mix(in oklch, var(--destructive) 60%, var(--card))",
-  runtime: "color-mix(in oklch, var(--destructive) 48%, var(--card))",
-  agent: "color-mix(in oklch, var(--destructive) 38%, var(--card))",
-  other: "color-mix(in oklch, var(--destructive) 30%, var(--card))",
+  auth: FAILURE_MONO[0],
+  rate_limit: FAILURE_MONO[1],
+  timeout: FAILURE_MONO[2],
+  provider: FAILURE_MONO[3],
+  runtime: FAILURE_MONO[4],
+  agent: FAILURE_MONO[5],
+  other: FAILURE_MONO[6],
 };
 
 /**

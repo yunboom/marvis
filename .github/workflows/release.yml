@@ -116,6 +116,56 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
 
+  # Server bundles and server-manifest.json for the desktop standalone mode.
+  # The PostgreSQL bundles come from the postgres-bundle workflow's pg-<version>
+  # release; repository variables pick that version, an optional mirror and the
+  # oldest desktop app a bundle supports. See .github/RELEASING.md.
+  standalone-bundles:
+    needs: [verify, release]
+    if: github.repository_owner == 'yunboom'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          # Keep the security floor even when the setup-go manifest lags;
+          # continue accepting newer patches within Go 1.27.
+          go-version: "~1.27.3"
+          check-latest: true
+          cache-dependency-path: server/go.sum
+
+      - name: Build server bundles
+        env:
+          TAG: ${{ needs.verify.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          for target in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64; do
+            bash scripts/build-standalone-bundle.sh "${target%/*}" "${target#*/}" "${TAG#v}" dist
+          done
+
+      - name: Build and publish manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.verify.outputs.tag_name }}
+          PG_VERSION: ${{ vars.STANDALONE_POSTGRES_VERSION || '17.11.0' }}
+          MIRROR_BASE_URL: ${{ vars.STANDALONE_MIRROR_BASE_URL }}
+          MIN_APP_VERSION: ${{ vars.STANDALONE_MIN_APP_VERSION }}
+        run: |
+          set -euo pipefail
+          gh release download "pg-$PG_VERSION" --pattern postgres-manifest.json --dir "$RUNNER_TEMP"
+          args=(server --dir dist --version "${TAG#v}" --tag "$TAG"
+            --postgres-manifest "$RUNNER_TEMP/postgres-manifest.json"
+            --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download")
+          if [ -n "$MIRROR_BASE_URL" ]; then args+=(--mirror-base-url "$MIRROR_BASE_URL"); fi
+          if [ -n "$MIN_APP_VERSION" ]; then args+=(--min-app-version "$MIN_APP_VERSION"); fi
+          node scripts/build-standalone-manifest.mjs "${args[@]}" > dist/server-manifest.json
+          gh release upload "$TAG" dist/* --clobber
+
   # Multi-arch images are built natively per platform on dedicated runners
   # (amd64 on ubuntu-latest, arm64 on ubuntu-24.04-arm) and merged into a
   # manifest list. This avoids QEMU emulation, which was making the Next.js
@@ -288,7 +338,7 @@ jobs:
           cache-from: type=gha,scope=release-web-${{ env.PLATFORM_PAIR }}
           cache-to: type=gha,mode=max,scope=release-web-${{ env.PLATFORM_PAIR }}
           build-args: |
-            REMOTE_API_URL=http://backend:8080
+            REMOTE_API_URL=http://backend:13840
             NEXT_PUBLIC_APP_VERSION=${{ needs.verify.outputs.tag_name }}
           outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/marvis-web,push-by-digest=true,name-canonical=true,push=true
 

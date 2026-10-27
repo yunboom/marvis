@@ -64,8 +64,8 @@ function DesktopNotFoundPage() {
       role="alert"
       className="flex h-full min-h-[20rem] flex-col items-center justify-center gap-4 p-8 text-center"
     >
-      <div className="rounded-full bg-muted p-3 text-muted-foreground">
-        <Compass className="h-6 w-6" aria-hidden="true" />
+      <div className="flex size-12 items-center justify-center rounded-full bg-field text-muted-foreground">
+        <Compass className="size-5" aria-hidden="true" />
       </div>
       <div className="space-y-2">
         <h2 className="text-title font-semibold">This page doesn&apos;t exist</h2>
@@ -96,7 +96,7 @@ function DesktopNotFoundPage() {
           type="button"
           onClick={() => useTabStore.getState().closeActiveTab()}
         >
-          <X className="mr-2 h-4 w-4" aria-hidden="true" />
+          <X className="size-4" aria-hidden="true" />
           Close tab
         </Button>
       </div>
@@ -121,8 +121,8 @@ function DesktopUnexpectedErrorPage({ error }: { error: unknown }) {
       role="alert"
       className="flex h-full min-h-[20rem] flex-col items-center justify-center gap-4 p-8 text-center"
     >
-      <div className="rounded-full bg-destructive/10 p-3 text-destructive">
-        <AlertTriangle className="h-6 w-6" aria-hidden="true" />
+      <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+        <AlertTriangle className="size-5" aria-hidden="true" />
       </div>
       <div className="space-y-2">
         <h2 className="text-title font-semibold">Something went wrong in this tab</h2>
@@ -137,7 +137,7 @@ function DesktopUnexpectedErrorPage({ error }: { error: unknown }) {
           variant="outline"
           onClick={() => useTabStore.getState().reloadActiveTab()}
         >
-          <RotateCw className="mr-2 h-4 w-4" aria-hidden="true" />
+          <RotateCw className="size-4" aria-hidden="true" />
           Reload tab
         </Button>
         {recoveryRoute ? (
@@ -160,7 +160,7 @@ function DesktopUnexpectedErrorPage({ error }: { error: unknown }) {
           variant="outline"
           onClick={() => useTabStore.getState().closeActiveTab()}
         >
-          <X className="mr-2 h-4 w-4" aria-hidden="true" />
+          <X className="size-4" aria-hidden="true" />
           Close tab
         </Button>
         <Button
@@ -172,7 +172,7 @@ function DesktopUnexpectedErrorPage({ error }: { error: unknown }) {
             })
           }
         >
-          <Send className="mr-2 h-4 w-4" aria-hidden="true" />
+          <Send className="size-4" aria-hidden="true" />
           Report error
         </Button>
       </div>

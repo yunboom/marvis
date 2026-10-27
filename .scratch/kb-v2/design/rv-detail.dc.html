@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>变更详情 · 新页面预览</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f">
+  <dc-import name="rv-list" hint-size="1440px,900px"></dc-import>
+  <div style="position: absolute; inset: 16px 16px 16px auto; width: 640px; background: #fff; border-radius: 20px; box-shadow: -12px 0 40px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.05); display: flex; flex-direction: column; overflow: hidden">
+    <div style="height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 20px; border-bottom: 1px solid rgba(0,0,0,.06)">
+      <span class="tag">新增</span><span style="font-weight: 600; flex: 1">回调人工处理</span>
+      <div class="seg"><button class="on">预览</button><button>源码</button></div>
+      <button class="ib" aria-label="关闭"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+    </div>
+    <article class="doc" style="padding: 26px 32px; max-width: none">
+      <div class="faint" style="font-size: 12.5px; margin-bottom: 6px">团队知识库 / 产品与业务 / 支付</div>
+      <h1 style="font-size: 26px">回调人工处理</h1>
+      <div style="display: flex; gap: 6px; margin-bottom: 14px"><span class="tag">开发</span><span class="tag">测试</span></div>
+      <p>重推 8 次仍失败的支付回调进入人工处理队列，由支付值班处理。<span class="cite">[1]</span></p>
+      <h2>处理步骤</h2>
+      <ol style="margin: 0; padding-left: 22px">
+        <li>在运营后台「支付 › 异常回调」找到这笔支付单。<span class="cite">[2]</span></li>
+        <li>到渠道商户后台核对实际支付结果。</li>
+        <li>点「按渠道结果更新」，系统补发订单通知。<span class="cite">[2]</span></li>
+        <li>在值班群回复处理结果，附支付单号。</li>
+      </ol>
+      <div style="margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,.06); font-size: 12.5px; color: #5c5c5c; display: flex; flex-direction: column; gap: 3px">
+        <span class="faint">引用来源</span><span>[1] 代码 · payment-service/internal/callback/retry.go</span><span>[2] 对话 · 仅发起人可查看</span>
+      </div>
+    </article>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

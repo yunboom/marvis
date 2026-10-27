@@ -67,7 +67,7 @@ function IssueWindowRoute() {
     return (
       <IssueWindowFrame>
         <div className="flex min-h-0 flex-1 items-center justify-center">
-          <MarvisIcon className="size-6 animate-pulse" />
+          <MarvisIcon className="size-12 animate-pulse" />
         </div>
       </IssueWindowFrame>
     );
@@ -106,8 +106,8 @@ function IssueWindowUnavailable() {
   return (
     <IssueWindowFrame>
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <div className="rounded-full bg-muted p-3 text-muted-foreground">
-          <AlertTriangle className="size-6" aria-hidden="true" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-field text-muted-foreground">
+          <AlertTriangle className="size-5" aria-hidden="true" />
         </div>
         <div className="space-y-1">
           <h1 className="text-title font-semibold">Issue unavailable</h1>
@@ -133,8 +133,8 @@ function IssueWindowRouteError() {
         role="alert"
         className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center"
       >
-        <div className="rounded-full bg-destructive/10 p-3 text-destructive">
-          <AlertTriangle className="size-6" aria-hidden="true" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <AlertTriangle className="size-5" aria-hidden="true" />
         </div>
         <div className="space-y-1">
           <h1 className="text-title font-semibold">Something went wrong</h1>

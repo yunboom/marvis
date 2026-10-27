@@ -16,7 +16,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
 import { cn } from "@marvis/ui/lib/utils";
@@ -82,7 +81,7 @@ export function ChatQueue({
       // queue reads as emerging from behind the input. z-0 keeps it there even
       // while the entrance animation's opacity/transform spawns a stacking
       // context. The composer's own chrome never changes.
-      className={cn(CHAT_GUTTER, "relative z-0 -mb-3")}
+      className={cn(CHAT_GUTTER, "relative z-0 -mb-3.5")}
       aria-live="polite"
       aria-busy={busyAction !== null}
     >
@@ -91,18 +90,18 @@ export function ChatQueue({
           data-slot="chat-queue"
           aria-label={t(($) => $.queue.title, { count: tasks.length })}
           className={cn(
-            // Quiet secondary surface: border only, no shadow, so the composer
-            // below stays the visually dominant card. pb-4 = the 12px hidden
-            // behind the composer plus a visible 4px breathing room above it.
-            // mx-3 pulls the rear card in from the composer's edges so the
+            // Quiet secondary surface: flat grey, no hairline or shadow, so the
+            // composer below stays the visually dominant card. pb-4.5 = the
+            // 14px hidden behind the composer plus a visible 4px breathing room.
+            // mx-3.5 pulls the rear card in from the composer's edges so the
             // stack reads as two distinct layers.
-            "mx-3 overflow-hidden rounded-lg border border-surface-border bg-surface pb-4",
+            "mx-3.5 overflow-hidden rounded-t-[18px] bg-muted pb-4.5",
             "animate-in fade-in slide-in-from-bottom-2 duration-300",
           )}
         >
           <div
             data-slot="chat-queue-list"
-            className="max-h-40 overflow-y-auto px-2 py-1"
+            className="max-h-40 overflow-y-auto px-2 pt-1.5"
           >
             {tasks.map((task) => {
               const sendNowKey = `send-now:${task.task_id}`;
@@ -113,7 +112,7 @@ export function ChatQueue({
                 <div
                   key={task.task_id}
                   data-slot="chat-queue-row"
-                  className="flex min-h-7 min-w-0 items-center gap-2 rounded-md px-1.5 py-0.5 text-caption animate-in fade-in duration-200"
+                  className="flex min-h-8.5 min-w-0 items-center gap-2 rounded-[10px] pr-1 pl-2.5 text-label transition-colors hover:bg-surface-selected animate-in fade-in duration-200"
                 >
                   <ListEnd
                     data-slot="chat-queue-item-icon"
@@ -149,6 +148,20 @@ export function ChatQueue({
                       size="icon-xs"
                       className="shrink-0 text-muted-foreground"
                       disabled={busyAction !== null}
+                      label={t(($) => $.queue.edit)}
+                      onClick={() => void run(editKey, () => onEdit(task.task_id))}
+                    >
+                      {busyAction === editKey ? (
+                        <Loader2 className="animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Pencil aria-hidden="true" />
+                      )}
+                    </IconButton>
+                    <IconButton
+                      variant="ghost"
+                      size="icon-xs"
+                      className="shrink-0 text-muted-foreground"
+                      disabled={busyAction !== null}
                       label={t(($) => $.queue.remove)}
                       onClick={() => void run(removeKey, () => onRemove(task.task_id))}
                     >
@@ -171,7 +184,7 @@ export function ChatQueue({
                           />
                         }
                       >
-                        {busyAction === editKey || busyAction === clearKey ? (
+                        {busyAction === clearKey ? (
                           <Loader2 className="animate-spin" aria-hidden="true" />
                         ) : (
                           <Ellipsis aria-hidden="true" />
@@ -183,14 +196,6 @@ export function ChatQueue({
                         sideOffset={6}
                         className="w-auto"
                       >
-                        <DropdownMenuItem
-                          disabled={busyAction !== null}
-                          onClick={() => void run(editKey, () => onEdit(task.task_id))}
-                        >
-                          <Pencil aria-hidden="true" />
-                          {t(($) => $.queue.edit)}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           variant="destructive"
                           disabled={busyAction !== null}

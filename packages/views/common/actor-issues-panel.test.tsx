@@ -8,8 +8,8 @@ import enIssues from "../locales/en/issues.json";
 import { ActorIssuesPanel } from "./actor-issues-panel";
 
 // The gutter is overridden with a sentinel rather than compared against the
-// real constant. `PAGE_GUTTER` is `px-4` today, so asserting the real value
-// would pass just as happily against a hand-spelled `px-4` — the very thing
+// real constant. `PAGE_GUTTER` is `px-6` today, so asserting the real value
+// would pass just as happily against a hand-spelled `px-6` — the very thing
 // this guards. Only a component that reads the constant picks the sentinel up.
 const SENTINEL_GUTTER = "px-[13px]";
 vi.mock("../layout/page-header", async (importOriginal) => ({

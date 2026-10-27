@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	pkgerrors "github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/yunboom/marvis/server/internal/analytics"
@@ -37,6 +38,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/integrations/slack"
 	"github.com/yunboom/marvis/server/internal/integrations/telegram"
 	"github.com/yunboom/marvis/server/internal/integrations/wecom"
+	"github.com/yunboom/marvis/server/internal/landiscovery"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 	"github.com/yunboom/marvis/server/internal/middleware"
 	"github.com/yunboom/marvis/server/internal/realtime"
@@ -47,6 +49,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/util/secretbox"
 	composiosdk "github.com/yunboom/marvis/server/pkg/composio"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/embedding"
 	"github.com/yunboom/marvis/server/pkg/featureflag"
 	"github.com/yunboom/marvis/server/pkg/llm"
 	publicapiv1 "github.com/yunboom/marvis/server/pkg/publicapi/v1"
@@ -191,6 +194,33 @@ func parseTrustedProxies(raw string) []netip.Prefix {
 	return out
 }
 
+// trustedProxySets 返回两组可信代理网段：httpProxies 给 handler（限流、Webhook 来源判断），
+// 只认 MARVIS_TRUSTED_PROXIES；realtimeProxies 给 WebSocket 的同源检查，
+// 在没有配置且开启局域网广播时额外信任回环地址（见 effectiveTrustedProxies）。
+// 回环默认值不进 handler：否则同机反向代理转发来的客户端 IP 头都会被采信。
+func trustedProxySets(raw string, lanEnabled bool) (httpProxies, realtimeProxies []netip.Prefix) {
+	return parseTrustedProxies(raw), effectiveTrustedProxies(raw, lanEnabled)
+}
+
+// effectiveTrustedProxies 返回 WebSocket 同源检查实际生效的可信代理网段。
+// raw（MARVIS_TRUSTED_PROXIES）非空时按 parseTrustedProxies 解析，以运维配置为准；
+// 为空且开启了局域网广播时只信任回环地址：用户经 marvis.local 访问时，
+// 本机网页端把原始 Host 放进 X-Forwarded-Host 转发过来，WebSocket 的同源检查需要采纳它。
+func effectiveTrustedProxies(raw string, lanEnabled bool) []netip.Prefix {
+	if strings.TrimSpace(raw) != "" {
+		return parseTrustedProxies(raw)
+	}
+
+	if !lanEnabled {
+		return nil
+	}
+
+	return []netip.Prefix{
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{127, 0, 0, 1}), 32),
+		netip.PrefixFrom(netip.IPv6Loopback(), 128),
+	}
+}
+
 // normalizeServerVersion maps the unstamped "dev" default (main.go's
 // `version` var, unchanged when the binary wasn't built with
 // -X main.version=<tag>) to an empty string. handler.Config.ServerVersion
@@ -263,6 +293,19 @@ type RouterOptions struct {
 	// than read here, for the same fail-the-boot-in-main-only reason: the raw
 	// value is validated by parseLLMDisableThinking before the router exists.
 	LLMDisableThinking bool
+	// LAN 是局域网广播的配置，由 main 从环境变量读取：Name 经 /api/config 下发，
+	// Enabled 为 true 且未配置 MARVIS_TRUSTED_PROXIES 时信任本机转发的请求头。
+	LAN landiscovery.Config
+	// LANHostname 返回局域网广播实际使用的主机名（如 marvis.local），没有在广播时返回空串；
+	// nil 表示不广播。桌面端飞书登录用它和 LAN.Port 推导回调地址。
+	LANHostname func() string
+	// InstanceID 是本部署的实例 ID，经 /api/config 下发；读取失败时为空，响应里不带该字段。
+	InstanceID string
+	// Standalone 表示桌面端在用户电脑上运行的单机模式（MARVIS_STANDALONE）。
+	Standalone bool
+	// BootstrapToken 是单机模式主机管理员一次性登录的 token（MARVIS_BOOTSTRAP_TOKEN）；
+	// 只有 Standalone 为 true 且长度不少于 handler.MinBootstrapTokenLength 时才注册 POST /auth/bootstrap。
+	BootstrapToken string
 }
 
 func buildChannelSupervisor(
@@ -425,6 +468,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 
 	cfSigner := auth.NewCloudFrontSignerFromEnv()
 	origins := allowedOrigins()
+	httpTrustedProxies, realtimeTrustedProxies := trustedProxySets(os.Getenv("MARVIS_TRUSTED_PROXIES"), opts.LAN.Enabled)
 
 	signupConfig := handler.Config{
 		AllowSignup:                    os.Getenv("ALLOW_SIGNUP") != "false",
@@ -435,7 +479,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		VCSIntegrationEnabled:          os.Getenv("MARVIS_VCS_INTEGRATION_ENABLED") == "true",
 		PublicURL:                      strings.TrimRight(strings.TrimSpace(os.Getenv("MARVIS_PUBLIC_URL")), "/"),
 		AppURL:                         appURLFromEnv(),
-		TrustedProxies:                 parseTrustedProxies(os.Getenv("MARVIS_TRUSTED_PROXIES")),
+		TrustedProxies:                 httpTrustedProxies,
 		CloudURL:                       strings.TrimSpace(os.Getenv("MARVIS_CLOUD_URL")),
 		CloudTimeout:                   35 * time.Second,
 		AttachmentDownloadMode:         os.Getenv("ATTACHMENT_DOWNLOAD_MODE"),
@@ -447,8 +491,19 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		LLMDefaultModel:                strings.TrimSpace(os.Getenv("MARVIS_LLM_DEFAULT_MODEL")),
 		LLMMaxRetries:                  opts.LLMMaxRetries,
 		LLMDisableThinking:             opts.LLMDisableThinking,
+		EmbeddingBaseURL:               strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_BASE_URL")),
+		EmbeddingAPIKey:                strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_API_KEY")),
+		EmbeddingModel:                 strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_MODEL")),
+		EmbeddingBatchSize:             embedding.ParseBatchSize(os.Getenv("MARVIS_EMBEDDING_BATCH_SIZE")),
 		ServerVersion:                  normalizeServerVersion(version),
+		ServerName:                     opts.LAN.Name,
+		InstanceID:                     opts.InstanceID,
+		LANHostname:                    opts.LANHostname,
+		LANPort:                        opts.LAN.Port,
 		GitExtraCACerts:                gitca.Load(slog.Default()),
+	}
+	if opts.Standalone && len(opts.BootstrapToken) >= handler.MinBootstrapTokenLength {
+		signupConfig.BootstrapToken = opts.BootstrapToken
 	}
 	h := handler.New(queries, pool, hub, bus, emailSvc, store, cfSigner, analyticsClient, signupConfig, daemonHub)
 	invitationRateLimits := handler.DefaultInvitationRateLimits()
@@ -484,6 +539,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	if seatcapacity.CanRunWorker(h.SeatCapacity) {
 		h.SeatCapacityWorker = seatcapacity.NewWorker(queries, h.SeatCapacity, capacityLocker, seatcapacity.WorkerConfig{})
 	}
+	// 飞书邀请依赖上面的席位容量判断：席位容量开启（连了 Cloud）时整体不启用，所以必须排在它后面。
+	configureLarkInvite(h)
 	if opts.BusinessMetrics != nil {
 		// Wire the BusinessMetrics receiver into the cloud runtime client
 		// so every outbound Fleet/Gateway request feeds the
@@ -618,6 +675,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				// wrap *db.Queries internally, so they keep taking queries.
 				cs := lark.NewChannelStore(queries)
 				patcher := lark.NewPatcher(cs, installSvc, larkClient, lark.PatcherConfig{})
+				if store != nil && patcher.SetAttachments(store) {
+					h.DeclareChannelFileDelivery(string(channel.TypeFeishu))
+				}
 				patcher.Register(bus)
 
 				// Typing indicator: shows a "processing" reaction on the user's
@@ -1426,7 +1486,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	// Share the same trusted-proxy CIDRs (MARVIS_TRUSTED_PROXIES) so the
 	// WebSocket origin check honors X-Forwarded-Host only from trusted proxies,
 	// using one config source instead of a parallel one.
-	realtime.SetTrustedProxies(signupConfig.TrustedProxies)
+	// 局域网广播开启且未配置时，这里额外信任回环地址（只用于 WebSocket 同源检查）。
+	realtime.SetTrustedProxies(realtimeTrustedProxies)
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   origins,
@@ -1488,6 +1549,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	// The authenticated /api/attachments/{id}/download route below is
 	// unchanged — this one is purely additive.
 	r.Get("/api/attachments/{id}/signed-download", h.DownloadAttachmentWithCapability)
+	r.Get("/api/kb/raw/{id}/signed-content", h.GetKbRawContentWithCapability)
 
 	// Avatar serving. Public for the same reason as the capability download
 	// above: the auth cookie is SameSite=Strict, so an auth-gated URL cannot
@@ -1509,12 +1571,27 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		slog.Warn("auth rate limiting disabled: REDIS_URL not configured")
 	}
 	trustedProxies := middleware.ParseTrustedProxies(os.Getenv("RATE_LIMIT_TRUSTED_PROXIES"))
-	authRL := middleware.RateLimit(rdb, envPositiveInt("RATE_LIMIT_AUTH", 5), time.Minute, trustedProxies)
-	authVerifyRL := middleware.RateLimit(rdb, envPositiveInt("RATE_LIMIT_AUTH_VERIFY", 20), time.Minute, trustedProxies)
+	// 单机模式通常不配 Redis，Redis 限流此时直接放行；固定验证码对所有邮箱有效，
+	// 必须限流，所以单机模式无 Redis 时改用进程内限流。
+	authRateLimit := func(limit int) func(http.Handler) http.Handler {
+		if rdb == nil && opts.Standalone {
+			return middleware.MemoryRateLimit(limit, time.Minute, trustedProxies)
+		}
+		return middleware.RateLimit(rdb, limit, time.Minute, trustedProxies)
+	}
+	authRL := authRateLimit(envPositiveInt("RATE_LIMIT_AUTH", 5))
+	authVerifyRL := authRateLimit(envPositiveInt("RATE_LIMIT_AUTH_VERIFY", 20))
 	contactSalesRL := middleware.RateLimit(rdb, envPositiveInt("RATE_LIMIT_CONTACT_SALES", 5), time.Hour, trustedProxies)
 	r.With(authRL).Post("/auth/send-code", h.SendCode)
 	r.With(authVerifyRL).Post("/auth/verify-code", h.VerifyCode)
+	if opts.Standalone && len(opts.BootstrapToken) >= handler.MinBootstrapTokenLength {
+		r.With(authVerifyRL).Post("/auth/bootstrap", h.BootstrapLogin)
+	}
 	r.With(authRL).Post("/auth/google", h.GoogleLogin)
+	r.With(authRL).Post("/auth/lark", h.LarkLogin)
+	// 桌面端没有网页端时的飞书登录：浏览器打开 desktop-start，飞书回调 desktop-callback。
+	r.With(authRL).Get(handler.LarkDesktopStartPath, h.LarkDesktopStart)
+	r.With(authRL).Get(handler.LarkDesktopCallbackPath, h.LarkDesktopCallback)
 	r.Post("/auth/logout", h.Logout)
 
 	// Public API
@@ -1662,6 +1739,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		r.Patch("/api/me/onboarding", h.PatchOnboarding)
 		r.Post("/api/me/onboarding/complete", h.CompleteOnboarding)
 		r.Post("/api/me/onboarding/cloud-waitlist", h.JoinCloudWaitlist)
+		// 飞书邀请是否可用，成员页据此决定显示列表还是未配置提示；所有已登录用户可读。
+		r.Get("/api/lark/status", h.GetLarkInviteStatus)
 		// Credential minting is human-only (MUL-8154): an agent task token
 		// (mat_) or cloud-node PAT (mcn_) authenticates as its owner, so
 		// without this guard a prompt-injected agent could trade its scoped,
@@ -1739,6 +1818,9 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					// because opening an issue is what asks for it; executable
 					// bytes stay off the authenticated app/API origin.
 					r.Get("/plugins/{installationId}/surfaces/{surfaceKey}/launch", h.GetPluginSurfaceLaunch)
+					// 通过飞书邀请卡片加入后的首次进入提示，只针对当前用户，成员可读。
+					r.Get("/lark-invites/welcome", h.GetLarkInviteWelcome)
+					r.Post("/lark-invites/welcome/ack", h.AckLarkInviteWelcome)
 				})
 				// Admin-level access
 				r.Group(func(r chi.Router) {
@@ -1760,6 +1842,13 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Post("/share-links", h.CreateShareLink)
 					r.Delete("/share-links/{linkId}", h.RevokeShareLink)
 					r.Get("/share-links", h.ListShareLinks)
+					// 飞书邀请卡片（管理员或所有者）。智能体代发时，处理函数再校验任务发起人。
+					r.Post("/lark-invites", h.SendLarkInvites)
+					r.Get("/lark-invites", h.ListLarkInvites)
+					r.Get("/lark-invites/{inviteId}", h.GetLarkInvite)
+					r.Delete("/lark-invites/{inviteId}", h.RevokeLarkInvite)
+					r.Get("/lark/chats", h.ListLarkChats)
+					r.Get("/lark/users/lookup", h.LookupLarkUser)
 					// Custom runtime profile mutations (admin-only).
 					r.Post("/runtime-profiles", h.CreateRuntimeProfile)
 					r.Patch("/runtime-profiles/{profileId}", h.UpdateRuntimeProfile)
@@ -2175,6 +2264,72 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				})
 			})
 
+			// Knowledge bases
+			r.Route("/api/kb", func(r chi.Router) {
+				r.Get("/bases", h.ListKbBases)
+				r.Post("/bases", h.CreateKbBase)
+				r.Get("/bases/{kb}", h.GetKbBase)
+				r.Patch("/bases/{kb}", h.UpdateKbBase)
+				r.Delete("/bases/{kb}", h.DeleteKbBase)
+				// Management: raw files (any member uploads), the OKF
+				// export and the relationship graph.
+				r.Get("/bases/{kb}/raw", h.ListKbRaw)
+				r.Post("/bases/{kb}/raw", h.UploadKbRaw)
+				r.Get("/raw/{id}/content", h.GetKbRawContent)
+				r.Get("/bases/{kb}/export", h.ExportKb)
+				r.Get("/bases/{kb}/graph", h.GetKbGraph)
+				r.Get("/templates", h.GetKbTemplates)
+				// Builder conversations (create / configure). Hidden from
+				// every chat list; messages go through /api/chat.
+				r.Get("/builder/sessions", h.ListKbBuilderSessions)
+				r.Post("/builder/sessions", h.CreateKbBuilderSession)
+				r.Patch("/builder/sessions/{sessionId}/runtime", h.SwitchKbBuilderRuntime)
+				r.Put("/builder/sessions/{sessionId}/draft", h.SaveKbBuilderDraft)
+				r.Delete("/builder/sessions/{sessionId}", h.DeleteKbBuilderSession)
+				r.Get("/bases/{kb}/home", h.GetKbHome)
+				r.Get("/bases/{kb}/pages", h.ListKbPages)
+				r.Get("/pages/{id}", h.GetKbPage)
+				r.Get("/pages/{id}/history", h.ListKbPageHistory)
+				r.Get("/pages/{id}/history/{revisionId}", h.GetKbRevisionDiff)
+				r.Get("/pages/{id}/fetch", h.FetchKbPage)
+				r.Get("/pages/{id}/claims", h.GetKbPageClaims)
+				r.Get("/bases/{kb}/claims", h.ListKbClaims)
+				r.Get("/bases/{kb}/stale", h.ListKbStalePages)
+				r.Get("/sources", h.ListKbSources)
+				r.Get("/bases/{kb}/annotations", h.ListKbAnnotations)
+				r.Post("/bases/{kb}/annotations", h.CreateKbAnnotation)
+				r.Get("/annotations/{id}", h.GetKbAnnotation)
+				r.Patch("/annotations/{id}", h.UpdateKbAnnotation)
+				r.Get("/search", h.SearchKb)
+				// Drafts: agents write pages here; a merge request merges
+				// one draft. Only the draft creator reads or writes it.
+				r.Post("/drafts", h.CreateKbDraft)
+				r.Get("/drafts/{draftId}", h.GetKbDraft)
+				r.Post("/drafts/{draftId}/sync", h.SyncKbDraft)
+				r.Post("/drafts/{draftId}/pages", h.CreateKbDraftPage)
+				r.Post("/drafts/{draftId}/pages/{id}/ops", h.ApplyKbPageOps)
+				r.Put("/drafts/{draftId}/pages/{id}/claims", h.PutKbDraftClaims)
+				// Jobs: a chat with an agent that writes one draft. Only
+				// the member who started a job sees it.
+				r.Get("/bases/{kb}/jobs", h.ListKbJobs)
+				r.Post("/bases/{kb}/jobs", h.CreateKbJob)
+				r.Get("/jobs/{jobId}", h.GetKbJob)
+				r.Post("/jobs/{jobId}/submit", h.SubmitKbJob)
+				r.Post("/jobs/{jobId}/discard", h.DiscardKbJob)
+				r.Post("/merge-requests", h.CreateKbMergeRequest)
+				// Review: merge requests are listed and read by every
+				// member; merge, revert and close check the knowledge base
+				// creator or an owner / admin (the author may close).
+				r.Get("/merge-requests", h.ListKbMergeRequests)
+				r.Get("/merge-requests/{number}", h.GetKbMergeRequest)
+				r.Patch("/merge-requests/{number}", h.UpdateKbMergeRequest)
+				r.Post("/merge-requests/{number}/merge", h.MergeKbMergeRequest)
+				r.Post("/merge-requests/{number}/close", h.CloseKbMergeRequest)
+				r.Post("/merge-requests/{number}/revert", h.RevertKbMergeRequest)
+				r.Get("/merge-requests/{number}/comments", h.ListKbMrComments)
+				r.Post("/merge-requests/{number}/comments", h.CreateKbMrComment)
+			})
+
 			// Squads
 			r.Route("/api/squads", func(r chi.Router) {
 				r.Get("/", h.ListSquads)
@@ -2582,6 +2737,137 @@ func buildLarkConnector(installSvc *lark.InstallationService, apiClient lark.API
 		return lark.NewNoopConnector(slog.Default()), "noop"
 	}
 	return conn, "ws-long-conn"
+}
+
+const (
+	// larkInviteEnabledEnv 是飞书邀请卡片的总开关，默认关闭。
+	larkInviteEnabledEnv = "MARVIS_LARK_INVITE_ENABLED"
+	// desktopDownloadURLEnv 是邀请卡片上“下载 Marvis”按钮的链接，为空时卡片不显示该按钮。
+	desktopDownloadURLEnv = "MARVIS_DESKTOP_DOWNLOAD_URL"
+
+	// 下面三个与按 agent 绑定的飞书机器人共用同一组部署级覆盖项。
+	larkHTTPBaseURLEnv     = "MARVIS_LARK_HTTP_BASE_URL"
+	larkCallbackBaseURLEnv = "MARVIS_LARK_CALLBACK_BASE_URL"
+	larkWSProxyURLEnv      = "MARVIS_LARK_WS_PROXY_URL"
+)
+
+// 飞书邀请未启用时写进启动日志的原因。
+const (
+	larkInviteReasonSwitchOff       = "switch is off"
+	larkInviteReasonMissingLogin    = "feishu login app credentials are missing"
+	larkInviteReasonSeatCapacity    = "seat capacity is enabled"
+	larkInviteReasonConnectorFailed = "connector init failed"
+)
+
+// larkInviteEnabledValues 是开关视为开启的取值，比较前统一去空白并转小写。
+var larkInviteEnabledValues = map[string]struct{}{
+	"true": {},
+	"1":    {},
+	"yes":  {},
+}
+
+// larkInviteEnabled 读取开关：值为 "true"、"1"、"yes"（不区分大小写）时开启。
+func larkInviteEnabled() bool {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv(larkInviteEnabledEnv)))
+	_, ok := larkInviteEnabledValues[value]
+
+	return ok
+}
+
+// configureLarkInvite 按开关把飞书邀请卡片接到 handler 上。
+// 开关开启、飞书登录应用凭据齐全、席位容量未开启（没连 Cloud）三者同时满足才启用，
+// 启用时设置 LarkInviteAPI、LarkInviteCreds、LarkInviteDownloadURL、LarkInviteConn；
+// 否则四个字段都保持零值，相关接口返回 lark_not_configured，并在启动日志里写明原因。
+// 本函数只构造对象，不连飞书；长连接由 main 在 sweepCtx 下启动。
+func configureLarkInvite(h *handler.Handler) {
+	if !larkInviteEnabled() {
+		slog.Info("lark invite cards disabled", "reason", larkInviteReasonSwitchOff, "env", larkInviteEnabledEnv)
+
+		return
+	}
+
+	appID, appSecret, ok := handler.LarkLoginCredentials()
+	if !ok {
+		slog.Warn("lark invite cards disabled", "reason", larkInviteReasonMissingLogin)
+
+		return
+	}
+
+	// 席位容量开启时飞书邀请整体不可用，不为它新增席位意图类型。
+	if h.SeatCapacity != nil {
+		slog.Warn("lark invite cards disabled", "reason", larkInviteReasonSeatCapacity)
+
+		return
+	}
+
+	creds := lark.InstallationCredentials{
+		AppID:     appID,
+		AppSecret: appSecret,
+		Region:    lark.RegionFeishu,
+	}
+
+	conn, err := buildLarkInviteConnection(h, creds)
+	if err != nil {
+		slog.Error("lark invite cards disabled", "reason", larkInviteReasonConnectorFailed, "error", err)
+
+		return
+	}
+
+	downloadURL := strings.TrimSpace(os.Getenv(desktopDownloadURLEnv))
+
+	h.LarkInviteAPI = lark.NewInviteAPIClient(lark.HTTPClientConfig{
+		BaseURL: strings.TrimSpace(os.Getenv(larkHTTPBaseURLEnv)),
+		Logger:  slog.Default(),
+	})
+	h.LarkInviteCreds = creds
+	h.LarkInviteDownloadURL = downloadURL
+	h.LarkInviteConn = conn
+
+	slog.Info("lark invite cards enabled", "app_id", appID, "download_button", downloadURL != "")
+}
+
+// buildLarkInviteConnection 构造飞书登录应用的卡片回调长连接，写法对照 buildLarkConnector，
+// 区别是凭据固定取登录应用、不查 installation 表，事件帧一律丢弃，卡片回调交给 h.HandleLarkInviteCardAction。
+// 这里只构造对象，真正拨号发生在 InviteConnection.Run。
+func buildLarkInviteConnection(h *handler.Handler, creds lark.InstallationCredentials) (*lark.InviteConnection, error) {
+	endpointFetcher, err := lark.NewHTTPConnectionTokenFetcher(lark.HTTPConnectionTokenConfig{
+		BaseURL: strings.TrimSpace(os.Getenv(larkCallbackBaseURLEnv)),
+		Logger:  slog.Default(),
+	})
+	if err != nil {
+		return nil, pkgerrors.Wrap(err, "build lark invite endpoint fetcher")
+	}
+
+	dialer := lark.NewGorillaDialer()
+	if proxyURL := strings.TrimSpace(os.Getenv(larkWSProxyURLEnv)); proxyURL != "" {
+		dialer.ProxyURL = proxyURL
+	}
+
+	connector, err := lark.NewWSLongConnConnector(larkInviteConnectorConfig(h, creds, endpointFetcher, dialer))
+	if err != nil {
+		return nil, pkgerrors.Wrap(err, "build lark invite ws connector")
+	}
+
+	return lark.NewInviteConnection(lark.InviteConnectionConfig{
+		Connector: connector,
+		AppID:     creds.AppID,
+		Logger:    slog.Default(),
+	}), nil
+}
+
+// larkInviteConnectorConfig 组装邀请长连接的配置：凭据固定取登录应用，事件帧一律丢弃，
+// 卡片回调交给 h.HandleLarkInviteCardAction。
+func larkInviteConnectorConfig(h *handler.Handler, creds lark.InstallationCredentials, endpointFetcher lark.EndpointFetcher, dialer lark.WSDialer) lark.WSConnectorConfig {
+	return lark.WSConnectorConfig{
+		Dialer:          dialer,
+		EndpointFetcher: endpointFetcher,
+		FrameDecoder:    lark.NewDropAllFrameDecoder(),
+		CredentialsProvider: lark.CredentialsProviderFunc(func(context.Context, lark.Installation) (lark.InstallationCredentials, error) {
+			return creds, nil
+		}),
+		Logger:      slog.Default(),
+		CardHandler: h.HandleLarkInviteCardAction,
+	}
 }
 
 // membershipChecker implements realtime.MembershipChecker using database queries.

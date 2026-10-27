@@ -101,6 +101,7 @@ var workspaceDeletionManifest = map[string]workspaceDeleteAction{
 	"lark_user_binding":                  workspaceDelete,
 	"maintenance_job":                    workspaceDeleteKeep, // Global maintenance audit history, not workspace-owned.
 	"member":                             workspaceDelete,
+	"member_delegation_day":              workspaceDeleteKeep, // user-scoped telemetry ledger, no workspace_id
 	"agent_mcp_server":                   workspaceDelete,
 	"workspace_mcp_server":               workspaceDelete,
 	"notification_preference":            workspaceDelete,
@@ -146,6 +147,25 @@ var workspaceDeletionManifest = map[string]workspaceDeleteAction{
 	"workspace":                          workspaceDelete,
 	"workspace_invitation":               workspaceDelete,
 	"workspace_share_link":               workspaceDelete,
+	"lark_invite":                        workspaceDelete,
+	"lark_invite_join":                   workspaceDelete,
+	"kb_annotation":                      workspaceDelete,
+	"kb_base":                            workspaceDelete,
+	"kb_block_embedding":                 workspaceDelete,
+	"kb_builder_session":                 workspaceDelete,
+	"kb_claim":                           workspaceDelete,
+	"kb_config_revision":                 workspaceDelete,
+	"kb_draft":                           workspaceDelete,
+	"kb_draft_page":                      workspaceDelete,
+	"kb_job":                             workspaceDelete,
+	"kb_job_draft":                       workspaceDelete,
+	"kb_link":                            workspaceDelete,
+	"kb_merge_request":                   workspaceDelete,
+	"kb_mr_comment":                      workspaceDelete,
+	"kb_page":                            workspaceDelete,
+	"kb_page_revision":                   workspaceDelete,
+	"kb_raw":                             workspaceDelete,
+	"kb_workspace":                       workspaceDelete,
 }
 
 func TestWorkspaceDeletionManifestCoversPublicSchema(t *testing.T) {

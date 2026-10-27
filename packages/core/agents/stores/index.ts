@@ -16,3 +16,7 @@ export {
   type TranscriptFilterKey,
   type TranscriptSortDirection,
 } from "./transcript-view-store";
+export {
+  useAgentIntegrationHintStore,
+  type AgentIntegrationHintState,
+} from "./integration-hint-store";

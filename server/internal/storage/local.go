@@ -41,7 +41,7 @@ type localMeta struct {
 //
 // Environment variables:
 //   - LOCAL_UPLOAD_DIR (default: "./data/uploads")
-//   - LOCAL_UPLOAD_BASE_URL (optional, e.g., "http://localhost:8080")
+//   - LOCAL_UPLOAD_BASE_URL (optional, e.g., "http://localhost:13840")
 func NewLocalStorageFromEnv() *LocalStorage {
 	uploadDir := os.Getenv("LOCAL_UPLOAD_DIR")
 	if uploadDir == "" {

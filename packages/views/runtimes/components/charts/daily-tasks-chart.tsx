@@ -12,15 +12,15 @@ import {
   type ChartConfig,
 } from "@marvis/ui/components/ui/chart";
 import { useLocale, useT } from "../../../i18n";
+import { CHART_MONO, monoBarFill } from "./chart-tones";
 
-// Three-segment stack — completed runs at the bottom (chart-1, primary
-// brand), then cancelled (chart-3, muted: a manual stop is an outcome, not
-// an error), failed on top (chart-5 for distinct emphasis). Lets the user
-// see day-over-day failure-rate trend without a separate chart.
+// Three-segment stack — completed runs at the bottom, then cancelled (a
+// manual stop is an outcome, not an error), failed on top. 单色方案：悬停时
+// 由深到浅显示三段，状态色不进图表。
 const tasksChartConfig = {
-  completed: { label: "Completed", color: "var(--chart-1)" },
-  cancelled: { label: "Cancelled", color: "var(--chart-3)" },
-  failed: { label: "Failed", color: "var(--chart-5)" },
+  completed: { label: "Completed", color: CHART_MONO[1] },
+  cancelled: { label: "Cancelled", color: CHART_MONO[3] },
+  failed: { label: "Failed", color: CHART_MONO[5] },
 } satisfies ChartConfig;
 
 export interface DailyTasksData {
@@ -36,7 +36,7 @@ export function DailyTasksChart({ data }: { data: DailyTasksData[] }) {
   const locale = useLocale();
   return (
     <ChartContainer config={tasksChartConfig} className="aspect-[3/1] w-full">
-      <BarChart data={data} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+      <BarChart data={data} barCategoryGap="30%" margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="label"
@@ -53,6 +53,7 @@ export function DailyTasksChart({ data }: { data: DailyTasksData[] }) {
           width="auto"
         />
         <ChartTooltip
+          cursor={false}
           content={
             <ChartTooltipContent
               formatter={(value, name) => `${value} ${name}`}
@@ -78,19 +79,19 @@ export function DailyTasksChart({ data }: { data: DailyTasksData[] }) {
         <Bar
           dataKey="completed"
           stackId="tasks"
-          fill="var(--color-completed)"
+          {...monoBarFill("completed")}
           radius={[0, 0, 0, 0]}
         />
         <Bar
           dataKey="cancelled"
           stackId="tasks"
-          fill="var(--color-cancelled)"
+          {...monoBarFill("cancelled")}
           radius={[0, 0, 0, 0]}
         />
         <Bar
           dataKey="failed"
           stackId="tasks"
-          fill="var(--color-failed)"
+          {...monoBarFill("failed")}
           radius={[3, 3, 0, 0]}
         />
       </BarChart>

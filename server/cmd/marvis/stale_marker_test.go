@@ -92,7 +92,7 @@ func TestLeftoverMarkerReportedIdenticallyOnEveryRefusalPath(t *testing.T) {
 			markerPath := seedMarker(t, marker.body)
 			clearDaemonEnvSignals(t)
 			t.Setenv("MARVIS_TOKEN", "")
-			t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+			t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 
 			for name, refuse := range refusalPaths() {
 				err := refuse()
@@ -126,7 +126,7 @@ func TestWorkspacesRootMarkerNeverReportedAsLeftover(t *testing.T) {
 	markerPath := seedMarker(t, workspacesRootMarker())
 	clearDaemonEnvSignals(t)
 	t.Setenv("MARVIS_TOKEN", "")
-	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 
 	if got := leftoverDaemonTaskMarkerPath(); got != "" {
 		t.Fatalf("leftoverDaemonTaskMarkerPath() = %q; want \"\" for the workspaces root marker", got)

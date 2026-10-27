@@ -46,11 +46,11 @@ Dialog 用于需要模态界面的独立操作。上下文选项使用 Popover�
 
 ## 动效
 
-弹窗和遮罩读取 `packages/ui/styles/tokens.css` 中的 `--dialog-enter-duration`、`--dialog-exit-duration`、`--dialog-enter-easing` 和 `--dialog-exit-easing`。默认保持现有的 100ms/ease 动画，弹窗同时淡入淡出并在 95% 和 100% 之间缩放。
+弹窗读取 `packages/ui/styles/tokens.css` 中的 `--dialog-enter-duration`、`--dialog-exit-duration`、`--dialog-enter-easing` 和 `--dialog-exit-easing`，遮罩读取 `--dialog-mask-enter-duration` 和 `--dialog-mask-exit-duration`。默认：遮罩 150ms 淡入、100ms 淡出；弹窗 200ms ease-out 淡入并从 96% 缩放到 100%，离开 100ms ease-in 缩向 98%。
 
-参数影响网页端和桌面端的共享 Dialog，以及使用 DialogContent 的组合；调用方自行覆盖动画时除外。不影响 Popover、Tooltip、AlertDialog 和 JavaScript 动效常量。
+参数影响网页端和桌面端的共享 Dialog，以及使用 DialogContent 的组合；调用方自行覆盖动画时除外。AlertDialog 共用同一组参数。不影响 Popover、Tooltip 和 JavaScript 动效常量。
 
-遵循系统减少动态效果设置，禁用弹窗和遮罩动画。UI Lab 的播放速度仅用于预览，不参与导出。打开、关闭和重播真实组件，也要快速交替打开与关闭，检查中断效果。
+遵循系统减少动态效果设置：弹窗和遮罩保留淡入淡出，去掉缩放。UI Lab 的播放速度仅用于预览，不参与导出。打开、关闭和重播真实组件，也要快速交替打开与关闭，检查中断效果。
 
 ## 应用修改
 

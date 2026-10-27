@@ -9,7 +9,7 @@ import { derivePRMergeStatus, PR_MERGE_STATUS_NONE } from "@marvis/core/github";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { useCurrentWorkspace } from "@marvis/core/paths";
-import type { IssueStatusCategory, Workspace } from "@marvis/core/types";
+import type { IssueStatusGroup, Workspace } from "@marvis/core/types";
 import { workspaceKeys } from "@marvis/core/workspace/queries";
 import {
   Select,
@@ -26,11 +26,13 @@ import { useStatusLabel } from "../../issues/utils/status-label";
 import { useT } from "../../i18n";
 import { SettingsRow } from "./settings-layout";
 
-/** The categories a merge may move an issue into, with their built-ins.
- * Blocked is left out: a merge never blocks an issue. */
-const TARGET_CATEGORIES: { category: IssueStatusCategory; builtIns: string[] }[] = [
-  { category: "started", builtIns: ["in_progress", "in_review"] },
-  { category: "done", builtIns: ["done"] },
+/** The groups a merge may move an issue into, with their built-ins. The server
+ * takes started and done statuses only, so the ended group lists done ones,
+ * and blocked is left out: a merge never blocks an issue. */
+const TARGET_GROUPS: { group: IssueStatusGroup; builtIns: string[] }[] = [
+  { group: "working", builtIns: ["in_progress"] },
+  { group: "needs_attention", builtIns: ["in_review"] },
+  { group: "ended", builtIns: ["done"] },
 ];
 
 /**
@@ -48,9 +50,13 @@ export function PRMergeStatusRow({ canManage }: { canManage: boolean }) {
 
   // Built-ins are always offered: the server accepts them before the catalog
   // is seeded, and the catalog may still be loading.
-  const groups = TARGET_CATEGORIES.map(({ category, builtIns }) => {
-    const listed = catalog.inCategory(category).map((entry) => entry.key).filter((key) => key !== "blocked");
-    return { category, keys: [...builtIns.filter((key) => !listed.includes(key)), ...listed] };
+  const groups = TARGET_GROUPS.map(({ group, builtIns }) => {
+    const listed = catalog
+      .inGroup(group)
+      .filter((entry) => entry.category === "started" || entry.category === "done")
+      .map((entry) => entry.key)
+      .filter((key) => key !== "blocked");
+    return { group, keys: [...builtIns.filter((key) => !listed.includes(key)), ...listed] };
   });
   const stored = derivePRMergeStatus(workspace);
   // A choice that no longer names an offered status (archived since) moves
@@ -122,9 +128,9 @@ export function PRMergeStatusRow({ canManage }: { canManage: boolean }) {
         <SelectContent align="end">
           <SelectItem value={PR_MERGE_STATUS_NONE}>{renderOption(PR_MERGE_STATUS_NONE)}</SelectItem>
           {groups.map((group) => (
-            <SelectGroup key={group.category}>
+            <SelectGroup key={group.group}>
               <SelectSeparator />
-              <SelectLabel>{t(($) => $.issue_statuses.category_labels[group.category])}</SelectLabel>
+              <SelectLabel>{t(($) => $.issue_statuses.group_labels[group.group])}</SelectLabel>
               {group.keys.map((key) => (
                 <SelectItem key={key} value={key}>
                   {renderOption(key)}

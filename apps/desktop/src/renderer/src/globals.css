@@ -72,7 +72,10 @@ html[lang|="ja"] {
 @source "../../../../../packages/views/**/*.{ts,tsx}";
 @source "./**/*.tsx";
 
-/* Desktop-specific: override sidebar container padding for traffic light layout */
+/* 桌面端：侧栏浮卡从顶部条（h-10，红绿灯所在的拖拽区）下方开始，与主区白卡顶边
+   对齐；左、下保留与 web 一致的 16px 外壳留白。容器是 content-box + fixed inset-y-0，
+   去掉固定高度让上下 padding 落在视口内，而不是把浮卡底边推出窗口。 */
 [data-slot="sidebar-container"] {
-  padding: 0 !important;
+  height: auto !important;
+  padding: 2.5rem 0 1rem 1rem !important;
 }

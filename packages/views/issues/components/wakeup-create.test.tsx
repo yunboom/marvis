@@ -130,12 +130,12 @@ describe("WakeupCreateForm", () => {
     expect(screen.getByRole("form", { name: "新建唤醒" })).toBeVisible();
   });
 
-  it("submits with Cmd+Enter", async () => {
+  it("submits with Enter", async () => {
     await renderForm();
     await chooseCondition("在某个时间");
     const input = screen.getByLabelText("唤醒后要做什么");
     fireEvent.change(input, { target: { value: "看一下 CI" } });
-    fireEvent.keyDown(input, { key: "Enter", metaKey: true });
+    fireEvent.keyDown(input, { key: "Enter" });
     await waitFor(() => expect(create).toHaveBeenCalledWith(expect.objectContaining({ kind: "at", mode: "once" })));
   });
 });

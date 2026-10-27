@@ -1,0 +1,708 @@
+{
+  "list": {
+    "title": "Knowledge base",
+    "new_button": "New knowledge base",
+    "pending_reviews_one": "{{count}} change to review",
+    "pending_reviews_other": "{{count}} changes to review",
+    "search_placeholder": "Search knowledge bases and pages...",
+    "search_label": "Search knowledge bases",
+    "sort": {
+      "recent": "Recently updated",
+      "name": "Name"
+    },
+    "table": {
+      "name": "Name",
+      "description": "Description",
+      "pages": "Pages",
+      "pending": "Pending",
+      "updated": "Updated"
+    },
+    "pending": {
+      "annotations_one": "{{count}} annotation",
+      "annotations_other": "{{count}} annotations",
+      "stale_pages_one": "{{count}} to re-check",
+      "stale_pages_other": "{{count}} to re-check"
+    },
+    "copy_link": "Copy link",
+    "link_copied": "Link copied",
+    "no_matches": "No matching knowledge bases",
+    "empty_title": "No knowledge bases yet",
+    "empty_description": "Agents write and maintain pages. Team members read, annotate, and review changes."
+  },
+  "nav": {
+    "label": "Knowledge base navigation",
+    "switch": "Switch knowledge base",
+    "more_actions": "Knowledge base actions",
+    "home": "Home",
+    "pending": "{{count}} pending",
+    "pages": "Pages",
+    "breadcrumb": "Breadcrumb",
+    "configure": "Configure knowledge base",
+    "configure_hint": "Purpose and schema",
+    "manage": "Manage knowledge base",
+    "graph": "Graph"
+  },
+  "tree": {
+    "expand": "Expand {{title}}",
+    "collapse": "Collapse {{title}}",
+    "load_more": "Load more",
+    "stale": "Needs review",
+    "empty": "No pages yet",
+    "draft": {
+      "added": "Draft · New",
+      "modified": "Draft",
+      "moved": "Draft · Moved",
+      "deleted": "Draft · Deleted"
+    }
+  },
+  "search": {
+    "placeholder": "Search this knowledge base",
+    "pages_one": "{{count}} page",
+    "pages_other": "{{count}} pages",
+    "no_results": "No results for “{{query}}”",
+    "no_results_hint": "Try different keywords.",
+    "failed": "Search failed"
+  },
+  "home": {
+    "pending_title": "Pending",
+    "pending_reviews": "Changes to review",
+    "latest_review": "Latest: {{title}}",
+    "annotations": "Annotations",
+    "agent_reported_one": "Includes {{count}} gap reported by agents",
+    "agent_reported_other": "Includes {{count}} gaps reported by agents",
+    "stale_pages": "Pages to re-check",
+    "stale_hint": "Code changed or the review date passed",
+    "recent_title": "Recently updated",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "No merged changes yet",
+    "not_found": "This knowledge base does not exist or was deleted"
+  },
+  "page": {
+    "toc": "Contents",
+    "info": "Page info",
+    "more": "More",
+    "history": "Page history",
+    "updated_by": "Updated by {{name}} · {{time}}",
+    "updated": "Updated {{time}}",
+    "verified": "Verified · {{name}} · {{date}}",
+    "stale": "Needs review",
+    "pending_mr_one": "{{count}} change to this page is waiting for review: {{title}} (#{{number}})",
+    "pending_mr_other": "{{count}} changes to this page are waiting for review, latest: {{title}} (#{{number}})",
+    "not_found": "This page does not exist or was deleted",
+    "sources": "Sources",
+    "missing_page": "This page has not been written yet",
+    "close_panel": "Close",
+    "view_change": "View change"
+  },
+  "draft": {
+    "label": "Draft",
+    "single": "Your draft changes this page and is not merged yet. Others still see the official version.",
+    "multi_one": "You have {{count}} draft changing this page, not merged yet. Others still see the official version.",
+    "multi_other": "You have {{count}} drafts changing this page, none merged yet. Others still see the official version.",
+    "official": "Official",
+    "draft": "Draft",
+    "diff": "Changes",
+    "diff_empty": "This draft does not change this page",
+    "choose": "Choose draft",
+    "origin": {
+      "chat": "Chat “{{label}}”",
+      "issue": "Issue “{{label}}”",
+      "kb_job": "Job “{{label}}”",
+      "none": "Draft"
+    },
+    "meta_one": "{{time}} · {{count}} block changed",
+    "meta_other": "{{time}} · {{count}} blocks changed",
+    "removed": "Removed in the draft",
+    "added": "Added in the draft"
+  },
+  "cite": {
+    "kind": {
+      "task": "Issue",
+      "chat": "Chat",
+      "pr": "Pull request",
+      "repo": "Code",
+      "raw": "File",
+      "web": "Web",
+      "other": "Source"
+    },
+    "checked_at": "Checked at {{version}}",
+    "lines": "Lines {{from}}–{{to}}",
+    "uploaded": "Uploaded · {{name}} · {{date}}",
+    "page": "Page {{page}}",
+    "open_file": "Open file",
+    "download": "Download",
+    "open_issue": "Open issue",
+    "open_chat": "Open chat",
+    "open_link": "Open link",
+    "chat_private": "Only the person who started it can view it",
+    "file_missing": "The file is no longer in the knowledge base"
+  },
+  "info": {
+    "verified": "Verified",
+    "verified_by": "{{name}} · verified {{date}}",
+    "next_review": "Next review {{date}}",
+    "tags": "Tags",
+    "sources": "Sources {{count}}",
+    "backlinks": "Linked from",
+    "none": "None"
+  },
+  "toc": {
+    "empty": "No headings"
+  },
+  "history": {
+    "current": "Current version",
+    "initial": "Initial version",
+    "meta": "{{author}} · merged by {{merger}} · {{time}}",
+    "submitted_by": "{{author}} submitted,",
+    "merged_by": "{{merger}} merged {{date}}",
+    "annotations_one": "{{count}} annotation handled",
+    "annotations_other": "{{count}} annotations handled",
+    "close": "Close history",
+    "no_changes": "No text changes in this revision",
+    "not_found": "This revision does not exist",
+    "empty": "No history yet",
+    "revert": "Revert this change"
+  },
+  "builder": {
+    "create_title": "New knowledge base",
+    "create_sub": "Create through conversation",
+    "config_title": "Configure knowledge base",
+    "via_chat": "Configured through conversation",
+    "setup_create_title": "Create a knowledge base through conversation",
+    "setup_config_title": "Configure the knowledge base through conversation",
+    "setup_description": "Choose the runtime and model the builder runs on.",
+    "chat_title": "Knowledge base builder",
+    "change_runtime": "Change",
+    "change_runtime_label": "Change runtime",
+    "intro_create": "What kind of knowledge base do you want? Pick a direction and I will draft the name, purpose and schema, then we refine them together.",
+    "intro_config": "I will change the purpose and schema to match what you need. Start from a question below, or say what you want to change.",
+    "describe_hint": "Or describe what you need.",
+    "starters": {
+      "dev": {
+        "title": "Engineering knowledge base",
+        "description": "System architecture, services and interfaces, runbooks, technical decisions"
+      },
+      "qa": {
+        "title": "Testing knowledge base",
+        "description": "Test design methods, test environments, regression checklists, defect reviews"
+      },
+      "product": {
+        "title": "Product knowledge base",
+        "description": "Feature descriptions, business rules, billing rules, customer replies"
+      },
+      "team": {
+        "title": "Team knowledge base",
+        "description": "Shared by engineering, testing and product, separated by domain tags"
+      }
+    },
+    "starter_message": "{{title}}: {{description}}",
+    "questions": {
+      "readers": "Who reads this knowledge base, and what do they look up most?",
+      "scope": "What belongs here, and what does not?",
+      "structure": "How should pages be organised: by system module, business flow or team?",
+      "writing": "What are the rules for citations and writing?"
+    },
+    "drafts_create_one": "You have {{count}} unfinished creation",
+    "drafts_create_other": "You have {{count}} unfinished creations",
+    "drafts_config_one": "You have {{count}} unfinished configuration",
+    "drafts_config_other": "You have {{count}} unfinished configurations",
+    "pick_create": "Creation drafts",
+    "pick_config": "Configuration drafts",
+    "panel": {
+      "title": "Knowledge base configuration",
+      "basics": "Basics",
+      "name": "Name",
+      "description": "Description",
+      "slug": "Directory name",
+      "generated_placeholder": "Generated after you describe your needs",
+      "slug_placeholder": "Generated from the name",
+      "slug_invalid": "Use lowercase letters, digits and hyphens",
+      "purpose": "Purpose",
+      "purpose_placeholder": "# Purpose",
+      "just_updated": "Just updated",
+      "expand_edit": "Expand to edit",
+      "expand_view": "Expand to view",
+      "schema": "Schema",
+      "schema_mode": "Schema mode",
+      "schema_default": "Default",
+      "schema_custom": "Custom",
+      "read_only": "Read-only",
+      "schema_default_hint": "Uses the built-in maintenance rules, which cannot be edited and the builder does not change. Switch to Custom to adapt them to your team.",
+      "schema_placeholder": "Drafted from the built-in schema after you describe your needs"
+    },
+    "footer": {
+      "unsaved": "Unsaved changes",
+      "discard_create": "Discard creation",
+      "discard_config": "Discard changes",
+      "create": "Create",
+      "save": "Save"
+    },
+    "discard": {
+      "create_title": "Discard this creation?",
+      "config_title": "Discard these changes?",
+      "description": "The conversation and the configuration on the right will be deleted permanently.",
+      "keep": "Keep editing"
+    },
+    "expand": {
+      "edit": "Edit",
+      "split": "Split",
+      "preview": "Preview",
+      "read_only": "Default · read-only",
+      "edit_hint": "Changes go back to the configuration on the right and take effect when saved",
+      "read_only_hint": "The default schema can only be viewed. To change it, switch to Custom on the right first",
+      "cancel": "Cancel",
+      "done": "Done",
+      "close": "Close"
+    },
+    "saved": "Saved",
+    "errors": {
+      "name_required": "Enter a name",
+      "slug_taken": "This directory name is already used in the workspace",
+      "conflict": "Someone else saved this configuration after you opened it. Reload to see their changes.",
+      "forbidden": "Only the knowledge base creator or a workspace owner or admin can configure it",
+      "create_failed": "Could not create the knowledge base",
+      "save_failed": "Could not save the configuration"
+    }
+  },
+  "welcome": {
+    "created": "Knowledge base “{{name}}” has been created. Here is how to use it.",
+    "guide_title": "How to use this knowledge base",
+    "suggested": "Suggested first",
+    "dismiss": "Got it",
+    "steps": {
+      "ingest": {
+        "title": "Ingest sources",
+        "description": "Start a knowledge base job and hand issues, chats, uploaded files or web pages to an agent. It writes the knowledge into pages and cites a source for every fact."
+      },
+      "review": {
+        "title": "Takes effect after review",
+        "description": "An agent's changes go into a draft first. You review it and submit it; it takes effect once the knowledge base creator or an owner or admin merges it."
+      },
+      "read": {
+        "title": "Read and annotate",
+        "description": "When something is wrong or outdated, select the sentence and add an annotation. Annotations can be handed to an agent in one click."
+      },
+      "maintain": {
+        "title": "Scheduled maintenance",
+        "description": "Set up a scheduled ingest and a scheduled health check, and the knowledge base keeps up with the latest issues and code."
+      }
+    }
+  },
+  "annotation": {
+    "action": "Annotate",
+    "compose_label": "Annotation",
+    "compose_hint": "Agents see this sentence when they handle it",
+    "cancel": "Cancel",
+    "submit": "Annotate",
+    "add": "Add annotation",
+    "page_panel": "Page annotations",
+    "kb_panel": "Knowledge base annotations",
+    "page_compose_label": "Annotate this page",
+    "kb_compose_label": "Annotate the whole knowledge base",
+    "hand_off": "Hand off to an agent",
+    "hand_off_all": "Hand all to an agent ({{n}})",
+    "status": {
+      "pending": "Pending",
+      "processing": "In progress",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "dismiss": "Dismiss",
+    "reopen": "Reopen",
+    "where_block": "{{title}} · paragraph {{n}}",
+    "where_page": "{{title}} · whole page",
+    "where_kb": "Whole knowledge base",
+    "followed": "Followed a rewrite",
+    "lost": "Sentence deleted",
+    "original": "Sentence when annotated: {{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "Annotations",
+    "empty": "No annotations",
+    "create_failed": "Could not save the annotation",
+    "quote_not_found": "The sentence was not found",
+    "update_failed": "Could not update the annotation",
+    "panel_empty": "No annotations yet"
+  },
+  "stale_list": {
+    "count_one": "{{count}} page",
+    "count_other": "{{count}} pages",
+    "page": "Page",
+    "reason": "Reason",
+    "overdue": "Review date passed",
+    "review_by": "Due by {{date}}",
+    "hand_off": "Hand to an agent",
+    "hand_off_all": "Hand all to an agent",
+    "empty": "No pages need re-checking.",
+    "all_message": "Re-check the pages in {{name}} whose review date has passed."
+  },
+  "job": {
+    "nav": "Knowledge base jobs",
+    "nav_running": "{{count}} running",
+    "list_title": "Knowledge base jobs",
+    "new": "New job",
+    "tabs": {
+      "all": "All",
+      "running": "Running",
+      "failed": "Failed"
+    },
+    "state": {
+      "running": "Running",
+      "idle": "Waiting for input",
+      "failed": "Failed",
+      "stopped": "Stopped"
+    },
+    "empty": "No jobs yet",
+    "subtitle": "{{name}} · Knowledge base job",
+    "new_title": "New conversation",
+    "back": "Back",
+    "executor": "Agent",
+    "pick_agent": "Choose an agent",
+    "pick_agent_first": "Choose the agent first",
+    "runtime_online": "Runtime online",
+    "runtime_offline": "Runtime offline",
+    "start_question": "What should happen in {{name}}?",
+    "start_hint": "Or describe what you need. Scheduled runs become automations, managed on the Automations page.",
+    "start_failed": "Could not start the job",
+    "not_found": "The job does not exist or you cannot open it",
+    "ended": "This conversation has ended",
+    "starters": {
+      "ingest": {
+        "title": "Ingest sources",
+        "description": "Read issues, chats or web pages and write the knowledge into pages"
+      },
+      "health": {
+        "title": "Health check",
+        "description": "Find stale pages, contradictions, orphan pages and claims whose code changed"
+      },
+      "merge": {
+        "title": "Merge duplicates",
+        "description": "Find pages that repeat each other and merge them into one"
+      },
+      "annotations": {
+        "title": "Handle annotations",
+        "description": "Change pages as the pending annotations ask"
+      },
+      "schedule_ingest": {
+        "title": "Schedule ingestion",
+        "description": "Create an automation that ingests the day's issues, comments and chats"
+      },
+      "schedule_health": {
+        "title": "Schedule a health check",
+        "description": "Create an automation that runs a health check every week"
+      }
+    },
+    "starter_message": "{{title}}: {{description}}",
+    "names": {
+      "ingest": "Ingest sources",
+      "health": "Health check",
+      "merge": "Merge duplicates",
+      "annotations": "Handle annotations",
+      "new_page": "New page",
+      "schedule": "Scheduled run",
+      "custom": "New conversation"
+    },
+    "draft": {
+      "title": "Draft changes",
+      "state": {
+        "none": "No draft yet",
+        "empty": "No changes yet",
+        "open": "Draft · not submitted",
+        "submitted": "In review",
+        "merged": "Merged",
+        "closed": "Closed · can resubmit",
+        "nochange": "No change needed",
+        "discarded": "Discarded"
+      },
+      "nodraft": "The agent's changes show here once it creates the draft.",
+      "empty": "Changes show here once the agent writes them.",
+      "nochange_title": "Nothing needed changing this time",
+      "nochange_hint": "Recorded as no change needed; no change request is opened",
+      "discarded": "The draft was discarded; its changes will not be merged.",
+      "summary_one": "{{count}} page · +{{added}} −{{deleted}}",
+      "summary_other": "{{count}} pages · +{{added}} −{{deleted}}",
+      "collapse_all": "Collapse all",
+      "expand_all": "Expand all",
+      "change": {
+        "added": "Added",
+        "modified": "Modified",
+        "moved": "Moved",
+        "deleted": "Deleted"
+      },
+      "view_in_page": "View in page",
+      "checks": "Checks before submitting",
+      "checks_pending": "Checked once the agent finishes",
+      "lint_ok": "Format check passed",
+      "lint": {
+        "missing_type": "The page header has no type",
+        "missing_title": "The page header has no title",
+        "missing_description": "The page header has no description",
+        "undefined_footnote": "A footnote cites no source",
+        "claim_without_evidence": "A claim has no evidence",
+        "invalid_evidence_uri": "An evidence address is not recognized",
+        "duplicate_slug": "A sibling page has the same name",
+        "unresolved_conflict": "A conflict is still unresolved",
+        "missing_evidence_version": "Code evidence has no version",
+        "unresolved_link": "A link points to a page not written yet",
+        "orphan_page": "No other page links to this page",
+        "isolated_page": "This page links to fewer than 2 related pages"
+      },
+      "conflict": "Conflicts with the mainline: {{path}}",
+      "fix": "Ask the agent to fix",
+      "rebase": "Ask the agent to update from the mainline",
+      "fix_message": "Fix the errors `marvis kb draft check {{draft}}` reports, then check again.",
+      "rebase_message": "The draft conflicts with the mainline. Update it with `marvis kb draft sync {{draft}}`, resolve the conflicts, then check again.",
+      "hint": {
+        "open": "Only you see the draft; submitting sends it to review",
+        "busy": "Submit once the agent finishes this turn",
+        "lint_one": "{{count}} error to fix before submitting",
+        "lint_other": "{{count}} errors to fix before submitting",
+        "conflict": "You can submit now and resolve the conflicts in review",
+        "submitted": "Keep going in the review comments, or here",
+        "closed": "Adjust and resubmit; that opens a new change request",
+        "merged": "This conversation has ended",
+        "running": "Add to the request on the left at any time"
+      },
+      "banner": {
+        "submitted_self": "You submitted change request #{{number}}. The draft is in review and read-only here.",
+        "submitted_agent": "{{name}} submitted change request #{{number}}. The draft is in review and read-only here.",
+        "closed": "{{name}} closed #{{number}}: “{{reason}}”. The draft is kept; you can keep adjusting it.",
+        "closed_no_reason": "{{name}} closed #{{number}}. The draft is kept; you can keep adjusting it.",
+        "merged": "{{name}} merged #{{number}}. The changes are live."
+      },
+      "banner_review": "Review",
+      "banner_view_page": "View page",
+      "banner_comments": "View comments",
+      "discard": "Discard draft",
+      "keep": "Keep",
+      "discard_confirm_title": "Discard this draft?",
+      "discard_confirm_description": "Its changes are dropped. The job stays in the list.",
+      "discard_failed": "Could not discard the draft",
+      "submit": "Submit for review",
+      "resubmit": "Resubmit for review",
+      "submit_failed": "Could not submit the draft",
+      "go_review": "Review #{{number}}",
+      "submitted_toast": "Change request #{{number}} submitted"
+    },
+    "entry": {
+      "check_page": "Ask an agent to check this page",
+      "check_page_message": "Check the page “{{title}}”.",
+      "write_here": "Ask an agent to write a page here",
+      "write_under": "Write a page under {{title}}",
+      "write_label": "What to write",
+      "write_submit": "Hand to an agent",
+      "cancel": "Cancel",
+      "new_page_message": "Add a page under “{{title}}”: {{text}}",
+      "annotations_all_message_one": "Handle the {{count}} pending annotation in {{name}}.",
+      "annotations_all_message_other": "Handle all {{count}} pending annotations in {{name}}.",
+      "annotations_page_message_one": "Handle the {{count}} pending annotation on “{{title}}”.",
+      "annotations_page_message_other": "Handle the {{count}} pending annotations on “{{title}}”.",
+      "annotations_kb_message_one": "Handle the {{count}} pending annotation on the whole knowledge base.",
+      "annotations_kb_message_other": "Handle the {{count}} pending annotations on the whole knowledge base."
+    }
+  },
+  "review": {
+    "title": "Review",
+    "list_label": "Change requests",
+    "select": "Select a change request",
+    "not_found": "This change request does not exist",
+    "conflict_banner": "The mainline changed the same content.",
+    "conflict_main": "Mainline lines {{lines}}",
+    "conflict_draft": "Branch lines {{lines}}",
+    "working": "Working",
+    "view_run": "View run",
+    "remove_quote": "Remove quote",
+    "reply": "Reply",
+    "replying_to": "Replying to {{name}}",
+    "quote_line": "{{page}} line {{line}}",
+    "comment_label": "Comment",
+    "comment_placeholder": "Leave a comment...",
+    "trigger_hint": "starts on send",
+    "send": "Send",
+    "hint_member": "The knowledge base creator or an owner / admin merges",
+    "hint_conflict": "Resolve the conflicts first",
+    "hint_running": "Merge after the agent finishes",
+    "comment_failed": "The comment was not sent",
+    "merged_toast": "Merged #{{number}}",
+    "close_failed": "Could not close",
+    "agent_working": "{{name}} is working",
+    "close": "Close",
+    "merge": "Merge",
+    "revert": "Revert this change",
+    "merged_by": "Merged by {{name}} · {{time}}",
+    "closed_by": "Closed by {{name}} · {{time}}",
+    "closed_by_reason": "Closed by {{name}} · {{time}} · {{reason}}",
+    "self_check": "Agent's summary",
+    "summary": "Summary",
+    "checks": "Checks",
+    "conflicting": "Conflicts with the mainline",
+    "mergeable": "Can be merged into the mainline",
+    "add_comment": "Add comment",
+    "activity": "Activity",
+    "close_confirm_title": "Close this change request?",
+    "close_reason": "Reason (optional)",
+    "cancel": "Cancel",
+    "reverted": "Revert change request #{{number}} opened",
+    "go_review": "Review",
+    "revert_conflict": "Later changes touched the same content; revert it by hand",
+    "revert_failed": "Could not revert",
+    "revert_confirm_title": "Revert #{{number}} “{{title}}”?",
+    "revert_confirm_description": "This opens a change request that undoes it; it takes effect once merged.",
+    "revert_submit": "Submit revert",
+    "meta_one": "Risk {{risk}} · {{count}} page changed",
+    "meta_other": "Risk {{risk}} · {{count}} pages changed",
+    "meta_annotations_one": "{{count}} annotation handled",
+    "meta_annotations_other": "{{count}} annotations handled",
+    "activity_count_one": "{{count}} item",
+    "activity_count_other": "{{count}} items",
+    "close_confirm_annotations_one": "The {{count}} annotation it handles goes back to pending.",
+    "close_confirm_annotations_other": "The {{count}} annotations it handles go back to pending.",
+    "tabs": {
+      "open": "Open",
+      "ended": "Ended",
+      "all": "All"
+    },
+    "status": {
+      "open": "Open",
+      "merged": "Merged",
+      "closed": "Closed"
+    },
+    "empty": {
+      "open": "Nothing waiting for review",
+      "ended": "No ended change requests yet",
+      "all": "No change requests yet"
+    },
+    "source": {
+      "ingest": "Ingest",
+      "health": "Health check",
+      "merge": "Merge pages",
+      "annotations": "Annotations",
+      "new_page": "New page",
+      "revert": "Revert",
+      "custom": "Other"
+    },
+    "origin": {
+      "kb_job": "Knowledge base job · {{label}}",
+      "revert": "Reverts #{{number}}",
+      "autopilot_run": "Autopilot · {{label}}",
+      "issue": "Issue · {{label}}",
+      "chat": "Chat · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "Working on the comment",
+      "mention": "Started by mention"
+    },
+    "merge_error": {
+      "stale": "The draft changed after you opened it; reload before merging",
+      "conflict": "Conflicts with the mainline; resolve them first",
+      "running": "Merge after the agent finishes",
+      "not_open": "This change request has ended",
+      "failed": "Could not merge"
+    },
+    "risk": {
+      "low": "low",
+      "medium": "medium",
+      "high": "high"
+    },
+    "changes": {
+      "title": "Change log",
+      "list_label": "Merged changes",
+      "empty": "No merged changes yet",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · merged by {{merger}}",
+      "revert_hint": "Reverting opens a new change request; it takes effect once merged."
+    }
+  },
+  "manage": {
+    "title": "Manage knowledge base",
+    "tabs_label": "Management sections",
+    "tab": {
+      "raw": "Raw files",
+      "export": "Export",
+      "delete": "Delete knowledge base"
+    },
+    "raw": {
+      "title": "Raw files",
+      "upload": "Upload files",
+      "uploading": "Uploading…",
+      "description": "Stored as uploaded. Pages cite them as sources.",
+      "col": {
+        "name": "File",
+        "source": "Source",
+        "created": "Imported",
+        "cited": "Cited by"
+      },
+      "source_upload": "Uploaded · {{name}}",
+      "empty": "No raw files yet",
+      "ingest": "Hand to an agent to ingest",
+      "ingest_count": "Hand to an agent to ingest ({{count}})",
+      "select": "Select {{name}}",
+      "select_all": "Select all",
+      "open": "Open {{name}}",
+      "name_taken": "A file with this name exists: {{names}}",
+      "name_invalid": "File names cannot be empty or contain / \\ # ?",
+      "upload_failed": "Upload failed",
+      "open_failed": "Could not open the file",
+      "cited_one": "{{count}} page",
+      "cited_other": "{{count}} pages",
+      "uploaded_one": "Uploaded {{count}} file",
+      "uploaded_other": "Uploaded {{count}} files"
+    },
+    "export": {
+      "title": "Export",
+      "okf": "OKF bundle",
+      "okf_description": "Exports every page as Open Knowledge Format v0.2: one Markdown file per page with frontmatter and an index.md per directory, zipped.",
+      "spec_link": "OKF specification",
+      "button": "Export zip",
+      "exporting": "Exporting…",
+      "failed": "Export failed"
+    },
+    "delete": {
+      "title": "Delete knowledge base",
+      "description": "Deletes every page, revision and annotation of this knowledge base. It cannot be restored.",
+      "button": "Delete",
+      "dialog_title": "Delete “{{name}}”?",
+      "dialog_body": "Removes the {{slug}}/ directory and closes its {{annotations}} annotations and {{mrs}} pending changes.",
+      "confirm_label": "Type the knowledge base name to confirm",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting…",
+      "deleted": "Deleted “{{name}}”",
+      "failed": "Delete failed",
+      "forbidden": "Only the knowledge base creator or an owner / admin can delete it."
+    }
+  },
+  "graph": {
+    "title": "Graph",
+    "label": "Links between pages",
+    "no_links": "No links",
+    "hint": "Colored by top-level page. Click to open.",
+    "missing": "{{title}} · not written yet",
+    "empty": "No pages yet",
+    "legend": "Legend",
+    "open_one": "Open {{title}} · {{count}} link",
+    "open_other": "Open {{title}} · {{count}} links"
+  },
+  "mention": {
+    "kb": "Knowledge base · {{slug}}",
+    "schema_default": "Default schema",
+    "schema_custom": "Custom schema",
+    "no_pending": "Nothing pending",
+    "pending_one": "{{count}} pending",
+    "pending_other": "{{count}} pending",
+    "created": "{{name}} created {{time}}",
+    "claims_one": "{{count}} claim",
+    "claims_other": "{{count}} claims",
+    "open_annotations_one": "{{count}} open annotation",
+    "open_annotations_other": "{{count}} open annotations",
+    "review_by": "Review by {{date}}",
+    "last_change": "Last change #{{number}}",
+    "merged": "{{name}} merged {{time}}",
+    "page_deleted": "Page deleted",
+    "risk": "Risk {{risk}}",
+    "submitted": "{{name}} submitted {{time}}",
+    "origin": "From {{origin}}",
+    "annotation": "Annotation",
+    "annotation_status": "Annotation · {{status}}",
+    "recorded": "{{name}} noted {{time}}"
+  }
+}

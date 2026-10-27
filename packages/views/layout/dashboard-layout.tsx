@@ -3,9 +3,9 @@
 import type { ReactNode } from "react";
 import { SidebarProvider, SidebarInset } from "@marvis/ui/components/ui/sidebar";
 import { ModalRegistry } from "../modals/registry";
-import { SourceBackfillModal } from "../onboarding";
 import { AppSidebar } from "./app-sidebar";
 import { DashboardGuard } from "./dashboard-guard";
+import { CurrentWorkspaceLarkInviteWelcome } from "./lark-invite-welcome";
 import { NavigationProgress } from "./navigation-progress";
 import { WorkspacePresencePrefetch } from "./workspace-presence-prefetch";
 import { GlobalShortcuts } from "./global-shortcuts";
@@ -37,12 +37,12 @@ export function DashboardLayout({
       <SidebarProvider className="h-svh bg-app-shell">
         <GlobalShortcuts />
         <WorkspacePresencePrefetch />
+        <CurrentWorkspaceLarkInviteWelcome />
         <AppSidebar searchSlot={searchSlot} />
         <SidebarInset className="relative overflow-hidden">
           <NavigationProgress />
           {children}
           <ModalRegistry />
-          <SourceBackfillModal />
           {extra}
         </SidebarInset>
       </SidebarProvider>

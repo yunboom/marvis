@@ -22,6 +22,11 @@ import { Card, CardContent } from "@marvis/ui/components/ui/card";
 import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { ArrowLeft, LogOut, Users, Check, X } from "lucide-react";
 
+// 邀请页卡片：与登录卡同一外观（24 圆角、细描边、浅投影，暗色无投影）。
+const INVITE_CARD_BASE =
+  "w-full rounded-2xl border-0 ring-1 ring-surface-border shadow-[0_24px_32px_rgba(0,0,0,0.06)] dark:shadow-none";
+const INVITE_CARD_MD = `${INVITE_CARD_BASE} max-w-md`;
+
 export interface InvitePageProps {
   invitationId: string;
   /**
@@ -112,8 +117,8 @@ export function InvitePage({ invitationId, onBack }: InvitePageProps) {
   if (isLoading) {
     return (
       <InviteShell onBack={onBack}>
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center gap-4 py-12">
+        <Card className={INVITE_CARD_MD}>
+          <CardContent className="flex flex-col items-center gap-4 px-10 py-12">
             <Skeleton className="h-12 w-12 rounded-full" />
             <Skeleton className="h-5 w-48" />
             <Skeleton className="h-4 w-64" />
@@ -127,8 +132,8 @@ export function InvitePage({ invitationId, onBack }: InvitePageProps) {
   if (fetchError || !invitation) {
     return (
       <InviteShell onBack={onBack}>
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center gap-4 py-12">
+        <Card className={INVITE_CARD_MD}>
+          <CardContent className="flex flex-col items-center gap-4 px-10 py-12">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <X className="h-6 w-6 text-muted-foreground" />
             </div>
@@ -152,8 +157,8 @@ export function InvitePage({ invitationId, onBack }: InvitePageProps) {
   if (done === "accepted") {
     return (
       <InviteShell onBack={onBack}>
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center gap-4 py-12">
+        <Card className={INVITE_CARD_MD}>
+          <CardContent className="flex flex-col items-center gap-4 px-10 py-12">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Check className="h-6 w-6 text-primary" />
             </div>
@@ -172,8 +177,8 @@ export function InvitePage({ invitationId, onBack }: InvitePageProps) {
   if (done === "declined") {
     return (
       <InviteShell onBack={onBack}>
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center gap-4 py-12">
+        <Card className={INVITE_CARD_MD}>
+          <CardContent className="flex flex-col items-center gap-4 px-10 py-12">
             <h2 className="text-title font-semibold">{t(($) => $.declined.title)}</h2>
             <p className="text-body text-muted-foreground">{t(($) => $.declined.description)}</p>
             <Button
@@ -194,8 +199,8 @@ export function InvitePage({ invitationId, onBack }: InvitePageProps) {
 
   return (
     <InviteShell onBack={onBack}>
-      <Card className="w-full max-w-md">
-        <CardContent className="flex flex-col items-center gap-6 py-12">
+      <Card className={INVITE_CARD_MD}>
+        <CardContent className="flex flex-col items-center gap-6 px-10 py-12">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Users className="h-7 w-7 text-primary" />
           </div>
@@ -268,7 +273,7 @@ function InviteShell({
   const { t } = useT("invite");
   const logout = useLogout();
   return (
-    <div className="relative flex min-h-svh flex-col bg-background">
+    <div className="relative flex min-h-svh flex-col bg-app-shell">
       <DragStrip />
       {onBack && (
         <Button

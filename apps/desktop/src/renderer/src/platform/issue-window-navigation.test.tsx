@@ -221,3 +221,83 @@ describe("IssueWindowNavigationProvider current location", () => {
     );
   });
 });
+
+/**
+ * 服务器没有网页端（appUrl 为空串）时，没有可以交给浏览器的地址：
+ * 这个窗口承载不了的页面不能再去调 openExternal，issue 之间的跳转不受影响。
+ */
+describe("IssueWindowNavigationProvider without a web app", () => {
+  beforeEach(() => {
+    window.desktopAPI.runtimeConfig = {
+      ok: true,
+      config: { appUrl: "" },
+    } as never;
+  });
+
+  function renderWithAdapter(): () => NavigationAdapter {
+    let adapter: NavigationAdapter | null = null;
+    function Probe() {
+      adapter = useNavigation();
+      return <CurrentPath />;
+    }
+    render(
+      <MemoryRouter initialEntries={["/acme/issues/MUL-1"]}>
+        <Routes>
+          <Route
+            path=":workspaceSlug/issues/:id"
+            element={
+              <IssueWindowNavigationProvider>
+                <Probe />
+              </IssueWindowNavigationProvider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+    return () => adapter!;
+  }
+
+  it("does not open a page this window cannot host from a content link", () => {
+    renderWithAdapter();
+
+    navigate("/acme/chat");
+
+    expect(screen.getByTestId("path")).toHaveTextContent("/acme/issues/MUL-1");
+    expect(openExternal).not.toHaveBeenCalled();
+  });
+
+  it("does not open a settings page on push", () => {
+    const adapter = renderWithAdapter();
+
+    act(() => adapter().push("/acme/settings?tab=workflows"));
+
+    expect(screen.getByTestId("path")).toHaveTextContent("/acme/issues/MUL-1");
+    expect(openExternal).not.toHaveBeenCalled();
+  });
+
+  it("does not open a non-issue page on replace", () => {
+    const adapter = renderWithAdapter();
+
+    act(() => adapter().replace("/acme/chat"));
+
+    expect(screen.getByTestId("path")).toHaveTextContent("/acme/issues/MUL-1");
+    expect(openExternal).not.toHaveBeenCalled();
+  });
+
+  it("still opens another issue in place", () => {
+    const adapter = renderWithAdapter();
+
+    act(() => adapter().push("/acme/issues/MUL-2"));
+
+    expect(screen.getByTestId("path")).toHaveTextContent("/acme/issues/MUL-2");
+    expect(openExternal).not.toHaveBeenCalled();
+  });
+
+  it("shares the current page as a marvis://open deep link", () => {
+    const adapter = renderWithAdapter()();
+
+    expect(adapter.getShareableUrl(currentPath(adapter))).toBe(
+      "marvis://open?path=%2Facme%2Fissues%2FMUL-1",
+    );
+  });
+});

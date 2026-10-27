@@ -26,8 +26,22 @@ The parser accepts exactly four `<type>` values plus the `all` sentinel, and the
     (member|agent|squad|issue|all)/([0-9a-fA-F-]+|all)
 
 So the link target is a real entity UUID (or `all`), never a display name. The
-label between the brackets is free text — that is where the human-readable name
-goes.
+label between the brackets must contain visible text. Put the human-readable
+name there. The `@` prefix is optional; issue references commonly omit it:
+
+    [MUL-123](mention://issue/<uuid>)
+
+Only canonical inline links with visible label text count as mentions. Empty
+or invisible labels, reference links, images, autolinks, titles, and
+angle-bracket destinations are not mention triggers. Use the shape above.
+Text removed by HTML sanitization, such as script contents, and inert template
+contents do not make a label visible; neither does an `@` prefix on its own.
+
+Code examples are inert as mentions. This includes inline code, multiline code
+spans, indented code, and backtick or tilde fenced blocks inside lists,
+blockquotes, or `<details>`. A fenced `diff` of agent instructions cannot invoke
+its mention targets. Copy the mention syntax out of code and paste it into
+ordinary prose to trigger it. Prose mentions in blockquotes still count.
 
 One `mention://` form deliberately sits OUTSIDE this parser:
 `[Label](mention://project/<uuid>)`. `project` is absent from the type group
@@ -37,6 +51,19 @@ ordinary link that opens the project on tap on mobile). That is the whole point:
 a project reference should never be able to start a run. Use it freely to point
 at a project; everything else in this document is about the four types (plus
 `all`) the parser does recognize.
+
+The knowledge base links are render-only in the same way. None of their types
+is in the parser, so they notify no one and enqueue nothing; clients show them
+as cards:
+
+- `[Name](mention://kb/<kb-id>)` — a knowledge base
+- `[Page title](mention://kb_page/<page-id>)` — a knowledge base page; append
+  `#<block-id>` to point at one block
+- `[#16 Title](mention://kb_mr/<id>)` — a change request
+- `[Annotation · Page title](mention://kb_annotation/<id>)` — an annotation
+
+Do not build them by hand: `marvis kb` output carries each one ready to paste in
+its `mention` field.
 
 ## Step 1 — look up the UUID
 

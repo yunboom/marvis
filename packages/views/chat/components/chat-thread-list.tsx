@@ -239,7 +239,7 @@ export function ChatThreadList({
       );
     } else if (isRunning) {
       previewNode = (
-        <span className="flex min-w-0 items-center gap-1.5 text-emerald-500">
+        <span className="flex min-w-0 items-center gap-1.5 text-success">
           <Loader2 className="size-3 shrink-0 animate-spin" />
           <span className="truncate">{t(($) => $.list.typing)}</span>
         </span>
@@ -361,15 +361,14 @@ export function ChatThreadList({
         className={cn(
           // Fixed height so nothing (hover actions, confirm prompts) can change
           // the row size and make the list jump. Content is vertically centered.
-          "group/row relative flex h-14 min-w-0 cursor-default items-center gap-3 rounded-md px-2 outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring",
-          isCurrent ? "bg-accent" : "hover:bg-accent/50",
+          "group/row relative flex h-14 min-w-0 shrink-0 cursor-default items-center gap-2.5 rounded-lg px-2 outline-none transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring",
+          isCurrent ? "bg-surface-selected" : "hover:bg-accent",
           isConfirmingAction && "bg-destructive/5 hover:bg-destructive/5",
         )}
       >
-        {/* Thin ring keeps photo + fallback avatars reading as the same circle
-            (the fallback's faint bg otherwise looks smaller). */}
+        {/* Two-line row: the 32px avatar sits centred beside both lines. */}
         {agent ? (
-          <ActorAvatar actorType="agent" actorId={agent.id} size="lg" enableHoverCard className="ring-1 ring-inset ring-border" />
+          <ActorAvatar actorType="agent" actorId={agent.id} size="lg" enableHoverCard />
         ) : (
           <span className="size-8 shrink-0" />
         )}
@@ -386,7 +385,7 @@ export function ChatThreadList({
             <span className={cn("min-w-0 flex-1 truncate text-body", unread > 0 ? "font-semibold text-foreground" : "font-medium")}>
               {titleText}
             </span>
-            <span className="ml-auto shrink-0 text-micro text-muted-foreground">{timeText}</span>
+            <span className="ml-auto shrink-0 text-caption text-muted-foreground">{timeText}</span>
           </div>
 
           {/* Line 2: preview + unread badge, or an inline confirm prompt */}
@@ -435,9 +434,7 @@ export function ChatThreadList({
                   {unread > 0 && (
                     <span
                       aria-label={t(($) => $.session_history.row_subtitle.new_reply)}
-                      // Softer, warmer red than the vivid `destructive` token —
-                      // an IM unread badge, not an error.
-                      className="inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-[oklch(0.62_0.14_18)] px-1 text-micro font-semibold text-white"
+                      className="inline-flex h-4.5 min-w-4.5 shrink-0 items-center justify-center rounded-full bg-destructive px-1.25 text-micro font-semibold text-white"
                     >
                       {unread > 99 ? "99+" : unread}
                     </span>
@@ -462,7 +459,10 @@ export function ChatThreadList({
             changes the row height (which was making the list jump). Keyboard
             focus reveals them too, so they are reachable without a mouse. */}
         {!isConfirmingAction && (
-          <div className="absolute inset-y-0 right-1 hidden items-center gap-0.5 rounded-md bg-gradient-to-l from-accent from-40% to-transparent pl-10 pr-1 [@media(hover:hover)]:group-hover/row:flex [@media(hover:hover)]:group-focus-within/row:flex">
+          <div className={cn(
+            "absolute inset-y-0 right-1 hidden items-center gap-0.5 rounded-lg bg-gradient-to-l from-60% to-transparent pl-10 pr-1 [@media(hover:hover)]:group-hover/row:flex [@media(hover:hover)]:group-focus-within/row:flex",
+            isCurrent ? "from-surface-selected" : "from-accent",
+          )}>
             {rowActions.map((action) => (
               <RowAction
                 key={action.key}
@@ -486,7 +486,7 @@ export function ChatThreadList({
         <button
           type="button"
           onClick={() => setView("history")}
-          className="flex w-full items-center gap-1.5 rounded-md px-2 py-2 text-left text-caption font-medium text-muted-foreground outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+          className="flex h-9 w-full shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-left text-label font-medium text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring"
         >
           <ChevronLeft className="size-4 shrink-0" />
           <span className="truncate">{t(($) => $.list.archived_title)}</span>
@@ -504,9 +504,9 @@ export function ChatThreadList({
     <button
       type="button"
       onClick={() => setView("archived")}
-      className="mt-1 flex h-10 w-full items-center gap-2 rounded-md px-2 text-left text-caption text-muted-foreground outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+      className="mt-1 flex h-10 w-full shrink-0 items-center gap-2.5 rounded-lg px-2 text-left text-label text-muted-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring"
     >
-      <span className="flex size-9 shrink-0 items-center justify-center">
+      <span className="flex w-8 shrink-0 items-center justify-center">
         <Archive className="size-4" />
       </span>
       <span className="min-w-0 flex-1 truncate font-medium">{t(($) => $.list.archived_title)}</span>
@@ -518,7 +518,7 @@ export function ChatThreadList({
   if (historySessions.length === 0) {
     return (
       <>
-        <div className="px-2 py-1.5 text-caption text-muted-foreground">
+        <div className="px-2.5 py-2 text-label text-muted-foreground">
           {t(($) => $.window.no_previous)}
         </div>
         {archivedEntry}
@@ -562,7 +562,7 @@ function RowAction({
             onClick();
           }}
           className={cn(
-            "inline-flex size-7 items-center justify-center rounded-xs text-muted-foreground transition-colors focus-visible:outline-none",
+            "inline-flex size-7 items-center justify-center rounded-row text-muted-foreground transition-colors duration-(--motion-fast) ease-out focus-visible:outline-none",
             danger
               ? "hover:bg-destructive/10 hover:text-destructive focus-visible:bg-destructive/10 focus-visible:text-destructive"
               : "hover:bg-accent hover:text-foreground focus-visible:bg-accent focus-visible:text-foreground",
@@ -592,8 +592,8 @@ function ConfirmRow({
 }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
-      <span className="min-w-0 flex-1 truncate text-caption font-medium text-destructive">{label}</span>
-      <div className="flex shrink-0 items-center gap-1">
+      <span className="min-w-0 flex-1 truncate text-label font-medium text-destructive">{label}</span>
+      <div className="flex shrink-0 items-center gap-1.5">
         <button
           type="button"
           onPointerDown={(e) => {
@@ -606,7 +606,7 @@ function ConfirmRow({
             onCancel();
           }}
           disabled={pending}
-          className="inline-flex h-6 items-center rounded-xs px-2 text-micro font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+          className="inline-flex h-6 items-center rounded-full px-2 text-caption font-medium text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground disabled:opacity-50"
         >
           {cancelText}
         </button>
@@ -622,7 +622,7 @@ function ConfirmRow({
             onConfirm();
           }}
           disabled={pending}
-          className="inline-flex h-6 items-center rounded-xs px-2 text-micro font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+          className="inline-flex h-6 items-center rounded-full bg-destructive/10 px-2 text-caption font-medium text-destructive transition-colors duration-(--motion-fast) ease-out hover:bg-destructive/15 disabled:opacity-50"
         >
           {confirmText}
         </button>

@@ -47,6 +47,12 @@ const (
 	googleLoginCodeInvalidOAuthCode    = "oauth_code_invalid"
 )
 
+// 第三方登录方式，写入 analytics 的 auth_method 与日志。
+const (
+	authMethodGoogle = "google"
+	authMethodLark   = "lark"
+)
+
 const devVerificationCodeEnv = "MARVIS_DEV_VERIFICATION_CODE"
 
 // supportedLanguages mirrors `SUPPORTED_LOCALES` in packages/core/i18n/types.ts.
@@ -56,6 +62,7 @@ const devVerificationCodeEnv = "MARVIS_DEV_VERIFICATION_CODE"
 var supportedLanguages = map[string]struct{}{
 	"en":      {},
 	"zh-Hans": {},
+	"zh-Hant": {},
 	"ko":      {},
 	"ja":      {},
 	"fr":      {},
@@ -129,7 +136,9 @@ func generateCode() (string, error) {
 }
 
 func isDevVerificationCode(code string) bool {
-	if isProductionEnv() {
+	// Standalone mode runs as production but uses the fixed code as its
+	// zero-setup login for the LAN, so only it may lift the production guard.
+	if isProductionEnv() && !IsStandaloneMode() {
 		return false
 	}
 
@@ -420,6 +429,17 @@ func (h *Handler) VerifyCode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isDevCode := isDevVerificationCode(code)
+	if isDevCode && IsStandaloneMode() {
+		// 单机模式的固定验证码是局域网里共享的口令，不能用来登录工作区所有者或管理员；
+		// 这类邮箱按普通验证码校验，失败时与输错验证码的响应一致，不暴露谁是管理员。
+		isManager, err := h.Queries.IsWorkspaceManagerEmail(r.Context(), email)
+		if err != nil {
+			slog.Warn("workspace manager lookup failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
+			writeError(w, http.StatusInternalServerError, "failed to verify code")
+			return
+		}
+		isDevCode = !isManager
+	}
 	if !isDevCode && subtle.ConstantTimeCompare([]byte(code), []byte(dbCode.Code)) != 1 {
 		_ = h.Queries.IncrementVerificationCodeAttempts(r.Context(), dbCode.ID)
 		writeError(w, http.StatusBadRequest, "invalid or expired code")
@@ -527,6 +547,7 @@ type googleUserInfo struct {
 	Picture string `json:"picture"`
 }
 
+// writeGoogleLoginActionableError 由 Google 与飞书登录共用，把注册限制类错误映射为可操作的错误码。
 func writeGoogleLoginActionableError(w http.ResponseWriter, err error) bool {
 	switch {
 	case errors.Is(err, auth.ErrTemporarilyDisabledUser):
@@ -669,38 +690,78 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.completeOAuthLogin(w, r, oauthLoginProfile{
+		Email:     email,
+		Name:      gUser.Name,
+		AvatarURL: gUser.Picture,
+	}, authMethodGoogle)
+}
+
+// oauthLoginProfile 是第三方登录（Google / 飞书）换取到的用户资料，邮箱已归一化为小写。
+type oauthLoginProfile struct {
+	Email     string
+	Name      string
+	AvatarURL string
+}
+
+// 第三方登录尾段的步骤，用于区分失败发生在哪一步。
+const (
+	oauthLoginStepUser  = "find or create user"
+	oauthLoginStepToken = "issue token"
+)
+
+// oauthLoginStepError 标记第三方登录尾段失败的步骤，调用方据此记录日志、给出对应的响应。
+// 错误信息与原错误一致，errors.Is / errors.As 可以识别原错误。
+type oauthLoginStepError struct {
+	step string
+	err  error
+}
+
+func (e *oauthLoginStepError) Error() string {
+	return e.err.Error()
+}
+
+func (e *oauthLoginStepError) Unwrap() error {
+	return e.err
+}
+
+// issueOAuthLogin 是第三方登录拿到邮箱、名字、头像之后的共用尾段：
+// 查找或创建用户、补全名字头像、签发 JWT，返回用户与登录凭证。
+// 账号停用、注册限制等错误可用 errors.Is / errors.As 识别；错误都包在 oauthLoginStepError 里，标明失败的步骤。
+func (h *Handler) issueOAuthLogin(r *http.Request, profile oauthLoginProfile, authMethod string) (db.User, string, error) {
+	email := profile.Email
+
 	if auth.IsTemporarilyDisabledUserEmail(email) {
-		writeErrorCode(w, http.StatusForbidden, googleLoginCodeAccountDisabled, auth.TemporarilyDisabledUserError)
-		return
+		return db.User{}, "", &oauthLoginStepError{step: oauthLoginStepUser, err: auth.ErrTemporarilyDisabledUser}
 	}
 
 	user, isNew, err := h.findOrCreateUser(r.Context(), email)
 	if err != nil {
-		if writeGoogleLoginActionableError(w, err) {
-			return
-		}
-		slog.Warn("login user lookup or creation failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
-		writeError(w, http.StatusInternalServerError, "failed to create user")
-		return
+		return db.User{}, "", &oauthLoginStepError{step: oauthLoginStepUser, err: err}
 	}
 	if isNew {
 		evt := analytics.Signup(uuidToString(user.ID), user.Email, signupSourceFromRequest(r))
-		evt.Properties["auth_method"] = "google"
+		evt.Properties["auth_method"] = authMethod
 		obsmetrics.RecordEvent(h.Analytics, h.Metrics, evt)
 	}
 
-	// Update name and avatar from Google profile if the user was just created
-	// (default name is email prefix) or has no avatar yet.
+	// 名字：用户刚创建（默认名是邮箱前缀）时用第三方资料补全。
+	// 头像：Google 只在用户没有头像时写入；飞书每次登录都跟随飞书头像，用户自己选的头像除外。
 	needsUpdate := false
 	newName := user.Name
 	newAvatar := user.AvatarUrl
 
-	if gUser.Name != "" && user.Name == strings.Split(email, "@")[0] {
-		newName = gUser.Name
+	if profile.Name != "" && user.Name == strings.Split(email, "@")[0] {
+		newName = profile.Name
 		needsUpdate = true
 	}
-	if gUser.Picture != "" && !user.AvatarUrl.Valid {
-		newAvatar = pgtype.Text{String: gUser.Picture, Valid: true}
+
+	replaceAvatar := !user.AvatarUrl.Valid
+	if authMethod == authMethodLark {
+		replaceAvatar = h.shouldReplaceAvatarFromProvider(user.AvatarUrl)
+	}
+	if profile.AvatarURL != "" && replaceAvatar && profile.AvatarURL != user.AvatarUrl.String {
+		newAvatar = pgtype.Text{String: profile.AvatarURL, Valid: true}
 		needsUpdate = true
 	}
 
@@ -717,14 +778,67 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, err := h.issueJWT(user)
 	if err != nil {
+		return db.User{}, "", &oauthLoginStepError{step: oauthLoginStepToken, err: err}
+	}
+
+	return user, tokenString, nil
+}
+
+// shouldReplaceAvatarFromProvider 判断登录时能否用第三方头像覆盖用户当前头像。
+// 当前头像为空，或是第三方的 http(s) 地址时可以覆盖；
+// emoji 头像、本服务存储里的上传头像是用户自己选的，不覆盖。
+func (h *Handler) shouldReplaceAvatarFromProvider(current pgtype.Text) bool {
+	if !current.Valid || current.String == "" {
+		return true
+	}
+
+	value := current.String
+	if strings.HasPrefix(value, agentEmojiAvatarPrefix) {
+		return false
+	}
+	if !strings.HasPrefix(value, "http://") && !strings.HasPrefix(value, "https://") {
+		return false
+	}
+
+	// 没有配置对象存储时不存在上传头像；配置了就要排除本服务存储生成的地址，
+	// 包括客户端回传后落库的、带签名的本服务头像地址。
+	if h.Storage == nil {
+		return true
+	}
+	if _, ok := avatarKeyFromServedURL(value); ok {
+		return false
+	}
+
+	return h.ownedStorageKey(value) == ""
+}
+
+// completeOAuthLogin 在 issueOAuthLogin 之后写 cookie 并以 JSON 返回登录结果，供网页端与桌面端经网页登录使用。
+func (h *Handler) completeOAuthLogin(w http.ResponseWriter, r *http.Request, profile oauthLoginProfile, authMethod string) {
+	email := profile.Email
+
+	user, tokenString, err := h.issueOAuthLogin(r, profile, authMethod)
+	if err != nil {
 		if writeGoogleLoginActionableError(w, err) {
 			return
 		}
-		slog.Warn("google login failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
-		writeError(w, http.StatusInternalServerError, "failed to generate token")
+
+		var stepErr *oauthLoginStepError
+		if errors.As(err, &stepErr) && stepErr.step == oauthLoginStepToken {
+			slog.Warn(authMethod+" login failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
+			writeError(w, http.StatusInternalServerError, "failed to generate token")
+			return
+		}
+
+		slog.Warn("login user lookup or creation failed", append(logger.RequestAttrs(r), "error", err, "email", email)...)
+		writeError(w, http.StatusInternalServerError, "failed to create user")
 		return
 	}
 
+	h.writeLoginSession(w, r, user, tokenString, authMethod)
+}
+
+// writeLoginSession 写登录 cookie 并以 JSON 返回登录结果，第三方登录与单机模式 bootstrap 登录共用。
+func (h *Handler) writeLoginSession(w http.ResponseWriter, r *http.Request, user db.User, tokenString, authMethod string) {
 	if err := auth.SetAuthCookies(w, tokenString); err != nil {
 		slog.Warn("failed to set auth cookies", "error", err)
 	}
@@ -735,7 +849,7 @@ func (h *Handler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	slog.Info("user logged in via google", append(logger.RequestAttrs(r), "user_id", uuidToString(user.ID), "email", user.Email)...)
+	slog.Info("user logged in via "+authMethod, append(logger.RequestAttrs(r), "user_id", uuidToString(user.ID), "email", user.Email)...)
 	writeJSON(w, http.StatusOK, LoginResponse{
 		Token: tokenString,
 		User:  h.userToResponse(user),

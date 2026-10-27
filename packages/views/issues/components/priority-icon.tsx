@@ -1,13 +1,20 @@
 import type { IssuePriority } from "@marvis/core/types";
 import { PRIORITY_CONFIG } from "@marvis/core/issues/config";
 
+// Dot geometry in the 16-unit viewBox: a 10-unit dot reads as ~9px inside the
+// 14px icon box, so call sites keep their layout.
+const DOT_R = 5;
+// The ring keeps the dot's outer edge; its stroke stays 1.5px at any size.
+const RING_STROKE_PX = 1.5;
+const RING_R = DOT_R - 0.85;
+// The "none" slash runs corner to corner of the ring's inner square.
+const SLASH_HALF = RING_R * Math.SQRT1_2;
+
 /**
- * Priority glyphs, two families on purpose:
- * - low / medium / high share one three-bar frame (1 / 2 / 3 bars filled,
- *   the rest faint) so severity reads as a fill level at a glance;
- * - urgent breaks out of the scale entirely — a filled badge with an
- *   exclamation mark — because it is an interrupt, not "even higher".
- * - none stays a quiet dash.
+ * Priority glyphs are small dots coloured on a warm severity ramp:
+ * - urgent / high / medium: a filled dot, the colour carries the severity;
+ * - low: a hollow ring, present but quiet;
+ * - none: the ring with a diagonal slash.
  */
 export function PriorityIcon({
   priority,
@@ -20,64 +27,49 @@ export function PriorityIcon({
 }) {
   const cfg = priority in PRIORITY_CONFIG ? PRIORITY_CONFIG[priority as IssuePriority] : null;
 
-  // "none" — simple horizontal dash
+  // "none" — the low ring, same colour, struck through.
   if (!cfg || priority === "none") {
     return (
       <svg
+        data-slot="priority-icon"
         viewBox="0 0 16 16"
-        className={`h-3.5 w-3.5 ${inheritColor ? "" : "text-muted-foreground"} shrink-0 ${className}`}
+        className={`h-3.5 w-3.5 ${inheritColor ? "" : PRIORITY_CONFIG.low.color} shrink-0 ${className}`}
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth={RING_STROKE_PX}
         strokeLinecap="round"
       >
-        <line x1="3" y1="8" x2="13" y2="8" />
-      </svg>
-    );
-  }
-
-  if (priority === "urgent") {
-    return (
-      <svg
-        viewBox="0 0 16 16"
-        className={`h-3.5 w-3.5 ${inheritColor ? "" : cfg.color} shrink-0 ${className}`}
-        fill="none"
-      >
-        <rect x="2" y="2" width="12" height="12" rx="3" fill="currentColor" />
+        <circle cx="8" cy="8" r={RING_R} vectorEffect="non-scaling-stroke" />
         <line
-          x1="8"
-          y1="5"
-          x2="8"
-          y2="8.6"
-          stroke="var(--background, #fff)"
-          strokeWidth="1.7"
-          strokeLinecap="round"
+          x1={8 - SLASH_HALF}
+          y1={8 + SLASH_HALF}
+          x2={8 + SLASH_HALF}
+          y2={8 - SLASH_HALF}
+          vectorEffect="non-scaling-stroke"
         />
-        <circle cx="8" cy="11" r="0.95" fill="var(--background, #fff)" />
       </svg>
     );
   }
 
-  // low / medium / high — a constant three-bar frame; severity = fill count.
-  const filled = Math.min(cfg.bars, 3);
-  const BAR_HEIGHTS = [6, 9, 12];
   return (
     <svg
+      data-slot="priority-icon"
       viewBox="0 0 16 16"
       className={`h-3.5 w-3.5 ${inheritColor ? "" : cfg.color} shrink-0 ${className}`}
-      fill="currentColor"
+      fill="none"
     >
-      {BAR_HEIGHTS.map((height, i) => (
-        <rect
-          key={i}
-          x={2 + i * 4.25}
-          y={14 - height}
-          width="3.5"
-          height={height}
-          rx="1"
-          opacity={i < filled ? 1 : 0.35}
+      {priority === "low" ? (
+        <circle
+          cx="8"
+          cy="8"
+          r={RING_R}
+          stroke="currentColor"
+          strokeWidth={RING_STROKE_PX}
+          vectorEffect="non-scaling-stroke"
         />
-      ))}
+      ) : (
+        <circle cx="8" cy="8" r={DOT_R} fill="currentColor" />
+      )}
     </svg>
   );
 }

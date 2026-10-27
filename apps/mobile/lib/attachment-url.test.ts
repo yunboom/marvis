@@ -43,8 +43,8 @@ describe("resolveAttachmentUrlWithBase", () => {
 
   it("passes an absolute http URL through unchanged (self-hosted dev)", () => {
     expect(
-      resolveAttachmentUrlWithBase("http://localhost:8080/file.bin", BASE),
-    ).toBe("http://localhost:8080/file.bin");
+      resolveAttachmentUrlWithBase("http://localhost:13840/file.bin", BASE),
+    ).toBe("http://localhost:13840/file.bin");
   });
 
   it("returns null for nullish or empty input", () => {

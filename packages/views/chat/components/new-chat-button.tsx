@@ -183,9 +183,9 @@ export function NewChatButton({
         <TooltipTrigger
           render={
             <Button
-              variant="ghost"
-              size="icon-sm"
-              className="rounded-full text-muted-foreground"
+              variant="secondary"
+              size="icon"
+              className="size-8"
               aria-label={label}
               onClick={() => {
                 if (only && !isAgentRuntimeBound(only)) {
@@ -213,9 +213,9 @@ export function NewChatButton({
       align="start"
       triggerRender={
         <IconButton
-          variant="ghost"
-          size="icon-sm"
-          className="rounded-full text-muted-foreground"
+          variant="secondary"
+          size="icon"
+          className="size-8"
           label={label}
           tooltipSide={side === "top" ? "top" : "bottom"}
         />

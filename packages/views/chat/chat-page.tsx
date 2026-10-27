@@ -128,8 +128,10 @@ export function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reconcile store/route changes, not URL updates
   }, [isCurrentChatRoute, workspaceSlug, c.activeSessionId]);
 
+  // `_v2`: the list column default narrowed; a saved layout from the wider
+  // default would otherwise keep it wide.
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: "marvis_chat_layout",
+    id: "marvis_chat_layout_v2",
   });
 
   // `?agent=` intent bookkeeping. The ref holds the param value already
@@ -229,14 +231,14 @@ export function ChatPage() {
   );
 
   const listHeader = (
-    <PageHeader>
-      <h1 className="flex-1 text-body font-semibold">{t(($) => $.page.title)}</h1>
+    <PageHeader className="h-14 border-b-0">
+      <h1 className="min-w-0 flex-1 truncate text-title font-semibold">{t(($) => $.page.title)}</h1>
       {newChatButton}
     </PageHeader>
   );
 
   const listBody = (
-    <div className="px-2 py-1">
+    <div className="flex flex-col gap-0.5 px-2 pb-2">
       <ChatThreadList
         sessions={c.sessions}
         agents={c.agents}
@@ -404,9 +406,9 @@ export function ChatPage() {
     >
       <ResizablePanel
         id="list"
-        defaultSize={260}
-        minSize={240}
-        maxSize={480}
+        defaultSize={240}
+        minSize={208}
+        maxSize={400}
         groupResizeBehavior="preserve-pixel-size"
       >
         <div className="flex flex-col border-r h-full">
@@ -421,7 +423,7 @@ export function ChatPage() {
             conversation
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-              <MessageSquare className="h-10 w-10 text-faint-foreground" />
+              <MessageSquare className="size-10 text-faint-foreground" strokeWidth={1.5} />
               <p className="text-body">{t(($) => $.page.select_prompt)}</p>
             </div>
           )}

@@ -122,7 +122,7 @@ it("updates a tab's custom icon from the shared catalog cache without fetching",
   qc.setQueryData(issueStatusListOptions("ws1").queryKey, {
     statuses: [{
       id: "qa", workspace_id: "ws1", key: "qa", name: "QA", description: "",
-      category: "started", color: "#123456", icon: "slash", is_system: false,
+      category: "started", status_group: "working", color: "#123456", icon: "slash", is_system: false,
       position: 0, archived_at: null, created_at: "", updated_at: "",
     }],
     categories: ["unstarted", "started", "done", "closed"],

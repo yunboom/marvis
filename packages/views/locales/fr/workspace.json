@@ -1,29 +1,61 @@
 {
-  "create_form": {
+  "create_page": {
+    "title": "Créer un espace de travail",
+    "subtitle": "Les membres, les tickets et les agents collaborent dans un espace de travail.",
+    "preview_empty_name": "Nouvel espace de travail",
+    "preview_empty_hint": "Saisissez un nom pour obtenir l’URL et les numéros de ticket",
     "name_label": "Nom de l'espace de travail",
-    "name_placeholder": "Mon espace de travail",
-    "url_label": "URL de l'espace de travail",
-    "url_placeholder": "mon-espace-de-travail",
+    "name_placeholder": "Acme Inc",
+    "random_name": "Aléatoire",
+    "url_label": "URL",
+    "slug_placeholder": "acme",
+    "issue_prefix_label": "Préfixe des tâches",
     "submit": "Créer l'espace de travail",
-    "submitting": "Création...",
+    "submitting": "Création…",
+    "cancel": "Annuler",
+    "log_out": "Se déconnecter",
+    "disabled_title": "La création d'espaces de travail est désactivée",
+    "disabled_description": "Cette instance Marvis n'autorise pas la création de nouveaux espaces de travail. Demandez à votre administrateur une invitation à un espace de travail existant.",
     "errors": {
       "slug_format": "Uniquement des lettres minuscules, des chiffres et des traits d'union",
       "slug_taken": "Cette URL d'espace de travail est déjà prise.",
       "slug_reserved": "Cette URL d'espace de travail est réservée et ne peut pas être utilisée.",
       "slug_conflict_toast": "Choisissez une autre URL d'espace de travail",
       "create_failed": "Échec de la création de l'espace de travail"
+    },
+    "about": {
+      "label": "À propos de vous",
+      "edit": "Modifier",
+      "dialog_hint": "Marvis s'en sert pour préparer votre première conversation.",
+      "multi": "Plusieurs choix possibles",
+      "done": "Terminé",
+      "uses_more": "{{first}} +{{rest}}",
+      "uses_none": "Aucun usage sélectionné",
+      "role": {
+        "question": "Qu'est-ce qui vous décrit le mieux ?",
+        "engineer": "Ingénieur / développeur",
+        "product": "Chef de produit",
+        "designer": "Designer",
+        "founder": "Fondateur / dirigeant",
+        "marketing": "Marketing / croissance",
+        "writer": "Rédacteur / contenu",
+        "research": "Chercheur / analyste",
+        "ops": "Opérations / gestion de projet",
+        "student": "Étudiant / usage personnel",
+        "other": "Autre"
+      },
+      "use_case": {
+        "question": "Pour quoi voulez-vous utiliser Marvis ?",
+        "ship_code": "Livrer du code avec des agents IA",
+        "manage_team": "Gérer les tâches de mon équipe",
+        "personal_tasks": "Organiser mes propres tâches",
+        "plan_research": "Planifier, réfléchir, faire des recherches",
+        "write_publish": "Écrire, réviser, publier",
+        "automate_ops": "Automatiser les opérations et les processus",
+        "evaluate": "Je découvre simplement",
+        "other": "Autre"
+      }
     }
-  },
-  "new_page": {
-    "back": "Retour",
-    "log_out": "Se déconnecter",
-    "title": "Bienvenue sur Marvis",
-    "description": "Un espace de travail unique où vos coéquipiers IA et vous travaillez côte à côte — ils prennent des tâches, laissent des commentaires et partagent le même contexte.",
-    "invite_hint": "Vous pourrez inviter des coéquipiers une fois votre espace de travail prêt."
-  },
-  "creation_disabled": {
-    "title": "La création d'espaces de travail est désactivée",
-    "description": "Cette instance Marvis n'autorise pas la création de nouveaux espaces de travail. Demandez à votre administrateur une invitation à un espace de travail existant."
   },
   "no_access": {
     "title": "Espace de travail indisponible",

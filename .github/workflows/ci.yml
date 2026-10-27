@@ -41,7 +41,7 @@ jobs:
           node-version: 22
 
       - name: Test CI selection and gates
-        run: node --test scripts/ci-scope.test.mjs scripts/check-image-budget.test.mjs
+        run: node --test scripts/ci-scope.test.mjs scripts/check-image-budget.test.mjs scripts/build-standalone-manifest.test.mjs
 
       - name: Filter paths
         id: filter
@@ -399,6 +399,12 @@ jobs:
       - name: Verify Go test wrapper
         run: bash scripts/test-go.test.sh
 
+      - name: Verify standalone server bundle
+        run: bash scripts/build-standalone-bundle.test.sh
+
+      - name: Verify PostgreSQL bundle repack
+        run: bash scripts/repack-postgres.test.sh
+
       - name: Test
         # pkg/agent runs on its own runner: backend-agent-tests below.
         run: bash scripts/test-go.sh --race --only regular
@@ -532,6 +538,12 @@ jobs:
           go-version: "~1.27.3"
           check-latest: true
           cache-dependency-path: server/go.sum
+
+      - name: Test Windows WeCom media streaming and plaintext cleanup
+        working-directory: server
+        # These tests need no database. Windows must prove private file access,
+        # streaming without buffered fallback, and cleanup after process exit.
+        run: go test ./internal/integrations/wecom -v -run '^(TestStreamingDecrypt|TestMediaTempFile|TestPeekFile|TestIngest|TestTheStreamingPath)' -count=1 -timeout=5m
 
       - name: Test Windows execution-environment isolation
         working-directory: server
@@ -910,6 +922,13 @@ jobs:
         run: |
           node scripts/generate-reserved-slugs.mjs
           git diff --exit-code -- packages/core/paths/reserved-slugs.ts
+
+      - name: Verify attachment text-preview whitelist is up to date
+        # The Go handler embeds the JSON source directly while the shared
+        # web/desktop view consumes the checked-in generated TypeScript file.
+        run: |
+          node scripts/generate-attachment-text-preview.mjs
+          git diff --exit-code -- packages/views/editor/utils/text-preview-whitelist.generated.ts
 
       - name: Setup Helm
         uses: azure/setup-helm@v4

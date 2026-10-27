@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS kb_claim_page_idx;

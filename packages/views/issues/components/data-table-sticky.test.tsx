@@ -101,12 +101,12 @@ describe("DataTable pinned columns", () => {
     const statusCell = screen.getByRole("cell", { name: "In progress" });
 
     expect(titleHeader).toHaveClass(
-      "bg-[color-mix(in_oklab,var(--muted)_30%,var(--background))]",
+      "bg-surface-sunken",
     );
     expect(titleHeader).not.toHaveClass("bg-muted/30", "backdrop-blur");
     expect(titleCell).toHaveClass(
       "bg-background",
-      "group-hover:bg-[color-mix(in_oklab,var(--muted)_50%,var(--background))]",
+      "group-hover:bg-accent",
     );
     expect(titleCell).not.toHaveClass("group-hover:bg-muted/50");
     expect(titleCell).toHaveStyle({ position: "sticky", zIndex: 1 });

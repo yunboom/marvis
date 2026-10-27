@@ -1,16 +1,17 @@
 {
   "page": {
-    "title": "收件箱",
-    "back": "收件箱"
+    "title": "消息",
+    "back": "消息",
+    "close": "关闭"
   },
   "menu": {
-    "mark_all_read": "全部标为已读",
+    "mark_all_read": "全部已读",
     "archive_all": "归档全部",
     "archive_all_read": "归档全部已读",
     "archive_completed": "归档已完成"
   },
   "filters": {
-    "tooltip": "筛选收件箱",
+    "tooltip": "筛选消息",
     "active_count_other": "{{count}} 个筛选条件",
     "status": "状态",
     "priority": "优先级",
@@ -49,7 +50,6 @@
   },
   "detail": {
     "select_prompt": "选择一条通知查看详情",
-    "empty": "收件箱为空",
     "original_input": "原始输入",
     "retry_with_context": "保留上下文重试",
     "edit_advanced": "在完整表单中编辑",

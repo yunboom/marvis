@@ -1068,7 +1068,7 @@ function BillingTabContent() {
           <SettingsCard>
             <div className="space-y-5 p-4 sm:p-5">
               <div
-                className="inline-flex w-full rounded-lg border border-surface-border p-1 sm:w-auto"
+                className="inline-flex w-full gap-0.5 rounded-full bg-field p-0.75 sm:w-auto"
                 role="group"
                 aria-label={t(($) => $.workspace.upgrade.interval_label)}
               >
@@ -1077,7 +1077,7 @@ function BillingTabContent() {
                     key={value}
                     type="button"
                     aria-pressed={interval === value}
-                    className="min-h-11 flex-1 rounded-md px-4 text-body font-medium text-muted-foreground transition-[color,background-color,box-shadow] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-pressed:bg-surface-selected aria-pressed:text-surface-selected-foreground aria-pressed:shadow-sm sm:min-w-32"
+                    className="min-h-10 flex-1 rounded-full px-4 text-body text-muted-foreground transition-[color,background-color,box-shadow] duration-(--motion-fast) ease-out hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-pressed:bg-surface aria-pressed:font-medium aria-pressed:text-foreground aria-pressed:shadow-control dark:aria-pressed:bg-white/12 sm:min-w-32"
                     onClick={() => {
                       setInterval(value);
                       checkoutIntentRef.current = null;

@@ -56,10 +56,14 @@ import {
   useRowLink,
 } from "../../navigation";
 import {
+  COLLECTION_ROW,
+  COLLECTION_ROW_SELECTED,
+  COLLECTION_TABLE_INSET,
   CollectionPageHeader,
   CollectionPageHeaderAction,
   CollectionPageState,
 } from "../../layout/collection-page";
+import { cn } from "@marvis/ui/lib/utils";
 import { canEditSkill } from "../hooks/use-can-edit-skill";
 import { originSourceUrl, readOrigin } from "../lib/origin";
 import { rowMatchesFilters, type SkillRow } from "./skill-list-filter";
@@ -77,7 +81,7 @@ import {
   type SkillActionsContext,
 } from "./skill-list-actions";
 import { useT, useTimeAgo } from "../../i18n";
-import { docsLocalePrefix } from "../../common/docs-locale";
+import { DOCS_LINKS_ENABLED, docsLocalePrefix } from "../../common/docs-locale";
 
 // Column template — single source of truth for header, rows, and skeletons.
 // Tracks: [edge 0.75rem] [checkbox 1rem] [name, only fr track]
@@ -110,9 +114,17 @@ const GRID_COLS =
   "grid-cols-[0.75rem_1rem_minmax(120px,1fr)_var(--lgc-usedby)_1.75rem_0.75rem] " +
   "@2xl:grid-cols-[0.75rem_1rem_minmax(200px,1fr)_var(--lgc-usedby)_var(--lgc-source)_var(--lgc-creator)_var(--lgc-updated)_var(--lgc-created)_1.75rem_0.75rem]";
 
-// h-12 rows. The virtualizer's fixed-size contract: every row renders at
+// h-13 rows. The virtualizer's fixed-size contract: every row renders at
 // exactly this height, which is what lets it skip per-row measurement.
-const ROW_HEIGHT = 48;
+const ROW_HEIGHT = 52;
+
+// Row height class matching ROW_HEIGHT, layered over COLLECTION_ROW.
+const ROW_HEIGHT_CLASS = "h-13";
+
+// Header band: the collection table head (40px grey band, rounded ends) on
+// the ListGrid header row; the 13px label size is pushed down to the cells.
+const LIST_HEAD =
+  "h-10 rounded-lg bg-surface-sunken [&_[role=columnheader]]:text-label [&_[role=columnheader]_button]:text-label";
 
 // Single source for hideable column widths: track vars and the grid's
 // min-width derive from the same numbers.
@@ -172,15 +184,20 @@ function PageHeaderBar({
       icon={SkillIcon}
       title={t(($) => $.page.title)}
       count={totalCount}
-      learnMore={{
-        href: `https://marvis.ai/docs${docsLocalePrefix(i18n.language)}/skills`,
-        label: t(($) => $.page.learn_more),
-      }}
+      learnMore={
+        DOCS_LINKS_ENABLED
+          ? {
+              href: `https://marvis.ai/docs${docsLocalePrefix(i18n.language)}/skills`,
+              label: t(($) => $.page.learn_more),
+            }
+          : undefined
+      }
       actions={
         <CollectionPageHeaderAction
           icon={Plus}
           label={t(($) => $.page.new_skill)}
           onClick={onCreate}
+          variant="default"
         />
       }
     />
@@ -237,7 +254,7 @@ function NameCell({ row }: { row: SkillRow }) {
         <Tooltip>
           <TooltipTrigger
             render={
-              <Lock className="h-3 w-3 shrink-0 text-faint-foreground" />
+              <Lock className="size-3.25 shrink-0 text-faint-foreground" />
             }
           />
           <TooltipContent>{t(($) => $.table.lock_tooltip)}</TooltipContent>
@@ -252,7 +269,7 @@ function UsedByCell({ agents }: { agents: Agent[] }) {
   if (agents.length === 0) {
     return (
       <ListGridCell>
-        <span className="text-caption text-muted-foreground">
+        <span className="text-label text-muted-foreground">
           {t(($) => $.table.unused)}
         </span>
       </ListGridCell>
@@ -262,15 +279,15 @@ function UsedByCell({ agents }: { agents: Agent[] }) {
   if (soleAgent) {
     const agent = soleAgent;
     return (
-      <ListGridCell className="gap-1.5">
+      <ListGridCell className="gap-2">
         <ActorAvatar
           name={agent.name}
           initials={agent.name.slice(0, 2).toUpperCase()}
           avatarUrl={resolvePublicFileUrl(agent.avatar_url)}
           isAgent
-          size="md"
+          size="sm"
         />
-        <span className="min-w-0 truncate text-caption text-muted-foreground">
+        <span className="min-w-0 truncate text-label text-muted-foreground">
           {agent.name}
         </span>
       </ListGridCell>
@@ -285,7 +302,7 @@ function UsedByCell({ agents }: { agents: Agent[] }) {
           <Tooltip key={a.id}>
             <TooltipTrigger
               render={
-                <span className="inline-flex rounded-full ring-2 ring-background">
+                <span className="inline-flex rounded-[28%] ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent">
                   <ActorAvatar
                     name={a.name}
                     initials={a.name.slice(0, 2).toUpperCase()}
@@ -300,7 +317,7 @@ function UsedByCell({ agents }: { agents: Agent[] }) {
           </Tooltip>
         ))}
         {extra > 0 && (
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted text-caption font-medium text-muted-foreground ring-2 ring-background">
+          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-[28%] bg-muted px-1.5 text-caption font-medium tabular-nums text-muted-foreground ring-2 ring-background transition-[box-shadow] duration-(--motion-fast) ease-out group-hover/row:ring-accent">
             +{extra}
           </span>
         )}
@@ -346,7 +363,7 @@ function SourceCell({
   const sourceUrl = originSourceUrl(origin);
 
   return (
-    <ListGridCell className="hidden gap-1.5 text-caption text-muted-foreground @2xl:flex">
+    <ListGridCell className="hidden gap-1.5 text-label text-muted-foreground @2xl:flex">
       {icon}
       {sourceUrl ? (
         <Tooltip>
@@ -374,16 +391,16 @@ function SourceCell({
 
 function CreatorCell({ creator }: { creator: MemberWithUser | null }) {
   return (
-    <ListGridCell className="hidden gap-1.5 @2xl:flex">
+    <ListGridCell className="hidden gap-2 @2xl:flex">
       {creator && (
         <>
           <ActorAvatar
             name={creator.name}
             initials={creator.name.slice(0, 2).toUpperCase()}
             avatarUrl={resolvePublicFileUrl(creator.avatar_url)}
-            size="md"
+            size="sm"
           />
-          <span className="min-w-0 truncate text-caption text-muted-foreground">
+          <span className="min-w-0 truncate text-label text-muted-foreground">
             {creator.name}
           </span>
         </>
@@ -402,8 +419,8 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       title={t(($) => $.page.empty.title)}
       description={t(($) => $.page.empty.description)}
       actions={
-        <Button type="button" onClick={onCreate} size="sm">
-          <Plus aria-hidden="true" className="size-3" />
+        <Button type="button" onClick={onCreate}>
+          <Plus aria-hidden="true" className="size-4" />
           {t(($) => $.page.new_skill)}
         </Button>
       }
@@ -435,7 +452,7 @@ function SkillListHeader({
     sortField === field ? sortDirection : false;
   const anySelected = allSelected || someSelected;
   return (
-    <ListGridHeader>
+    <ListGridHeader className={LIST_HEAD}>
       {/* Tri-state select-all in the checkbox track. Same presentational
           Checkbox + interactive wrapper pattern as the row cells; revealed
           on header hover or whenever a selection exists. */}
@@ -518,7 +535,7 @@ function LoadingSkeleton() {
       className={GRID_COLS}
       style={columnTrackVars((key) => !DEFAULT_HIDDEN_COLUMNS.includes(key))}
     >
-      <ListGridHeader>
+      <ListGridHeader className={LIST_HEAD}>
         <span aria-hidden="true" />
         <ListGridHeaderCell>
           <Skeleton className="h-3 w-12" />
@@ -540,13 +557,16 @@ function LoadingSkeleton() {
         <span aria-hidden="true" />
       </ListGridHeader>
       {Array.from({ length: 5 }).map((_, i) => (
-        <ListGridRow key={i} className="hover:bg-transparent">
+        <ListGridRow
+          key={i}
+          className={cn(COLLECTION_ROW, ROW_HEIGHT_CLASS, "hover:bg-transparent")}
+        >
           <span aria-hidden="true" />
           <ListGridCell>
             <Skeleton className="h-3.5 w-40 max-w-full" />
           </ListGridCell>
           <ListGridCell>
-            <Skeleton className="h-5 w-14" />
+            <Skeleton className="h-4.5 w-14 rounded-full" />
           </ListGridCell>
           <ListGridCell className="hidden px-0 @2xl:flex" />
           <ListGridCell className="hidden gap-1.5 @2xl:flex">
@@ -787,15 +807,15 @@ export default function SkillsPage() {
       {supportingQueryDown && (
         <div
           role="status"
-          className="flex shrink-0 items-start gap-2 border-b bg-warning/10 px-6 py-2 text-caption text-muted-foreground"
+          className="mx-6 mb-1 flex shrink-0 items-center gap-2.5 rounded-lg bg-warning/12 px-3.5 py-2.5 text-label text-foreground animate-content-rise"
         >
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <AlertTriangle className="size-4 shrink-0 text-warning" />
           <span>{t(($) => $.page.supporting_data_warning)}</span>
         </div>
       )}
 
       {isLoading ? (
-        <div className="flex-1 overflow-y-auto @container">
+        <div className={cn("flex-1 overflow-y-auto @container", COLLECTION_TABLE_INSET)}>
           <LoadingSkeleton />
         </div>
       ) : showEmpty ? (
@@ -821,7 +841,10 @@ export default function SkillsPage() {
           />
           <div
             ref={listScrollRef}
-            className="min-h-0 flex-1 overflow-auto @container"
+            className={cn(
+              "min-h-0 flex-1 overflow-auto @container",
+              COLLECTION_TABLE_INSET,
+            )}
           >
           <ListGrid
             className={`${GRID_COLS} @2xl:min-w-[var(--lgc-minw)]`}
@@ -854,9 +877,12 @@ export default function SkillsPage() {
                 return (
               <ListGridRow
                 key={row.skill.id}
-                className={`cursor-pointer ${
-                  selectedIds.has(row.skill.id) ? "bg-accent/30" : ""
-                }`}
+                className={cn(
+                  COLLECTION_ROW,
+                  ROW_HEIGHT_CLASS,
+                  "cursor-pointer",
+                  selectedIds.has(row.skill.id) && COLLECTION_ROW_SELECTED,
+                )}
                 {...rowLink(paths.skillDetail(row.skill.id), row.skill.name)}
               >
                 <CheckboxCell
@@ -880,14 +906,14 @@ export default function SkillsPage() {
                   <ListGridCell className="hidden px-0 @2xl:flex" />
                 )}
                 {isColVisible("updated") ? (
-                  <ListGridCell className="hidden whitespace-nowrap text-caption tabular-nums text-muted-foreground @2xl:flex">
+                  <ListGridCell className="hidden whitespace-nowrap text-label tabular-nums text-muted-foreground @2xl:flex">
                     {timeAgo(row.skill.updated_at)}
                   </ListGridCell>
                 ) : (
                   <ListGridCell className="hidden px-0 @2xl:flex" />
                 )}
                 {isColVisible("created") ? (
-                  <ListGridCell className="hidden whitespace-nowrap text-caption tabular-nums text-muted-foreground @2xl:flex">
+                  <ListGridCell className="hidden whitespace-nowrap text-label tabular-nums text-muted-foreground @2xl:flex">
                     {timeAgo(row.skill.created_at)}
                   </ListGridCell>
                 ) : (

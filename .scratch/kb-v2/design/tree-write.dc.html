@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>让智能体在这里写一页</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f">
+  <dc-import name="read-default" hover="支付" plus-on="{{ true }}" hint-size="1440px,900px"></dc-import>
+  <div class="menu" role="dialog" aria-label="让智能体在这里写一页" style="top: 262px; left: 530px; width: 360px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+    <div style="font-size: 13px"><span class="muted">在</span> 支付 <span class="muted">下写一页</span></div>
+    <label for="tw" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">要写什么</label>
+    <textarea id="tw" class="field focus" rows="3">回调人工处理的操作步骤：谁处理、在哪个后台、处理完怎么通知渠道。</textarea>
+    <div style="display: flex; justify-content: flex-end; gap: 8px"><button class="btn btn-g">取消</button><button class="btn btn-p">交给智能体</button></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

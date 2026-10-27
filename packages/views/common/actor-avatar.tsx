@@ -218,7 +218,7 @@ function ActorAvatarProfileLink({
     <span
       role="link"
       tabIndex={-1}
-      className="inline-flex cursor-pointer rounded-full"
+      className="inline-flex cursor-pointer"
       onClick={navigate}
       onAuxClick={(event) => {
         if (event.defaultPrevented || event.button !== 1) return;
@@ -291,7 +291,7 @@ function AgentAvatarHoverCard({
       <AgentProfileCard agentId={agentId} />
     );
   return (
-    <ActorAvatarHoverCardShell content={content}>
+    <ActorAvatarHoverCardShell content={content} square>
       {children}
     </ActorAvatarHoverCardShell>
   );
@@ -319,7 +319,7 @@ function SquadAvatarHoverCard({
   children: React.ReactNode;
 }) {
   return (
-    <ActorAvatarHoverCardShell content={<SquadProfileCard squadId={squadId} />}>
+    <ActorAvatarHoverCardShell content={<SquadProfileCard squadId={squadId} />} square>
       {children}
     </ActorAvatarHoverCardShell>
   );
@@ -342,9 +342,11 @@ function SquadAvatarHoverCard({
 // subtree, and its queries, stay unmounted until open).
 function ActorAvatarHoverCardShell({
   content,
+  square = false,
   children,
 }: {
   content: React.ReactNode;
+  square?: boolean;
   children: React.ReactNode;
 }) {
   const triggerRef = useRef<HTMLSpanElement>(null);
@@ -358,8 +360,9 @@ function ActorAvatarHoverCardShell({
   }, []);
 
   const tabIndex = standalone ? 0 : -1;
+  // The focus ring follows the avatar: agents and squads are rounded squares.
   const className = standalone
-    ? "inline-flex cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    ? `inline-flex cursor-pointer ${square ? "rounded-[28%]" : "rounded-full"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`
     : "inline-flex cursor-pointer";
 
   return (

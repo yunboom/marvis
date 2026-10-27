@@ -48,6 +48,7 @@ describe("ChatQueue", () => {
     expect(screen.getByText("First follow-up")).toBeInTheDocument();
     expect(screen.getByText("Queued message")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Steer" })).toHaveLength(2);
+    expect(screen.getAllByLabelText("Edit queued message")).toHaveLength(2);
     expect(screen.getAllByLabelText("Remove queued message")).toHaveLength(2);
     expect(screen.getAllByLabelText("More queue actions")).toHaveLength(2);
     expect(screen.queryByRole("button", { name: "Clear all" })).not.toBeInTheDocument();
@@ -56,12 +57,11 @@ describe("ChatQueue", () => {
     const queue = container.querySelector('[data-slot="chat-queue"]');
     // Tucked stack, owned entirely by the queue: it slides under the composer
     // (negative margin + z-0) while the composer's chrome stays untouched.
-    expect(shell).toHaveClass("z-0", "-mb-3");
+    expect(shell).toHaveClass("z-0", "-mb-3.5");
     expect(queue).toHaveClass(
-      "rounded-lg",
-      "border-surface-border",
-      "bg-surface",
-      "pb-4",
+      "rounded-t-[18px]",
+      "bg-muted",
+      "pb-4.5",
     );
     expect(container.querySelectorAll('[data-slot="chat-queue-row"]')).toHaveLength(2);
     expect(container.querySelectorAll('[data-slot="chat-queue-item-icon"]')).toHaveLength(2);
@@ -73,8 +73,7 @@ describe("ChatQueue", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Steer" })[1]!);
     await waitFor(() => expect(actions.onSendNow).toHaveBeenCalledWith("task-3"));
 
-    fireEvent.click(screen.getAllByLabelText("More queue actions")[0]!);
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Edit queued message" }));
+    fireEvent.click(screen.getAllByLabelText("Edit queued message")[0]!);
     await waitFor(() => expect(actions.onEdit).toHaveBeenCalledWith("task-2"));
 
     fireEvent.click(screen.getAllByLabelText("Remove queued message")[1]!);

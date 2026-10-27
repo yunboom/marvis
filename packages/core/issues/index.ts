@@ -19,4 +19,5 @@ export {
   type StatusFilterColumnsResult,
   normalizeStatusPatch,
 } from "./status-category";
+export * from "./board-status-columns";
 export * from "./wakeups";

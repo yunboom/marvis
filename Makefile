@@ -1,4 +1,4 @@
-.PHONY: help makehelp dev server daemon cli marvis build test migrate-up migrate-down sqlc seed clean setup start stop check worktree-env setup-main start-main stop-main check-main setup-worktree start-worktree stop-worktree check-worktree remove-worktree db-up db-down db-drop db-reset selfhost selfhost-build selfhost-stop up down status list destroy gc env-exec api-dev web-dev desktop-dev
+.PHONY: help makehelp dev server daemon cli marvis build standalone-bundle test migrate-up migrate-down sqlc schema seed clean setup start stop check worktree-env setup-main start-main stop-main check-main setup-worktree start-worktree stop-worktree check-worktree remove-worktree db-up db-down db-drop db-reset selfhost selfhost-build selfhost-stop up down status list destroy gc env-exec api-dev web-dev desktop-dev
 
 MAIN_ENV_FILE ?= .env
 WORKTREE_ENV_FILE ?= .env.worktree
@@ -12,7 +12,7 @@ POSTGRES_DB ?= marvis
 POSTGRES_USER ?= marvis
 POSTGRES_PASSWORD ?= marvis
 POSTGRES_PORT ?= 5432
-PORT := $(or $(BACKEND_PORT),$(API_PORT),$(SERVER_PORT),$(PORT),8080)
+PORT := $(or $(BACKEND_PORT),$(API_PORT),$(SERVER_PORT),$(PORT),13840)
 ifeq ($(origin MARVIS_PUBLIC_URL), undefined)
 MARVIS_PUBLIC_URL := http://localhost:$(PORT)
 endif
@@ -342,6 +342,9 @@ build: ## Build the server, CLI, and migrate binaries into server/bin
 	cd server && go build -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildCommit=$(BUILD_COMMIT) -X main.date=$(DATE)" -o bin/marvis$(EXE) ./cmd/marvis
 	cd server && go build -o bin/migrate$(EXE) ./cmd/migrate
 
+standalone-bundle: ## Build the desktop standalone-mode server bundle (server, migrate, migrations) into server/dist
+	bash scripts/build-standalone-bundle.sh $(or $(GOOS),$(shell go env GOOS)) $(or $(GOARCH),$(shell go env GOARCH)) $(VERSION) server/dist
+
 test: ## Run Go tests after ensuring the target DB exists and migrations are applied
 	$(REQUIRE_ENV)
 	@bash scripts/ensure-postgres.sh "$(ENV_FILE)"
@@ -355,6 +358,11 @@ migrate-up: ## Create the target DB if needed, then apply database migrations
 	$(REQUIRE_ENV)
 	@bash scripts/ensure-postgres.sh "$(ENV_FILE)"
 	cd server && go run ./cmd/migrate up
+
+schema: ## Regenerate server/schema.sql, the full schema after all migrations
+	$(REQUIRE_ENV)
+	@bash scripts/ensure-postgres.sh "$(ENV_FILE)"
+	@bash scripts/dump-schema.sh "$(ENV_FILE)"
 
 migrate-down: ## Create the target DB if needed, then roll back database migrations
 	$(REQUIRE_ENV)

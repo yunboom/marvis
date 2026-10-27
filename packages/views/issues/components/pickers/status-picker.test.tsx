@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { defaultStatusGroup } from "@marvis/core/issues/config";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
 import type { IssueStatusEntry, IssueWorkflow } from "@marvis/core/types";
@@ -56,6 +57,7 @@ function entry(overrides: Partial<IssueStatusEntry>): IssueStatusEntry {
     created_at: "",
     updated_at: "",
     ...overrides,
+    status_group: overrides.status_group ?? defaultStatusGroup(overrides.key ?? "custom", overrides.category ?? "started"),
   };
 }
 
@@ -96,7 +98,7 @@ afterEach(() => {
 describe("StatusPicker trigger color", () => {
   // The bug: the trigger read the catalog entry's raw color while the list read
   // the resolved one, so a built-in rendered as the server's seeded #22c55e in
-  // one and as the `text-success` token in the other — the same status in two
+  // one and as the `text-status-review` token in the other — the same status in two
   // visibly different greens, side by side. (MUL-6440)
   it("paints a built-in from the token, exactly like its row in the list", () => {
     catalogEntries = [IN_REVIEW, { ...QA, icon: "slash" }];
@@ -111,8 +113,8 @@ describe("StatusPicker trigger color", () => {
     // the token and produces the two-greens mismatch.
     expect(trigger?.getAttribute("style")).toBeNull();
     expect(row?.getAttribute("style")).toBeNull();
-    expect(trigger?.getAttribute("class")).toContain("text-success");
-    expect(row?.getAttribute("class")).toContain("text-success");
+    expect(trigger?.getAttribute("class")).toContain("text-status-review");
+    expect(row?.getAttribute("class")).toContain("text-status-review");
   });
 
   // The other half of the same rule: a CUSTOM status has no token to fall back
@@ -299,8 +301,9 @@ describe("StatusPicker on an issue outside any project (MUL-8121)", () => {
     catalogEntries = [TODO, IN_REVIEW, QA, MERGED, DONE];
     workspaceDefault = DEFAULT;
     renderWithI18n(<StatusPicker status="todo" onUpdate={() => {}} open onOpenChange={() => {}} />);
+    // Group order: In Review waits on a person, after the working statuses.
     // Cancelled is the built-in stand-in for a category the fixture omits.
-    expect(rows()).toEqual(["Todo", "In Review", "QA", "Merged", "Done", "Cancelled"]);
+    expect(rows()).toEqual(["Todo", "QA", "Merged", "In Review", "Done", "Cancelled"]);
   });
 
   it("offers the whole catalog while Default is unknown", () => {
@@ -308,7 +311,8 @@ describe("StatusPicker on an issue outside any project (MUL-8121)", () => {
     renderWithI18n(
       <StatusPicker status="todo" projectId={null} onUpdate={() => {}} open onOpenChange={() => {}} />,
     );
+    // Group order: In Review waits on a person, after the working statuses.
     // Cancelled is the built-in stand-in for a category the fixture omits.
-    expect(rows()).toEqual(["Todo", "In Review", "QA", "Merged", "Done", "Cancelled"]);
+    expect(rows()).toEqual(["Todo", "QA", "Merged", "In Review", "Done", "Cancelled"]);
   });
 });

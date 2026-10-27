@@ -1,7 +1,10 @@
+import type { SelectedServer } from "./server-discovery";
+
 export interface RuntimeConfig {
   schemaVersion: 1;
   apiUrl: string;
   wsUrl: string;
+  // 网页端地址；空串表示服务器没有网页端。
   appUrl: string;
 }
 
@@ -9,21 +12,18 @@ export interface RuntimeConfigError {
   message: string;
 }
 
+// unconfigured：还没有选择服务器（既没有 server.json 也没有 desktop.json），
+// 由界面引导用户连接，suggestedAddress 是预填进地址栏的地址（开发模式的后端）；
+// error：配置存在但不合法，必须阻断而不是静默回退。
 export type RuntimeConfigResult =
   | { ok: true; config: RuntimeConfig }
-  | { ok: false; error: RuntimeConfigError };
-
-export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
-  schemaVersion: 1,
-  apiUrl: "https://api.marvis.ai",
-  wsUrl: "wss://api.marvis.ai/ws",
-  appUrl: "https://marvis.ai",
-});
+  | { ok: false; error: RuntimeConfigError }
+  | { ok: false; unconfigured: true; suggestedAddress?: string };
 
 const LOCAL_DEV_RUNTIME_CONFIG: RuntimeConfig = Object.freeze({
   schemaVersion: 1,
-  apiUrl: "http://localhost:8080",
-  wsUrl: "ws://localhost:8080/ws",
+  apiUrl: "http://localhost:13840",
+  wsUrl: "ws://localhost:13840/ws",
   appUrl: "http://localhost:3000",
 });
 
@@ -47,6 +47,16 @@ export function runtimeConfigFromDevEnv(env: RuntimeConfigEnv): RuntimeConfig {
     appUrl: env.appUrl
       ? normalizeHttpUrl(env.appUrl, "VITE_APP_URL")
       : deriveDevAppUrl(apiUrl),
+  };
+}
+
+// 由用户选定的服务器生成启动配置：只连后端，网页地址可为空串。
+export function runtimeConfigFromServer(server: SelectedServer): RuntimeConfig {
+  return {
+    schemaVersion: 1,
+    apiUrl: server.url,
+    wsUrl: deriveWsUrl(server.url),
+    appUrl: server.appUrl,
   };
 }
 
@@ -110,8 +120,8 @@ export function deriveAppUrl(apiUrl: string): string {
   return trimTrailingSlash(url.toString());
 }
 
-// Dev variant: when the api host is the local backend (`localhost:8080` /
-// `127.0.0.1:8080`), the renderer is served from a different port (3000),
+// Dev variant: when the api host is the local backend (`localhost:13840` /
+// `127.0.0.1:13840`), the renderer is served from a different port (3000),
 // so deriving by host alone is wrong. Fall back to the local dev web URL
 // in that case; for any non-local host (e.g. a remote test environment),
 // trust the production-style derivation so `apiUrl=https://api.test.x`

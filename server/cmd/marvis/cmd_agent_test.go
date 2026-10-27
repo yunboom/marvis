@@ -290,7 +290,7 @@ func TestNewAPIClient_WorkdirParentEscapeFailsClosed(t *testing.T) {
 	t.Setenv("MARVIS_TASK_ID", "")
 	t.Setenv("MARVIS_DAEMON_PORT", "")
 	t.Setenv("MARVIS_TOKEN", "")
-	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 
 	if got := resolveToken(testCmd()); got != "" {
 		t.Fatalf("resolveToken() = %q, want empty (config PAT must not leak into an escaped daemon subprocess)", got)
@@ -312,7 +312,7 @@ func TestNewAPIClient_LeftoverMarkerActionableError(t *testing.T) {
 	t.Setenv("MARVIS_TASK_ID", "")
 	t.Setenv("MARVIS_DAEMON_PORT", "")
 	t.Setenv("MARVIS_TOKEN", "")
-	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 
 	if _, err := newAPIClient(testCmd()); err == nil {
 		t.Fatal("newAPIClient(): expected error for leftover daemon-task marker, got nil")
@@ -326,7 +326,7 @@ func TestNewAPIClient_LeftoverMarkerActionableError(t *testing.T) {
 // TestResolveWorkspaceID_AgentContextSkipsConfig is a regression test for
 // the cross-workspace contamination bug (#1235). Inside a daemon-spawned
 // agent task (MARVIS_AGENT_ID / MARVIS_TASK_ID set), the CLI must NOT
-// silently read the user-global ~/.marvis-studio/config.json to recover a missing
+// silently read the user-global ~/.marvis/config.json to recover a missing
 // workspace — that fallback is how agent operations leaked into an
 // unrelated workspace when the daemon failed to inject the right value.
 //
@@ -449,7 +449,7 @@ func TestResolveToken_AgentContextSkipsConfig(t *testing.T) {
 		t.Setenv("MARVIS_AGENT_ID", "")
 		t.Setenv("MARVIS_TASK_ID", "")
 		t.Setenv("MARVIS_DAEMON_PORT", "")
-		t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+		t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 		t.Setenv("MARVIS_TOKEN", "")
 		t.Setenv("MARVIS_DAEMON_PORT", "")
 
@@ -473,7 +473,7 @@ func TestResolveToken_AgentContextSkipsConfig(t *testing.T) {
 		t.Setenv("MARVIS_AGENT_ID", "")
 		t.Setenv("MARVIS_TASK_ID", "")
 		t.Setenv("MARVIS_DAEMON_PORT", "27182")
-		t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+		t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 		t.Setenv("MARVIS_TOKEN", "")
 
 		if got := resolveToken(testCmd()); got != "" {
@@ -486,7 +486,7 @@ func TestResolveToken_AgentContextSkipsConfig(t *testing.T) {
 		t.Setenv("MARVIS_AGENT_ID", "")
 		t.Setenv("MARVIS_TASK_ID", "")
 		t.Setenv("MARVIS_DAEMON_PORT", "")
-		t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+		t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 		t.Setenv("MARVIS_TOKEN", "")
 
 		if got := resolveToken(testCmd()); got != "" {
@@ -598,7 +598,7 @@ func TestResolveToken_AgentContextSkipsConfig(t *testing.T) {
 }
 
 func TestNewAPIClient_AgentContextRequiresTaskToken(t *testing.T) {
-	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 	t.Setenv("MARVIS_WORKSPACE_ID", "workspace-123")
 	t.Setenv("MARVIS_AGENT_ID", "agent-123")
 	t.Setenv("MARVIS_TASK_ID", "task-456")
@@ -643,7 +643,7 @@ func TestNewAPIClient_AgentContextRequiresTaskToken(t *testing.T) {
 func TestNewAPIClient_DaemonPortRequiresTaskToken(t *testing.T) {
 	t.Chdir(t.TempDir())
 	redirectTestHome(t, t.TempDir())
-	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 	t.Setenv("MARVIS_WORKSPACE_ID", "workspace-123")
 	t.Setenv("MARVIS_AGENT_ID", "")
 	t.Setenv("MARVIS_TASK_ID", "")
@@ -668,7 +668,7 @@ func TestNewAPIClient_DaemonPortRequiresTaskToken(t *testing.T) {
 
 func TestNewAPIClient_WorkdirMarkerRequiresTaskToken(t *testing.T) {
 	redirectTestHome(t, t.TempDir())
-	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:8080")
+	t.Setenv("MARVIS_SERVER_URL", "http://127.0.0.1:13840")
 	t.Setenv("MARVIS_AGENT_ID", "")
 	t.Setenv("MARVIS_TASK_ID", "")
 	t.Setenv("MARVIS_DAEMON_PORT", "")

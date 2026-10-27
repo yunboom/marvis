@@ -212,7 +212,7 @@ export function SquadDetailPage() {
         actions={
           canManage ? (
             <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setConfirmArchive(true)}>
-              <Trash2 className="size-3.5 mr-1" />
+              <Trash2 className="size-3.5" />
               {t(($) => $.inspector.archive_button)}
             </Button>
           ) : null
@@ -304,8 +304,8 @@ function SquadDetailSkeleton() {
         <Skeleton className="h-5 w-48" />
       </PageHeader>
       <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto p-3 md:grid md:grid-cols-[280px_minmax(0,1fr)] md:gap-4 md:overflow-hidden md:p-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="flex flex-col gap-4 rounded-lg border p-5">
-          <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="flex flex-col gap-4 rounded-xl border border-border p-5">
+          <Skeleton className="size-18 rounded-full" />
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-3 w-full" />
           <div className="space-y-2">
@@ -314,7 +314,7 @@ function SquadDetailSkeleton() {
             <Skeleton className="h-3 w-1/2" />
           </div>
         </div>
-        <div className="flex flex-col gap-4 rounded-lg border p-6">
+        <div className="flex flex-col gap-4 rounded-xl border border-border p-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-24" />
@@ -351,7 +351,7 @@ function SquadHeaderAvatar({ squad, initials }: { squad: Squad; initials: string
 // affordance.
 function SquadStaticAvatar({ squad, initials }: { squad: Squad; initials: string }) {
   return (
-    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-muted">
+    <div className="size-18 shrink-0 overflow-hidden rounded-full bg-muted">
       {squad.avatar_url ? (
         <ActorAvatarBase
           name={squad.name}
@@ -393,7 +393,7 @@ function SquadNameEditor({
         <button
           type="button"
           {...triggerProps}
-          className="group -mx-1 inline-flex items-center gap-1.5 self-start rounded-xs px-1 text-left text-title font-semibold leading-tight transition-colors hover:bg-accent/50"
+          className="group -mx-1.5 inline-flex items-center gap-1.5 self-start rounded-row px-1.5 text-left text-title font-semibold leading-tight transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)"
         >
           <span>{value}</span>
           <Pencil className="h-3.5 w-3.5 shrink-0 text-transparent transition-colors group-hover:text-muted-foreground" />
@@ -550,7 +550,7 @@ function AddMemberDialog({
           <div>
             <Label className="text-caption text-muted-foreground">{t(($) => $.add_member_dialog.label_member)}</Label>
             <Popover open={pickerOpen} onOpenChange={(v) => { setPickerOpen(v); if (!v) setPickerFilter(""); }}>
-              <PopoverTrigger className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5 mt-1 text-left text-body transition-colors hover:bg-muted">
+              <PopoverTrigger className="mt-1 flex w-full min-w-0 items-center gap-3 rounded-lg bg-field px-3 py-2.5 text-left text-body transition-colors duration-(--motion-fast) ease-out hover:bg-field-hover hover:duration-(--motion-instant)">
                 {target ? (
                   <ActorAvatar actorType={target.type} actorId={target.id} size="sm" />
                 ) : (
@@ -569,7 +569,7 @@ function AddMemberDialog({
                 <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${pickerOpen ? "rotate-180" : ""}`} />
               </PopoverTrigger>
               <PopoverContent align="start" className="w-[var(--anchor-width)] p-0">
-                <div className="px-2 py-1.5 border-b">
+                <div className="border-b border-border px-2 py-1.5">
                   <input
                     autoFocus
                     type="text"
@@ -743,9 +743,9 @@ function SquadDetailInspector({
     .slice(0, 2);
 
   return (
-    <aside className="flex w-full flex-col rounded-lg border bg-background md:h-full md:min-h-0 md:overflow-y-auto">
+    <aside className="flex w-full flex-col rounded-xl border border-border bg-background md:h-full md:min-h-0 md:overflow-y-auto">
       {/* Identity */}
-      <div className="flex flex-col gap-3 border-b px-5 pb-5 pt-5">
+      <div className="flex flex-col gap-3 border-b border-border px-5 pb-5 pt-5">
         {canManage ? (
           <>
             <AvatarUploadControl
@@ -783,8 +783,8 @@ function SquadDetailInspector({
       </div>
 
       {/* Details — read-only */}
-      <div className="border-b px-5 py-4">
-        <div className="mb-1 -mx-2 px-2 text-micro font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="border-b border-border px-5 py-4">
+        <div className="mb-1.5 -mx-2 px-2 text-caption font-medium text-muted-foreground">
           {t(($) => $.inspector.details_section)}
         </div>
         <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
@@ -818,8 +818,8 @@ function SquadDetailInspector({
 function InspectorRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <>
-      <div className="px-2 py-1 text-caption text-muted-foreground">{label}</div>
-      <div className="min-w-0 px-2 py-1 text-caption">{children}</div>
+      <div className="px-2 py-1 text-label text-muted-foreground">{label}</div>
+      <div className="min-w-0 px-2 py-1 text-label">{children}</div>
     </>
   );
 }
@@ -842,7 +842,7 @@ function SquadDescriptionEditor({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group -mx-1 inline-flex items-start gap-1.5 self-start rounded-xs px-1 text-left text-caption leading-relaxed transition-colors hover:bg-accent/50"
+        className="group -mx-1.5 inline-flex items-start gap-1.5 self-start rounded-row px-1.5 text-left text-label leading-relaxed transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)"
       >
         {value ? (
           <span className="text-muted-foreground">{value}</span>
@@ -917,7 +917,7 @@ function SquadDescriptionEditorBody({
             void commit();
           }
         }}
-        className="w-full resize-none rounded-md border bg-transparent px-3 py-2 text-body outline-none focus-visible:border-input"
+        className="w-full resize-none rounded-lg border-0 bg-field px-3 py-2 text-body outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-field-hover focus-visible:bg-field-hover"
       />
       <DialogFooter>
         <Button variant="ghost" size="sm" onClick={onClose} disabled={saving}>{t(($) => $.description_dialog.cancel)}</Button>
@@ -996,14 +996,14 @@ function SquadOverviewPane({
   };
 
   return (
-    <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-lg border bg-background md:h-full md:min-h-0">
-      <div className="flex shrink-0 items-center gap-0 overflow-x-auto border-b px-2 md:px-4">
+    <div className="flex min-h-[60vh] flex-col overflow-hidden rounded-xl border border-border bg-background md:h-full md:min-h-0">
+      <div className="flex shrink-0 items-center gap-0 overflow-x-auto border-b border-border px-2 md:px-4">
         {squadDetailTabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => requestTabChange(tab.id)}
-            className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-caption font-medium transition-colors ${
+            className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-label font-medium transition-colors duration-(--motion-fast) ease-out ${
               activeTab === tab.id
                 ? "border-foreground text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -1134,12 +1134,12 @@ function SquadMembersTab({
                 render={<AppLink href={createAgentHref} />}
                 nativeButton={false}
               >
-                <Plus className="size-3.5 mr-1.5" />
+                <Plus className="size-3.5" />
                 {t(($) => $.members_tab.create_agent_button)}
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={onAddMemberClick}>
-              <Plus className="size-3.5 mr-1.5" />
+              <Plus className="size-3.5" />
               {t(($) => $.members_tab.add_member_button)}
             </Button>
           </div>
@@ -1170,7 +1170,7 @@ function SquadMembersTab({
           const showLastActive =
             m.member_type === "agent" && statusValue && statusValue !== "working" && status?.last_active_at;
           return (
-            <div key={m.id} className="group flex items-start gap-3 rounded-lg border p-3">
+            <div key={m.id} className="group flex items-start gap-3 rounded-xl border border-border p-3 transition-colors duration-(--motion-fast) ease-out hover:bg-accent/60 hover:duration-(--motion-instant)">
               <ActorAvatar
                 actorType={m.member_type}
                 actorId={m.member_id}
@@ -1242,7 +1242,7 @@ function SquadMembersTab({
                     render={
                       <AppLink
                         href={p.agentDetail(m.member_id)}
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                        className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-surface-selected hover:text-foreground"
                         aria-label={t(($) => $.members_tab.view_agent_tooltip)}
                       >
                         <ArrowUpRight className="size-3.5" />
@@ -1261,7 +1261,7 @@ function SquadMembersTab({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-muted-foreground hover:text-amber-600 h-8 w-8 p-0"
+                        className="size-8 p-0 text-muted-foreground hover:bg-surface-selected hover:text-amber-600"
                         onClick={() => onSetLeader(m.member_id)}
                         disabled={setLeaderPending}
                         aria-label={t(($) => $.members_tab.make_leader_tooltip)}
@@ -1282,7 +1282,7 @@ function SquadMembersTab({
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
+                        className="size-8 p-0 text-muted-foreground hover:bg-surface-selected hover:text-destructive"
                         onClick={() => onRemoveMember(m)}
                         aria-label={t(($) => $.members_tab.remove_member_tooltip)}
                       >
@@ -1355,7 +1355,7 @@ function SquadInstructionsTab({
           way to present it read-only (see editor/content-editor.tsx). */}
       <div
         aria-disabled={!canManage}
-        className={`flex-1 min-h-0 overflow-y-auto rounded-md border bg-background px-4 py-3 transition-colors ${
+        className={`flex-1 min-h-0 overflow-y-auto rounded-xl border border-border bg-background px-4 py-3 transition-colors duration-(--motion-fast) ease-out ${
           canManage ? "focus-within:border-input" : "pointer-events-none"
         }`}
       >

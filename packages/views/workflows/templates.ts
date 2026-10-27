@@ -4,11 +4,12 @@ export type WorkflowTemplateId = "delivery" | "content" | "community";
  * Starting points for a new workflow (MUL-7420). Each lists only its middle
  * columns; `status` names a status in the library, `name` creates one (or
  * reuses a status of that name) when the workflow is saved. Names are i18n
- * keys under `workflows.templates.<id>.statuses`.
+ * keys under `workflows.templates.<id>.statuses`. A created status takes its
+ * category's default group unless the column names one.
  */
 export const WORKFLOW_TEMPLATES: {
   id: WorkflowTemplateId;
-  columns: ({ status: string } | { name: string; category: "unstarted" | "started" })[];
+  columns: ({ status: string } | { name: string; category: "unstarted" | "started"; status_group?: "working" | "needs_attention" })[];
 }[] = [
   { id: "delivery", columns: [{ status: "in_progress" }, { status: "in_review" }, { name: "qa", category: "started" }] },
   {
@@ -24,7 +25,7 @@ export const WORKFLOW_TEMPLATES: {
     columns: [
       { name: "triage", category: "unstarted" },
       { name: "replying", category: "started" },
-      { name: "waiting", category: "started" },
+      { name: "waiting", category: "started", status_group: "needs_attention" },
     ],
   },
 ];

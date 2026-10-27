@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <WorkspaceDocumentTitle />
       </Suspense>
       <DashboardLayout
-        loadingIndicator={<MarvisIcon className="size-6" />}
+        loadingIndicator={<MarvisIcon className="size-12" />}
         searchSlot={<SearchTrigger />}
         extra={
           <>

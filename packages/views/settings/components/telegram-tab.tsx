@@ -35,7 +35,7 @@ import { telegramInstallationsOptions, telegramKeys } from "@marvis/core/telegra
 import { api } from "@marvis/core/api";
 import type { TelegramInstallation } from "@marvis/core/types";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { docsLocalePrefix } from "../../common/docs-locale";
+import { DOCS_LINKS_ENABLED, docsLocalePrefix } from "../../common/docs-locale";
 import { openExternal } from "../../platform";
 import { useLocale, useT } from "../../i18n";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
@@ -367,15 +367,17 @@ export function TelegramAgentBindButton({
             {t(($) => $.telegram.connect_dialog_description)}
           </p>
 
-          <button
-            type="button"
-            onClick={() => openExternal(telegramDocsUrl(i18n.language))}
-            className="inline-flex w-fit items-center gap-2 text-body font-medium text-primary underline-offset-2 hover:underline"
-            data-testid="telegram-docs-link"
-          >
-            <ExternalLink className="h-4 w-4" />
-            {t(($) => $.telegram.connect_docs_link)}
-          </button>
+          {DOCS_LINKS_ENABLED && (
+            <button
+              type="button"
+              onClick={() => openExternal(telegramDocsUrl(i18n.language))}
+              className="inline-flex w-fit items-center gap-2 text-body font-medium text-primary underline-offset-2 hover:underline"
+              data-testid="telegram-docs-link"
+            >
+              <ExternalLink className="h-4 w-4" />
+              {t(($) => $.telegram.connect_docs_link)}
+            </button>
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="telegram-bot-token">

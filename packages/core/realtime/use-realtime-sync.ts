@@ -11,6 +11,15 @@ import { clearWorkspaceStorage } from "../platform/storage-cleanup";
 import { defaultStorage } from "../platform/storage";
 import { getCurrentWsId, getCurrentSlug } from "../platform/workspace-storage";
 import { issueKeys } from "../issues/queries";
+import {
+  invalidateKbAnnotations,
+  invalidateKbDraft,
+  invalidateKbJobs,
+  invalidateKbMainline,
+  invalidateKbMergeRequests,
+  invalidateKbMrComments,
+  invalidateKbBase,
+} from "../kb/ws-updaters";
 import { projectKeys } from "../projects/queries";
 import { pinKeys } from "../pins/queries";
 import { autopilotKeys } from "../autopilots/queries";
@@ -122,6 +131,9 @@ import type {
   ChatSession,
   ChatSessionCreatedPayload,
   InvitationCreatedPayload,
+  KbDraftUpdatedPayload,
+  KbMrCommentedPayload,
+  KbBaseChangedPayload,
 } from "../types";
 
 const chatWsLogger = createLogger("chat.ws");
@@ -811,7 +823,12 @@ export function useRealtimeSync(
       },
       member: () => {
         const wsId = getCurrentWsId();
-        if (wsId) qc.invalidateQueries({ queryKey: workspaceKeys.members(wsId) });
+        if (!wsId) return;
+
+        qc.invalidateQueries({ queryKey: workspaceKeys.members(wsId) });
+        // 通过飞书邀请卡片加入会产生 member:added，邀请列表里的已加入人数和状态要跟着刷新；
+        // 没有打开过飞书邀请列表的客户端没有这条查询，失效是空操作。
+        qc.invalidateQueries({ queryKey: workspaceKeys.larkInvites(wsId) });
       },
       // workspace:updated is handled by the specific handler below
       // (compares prefixes to decide whether to also invalidate issues).
@@ -1335,6 +1352,60 @@ export function useRealtimeSync(
       }
     };
 
+    // Annotation lists, counts and page panels refetch; the payload only
+    // names what changed.
+    const unsubKbAnnotationChanged = ws.on("kb.annotation.changed", () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbAnnotations(qc, wsId);
+    });
+
+    // Job lists and job pages: a job started, linked a draft, was submitted
+    // or discarded.
+    const unsubKbJobUpdated = ws.on("kb.job.updated", () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbJobs(qc, wsId);
+    });
+
+    // A draft's writes, folded per second: the job page's diff and checks,
+    // and the tree and pages read through that draft.
+    const unsubKbDraftUpdated = ws.on("kb.draft.updated", (p) => {
+      const wsId = getCurrentWsId();
+      const { draft_id, page_ids } = p as KbDraftUpdatedPayload;
+      if (wsId && draft_id) invalidateKbDraft(qc, wsId, draft_id, Array.isArray(page_ids) ? page_ids : []);
+    });
+
+    const unsubKbMrCreated = ws.on("kb.mr.created", () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbMergeRequests(qc, wsId);
+    });
+
+    // Title, summary or risk changed: the lists and the review page.
+    const unsubKbMrUpdated = ws.on("kb.mr.updated", () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbMergeRequests(qc, wsId);
+    });
+
+    // A merge or close moves the mainline and the handled annotations.
+    const onKbMrSettled = () => {
+      const wsId = getCurrentWsId();
+      if (wsId) invalidateKbMainline(qc, wsId);
+    };
+    const unsubKbMrMerged = ws.on("kb.mr.merged", onKbMrSettled);
+    const unsubKbMrClosed = ws.on("kb.mr.closed", onKbMrSettled);
+
+    // Knowledge base list and details; a deletion drops everything under it.
+    const unsubKbBaseChanged = ws.on("kb.base.changed", (p) => {
+      const wsId = getCurrentWsId();
+      const { action } = p as KbBaseChangedPayload;
+      if (wsId) invalidateKbBase(qc, wsId, action === "deleted");
+    });
+
+    const unsubKbMrCommented = ws.on("kb.mr.commented", (p) => {
+      const wsId = getCurrentWsId();
+      const { number } = p as KbMrCommentedPayload;
+      if (wsId && number) invalidateKbMrComments(qc, wsId, number);
+    });
+
     const unsubWsUpdated = ws.on("workspace:updated", (p) => {
       applyWorkspaceUpdatedToCache(qc, p as WorkspaceUpdatedPayload);
     });
@@ -1598,6 +1669,10 @@ export function useRealtimeSync(
       // the aggregate on every turn (MUL-4159).
       // Assistant message just landed → has_unread may have flipped to true.
       invalidateSessionLists();
+      // A job's state and last reply come from its chat; only mounted job
+      // lists and pages refetch.
+      const kbWsId = getCurrentWsId();
+      if (kbWsId) invalidateKbJobs(qc, kbWsId);
     });
 
     // Late quick-actions supplement from the daemon's background suggestion
@@ -1843,6 +1918,15 @@ export function useRealtimeSync(
       unsubSubscriberAdded();
       unsubSubscriberRemoved();
       unsubWsUpdated();
+      unsubKbAnnotationChanged();
+      unsubKbJobUpdated();
+      unsubKbDraftUpdated();
+      unsubKbMrCreated();
+      unsubKbMrUpdated();
+      unsubKbMrMerged();
+      unsubKbMrClosed();
+      unsubKbMrCommented();
+      unsubKbBaseChanged();
       unsubWsDeleted();
       unsubMemberRemoved();
       unsubMemberAdded();

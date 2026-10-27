@@ -90,7 +90,7 @@ APP_ENV=production pnpm exec expo prebuild --clean --platform ios
 Use `development` or `staging` instead for those variants, then run the usual
 build script. Keep normal development builds on the incremental prebuild path.
 For native validation, test a Release cold launch to sign-in, cold and warm
-`marvis-studio://` links, background/foreground transitions, and the Debug dev-client
+`marvis://` links, background/foreground transitions, and the Debug dev-client
 in each variant. Also open the image picker from profile, chat, and the issue
 editor, select an image, and confirm the upload completes. From the issue editor,
 also attach a document and confirm its picker dismisses and the upload completes.
@@ -102,7 +102,7 @@ Unit tests do not replace this device validation.
 
 ```bash
 cp apps/mobile/.env.example apps/mobile/.env.development.local
-# then edit EXPO_PUBLIC_API_URL inside it to your Mac's LAN IP, e.g. http://192.168.1.42:8080
+# then edit EXPO_PUBLIC_API_URL inside it to your Mac's LAN IP, e.g. http://192.168.1.42:13840
 ```
 
 If your Apple ID isn't on the Marvis Apple Developer team yet, also set `EXPO_BUNDLE_IDENTIFIER_DEV` to a reverse-domain you own (e.g. `com.yourname.marvis.dev`). For a personal production build, set `EXPO_BUNDLE_IDENTIFIER_PROD` in `.env.production.local`.

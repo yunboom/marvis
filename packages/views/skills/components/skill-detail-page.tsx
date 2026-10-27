@@ -68,6 +68,11 @@ import { cn } from "@marvis/ui/lib/utils";
 import { AppLink, useNavigation } from "../../navigation";
 import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
 import { PAGE_GUTTER, PAGE_RAIL } from "../../layout/page-header";
+import {
+  COLLECTION_BATCH_ACTION,
+  COLLECTION_BATCH_BAR,
+  COLLECTION_BATCH_DIVIDER,
+} from "../../layout/collection-page";
 import { useCanEditSkill } from "../hooks/use-can-edit-skill";
 import { useSkillPermissions } from "@marvis/core/permissions";
 import { CapabilityBanner } from "@marvis/ui/components/common/capability-banner";
@@ -308,7 +313,7 @@ function SkillIdentity({
   const sourceUrl = originSourceUrl(origin);
 
   return (
-    <div className="shrink-0 border-b py-3">
+    <div className="shrink-0 py-4">
       <div
         className={cn(
           PAGE_RAIL,
@@ -317,15 +322,15 @@ function SkillIdentity({
         )}
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground">
-            <SkillIcon className="h-4 w-4" aria-hidden="true" />
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-muted-foreground">
+            <SkillIcon className="size-4.5" aria-hidden="true" />
           </div>
-          <h1 className="min-w-0 truncate font-mono text-title font-semibold tracking-tight">
+          <h1 className="min-w-0 truncate font-mono text-title font-bold tracking-tight">
 
             {skill.name}
           </h1>
         </div>
-        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-caption text-muted-foreground sm:ml-auto">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-label text-muted-foreground sm:ml-auto">
           {originLabel && (
             <span className="inline-flex min-w-0 items-center gap-1.5">
               {/* Same three-way split as the list's Source column: runtime,
@@ -409,26 +414,26 @@ function UsedByList({ agents }: { agents: Agent[] }) {
   const { t } = useT("skills");
   if (agents.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed px-3 py-6 text-center text-caption text-muted-foreground">
+      <div className="rounded-xl bg-surface-sunken px-3 py-6 text-center text-label text-muted-foreground">
         {t(($) => $.detail.overview.used_by_empty)}
       </div>
     );
   }
   return (
-    <ul className="divide-y overflow-hidden rounded-lg border bg-card">
+    <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
       {agents.map((a) => (
-        <li key={a.id} className="flex items-center gap-2.5 px-3 py-2.5">
+        <li key={a.id} className="flex h-16 items-center gap-3 px-4">
           <ActorAvatar
             name={a.name}
             initials={a.name.slice(0, 2).toUpperCase()}
             avatarUrl={resolvePublicFileUrl(a.avatar_url)}
             isAgent
-            size="md"
+            size="xl"
           />
           <div className="min-w-0 flex-1">
             <div className="truncate text-body font-medium">{a.name}</div>
             {a.description && (
-              <div className="truncate text-caption text-muted-foreground">
+              <div className="mt-0.5 truncate text-label text-muted-foreground">
                 {a.description}
               </div>
             )}
@@ -466,7 +471,7 @@ function OverviewTab({
     <div className={cn(PAGE_RAIL, PAGE_GUTTER, "py-4 sm:py-6 md:py-8")}>
       <div className="w-full max-w-3xl">
         <section>
-          <h2 className="text-title-sm font-medium">{t(($) => $.detail.overview.properties)}</h2>
+          <h2 className="text-title-sm font-semibold">{t(($) => $.detail.overview.properties)}</h2>
           <details className="mt-1 text-caption text-muted-foreground">
             <summary className="cursor-pointer rounded-sm py-2 focus-visible:outline-2 focus-visible:outline-ring">
               {t(($) => $.detail.overview.properties_help)}
@@ -521,16 +526,16 @@ function OverviewTab({
 
         <section className="mt-10">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="min-w-0 text-title-sm font-medium">
+            <h2 className="min-w-0 text-title-sm font-semibold">
               {t(($) => $.detail.overview.used_by, { count: skillAgents.length })}
             </h2>
             <Button
               variant="outline"
-              size="xs"
-              className="shrink-0 gap-1"
+              size="sm"
+              className="shrink-0"
               onClick={onAddToAgents}
             >
-              <UserPlus className="h-3 w-3" />
+              <UserPlus className="size-3.5" />
               {t(($) => $.actions.add_to_agent)}
             </Button>
           </div>
@@ -539,7 +544,7 @@ function OverviewTab({
           </div>
         </section>
 
-        <p className="mt-10 rounded-lg bg-muted px-3 py-2.5 text-caption leading-relaxed text-muted-foreground">
+        <p className="mt-10 rounded-lg bg-surface-sunken px-3.5 py-2.5 text-label leading-relaxed text-muted-foreground">
           {canEdit
             ? t(($) => $.detail.overview.permissions_owner)
             : creatorName
@@ -617,11 +622,11 @@ function FilesTab({
         aria-orientation="vertical"
         aria-label={t(($) => $.detail.files.list_aria)}
         className={cn(
-          "shrink-0 border-b border-surface-border py-3 md:w-52 md:overflow-y-auto md:border-b-0 md:border-r md:py-4",
+          "shrink-0 border-b border-border py-3 md:w-52 md:overflow-y-auto md:border-b-0 md:border-r md:py-4",
           PAGE_GUTTER,
         )}
       >
-        <p className="px-2.5 pb-1 text-micro font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="px-2.5 pb-1 text-caption font-medium text-muted-foreground">
           {t(($) => $.detail.files.main)}
         </p>
         <FileTree
@@ -631,7 +636,7 @@ function FilesTab({
           onSelect={onSelectPath}
         />
 
-        <p className="px-2.5 pb-1 pt-3 text-micro font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="px-2.5 pb-1 pt-3 text-caption font-medium text-muted-foreground">
           {t(($) => $.detail.files.supporting, { count: supportingPaths.length })}
         </p>
         {supportingPaths.length > 0 ? (
@@ -643,7 +648,7 @@ function FilesTab({
           />
         ) : (
           !addingFile && (
-            <p className="px-2.5 py-1 text-caption text-muted-foreground">
+            <p className="px-2.5 py-1 text-label text-muted-foreground">
               {t(($) => $.detail.files.supporting_empty)}
             </p>
           )
@@ -662,7 +667,7 @@ function FilesTab({
               variant="ghost"
               size="xs"
               onClick={onStartAddFile}
-              className="mt-2 h-8 w-full justify-start px-2.5 text-muted-foreground"
+              className="mt-2 h-8 w-full justify-start rounded-row px-2.5 text-label font-normal text-muted-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
               {t(($) => $.detail.files.add_file)}
@@ -671,7 +676,7 @@ function FilesTab({
       </aside>
 
       <section className="flex min-h-[32rem] min-w-0 flex-1 flex-col md:min-h-0">
-        <div className="flex h-10 shrink-0 items-center gap-3 border-b px-3 sm:px-4">
+        <div className="flex h-11 shrink-0 items-center gap-3 border-b border-border px-3 sm:px-4">
           <span className="truncate font-mono text-caption text-muted-foreground">
             {selectedPath}
           </span>
@@ -685,7 +690,7 @@ function FilesTab({
               <div
                 role="group"
                 aria-label={t(($) => $.detail.files.mode_aria)}
-                className="flex items-center gap-0.5 rounded-md bg-muted p-0.5"
+                className="flex items-center gap-0.5 rounded-full bg-field p-0.75"
               >
                 {(["preview", "raw"] as const).map((value) => (
                   <button
@@ -694,9 +699,9 @@ function FilesTab({
                     aria-pressed={mode === value}
                     onClick={() => onModeChange(value)}
                     className={cn(
-                      "h-6 rounded-xs px-2 text-caption font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      "h-6.5 rounded-full px-3 text-label transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       mode === value
-                        ? "bg-surface text-foreground shadow-sm"
+                        ? "bg-surface font-medium text-foreground shadow-control dark:bg-white/12"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
@@ -1089,7 +1094,7 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
   if (isLoading) {
     return (
       <div className="flex flex-1 min-h-0 flex-col">
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-3 w-3 rounded-xs" />
           <Skeleton className="h-4 w-40" />
@@ -1106,10 +1111,10 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
   if (error || !skill) {
     return (
       <div className="flex flex-1 min-h-0 flex-col">
-        <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
           <Button
             variant="ghost"
-            size="xs"
+            size="sm"
             render={<AppLink href={paths.skills()} />}
             nativeButton={false}
           >
@@ -1117,14 +1122,16 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
           </Button>
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-          <AlertCircle className="h-8 w-8 text-faint-foreground" />
-          <p className="text-body font-medium">{t(($) => $.detail.not_found.title)}</p>
-          <p className="max-w-xs text-caption text-muted-foreground">
+          <span className="mb-1 flex size-12 items-center justify-center rounded-full bg-surface-sunken text-faint-foreground">
+            <AlertCircle className="size-6" aria-hidden="true" />
+          </span>
+          <p className="text-body-lg font-semibold">{t(($) => $.detail.not_found.title)}</p>
+          <p className="max-w-xs text-label text-muted-foreground">
             {error instanceof Error ? error.message : t(($) => $.detail.not_found.fallback)}
           </p>
           <AppLink
             href={paths.skills()}
-            className={`${buttonVariants({ variant: "outline", size: "xs" })} mt-2`}
+            className={`${buttonVariants({ variant: "outline", size: "sm" })} mt-2`}
           >
             {t(($) => $.detail.not_found.back)}
           </AppLink>
@@ -1167,8 +1174,8 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
         actions={
           <>
             {!canEdit && (
-              <span className="inline-flex items-center gap-1 text-caption text-muted-foreground">
-                <Lock className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1 text-label text-muted-foreground">
+                <Lock className="size-3.25" />
                 {t(($) => $.detail.read_only)}
               </span>
             )}
@@ -1178,11 +1185,10 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
                   render={
                     <Button
                       variant="outline"
-                      size="xs"
-                      className="gap-1"
+                      size="sm"
                       onClick={() => setConfirmRefresh(true)}
                     >
-                      <RotateCw className="h-3 w-3" />
+                      <RotateCw className="size-3.5" />
                       {t(($) => $.detail.refresh.button)}
                     </Button>
                   }
@@ -1194,11 +1200,10 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
             )}
             <Button
               variant="outline"
-              size="xs"
-              className="gap-1"
+              size="sm"
               onClick={() => setShowAddToAgents(true)}
             >
-              <UserPlus className="h-3 w-3" />
+              <UserPlus className="size-3.5" />
               {t(($) => $.actions.add_to_agent)}
             </Button>
             {canEdit && (
@@ -1236,10 +1241,10 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
       {supportingQueryDown && (
         <div
           role="status"
-          className="shrink-0 border-b bg-warning/10 py-2 text-caption text-muted-foreground"
+          className={cn(PAGE_RAIL, PAGE_GUTTER, "shrink-0 pt-3")}
         >
-          <div className={cn(PAGE_RAIL, PAGE_GUTTER, "flex items-start gap-2")}>
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <div className="flex items-center gap-2.5 rounded-lg bg-warning/12 px-3.5 py-2.5 text-label text-foreground animate-content-rise">
+            <AlertTriangle className="size-4 shrink-0 text-warning" />
             <span>{t(($) => $.detail.supporting_data_warning)}</span>
           </div>
         </div>
@@ -1254,7 +1259,7 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
       />
 
       <div
-        className="shrink-0 overflow-x-auto border-b"
+        className="shrink-0 overflow-x-auto border-b border-border"
         role="tablist"
         aria-label={t(($) => $.detail.tabs.aria)}
       >
@@ -1267,7 +1272,7 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
               aria-selected={activeView === tab.id}
               onClick={() => selectView(tab.id)}
               className={cn(
-                "relative shrink-0 py-3 text-body font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                "relative shrink-0 py-3 text-body font-medium transition-colors duration-(--motion-fast) ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                 activeView === tab.id
                   ? "text-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -1283,10 +1288,10 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
         <div
           role="status"
           aria-live="polite"
-          className="shrink-0 border-b border-warning/30 bg-warning/10 py-2 text-caption"
+          className={cn(PAGE_RAIL, PAGE_GUTTER, "shrink-0 pt-3")}
         >
-          <div className={cn(PAGE_RAIL, PAGE_GUTTER, "flex items-start gap-2")}>
-            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <div className="flex items-start gap-2.5 rounded-lg bg-warning/12 px-3.5 py-2.5 text-label animate-content-rise">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
             <div className="flex-1">
               <div className="font-medium text-foreground">
                 {t(($) => $.detail.conflict_banner.title)}
@@ -1347,19 +1352,21 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
         <div
           role="status"
           aria-live="polite"
-          className="absolute bottom-6 left-1/2 z-50 flex -translate-x-1/2 animate-in items-center gap-1 rounded-lg border bg-background px-2 py-1.5 fade-in slide-in-from-bottom-2 shadow-lg max-md:above-chat-launcher"
+          className={COLLECTION_BATCH_BAR}
         >
-          <div className="mr-1 flex items-center border-r pl-1 pr-2">
-            <span className="whitespace-nowrap text-caption text-muted-foreground">
+          <div className="flex items-center">
+            <span className="whitespace-nowrap text-label text-muted-foreground">
               {t(($) => $.detail.save_bar.changed_summary, {
                 parts: changedParts.join(" · "),
               })}
             </span>
           </div>
+          <span aria-hidden="true" className={COLLECTION_BATCH_DIVIDER} />
           <Button
             type="button"
             variant="ghost"
-            size="xs"
+            size="sm"
+            className={COLLECTION_BATCH_ACTION}
             onClick={handleDiscard}
             disabled={saving}
           >
@@ -1367,18 +1374,19 @@ export function SkillDetailPage({ skillId }: { skillId: string }) {
           </Button>
           <Button
             type="button"
-            size="xs"
+            size="sm"
+            className="h-8 rounded-full px-3 text-label"
             onClick={handleSave}
             disabled={saving || !name.trim()}
           >
             {saving ? (
               <>
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
                 {t(($) => $.detail.save_bar.saving)}
               </>
             ) : (
               <>
-                <Save className="h-3 w-3" />
+                <Save className="size-3.5" />
                 {t(($) => $.detail.save_bar.save)}
               </>
             )}

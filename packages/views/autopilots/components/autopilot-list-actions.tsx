@@ -34,8 +34,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
+import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
 import { useIntentNavigate } from "../../navigation";
+import {
+  COLLECTION_BATCH_ACTION,
+  COLLECTION_BATCH_BAR,
+  COLLECTION_BATCH_DIVIDER,
+} from "../../layout/collection-page";
 import { DeferredTooltip } from "@marvis/ui/components/common/deferred-tooltip";
 
 // Delete dialog — single row (kebab) and batch share one implementation.
@@ -169,7 +175,7 @@ export function AutopilotRowActions({ row }: { row: Autopilot }) {
                 <button
                   type="button"
                   aria-label={t(($) => $.actions.row_menu)}
-                  className="flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-accent-foreground group-hover/row:opacity-100 data-popup-open:bg-accent data-popup-open:opacity-100 data-popup-open:text-accent-foreground"
+                  className="flex size-7 items-center justify-center rounded-full text-muted-foreground opacity-0 transition-[opacity,background-color] duration-(--motion-fast) ease-out hover:bg-accent hover:text-accent-foreground hover:duration-(--motion-instant) group-hover/row:opacity-100 focus-visible:opacity-100 data-popup-open:bg-accent data-popup-open:opacity-100 data-popup-open:text-accent-foreground"
                 >
                   <MoreHorizontal className="size-4" />
                 </button>
@@ -244,30 +250,30 @@ export function AutopilotBatchToolbar({
     <>
       {/* Anchored to the page root (relative), NOT the viewport — see the
           skills batch toolbar for the rationale. */}
-      <div className="absolute bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-lg border bg-background px-2 py-1.5 shadow-lg max-md:above-chat-launcher">
-        <div className="mr-1 flex items-center gap-1.5 border-r pl-1 pr-2">
-          <span className="text-body font-medium">
-            {t(($) => $.actions.selected, { count: rows.length })}
-          </span>
-          <TooltipHint label={t(($) => $.actions.clear_selection)}>
-            <button
-              type="button"
-              aria-label={t(($) => $.actions.clear_selection)}
-              onClick={onClear}
-              className="rounded-xs p-0.5 transition-colors hover:bg-accent"
-            >
-              <X className="size-3.5 text-muted-foreground" />
-            </button>
-          </TooltipHint>
-        </div>
+      <div role="toolbar" className={COLLECTION_BATCH_BAR}>
+        <span className="whitespace-nowrap text-body font-medium">
+          {t(($) => $.actions.selected, { count: rows.length })}
+        </span>
+        <TooltipHint label={t(($) => $.actions.clear_selection)}>
+          <button
+            type="button"
+            aria-label={t(($) => $.actions.clear_selection)}
+            onClick={onClear}
+            className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground hover:duration-(--motion-instant)"
+          >
+            <X className="size-3.5" />
+          </button>
+        </TooltipHint>
+        <span aria-hidden="true" className={COLLECTION_BATCH_DIVIDER} />
 
         {anyActive && (
           <Button
             variant="ghost"
             size="sm"
+            className={COLLECTION_BATCH_ACTION}
             onClick={() => setStatus(rows, "paused")}
           >
-            <Pause className="mr-1 size-3.5" />
+            <Pause className="size-3.5" />
             {t(($) => $.actions.pause)}
           </Button>
         )}
@@ -275,19 +281,23 @@ export function AutopilotBatchToolbar({
           <Button
             variant="ghost"
             size="sm"
+            className={COLLECTION_BATCH_ACTION}
             onClick={() => setStatus(rows, "active")}
           >
-            <Play className="mr-1 size-3.5" />
+            <Play className="size-3.5" />
             {t(($) => $.actions.resume)}
           </Button>
         )}
         <Button
           variant="ghost"
           size="sm"
-          className="text-destructive hover:text-destructive"
+          className={cn(
+            COLLECTION_BATCH_ACTION,
+            "text-destructive hover:text-destructive aria-expanded:text-destructive",
+          )}
           onClick={() => setDeleteOpen(true)}
         >
-          <Trash2 className="mr-1 size-3.5" />
+          <Trash2 className="size-3.5" />
           {t(($) => $.actions.delete)}
         </Button>
       </div>

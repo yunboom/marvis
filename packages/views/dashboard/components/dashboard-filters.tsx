@@ -45,7 +45,7 @@ export function TimeRangeFilter({
             variant="outline"
             size="sm"
             aria-label={t(($) => $.filter.period_label)}
-            className="gap-1 px-2.5"
+            className="h-8 gap-1.5 px-2.5 text-label font-normal"
           >
             <CalendarDays className="size-3.5 text-muted-foreground" />
             <span className="tabular-nums">{current.label}</span>
@@ -109,7 +109,11 @@ export function ProjectFilter({
             variant="outline"
             size="sm"
             aria-label={t(($) => $.filter.project_label)}
-            className={selected ? "gap-1 px-2.5" : "gap-1 px-2.5 text-muted-foreground"}
+            className={
+              selected
+                ? "h-8 gap-1.5 px-2.5 text-label font-normal"
+                : "h-8 gap-1.5 px-2.5 text-label font-normal text-muted-foreground"
+            }
           >
             {selected ? (
               <ProjectIcon project={selected} size="sm" />

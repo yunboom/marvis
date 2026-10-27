@@ -10,6 +10,7 @@ import {
   type NavigationAdapter,
 } from "@marvis/views/navigation";
 import { parseIssueWindowPath } from "../../../shared/issue-window";
+import { buildShareableUrl } from "./shareable-url";
 
 /**
  * Hand an app page this single-route window cannot host to the browser.
@@ -17,12 +18,14 @@ import { parseIssueWindowPath } from "../../../shared/issue-window";
  * Shared by content links and the adapter's push/replace, so a non-issue
  * destination (e.g. workspace settings from the issue workflow card, MUL-8098)
  * is never silently dropped.
+ *
+ * 服务器没有网页端时 appUrl 为空串，没有可打开的地址，这里什么都不做。
  */
 function openInBrowser(
   path: string,
   runtimeConfig: typeof window.desktopAPI.runtimeConfig,
 ) {
-  if (!runtimeConfig.ok) return;
+  if (!runtimeConfig.ok || !runtimeConfig.config.appUrl) return;
   void window.desktopAPI.openExternal(`${runtimeConfig.config.appUrl}${path}`);
 }
 
@@ -130,7 +133,9 @@ export function IssueWindowNavigationProvider({
         });
       },
       getShareableUrl: (path) =>
-        runtimeConfig.ok ? `${runtimeConfig.config.appUrl}${path}` : path,
+        runtimeConfig.ok
+          ? buildShareableUrl(runtimeConfig.config.appUrl, path)
+          : path,
     };
   }, [
     location.pathname,

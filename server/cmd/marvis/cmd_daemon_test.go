@@ -358,7 +358,7 @@ func TestDaemonStartupFailureError(t *testing.T) {
 18:29:58.425 WRN auth token rejected by server — run 'marvis login' to re-authenticate component=daemon error="POST /api/tokens/current/renew returned 401: {\"error\":\"invalid token\"}"
 list workspaces: GET /api/workspaces returned 401: {"error":"invalid token"}
 `)
-		err := daemonStartupFailureError(daemonStartupLogs{logPath: logPath}, nil, "", "http://localhost:8080")
+		err := daemonStartupFailureError(daemonStartupLogs{logPath: logPath}, nil, "", "http://localhost:13840")
 		msg := err.Error()
 		if !strings.Contains(msg, "rejected your login token") || !strings.Contains(msg, "marvis login") {
 			t.Fatalf("error = %q, want token-rejected reason with login hint", msg)
@@ -371,7 +371,7 @@ list workspaces: GET /api/workspaces returned 401: {"error":"invalid token"}
 	t.Run("token rejected with profile", func(t *testing.T) {
 		t.Parallel()
 		logPath := writeLog(t, "daemon.log", "WRN auth token rejected by server error=\"returned 401\"\n")
-		err := daemonStartupFailureError(daemonStartupLogs{logPath: logPath}, nil, "staging", "http://localhost:8080")
+		err := daemonStartupFailureError(daemonStartupLogs{logPath: logPath}, nil, "staging", "http://localhost:13840")
 		if !strings.Contains(err.Error(), "marvis login --profile staging") {
 			t.Fatalf("error = %q, want profile-scoped login hint", err)
 		}
@@ -382,13 +382,13 @@ list workspaces: GET /api/workspaces returned 401: {"error":"invalid token"}
 		// The detached child routes slog into daemon.log, but its final cobra
 		// error line goes to raw stderr — the crash sink. The "connection
 		// refused" reason may therefore exist ONLY there.
-		logPath := writeLog(t, "daemon.log", `18:40:46.588 DBG token renewal failed; will retry on next cycle component=daemon error="Post \"http://localhost:8080/api/tokens/current/renew\": dial tcp [::1]:8080: connect: connection refused"
+		logPath := writeLog(t, "daemon.log", `18:40:46.588 DBG token renewal failed; will retry on next cycle component=daemon error="Post \"http://localhost:13840/api/tokens/current/renew\": dial tcp [::1]:13840: connect: connection refused"
 `)
-		errLogPath := writeLog(t, "daemon.err.log", `Error: list workspaces: Get "http://localhost:8080/api/workspaces": dial tcp [::1]:8080: connect: connection refused
+		errLogPath := writeLog(t, "daemon.err.log", `Error: list workspaces: Get "http://localhost:13840/api/workspaces": dial tcp [::1]:13840: connect: connection refused
 `)
-		err := daemonStartupFailureError(daemonStartupLogs{logPath: logPath, errLogPath: errLogPath}, nil, "", "http://localhost:8080")
+		err := daemonStartupFailureError(daemonStartupLogs{logPath: logPath, errLogPath: errLogPath}, nil, "", "http://localhost:13840")
 		msg := err.Error()
-		if !strings.Contains(msg, "cannot reach the Marvis server at http://localhost:8080") {
+		if !strings.Contains(msg, "cannot reach the Marvis server at http://localhost:13840") {
 			t.Fatalf("error = %q, want server-unreachable reason with URL", msg)
 		}
 		if strings.Contains(msg, "dial tcp") || strings.Contains(msg, "component=daemon") {
@@ -403,7 +403,7 @@ list workspaces: GET /api/workspaces returned 401: {"error":"invalid token"}
 18:00:00.003 ERR something exploded component=daemon
 `)
 		errLogPath := writeLog(t, "daemon.err.log", "open /nope: permission denied\n")
-		err := daemonStartupFailureError(daemonStartupLogs{logPath: logPath, errLogPath: errLogPath}, nil, "", "http://localhost:8080")
+		err := daemonStartupFailureError(daemonStartupLogs{logPath: logPath, errLogPath: errLogPath}, nil, "", "http://localhost:13840")
 		msg := err.Error()
 		if !strings.Contains(msg, "something exploded") || !strings.Contains(msg, "permission denied") {
 			t.Fatalf("error = %q, want WRN/ERR and crash lines kept", msg)
@@ -790,7 +790,7 @@ func TestEnumerateDiskUsageRoots(t *testing.T) {
 	redirectTestHome(t, home)
 	t.Setenv("MARVIS_WORKSPACES_ROOT", "")
 
-	// Two profiles configured under ~/.marvis-studio/profiles, but only one has its
+	// Two profiles configured under ~/.marvis/profiles, but only one has its
 	// workspaces root created on disk; the other (never-run) profile is skipped.
 	mkdirProfile(t, home, "desktop-host")
 	mkdirProfile(t, home, "never-ran")
@@ -868,7 +868,7 @@ func valueColumn(t *testing.T, line string) int {
 
 func mkdirProfile(t *testing.T, home, profile string) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Join(home, ".marvis-studio", "profiles", profile), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(home, ".marvis", "profiles", profile), 0o755); err != nil {
 		t.Fatal(err)
 	}
 }

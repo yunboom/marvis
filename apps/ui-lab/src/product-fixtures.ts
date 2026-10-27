@@ -1,5 +1,6 @@
 import en from "./locales/en.json";
 import zh from "./locales/zh.json";
+import zhHant from "./locales/zh-Hant.json";
 import { productLocale, type LabLocale } from "./locale";
 import type {
   Issue,
@@ -10,7 +11,7 @@ import type {
   IssueTableQuerySpec,
   Comment,
 } from "@marvis/core/types";
-import { STATUS_ORDER } from "@marvis/core/issues/config";
+import { STATUS_ORDER, defaultStatusGroup } from "@marvis/core/issues/config";
 import { ApiClient } from "@marvis/core/api";
 
 const time = "2026-09-14T06:00:00Z";
@@ -96,7 +97,8 @@ export const memoryStorage = (): StorageAdapter => {
 // Only data is substituted. Views, hooks, stores and mutations are the production modules.
 // There is deliberately no fallback to ApiClient's network implementation.
 export function createFixtureApi(getLocale: () => LabLocale = () => "en") {
-  const messages = () => (getLocale() === "zh" ? zh.fixtures : en.fixtures);
+  const messages = () =>
+    ({ en, zh, "zh-Hant": zhHant })[getLocale()].fixtures;
   // Translate untouched fixtures at the data boundary; preserve user edits.
   const localizeIssue = (issue: Issue): Issue => {
     const index = issues.findIndex((original) => original.id === issue.id);
@@ -315,6 +317,7 @@ export function createFixtureApi(getLocale: () => LabLocale = () => "en") {
         name: key,
         description: "",
         category: key,
+        status_group: defaultStatusGroup(key, key),
         color: "#777777",
         is_system: true,
         position: index,

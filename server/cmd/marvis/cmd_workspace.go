@@ -170,6 +170,7 @@ func init() {
 	workspaceMcpCmd.AddCommand(workspaceMcpAddCmd)
 	workspaceMcpCmd.AddCommand(workspaceMcpUpdateCmd)
 	workspaceMcpCmd.AddCommand(workspaceMcpRemoveCmd)
+	workspaceCmd.AddCommand(larkInviteCmd)
 
 	workspaceListCmd.Flags().String("output", "table", "Output format: table or json")
 	workspaceListCmd.Flags().Bool("full-id", false, "Show full UUIDs in table output")

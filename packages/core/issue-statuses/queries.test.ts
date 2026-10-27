@@ -6,12 +6,14 @@ import {
   isIssueStatusCategory,
   issueStatusColor,
 } from "./queries";
+import { defaultStatusGroup } from "../issues/config/status";
 import type { IssueStatusEntry } from "../types";
 
 function entry(key: string, category: string, name = key, archivedAt: string | null = null): IssueStatusEntry {
   return {
     id: key, workspace_id: "ws-1", key, name, description: "",
     category: category as IssueStatusEntry["category"], color: "#123456",
+    status_group: defaultStatusGroup(key, category as IssueStatusEntry["category"]),
     is_system: false, position: 0, archived_at: archivedAt,
     created_at: "", updated_at: "",
   };

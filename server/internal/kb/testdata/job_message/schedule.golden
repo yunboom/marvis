@@ -1,0 +1,16 @@
+Knowledge base: Team KB (`team`)
+Job: Schedule a recurring run (`c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f`)
+
+How to work:
+- Create a draft with `marvis kb draft create team --job c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f`; the member sees it on the right. Write every change of this job into that draft.
+- For how to read and write the knowledge base, load the `marvis-platform` skill and open `references/knowledge-bases.md`.
+- The member reviews the draft on the right and submits it. Submit the change request yourself only when the member asks you to.
+- End each turn with a short summary: pages changed, anything unresolved.
+
+## Schedule a recurring run
+The member wants this knowledge base maintained on a schedule. Agree with the member on what to run, how often, and which agent runs it, then create a run-only automation. How to create it is in the `marvis-platform` skill, `references/autopilots.md`. In the automation's instructions, name the knowledge base `team`, say what to do, and point to `references/knowledge-bases.md`.
+
+Do not change pages in this conversation. Reply with the automation's name and schedule.
+
+Member's message:
+Tidy the payment pages

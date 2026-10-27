@@ -421,7 +421,7 @@ func TestRunDaemonDiskUsageTaskContextScansInjectedRootWithoutOwnerToken(t *test
 	if !strings.Contains(out, injectedRoot) {
 		t.Errorf("report did not name the injected root %q, got:\n%s", injectedRoot, out)
 	}
-	// The hint enumerates ~/.marvis-studio/profiles, so it must stay out of a task.
+	// The hint enumerates ~/.marvis/profiles, so it must stay out of a task.
 	if strings.Contains(out, "Other workspace roots") {
 		t.Errorf("report disclosed other workspace roots inside a task, got:\n%s", out)
 	}

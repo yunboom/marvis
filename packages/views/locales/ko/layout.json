@@ -5,9 +5,11 @@
     "my_issues": "내 태스크",
     "issues": "태스크",
     "projects": "프로젝트",
+    "workflows": "워크플로",
     "autopilots": "오토파일럿",
     "agents": "에이전트",
     "squads": "스쿼드",
+    "knowledge_base": "지식 베이스",
     "usage": "분석",
     "runtimes": "런타임",
     "skills": "스킬",
@@ -63,10 +65,12 @@
     "ai_team_group": "AI 팀",
     "show_more_pins": "{{count}}개 더 보기…",
     "show_fewer_pins": "접기",
-    "unread_overflow": "99+",
-    "discord_card": {
-      "title": "Discord 참여하기",
-      "dismiss": "닫기"
-    }
+    "expand_sub_nav": "{{label}} 펼치기",
+    "collapse_sub_nav": "{{label}} 접기",
+    "unread_overflow": "99+"
+  },
+  "lark_invite_welcome": {
+    "title": "{{workspace}}에 참여했습니다",
+    "description": "{{inviter}}님의 Feishu 초대로 참여했습니다. 역할: {{role}}."
   }
 }

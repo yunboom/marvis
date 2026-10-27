@@ -20,6 +20,7 @@
     "send_tooltip": "发送",
     "queue_send_tooltip": "排队发送",
     "stop_tooltip": "停止",
+    "restored_to_input": "消息已放回输入框",
     "send_failed_toast": "发送消息失败",
     "send_blocked_toast": "消息未发送——你已没有该智能体的使用权限",
     "runtime_required_toast": "消息未发送——请先为该智能体绑定运行时",
@@ -84,7 +85,8 @@
     "quick_actions_heading": "后续提问",
     "quick_actions_aria": "后续提问建议",
     "quick_actions_regenerate": "重新生成建议",
-    "quick_actions_regenerate_failed": "无法重新生成建议，请重试。"
+    "quick_actions_regenerate_failed": "无法重新生成建议，请重试。",
+    "stopped": "已停止"
   },
   "session_history": {
     "untitled": "无标题",
@@ -184,7 +186,7 @@
     },
     "digest": {
       "title": "让日报自己写好",
-      "desc": "每天自动汇总工作区进展，发到你的收件箱。",
+      "desc": "每天自动汇总工作区进展，发到消息。",
       "prompt": "帮我建一个每天早上自动汇总工作区进展的日报自动化"
     },
     "digest_badge": "每天 9:00"

@@ -3,7 +3,9 @@
  * of a raw pixel number so the same "role" (inline chip, list row, section
  * header, hero) renders at one consistent size everywhere.
  *
- * Tiers align to a 4px grid (Tailwind size-4/5/6/8/10/14). The px values are
+ * Tiers follow the Marvis avatar ladder: 16 inside pills, 20 inline, 28
+ * stacked, 32 beside a name line (messages, comments, conversation heads), 40
+ * for two-line list rows, 72 for a hero. The px values are
  * the single source of truth for any component that still needs the concrete
  * diameter (font scaling, overlap math, presence-dot thresholds).
  */
@@ -13,10 +15,10 @@ export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 export const AVATAR_SIZE_PX: Record<AvatarSize, number> = {
   xs: 16,
   sm: 20,
-  md: 24,
+  md: 28,
   lg: 32,
   xl: 40,
-  "2xl": 56,
+  "2xl": 72,
 };
 
 /** Default tier for avatars that don't specify a size. Matches the historical

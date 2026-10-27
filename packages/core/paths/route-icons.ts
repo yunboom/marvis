@@ -25,6 +25,7 @@ export type RouteIconName =
   | "CircleUser"
   | "ListTodo"
   | "FolderKanban"
+  | "Workflow"
   | "Zap"
   | "Bot"
   | "Users"
@@ -32,6 +33,7 @@ export type RouteIconName =
   | "Monitor"
   | "Server"
   | "BookOpenText"
+  | "Layers"
   | "Settings"
   | "File"
   | "FileText"
@@ -49,9 +51,11 @@ export type NavLabelKey =
   | "my_issues"
   | "issues"
   | "projects"
+  | "workflows"
   | "autopilots"
   | "agents"
   | "squads"
+  | "knowledge_base"
   | "usage"
   | "runtimes"
   | "skills"
@@ -64,9 +68,11 @@ export type WorkspacePageKey =
   | "myIssues"
   | "issues"
   | "projects"
+  | "workflows"
   | "autopilots"
   | "agents"
   | "squads"
+  | "kb"
   | "usage"
   | "runtimes"
   | "skills"
@@ -91,9 +97,11 @@ export const WORKSPACE_PAGES: Record<WorkspacePageKey, WorkspacePage> = {
   myIssues: { segment: "my-issues", icon: "CircleUser", navKey: "my_issues" },
   issues: { segment: "issues", icon: "ListTodo", navKey: "issues" },
   projects: { segment: "projects", icon: "FolderKanban", navKey: "projects" },
+  workflows: { segment: "workflows", icon: "Workflow", navKey: "workflows" },
   autopilots: { segment: "autopilots", icon: "Zap", navKey: "autopilots" },
   agents: { segment: "agents", icon: "Bot", navKey: "agents" },
   squads: { segment: "squads", icon: "Users", navKey: "squads" },
+  kb: { segment: "kb", icon: "Layers", navKey: "knowledge_base" },
   usage: { segment: "usage", icon: "BarChart3", navKey: "usage" },
   runtimes: { segment: "runtimes", icon: "Monitor", navKey: "runtimes" },
   skills: { segment: "skills", icon: "BookOpenText", navKey: "skills" },

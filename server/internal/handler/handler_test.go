@@ -2371,6 +2371,102 @@ func TestVerifyCodeRejectsConfiguredDevCodeInProduction(t *testing.T) {
 	}
 }
 
+func TestVerifyCodeAcceptsConfiguredDevCodeInStandaloneProduction(t *testing.T) {
+	t.Setenv(devVerificationCodeEnv, "888888")
+	t.Setenv("APP_ENV", "production")
+	t.Setenv(StandaloneEnv, "1")
+
+	const email = "dev-code-standalone-test@marvis.ai"
+	ctx := context.Background()
+
+	t.Cleanup(func() {
+		testPool.Exec(ctx, `DELETE FROM verification_code WHERE email = $1`, email)
+		testPool.Exec(ctx, `DELETE FROM "user" WHERE email = $1`, email)
+	})
+
+	createVerificationCodeForTest(t, email, "123456")
+
+	w := httptest.NewRecorder()
+	var buf bytes.Buffer
+	json.NewEncoder(&buf).Encode(map[string]string{"email": email, "code": "888888"})
+	req := httptest.NewRequest("POST", "/auth/verify-code", &buf)
+	req.Header.Set("Content-Type", "application/json")
+	testHandler.VerifyCode(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("VerifyCode (standalone production dev code): expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp LoginResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode login response: %v", err)
+	}
+	if resp.Token == "" {
+		t.Fatal("VerifyCode (standalone production dev code): expected a token")
+	}
+}
+
+// postVerifyCodeStatus seeds a real code for email, then logs in with code.
+func postVerifyCodeStatus(t *testing.T, email, code string) int {
+	t.Helper()
+
+	ctx := context.Background()
+	t.Cleanup(func() {
+		testPool.Exec(ctx, `DELETE FROM verification_code WHERE email = $1`, email)
+	})
+	createVerificationCodeForTest(t, email, "123456")
+
+	w := httptest.NewRecorder()
+	var buf bytes.Buffer
+	json.NewEncoder(&buf).Encode(map[string]string{"email": email, "code": code})
+	req := httptest.NewRequest("POST", "/auth/verify-code", &buf)
+	req.Header.Set("Content-Type", "application/json")
+	testHandler.VerifyCode(w, req)
+
+	return w.Code
+}
+
+// The fixed code is shared by everyone on the LAN, so in standalone mode it
+// must not open accounts that manage a workspace.
+func TestVerifyCodeStandaloneDevCodeRefusesWorkspaceManagers(t *testing.T) {
+	t.Setenv(devVerificationCodeEnv, "888888")
+	t.Setenv("APP_ENV", "production")
+	t.Setenv(StandaloneEnv, "1")
+
+	adminEmail := "standalone-admin@marvis.ai"
+	adminID := dbfx.User(t, "Standalone Admin", adminEmail)
+	dbfx.Member(t, testWorkspaceID, adminID, "admin")
+
+	memberEmail := "standalone-member@marvis.ai"
+	memberID := dbfx.User(t, "Standalone Member", memberEmail)
+	dbfx.Member(t, testWorkspaceID, memberID, "member")
+
+	cases := []struct {
+		name  string
+		email string
+		want  int
+	}{
+		{"owner", handlerTestEmail, http.StatusBadRequest},
+		{"admin", adminEmail, http.StatusBadRequest},
+		{"member", memberEmail, http.StatusOK},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := postVerifyCodeStatus(t, c.email, "888888"); got != c.want {
+				t.Fatalf("VerifyCode with the fixed code for %s = %d, want %d", c.name, got, c.want)
+			}
+		})
+	}
+}
+
+func TestVerifyCodeDevCodeStillOpensManagersOutsideStandalone(t *testing.T) {
+	t.Setenv(devVerificationCodeEnv, "888888")
+	t.Setenv("APP_ENV", "development")
+
+	if got := postVerifyCodeStatus(t, handlerTestEmail, "888888"); got != http.StatusOK {
+		t.Fatalf("VerifyCode with the dev code for the owner outside standalone = %d, want 200", got)
+	}
+}
+
 func TestVerifyCodeWrongCode(t *testing.T) {
 	t.Setenv(devVerificationCodeEnv, "")
 

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { motion } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@marvis/ui/lib/utils";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
+import { openServerSettingsTab } from "@/hooks/use-open-settings-shortcut";
 import {
   useNavigationInputBindings,
   useTabHistory,
@@ -14,6 +14,7 @@ import {
 import { ModalRegistry } from "@marvis/views/modals/registry";
 import {
   AppSidebar,
+  CurrentWorkspaceLarkInviteWelcome,
   GlobalShortcuts,
   NavigationProgress,
 } from "@marvis/views/layout";
@@ -32,22 +33,22 @@ import {
   DesktopNavigationProvider,
   routeContentLinkPath,
 } from "@/platform/navigation";
+import { OpenPathBridge } from "@/platform/open-path-bridge";
+import { splitTabUrl, useActiveTabUrl } from "@/stores/tab-store";
+import {
+  ServerReplacedDialog,
+  ServerStatusBanner,
+} from "./server/server-status-banner";
+import { useServerStatus } from "./server/use-server-status";
 import { TabBar } from "./tab-bar";
 import { TabContent } from "./tab-content";
 import { WindowOverlay } from "./window-overlay";
 import { WindowToolbar, WINDOW_TOOLBAR_CLEARANCE } from "./window-toolbar";
 
+// 顶部条高度：红绿灯（trafficLightPosition y=13）、前进后退和标签栏都在这一条里
+// 垂直居中；侧栏浮卡与主区白卡从它下方开始，顶边对齐（globals.css 里侧栏容器的
+// padding-top 与此保持一致）。
 const TOP_BAR_HEIGHT_CLASS = "h-10";
-const toolbarMotion = {
-  type: "spring",
-  stiffness: 420,
-  damping: 38,
-  mass: 0.8,
-} as const;
-
-function SidebarTopSpacer() {
-  return <div className={cn("shrink-0", TOP_BAR_HEIGHT_CLASS)} />;
-}
 
 function useNativeNavigationGestures() {
   const { goBack, goForward } = useTabHistory();
@@ -81,7 +82,7 @@ function MainTopBar({ sidebarMounted }: { sidebarMounted: boolean }) {
       data-slot="main-top-bar"
       data-sidebar-resize-consumer
       className={cn(
-        "relative shrink-0 flex items-center gap-2 transition-[padding-left] duration-200 ease-out motion-reduce:transition-none",
+        "relative shrink-0 flex items-center gap-2 transition-[padding-left] duration-(--motion-base) ease-standard motion-reduce:transition-none",
         TOP_BAR_HEIGHT_CLASS,
       )}
       style={{ paddingLeft: toolbarClearance }}
@@ -106,29 +107,39 @@ function MainTopBar({ sidebarMounted }: { sidebarMounted: boolean }) {
   );
 }
 
-// The canvas hugs the expanded sidebar with a hairline gap. When the sidebar
-// leaves the main flow, the left margin must grow to mirror the fixed mr-2 so
-// the floating canvas sits symmetrically inside the window frame.
+// 主区白卡：与侧栏浮卡同样的 16px 外壳留白、24 圆角、细描边。侧栏的 sidebar-gap
+// 已把 16px 外壳留白放在浮卡左侧，所以无论侧栏展开还是收起，白卡左侧都是 16px。
+// banner 是服务器连接状态横幅，贴在卡片顶部、页面内容之上；dimmed 时页面内容变淡，
+// 说明数据可能不是最新的（仍可阅读和操作）。
 function MainCanvas({
   children,
   showWorkspaceLoading,
+  banner,
+  dimmed,
 }: {
   children: React.ReactNode;
   showWorkspaceLoading: boolean;
+  banner: React.ReactNode;
+  dimmed: boolean;
 }) {
-  const { state, isCompact } = useSidebar();
   const { t } = useT("layout");
-  const sidebarHidden = state === "collapsed" || isCompact;
   const loadingLabel = t(($) => $.workspace_loader.loading_workspace);
 
   return (
-    <motion.div
-      animate={{ marginLeft: sidebarHidden ? 8 : 2 }}
-      className="relative flex flex-1 min-h-0 flex-col overflow-hidden mr-2 mb-2 rounded-xl bg-page-canvas ring-1 ring-surface-border shadow-[var(--surface-shadow)]"
-      initial={false}
-      transition={toolbarMotion}
+    <div
+      data-slot="main-canvas"
+      className="relative mx-4 mb-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-page-canvas"
     >
-      {children}
+      {banner}
+      <div
+        data-slot="main-canvas-content"
+        className={cn(
+          "relative flex min-h-0 flex-1 flex-col transition-opacity duration-(--motion-base) motion-reduce:transition-none",
+          dimmed && "opacity-55",
+        )}
+      >
+        {children}
+      </div>
       {showWorkspaceLoading && (
         <div
           aria-label={loadingLabel}
@@ -137,12 +148,12 @@ function MainCanvas({
           role="status"
         >
           <div className="flex flex-col items-center gap-4">
-            <MarvisIcon className="size-8 animate-pulse" />
+            <MarvisIcon className="size-12 animate-pulse" />
             <p className="text-body text-muted-foreground">{loadingLabel}</p>
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
@@ -204,10 +215,18 @@ function DesktopInboxBridge() {
   return null;
 }
 
+function isSettingsUrl(url: string, slug: string): boolean {
+  const { pathname } = splitTabUrl(url);
+  const settings = paths.workspace(slug).settings();
+
+  return pathname === settings || pathname.startsWith(`${settings}/`);
+}
+
 export function DesktopShell() {
   useInternalLinkHandler();
   useNativeNavigationGestures();
   useNavigationInputBindings();
+  const serverStatus = useServerStatus();
 
   // Reactive read of current workspace slug from the platform singleton.
   // On first mount, it is null until WorkspaceRouteLayout (inside the tab
@@ -239,6 +258,10 @@ export function DesktopShell() {
     currentSlug && workspaces.some((w) => w.slug === currentSlug)
       ? currentSlug
       : null;
+  // 设置页是横幅“切换服务器”的去处，掉线时不变淡，避免看起来像不能操作。
+  const activeTabUrl = useActiveTabUrl();
+  const onSettings =
+    slug !== null && activeTabUrl !== null && isSettingsUrl(activeTabUrl, slug);
 
   return (
     <DesktopNavigationProvider>
@@ -253,6 +276,7 @@ export function DesktopShell() {
           IndexRedirect, not a route. */}
       <WorkspaceSlugProvider slug={slug}>
         <DesktopInboxBridge />
+        <OpenPathBridge />
         <div className="flex h-screen bg-app-shell">
           {/* bg-app-shell is the wrapper's non-inset fill, so it also owns the
               non-inset half of --sidebar-wrapper-fill. sidebar.tsx supplies the
@@ -270,12 +294,29 @@ export function DesktopShell() {
             className="flex-1 bg-app-shell [--sidebar-wrapper-fill:var(--app-shell)]"
           >
             {slug && <GlobalShortcuts />}
+            {/* One-time "joined via Feishu invite" toast. The shell outlives tab
+                switches, so mounting it here (not per tab) shows it once per
+                session; web mounts the same component in DashboardLayout. */}
+            {slug && <CurrentWorkspaceLarkInviteWelcome />}
             {slug && <WindowToolbar />}
-            {slug && <AppSidebar topSlot={<SidebarTopSpacer />} searchSlot={<SearchTrigger />} />}
+            {slug && <AppSidebar searchSlot={<SearchTrigger />} />}
             {/* Right side: header + content container */}
             <div className="flex flex-1 min-w-0 flex-col">
               <MainTopBar sidebarMounted={Boolean(slug)} />
-              <MainCanvas showWorkspaceLoading={!slug}>
+              <MainCanvas
+                showWorkspaceLoading={!slug}
+                dimmed={serverStatus.banner !== null && !onSettings}
+                banner={
+                  serverStatus.banner !== null && (
+                    <ServerStatusBanner
+                      state={serverStatus.banner}
+                      server={serverStatus.server}
+                      onRetry={serverStatus.retry}
+                      onSwitch={openServerSettingsTab}
+                    />
+                  )
+                }
+              >
                 {/* Same indicator, same anchor as web: DashboardLayout puts it
                     at the top of SidebarInset, and MainCanvas is desktop's
                     equivalent relative/overflow-hidden content box. Desktop
@@ -291,6 +332,16 @@ export function DesktopShell() {
         {slug && <ModalRegistry />}
         {slug && <SearchCommand />}
         <WindowOverlay />
+        <ServerReplacedDialog
+          open={serverStatus.replaced.open}
+          server={serverStatus.server}
+          otherName={serverStatus.replaced.otherName}
+          onWait={serverStatus.dismissReplaced}
+          onSwitch={() => {
+            serverStatus.dismissReplaced();
+            openServerSettingsTab();
+          }}
+        />
       </WorkspaceSlugProvider>
     </DesktopNavigationProvider>
   );

@@ -1,9 +1,12 @@
 ---
 title: デスクトップアプリ
-description: Marvis Desktop をインストールし、デスクトップタブと内蔵デーモンを使い、セルフホストインスタンスに接続します。
+description: Marvis Desktop をインストールし、Marvis サーバーに接続して、デスクトップタブと内蔵デーモンを使います。
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { DesktopTabsDemo } from "@/components/demos/desktop-tabs-demo";
 
 Marvis Desktop は macOS、Windows、Linux で利用できます。Web 版と同じアカウントとワークスペースデータを使いますが、ローカルマシンのデーモンを自動で管理し、ワークスペースごとに独立したタブのセットを保持します。
 
@@ -22,6 +25,8 @@ Marvis Desktop は macOS、Windows、Linux で利用できます。Web 版と同
 
 ## インストール
 
+<Steps>
+<Step>
 [Marvis ダウンロードページ](https://marvis.ai/download)から、OS と CPU アーキテクチャに合ったインストーラーを選びます:
 
 | プラットフォーム | インストーラー |
@@ -29,8 +34,11 @@ Marvis Desktop は macOS、Windows、Linux で利用できます。Web 版と同
 | macOS | `.dmg` |
 | Windows | `.exe` |
 | Linux | `.AppImage`、`.deb` または `.rpm` |
-
-インストール後、Web 版と同じメールアドレスでサインインします。サインインすると、Desktop は内蔵の Marvis CLI を起動し、マシンにすでにインストールされている AI コーディングツールを検出します。
+</Step>
+<Step>
+インストール後、[Desktop を Marvis サーバーに接続](#サーバーへの接続)してサインインします。サインインすると、Desktop は内蔵の Marvis CLI を起動し、マシンにすでにインストールされている AI コーディングツールを検出します。
+</Step>
+</Steps>
 
 <Callout type="info">
 Desktop に内蔵された CLI は、アプリが管理するランタイム専用です。ターミナルで `marvis issue` などのコマンドも実行したい場合は、[クイックスタートのステップ 2](/cloud-quickstart#2-コンピュータを接続する)に従って CLI を別途インストールしてください。
@@ -40,7 +48,9 @@ Desktop に内蔵された CLI は、アプリが管理するランタイム専�
 
 Desktop はワークスペースごとにタブを保存します。たとえば、ワークスペース A でタスクを 3 つ開いてからワークスペース B に切り替えると、B 自身のタブが表示されます。A に戻ると、先ほどの 3 つのタブがそのまま残っています。
 
-同じリソースは現在のワークスペースで一度しか開きません。タブは並べ替え、ピン留め、クローズができ、それぞれが進む・戻るの履歴とスクロール位置を保持します。このデプロイのアプリリンクをクリックまたは貼り付けると、ブラウザに移動せずタブ内で直接開きます。
+<DesktopTabsDemo />
+
+同じリソースは現在のワークスペースで一度しか開きません。タブは並べ替え、ピン留め、クローズができ、それぞれが進む・戻るの履歴とスクロール位置を保持します。ピン留めしたタブは左端に並び、閉じるボタンがありません。閉じるにはピン留めを解除します。ピン留めしたタブから別のページを開くと新しいタブで開き、ピン留めしたタブは元のページにとどまります。このデプロイのアプリリンクをクリックまたは貼り付けると、ブラウザに移動せずタブ内で直接開きます。
 
 サインアウトすると、このマシンに保存されたすべてのタブが消去されるため、次にサインインした人が前のアカウントの残したページを見ることはありません。
 
@@ -49,7 +59,7 @@ Desktop はワークスペースごとにタブを保存します。たとえば
 サインイン後、Desktop は現在の Marvis サービス専用の CLI プロファイルを作成し、それを使ってデーモンを起動します。プロファイルの場所:
 
 ```text
-~/.marvis-studio/profiles/desktop-<host>/
+~/.marvis/profiles/desktop-<host>/
 ```
 
 このプロファイルが、ターミナルで使っているデフォルトのプロファイルを読み取ったり上書きしたりすることはありません。別のデーモンを手動で起動した場合、Marvis はそれらを別々のランタイムとして表示します。
@@ -68,17 +78,62 @@ Desktop はワークスペースごとにタブを保存します。たとえば
 - Linux で自動更新が有効なのは `.AppImage` だけです。`.deb` と `.rpm` は新しいパッケージをダウンロードして上書きインストールします。
 - 自動更新が失敗した場合も、同様にダウンロードページから対応するインストーラーを取得して上書きインストールしてください。
 
-## セルフホストインスタンスへの接続
+## サーバーへの接続
 
-Desktop はデフォルトで Marvis Cloud に接続します。セルフホストインスタンスに接続するには、ホームディレクトリの `.marvis` の中に `desktop.json` を作成します:
+Desktop が接続するのは Marvis サーバー、つまりバックエンドだけです。Web アプリは必須ではありません。
+
+### 初回起動
+
+サーバーが設定されていない場合、Desktop は **Marvis サーバーに接続** を表示します。
+
+1. **ローカルネットワーク上のサーバー** から選ぶか、アドレスを入力します。デフォルトのアドレスは `http://marvis.local:13840` です。
+2. アドレスを入力した場合は **接続をテスト** を押します。Desktop はサーバー名とバージョン、または接続できない理由を表示します。
+3. **続ける** を押し、確認ページでアドレスを確認して、**接続** を押します。
+4. サインインします。
+
+サーバーが見つかったり消えたりすると、リストが更新されます。**再検索** でネットワークを検索し直します。コンピュータとサーバーは同じネットワークに接続されている必要があります。このコンピュータで動いているサーバーには **このコンピュータ** と表示されます。バージョンが古すぎるサーバーは表示されますが、選択できません。
+
+Desktop は、確認するまで接続せず、自動でサインインすることもありません。HTTP を使うサーバーは暗号化されません。確認ページにその旨が表示されます。
+
+選択したサーバーは、Desktop のアプリデータフォルダに `server.json` として保存されます:
 
 | プラットフォーム | パス |
 | --- | --- |
-| macOS | `/Users/<you>/.marvis/desktop.json` |
-| Linux | `/home/<you>/.marvis/desktop.json` |
-| Windows | `C:\Users\<you>\.marvis\desktop.json` |
+| macOS | `~/Library/Application Support/Marvis/` |
+| Linux | `~/.config/Marvis/` |
+| Windows | `%APPDATA%\Marvis\` |
 
-これらはデフォルトの場所です。ホームディレクトリを移動またはリダイレクトしている場合は、実際のパスを使ってください。
+### サーバーの切り替え
+
+**設定 → このデバイス → サーバー** を開きます。このページには次が表示されます:
+
+- 現在のサーバーの名前、アドレス、接続状態。
+- ローカルネットワーク上で見つかった他のサーバー。それぞれに **切り替え** があります。
+- **その他のアドレス** の入力欄。**接続をテスト** と **切り替え** があります。
+
+切り替えると、現在のアカウントからログアウトします。Desktop は確認を求めたあと、新しいサーバーを保存してサインインページを開きます。内蔵デーモンは新しいサーバーのプロファイルを自動で使います。
+
+この設定はこのコンピュータだけに適用されます。
+
+### 接続が切れたとき
+
+- サーバーが応答しなくなると、メイン領域の上部にバナーが表示され、接続が切れて再接続中であることを知らせます。
+- 失敗が続くと、バナーはサーバーに接続できないことを知らせ、**再試行** と **サーバーを切り替える** が表示されます。Desktop は確認を続け、サーバーが復旧すると自動でオンラインに戻ります。
+- ローカルネットワークの一覧から選んだサーバーは IP アドレスで保存されます。そのアドレスが応答しなくなり、同じサーバー（インスタンス ID で識別）がローカルネットワーク上に新しい IP で現れると、Desktop は新しいアドレスに切り替え、再接続したことを知らせます。
+- 保存したアドレスで別のサーバーが応答すると、Desktop は **このアドレスのサーバーが変わりました** を表示し、自動では切り替えません。**待機を続ける** か **サーバーを切り替える** を選びます。
+
+### Web アプリがない場合
+
+サーバーに Web アドレスがない場合、またはそのアドレスが `localhost` の場合、Desktop は Web アプリがないものとして扱います。
+
+- サインインページの Google のボタンは非表示になります。サーバーで Feishu ログインが設定され、Desktop 用のコールバックアドレスが Feishu 開発者コンソールに登録されている場合は、Feishu のボタンが残ります。詳しくは[Desktop と Web アプリ](/self-host-quickstart#desktop-と-web-アプリ)を参照してください。Feishu のサインインはブラウザで行い、終わるとアプリに戻ります。それ以外の場合は、メール認証コードでのサインインだけが残ります。
+- **リンクをコピー** は `marvis://open?...` 形式のリンクを生成します。Desktop がインストールされ、同じサーバーに接続しているコンピュータでは、このリンクが Desktop で開きます。
+
+## desktop.json でサーバーを事前設定する
+
+運用担当者は、コンピュータごとにサーバーを事前設定できます。Desktop は、アプリでサーバーが選択されていない間だけ、この事前設定を読み込みます。接続ページを表示せずに接続し、このファイルには書き込みません。
+
+ホームディレクトリの `.marvis` の中に `desktop.json` を作成し、次の内容を書きます:
 
 ```json
 {
@@ -87,14 +142,48 @@ Desktop はデフォルトで Marvis Cloud に接続します。セルフホス�
 }
 ```
 
+<Tabs groupId="os" persist items={["macOS / Linux", "Windows"]}>
+<Tab value="macOS / Linux">
+
+| プラットフォーム | パス |
+| --- | --- |
+| macOS | `/Users/<you>/.marvis/desktop.json` |
+| Linux | `/home/<you>/.marvis/desktop.json` |
+
+</Tab>
+<Tab value="Windows">
+
+ファイルのパスは `C:\Users\<you>\.marvis\desktop.json` です。
+
+メモ帳や PowerShell のリダイレクトでは Desktop が読めないファイルになりやすいため（理由は[Windows: ファイル名とエンコーディングを確認する](#windows-ファイル名とエンコーディングを確認する)を参照）、PowerShell で一度に作成することをおすすめします:
+
+```powershell
+$dir = "$env:USERPROFILE\.marvis"
+New-Item -ItemType Directory -Force $dir | Out-Null
+$json = @'
+{
+  "schemaVersion": 1,
+  "apiUrl": "https://api.example.com"
+}
+'@
+[System.IO.File]::WriteAllText("$dir\desktop.json", $json)
+```
+
+</Tab>
+</Tabs>
+
+これらはデフォルトの場所です。ホームディレクトリを移動またはリダイレクトしている場合は、実際のパスを使ってください。
+
 <Callout type="warning">
-これは CLI の `~/.marvis-studio/config.json` と**別のファイル**で、キー名も異なります: CLI は `server_url`、Desktop は `apiUrl` を使います。Desktop は CLI の設定を読みません。`~/.marvis-studio/profiles/desktop-<host>/` の下に専用の daemon プロファイルを管理します。`config.json` を編集しても、Desktop の接続先は変わりません。
+これは CLI の `~/.marvis/config.json` と**別のファイル**で、キー名も異なります: CLI は `server_url`、Desktop は `apiUrl` を使います。Desktop は CLI の設定を読みません。`~/.marvis/profiles/desktop-<host>/` の下に専用の daemon プロファイルを管理します。`config.json` を編集しても、Desktop の接続先は変わりません。
 </Callout>
 
 `apiUrl` はバックエンドの公開アドレスです。必須で、`http` または `https` を使う必要があります。残りの 2 つのアドレスは省略でき、Desktop が自動で導出します:
 
 - `wsUrl`: `apiUrl` のスキームを `ws` または `wss` に置き換え、パスの末尾に `/ws` を追加します。
 - `appUrl`: ホスト名が `api.` で始まりラベルが 3 つ以上ある場合は `api.` プレフィックスを取り除きます（`api.example.com` → `example.com`）。それ以外は `apiUrl` と同じままです。
+
+事前設定には必ず Web アドレスが含まれます。`appUrl` を省略した場合は Desktop が導出します。Web アプリなしで Desktop を使うには、アプリでサーバーを選択します。
 
 通常は `apiUrl` だけで十分です。導出結果がデプロイと合わない場合にのみ明示的に上書きします。よくあるのは次の 3 つのケースです:
 
@@ -111,49 +200,37 @@ Desktop はデフォルトで Marvis Cloud に接続します。セルフホス�
 }
 ```
 
-保存後に Desktop を再起動します。この設定は起動時に一度だけ読み込まれます。2 つの失敗の現れ方は異なるため、これが切り分けの手がかりになります:
+保存後に Desktop を再起動します。この設定は起動時に一度だけ読み込まれます。2 つの失敗は現れ方が異なります:
 
-- **ファイルが見つからない**（ディレクトリが違う、またはファイル名が `desktop.json` ではない）: Desktop はデフォルトの Cloud 設定を使い、エラーは表示しません。つまり Desktop が Cloud のアドレスを表示したままで設定エラーも出ない場合、ファイルは Desktop が探している場所にありません。
-- **ファイルは見つかったが無効**（JSON、バージョン、URL のいずれかに問題がある）: Desktop は設定エラーを表示し、自動では Cloud にフォールバックしません。
+- **ファイルが見つからない**（ディレクトリが違う、またはファイル名が `desktop.json` ではない）: Desktop は接続ページを表示し、エラーは表示しません。つまり Desktop がサーバーへの接続を求め続け、設定エラーも出ない場合、ファイルは Desktop が探している場所にありません。
+- **ファイルは見つかったが無効**（JSON、バージョン、URL のいずれかに問題がある）: Desktop は設定エラーを表示します。
 
-そのファイルを削除して再起動すれば、デフォルトの Cloud 設定に戻ります。
+そのファイルを削除して再起動すれば、接続ページに戻ります。アプリでサーバーを選択済みの場合は、アプリデータフォルダの `server.json` も削除します。
 
 <Callout type="warning">
-Desktop が接続できるのは、ブラウザと実行マシンの両方から到達できるアドレスだけです。リモートのセルフホストインスタンスが HTTPS を使っていない、または WebSocket をプロキシしていない場合、Desktop は接続を確立できません。完全な設定は[セルフホストクイックスタート](/self-host-quickstart#3-アクセス方法を選ぶ)を参照してください。
+Desktop が接続できるのは、ブラウザと実行マシンの両方から到達できるアドレスだけです。リモートのセルフホストインスタンスが HTTPS を使っていない、または WebSocket をプロキシしていない場合、Desktop は接続を確立できません。完全な設定は[セルフホストクイックスタート](/self-host-quickstart#remote-access)を参照してください。
 </Callout>
 
 ### Windows: ファイル名とエンコーディングを確認する
 
-Windows では、エディタの 2 つのデフォルト動作が Desktop の読めないファイルを気づかないうちに作ってしまいます:
+Windows でよく使う 2 つの書き方では、Desktop が読めないファイルができてしまいます:
 
-- **メモ帳は `.txt` を付け足します。** `desktop.json` として保存したつもりでも実際には `desktop.json.txt` になることがあり、Desktop はファイルが見つからないものとして扱います。エクスプローラーでファイル名拡張子の表示を有効にするか、保存ダイアログで*すべてのファイル*を選んでください。実際のファイル名を確認するには、PowerShell で `Get-ChildItem "$env:USERPROFILE\.marvis-studio" -Filter "desktop.json*"` を実行します。`Name` 列がちょうど `desktop.json` になっている必要があります。
+- **メモ帳は `.txt` を付け足します。** `desktop.json` として保存したつもりでも実際には `desktop.json.txt` になることがあり、Desktop はファイルが見つからないものとして扱います。エクスプローラーでファイル名拡張子の表示を有効にするか、保存ダイアログで*すべてのファイル*を選んでください。実際のファイル名を確認するには、PowerShell で `Get-ChildItem "$env:USERPROFILE\.marvis" -Filter "desktop.json*"` を実行します。`Name` 列がちょうど `desktop.json` になっている必要があります。
 - **PowerShell のリダイレクトは UTF-16 や BOM 付きで書き込みます。** `> desktop.json` や `Out-File` はパースできないエンコーディングを生成することがあり、設定エラーとして現れます。
 
-どちらも避けるには、PowerShell で一度に作成します:
-
-```powershell
-$dir = "$env:USERPROFILE\.marvis-studio"
-New-Item -ItemType Directory -Force $dir | Out-Null
-$json = @'
-{
-  "schemaVersion": 1,
-  "apiUrl": "https://api.example.com"
-}
-'@
-[System.IO.File]::WriteAllText("$dir\desktop.json", $json)
-```
+上の Windows タブにある PowerShell のコマンドなら、この 2 つをどちらも避けられます。
 
 ## Windows Defender が Marvis をウイルスとして検出する
 
-**症状**: Windows セキュリティが `Trojan:Script/Wacatac.B!ml` のような脅威を報告し、Desktop のインストール先にあるファイルを隔離します。対象になるのは通常、アプリ本体の実行ファイルではなく同梱の CLI です。
+Windows セキュリティが `Trojan:Script/Wacatac.B!ml` のような脅威を報告し、Desktop のインストール先にあるファイルを隔離します。対象になるのは通常、アプリ本体の実行ファイルではなく同梱の CLI です。
 
 ```text
 C:\Users\<ユーザー名>\AppData\Local\Programs\@marvisdesktop\resources\app.asar.unpacked\resources\bin\marvis.exe
 ```
 
-**これは誤検知です。** `!ml` というサフィックスは、この判定がマルウェアのシグネチャ一致ではなく Defender の機械学習ヒューリスティックによるものであることを示します。Marvis の Windows ビルドはまだ Authenticode コード署名を行っておらず、公開されたばかりで署名がなく、バックグラウンドプロセスを起動してネットワーク接続を張るバイナリは、この種のヒューリスティックが最も疑わしいと判定するプロファイルそのものです。Windows 向けの成果物はすべて、このリポジトリの公開ソースから GitHub Actions でビルドされています。
+これは誤検知です。`!ml` というサフィックスは、この判定がマルウェアのシグネチャ一致ではなく Defender の機械学習ヒューリスティックによるものであることを示します。Marvis の Windows ビルドはまだ Authenticode コード署名を行っておらず、公開されたばかりで署名がなく、バックグラウンドプロセスを起動してネットワーク接続を張るバイナリは、この種のヒューリスティックで疑わしいと判定されやすいのです。Windows 向けの成果物はすべて、このリポジトリの公開ソースから GitHub Actions でビルドされています。
 
-**自分で検証できます** — 各 GitHub リリースには、すべての CLI アーカイブを網羅した `checksums.txt` が公開されています。
+自分で検証することもできます。各 GitHub リリースには、すべての CLI アーカイブを網羅した `checksums.txt` が公開されています。
 
 ```powershell
 Get-FileHash .\marvis-cli-<version>-windows-amd64.zip -Algorithm SHA256
@@ -161,15 +238,24 @@ Get-FileHash .\marvis-cli-<version>-windows-amd64.zip -Algorithm SHA256
 
 出力されたハッシュを、[最新リリース](https://github.com/yunboom/marvis/releases/latest)の `checksums.txt` の該当行と照合してください。
 
-**対処方法**:
+次の 3 つの手順で対処します。
 
-1. **隔離されたファイルを復元する** — Windows セキュリティ → *ウイルスと脅威の防止* → *保護の履歴* → Marvis の項目を選択 → *操作* → *復元*。
-2. **除外を追加する**（再び隔離されないように）— *ウイルスと脅威の防止* → *設定の管理* → *除外* → *除外の追加または削除* → *フォルダー* で、次の両方を追加します。
-   - `%LOCALAPPDATA%\Programs\@marvisdesktop`
-   - `%APPDATA%\Marvis`
+<Steps>
+<Step>
+隔離されたファイルを復元する：Windows セキュリティ → *ウイルスと脅威の防止* → *保護の履歴* → Marvis の項目を選択 → *操作* → *復元*。
+</Step>
+<Step>
+除外を追加する（再び隔離されないように）：*ウイルスと脅威の防止* → *設定の管理* → *除外* → *除外の追加または削除* → *フォルダー* で、次の両方を追加します。
 
-   両方が必要です。同梱の CLI が失われると Desktop は代替バイナリを `%APPDATA%\Marvis\bin` にダウンロードするため、インストール先だけを除外してもダウンロードした代替バイナリが再び隔離され、同じことの繰り返しになります。
-3. **誤検知を Microsoft に報告する** — [Microsoft Security Intelligence のファイル送信ページ](https://www.microsoft.com/en-us/wdsi/filesubmission)で *Software developer* と *Incorrectly detected as malware* を選択します。すべてのユーザーに対して検出を取り下げてもらうにはこの手順が必要で、通常は数日で反映されます。
+- `%LOCALAPPDATA%\Programs\@marvisdesktop`
+- `%APPDATA%\Marvis`
+
+両方が必要です。同梱の CLI が失われると Desktop は代替バイナリを `%APPDATA%\Marvis\bin` にダウンロードするため、インストール先だけを除外してもダウンロードした代替バイナリが再び隔離され、同じことの繰り返しになります。
+</Step>
+<Step>
+誤検知を Microsoft に報告する：[Microsoft Security Intelligence のファイル送信ページ](https://www.microsoft.com/en-us/wdsi/filesubmission)で *Software developer* と *Incorrectly detected as malware* を選択します。すべてのユーザーに対して検出を取り下げてもらうにはこの手順が必要で、通常は数日で反映されます。
+</Step>
+</Steps>
 
 <Callout type="warning">
 これらの除外を追加してよいのは、[ダウンロードページ](https://marvis.ai/download)または [GitHub リリース](https://github.com/yunboom/marvis/releases)からインストールし、チェックサムが一致している場合だけです。除外を設定すると、そのフォルダー内のすべてのファイルでリアルタイム保護が無効になります。
@@ -179,4 +265,5 @@ Get-FileHash .\marvis-cli-<version>-windows-amd64.zip -Algorithm SHA256
 
 - [クイックスタート](/cloud-quickstart) — 初回接続の流れ。
 - [デーモンとランタイム](/daemon-runtimes) — 内蔵デーモンの仕組み。
+- [セルフホストクイックスタート](/self-host-quickstart#ローカルネットワーク検出) — ローカルネットワークでサーバーを広告する。
 - [トラブルシューティング](/troubleshooting) — 接続問題の診断。

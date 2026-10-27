@@ -11,6 +11,8 @@ describe("callbackErrorFrom", () => {
     "email_not_allowed",
     "google_account_no_email",
     "oauth_code_invalid",
+    "lark_account_no_email",
+    "lark_tenant_not_allowed",
   ] as const)("keeps the stable %s error kind for localization", (code) => {
     const err = new ApiError("English fallback", 403, "Forbidden", { code });
     expect(callbackErrorFrom(err)).toEqual({ kind: code });

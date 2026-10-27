@@ -1190,6 +1190,12 @@ func (h *Handler) DeleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		failWorkspaceDelete(w, r, workspaceID, "list source context pending objects", err)
 		return
 	}
+	// Knowledge base raw files live in object storage under their own keys.
+	kbRawKeys, err := qtx.ListWorkspaceKbRawStorageKeys(r.Context(), requester.WorkspaceID)
+	if err != nil {
+		failWorkspaceDelete(w, r, workspaceID, "list knowledge base raw objects", err)
+		return
+	}
 
 	// Keep the relationship graph in the application layer. Each step is a
 	// set-based delete scoped by workspace_id; the legacy cascades remain only
@@ -1363,6 +1369,24 @@ func (h *Handler) DeleteWorkspace(w http.ResponseWriter, r *http.Request) {
 			run:  func() error { return qtx.DeleteWorkspacePluginData(ctx, requester.WorkspaceID) },
 		},
 		{
+			// Knowledge base tables have no foreign keys; the optional
+			// embedding table only exists where pgvector is installed.
+			name: "delete knowledge bases",
+			run: func() error {
+				hasEmbeddings, err := qtx.KbBlockEmbeddingTableExists(ctx)
+				if err != nil {
+					return err
+				}
+				if hasEmbeddings {
+					if err := qtx.DeleteWorkspaceKbBlockEmbeddings(ctx, requester.WorkspaceID); err != nil {
+						return err
+					}
+				}
+
+				return qtx.DeleteWorkspaceKnowledgeBases(ctx, requester.WorkspaceID)
+			},
+		},
+		{
 			name: "delete agents",
 			run:  func() error { return qtx.DeleteWorkspaceAgents(ctx, requester.WorkspaceID) },
 		},
@@ -1398,6 +1422,7 @@ func (h *Handler) DeleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		h.NotifyRuntimeGone(uuidToString(runtimeID))
 	}
 	h.deleteS3Objects(r.Context(), append(sourceContextAttachmentURLs, sourceContextIntentURLs...))
+	h.deleteKbRawObjects(kbRawKeys)
 
 	slog.Info("workspace deleted", append(logger.RequestAttrs(r), "workspace_id", workspaceID)...)
 	h.publish(protocol.EventWorkspaceDeleted, workspaceID, "member", requestUserID(r), map[string]any{

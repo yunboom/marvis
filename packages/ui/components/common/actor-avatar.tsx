@@ -11,6 +11,10 @@ import {
 import { parseAvatarEmoji } from "@marvis/ui/lib/avatar-emoji";
 import { MarvisIcon } from "./marvis-icon";
 
+/** One monochrome tone for every avatar without a picture, so identity reads
+ *  from the name and the shape, never from colour. */
+const NEUTRAL_TONE = "bg-identity-gray text-identity-gray-foreground";
+
 interface ActorAvatarProps {
   name: string;
   initials: string;
@@ -45,19 +49,24 @@ function ActorAvatar({
     setImgError(false);
   }, [avatarUrl]);
 
-  // Every actor — member, agent, squad, or system — renders as a circle. This
-  // is the single source of truth for avatar shape; the upload editors mirror
-  // it (packages/views/common/avatar-upload-control.tsx).
+  // Members render as a circle; agents and squads as a rounded square (radius
+  // 28% of the size); the system actor keeps the circle. This is the single
+  // source of truth for avatar shape; the upload editors mirror it
+  // (packages/views/common/avatar-upload-control.tsx).
+  const square = !isSystem && (isAgent || isSquad);
+
   return (
     <div
       data-slot="avatar"
+      data-shape={square ? "square" : "circle"}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center font-medium overflow-hidden",
-        (!avatarUrl || emoji || imgError) && "bg-muted text-muted-foreground",
+        "inline-flex shrink-0 items-center justify-center font-semibold overflow-hidden",
+        emoji && "bg-muted text-muted-foreground",
+        !emoji && (!avatarUrl || imgError) && NEUTRAL_TONE,
         className,
-        // rounded-full stays last so a call-site `className` can never override
-        // the circle — avatar shape is a hard invariant, not a per-site choice.
-        "rounded-full"
+        // The shape class stays last so a call-site `className` can never
+        // override it — avatar shape is a hard invariant, not a per-site choice.
+        square ? "rounded-[28%]" : "rounded-full"
       )}
       style={{ width: diameter, height: diameter, fontSize: scaled(0.45) }}
     >

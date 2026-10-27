@@ -82,6 +82,8 @@ export function parseTabSubject(url: string): TabSubject {
       return { kind: "page", page: "myIssues" };
     case "projects":
       return id ? { kind: "project", id } : { kind: "page", page: "projects" };
+    case "workflows":
+      return { kind: "page", page: "workflows" };
     case "autopilots":
       return id ? { kind: "autopilot", id } : { kind: "page", page: "autopilots" };
     case "agents":
@@ -96,6 +98,10 @@ export function parseTabSubject(url: string): TabSubject {
       return id
         ? { kind: "actor", actorType: "squad", id }
         : { kind: "page", page: "squads" };
+    case "kb":
+      // Knowledge base sub-routes have no resource presentation yet; they
+      // read as the knowledge base page.
+      return { kind: "page", page: "kb" };
     case "usage":
       return { kind: "page", page: "usage" };
     case "inbox":

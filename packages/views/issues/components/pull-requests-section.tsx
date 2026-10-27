@@ -58,12 +58,12 @@ export function PullRequestsSection({
         <button
           type="button"
           aria-expanded={open}
-          className={`flex min-w-0 flex-1 items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors hover:bg-accent/70 ${open ? "" : "text-muted-foreground hover:text-foreground"}`}
+          className={`flex min-w-0 flex-1 items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors hover:bg-accent ${open ? "" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => onOpenChange(!open)}
         >
           <span className="truncate">{t(($) => $.detail.section_pull_requests)}</span>
           {count > 0 ? (
-            <span className="shrink-0 rounded-xs bg-muted px-1 text-micro font-medium tabular-nums text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-field px-1.5 text-micro font-medium tabular-nums text-muted-foreground">
               {count}
             </span>
           ) : null}

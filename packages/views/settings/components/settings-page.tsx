@@ -1,31 +1,29 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Lock, Search, X } from "lucide-react";
 import {
-  AlarmClock,
+  Alarm,
   Bell,
-  Blocks,
-  CircleDot,
+  ChatCircleDots,
   CreditCard,
-  FolderGit2,
+  GearSix,
+  GitBranch,
+  HardDrives,
+  Key,
   Keyboard,
-  KeyRound,
   Laptop,
+  Lightning,
+  ListChecks,
   ListPlus,
-  Lock,
-  MessagesSquare,
   Plug,
-  Search,
-  Server,
-  Settings,
+  PlugsConnected,
+  PuzzlePiece,
   SlidersHorizontal,
-  Tags,
-  User,
-  Users,
-  X,
-  Workflow,
-  Zap,
-} from "lucide-react";
+  Tag,
+  UserCircle,
+  UsersThree,
+} from "@phosphor-icons/react/ssr";
 import { useAuthStore } from "@marvis/core/auth";
 import { useCurrentWorkspace } from "@marvis/core/paths";
 import { useFeatureEnabled } from "@marvis/core/config";
@@ -33,7 +31,6 @@ import { useCurrentMember } from "@marvis/core/permissions";
 import {
   BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
   PLUGINS_V1_FLAG,
-  PROJECT_WORKFLOWS_V1_FLAG,
 } from "@marvis/core/feature-flags";
 import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
@@ -52,8 +49,6 @@ import { ChannelsTab } from "./channels-tab";
 import { ConnectedAppsTab, useComposioAvailable } from "./connected-apps-tab";
 import { NotificationsTab } from "./notifications-tab";
 import { LabelsTab } from "./labels-tab";
-import { IssueStatusesTab } from "./issue-statuses-tab";
-import { WorkflowsTab } from "../../workflows/workflows-tab";
 import { PropertiesTab } from "./properties-tab";
 import { QuickActionsTab } from "./quick-actions-tab";
 import { KeyboardShortcutsTab } from "./keyboard-shortcuts-tab";
@@ -66,6 +61,7 @@ import { HighlightText } from "../../search/highlight-text";
 import { useSettingsSearchIndex } from "./use-settings-search-index";
 import { WakeupsTab } from "./wakeups-tab";
 import { CollapsedNavTrigger } from "../../layout/page-header";
+import { filled } from "../../layout/route-icon-components";
 import { useT } from "../../i18n";
 
 export interface ExtraSettingsTab {
@@ -89,6 +85,8 @@ type SettingsEntry = ExtraSettingsTab & {
 interface SettingsSubgroup {
   key: string;
   label?: string;
+  /** Labelled subgroups render as a collapsible row with this icon. */
+  icon?: ExtraSettingsTab["icon"];
   entries: SettingsEntry[];
 }
 
@@ -102,6 +100,29 @@ interface SettingsScopeGroup {
   subgroups: SettingsSubgroup[];
 }
 
+/** Nav icons share the sidebar's solid glyph style. */
+const ICONS = {
+  profile: filled(UserCircle),
+  preferences: filled(SlidersHorizontal),
+  notifications: filled(Bell),
+  keyboard: filled(Keyboard),
+  apps: filled(PlugsConnected),
+  tokens: filled(Key),
+  workspace: filled(GearSix),
+  members: filled(UsersThree),
+  billing: filled(CreditCard),
+  wakeups: filled(Alarm),
+  labels: filled(Tag),
+  properties: filled(ListPlus),
+  autopilot: filled(Lightning),
+  code: filled(GitBranch),
+  chat: filled(ChatCircleDots),
+  mcp: filled(HardDrives),
+  plugins: filled(PuzzlePiece),
+  issues: filled(ListChecks),
+  connections: filled(Plug),
+};
+
 const FLASH_MS = 1600;
 const ANCHOR_WAIT_MS = 1500;
 
@@ -114,7 +135,6 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
   const isMember = role === "member";
   const navigation = useNavigation();
   const pluginsEnabled = useFeatureEnabled(PLUGINS_V1_FLAG, false);
-  const workflowsEnabled = useFeatureEnabled(PROJECT_WORKFLOWS_V1_FLAG, false);
   const billingEnabled = useFeatureEnabled(
     BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
     false,
@@ -145,29 +165,29 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         {
           key: "personal",
           entries: [
-            entry("profile", t(($) => $.page.tabs.profile), User, <AccountTab />),
+            entry("profile", t(($) => $.page.tabs.profile), ICONS.profile, <AccountTab />),
             entry(
               "preferences",
               t(($) => $.page.tabs.preferences),
-              SlidersHorizontal,
+              ICONS.preferences,
               <PreferencesTab />,
             ),
             entry(
               "notifications",
               t(($) => $.page.tabs.notifications),
-              Bell,
+              ICONS.notifications,
               <NotificationsTab />,
             ),
             entry(
               "shortcuts",
               t(($) => $.page.tabs.shortcuts),
-              Keyboard,
+              ICONS.keyboard,
               <KeyboardShortcutsTab />,
             ),
             ...(appsAvailable
-              ? [entry("apps", t(($) => $.page.tabs.apps), Plug, <ConnectedAppsTab />)]
+              ? [entry("apps", t(($) => $.page.tabs.apps), ICONS.apps, <ConnectedAppsTab />)]
               : []),
-            entry("tokens", t(($) => $.page.tabs.tokens), KeyRound, <TokensTab />),
+            entry("tokens", t(($) => $.page.tabs.tokens), ICONS.tokens, <TokensTab />),
           ],
         },
       ],
@@ -188,10 +208,10 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         {
           key: "workspace",
           entries: [
-            entry("workspace", t(($) => $.page.tabs.general), Settings, <WorkspaceTab />, {
+            entry("workspace", t(($) => $.page.tabs.general), ICONS.workspace, <WorkspaceTab />, {
               adminOnly: true,
             }),
-            entry("members", t(($) => $.page.tabs.members), Users, <MembersTab />, {
+            entry("members", t(($) => $.page.tabs.members), ICONS.members, <MembersTab />, {
               adminOnly: true,
             }),
             ...(billingEnabled
@@ -199,7 +219,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                   entry(
                     "billing",
                     t(($) => $.page.tabs.billing),
-                    CreditCard,
+                    ICONS.billing,
                     <BillingTab />,
                   ),
                 ]
@@ -209,33 +229,26 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         {
           key: "issues",
           label: t(($) => $.page.groups.issues),
+          icon: ICONS.issues,
           entries: [
-            ...(workflowsEnabled
-              ? [entry("workflows", t(($) => $.page.tabs.workflows), Workflow, <WorkflowsTab />, {
-                  wide: true,
-                })]
-              : [entry("issue-statuses", t(($) => $.page.tabs.issue_statuses), CircleDot, <IssueStatusesTab />, {
-                  wide: true,
-                  adminOnly: true,
-                })]),
-            entry("wakeups", t(($) => $.page.tabs.wakeups), AlarmClock, <WakeupsTab />, {
+            entry("wakeups", t(($) => $.page.tabs.wakeups), ICONS.wakeups, <WakeupsTab />, {
               wide: true,
               adminOnly: true,
             }),
-            entry("labels", t(($) => $.page.tabs.labels), Tags, <LabelsTab />, {
+            entry("labels", t(($) => $.page.tabs.labels), ICONS.labels, <LabelsTab />, {
               wide: true,
             }),
             entry(
               "properties",
               t(($) => $.page.tabs.properties),
-              ListPlus,
+              ICONS.properties,
               <PropertiesTab />,
               { wide: true, adminOnly: true },
             ),
             entry(
               "quick-actions",
               t(($) => $.page.tabs.quick_actions),
-              Zap,
+              ICONS.autopilot,
               <QuickActionsTab />,
               { wide: true },
             ),
@@ -244,22 +257,23 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         {
           key: "connections",
           label: t(($) => $.page.groups.connections),
+          icon: ICONS.connections,
           entries: [
-            entry("code", t(($) => $.page.tabs.code), FolderGit2, <CodeTab />, {
+            entry("code", t(($) => $.page.tabs.code), ICONS.code, <CodeTab />, {
               adminOnly: true,
             }),
             entry(
               "channels",
               t(($) => $.page.tabs.channels),
-              MessagesSquare,
+              ICONS.chat,
               <ChannelsTab />,
             ),
-            entry("mcp", t(($) => $.page.tabs.mcp), Server, <McpTab />, {
+            entry("mcp", t(($) => $.page.tabs.mcp), ICONS.mcp, <McpTab />, {
               adminOnly: true,
             }),
             ...(pluginsEnabled
               ? [
-                  entry("plugins", t(($) => $.page.tabs.plugins), Blocks, <PluginsTab />, {
+                  entry("plugins", t(($) => $.page.tabs.plugins), ICONS.plugins, <PluginsTab />, {
                     adminOnly: true,
                   }),
                 ]
@@ -273,7 +287,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
           {
             key: "device" as const,
             label: t(($) => $.page.groups.device),
-            mark: <Laptop aria-hidden="true" className="size-4 text-muted-foreground" />,
+            mark: <Laptop weight="fill" aria-hidden="true" className="size-4 text-foreground" />,
             subgroups: [{ key: "device", entries: extraDeviceTabs as SettingsEntry[] }],
           },
         ]
@@ -296,6 +310,19 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
         subgroup.entries.some((item) => item.value === value),
       ),
     );
+
+  // 二级分组默认折叠；当前页所在的分组展开，跳转到折叠分组里的页面时自动展开。
+  const activeSubgroup = groups
+    .flatMap((group) => group.subgroups)
+    .find((subgroup) => subgroup.entries.some((item) => item.value === active.value))?.key;
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
+    activeSubgroup ? { [activeSubgroup]: true } : {},
+  );
+  useEffect(() => {
+    if (activeSubgroup) setExpanded((current) => (current[activeSubgroup] ? current : { ...current, [activeSubgroup]: true }));
+  }, [activeSubgroup]);
+  const toggleSubgroup = (key: string) =>
+    setExpanded((current) => ({ ...current, [key]: !current[key] }));
 
   // --- search ---------------------------------------------------------------
   const [query, setQuery] = useState("");
@@ -359,19 +386,21 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
     };
   }, [active.value, location.section]);
 
-  const navItem = (item: SettingsEntry) => (
+  // nested：折叠分组里的子项，整行缩进一级。
+  const navItem = (item: SettingsEntry, nested = false) => (
     <li key={item.value}>
       <AppLink
         href={href(item.value)}
         aria-current={active.value === item.value ? "page" : undefined}
         className={cn(
-          "flex min-h-8 items-center gap-2.5 rounded-lg px-3 py-1.5 text-body transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+          "flex h-7.5 items-center gap-2.5 rounded-row px-2.5 text-body transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:outline-2 focus-visible:outline-ring",
+          nested && "pl-9",
           active.value === item.value
             ? "bg-surface-selected font-medium text-surface-selected-foreground hover:bg-surface-selected"
             : "text-muted-foreground hover:bg-surface-hover hover:text-foreground",
         )}
       >
-        <item.icon className="size-4 shrink-0" aria-hidden="true" />
+        <item.icon className="size-4 shrink-0 text-foreground" aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate">{item.label}</span>
         {isMember && item.adminOnly ? (
           <Lock
@@ -385,7 +414,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
 
   const searchResults = (
     <div className="space-y-1">
-      <p className="px-3 pb-1 text-caption text-muted-foreground" role="status">
+      <p className="px-2.5 pb-1.5 pt-1 text-caption text-muted-foreground" role="status">
         {results.length > 0
           ? t(($) => $.page.search_results, { count: results.length })
           : t(($) => $.page.search_empty)}
@@ -406,7 +435,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                 onClick={() => openResult(position)}
                 onMouseMove={() => setActiveResult(position)}
                 className={cn(
-                  "w-full rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+                  "w-full rounded-md px-2.5 py-2 text-left transition-colors duration-(--motion-fast) ease-out focus-visible:outline-2 focus-visible:outline-ring",
                   position === activeResult
                     ? "bg-surface-selected text-surface-selected-foreground"
                     : "hover:bg-surface-hover",
@@ -433,10 +462,10 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:flex-row">
-      <aside className="shrink-0 border-b border-surface-border md:flex md:w-60 md:flex-col md:border-b-0 md:border-r">
-        <div className="flex h-16 shrink-0 items-center gap-1 px-4 md:px-5">
+      <aside className="shrink-0 border-b border-surface-border md:flex md:w-62 md:flex-col md:border-b-0 md:border-r">
+        <div className="flex h-16 shrink-0 items-center gap-1 px-4 md:px-5.5">
           <CollapsedNavTrigger />
-          <h1 className="text-title font-semibold tracking-tight">
+          <h1 className="text-title-lg font-bold">
             {t(($) => $.page.title)}
           </h1>
         </div>
@@ -446,7 +475,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
           </label>
           <select
             id="settings-navigation"
-            className="h-10 w-full rounded-lg border border-input bg-background px-3 text-body text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            className="h-10 w-full rounded-lg border-0 bg-field px-3 text-body text-foreground focus-visible:outline-2 focus-visible:outline-ring"
             value={active.value}
             onChange={(event) => navigation.push(href(event.target.value))}
           >
@@ -466,10 +495,10 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
             )}
           </select>
         </div>
-        <div className="relative mx-3 mb-3 hidden shrink-0 md:block">
+        <div className="relative mx-3 mb-2.5 hidden shrink-0 md:block">
           <Search
             aria-hidden="true"
-            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-2.5 top-1/2 size-3.75 -translate-y-1/2 text-muted-foreground"
           />
           <input
             type="search"
@@ -499,7 +528,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
             placeholder={t(($) => $.page.search)}
             aria-label={t(($) => $.page.search)}
             aria-controls={query ? "settings-search-results" : undefined}
-            className="h-8 w-full rounded-lg border border-input bg-transparent pl-8 pr-8 text-body outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 [&::-webkit-search-cancel-button]:hidden"
+            className="h-8.5 w-full rounded-lg border-0 bg-field pl-8 pr-8 text-label outline-none transition-colors placeholder:text-muted-foreground hover:bg-field-hover focus-visible:bg-field-hover focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-search-cancel-button]:hidden"
           />
           {query ? (
             <TooltipHint label={t(($) => $.page.search_clear)}>
@@ -507,9 +536,9 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                 type="button"
                 onClick={() => setQuery("")}
                 aria-label={t(($) => $.page.search_clear)}
-                className="absolute right-1.5 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground"
+                className="absolute right-1.5 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:bg-surface-hover hover:text-foreground"
               >
-                <X className="size-3.5" aria-hidden="true" />
+                <X className="size-3.25" aria-hidden="true" />
               </button>
             </TooltipHint>
           ) : null}
@@ -530,7 +559,7 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                 >
                   <h2
                     id={`settings-group-${group.key}`}
-                    className="flex h-8 min-w-0 items-center gap-2.5 px-3 text-label font-semibold text-foreground"
+                    className="flex h-7.5 min-w-0 items-center gap-2.5 px-2.5 text-label font-semibold text-foreground"
                   >
                     <span className="flex size-4 shrink-0 items-center justify-center">
                       {group.mark}
@@ -542,25 +571,42 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
                       </span>
                     ) : null}
                   </h2>
-                  {group.subgroups.map((subgroup) => (
-                    <div
-                      key={subgroup.key}
-                      role={subgroup.label ? "group" : undefined}
-                      aria-labelledby={
-                        subgroup.label ? `settings-subgroup-${subgroup.key}` : undefined
-                      }
-                    >
-                      {subgroup.label ? (
-                        <h3
-                          id={`settings-subgroup-${subgroup.key}`}
-                          className="px-3 pb-1 pt-3 text-caption font-medium text-muted-foreground"
+                  {group.subgroups.map((subgroup) => {
+                    if (!subgroup.label) {
+                      return (
+                        <ul key={subgroup.key} className="space-y-px">
+                          {subgroup.entries.map((item) => navItem(item))}
+                        </ul>
+                      );
+                    }
+                    const open = Boolean(expanded[subgroup.key]);
+                    const Icon = subgroup.icon;
+                    const Chevron = open ? ChevronUp : ChevronDown;
+                    return (
+                      <div key={subgroup.key} className="mt-px">
+                        <button
+                          type="button"
+                          aria-expanded={open}
+                          aria-controls={`settings-subgroup-${subgroup.key}`}
+                          onClick={() => toggleSubgroup(subgroup.key)}
+                          className="flex h-7.5 w-full items-center gap-2.5 rounded-row px-2.5 text-left text-body text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-surface-hover hover:text-foreground hover:duration-(--motion-instant) focus-visible:outline-2 focus-visible:outline-ring"
                         >
-                          {subgroup.label}
-                        </h3>
-                      ) : null}
-                      <ul className="space-y-px">{subgroup.entries.map(navItem)}</ul>
-                    </div>
-                  ))}
+                          {Icon ? <Icon className="size-4 shrink-0 text-foreground" aria-hidden="true" /> : null}
+                          <span className="min-w-0 flex-1 truncate">{subgroup.label}</span>
+                          <Chevron className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        </button>
+                        {open ? (
+                          <ul
+                            id={`settings-subgroup-${subgroup.key}`}
+                            aria-label={subgroup.label}
+                            className="mt-px space-y-px"
+                          >
+                            {subgroup.entries.map((item) => navItem(item, true))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </section>
               ))}
             </div>
@@ -574,8 +620,8 @@ export function SettingsPage({ extraDeviceTabs = [] }: SettingsPageProps = {}) {
       >
         <div
           className={cn(
-            "mx-auto w-full px-4 py-6 sm:px-6 md:px-10 md:py-8",
-            active.wide ? "max-w-5xl" : "max-w-4xl",
+            "mx-auto w-full px-4 py-6 sm:px-6 md:px-10 md:pt-8 md:pb-10",
+            active.wide ? "max-w-5xl" : "max-w-[52.5rem]",
           )}
         >
           {active.content}

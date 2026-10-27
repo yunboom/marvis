@@ -30,17 +30,18 @@ describe("issue icons", () => {
     rerender(<StatusIcon status="qa" category="started" icon={icon} />);
     expect(container.innerHTML).toBe(markup);
   });
-  it("renders a muted fallback for unknown status values", () => {
+  it("renders the todo grey fallback for unknown status values", () => {
     const { container } = render(<StatusIcon status="unexpected_status" />);
 
     const icon = container.querySelector("svg");
-    expect(icon).toHaveClass("text-muted-foreground");
+    expect(icon).toHaveClass("text-status-todo");
   });
 
-  it("renders a muted fallback for unknown priority values", () => {
+  it("renders unknown priority values as no priority", () => {
     const { container } = render(<PriorityIcon priority="unexpected_priority" />);
 
     const icon = container.querySelector("svg");
-    expect(icon).toHaveClass("text-muted-foreground");
+    expect(icon).toHaveClass("text-priority-low");
+    expect(icon?.querySelector("line")).not.toBeNull();
   });
 });

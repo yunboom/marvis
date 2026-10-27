@@ -217,6 +217,30 @@ describe("useRealtimeSync — ws instance change", () => {
     }
   });
 
+  // 飞书邀请卡片加入工作区会广播 member:added；列表里的已加入人数和状态依赖它刷新，
+  // 全局 staleTime 是 Infinity，没有失效就会一直停在旧数据。
+  it.each(["member:added", "member:updated", "member:removed"])(
+    "refreshes the member list and the Feishu invite list after %s",
+    (type) => {
+      vi.useFakeTimers();
+      try {
+        const ws = createMockWs();
+        renderHook(() => useRealtimeSync(ws, stores), { wrapper: createWrapper(qc) });
+        const onAny = vi.mocked(ws.onAny).mock.calls[0]![0];
+        invalidateSpy.mockClear();
+
+        onAny({ type, payload: {} } as never);
+        vi.advanceTimersByTime(100);
+
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: workspaceKeys.members("ws-1") });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: workspaceKeys.larkInvites("ws-1") });
+        expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: workspaceKeys.larkInvites("ws-2") });
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
+
   it("invalidates per-issue caches (no wsId in key) on ws instance change", () => {
     // These keys are not under the ["issues", wsId] prefix, so they need
     // their own invalidation on recovery — otherwise events missed while

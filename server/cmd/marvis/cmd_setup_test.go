@@ -150,7 +150,7 @@ func TestResolveSelfHostServerURL(t *testing.T) {
 	newCmd := func() *cobra.Command {
 		c := &cobra.Command{}
 		c.Flags().String("server-url", "", "")
-		c.Flags().Int("port", 8080, "")
+		c.Flags().Int("port", 13840, "")
 		return c
 	}
 
@@ -364,9 +364,9 @@ func TestFormatURLChange(t *testing.T) {
 		newVal string
 		want   string
 	}{
-		{"changed", "http://localhost:8080", "https://api.internal.co", "http://localhost:8080  ->  https://api.internal.co"},
+		{"changed", "http://localhost:13840", "https://api.internal.co", "http://localhost:13840  ->  https://api.internal.co"},
 		{"unchanged", "https://api.internal.co", "https://api.internal.co", "https://api.internal.co"},
-		{"empty new keeps old", "http://localhost:8080", "", "http://localhost:8080"},
+		{"empty new keeps old", "http://localhost:13840", "", "http://localhost:13840"},
 	}
 	for _, tc := range cases {
 		tc := tc
@@ -384,10 +384,10 @@ func TestServerHostIsLocal(t *testing.T) {
 		server string
 		want   bool
 	}{
-		{"localhost", "http://localhost:8080", true},
-		{"127.0.0.1", "http://127.0.0.1:8080", true},
-		{"IPv6 loopback", "http://[::1]:8080", true},
-		{"LAN IP", "http://192.168.0.28:8080", false},
+		{"localhost", "http://localhost:13840", true},
+		{"127.0.0.1", "http://127.0.0.1:13840", true},
+		{"IPv6 loopback", "http://[::1]:13840", true},
+		{"LAN IP", "http://192.168.0.28:13840", false},
 		{"public FQDN", "https://api.internal.co", false},
 		{"unparseable", "://bad", false},
 	}
@@ -408,7 +408,7 @@ func TestSetupCommandsFailClosedInTaskContext(t *testing.T) {
 	t.Setenv("MARVIS_TASK_ID", "task-test")
 	t.Setenv("MARVIS_TASK_CONFIG_ROOT", filepath.Join(t.TempDir(), "task-marvis"))
 
-	ownerPath := filepath.Join(ownerHome, ".marvis-studio", "config.json")
+	ownerPath := filepath.Join(ownerHome, ".marvis", "config.json")
 	if err := os.MkdirAll(filepath.Dir(ownerPath), 0o755); err != nil {
 		t.Fatal(err)
 	}

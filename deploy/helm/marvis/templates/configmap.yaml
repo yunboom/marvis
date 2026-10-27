@@ -6,7 +6,7 @@ metadata:
     {{- include "marvis.labels" . | nindent 4 }}
 data:
   # --- Backend ---
-  PORT: "8080"
+  PORT: "13840"
   MAINTENANCE_PORT: {{ .Values.backend.config.maintenancePort | quote }}
   MARVIS_DATABASE_STARTUP_TIMEOUT: {{ .Values.backend.config.databaseStartupTimeout | quote }}
   MARVIS_DATABASE_CONNECT_TIMEOUT: {{ .Values.backend.config.databaseConnectTimeout | quote }}

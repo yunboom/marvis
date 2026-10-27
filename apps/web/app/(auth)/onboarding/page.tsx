@@ -65,11 +65,11 @@ export default function OnboardingPage() {
 
   // Layout: page owns its own scroll (root layout sets `body {
   // overflow: hidden }` for the app-shell convention). OnboardingFlow
-  // owns the per-step width constraint internally — Welcome renders a
-  // wide two-column hero, all other steps wrap themselves at max-w-xl.
+  // owns the per-step width constraint internally.
   return (
-    <div className="h-full overflow-y-auto bg-background">
+    <div className="h-full overflow-y-auto bg-app-shell">
       <OnboardingFlow
+        firstRun
         onComplete={(ws, destination) => {
           completingRef.current = true;
           if (ws && destination?.kind === "chat") {

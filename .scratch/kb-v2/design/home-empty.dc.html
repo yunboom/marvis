@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>没有知识库</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 0 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <div class="col">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 26px 28px 18px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM13 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5z"></path></svg>
+        <h1 class="ptitle">知识库</h1>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding-bottom: 80px">
+        <span style="width: 56px; height: 56px; border-radius: 16px; background: #f2f2f2; display: inline-flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="1.6" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM13 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5z"></path></svg></span>
+        <div style="font-size: 17px; font-weight: 600">还没有知识库</div>
+        <div class="muted" style="font-size: 14px; max-width: 420px; text-align: center; line-height: 1.7">智能体负责写和维护页面，团队成员阅读、批注、审核修改。</div>
+        <div style="display: flex; gap: 10px; margin-top: 6px">
+          <button class="btn btn-p btn-l">新建知识库</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

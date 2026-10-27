@@ -1,7 +1,8 @@
 {
   "page": {
     "title": "Inbox",
-    "back": "Inbox"
+    "back": "Inbox",
+    "close": "Close"
   },
   "menu": {
     "mark_all_read": "Mark all as read",
@@ -51,7 +52,6 @@
   },
   "detail": {
     "select_prompt": "Select a notification to view details",
-    "empty": "Your inbox is empty",
     "original_input": "Original input",
     "retry_with_context": "Retry with context",
     "edit_advanced": "Edit as advanced form",

@@ -8,8 +8,6 @@ import { cn } from "@marvis/ui/lib/utils";
 import { copyText } from "@marvis/ui/lib/clipboard";
 import { toast } from "sonner";
 import type { Project, ProjectStatus, ProjectPriority } from "@marvis/core/types";
-import { useFeatureEnabled } from "@marvis/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
 import { useAuthStore } from "@marvis/core/auth";
 import { projectDetailOptions } from "@marvis/core/projects/queries";
 import { useUpdateProject, useDeleteProject } from "@marvis/core/projects/mutations";
@@ -30,6 +28,7 @@ import { PriorityIcon } from "../../issues/components/priority-icon";
 import { ProjectResourcesSection } from "./project-resources-section";
 import { ProjectStartDatePicker } from "./project-start-date-picker";
 import { ProjectDueDatePicker } from "./project-due-date-picker";
+import { ProjectIcon } from "./project-icon";
 import { ProjectWorkflowControl } from "../../workflows/project-workflow-row";
 import { ProjectWorkflowMenu } from "../../workflows/project-workflow-menu";
 import { IssueSurface } from "../../issues/surface/issue-surface";
@@ -60,10 +59,10 @@ import {
 import { EmojiPicker } from "@marvis/ui/components/common/emoji-picker";
 import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
 import {
-  AnimatedRightSidebar,
+  AnimatedRightSidebarPanel,
   getAnimatedRightSidebarInitialOpen,
-  rightSidebarPanelMotionProps,
-  useAnimatedRightSidebarState,
+  RightSidebarOpenState,
+  useRightSidebarController,
   useRightSidebarShortcut,
 } from "../../layout/animated-right-sidebar";
 import {
@@ -99,12 +98,9 @@ function PropRow({
   );
 }
 
-// The project's workflow (MUL-7420). Hidden while workflows are off, unless the
-// project already uses one — it can always switch back to Default.
+// The project's workflow (MUL-7420).
 function ProjectWorkflowPropRow({ project }: { project: Project }) {
   const { t } = useT("issues");
-  const enabled = useFeatureEnabled(PROJECT_WORKFLOWS_V1_FLAG, false);
-  if (!enabled && !project.workflow_id) return null;
   return (
     <PropRow label={t(($) => $.workflows.project.label)}>
       <ProjectWorkflowControl project={project} />
@@ -181,15 +177,8 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
   // to `true` made the mobile <Sheet> mount in the open position on first render
   // (after `useIsMobile()` flipped from false→true), briefly covering the page
   // with its modal backdrop and locking scroll — leaving the page unresponsive.
-  const {
-    open: desktopSidebarOpen,
-    visualOpen: desktopSidebarVisualOpen,
-    motionEnabled: desktopSidebarMotionEnabled,
-    beginToggle: beginDesktopSidebarToggle,
-    handleResize: handleDesktopSidebarResize,
-  } = useAnimatedRightSidebarState(desktopSidebarInitialOpen);
+  const desktopSidebar = useRightSidebarController(desktopSidebarInitialOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const sidebarOpen = isMobile ? mobileSidebarOpen : desktopSidebarOpen;
 
   useEffect(() => {
     if (isMobile) {
@@ -206,12 +195,12 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
     const panel = sidebarRef.current;
     if (!panel) return;
     const nextOpen = panel.isCollapsed();
-    beginDesktopSidebarToggle(nextOpen);
+    desktopSidebar.beginToggle(nextOpen);
     window.requestAnimationFrame(() => {
       if (nextOpen) panel.expand();
       else panel.collapse();
     });
-  }, [beginDesktopSidebarToggle, isMobile, sidebarRef]);
+  }, [desktopSidebar, isMobile, sidebarRef]);
 
   useRightSidebarShortcut(rightSidebarShortcutTargetRef, handleToggleSidebar);
 
@@ -271,7 +260,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                   className="text-display-sm cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
                   aria-label={t(($) => $.detail.icon_tooltip)}
                 >
-                  {project.icon || "📁"}
+                  <ProjectIcon project={project} size="lg" />
                 </button>
               }
             />
@@ -552,21 +541,28 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      variant={sidebarOpen ? "secondary" : "ghost"}
-                      size="icon-sm"
-                      className={sidebarOpen ? "" : "text-muted-foreground"}
-                      onClick={handleToggleSidebar}
-                    >
-                      <PanelRight />
-                    </Button>
-                  }
-                />
-                <TooltipContent side="bottom">{t(($) => $.detail.sidebar_tooltip)}</TooltipContent>
-              </Tooltip>
+              <RightSidebarOpenState controller={desktopSidebar}>
+                {(desktopOpen) => {
+                  const sidebarOpen = isMobile ? mobileSidebarOpen : desktopOpen;
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            variant={sidebarOpen ? "secondary" : "ghost"}
+                            size="icon-sm"
+                            className={sidebarOpen ? "" : "text-muted-foreground"}
+                            onClick={handleToggleSidebar}
+                          >
+                            <PanelRight />
+                          </Button>
+                        }
+                      />
+                      <TooltipContent side="bottom">{t(($) => $.detail.sidebar_tooltip)}</TooltipContent>
+                    </Tooltip>
+                  );
+                }}
+              </RightSidebarOpenState>
               </>
             }
           />
@@ -579,22 +575,9 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
         </ResizablePanel>
         {!isMobile && <ResizableHandle />}
         {!isMobile && (
-        <ResizablePanel
-          id="sidebar"
-          {...rightSidebarPanelMotionProps}
-          data-right-sidebar-motion={desktopSidebarMotionEnabled ? "enabled" : undefined}
-          defaultSize={desktopSidebarOpen ? 320 : 0}
-          minSize={260}
-          maxSize={420}
-          collapsible
-          groupResizeBehavior="preserve-pixel-size"
-          panelRef={sidebarRef}
-          onResize={handleDesktopSidebarResize}
-        >
-          <AnimatedRightSidebar open={desktopSidebarVisualOpen} motionEnabled={desktopSidebarMotionEnabled}>
-            {sidebarContent}
-          </AnimatedRightSidebar>
-        </ResizablePanel>
+        <AnimatedRightSidebarPanel controller={desktopSidebar} panelRef={sidebarRef}>
+          {sidebarContent}
+        </AnimatedRightSidebarPanel>
         )}
         {isMobile && (
           <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>

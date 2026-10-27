@@ -6,6 +6,16 @@ import { escapeMarkdownLabel } from "../utils/escape-markdown-label";
 
 const MENTION_LINK_MARKER = "](mention://";
 
+/**
+ * Mention types that name an entity rather than a person: written and shown
+ * without the `@` prefix. Knowledge base links (spec 7.14) are entities too.
+ */
+const ENTITY_MENTION_TYPES = new Set(["issue", "project", "kb", "kb_page", "kb_mr", "kb_annotation"]);
+
+function mentionPrefix(type: unknown): string {
+  return ENTITY_MENTION_TYPES.has(String(type)) ? "" : "@";
+}
+
 function isEscaped(text: string, index: number): boolean {
   let slashCount = 0;
   for (let i = index - 1; i >= 0 && text[i] === "\\"; i--) {
@@ -44,8 +54,7 @@ function findMentionStart(src: string): number {
 /** A mention as text, the way its pill reads: issues and projects by name. */
 export function mentionText(attrs: Record<string, unknown>): string {
   const type = attrs.type ?? "member";
-  const prefix = type === "issue" || type === "project" ? "" : "@";
-  return `${prefix}${String(attrs.label ?? attrs.id ?? "")}`;
+  return `${mentionPrefix(type)}${String(attrs.label ?? attrs.id ?? "")}`;
 }
 
 export const BaseMentionExtension = Mention.extend({
@@ -112,7 +121,7 @@ export const BaseMentionExtension = Mention.extend({
   },
   renderMarkdown: (node: any) => {
     const { id, label, type = "member" } = node.attrs || {};
-    const prefix = type === "issue" || type === "project" ? "" : "@";
+    const prefix = mentionPrefix(type);
     // Escape [ ] \ ( ) in the label so the markdown link syntax is not broken
     // and the label survives the linear tokenizer (which now treats "\" as an
     // escape lead, not an ordinary char). Must stay in sync with the unescape

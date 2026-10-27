@@ -471,7 +471,7 @@ export function DashboardPage() {
              with the page metadata rather than among the scope controls. */
           <div className="flex items-center gap-1">
             {tzLabel ? (
-              <span className="hidden text-caption text-muted-foreground lg:inline">
+              <span className="mr-1 hidden text-label text-muted-foreground lg:inline">
                 {updatedLabel
                   ? t(($) => $.header.timezone_and_updated, {
                       tz: tzLabel,
@@ -482,7 +482,8 @@ export function DashboardPage() {
             ) : null}
             <IconButton
               variant="ghost"
-              size="icon-sm"
+              size="icon"
+              className="text-muted-foreground"
               label={t(($) => $.header.refresh)}
               tooltipSide="bottom"
               onClick={handleRefresh}
@@ -500,16 +501,16 @@ export function DashboardPage() {
           here and not inside a tab. */}
       <div className={cn("h-12 shrink-0 overflow-x-auto border-b [-webkit-overflow-scrolling:touch]", PAGE_GUTTER)}>
         <div className="flex h-full w-max min-w-full items-center justify-between gap-2">
-          <TabsList variant="line" className="gap-0 p-0 group-data-horizontal/tabs:h-full">
+          <TabsList variant="line" className="gap-1 p-0 group-data-horizontal/tabs:h-full">
             <TabsTrigger
               value="usage"
-              className="h-full rounded-none px-2.5 text-label group-data-horizontal/tabs:after:bottom-0"
+              className="h-full rounded-none px-2.5 text-body data-active:font-semibold group-data-horizontal/tabs:after:bottom-0"
             >
               {t(($) => $.tab_usage)}
             </TabsTrigger>
             <TabsTrigger
               value="errors"
-              className="h-full rounded-none px-2.5 text-label group-data-horizontal/tabs:after:bottom-0"
+              className="h-full rounded-none px-2.5 text-body data-active:font-semibold group-data-horizontal/tabs:after:bottom-0"
             >
               {t(($) => $.errors.title)}
             </TabsTrigger>
@@ -526,8 +527,8 @@ export function DashboardPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-6xl p-6">
-          <TabsContent value="usage" className="space-y-5">
+        <div className="mx-auto max-w-6xl px-6 pt-5 pb-6">
+          <TabsContent value="usage" className="space-y-4">
             {usageLoading ? (
               <DashboardSkeleton />
             ) : usageHasNoData ? (
@@ -536,7 +537,7 @@ export function DashboardPage() {
               <>
                 {/* KPI row — same 3-divide-x card grid the runtime usage
                     section uses, expanded to four tiles. */}
-                <div className="grid grid-cols-1 divide-y rounded-lg border bg-card sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+                <div className="grid grid-cols-1 divide-y rounded-xl border bg-card sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
                   <KpiCard
                     label={t(($) => $.kpi.cost_label, { days })}
                     value={<CurrencyNumberFlow value={totals.cost} locales={locales} />}
@@ -643,10 +644,10 @@ export function DashboardPage() {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-5">
-      <Skeleton className="h-28 rounded-lg" />
-      <Skeleton className="h-56 rounded-lg" />
-      <Skeleton className="h-48 rounded-lg" />
+    <div className="space-y-4">
+      <Skeleton className="h-28 rounded-xl" />
+      <Skeleton className="h-56 rounded-xl" />
+      <Skeleton className="h-48 rounded-xl" />
     </div>
   );
 }
@@ -654,10 +655,10 @@ function DashboardSkeleton() {
 function DashboardEmpty() {
   const { t } = useT("usage");
   return (
-    <div className="flex flex-col items-center rounded-lg border border-dashed py-12 text-center">
-      <BarChart3 className="h-6 w-6 text-faint-foreground" />
-      <p className="mt-3 text-body font-medium">{t(($) => $.empty.title)}</p>
-      <p className="mt-1 max-w-md text-caption text-muted-foreground">
+    <div className="flex flex-col items-center rounded-xl border border-dashed border-input px-6 py-14 text-center">
+      <BarChart3 className="size-6 text-faint-foreground" />
+      <p className="mt-3 text-body-lg font-medium">{t(($) => $.empty.title)}</p>
+      <p className="mt-1 max-w-md text-label text-muted-foreground">
         {t(($) => $.empty.body)}
       </p>
     </div>

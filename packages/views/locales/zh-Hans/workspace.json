@@ -1,29 +1,61 @@
 {
-  "create_form": {
+  "create_page": {
+    "title": "创建工作区",
+    "subtitle": "成员、任务和智能体都在工作区里协作。",
+    "preview_empty_name": "新工作区",
+    "preview_empty_hint": "填写名称后生成 URL 和任务编号",
     "name_label": "工作区名称",
-    "name_placeholder": "我的工作区",
-    "url_label": "工作区 URL",
-    "url_placeholder": "my-workspace",
+    "name_placeholder": "Acme Inc",
+    "random_name": "随机",
+    "url_label": "URL",
+    "slug_placeholder": "acme",
+    "issue_prefix_label": "任务前缀",
     "submit": "创建工作区",
     "submitting": "创建中...",
+    "cancel": "取消",
+    "log_out": "退出登录",
+    "disabled_title": "无法创建工作区",
+    "disabled_description": "该实例已禁止创建工作区，请联系管理员邀请你加入。",
     "errors": {
       "slug_format": "只能包含小写字母、数字和连字符",
       "slug_taken": "该工作区 URL 已被占用。",
       "slug_reserved": "该工作区 URL 是系统保留的，无法使用。",
       "slug_conflict_toast": "请换一个工作区 URL",
       "create_failed": "创建工作区失败"
+    },
+    "about": {
+      "label": "关于你",
+      "edit": "修改",
+      "dialog_hint": "Marvis 会据此安排第一次对话",
+      "multi": "可多选",
+      "done": "完成",
+      "uses_more": "{{first}} 等 {{count}} 项",
+      "uses_none": "未选择用途",
+      "role": {
+        "question": "哪一项最符合你？",
+        "engineer": "工程师 / 开发者",
+        "product": "产品经理",
+        "designer": "设计师",
+        "founder": "创始人 / 高管",
+        "marketing": "市场 / 增长",
+        "writer": "写作 / 内容",
+        "research": "研究员 / 分析师",
+        "ops": "运营 / 项目管理",
+        "student": "学生 / 个人使用",
+        "other": "其他"
+      },
+      "use_case": {
+        "question": "你打算用 Marvis 做什么？",
+        "ship_code": "让 AI 智能体帮我写代码",
+        "manage_team": "给团队做任务管理",
+        "personal_tasks": "管理我自己的任务",
+        "plan_research": "计划、头脑风暴、调研",
+        "write_publish": "写作、编辑、发布",
+        "automate_ops": "自动化日常运营",
+        "evaluate": "只是随便看看",
+        "other": "其他"
+      }
     }
-  },
-  "new_page": {
-    "back": "返回",
-    "log_out": "退出登录",
-    "title": "欢迎使用 Marvis",
-    "description": "一个工作区，让你和 AI 队友并肩协作——一起处理任务、留下评论、共享同一份上下文。",
-    "invite_hint": "工作区创建后可邀请队友加入。"
-  },
-  "creation_disabled": {
-    "title": "已禁用创建工作区",
-    "description": "该 Marvis 实例不允许创建新的工作区，请联系管理员邀请你加入已有工作区。"
   },
   "no_access": {
     "title": "工作区不可用",

@@ -50,12 +50,12 @@ func createDaemonTestRepo(t *testing.T) string {
 func TestNormalizeServerBaseURL(t *testing.T) {
 	t.Parallel()
 
-	got, err := NormalizeServerBaseURL("ws://localhost:8080/ws")
+	got, err := NormalizeServerBaseURL("ws://localhost:13840/ws")
 	if err != nil {
 		t.Fatalf("NormalizeServerBaseURL returned error: %v", err)
 	}
-	if got != "http://localhost:8080" {
-		t.Fatalf("expected http://localhost:8080, got %s", got)
+	if got != "http://localhost:13840" {
+		t.Fatalf("expected http://localhost:13840, got %s", got)
 	}
 }
 
@@ -194,7 +194,7 @@ func TestPrepareReasonixTaskStateHome(t *testing.T) {
 	if err != nil {
 		t.Fatalf("prepareReasonixTaskStateHome: %v", err)
 	}
-	want := filepath.Join(home, ".marvis-studio", "profiles", "work", "reasonix-state", "runtime-1", "agent_2")
+	want := filepath.Join(home, ".marvis", "profiles", "work", "reasonix-state", "runtime-1", "agent_2")
 	if got != want {
 		t.Fatalf("state home = %q, want %q", got, want)
 	}
@@ -216,7 +216,7 @@ func TestPrepareDshTaskSessionRoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("prepareDshTaskSessionRoot: %v", err)
 	}
-	want := filepath.Join(home, ".marvis-studio", "profiles", "work", "dsh-sessions", "runtime-1", "agent_2")
+	want := filepath.Join(home, ".marvis", "profiles", "work", "dsh-sessions", "runtime-1", "agent_2")
 	if got != want {
 		t.Fatalf("session root = %q, want %q", got, want)
 	}

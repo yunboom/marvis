@@ -371,7 +371,21 @@
     "empty_grouping": "No matching issues",
     "no_value": "No value",
     "ordered_by": "Board ordered by {{field}}",
-    "manual_reorder_hint": "Switch to Manual ordering to rearrange issues within a column."
+    "manual_reorder_hint": "Switch to Manual ordering to rearrange issues within a column.",
+    "status_column": {
+      "not_started": "Not started",
+      "working": "Working",
+      "needs_attention": "Needs attention",
+      "ended": "Ended"
+    },
+    "lane_more_one": "{{count}} more",
+    "lane_more_other": "{{count}} more",
+    "lane_collapse": "Collapse",
+    "lane_focus": "Focus {{status}}",
+    "focusing": "Focused",
+    "exit_focus": "Exit focus",
+    "below_fold_one": "{{count}} more below",
+    "below_fold_other": "{{count}} more below"
   },
   "peek": {
     "panel_label": "Issue preview",
@@ -532,6 +546,7 @@
     "pr_auto_complete_disabled": "set this issue to keep its status when PRs merge",
     "pr_auto_complete_enabled": "set this issue to change status when PRs merge again",
     "wakeup_created": "added a wakeup: {{condition}} · wake {{agent}}",
+    "wakeup_created_scheduled": "added a wakeup for {{agent}}: {{condition}}",
     "wakeup_triggered": "{{condition}} · woke {{agent}}",
     "wakeup_triggered_merged": "{{condition}} · joined {{agent}}'s waiting run",
     "wakeup_triggered_acknowledged": "{{condition}} · {{agent}} did this itself; not woken again",
@@ -655,6 +670,7 @@
     "recipient_count_other": "{{count}} agents will receive this",
     "steer_attachment_notice": "Only text can join a running run, so a message with files is handled after it.",
     "restart_send": "Stop and send",
+    "restart_stopping": "Stopping…",
     "restart_failed": "Couldn't stop the current run. Your message wasn't sent."
   },
   "reply": {
@@ -688,6 +704,7 @@
     "hover_header_queued_other": "{{count}} queued agents",
     "status_running": "Working",
     "status_queued": "Queued",
+    "status_working": "Working",
     "empty_hover": "No agents working right now",
     "unknown_hover": "Agents working: not loaded yet",
     "filter_active_label": "Viewing issues with agents working",
@@ -725,6 +742,7 @@
     "retry_failed": "Failed to retry run",
     "retry_blocked": "Not retried — you don't have permission to use this agent",
     "transcript_tooltip": "View transcript",
+    "jump_to_run": "Go to run",
     "cancel_failed": "Failed to cancel run",
     "trigger_retry": "Retry",
     "trigger_retry_attempt": "Retry #{{attempt}}",
@@ -865,7 +883,9 @@
   },
   "card": {
     "update_failed": "Failed to update issue",
-    "updated_ago": "Updated {{time}}"
+    "updated_ago": "Updated {{time}}",
+    "overdue_days_one": "{{count}} day overdue",
+    "overdue_days_other": "{{count}} days overdue"
   },
   "actions": {
     "rename_issue": "Rename issue",
@@ -1301,6 +1321,7 @@
       "other_done": "is done",
       "other_ended": "is done or cancelled",
       "other_in_review": "moves to In Review",
+      "other_blocked": "moves to Blocked",
       "max_fires": "Up to",
       "max_fires_times_one": "{{count}} time",
       "max_fires_times_other": "{{count}} times",
@@ -1356,6 +1377,7 @@
       "other_done": "When {{issue}} is done",
       "other_ended": "When {{issue}} is done or cancelled",
       "other_in_review": "When {{issue}} moves to In Review",
+      "other_blocked": "When {{issue}} moves to Blocked",
       "another_issue": "another issue",
       "unknown_label": "a deleted label",
       "unknown_property": "a deleted property",
@@ -1379,6 +1401,7 @@
       "other_done": "Waiting for {{issue}}",
       "other_ended": "Waiting for {{issue}} to end",
       "other_in_review": "Waiting for {{issue}} to reach review",
+      "other_blocked": "Waiting for {{issue}} to be blocked",
       "time": "{{time}} · wakes {{agent}}",
       "header": "{{agent}}: {{what}}",
       "paused": "Wakeup paused",
@@ -1540,7 +1563,7 @@
       "set_start": "Make starting step",
       "move_up": "Move up",
       "move_down": "Move down",
-      "remove": "Remove column",
+      "remove": "Remove step",
       "on_enter": "On entering, hand to",
       "choose_target": "Choose…",
       "instructions": "Handoff instructions",
@@ -1560,7 +1583,7 @@
       "duplicate": "Duplicate as new workflow",
       "copy_name": "{{name}} copy",
       "more": "More actions",
-      "steps_hint": "Drag to reorder the middle columns. Backlog and Blocked are optional. A new status is created when you save.",
+      "steps_hint": "New statuses are added to the status library when you save.",
       "status_needs_admin": "{{names}} would be new statuses. Only workspace admins can add statuses: remove these columns or ask an admin to add the statuses first.",
       "reorder": "Reorder {{name}}",
       "card_hand_to": "Hand to",
@@ -1583,7 +1606,6 @@
       "select_step": "Select a column to set who it hands issues to.",
       "unsaved": "Unsaved changes",
       "not_found": "This workflow no longer exists.",
-      "default_note": "Default is the board of every project that doesn’t pick a workflow, and of views outside a project.",
       "new_badge": "New",
       "columns": "Columns",
       "include_status": "Include {{status}}",
@@ -1591,7 +1613,43 @@
       "step_off": "Switched off: this workflow leaves the status out. Turn it on in the step list to use it.",
       "status_new_hint": "A new status. It is added to the status library when you save.",
       "no_other_status": "Every status is already a step.",
-      "no_handoff_step": "This step doesn't hand off: issues entering it keep their assignee and start no run."
+      "no_handoff_step": "This step doesn't hand off: issues entering it keep their assignee and start no run.",
+      "zone": {
+        "start": "Start",
+        "middle": "Middle steps",
+        "middle_caption_one": "{{count}} step · yours to arrange",
+        "middle_caption_other": "{{count}} steps · yours to arrange",
+        "blocked": "Blocked",
+        "blocked_caption": "Reachable from any step",
+        "end": "End",
+        "fixed": "Fixed position"
+      },
+      "why": {
+        "todo": "Every new issue starts in Todo, and an issue assigned to an agent starts its run here. Every workflow keeps it, in a fixed position.",
+        "done": "Where finished issues end. Completion counts rely on it, so it can't be removed.",
+        "cancelled": "Where dropped issues end. With Done it marks an issue as over, so it can't be removed.",
+        "backlog": "A parking lot: issues here don't start agents. Switch it off if the team doesn't park work, and the board drops the column.",
+        "blocked": "A side status: any step can move here when stuck, and “When done, move to” skips it. Switch it off if you don't need it."
+      },
+      "kind": {
+        "locked": "Fixed step",
+        "optional": "Optional step",
+        "optional_off": "Optional step · off",
+        "middle": "Middle step",
+        "new": "New status"
+      },
+      "lock_why": "Why {{name}} can't be removed",
+      "remove_named": "Remove {{name}}",
+      "card_no_run": "Starts no run",
+      "card_ends": "Issue ends",
+      "search_status": "Search the status library",
+      "library": "Status library",
+      "no_match": "No status in the library matches",
+      "new_status_named": "New status “{{name}}”",
+      "key_on_save": "Created on save",
+      "rule_locked": "Always kept",
+      "rule_optional": "Optional, fixed position",
+      "default_note": "Default is the board of every project that doesn’t pick a workflow, and of views outside a project."
     },
     "mapping": {
       "title": "Move issues into {{name}}",
@@ -1630,7 +1688,7 @@
       "used_by_short": "Used by: {{names}}",
       "used_by_nobody": "No projects yet",
       "manage": "Manage workflows…",
-      "picker_more": "Create more workflows in Settings → Workflows."
+      "picker_more": "Create more workflows on the Workflows page in the sidebar."
     },
     "picker": {
       "header": "{{workflow}} · from project “{{project}}”",

@@ -20,11 +20,11 @@ export function RuntimeRequiredBanner({
   const name = agentName?.trim() || t(($) => $.runtime_required_banner.fallback_name);
 
   return (
-    <div className={cn(CHAT_GUTTER, "mb-1.5")}>
+    <div className={cn(CHAT_GUTTER, "mb-2")}>
       <div
         className={cn(
           CHAT_COLUMN,
-          "flex items-center gap-2 rounded-md bg-amber-50 px-2.5 py-1.5 text-caption text-amber-900 ring-1 ring-amber-200/60 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-900/40",
+          "flex items-center gap-2 rounded-lg bg-warning/10 py-1.5 pr-1.5 pl-3 text-label text-amber-900 ring-1 ring-inset ring-warning/30 dark:bg-warning/12 dark:text-amber-200 dark:ring-warning/24",
         )}
       >
         <Server className="size-3.5 shrink-0" />
@@ -34,7 +34,7 @@ export function RuntimeRequiredBanner({
         <Button
           variant="outline"
           size="sm"
-          className="h-6 shrink-0 bg-background/70 text-caption"
+          className="h-6.5 shrink-0 bg-background px-3 text-caption text-foreground"
           render={
             <AppLink href={`${paths.agentDetail(agentId)}?view=general`} />
           }

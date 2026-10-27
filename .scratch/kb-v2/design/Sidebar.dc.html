@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>侧栏</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<nav aria-label="主导航" style="width: 254px; height: 868px; flex: none; background: #fff; border-radius: 20px; box-shadow: 0 0 0 1px rgba(0,0,0,.04); padding: 16px 12px 12px; display: flex; flex-direction: column; gap: 2px; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f; font-size: 14px">
+  <div style="display: flex; align-items: center; gap: 8px; padding: 2px 6px 12px">
+    <span style="width: 26px; height: 26px; border-radius: 7px; background: #0f0f0f; color: #fff; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; justify-content: center">M</span>
+    <span style="font-size: 21px; font-weight: 700; letter-spacing: -.01em; flex: 1">Marvis</span>
+    <button class="ib" aria-label="新建任务"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg></button>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; border-radius: 12px; box-shadow: 0 0 0 1px rgba(0,0,0,.1); margin-bottom: 10px; color: #757575">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    <span style="flex: 1; font-size: 13px">搜索...</span><span class="kbd">⌘</span><span class="kbd">K</span>
+  </div>
+  <a class="{{c.mytask}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="10" r="3"></circle><path d="M6.5 18a6 6 0 0 1 11 0"></path></svg>我的任务</a>
+  <a class="{{c.chat}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg>我的对话</a>
+  <div class="sec">工作</div>
+  <a class="{{c.task}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="m8 12 3 3 5-6"></path></svg>任务</a>
+  <a class="{{c.project}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 7h7l2 2h9v10H3z"></path></svg>项目</a>
+  <a class="{{c.auto}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M13 3 5 14h6l-1 7 8-11h-6z"></path></svg>自动化</a>
+  <div class="sec">AI 团队</div>
+  <a class="{{c.agent}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="8" width="16" height="11" rx="3"></rect><path d="M12 4v4M9 13h.01M15 13h.01"></path></svg>智能体</a>
+  <a class="{{c.squad}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="9" r="3"></circle><circle cx="17" cy="10" r="2.5"></circle><path d="M3 19a6 6 0 0 1 12 0M15 19a4 4 0 0 1 6 0"></path></svg>小队</a>
+  <a class="{{c.kb}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM13 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5z"></path></svg><span style="flex: 1">知识库</span><sc-if value="{{hasBadge}}" hint-placeholder-val="{{ true }}"><span style="min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #0f0f0f; color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center">{{badge}}</span></sc-if></a>
+  <a class="{{c.skills}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h7v16H4zM13 4h7v16h-7zM7 8h1M16 8h1"></path></svg>Skills</a>
+  <a class="{{c.runtime}}" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg>运行时</a>
+  <div style="flex: 1"></div>
+  <a class="nav-i" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"></path></svg>统计</a>
+  <a class="nav-i" href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"></path></svg>设置</a>
+  <div style="height: 1px; background: rgba(0,0,0,.06); margin: 6px 4px"></div>
+  <div style="display: flex; align-items: center; gap: 10px; padding: 6px 6px 0">
+    <span style="width: 24px; height: 24px; border-radius: 6px; background: #0f0f0f; color: #fff; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">木</span>
+    <span style="flex: 1; font-weight: 500">木卫五</span>
+    <button class="ib" aria-label="消息"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg></button>
+  </div>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","default":"kb","options":["chat","kb","auto"]},"badge":{"editor":"int","default":3},"$preview":{"width":254,"height":868}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var active = this.props.active ?? 'kb';
+    var badge = this.props.badge ?? 3;
+    var keys = ['mytask', 'chat', 'task', 'project', 'auto', 'agent', 'squad', 'kb', 'skills', 'runtime'];
+    var c = {};
+    keys.forEach(function (k) { c[k] = 'nav-i' + (k === active ? ' on' : ''); });
+    return { c: c, hasBadge: badge > 0, badge: badge };
+  }
+}
+</script>
+</body>
+</html>

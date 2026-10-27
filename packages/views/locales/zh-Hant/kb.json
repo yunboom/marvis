@@ -1,0 +1,681 @@
+{
+  "list": {
+    "title": "知識庫",
+    "new_button": "新建知識庫",
+    "pending_reviews_other": "待稽核修改 {{count}}",
+    "search_placeholder": "搜尋知識庫和頁面...",
+    "search_label": "搜尋知識庫",
+    "sort": {
+      "recent": "最近更新",
+      "name": "名稱"
+    },
+    "table": {
+      "name": "名稱",
+      "description": "簡介",
+      "pages": "頁面",
+      "pending": "待處理",
+      "updated": "更新時間"
+    },
+    "pending": {
+      "annotations_other": "批註 {{count}}",
+      "stale_pages_other": "待複核 {{count}}"
+    },
+    "copy_link": "複製連結",
+    "link_copied": "連結已複製",
+    "no_matches": "沒有匹配的知識庫",
+    "empty_title": "還沒有知識庫",
+    "empty_description": "智慧體負責寫和維護頁面，團隊成員閱讀、批註、稽核修改。"
+  },
+  "nav": {
+    "label": "知識庫導航",
+    "switch": "切換知識庫",
+    "more_actions": "知識庫更多操作",
+    "home": "首頁",
+    "pending": "待處理 {{count}}",
+    "pages": "頁面",
+    "breadcrumb": "位置",
+    "configure": "配置知識庫",
+    "configure_hint": "目標與 Schema",
+    "manage": "知識庫管理",
+    "graph": "關係圖"
+  },
+  "tree": {
+    "expand": "展開{{title}}",
+    "collapse": "收起{{title}}",
+    "load_more": "載入更多",
+    "stale": "需要複核",
+    "empty": "還沒有頁面",
+    "draft": {
+      "added": "草稿 · 新",
+      "modified": "草稿",
+      "moved": "草稿 · 移",
+      "deleted": "草稿 · 刪"
+    }
+  },
+  "search": {
+    "placeholder": "在本知識庫搜尋",
+    "pages_other": "{{count}} 個頁面",
+    "no_results": "沒有找到「{{query}}」",
+    "no_results_hint": "換個關鍵詞試試。",
+    "failed": "搜尋失敗"
+  },
+  "home": {
+    "pending_title": "待處理",
+    "pending_reviews": "待稽核修改",
+    "latest_review": "最近：{{title}}",
+    "annotations": "批註",
+    "agent_reported_other": "含 {{count}} 條智慧體上報的缺口",
+    "stale_pages": "需要複核的頁面",
+    "stale_hint": "程式碼改動或過了複核日期",
+    "recent_title": "最近更新",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "還沒有合併的修改",
+    "not_found": "知識庫不存在或已刪除"
+  },
+  "page": {
+    "toc": "目錄",
+    "info": "頁面資訊",
+    "more": "更多",
+    "history": "頁面歷史",
+    "updated_by": "{{name}} 更新 · 更新於 {{time}}",
+    "updated": "更新於 {{time}}",
+    "verified": "已核實 · {{name}} · {{date}}",
+    "stale": "需要複核",
+    "pending_mr_other": "本頁有 {{count}} 個待稽核的修改：{{title}}（#{{number}}）",
+    "not_found": "頁面不存在或已刪除",
+    "sources": "引用來源",
+    "missing_page": "這一頁還沒有寫",
+    "close_panel": "關閉",
+    "view_change": "檢視修改"
+  },
+  "draft": {
+    "label": "草稿",
+    "single": "你的草稿改了這一頁，還沒有合併。其他人看到的仍是正式版本。",
+    "multi_other": "你有 {{count}} 份草稿改了這一頁，都還沒有合併。其他人看到的仍是正式版本。",
+    "official": "正式",
+    "draft": "草稿",
+    "diff": "差異",
+    "diff_empty": "這一頁在草稿裡沒有改動",
+    "choose": "選擇草稿",
+    "origin": {
+      "chat": "對話「{{label}}」",
+      "issue": "任務「{{label}}」",
+      "kb_job": "作業「{{label}}」",
+      "none": "草稿"
+    },
+    "meta_other": "{{time}} · 改了 {{count}} 段",
+    "removed": "草稿中刪除",
+    "added": "草稿中新增"
+  },
+  "cite": {
+    "kind": {
+      "task": "任務",
+      "chat": "對話",
+      "pr": "合併請求",
+      "repo": "程式碼",
+      "raw": "檔案",
+      "web": "網頁",
+      "other": "來源"
+    },
+    "checked_at": "核對於 {{version}}",
+    "lines": "第 {{from}}–{{to}} 行",
+    "uploaded": "上傳 · {{name}} · {{date}}",
+    "page": "第 {{page}} 頁",
+    "open_file": "開啟檔案",
+    "download": "下載",
+    "open_issue": "開啟任務",
+    "open_chat": "開啟對話",
+    "open_link": "開啟連結",
+    "chat_private": "僅發起人可檢視",
+    "file_missing": "檔案已不在知識庫中"
+  },
+  "info": {
+    "verified": "核實",
+    "verified_by": "{{name}} · {{date}} 核實",
+    "next_review": "下次複核 {{date}}",
+    "tags": "領域",
+    "sources": "引用來源 {{count}}",
+    "backlinks": "連結到本頁",
+    "none": "無"
+  },
+  "toc": {
+    "empty": "沒有標題"
+  },
+  "history": {
+    "current": "當前版本",
+    "initial": "初始版本",
+    "meta": "{{author}} · {{merger}}合併 · {{time}}",
+    "submitted_by": "{{author}} 提交，",
+    "merged_by": "{{merger}} {{date}} 合併",
+    "annotations_other": "處理批註 {{count}} 條",
+    "close": "關閉歷史",
+    "no_changes": "這次修改沒有改動正文",
+    "not_found": "修訂不存在",
+    "empty": "還沒有歷史",
+    "revert": "回滾這次修改"
+  },
+  "builder": {
+    "create_title": "新建知識庫",
+    "create_sub": "透過對話建立",
+    "config_title": "配置知識庫",
+    "via_chat": "透過對話配置",
+    "setup_create_title": "透過對話建立知識庫",
+    "setup_config_title": "透過對話配置知識庫",
+    "setup_description": "選擇構建器執行的執行時和模型。",
+    "chat_title": "知識庫構建器",
+    "change_runtime": "更換",
+    "change_runtime_label": "更換執行時",
+    "intro_create": "想建一個什麼樣的知識庫？選一個方向開始，我來起草名稱、目標和 Schema，再一起細調。",
+    "intro_config": "我會根據你的需求修改目標和 Schema。可以從下面的問題開始，也可以直接說想改什麼。",
+    "describe_hint": "也可以直接描述你的需求。",
+    "starters": {
+      "dev": {
+        "title": "研發知識庫",
+        "description": "系統架構、服務與介面、排障手冊、技術決策"
+      },
+      "qa": {
+        "title": "測試知識庫",
+        "description": "用例設計方法、測試環境、迴歸清單、缺陷覆盤"
+      },
+      "product": {
+        "title": "產品知識庫",
+        "description": "功能說明、業務規則、計費規則、對客話術"
+      },
+      "team": {
+        "title": "團隊綜合知識庫",
+        "description": "研發、測試、產品共用，按領域標籤區分"
+      }
+    },
+    "starter_message": "建一個{{title}}：{{description}}",
+    "questions": {
+      "readers": "這個知識庫給誰看？他們最常查什麼？",
+      "scope": "收錄哪些內容，哪些不收？",
+      "structure": "頁面怎麼組織：按系統模組、業務流程，還是團隊？",
+      "writing": "引用和寫法有什麼要求？"
+    },
+    "drafts_create_other": "您有 {{count}} 條未完成的建立",
+    "drafts_config_other": "您有 {{count}} 條未完成的配置",
+    "pick_create": "建立草稿",
+    "pick_config": "配置草稿",
+    "panel": {
+      "title": "知識庫配置",
+      "basics": "基本資訊",
+      "name": "名稱",
+      "description": "簡介",
+      "slug": "目錄名",
+      "generated_placeholder": "說完需求後自動生成",
+      "slug_placeholder": "按名稱生成",
+      "slug_invalid": "只能用小寫字母、數字和連字元",
+      "purpose": "目標",
+      "purpose_placeholder": "# 目標",
+      "just_updated": "剛更新",
+      "expand_edit": "放大編輯",
+      "expand_view": "放大檢視",
+      "schema": "Schema",
+      "schema_mode": "Schema 模式",
+      "schema_default": "預設",
+      "schema_custom": "自定義",
+      "read_only": "只讀",
+      "schema_default_hint": "使用平臺內建的維護規則，不能編輯，構建器也不會改它；要按團隊習慣調整，切到「自定義」。",
+      "schema_placeholder": "說完需求後按內建 Schema 起草"
+    },
+    "footer": {
+      "unsaved": "有未儲存的修改",
+      "discard_create": "放棄建立",
+      "discard_config": "放棄修改",
+      "create": "建立",
+      "save": "儲存"
+    },
+    "discard": {
+      "create_title": "放棄這次建立？",
+      "config_title": "放棄這次修改？",
+      "description": "對話和右側配置都會被永久刪除。",
+      "keep": "繼續編輯"
+    },
+    "expand": {
+      "edit": "編輯",
+      "split": "分欄",
+      "preview": "預覽",
+      "read_only": "預設 · 只讀",
+      "edit_hint": "改動回到右側配置，儲存後生效",
+      "read_only_hint": "預設 Schema 只能檢視；要修改，先在右側切到「自定義」",
+      "cancel": "取消",
+      "done": "完成",
+      "close": "關閉"
+    },
+    "saved": "已儲存",
+    "errors": {
+      "name_required": "請填寫名稱",
+      "slug_taken": "工作區裡已有這個目錄名",
+      "conflict": "開啟配置後有人儲存過，重新整理後再修改。",
+      "forbidden": "只有知識庫建立者或工作區 owner、admin 可以配置",
+      "create_failed": "建立知識庫失敗",
+      "save_failed": "儲存配置失敗"
+    }
+  },
+  "welcome": {
+    "created": "知識庫「{{name}}」已建立。先看看怎麼用。",
+    "guide_title": "這個知識庫怎麼用",
+    "suggested": "建議先做",
+    "dismiss": "知道了",
+    "steps": {
+      "ingest": {
+        "title": "收錄資料",
+        "description": "新建知識庫作業，把任務、對話、上傳的檔案或網頁交給智慧體，它把知識整理進頁面，每條事實都標來源。"
+      },
+      "review": {
+        "title": "稽核後生效",
+        "description": "智慧體的改動先進草稿，你看過後提交稽核，知識庫建立者或 owner、admin 合併後才生效。"
+      },
+      "read": {
+        "title": "閱讀和批註",
+        "description": "發現寫錯或過時，選中那句話加一條批註；批註可以一鍵交給智慧體處理。"
+      },
+      "maintain": {
+        "title": "定時維護",
+        "description": "建一個定時收錄和定時健康檢查，知識庫會自己跟上最新的任務和程式碼。"
+      }
+    }
+  },
+  "annotation": {
+    "action": "批註",
+    "compose_label": "批註內容",
+    "compose_hint": "智慧體處理時會看到這句原文",
+    "cancel": "取消",
+    "submit": "批註",
+    "add": "新增批註",
+    "page_panel": "本頁批註",
+    "kb_panel": "知識庫批註",
+    "page_compose_label": "批註本頁",
+    "kb_compose_label": "批註整個知識庫",
+    "hand_off": "交給智慧體處理",
+    "hand_off_all": "全部交給智慧體（{{n}}）",
+    "status": {
+      "pending": "待處理",
+      "processing": "處理中",
+      "resolved": "已解決",
+      "dismissed": "不處理"
+    },
+    "dismiss": "不處理",
+    "reopen": "恢復",
+    "where_block": "{{title}} · 第 {{n}} 段",
+    "where_page": "{{title}} · 整頁",
+    "where_kb": "整個知識庫",
+    "followed": "已跟隨改寫",
+    "lost": "原句已刪除",
+    "original": "批註時的原句：{{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "批註",
+    "empty": "沒有批註",
+    "create_failed": "批註失敗",
+    "quote_not_found": "沒有找到這句原文",
+    "update_failed": "操作失敗",
+    "panel_empty": "還沒有批註"
+  },
+  "stale_list": {
+    "count_other": "{{count}} 個頁面",
+    "page": "頁面",
+    "reason": "原因",
+    "overdue": "過了複核日期",
+    "review_by": "應在 {{date}} 前複核",
+    "hand_off": "交給智慧體複核",
+    "hand_off_all": "全部交給智慧體複核",
+    "empty": "沒有需要複核的頁面。",
+    "all_message": "複核「{{name}}」裡過了複核日期的頁面。"
+  },
+  "job": {
+    "nav": "知識庫作業",
+    "nav_running": "{{count}} 執行中",
+    "list_title": "知識庫作業",
+    "new": "新建作業",
+    "tabs": {
+      "all": "全部",
+      "running": "執行中",
+      "failed": "失敗"
+    },
+    "state": {
+      "running": "執行中",
+      "idle": "等待輸入",
+      "failed": "失敗",
+      "stopped": "已停止"
+    },
+    "empty": "還沒有作業",
+    "subtitle": "{{name}} · 知識庫作業",
+    "new_title": "新對話",
+    "back": "返回",
+    "executor": "執行智慧體",
+    "pick_agent": "選擇智慧體",
+    "pick_agent_first": "先選擇執行智慧體",
+    "runtime_online": "執行時線上",
+    "runtime_offline": "執行時離線",
+    "start_question": "要對{{name}}做什麼？",
+    "start_hint": "也可以直接描述你的需求。定時任務建成自動化後，在「自動化」頁管理。",
+    "start_failed": "作業沒有建成",
+    "not_found": "作業不存在或無權檢視",
+    "ended": "這段對話已結束",
+    "starters": {
+      "ingest": {
+        "title": "收錄資料",
+        "description": "讀取任務、對話或網頁，把知識寫進頁面"
+      },
+      "health": {
+        "title": "健康檢查",
+        "description": "檢查過期頁面、互相矛盾的內容、孤立頁面和程式碼已變的論斷"
+      },
+      "merge": {
+        "title": "知識合併",
+        "description": "找出內容重複的頁面併合成一頁"
+      },
+      "annotations": {
+        "title": "處理批註",
+        "description": "按待處理的批註修改頁面"
+      },
+      "schedule_ingest": {
+        "title": "建立定時收錄",
+        "description": "建一個自動化，每天收錄當天的任務、評論和聊天"
+      },
+      "schedule_health": {
+        "title": "建立定時健康檢查",
+        "description": "建一個自動化，每週做一次健康檢查"
+      }
+    },
+    "starter_message": "{{title}}：{{description}}",
+    "names": {
+      "ingest": "收錄資料",
+      "health": "健康檢查",
+      "merge": "知識合併",
+      "annotations": "處理批註",
+      "new_page": "新頁面",
+      "schedule": "定時執行",
+      "custom": "新對話"
+    },
+    "draft": {
+      "title": "草稿改動",
+      "state": {
+        "none": "暫無草稿",
+        "empty": "暫無改動",
+        "open": "草稿 · 未提交",
+        "submitted": "已提交稽核",
+        "merged": "已合併",
+        "closed": "已關閉 · 可重新提交",
+        "nochange": "無需修改",
+        "discarded": "已放棄"
+      },
+      "nodraft": "智慧體建好草稿後，在這裡顯示改動。",
+      "empty": "智慧體推送改動後顯示在這裡。",
+      "nochange_title": "這次沒有需要修改的內容",
+      "nochange_hint": "執行結果記為「無需修改」，不生成變更請求",
+      "discarded": "草稿已放棄，改動不會合並。",
+      "summary_other": "{{count}} 個頁面 · +{{added}} −{{deleted}}",
+      "collapse_all": "全部摺疊",
+      "expand_all": "全部展開",
+      "change": {
+        "added": "新增",
+        "modified": "修改",
+        "moved": "移動",
+        "deleted": "刪除"
+      },
+      "view_in_page": "在頁面中檢視",
+      "checks": "提交前檢查",
+      "checks_pending": "改完後自動檢查",
+      "lint_ok": "格式檢查透過",
+      "lint": {
+        "missing_type": "頁頭缺少 type",
+        "missing_title": "頁頭缺少 title",
+        "missing_description": "頁頭缺少 description",
+        "undefined_footnote": "引用了沒有來源的腳註",
+        "claim_without_evidence": "有論斷沒有證據",
+        "invalid_evidence_uri": "證據的地址無法識別",
+        "duplicate_slug": "同一層已有同名頁面",
+        "unresolved_conflict": "還有沒解決的衝突",
+        "missing_evidence_version": "程式碼證據缺少版本",
+        "unresolved_link": "連結指向還沒寫的頁面",
+        "orphan_page": "沒有其他頁面連結到這一頁",
+        "isolated_page": "這一頁連結的相關頁面少於 2 個"
+      },
+      "conflict": "與主線衝突：{{path}}",
+      "fix": "讓智慧體修復",
+      "rebase": "讓智慧體基於主線更新",
+      "fix_message": "修復 `marvis kb draft check {{draft}}` 報的錯誤，修完再檢查一遍。",
+      "rebase_message": "草稿與主線有衝突。用 `marvis kb draft sync {{draft}}` 基於主線更新，解決衝突後再檢查一遍。",
+      "hint": {
+        "open": "只有你能看到草稿，提交後進入稽核",
+        "busy": "等智慧體這一輪結束再提交",
+        "lint_other": "有 {{count}} 個錯誤，修復後才能提交",
+        "conflict": "可以直接提交，稽核時再處理衝突",
+        "submitted": "之後的修改在稽核頁評論裡繼續，也可以在這裡接著說",
+        "closed": "調整後可重新提交，會開一個新的變更請求",
+        "merged": "這段對話已結束",
+        "running": "可以隨時在左邊補充要求"
+      },
+      "banner": {
+        "submitted_self": "你已提交變更請求 #{{number}}，草稿轉為待稽核，這裡只讀。",
+        "submitted_agent": "{{name}}已提交變更請求 #{{number}}，草稿轉為待稽核，這裡只讀。",
+        "closed": "#{{number}} 已被{{name}}關閉：「{{reason}}」。草稿還在，可以繼續調整。",
+        "closed_no_reason": "#{{number}} 已被{{name}}關閉。草稿還在，可以繼續調整。",
+        "merged": "#{{number}} 已由{{name}}合併，改動已生效。"
+      },
+      "banner_review": "去稽核",
+      "banner_view_page": "檢視頁面",
+      "banner_comments": "檢視評論",
+      "discard": "放棄草稿",
+      "keep": "保留",
+      "discard_confirm_title": "放棄這份草稿？",
+      "discard_confirm_description": "草稿裡的改動會丟棄，作業保留在列表裡。",
+      "discard_failed": "沒有放棄成功",
+      "submit": "提交稽核",
+      "resubmit": "重新提交稽核",
+      "submit_failed": "沒有提交成功",
+      "go_review": "去稽核 #{{number}}",
+      "submitted_toast": "已提交變更請求 #{{number}}"
+    },
+    "entry": {
+      "check_page": "讓智慧體檢查本頁",
+      "check_page_message": "檢查「{{title}}」這一頁。",
+      "write_here": "讓智慧體在這裡寫一頁",
+      "write_under": "在 {{title}} 下寫一頁",
+      "write_label": "要寫什麼",
+      "write_submit": "交給智慧體",
+      "cancel": "取消",
+      "new_page_message": "在「{{title}}」下新增一頁：{{text}}",
+      "annotations_all_message_other": "處理{{name}}的全部 {{count}} 條待處理批註。",
+      "annotations_page_message_other": "處理「{{title}}」的 {{count}} 條待處理批註。",
+      "annotations_kb_message_other": "處理整個知識庫的 {{count}} 條待處理批註。"
+    }
+  },
+  "review": {
+    "title": "稽核",
+    "list_label": "變更請求",
+    "select": "選擇一個變更請求",
+    "not_found": "變更請求不存在",
+    "conflict_banner": "主線改了同一段內容。",
+    "conflict_main": "主線第 {{lines}} 行",
+    "conflict_draft": "本分支第 {{lines}} 行",
+    "working": "正在工作",
+    "view_run": "檢視執行過程",
+    "remove_quote": "移除引用",
+    "reply": "回覆",
+    "replying_to": "回覆 {{name}}",
+    "quote_line": "{{page}} 第 {{line}} 行",
+    "comment_label": "評論",
+    "comment_placeholder": "留下評論...",
+    "trigger_hint": "傳送後開始",
+    "send": "傳送",
+    "hint_member": "知識庫建立者或 owner / admin 合併",
+    "hint_conflict": "先解決衝突",
+    "hint_running": "智慧體改完後再合併",
+    "comment_failed": "評論沒有發出",
+    "merged_toast": "已合併 #{{number}}",
+    "close_failed": "沒有關閉成功",
+    "agent_working": "{{name}} 在工作",
+    "close": "關閉",
+    "merge": "合併",
+    "revert": "回滾此次變更",
+    "merged_by": "{{name}} 合併 · {{time}}",
+    "closed_by": "{{name}} 關閉 · {{time}}",
+    "closed_by_reason": "{{name}} 關閉 · {{time}} · {{reason}}",
+    "self_check": "智慧體自查",
+    "summary": "變更說明",
+    "checks": "檢查",
+    "conflicting": "與主線衝突",
+    "mergeable": "可以合併到主線",
+    "add_comment": "加入評論",
+    "activity": "動態",
+    "close_confirm_title": "關閉這個變更請求？",
+    "close_reason": "關閉理由（選填）",
+    "cancel": "取消",
+    "reverted": "已生成回滾變更請求 #{{number}}",
+    "go_review": "去稽核",
+    "revert_conflict": "之後的改動動了同樣的內容，需要手動處理",
+    "revert_failed": "沒有回滾成功",
+    "revert_confirm_title": "回滾 #{{number}}「{{title}}」？",
+    "revert_confirm_description": "會生成一個反向修改的變更請求，合併後生效。",
+    "revert_submit": "提交回滾",
+    "meta_other": "風險 {{risk}} · 影響 {{count}} 個頁面",
+    "meta_annotations_other": "處理 {{count}} 條批註",
+    "activity_count_other": "{{count}} 條動態",
+    "close_confirm_annotations_other": "處理的 {{count}} 條批註會退回待處理。",
+    "tabs": {
+      "open": "待稽核",
+      "ended": "已結束",
+      "all": "全部"
+    },
+    "status": {
+      "open": "待稽核",
+      "merged": "已合併",
+      "closed": "已關閉"
+    },
+    "empty": {
+      "open": "沒有待稽核的修改",
+      "ended": "還沒有結束的變更請求",
+      "all": "還沒有變更請求"
+    },
+    "source": {
+      "ingest": "收錄資料",
+      "health": "健康檢查",
+      "merge": "知識合併",
+      "annotations": "處理批註",
+      "new_page": "新頁面",
+      "revert": "回滾",
+      "custom": "其他"
+    },
+    "origin": {
+      "kb_job": "知識庫作業 · {{label}}",
+      "revert": "回滾 #{{number}}",
+      "autopilot_run": "自動化 · {{label}}",
+      "issue": "任務 · {{label}}",
+      "chat": "對話 · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "按評論修改",
+      "mention": "被 @ 後開始"
+    },
+    "merge_error": {
+      "stale": "草稿在你開啟後又改過，重新整理後再合併",
+      "conflict": "與主線衝突，先解決衝突",
+      "running": "智慧體改完後再合併",
+      "not_open": "這個變更請求已經結束",
+      "failed": "沒有合併成功"
+    },
+    "risk": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "changes": {
+      "title": "變更記錄",
+      "list_label": "已合併的變更",
+      "empty": "還沒有合併的修改",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · {{merger}}合併",
+      "revert_hint": "回滾會生成新的變更請求，合併後生效。"
+    }
+  },
+  "manage": {
+    "title": "知識庫管理",
+    "tabs_label": "管理分區",
+    "tab": {
+      "raw": "原始資料",
+      "export": "匯出",
+      "delete": "刪除知識庫"
+    },
+    "raw": {
+      "title": "原始資料",
+      "upload": "上傳資料",
+      "uploading": "上傳中…",
+      "description": "匯入時原樣儲存，頁面引用它們作為來源。",
+      "col": {
+        "name": "資料",
+        "source": "來源",
+        "created": "匯入",
+        "cited": "引用它的頁面"
+      },
+      "source_upload": "上傳 · {{name}}",
+      "empty": "還沒有原始資料",
+      "ingest": "交給智慧體收錄",
+      "ingest_count": "交給智慧體收錄（{{count}}）",
+      "select": "選擇 {{name}}",
+      "select_all": "全選",
+      "open": "開啟 {{name}}",
+      "name_taken": "已有同名檔案：{{names}}",
+      "name_invalid": "檔名不能為空，也不能包含 / \\ # ?",
+      "upload_failed": "上傳失敗",
+      "open_failed": "無法開啟檔案",
+      "cited_other": "{{count}} 個頁面",
+      "uploaded_other": "已上傳 {{count}} 個檔案"
+    },
+    "export": {
+      "title": "匯出",
+      "okf": "OKF bundle",
+      "okf_description": "按 Open Knowledge Format v0.2 匯出全部頁面：每頁一個 Markdown 檔案，帶 frontmatter，每個目錄一份 index.md，打包成 zip。",
+      "spec_link": "OKF 規範",
+      "button": "匯出 zip",
+      "exporting": "匯出中…",
+      "failed": "匯出失敗"
+    },
+    "delete": {
+      "title": "刪除知識庫",
+      "description": "刪除這個知識庫的全部頁面、修訂和批註，介面不提供恢復。",
+      "button": "刪除",
+      "dialog_title": "刪除「{{name}}」？",
+      "dialog_body": "移除 {{slug}}/ 目錄，關閉它的 {{annotations}} 條批註和 {{mrs}} 個待稽核修改。",
+      "confirm_label": "輸入知識庫名稱確認",
+      "cancel": "取消",
+      "confirm": "刪除",
+      "deleting": "刪除中…",
+      "deleted": "已刪除「{{name}}」",
+      "failed": "刪除失敗",
+      "forbidden": "知識庫建立者或 owner / admin 才能刪除。"
+    }
+  },
+  "graph": {
+    "title": "關係圖",
+    "label": "頁面之間的連結",
+    "no_links": "無連結",
+    "hint": "顏色按一級頁面區分，點選開啟頁面",
+    "missing": "{{title}} · 還沒寫",
+    "empty": "還沒有頁面",
+    "legend": "圖例",
+    "open_other": "開啟{{title}} · {{count}} 個連結"
+  },
+  "mention": {
+    "kb": "知識庫 · {{slug}}",
+    "schema_default": "預設 Schema",
+    "schema_custom": "自定義 Schema",
+    "no_pending": "沒有待處理",
+    "pending_other": "{{count}} 項待處理",
+    "created": "{{name}} 建立於 {{time}}",
+    "claims_other": "{{count}} 條論斷",
+    "open_annotations_other": "{{count}} 條待處理批註",
+    "review_by": "複核期 {{date}}",
+    "last_change": "最近修改 #{{number}}",
+    "merged": "{{name}} 合併於 {{time}}",
+    "page_deleted": "頁面已刪除",
+    "risk": "風險 {{risk}}",
+    "submitted": "{{name}} 提交於 {{time}}",
+    "origin": "來源：{{origin}}",
+    "annotation": "批註",
+    "annotation_status": "批註 · {{status}}",
+    "recorded": "{{name}} 記於 {{time}}"
+  }
+}

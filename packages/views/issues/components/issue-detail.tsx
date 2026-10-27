@@ -155,8 +155,12 @@ import {
   type SubIssueRowProperties,
   type SubIssueRowPropertyKey,
 } from "@marvis/core/issues/stores";
-import { useIssueSelectionStore } from "@marvis/core/issues/stores/selection-store";
 import { BatchActionToolbar } from "./batch-action-toolbar";
+import {
+  IssueSurfaceSelectionProvider,
+  useCreateIssueSurfaceSelection,
+  useIssueSurfaceSelection,
+} from "../surface/selection-context";
 import { useIssueTimeline } from "../hooks/use-issue-timeline";
 import { useIssueReactions } from "../hooks/use-issue-reactions";
 import { useIssueSubscribers } from "../hooks/use-issue-subscribers";
@@ -179,10 +183,10 @@ import { useInPageFind } from "../hooks/use-in-page-find";
 import { useStickyComposer } from "../hooks/use-sticky-composer";
 import { FindBar } from "./find-bar";
 import {
-  AnimatedRightSidebar,
+  AnimatedRightSidebarPanel,
   getAnimatedRightSidebarInitialOpen,
-  rightSidebarPanelMotionProps,
-  useAnimatedRightSidebarState,
+  RightSidebarOpenState,
+  useRightSidebarController,
   useRightSidebarShortcut,
 } from "../../layout/animated-right-sidebar";
 
@@ -201,7 +205,7 @@ export function issueHighlightMementoKey(issueId: string): string {
 // stay one control visually — they occupy the same slot and only differ in
 // what a click does.
 const SUBSCRIPTION_ACTION_CLASS =
-  "text-caption text-muted-foreground hover:text-foreground transition-colors disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex h-7 items-center rounded-full px-2.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50";
 
 function SubscriberPopoverContent({
   members,
@@ -682,7 +686,7 @@ function ActivityBlock({
         <button
           type="button"
           onClick={onToggle}
-          className="flex items-center gap-1.5 text-caption text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
         >
           <ChevronRight className="h-3 w-3 shrink-0" />
           <span>{t(($) => $.activity.activity_count, { count })}</span>
@@ -704,12 +708,12 @@ function ActivityBlock({
   // fold the whole block back to a single count line.
   const showHeader = hiddenOlderCount === 0;
   return (
-    <div className="pb-3 px-4 max-md:px-3 flex flex-col gap-3">
+    <div className="pb-3 px-4 max-md:px-3 flex flex-col gap-2.5">
       {showHeader && (
         <button
           type="button"
           onClick={onToggle}
-          className="flex items-center gap-1.5 text-caption text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
         >
           <ChevronDown className="h-3 w-3 shrink-0" />
           <span>{t(($) => $.activity.activity_count, { count: entries.length })}</span>
@@ -719,7 +723,7 @@ function ActivityBlock({
         <button
           type="button"
           onClick={onToggleShowOlder}
-          className="flex items-center gap-1.5 text-caption text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
         >
           <ChevronRight className="h-3 w-3 shrink-0" />
           <span>{t(($) => $.activity.show_more_activities, { count: hiddenOlderCount })}</span>
@@ -773,13 +777,13 @@ function ActivityBlock({
 
         const handoff = isStatusChange && !!details.handoff_to_id;
         return (
-          <div key={entry.id} className="text-caption text-muted-foreground">
+          <div key={entry.id} className="text-label text-muted-foreground">
             <div className="flex items-center">
-              <div className="mr-2 flex w-4 shrink-0 justify-center">{leadIcon}</div>
+              <div className="mr-2 flex w-5 shrink-0 justify-center">{leadIcon}</div>
               <div className="flex min-w-0 flex-1 items-center gap-1">
                 {/* The platform's own entries read as a sentence without an actor. */}
                 {!(isWakeup && entry.actor_type === "system") && (
-                  <span className="shrink-0 font-medium">
+                  <span className="shrink-0 font-medium text-foreground">
                     {entry.actor_name || getActorName(entry.actor_type, entry.actor_id)}
                   </span>
                 )}
@@ -792,12 +796,12 @@ function ActivityBlock({
                   />
                 </span>
                 {chip && (
-                  <span className="ml-auto inline-flex max-w-48 shrink-0 items-center gap-1 truncate rounded-xs bg-muted px-1.5 py-0.5 text-micro text-muted-foreground">
+                  <span className="ml-auto inline-flex h-[18px] max-w-48 shrink-0 items-center gap-1 truncate rounded-full bg-field px-1.5 text-micro text-muted-foreground">
                     {chip}
                   </span>
                 )}
                 {(entry.coalesced_count ?? 1) > 1 && entry.action !== "task_completed" && entry.action !== "task_failed" && (
-                  <span className="shrink-0 rounded-xs bg-muted px-1.5 py-0.5 text-caption font-medium tabular-nums text-muted-foreground">
+                  <span className="inline-flex h-[18px] shrink-0 items-center rounded-full bg-field px-1.5 text-micro font-medium tabular-nums text-foreground">
                     {t(($) => $.activity.coalesced_badge, { count: entry.coalesced_count ?? 1 })}
                   </span>
                 )}
@@ -811,7 +815,7 @@ function ActivityBlock({
                 </Tooltip>
               </div>
             </div>
-            {handoff && <div className="ml-6"><TimelineHandoff details={details} /></div>}
+            {handoff && <div className="ml-7"><TimelineHandoff details={details} /></div>}
           </div>
         );
       })}
@@ -839,9 +843,9 @@ function SubIssueRow({
   const locale = useLocale();
   const paths = useWorkspacePaths();
   const updateIssue = useUpdateIssue();
-  const selected = useIssueSelectionStore((s) => s.selectedIds.has(child.id));
+  const { selectedIds, toggle: toggleSelected } = useIssueSurfaceSelection();
+  const selected = selectedIds.has(child.id);
   const childStatusCatalog = useIssueStatuses(useWorkspaceId());
-  const toggleSelected = useIssueSelectionStore((s) => s.toggle);
   // Category, not key: a custom status in the done/cancelled categories is
   // finished work and has to strike through like any other. (MUL-6243)
   const isDone = issueBehavesAsAny(child, ["done", "closed"]);
@@ -879,8 +883,8 @@ function SubIssueRow({
     <IssueActionsContextMenu issue={child}>
       <div
         className={cn(
-          "flex items-center gap-2.5 px-3 py-2 hover:bg-accent/50 transition-colors group/row",
-          selected && "bg-accent/30",
+          "flex h-[42px] items-center gap-2 px-3 transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant) group/row",
+          selected && "bg-surface-selected hover:bg-surface-selected",
         )}
       >
         {/* Priority ⇄ checkbox slot, mirroring the main list rows: the
@@ -931,9 +935,9 @@ function SubIssueRow({
         />
         <AppLink
           href={paths.issueDetail(child.id)}
-          className="flex min-w-0 flex-1 items-center gap-2.5"
+          className="flex min-w-0 flex-1 items-center gap-2"
         >
-          <span className="text-micro text-muted-foreground tabular-nums font-medium shrink-0">
+          <span className="min-w-11 shrink-0 text-label text-muted-foreground tabular-nums">
             {child.identifier}
           </span>
           <IssueAgentActivityIndicator issueId={child.id} />
@@ -965,7 +969,7 @@ function SubIssueRow({
                 {customPropsWithValue.slice(0, 3).map((property) => (
                   <span
                     key={property.id}
-                    className="inline-flex max-w-[120px] items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground"
+                    className="inline-flex h-5 max-w-[120px] items-center gap-1 rounded-full border border-input px-2 text-caption text-muted-foreground"
                   >
                     <PropertyIcon property={property} className="size-3 text-micro" />
                     <CustomPropertyValueDisplay
@@ -977,13 +981,13 @@ function SubIssueRow({
               </span>
             )}
             {rowProps.childProgress && childProgress && childProgress.total > 0 && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5">
+              <span className="inline-flex shrink-0 items-center gap-1">
                 <ProgressRing
                   done={childProgress.done}
                   total={childProgress.total}
                   size={11}
                 />
-                <span className="text-micro text-muted-foreground tabular-nums font-medium">
+                <span className="text-caption text-muted-foreground tabular-nums">
                   {childProgress.done}/{childProgress.total}
                 </span>
               </span>
@@ -1027,7 +1031,7 @@ function SubIssueRow({
               ) : (
                 <span
                   aria-hidden
-                  className="h-5 w-5 rounded-full border border-dashed border-muted-foreground/30 shrink-0"
+                  className="h-5 w-5 shrink-0 rounded-full border-[1.5px] border-dashed border-input"
                 />
               )
             }
@@ -1073,7 +1077,7 @@ function SubIssueDisplayPopover({
               render={
                 <button
                   type="button"
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
                   aria-label={t(($) => $.display.tooltip)}
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -1159,7 +1163,11 @@ interface IssueDetailProps {
    * properties sidebar, and `trailingActions` where the sidebar toggle sits.
    */
   variant?: "page" | "peek";
-  /** Peek only: host controls at the end of the header (open full page, close). */
+  /**
+   * Host controls at the end of the header. The peek puts them where the
+   * sidebar toggle sits (open full page, close); a page puts them after it
+   * (the message box's close button).
+   */
   trailingActions?: ReactNode;
 }
 
@@ -1199,7 +1207,7 @@ export function IssueNotFound({
           {trailing && <div className="ml-auto flex shrink-0 items-center gap-1">{trailing}</div>}
         </div>
       )}
-      <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-3 text-body text-muted-foreground">
+      <div className="flex flex-1 min-h-0 flex-col items-center justify-center gap-4 text-body text-muted-foreground">
         <p>{t(($) => $.detail.not_found)}</p>
         {showBackLink && (
           <Button variant="outline" size="sm" onClick={() => backOrReplace(paths.issues())}>
@@ -1245,8 +1253,8 @@ export function IssueDetailSkeleton({
         <div className="flex-1 overflow-y-auto [scrollbar-gutter:stable_both-edges]">
           {/* Gutters match the loaded column exactly (see its comment), so the
               skeleton doesn't reflow sideways when real content mounts. */}
-          <div className="mx-auto w-full max-w-4xl px-3 py-6 space-y-6 md:px-8 md:py-8">
-            <Skeleton className="h-8 w-3/4" />
+          <div className="mx-auto w-full max-w-190 px-3 py-6 space-y-6 md:px-10 md:py-8">
+            <Skeleton className="h-[30px] w-[62%] rounded-lg" />
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-5/6" />
@@ -1266,7 +1274,7 @@ export function IssueDetailSkeleton({
           </div>
         </div>
         {sidebar && (
-          <div className="hidden md:block w-80 border-l p-4 space-y-5">
+          <div className="hidden md:block w-80 border-l border-border px-5 py-6 space-y-3.5">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Skeleton className="h-3 w-16 shrink-0" />
@@ -1332,13 +1340,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
     defaultSidebarOpen,
     defaultLayout,
   );
-  const {
-    open: desktopSidebarOpen,
-    visualOpen: desktopSidebarVisualOpen,
-    motionEnabled: desktopSidebarMotionEnabled,
-    beginToggle: beginDesktopSidebarToggle,
-    handleResize: handleDesktopSidebarResize,
-  } = useAnimatedRightSidebarState(desktopSidebarInitialOpen);
+  const desktopSidebar = useRightSidebarController(desktopSidebarInitialOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -1346,7 +1348,6 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
       setMobileSidebarOpen(false);
     }
   }, [isMobile]);
-  const sidebarOpen = isMobile ? mobileSidebarOpen : desktopSidebarOpen;
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [parentIssueOpen, setParentIssueOpen] = useState(true);
@@ -2009,6 +2010,81 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
       replyToRoot.has(commentId) ? jumpToReply(commentId) : jumpToThread(commentId),
     [replyToRoot, jumpToReply, jumpToThread],
   );
+  // Header chip jump to a run's block. A run is either its own top-level row
+  // or a slot inside the thread it answers, so find that row, undo whatever
+  // folds the thread, scroll the row into place, then let the effect below
+  // align the block itself once it mounts.
+  const [pendingRunJump, setPendingRunJump] = useState<{ taskId: string; rootId: string; flashId: string } | null>(null);
+  const jumpToRun = useCallback(
+    (taskId: string) => {
+      let index = items.findIndex((it) => it.kind === "run" && it.run.task.id === taskId);
+      let run = index >= 0 ? (items[index] as Extract<TimelineItem, { kind: "run" }>).run : undefined;
+      if (!run) {
+        for (const [rootId, runs] of commentRuns) {
+          run = runs.find((candidate) => candidate.task.id === taskId);
+          if (run) {
+            index = items.findIndex((it) => it.id === rootId);
+            break;
+          }
+        }
+      }
+      const rootItem = items[index];
+      if (!run || !rootItem) return;
+      const root = rootItem.kind !== "activity-group" ? rootItem.entry : undefined;
+      const headsThread = run.hasReply && run.commentId === rootItem.id;
+      if (root && !headsThread) {
+        const collapse = useCommentCollapseStore.getState();
+        if (collapse.isCollapsed(id, root.id)) collapse.toggle(id, root.id);
+      }
+      if (
+        root && !expandedResolved.has(root.id) &&
+        deriveThreadResolution(root, timelineView.threadReplies.get(root.id) ?? EMPTY_REPLIES).kind !== "none"
+      ) {
+        toggleResolvedExpand(root.id, true);
+      }
+      if (!isFlatTimeline) virtuosoRef.current?.scrollToIndex({ index, align: "start", offset: -16 });
+      setPendingRunJump({ taskId, rootId: rootItem.id, flashId: run.hasReply && run.commentId ? run.commentId : taskId });
+    },
+    [id, items, commentRuns, expandedResolved, timelineView.threadReplies, toggleResolvedExpand, isFlatTimeline],
+  );
+  // Same frame-by-frame landing as a reply jump. A run that has replied may
+  // only show as a log button in its comment's header, so align that comment.
+  useEffect(() => {
+    const container = scrollContainerEl;
+    if (!pendingRunJump || !container) return;
+    const { taskId, rootId, flashId } = pendingRunJump;
+    let rafId = 0;
+    let frames = 0;
+    let last = -1;
+    const align = () => {
+      const el = container.querySelector<HTMLElement>(`[data-run-slot-id="${taskId}"]`)
+        ?? container.querySelector<HTMLElement>(`[data-run-id="${taskId}"]`)?.closest<HTMLElement>("[id^='comment-']");
+      if (!el) {
+        if (++frames < 60) rafId = requestAnimationFrame(align);
+        else setPendingRunJump(null);
+        return;
+      }
+      const stickyBar = document
+        .getElementById(`comment-${rootId}`)
+        ?.querySelector<HTMLElement>("[data-thread-sticky-bar]");
+      const c = container.getBoundingClientRect();
+      const e = el.getBoundingClientRect();
+      const target = Math.max(
+        0,
+        container.scrollTop + (e.top - c.top) - 16 - (stickyBar && !el.contains(stickyBar) ? stickyBar.offsetHeight : 0),
+      );
+      container.scrollTop = target;
+      if (Math.abs(target - last) > 1 && ++frames < 90) {
+        last = target;
+        rafId = requestAnimationFrame(align);
+        return;
+      }
+      flashJumpTarget(flashId);
+      setPendingRunJump(null);
+    };
+    rafId = requestAnimationFrame(align);
+    return () => cancelAnimationFrame(rafId);
+  }, [pendingRunJump, scrollContainerEl, flashJumpTarget]);
 
   const {
     reactions: issueReactions,
@@ -2098,17 +2174,16 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
     [issueId, setSubIssuesCollapsedFor],
   );
 
-  // Selection store is global (workspace-scoped); clear it whenever this
-  // issue detail is mounted or switched, so leftover selections from the
-  // main list view (or another sub-issue list) don't leak into this one.
-  const clearSelection = useIssueSelectionStore((s) => s.clear);
-  const selectedIds = useIssueSelectionStore((s) => s.selectedIds);
-  const selectIds = useIssueSelectionStore((s) => s.select);
-  const deselectIds = useIssueSelectionStore((s) => s.deselect);
-  useEffect(() => {
-    clearSelection();
-    return clearSelection;
-  }, [id, clearSelection]);
+  // The sub-issue list owns its selection, reset per issue. Rows, select-all
+  // and the inline batch toolbar must read the same one: a peek renders this
+  // inside a surface whose own selection provider would otherwise win for the
+  // toolbar while the rows wrote elsewhere.
+  const subIssueSelection = useCreateIssueSurfaceSelection(`sub-issues:${id}`);
+  const {
+    selectedIds,
+    select: selectIds,
+    deselect: deselectIds,
+  } = subIssueSelection;
 
   const childIssueIds = useMemo(() => childIssues.map((c) => c.id), [childIssues]);
   const childSelectedCount = childIssueIds.filter((cid) =>
@@ -2545,23 +2620,24 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
     const panel = sidebarRef.current;
     if (!panel) return;
     const nextOpen = panel.isCollapsed();
-    beginDesktopSidebarToggle(nextOpen);
+    desktopSidebar.beginToggle(nextOpen);
     window.requestAnimationFrame(() => {
       if (nextOpen) panel.expand();
       else panel.collapse();
     });
-  }, [beginDesktopSidebarToggle, isMobile, sidebarRef]);
+  }, [desktopSidebar, isMobile, sidebarRef]);
 
   // The header's wakeup chip opens the sidebar and brings the Wakeups section
   // into view with focus on its heading.
   const openWakeups = useCallback(() => {
+    const sidebarOpen = isMobile ? mobileSidebarOpen : desktopSidebar.getState().open;
     if (!sidebarOpen) handleToggleSidebar();
     window.requestAnimationFrame(() => {
       const heading = document.getElementById(`issue-wakeups-${id}`);
       heading?.scrollIntoView({ block: "nearest" });
       heading?.focus({ preventScroll: true });
     });
-  }, [handleToggleSidebar, id, sidebarOpen]);
+  }, [desktopSidebar, handleToggleSidebar, id, isMobile, mobileSidebarOpen]);
 
   useRightSidebarShortcut(rightSidebarShortcutTargetRef, handleToggleSidebar);
 
@@ -2656,13 +2732,13 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
       <div>
         <button
           type="button"
-          className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors mb-2 hover:bg-accent/70 ${propertiesOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+          className={`flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors mb-1.5 hover:bg-accent ${propertiesOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setPropertiesOpen(!propertiesOpen)}
         >
           {t(($) => $.detail.section_properties)}
           <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${propertiesOpen ? "rotate-90" : ""}`} />
         </button>
-        {propertiesOpen && <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 pl-2">
+        {propertiesOpen && <div className="grid grid-cols-[minmax(76px,auto)_1fr] gap-x-2 gap-y-0.5 pl-2">
           {/* Core props — always rendered. */}
           <PropRow label={t(($) => $.detail.prop_status)}>
             <StatusPicker
@@ -2776,7 +2852,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             <div className="col-span-2 mt-1">
               <Popover open={addPropPopoverOpen} onOpenChange={setAddPropPopoverOpen}>
                 <PopoverTrigger
-                  className="flex items-center gap-1.5 rounded-md px-2 py-1 -mx-2 text-caption text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
+                  className="-mx-2 flex h-7 items-center gap-1.5 rounded-row px-2 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
                 >
                   <Plus className="h-3 w-3 shrink-0" />
                   <span>{t(($) => $.detail.add_property_action)}</span>
@@ -2791,7 +2867,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                       key={k}
                       type="button"
                       onClick={() => addOptionalProp(k)}
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-caption text-foreground transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                      className="flex h-8 w-full items-center gap-2 rounded-row px-2 text-label text-foreground transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                     >
                       {k === "priority" && (
                         <PriorityIcon priority="medium" inheritColor className="text-muted-foreground" />
@@ -2833,7 +2909,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                             key={p.id}
                             type="button"
                             onClick={() => addCustomProp(p.id)}
-                            className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-caption text-foreground transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                            className="flex h-8 w-full items-center gap-2 rounded-row px-2 text-label text-foreground transition-colors hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
                           >
                             {p.icon ? (
                               <PropertyIcon property={p} className="size-3.5 text-caption" />
@@ -2875,17 +2951,17 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         <div>
           <button
             type="button"
-            className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors mb-2 hover:bg-accent/70 ${parentIssueOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+            className={`flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors mb-1.5 hover:bg-accent ${parentIssueOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
             onClick={() => setParentIssueOpen(!parentIssueOpen)}
           >
             {t(($) => $.detail.section_parent_issue)}
             <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${parentIssueOpen ? "rotate-90" : ""}`} />
           </button>
           {parentIssueOpen && <div className="pl-2">
-            <div className="flex items-center gap-0.5 rounded-md px-2 -mx-2 hover:bg-accent/50 transition-colors group">
+            <div className="-mx-2 flex h-[30px] items-center gap-0.5 rounded-row px-2 transition-colors hover:bg-accent group">
               <AppLink
                 href={paths.issueDetail(parentIssue.id)}
-                className="flex flex-1 min-w-0 items-center gap-1.5 py-1.5 text-caption"
+                className="flex flex-1 min-w-0 items-center gap-1.5 text-label"
               >
                 <StatusIcon
                   status={parentIssue.status}
@@ -2943,13 +3019,13 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
       <div>
         <button
           type="button"
-          className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium transition-colors mb-2 hover:bg-accent/70 ${detailsOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
+          className={`flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium transition-colors mb-1.5 hover:bg-accent ${detailsOpen ? "" : "text-muted-foreground hover:text-foreground"}`}
           onClick={() => setDetailsOpen(!detailsOpen)}
         >
           {t(($) => $.detail.section_details)}
           <ChevronRight className={`!size-3 shrink-0 stroke-[2.5] text-muted-foreground transition-transform ${detailsOpen ? "rotate-90" : ""}`} />
         </button>
-        {detailsOpen && <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 pl-2">
+        {detailsOpen && <div className="grid grid-cols-[minmax(76px,auto)_1fr] gap-x-2 gap-y-0.5 pl-2">
           <PropRow label={t(($) => $.detail.prop_created_by)}>
             <ActorAvatar actorType={issue.creator_type} actorId={issue.creator_id} size="sm" enableHoverCard />
             <span className="cursor-pointer truncate">{getActorName(issue.creator_type, issue.creator_id)}</span>
@@ -2980,7 +3056,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         <>
           <button
             type="button"
-            className="flex w-full items-center gap-1 rounded-md px-2 py-1 text-caption font-medium text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground"
+            className="flex w-full items-center gap-1 h-7 rounded-row px-2 text-label font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             onClick={() => setMetadataOpen(true)}
           >
             {t(($) => $.detail.section_metadata)}
@@ -2993,7 +3069,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               <DialogHeader>
                 <DialogTitle>{t(($) => $.detail.section_metadata)}</DialogTitle>
               </DialogHeader>
-              <pre className="max-h-[60vh] overflow-auto rounded-md bg-muted p-3 font-mono text-caption">
+              <pre className="max-h-[60vh] overflow-auto rounded-lg bg-field p-3 font-mono text-caption">
                 {JSON.stringify(issue.metadata ?? {}, null, 2)}
               </pre>
             </DialogContent>
@@ -3013,6 +3089,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         {reply?.resolved_at && !expandedResolved.has(reply.id) ? <ResolvedThreadBar
           entry={reply} replies={timelineView.threadReplies.get(reply.id) ?? EMPTY_REPLIES}
           onExpand={() => toggleResolvedExpand(reply.id, true)} /> : <AgentRunComment run={item.run} entering={enteringRunIds.has(item.run.task.id)} standalone
+          highlightedId={highlightedId}
           commentProps={reply ? {
             issueId: id, entry: reply, replies: timelineView.threadReplies.get(reply.id) ?? EMPTY_REPLIES,
             currentUserId: user?.id, canModerate: canModerateComments, onReply: submitReply,
@@ -3118,7 +3195,10 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         ]
       : [];
 
-  const titleSizeClass = isPeek ? "text-title-lg font-semibold" : "text-display-sm font-bold";
+  // 页面版标题：30px 粗体，左右各让出 8px 给悬停底色，编辑器与静态标题共用同一套内边距避免切换时跳动。
+  const titleSizeClass = isPeek
+    ? "text-title-lg font-semibold"
+    : "-mx-2 rounded-lg px-2 py-0.5 text-[30px] leading-[1.35] font-bold tracking-[-0.01em]";
 
   const detailContent = (
     <CurrentIssueRenderContextProvider value={currentIssueRenderContext}>
@@ -3156,7 +3236,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             {/* Live "agent is working" chip, leftmost in the right cluster so
                 it never overlaps the title (which truncates to make room).
                 It self-hides when no agent is active. */}
-            <IssueAgentHeaderChip issueId={id} />
+            <IssueAgentHeaderChip issueId={id} onJumpToRun={jumpToRun} />
             <IssueWakeupHeaderChip issueId={id} onOpen={openWakeups} />
             {onDone && !issueBehavesAsAny(issue, ["done", "closed"]) && (
               <Tooltip>
@@ -3227,16 +3307,26 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             {isPeek ? (
               trailingActions
             ) : (
-              <IconButton
-                label={t(($) => $.detail.sidebar_tooltip)}
-                shortcut={<ActionShortcutKeycaps action="toggleRightSidebar" />}
-                tooltipSide="bottom"
-                variant={sidebarOpen ? "secondary" : "ghost"}
-                className={sidebarOpen ? "" : "text-muted-foreground"}
-                onClick={handleToggleSidebar}
-              >
-                <PanelRight />
-              </IconButton>
+              <>
+                <RightSidebarOpenState controller={desktopSidebar}>
+                  {(desktopOpen) => {
+                    const sidebarOpen = isMobile ? mobileSidebarOpen : desktopOpen;
+                    return (
+                      <IconButton
+                        label={t(($) => $.detail.sidebar_tooltip)}
+                        shortcut={<ActionShortcutKeycaps action="toggleRightSidebar" />}
+                        tooltipSide="bottom"
+                        variant={sidebarOpen ? "secondary" : "ghost"}
+                        className={sidebarOpen ? "" : "text-muted-foreground"}
+                        onClick={handleToggleSidebar}
+                      >
+                        <PanelRight />
+                      </IconButton>
+                    );
+                  }}
+                </RightSidebarOpenState>
+                {trailingActions}
+              </>
             )}
             </>
           }
@@ -3264,7 +3354,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             "mx-auto w-full",
             // The peek is already a narrow column, so it takes a tighter gutter
             // and never reaches the chat launcher's corner (see IssuePeekHost).
-            isPeek ? "px-6 py-5" : "max-w-4xl px-3 py-6 max-md:pb-chat-launcher md:px-8 md:py-8",
+            isPeek ? "px-6 py-5" : "max-w-190 px-3 py-6 max-md:pb-chat-launcher md:px-10 md:pt-7 md:pb-8",
           )}
         >
           <IssueDuplicateBanner
@@ -3311,7 +3401,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             <div
               role="button"
               tabIndex={0}
-              className={cn("w-full cursor-text leading-snug tracking-tight", titleSizeClass)}
+              className={cn("w-full cursor-text leading-snug tracking-tight", titleSizeClass, !isPeek && "transition-colors duration-(--motion-fast) ease-out hover:bg-accent")}
               onClick={(e) => {
                 // A drag-selection (copying the title) must not summon the editor.
                 const sel = window.getSelection();
@@ -3383,7 +3473,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
           {parentIssue && !issue.source_context && (
             <AppLink
               href={paths.issueDetail(parentIssue.id)}
-              className="mt-2 inline-flex max-w-full items-center gap-1.5 text-caption text-muted-foreground hover:text-foreground transition-colors group/parent"
+              className="mt-2 inline-flex max-w-full items-center gap-1.5 text-label text-muted-foreground hover:text-foreground transition-colors group/parent"
             >
               <span className="font-medium shrink-0">{t(($) => $.detail.sub_issue_of)}</span>
               <StatusIcon
@@ -3400,7 +3490,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               {parentChildIssues.length > 0 && (() => {
                 const done = parentChildIssues.filter((c) => issueBehavesAs(c, "done")).length;
                 return (
-                  <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 shrink-0">
+                  <span className="ml-1 inline-flex shrink-0 items-center gap-1 rounded-full bg-field px-2 py-0.5">
                     <ProgressRing done={done} total={parentChildIssues.length} size={11} />
                     <span className="tabular-nums text-micro font-medium">
                       {done}/{parentChildIssues.length}
@@ -3443,7 +3533,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             {...descDropZoneProps}
             {...descriptionAnnotations.captureProps}
             ref={descriptionAnnotations.cardRef}
-            className="relative mt-5 rounded-lg"
+            className="relative mt-4.5 rounded-lg"
             onFocusCapture={() => {
               if (!descriptionEditingRef.current) {
                 descriptionEditingRef.current = true;
@@ -3501,7 +3591,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               />
             </div>
 
-            <div className="flex items-center gap-1 mt-3">
+            <div className="mt-3 flex items-center gap-1.5">
               <ReactionBar
                 reactions={issueReactions}
                 currentUserId={user?.id}
@@ -3522,7 +3612,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
             <div className="mt-6">
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 text-caption text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1.5 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
                 onClick={() => actions.openCreateSubIssue()}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -3536,13 +3626,14 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               // Provider hosts the shared right-click actions menu the rows
               // delegate to (one singleton menu, not one per row).
               <IssueContextMenuProvider>
-              <div className="mt-10 group/sub-issues">
+              <IssueSurfaceSelectionProvider selection={subIssueSelection}>
+              <div className="mt-9 group/sub-issues">
                 {/* Header */}
-                <div className="flex items-center gap-2 mb-2">
+                <div className="mb-2 flex h-8 items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setSubIssuesCollapsed((v) => !v)}
-                    className="flex items-center gap-1.5 text-body font-medium text-foreground hover:text-foreground/80 transition-colors"
+                    className="flex items-center gap-1.5 text-body font-semibold text-foreground hover:text-foreground/80 transition-colors"
                   >
                     <ChevronDown
                       className={cn(
@@ -3552,7 +3643,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                     />
                     <span>{t(($) => $.detail.sub_issues_label)}</span>
                   </button>
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2 py-0.5">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-field px-2 py-0.5">
                     <ProgressRing done={doneCount} total={childIssues.length} size={11} />
                     <span className="text-micro text-muted-foreground tabular-nums font-medium">
                       {doneCount}/{childIssues.length}
@@ -3583,7 +3674,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                         render={
                           <button
                             type="button"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:text-foreground"
                             onClick={() => actions.openCreateSubIssue()}
                             aria-label={t(($) => $.detail.add_sub_issue_aria)}
                           >
@@ -3598,18 +3689,22 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
 
                 {/* Inline batch toolbar — appears next to the rows when
                     selections exist, instead of as a far-away fixed bar. */}
-                <BatchActionToolbar issues={childIssues} placement="inline" />
+                <BatchActionToolbar
+                  issues={childIssues}
+                  placement="inline"
+                  clearSelectionOnApply
+                />
 
                 {/* List */}
                 {!subIssuesCollapsed && (() => {
                   const groups = groupSubIssuesByStage(childIssues);
                   const staged = childIssues.some((c) => c.stage != null);
                   return (
-                    <div className="overflow-hidden rounded-lg border bg-card/30 divide-y divide-border/60">
+                    <div className="overflow-hidden rounded-lg border border-border divide-y divide-border">
                       {groups.map(({ stage: groupStage, items }) => (
                         <Fragment key={groupStage ?? "unstaged"}>
                           {staged && (
-                            <div className="bg-muted/40 px-3 py-1 text-micro font-medium uppercase tracking-wider text-muted-foreground">
+                            <div className="flex h-7 items-center bg-surface-sunken px-3.5 text-caption font-medium text-muted-foreground">
                               {groupStage == null
                                 ? t(($) => $.stage.none)
                                 : t(($) => $.stage.value, { n: groupStage })}
@@ -3630,6 +3725,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                   );
                 })()}
               </div>
+              </IssueSurfaceSelectionProvider>
               </IssueContextMenuProvider>
             );
           })()}
@@ -3638,7 +3734,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
 
           {/* Activity / Comments */}
           <div>
-            <div className="flex items-center justify-between">
+            <div className="flex h-8 items-center justify-between">
               <div className="flex items-center gap-3">
                 <h2 className="text-title-sm font-semibold">{t(($) => $.detail.activity_section)}</h2>
               </div>
@@ -3653,7 +3749,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                         explaining a state, and must not read as a second
                         action sitting next to Unsubscribe. Uses the shared
                         caption role rather than an ad-hoc size (MUL-5451). */}
-                    <TooltipTrigger className="cursor-default rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">
+                    <TooltipTrigger className="inline-flex h-[22px] cursor-default items-center rounded-full bg-field px-2.5 text-caption text-muted-foreground">
                       {t(($) => $.detail.delegated_subscription_badge)}
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-64">
@@ -3739,7 +3835,7 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
                         )}
                       </AvatarGroup>
                     ) : (
-                      <span className="flex items-center justify-center h-6 w-6 rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full border-[1.5px] border-dashed border-input text-muted-foreground">
                         <Users className="h-3 w-3" />
                       </span>
                     )}
@@ -3758,7 +3854,12 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
               </div>
             </div>
 
-            <LocalDirectoryHint projectId={issue?.project_id} />
+            <LocalDirectoryHint
+              projectId={issue.project_id}
+              assignedAgent={issue.assignee_type === "agent"
+                ? agents.find((agent) => agent.id === issue.assignee_id) ?? null
+                : undefined}
+            />
 
             {/* The "agent is working" live signal now lives in the header
                 (IssueAgentHeaderChip) so it stays in one fixed place and
@@ -3944,22 +4045,9 @@ export function IssueDetail({ issueId, onDelete, onDone, defaultSidebarOpen = tr
         {detailContent}
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel
-        id="sidebar"
-        {...rightSidebarPanelMotionProps}
-        data-right-sidebar-motion={desktopSidebarMotionEnabled ? "enabled" : undefined}
-        defaultSize={desktopSidebarOpen ? 320 : 0}
-        minSize={260}
-        maxSize={420}
-        collapsible
-        groupResizeBehavior="preserve-pixel-size"
-        panelRef={sidebarRef}
-        onResize={handleDesktopSidebarResize}
-      >
-        <AnimatedRightSidebar open={desktopSidebarVisualOpen} motionEnabled={desktopSidebarMotionEnabled}>
-          {sidebarContent}
-        </AnimatedRightSidebar>
-      </ResizablePanel>
+      <AnimatedRightSidebarPanel controller={desktopSidebar} panelRef={sidebarRef}>
+        {sidebarContent}
+      </AnimatedRightSidebarPanel>
     </ResizablePanelGroup>,
   );
 }

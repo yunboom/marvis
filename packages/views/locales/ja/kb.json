@@ -1,0 +1,681 @@
+{
+  "list": {
+    "title": "ナレッジベース",
+    "new_button": "ナレッジベースを作成",
+    "pending_reviews_other": "レビュー待ちの変更 {{count}}",
+    "search_placeholder": "ナレッジベースとページを検索...",
+    "search_label": "ナレッジベースを検索",
+    "sort": {
+      "recent": "最近の更新",
+      "name": "名前"
+    },
+    "table": {
+      "name": "名前",
+      "description": "説明",
+      "pages": "ページ",
+      "pending": "未対応",
+      "updated": "更新日時"
+    },
+    "pending": {
+      "annotations_other": "注釈 {{count}}",
+      "stale_pages_other": "再確認 {{count}}"
+    },
+    "copy_link": "リンクをコピー",
+    "link_copied": "リンクをコピーしました",
+    "no_matches": "一致するナレッジベースはありません",
+    "empty_title": "ナレッジベースはまだありません",
+    "empty_description": "エージェントがページを書いて保守し、チームメンバーが読んで注釈し、変更をレビューします。"
+  },
+  "nav": {
+    "label": "ナレッジベースのナビゲーション",
+    "switch": "ナレッジベースを切り替え",
+    "more_actions": "ナレッジベースの操作",
+    "home": "ホーム",
+    "pending": "未対応 {{count}}",
+    "pages": "ページ",
+    "breadcrumb": "現在地",
+    "configure": "ナレッジベースを設定",
+    "configure_hint": "目的とスキーマ",
+    "manage": "ナレッジベースの管理",
+    "graph": "関係図"
+  },
+  "tree": {
+    "expand": "{{title}}を展開",
+    "collapse": "{{title}}を折りたたむ",
+    "load_more": "さらに読み込む",
+    "stale": "要再確認",
+    "empty": "ページはまだありません",
+    "draft": {
+      "added": "下書き · 新規",
+      "modified": "下書き",
+      "moved": "下書き · 移動",
+      "deleted": "下書き · 削除"
+    }
+  },
+  "search": {
+    "placeholder": "このナレッジベースを検索",
+    "pages_other": "{{count}} ページ",
+    "no_results": "「{{query}}」は見つかりませんでした",
+    "no_results_hint": "別のキーワードをお試しください。",
+    "failed": "検索に失敗しました"
+  },
+  "home": {
+    "pending_title": "未対応",
+    "pending_reviews": "レビュー待ちの変更",
+    "latest_review": "最新：{{title}}",
+    "annotations": "注釈",
+    "agent_reported_other": "エージェントが報告した不足 {{count}} 件を含む",
+    "stale_pages": "再確認が必要なページ",
+    "stale_hint": "コードが変更されたか、確認期限を過ぎました",
+    "recent_title": "最近の更新",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "マージされた変更はまだありません",
+    "not_found": "ナレッジベースが存在しないか削除されました"
+  },
+  "page": {
+    "toc": "目次",
+    "info": "ページ情報",
+    "more": "その他",
+    "history": "ページ履歴",
+    "updated_by": "{{name}} が更新 · {{time}}",
+    "updated": "{{time}} に更新",
+    "verified": "確認済み · {{name}} · {{date}}",
+    "stale": "要再確認",
+    "pending_mr_other": "このページにはレビュー待ちの変更が {{count}} 件あります：{{title}}（#{{number}}）",
+    "not_found": "ページが存在しないか削除されました",
+    "sources": "出典",
+    "missing_page": "このページはまだ書かれていません",
+    "close_panel": "閉じる",
+    "view_change": "変更を見る"
+  },
+  "draft": {
+    "label": "下書き",
+    "single": "あなたの下書きがこのページを変更しています（未マージ）。他のメンバーには正式版が表示されます。",
+    "multi_other": "このページを変更している下書きが {{count}} 件あります（いずれも未マージ）。他のメンバーには正式版が表示されます。",
+    "official": "正式版",
+    "draft": "下書き",
+    "diff": "差分",
+    "diff_empty": "この下書きはこのページを変更していません",
+    "choose": "下書きを選択",
+    "origin": {
+      "chat": "チャット「{{label}}」",
+      "issue": "タスク「{{label}}」",
+      "kb_job": "ジョブ「{{label}}」",
+      "none": "下書き"
+    },
+    "meta_other": "{{time}} · {{count}} ブロックを変更",
+    "removed": "下書きで削除",
+    "added": "下書きで追加"
+  },
+  "cite": {
+    "kind": {
+      "task": "タスク",
+      "chat": "チャット",
+      "pr": "プルリクエスト",
+      "repo": "コード",
+      "raw": "ファイル",
+      "web": "Web",
+      "other": "出典"
+    },
+    "checked_at": "{{version}} で確認",
+    "lines": "{{from}}–{{to}} 行",
+    "uploaded": "アップロード · {{name}} · {{date}}",
+    "page": "{{page}} ページ",
+    "open_file": "ファイルを開く",
+    "download": "ダウンロード",
+    "open_issue": "タスクを開く",
+    "open_chat": "チャットを開く",
+    "open_link": "リンクを開く",
+    "chat_private": "開始した本人のみ閲覧できます",
+    "file_missing": "ファイルはナレッジベースにありません"
+  },
+  "info": {
+    "verified": "確認",
+    "verified_by": "{{name}} · {{date}} に確認",
+    "next_review": "次回確認 {{date}}",
+    "tags": "領域",
+    "sources": "出典 {{count}}",
+    "backlinks": "このページへのリンク",
+    "none": "なし"
+  },
+  "toc": {
+    "empty": "見出しがありません"
+  },
+  "history": {
+    "current": "現在のバージョン",
+    "initial": "初版",
+    "meta": "{{author}} · {{merger}} がマージ · {{time}}",
+    "submitted_by": "{{author}} が提出、",
+    "merged_by": "{{merger}} が {{date}} にマージ",
+    "annotations_other": "注釈 {{count}} 件を処理",
+    "close": "履歴を閉じる",
+    "no_changes": "この版では本文の変更はありません",
+    "not_found": "リビジョンが存在しません",
+    "empty": "履歴はまだありません",
+    "revert": "この変更を取り消す"
+  },
+  "builder": {
+    "create_title": "新しいナレッジベース",
+    "create_sub": "会話で作成",
+    "config_title": "ナレッジベースを設定",
+    "via_chat": "会話で設定",
+    "setup_create_title": "会話でナレッジベースを作成",
+    "setup_config_title": "会話でナレッジベースを設定",
+    "setup_description": "ビルダーを実行するランタイムとモデルを選びます。",
+    "chat_title": "ナレッジベースビルダー",
+    "change_runtime": "変更",
+    "change_runtime_label": "ランタイムを変更",
+    "intro_create": "どんなナレッジベースを作りますか？方向を選ぶと、名前・目的・スキーマを下書きし、一緒に調整します。",
+    "intro_config": "必要に合わせて目的とスキーマを変更します。下の質問から始めるか、変えたい点を伝えてください。",
+    "describe_hint": "やりたいことを直接書いても構いません。",
+    "starters": {
+      "dev": {
+        "title": "開発ナレッジベース",
+        "description": "システム構成、サービスとインターフェース、障害対応手順、技術的な決定"
+      },
+      "qa": {
+        "title": "テストナレッジベース",
+        "description": "テスト設計手法、テスト環境、回帰チェックリスト、不具合の振り返り"
+      },
+      "product": {
+        "title": "プロダクトナレッジベース",
+        "description": "機能説明、業務ルール、課金ルール、顧客向けの回答"
+      },
+      "team": {
+        "title": "チーム共通ナレッジベース",
+        "description": "開発・テスト・プロダクトで共用、領域タグで区別"
+      }
+    },
+    "starter_message": "{{title}}を作成：{{description}}",
+    "questions": {
+      "readers": "このナレッジベースは誰が読み、何を最もよく調べますか？",
+      "scope": "何を収録し、何を収録しませんか？",
+      "structure": "ページの構成は？システムモジュール別、業務フロー別、チーム別のどれですか？",
+      "writing": "引用や書き方のルールはありますか？"
+    },
+    "drafts_create_other": "未完了の作成が {{count}} 件あります",
+    "drafts_config_other": "未完了の設定が {{count}} 件あります",
+    "pick_create": "作成の下書き",
+    "pick_config": "設定の下書き",
+    "panel": {
+      "title": "ナレッジベースの設定",
+      "basics": "基本情報",
+      "name": "名前",
+      "description": "概要",
+      "slug": "ディレクトリ名",
+      "generated_placeholder": "要件を伝えると自動生成されます",
+      "slug_placeholder": "名前から生成",
+      "slug_invalid": "小文字の英字・数字・ハイフンのみ使えます",
+      "purpose": "目的",
+      "purpose_placeholder": "# 目的",
+      "just_updated": "更新済み",
+      "expand_edit": "拡大して編集",
+      "expand_view": "拡大して表示",
+      "schema": "スキーマ",
+      "schema_mode": "スキーマモード",
+      "schema_default": "デフォルト",
+      "schema_custom": "カスタム",
+      "read_only": "読み取り専用",
+      "schema_default_hint": "組み込みのメンテナンスルールを使います。編集できず、ビルダーも変更しません。チームに合わせるには「カスタム」に切り替えてください。",
+      "schema_placeholder": "要件を伝えると組み込みスキーマから下書きします"
+    },
+    "footer": {
+      "unsaved": "未保存の変更があります",
+      "discard_create": "作成を破棄",
+      "discard_config": "変更を破棄",
+      "create": "作成",
+      "save": "保存"
+    },
+    "discard": {
+      "create_title": "この作成を破棄しますか？",
+      "config_title": "この変更を破棄しますか？",
+      "description": "会話と右側の設定は完全に削除されます。",
+      "keep": "編集を続ける"
+    },
+    "expand": {
+      "edit": "編集",
+      "split": "分割",
+      "preview": "プレビュー",
+      "read_only": "デフォルト · 読み取り専用",
+      "edit_hint": "変更は右側の設定に戻り、保存すると反映されます",
+      "read_only_hint": "デフォルトのスキーマは表示のみです。変更するには右側で「カスタム」に切り替えてください",
+      "cancel": "キャンセル",
+      "done": "完了",
+      "close": "閉じる"
+    },
+    "saved": "保存しました",
+    "errors": {
+      "name_required": "名前を入力してください",
+      "slug_taken": "このディレクトリ名はワークスペースで使用済みです",
+      "conflict": "設定を開いた後に他の人が保存しました。再読み込みして確認してください。",
+      "forbidden": "ナレッジベースの作成者、またはワークスペースのオーナー・管理者のみ設定できます",
+      "create_failed": "ナレッジベースを作成できませんでした",
+      "save_failed": "設定を保存できませんでした"
+    }
+  },
+  "welcome": {
+    "created": "ナレッジベース「{{name}}」を作成しました。使い方を確認しましょう。",
+    "guide_title": "このナレッジベースの使い方",
+    "suggested": "最初におすすめ",
+    "dismiss": "わかりました",
+    "steps": {
+      "ingest": {
+        "title": "資料を収録",
+        "description": "ナレッジベースジョブを作成し、タスク・会話・アップロードしたファイル・Web ページをエージェントに渡します。知識をページにまとめ、各事実に出典を付けます。"
+      },
+      "review": {
+        "title": "レビュー後に反映",
+        "description": "エージェントの変更はまず下書きに入ります。確認してレビューに出し、作成者またはオーナー・管理者がマージすると反映されます。"
+      },
+      "read": {
+        "title": "読む・注釈を付ける",
+        "description": "誤りや古い内容に気づいたら、その文を選んで注釈を付けます。注釈はワンクリックでエージェントに任せられます。"
+      },
+      "maintain": {
+        "title": "定期メンテナンス",
+        "description": "定期収録と定期ヘルスチェックを設定すると、ナレッジベースが最新のタスクとコードに追従します。"
+      }
+    }
+  },
+  "annotation": {
+    "action": "注釈",
+    "compose_label": "注釈の内容",
+    "compose_hint": "エージェントは処理時にこの原文を参照します",
+    "cancel": "キャンセル",
+    "submit": "注釈",
+    "add": "注釈を追加",
+    "page_panel": "このページの注釈",
+    "kb_panel": "ナレッジベースの注釈",
+    "page_compose_label": "このページに注釈",
+    "kb_compose_label": "ナレッジベース全体に注釈",
+    "hand_off": "エージェントに任せる",
+    "hand_off_all": "すべてエージェントに任せる（{{n}}）",
+    "status": {
+      "pending": "未対応",
+      "processing": "対応中",
+      "resolved": "解決済み",
+      "dismissed": "対応しない"
+    },
+    "dismiss": "対応しない",
+    "reopen": "戻す",
+    "where_block": "{{title}} · 第 {{n}} 段落",
+    "where_page": "{{title}} · ページ全体",
+    "where_kb": "ナレッジベース全体",
+    "followed": "書き換えに追従",
+    "lost": "原文は削除済み",
+    "original": "注釈時の原文：{{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "注釈",
+    "empty": "注釈はありません",
+    "create_failed": "注釈を保存できませんでした",
+    "quote_not_found": "原文が見つかりません",
+    "update_failed": "更新できませんでした",
+    "panel_empty": "まだ注釈はありません"
+  },
+  "stale_list": {
+    "count_other": "{{count}} ページ",
+    "page": "ページ",
+    "reason": "理由",
+    "overdue": "確認期限を過ぎました",
+    "review_by": "{{date}} までに再確認",
+    "hand_off": "エージェントに再確認を任せる",
+    "hand_off_all": "すべてエージェントに任せる",
+    "empty": "再確認が必要なページはありません。",
+    "all_message": "「{{name}}」で確認期限を過ぎたページを再確認してください。"
+  },
+  "job": {
+    "nav": "ナレッジベースのジョブ",
+    "nav_running": "{{count}} 件実行中",
+    "list_title": "ナレッジベースのジョブ",
+    "new": "新しいジョブ",
+    "tabs": {
+      "all": "すべて",
+      "running": "実行中",
+      "failed": "失敗"
+    },
+    "state": {
+      "running": "実行中",
+      "idle": "入力待ち",
+      "failed": "失敗",
+      "stopped": "停止済み"
+    },
+    "empty": "ジョブはまだありません",
+    "subtitle": "{{name}} · ナレッジベースのジョブ",
+    "new_title": "新しい会話",
+    "back": "戻る",
+    "executor": "実行エージェント",
+    "pick_agent": "エージェントを選択",
+    "pick_agent_first": "先に実行エージェントを選んでください",
+    "runtime_online": "ランタイム オンライン",
+    "runtime_offline": "ランタイム オフライン",
+    "start_question": "{{name}}で何をしますか？",
+    "start_hint": "やりたいことを直接書いてもかまいません。定期実行は自動化として作成され、「自動化」ページで管理します。",
+    "start_failed": "ジョブを作成できませんでした",
+    "not_found": "ジョブが存在しないか、閲覧できません",
+    "ended": "この会話は終了しました",
+    "starters": {
+      "ingest": {
+        "title": "資料を取り込む",
+        "description": "タスク、会話、Web ページを読み、知識をページに書き込みます"
+      },
+      "health": {
+        "title": "ヘルスチェック",
+        "description": "古いページ、矛盾する内容、孤立ページ、コードが変わった主張を確認します"
+      },
+      "merge": {
+        "title": "知識を統合",
+        "description": "内容が重複するページを見つけて 1 ページにまとめます"
+      },
+      "annotations": {
+        "title": "注釈を処理",
+        "description": "未対応の注釈に従ってページを修正します"
+      },
+      "schedule_ingest": {
+        "title": "定期取り込みを作成",
+        "description": "その日のタスク、コメント、チャットを毎日取り込む自動化を作ります"
+      },
+      "schedule_health": {
+        "title": "定期ヘルスチェックを作成",
+        "description": "毎週ヘルスチェックを行う自動化を作ります"
+      }
+    },
+    "starter_message": "{{title}}：{{description}}",
+    "names": {
+      "ingest": "資料を取り込む",
+      "health": "ヘルスチェック",
+      "merge": "知識を統合",
+      "annotations": "注釈を処理",
+      "new_page": "新しいページ",
+      "schedule": "定期実行",
+      "custom": "新しい会話"
+    },
+    "draft": {
+      "title": "下書きの変更",
+      "state": {
+        "none": "下書きなし",
+        "empty": "変更なし",
+        "open": "下書き · 未提出",
+        "submitted": "レビュー中",
+        "merged": "マージ済み",
+        "closed": "クローズ済み · 再提出可",
+        "nochange": "変更不要",
+        "discarded": "破棄済み"
+      },
+      "nodraft": "エージェントが下書きを作ると、ここに変更が表示されます。",
+      "empty": "エージェントが変更を書き込むと、ここに表示されます。",
+      "nochange_title": "今回は変更が必要な内容はありません",
+      "nochange_hint": "「変更不要」として記録され、変更リクエストは作成されません",
+      "discarded": "下書きは破棄されました。変更はマージされません。",
+      "summary_other": "{{count}} ページ · +{{added}} −{{deleted}}",
+      "collapse_all": "すべて折りたたむ",
+      "expand_all": "すべて展開",
+      "change": {
+        "added": "追加",
+        "modified": "変更",
+        "moved": "移動",
+        "deleted": "削除"
+      },
+      "view_in_page": "ページで表示",
+      "checks": "提出前チェック",
+      "checks_pending": "変更後に自動でチェックします",
+      "lint_ok": "形式チェックに合格",
+      "lint": {
+        "missing_type": "ページヘッダーに type がありません",
+        "missing_title": "ページヘッダーに title がありません",
+        "missing_description": "ページヘッダーに description がありません",
+        "undefined_footnote": "出典のない脚注を参照しています",
+        "claim_without_evidence": "根拠のない主張があります",
+        "invalid_evidence_uri": "根拠のアドレスを認識できません",
+        "duplicate_slug": "同じ階層に同名のページがあります",
+        "unresolved_conflict": "未解決の競合があります",
+        "missing_evidence_version": "コードの根拠にバージョンがありません",
+        "unresolved_link": "まだ書かれていないページへのリンクがあります",
+        "orphan_page": "このページにリンクしているページがありません",
+        "isolated_page": "このページがリンクする関連ページが 2 つ未満です"
+      },
+      "conflict": "メインラインと競合：{{path}}",
+      "fix": "エージェントに修正させる",
+      "rebase": "エージェントにメインラインから更新させる",
+      "fix_message": "`marvis kb draft check {{draft}}` が報告したエラーを修正し、もう一度チェックしてください。",
+      "rebase_message": "下書きがメインラインと競合しています。`marvis kb draft sync {{draft}}` でメインラインから更新し、競合を解消してからもう一度チェックしてください。",
+      "hint": {
+        "open": "下書きはあなただけに見えます。提出するとレビューに進みます",
+        "busy": "エージェントのこのターンが終わってから提出してください",
+        "lint_other": "{{count}} 件のエラーを修正すると提出できます",
+        "conflict": "そのまま提出し、レビューで競合を解消することもできます",
+        "submitted": "以降の修正はレビューのコメントで、またはここで続けられます",
+        "closed": "調整して再提出すると、新しい変更リクエストが作成されます",
+        "merged": "この会話は終了しました",
+        "running": "左側でいつでも要件を追加できます"
+      },
+      "banner": {
+        "submitted_self": "変更リクエスト #{{number}} を提出しました。下書きはレビュー中で、ここでは読み取り専用です。",
+        "submitted_agent": "{{name}}が変更リクエスト #{{number}} を提出しました。下書きはレビュー中で、ここでは読み取り専用です。",
+        "closed": "#{{number}} は{{name}}によりクローズされました：「{{reason}}」。下書きは残っているので、調整を続けられます。",
+        "closed_no_reason": "#{{number}} は{{name}}によりクローズされました。下書きは残っているので、調整を続けられます。",
+        "merged": "#{{number}} は{{name}}によりマージされ、変更が反映されました。"
+      },
+      "banner_review": "レビューへ",
+      "banner_view_page": "ページを表示",
+      "banner_comments": "コメントを表示",
+      "discard": "下書きを破棄",
+      "keep": "残す",
+      "discard_confirm_title": "この下書きを破棄しますか？",
+      "discard_confirm_description": "下書きの変更は破棄されます。ジョブは一覧に残ります。",
+      "discard_failed": "破棄できませんでした",
+      "submit": "レビューに提出",
+      "resubmit": "レビューに再提出",
+      "submit_failed": "提出できませんでした",
+      "go_review": "#{{number}} をレビュー",
+      "submitted_toast": "変更リクエスト #{{number}} を提出しました"
+    },
+    "entry": {
+      "check_page": "このページをエージェントにチェックさせる",
+      "check_page_message": "「{{title}}」のページをチェックしてください。",
+      "write_here": "ここにエージェントにページを書かせる",
+      "write_under": "{{title}} の下にページを書く",
+      "write_label": "書く内容",
+      "write_submit": "エージェントに任せる",
+      "cancel": "キャンセル",
+      "new_page_message": "「{{title}}」の下に新しいページを追加：{{text}}",
+      "annotations_all_message_other": "{{name}}の未対応の注釈 {{count}} 件をすべて処理してください。",
+      "annotations_page_message_other": "「{{title}}」の未対応の注釈 {{count}} 件を処理してください。",
+      "annotations_kb_message_other": "ナレッジベース全体の未対応の注釈 {{count}} 件を処理してください。"
+    }
+  },
+  "review": {
+    "title": "レビュー",
+    "list_label": "変更リクエスト",
+    "select": "変更リクエストを選択",
+    "not_found": "変更リクエストが存在しません",
+    "conflict_banner": "メインラインが同じ内容を変更しました。",
+    "conflict_main": "メインライン {{lines}} 行",
+    "conflict_draft": "ブランチ {{lines}} 行",
+    "working": "作業中",
+    "view_run": "実行を見る",
+    "remove_quote": "引用を外す",
+    "reply": "返信",
+    "replying_to": "{{name}} への返信",
+    "quote_line": "{{page}} {{line}} 行目",
+    "comment_label": "コメント",
+    "comment_placeholder": "コメントを残す...",
+    "trigger_hint": "送信後に開始",
+    "send": "送信",
+    "hint_member": "ナレッジベースの作成者または owner / admin がマージします",
+    "hint_conflict": "先に競合を解決してください",
+    "hint_running": "エージェントの作業後にマージ",
+    "comment_failed": "コメントを送信できませんでした",
+    "merged_toast": "#{{number}} をマージしました",
+    "close_failed": "クローズできませんでした",
+    "agent_working": "{{name}} が作業中",
+    "close": "クローズ",
+    "merge": "マージ",
+    "revert": "この変更を取り消す",
+    "merged_by": "{{name}} がマージ · {{time}}",
+    "closed_by": "{{name}} がクローズ · {{time}}",
+    "closed_by_reason": "{{name}} がクローズ · {{time}} · {{reason}}",
+    "self_check": "エージェントの説明",
+    "summary": "変更の説明",
+    "checks": "チェック",
+    "conflicting": "メインラインと競合",
+    "mergeable": "メインラインにマージできます",
+    "add_comment": "コメントする",
+    "activity": "アクティビティ",
+    "close_confirm_title": "この変更リクエストをクローズしますか？",
+    "close_reason": "理由（任意）",
+    "cancel": "キャンセル",
+    "reverted": "取り消しの変更リクエスト #{{number}} を作成しました",
+    "go_review": "レビューへ",
+    "revert_conflict": "後の変更が同じ内容を変更しています。手動で取り消してください",
+    "revert_failed": "取り消せませんでした",
+    "revert_confirm_title": "#{{number}}「{{title}}」を取り消しますか？",
+    "revert_confirm_description": "逆向きの変更リクエストを作成します。マージ後に反映されます。",
+    "revert_submit": "取り消しを提出",
+    "meta_other": "リスク {{risk}} · {{count}} ページに影響",
+    "meta_annotations_other": "注釈 {{count}} 件を処理",
+    "activity_count_other": "{{count}} 件",
+    "close_confirm_annotations_other": "処理中の注釈 {{count}} 件は未処理に戻ります。",
+    "tabs": {
+      "open": "レビュー待ち",
+      "ended": "終了",
+      "all": "すべて"
+    },
+    "status": {
+      "open": "レビュー待ち",
+      "merged": "マージ済み",
+      "closed": "クローズ"
+    },
+    "empty": {
+      "open": "レビュー待ちの変更はありません",
+      "ended": "終了した変更リクエストはまだありません",
+      "all": "変更リクエストはまだありません"
+    },
+    "source": {
+      "ingest": "資料の取り込み",
+      "health": "ヘルスチェック",
+      "merge": "ページ統合",
+      "annotations": "注釈の処理",
+      "new_page": "新規ページ",
+      "revert": "取り消し",
+      "custom": "その他"
+    },
+    "origin": {
+      "kb_job": "ナレッジベースジョブ · {{label}}",
+      "revert": "#{{number}} の取り消し",
+      "autopilot_run": "自動化 · {{label}}",
+      "issue": "タスク · {{label}}",
+      "chat": "会話 · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "コメントに対応",
+      "mention": "メンションで開始"
+    },
+    "merge_error": {
+      "stale": "開いた後に下書きが変更されました。再読み込みしてからマージしてください",
+      "conflict": "メインラインと競合しています。先に解決してください",
+      "running": "エージェントの作業後にマージ",
+      "not_open": "この変更リクエストは終了しています",
+      "failed": "マージできませんでした"
+    },
+    "risk": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "changes": {
+      "title": "変更履歴",
+      "list_label": "マージ済みの変更",
+      "empty": "マージ済みの変更はまだありません",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · {{merger}} がマージ",
+      "revert_hint": "取り消すと新しい変更リクエストが作成され、マージ後に反映されます。"
+    }
+  },
+  "manage": {
+    "title": "ナレッジベースの管理",
+    "tabs_label": "管理セクション",
+    "tab": {
+      "raw": "元資料",
+      "export": "エクスポート",
+      "delete": "ナレッジベースを削除"
+    },
+    "raw": {
+      "title": "元資料",
+      "upload": "資料をアップロード",
+      "uploading": "アップロード中…",
+      "description": "そのまま保存され、ページの出典として引用されます。",
+      "col": {
+        "name": "資料",
+        "source": "出所",
+        "created": "取り込み",
+        "cited": "引用しているページ"
+      },
+      "source_upload": "アップロード · {{name}}",
+      "empty": "元資料はまだありません",
+      "ingest": "エージェントに取り込ませる",
+      "ingest_count": "エージェントに取り込ませる（{{count}}）",
+      "select": "{{name}} を選択",
+      "select_all": "すべて選択",
+      "open": "{{name}} を開く",
+      "name_taken": "同じ名前のファイルがあります：{{names}}",
+      "name_invalid": "ファイル名は空にできず、/ \\ # ? を含められません",
+      "upload_failed": "アップロードに失敗しました",
+      "open_failed": "ファイルを開けませんでした",
+      "cited_other": "{{count}} ページ",
+      "uploaded_other": "{{count}} 件のファイルをアップロードしました"
+    },
+    "export": {
+      "title": "エクスポート",
+      "okf": "OKF bundle",
+      "okf_description": "全ページを Open Knowledge Format v0.2 でエクスポートします。ページごとに frontmatter 付きの Markdown、ディレクトリごとに index.md を作り、zip にまとめます。",
+      "spec_link": "OKF 仕様",
+      "button": "zip をエクスポート",
+      "exporting": "エクスポート中…",
+      "failed": "エクスポートに失敗しました"
+    },
+    "delete": {
+      "title": "ナレッジベースを削除",
+      "description": "このナレッジベースのページ、改訂、注釈をすべて削除します。復元はできません。",
+      "button": "削除",
+      "dialog_title": "「{{name}}」を削除しますか？",
+      "dialog_body": "{{slug}}/ ディレクトリを削除し、注釈 {{annotations}} 件とレビュー待ちの変更 {{mrs}} 件を閉じます。",
+      "confirm_label": "確認のためナレッジベース名を入力",
+      "cancel": "キャンセル",
+      "confirm": "削除",
+      "deleting": "削除中…",
+      "deleted": "「{{name}}」を削除しました",
+      "failed": "削除に失敗しました",
+      "forbidden": "ナレッジベースの作成者または owner / admin のみ削除できます。"
+    }
+  },
+  "graph": {
+    "title": "関係図",
+    "label": "ページ間のリンク",
+    "no_links": "リンクなし",
+    "hint": "第 1 階層のページごとに色分け。クリックで開きます",
+    "missing": "{{title}} · 未作成",
+    "empty": "ページはまだありません",
+    "legend": "凡例",
+    "open_other": "{{title}} を開く · リンク {{count}} 件"
+  },
+  "mention": {
+    "kb": "ナレッジベース · {{slug}}",
+    "schema_default": "デフォルト Schema",
+    "schema_custom": "カスタム Schema",
+    "no_pending": "未対応なし",
+    "pending_other": "未対応 {{count}} 件",
+    "created": "{{name}} が {{time}} に作成",
+    "claims_other": "主張 {{count}} 件",
+    "open_annotations_other": "未対応の注釈 {{count}} 件",
+    "review_by": "見直し期限 {{date}}",
+    "last_change": "最終変更 #{{number}}",
+    "merged": "{{name}} が {{time}} にマージ",
+    "page_deleted": "ページは削除されました",
+    "risk": "リスク {{risk}}",
+    "submitted": "{{name}} が {{time}} に提出",
+    "origin": "出典：{{origin}}",
+    "annotation": "注釈",
+    "annotation_status": "注釈 · {{status}}",
+    "recorded": "{{name}} が {{time}} に記録"
+  }
+}

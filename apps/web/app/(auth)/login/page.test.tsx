@@ -87,6 +87,7 @@ vi.mock("@marvis/core/api", () => ({
   },
 }));
 
+import { configStore } from "@marvis/core/config";
 import LoginPage from "./page";
 
 describe("LoginPage", () => {
@@ -106,7 +107,7 @@ describe("LoginPage", () => {
   // Regression: MUL-1080 — if the user is already authenticated on the web
   // and the Desktop app redirects them to /login?platform=desktop, the web
   // must exchange the cookie session for a bearer token and hand it off via
-  // the marvis-studio:// deep link, not silently redirect to the workspace page.
+  // the marvis:// deep link, not silently redirect to the workspace page.
   it("mints a token and deep-links to Desktop when already logged in with platform=desktop", async () => {
     searchParamsState.params = new URLSearchParams({ platform: "desktop" });
     authStateRef.state.user = { id: "u1", email: "test@marvis.ai" };
@@ -129,7 +130,7 @@ describe("LoginPage", () => {
       });
       await waitFor(() => {
         expect(hrefSetter).toHaveBeenCalledWith(
-          "marvis-studio://auth/callback?token=handoff-jwt",
+          "marvis://auth/callback?token=handoff-jwt",
         );
       });
       expect(
@@ -200,5 +201,45 @@ describe("LoginPage", () => {
       });
       expect(mockListWorkspaces).not.toHaveBeenCalled();
     });
+  });
+  it("sends Feishu sign-in through the authorize URL with provider:lark in state", async () => {
+    configStore.getState().setAuthConfig({ allowSignup: true, larkLoginAppId: "cli_lark" });
+    searchParamsState.params = new URLSearchParams({ next: "/invite/abc" });
+    const hrefSetter = vi.fn();
+    const originalLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      writable: true,
+      value: {
+        ...originalLocation,
+        origin: "https://app.example.test",
+        set href(value: string) {
+          hrefSetter(value);
+        },
+      },
+    });
+
+    try {
+      render(<LoginPage />, { wrapper: createWrapper() });
+      act(() => {
+        screen.getByRole("button", { name: "Continue with Feishu" }).click();
+      });
+
+      const url = new URL(hrefSetter.mock.calls[0]?.[0] as string);
+      expect(url.origin + url.pathname).toBe(
+        "https://accounts.feishu.cn/open-apis/authen/v1/authorize",
+      );
+      expect(url.searchParams.get("client_id")).toBe("cli_lark");
+      expect(url.searchParams.get("redirect_uri")).toBe(
+        "https://app.example.test/auth/callback",
+      );
+      expect(url.searchParams.get("state")).toBe("provider:lark,next:/invite/abc");
+    } finally {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: originalLocation,
+      });
+      configStore.getState().setAuthConfig({ allowSignup: true });
+    }
   });
 });

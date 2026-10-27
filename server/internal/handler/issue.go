@@ -49,6 +49,10 @@ type IssueResponse struct {
 	// omitted when an endpoint cannot resolve a custom status, so consumers must
 	// fall back to their catalog rather than treat a blank as "no category".
 	StatusCategory string `json:"status_category,omitempty"`
+	// StatusGroup is how the status is arranged on the board and in the status
+	// library. Display data only; lifecycle decisions read StatusCategory. Same
+	// omission rule as StatusCategory when a custom status is unresolved.
+	StatusGroup string `json:"status_group,omitempty"`
 	// StatusName is a CUSTOM status's display name, carried beside the key so a
 	// consumer that only ever sees `status` is not left holding a bare handle.
 	// A key derived from a non-Latin name is opaque by construction
@@ -378,6 +382,9 @@ func (h *Handler) newStatusCategoryFiller(ctx context.Context, wsID pgtype.UUID,
 		// Every response that resolves its status also resolves its duplicate
 		// mark, so the two never disagree about which endpoints carry them.
 		h.fillDuplicateOf(ctx, wsID, resp, refs)
+		if resp.StatusGroup == "" {
+			resp.StatusGroup = resolver.Group(ctx, h.Queries, resp.Status)
+		}
 		if resp.StatusCategory != "" {
 			return
 		}
@@ -485,6 +492,7 @@ func issueToResponse(i db.Issue, issuePrefix string) IssueResponse {
 		Description:        textToPtr(i.Description),
 		Status:             i.Status,
 		StatusCategory:     statusCategory,
+		StatusGroup:        issuestatus.BuiltInGroup(i.Status),
 		Priority:           i.Priority,
 		AssigneeType:       textToPtr(i.AssigneeType),
 		AssigneeID:         uuidToPtr(i.AssigneeID),
@@ -523,6 +531,7 @@ func issueListRowToResponse(i db.ListIssuesRow, issuePrefix string) IssueRespons
 		Description:        textToPtr(i.Description),
 		Status:             i.Status,
 		StatusCategory:     statusCategory,
+		StatusGroup:        issuestatus.BuiltInGroup(i.Status),
 		Priority:           i.Priority,
 		AssigneeType:       textToPtr(i.AssigneeType),
 		AssigneeID:         uuidToPtr(i.AssigneeID),
@@ -593,6 +602,7 @@ func openIssueRowToResponse(i db.ListOpenIssuesRow, issuePrefix string) IssueRes
 		Description:        textToPtr(i.Description),
 		Status:             i.Status,
 		StatusCategory:     statusCategory,
+		StatusGroup:        issuestatus.BuiltInGroup(i.Status),
 		Priority:           i.Priority,
 		AssigneeType:       textToPtr(i.AssigneeType),
 		AssigneeID:         uuidToPtr(i.AssigneeID),
@@ -772,17 +782,18 @@ var identifierNumberRe = regexp.MustCompile(`(?i)^[a-z][a-z0-9]*-(\d+)$`)
 
 // parseQueryNumber extracts an issue number from the query if it looks like
 // an identifier (e.g. "MUL-123" or "V2-12") or a bare number (e.g. "123").
+// Numbers outside PostgreSQL int4 range remain ordinary text search terms.
 func parseQueryNumber(q string) (int, bool) {
 	q = strings.TrimSpace(q)
 	// Check for identifier pattern like "MUL-123"
 	if m := identifierNumberRe.FindStringSubmatch(q); m != nil {
-		if n, err := strconv.Atoi(m[1]); err == nil && n > 0 {
-			return n, true
+		if n, err := strconv.ParseInt(m[1], 10, 32); err == nil && n > 0 {
+			return int(n), true
 		}
 	}
 	// Check for bare number
-	if n, err := strconv.Atoi(q); err == nil && n > 0 {
-		return n, true
+	if n, err := strconv.ParseInt(q, 10, 32); err == nil && n > 0 {
+		return int(n), true
 	}
 	return 0, false
 }
@@ -2552,6 +2563,7 @@ func (h *Handler) ListChildIssues(w http.ResponseWriter, r *http.Request) {
 	for i, child := range children {
 		resp[i] = issueToResponse(child, prefix)
 		resp[i].StatusCategory = issuestatus.WireCategory(child.Status, statusResolver.Category(r.Context(), h.Queries, child.Status))
+		resp[i].StatusGroup = statusResolver.Group(r.Context(), h.Queries, child.Status)
 		labels := labelsMap[resp[i].ID]
 		if labels == nil {
 			labels = []LabelResponse{}
@@ -2638,6 +2650,7 @@ func (h *Handler) ListChildrenByParents(w http.ResponseWriter, r *http.Request) 
 	for i, child := range children {
 		resp[i] = issueToResponse(child, prefix)
 		resp[i].StatusCategory = issuestatus.WireCategory(child.Status, statusResolver.Category(r.Context(), h.Queries, child.Status))
+		resp[i].StatusGroup = statusResolver.Group(r.Context(), h.Queries, child.Status)
 		labels := labelsMap[resp[i].ID]
 		if labels == nil {
 			labels = []LabelResponse{}
@@ -3652,14 +3665,15 @@ func mergeIssueChannelMediaDescription(current, incoming string, base *string, a
 	return merged
 }
 
-func refreshUntouchedNullableIssueParams(params *db.UpdateIssueParams, current db.Issue, rawFields map[string]json.RawMessage) {
+func refreshUntouchedNullableIssueParams(params *db.UpdateIssueParams, current db.Issue, rawFields map[string]json.RawMessage, workflowAssignee bool) {
 	_, assigneeTypeTouched := rawFields["assignee_type"]
 	_, assigneeIDTouched := rawFields["assignee_id"]
 	// Assignee type and id form one validated value. If either half was
 	// supplied, retain the pre-validation counterpart in params rather than
 	// combining the supplied half with a concurrently-written counterpart that
-	// has never been validated with it.
-	if !assigneeTypeTouched && !assigneeIDTouched {
+	// has never been validated with it. A workflow-resolved assignee is also
+	// an intended write, even though the caller sent no assignee fields.
+	if !assigneeTypeTouched && !assigneeIDTouched && !workflowAssignee {
 		params.AssigneeType = current.AssigneeType
 		params.AssigneeID = current.AssigneeID
 	}
@@ -3682,7 +3696,7 @@ func refreshUntouchedNullableIssueParams(params *db.UpdateIssueParams, current d
 
 var errIssueFieldConflict = errors.New("issue text field conflict")
 
-func (h *Handler) updateIssueAtomically(ctx context.Context, workspaceID pgtype.UUID, params db.UpdateIssueParams, rawFields map[string]json.RawMessage, titleBase, descriptionBase *string, attachmentIDs []pgtype.UUID, statusKey string) (db.Issue, db.Issue, bool, error) {
+func (h *Handler) updateIssueAtomically(ctx context.Context, workspaceID pgtype.UUID, params db.UpdateIssueParams, rawFields map[string]json.RawMessage, titleBase, descriptionBase *string, attachmentIDs []pgtype.UUID, statusKey string, workflowAssignee bool) (db.Issue, db.Issue, bool, error) {
 	if h.TxStarter == nil {
 		return db.Issue{}, db.Issue{}, false, errors.New("atomic issue update requires transaction starter")
 	}
@@ -3752,7 +3766,7 @@ func (h *Handler) updateIssueAtomically(ctx context.Context, workspaceID pgtype.
 			Valid:  true,
 		}
 	}
-	refreshUntouchedNullableIssueParams(&params, current, rawFields)
+	refreshUntouchedNullableIssueParams(&params, current, rawFields, workflowAssignee)
 
 	issue, cancelledWakeups, err := updateIssueStoppingWakeups(ctx, qtx, params)
 	if err != nil {
@@ -4050,7 +4064,7 @@ func (h *Handler) UpdateIssue(w http.ResponseWriter, r *http.Request) {
 	if req.Description != nil || req.TitleBase != nil || req.DescriptionBase != nil || len(attachmentIDs) > 0 {
 		var lockedPrev db.Issue
 		issue, lockedPrev, attachmentsChanged, err = h.updateIssueAtomically(
-			writeCtx, prevIssue.WorkspaceID, params, rawFields, req.TitleBase, req.DescriptionBase, attachmentIDs, statusKeyForGuard,
+			writeCtx, prevIssue.WorkspaceID, params, rawFields, req.TitleBase, req.DescriptionBase, attachmentIDs, statusKeyForGuard, handoff != nil,
 		)
 		if lockedPrev.ID.Valid {
 			prevIssue = lockedPrev
@@ -4877,7 +4891,7 @@ func (h *Handler) BatchUpdateIssues(w http.ResponseWriter, r *http.Request) {
 			// legacy single-update clients that omit description_base.
 			var lockedPrev db.Issue
 			issue, lockedPrev, _, err = h.updateIssueAtomically(
-				writeCtx, prevIssue.WorkspaceID, params, rawUpdates, nil, nil, nil, issueStatusGuard,
+				writeCtx, prevIssue.WorkspaceID, params, rawUpdates, nil, nil, nil, issueStatusGuard, handoff != nil,
 			)
 			if err == nil {
 				prevIssue = lockedPrev

@@ -21,22 +21,39 @@ import {
 
 /**
  * Default palette shared by every color-picking surface (labels, property
- * options). Keeping one list is what makes colors look consistent across
- * the product — pick from here first, reach for the area/hex only when a
- * specific color is needed.
+ * options, statuses). Keeping one list is what makes colors look consistent
+ * across the product — pick from here first, reach for the area/hex only when
+ * a specific color is needed. Low-chroma pigments that sit on the ink theme;
+ * index 0 (ink wash) is the default for new items.
  */
 export const COLOR_PICKER_PRESETS = [
-  "#6b7280",
-  "#ef4444",
-  "#f97316",
-  "#eab308",
-  "#22c55e",
-  "#14b8a6",
-  "#3b82f6",
-  "#6366f1",
-  "#a855f7",
-  "#ec4899",
+  "#737373",
+  "#a8603f",
+  "#c48a2c",
+  "#3f7f5f",
+  "#4f7f7a",
+  "#4a6f8a",
+  "#5c5f99",
+  "#87607f",
+  "#b8452f",
+  "#7b4835",
 ] as const;
+
+type ColorPickerPreset = (typeof COLOR_PICKER_PRESETS)[number];
+
+/** Locale key naming each preset swatch for assistive tech. */
+const PRESET_NAME_KEY = {
+  "#737373": "ink",
+  "#a8603f": "ochre",
+  "#c48a2c": "gamboge",
+  "#3f7f5f": "malachite",
+  "#4f7f7a": "celadon",
+  "#4a6f8a": "slate_blue",
+  "#5c5f99": "indigo",
+  "#87607f": "lotus",
+  "#b8452f": "cinnabar",
+  "#7b4835": "brand_brown",
+} as const satisfies Record<ColorPickerPreset, string>;
 
 const HUE_GRADIENT =
   "linear-gradient(to right, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00)";
@@ -291,7 +308,7 @@ export function ColorPickerPanel({
           <button
             key={preset}
             type="button"
-            aria-label={preset}
+            aria-label={t(($) => $.color_picker.swatches[PRESET_NAME_KEY[preset]])}
             aria-pressed={currentHex === preset}
             onClick={() => {
               setHexDraft(null);

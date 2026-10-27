@@ -7,17 +7,12 @@ import { AppLink, resolveClickIntent, useNavigation } from "../navigation";
 import {
   AlertTriangle,
   ArrowDown,
-  ArrowLeftRight,
   ArrowUp,
   CalendarClock,
   CalendarDays,
   Check,
-  ChevronRight,
   CircleUser,
   FolderKanban,
-  Maximize2,
-  Minimize2,
-  MoreHorizontal,
   Settings2,
   Shapes,
   Tag,
@@ -54,14 +49,12 @@ import { Button } from "@marvis/ui/components/ui/button";
 import { Switch } from "@marvis/ui/components/ui/switch";
 import { ContentEditor, type ContentEditorRef, TitleEditor, type TitleEditorRef, useFileDropZone, FileDropOverlay, useUploadGate, useComposerSubmit } from "../editor";
 import { useIssueCreateUploads } from "./use-issue-create-uploads";
-import { useShortcut } from "@marvis/core/shortcuts";
-import { ShortcutKeycaps } from "../common/shortcut-keycaps";
 import { StatusIcon, StatusPicker, PriorityIcon, PriorityPicker, StagePicker, AssigneePicker, StartDatePicker, DueDatePicker, LabelPicker } from "../issues/components";
 import { maxSiblingStage } from "../issues/components/pickers/stage-picker";
 import { ProjectPicker } from "../projects/components/project-picker";
 import { useIssueTriggerPreview } from "../issues/hooks/use-issue-trigger-preview";
 import { useActorName } from "@marvis/core/workspace/hooks";
-import { useCurrentWorkspace, useWorkspacePaths } from "@marvis/core/paths";
+import { useWorkspacePaths } from "@marvis/core/paths";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { useProjectWorkflow, workflowAllowsStatus, workflowStep } from "@marvis/core/issue-workflows";
@@ -89,8 +82,9 @@ import {
   parseWithFallback,
 } from "@marvis/core/api";
 import { FileUploadButton } from "@marvis/ui/components/common/file-upload-button";
-import { BorderBeam } from "@marvis/ui/components/common/border-beam";
+import { BreathingDot } from "@marvis/ui/components/common/breathing-dot";
 import { ClearablePillButton, PillButton } from "../common/pill-button";
+import { CreateIssueHeader, MoreFieldsIcon, SendShortcutHint } from "./create-issue-header";
 import { ActorAvatar } from "../common/actor-avatar";
 import { PropertyIcon } from "../common/property-icon";
 import {
@@ -108,90 +102,48 @@ import { useIssueLimitUpgradePrompt } from "./use-issue-limit-upgrade-prompt";
 // remounting the Dialog Root (no overlay flash). `onSwitchMode` flips the
 // shell's local mode state.
 
-// CreateRunHint is the create modal's passive pre-trigger label (MUL-3375 §4):
-// whether saving will start a run, driven by the unified backend predicate
-// (preview, isCreate) — never a frontend guess. No dialog, no blocking.
+// Pre-trigger preview (MUL-3375 §4): whether saving will start a run, driven
+// by the unified backend predicate (preview, isCreate) — never a frontend
+// guess. A run that will start shows as a breathing dot on the assignee pill
+// (see `assigneeTrigger`); a parked one keeps this caption, because it is a
+// consequence the user would otherwise miss.
 //
-// Visually it borrows the comment header's avatar+text line, minus the
-// interactivity — purely a caption, never a link/hover-card. It renders its own
-// reveal band (a grid 0fr→1fr collapse) so it sits on a dedicated row above the
-// property toolbar without reflowing anything: collapsed it is 0px (the flex-1
-// editor absorbs the delta), and it expands only once the predicate resolves,
-// animating straight to the correct copy.
-function CreateRunHint({
+// The caption renders its own reveal band (a grid 0fr→1fr collapse) so it
+// sits above the property row without reflowing anything: collapsed it is 0px
+// (the flex-1 editor absorbs the delta), and it expands only once the
+// predicate resolves.
+function CreateParkedHint({
   assigneeType,
   assigneeId,
-  status,
+  visible,
 }: {
   assigneeType?: IssueAssigneeType;
   assigneeId?: string;
-  status: IssueStatus;
+  visible: boolean;
 }) {
   const { t } = useT("modals");
-  const { getActorName } = useActorName();
-  const isAgentLike = assigneeType === "agent" || assigneeType === "squad";
-  const preview = useIssueTriggerPreview({
-    isCreate: true,
-    assigneeType: assigneeType ?? null,
-    assigneeId: assigneeId ?? null,
-    status,
-    enabled: isAgentLike && !!assigneeId,
-  });
-
-  // Reveal only after the predicate resolves so the band animates to the final
-  // copy instead of flashing "parked" before the run preview lands.
-  const ready = isAgentLike && !!assigneeId && !preview.isLoading;
-  const willStart = preview.totalCount > 0;
-  const isSquad = assigneeType === "squad";
-  const triggerAgentId = preview.triggers[0]?.agent_id ?? assigneeId;
-
-  // Avatar + copy mirror the flow. A squad doesn't "work" — its leader
-  // evaluates and delegates — so the squad path keeps the squad as the subject
-  // (avatar + name) and uses the leader-delegates copy. A single agent picks
-  // the issue up directly; a parked issue shows whoever it was assigned to.
-  let avatarType: string;
-  let avatarId: string | undefined;
-  let text: string;
-  if (!willStart) {
-    avatarType = assigneeType ?? "agent";
-    avatarId = assigneeId;
-    text = t(($) => $.run_confirm.create_parked);
-  } else if (isSquad) {
-    avatarType = "squad";
-    avatarId = assigneeId;
-    text = t(($) => $.run_confirm.create_will_start_squad, {
-      name: getActorName("squad", assigneeId ?? ""),
-    });
-  } else {
-    avatarType = "agent";
-    avatarId = triggerAgentId;
-    text = t(($) => $.run_confirm.create_will_start, {
-      name: getActorName("agent", triggerAgentId ?? assigneeId ?? ""),
-    });
-  }
-
   return (
     <div
       className={cn(
         "grid shrink-0 transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
-        ready ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        visible ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
       )}
-      aria-hidden={!ready}
+      aria-hidden={!visible}
     >
       <div className="overflow-hidden">
         <div
           aria-live="polite"
-          className="flex items-center gap-1.5 px-4 pb-1 pt-0.5 text-micro text-muted-foreground"
+          className="flex items-center gap-1.5 px-7 pb-1.5 text-caption text-muted-foreground"
         >
-          {avatarId && (
+          {assigneeId && (
             <ActorAvatar
-              actorType={avatarType}
-              actorId={avatarId}
+              actorType={assigneeType ?? "agent"}
+              actorId={assigneeId}
               size="sm"
               profileLink={false}
             />
           )}
-          <span className="truncate">{text}</span>
+          <span className="truncate">{t(($) => $.run_confirm.create_parked)}</span>
         </div>
       </div>
     </div>
@@ -214,7 +166,7 @@ function WorkflowHandoffHint({ projectId, status }: { projectId?: string; status
   if (!label) return null;
   const actor = stepHandlerActor(step, project);
   return (
-    <div aria-live="polite" className="flex items-center gap-1.5 px-4 pb-1 pt-0.5 text-micro text-muted-foreground">
+    <div aria-live="polite" className="flex items-center gap-1.5 px-7 pb-1.5 text-caption text-muted-foreground">
       {actor && <ActorAvatar actorType={actor.type} actorId={actor.id} size="sm" profileLink={false} />}
       <span className="truncate">{t(($) => $.workflows.create_handoff_hint, { name: label })}</span>
     </div>
@@ -244,7 +196,7 @@ export function ManualCreatePanel({
   const { t: tProjects } = useT("projects");
   const router = useNavigation();
   const p = useWorkspacePaths();
-  const workspaceName = useCurrentWorkspace()?.name;
+  const { getActorName } = useActorName();
   const anchorCommentId = typeof data?.anchor_comment_id === "string" ? data.anchor_comment_id : null;
   const sourcePreview = data?.source_context_preview as SourceContextPreview | undefined;
   const sourceContextLoading = data?.source_context_loading === true;
@@ -271,7 +223,6 @@ export function ManualCreatePanel({
   const setKeepOpen = useQuickCreateStore((s) => s.setKeepOpen);
   const manualFields = useIssueCreateSettingsStore((s) => s.manualCreateFields);
 
-  const sendShortcut = useShortcut("send");
   const [title, setTitle] = useState(draft.manual.title);
   const [formResetKey, setFormResetKey] = useState(0);
   const titleEditorRef = useRef<TitleEditorRef>(null);
@@ -434,6 +385,52 @@ export function ManualCreatePanel({
     setManual({ propertyValues: next });
     if (propertyErrorId === propertyId) setPropertyErrorId(null);
   };
+
+  // Run preview for an agent / squad assignee. Read only after it resolves so
+  // the pill and the parked caption never flash a stale state.
+  const assigneeIsAgentLike = assigneeType === "agent" || assigneeType === "squad";
+  const runPreview = useIssueTriggerPreview({
+    isCreate: true,
+    assigneeType: assigneeType ?? null,
+    assigneeId: assigneeId ?? null,
+    status,
+    enabled: assigneeIsAgentLike && !!assigneeId,
+  });
+  const runPreviewReady = assigneeIsAgentLike && !!assigneeId && !runPreview.isLoading;
+  const willStartRun = runPreviewReady && runPreview.totalCount > 0;
+
+  // An agent-like assignee gets its own pill content so the avatar can carry
+  // the breathing dot when saving will start a run. The dot is decorative;
+  // the run consequence is spelled out for screen readers instead.
+  const assigneeTrigger =
+    assigneeIsAgentLike && assigneeType && assigneeId ? (
+      <>
+        <span className="relative inline-flex shrink-0">
+          <ActorAvatar
+            actorType={assigneeType}
+            actorId={assigneeId}
+            size="sm"
+            profileLink={false}
+            showStatusDot={!willStartRun}
+          />
+          {willStartRun && (
+            <BreathingDot className="absolute -right-0.5 -bottom-0.5 ring-2 ring-surface-raised rounded-full" />
+          )}
+        </span>
+        <span className="truncate">{getActorName(assigneeType, assigneeId)}</span>
+        {willStartRun && (
+          <span className="sr-only">
+            {assigneeType === "squad"
+              ? t(($) => $.run_confirm.create_will_start_squad, {
+                  name: getActorName("squad", assigneeId),
+                })
+              : t(($) => $.run_confirm.create_will_start, {
+                  name: getActorName("agent", runPreview.triggers[0]?.agent_id ?? assigneeId),
+                })}
+          </span>
+        )}
+      </>
+    ) : undefined;
 
   // Inline pill reveal per toolbar field: kept by Settings → Preferences → Issue creation, holding a
   // non-default value (a hidden field with a value must stay visible — the
@@ -653,14 +650,14 @@ export function ManualCreatePanel({
       // reset + close/keep-open happens in onAccepted once we report success.
       {
         toast.custom((toastId) => (
-          <div className="bg-popover text-popover-foreground border rounded-lg shadow-lg p-4 w-[360px]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center justify-center size-5 rounded-full bg-emerald-500/15 text-emerald-500">
+          <div className="w-[360px] rounded-lg border border-border bg-popover px-4 py-3.5 text-popover-foreground shadow-toast">
+            <div className="flex items-center gap-2">
+              <div className="flex size-5 items-center justify-center rounded-full bg-success/15 text-success">
                 <Check className="size-3" />
               </div>
               <span className="text-body font-medium">{t(($) => $.create_issue.toast_created)}</span>
             </div>
-            <div className="flex items-center gap-2 text-body text-muted-foreground ml-7">
+            <div className="mt-1.5 ml-7 flex items-center gap-1.5 text-label text-muted-foreground">
               <StatusIcon
                 status={issue.status}
                 icon={iconOf(issue.status)}
@@ -675,7 +672,7 @@ export function ManualCreatePanel({
                 would throw here. */}
             <button
               type="button"
-              className="ml-7 mt-2 text-body text-primary hover:underline cursor-pointer"
+              className="ml-7 mt-2 text-label font-medium text-foreground underline underline-offset-3 cursor-pointer"
               onClick={() => {
                 router.push(p.issueDetail(issue.id));
                 toast.dismiss(toastId);
@@ -767,23 +764,23 @@ export function ManualCreatePanel({
         if (dup) {
           toast.custom(
             (toastId) => (
-              <div className="bg-popover text-popover-foreground border rounded-lg shadow-lg p-4 w-[360px]">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center size-5 rounded-full bg-amber-500/15 text-amber-500">
+              <div className="w-[360px] rounded-lg border border-border bg-popover px-4 py-3.5 text-popover-foreground shadow-toast">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-5 items-center justify-center rounded-full bg-warning/15 text-warning">
                     <AlertTriangle className="size-3" />
                   </div>
                   <span className="text-body font-medium">
                     {t(($) => $.create_issue.toast_duplicate_title)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-body text-muted-foreground ml-7">
+                <div className="mt-1.5 ml-7 flex items-center gap-1.5 text-label text-muted-foreground">
                   <span className="truncate">{dup.issue.identifier} – {dup.issue.title}</span>
                 </div>
                 {/* See the created-issue toast above: toast content lives
                     outside NavigationProvider, so this stays a button. */}
                 <button
                   type="button"
-                  className="ml-7 mt-2 text-body text-primary hover:underline cursor-pointer"
+                  className="ml-7 mt-2 text-label font-medium text-foreground underline underline-offset-3 cursor-pointer"
                   onClick={() => {
                     router.push(p.issueDetail(dup.issue.id));
                     toast.dismiss(toastId);
@@ -924,29 +921,14 @@ export function ManualCreatePanel({
       // would otherwise stay a fully lit, pressable-looking primary button.
       // Deliberately no `pointer-events-none`: this control still has to hover
       // its tooltip and take the click that focuses the title.
-      className="justify-self-end aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:active:translate-y-0"
+      className="h-8.5 px-4 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:active:translate-y-0"
     >
-      {submitState === "submitting" ? (
-        t(($) => $.create_issue.submitting)
-      ) : submitState === "uploading" ? (
-        tEditor(($) => $.upload.in_progress)
-      ) : (
-        <>
-          {t(($) => $.create_issue.submit)}
-          {/* Decorative: the accessible name must stay "Create Issue", not
-              "Create Issue Command Enter". Absent when `send` is unbound.
-              Hidden on phones — no ⌘ key there, and the footer row is at its
-              tightest. */}
-          {sendShortcut ? (
-            <ShortcutKeycaps
-              shortcut={sendShortcut}
-              decorative
-              className="ml-1 max-sm:hidden"
-              keyClassName="border-background/30 bg-background/15 text-primary-foreground shadow-none"
-            />
-          ) : null}
-        </>
-      )}
+      {submitState === "submitting"
+        ? t(($) => $.create_issue.submitting)
+        : submitState === "uploading"
+          ? tEditor(($) => $.upload.in_progress)
+          : t(($) => $.create_issue.submit)}
+      <SendShortcutHint />
     </Button>
   );
 
@@ -954,60 +936,24 @@ export function ManualCreatePanel({
     <>
             <DialogTitle className="sr-only">{t(($) => $.create_issue.sr_manual)}</DialogTitle>
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 pt-3 pb-2 shrink-0">
-              <div className="flex items-center gap-1.5 text-caption">
-                <span className="text-muted-foreground">{workspaceName}</span>
-                <ChevronRight className="size-3 text-faint-foreground" />
-                <span className="font-medium">{t(($) => $.create_issue.manual_breadcrumb)}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        aria-label={isExpanded ? t(($) => $.common.collapse_tooltip) : t(($) => $.common.expand_tooltip)}
-                        className="rounded-sm p-1.5 opacity-70 hover:opacity-100 hover:bg-accent/60 transition-all cursor-pointer"
-                      >
-                        {isExpanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-                      </button>
-                    }
-                  />
-                  <TooltipContent side="bottom">
-                    {isExpanded
-                      ? t(($) => $.common.collapse_tooltip)
-                      : t(($) => $.common.expand_tooltip)}
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label={t(($) => $.common.close)}
-                        className="rounded-sm p-1.5 opacity-70 hover:opacity-100 hover:bg-accent/60 transition-all cursor-pointer"
-                      >
-                        <XIcon className="size-4" />
-                      </button>
-                    }
-                  />
-                  <TooltipContent side="bottom">{t(($) => $.common.close)}</TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
+            <CreateIssueHeader
+              mode="manual"
+              onSwitch={switchToAgent}
+              switchDisabled={gate.uploading}
+              isExpanded={isExpanded}
+              setIsExpanded={setIsExpanded}
+              onClose={onClose}
+            />
 
             {/* Title */}
-            <div className="px-5 pb-2 shrink-0">
+            <div className="px-7 pt-4 shrink-0 [&_.is-editor-empty:first-child]:before:!text-faint-foreground">
               <TitleEditor
                 key={formResetKey}
                 ref={titleEditorRef}
                 autoFocus
                 defaultValue={draft.manual.title}
                 placeholder={t(($) => $.create_issue.title_placeholder)}
-                className="text-title font-semibold"
+                className="text-display-sm font-semibold"
                 onChange={(v) => updateTitle(v)}
                 // Chord only — plain Enter still just ends title editing (#5532).
                 onSubmitShortcut={handleSubmit}
@@ -1015,7 +961,10 @@ export function ManualCreatePanel({
             </div>
 
             {/* Description — takes remaining space */}
-            <div {...descDropZoneProps} className="relative flex flex-1 min-h-0 overflow-y-auto px-5">
+            <div
+              {...descDropZoneProps}
+              className="relative flex flex-1 min-h-0 overflow-y-auto px-7 pt-3 text-body-lg leading-[1.65] [&_.ProseMirror]:leading-[1.65] [&_.is-editor-empty:first-child]:before:!text-faint-foreground"
+            >
               <ContentEditor
                 ref={descEditorRef}
                 defaultValue={draft.manual.description}
@@ -1043,24 +992,29 @@ export function ManualCreatePanel({
               />
             )}
 
-            {/* Pre-trigger preview — a passive caption above the toolbar; reveals
-                when an agent assignee will pick the issue up. */}
+            {/* Pre-trigger caption: a parked agent assignee, or the workflow
+                step handler when nobody is picked. */}
             {assigneeId ? (
-              <CreateRunHint assigneeType={assigneeType} assigneeId={assigneeId} status={status} />
+              <CreateParkedHint
+                assigneeType={assigneeType}
+                assigneeId={assigneeId}
+                visible={runPreviewReady && !willStartRun}
+              />
             ) : (
               <WorkflowHandoffHint projectId={projectId} status={status} />
             )}
 
-            {/* Property toolbar — each field renders per the Settings → Preferences → Issue creation
-                selection (see showField above). */}
-            <div className="flex items-center gap-1.5 px-4 py-2 shrink-0 flex-wrap">
+            {/* Property row — ghost pills; each field renders per the
+                Settings → Preferences → Issue creation selection (see
+                showField above). Unset optional fields show their icon only. */}
+            <div className="flex items-center gap-1 px-6 pt-2 pb-2 shrink-0 flex-wrap">
               {/* Status */}
               {showField.status && (
                 <StatusPicker
                   status={status}
                   projectId={projectId ?? null}
                   onUpdate={(u) => { if (u.status) updateStatus(u.status); }}
-                  triggerRender={<PillButton />}
+                  triggerRender={<PillButton variant="ghost" />}
                   tooltip={tIssues(($) => $.detail.prop_status)}
                   align="start"
                   open={fieldPickerOpen === "status" ? true : undefined}
@@ -1073,7 +1027,7 @@ export function ManualCreatePanel({
                 <PriorityPicker
                   priority={priority}
                   onUpdate={(u) => { if (u.priority) updatePriority(u.priority); }}
-                  triggerRender={<PillButton />}
+                  triggerRender={<PillButton variant="ghost" />}
                   tooltip={tIssues(($) => $.detail.prop_priority)}
                   align="start"
                   open={fieldPickerOpen === "priority" ? true : undefined}
@@ -1090,7 +1044,8 @@ export function ManualCreatePanel({
                     u.assignee_type ?? undefined,
                     u.assignee_id ?? undefined,
                   )}
-                  triggerRender={<PillButton />}
+                  trigger={assigneeTrigger}
+                  triggerRender={<PillButton variant="ghost" />}
                   tooltip={tIssues(($) => $.detail.prop_assignee)}
                   align="start"
                   open={fieldPickerOpen === "assignee" ? true : undefined}
@@ -1106,7 +1061,7 @@ export function ManualCreatePanel({
                 <LabelPicker
                   selectedIds={labelIds}
                   onSelectedIdsChange={updateLabelIds}
-                  triggerRender={<PillButton />}
+                  triggerRender={<PillButton variant="ghost" iconOnly={labelIds.length === 0} />}
                   tooltip={tIssues(($) => $.detail.prop_labels)}
                   align="start"
                   open={fieldPickerOpen === "labels" ? true : undefined}
@@ -1121,6 +1076,8 @@ export function ManualCreatePanel({
                   onUpdate={(u) => updateProject(u.project_id ?? undefined)}
                   triggerRender={
                     <ClearablePillButton
+                      variant="ghost"
+                      iconOnly={!projectId}
                       onClear={projectId ? () => updateProject(undefined) : undefined}
                       clearLabel={tProjects(($) => $.picker.clear_aria)}
                     />
@@ -1138,7 +1095,7 @@ export function ManualCreatePanel({
                   stage={stage}
                   onUpdate={(u) => setStage(u.stage ?? null)}
                   maxStage={maxSiblingStage(parentChildren)}
-                  triggerRender={<PillButton />}
+                  triggerRender={<PillButton variant="ghost" />}
                   tooltip={tIssues(($) => $.detail.prop_stage)}
                   align="start"
                 />
@@ -1154,7 +1111,7 @@ export function ManualCreatePanel({
                 <StartDatePicker
                   startDate={startDate}
                   onUpdate={(u) => updateStartDate(u.start_date ?? null)}
-                  triggerRender={<PillButton />}
+                  triggerRender={<PillButton variant="ghost" iconOnly={!startDate} />}
                   tooltip={tIssues(($) => $.detail.prop_start_date)}
                   align="start"
                   open={startDatePickerOpen}
@@ -1169,7 +1126,7 @@ export function ManualCreatePanel({
                 <DueDatePicker
                   dueDate={dueDate}
                   onUpdate={(u) => updateDueDate(u.due_date ?? null)}
-                  triggerRender={<PillButton />}
+                  triggerRender={<PillButton variant="ghost" iconOnly={!dueDate} />}
                   tooltip={tIssues(($) => $.detail.prop_due_date)}
                   align="start"
                   open={dueDatePickerOpen}
@@ -1204,7 +1161,7 @@ export function ManualCreatePanel({
                         onOpenChange={(open) =>
                           setCustomPropertyPickerId(open ? property.id : null)
                         }
-                        triggerRender={<PillButton />}
+                        triggerRender={<PillButton variant="ghost" />}
                         trigger={
                           <>
                             <PropertyIcon property={property} className="size-3.5 text-caption" />
@@ -1227,7 +1184,7 @@ export function ManualCreatePanel({
               {parentIssueId && parentIssueLocked ? (
                 <span
                   data-testid="manual-sub-issue-chip"
-                  className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground"
+                  className="inline-flex h-[30px] items-center gap-1 rounded-full px-2.5 text-label text-muted-foreground"
                 >
                   {t(($) => $.create_issue.subissue_of, {
                     identifier: parentIssue?.identifier
@@ -1236,7 +1193,7 @@ export function ManualCreatePanel({
                   })}
                 </span>
               ) : parentIssueId && parentIssue ? (
-                <div className="inline-flex items-center rounded-full border text-caption transition-colors hover:bg-accent/60">
+                <div className="inline-flex h-[30px] items-center rounded-full text-label transition-colors hover:bg-accent">
                   <button
                     type="button"
                     onClick={() => setParentPickerOpen(true)}
@@ -1265,7 +1222,7 @@ export function ManualCreatePanel({
               {childIssues.map((c) => (
                 <div
                   key={c.id}
-                  className="inline-flex items-center rounded-full border text-caption transition-colors hover:bg-accent/60"
+                  className="inline-flex h-[30px] items-center rounded-full text-label transition-colors hover:bg-accent"
                 >
                   <div className="flex items-center gap-1.5 py-1 pl-2.5">
                     <ArrowDown className="size-3 text-muted-foreground" />
@@ -1292,8 +1249,8 @@ export function ManualCreatePanel({
                 <TooltipHint label={t(($) => $.create_issue.more_options_aria)}>
                   <DropdownMenuTrigger
                     render={
-                      <PillButton aria-label={t(($) => $.create_issue.more_options_aria)}>
-                        <MoreHorizontal className="size-3.5" />
+                      <PillButton variant="ghost" iconOnly aria-label={t(($) => $.create_issue.more_options_aria)}>
+                        <MoreFieldsIcon />
                       </PillButton>
                     }
                   />
@@ -1467,54 +1424,46 @@ export function ManualCreatePanel({
               }}
             />
 
-            {/* Footer — same 2x2-grid-on-phones / single-row-from-`sm` shape
-                as the agent panel; see the note on AgentCreatePanel's footer
-                for why (MUL-6236). TooltipProvider/Tooltip render no DOM and
-                TooltipContent is portaled, so the Create button stays a direct
-                grid child in both branches below. */}
-            <div className="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-2.5 border-t px-4 py-3 shrink-0 sm:flex sm:flex-wrap">
-              <div className="flex min-h-7 items-center gap-2 sm:mr-auto">
+            {/* Footer — two groups: attach and keep-open on the left, the
+                send hint and Create on the right. Two groups fit a phone row
+                without the old 2x2 grid (MUL-6236); the hint drops below `sm`,
+                where there is no ⌘ key. TooltipProvider/Tooltip render no DOM
+                and TooltipContent is portaled, so Create stays a direct child
+                of the right group in both branches below. */}
+            <div
+              data-slot="create-issue-footer"
+              className="flex items-center justify-between gap-3 px-6 pt-2 pb-5 shrink-0"
+            >
+              <div className="flex min-h-7 items-center gap-3">
                 <FileUploadButton
                   size="sm"
                   multiple
                   onSelect={(file) => descEditorRef.current?.uploadFile(file)}
                 />
+                <label className="flex shrink-0 items-center gap-1.5 text-caption text-muted-foreground cursor-pointer select-none">
+                  <Switch
+                    size="sm"
+                    checked={keepOpen}
+                    onCheckedChange={setKeepOpen}
+                  />
+                  {t(($) => $.create_issue.create_another)}
+                </label>
               </div>
-              <TooltipHint label={t(($) => $.create_issue.switch_to_agent_tooltip)}>
-                <button
-                  type="button"
-                  onClick={switchToAgent}
-                  disabled={gate.uploading}
-                  aria-disabled={gate.uploading || undefined}
-                  aria-busy={gate.uploading || undefined}
-                  className="relative group flex shrink-0 items-center gap-1.5 justify-self-end text-caption px-2 py-1 rounded-sm text-muted-foreground bg-brand/5 hover:bg-brand/10 hover:text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <ArrowLeftRight className="size-3.5 text-brand transition-transform duration-300 group-hover:rotate-180" />
-                  {t(($) => $.create_issue.switch_to_agent)}
-                  <BorderBeam />
-                </button>
-              </TooltipHint>
-              <label className="flex shrink-0 items-center gap-1.5 text-caption text-muted-foreground cursor-pointer select-none">
-                <Switch
-                  size="sm"
-                  checked={keepOpen}
-                  onCheckedChange={setKeepOpen}
-                />
-                {t(($) => $.create_issue.create_another)}
-              </label>
-              {submitState === "missing_title" ? (
-                <TooltipProvider delay={200}>
-                  <Tooltip>
-                    {/* No `<span>` wrapper needed now: aria-disabled leaves the
-                        button focusable and hoverable, so it can anchor its own
-                        tooltip. */}
-                    <TooltipTrigger render={createButton} />
-                    <TooltipContent side="top">{t(($) => $.create_issue.title_required)}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                createButton
-              )}
+              <div className="flex items-center gap-3">
+                {submitState === "missing_title" ? (
+                  <TooltipProvider delay={200}>
+                    <Tooltip>
+                      {/* No `<span>` wrapper needed now: aria-disabled leaves the
+                          button focusable and hoverable, so it can anchor its own
+                          tooltip. */}
+                      <TooltipTrigger render={createButton} />
+                      <TooltipContent side="top">{t(($) => $.create_issue.title_required)}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  createButton
+                )}
+              </div>
             </div>
     </>
   );

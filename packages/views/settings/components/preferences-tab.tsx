@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   Select,
@@ -58,6 +58,16 @@ import {
   SettingsSection,
   SettingsTab,
 } from "./settings-layout";
+
+/** 偏好设置页的分段控件按钮：26px 药丸，与设置稿一致。 */
+const SEGMENT_BUTTON = "h-6.5 rounded-full px-3 text-label";
+
+/** 下拉触发器：34px 填充式，圆角 12。 */
+const SELECT_TRIGGER = "w-full px-3 data-[size=default]:h-8.5";
+
+/** 时区选择器的触发器，与 SELECT_TRIGGER 同一外观。 */
+const SELECT_TRIGGER_FIELD =
+  "flex h-8.5 w-full items-center gap-2 rounded-lg bg-field px-3 text-left text-body outline-none transition-colors hover:bg-field-hover focus-visible:ring-3 focus-visible:ring-ring/50";
 
 /**
  * Preferences on one page. The settings here are stored in three different
@@ -135,7 +145,7 @@ function ThemeRow() {
         <SegmentedToggle
           value={value}
           onChange={setTheme}
-          buttonClassName="px-3 py-1 text-label"
+          buttonClassName={SEGMENT_BUTTON}
           options={[
             ["light", t(($) => $.preferences.theme.light)],
             ["dark", t(($) => $.preferences.theme.dark)],
@@ -164,6 +174,7 @@ function LanguageRow() {
   const languageOptions: { value: SupportedLocale; label: string }[] = [
     { value: "en", label: t(($) => $.preferences.language.english) },
     { value: "zh-Hans", label: t(($) => $.preferences.language.chinese) },
+    { value: "zh-Hant", label: t(($) => $.preferences.language.chinese_traditional) },
     { value: "ko", label: t(($) => $.preferences.language.korean) },
     { value: "ja", label: t(($) => $.preferences.language.japanese) },
     { value: "fr", label: t(($) => $.preferences.language.french) },
@@ -204,7 +215,7 @@ function LanguageRow() {
     <SettingsRow
       anchor="language"
       label={t(($) => $.preferences.language.title)}
-      size="select"
+      size="select-wide"
     >
       <Select
         items={languageOptions}
@@ -214,8 +225,7 @@ function LanguageRow() {
         }}
       >
         <SelectTrigger
-          size="sm"
-          className="w-full"
+          className={SELECT_TRIGGER}
           aria-label={t(($) => $.preferences.language.title)}
         >
           <SelectValue>
@@ -267,7 +277,7 @@ function RunningAgentReplyRow() {
       anchor="running-agent-reply"
       label={t(($) => $.preferences.running_agent_reply.title)}
       description={t(($) => $.preferences.running_agent_reply.hint)}
-      size="select"
+      size="select-wide"
     >
       <Select
         items={options}
@@ -277,8 +287,7 @@ function RunningAgentReplyRow() {
         }}
       >
         <SelectTrigger
-          size="sm"
-          className="w-full"
+          className={SELECT_TRIGGER}
           aria-label={t(($) => $.preferences.running_agent_reply.title)}
         >
           <SelectValue>
@@ -317,7 +326,7 @@ function IssueOpeningRow() {
         <SegmentedToggle<IssueOpenMode>
           value={value}
           onChange={setValue}
-          buttonClassName="px-3 py-1 text-label"
+          buttonClassName={SEGMENT_BUTTON}
           options={[
             ["page", t(($) => $.issue.opening.page)],
             ["peek", t(($) => $.issue.opening.peek)],
@@ -373,14 +382,14 @@ function IssueFieldsMatrix() {
     <SettingsCard>
       <table className="w-full text-body">
         <thead>
-          <tr className="border-b border-surface-border bg-muted/20 text-caption font-medium text-muted-foreground">
-            <th scope="col" className="px-4 py-2 text-left font-medium">
+          <tr className="h-9 border-b border-surface-border bg-surface-sunken text-caption font-medium text-muted-foreground">
+            <th scope="col" className="px-4.5 text-left font-medium">
               {t(($) => $.preferences.issue_fields.field)}
             </th>
-            <th scope="col" className="w-32 px-4 py-2 text-center font-medium">
+            <th scope="col" className="w-32 px-4.5 text-center font-medium">
               {quickLabel}
             </th>
-            <th scope="col" className="w-32 px-4 py-2 text-center font-medium">
+            <th scope="col" className="w-32 px-4.5 text-center font-medium">
               {manualLabel}
             </th>
           </tr>
@@ -390,13 +399,14 @@ function IssueFieldsMatrix() {
             const fieldLabel = t(($) => $.issue.fields[field]);
             const quickSupported = (QUICK_CREATE_FIELDS as readonly string[]).includes(field);
             return (
-              <tr key={field}>
-                <th scope="row" className="px-4 py-2.5 text-left font-normal">
+              <tr key={field} className="h-10">
+                <th scope="row" className="px-4.5 text-left font-normal">
                   {fieldLabel}
                 </th>
-                <td className="px-4 py-2.5 text-center">
+                <td className="px-4.5 text-center align-middle">
                   {quickSupported ? (
                     <Checkbox
+                      className="mx-auto"
                       checked={quickFields.includes(field as QuickCreateField)}
                       onCheckedChange={(checked) =>
                         setQuickVisible(field as QuickCreateField, checked === true)
@@ -413,8 +423,9 @@ function IssueFieldsMatrix() {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-2.5 text-center">
+                <td className="px-4.5 text-center align-middle">
                   <Checkbox
+                    className="mx-auto"
                     checked={manualFields.includes(field)}
                     onCheckedChange={(checked) =>
                       setManualVisible(field, checked === true)
@@ -502,18 +513,18 @@ function TimezoneRow() {
             <button
               type="button"
               aria-label={t(($) => $.preferences.timezone.title)}
-              className="flex h-7 w-full items-center gap-1.5 rounded-md border border-input bg-transparent pl-2.5 pr-2 text-left text-body outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
+              className={SELECT_TRIGGER_FIELD}
             />
           }
         >
-          <span className="min-w-0 flex-1 truncate font-mono text-caption">
+          <span className="min-w-0 flex-1 truncate">
             {current}
             {suffix}
           </span>
           <span className="shrink-0 text-caption text-muted-foreground">
             {utcOffset(current)}
           </span>
-          <ChevronsUpDown aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+          <ChevronDown aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
         </PopoverTrigger>
         <PopoverContent align="end" className="w-80 p-0">
           {/* Plain substring matching: fuzzy ranking puts "Antarctica/Vostok"

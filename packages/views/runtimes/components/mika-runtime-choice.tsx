@@ -1,9 +1,11 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { AgentRuntime } from "@marvis/core/types";
 import { ModelDropdown } from "../../agents/components/model-dropdown";
 import { RuntimePicker } from "../../agents/components/runtime-picker";
 import { CompactRuntimeRow } from "./compact-runtime-row";
+import { GroupedRuntimeList } from "./grouped-runtime-list";
 
 export interface MikaRuntimeSelection {
   runtimeId: string;
@@ -33,6 +35,8 @@ export function MikaRuntimeChoice({
   onChange,
   disabled = false,
   layout = "dropdown",
+  modelLabel,
+  headerAction,
 }: {
   runtimes: AgentRuntime[];
   runtimesLoading?: boolean;
@@ -41,7 +45,11 @@ export function MikaRuntimeChoice({
   value: MikaRuntimeSelection;
   onChange: (next: MikaRuntimeSelection) => void;
   disabled?: boolean;
-  layout?: "dropdown" | "list";
+  layout?: "dropdown" | "list" | "grouped";
+  /** Heading above the model dropdown; omitted where the context names it. */
+  modelLabel?: string;
+  /** Grouped layout only: an action at the end of the first machine header. */
+  headerAction?: ReactNode;
 }) {
   const selected = runtimes.find((rt) => rt.id === value.runtimeId) ?? null;
 
@@ -54,12 +62,44 @@ export function MikaRuntimeChoice({
     });
   };
 
+  const modelDropdown = (
+    <ModelDropdown
+      runtimeId={value.runtimeId || null}
+      runtimeOnline={selected?.status === "online"}
+      value={value.model}
+      onChange={(model) => onChange({ ...value, model })}
+      disabled={!value.runtimeId || disabled}
+    />
+  );
+
+  // Grouped: machines head their runtimes and the model opens under the
+  // selected row, so the whole choice reads as one list.
+  if (layout === "grouped") {
+    return (
+      <GroupedRuntimeList
+        runtimes={runtimes}
+        selectedId={value.runtimeId}
+        onSelect={selectRuntime}
+        disabled={disabled}
+        headerAction={headerAction}
+        selectedDetail={
+          <div className="flex items-center gap-3">
+            {modelLabel ? (
+              <span className="shrink-0 text-label text-muted-foreground">{modelLabel}</span>
+            ) : null}
+            <div className="min-w-0 flex-1">{modelDropdown}</div>
+          </div>
+        }
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       {layout === "list" ? (
         // Capped at ~4 rows so the install commands above stay reachable when
         // a member has many machines registered.
-        <div className="flex max-h-[240px] flex-col gap-2 overflow-y-auto">
+        <div className="flex max-h-[280px] flex-col gap-2 overflow-y-auto">
           {runtimes.map((rt) => (
             <CompactRuntimeRow
               key={rt.id}
@@ -81,13 +121,12 @@ export function MikaRuntimeChoice({
           disabled={disabled}
         />
       )}
-      <ModelDropdown
-        runtimeId={value.runtimeId || null}
-        runtimeOnline={selected?.status === "online"}
-        value={value.model}
-        onChange={(model) => onChange({ ...value, model })}
-        disabled={!value.runtimeId || disabled}
-      />
+      <div className="flex flex-col gap-2">
+        {modelLabel ? (
+          <span className="mt-2 text-body font-medium">{modelLabel}</span>
+        ) : null}
+        {modelDropdown}
+      </div>
     </div>
   );
 }

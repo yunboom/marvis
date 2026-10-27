@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>页面阅读</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <dc-import name="KbNav" sel="支付回调" hover="{{hover}}" plus-on="{{plusOn}}" draft="{{draft}}" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar">
+        <div class="crumb"><span>团队知识库</span><span>/</span><span>产品与业务</span><span>/</span><span>支付</span><span>/</span><b>支付回调</b></div>
+        <div style="flex: 1"></div>
+        <button class="{{ic.ann}}" aria-label="本页批注" style="width: auto; padding: 0 8px; gap: 4px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 5h14v10H10l-5 4z"></path></svg><span style="font-size: 12.5px">2</span></button>
+        <button class="{{ic.toc}}" aria-label="目录"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg></button>
+        <button class="{{ic.info}}" aria-label="页面信息"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5h.01"></path></svg></button>
+        <button class="{{ic.more}}" aria-label="更多"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>
+      </div>
+      <div style="flex: 1; min-height: 0; display: flex">
+        <div style="flex: 1; min-width: 0; overflow: hidden; position: relative">
+          <dc-import name="PageDoc" mark="{{mark}}" banner="{{banner}}" stale="{{stale}}" draft="{{draft}}" drafts="{{drafts}}" draft-menu="{{draftMenu}}" compact="{{hasPanel}}" hint-size="100%,812px"></dc-import>
+        </div>
+        <sc-if value="{{p.info}}" hint-placeholder-val="{{ false }}">
+          <aside class="panel" aria-label="页面信息">
+            <div class="ph"><span style="flex: 1">页面信息</span><button class="ib" aria-label="关闭"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+            <div class="pb">
+              <div><div class="ps">核实</div><div style="font-size: 13px; display: flex; flex-direction: column; gap: 4px"><span><span class="dot d-green" style="margin-right: 6px"></span>王芳 · 10-20 核实</span><span class="muted">下次复核 2027-01-20</span></div></div>
+              <div><div class="ps">领域</div><div style="display: flex; gap: 6px"><span class="tag">开发</span><span class="tag">测试</span></div></div>
+              <div><div class="ps">引用来源 4</div>
+                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+                  <a href="#" class="card" style="padding: 8px 10px; text-decoration: none; color: inherit; display: flex; flex-direction: column"><span class="faint" style="font-size: 11.5px">代码 · 3f2a91c</span><span class="mono" style="font-size: 12px">payment-service/…/callback/handler.go</span></a>
+                  <a href="#" class="card" style="padding: 8px 10px; text-decoration: none; color: inherit; display: flex; flex-direction: column"><span class="faint" style="font-size: 11.5px">任务</span><span>MAR-128 回调补查改为对账任务</span></a>
+                  <div class="card" style="padding: 8px 10px; display: flex; flex-direction: column"><span class="faint" style="font-size: 11.5px">对话 · 王芳与 Marvis</span><span class="muted">仅发起人可查看</span></div>
+                  <a href="#" class="card" style="padding: 8px 10px; text-decoration: none; color: inherit; display: flex; flex-direction: column"><span class="faint" style="font-size: 11.5px">原始资料</span><span>渠道接入规范 v3.pdf</span></a>
+                </div>
+              </div>
+              <div><div class="ps">链接到本页</div><div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px"><a href="#" style="color: #4f6f8a; text-decoration: none">幂等键</a><a href="#" style="color: #4f6f8a; text-decoration: none">回调人工处理</a><a href="#" style="color: #4f6f8a; text-decoration: none">支付服务</a></div></div>
+            </div>
+          </aside>
+        </sc-if>
+        <sc-if value="{{p.toc}}" hint-placeholder-val="{{ false }}">
+          <aside class="panel" aria-label="目录" style="width: 240px">
+            <div class="ph"><span style="flex: 1">目录</span><button class="ib" aria-label="关闭"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+            <div class="pb" style="gap: 2px; font-size: 13.5px">
+              <a href="#" style="padding: 6px 8px; border-radius: 8px; color: #0f0f0f; text-decoration: none; background: rgba(0,0,0,.05)">处理顺序</a>
+              <a href="#" style="padding: 6px 8px; border-radius: 8px; color: #3d3d3d; text-decoration: none">去重</a>
+              <a href="#" style="padding: 6px 8px; border-radius: 8px; color: #3d3d3d; text-decoration: none">失败处理</a>
+              <a href="#" style="padding: 6px 8px; border-radius: 8px; color: #3d3d3d; text-decoration: none">引用来源</a>
+            </div>
+          </aside>
+        </sc-if>
+        <sc-if value="{{p.ann}}" hint-placeholder-val="{{ false }}">
+          <aside class="panel" aria-label="本页批注">
+            <div class="ph"><span style="flex: 1">本页批注 2</span><button class="btn btn-o" style="height: 28px; font-size: 12.5px; margin-right: 4px">交给智能体处理</button><button class="ib" aria-label="关闭"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+            <div class="pb">
+              <div class="card" style="padding: 12px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 0 0 1.5px rgba(184,134,46,.6)">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px"><span class="av">王</span><span>王芳</span><span class="faint">昨天 17:40</span><span style="flex: 1"></span><span class="tag"><span class="dot d-amber"></span>待处理</span></div>
+                <div style="font-size: 12.5px; color: #5c5c5c; background: #f7f7f7; border-radius: 8px; padding: 6px 8px">渠道回调按订单号加幂等键去重，重复回调直接返回成功。</div>
+                <div style="font-size: 13.5px">去重键已经改成渠道交易号，不是订单号。</div>
+              </div>
+              <div class="card" style="padding: 12px; display: flex; flex-direction: column; gap: 6px">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px"><span class="av bot">通</span><span>通用开发助手</span><span class="faint">今天 08:02</span><span style="flex: 1"></span><span class="tag"><span class="dot d-amber"></span>待处理</span></div>
+                <div style="font-size: 12.5px; color: #5c5c5c; background: #f7f7f7; border-radius: 8px; padding: 6px 8px">超时未回调的支付单由对账任务每 10 分钟补查一次。</div>
+                <div style="font-size: 13.5px">代码已变更：补查间隔可能已调整，需要核对。</div>
+              </div>
+              <sc-if value="{{kbComposing}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 10px; display: flex; flex-direction: column; gap: 8px"><label for="pk" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">批注本页</label><textarea id="pk" class="field focus" rows="2" value="{{kbDraft}}"></textarea><div style="display: flex; justify-content: flex-end; gap: 8px"><button class="btn btn-g" style="height: 30px">取消</button><button class="btn btn-p" style="height: 30px">批注</button></div></div></sc-if>
+              <sc-if value="{{kbIdle}}" hint-placeholder-val="{{ true }}"><button class="btn btn-g" style="align-self: flex-start; height: 30px; gap: 5px; color: #5c5c5c; padding: 0 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>添加批注</button></sc-if>
+            </div>
+          </aside>
+        </sc-if>
+        <sc-if value="{{p.hist}}" hint-placeholder-val="{{ false }}">
+          <aside class="panel" aria-label="页面历史">
+            <div class="ph"><span style="flex: 1">页面历史</span><button class="ib" aria-label="关闭"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+            <div class="pb" style="gap: 4px; padding: 10px">
+              <sc-for list="{{hist}}" as="h" hint-placeholder-count="4">
+                <div style="{{h.style}}">
+                  <div style="display: flex; align-items: center; gap: 6px"><span class="faint mono">#{{h.n}}</span><span style="font-weight: 500; font-size: 13.5px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{h.title}}</span></div>
+                  <div class="faint" style="font-size: 12px">{{h.meta}}</div>
+                  <sc-if value="{{h.current}}" hint-placeholder-val="{{ false }}"><span class="tag" style="align-self: flex-start">当前版本</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </aside>
+        </sc-if>
+      </div>
+    </div>
+    <button aria-label="问 Marvis" style="position: absolute; right: 24px; bottom: 24px; width: 48px; height: 48px; border-radius: 24px; border: 0; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 0 0 1px #e8e8e8; display: inline-flex; align-items: center; justify-content: center; color: #666; z-index: 3"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></button>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"enum","default":"none","options":["none","info","toc","ann","hist"]},"mark":{"editor":"enum","default":"none","options":["none","select","ann"]},"banner":{"editor":"boolean","default":false},"stale":{"editor":"boolean","default":false},"kbCompose":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"drafts":{"editor":"int","default":1},"draftMenu":{"editor":"boolean","default":false},"hover":{"editor":"text","default":""},"plusOn":{"editor":"boolean","default":false},"moreOn":{"editor":"boolean","default":false},"histSel":{"editor":"int","default":0},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var panel = this.props.panel ?? 'none';
+    var histSel = this.props.histSel ?? 0;
+    var hist = [
+      { n: 14, title: '每日收录 · 10-24', meta: '通用开发助手 · 韩梅梅合并 · 昨天 22:06', current: true },
+      { n: 9, title: '处理批注：补查间隔', meta: '通用开发助手 · 王芳合并 · 10-19' },
+      { n: 6, title: '知识合并：并入「回调重试」', meta: '通用开发助手 · 李雷合并 · 10-12' },
+      { n: 2, title: '收录资料：渠道接入规范 v3', meta: '通用开发助手 · 王芳合并 · 10-08' }
+    ];
+    var ib = function (on) { return 'ib' + (on ? ' on' : ''); };
+    return {
+      p: { info: panel === 'info', toc: panel === 'toc', ann: panel === 'ann', hist: panel === 'hist' },
+      hasPanel: panel !== 'none',
+      ic: { ann: ib(panel === 'ann'), toc: ib(panel === 'toc'), info: ib(panel === 'info'), more: ib(!!this.props.moreOn || panel === 'hist') },
+      mark: this.props.mark ?? 'none', banner: !!this.props.banner, stale: !!this.props.stale, draft: !!this.props.draft,
+      kbComposing: !!this.props.kbCompose, kbIdle: !this.props.kbCompose, kbDraft: this.props.kbCompose ? '去重和失败处理两节的例子对不上，建议统一用同一笔订单。' : '',
+      kbFieldCls: 'field' + (this.props.kbCompose ? ' focus' : ''), hover: this.props.hover ?? '', plusOn: !!this.props.plusOn,
+      hist: hist.map(function (h) { return Object.assign({}, h, { style: 'display: flex; flex-direction: column; gap: 3px; padding: 10px; border-radius: 10px; background: ' + (h.n === histSel ? 'rgba(0,0,0,.055)' : 'transparent') }); })
+    };
+  }
+}
+</script>
+</body>
+</html>

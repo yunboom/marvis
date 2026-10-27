@@ -6,8 +6,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@marvis/ui/lib/utils";
 import { useScrollFade } from "@marvis/ui/hooks/use-scroll-fade";
 import { AppLink, useNavigation } from "../navigation";
-import { HelpLauncher } from "./help-launcher";
-import { JoinDiscordCard } from "./join-discord-card";
 import {
   DndContext,
   PointerSensor,
@@ -21,12 +19,16 @@ import { CSS } from "@dnd-kit/utilities";
 import { Layers,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   LogOut,
   Plus,
+  CirclePlus,
   Check,
-  SquarePen,
   X,
 } from "lucide-react";
+import { Bell } from "@phosphor-icons/react/ssr";
+import { useMessageBoxStore } from "@marvis/core/inbox/message-box-store";
+import { IconButton } from "@marvis/ui/components/common/icon-button";
 import { WorkspaceAvatar } from "../workspace/workspace-avatar";
 import { ActorAvatar } from "@marvis/ui/components/common/actor-avatar";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
@@ -44,8 +46,12 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from "@marvis/ui/components/ui/sidebar";
@@ -59,6 +65,7 @@ import {
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
+import { MarvisWordmark } from "@marvis/ui/components/common/marvis-wordmark";
 import { useAuthStore } from "@marvis/core/auth";
 import { issueViewDetailOptions } from "@marvis/core/issue-views/queries";
 import {
@@ -71,6 +78,7 @@ import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inboxUnreadSummaryEnabled, inboxUnreadSummaryOptions, useInboxUnreadCount, hasOtherWorkspaceUnread, unreadWorkspaceIds } from "@marvis/core/inbox/queries";
 import { chatSessionsOptions } from "@marvis/core/chat/queries";
+import { countOpenMergeRequests, kbBaseListOptions } from "@marvis/core/kb/queries";
 import { countUnreadChatMessages } from "@marvis/core/chat/unread";
 import { useChatStore } from "@marvis/core/chat";
 import { api, ApiError } from "@marvis/core/api";
@@ -82,6 +90,8 @@ import { projectDetailOptions } from "@marvis/core/projects/queries";
 import type { PinnedItem } from "@marvis/core/types";
 import { useLogout } from "../auth";
 import { ProjectIcon } from "../projects/components/project-icon";
+import { IntegrationHintDot } from "../agents/components/integration-hint-dot";
+import { useAgentIntegrationHints } from "../agents/use-agent-integration-hints";
 import { routeIconForPath } from "./route-icon-components";
 import { useT } from "../i18n";
 import {
@@ -109,18 +119,26 @@ const EMPTY_INVITATIONS: Awaited<ReturnType<typeof api.listMyInvitations>> = [];
 const EMPTY_INBOX_SUMMARY: Awaited<ReturnType<typeof api.getInboxUnreadSummary>> = [];
 const PINNED_PREVIEW_LIMIT = 5;
 
+// Pinned rows make way for a dragged row over 150ms on the standard curve
+// (Marvis motion spec: drag reflow).
+const PIN_REFLOW_TRANSITION = {
+  duration: 150,
+  easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+};
+
 // Nav items reference WorkspacePaths method names so they can be resolved
 // against the current workspace slug at render time (see AppSidebar body).
 // Only parameterless paths are valid nav destinations.
 type NavKey =
-  | "inbox"
   | "chat"
   | "myIssues"
   | "issues"
   | "projects"
+  | "workflows"
   | "autopilots"
   | "agents"
   | "squads"
+  | "kb"
   | "usage"
   | "runtimes"
   | "skills"
@@ -129,14 +147,15 @@ type NavKey =
 // Static schema (key only) — labels resolved at render via useT("layout"),
 // icons derived from the destination path via routeIconForPath.
 type NavLabelKey =
-  | "inbox"
   | "chat"
   | "my_issues"
   | "issues"
   | "projects"
+  | "workflows"
   | "autopilots"
   | "agents"
   | "squads"
+  | "knowledge_base"
   | "usage"
   | "runtimes"
   | "skills"
@@ -145,8 +164,9 @@ type NavLabelKey =
 // Nav icons are NOT declared here: they are derived from each item's
 // destination path at render time, so the sidebar and the desktop tab bar
 // always agree. See route-icon-components.tsx.
+// The inbox has no nav row: the bell next to the workspace switcher opens it
+// as the message box.
 const personalNav: { key: NavKey; labelKey: NavLabelKey }[] = [
-  { key: "inbox", labelKey: "inbox" },
   { key: "myIssues", labelKey: "my_issues" },
   { key: "chat", labelKey: "chat" },
 ];
@@ -157,9 +177,15 @@ const workNav: { key: NavKey; labelKey: NavLabelKey }[] = [
   { key: "autopilots", labelKey: "autopilots" },
 ];
 
+// Second-level rows rendered under a work nav item.
+const workSubNav: Partial<Record<NavKey, { key: NavKey; labelKey: NavLabelKey }[]>> = {
+  projects: [{ key: "workflows", labelKey: "workflows" }],
+};
+
 const aiTeamNav: { key: NavKey; labelKey: NavLabelKey }[] = [
   { key: "agents", labelKey: "agents" },
   { key: "squads", labelKey: "squads" },
+  { key: "kb", labelKey: "knowledge_base" },
   { key: "skills", labelKey: "skills" },
   { key: "runtimes", labelKey: "runtimes" },
 ];
@@ -170,12 +196,18 @@ const utilityNav: { key: NavKey; labelKey: NavLabelKey }[] = [
 ];
 
 const NAV_ITEM_CLASS_NAME =
-  "h-9 gap-2.5 rounded-[10px] px-3 text-body text-foreground [&_svg]:size-[18px] hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground";
+  "h-[34px] gap-2.5 rounded-md px-3 text-body text-foreground [&_svg]:size-[18px] hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground";
+
+function AgentsIntegrationHintDot({ wsId }: { wsId: string | undefined }) {
+  const hasHint = useAgentIntegrationHints(wsId).size > 0;
+  if (!hasHint) return null;
+  return <IntegrationHintDot className="ml-auto" />;
+}
 
 function DraftDot() {
   const hasDraft = useIssueDraftStore((s) => s.hasDraft());
   if (!hasDraft) return null;
-  return <span className="absolute top-0 right-0 size-1.5 rounded-full bg-brand" />;
+  return <span className="absolute top-1 right-1 size-1.5 rounded-full bg-brand ring-1 ring-sidebar" />;
 }
 
 /**
@@ -206,7 +238,10 @@ function SortablePinItem({
   isActiveOverride?: boolean;
 }) {
   const { t } = useT("layout");
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: pin.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: pin.id,
+    transition: PIN_REFLOW_TRANSITION,
+  });
   const wasDragged = useRef(false);
 
   useEffect(() => {
@@ -220,7 +255,11 @@ function SortablePinItem({
     <SidebarMenuItem
       ref={setNodeRef}
       style={style}
-      className={cn("group/pin", isDragging && "opacity-30")}
+      // The dragged row lifts as an opaque floating row instead of a ghost.
+      className={cn(
+        "group/pin",
+        isDragging && "relative z-10 rounded-row bg-surface-raised shadow-menu",
+      )}
       {...attributes}
       {...listeners}
     >
@@ -237,7 +276,7 @@ function SortablePinItem({
           onNavigate?.();
         }}
         className={cn(
-          "text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground",
+          "h-7 gap-2 pr-2 pl-3.5 text-muted-foreground hover:not-data-active:bg-sidebar-accent/70 hover:text-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground",
           isDragging && "pointer-events-none",
         )}
       >
@@ -433,9 +472,6 @@ interface AppSidebarProps {
   headerStyle?: React.CSSProperties;
 }
 
-// Product wordmark beside the logo; a brand name, so it is not translated.
-const BRAND_NAME = "Marvis";
-
 export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }: AppSidebarProps = {}) {
   const { t } = useT("layout");
   const { pathname, push } = useNavigation();
@@ -461,10 +497,11 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   }, [pathname, setOpenMobile]);
 
   const wsId = workspace?.id;
-  // Nav badge. Reads the cross-workspace unread summary fetched just below
+  // Bell dot. Reads the cross-workspace unread summary fetched just below
   // for the switcher dot, so the count costs no request of its own — it used
   // to download the whole inbox list here just to count it (MUL-6967).
   const unreadCount = useInboxUnreadCount(wsId);
+  const setMessageBoxOpen = useMessageBoxStore((s) => s.setOpen);
   // Chat tab unread badge: IM-style total of unread *messages* across chat
   // threads (countUnreadChatMessages is the shared definition — mobile's tab
   // badge derives from the same function, keeping the platforms in agreement).
@@ -493,6 +530,13 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   const chatUnreadCount = React.useMemo(
     () => countUnreadChatMessages(chatSessions, viewedChatSessionId),
     [chatSessions, viewedChatSessionId],
+  );
+  // Knowledge base badge: merge requests waiting for review across the
+  // workspace, summed from the list the knowledge base page reads anyway.
+  const { data: knowledgeBases } = useQuery(kbBaseListOptions(wsId ?? ""));
+  const kbOpenMergeRequests = React.useMemo(
+    () => countOpenMergeRequests(knowledgeBases ?? []),
+    [knowledgeBases],
   );
   // Cross-workspace unread summary backs the workspace-switcher dot. One
   // shared cache entry across workspaces; gated on an active workspace since
@@ -547,6 +591,38 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   }, [wsId]);
   const visiblePinned = localPinnedWsId === (wsId ?? null) ? localPinned : EMPTY_PINS;
   const pinsExpanded = expandedPinsWorkspaceId === wsId;
+  // Sub-nav groups default collapsed, except the one holding the current
+  // route; landing on a sub route later reopens its group.
+  const [collapsedSubNav, setCollapsedSubNav] = useState<Partial<Record<NavKey, boolean>>>(() => {
+    const collapsed: Partial<Record<NavKey, boolean>> = {};
+    for (const key of Object.keys(workSubNav) as NavKey[]) {
+      collapsed[key] = !workSubNav[key]?.some((sub) => isNavActive(pathname, p[sub.key]()));
+    }
+    return collapsed;
+  });
+  const toggleSubNav = (key: NavKey) =>
+    setCollapsedSubNav((current) => ({ ...current, [key]: !current[key] }));
+  // Clicking a parent row that owns a page: from elsewhere it navigates and
+  // expands; on its own page it toggles. Modified clicks open tabs instead.
+  const handleParentNavClick = (key: NavKey, href: string, e: React.MouseEvent) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (pathname === href) {
+      e.preventDefault();
+      toggleSubNav(key);
+      return;
+    }
+    setCollapsedSubNav((current) => (current[key] ? { ...current, [key]: false } : current));
+  };
+  const activeSubNavParent = (Object.keys(workSubNav) as NavKey[]).find((key) =>
+    workSubNav[key]?.some((sub) => isNavActive(pathname, p[sub.key]())),
+  );
+  useEffect(() => {
+    if (activeSubNavParent) {
+      setCollapsedSubNav((current) =>
+        current[activeSubNavParent] ? { ...current, [activeSubNavParent]: false } : current,
+      );
+    }
+  }, [activeSubNavParent]);
   const displayedPinned = pinsExpanded ? visiblePinned : visiblePinned.slice(0, PINNED_PREVIEW_LIMIT);
   // View pins are absent here (their href resolves async): while a view
   // pin is active the plain nav row for its surface stays highlighted too.
@@ -617,42 +693,44 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
       <Sidebar variant="floating">
         {topSlot}
         {/* Workspace Switcher */}
-        <SidebarHeader className={cn("gap-3 px-3 pt-5 pb-1", headerClassName)} style={headerStyle}>
-          <div className="flex h-10 items-center gap-2.5 px-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        {/* pb-4 plus the nav group's top padding puts 20px between search and
+            the first nav row; logo to search is the 12px gap. */}
+        <SidebarHeader className={cn("gap-3 px-3 pt-3.5 pb-4", headerClassName)} style={headerStyle}>
+          {/* pl-[9px] centres the 24px logo on the 18px nav icons below, and
+              the 7px gap starts the wordmark where the nav labels start. */}
+          <div className="flex h-9 items-center gap-[7px] pl-[9px]">
             <MarvisIcon className="size-6 shrink-0 text-foreground" />
-            <span className="text-display-sm font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
-              {BRAND_NAME}
-            </span>
+            <MarvisWordmark className="h-[18px] shrink-0 text-foreground" />
+            <IconButton
+              label={t(($) => $.sidebar.new_issue)}
+              shortcut={
+                createIssueShortcut ? (
+                  <ShortcutKeycaps shortcut={createIssueShortcut} decorative />
+                ) : undefined
+              }
+              tooltipSide="bottom"
+              size="icon-sm"
+              // A bare ink-on-white outlined glyph, no button chrome until hover
+              // — the Marvis.app "new" affordance. 20px at a ~1.5px stroke.
+              className="relative ml-auto -mr-1 rounded-full text-foreground hover:bg-accent"
+              onClick={() => openCreateIssueWithPreference()}
+            >
+              <CirclePlus className="size-5" strokeWidth={1.75} />
+              <DraftDot />
+            </IconButton>
           </div>
-          <SidebarMenu className="gap-2">
-            {searchSlot && (
-              <SidebarMenuItem>
-                {searchSlot}
-              </SidebarMenuItem>
-            )}
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                className={NAV_ITEM_CLASS_NAME}
-                onClick={() => openCreateIssueWithPreference()}
-              >
-                <span className="relative">
-                  <SquarePen />
-                  <DraftDot />
-                </span>
-                <span>{t(($) => $.sidebar.new_issue)}</span>
-                {createIssueShortcut ? (
-                  <ShortcutKeycaps shortcut={createIssueShortcut} decorative className="pointer-events-none ml-auto" />
-                ) : null}
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          {searchSlot && (
+            <SidebarMenu>
+              <SidebarMenuItem>{searchSlot}</SidebarMenuItem>
+            </SidebarMenu>
+          )}
         </SidebarHeader>
 
         {/* Navigation */}
         <SidebarContent ref={sidebarScrollRef} style={sidebarFadeStyle}>
-          <SidebarGroup className="px-3 py-1.5">
+          <SidebarGroup className="px-3 py-1">
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
+              <SidebarMenu className="gap-0.5">
                 {personalNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
@@ -666,13 +744,6 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                       >
                         <Icon />
                         <span>{t(($) => $.nav[item.labelKey])}</span>
-                        {item.key === "inbox" && unreadCount > 0 && (
-                          <CappedNumberFlow
-                            value={unreadCount}
-                            animated={false}
-                            className="ml-auto text-caption"
-                          />
-                        )}
                         {item.key === "chat" && chatUnreadCount > 0 && (
                           <CappedNumberFlow
                             value={chatUnreadCount}
@@ -690,20 +761,20 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
 
           {visiblePinned.length > 0 && (
             <Collapsible defaultOpen>
-              <SidebarGroup className="group/pinned px-3 py-1.5">
+              <SidebarGroup className="group/pinned px-3 py-1">
                 <SidebarGroupLabel
                   render={<CollapsibleTrigger />}
-                  className="group/trigger cursor-pointer px-3 font-normal hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
+                  className="group/trigger cursor-pointer gap-1 px-3 font-normal transition-colors duration-150 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground hover:duration-100"
                 >
                   <span>{t(($) => $.sidebar.pinned_label)}</span>
-                  <ChevronRight className="!size-3 ml-1 stroke-[2.5] transition-transform duration-200 group-data-[panel-open]/trigger:rotate-90" />
-                  <span className="ml-auto text-micro text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100">{visiblePinned.length}</span>
+                  <ChevronRight className="!size-3 stroke-[2.5] transition-transform duration-150 ease-out motion-reduce:transition-none group-data-[panel-open]/trigger:rotate-90" />
+                  <span className="ml-auto text-micro text-muted-foreground opacity-0 transition-opacity duration-100 group-hover/pinned:opacity-100">{visiblePinned.length}</span>
                 </SidebarGroupLabel>
                 <CollapsibleContent>
-                  <SidebarGroupContent>
+                  <SidebarGroupContent className="mt-0.5">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                       <SortableContext items={displayedPinned.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                        <SidebarMenu className="gap-1">
+                        <SidebarMenu className="gap-0.5">
                           {displayedPinned.map((pin: PinnedItem) => (
                             <PinRow
                               key={pin.id}
@@ -721,7 +792,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                       <SidebarMenuButton
                         size="sm"
                         aria-expanded={pinsExpanded}
-                        className="mt-0.5 pl-7 text-muted-foreground"
+                        className="mt-0.5 h-7 pl-9 text-muted-foreground"
                         onClick={() => setExpandedPinsWorkspaceId(pinsExpanded ? null : wsId ?? null)}
                       >
                         <span>
@@ -737,24 +808,65 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             </Collapsible>
           )}
 
-          <SidebarGroup className="px-3 py-1.5">
+          <SidebarGroup className="px-3 py-1">
             <SidebarGroupLabel className="px-3 font-normal">{t(($) => $.sidebar.work_group)}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
+              <SidebarMenu className="gap-0.5">
                 {workNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
                   const isActive = !isActivePinnedRoute && isNavActive(pathname, href);
+                  const subNav = workSubNav[item.key];
+                  const label = t(($) => $.nav[item.labelKey]);
+                  const subOpen = !collapsedSubNav[item.key];
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
                         isActive={isActive}
                         render={<AppLink href={href} />}
-                        className={NAV_ITEM_CLASS_NAME}
-                      >
+                        className={cn(NAV_ITEM_CLASS_NAME, subNav && "pr-9")}
+                        onClick={subNav ? (e) => handleParentNavClick(item.key, href, e) : undefined}                      >
                         <Icon />
-                        <span>{t(($) => $.nav[item.labelKey])}</span>
+                        <span>{label}</span>
                       </SidebarMenuButton>
+                      {subNav && (
+                        <SidebarMenuAction
+                          aria-expanded={subOpen}
+                          aria-controls={`sidebar-sub-nav-${item.key}`}
+                          aria-label={
+                            subOpen
+                              ? t(($) => $.sidebar.collapse_sub_nav, { label })
+                              : t(($) => $.sidebar.expand_sub_nav, { label })
+                          }
+                          onClick={() => toggleSubNav(item.key)}
+                          className="top-[7px] right-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                        >
+                          {subOpen ? <ChevronUp className="!size-3.5" /> : <ChevronDown className="!size-3.5" />}
+                        </SidebarMenuAction>
+                      )}
+                      {subNav && subOpen && (
+                        <SidebarMenuSub
+                          id={`sidebar-sub-nav-${item.key}`}
+                          className="mx-0 mt-0.5 translate-x-0 gap-0.5 border-l-0 p-0"
+                        >
+                          {subNav.map((sub) => {
+                            const subHref = p[sub.key]();
+                            const SubIcon = routeIconForPath(subHref);
+                            return (
+                              <SidebarMenuSubItem key={sub.key}>
+                                <SidebarMenuSubButton
+                                  isActive={!isActivePinnedRoute && isNavActive(pathname, subHref)}
+                                  render={<AppLink href={subHref} />}
+                                  className="h-[34px] translate-x-0 gap-2.5 rounded-md pr-3 pl-10 text-foreground hover:bg-sidebar-accent/70 data-active:font-medium [&>svg]:size-[18px] [&>svg]:text-current"
+                                >
+                                  <SubIcon />
+                                  <span>{t(($) => $.nav[sub.labelKey])}</span>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            );
+                          })}
+                        </SidebarMenuSub>
+                      )}
                     </SidebarMenuItem>
                   );
                 })}
@@ -762,10 +874,10 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup className="px-3 py-1.5">
+          <SidebarGroup className="px-3 py-1">
             <SidebarGroupLabel className="px-3 font-normal">{t(($) => $.sidebar.ai_team_group)}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-1">
+              <SidebarMenu className="gap-0.5">
                 {aiTeamNav.map((item) => {
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
@@ -779,6 +891,15 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                       >
                         <Icon />
                         <span>{t(($) => $.nav[item.labelKey])}</span>
+                        {item.key === "kb" && kbOpenMergeRequests > 0 && (
+                          <span
+                            data-testid="kb-open-mr-badge"
+                            className="ml-auto inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1.25 text-micro font-normal tabular-nums text-primary-foreground"
+                          >
+                            {kbOpenMergeRequests > 99 ? "99+" : kbOpenMergeRequests}
+                          </span>
+                        )}
+                        {item.key === "agents" && <AgentsIntegrationHintDot wsId={wsId} />}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -788,8 +909,8 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="gap-0.5 px-3 pt-1 pb-3">
-          <SidebarMenu className="gap-1">
+        <SidebarFooter className="gap-0.5 px-3 pt-1 pb-2.5">
+          <SidebarMenu className="gap-0.5">
             {utilityNav.map((item) => {
               const href = p[item.key]();
               const Icon = routeIconForPath(href);
@@ -807,25 +928,19 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
               );
             })}
           </SidebarMenu>
-          {/* Discord fills the strip while visible; once dismissed, help
-              aligns with the navigation icons above. */}
-          <div className="flex items-center gap-1">
-            <JoinDiscordCard />
-            <HelpLauncher />
-          </div>
-          <div className="mt-1 border-t border-sidebar-border pt-2">
-            <SidebarMenu>
+          <div className="mt-1 flex items-center gap-0.5 border-t border-sidebar-border pt-2">
+            <SidebarMenu className="min-w-0 flex-1">
               <SidebarMenuItem>
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
-                      <SidebarMenuButton className="h-10 gap-2.5 px-3">
+                      <SidebarMenuButton className="h-10 gap-2.5 rounded-md px-3 font-medium">
                         <span className="relative">
                           <WorkspaceAvatar name={workspace?.name ?? "M"} avatarUrl={workspace?.avatar_url} size="sm" />
                           {/* Shared brand dot: a pending invitation OR another
                               workspace with unread inbox items. The active
-                              workspace's own unread stays on the Inbox nav count
-                              (below), so it is deliberately excluded here. */}
+                              workspace's own unread is the bell's red dot
+                              (beside this button), so it is excluded here. */}
                           {(myInvitations.length > 0 || otherWorkspaceUnread) && (
                             <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-brand ring-1 ring-sidebar" />
                           )}
@@ -944,6 +1059,23 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                 </DropdownMenu>
               </SidebarMenuItem>
             </SidebarMenu>
+            <IconButton
+              // The dot alone is not a name; the count rides on the label.
+              label={unreadCount > 0 ? `${t(($) => $.nav.inbox)} (${unreadCount})` : t(($) => $.nav.inbox)}
+              aria-haspopup="dialog"
+              tooltipSide="top"
+              size="icon-lg"
+              className="relative shrink-0 rounded-md text-foreground"
+              onClick={() => setMessageBoxOpen(true)}
+            >
+              <Bell className="size-[18px]" />
+              {unreadCount > 0 && (
+                <span
+                  data-testid="message-box-unread-dot"
+                  className="absolute top-2 right-2 size-2 rounded-full bg-destructive ring-[1.5px] ring-sidebar"
+                />
+              )}
+            </IconButton>
           </div>
         </SidebarFooter>
         <SidebarRail />

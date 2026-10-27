@@ -7,6 +7,7 @@ export * from "./local-skills";
 export * from "./types";
 export * from "./derive-health";
 export * from "./display";
+export * from "./machine-groups";
 export * from "./use-runtime-health";
 export * from "./cli-version";
 export * from "./custom-pricing-store";

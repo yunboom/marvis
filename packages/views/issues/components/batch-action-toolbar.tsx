@@ -27,6 +27,13 @@ import { StatusPicker, PriorityPicker, AssigneePicker } from "./pickers";
 import { useT } from "../../i18n";
 import { cn } from "@marvis/ui/lib/utils";
 import {
+  COLLECTION_BATCH_ACTION,
+  COLLECTION_BATCH_DIVIDER,
+} from "../../layout/collection-page";
+
+// 批量栏动作按钮：沿用列表页批量栏的药丸样式，字号按设计稿放到 14px
+const BATCH_ACTION = cn(COLLECTION_BATCH_ACTION, "text-body");
+import {
   UI_EASE_OUT,
   UI_MOTION_DURATION,
 } from "@marvis/ui/lib/motion";
@@ -36,6 +43,7 @@ import { useIssueSurfaceSelection } from "../surface/selection-context";
 export function BatchActionToolbar({
   issues,
   placement = "fixed-bottom",
+  clearSelectionOnApply = false,
 }: {
   /**
    * The universe of selectable issues at this call site (the same list the
@@ -51,6 +59,14 @@ export function BatchActionToolbar({
    * the selected rows (used inside scrollable sections like sub-issues).
    */
   placement?: "fixed-bottom" | "inline";
+  /**
+   * Drop the selection once a status / priority / assignee change fully
+   * applies. Off for full-screen lists, where the selection stays so several
+   * edits can be chained; on for sub-issues, where a batch edit is a one-shot
+   * dispatch and a lingering inline toolbar reads as unfinished. A partial or
+   * failed write keeps the selection so the user can retry.
+   */
+  clearSelectionOnApply?: boolean;
 }) {
   const { t } = useT("issues");
   const selection = useIssueSurfaceSelection();
@@ -120,6 +136,7 @@ export function BatchActionToolbar({
       if (updated < count) {
         toast.warning(t(($) => $.batch.update_partial, { updated, count }));
       } else {
+        if (clearSelectionOnApply) clear();
         toast.success(t(($) => $.batch.update_success, { count }));
       }
     } catch (err) {
@@ -160,6 +177,7 @@ export function BatchActionToolbar({
           mode: "assign",
           assigneeType: updates.assignee_type,
           assigneeId: updates.assignee_id,
+          onApplied: clearSelectionOnApply ? clear : undefined,
         });
         return;
       }
@@ -201,7 +219,7 @@ export function BatchActionToolbar({
             )}
           >
             <motion.div
-              className="flex items-center gap-1 rounded-lg border bg-background px-2 py-1.5 shadow-lg"
+              className="flex h-11 items-center gap-0.5 rounded-full border border-border bg-popover pr-1.5 pl-4 text-popover-foreground shadow-menu"
               initial={{
                 opacity: 0,
                 transform: shouldReduceMotion
@@ -229,16 +247,17 @@ export function BatchActionToolbar({
                 },
               }}
             >
-        <div className="flex items-center gap-1.5 pl-1 pr-2 border-r mr-1">
-          <span className="text-body font-medium">{t(($) => $.batch.selected, { count })}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="whitespace-nowrap text-body font-medium">{t(($) => $.batch.selected, { count })}</span>
           <button
             type="button"
             onClick={clear}
-            className="rounded-xs p-0.5 hover:bg-accent transition-colors"
+            className="flex size-5.5 items-center justify-center rounded-sm transition-colors duration-(--motion-fast) hover:bg-accent"
           >
             <X className="size-3.5 text-muted-foreground" />
           </button>
         </div>
+        <span aria-hidden className={COLLECTION_BATCH_DIVIDER} />
 
         {/* Status */}
         <StatusPicker
@@ -250,7 +269,7 @@ export function BatchActionToolbar({
           onUpdate={handleBatchStatus}
           open={statusOpen}
           onOpenChange={setStatusOpen}
-          triggerRender={<Button variant="ghost" size="sm" disabled={loading} />}
+          triggerRender={<Button variant="ghost" size="sm" className={BATCH_ACTION} disabled={loading} />}
           trigger={t(($) => $.batch.status)}
           align="center"
         />
@@ -261,7 +280,7 @@ export function BatchActionToolbar({
           onUpdate={handleBatchUpdate}
           open={priorityOpen}
           onOpenChange={setPriorityOpen}
-          triggerRender={<Button variant="ghost" size="sm" disabled={loading} />}
+          triggerRender={<Button variant="ghost" size="sm" className={BATCH_ACTION} disabled={loading} />}
           trigger={t(($) => $.batch.priority)}
           align="center"
         />
@@ -274,7 +293,7 @@ export function BatchActionToolbar({
           onUpdate={handleBatchAssignee}
           open={assigneeOpen}
           onOpenChange={setAssigneeOpen}
-          triggerRender={<Button variant="ghost" size="sm" disabled={loading} />}
+          triggerRender={<Button variant="ghost" size="sm" className={BATCH_ACTION} disabled={loading} />}
           trigger={t(($) => $.batch.assignee)}
           align="center"
         />
@@ -285,9 +304,9 @@ export function BatchActionToolbar({
           size="sm"
           disabled={loading}
           onClick={() => setDeleteOpen(true)}
-          className="text-destructive hover:text-destructive"
+          className={cn(BATCH_ACTION, "gap-1 text-destructive hover:text-destructive")}
         >
-          <Trash2 className="size-3.5 mr-1" />
+          <Trash2 className="size-3.5" />
           {t(($) => $.batch.delete)}
         </Button>
             </motion.div>

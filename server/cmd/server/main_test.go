@@ -349,7 +349,7 @@ func TestJWTSecretBootError(t *testing.T) {
 // long-lived WebSocket connections mid-stream — none of which the rest of the
 // suite would catch.
 func TestNewMainHTTPServerTimeouts(t *testing.T) {
-	srv := newMainHTTPServer(":8080", nil)
+	srv := newMainHTTPServer(":13840", nil)
 
 	if got, want := srv.ReadHeaderTimeout, 5*time.Second; got != want {
 		t.Errorf("ReadHeaderTimeout = %v, want %v", got, want)
@@ -364,5 +364,22 @@ func TestNewMainHTTPServerTimeouts(t *testing.T) {
 	}
 	if got := srv.WriteTimeout; got != 0 {
 		t.Errorf("WriteTimeout = %v, want 0", got)
+	}
+}
+
+// TestMainListenAddr pins how MARVIS_LISTEN_HOST and PORT combine: an empty
+// host keeps the historical all-interfaces bind, and IPv6 hosts get brackets.
+func TestMainListenAddr(t *testing.T) {
+	cases := []struct{ host, port, want string }{
+		{"", "13840", ":13840"},
+		{"  ", "13840", ":13840"},
+		{"127.0.0.1", "13840", "127.0.0.1:13840"},
+		{"::1", "13840", "[::1]:13840"},
+		{"0.0.0.0", "18080", "0.0.0.0:18080"},
+	}
+	for _, c := range cases {
+		if got := mainListenAddr(c.host, c.port); got != c.want {
+			t.Errorf("mainListenAddr(%q, %q) = %q, want %q", c.host, c.port, got, c.want)
+		}
 	}
 }

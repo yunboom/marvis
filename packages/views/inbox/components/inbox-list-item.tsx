@@ -126,16 +126,16 @@ export function InboxListItem({
       onContextMenu={
         openContextMenu ? (e) => openContextMenu(item, e) : undefined
       }
-      className={`group flex w-full cursor-default select-none items-center gap-3 rounded-md px-2 py-2.5 text-left outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring ${
+      className={`group flex w-full cursor-default select-none items-center gap-3 rounded-lg p-3 text-left outline-none transition-colors duration-(--motion-fast) ease-out hover:duration-(--motion-instant) focus-visible:ring-1 focus-visible:ring-ring ${
         isSelected
-          ? "bg-accent"
-          : "hover:bg-accent/50 data-[popup-open]:bg-accent/50"
+          ? "bg-surface-selected"
+          : "hover:bg-accent data-[popup-open]:bg-accent"
       }`}
     >
       <ActorAvatar
         actorType={actorType}
         actorId={item.actor_id ?? item.recipient_id}
-        size="lg"
+        size="xl"
         enableHoverCard
       />
       <div className="min-w-0 flex-1">
@@ -145,7 +145,7 @@ export function InboxListItem({
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
             )}
             <span
-              className={`truncate text-body ${showUnread ? "font-medium" : "text-muted-foreground"}`}
+              className={`truncate text-body ${showUnread ? "font-semibold" : "text-muted-foreground"}`}
             >
               {displayTitle}
             </span>
@@ -165,7 +165,7 @@ export function InboxListItem({
                     e.stopPropagation();
                     onAction();
                   }}
-                  className="hidden rounded-xs p-0.5 text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring [@media(hover:hover)]:group-hover:inline-flex [@media(hover:hover)]:group-focus-within:inline-flex"
+                  className="hidden size-5.5 items-center justify-center rounded-sm bg-secondary text-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-surface-selected focus-visible:ring-1 focus-visible:ring-ring [@media(hover:hover)]:group-hover:inline-flex [@media(hover:hover)]:group-focus-within:inline-flex"
                 >
                   <ActionIcon className="h-3.5 w-3.5" />
                 </button>
@@ -191,7 +191,7 @@ export function InboxListItem({
             )}
           </div>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-2">
+        <div className="mt-1 flex items-center justify-between gap-2">
           <p className={`min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-caption ${showUnread ? "text-muted-foreground" : "text-muted-foreground"}`}>
             <InboxDetailLabel item={item} />
           </p>

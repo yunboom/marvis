@@ -4,6 +4,7 @@ import {
   deriveWsUrl,
   parseRuntimeConfig,
   runtimeConfigFromDevEnv,
+  runtimeConfigFromServer,
 } from "./runtime-config";
 
 describe("runtime config", () => {
@@ -37,7 +38,7 @@ describe("runtime config", () => {
   });
 
   it("derives ws for http api URLs", () => {
-    expect(deriveWsUrl("http://localhost:8080")).toBe("ws://localhost:8080/ws");
+    expect(deriveWsUrl("http://localhost:13840")).toBe("ws://localhost:13840/ws");
   });
 
   it("accepts explicit appUrl and wsUrl", () => {
@@ -102,10 +103,10 @@ describe("runtime config", () => {
   });
 
   it("falls back to local web URL when dev apiUrl is localhost", () => {
-    expect(runtimeConfigFromDevEnv({ apiUrl: "http://localhost:8080" })).toEqual({
+    expect(runtimeConfigFromDevEnv({ apiUrl: "http://localhost:13840" })).toEqual({
       schemaVersion: 1,
-      apiUrl: "http://localhost:8080",
-      wsUrl: "ws://localhost:8080/ws",
+      apiUrl: "http://localhost:13840",
+      wsUrl: "ws://localhost:13840/ws",
       appUrl: "http://localhost:3000",
     });
   });
@@ -137,6 +138,23 @@ describe("runtime config", () => {
       apiUrl: "https://api.test.marvis.ai",
       wsUrl: "wss://api.test.marvis.ai/ws",
       appUrl: "https://staging.marvis.ai",
+    });
+  });
+
+  it("builds a config from the selected server", () => {
+    expect(
+      runtimeConfigFromServer({
+        url: "https://m.example.com:8443",
+        name: "设计部 Marvis",
+        instanceId: "7f3a",
+        source: "manual",
+        appUrl: "",
+      }),
+    ).toEqual({
+      schemaVersion: 1,
+      apiUrl: "https://m.example.com:8443",
+      wsUrl: "wss://m.example.com:8443/ws",
+      appUrl: "",
     });
   });
 });

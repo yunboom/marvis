@@ -222,18 +222,18 @@ describe("brand Button variants resolve to brand colour in the real stylesheet",
   // as the FAILURE they are, so the reason for the current shape is executable
   // rather than a comment someone can quietly undo.
   describe("the mistakes this design prevents", () => {
-    it("shows why layering brand over `outline` cannot work in dark mode", () => {
+    it("shows why layering brand over `outline` cannot work once its popover opens", () => {
       const layered = cn(
         buttonVariants({ variant: "outline", size: "sm" }),
         "border-brand bg-brand text-brand-foreground",
       );
 
-      // tailwind-merge cannot drop outline's dark: rules — different modifier
+      // tailwind-merge cannot drop outline's state rules — different modifier
       // group, so there is no conflict for it to resolve...
-      expect(layered).toContain("dark:bg-input/30");
-      // ...and `:is(.dark *)` then outranks the bare .bg-brand.
-      expect(bg(layered, { dark: true })).toBe("dark:bg-input/30");
-      // Light mode looks fine, which is exactly why this shipped unnoticed.
+      expect(layered).toContain("aria-expanded:bg-accent");
+      // ...and the attribute selector then outranks the bare .bg-brand.
+      expect(bg(layered, { expanded: true })).toBe("aria-expanded:bg-accent");
+      // The resting state looks fine, which is exactly why this ships unnoticed.
       expect(bg(layered, {})).toBe("bg-brand");
     });
 

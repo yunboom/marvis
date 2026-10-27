@@ -63,10 +63,10 @@ export function ChatAddMenu({
             <IconButton
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               disabled={disabled}
               label={t(($) => $.input.add_tooltip)}
-              className="rounded-full text-muted-foreground"
+              className="size-9 rounded-full text-foreground [&_svg:not([class*='size-'])]:size-5"
             >
               <Plus />
             </IconButton>

@@ -10,6 +10,7 @@ import {
 } from "@marvis/ui/components/ui/tooltip";
 import type { ChatQuickAction } from "@marvis/core/types";
 import { useT } from "../../i18n";
+import { MIKA_AVATAR_SRC } from "../../onboarding/components/mika-avatar";
 
 /**
  * Product-fixed starter cards rendered under Mika's onboarding opening (the
@@ -70,9 +71,12 @@ export function OnboardingStarterCards({
     }
   };
 
+  // Wide columns (@2xl, 672px) show three tall cards side by side; narrower
+  // ones — a resized window, a wide sidebar — stack compact rows with the
+  // vignette shrunk on the left, so all three still fit without scrolling.
   return (
     <div
-      className="mt-3 grid grid-cols-1 gap-3 @2xl:grid-cols-3"
+      className="mt-3 grid grid-cols-1 gap-2 @2xl:grid-cols-3 @2xl:gap-3"
       aria-label={t(($) => $.onboarding_cards.aria_label)}
     >
       {cards.map((card) => (
@@ -87,23 +91,25 @@ export function OnboardingStarterCards({
                 aria-label={card.title}
                 onClick={() => void handlePick(card)}
                 className={cn(
-                  "group flex flex-col overflow-clip rounded-xl border bg-card text-left transition-colors",
-                  "hover:border-brand/40 hover:bg-accent/40",
+                  "group flex min-h-18 overflow-clip rounded-xl border border-border bg-card text-left transition-colors duration-(--motion-fast) ease-out @2xl:flex-col",
+                  "hover:border-input hover:bg-accent/40 hover:duration-(--motion-instant)",
                   "disabled:pointer-events-none disabled:opacity-55",
                 )}
               />
             }
           >
-            <div className="flex h-26 shrink-0 items-center justify-center bg-gradient-to-b from-muted/55 to-transparent">
-              {card.vignette}
+            <div className="flex h-18 w-28 shrink-0 items-center justify-center overflow-hidden bg-surface-sunken @2xl:h-26 @2xl:w-auto @2xl:bg-transparent @2xl:bg-gradient-to-b @2xl:from-surface-sunken @2xl:to-transparent">
+              <div className="scale-[0.55] @2xl:scale-100">{card.vignette}</div>
             </div>
-            <div className="flex min-h-0 flex-1 flex-col items-start px-3.5 pt-3 pb-3.5">
-              <div className="text-body-lg font-medium">{card.title}</div>
-              <div className="mt-0.5 text-caption text-muted-foreground">
-                {card.desc}
+            <div className="flex min-w-0 flex-1 items-center gap-3 px-3.5 py-3 @2xl:flex-col @2xl:items-start @2xl:gap-0 @2xl:pb-3.5">
+              <div className="min-w-0 flex-1">
+                <div className="text-body font-medium @2xl:text-body-lg">{card.title}</div>
+                <div className="mt-0.5 truncate text-caption text-muted-foreground @2xl:whitespace-normal">
+                  {card.desc}
+                </div>
               </div>
-              <div className="mt-auto flex items-center gap-1 pt-2.5 text-label font-medium text-brand">
-                {t(($) => $.onboarding_cards.cta)}
+              <div className="flex shrink-0 items-center gap-1 text-label font-medium text-brand @2xl:mt-auto @2xl:pt-2.5">
+                <span className="hidden @2xl:inline">{t(($) => $.onboarding_cards.cta)}</span>
                 <ArrowUpRight aria-hidden="true" className="size-3.5" />
               </div>
             </div>
@@ -169,9 +175,7 @@ function BoardVignette() {
         <MiniCard className="border-brand/45">
           <Bar className="w-3/4" />
           <div className="flex items-center gap-1">
-            <span className="flex size-3.5 items-center justify-center rounded-full bg-muted text-micro leading-none">
-              🦄
-            </span>
+            <img src={MIKA_AVATAR_SRC} alt="" className="size-3.5 rounded-full object-cover" />
             <Bar className="w-6 bg-brand/55" />
           </div>
         </MiniCard>
@@ -194,9 +198,7 @@ function DelegateVignette() {
   return (
     <div aria-hidden="true" className="flex w-45 flex-col gap-1.5">
       <MiniCard className="flex-row items-center gap-1.5 px-2 py-1.5">
-        <span className="flex size-4.5 shrink-0 items-center justify-center rounded-full bg-muted text-micro leading-none">
-          🦄
-        </span>
+        <img src={MIKA_AVATAR_SRC} alt="" className="size-4.5 shrink-0 rounded-full object-cover" />
         <div className="flex flex-1 flex-col gap-1">
           <Bar className="w-5/6" />
           <Bar className="w-1/2" />

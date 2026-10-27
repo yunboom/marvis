@@ -43,6 +43,7 @@ import {
   WeeklyTokensChart,
   ActivityHeatmap,
 } from "./charts";
+import { CHART_MONO } from "./charts/chart-tones";
 import { CustomPricingDialog } from "./custom-pricing-dialog";
 import { useT } from "../../i18n";
 
@@ -621,12 +622,12 @@ function ChartLegend({ includeCacheRead = false }: { includeCacheRead?: boolean 
   // segment order both the token and the cost stacks draw. Only the heatmap,
   // which has no stack at all, leaves it out.
   const items = [
-    { label: t(($) => $.usage.legend_input), color: "var(--color-chart-1)" },
-    { label: t(($) => $.usage.legend_output), color: "var(--color-chart-2)" },
+    { label: t(($) => $.usage.legend_input), color: CHART_MONO[1] },
+    { label: t(($) => $.usage.legend_output), color: CHART_MONO[2] },
     ...(includeCacheRead
-      ? [{ label: t(($) => $.usage.legend_cache_read), color: "var(--color-chart-4)" }]
+      ? [{ label: t(($) => $.usage.legend_cache_read), color: CHART_MONO[4] }]
       : []),
-    { label: t(($) => $.usage.legend_cache_write), color: "var(--color-chart-3)" },
+    { label: t(($) => $.usage.legend_cache_write), color: CHART_MONO[3] },
   ];
   return (
     <div className="flex items-center gap-3 text-caption text-muted-foreground">
@@ -773,7 +774,7 @@ function CostByList({
             <div className="min-w-0">{renderKey(row.key)}</div>
             <div className="relative h-2 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-chart-1"
+                className="h-full rounded-full bg-foreground"
                 style={{ width: `${pct}%` }}
               />
             </div>

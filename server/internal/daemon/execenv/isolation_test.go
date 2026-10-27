@@ -35,7 +35,7 @@ const preparationHelperTestMode = "execenv-preparation-helper"
 // It also clears TaskConfigRootEnv, which the daemon sets for every task it
 // runs. Tests here isolate themselves by pointing HOME at a t.TempDir(), but
 // cli.ProfileDir consults that variable first and never reaches HOME while it
-// is set — so a test asserting a path under $HOME/.marvis-studio passed in CI and
+// is set — so a test asserting a path under $HOME/.marvis passed in CI and
 // failed for any agent running the suite from inside a Marvis task. Clearing
 // it once here makes the package resolve profile dirs the same way everywhere,
 // and keeps working for parallel tests, which cannot call t.Setenv. A test

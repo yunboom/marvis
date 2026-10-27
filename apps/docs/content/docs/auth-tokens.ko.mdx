@@ -36,8 +36,8 @@ PAT를 저장소, 태스크, 댓글, 스크린샷, 로그에 넣지 마세요. �
 `marvis login`을 실행하면 CLI가 브라우저에서 로그인을 완료한 뒤 90일 동안 유효한 PAT를 만들고 현재 profile의 설정 파일에 저장합니다.
 
 ```text
-~/.marvis-studio/config.json
-~/.marvis-studio/profiles/<name>/config.json
+~/.marvis/config.json
+~/.marvis/profiles/<name>/config.json
 ```
 
 데몬도 같은 PAT로 Marvis에 연결합니다. 만료 시간이 있는 `mul_` PAT는 남은 유효 기간이 7일 미만이면 자동으로 갱신되어 그 시점부터 90일 뒤까지 연장됩니다. 갱신 실패는 토큰 자체를 바꾸지 않습니다. 토큰이 이미 만료되었거나 취소되었다면 `marvis login`을 다시 실행해야 합니다.

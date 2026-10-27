@@ -23,22 +23,54 @@ import { cn } from "@marvis/ui/lib/utils";
 // line, so call sites never pick a tier that outgrows it: avatars through
 // `--avatar-slot-size` (read by the base avatar), label chips by dropping
 // their vertical padding.
-const PILL_CHROME =
-  "inline-flex h-[var(--button-height-xs)] items-center rounded-full border text-caption min-w-0 max-w-56 overflow-hidden transition-colors " +
+const PILL_SHELL =
+  "inline-flex items-center rounded-full min-w-0 max-w-56 overflow-hidden transition-colors " +
   "[--avatar-slot-size:1rem] [&_[data-slot=label-chip]]:py-0";
+const PILL_CHROME = cn(PILL_SHELL, "h-[var(--button-height-xs)] border text-caption");
+
+// Ghost pills sit in a borderless property row (the create-issue modal): no
+// fill or border at rest, a 30px hit target and label-size text. They tint
+// only on hover and while their popover is open. The priority glyph fills only
+// part of its box, so here it is drawn at 23px, where the low ring matches the
+// ~13.5px status ring beside it; negative margins keep its 14px footprint.
+const GHOST_PILL_CHROME = cn(
+  PILL_SHELL,
+  "h-[30px] text-label text-foreground",
+  "[&_[data-slot=priority-icon]]:size-[23px] [&_[data-slot=priority-icon]]:-mx-[4.5px]",
+);
+
+// An unset ghost pill shows its icon alone. The value text stays in the DOM
+// as `sr-only`, so the pill keeps its accessible name; the picker's tooltip
+// names the property on hover.
+const ICON_ONLY = "justify-center [&>span]:sr-only [&>svg]:text-muted-foreground";
+
+/** Visual style of a pill. `ghost` is borderless and unfilled at rest. */
+export type PillVariant = "default" | "ghost";
+
+interface PillStyleProps {
+  /** Defaults to `default`, the bordered pill used across create toolbars. */
+  variant?: PillVariant;
+  /** Ghost only: render the leading icon alone, for an unset field. */
+  iconOnly?: boolean;
+}
 
 export function PillButton({
   children,
   className,
+  variant = "default",
+  iconOnly = false,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & PillStyleProps) {
+  const ghost = variant === "ghost";
   return (
     <button
       type="button"
+      data-variant={variant}
       className={cn(
-        PILL_CHROME,
-        "gap-1.5 px-2.5",
-        "hover:bg-accent/60 cursor-pointer",
+        ghost ? GHOST_PILL_CHROME : PILL_CHROME,
+        ghost && iconOnly ? cn("w-[30px] shrink-0 px-0", ICON_ONLY) : "gap-1.5 px-2.5",
+        ghost ? "hover:bg-accent" : "hover:bg-accent/60",
+        "cursor-pointer",
         "data-popup-open:bg-accent data-popup-open:text-accent-foreground",
         "disabled:cursor-not-allowed disabled:hover:bg-transparent",
         className,
@@ -76,8 +108,10 @@ export function ClearablePillButton({
   onClear,
   clearLabel,
   disabled,
+  variant = "default",
+  iconOnly = false,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & PillStyleProps & {
   /** Omit to render a plain pill — the × appears only when there is a value
    *  to drop. */
   onClear?: (() => void) | undefined;
@@ -88,11 +122,13 @@ export function ClearablePillButton({
   // A disabled trigger disables clearing too: both are writes to the same
   // field, and a read-only pill that can still be emptied is not read-only.
   const clearable = !!onClear && !disabled;
+  const ghost = variant === "ghost";
   return (
     <span
+      data-variant={variant}
       className={cn(
-        PILL_CHROME,
-        !disabled && "hover:bg-accent/60",
+        ghost ? GHOST_PILL_CHROME : PILL_CHROME,
+        !disabled && (ghost ? "hover:bg-accent" : "hover:bg-accent/60"),
         // The open-state highlight lives on the trigger (Base UI stamps the
         // attribute there), but it has to paint the whole pill.
         "has-[[data-popup-open]]:bg-accent has-[[data-popup-open]]:text-accent-foreground",
@@ -103,8 +139,10 @@ export function ClearablePillButton({
         type="button"
         disabled={disabled}
         className={cn(
-          "flex h-full min-w-0 items-center gap-1.5 overflow-hidden pl-2.5 cursor-pointer",
-          clearable ? "pr-1" : "pr-2.5",
+          "flex h-full min-w-0 items-center overflow-hidden cursor-pointer",
+          ghost && iconOnly
+            ? cn("w-[30px] shrink-0", ICON_ONLY)
+            : cn("gap-1.5 pl-2.5", clearable ? "pr-1" : "pr-2.5"),
           "disabled:cursor-not-allowed",
         )}
         {...props}

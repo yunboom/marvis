@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -114,7 +115,7 @@ func main() {
 	}
 	cli.CleanupStaleUpdateArtifacts()
 	if err := rootCmd.Execute(); err != nil {
-		if err != errSilent {
+		if !errors.Is(err, errSilent) {
 			fmt.Fprintln(os.Stderr, cli.FormatError(err, debugFlag))
 		}
 		os.Exit(cli.ExitCodeFor(err))

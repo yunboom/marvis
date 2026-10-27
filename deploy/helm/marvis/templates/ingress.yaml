@@ -51,7 +51,7 @@ spec:
               service:
                 name: {{ include "marvis.backend.fullname" . }}
                 port:
-                  number: 8080
+                  number: 13840
   {{- with .Values.ingress.tls }}
   tls:
     {{- toYaml . | nindent 4 }}

@@ -492,10 +492,7 @@ describe("LarkAgentBotConnectedBadge (Unbind / Disconnect)", () => {
     // badge and receives nothing, so the connected state has to name the
     // one setting that explains the silence.
     expect(screen.getByText(/long connection/i)).toBeTruthy();
-    const docs = screen.getByRole("link", { name: /Troubleshooting/i });
-    expect(docs.getAttribute("href")).toBe(
-      "https://marvis.ai/docs/lark-bot-integration",
-    );
+    expect(screen.queryByRole("link", { name: /Troubleshooting/i })).toBeNull();
   });
 
   it("opens the confirm dialog and does NOT call the API until the user confirms", async () => {

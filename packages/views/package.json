@@ -21,6 +21,7 @@
     "./common/task-transcript": "./common/task-transcript/index.ts",
     "./projects/components": "./projects/components/index.ts",
     "./autopilots/components": "./autopilots/components/index.ts",
+    "./workflows": "./workflows/index.ts",
     "./modals/registry": "./modals/registry.tsx",
     "./modals/create-issue": "./modals/create-issue.tsx",
     "./my-issues": "./my-issues/index.ts",
@@ -40,8 +41,10 @@
     "./dashboard": "./dashboard/index.ts",
     "./squads": "./squads/index.ts",
     "./squads/components": "./squads/components/index.ts",
+    "./kb": "./kb/index.ts",
     "./workspace/workspace-avatar": "./workspace/workspace-avatar.tsx",
     "./workspace/no-access-page": "./workspace/no-access-page.tsx",
+    "./workspace/new-workspace-page": "./workspace/new-workspace-page.tsx",
     "./workspace/use-workspace-seen": "./workspace/use-workspace-seen.ts",
     "./layout": "./layout/index.ts",
     "./layout/route-icon-components": "./layout/route-icon-components.tsx",
@@ -127,6 +130,7 @@
     "yaml": "catalog:"
   },
   "peerDependencies": {
+    "@phosphor-icons/react": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-table": "catalog:",
     "i18next": "catalog:",

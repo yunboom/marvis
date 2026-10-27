@@ -165,7 +165,7 @@ export function ExecutionLogSection({ issueId, identifier, issueTitle }: Executi
       <div className="mb-2 flex w-full items-center gap-1">
         <button
           type="button"
-          className={`flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-caption font-medium transition-colors hover:bg-accent/70 ${
+          className={`flex min-w-0 items-center gap-1 whitespace-nowrap h-7 rounded-row px-2 text-label font-medium transition-colors hover:bg-accent ${
             open ? "" : "text-muted-foreground hover:text-foreground"
           }`}
           onClick={() => setOpen(!open)}
@@ -202,7 +202,7 @@ export function ExecutionLogSection({ issueId, identifier, issueTitle }: Executi
             <ActiveTaskRow key={task.id} task={task} issueId={issueId} />
           ))}
           {activeTasks.length > 0 && pastRuns.length > 0 && (
-            <div className="my-1.5 border-t border-border/60" />
+            <div className="my-1.5 border-t border-border" />
           )}
 
           {(timeline.pricedCount > 0 || timeline.agentMs > 0) && <RunTotals timeline={timeline} />}
@@ -210,7 +210,7 @@ export function ExecutionLogSection({ issueId, identifier, issueTitle }: Executi
 
           {latest.length > 0 && (
             <>
-              <div className="px-1 pt-2 pb-0.5 text-micro text-muted-foreground">
+              <div className="px-1 pt-2 pb-0.5 text-caption text-muted-foreground">
                 {t(($) => $.execution_log.latest)}
               </div>
               {latest.map((task) => (
@@ -221,7 +221,7 @@ export function ExecutionLogSection({ issueId, identifier, issueTitle }: Executi
           <button
             type="button"
             onClick={openRuns}
-            className="flex w-full items-center gap-1.5 rounded-xs px-1 py-1.5 text-caption transition-colors hover:bg-accent/40"
+            className="flex w-full items-center gap-1.5 rounded-row px-1 py-1.5 text-caption transition-colors hover:bg-accent"
           >
             <Maximize2 aria-hidden className="size-3 shrink-0 text-muted-foreground" />
             <span className="truncate">{t(($) => $.execution_log.open_timeline)}</span>
@@ -472,7 +472,7 @@ export function IssueRunsTotal({
     <Tooltip>
       <TooltipTrigger
         render={<button type="button" onClick={onOpen} />}
-        className={`flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-caption tabular-nums transition-colors hover:bg-accent/70 ${
+        className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-caption tabular-nums transition-colors hover:bg-accent ${
           alone ? "ml-auto" : ""
         }`}
       >
@@ -519,10 +519,13 @@ export function ActiveTaskRow({
   task,
   issueId,
   onTranscriptOpenChange,
+  onJump,
 }: {
   task: AgentTask;
   issueId: string;
   onTranscriptOpenChange?: (open: boolean, fromKeyboard?: boolean) => void;
+  /** Turns the trigger into a button that takes the reader to this run's block. */
+  onJump?: () => void;
 }) {
   const { t } = useT("issues");
   const [cancelling, setCancelling] = useState(false);
@@ -575,14 +578,29 @@ export function ActiveTaskRow({
   // anyway would only ever be exercised by hand-written fixtures, which is a
   // test that asserts a scenario production cannot produce. Restore it in the
   // same change that adds incremental reporting + cache invalidation.
+  const triggerText = task.wakeup_id ? (
+    <WakeupRunLabel task={task} fallback={trigger} render={(label) => <TriggerText text={label} />} />
+  ) : (
+    <TriggerText text={trigger} />
+  );
   return (
     <RowShell task={task}>
-      {task.wakeup_id ? (
-        <WakeupRunLabel task={task} fallback={trigger} render={(label) => <TriggerText text={label} />} />
+      {onJump ? (
+        <button
+          type="button"
+          onClick={onJump}
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 self-stretch rounded-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {triggerText}
+          <TaskCommentCoverage task={task} />
+          <span className="sr-only">{t(($) => $.execution_log.jump_to_run)}</span>
+        </button>
       ) : (
-        <TriggerText text={trigger} />
+        <>
+          {triggerText}
+          <TaskCommentCoverage task={task} />
+        </>
       )}
-      <TaskCommentCoverage task={task} />
       <RowStatus title={label}>
         {task.status === "running" ? (
           <>
@@ -757,7 +775,7 @@ function RowShell({
     <div
       title={title || undefined}
       className={cn(
-        "group/execution-log-row flex gap-2 overflow-hidden rounded-xs px-1 py-1.5 transition-colors hover:bg-accent/40",
+        "group/execution-log-row flex gap-2 overflow-hidden rounded-row px-1 py-1.5 transition-colors hover:bg-accent",
         multiline ? "items-start" : "items-center",
       )}
     >
@@ -770,7 +788,7 @@ function RowShell({
             enableHoverCard
           />
         ) : (
-          <span className="inline-block h-5 w-5 rounded-full bg-muted" />
+          <span className="inline-block h-5 w-5 rounded-full bg-field" />
         )}
       </span>
       {children}

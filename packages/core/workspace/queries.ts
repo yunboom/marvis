@@ -1,5 +1,5 @@
 import { queryOptions, type QueryClient } from "@tanstack/react-query";
-import { api } from "../api";
+import { api, ApiError } from "../api";
 import type { Agent, Squad, Workspace } from "../types";
 
 export const workspaceKeys = {
@@ -8,6 +8,10 @@ export const workspaceKeys = {
   members: (wsId: string) => ["workspaces", wsId, "members"] as const,
   invitations: (wsId: string) => ["workspaces", wsId, "invitations"] as const,
   shareLinks: (wsId: string) => ["workspaces", wsId, "share-links"] as const,
+  larkInvites: (wsId: string) => ["workspaces", wsId, "lark-invites"] as const,
+  larkChats: (wsId: string) => ["workspaces", wsId, "lark-chats"] as const,
+  larkInviteWelcome: (wsId: string) =>
+    ["workspaces", wsId, "lark-invite-welcome"] as const,
   myInvitations: () => ["invitations", "mine"] as const,
   agents: (wsId: string) => ["workspaces", wsId, "agents"] as const,
   agent: (wsId: string, agentId: string) =>
@@ -174,6 +178,59 @@ export function shareLinkListOptions(wsId: string, enabled = true) {
     queryKey: workspaceKeys.shareLinks(wsId),
     queryFn: () => api.listShareLinks(wsId),
     enabled: enabled && !!wsId,
+  });
+}
+
+// 飞书邀请是否可用取决于服务器配置，不属于任何工作区，key 与工作区无关。
+export const larkStatusKey = ["lark", "invite-status"] as const;
+
+export function larkInviteStatusOptions() {
+  return queryOptions({
+    queryKey: larkStatusKey,
+    queryFn: () => api.getLarkInviteStatus(),
+  });
+}
+
+// 拉全部状态：界面在客户端按状态展示和分组，不为每个状态各发一次请求。
+export function larkInviteListOptions(wsId: string, enabled = true) {
+  return queryOptions({
+    queryKey: workspaceKeys.larkInvites(wsId),
+    queryFn: () => api.listLarkInvites(wsId, "all"),
+    enabled: enabled && !!wsId,
+  });
+}
+
+// 列群失败后的重试次数，与 createQueryClient 的全局默认一致。
+const LARK_CHAT_LIST_MAX_RETRIES = 1;
+
+// 列群遇到 4xx（没有权限，或飞书应用没开机器人、缺权限而返回 lark_not_configured）时，
+// 重试不会成功，直接显示错误；其他错误保持全局默认的重试次数。
+function retryUnlessClientError(failureCount: number, error: Error): boolean {
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return false;
+  }
+
+  return failureCount < LARK_CHAT_LIST_MAX_RETRIES;
+}
+
+export function larkChatListOptions(wsId: string, enabled = true) {
+  return queryOptions({
+    queryKey: workspaceKeys.larkChats(wsId),
+    queryFn: () => api.listLarkChats(wsId),
+    enabled: enabled && !!wsId,
+    retry: retryUnlessClientError,
+  });
+}
+
+// 首次进入的提示：服务端按当前用户返回待提示记录，没有则为 null。
+// 记录由界面确认（ack）后才消失，所以不自动重取，窗口聚焦也不重取。
+export function larkInviteWelcomeOptions(wsId: string) {
+  return queryOptions({
+    queryKey: workspaceKeys.larkInviteWelcome(wsId),
+    queryFn: () => api.getLarkInviteWelcome(wsId),
+    enabled: !!wsId,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 }
 

@@ -52,7 +52,15 @@ export function proxy(req: NextRequest) {
   if (runtimeDestination) {
     const url = new URL(runtimeDestination);
     url.search = req.nextUrl.search;
-    return NextResponse.rewrite(url);
+    // 改写后后端只能看到自己的地址，看不到浏览器访问的 Host。
+    // 带上 x-forwarded-host，后端的同源检查（WebSocket Origin）才认 marvis.local 这类局域网名字；
+    // 上游代理已经设置过的值保持不变。
+    const headers = new Headers(req.headers);
+    if (!headers.has("x-forwarded-host")) {
+      const host = req.headers.get("host");
+      if (host) headers.set("x-forwarded-host", host);
+    }
+    return NextResponse.rewrite(url, { request: { headers } });
   }
 
   const hasSession = req.cookies.has("marvis_logged_in");
@@ -90,24 +98,21 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // --- Root path: redirect logged-in users to their last workspace ---
-  // The official cloud host also serves the public marketing site. Visiting
-  // https://marvis.ai/ must remain a public-site navigation even when a local
-  // desktop/runtime session has fresh auth cookies; explicit app routes such
-  // as /acme/issues and legacy /issues still route to the workspace app.
-  if (
-    pathname === "/" &&
-    hasSession &&
-    lastSlug &&
-    !isOfficialMarketingHost(req.nextUrl.hostname)
-  ) {
+  // --- Root path: the app entry, never the marketing page ---
+  // Logged-in users with a last workspace go straight to it; everyone else
+  // goes to /login, which also resolves a session without the slug cookie
+  // against the workspace list. The official cloud host also serves the
+  // public marketing site, so https://marvis.ai/ stays a public-site
+  // navigation; explicit app routes such as /acme/issues and legacy /issues
+  // still route to the workspace app there.
+  if (pathname === "/" && !isOfficialMarketingHost(req.nextUrl.hostname)) {
     const url = req.nextUrl.clone();
-    url.pathname = `/${lastSlug}/issues`;
+    url.pathname = hasSession && lastSlug ? `/${lastSlug}/issues` : "/login";
     return NextResponse.redirect(url);
   }
 
   // --- Default: forward locale header to RSC, no redirect/rewrite ---
-  // Covers logged-out root path, /login, /:slug/*, and everything else.
+  // Covers the marketing root, /login, /:slug/*, and everything else.
   return nextWithLocale(req);
 }
 

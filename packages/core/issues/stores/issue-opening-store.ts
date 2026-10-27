@@ -10,11 +10,12 @@ interface IssueOpeningState {
 }
 
 // Like theme and comment-composer preferences, this personal navigation habit
-// is saved on this device across workspaces. Existing users keep full pages.
+// is saved on this device across workspaces. Peek is the default; only an
+// explicit full-page choice is kept.
 export const useIssueOpeningStore = create<IssueOpeningState>()(
   persist(
     (set) => ({
-      openMode: "page",
+      openMode: "peek",
       setOpenMode: (openMode) => set({ openMode }),
     }),
     {
@@ -25,9 +26,9 @@ export const useIssueOpeningStore = create<IssueOpeningState>()(
         ...current,
         openMode:
           persisted && typeof persisted === "object" &&
-          "openMode" in persisted && persisted.openMode === "peek"
-            ? "peek"
-            : "page",
+          "openMode" in persisted && persisted.openMode === "page"
+            ? "page"
+            : "peek",
       }),
     },
   ),

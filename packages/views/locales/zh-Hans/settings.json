@@ -15,7 +15,7 @@
       "archive": "归档",
       "reorder": "拖动排序 {{name}}"
     },
-    "reorder_hint": "在分类内拖动排序，同步用于看板、列表和菜单。",
+    "reorder_hint": "在分组内拖动排序，同步用于看板、列表和菜单。",
     "built_in_dialog": {},
     "editor": {
       "create_title": "新建状态",
@@ -24,8 +24,9 @@
       "name_placeholder": "例如：Code Review",
       "key_hint": "API 和 CLI 中通过 {{key}} 引用。",
       "created": "状态已创建。API 和 CLI 中通过 {{key}} 引用。",
-      "category": "分类",
-      "category_locked": "状态创建后不能修改分类。",
+      "lifecycle": "生命周期类型",
+      "group": "分组",
+      "lifecycle_locked": "状态创建后不能修改生命周期类型。",
       "description": "描述",
       "description_placeholder": "这个状态对团队意味着什么",
       "color": "颜色",
@@ -63,11 +64,11 @@
       "done": "已完成",
       "closed": "已关闭"
     },
-    "categories": {
-      "unstarted": "尚未开始的工作，包括待规划和已规划的任务。",
-      "started": "正在进行、审核中或已阻塞的工作。",
-      "done": "已经完成的工作。",
-      "closed": "不再继续的工作。"
+    "group_labels": {
+      "not_started": "未开始",
+      "working": "工作中",
+      "needs_attention": "需介入",
+      "ended": "已结束"
     },
     "built_in_descriptions": {
       "backlog": "搁置。把任务移到这里不会启动智能体。",
@@ -87,7 +88,7 @@
   "wakeups": {
     "description": "平台对所有任务生效的规则。每个任务可以在自己的「唤醒」区域单独修改。",
     "child_done_title": "子任务结束时",
-    "child_done_description": "某个阶段的子任务全部结束、且后面还有阶段在等待时，唤醒父任务的负责人；全部子任务结束时再唤醒一次。负责人是成员时，改为发送收件箱通知。",
+    "child_done_description": "某个阶段的子任务全部结束、且后面还有阶段在等待时，唤醒父任务的负责人；全部子任务结束时再唤醒一次。负责人是成员时，改为发送消息通知。",
     "enabled": "默认开启",
     "instruction": "默认指令",
     "instruction_hint": "发给被唤醒的智能体。留空则使用下方的内置指令。",
@@ -166,7 +167,8 @@
     "language": {
       "title": "语言",
       "english": "English",
-      "chinese": "中文",
+      "chinese": "简体中文",
+      "chinese_traditional": "繁體中文",
       "korean": "한국어",
       "japanese": "日本語",
       "french": "Français",
@@ -256,7 +258,7 @@
       },
       "archiveInboxItem": {
         "label": "归档通知",
-        "description": "归档当前打开的收件箱通知；在归档列表中则取消归档。"
+        "description": "归档当前打开的消息通知；在归档列表中则取消归档。"
       },
       "send": {
         "label": "发送",
@@ -271,8 +273,8 @@
         "description": "像浏览器一样在历史记录中前进。"
       },
       "goInbox": {
-        "label": "前往收件箱",
-        "description": "打开工作区收件箱。"
+        "label": "前往消息",
+        "description": "打开工作区消息。"
       },
       "goChat": {
         "label": "前往聊天",
@@ -415,7 +417,7 @@
     "groups": {
       "personal": "个人",
       "workspace": "工作区",
-      "issues": "任务与工作流",
+      "issues": "任务",
       "connections": "连接与扩展",
       "device": "本设备"
     },
@@ -646,7 +648,7 @@
     "toast_profile_failed": "更新资料失败"
   },
   "notifications": {
-    "title": "收件箱通知",
+    "title": "消息通知",
     "description": "关闭通知后，仍可在任务中查看相关动态。",
     "toast_failed": "更新通知设置失败",
     "groups": {
@@ -681,7 +683,7 @@
     },
     "browser": {
       "label": "浏览器通知",
-      "hint": "允许当前浏览器为新的收件箱条目弹出通知横幅。",
+      "hint": "允许当前浏览器为新的消息条目弹出通知横幅。",
       "enable": "启用",
       "granted": "当前浏览器可以弹出通知横幅。",
       "denied": "已被浏览器拦截。请在浏览器设置中为本站点开启通知权限。",
@@ -1311,6 +1313,356 @@
       "reconnect_failed": "无法重新连接守护进程",
       "try_again_moment": "请稍后重试。",
       "try_again": "请重试。"
+    },
+    "server": {
+      "connect": {
+        "title": "连接到 Marvis 服务器",
+        "subtitle": "在这台电脑上使用，或连接局域网中已有的服务器。之后可以在设置里更换。",
+        "lan_heading": "局域网中的服务器",
+        "scanning": "正在查找",
+        "rescan": "重新查找",
+        "local_badge": "本机",
+        "none": "局域网中没有找到服务器。电脑和服务器需要连在同一个局域网。",
+        "or_address": "或输入地址",
+        "summary_manual": "手动输入的地址",
+        "summary_manual_hint": "先测试连接"
+      },
+      "address": {
+        "label": "服务器地址",
+        "test": "测试连接",
+        "testing": "正在测试"
+      },
+      "probe": {
+        "ok": "可以连接 · {{name}} · {{version}}",
+        "ok_no_version": "可以连接 · {{name}}",
+        "unreachable": "无法连接到这个地址",
+        "not_marvis": "这个地址不是 Marvis 服务器",
+        "too_old": "服务器版本过旧"
+      },
+      "confirm": {
+        "http_warning": "这个服务器使用 HTTP 连接，同一网络中的设备可能看到传输的内容。",
+        "connect": "连接",
+        "connecting": "正在连接..."
+      },
+      "settings": {
+        "title": "服务器",
+        "description": "这台电脑连接的 Marvis 服务器。切换后需要重新登录。",
+        "connected": "已连接",
+        "offline": "无法连接",
+        "other_address": "其他地址",
+        "switch": "切换",
+        "switch_title": "切换到 {{name}}？",
+        "switch_body": "会退出当前账号，连接到 {{address}} 后重新登录。",
+        "switch_failed": "切换服务器失败",
+        "cancel": "取消"
+      },
+      "banner": {
+        "reconnecting": "与 {{name}} 的连接已断开，正在重新连接…",
+        "unreachable": "无法连接到 {{name}}（{{address}}）。页面内容可能不是最新的。",
+        "retry": "重试",
+        "switch": "切换服务器"
+      },
+      "moved": {
+        "title": "已重新连接到 {{name}}",
+        "body": "服务器地址变为 {{address}}，已自动更新"
+      },
+      "replaced": {
+        "title": "这个地址上换了一台服务器",
+        "body": "{{address}} 现在是“{{other}}”，不是你之前连接的“{{name}}”。为避免连错，没有自动切换。",
+        "wait": "继续等待",
+        "switch": "切换服务器"
+      },
+      "tab_label": "服务器"
+    },
+    "standalone": {
+      "pick": {
+        "heading": "这台电脑",
+        "option": "在这台电脑上使用",
+        "badge": "单机模式",
+        "not_installed": "首次使用需下载约 40 MB 资源",
+        "ready": "已就绪 · v{{version}}",
+        "summary_setup": "下一步：完成设置",
+        "next": "下一步",
+        "continue": "继续",
+        "entering": "正在进入..."
+      },
+      "setup": {
+        "title": "完成单机模式设置",
+        "subtitle": "填写管理员邮箱即可开始，其余设置已使用默认值。",
+        "resources": "资源",
+        "resources_size": "约 40 MB",
+        "location": "位置",
+        "access": "访问",
+        "access_local": "仅本机",
+        "access_lan": "本机和局域网",
+        "errors_count_other": "{{count}} 项配置需要修改",
+        "download": "下载资源",
+        "submitting": "正在保存...",
+        "back": "返回",
+        "submit_failed": "设置未能保存，请重试。"
+      },
+      "form": {
+        "help": "{{label}}说明",
+        "random": "随机",
+        "random_label": "随机生成{{label}}",
+        "defaults": "默认配置",
+        "optional": "可选",
+        "needs_fix_other": "{{count}} 项需要修改",
+        "not_configured": "未配置",
+        "configured": "已配置",
+        "saved_secret": "已保存，留空则不修改",
+        "lan_login_warning": "局域网登录需要配置登录验证码、飞书登录或邮件服务中的一种",
+        "admin_email": {
+          "label": "管理员邮箱",
+          "help": "第一个账号，也是工作区所有者。Marvis 用它在这台电脑上自动登录。",
+          "placeholder": "name@company.com"
+        },
+        "general": {
+          "title": "常规",
+          "summary": "{{name}} · 端口 {{port}} · {{access}}"
+        },
+        "name": {
+          "label": "名称",
+          "help": "在局域网中显示的名字。"
+        },
+        "port": {
+          "label": "端口",
+          "help": "局域网连接使用的端口，默认 13840。"
+        },
+        "lan": {
+          "label": "允许局域网连接",
+          "help": "开启后局域网中的设备可以发现并连接这台电脑；关闭时只有这台电脑能使用。"
+        },
+        "keys": {
+          "title": "安全密钥",
+          "summary": "8 个已随机生成",
+          "summary_locked": "已锁定，不能修改"
+        },
+        "jwt": {
+          "label": "登录签名密钥",
+          "help": "签发登录凭证。至少 32 个字符，首次启动后不能修改。"
+        },
+        "key_help": "加密保存集成凭证。需要 base64 编码的 32 字节，首次启动后不能修改，修改会导致已保存的凭证无法解密。",
+        "key_names": {
+          "lark": "飞书凭证加密密钥",
+          "vcs": "代码仓库凭证加密密钥",
+          "slack": "Slack 凭证加密密钥",
+          "dingtalk": "钉钉凭证加密密钥",
+          "wecom": "企业微信凭证加密密钥",
+          "telegram": "Telegram 凭证加密密钥",
+          "plugin": "插件凭证加密密钥"
+        },
+        "other_keys": {
+          "label": "其他 5 个集成密钥已随机生成",
+          "help": "Slack、钉钉、企业微信、Telegram、插件的凭证加密密钥，规则同上。"
+        },
+        "login_code": {
+          "title": "登录验证码",
+          "summary_on": "已开启 · {{code}}",
+          "summary_off": "已关闭",
+          "switch_label": "启用固定验证码",
+          "switch_help": "局域网中的成员登录时输入这个验证码，不需要邮件服务。关闭后需要用飞书登录或邮件验证码登录。",
+          "label": "登录验证码",
+          "help": "局域网中的成员登录时输入的 6 位数字。不能用来登录工作区所有者和管理员，只在可信的局域网中使用。",
+          "placeholder": "6 位数字"
+        },
+        "lark": {
+          "title": "飞书登录",
+          "summary_on": "已配置 · {{appId}}",
+          "app_id_label": "App ID",
+          "app_id_help": "飞书开放平台 › 应用凭证中的 App ID，以 cli_ 开头。",
+          "app_secret_label": "App Secret",
+          "app_secret_help": "同一页面中的 App Secret。",
+          "tenants_label": "允许的租户",
+          "tenants_help": "只允许这些租户的成员登录，多个用英文逗号分隔。不填则不限制。",
+          "tenants_placeholder": "不限制"
+        },
+        "smtp": {
+          "title": "邮件服务",
+          "summary_on": "已配置 · {{host}}",
+          "host_label": "发信地址",
+          "host_help": "发送登录验证码邮件的 SMTP 地址，例如 smtp.example.com。",
+          "port_label": "端口",
+          "port_help": "常用 465 或 587。",
+          "username_label": "用户名",
+          "username_help": "登录邮件服务的账号。",
+          "password_label": "密码",
+          "password_help": "登录邮件服务的密码或授权码。",
+          "from_label": "发件人",
+          "from_help": "邮件中显示的发件人地址。"
+        },
+        "llm": {
+          "title": "辅助模型",
+          "summary_on": "已配置 · {{model}}",
+          "base_url_label": "接口地址",
+          "base_url_help": "兼容 OpenAI 接口的模型服务地址。不填时使用 OpenAI 的默认地址。",
+          "api_key_label": "API Key",
+          "api_key_help": "为对话生成标题和追问建议。对话内容会发送到这个模型服务。",
+          "model_label": "模型",
+          "model_help": "不填时使用内置的默认模型。"
+        },
+        "validation": {
+          "required": "请填写{{label}}",
+          "email": "邮箱格式不正确",
+          "port_range": "端口范围 {{min}}–{{max}}",
+          "jwt_length": "至少 {{min}} 个字符",
+          "key_format": "需要 base64 编码的 32 字节密钥",
+          "login_code": "需要 6 位数字",
+          "lark_app_id": "App ID 以 cli_ 开头",
+          "lark_secret_required": "填写 App ID 后需要填写 App Secret",
+          "tenant_keys": "多个租户用英文逗号分隔",
+          "url": "需要以 http:// 或 https:// 开头"
+        }
+      },
+      "prepare": {
+        "label": "准备单机模式",
+        "steps": "阶段",
+        "step_download": "下载",
+        "step_verify": "校验",
+        "step_install": "安装",
+        "progress": "资源准备进度",
+        "phase_downloading": "正在下载资源",
+        "phase_paused": "已暂停",
+        "phase_verifying": "正在校验资源",
+        "phase_installing": "正在安装资源",
+        "phase_starting": "正在启动",
+        "phase_failed": "安装未完成",
+        "phase_stopped": "未运行",
+        "title_preparing": "正在准备单机模式",
+        "title_paused": "下载已暂停",
+        "title_failed": "资源安装失败",
+        "title_unavailable": "单机模式暂时无法使用",
+        "title_stopped": "单机模式未运行",
+        "title_done": "单机模式已就绪",
+        "subtitle_downloading": "首次使用需要下载资源。关闭窗口后在后台继续。",
+        "subtitle_paused": "已下载的部分会保留，继续后从断点开始。",
+        "subtitle_verifying": "资源下载完成，正在确认完整性。",
+        "subtitle_installing": "首次安装需要一点时间，请保持 Marvis 打开。",
+        "subtitle_starting": "单机模式正在启动，请保持 Marvis 打开。",
+        "subtitle_stopped": "重试后重新开始运行。",
+        "subtitle_done_lan": "局域网中的设备可以自动发现这台电脑，退出 Marvis 后连接断开。",
+        "subtitle_done_local": "当前只在这台电脑上使用，可在 设置 › 服务器 中允许局域网连接。",
+        "size": "{{received}} / {{total}} MB",
+        "speed": "{{speed}} MB/s",
+        "speed_eta": "{{speed}} MB/s · 剩余约 {{eta}}",
+        "eta_seconds_other": "{{count}} 秒",
+        "eta_minutes_other": "{{count}} 分钟",
+        "paused_hint": "网络恢复后自动继续",
+        "install_hint": "首次安装约需 1 分钟",
+        "done_heading": "资源已就绪",
+        "done_version": "版本 v{{version}}",
+        "pause": "暂停下载",
+        "resume": "继续下载",
+        "cancel": "取消",
+        "retry": "重试",
+        "edit_settings": "修改设置",
+        "view_logs": "查看日志",
+        "enter": "进入 Marvis",
+        "entering": "正在进入...",
+        "enter_failed": "未能进入单机模式",
+        "action_failed": "操作未完成，请重试。",
+        "errors": {
+          "port_in_use": "网络端口 {{port}} 被其他程序占用。修改端口后重试，已下载的资源会保留。",
+          "port_in_use_running": "网络端口 {{port}} 被其他程序占用。关闭占用端口的程序后重试。",
+          "network": "网络连接中断。网络恢复后重试，已下载的资源会保留。",
+          "checksum": "资源文件校验失败，重试会重新下载。",
+          "disk": "磁盘空间不足或没有写入权限。",
+          "unsupported_platform": "这台电脑的系统暂不支持单机模式。",
+          "manifest": "暂时无法获取资源信息，请稍后重试。",
+          "start_failed": "资源已就绪，但未能开始运行。"
+        }
+      },
+      "login": {
+        "admin": "以管理员身份进入",
+        "admin_busy": "正在进入...",
+        "admin_failed": "未能以管理员身份进入"
+      },
+      "settings": {
+        "description": "这台电脑处于单机模式。",
+        "mode": "单机模式",
+        "meta": "资源版本 v{{version}}",
+        "meta_running": "资源版本 v{{version}} · 已运行 {{duration}}",
+        "duration_minutes_other": "{{count}} 分钟",
+        "duration_hours_other": "{{count}} 小时",
+        "duration_days_other": "{{count}} 天",
+        "status": {
+          "running": "运行中",
+          "starting": "正在启动",
+          "stopped": "已停止",
+          "unavailable": "无法使用",
+          "updating": "正在更新"
+        },
+        "reload": "重新加载",
+        "stop": "停止",
+        "start": "启动",
+        "lan_label": "允许局域网连接",
+        "lan_help": "局域网中的设备会自动发现这台电脑。搜索不到时，手动输入地址 {{url}}",
+        "updates_label": "资源更新",
+        "updates_hint": "在 设置 › 更新 中检查",
+        "updates_go": "前往",
+        "switch_heading": "切换到其他服务器",
+        "switch_hint": "连接成功后单机模式停止，本机数据保留，之后可以在这里切回。",
+        "switch_title": "切换到 {{name}}？",
+        "switch_body": "会退出当前账号，连接到 {{host}} 后重新登录。单机模式随之停止，本机数据保留。",
+        "config_heading": "配置",
+        "edit": "编辑",
+        "port": "端口",
+        "admin_email": "管理员邮箱",
+        "lark": "飞书登录",
+        "smtp": "邮件服务",
+        "keys": "安全密钥",
+        "keys_locked": "已锁定",
+        "keys_unlocked": "未锁定",
+        "edit_title": "编辑配置",
+        "edit_note": "保存后重新加载生效。",
+        "save": "保存",
+        "saving": "正在保存...",
+        "save_failed": "保存失败",
+        "data_heading": "数据",
+        "backup_now": "立即备份",
+        "open": "打开",
+        "backup_update": "更新前自动备份 · {{date}}",
+        "backup_manual": "手动备份 · {{date}}",
+        "restore": "恢复",
+        "restore_title": "恢复到 {{date}} 的备份？",
+        "restore_body": "当前数据会被替换，局域网连接会短暂中断。",
+        "logs": "日志",
+        "view": "查看",
+        "keep_hint": "保留最近 3 份备份",
+        "this_computer": "这台电脑",
+        "ready": "单机模式 · 已就绪 v{{version}}",
+        "enter_title": "切换到单机模式？",
+        "enter_body": "会退出当前账号，在这台电脑上使用。"
+      },
+      "update": {
+        "app_heading": "Marvis",
+        "heading": "单机模式资源",
+        "latest_title": "已是最新版本",
+        "latest_meta": "v{{version}} · 上次检查 {{time}}",
+        "latest_meta_unchecked": "v{{version}}",
+        "check": "检查更新",
+        "checking": "正在检查...",
+        "available_title": "资源更新 v{{version}}",
+        "available_meta": "约 {{size}} MB · 更新前自动备份数据，局域网连接中断约 10 秒",
+        "available_meta_no_size": "更新前自动备份数据，局域网连接中断约 10 秒",
+        "install": "更新",
+        "downloading_title": "正在下载资源更新",
+        "downloading_meta": "{{received}} / {{total}} MB · {{speed}} MB/s",
+        "downloading_meta_eta": "{{received}} / {{total}} MB · {{speed}} MB/s · 剩余约 {{eta}}",
+        "progress_label": "下载资源更新",
+        "installing_title": "正在安装资源更新",
+        "installing_meta": "局域网连接会短暂中断，完成后自动恢复",
+        "steps_label": "更新步骤",
+        "step_backup": "备份数据",
+        "step_install": "安装资源",
+        "step_migrate": "更新数据",
+        "step_done": "完成",
+        "rolled_back_title": "更新失败，已恢复到 v{{version}}",
+        "rolled_back_meta": "数据已恢复到更新前的状态",
+        "view_logs": "查看日志",
+        "retry": "重试",
+        "auto_download": "自动下载资源更新"
+      }
     }
   },
   "members": {
@@ -1394,7 +1746,84 @@
     "invitation_meta": "{{sent}} 发送 · {{expires}} 过期",
     "revoke_invitation_aria": "撤销发给 {{email}} 的邀请",
     "seats_used": "已用 {{used}} / {{purchased}} 个席位",
-    "manage_seats": "管理席位"
+    "manage_seats": "管理席位",
+    "lark": {
+      "tab": "飞书邀请",
+      "send": "发送飞书邀请",
+      "intro": "卡片发到飞书群或个人，点击“加入工作区”的人直接成为成员。",
+      "col_target": "接收方",
+      "col_role": "角色",
+      "col_joined": "已加入",
+      "col_expiry": "有效期",
+      "col_sender": "发送人",
+      "status_active": "有效",
+      "status_completed": "已完成",
+      "status_expired": "已过期",
+      "status_revoked": "已撤销",
+      "joined_count_other": "{{count}} 人已加入",
+      "joined_of": "{{used}} / {{max}}",
+      "not_joined": "未加入",
+      "joined": "已加入",
+      "chat_kind": "群聊",
+      "chat_sub_other": "群聊 · {{count}} 人",
+      "user_kind": "个人",
+      "user_sub": "个人 · {{email}}",
+      "revoke": "撤销",
+      "toast_revoked": "邀请已撤销",
+      "toast_revoke_failed": "撤销失败",
+      "empty": "还没有发出飞书邀请",
+      "load_failed": "邀请列表加载失败",
+      "not_configured_title": "服务器未配置飞书机器人",
+      "not_configured_body": "服务器管理员开启飞书邀请后可用。",
+      "dialog_title": "发送飞书邀请",
+      "tab_chat": "群聊",
+      "tab_user": "个人",
+      "search_chat": "搜索群名",
+      "chat_hint": "这里列出 Marvis 机器人所在的群。要发到其他群，先在飞书群设置里添加 Marvis 机器人。",
+      "chats_empty": "没有可选的群",
+      "chats_load_failed": "群列表加载失败",
+      "email_label": "邮箱",
+      "email_placeholder": "输入邮箱，回车添加",
+      "email_invalid": "邮箱格式不正确",
+      "email_not_found": "飞书里没有 {{email}}，发送时会跳过。",
+      "email_remove": "移除 {{email}}",
+      "lookup_failed": "查询飞书用户失败",
+      "user_hint": "对方会在和 Marvis 机器人的私聊里收到卡片。",
+      "role_label": "加入后的角色",
+      "expiry_label": "有效期",
+      "expiry_1d": "1 天",
+      "max_uses_label": "人数上限",
+      "max_uses_placeholder": "不限",
+      "note_label": "附言",
+      "note_placeholder": "显示在卡片上",
+      "sender_hint": "以 Marvis 机器人的名义发送",
+      "send_to_chats_other": "发送到 {{count}} 个群",
+      "send_to_users_other": "发送给 {{count}} 人",
+      "sending": "发送中",
+      "target_limit": "一次最多发送 {{max}} 个接收方",
+      "failed_title": "未发送",
+      "preview": "卡片预览",
+      "preview_title": "工作区邀请",
+      "preview_sentence": "{{inviter}} 邀请你加入工作区 {{workspace}}",
+      "preview_role": "角色：{{role}}",
+      "preview_expires": "有效期至：{{date}}",
+      "preview_note": "“{{note}}”",
+      "preview_join": "加入工作区",
+      "sent_toast_other": "已发送 {{count}} 张卡片",
+      "submitted_toast": "已提交，结果稍后更新",
+      "errors": {
+        "lark_not_configured": "飞书应用配置不完整",
+        "permission_denied": "需要管理员或所有者权限",
+        "invalid_target": "接收方无效",
+        "invalid_request": "请求参数不正确",
+        "invite_not_found": "邀请不存在",
+        "bot_not_in_chat": "Marvis 机器人不在这个群里",
+        "user_not_found": "飞书里没有这个邮箱的用户",
+        "user_not_in_app_scope": "对方不在应用可用范围内",
+        "open_id_cross_app": "这个 ID 属于其他飞书应用",
+        "send_failed": "发送失败"
+      }
+    }
   },
   "integrations": {
     "status_connected": "已连接",

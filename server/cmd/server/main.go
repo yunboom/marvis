@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -24,6 +25,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/events"
 	"github.com/yunboom/marvis/server/internal/handler"
 	"github.com/yunboom/marvis/server/internal/integrations/wecom"
+	"github.com/yunboom/marvis/server/internal/landiscovery"
 	"github.com/yunboom/marvis/server/internal/logger"
 	"github.com/yunboom/marvis/server/internal/maintenance"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
@@ -324,6 +326,18 @@ func newMainHTTPServer(addr string, handler http.Handler) *http.Server {
 	}
 }
 
+// mainListenAddr joins MARVIS_LISTEN_HOST and PORT into the public listen
+// address. An empty host keeps the all-interfaces bind; standalone mode passes
+// 127.0.0.1 so the server is unreachable from the LAN while LAN access is off.
+func mainListenAddr(host, port string) string {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		return ":" + port
+	}
+
+	return net.JoinHostPort(host, port)
+}
+
 func main() {
 	logger.Init()
 	// Read the opt-out before constructing any telemetry dependency. In the
@@ -346,17 +360,26 @@ func main() {
 		slog.Warn("no email backend configured (RESEND_API_KEY and SMTP_HOST both empty) — verification codes will be printed to the log instead of emailed.")
 	}
 	if os.Getenv("MARVIS_DEV_VERIFICATION_CODE") != "" {
-		if strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production") {
+		standalone := handler.IsStandaloneMode()
+		switch {
+		case standalone:
+			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is enabled for standalone mode: anyone who can reach this server and knows the code can sign in as any email.")
+		case strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production"):
 			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is set but ignored because APP_ENV=production.")
-		} else {
+		default:
 			slog.Warn("MARVIS_DEV_VERIFICATION_CODE is enabled. Use it only for local development or private test instances.")
 		}
+	}
+	bootstrapToken := strings.TrimSpace(os.Getenv("MARVIS_BOOTSTRAP_TOKEN"))
+	if bootstrapToken != "" && len(bootstrapToken) < handler.MinBootstrapTokenLength {
+		slog.Warn("MARVIS_BOOTSTRAP_TOKEN is too short; /auth/bootstrap stays disabled", "min_length", handler.MinBootstrapTokenLength)
 	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "13840"
 	}
+	listenHost := os.Getenv("MARVIS_LISTEN_HOST")
 	shutdownHoldDuration := envNonNegativeDuration("MARVIS_SHUTDOWN_HOLD_DURATION", 0)
 
 	// Feature flags: loaded once at startup from MARVIS_FEATURE_FLAGS_FILE
@@ -679,6 +702,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 局域网广播的配置和实例 ID：/api/config 对外核实用，与是否广播无关，所以总是读取。
+	lanConfig := lanConfigForListenHost(lanConfigForListenPort(landiscovery.ConfigFromEnv(os.Getenv, os.Hostname), port), listenHost)
+	instanceID := loadLANInstanceID(context.Background(), pool)
+	// 广播实际使用的主机名，桌面端飞书登录据此推导回调地址；不广播时一直为空。
+	lanStatus := &landiscovery.Status{}
+
 	r, h := NewRouterWithOptions(pool, hub, bus, analyticsClient, storeRedis, RouterOptions{
 		HTTPMetrics:         httpMetrics,
 		BusinessMetrics:     businessMetrics,
@@ -693,7 +722,15 @@ func main() {
 		HeartbeatScheduler:  heartbeatScheduler,
 		LLMMaxRetries:       llmMaxRetries,
 		LLMDisableThinking:  llmDisableThinking,
+		LAN:                 lanConfig,
+		LANHostname:         lanStatus.Hostname,
+		InstanceID:          instanceID,
+		Standalone:          handler.IsStandaloneMode(),
+		BootstrapToken:      bootstrapToken,
 	})
+	// member_delegation_day exists only for self-host telemetry; DO_NOT_TRACK
+	// stops writing it as well as sending the snapshot.
+	h.TaskService.RecordMemberActivity = telemetryConfig.Enabled
 	var replicaQueries *db.Queries
 	if replicaPool != nil {
 		replicaQueries = db.New(replicaPool)
@@ -708,7 +745,7 @@ func main() {
 	// the scheduler's Run goroutine starts so the field write is race-free.
 	heartbeatScheduler.RecoveryNotifier = h
 
-	srv := newMainHTTPServer(":"+port, r)
+	srv := newMainHTTPServer(mainListenAddr(listenHost, port), r)
 	profilingServer := profiling.NewServer()
 	maintenanceServer, maintenanceErr := maintenance.NewServer(os.Getenv("MAINTENANCE_PORT"), maintenance.NewService(pool, maintenance.StatusCategory{}))
 	if maintenanceErr != nil {
@@ -779,6 +816,9 @@ func main() {
 	if h.TelegramOutbound != nil {
 		h.TelegramOutbound.Start(sweepCtx)
 	}
+	// Knowledge base block embeddings for hybrid search; returns at once
+	// without an embedding model or pgvector.
+	go h.KbEmbeddings.Run(sweepCtx)
 	// GitHub PR-card API snapshot pipeline (MUL-5265): worker pool + TTL sweeper.
 	// No-op when unconfigured (no App private key).
 	h.PRRefresh.Start(sweepCtx)
@@ -796,6 +836,11 @@ func main() {
 
 	if h.LarkTyping != nil {
 		go h.LarkTyping.Run(sweepCtx)
+	}
+
+	// 飞书邀请卡片的回调长连接：未启用时 LarkInviteConn 为 nil。
+	if h.LarkInviteConn != nil {
+		go h.LarkInviteConn.Run(sweepCtx)
 	}
 
 	// Media intent-ledger reconciler (PR #5580): settles uploaded-but-unbound
@@ -884,6 +929,9 @@ func main() {
 		}
 	}()
 
+	// 监听已启动，开始局域网广播；失败只记警告，不影响服务端。
+	lan := startLANAdvertising(lanConfig, normalizeServerVersion(version), instanceID, lanStatus)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
@@ -893,6 +941,9 @@ func main() {
 	signal.Stop(quit)
 
 	slog.Info("shutting down server")
+
+	// 先撤销局域网广播，再关闭 HTTP 服务，让其他设备尽快不再发现这台服务器。
+	lan.Stop()
 
 	// The order below is the contract, and shutdown.go is where it is stated
 	// and pinned. The one that is not self-evident: the WeCom dispatcher must

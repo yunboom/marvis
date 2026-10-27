@@ -62,7 +62,7 @@ export function RetryRunButton({ task, issueId }: { task: AgentTask; issueId: st
             aria-label={t(($) => $.execution_log.retry_task_aria)}
           />
         }
-        className="flex items-center justify-center rounded-xs p-1 text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex items-center justify-center rounded-full p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
       >
         {retrying ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />

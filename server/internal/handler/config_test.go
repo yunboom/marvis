@@ -114,6 +114,149 @@ func TestGetConfigIncludesRuntimeAuthConfig(t *testing.T) {
 	}
 }
 
+// 局域网身份测试使用的服务器名称和实例 ID。
+const (
+	lanTestServerName = "设计部 Marvis"
+	lanTestInstanceID = "7f3a0c52-9d1e-4b6a-8f20-3c5d7e9a1b44"
+)
+
+func TestGetConfigIncludesLANIdentity(t *testing.T) {
+	origCfg := testHandler.cfg
+	t.Cleanup(func() { testHandler.cfg = origCfg })
+
+	fetch := func() map[string]any {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+		var body map[string]any
+		testutil.Call(t, testHandler.GetConfig, req).Want(http.StatusOK).JSON(&body)
+		return body
+	}
+
+	// 自托管部署：两个字段随 /api/config 下发。
+	t.Setenv("MARVIS_APP_URL", "https://marvis.self-hosted.example")
+	t.Setenv("FRONTEND_ORIGIN", "")
+
+	testHandler.cfg.ServerName = lanTestServerName
+	testHandler.cfg.InstanceID = lanTestInstanceID
+	body := fetch()
+	if body["server_name"] != lanTestServerName {
+		t.Fatalf("server_name = %v, want %s", body["server_name"], lanTestServerName)
+	}
+	if body["instance_id"] != lanTestInstanceID {
+		t.Fatalf("instance_id = %v, want the configured instance id", body["instance_id"])
+	}
+
+	// 未配置时两个字段都不出现，旧客户端看到的响应形状不变。
+	testHandler.cfg.ServerName = ""
+	testHandler.cfg.InstanceID = ""
+	body = fetch()
+	for _, key := range []string{"server_name", "instance_id"} {
+		if _, ok := body[key]; ok {
+			t.Fatalf("%s must be omitted when empty", key)
+		}
+	}
+}
+
+// TestGetConfigOmitsLANIdentityOnOfficialCloud 确认官方云（前端域名 marvis.ai）不下发
+// server_name 和 instance_id，即使服务端配置了它们；自托管的前端域名仍然下发。
+func TestGetConfigOmitsLANIdentityOnOfficialCloud(t *testing.T) {
+	origCfg := testHandler.cfg
+	t.Cleanup(func() { testHandler.cfg = origCfg })
+
+	testHandler.cfg.ServerName = lanTestServerName
+	testHandler.cfg.InstanceID = lanTestInstanceID
+
+	fetch := func() map[string]any {
+		t.Helper()
+		req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+		var body map[string]any
+		testutil.Call(t, testHandler.GetConfig, req).Want(http.StatusOK).JSON(&body)
+		return body
+	}
+
+	t.Setenv("MARVIS_APP_URL", "https://marvis.ai")
+	t.Setenv("FRONTEND_ORIGIN", "")
+	body := fetch()
+	for _, key := range []string{"server_name", "instance_id"} {
+		if _, ok := body[key]; ok {
+			t.Fatalf("%s must be omitted on the official cloud, got %v", key, body[key])
+		}
+	}
+
+	t.Setenv("MARVIS_APP_URL", "https://marvis.self-hosted.example")
+	body = fetch()
+	if body["server_name"] != lanTestServerName || body["instance_id"] != lanTestInstanceID {
+		t.Fatalf("self-hosted: server_name = %v, instance_id = %v, want both configured values", body["server_name"], body["instance_id"])
+	}
+}
+
+func TestGetConfigLarkLoginAppID(t *testing.T) {
+	tests := []struct {
+		name   string
+		secret string
+		want   string
+	}{
+		{name: "configured", secret: "lark-secret", want: "cli_lark_app"},
+		{name: "secret missing", secret: "", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(larkLoginAppIDEnv, "cli_lark_app")
+			t.Setenv(larkLoginAppSecretEnv, tt.secret)
+
+			req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+			var cfg AppConfig
+			testutil.Call(t, testHandler.GetConfig, req).Want(http.StatusOK).JSON(&cfg)
+
+			if cfg.LarkLoginAppID != tt.want {
+				t.Fatalf("lark_login_app_id = %q, want %q", cfg.LarkLoginAppID, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetConfigLarkDesktopLogin(t *testing.T) {
+	origCfg := testHandler.cfg
+	t.Cleanup(func() { testHandler.cfg = origCfg })
+
+	advertising := func() string { return "marvis.local" }
+	tests := []struct {
+		name        string
+		secret      string
+		redirectURI string
+		lanHostname func() string
+		want        bool
+	}{
+		{name: "configured callback address", secret: "lark-secret", redirectURI: "http://studio.example:13840/auth/lark/desktop-callback", want: true},
+		{name: "advertised host", secret: "lark-secret", lanHostname: advertising, want: true},
+		{name: "no callback address", secret: "lark-secret", want: false},
+		{name: "feishu login not configured", secret: "", redirectURI: "http://studio.example:13840/auth/lark/desktop-callback", lanHostname: advertising, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(larkLoginAppIDEnv, "cli_lark_app")
+			t.Setenv(larkLoginAppSecretEnv, tt.secret)
+			t.Setenv(larkLoginDesktopRedirectURIEnv, tt.redirectURI)
+			testHandler.cfg.LANHostname = tt.lanHostname
+			testHandler.cfg.LANPort = 13840
+
+			req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+			var body map[string]any
+			testutil.Call(t, testHandler.GetConfig, req).Want(http.StatusOK).JSON(&body)
+
+			got, present := body["lark_desktop_login"]
+			if tt.want && got != true {
+				t.Fatalf("lark_desktop_login = %v, want true", got)
+			}
+			if !tt.want && present {
+				t.Fatalf("lark_desktop_login = %v, want the field omitted", got)
+			}
+		})
+	}
+}
+
 func TestGetConfigUsesDaemonServerURLOverride(t *testing.T) {
 	t.Setenv("MARVIS_DAEMON_SERVER_URL", " https://api.internal.example/// ")
 	t.Setenv("MARVIS_PUBLIC_URL", "https://hooks.example.com/")
@@ -457,6 +600,9 @@ func TestGetConfigExposesFrontendFeatureFlags(t *testing.T) {
 	if !cfg.FeatureFlags["settings_resource_labels"] {
 		t.Fatalf("settings_resource_labels: want true for installed clients, got false")
 	}
+	if !cfg.FeatureFlags["project_workflows_v1"] {
+		t.Fatal("project_workflows_v1: want true for installed clients")
+	}
 	if !cfg.FeatureFlags["agents_agent_builder"] {
 		t.Fatalf("agents_agent_builder: want true for installed clients, got false")
 	}
@@ -505,6 +651,24 @@ func TestGetConfigExposesEnabledPluginsV1Flag(t *testing.T) {
 	}
 	if !cfg.FeatureFlags["plugins_v1"] {
 		t.Fatal("plugins_v1: want true with flag enabled, got false")
+	}
+}
+
+func TestGetConfigKeepsProjectWorkflowsEnabledForInstalledClients(t *testing.T) {
+	h := &Handler{}
+	withFeatureFlag(t, h, "project_workflows_v1", false)
+
+	w := httptest.NewRecorder()
+	h.GetConfig(w, httptest.NewRequest(http.MethodGet, "/api/config", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("GetConfig: expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var cfg AppConfig
+	if err := json.Unmarshal(w.Body.Bytes(), &cfg); err != nil {
+		t.Fatalf("decode config: %v", err)
+	}
+	if !cfg.FeatureFlags["project_workflows_v1"] {
+		t.Fatal("retired project_workflows_v1 overrides must not hide workflows in installed clients")
 	}
 }
 

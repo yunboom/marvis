@@ -26,6 +26,7 @@ import {
   ArrowUpRight,
   Copy,
   RotateCw,
+  Square,
 } from "lucide-react";
 import { useScrollFade } from "@marvis/ui/hooks/use-scroll-fade";
 import { isTaskMessageTaskId, taskMessagesOptions } from "@marvis/core/chat/queries";
@@ -378,7 +379,7 @@ export function ChatMessageList({
         components={LIST_COMPONENTS}
         itemContent={(_, item) => (
           <div
-            className={cn(CHAT_COLUMN, "py-2")}
+            className={cn(CHAT_COLUMN, "py-3")}
             {...(item.key === liveEndKey ? { [LIVE_END_ROW_ATTR]: "" } : {})}
           >
             <MessageBubble
@@ -428,7 +429,7 @@ function ChatSkeletonBody() {
         <Skeleton className="h-3.5 w-1/2" />
       </div>
       <div className="flex justify-end">
-        <Skeleton className="h-8 w-48 rounded-2xl" />
+        <Skeleton className="h-10 w-48 rounded-xl" />
       </div>
       <div className="space-y-2">
         <Skeleton className="h-3.5 w-2/3" />
@@ -487,7 +488,7 @@ const MessageBubble = memo(function MessageBubble({
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
-        <div className="rounded-2xl bg-muted px-3.5 py-2 text-body max-w-[80%] break-words">
+        <div className="max-w-[80%] break-words rounded-xl bg-muted px-4 py-2.5 text-body-lg">
           {/* User messages are authored as markdown in ContentEditor, so they
            * render through the SAME RichContent as assistant replies and as
            * Issue/Comment — a Mermaid fence a user pastes is a diagram here
@@ -498,6 +499,7 @@ const MessageBubble = memo(function MessageBubble({
             attachments={message.attachments}
             density="compact"
             phase="settled"
+            className="text-body-lg leading-relaxed"
           />
           <AttachmentList
             attachments={message.attachments}
@@ -592,6 +594,11 @@ function AssistantMessage({
   // chat_message (failure_reason set), render a destructive bubble with the
   // human-readable reason label + collapsible raw errMsg + the same timeline
   // so the user can see exactly where the run broke.
+  // A run the user stopped is not a failure: keep what it produced and close
+  // it with a quiet marker instead of the destructive failure note.
+  if (message?.failure_reason && STOPPED_FAILURE_REASONS.has(message.failure_reason)) {
+    return <StoppedReply timeline={timeline} />;
+  }
   if (message?.failure_reason) {
     return (
       <FailureBubble
@@ -617,7 +624,7 @@ function AssistantMessage({
     !isNoResponse && settledContent?.trim() ? settledContent : undefined;
 
   return (
-    <div className="w-full space-y-1.5">
+    <div className="w-full space-y-2">
       {timeline.length > 0 && (
         <TimelineView
           items={timeline}
@@ -635,7 +642,7 @@ function AssistantMessage({
           attachments={message.attachments}
           density="compact"
           phase="settled"
-          className="leading-relaxed"
+          className="text-body-lg leading-relaxed"
         />
       ) : null}
       {message && (
@@ -754,7 +761,7 @@ function QuickActions({
   const regenerateLabel = t(($) => $.message_list.quick_actions_regenerate);
 
   return (
-    <div className="mt-2 border-t border-border/40 pt-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
+    <div className="mt-1 border-t border-border pt-2.5 animate-in fade-in slide-in-from-bottom-1 duration-300">
       <div
         className="flex flex-wrap items-center gap-2"
         aria-label={t(($) => $.message_list.quick_actions_aria)}
@@ -771,7 +778,7 @@ function QuickActions({
                   type="button"
                   variant={action.primary ? "brandSubtle" : "outline"}
                   size="sm"
-                  className="max-w-full rounded-full px-3"
+                  className="h-7.5 max-w-full rounded-full px-3"
                   disabled={blocked}
                   onClick={() => void handleSelect(action)}
                 />
@@ -839,12 +846,12 @@ function QuickActionsSkeleton() {
   // chat:quick_actions ever resolves it — so this unmounts on its own instead
   // of only hiding itself while the cache stays stuck (MUL-5149 review).
   return (
-    <div className="mt-2 border-t border-border/40 pt-2 animate-in fade-in duration-300">
+    <div className="mt-1 border-t border-border pt-2.5 animate-in fade-in duration-300">
       <div className="flex flex-wrap items-center gap-2" aria-hidden="true">
         <QuickActionsHeading />
-        <Skeleton className="h-8 w-24 rounded-full" />
-        <Skeleton className="h-8 w-32 rounded-full" />
-        <Skeleton className="h-8 w-28 rounded-full" />
+        <Skeleton className="h-7.5 w-24 rounded-full" />
+        <Skeleton className="h-7.5 w-32 rounded-full" />
+        <Skeleton className="h-7.5 w-28 rounded-full" />
       </div>
     </div>
   );
@@ -853,10 +860,28 @@ function QuickActionsSkeleton() {
 // Muted, localized notice shown in place of assistant text when a turn
 // completed with no reply (message_kind === "no_response"). Explains the empty
 // turn instead of rendering a blank bubble (MUL-4351).
+const STOPPED_FAILURE_REASONS = new Set(["manual", "cancelled"]);
+
+function StoppedReply({ timeline }: { timeline: ChatTimelineItem[] }) {
+  const { t } = useT("chat");
+  return (
+    <div className="w-full space-y-2">
+      {timeline.length > 0 && <TimelineView items={timeline} />}
+      <span
+        data-slot="chat-stopped-marker"
+        className="inline-flex h-6 items-center gap-1.5 rounded-full bg-muted px-2.5 text-caption text-muted-foreground"
+      >
+        <Square className="size-2.5 fill-current" aria-hidden="true" />
+        {t(($) => $.message_list.stopped)}
+      </span>
+    </div>
+  );
+}
+
 function NoResponseNotice() {
   const { t } = useT("chat");
   return (
-    <div className="text-body italic text-muted-foreground">
+    <div className="text-body-lg italic text-muted-foreground">
       {t(($) => $.message_list.no_response)}
     </div>
   );
@@ -1033,10 +1058,10 @@ function FailureBubble({
        *  failure is informational ("this didn't work"), not a system
        *  error. The icon + muted destructive text are signal enough,
        *  the rest stays in the normal reply rhythm. */}
-      <div className="flex items-start gap-1.5 text-body">
-        <AlertTriangle className="size-3.5 shrink-0 text-destructive mt-0.5" />
+      <div className="flex items-start gap-1.5 text-body-lg">
+        <AlertTriangle className="mt-1 size-3.75 shrink-0 text-destructive" />
         <div className="flex-1 min-w-0">
-          <div className="text-destructive">{label}</div>
+          <div className="leading-relaxed text-destructive">{label}</div>
           {rawError.trim() && (
             <Collapsible open={open} onOpenChange={setOpen}>
               <CollapsibleTrigger className="mt-0.5 flex items-center gap-1 text-caption text-muted-foreground hover:text-foreground transition-colors">
@@ -1048,7 +1073,7 @@ function FailureBubble({
                 <span>{t(($) => $.message_list.show_details)}</span>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <pre className="mt-1 max-h-40 overflow-auto rounded-xs bg-muted/40 p-2 text-caption text-muted-foreground whitespace-pre-wrap break-all">
+                <pre className="mt-1 max-h-40 overflow-auto rounded-row bg-field p-2 text-caption text-muted-foreground whitespace-pre-wrap break-all">
                   {rawError}
                 </pre>
               </CollapsibleContent>
@@ -1111,7 +1136,7 @@ function TimelineView({
           attachments={attachments}
           density="compact"
           phase="settled"
-          className="leading-relaxed"
+          className="text-body-lg leading-relaxed"
         />
       </>
     );
@@ -1128,7 +1153,7 @@ function TimelineView({
           attachments={attachments}
           density="compact"
           phase={phase}
-          className="leading-relaxed"
+          className="text-body-lg leading-relaxed"
         />
       )}
       {middle.length > 0 && (
@@ -1147,7 +1172,7 @@ function TimelineView({
           attachments={attachments}
           density="compact"
           phase={phase}
-          className="leading-relaxed"
+          className="text-body-lg leading-relaxed"
         />
       )}
     </>
@@ -1183,12 +1208,12 @@ function OuterProcessFold({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex items-center gap-1 text-caption text-muted-foreground hover:text-foreground transition-colors">
+      <CollapsibleTrigger className="flex items-center gap-1 text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground">
         {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
         <span>{t(($) => $.message_list.process_steps, { count: displayedStepCount })}</span>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="mt-1 rounded-lg border bg-muted/20 p-2 space-y-0.5">
+        <div className="mt-1.5 space-y-0.5 rounded-lg border border-border bg-surface-sunken p-2">
           {items.map((item) =>
             item.type === "text" ? (
               <MiddleTextRow

@@ -1,24 +1,26 @@
 "use client";
 
-import { useCallback, memo } from "react";
+import { useCallback, useEffect, useState, memo, type ReactNode } from "react";
 import { AppLink } from "../../navigation";
+import type { DropAnimation } from "@dnd-kit/core";
 import { useSortable, defaultAnimateLayoutChanges } from "@dnd-kit/sortable";
 import type { AnimateLayoutChanges } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@marvis/ui/lib/utils";
 import type { Issue, IssueProperty, Project, UpdateIssueRequest } from "@marvis/core/types";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { propertyListOptions } from "@marvis/core/properties";
 import { CustomPropertyValueDisplay } from "./pickers/custom-property-picker";
 import { descriptionPreview } from "./description-preview";
-import { formatDateOnly, isPastDateOnly } from "@marvis/core/issues/date";
-import { CalendarClock, CalendarDays } from "lucide-react";
+import { dateOnlyToUTCDate, formatDateOnly, todayDateOnly } from "@marvis/core/issues/date";
+import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { Folder } from "lucide-react";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { PropertyIcon } from "../../common/property-icon";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { useActorName } from "@marvis/core/workspace/hooks";
 import { useLocale, useT, useTimeAgo } from "../../i18n";
-import { ProjectIcon } from "../../projects/components/project-icon";
 import { PriorityIcon } from "./priority-icon";
 import { PriorityPicker, AssigneePicker, StartDatePicker, DueDatePicker } from "./pickers";
 import { useViewStore } from "@marvis/core/issues/stores/view-store-context";
@@ -26,7 +28,6 @@ import { propertyIdFromViewKey } from "@marvis/core/issues/stores/view-store";
 import { ProgressRing } from "./progress-ring";
 import type { ChildProgress } from "./list-row";
 import { IssueActionsContextMenu } from "../actions";
-import { LabelChip } from "../../labels/label-chip";
 import { IssueAgentActivityIndicator } from "./issue-agent-activity-indicator";
 import { CustomStatusChip, useIsCustomStatus } from "./custom-status-chip";
 import { IssueDuplicateOfMarker } from "./issue-duplicates";
@@ -39,6 +40,98 @@ import {
 } from "../surface/peek-context";
 function formatDate(date: string, locale: string): string {
   return formatDateOnly(date, { month: "short", day: "numeric" }, locale);
+}
+
+// Board card: borderless white card held by a hairline shadow ring. Hover and an
+// open popup deepen the ring; the peeked ring composes with it, so a selected
+// card stays identifiable while hovered. Keyboard focus on the draggable
+// wrapper or its link draws the same rounded ring in the focus color (the
+// wrapper's own outline would be a square box around the card); the peeked
+// color wins when both apply.
+const BOARD_CARD_SURFACE =
+  "rounded-[12px] bg-card px-3.5 py-3 shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_1px_2px_rgb(0_0_0/0.04)] transition-shadow duration-(--motion-fast) ease-out dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] group-hover/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] group-hover/card:duration-(--motion-instant) group-data-[popup-open]/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] dark:group-hover/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] dark:group-data-[popup-open]/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] group-focus-visible/card:ring-[1.5px] group-focus-visible/card:ring-ring group-has-[>a:focus-visible]/card:ring-[1.5px] group-has-[>a:focus-visible]/card:ring-ring group-data-[peeked]/card:ring-[1.5px] group-data-[peeked]/card:ring-foreground!";
+
+// Inline meta item on the project / labels line: plain muted text, no pill.
+const BOARD_CARD_META_ITEM = "inline-flex min-w-0 items-center gap-1";
+
+// Footer separator between the date group and child progress.
+const FOOTER_SEPARATOR = " · ";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Whole calendar days a date-only value lies before today; 0 when not past. */
+function daysOverdue(value: string | null | undefined): number {
+  const due = dateOnlyToUTCDate(value);
+  const today = dateOnlyToUTCDate(todayDateOnly());
+  if (!due || !today) return 0;
+
+  return Math.max(0, Math.round((today.getTime() - due.getTime()) / DAY_MS));
+}
+
+// 拖拽动效（Motion「看板拖拽」）：让位 200ms ease-standard；落位 200ms ease-spring。
+// 落位走 Web Animations，easing 不能写 var()，这里与 tokens.css 的 --ease-spring 保持同值。
+export const DRAG_SHIFT_TRANSITION = { duration: 200, easing: "var(--ease-standard)" };
+const DROP_DURATION_MS = 200;
+const DROP_EASE_SPRING = "cubic-bezier(0.34, 1.28, 0.64, 1)";
+const DROP_EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+const DRAG_LIFT_ATTR = "data-drag-lift";
+
+/**
+ * 看板与列表拖拽浮层共用的落位动画：浮层飞回卡片原位，同时收回抬起的放大、倾斜和阴影。
+ * 减少动态效果时保留位移，去掉回弹。
+ */
+export function issueDropAnimation(reducedMotion: boolean): DropAnimation {
+  const easing = reducedMotion ? DROP_EASE_OUT : DROP_EASE_SPRING;
+  return {
+    duration: DROP_DURATION_MS,
+    easing,
+    sideEffects: (params) => {
+      // 落位期间隐藏原位占位，避免与浮层重影；结束后恢复
+      const source = params.active.node;
+      const previousOpacity = source.style.opacity;
+      source.style.opacity = "0";
+
+      // 落位时把抬起的放大、倾斜和浮起阴影一并收回
+      const lift = params.dragOverlay.node.querySelector<HTMLElement>(`[${DRAG_LIFT_ATTR}]`);
+      if (lift) {
+        lift.style.transitionDuration = `${DROP_DURATION_MS}ms`;
+        lift.style.transitionTimingFunction = easing;
+        lift.style.scale = "1";
+        lift.style.rotate = "0deg";
+        lift.style.boxShadow = "none";
+      }
+
+      return () => {
+        source.style.opacity = previousOpacity;
+      };
+    },
+  };
+}
+
+/**
+ * DragOverlay 里被拖起的卡片外观：150ms 抬起到 scale 1.02、倾斜 1.5° 并带浮起阴影，卡片保持不透明。
+ */
+export function DragLift({ children, className }: { children: ReactNode; className?: string }) {
+  const [lifted, setLifted] = useState(false);
+
+  // 首帧以静止态挂载，下一帧再切到抬起态，过渡才会生效
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setLifted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <div
+      {...{ [DRAG_LIFT_ATTR]: "" }}
+      data-lifted={lifted ? "" : undefined}
+      className={cn(
+        "cursor-grabbing rounded-[12px] transition-[scale,rotate,box-shadow] duration-(--motion-fast) ease-out motion-reduce:transition-none data-[lifted]:scale-[1.02] data-[lifted]:rotate-[1.5deg] data-[lifted]:shadow-menu",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 /** Stops event from bubbling to Link/drag handlers */
@@ -118,13 +211,15 @@ export const BoardCardContent = memo(function BoardCardContent({
   // chip is the only thing in it and it decides to render nothing.
   const showCustomStatus = useIsCustomStatus(issue.status);
 
-  const showAssigneeName = showAssigneeSection && hasAssignee && !showStartDate && !showDueDate;
-  const showUpdatedHint = showAssigneeName && !showChildProgress;
   const { getActorName } = useActorName();
   const assigneeName =
-    showAssigneeName && issue.assignee_type && issue.assignee_id
+    showAssigneeSection && issue.assignee_type && issue.assignee_id
       ? getActorName(issue.assignee_type, issue.assignee_id)
       : null;
+
+  const statusCatalog = useIssueStatuses(cardWsId);
+  const statusCategory = statusCatalog.categoryOf(issue.status);
+  const isFinished = statusCategory === "done" || statusCategory === "closed";
 
   const priorityLabel = t(($) => $.priority[issue.priority]);
   const priorityIconNode = showPriority ? (
@@ -138,7 +233,7 @@ export const BoardCardContent = memo(function BoardCardContent({
             <button
               type="button"
               aria-label={priorityLabel}
-              className="inline-flex size-5 shrink-0 items-center justify-center rounded-xs hover:bg-muted/60"
+              className="inline-flex size-4.5 shrink-0 items-center justify-center rounded-xs transition-colors duration-(--motion-fast) hover:bg-accent"
             >
               <PriorityIcon priority={issue.priority} />
             </button>
@@ -148,40 +243,32 @@ export const BoardCardContent = memo(function BoardCardContent({
     ) : (
       <span
         aria-label={priorityLabel}
-        className="inline-flex size-5 shrink-0 items-center justify-center"
+        className="inline-flex size-4.5 shrink-0 items-center justify-center"
       >
         <PriorityIcon priority={issue.priority} />
       </span>
     )
   ) : null;
 
-  // The parent row gives this container the leftover space; min-w-0 and
-  // max-w-full make the nested picker trigger respect that limit.
-  const assigneeContainerClass = assigneeName
-    ? "flex min-w-0 max-w-full items-center"
-    : "inline-flex items-center";
-
   const assigneeInner = hasAssignee ? (
-    <span className="flex min-w-0 max-w-full items-center gap-1.5">
+    <span className="flex min-w-0 max-w-[150px] items-center gap-1.5">
       <ActorAvatar
         actorType={issue.assignee_type!}
         actorId={issue.assignee_id!}
-        size="sm"
+        size="xs"
         enableHoverCard
         profileLink={false}
         className="shrink-0"
       />
       {assigneeName && (
-        <span className="min-w-0 truncate text-caption text-foreground">{assigneeName}</span>
+        <span className="min-w-0 truncate text-caption text-muted-foreground">{assigneeName}</span>
       )}
     </span>
-  ) : (
-    <span className="text-caption text-muted-foreground">{t(($) => $.pickers.assignee.trigger_unassigned)}</span>
-  );
+  ) : null;
 
   const assigneeNode = showAssigneeSection ? (
     canEdit ? (
-      <PickerWrapper className={assigneeContainerClass}>
+      <PickerWrapper className="flex min-w-0 items-center">
         <AssigneePicker
           assigneeType={issue.assignee_type}
           assigneeId={issue.assignee_id}
@@ -190,27 +277,82 @@ export const BoardCardContent = memo(function BoardCardContent({
         />
       </PickerWrapper>
     ) : (
-      <span className={assigneeContainerClass}>{assigneeInner}</span>
+      <span className="flex min-w-0 items-center">{assigneeInner}</span>
     )
   ) : null;
 
-  const showMetaRow = showAssigneeSection || showStartDate || showDueDate || showChildProgress;
-  const showRightMeta = !!showStartDate || !!showDueDate || !!showChildProgress || showUpdatedHint;
+  // Dates: "start – due" when both are on and set; an overdue due date reads as
+  // "N days overdue" in the urgent colour and replaces the range.
+  const overdueDays = showDueDate ? daysOverdue(issue.due_date) : 0;
+  const isOverdue = overdueDays > 0;
+  const showStartInFooter = !!showStartDate && !isOverdue;
+
+  const startText = showStartInFooter ? formatDate(issue.start_date!, locale) : null;
+  const startNode = startText ? (
+    canEdit ? (
+      <PickerWrapper className="flex shrink-0">
+        <StartDatePicker
+          startDate={issue.start_date}
+          onUpdate={handleUpdate}
+          tooltip={t(($) => $.detail.prop_start_date)}
+          trigger={<span className="tabular-nums">{startText}</span>}
+        />
+      </PickerWrapper>
+    ) : (
+      <span className="shrink-0 tabular-nums">{startText}</span>
+    )
+  ) : null;
+
+  const dueText = showDueDate
+    ? isOverdue
+      ? t(($) => $.card.overdue_days, { count: overdueDays })
+      : formatDate(issue.due_date!, locale)
+    : null;
+  const dueClass = cn(
+    "shrink-0 tabular-nums",
+    isOverdue && "font-semibold text-priority-urgent",
+  );
+  const dueNode = dueText ? (
+    canEdit ? (
+      <PickerWrapper className="flex shrink-0">
+        <DueDatePicker
+          dueDate={issue.due_date}
+          onUpdate={handleUpdate}
+          tooltip={t(($) => $.detail.prop_due_date)}
+          trigger={<span className={dueClass}>{dueText}</span>}
+        />
+      </PickerWrapper>
+    ) : (
+      <span className={dueClass}>{dueText}</span>
+    )
+  ) : null;
+
+  const hasDates = !!startNode || !!dueNode;
+  const updatedHint = (
+    <span className="min-w-0 truncate">
+      {t(($) => $.card.updated_ago, { time: timeAgo(issue.updated_at) })}
+    </span>
+  );
+
+  const showMetaLine = showCustomStatus || showProject || showLabels || cardCustomProperties.length > 0;
 
   return (
-    <div className="rounded-lg border-[0.5px] border-surface-border bg-surface py-3 px-2.5 shadow-[var(--surface-shadow)] transition-colors group-hover/card:border-foreground/15 group-hover/card:bg-surface-hover group-data-[popup-open]/card:border-foreground/15 group-data-[popup-open]/card:bg-surface-hover group-data-[peeked]/card:ring-2 group-data-[peeked]/card:ring-brand/50">
-      {/* Row 1: priority + identifier (left), agent activity + assignee (right) */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          {priorityIconNode}
-          <p className="text-caption text-muted-foreground truncate">{issue.identifier}</p>
+    <div className={BOARD_CARD_SURFACE}>
+      {/* Top row: identifier (left), assignee (right) */}
+      <div className="flex h-4.5 items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <p className="truncate text-caption text-faint-foreground">{issue.identifier}</p>
           <IssueDuplicateOfMarker issue={issue} insideLink />
         </div>
-        <IssueAgentActivityIndicator issueId={issue.id} />
+        {assigneeNode}
       </div>
 
-      {/* Row 2: Title */}
-      <p className="mt-1 text-body font-medium leading-snug line-clamp-2">
+      <p
+        className={cn(
+          "mt-1.5 line-clamp-2 text-body font-medium",
+          isFinished && "text-muted-foreground",
+        )}
+      >
         {issue.title}
       </p>
 
@@ -218,37 +360,39 @@ export const BoardCardContent = memo(function BoardCardContent({
         const preview = descriptionPreview(issue.description!);
         if (!preview) return null;
         return (
-          <p className="mt-1 text-caption text-muted-foreground line-clamp-1">
+          <p className="mt-3 line-clamp-2 text-label text-muted-foreground">
             {preview}
           </p>
         );
       })()}
 
-      {/* Chip row: status + project + labels + custom property values.
-          The status chip renders only for a CUSTOM status — the column header
-          already names the category. (MUL-6243) */}
-      {(showCustomStatus || showProject || showLabels || cardCustomProperties.length > 0) && (
-        <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+      {/* Meta line: custom status, project, labels and custom property values
+          as plain muted text. The status chip renders only for a CUSTOM
+          status — the column header already names the category. (MUL-6243) */}
+      {showMetaLine && (
+        <div className="mt-3 flex min-w-0 items-center gap-3 overflow-hidden text-caption text-muted-foreground">
           <CustomStatusChip status={issue.status} />
           {showProject && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground max-w-[160px]">
-              <ProjectIcon project={project} size="sm" />
+            <span className={cn(BOARD_CARD_META_ITEM, "max-w-40 shrink-0")}>
+              <Folder className="size-3 shrink-0" aria-hidden="true" />
               <span className="truncate">{project!.title}</span>
             </span>
           )}
           {showLabels && labels.slice(0, 2).map((label) => (
-            <LabelChip key={label.id} label={label} />
+            <span key={label.id} className={cn(BOARD_CARD_META_ITEM, "max-w-32")}>
+              <span
+                aria-hidden="true"
+                className="size-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: label.color }}
+              />
+              <span className="truncate">{label.name}</span>
+            </span>
           ))}
           {showLabels && labels.length > 2 && (
-            <span className="text-micro text-muted-foreground">
-              +{labels.length - 2}
-            </span>
+            <span className="shrink-0 tabular-nums">+{labels.length - 2}</span>
           )}
           {cardCustomProperties.map((property) => (
-            <span
-              key={property.id}
-              className="inline-flex max-w-[160px] items-center gap-1 rounded-full bg-muted/60 px-1.5 py-0.5 text-micro text-muted-foreground"
-            >
+            <span key={property.id} className={cn(BOARD_CARD_META_ITEM, "max-w-40")}>
               <PropertyIcon property={property} className="size-3 text-micro" />
               <CustomPropertyValueDisplay property={property} value={issue.properties?.[property.id]} />
             </span>
@@ -256,89 +400,34 @@ export const BoardCardContent = memo(function BoardCardContent({
         </div>
       )}
 
-      {/* Meta row: assignee (left), start date, due date, child progress (right) */}
-      {showMetaRow && (
-        <div className="mt-2 flex items-center justify-between gap-2">
-          {showAssigneeSection && (
-            <div className="min-w-0 flex-1">
-              {assigneeNode}
-            </div>
+      {/* Footer: priority, dates, child progress (left); agent status or last
+          update (right) */}
+      <div className="mt-3 flex h-4.5 items-center gap-2 text-caption text-faint-foreground">
+        <div className="flex min-w-0 items-center gap-1.5">
+          {priorityIconNode}
+          {hasDates && (
+            <span className="flex shrink-0 items-center">
+              {startNode}
+              {startNode && dueNode && <span aria-hidden="true">&nbsp;–&nbsp;</span>}
+              {dueNode}
+            </span>
           )}
-          {showRightMeta && (
-            <div className="ml-auto flex shrink-0 items-center gap-2">
-              {showStartDate && (
-                canEdit ? (
-                  <PickerWrapper className="flex shrink-0">
-                    <StartDatePicker
-                      startDate={issue.start_date}
-                      onUpdate={handleUpdate}
-                      tooltip={t(($) => $.detail.prop_start_date)}
-                      trigger={
-                        <span className="flex items-center gap-1 text-caption text-muted-foreground">
-                          <CalendarClock className="size-3" />
-                          {formatDate(issue.start_date!, locale)}
-                        </span>
-                      }
-                    />
-                  </PickerWrapper>
-                ) : (
-                  <span className="flex shrink-0 items-center gap-1 text-caption text-muted-foreground">
-                    <CalendarClock className="size-3" />
-                    {formatDate(issue.start_date!, locale)}
-                  </span>
-                )
-              )}
-              {showDueDate && (
-                canEdit ? (
-                  <PickerWrapper className="flex shrink-0">
-                    <DueDatePicker
-                      dueDate={issue.due_date}
-                      onUpdate={handleUpdate}
-                      tooltip={t(($) => $.detail.prop_due_date)}
-                      trigger={
-                        <span
-                          className={`flex items-center gap-1 text-caption ${
-                            isPastDateOnly(issue.due_date)
-                              ? "text-destructive"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          <CalendarDays className="size-3" />
-                          {formatDate(issue.due_date!, locale)}
-                        </span>
-                      }
-                    />
-                  </PickerWrapper>
-                ) : (
-                  <span
-                    className={`flex shrink-0 items-center gap-1 text-caption ${
-                      isPastDateOnly(issue.due_date)
-                        ? "text-destructive"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    <CalendarDays className="size-3" />
-                    {formatDate(issue.due_date!, locale)}
-                  </span>
-                )
-              )}
-              {showChildProgress && (
-                <div className="inline-flex shrink-0 items-center gap-1">
-                  <ProgressRing done={childProgress!.done} total={childProgress!.total} size={14} />
-                  <span className="text-micro text-muted-foreground tabular-nums font-medium">
-                    {childProgress!.done}/{childProgress!.total}
-                  </span>
-                </div>
-              )}
-              {showUpdatedHint && (
-                <span className="shrink-0 text-caption text-muted-foreground">
-                  {t(($) => $.card.updated_ago, { time: timeAgo(issue.updated_at) })}
+          {showChildProgress && (
+            <span className="inline-flex shrink-0 items-center">
+              {hasDates && <span aria-hidden="true" className="whitespace-pre">{FOOTER_SEPARATOR}</span>}
+              <span className="inline-flex items-center gap-1">
+                <ProgressRing done={childProgress!.done} total={childProgress!.total} size={12} />
+                <span className="tabular-nums">
+                  {childProgress!.done}/{childProgress!.total}
                 </span>
-              )}
-            </div>
+              </span>
+            </span>
           )}
         </div>
-      )}
+        <div className="ml-auto flex min-w-0 items-center">
+          <IssueAgentActivityIndicator issueId={issue.id} variant="status" fallback={updatedHint} />
+        </div>
+      </div>
     </div>
   );
 });
@@ -375,6 +464,7 @@ export const DraggableBoardCard = memo(function DraggableBoardCard({
     id: issue.id,
     data: { status: issue.status },
     animateLayoutChanges,
+    transition: DRAG_SHIFT_TRANSITION,
     disabled: disableSorting ? { droppable: true } : undefined,
   });
 
@@ -393,7 +483,7 @@ export const DraggableBoardCard = memo(function DraggableBoardCard({
         data-peeked={peeked ? "" : undefined}
         {...attributes}
         {...listeners}
-        className={`group/card ${isDragging ? "opacity-30" : ""}`}
+        className={`group/card outline-none motion-reduce:transition-none! ${isDragging ? "opacity-30" : ""}`}
         onKeyDown={
           peek
             ? (e) => {
@@ -411,7 +501,7 @@ export const DraggableBoardCard = memo(function DraggableBoardCard({
         <AppLink
           href={p.issueDetail(issue.id)}
           newTabTitle={issue.identifier}
-          className={`group block transition-colors ${isDragging ? "pointer-events-none" : ""}`}
+          className={`group block outline-none transition-colors ${isDragging ? "pointer-events-none" : ""}`}
           {...peekLinkProps}
         >
           <BoardCardContent
