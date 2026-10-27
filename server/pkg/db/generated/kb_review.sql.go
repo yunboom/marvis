@@ -641,11 +641,13 @@ SELECT
     d.id AS draft_id,
     j.id AS job_id,
     COALESCE(j.name, '')::text AS job_name,
+    j.created_by AS job_created_by,
     j.agent_id AS job_agent_id,
     j.chat_session_id AS job_chat_session_id,
     atq.agent_id AS task_agent_id,
     atq.chat_session_id AS task_chat_session_id,
     COALESCE(cs.title, '')::text AS chat_title,
+    cs.creator_id AS chat_creator_id,
     atq.issue_id AS task_issue_id,
     COALESCE(i.title, '')::text AS issue_title,
     COALESCE(i.number, 0)::int AS issue_number,
@@ -673,11 +675,13 @@ type ListKbMergeRequestOriginsRow struct {
 	DraftID            pgtype.UUID `json:"draft_id"`
 	JobID              pgtype.UUID `json:"job_id"`
 	JobName            string      `json:"job_name"`
+	JobCreatedBy       pgtype.UUID `json:"job_created_by"`
 	JobAgentID         pgtype.UUID `json:"job_agent_id"`
 	JobChatSessionID   pgtype.UUID `json:"job_chat_session_id"`
 	TaskAgentID        pgtype.UUID `json:"task_agent_id"`
 	TaskChatSessionID  pgtype.UUID `json:"task_chat_session_id"`
 	ChatTitle          string      `json:"chat_title"`
+	ChatCreatorID      pgtype.UUID `json:"chat_creator_id"`
 	TaskIssueID        pgtype.UUID `json:"task_issue_id"`
 	IssueTitle         string      `json:"issue_title"`
 	IssueNumber        int32       `json:"issue_number"`
@@ -702,11 +706,13 @@ func (q *Queries) ListKbMergeRequestOrigins(ctx context.Context, arg ListKbMerge
 			&i.DraftID,
 			&i.JobID,
 			&i.JobName,
+			&i.JobCreatedBy,
 			&i.JobAgentID,
 			&i.JobChatSessionID,
 			&i.TaskAgentID,
 			&i.TaskChatSessionID,
 			&i.ChatTitle,
+			&i.ChatCreatorID,
 			&i.TaskIssueID,
 			&i.IssueTitle,
 			&i.IssueNumber,

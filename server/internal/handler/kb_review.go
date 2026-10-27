@@ -20,7 +20,8 @@ import (
 	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
-// Merge request origin types (spec 7.13), in the order they are decided.
+// Origin types (spec 7.13), in the order a merge request decides them. A
+// draft's origin in the reading page's draft switcher uses the same words.
 const (
 	kbOriginJob          = "kb_job"
 	kbOriginRevert       = "revert"
@@ -46,6 +47,18 @@ type KbMergeRequestOriginResponse struct {
 	Type  string  `json:"type"`
 	Label string  `json:"label"`
 	RefID *string `json:"ref_id"`
+	// Openable tells whether the viewer may open the origin: a job only
+	// opens for the member who started it, a chat only for its creator.
+	Openable bool `json:"openable"`
+	// openTo is the only member who may open a job or chat origin.
+	openTo pgtype.UUID
+}
+
+// restrictTo settles Openable for the viewer of a list or detail read.
+func (o *KbMergeRequestOriginResponse) restrictTo(viewerID string) {
+	if o.openTo.Valid {
+		o.Openable = uuidToString(o.openTo) == viewerID
+	}
 }
 
 // KbMergeRequestResponse is one merge request.
@@ -206,6 +219,11 @@ func (h *Handler) ListKbMergeRequests(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, err)
 		return
 	}
+	if userID := requestUserID(r); userID != "" {
+		for i := range resp {
+			resp[i].Origin.restrictTo(userID)
+		}
+	}
 
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -277,6 +295,7 @@ func (h *Handler) GetKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	detail.CanMerge = canMaintainKb(member, base)
 	detail.CanRevert = detail.CanMerge
 	detail.CanClose = canCloseKbMergeRequest(member, base, mr, actorType, actorID)
+	detail.Origin.restrictTo(userID)
 
 	writeJSON(w, http.StatusOK, detail)
 }
@@ -506,21 +525,21 @@ func (h *Handler) kbMergeRequestResponses(ctx context.Context, wsUUID pgtype.UUI
 func kbMergeRequestOrigin(mr db.KbMergeRequest, row db.ListKbMergeRequestOriginsRow, reverted *db.KbMergeRequest) KbMergeRequestOriginResponse {
 	switch {
 	case row.JobID.Valid:
-		return KbMergeRequestOriginResponse{Type: kbOriginJob, Label: row.JobName, RefID: uuidToPtr(row.JobID)}
+		return KbMergeRequestOriginResponse{Type: kbOriginJob, Label: row.JobName, RefID: uuidToPtr(row.JobID), Openable: true, openTo: row.JobCreatedBy}
 	case mr.RevertsID.Valid:
 		label := ""
 		if reverted != nil {
 			label = fmt.Sprintf("#%d %s", reverted.Number, reverted.Title)
 		}
 
-		return KbMergeRequestOriginResponse{Type: kbOriginRevert, Label: label, RefID: uuidToPtr(mr.RevertsID)}
+		return KbMergeRequestOriginResponse{Type: kbOriginRevert, Label: label, RefID: uuidToPtr(mr.RevertsID), Openable: true}
 	case row.TaskAutopilotRunID.Valid:
 		// The autopilot page lists its runs; there is no page per run.
-		return KbMergeRequestOriginResponse{Type: kbOriginAutopilotRun, Label: row.AutopilotTitle, RefID: uuidToPtr(row.AutopilotID)}
+		return KbMergeRequestOriginResponse{Type: kbOriginAutopilotRun, Label: row.AutopilotTitle, RefID: uuidToPtr(row.AutopilotID), Openable: true}
 	case row.TaskIssueID.Valid:
-		return KbMergeRequestOriginResponse{Type: kbOriginIssue, Label: row.IssueTitle, RefID: uuidToPtr(row.TaskIssueID)}
+		return KbMergeRequestOriginResponse{Type: kbOriginIssue, Label: row.IssueTitle, RefID: uuidToPtr(row.TaskIssueID), Openable: true}
 	case row.TaskChatSessionID.Valid:
-		return KbMergeRequestOriginResponse{Type: kbOriginChat, Label: row.ChatTitle, RefID: uuidToPtr(row.TaskChatSessionID)}
+		return KbMergeRequestOriginResponse{Type: kbOriginChat, Label: row.ChatTitle, RefID: uuidToPtr(row.TaskChatSessionID), Openable: true, openTo: row.ChatCreatorID}
 	}
 
 	return KbMergeRequestOriginResponse{Type: kbOriginNone}
