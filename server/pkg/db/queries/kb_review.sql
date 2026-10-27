@@ -405,12 +405,14 @@ WHERE EXISTS (
 RETURNING *;
 
 -- name: ArchiveKbMrInboxItems :many
--- Archives the review notifications of one merge request that no longer ask
+-- Archives the review notifications of merge requests that no longer ask
 -- for action; merge request numbers are unique within a workspace.
 UPDATE inbox_item SET archived = true
 WHERE workspace_id = sqlc.arg('workspace_id')
   AND type = ANY(sqlc.arg('types')::text[])
-  AND details->>'merge_request_number' = (sqlc.arg('merge_request_number')::int)::text
+  AND details->>'merge_request_number' IN (
+      SELECT n::text FROM unnest(sqlc.arg('merge_request_numbers')::int[]) AS n
+  )
   AND archived = false
 RETURNING recipient_type, recipient_id;
 

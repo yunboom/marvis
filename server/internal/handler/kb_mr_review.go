@@ -625,13 +625,23 @@ func notifyKbReviewNeeded(ctx context.Context, q *db.Queries, base db.KbBase, mr
 // of the given kinds, which no longer ask for action, and counts them per
 // recipient member.
 func archiveKbMrInboxItems(ctx context.Context, q *db.Queries, mr db.KbMergeRequest, kinds []string) (map[string]int64, error) {
+	return archiveKbMrsInboxItems(ctx, q, mr.WorkspaceID, []int32{mr.Number}, kinds)
+}
+
+// archiveKbMrsInboxItems is archiveKbMrInboxItems for several merge requests
+// of a workspace, by number.
+func archiveKbMrsInboxItems(ctx context.Context, q *db.Queries, workspaceID pgtype.UUID, numbers []int32, kinds []string) (map[string]int64, error) {
+	if len(numbers) == 0 {
+		return map[string]int64{}, nil
+	}
+
 	rows, err := q.ArchiveKbMrInboxItems(ctx, db.ArchiveKbMrInboxItemsParams{
-		WorkspaceID:        mr.WorkspaceID,
-		Types:              kinds,
-		MergeRequestNumber: mr.Number,
+		WorkspaceID:         workspaceID,
+		Types:               kinds,
+		MergeRequestNumbers: numbers,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "archive review notifications merge_request_id=%s", uuidToString(mr.ID))
+		return nil, errors.Wrapf(err, "archive review notifications workspace_id=%s numbers=%v", uuidToString(workspaceID), numbers)
 	}
 
 	counts := make(map[string]int64, len(rows))

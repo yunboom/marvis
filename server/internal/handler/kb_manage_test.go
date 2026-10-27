@@ -551,10 +551,29 @@ func TestDeleteKbBase(t *testing.T) {
 		t.Errorf("mismatch = %v", mismatch)
 	}
 
+	// The closed request's approval notice is archived; the other one stays.
+	notice := func(mrNumber int) string {
+		id := dbfx.Insert(t, "inbox_item", testutil.Cols{
+			"workspace_id": testWorkspaceID, "recipient_type": "member", "recipient_id": creator,
+			"type": kbInboxReviewNeeded, "severity": kbInboxSeverity, "title": "notice",
+			"details": fmt.Sprintf(`{"merge_request_number": %d}`, mrNumber),
+		})
+		dbfx.Cleanup(t, `DELETE FROM inbox_item WHERE id = $1`, id)
+		return id
+	}
+	closedNotice, keptNotice := notice(number), notice(number+1)
+
 	var resp DeleteKbBaseResponse
 	testutil.Call(t, testHandler.DeleteKbBase, deleteReq(creator, "要删除的知识库")).Want(http.StatusOK).JSON(&resp)
 	if !resp.Deleted || len(resp.ClosedMRs) != 1 || int(resp.ClosedMRs[0]) != number {
 		t.Errorf("response = %+v", resp)
+	}
+	for id, want := range map[string]bool{closedNotice: true, keptNotice: false} {
+		var archived bool
+		dbfx.QueryRow(t, `SELECT archived FROM inbox_item WHERE id = $1`, id).Scan(&archived)
+		if archived != want {
+			t.Errorf("notice %s archived = %v, want %v", id, archived, want)
+		}
 	}
 
 	t.Run("rows and raw objects stay", func(t *testing.T) {

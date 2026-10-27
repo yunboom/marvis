@@ -75,33 +75,36 @@ func (h *Handler) DeleteKbBase(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	closed, err := h.deleteKnowledgeBase(r, base)
+	closed, inboxArchived, err := h.deleteKnowledgeBase(r, base)
 	if err != nil {
 		h.writeKbError(w, r, err)
 		return
 	}
 
 	h.publishKbBaseChanged(r, base, kbBaseActionDeleted)
+	actorType, actorID := h.resolveActor(r, requestUserID(r), uuidToString(base.WorkspaceID))
+	h.publishKbInbox(base.WorkspaceID, kbInboxChanges{archived: inboxArchived}, actorType, actorID)
 
 	writeJSON(w, http.StatusOK, DeleteKbBaseResponse{Deleted: true, ClosedMRs: closed})
 }
 
 // deleteKnowledgeBase marks a knowledge base deleted under its row lock and
-// closes its active merge requests, returning their numbers.
-func (h *Handler) deleteKnowledgeBase(r *http.Request, base db.KbBase) ([]int32, error) {
+// closes its active merge requests, returning their numbers and the review
+// notifications archived with them per member.
+func (h *Handler) deleteKnowledgeBase(r *http.Request, base db.KbBase) ([]int32, map[string]int64, error) {
 	ctx := r.Context()
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "begin knowledge base delete")
+		return nil, nil, errors.Wrap(err, "begin knowledge base delete")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
 
 	if _, err := qtx.GetKbBaseForUpdate(ctx, db.GetKbBaseForUpdateParams{WorkspaceID: base.WorkspaceID, ID: base.ID}); err != nil {
 		if isNotFound(err) {
-			return nil, kbFail(http.StatusNotFound, kbCodeKnowledgeBaseNF, "knowledge base not found")
+			return nil, nil, kbFail(http.StatusNotFound, kbCodeKnowledgeBaseNF, "knowledge base not found")
 		}
-		return nil, errors.Wrapf(err, "lock knowledge base knowledge_base_id=%s", uuidToString(base.ID))
+		return nil, nil, errors.Wrapf(err, "lock knowledge base knowledge_base_id=%s", uuidToString(base.ID))
 	}
 
 	userID := parseUUID(requestUserID(r))
@@ -112,15 +115,19 @@ func (h *Handler) deleteKnowledgeBase(r *http.Request, base db.KbBase) ([]int32,
 		Statuses:        kbActiveMergeRequestStatuses,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "close merge requests knowledge_base_id=%s", uuidToString(base.ID))
+		return nil, nil, errors.Wrapf(err, "close merge requests knowledge_base_id=%s", uuidToString(base.ID))
+	}
+	inboxArchived, err := archiveKbMrsInboxItems(ctx, qtx, base.WorkspaceID, closed, kbInboxAllReview)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	if err := qtx.SoftDeleteKbBase(ctx, db.SoftDeleteKbBaseParams{DeletedBy: userID, ID: base.ID}); err != nil {
-		return nil, errors.Wrapf(err, "delete knowledge base knowledge_base_id=%s", uuidToString(base.ID))
+		return nil, nil, errors.Wrapf(err, "delete knowledge base knowledge_base_id=%s", uuidToString(base.ID))
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, errors.Wrap(err, "commit knowledge base delete")
+		return nil, nil, errors.Wrap(err, "commit knowledge base delete")
 	}
 
 	if closed == nil {
@@ -128,7 +135,7 @@ func (h *Handler) deleteKnowledgeBase(r *http.Request, base db.KbBase) ([]int32,
 	}
 	slices.Sort(closed)
 
-	return closed, nil
+	return closed, inboxArchived, nil
 }
 
 // KbGraphNodeResponse is a page of the relationship graph.
