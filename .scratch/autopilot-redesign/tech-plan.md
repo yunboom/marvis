@@ -71,7 +71,7 @@
 
 - 新迁移：
   - `autopilot_run` 加 `chat_session_id UUID`（可空，软引用），配一个 `CREATE UNIQUE INDEX CONCURRENTLY` 唯一索引（单独一个迁移文件）。不加外键。
-  - `chat_message` 加 `sender_user_id UUID`（可空）：共用对话里用户消息要显示是谁发的；普通聊天不填，前端回退到会话创建者。
+  - 发送人不加列：每条用户消息都挂着这次入队的任务（`service/task.go:2486`，`CreateChatMessage` 写 `TaskID`），任务上的 `initiator_user_id` 就是真实发送人（迁移 117，为飞书群这类多人会话加的）。
   - 迁移编号：当前最大是 `633_rebrand_marvis`，按仓库规则 rebrand 排最后：新迁移用 633 起，rebrand 顺延到最后，同步改 `scripts/rebrand-marvis.py` 的 `KEEP`、`cmd/migrate/main.go` 并发索引表和引用文件名的测试。
 - 聊天列表查询（`ListChatSessionsByCreator` 等）加 `NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)`，这些会话不出现在「我的对话」里。
 
@@ -84,7 +84,7 @@
   - 原 task 因 `context_overflow` 等不适合续接的原因失败时不预填 session（过滤条件对齐 `GetLastTaskSession`），只预填 `work_dir`。
 - 发消息、停止、排队、拉消息复用现有聊天接口（`POST /api/chat/sessions/{id}/messages` 等）。改两处：
   - 访问控制：`loadChatSessionForUser` 现在只放行创建者（`handler/chat.go:282`）。会话挂在某次运行上时，改为按「能查看该自动化」放行；其余聊天不变。
-  - 发送人：发送时写 `chat_message.sender_user_id`，消息接口返回它；每次发送仍按发送人做 `canInvokeAgent` 检查，任务归属记发送人。
+  - 发送人：消息列表查询按 `chat_message.task_id` 关联 `agent_task_queue`，返回 `initiator_user_id` 作为 `sender_user_id`（可空，普通聊天前端回退到会话创建者）；schema 加可选字段。每次发送仍按发送人做 `canInvokeAgent` 检查，任务归属记发送人。
 - 多人同时发送：聊天本身按会话排队（同一会话有任务在跑时新消息进队列），无需额外处理。
 - `GET /api/autopilots/{id}/runs/{runId}` 响应增加 `chat_session_id`（可空），schema 加可选字段 + 默认 `null`，补 malformed 响应测试。
 
