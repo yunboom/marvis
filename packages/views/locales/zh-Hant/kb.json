@@ -94,7 +94,7 @@
     "multi_other": "你有 {{count}} 份草稿改了這一頁，都還沒有合併。其他人看到的仍是正式版本。",
     "official": "正式",
     "draft": "草稿",
-    "diff": "差異",
+    "show_diff": "顯示差異",
     "diff_empty": "這一頁在草稿裡沒有改動",
     "choose": "選擇草稿",
     "origin": {

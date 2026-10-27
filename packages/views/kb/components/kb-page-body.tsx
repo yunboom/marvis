@@ -172,8 +172,8 @@ function BlockView({ change, numbers, highlights }: BlockViewProps) {
 
 interface KbPageBodyProps {
   page: KbPage;
-  /** The published page, when `page` is a draft copy; edits show inline. */
-  published?: KbPage | null;
+  /** Blocks a draft copy is compared with; its edits show inline. Omitted, the page renders as is. */
+  diffBase?: readonly KbBlock[];
   /** Banners shown under the meta row. */
   banners?: ReactNode;
   rawFileActions?: KbRawFileActions;
@@ -185,22 +185,25 @@ interface KbPageBodyProps {
   kbSlug?: string;
   /** The draft being read; links to pages of `kbSlug` keep it. */
   draft?: string;
+  /** The draft's edits are marked; page links keep that too. */
+  diff?: boolean;
 }
 
 /**
  * The body of a knowledge base page: title, meta, blocks, sources. Footnotes
- * become numbered citations with a hover card; a draft copy is compared with
- * the published page block by block.
+ * become numbered citations with a hover card; given `diffBase`, a draft copy
+ * is compared with it block by block.
  */
 export function KbPageBody({
   page,
-  published,
+  diffBase,
   banners,
   rawFileActions,
   onRawLink,
   annotatedQuotes,
   kbSlug = "",
   draft = "",
+  diff = false,
 }: KbPageBodyProps) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
@@ -214,10 +217,10 @@ export function KbPageBody({
   const highlights = useMemo(() => (page.stale ? page.claims.map((c) => c.text) : []), [page.stale, page.claims]);
   const changes = useMemo(() => {
     const blocks = page.blocks.filter((b) => !isFootnoteDefinitionBlock(b.content));
-    if (!published || !page.draft_change) return blocks.map((block): KbBlockChange => ({ kind: "same", block }));
-    const before = published.blocks.filter((b) => !isFootnoteDefinitionBlock(b.content));
-    return compareBlocks(before, blocks);
-  }, [page.blocks, page.draft_change, published]);
+    if (!diffBase) return blocks.map((block): KbBlockChange => ({ kind: "same", block }));
+    return compareBlocks(diffBase.filter((b) => !isFootnoteDefinitionBlock(b.content)), blocks);
+  }, [page.blocks, diffBase]);
+  const unchanged = !!diffBase && changes.every((change) => change.kind === "same");
 
   const cancelHide = () => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -278,7 +281,7 @@ export function KbPageBody({
         if (pageLink) {
           e.preventDefault();
           e.stopPropagation();
-          push(withDraft(p.kbPage(kbSlug, pageLink.pageId), draft) + pageLink.hash);
+          push(withDraft(p.kbPage(kbSlug, pageLink.pageId), draft, diff) + pageLink.hash);
           return;
         }
 
@@ -309,6 +312,7 @@ export function KbPageBody({
 
       {banners}
 
+      {unchanged && <p className="mb-[18px] text-body text-muted-foreground">{t(($) => $.draft.diff_empty)}</p>}
       <div className="flex flex-col">
         {changes.map((change, i) => (
           <BlockView

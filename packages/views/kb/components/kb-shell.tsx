@@ -25,7 +25,7 @@ import { parseKbRoute } from "../utils/kb-markdown";
 import { parseKbJobRoute } from "../jobs/kb-job-state";
 import { parseKbReviewRoute } from "../review/kb-review-route";
 import { parseKbManageRoute } from "../manage/kb-manage-route";
-import { KbPageTree } from "./kb-page-tree";
+import { KbPageTree, readsDraftDiff } from "./kb-page-tree";
 
 export function KbInitial({ name, className }: { name: string; className?: string }) {
   // Array.from keeps a leading emoji or astral character whole.
@@ -157,12 +157,15 @@ function KbNav({
   kbSlug,
   pageId,
   draft,
+  diff,
   onJobs,
   onChanges,
 }: {
   kbSlug: string;
   pageId: string;
   draft: string;
+  /** The draft's edits are marked in the tree. */
+  diff: boolean;
   onJobs: boolean;
   /** A page reached from the "…" menu (change log, management, graph): no nav row is current. */
   onChanges: boolean;
@@ -220,7 +223,7 @@ function KbNav({
       </div>
       <div className="px-4 pt-2 pb-1 text-caption text-muted-foreground">{t(($) => $.nav.pages)}</div>
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
-        <KbPageTree kbSlug={kbSlug} selectedId={pageId} ancestorIds={ancestorIds} draft={draft} />
+        <KbPageTree kbSlug={kbSlug} selectedId={pageId} ancestorIds={ancestorIds} draft={draft} diff={diff} />
       </nav>
     </aside>
   );
@@ -253,6 +256,7 @@ export function KbShell({ children }: { children: ReactNode }) {
           kbSlug={kbSlug}
           pageId={pageId}
           draft={draft}
+          diff={readsDraftDiff(searchParams)}
           onJobs={jobView === "list"}
           onChanges={reviewView === "changes" || parseKbManageRoute(pathname).view !== null}
         />}

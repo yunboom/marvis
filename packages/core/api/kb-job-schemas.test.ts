@@ -4,11 +4,9 @@ import { parseWithFallback } from "./schema";
 import {
   EMPTY_KB_JOB_LIST,
   EMPTY_KB_MERGE_REQUEST_CREATED,
-  KbDraftDetailSchema,
   KbJobDetailSchema,
   KbJobListSchema,
   KbMergeRequestCreatedSchema,
-  kbDraftDetailFallback,
   kbJobDetailFallback,
 } from "./kb-schemas";
 
@@ -103,41 +101,5 @@ describe("job schemas", () => {
         endpoint: "POST /api/kb/jobs/:id/submit",
       }),
     ).toEqual(EMPTY_KB_MERGE_REQUEST_CREATED);
-  });
-});
-
-describe("draft detail schema", () => {
-  const endpoint = { endpoint: "GET /api/kb/drafts/:id" };
-  const draft = {
-    id: "draft-1",
-    knowledge_base_id: "kb-1",
-    title: "处理批注",
-    version: 9,
-    status: "open",
-    pages: detail.pages,
-    checks: detail.checks,
-  };
-
-  it("reads a well-formed draft", () => {
-    expect(parseWithFallback(draft, KbDraftDetailSchema, kbDraftDetailFallback("draft-1"), endpoint)).toEqual(draft);
-  });
-
-  it("degrades unknown enums and missing parts to a usable draft", () => {
-    const parsed = parseWithFallback(
-      { id: "draft-2", version: "x", status: "archived", pages: [{ page_id: "p", change: "renamed" }, "junk"], checks: null },
-      KbDraftDetailSchema,
-      kbDraftDetailFallback("draft-2"),
-      endpoint,
-    );
-
-    expect(parsed).toMatchObject({ id: "draft-2", title: "", version: 0, status: "open", checks: { lint: [], conflicts: [] } });
-    expect(parsed.pages).toHaveLength(1);
-    expect(parsed.pages[0]).toMatchObject({ page_id: "p", change: "modified", lines: [] });
-  });
-
-  it("falls back on a malformed body", () => {
-    expect(parseWithFallback("oops", KbDraftDetailSchema, kbDraftDetailFallback("draft-3"), endpoint)).toEqual(
-      kbDraftDetailFallback("draft-3"),
-    );
   });
 });
