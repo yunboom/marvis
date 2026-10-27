@@ -59,6 +59,7 @@ const TYPE_KEY: Record<InboxItemType, string> = {
   children_done: "type.children_done",
   kb_mr_changes_requested: "type.kb_mr_changes_requested",
   kb_mr_review_requested: "type.kb_mr_review_requested",
+  kb_mr_review_needed: "type.kb_mr_review_needed",
 };
 
 // due_date is a calendar day — format timezone-safely (no offset day shift).

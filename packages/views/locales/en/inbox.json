@@ -84,7 +84,8 @@
     "children_done": "Sub-issues finished",
     "autopilot_quota_exceeded": "Autopilot run limit reached",
     "kb_mr_changes_requested": "Changes requested",
-    "kb_mr_review_requested": "Review requested again"
+    "kb_mr_review_requested": "Review requested again",
+    "kb_mr_review_needed": "Approval needed"
   },
   "labels": {
     "set_status_to": "Set status to",
@@ -101,7 +102,8 @@
     "autopilot_quota_blocked": "Run blocked because the limit was reached",
     "children_done_stage": "Stage {{stage}}'s sub-issues finished",
     "kb_mr_changes_requested": "{{name}} submitted a review",
-    "kb_mr_review_requested": "{{name}} requested review again"
+    "kb_mr_review_requested": "{{name}} requested review again",
+    "kb_mr_review_needed": "{{name}} submitted a change request"
   },
   "toasts": {
     "source_context_retry_started": "Retry started with the original context",
@@ -133,7 +135,8 @@
     "view_all_one": "View all {{count}} comment",
     "view_all_other": "View all {{count}} comments",
     "view_feedback": "View feedback",
-    "go_review": "Go to review"
+    "go_review": "Go to review",
+    "review_needed_action": "submitted a change request; it needs your approval"
   },
   "categories": {
     "label": "Notification type",

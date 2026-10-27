@@ -140,6 +140,15 @@ describe("KbReviewNotice", () => {
     auth.state.user.id = "user-1";
   });
 
+  it("asks a maintainer to approve a new request without showing an old review", async () => {
+    mount(item({ type: "kb_mr_review_needed", details: { knowledge_base_slug: "team", merge_request_number: 16 as unknown as string } }));
+
+    expect(await screen.findByText("submitted a change request; it needs your approval")).toBeInTheDocument();
+    expect(screen.getByText("Wang Fang")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Go to review" })).toHaveAttribute("href", "/acme/kb/team/reviews/16");
+    expect(screen.queryByText("Fix two things.")).toBeNull();
+  });
+
   it("falls back to the stored body when the request cannot be read", async () => {
     mocked.getKnowledgeBaseMergeRequest.mockRejectedValue(new Error("forbidden"));
     mount(item());

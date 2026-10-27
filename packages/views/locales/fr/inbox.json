@@ -84,7 +84,8 @@
     "children_done": "Sous-tâches terminées",
     "autopilot_quota_exceeded": "Limite d'exécutions d'automatisation atteinte",
     "kb_mr_changes_requested": "Modifications demandées",
-    "kb_mr_review_requested": "Nouvelle revue demandée"
+    "kb_mr_review_requested": "Nouvelle revue demandée",
+    "kb_mr_review_needed": "Approbation requise"
   },
   "labels": {
     "set_status_to": "Statut défini sur",
@@ -101,7 +102,8 @@
     "autopilot_quota_blocked": "Exécution bloquée car la limite a été atteinte",
     "children_done_stage": "Sous-tâches de l’étape {{stage}} terminées",
     "kb_mr_changes_requested": "{{name}} a envoyé une revue",
-    "kb_mr_review_requested": "{{name}} a redemandé une revue"
+    "kb_mr_review_requested": "{{name}} a redemandé une revue",
+    "kb_mr_review_needed": "{{name}} a soumis une demande de modification"
   },
   "toasts": {
     "source_context_retry_started": "Nouvelle tentative démarrée avec le contexte d'origine",
@@ -133,7 +135,8 @@
     "view_all_one": "Voir le {{count}} commentaire",
     "view_all_other": "Voir les {{count}} commentaires",
     "view_feedback": "Voir les remarques",
-    "go_review": "Aller à la revue"
+    "go_review": "Aller à la revue",
+    "review_needed_action": "a soumis une demande de modification ; elle attend votre approbation"
   },
   "categories": {
     "label": "Type de notification",

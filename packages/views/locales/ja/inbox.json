@@ -82,7 +82,8 @@
     "children_done": "サブタスクがすべて終わりました",
     "autopilot_quota_exceeded": "自動化の実行上限に達しました",
     "kb_mr_changes_requested": "レビューで修正依頼",
-    "kb_mr_review_requested": "再レビュー依頼"
+    "kb_mr_review_requested": "再レビュー依頼",
+    "kb_mr_review_needed": "承認待ち"
   },
   "labels": {
     "set_status_to": "ステータスを変更:",
@@ -99,7 +100,8 @@
     "autopilot_quota_blocked": "上限に達したため実行をブロックしました",
     "children_done_stage": "ステージ {{stage}} のサブタスクがすべて終わりました",
     "kb_mr_changes_requested": "{{name}} がレビューを送信",
-    "kb_mr_review_requested": "{{name}} が再レビューを依頼"
+    "kb_mr_review_requested": "{{name}} が再レビューを依頼",
+    "kb_mr_review_needed": "{{name}} が変更リクエストを提出"
   },
   "toasts": {
     "source_context_retry_started": "元のコンテキストで再試行を開始しました",
@@ -130,7 +132,8 @@
     "comments": "指摘",
     "view_all_other": "指摘 {{count}} 件をすべて見る",
     "view_feedback": "指摘を見る",
-    "go_review": "レビューページへ"
+    "go_review": "レビューページへ",
+    "review_needed_action": "が変更リクエストを提出しました。承認が必要です"
   },
   "categories": {
     "label": "通知の種類",

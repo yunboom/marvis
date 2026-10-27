@@ -15,7 +15,7 @@ import { useT } from "../../i18n";
 const NOTICE_COMMENTS = 2;
 
 export function isKbReviewNotice(type: InboxItem["type"]): boolean {
-  return type === "kb_mr_changes_requested" || type === "kb_mr_review_requested";
+  return type === "kb_mr_changes_requested" || type === "kb_mr_review_requested" || type === "kb_mr_review_needed";
 }
 
 /** Where a review notification points: the knowledge base and the request number. */
@@ -30,8 +30,12 @@ function noticeTarget(item: InboxItem): { slug: string; number: number; reviewId
   };
 }
 
-/** The review the notice is about: the submitted one, or the viewer's own latest. */
+/**
+ * The review the notice is about: the submitted one, the viewer's own latest
+ * when asked to review again, none when asked to approve.
+ */
 function noticeReview(item: InboxItem, mr: KbMergeRequestDetail, reviewId: string, userId: string): KbMrReview | null {
+  if (item.type === "kb_mr_review_needed") return null;
   if (item.type === "kb_mr_changes_requested") return mr.reviews.find((r) => r.id === reviewId) ?? null;
   const mine = mr.reviews.filter((r) => r.reviewer_user_id === userId);
 
@@ -45,6 +49,14 @@ function useNoticeData(item: InboxItem) {
   const comments = useQuery({ ...kbMrCommentListOptions(item.workspace_id, target.number), enabled: enabled && detail.isSuccess, retry: false });
 
   return { target, detail, comments };
+}
+
+/** What the actor did, after their name. */
+function noticeAction(type: InboxItem["type"]) {
+  if (type === "kb_mr_changes_requested") return "changes_requested_action" as const;
+  if (type === "kb_mr_review_needed") return "review_needed_action" as const;
+
+  return "review_requested_action" as const;
 }
 
 /**
@@ -68,7 +80,10 @@ export function KbReviewNotice({ item }: { item: InboxItem }) {
 
   const review = noticeReview(item, mr, target.reviewId, userId);
   const feedback = review ? (comments.data ?? []).filter((c) => c.review_id === review.id) : [];
-  const actor = item.actor_id ? getActorName("member", item.actor_id) : "";
+  // An agent can open a change request; review notices otherwise come from members.
+  const actorType = item.actor_type === "agent" ? "agent" : "member";
+  const actor = item.actor_id ? getActorName(actorType, item.actor_id) : "";
+  const action = noticeAction(item.type);
   const pageTitle = (pageId: string) => mr.pages.find((page) => page.page_id === pageId)?.title || "";
   const href = slug ? paths.workspace(slug).kbMergeRequest(target.slug, target.number) : null;
   const changes = item.type === "kb_mr_changes_requested";
@@ -77,10 +92,9 @@ export function KbReviewNotice({ item }: { item: InboxItem }) {
     <div className="mt-4.5 flex flex-col gap-3.5">
       {actor && (
         <div className="flex items-center gap-2 text-body">
-          {item.actor_id && <ActorAvatar actorType="member" actorId={item.actor_id} name={actor} size="sm" profileLink={false} />}
+          {item.actor_id && <ActorAvatar actorType={actorType} actorId={item.actor_id} name={actor} size="sm" profileLink={false} />}
           <span>
-            <span className="font-medium">{actor}</span>{" "}
-            {changes ? t(($) => $.kb_review.changes_requested_action) : t(($) => $.kb_review.review_requested_action)}
+            <span className="font-medium">{actor}</span> {t(($) => $.kb_review[action])}
           </span>
         </div>
       )}
@@ -116,7 +130,7 @@ export function KbReviewNotice({ item }: { item: InboxItem }) {
   );
 }
 
-/** The notice's primary action: the owner reads the feedback, a reviewer reviews again. */
+/** The notice's primary action: the owner reads the feedback, a reviewer or maintainer reviews. */
 export function KbReviewNoticeAction({ item }: { item: InboxItem }) {
   const { t } = useT("inbox");
   const slug = useWorkspaceSlug();

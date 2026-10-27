@@ -82,7 +82,8 @@
     "children_done": "하위 태스크가 모두 끝났습니다",
     "autopilot_quota_exceeded": "자동화 실행 한도 도달",
     "kb_mr_changes_requested": "리뷰 제출됨",
-    "kb_mr_review_requested": "다시 리뷰 요청"
+    "kb_mr_review_requested": "다시 리뷰 요청",
+    "kb_mr_review_needed": "승인 필요"
   },
   "labels": {
     "set_status_to": "상태 변경:",
@@ -99,7 +100,8 @@
     "autopilot_quota_blocked": "한도에 도달하여 실행이 차단됨",
     "children_done_stage": "{{stage}}단계 하위 태스크가 모두 끝났습니다",
     "kb_mr_changes_requested": "{{name}} 님이 리뷰를 제출",
-    "kb_mr_review_requested": "{{name}} 님이 다시 리뷰를 요청"
+    "kb_mr_review_requested": "{{name}} 님이 다시 리뷰를 요청",
+    "kb_mr_review_needed": "{{name}} 님이 변경 요청을 제출"
   },
   "toasts": {
     "source_context_retry_started": "원본 컨텍스트로 재시도를 시작했습니다",
@@ -130,7 +132,8 @@
     "comments": "의견",
     "view_all_other": "의견 {{count}}개 모두 보기",
     "view_feedback": "리뷰 의견 보기",
-    "go_review": "리뷰 페이지로"
+    "go_review": "리뷰 페이지로",
+    "review_needed_action": "님이 변경 요청을 제출했습니다. 승인이 필요합니다"
   },
   "categories": {
     "label": "알림 유형",

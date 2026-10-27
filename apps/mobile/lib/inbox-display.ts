@@ -96,7 +96,8 @@ export function isInboxSheetNotice(type: InboxItem["type"]): boolean {
     type === "autopilot_quota_exceeded" ||
     type === "autopilot_paused" ||
     type === "kb_mr_changes_requested" ||
-    type === "kb_mr_review_requested"
+    type === "kb_mr_review_requested" ||
+    type === "kb_mr_review_needed"
   );
 }
 

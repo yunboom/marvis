@@ -82,7 +82,8 @@
     "children_done": "子任務已全部結束",
     "autopilot_quota_exceeded": "自動化執行次數已用完",
     "kb_mr_changes_requested": "提交了評審",
-    "kb_mr_review_requested": "重新請求稽核"
+    "kb_mr_review_requested": "重新請求稽核",
+    "kb_mr_review_needed": "待你稽核"
   },
   "labels": {
     "set_status_to": "狀態設為",
@@ -99,7 +100,8 @@
     "autopilot_quota_blocked": "執行已被阻止：額度已用完",
     "children_done_stage": "第 {{stage}} 階段的子任務已全部結束",
     "kb_mr_changes_requested": "{{name}} 提交了評審",
-    "kb_mr_review_requested": "{{name}} 重新請求稽核"
+    "kb_mr_review_requested": "{{name}} 重新請求稽核",
+    "kb_mr_review_needed": "{{name}} 提交了變更請求"
   },
   "toasts": {
     "source_context_retry_started": "已使用原始上下文開始重試",
@@ -130,7 +132,8 @@
     "comments": "意見",
     "view_all_other": "查看全部 {{count}} 條意見",
     "view_feedback": "查看稽核意見",
-    "go_review": "去稽核頁"
+    "go_review": "去稽核頁",
+    "review_needed_action": "提交了變更請求，待你稽核"
   },
   "categories": {
     "label": "通知類型",

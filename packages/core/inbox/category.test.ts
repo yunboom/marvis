@@ -14,6 +14,7 @@ describe("inbox categories", () => {
     expect(inboxCategoryOf("mentioned")).toBe("issue");
     expect(inboxCategoryOf("quick_create_unconfirmed")).toBe("issue");
     expect(inboxCategoryOf("kb_mr_changes_requested")).toBe("kb");
+    expect(inboxCategoryOf("kb_mr_review_needed")).toBe("kb");
     expect(inboxCategoryOf("autopilot_quota_exceeded")).toBe("autopilot");
     expect(inboxCategoryOf("something_new")).toBeNull();
     expect(inboxCategoryOf("toString")).toBeNull();

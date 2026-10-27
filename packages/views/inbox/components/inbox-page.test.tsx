@@ -701,6 +701,7 @@ describe("InboxPage", () => {
     listData.active = [
       item({ id: "issue-row", issue_id: "issue-a", read: false }),
       item({ id: "kb-row", issue_id: null, type: "kb_mr_changes_requested", read: false }),
+      item({ id: "needed-row", issue_id: null, type: "kb_mr_review_needed", read: false }),
       item({ id: "auto-row", issue_id: null, type: "autopilot_paused" }),
       item({ id: "new-row", issue_id: null, type: "something_new" as InboxItem["type"] }),
     ];
@@ -709,14 +710,14 @@ describe("InboxPage", () => {
     const tabs = screen.getAllByRole("tab");
     expect(tabs).toHaveLength(4);
     // Unread per tab; a tab without unread shows no number.
-    expect(tabs[0]).toHaveTextContent("Inbox2");
+    expect(tabs[0]).toHaveTextContent("Inbox3");
     expect(tabs[1]).toHaveTextContent("Inbox1");
-    expect(tabs[2]).toHaveTextContent("Inbox1");
+    expect(tabs[2]).toHaveTextContent("Inbox2");
     expect(tabs[3]).toHaveTextContent(/^Inbox$/);
-    expect(screen.getAllByTestId("row")).toHaveLength(4);
+    expect(screen.getAllByTestId("row")).toHaveLength(5);
 
     fireEvent.click(tabs[2]!);
-    expect(screen.getAllByTestId("row").map((row) => row.textContent)).toEqual(["kb-row"]);
+    expect(screen.getAllByTestId("row").map((row) => row.textContent).sort()).toEqual(["kb-row", "needed-row"]);
     expect(replace).toHaveBeenLastCalledWith("/acme/inbox?category=kb");
   });
 

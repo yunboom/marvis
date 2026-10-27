@@ -96,6 +96,16 @@ describe("getInboxNavigationTarget", () => {
       pathname: "/[workspace]/inbox/[id]",
       params: { workspace: "acme", id: "inbox-1" },
     });
+    expect(
+      getInboxNavigationTarget(
+        item({ issue_id: null, type: "kb_mr_review_needed" }),
+        "acme",
+        "history-1",
+      ),
+    ).toEqual({
+      pathname: "/[workspace]/inbox/[id]",
+      params: { workspace: "acme", id: "inbox-1" },
+    });
   });
 
   it("opens issue-less quota notices in their workspace sheet", () => {

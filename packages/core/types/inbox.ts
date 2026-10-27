@@ -33,10 +33,12 @@ export type InboxItemType =
   // system rule notifies a member assignee instead of waking an agent).
   | "children_done"
   // Knowledge base reviews, issue-less: a review asked the owner for changes,
-  // or the owner asked the reviewers to review again. details carries
-  // knowledge_base_slug, merge_request_number and review_id.
+  // the owner asked the reviewers to review again, or a change request waits
+  // for the maintainers' approval. details carries knowledge_base_slug,
+  // merge_request_number and review_id.
   | "kb_mr_changes_requested"
-  | "kb_mr_review_requested";
+  | "kb_mr_review_requested"
+  | "kb_mr_review_needed";
 
 /**
  * One workspace's unread inbox count in the cross-workspace summary

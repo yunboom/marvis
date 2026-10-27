@@ -38,6 +38,7 @@ export const INBOX_CATEGORY_OF: Record<InboxItemType, InboxCategory> = {
   quick_create_unconfirmed: "issue",
   kb_mr_changes_requested: "kb",
   kb_mr_review_requested: "kb",
+  kb_mr_review_needed: "kb",
   autopilot_paused: "autopilot",
   autopilot_quota_exceeded: "autopilot",
 };
