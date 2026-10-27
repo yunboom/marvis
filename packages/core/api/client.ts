@@ -5175,6 +5175,22 @@ export class ApiClient {
     });
   }
 
+  /** Archives or unarchives a job; an archived job's chat is read-only. */
+  async setKnowledgeBaseJobArchived(id: string, archived: boolean): Promise<KbJob> {
+    const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}/archive`, {
+      method: "PATCH",
+      body: JSON.stringify({ archived }),
+    });
+    return parseWithFallback(raw, KbJobSchema, kbJobFallback(id), {
+      endpoint: "PATCH /api/kb/jobs/:id/archive",
+    });
+  }
+
+  /** Hard-deletes a job and its chat; a submitted draft's merge request stays. */
+  async deleteKnowledgeBaseJob(id: string): Promise<void> {
+    await this.fetch(`/api/kb/jobs/${encodeURIComponent(id)}`, { method: "DELETE" });
+  }
+
   /** Merge requests; the change log is `status: "merged"`. */
   async listKnowledgeBaseMergeRequests(
     params: { status?: KbMergeRequestListStatus; kb?: string; limit?: number; offset?: number } = {},

@@ -362,6 +362,21 @@
     "start_failed": "Impossible de lancer la tâche",
     "not_found": "La tâche n’existe pas ou vous ne pouvez pas l’ouvrir",
     "ended": "Cette conversation est terminée",
+    "archive": "Archiver",
+    "unarchive": "Désarchiver",
+    "delete": "Supprimer",
+    "archived_title": "Archivées",
+    "archived_notice": "Cette tâche est archivée",
+    "row_actions": "Actions de la tâche",
+    "archive_failed": "Impossible de mettre à jour la tâche",
+    "delete_failed": "Impossible de supprimer la tâche",
+    "delete_dialog": {
+      "title": "Supprimer la tâche",
+      "description": "« {{name}} » et sa conversation seront définitivement supprimés, et un brouillon non soumis sera abandonné. Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "confirming": "Suppression..."
+    },
     "starters": {
       "ingest": {
         "title": "Intégrer des sources",

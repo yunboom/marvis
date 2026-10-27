@@ -485,6 +485,8 @@ export interface KbJob {
   draft_id: string | null;
   created_by: string;
   state: KbJobState;
+  /** Archived jobs sit behind the list's archived entry; their chat is read-only. */
+  archived: boolean;
   last_reply: string;
   draft: KbJobDraft | null;
   merge_request: KbJobMergeRequest | null;

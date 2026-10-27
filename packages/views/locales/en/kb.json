@@ -362,6 +362,21 @@
     "start_failed": "Could not start the job",
     "not_found": "The job does not exist or you cannot open it",
     "ended": "This conversation has ended",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "delete": "Delete",
+    "archived_title": "Archived",
+    "archived_notice": "This job is archived",
+    "row_actions": "Job actions",
+    "archive_failed": "Could not update the job",
+    "delete_failed": "Could not delete the job",
+    "delete_dialog": {
+      "title": "Delete job",
+      "description": "\"{{name}}\" and its conversation will be permanently removed, and an unsubmitted draft is discarded. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "confirming": "Deleting..."
+    },
     "starters": {
       "ingest": {
         "title": "Ingest sources",

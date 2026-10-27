@@ -21,6 +21,7 @@ const job = {
   draft_id: "draft-1",
   created_by: "user-1",
   state: "idle",
+  archived: false,
   last_reply: "改好了「支付回调」的去重一节。",
   draft: { version: 9, status: "open", pages: 2, added: 3, deleted: 1 },
   merge_request: null,
@@ -78,6 +79,7 @@ describe("job schemas", () => {
 
     expect(parsed.starter).toBe("custom");
     expect(parsed.state).toBe("idle");
+    expect(parsed.archived).toBe(false);
     expect(parsed.draft_id).toBeNull();
     expect(parsed.draft).toMatchObject({ version: 0, status: "open", pages: 0 });
     expect(parsed.merge_request).toMatchObject({ number: 16, status: "open", close_reason: "" });

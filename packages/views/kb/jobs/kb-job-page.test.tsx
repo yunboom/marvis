@@ -28,6 +28,8 @@ vi.mock("@marvis/core/api", () => {
       createKnowledgeBaseJob: vi.fn(),
       submitKnowledgeBaseJob: vi.fn(),
       discardKnowledgeBaseJob: vi.fn(),
+      setKnowledgeBaseJobArchived: vi.fn(),
+      deleteKnowledgeBaseJob: vi.fn(),
       listAgents: vi.fn(),
       listMembers: vi.fn(),
       listRuntimes: vi.fn(),
@@ -175,6 +177,7 @@ function job(over: Partial<KbJobDetail> = {}): KbJobDetail {
     draft_id: "draft-1",
     created_by: "user-1",
     state: "idle",
+    archived: false,
     last_reply: "",
     draft: { version: 3, status: "open", pages: 1, added: 1, deleted: 1 },
     merge_request: null,
@@ -437,6 +440,37 @@ describe("KbJobPage", () => {
     const dialog = await screen.findByRole("alertdialog");
     await userEvent.click(within(dialog).getByRole("button", { name: "Discard draft" }));
     await waitFor(() => expect(mocked.discardKnowledgeBaseJob).toHaveBeenCalledWith("job-1"));
+  });
+
+  it("archives from the ⋯ menu and offers no delete until archived", async () => {
+    mocked.setKnowledgeBaseJobArchived.mockResolvedValue({ ...job(), archived: true });
+    await openJob(job());
+
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.queryByRole("menuitem", { name: "Delete" })).toBeNull();
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Archive" }));
+    await waitFor(() => expect(mocked.setKnowledgeBaseJobArchived).toHaveBeenCalledWith("job-1", true));
+  });
+
+  it("turns read-only once archived and deletes after confirming, then leaves for the list", async () => {
+    mocked.deleteKnowledgeBaseJob.mockResolvedValue(undefined);
+    mocked.getKnowledgeBaseJob.mockResolvedValue(job({ archived: true }));
+    const adapter = makeAdapter("/acme/kb/team/jobs/job-1");
+    mount(adapter);
+    await screen.findByRole("region", { name: "Draft changes" });
+
+    expect(screen.queryByRole("form", { name: "composer" })).toBeNull();
+    expect(screen.getByText("This job is archived")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Unarchive" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(mocked.deleteKnowledgeBaseJob).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(mocked.deleteKnowledgeBaseJob).toHaveBeenCalledWith("job-1"));
+    await waitFor(() => expect(adapter.push).toHaveBeenCalledWith("/acme/kb/team/jobs"));
   });
 });
 

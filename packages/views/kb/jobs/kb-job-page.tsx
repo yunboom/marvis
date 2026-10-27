@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, ChevronDown, MoreHorizontal, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ApiError } from "@marvis/core/api";
@@ -11,12 +11,34 @@ import { useChatStore } from "@marvis/core/chat";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { KB_NEW_JOB_PARAMS, useWorkspacePaths } from "@marvis/core/paths";
 import { kbBaseDetailOptions, kbJobOptions, kbKeys } from "@marvis/core/kb/queries";
-import { useCreateKbJob, useDiscardKbJob, useSubmitKbJob } from "@marvis/core/kb/mutations";
+import {
+  useCreateKbJob,
+  useDeleteKbJob,
+  useDiscardKbJob,
+  useSetKbJobArchived,
+  useSubmitKbJob,
+} from "@marvis/core/kb/mutations";
 import { runtimeDisplayLabel } from "@marvis/core/runtimes";
 import { runtimeListOptions } from "@marvis/core/runtimes/queries";
 import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
 import type { CreateKbJobRequest, KbJobStarter } from "@marvis/core/types";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@marvis/ui/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { ChatInput } from "../../chat/components/chat-input";
@@ -55,11 +77,14 @@ function JobShell({
   kbSlug,
   title,
   runtimeLabel,
+  actions,
   children,
 }: {
   kbSlug: string;
   title: string;
   runtimeLabel: string;
+  /** The job's ⋯ menu, once the job exists. */
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useT("kb");
@@ -90,6 +115,7 @@ function JobShell({
         {runtimeLabel && (
           <span className="max-w-64 truncate rounded-full bg-muted px-3 py-1 text-caption max-md:hidden">{runtimeLabel}</span>
         )}
+        {actions}
       </header>
       <div className="flex min-h-0 flex-1 max-lg:flex-col">{children}</div>
     </div>
@@ -293,6 +319,100 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
   );
 }
 
+/**
+ * The job's ⋯ menu, as the chat header's: archive, or once archived,
+ * unarchive and delete. Delete asks first, awaits the server, then leaves
+ * for the job list.
+ */
+function JobActions({ kbSlug, jobId, name, archived }: { kbSlug: string; jobId: string; name: string; archived: boolean }) {
+  const { t } = useT("kb");
+  const { t: tCommon } = useT("common");
+  const p = useWorkspacePaths();
+  const { push } = useNavigation();
+  const setArchived = useSetKbJobArchived();
+  const deleteJob = useDeleteKbJob();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const archive = (next: boolean) =>
+    setArchived.mutate(
+      { jobId, archived: next },
+      {
+        onError: (err) =>
+          toast.error(err instanceof ApiError && err.message ? err.message : t(($) => $.job.archive_failed)),
+      },
+    );
+  const doDelete = async () => {
+    try {
+      await deleteJob.mutateAsync(jobId);
+      setConfirmDelete(false);
+      push(p.kbJobs(kbSlug));
+    } catch (err) {
+      toast.error(err instanceof ApiError && err.message ? err.message : t(($) => $.job.delete_failed));
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <IconButton
+              label={tCommon(($) => $.more_actions)}
+              tooltipSide="bottom"
+              size="icon"
+              className="size-9 text-muted-foreground"
+            />
+          }
+        >
+          <MoreHorizontal className="size-4.5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-auto">
+          {archived ? (
+            <>
+              <DropdownMenuItem onClick={() => archive(false)}>
+                <ArchiveRestore className="h-4 w-4" />
+                {t(($) => $.job.unarchive)}
+              </DropdownMenuItem>
+              {/* Hard delete is offered only once a job is archived. */}
+              <DropdownMenuItem variant="destructive" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-4 w-4" />
+                {t(($) => $.job.delete)}
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <DropdownMenuItem onClick={() => archive(true)}>
+              <Archive className="h-4 w-4" />
+              {t(($) => $.job.archive)}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={confirmDelete} onOpenChange={(open) => !deleteJob.isPending && setConfirmDelete(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(($) => $.job.delete_dialog.title)}</AlertDialogTitle>
+            <AlertDialogDescription>{t(($) => $.job.delete_dialog.description, { name })}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteJob.isPending}>{t(($) => $.job.delete_dialog.cancel)}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteJob.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void doDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteJob.isPending ? t(($) => $.job.delete_dialog.confirming) : t(($) => $.job.delete_dialog.confirm)}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 /** An existing job: its conversation on the left, its draft on the right. */
 function KbJobConversation({ kbSlug, jobId }: { kbSlug: string; jobId: string }) {
   const { t } = useT("kb");
@@ -330,6 +450,8 @@ function KbJobConversation({ kbSlug, jobId }: { kbSlug: string; jobId: string })
   }
 
   const ended = job.draft?.status === "merged" || job.draft?.status === "discarded" || job.merge_request?.status === "merged";
+  // An archived job's chat is read-only, as an archived chat is.
+  const readOnly = ended || job.archived;
   const queuedTasks = conversation.pendingTask?.queued_tasks ?? [];
 
   const onSubmit = () => {
@@ -350,7 +472,12 @@ function KbJobConversation({ kbSlug, jobId }: { kbSlug: string; jobId: string })
   };
 
   return (
-    <JobShell kbSlug={kbSlug} title={job.name} runtimeLabel={runtimeLabel}>
+    <JobShell
+      kbSlug={kbSlug}
+      title={job.name}
+      runtimeLabel={runtimeLabel}
+      actions={<JobActions kbSlug={kbSlug} jobId={jobId} name={job.name} archived={job.archived} />}
+    >
       <section aria-label={job.agent_name} className="flex min-h-0 min-w-0 flex-1 flex-col @container">
         <AgentRow agentId={job.agent_id} />
         {conversation.loading ? (
@@ -366,11 +493,13 @@ function KbJobConversation({ kbSlug, jobId }: { kbSlug: string; jobId: string })
             isFetchingOlderMessages={conversation.isFetchingOlderMessages}
             onLoadOlderMessages={conversation.fetchOlderMessages}
             onQuickAction={(action) => conversation.send(action.prompt)}
-            quickActionsDisabled={running || ended}
+            quickActionsDisabled={running || readOnly}
           />
         )}
-        {ended ? (
-          <p className="shrink-0 border-t px-6 py-4 text-center text-label text-muted-foreground">{t(($) => $.job.ended)}</p>
+        {readOnly ? (
+          <p className="shrink-0 border-t px-6 py-4 text-center text-label text-muted-foreground">
+            {job.archived ? t(($) => $.job.archived_notice) : t(($) => $.job.ended)}
+          </p>
         ) : (
           <>
             <ChatQueue

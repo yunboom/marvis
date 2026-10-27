@@ -351,6 +351,21 @@
     "start_failed": "ジョブを作成できませんでした",
     "not_found": "ジョブが存在しないか、閲覧できません",
     "ended": "この会話は終了しました",
+    "archive": "アーカイブ",
+    "unarchive": "アーカイブ解除",
+    "delete": "削除",
+    "archived_title": "アーカイブ済み",
+    "archived_notice": "このジョブはアーカイブされています",
+    "row_actions": "ジョブの操作",
+    "archive_failed": "ジョブを更新できませんでした",
+    "delete_failed": "ジョブを削除できませんでした",
+    "delete_dialog": {
+      "title": "ジョブを削除",
+      "description": "\"{{name}}\" とその会話が完全に削除され、未提出の下書きは破棄されます。この操作は取り消せません。",
+      "cancel": "キャンセル",
+      "confirm": "削除",
+      "confirming": "削除中..."
+    },
     "starters": {
       "ingest": {
         "title": "資料を取り込む",

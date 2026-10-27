@@ -351,6 +351,21 @@
     "start_failed": "作业没有建成",
     "not_found": "作业不存在或无权查看",
     "ended": "这段对话已结束",
+    "archive": "归档",
+    "unarchive": "取消归档",
+    "delete": "删除",
+    "archived_title": "已归档",
+    "archived_notice": "此作业已归档",
+    "row_actions": "作业操作",
+    "archive_failed": "作业没有更新成功",
+    "delete_failed": "作业没有删除成功",
+    "delete_dialog": {
+      "title": "删除作业",
+      "description": "\"{{name}}\" 及其对话会被永久删除，未提交的草稿会被放弃，无法撤销。",
+      "cancel": "取消",
+      "confirm": "删除",
+      "confirming": "删除中..."
+    },
     "starters": {
       "ingest": {
         "title": "收录资料",

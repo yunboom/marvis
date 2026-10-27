@@ -351,6 +351,21 @@
     "start_failed": "작업을 만들지 못했습니다",
     "not_found": "작업이 없거나 볼 수 없습니다",
     "ended": "이 대화는 종료되었습니다",
+    "archive": "보관",
+    "unarchive": "보관 해제",
+    "delete": "삭제",
+    "archived_title": "보관됨",
+    "archived_notice": "보관된 작업입니다",
+    "row_actions": "작업 메뉴",
+    "archive_failed": "작업을 업데이트하지 못했습니다",
+    "delete_failed": "작업을 삭제하지 못했습니다",
+    "delete_dialog": {
+      "title": "작업 삭제",
+      "description": "\"{{name}}\"과(와) 대화가 영구 삭제되고, 제출하지 않은 초안은 버려집니다. 이 작업은 되돌릴 수 없습니다.",
+      "cancel": "취소",
+      "confirm": "삭제",
+      "confirming": "삭제하는 중..."
+    },
     "starters": {
       "ingest": {
         "title": "자료 수집",

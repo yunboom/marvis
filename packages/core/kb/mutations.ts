@@ -58,6 +58,39 @@ export function useDiscardKbJob() {
   });
 }
 
+/**
+ * Archives or unarchives a job. Awaits the server, as discarding does: the
+ * row moves between the list's two views once the refetch lands.
+ */
+export function useSetKbJobArchived() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ jobId, archived }: { jobId: string; archived: boolean }) =>
+      api.setKnowledgeBaseJobArchived(jobId, archived),
+    onSettled: () => invalidateKbJobs(qc, wsId),
+  });
+}
+
+/**
+ * Hard-deletes a job and its chat. Not optimistic: callers await it before
+ * leaving the job. A merge request made from the job loses its origin link,
+ * so the review lists refetch too.
+ */
+export function useDeleteKbJob() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: (jobId: string) => api.deleteKnowledgeBaseJob(jobId),
+    // The job is gone; dropping its detail keeps an open job page from
+    // refetching into a not-found state before it navigates away.
+    onSuccess: (_, jobId) => qc.removeQueries({ queryKey: kbKeys.job(wsId, jobId) }),
+    onSettled: () => invalidateKbMergeRequests(qc, wsId),
+  });
+}
+
 /** Creates a knowledge base; the list and its counters refetch afterwards. */
 export function useCreateKnowledgeBase() {
   const qc = useQueryClient();
