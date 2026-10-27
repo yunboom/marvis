@@ -279,7 +279,7 @@ RETURNING *;
 
 -- name: ListKbMrComments :many
 -- A merge request's comments, oldest first: the published ones (direct
--- comments and those of submitted reviews), plus, with pending_reviewer_id,
+-- comments and those of submitted reviews), plus, with pending_reviewer_user_id,
 -- the comments of that reviewer's pending review.
 SELECT c.* FROM kb_mr_comment c
 LEFT JOIN kb_mr_review rv ON rv.id = c.review_id
@@ -287,7 +287,7 @@ WHERE c.merge_request_id = sqlc.arg('merge_request_id')
   AND (
     c.review_id IS NULL
     OR rv.state = sqlc.arg('submitted_state')::text
-    OR rv.reviewer_id = sqlc.narg('pending_reviewer_id')::uuid
+    OR rv.reviewer_user_id = sqlc.narg('pending_reviewer_user_id')::uuid
   )
 ORDER BY c.created_at, c.id;
 
@@ -319,15 +319,15 @@ GROUP BY review_id;
 -- name: OpenKbMrReview :one
 -- Starts the reviewer's pending review; returns no row when one is already
 -- pending (kb_mr_review_pending_uidx), so the caller reads that one instead.
-INSERT INTO kb_mr_review (workspace_id, merge_request_id, reviewer_id, state)
-VALUES (sqlc.arg('workspace_id'), sqlc.arg('merge_request_id'), sqlc.arg('reviewer_id'), sqlc.arg('state'))
-ON CONFLICT (merge_request_id, reviewer_id) WHERE state = 'pending' DO NOTHING
+INSERT INTO kb_mr_review (workspace_id, merge_request_id, reviewer_user_id, state)
+VALUES (sqlc.arg('workspace_id'), sqlc.arg('merge_request_id'), sqlc.arg('reviewer_user_id'), sqlc.arg('state'))
+ON CONFLICT (merge_request_id, reviewer_user_id) WHERE state = 'pending' DO NOTHING
 RETURNING *;
 
 -- name: GetKbMrPendingReview :one
 SELECT * FROM kb_mr_review
 WHERE merge_request_id = sqlc.arg('merge_request_id')
-  AND reviewer_id = sqlc.arg('reviewer_id')
+  AND reviewer_user_id = sqlc.arg('reviewer_user_id')
   AND state = sqlc.arg('state')::text;
 
 -- name: GetKbMrReviewForUpdate :one
@@ -344,7 +344,7 @@ WHERE merge_request_id = sqlc.arg('merge_request_id') AND id = sqlc.arg('id');
 -- viewer's pending review (viewer_id) last.
 SELECT * FROM kb_mr_review
 WHERE merge_request_id = sqlc.arg('merge_request_id')
-  AND (state = sqlc.arg('submitted_state')::text OR reviewer_id = sqlc.narg('viewer_id')::uuid)
+  AND (state = sqlc.arg('submitted_state')::text OR reviewer_user_id = sqlc.narg('viewer_id')::uuid)
 ORDER BY submitted_at NULLS LAST, created_at, id;
 
 -- name: SubmitKbMrReview :one
@@ -358,9 +358,9 @@ RETURNING *;
 -- name: DeleteKbMrReview :exec
 DELETE FROM kb_mr_review WHERE id = sqlc.arg('id');
 
--- name: ListKbMrReviewerIDs :many
+-- name: ListKbMrReviewerUserIDs :many
 -- Members who submitted a review on the merge request.
-SELECT DISTINCT reviewer_id FROM kb_mr_review
+SELECT DISTINCT reviewer_user_id FROM kb_mr_review
 WHERE merge_request_id = sqlc.arg('merge_request_id')
   AND state = sqlc.arg('state')::text;
 

@@ -451,7 +451,7 @@ func seedKbEverywhere(t *testing.T, base string, number int) {
 		"author_type": "member", "author_id": testUserID, "draft_id": draft,
 	})
 	dbfx.Insert(t, "kb_mr_comment", testutil.Cols{"merge_request_id": mr, "body": "c", "author_type": "member", "author_id": testUserID})
-	dbfx.Insert(t, "kb_mr_review", testutil.Cols{"workspace_id": testWorkspaceID, "merge_request_id": mr, "reviewer_id": testUserID})
+	dbfx.Insert(t, "kb_mr_review", testutil.Cols{"workspace_id": testWorkspaceID, "merge_request_id": mr, "reviewer_user_id": testUserID})
 	dbfx.Insert(t, "kb_mr_event", testutil.Cols{
 		"workspace_id": testWorkspaceID, "merge_request_id": mr, "actor_type": "member", "actor_id": testUserID, "kind": "edited",
 	})

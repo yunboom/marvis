@@ -74,7 +74,7 @@ const detail = {
     {
       id: "rv-1",
       merge_request_id: "mr-1",
-      reviewer_id: "user-1",
+      reviewer_user_id: "user-1",
       reviewer_name: "王芳",
       state: "submitted",
       summary: "两处要改。",

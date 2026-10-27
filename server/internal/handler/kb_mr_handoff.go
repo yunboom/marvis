@@ -124,7 +124,7 @@ func (h *Handler) kbReviewHandoffMessage(ctx context.Context, base db.KbBase, mr
 
 	actors := make([]kbActor, 0, len(round)+len(comments))
 	for _, rv := range round {
-		actors = append(actors, kbActor{kind: kbActorMember, id: rv.ReviewerID})
+		actors = append(actors, kbActor{kind: kbActorMember, id: rv.ReviewerUserID})
 	}
 	for _, c := range comments {
 		actors = append(actors, kbActor{kind: c.AuthorType, id: c.AuthorID})
@@ -139,7 +139,7 @@ func (h *Handler) kbReviewHandoffMessage(ctx context.Context, base db.KbBase, mr
 	for _, rv := range round {
 		inRound[rv.ID] = true
 		if rv.Summary != "" {
-			in.Summaries = append(in.Summaries, kb.ReviewHandoffSummary{Reviewer: names.name(kbActorMember, rv.ReviewerID), Text: rv.Summary})
+			in.Summaries = append(in.Summaries, kb.ReviewHandoffSummary{Reviewer: names.name(kbActorMember, rv.ReviewerUserID), Text: rv.Summary})
 		}
 	}
 	for _, c := range comments {

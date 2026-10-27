@@ -66,7 +66,7 @@ func (h *Handler) kbVisibleComments(ctx context.Context, mr db.KbMergeRequest, u
 	if state == kbCommentStateAll {
 		reviewer = parseUUID(userID)
 		review, err := h.Queries.GetKbMrPendingReview(ctx, db.GetKbMrPendingReviewParams{
-			MergeRequestID: mr.ID, ReviewerID: reviewer, State: kb.ReviewStatePending,
+			MergeRequestID: mr.ID, ReviewerUserID: reviewer, State: kb.ReviewStatePending,
 		})
 		if err != nil && !isNotFound(err) {
 			return nil, nil, errors.Wrapf(err, "load pending review merge_request_id=%s", uuidToString(mr.ID))

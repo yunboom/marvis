@@ -677,26 +677,26 @@ func (q *Queries) GetKbMrComment(ctx context.Context, arg GetKbMrCommentParams) 
 }
 
 const getKbMrPendingReview = `-- name: GetKbMrPendingReview :one
-SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
+SELECT id, workspace_id, merge_request_id, reviewer_user_id, state, summary, created_at, submitted_at FROM kb_mr_review
 WHERE merge_request_id = $1
-  AND reviewer_id = $2
+  AND reviewer_user_id = $2
   AND state = $3::text
 `
 
 type GetKbMrPendingReviewParams struct {
 	MergeRequestID pgtype.UUID `json:"merge_request_id"`
-	ReviewerID     pgtype.UUID `json:"reviewer_id"`
+	ReviewerUserID pgtype.UUID `json:"reviewer_user_id"`
 	State          string      `json:"state"`
 }
 
 func (q *Queries) GetKbMrPendingReview(ctx context.Context, arg GetKbMrPendingReviewParams) (KbMrReview, error) {
-	row := q.db.QueryRow(ctx, getKbMrPendingReview, arg.MergeRequestID, arg.ReviewerID, arg.State)
+	row := q.db.QueryRow(ctx, getKbMrPendingReview, arg.MergeRequestID, arg.ReviewerUserID, arg.State)
 	var i KbMrReview
 	err := row.Scan(
 		&i.ID,
 		&i.WorkspaceID,
 		&i.MergeRequestID,
-		&i.ReviewerID,
+		&i.ReviewerUserID,
 		&i.State,
 		&i.Summary,
 		&i.CreatedAt,
@@ -706,7 +706,7 @@ func (q *Queries) GetKbMrPendingReview(ctx context.Context, arg GetKbMrPendingRe
 }
 
 const getKbMrReview = `-- name: GetKbMrReview :one
-SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
+SELECT id, workspace_id, merge_request_id, reviewer_user_id, state, summary, created_at, submitted_at FROM kb_mr_review
 WHERE merge_request_id = $1 AND id = $2
 `
 
@@ -722,7 +722,7 @@ func (q *Queries) GetKbMrReview(ctx context.Context, arg GetKbMrReviewParams) (K
 		&i.ID,
 		&i.WorkspaceID,
 		&i.MergeRequestID,
-		&i.ReviewerID,
+		&i.ReviewerUserID,
 		&i.State,
 		&i.Summary,
 		&i.CreatedAt,
@@ -732,7 +732,7 @@ func (q *Queries) GetKbMrReview(ctx context.Context, arg GetKbMrReviewParams) (K
 }
 
 const getKbMrReviewForUpdate = `-- name: GetKbMrReviewForUpdate :one
-SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
+SELECT id, workspace_id, merge_request_id, reviewer_user_id, state, summary, created_at, submitted_at FROM kb_mr_review
 WHERE merge_request_id = $1 AND id = $2
 FOR UPDATE
 `
@@ -749,7 +749,7 @@ func (q *Queries) GetKbMrReviewForUpdate(ctx context.Context, arg GetKbMrReviewF
 		&i.ID,
 		&i.WorkspaceID,
 		&i.MergeRequestID,
-		&i.ReviewerID,
+		&i.ReviewerUserID,
 		&i.State,
 		&i.Summary,
 		&i.CreatedAt,
@@ -1025,22 +1025,22 @@ WHERE c.merge_request_id = $1
   AND (
     c.review_id IS NULL
     OR rv.state = $2::text
-    OR rv.reviewer_id = $3::uuid
+    OR rv.reviewer_user_id = $3::uuid
   )
 ORDER BY c.created_at, c.id
 `
 
 type ListKbMrCommentsParams struct {
-	MergeRequestID    pgtype.UUID `json:"merge_request_id"`
-	SubmittedState    string      `json:"submitted_state"`
-	PendingReviewerID pgtype.UUID `json:"pending_reviewer_id"`
+	MergeRequestID        pgtype.UUID `json:"merge_request_id"`
+	SubmittedState        string      `json:"submitted_state"`
+	PendingReviewerUserID pgtype.UUID `json:"pending_reviewer_user_id"`
 }
 
 // A merge request's comments, oldest first: the published ones (direct
-// comments and those of submitted reviews), plus, with pending_reviewer_id,
+// comments and those of submitted reviews), plus, with pending_reviewer_user_id,
 // the comments of that reviewer's pending review.
 func (q *Queries) ListKbMrComments(ctx context.Context, arg ListKbMrCommentsParams) ([]KbMrComment, error) {
-	rows, err := q.db.Query(ctx, listKbMrComments, arg.MergeRequestID, arg.SubmittedState, arg.PendingReviewerID)
+	rows, err := q.db.Query(ctx, listKbMrComments, arg.MergeRequestID, arg.SubmittedState, arg.PendingReviewerUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -1106,31 +1106,31 @@ func (q *Queries) ListKbMrEvents(ctx context.Context, mergeRequestID pgtype.UUID
 	return items, nil
 }
 
-const listKbMrReviewerIDs = `-- name: ListKbMrReviewerIDs :many
-SELECT DISTINCT reviewer_id FROM kb_mr_review
+const listKbMrReviewerUserIDs = `-- name: ListKbMrReviewerUserIDs :many
+SELECT DISTINCT reviewer_user_id FROM kb_mr_review
 WHERE merge_request_id = $1
   AND state = $2::text
 `
 
-type ListKbMrReviewerIDsParams struct {
+type ListKbMrReviewerUserIDsParams struct {
 	MergeRequestID pgtype.UUID `json:"merge_request_id"`
 	State          string      `json:"state"`
 }
 
 // Members who submitted a review on the merge request.
-func (q *Queries) ListKbMrReviewerIDs(ctx context.Context, arg ListKbMrReviewerIDsParams) ([]pgtype.UUID, error) {
-	rows, err := q.db.Query(ctx, listKbMrReviewerIDs, arg.MergeRequestID, arg.State)
+func (q *Queries) ListKbMrReviewerUserIDs(ctx context.Context, arg ListKbMrReviewerUserIDsParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listKbMrReviewerUserIDs, arg.MergeRequestID, arg.State)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	items := []pgtype.UUID{}
 	for rows.Next() {
-		var reviewer_id pgtype.UUID
-		if err := rows.Scan(&reviewer_id); err != nil {
+		var reviewer_user_id pgtype.UUID
+		if err := rows.Scan(&reviewer_user_id); err != nil {
 			return nil, err
 		}
-		items = append(items, reviewer_id)
+		items = append(items, reviewer_user_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -1139,9 +1139,9 @@ func (q *Queries) ListKbMrReviewerIDs(ctx context.Context, arg ListKbMrReviewerI
 }
 
 const listKbMrReviews = `-- name: ListKbMrReviews :many
-SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
+SELECT id, workspace_id, merge_request_id, reviewer_user_id, state, summary, created_at, submitted_at FROM kb_mr_review
 WHERE merge_request_id = $1
-  AND (state = $2::text OR reviewer_id = $3::uuid)
+  AND (state = $2::text OR reviewer_user_id = $3::uuid)
 ORDER BY submitted_at NULLS LAST, created_at, id
 `
 
@@ -1166,7 +1166,7 @@ func (q *Queries) ListKbMrReviews(ctx context.Context, arg ListKbMrReviewsParams
 			&i.ID,
 			&i.WorkspaceID,
 			&i.MergeRequestID,
-			&i.ReviewerID,
+			&i.ReviewerUserID,
 			&i.State,
 			&i.Summary,
 			&i.CreatedAt,
@@ -1284,16 +1284,16 @@ func (q *Queries) LockKbPagesByIDs(ctx context.Context, arg LockKbPagesByIDsPara
 }
 
 const openKbMrReview = `-- name: OpenKbMrReview :one
-INSERT INTO kb_mr_review (workspace_id, merge_request_id, reviewer_id, state)
+INSERT INTO kb_mr_review (workspace_id, merge_request_id, reviewer_user_id, state)
 VALUES ($1, $2, $3, $4)
-ON CONFLICT (merge_request_id, reviewer_id) WHERE state = 'pending' DO NOTHING
-RETURNING id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at
+ON CONFLICT (merge_request_id, reviewer_user_id) WHERE state = 'pending' DO NOTHING
+RETURNING id, workspace_id, merge_request_id, reviewer_user_id, state, summary, created_at, submitted_at
 `
 
 type OpenKbMrReviewParams struct {
 	WorkspaceID    pgtype.UUID `json:"workspace_id"`
 	MergeRequestID pgtype.UUID `json:"merge_request_id"`
-	ReviewerID     pgtype.UUID `json:"reviewer_id"`
+	ReviewerUserID pgtype.UUID `json:"reviewer_user_id"`
 	State          string      `json:"state"`
 }
 
@@ -1303,7 +1303,7 @@ func (q *Queries) OpenKbMrReview(ctx context.Context, arg OpenKbMrReviewParams) 
 	row := q.db.QueryRow(ctx, openKbMrReview,
 		arg.WorkspaceID,
 		arg.MergeRequestID,
-		arg.ReviewerID,
+		arg.ReviewerUserID,
 		arg.State,
 	)
 	var i KbMrReview
@@ -1311,7 +1311,7 @@ func (q *Queries) OpenKbMrReview(ctx context.Context, arg OpenKbMrReviewParams) 
 		&i.ID,
 		&i.WorkspaceID,
 		&i.MergeRequestID,
-		&i.ReviewerID,
+		&i.ReviewerUserID,
 		&i.State,
 		&i.Summary,
 		&i.CreatedAt,
@@ -1499,7 +1499,7 @@ UPDATE kb_mr_review SET
     summary = $2,
     submitted_at = now()
 WHERE id = $3
-RETURNING id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at
+RETURNING id, workspace_id, merge_request_id, reviewer_user_id, state, summary, created_at, submitted_at
 `
 
 type SubmitKbMrReviewParams struct {
@@ -1515,7 +1515,7 @@ func (q *Queries) SubmitKbMrReview(ctx context.Context, arg SubmitKbMrReviewPara
 		&i.ID,
 		&i.WorkspaceID,
 		&i.MergeRequestID,
-		&i.ReviewerID,
+		&i.ReviewerUserID,
 		&i.State,
 		&i.Summary,
 		&i.CreatedAt,

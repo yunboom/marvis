@@ -3041,7 +3041,7 @@ CREATE TABLE public.kb_mr_review (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     workspace_id uuid NOT NULL,
     merge_request_id uuid NOT NULL,
-    reviewer_id uuid NOT NULL,
+    reviewer_user_id uuid NOT NULL,
     state text DEFAULT 'pending'::text NOT NULL,
     summary text DEFAULT ''::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -7199,7 +7199,7 @@ CREATE INDEX kb_mr_review_mr_idx ON public.kb_mr_review USING btree (merge_reque
 -- Name: kb_mr_review_pending_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX kb_mr_review_pending_uidx ON public.kb_mr_review USING btree (merge_request_id, reviewer_id) WHERE (state = 'pending'::text);
+CREATE UNIQUE INDEX kb_mr_review_pending_uidx ON public.kb_mr_review USING btree (merge_request_id, reviewer_user_id) WHERE (state = 'pending'::text);
 
 --
 -- Name: kb_mr_ws_number_uidx; Type: INDEX; Schema: public; Owner: -

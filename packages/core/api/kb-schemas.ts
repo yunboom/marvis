@@ -871,7 +871,7 @@ export const KbMrReviewSchema = z
   .object({
     id: z.string(),
     merge_request_id: text,
-    reviewer_id: text,
+    reviewer_user_id: text,
     reviewer_name: text,
     // A state this client does not know counts as submitted: shown, not editable.
     state: z.enum(KB_MR_REVIEW_STATES).catch("submitted"),
@@ -961,7 +961,7 @@ export function kbMrReviewFallback(id = ""): KbMrReview {
   return {
     id,
     merge_request_id: "",
-    reviewer_id: "",
+    reviewer_user_id: "",
     reviewer_name: "",
     state: "submitted",
     summary: "",

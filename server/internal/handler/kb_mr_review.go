@@ -90,7 +90,7 @@ func isKbMergeRequestActive(status string) bool {
 type KbMrReviewResponse struct {
 	ID             string  `json:"id"`
 	MergeRequestID string  `json:"merge_request_id"`
-	ReviewerID     string  `json:"reviewer_id"`
+	ReviewerUserID string  `json:"reviewer_user_id"`
 	ReviewerName   string  `json:"reviewer_name"`
 	State          string  `json:"state"`
 	Summary        string  `json:"summary"`
@@ -164,12 +164,12 @@ func (h *Handler) OpenKbMrReview(w http.ResponseWriter, r *http.Request) {
 
 	status := http.StatusCreated
 	review, err := h.Queries.OpenKbMrReview(ctx, db.OpenKbMrReviewParams{
-		WorkspaceID: mr.WorkspaceID, MergeRequestID: mr.ID, ReviewerID: parseUUID(userID), State: kb.ReviewStatePending,
+		WorkspaceID: mr.WorkspaceID, MergeRequestID: mr.ID, ReviewerUserID: parseUUID(userID), State: kb.ReviewStatePending,
 	})
 	if isNotFound(err) {
 		status = http.StatusOK
 		review, err = h.Queries.GetKbMrPendingReview(ctx, db.GetKbMrPendingReviewParams{
-			MergeRequestID: mr.ID, ReviewerID: parseUUID(userID), State: kb.ReviewStatePending,
+			MergeRequestID: mr.ID, ReviewerUserID: parseUUID(userID), State: kb.ReviewStatePending,
 		})
 	}
 	if err != nil {
@@ -216,7 +216,7 @@ func (h *Handler) loadKbMrPendingReview(w http.ResponseWriter, r *http.Request) 
 		writeErrorCode(w, http.StatusNotFound, kbCodeReviewNotFound, "review not found")
 		return db.KbMergeRequest{}, db.KbBase{}, db.KbMrReview{}, false
 	}
-	if uuidToString(review.ReviewerID) != userID {
+	if uuidToString(review.ReviewerUserID) != userID {
 		writeErrorCode(w, http.StatusForbidden, kbCodeForbidden, "this review belongs to another member")
 		return db.KbMergeRequest{}, db.KbBase{}, db.KbMrReview{}, false
 	}
@@ -297,7 +297,7 @@ func (h *Handler) SubmitKbMrReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reviewerID := uuidToString(review.ReviewerID)
+	reviewerID := uuidToString(review.ReviewerUserID)
 	h.publishKbMergeRequestEvent(protocol.EventKbMrUpdated, out.mr, kbActorMember, reviewerID, nil)
 	h.publishKbMrCommented(out.mr, kbActorMember, reviewerID, pgtype.UUID{}, review.ID)
 	h.publishKbMergeRequestJob(out.mr, db.KbDraft{ID: out.mr.DraftID}, kbActorMember, reviewerID)
@@ -362,7 +362,7 @@ func (h *Handler) submitKbMrReview(ctx context.Context, base db.KbBase, mr db.Kb
 	if err != nil {
 		return kbReviewOutcome{}, errors.Wrapf(err, "request changes merge_request_id=%s", uuidToString(mr.ID))
 	}
-	if err := recordKbMrEvent(ctx, qtx, updated, kbActorMember, uuidToString(review.ReviewerID), kbMrEventReviewSubmitted, map[string]any{
+	if err := recordKbMrEvent(ctx, qtx, updated, kbActorMember, uuidToString(review.ReviewerUserID), kbMrEventReviewSubmitted, map[string]any{
 		"review_id": uuidToString(review.ID), "comment_count": commentCount, "summary": summary,
 	}); err != nil {
 		return kbReviewOutcome{}, err
@@ -374,7 +374,7 @@ func (h *Handler) submitKbMrReview(ctx context.Context, base db.KbBase, mr db.Kb
 	}
 	notified, err := createKbReviewInboxItems(ctx, qtx, kbReviewNotice{
 		kind: kbInboxChangesRequested, base: base, mr: updated, review: submitted,
-		actorID: review.ReviewerID, recipients: []pgtype.UUID{owner}, body: summary,
+		actorID: review.ReviewerUserID, recipients: []pgtype.UUID{owner}, body: summary,
 	})
 	if err != nil {
 		return kbReviewOutcome{}, err
@@ -453,7 +453,7 @@ func (h *Handler) requestKbMrReview(ctx context.Context, base db.KbBase, mr db.K
 	if err := recordKbMrEvent(ctx, qtx, updated, actorType, actorID, kbMrEventReviewRequested, nil); err != nil {
 		return kbReviewOutcome{}, err
 	}
-	reviewers, err := qtx.ListKbMrReviewerIDs(ctx, db.ListKbMrReviewerIDsParams{MergeRequestID: mr.ID, State: kb.ReviewStateSubmitted})
+	reviewers, err := qtx.ListKbMrReviewerUserIDs(ctx, db.ListKbMrReviewerUserIDsParams{MergeRequestID: mr.ID, State: kb.ReviewStateSubmitted})
 	if err != nil {
 		return kbReviewOutcome{}, errors.Wrapf(err, "list reviewers merge_request_id=%s", uuidToString(mr.ID))
 	}
@@ -559,7 +559,7 @@ func (h *Handler) kbMrReviewResponses(ctx context.Context, mr db.KbMergeRequest,
 	actors := make([]kbActor, len(rows))
 	ids := make([]pgtype.UUID, len(rows))
 	for i, rv := range rows {
-		actors[i] = kbActor{kind: kbActorMember, id: rv.ReviewerID}
+		actors[i] = kbActor{kind: kbActorMember, id: rv.ReviewerUserID}
 		ids[i] = rv.ID
 	}
 	names, err := h.loadKbActorNames(ctx, mr.WorkspaceID, actors)
@@ -579,8 +579,8 @@ func (h *Handler) kbMrReviewResponses(ctx context.Context, mr db.KbMergeRequest,
 		resp := KbMrReviewResponse{
 			ID:             uuidToString(rv.ID),
 			MergeRequestID: uuidToString(rv.MergeRequestID),
-			ReviewerID:     uuidToString(rv.ReviewerID),
-			ReviewerName:   names.name(kbActorMember, rv.ReviewerID),
+			ReviewerUserID: uuidToString(rv.ReviewerUserID),
+			ReviewerName:   names.name(kbActorMember, rv.ReviewerUserID),
 			State:          rv.State,
 			Summary:        rv.Summary,
 			CommentCount:   counts[rv.ID],

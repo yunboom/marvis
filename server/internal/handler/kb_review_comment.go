@@ -110,9 +110,9 @@ func (h *Handler) ListKbMrComments(w http.ResponseWriter, r *http.Request) {
 // review of pendingReviewer when one is given.
 func (h *Handler) listKbMrComments(ctx context.Context, mr db.KbMergeRequest, pendingReviewer pgtype.UUID) ([]db.KbMrComment, error) {
 	rows, err := h.Queries.ListKbMrComments(ctx, db.ListKbMrCommentsParams{
-		MergeRequestID:    mr.ID,
-		SubmittedState:    kb.ReviewStateSubmitted,
-		PendingReviewerID: pendingReviewer,
+		MergeRequestID:        mr.ID,
+		SubmittedState:        kb.ReviewStateSubmitted,
+		PendingReviewerUserID: pendingReviewer,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "list comments merge_request_id=%s", uuidToString(mr.ID))
@@ -207,7 +207,7 @@ func (h *Handler) createKbMrReviewComment(w http.ResponseWriter, r *http.Request
 		h.writeKbInternalError(w, r, errors.Wrapf(err, "load review review_id=%s", uuidToString(reviewID)))
 		return
 	}
-	if err != nil || uuidToString(review.ReviewerID) != requestUserID(r) {
+	if err != nil || uuidToString(review.ReviewerUserID) != requestUserID(r) {
 		writeErrorCode(w, http.StatusForbidden, kbCodeForbidden, "review_id is not your review of this merge request")
 		return
 	}
@@ -220,7 +220,7 @@ func (h *Handler) createKbMrReviewComment(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	comment, err := h.createKbMrComment(ctx, base, mr, req, review.ID, kbActorMember, uuidToString(review.ReviewerID))
+	comment, err := h.createKbMrComment(ctx, base, mr, req, review.ID, kbActorMember, uuidToString(review.ReviewerUserID))
 	if err != nil {
 		h.writeKbError(w, r, err)
 		return

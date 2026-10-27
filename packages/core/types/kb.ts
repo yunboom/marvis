@@ -622,7 +622,7 @@ export type KbMrReviewState = "pending" | "submitted";
 export interface KbMrReview {
   id: string;
   merge_request_id: string;
-  reviewer_id: string;
+  reviewer_user_id: string;
   reviewer_name: string;
   state: KbMrReviewState;
   summary: string;

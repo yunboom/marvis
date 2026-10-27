@@ -1307,7 +1307,7 @@ type KbMrReview struct {
 	ID             pgtype.UUID        `json:"id"`
 	WorkspaceID    pgtype.UUID        `json:"workspace_id"`
 	MergeRequestID pgtype.UUID        `json:"merge_request_id"`
-	ReviewerID     pgtype.UUID        `json:"reviewer_id"`
+	ReviewerUserID pgtype.UUID        `json:"reviewer_user_id"`
 	State          string             `json:"state"`
 	Summary        string             `json:"summary"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
