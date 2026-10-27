@@ -189,7 +189,7 @@ func (h *Handler) CreateKbDraft(w http.ResponseWriter, r *http.Request) {
 
 	var job *db.KbJob
 	if jobID.Valid {
-		linked, err := linkKbJobDraft(ctx, qtx, base, draft, jobID, userID, actorType, actorID, task)
+		linked, err := linkKbJobDraft(ctx, qtx, base, draft, jobID, userID)
 		if err != nil {
 			h.writeKbError(w, r, err)
 			return
@@ -248,10 +248,10 @@ func (h *Handler) kbJobOfTaskChat(ctx context.Context, base db.KbBase, task db.A
 	return job.ID, nil
 }
 
-// linkKbJobDraft links a new draft to a job: the job must be of the same
-// knowledge base, the caller its creator or the agent running in its chat,
-// and the job must not have a draft yet.
-func linkKbJobDraft(ctx context.Context, q *db.Queries, base db.KbBase, draft db.KbDraft, jobID pgtype.UUID, userID, actorType, actorID string, task *db.AgentTaskQueue) (db.KbJob, error) {
+// linkKbJobDraft links a new draft to the job whose chat created it
+// (kbJobOfTaskChat already matched the knowledge base and the chat); the job
+// must not have a draft yet.
+func linkKbJobDraft(ctx context.Context, q *db.Queries, base db.KbBase, draft db.KbDraft, jobID pgtype.UUID, userID string) (db.KbJob, error) {
 	job, err := q.GetKbJobForUpdate(ctx, db.GetKbJobForUpdateParams{WorkspaceID: base.WorkspaceID, ID: jobID})
 	if err != nil {
 		if isNotFound(err) {
@@ -260,16 +260,6 @@ func linkKbJobDraft(ctx context.Context, q *db.Queries, base db.KbBase, draft db
 
 		return db.KbJob{}, errors.Wrapf(err, "load job job_id=%s", uuidToString(jobID))
 	}
-	if job.KnowledgeBaseID != base.ID {
-		return db.KbJob{}, kbFail(http.StatusNotFound, kbCodeJobNotFound, "job not found in this knowledge base")
-	}
-
-	runsInJob := actorType == kbActorAgent && task != nil &&
-		actorID == uuidToString(job.AgentID) && task.ChatSessionID == job.ChatSessionID
-	if uuidToString(job.CreatedBy) != userID && !runsInJob {
-		return db.KbJob{}, kbFail(http.StatusForbidden, kbCodeForbidden, "only the job creator or the agent running the job can link its draft")
-	}
-
 	existing, err := q.GetKbJobDraftByJob(ctx, job.ID)
 	switch {
 	case err == nil:
