@@ -9,9 +9,6 @@ import (
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
-// taskStatusFailed is the agent_task_queue status of a task that failed.
-const taskStatusFailed = "failed"
-
 // RunChatResumePointer points a run's follow-up chat session at the run
 // task's provider session, work dir and runtime. A task that failed in a way
 // that poisons its conversation, or whose session was retired, keeps only the
@@ -24,7 +21,7 @@ func RunChatResumePointer(chatSessionID pgtype.UUID, task db.AgentTaskQueue) db.
 		RuntimeID: task.RuntimeID,
 	}
 
-	unresumable := task.Status == taskStatusFailed && ResumeUnsafeFailure(task.FailureReason.String, task.Error.String)
+	unresumable := task.Status == TaskStatusFailed && ResumeUnsafeFailure(task.FailureReason.String, task.Error.String)
 	retired := task.RetiredSessionID.Valid && task.RetiredSessionID.String == task.SessionID.String
 	if unresumable || retired {
 		params.SessionID = pgtype.Text{}

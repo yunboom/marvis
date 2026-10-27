@@ -1596,6 +1596,7 @@ WHERE id = (
           JOIN agent_task_queue run_task ON run_task.autopilot_run_id = run.id
           WHERE atq.chat_session_id IS NOT NULL
             AND run.chat_session_id = atq.chat_session_id
+            -- task status set: service.UnsettledTaskStatuses
             AND run_task.status IN ('queued', 'dispatched', 'running', 'waiting_local_directory', 'deferred')
       )
     ORDER BY atq.priority DESC, atq.created_at ASC, atq.id ASC

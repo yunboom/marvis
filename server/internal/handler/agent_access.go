@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/yunboom/marvis/server/internal/service"
 	"github.com/yunboom/marvis/server/internal/util"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
@@ -238,17 +239,12 @@ func (h *Handler) invokeOriginatorFromRequest(r *http.Request, actorType, actorI
 	return ""
 }
 
-// isTerminalTaskStatus reports whether a task has finished, in any of the three
-// ways it can. Mirrors the agent_task_queue status CHECK constraint; a status the
-// constraint does not know is treated as NOT terminal so an added in-flight state
-// keeps working (an added terminal state would need adding here, which the invoke
-// gate's fail-closed default makes visible rather than silent).
+// isTerminalTaskStatus reports whether a task has finished; see
+// service.IsTerminalTaskStatus. An added terminal state would need adding
+// there, which the invoke gate's fail-closed default makes visible rather than
+// silent.
 func isTerminalTaskStatus(status string) bool {
-	switch status {
-	case "completed", "failed", "cancelled":
-		return true
-	}
-	return false
+	return service.IsTerminalTaskStatus(status)
 }
 
 // commentSourceTaskID returns the agent's currently-executing task (from the

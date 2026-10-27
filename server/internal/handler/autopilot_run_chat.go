@@ -26,14 +26,6 @@ const (
 	autopilotRunChatCodeNoSession       = "run_has_no_session"
 )
 
-// Terminal agent_task_queue statuses: a run's task in one of these has written
-// its session_id / work_dir back and can be continued.
-const (
-	runTaskStatusCompleted = "completed"
-	runTaskStatusFailed    = "failed"
-	runTaskStatusCancelled = "cancelled"
-)
-
 // AutopilotRunChatResponse is the body of EnsureAutopilotRunChat.
 type AutopilotRunChatResponse struct {
 	ChatSessionID string `json:"chat_session_id"`
@@ -161,7 +153,7 @@ func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot d
 	if _, err := qtx.MarkChatSessionExplicitlyCreated(ctx, session.ID); err != nil {
 		return pgtype.UUID{}, errors.Wrapf(err, "mark run chat session chat_session_id=%s", uuidToString(session.ID))
 	}
-	if runTaskTerminal(task.Status) {
+	if service.IsTerminalTaskStatus(task.Status) {
 		resumeTask, err := runChatResumeTask(ctx, qtx, runID, task)
 		if err != nil {
 			return pgtype.UUID{}, err
@@ -216,15 +208,6 @@ func lockRunChatProject(ctx context.Context, qtx *db.Queries, autopilot db.Autop
 	}
 
 	return autopilot.ProjectID, nil
-}
-
-func runTaskTerminal(status string) bool {
-	switch status {
-	case runTaskStatusCompleted, runTaskStatusFailed, runTaskStatusCancelled:
-		return true
-	default:
-		return false
-	}
 }
 
 func (h *Handler) writeAutopilotRunChatError(w http.ResponseWriter, r *http.Request, err error) {

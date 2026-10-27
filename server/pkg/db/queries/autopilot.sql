@@ -448,6 +448,7 @@ WHERE r.chat_session_id = @chat_session_id AND a.workspace_id = @workspace_id;
 -- auto-retry child when the run task was retried, else the run task itself.
 SELECT * FROM agent_task_queue
 WHERE autopilot_run_id = @autopilot_run_id
+  -- task status set: service.TerminalTaskStatuses
   AND status IN ('completed', 'failed', 'cancelled')
   AND session_id IS NOT NULL
 ORDER BY created_at DESC, id DESC
