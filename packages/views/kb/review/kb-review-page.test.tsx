@@ -266,6 +266,61 @@ describe("KbReviewPage", () => {
     );
   });
 
+  it("sends a reply on Cmd/Ctrl+Enter, locks while sending and clears on success", async () => {
+    let accept: (c: KbMrComment) => void = () => {};
+    mocked.createKnowledgeBaseMrComment.mockReturnValue(new Promise((resolve) => (accept = resolve)));
+    await openReview(detail(), [{ ...COMMENT, quote: null, triggered: [] }]);
+
+    const box = screen.getByRole("textbox", { name: "Comment" });
+    const send = screen.getByRole("button", { name: "Send" });
+    expect(box.closest("[data-slot=comment-composer]")).not.toBeNull();
+    expect(send).toBeDisabled();
+    await userEvent.type(box, "   ");
+    expect(send).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    expect(screen.getByText("Replying to Li Lei")).toBeInTheDocument();
+    await userEvent.clear(box);
+    await userEvent.type(box, "Done.");
+    // Plain Enter is a new line; only Cmd/Ctrl+Enter sends.
+    await userEvent.keyboard("{Enter}");
+    expect(mocked.createKnowledgeBaseMrComment).not.toHaveBeenCalled();
+    await userEvent.keyboard("{Control>}{Enter}{/Control}");
+
+    await waitFor(() =>
+      expect(mocked.createKnowledgeBaseMrComment).toHaveBeenCalledWith(16, { body: "Done.", parent_id: "c-1", quote: null }),
+    );
+    expect(box).toHaveAttribute("readonly");
+    expect(screen.getByRole("button", { name: "Send" })).toHaveAttribute("aria-busy", "true");
+
+    accept(COMMENT);
+    await waitFor(() => expect(box).toHaveValue(""));
+    expect(box).not.toHaveAttribute("readonly");
+    expect(screen.queryByText("Replying to Li Lei")).not.toBeInTheDocument();
+  });
+
+  it("removes the reply and line quotes from the comment box", async () => {
+    await openReview(detail(), [{ ...COMMENT, quote: null, triggered: [] }]);
+
+    await userEvent.click(screen.getByRole("button", { name: "Reply" }));
+    await userEvent.click(screen.getByRole("button", { name: /Dedup by trade no\./ }));
+    await userEvent.click(screen.getByRole("button", { name: "Add comment" }));
+    expect(screen.getByText("Replying to Li Lei")).toBeInTheDocument();
+    expect(screen.getByText("Callback line 15")).toBeInTheDocument();
+
+    const [removeReply, removeQuote] = screen.getAllByRole("button", { name: "Remove quote" });
+    await userEvent.click(removeQuote!);
+    expect(screen.queryByText("Callback line 15")).not.toBeInTheDocument();
+    await userEvent.click(removeReply!);
+    expect(screen.queryByText("Replying to Li Lei")).not.toBeInTheDocument();
+  });
+
+  it("drops the agent hint once the request is no longer open", async () => {
+    await openReview(detail({ status: "closed" }));
+
+    expect(screen.queryByText("starts on send")).not.toBeInTheDocument();
+  });
+
   it("confirms closing with the annotations that go back to pending", async () => {
     mocked.closeKnowledgeBaseMergeRequest.mockResolvedValue(mergeRequest({ status: "closed" }));
     await openReview(detail());

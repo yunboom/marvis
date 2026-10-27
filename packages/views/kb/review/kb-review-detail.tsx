@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowUp, Loader2, MessageSquare, X } from "lucide-react";
+import { Loader2, MessageSquare, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useWorkspaceId } from "@marvis/core/hooks";
+import { createShortcutChord } from "@marvis/core/shortcuts";
+import { isImeComposing } from "@marvis/core/utils";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbMergeRequestOptions, kbMrCommentListOptions } from "@marvis/core/kb/queries";
 import { useCloseKbMergeRequest, useCreateKbMrComment, useMergeKbMergeRequest } from "@marvis/core/kb/mutations";
@@ -28,9 +30,10 @@ import {
 } from "@marvis/ui/components/ui/alert-dialog";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Input } from "@marvis/ui/components/ui/input";
-import { Textarea } from "@marvis/ui/components/ui/textarea";
+import { SubmitButton } from "@marvis/ui/components/common/submit-button";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
+import { ShortcutKeycaps } from "../../common/shortcut-keycaps";
 import { AppLink } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
 import { KB_TAG } from "../components/kb-cite-card";
@@ -56,6 +59,9 @@ function mergeError(error: unknown): MergeError | "failed" {
 
   return Object.hasOwn(MERGE_ERRORS, code) ? MERGE_ERRORS[code as keyof typeof MERGE_ERRORS] : "failed";
 }
+
+/** The review composer sends on Cmd/Ctrl+Enter; plain Enter is a new line. */
+const SEND_SHORTCUT = createShortcutChord("Enter", { primary: true });
 
 const STATUS_DOT: Record<KbMergeRequestDetail["status"], KbDot> = { open: "blue", merged: "green", closed: "gray" };
 
@@ -276,56 +282,74 @@ function Composer({
 }) {
   const { t } = useT("kb");
   const [body, setBody] = useState("");
+  const canSend = !!body.trim();
   const send = () => {
-    if (!body.trim() || sending) return;
+    if (!canSend || sending) return;
     void onSend(body.trim()).then((ok) => {
       if (ok) setBody("");
     });
   };
 
   return (
-    <div className="flex max-w-[720px] flex-col gap-2.5 rounded-2xl border bg-card px-3.5 pt-3 pb-2.5 shadow-sm">
-      {replyTo && (
-        <QuoteChip label={t(($) => $.review.replying_to, { name: replyTo.author_name })} text={replyTo.body} onRemove={onClearReply} />
+    <div
+      data-slot="comment-composer"
+      className="relative flex max-w-[720px] flex-col rounded-[22px] border border-input bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04),0_6px_20px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow] duration-(--motion-fast) ease-out focus-within:border-ring focus-within:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_28px_rgb(0_0_0/0.07)]"
+    >
+      {(replyTo || quote) && (
+        <div className="flex flex-col gap-1.5 px-3.5 pt-3">
+          {replyTo && (
+            <QuoteChip label={t(($) => $.review.replying_to, { name: replyTo.author_name })} text={replyTo.body} onRemove={onClearReply} />
+          )}
+          {quote && (
+            <QuoteChip
+              label={t(($) => $.review.quote_line, { page: quote.pageTitle, line: quote.line })}
+              text={quote.quote.text}
+              onRemove={onClearQuote}
+            />
+          )}
+        </div>
       )}
-      {quote && (
-        <QuoteChip
-          label={t(($) => $.review.quote_line, { page: quote.pageTitle, line: quote.line })}
-          text={quote.quote.text}
-          onRemove={onClearQuote}
+      {/* Plain text, with the issue composer's editor line metrics. Locked
+          and dimmed while the send is in flight so a success can't clear
+          text typed after it started. */}
+      <div className={cn("min-h-0 px-4 pt-3.5 pb-1", sending && "pointer-events-none opacity-60")} aria-busy={sending || undefined}>
+        <textarea
+          aria-label={t(($) => $.review.comment_label)}
+          placeholder={t(($) => $.review.comment_placeholder)}
+          rows={1}
+          value={body}
+          readOnly={sending}
+          onChange={(event) => setBody(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey) || isImeComposing(event.nativeEvent)) return;
+            event.preventDefault();
+            send();
+          }}
+          className="block field-sizing-content max-h-[40vh] w-full resize-none border-0 bg-transparent p-0 text-body leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
         />
-      )}
-      <Textarea
-        aria-label={t(($) => $.review.comment_label)}
-        placeholder={t(($) => $.review.comment_placeholder)}
-        rows={2}
-        value={body}
-        onChange={(event) => setBody(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) send();
-        }}
-        className="min-h-0 resize-none border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
-      />
-      <div className="flex items-center gap-1.5">
-        <span className="min-w-0 flex-1">
+      </div>
+      <div data-slot="comment-composer-toolbar" className="flex min-w-0 items-center gap-1 px-2 pb-2">
+        <div className="min-w-0 flex-1">
           {mr.review_agent && mr.status === "open" && (
-            <span className={cn(KB_TAG, "gap-1.5")}>
+            <span className="inline-flex h-8 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-full bg-muted pr-2.5 pl-1.5 text-caption font-medium text-muted-foreground">
               <ActorAvatar actorType="agent" actorId={mr.review_agent.id} name={mr.review_agent.name || undefined} size="xs" profileLink={false} />
-              {mr.review_agent.name}
-              <span className="text-faint-foreground">{t(($) => $.review.trigger_hint)}</span>
+              <span className="truncate">{mr.review_agent.name}</span>
+              <span className="shrink-0 text-faint-foreground">{t(($) => $.review.trigger_hint)}</span>
             </span>
           )}
-        </span>
-        <Button
-          type="button"
-          size="icon-sm"
-          aria-label={t(($) => $.review.send)}
-          disabled={!body.trim() || sending}
+        </div>
+        <SubmitButton
           onClick={send}
-          className="rounded-full"
-        >
-          {sending ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
-        </Button>
+          disabled={!canSend}
+          loading={sending}
+          ariaLabel={t(($) => $.review.send)}
+          tooltip={
+            <>
+              {t(($) => $.review.send)}
+              <ShortcutKeycaps shortcut={SEND_SHORTCUT} decorative />
+            </>
+          }
+        />
       </div>
     </div>
   );
