@@ -89,6 +89,9 @@ function QuoteBox({ annotation }: { annotation: KbAnnotation }) {
   return <div className="rounded-lg bg-surface-sunken px-2.5 py-1.5 text-label text-muted-foreground">{annotation.quote}</div>;
 }
 
+// The keyCode a keydown reports while an input method is composing.
+const IME_KEY_CODE = 229;
+
 /** Writes the body of a new annotation: the composer of 5.2, 5.4 and 5.6. */
 export function KbAnnotationComposer({
   label,
@@ -120,9 +123,13 @@ export function KbAnnotationComposer({
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !e.nativeEvent.isComposing) {
+          // Enter submits and Shift+Enter breaks the line; an Enter that
+          // confirms an IME composition (keyCode 229 in some browsers) does neither.
+          const composing = e.nativeEvent.isComposing || e.keyCode === IME_KEY_CODE;
+          if (e.key === "Enter" && !e.shiftKey && !composing) {
             e.preventDefault();
             submit();
+            return;
           }
           if (e.key === "Escape") onCancel();
         }}

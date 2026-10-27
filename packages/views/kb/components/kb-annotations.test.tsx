@@ -7,7 +7,7 @@ import { api } from "@marvis/core/api";
 import type { KbAnnotation, KbHome, KbPage, KnowledgeBaseDetail } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
-import { KbAnnotationsPage, readSelectedSentence } from "./kb-annotations";
+import { KbAnnotationComposer, KbAnnotationsPage, readSelectedSentence } from "./kb-annotations";
 import { KbHomePage } from "./kb-home-page";
 import { KbPageView } from "./kb-page-view";
 
@@ -386,6 +386,55 @@ describe("page annotations", () => {
     });
     // The page panel opens on the new annotation.
     expect(await screen.findByRole("complementary", { name: /Page annotations/ })).toBeInTheDocument();
+  });
+});
+
+describe("KbAnnotationComposer keyboard", () => {
+  function renderComposer(pending = false) {
+    const onSubmit = vi.fn();
+    const onCancel = vi.fn();
+    renderWithI18n(<KbAnnotationComposer label="Annotation" pending={pending} onSubmit={onSubmit} onCancel={onCancel} />);
+
+    return { onSubmit, onCancel, box: screen.getByRole("textbox", { name: "Annotation" }) };
+  }
+
+  it("submits on Enter and breaks the line on Shift+Enter", async () => {
+    const { onSubmit, box } = renderComposer();
+
+    await userEvent.type(box, "第一行{Shift>}{Enter}{/Shift}第二行");
+    expect(box).toHaveValue("第一行\n第二行");
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await userEvent.keyboard("{Enter}");
+    expect(onSubmit).toHaveBeenCalledWith("第一行\n第二行");
+  });
+
+  it("does not submit an empty body", async () => {
+    const empty = renderComposer();
+    await userEvent.type(empty.box, "  {Enter}");
+    expect(empty.onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("does not submit while a submit is pending", async () => {
+    const busy = renderComposer(true);
+    await userEvent.type(busy.box, "内容{Enter}");
+    expect(busy.onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("ignores the Enter that confirms an input method composition", () => {
+    const { onSubmit, box } = renderComposer();
+    fireEvent.change(box, { target: { value: "huifu" } });
+
+    fireEvent.keyDown(box, { key: "Enter", isComposing: true });
+    fireEvent.keyDown(box, { key: "Enter", keyCode: 229 });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("cancels on Escape", async () => {
+    const { onCancel, box } = renderComposer();
+
+    await userEvent.type(box, "草稿{Escape}");
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });
 
