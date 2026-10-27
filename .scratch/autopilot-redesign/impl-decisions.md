@@ -150,3 +150,29 @@
    - 缺口：运行页对已删除自动化不额外禁用输入框，发送会被服务端以「会话已归档」拒绝。
 48. **预填指针取最新重试**（工单 06，补工单 05）
    - 选择：运行任务已终态时，按 `autopilot_run_id` 取该运行最新一条带 `session_id` 的终态任务（自动重试子任务）作续接指针；没有就用运行任务本身（失败未建会话时只填工作目录，同前）。
+49. **任务状态只定义一处**（审查修复）
+   - 选择：`service/task_status.go` 定义 `TaskStatus*` 常量、`TerminalTaskStatuses` / `UnsettledTaskStatuses` 和唯一的 `IsTerminalTaskStatus`；handler 删掉 `runTaskStatus*` 与 `runTaskTerminal`，原有 `isTerminalTaskStatus` 改为转调它。SQL 沿用仓库 sqlc 查询内联字面量的写法（认领查询调用方多，改成参数传入牵连面大），本次新增的两处列表上方加 `-- task status set: service.<集合名>` 标记；`task_status_test.go` 断言每个标记列表与对应 Go 集合相同、两个集合互补且合起来等于 `schema.sql` 的 `agent_task_queue_status_check`。
+   - 理由：Go 与 SQL 两份集合由测试锁住，新增状态漏改会失败。
+50. **运行对话接口区分查库错误**（审查修复）
+   - 选择：`EnsureAutopilotRunChat` 取运行、取智能体时只有 `pgx.ErrNoRows` 返回 404，其它错误包装后返回 500；`writeAutopilotRunChatError` 更名为 `writeAutopilotInternalError`，自动化读接口共用。
+51. **聊天角色常量**（审查修复）
+   - 选择：在 `chat_message_sender.go` 定义 `chatMessageRoleUser`，不再借用知识库的 `kbChatRoleUser`。仓库没有通用聊天角色常量，知识库那份不动。
+52. **派发原因常量**（审查修复）
+   - 选择：新增 `@marvis/core/constants/dispatch-reason` 的 `DISPATCH_REASON`（值对应 `server/internal/dispatch/reason.go`），运行页发送失败和列表页暂停原因的比较改用它。放在 constants 而非 `@marvis/core/api`：多数视图测试整体 mock 了 api 模块。聊天页、知识库作业页等存量同类比较不在本次范围。后端新增代码没有这类裸字符串（错误码已是常量）。
+53. **共用对话复用自动化读权限**（审查修复）
+   - 选择：抽出 `canReadAutopilot(ctx, autopilot, userID) (bool, error)`（目前等于是该工作区成员），`GetAutopilot` 加载后先问它（不可读返回 404），运行对话的 `runChatAccess` 也只问它。行为不变。
+54. **运行记录去向按运行自身判断**（审查修复）
+   - 选择：`autopilot_run` 没有记录模式的列，不加快照。有 `issue_id` 的是创建任务运行（任务先建、再挂派发任务），有 `task_id` 无 `issue_id` 的是仅运行运行。前端 `runDestination`：有任务 → 任务详情；有 task 无任务 → 运行页；两者都没有（派发前失败）没有模式痕迹，沿用自动化当前模式（仅运行进运行页看失败原因，创建任务不可点，同现状）。后端获取或创建对话：运行有 `issue_id` 即 409 `run_mode_unsupported`，不再看自动化当前模式。
+   - 理由：自动化改模式后旧运行仍按产生时的方式打开；不为「派发前失败且改过模式」这种少见情况加迁移。
+55. **删除自动化后关闭运行页输入框**（审查修复，补决策 47 的缺口）
+   - 选择：自动化 `status === "archived"`（删除即归档，详情接口照常返回）或运行会话 `status === "archived"` 时禁用输入框和快捷动作；前者在横幅位显示「自动化已删除，无法继续对话。」（六种语言），后者沿用输入框「此会话已归档」占位。
+   - 理由：自动化状态随页面加载必到，覆盖还没建会话的运行；会话归档覆盖其它归档途径。
+56. **运行状态色用语义 token**（审查修复）
+   - 选择：`RUN_VISUAL` 改用 `text-success` / `text-info` / `text-warning` / `text-destructive`，并加 `dot` 字段；列表页上次运行状态点读同一张表，两处颜色同源。跳过由灰色改为 warning，与列表点一致。
+57. **审查后保留项**（审查修复）
+   - handler 500 前的 `slog.Error`：仓库 handler 惯例，没有统一打印错误的顶层中间件。
+   - 运行页发送逻辑与聊天页相似：有意照抄知识库作业页的会话 hook，三处稳定后再考虑共享抽象。
+   - 快捷动作：运行页沿用聊天快捷动作，已定。
+   - 删除确认文案：沿用现有文案，已定。
+   - 措辞「指令 / 运行记录」：与设计稿和决策记录一致。
+   - 停止与共用排队权限：见决策 38、41，排队是会话级的，共用成员可停止、可管排队。
