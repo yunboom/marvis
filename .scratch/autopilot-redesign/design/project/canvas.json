@@ -12,8 +12,8 @@
  "boards": {
   "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "page": "list", "title": "1.1 列表 · 表格换成两列卡片，页头、Tab、范围分段、筛选 / 排序药丸沿用 09 自动化"},
   "list-filter.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "page": "list", "title": "1.2 筛选后 · 品牌色药丸带清除，左侧显示「n / 总数」；排序菜单下半是「显示字段」（原列开关）"},
-  "list-select.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 900, "page": "list", "title": "1.3 悬停卡片出现勾选框和「…」· 勾选后底部浮出批量栏，「全选」在批量栏里"},
-  "list-menu.dc.html": {"x": 4560, "y": 0, "w": 1440, "h": 900, "page": "list", "title": "1.4 「…」行菜单 · 新标签页打开 / 暂停或启用 / 删除"},
+  "list-new.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 900, "page": "list", "title": "1.3 「新建自动化」下拉 · 从空白开始，或从模板创建（有没有自动化都能用模板）"},
+  "list-menu.dc.html": {"x": 4560, "y": 0, "w": 1440, "h": 900, "page": "list", "title": "1.4 悬停卡片出现「…」· 新标签页打开 / 暂停或启用 / 删除"},
   "list-empty.dc.html": {"x": 6080, "y": 0, "w": 1440, "h": 900, "page": "list", "title": "1.5 没有自动化 · 模板卡片 + 从空白开始"},
   "Detail.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "page": "detail", "title": "2.1 详情 · 左边配置，右边指令与运行记录"},
   "detail-paused.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "page": "detail", "title": "2.2 执行智能体失去运行时 · 顶部横幅，开关关闭，立即运行不可点"},
@@ -26,10 +26,10 @@
   "run-webhook.dc.html": {"x": 6080, "y": 0, "w": 1440, "h": 900, "page": "run", "title": "3.5 Webhook 触发的运行 · 右侧显示载荷（原日志弹窗顶部的载荷预览）"},
   "Sidebar.dc.html": {"x": 0, "y": 0, "w": 216, "h": 868, "page": "comp", "title": "侧栏（同 46 改版）"}
  },
- "order": ["Main.dc.html", "list-filter.dc.html", "list-select.dc.html", "list-menu.dc.html", "list-empty.dc.html", "Detail.dc.html", "detail-paused.dc.html", "detail-expand.dc.html", "detail-delete.dc.html", "Run.dc.html", "run-live.dc.html", "run-queue.dc.html", "run-followup.dc.html", "run-webhook.dc.html", "Sidebar.dc.html"],
+ "order": ["Main.dc.html", "list-filter.dc.html", "list-new.dc.html", "list-menu.dc.html", "list-empty.dc.html", "Detail.dc.html", "detail-paused.dc.html", "detail-expand.dc.html", "detail-delete.dc.html", "Run.dc.html", "run-live.dc.html", "run-queue.dc.html", "run-followup.dc.html", "run-webhook.dc.html", "Sidebar.dc.html"],
  "notes": {
   "t-list": {"kind": "title1", "page": "list", "x": 0, "y": -300, "maxW": 7520, "text": "自动化列表：只改外观，功能与 09 自动化一致"},
-  "n-list": {"page": "list", "x": 0, "y": 1020, "w": 900, "size": "m", "text": "对照 09 自动化（现有表格）\n· 不变：标题 + 计数、新建自动化、自动化 / 任务唤醒 Tab、范围（全部 / 启用 / 已暂停 + 计数）、筛选（执行者 / 模式 / 触发器 / 创建者）、排序（名称 / 上次运行 / 下次运行 / 创建时间 + 升降序）、行菜单、多选与批量暂停 / 启用 / 删除、加载 / 出错 / 无匹配 / 空状态\n· 表格 → 两列卡片：原来的列变成卡片底部一行（执行者 · 触发器 · 上次运行 · 下次运行；模式 / 创建者 / 创建时间默认隐藏），原「列开关」改名「显示字段」控制这一行\n· 新增：卡片上两行指令摘要（待确认）\n· 卡片没有表头：列头点击排序并入排序菜单，「全选」移到批量栏\n· 任务唤醒 Tab 表格不变"},
+  "n-list": {"page": "list", "x": 0, "y": 1020, "w": 900, "size": "m", "text": "对照 09 自动化（现有表格）\n· 不变：标题 + 计数、自动化 / 任务唤醒 Tab、范围（全部 / 启用 / 已暂停 + 计数）、筛选（执行者 / 模式 / 触发器 / 创建者）、排序（名称 / 上次运行 / 下次运行 / 创建时间 + 升降序）、行菜单、加载 / 出错 / 无匹配 / 空状态\n· 表格 → 两列卡片：原来的列变成卡片底部一行（执行者 · 触发器 · 上次运行 · 下次运行；模式 / 创建者 / 创建时间默认隐藏），原「列开关」改名「显示字段」控制这一行；列头点击排序并入排序菜单\n· 「新建自动化」改为下拉：从空白开始 + 六个模板。原来模板只在没有自动化时出现，现在随时可用（用户要求）\n· 去掉多选与批量暂停 / 启用 / 删除（用户要求），单个操作走「…」菜单\n· 新增：卡片上两行指令摘要（待确认）\n· 任务唤醒 Tab 表格不变"},
   "t-detail": {"kind": "title1", "page": "detail", "x": 0, "y": -300, "maxW": 5960, "text": "自动化详情：两栏，内容不增不减"},
   "n-detail": {"page": "detail", "x": 0, "y": 1020, "w": 900, "size": "m", "text": "对照现有详情页\n· 顶栏：返回 + 两行标题（同 9.3 知识库作业）；编辑、删除是图标按钮，立即运行是主按钮（非启用状态不可点）\n· 启停开关从标题旁移到左栏「状态」，并显示下次运行\n· 左栏：执行者 / 创建者 / 输出方式 / 项目、订阅者（仅创建任务模式）、触发器（编辑时间表 / 删除 / 复制地址 / 重置地址 / 已停用与已弃用标记）、Webhook 投递\n· 右栏：指令默认折叠可展开；运行记录每行可点——仅运行进入第 3 页的运行对话，创建任务跳到任务详情；跳过的运行仍折叠成一组\n· 页面底部的危险区去掉，删除在顶栏，仍弹确认\n· 只读用户：不显示编辑、删除、立即运行、触发器的增删改"},
   "t-run": {"kind": "title1", "page": "run", "x": 0, "y": -300, "maxW": 7520, "text": "运行对话：原来只读的执行日志弹窗，改成能继续聊的整页（新增能力）"},
