@@ -62,11 +62,7 @@ func IsSchemaMode(mode string) bool {
 // BuilderInstructions renders the hidden builder agent's instructions.
 func BuilderInstructions(in BuilderInstructionsInput) (string, error) {
 	var out strings.Builder
-	err := builderInstructionsTemplate.Execute(&out, struct {
-		BuilderInstructionsInput
-		DefaultSchema string
-	}{in, strings.TrimRight(DefaultSchema, "\n")})
-	if err != nil {
+	if err := builderInstructionsTemplate.Execute(&out, in); err != nil {
 		return "", errors.Wrapf(err, "render builder instructions mode=%s slug=%q", in.Mode, in.Slug)
 	}
 

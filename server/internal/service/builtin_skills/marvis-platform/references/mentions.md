@@ -38,6 +38,19 @@ a project reference should never be able to start a run. Use it freely to point
 at a project; everything else in this document is about the four types (plus
 `all`) the parser does recognize.
 
+The knowledge base links are render-only in the same way. None of their types
+is in the parser, so they notify no one and enqueue nothing; clients show them
+as cards:
+
+- `[Name](mention://kb/<kb-id>)` — a knowledge base
+- `[Page title](mention://kb_page/<page-id>)` — a knowledge base page; append
+  `#<block-id>` to point at one block
+- `[#16 Title](mention://kb_mr/<id>)` — a change request
+- `[Annotation · Page title](mention://kb_annotation/<id>)` — an annotation
+
+Do not build them by hand: `marvis kb` output carries each one ready to paste in
+its `mention` field.
+
 ## Step 1 — look up the UUID
 
 A name is not a UUID. Look the UUID up first, from the matching list command:

@@ -401,3 +401,16 @@
 9. **管理页路由与可见范围**：`/kb/{slug}/manage`（原始资料）、`/manage/export`、`/manage/delete`，`/kb/{slug}/graph`；都在知识库导航里显示，导航不高亮任何一行。「删除知识库」标签只对创建者和 owner / admin 显示；直接打开 `/manage/delete` 的成员看到无权限说明。「…」菜单加「知识库管理」（所有成员）和「关系图」。
 10. **交给智能体收录**：原始资料行可多选（上传成功后自动选中刚上传的文件），「交给智能体收录（N）」跳 `paths.kbNewJob(slug, {starter: "ingest", sources: uri 列表})`。作业页按逗号拆 `sources`，文件名含逗号时会被拆错（票 07 的参数格式），留作缺口。
 11. **文案**：设计稿 11.1 说明里「上传后会在聊天里交给智能体沉淀」与实际流程（手动选文件建作业）不符，只保留「导入时原样保存，页面引用它们作为来源。」；11.3 的「这是最后一个知识库，每日知识沉淀会停用」横幅不画（没有每日沉淀功能）；11.1 设计稿里「任务」「链接」来源的行（非上传来源）没有对应数据，来源列只有「上传 · 上传人」。
+
+## 票 11
+
+1. **只有构建器指令需要改**：作业首条消息（8.4）、六段开场白附加段（8.5）、审核评论转交（8.6）、默认 Schema 和目标模板（04）在 efa775847 已与 spec 英文原文逐行一致，未改动，快照不变。构建器指令按决策 106 换成 spec 8.3 的原文，`BuilderInstructions` 不再传 `DefaultSchema`；快照放 `internal/kb/testdata/builder/{create_default,config_custom}.golden`（`-update-builder-golden` 重写）。
+2. **构建器引用的 skill 小节加测试守住**：`builder_test.go` 读 `service/builtin_skills/marvis-platform/references/knowledge-bases.md`，确认「Creating and configuring a knowledge base」这个标题存在，改标题会直接报错。另加一条测试：构建器指令、作业首条消息、审核评论、目标模板都不出现 quickstart、`kb job link-draft`、`marvis kb templates`、`DefaultSchema`。
+3. **knowledge-bases.md 与 spec 的两处出入**
+   - 「Annotations」一节 `kb mr create` 示例在 spec 导出里换行丢了，成了一行中间夹 9 个空格；改成与其他示例一致的 `\` 续行。
+   - spec 里两处句中硬换行（`build the\nlink`、`material to\ningest`）原样保留，Markdown 渲染相同。
+4. **mentions.md 的知识库链接**：spec 只说三种链接写进 mentions.md、没给原文；写成紧跟 project 段之后的一段：四种 `mention://kb*` 链接都不在解析器里，不通知、不启动智能体，客户端渲染成卡片；页面链接可加 `#<块 id>`；不要自己拼，用 `marvis kb` 输出的 `mention` 字段。页面那一行也写在这里（任务说明要求），运行时说明 Mentions 的那一行归票 10。
+5. **SKILL.md 连带改动**：description 加 `knowledge bases`（259 字符，上限 300）；「What is never right is reading all eight」改为 nine；`builtin_skills_test.go` 的触发词表、路由表断言补上 knowledge-bases.md，并给它加内容锚点（含 notWant quickstart）。
+6. **留给票 10 的缺口**
+   - `marvis kb schema templates` 命令还不存在。`prompt_cli_commands_test` 只检查围栏代码块和行内代码，不检查缩进代码块，所以 skill 里那条命令没被拦；构建器指令不在它的检查范围。票 10 加上命令后两处才能用。
+   - spec 8.2.2 要求 `writeSkills` 的提示句（`runtime_config_sections.go`）补上 knowledge bases，属于运行时说明，本票没改。
