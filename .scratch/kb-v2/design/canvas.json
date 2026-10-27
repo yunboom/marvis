@@ -453,7 +453,7 @@
   "rv-list.dc.html": {
    "h": 900,
    "page": "review",
-   "title": "8.1 待审核",
+   "title": "8.1 待审核 ·「智能体自查」「检查」两张卡片等高固定高度，内容超出在卡片内滚动",
    "w": 1440,
    "x": 0,
    "y": 0
@@ -745,6 +745,14 @@
    "x": 1520,
    "y": 0,
    "title": "13.2 审核人收到「重新请求审核」· 未读条目与已读的「提交了评审」条目，详情为自己的评审摘要和「去审核页」"
+  },
+  "rv-timeline.dc.html": {
+   "h": 900,
+   "page": "review",
+   "w": 1440,
+   "x": 16720,
+   "y": 0,
+   "title": "8.12 动态 · 评论与事件按时间混排（提交评审、重新请求审核、合并），较早的折叠为「展开更早 N 条动态」"
   }
  },
  "createdOnFiles": {
@@ -926,6 +934,7 @@
   "rv-start.dc.html",
   "rv-submit.dc.html",
   "rv-owner.dc.html",
+  "rv-timeline.dc.html",
   "kb-runs.dc.html",
   "kb-session-new.dc.html",
   "kb-session-auto.dc.html",

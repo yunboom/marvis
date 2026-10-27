@@ -956,6 +956,8 @@ GET`/api/kb/pages/{id}/history`
 - 提交评审后，变更请求 `status` 改为 `changes_requested`（界面「待解决」），并给负责人发站内消息（「消息」里的通知，设计稿 13.1）。负责人是建草稿的人（`kb_draft.created_by`）；草稿由智能体建时，是它代表的成员。
 - 负责人在评论下直接回复，立即公开（`review_id` 为空）。「待解决」不能合并；负责人点「重新请求审核」或执行 `kb mr ready`，变更请求回到 `open`，并通知提交过评审的审核人（设计稿 13.2）。关闭、回滚不变。
 - 评论不派发智能体。负责人要智能体按意见修改，在作业页点「交给智能体处理」（7.10）。
+- 动态：评论和 `kb_mr_event` 事件按 `created_at` 混排，较早的折叠为「展开更早 N 条动态」，与任务详情的评论 + `activity_log` 时间线一致（设计稿 8.12）。提交评审、重新请求审核、合并、关闭、回滚、改标题 / 说明 / 风险时各写一行事件，和这次操作在同一事务里。
+- 「智能体自查」「检查」两张卡片等高、固定高度，内容超出时在卡片内滚动。
 - 知识库作业中合并按钮不可用；合并、回滚、关闭要知识库创建者或 owner / admin，作者也能关闭自己的（决策 30、46、102），按令牌绑定的人判角色（`server/internal/middleware/workspace.go:240-260`）。
 
 ```
@@ -1110,6 +1112,69 @@ GET`/api/kb/merge-requests/{number}`
     }
   ]
 }
+```
+
+ 
+GET`/api/kb/merge-requests/{number}/timeline`
+ 
+动态：评论和事件统一按 `created_at` 排序。
+
+ 
+权限 工作区成员
+
+ 
+| 参数 | 位置 | 类型 | 必填 | 说明 / 示例 | 
+| `state` | query | string | 否 | 同评论接口：`published`（默认）/ `all` 再加上调用者自己待提交的评论 | 
+
+ 
+响应 200
+
+```
+[
+  {
+    "type": "event",                                          // comment 评论（字段同评论接口）/ event 事件
+    "id": "e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b",             // 评论 id
+    "kind": "review_submitted",                               // 事件类型：review_submitted 提交评审 / review_requested 重新请求审核 / merged / closed / reverted / edited 改了标题、说明或风险
+    "actor_type": "member",                                   // member / agent
+    "actor_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 操作人
+    "actor_name": "王芳",                                       // 操作人显示名
+    "payload": {                                              // 事件附带的信息，按 kind 不同
+      "review_id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",    // 提交的评审
+      "comment_count": 3,                                     // 这次评审的评论数
+      "summary": "去重原因和生效时间补上后再合并。"                           // 评审总结
+    },
+    "created_at": "2026-10-25T10:41:00Z"                      // RFC3339
+  },
+  {
+    "type": "comment",                                        // comment 评论（字段同评论接口）/ event 事件
+    "id": "c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f",             // 评论 id
+    "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+    "review_id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",      // 提交的评审
+    "parent_id": null,                                        // 回复的评论（无则 null）
+    "state": "published",                                     // pending 待提交，只有作者可见 / published 已公开
+    "quote": {                                                // 引用的行（「加入评论」带入；不引用为 null）
+      "page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",      // 页面
+      "block_id": "b8Xz",                                     // 块
+      "text": "渠道回调按渠道交易号加幂等键去重。[^mar-142]"                   // 行内容
+    },
+    "body": "补一下改成交易号的原因和生效时间。",                              // Markdown
+    "author_type": "member",                                  // member / agent
+    "author_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",      // 作者
+    "author_name": "王芳",                                      // 作者显示名
+    "created_at": "2026-10-25T10:38:00Z"                      // RFC3339
+  },
+  {
+    "type": "event",                                          // comment 评论（字段同评论接口）/ event 事件
+    "id": "f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c",             // 评论 id
+    "kind": "review_requested",                               // 事件类型：review_submitted 提交评审 / review_requested 重新请求审核 / merged / closed / reverted / edited 改了标题、说明或风险
+    "actor_type": "member",                                   // member / agent
+    "actor_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",       // 操作人
+    "actor_name": "木卫五",                                      // 操作人显示名
+    "payload": {                                              // 事件附带的信息，按 kind 不同
+    },
+    "created_at": "2026-10-25T11:20:00Z"                      // RFC3339
+  }
+]
 ```
 
  
@@ -1938,7 +2003,7 @@ PATCH`/api/kb/bases/{kb}`
 
 - 原始资料：上传到对象存储，写 `kb_raw`，立即可用；工作区成员都能上传（决策 101）；「交给智能体收录」新建一次 `starter = ingest` 的作业，带上选中的文件。页面里用到的图片同样上传，`kind = asset`。列表里每一行点开就是附件预览（同阅读页）。
 - 可见范围：「原始资料」「导出」两个标签页成员都能看到，「删除知识库」只对知识库创建者和 owner / admin 显示。
-- 删除：知识库创建者或 owner / admin，输入知识库名称确认；同一事务删除 `kb_*` 关联行、关闭打开的变更请求；对象存储里的文件由后台任务清理。
+- 删除：知识库创建者或 owner / admin，输入知识库名称确认；同一事务删除 `kb_*` 关联行（含变更请求的评审、评论和 `kb_mr_event` 事件）、关闭打开的变更请求；对象存储里的文件由后台任务清理。删除工作区时按同样的方式清理这些表。
 
 导出 OKF bundle（决策 57）
 
