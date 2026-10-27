@@ -70,6 +70,7 @@ import {
 import { AutopilotRowActions } from "./autopilot-list-actions";
 import { AUTOPILOT_TEMPLATES, type AutopilotTemplate } from "./autopilot-templates";
 import { instructionsPreview } from "./instructions-preview";
+import { RUN_VISUAL } from "./run-status";
 import { useLocale, useT, useTimeAgo } from "../../i18n";
 
 // Card geometry is the virtualizer's fixed-size contract: every card is
@@ -122,19 +123,7 @@ const TRIGGER_ICONS: Record<string, typeof Zap> = {
 // Dot color per last run outcome. Server-driven enum — unknown values fall
 // through to the neutral dot, never crash (API compatibility rule).
 function runStatusDotClass(status: string | null | undefined): string {
-  switch (status) {
-    case "completed":
-    case "issue_created":
-      return "bg-success";
-    case "failed":
-      return "bg-destructive";
-    case "skipped":
-      return "bg-warning";
-    case "running":
-      return "bg-info";
-    default:
-      return "bg-faint-foreground";
-  }
+  return status && isKnownRunStatus(status) ? RUN_VISUAL[status].dot : "bg-faint-foreground";
 }
 
 const KNOWN_RUN_STATUSES = [
