@@ -24,7 +24,7 @@
       </div>
       <div style="flex: 1; min-height: 0; display: flex">
         <div style="flex: 1; min-width: 0; overflow: hidden; position: relative">
-          <dc-import name="PageDoc" mark="{{mark}}" banner="{{banner}}" stale="{{stale}}" draft="{{draft}}" drafts="{{drafts}}" draft-menu="{{draftMenu}}" diff="{{diff}}" new-page="{{newPage}}" compact="{{hasPanel}}" hint-size="100%,812px"></dc-import>
+          <dc-import name="PageDoc" mark="{{mark}}" banner="{{banner}}" stale="{{stale}}" draft="{{draft}}" drafts="{{drafts}}" draft-menu="{{draftMenu}}" diff="{{diff}}" new-page="{{newPage}}" bar="{{bar}}" compact="{{hasPanel}}" hint-size="100%,812px"></dc-import>
         </div>
         <sc-if value="{{p.info}}" hint-placeholder-val="{{ false }}">
           <aside class="panel" aria-label="页面信息">
@@ -94,7 +94,7 @@
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"enum","default":"none","options":["none","info","toc","ann","hist"]},"mark":{"editor":"enum","default":"none","options":["none","select","ann"]},"banner":{"editor":"boolean","default":false},"stale":{"editor":"boolean","default":false},"kbCompose":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"drafts":{"editor":"int","default":1},"draftMenu":{"editor":"boolean","default":false},"diff":{"editor":"boolean","default":false},"newPage":{"editor":"boolean","default":false},"hover":{"editor":"text","default":""},"plusOn":{"editor":"boolean","default":false},"moreOn":{"editor":"boolean","default":false},"histSel":{"editor":"int","default":0},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"enum","default":"none","options":["none","info","toc","ann","hist"]},"mark":{"editor":"enum","default":"none","options":["none","select","ann"]},"banner":{"editor":"boolean","default":false},"stale":{"editor":"boolean","default":false},"kbCompose":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"drafts":{"editor":"int","default":1},"draftMenu":{"editor":"boolean","default":false},"diff":{"editor":"boolean","default":false},"newPage":{"editor":"boolean","default":false},"bar":{"editor":"enum","default":"none","options":["none","own-draft","own-review","others","both"]},"hover":{"editor":"text","default":""},"plusOn":{"editor":"boolean","default":false},"moreOn":{"editor":"boolean","default":false},"histSel":{"editor":"int","default":0},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     var panel = this.props.panel ?? 'none';
@@ -111,7 +111,7 @@ class Component extends DCLogic {
       hasPanel: panel !== 'none',
       ic: { ann: ib(panel === 'ann'), toc: ib(panel === 'toc'), info: ib(panel === 'info'), more: ib(!!this.props.moreOn || panel === 'hist') },
       mark: this.props.mark ?? 'none', banner: !!this.props.banner, stale: !!this.props.stale, draft: !!this.props.draft || !!this.props.newPage,
-      diff: !!this.props.diff, newPage: !!this.props.newPage, pageName: this.props.newPage ? '回调人工处理' : '支付回调',
+      diff: !!this.props.diff, newPage: !!this.props.newPage, bar: this.props.bar ?? 'none', pageName: this.props.newPage ? '回调人工处理' : '支付回调',
       kbComposing: !!this.props.kbCompose, kbIdle: !this.props.kbCompose, kbDraft: this.props.kbCompose ? '去重和失败处理两节的例子对不上，建议统一用同一笔订单。' : '',
       kbFieldCls: 'field' + (this.props.kbCompose ? ' focus' : ''), hover: this.props.hover ?? '', plusOn: !!this.props.plusOn,
       hist: hist.map(function (h) { return Object.assign({}, h, { style: 'display: flex; flex-direction: column; gap: 3px; padding: 10px; border-radius: 10px; background: ' + (h.n === histSel ? 'rgba(0,0,0,.055)' : 'transparent') }); })

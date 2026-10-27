@@ -17,7 +17,16 @@
     <sc-if value="{{stale}}" hint-placeholder-val="{{ false }}"><span class="tag" style="background: rgba(184,134,46,.12); color: #7a5a1c"><span class="dot d-amber"></span>需要复核</span></sc-if>
     <span class="tag">开发</span><span class="tag">测试</span>
   </div>
-  <sc-if value="{{draft}}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{newBar}}" hint-placeholder-val="{{ false }}">
+    <div class="banner" style="margin-bottom: 18px; background: rgba(79,111,138,.05); box-shadow: inset 0 0 0 1px rgba(79,111,138,.45); border-radius: 12px; gap: 10px; flex-wrap: nowrap">
+      <span class="tag" style="background: {{barTagBg}}; color: #fff; flex: none">{{barTag}}</span>
+      <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{barText}}</span>
+      <sc-if value="{{barLink}}" hint-placeholder-val="{{ false }}"><a href="#" style="color: #4f6f8a; text-decoration: none; flex: none">查看修改</a></sc-if>
+      <sc-if value="{{barOthers}}" hint-placeholder-val="{{ false }}"><button class="btn btn-g" aria-haspopup="menu" style="height: 28px; font-size: 12.5px; gap: 4px; padding: 0 8px; flex: none; color: #5c5c5c">另有 1 个待审核的修改<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></sc-if>
+      <sc-if value="{{barOwn}}" hint-placeholder-val="{{ false }}"><button role="switch" aria-checked="false" style="display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; font: inherit; font-size: 13px; color: #0f0f0f; padding: 0 4px; cursor: pointer; flex: none"><span style="width: 32px; height: 18px; border-radius: 9px; background: #d4d4d4; position: relative; flex: none"><span style="position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 7px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2)"></span></span>显示差异</button><div class="seg" style="flex: none"><button>正式</button><button class="on">草稿</button></div></sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{oldBar}}" hint-placeholder-val="{{ false }}">
     <div class="banner" style="margin-bottom: 18px; background: rgba(79,111,138,.05); box-shadow: inset 0 0 0 1px rgba(79,111,138,.45); border-radius: 12px; position: relative">
       <span class="tag" style="background: #4f6f8a; color: #fff">草稿</span>
       <span style="flex: 1">{{draftText}}</span>
@@ -73,7 +82,7 @@
   </div>
 </article>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"mark":{"editor":"enum","default":"none","options":["none","select","ann"]},"banner":{"editor":"boolean","default":false},"compact":{"editor":"boolean","default":false},"stale":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"drafts":{"editor":"int","default":1},"draftMenu":{"editor":"boolean","default":false},"diff":{"editor":"boolean","default":false},"newPage":{"editor":"boolean","default":false},"$preview":{"width":760,"height":812}}'>
+<script type="text/x-dc" data-dc-script data-props='{"mark":{"editor":"enum","default":"none","options":["none","select","ann"]},"banner":{"editor":"boolean","default":false},"compact":{"editor":"boolean","default":false},"stale":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"drafts":{"editor":"int","default":1},"draftMenu":{"editor":"boolean","default":false},"diff":{"editor":"boolean","default":false},"newPage":{"editor":"boolean","default":false},"bar":{"editor":"enum","default":"none","options":["none","own-draft","own-review","others","both"]},"$preview":{"width":760,"height":812}}'>
 class Component extends DCLogic {
   renderVals() {
     var mark = this.props.mark ?? 'none';
@@ -84,6 +93,13 @@ class Component extends DCLogic {
     var newPage = !!this.props.newPage;
     if (newPage) draft = true;
     var diff = draft && !!this.props.diff;
+    var bar = this.props.bar ?? 'none';
+    var own = { 'own-draft': 1, 'own-review': 1, both: 1 }[bar] === 1;
+    var barTag = { 'own-draft': '草稿', 'own-review': '待审核', others: '待审核', both: '待解决' }[bar] || '';
+    var barText = { 'own-draft': '你的草稿改了这一页，还没有合并。其他人看到的仍是正式版本。',
+      'own-review': '已提交审核 #16 · 去重键改为渠道交易号，补回调人工处理',
+      others: '本页有 1 个待审核的修改 #18 · 退款回调也按渠道交易号去重，补充对账脚本的说明',
+      both: '待解决 #16 · 去重键改为渠道交易号，补回调人工处理' }[bar] || '';
     var list = [
       { name: '对话「回调去重键」', meta: '10 分钟前 · 改了 1 段' },
       { name: '任务 MAR-150「回调重试次数」', meta: '2 小时前 · 改了 2 段' }
@@ -93,7 +109,9 @@ class Component extends DCLogic {
       draft: draft, notDraft: !draft, stale: stale, fresh: !stale, showFresh: !stale && !newPage,
       newPage: newPage, existing: !newPage, diff: diff, swBg: diff ? '#0f0f0f' : '#d4d4d4', swX: diff ? '16px' : '2px',
       showOld: !draft || diff, showNew: draft, oldCls: diff ? 'dd' : '', newCls: diff ? 'di' : '', oldBlk: diff ? 'bd' : '', newBlk: diff ? 'bi' : '', allNew: diff ? 'bi' : '',
-      docCls: draft ? 'doc rd' : 'doc', maxW: draft ? '800px' : '760px',
+      docCls: draft || bar !== 'none' ? 'doc rd' : 'doc', maxW: draft || bar !== 'none' ? '800px' : '760px',
+      newBar: bar !== 'none', oldBar: draft && bar === 'none', barOwn: own, barTag: barTag, barText: barText,
+      barTagBg: bar === 'both' ? '#9a6b1c' : '#4f6f8a', barLink: bar !== 'own-draft', barOthers: bar === 'both',
       pageTitle: newPage ? '回调人工处理' : '支付回调', metaText: newPage ? '通用开发助手 新建 · 10 分钟前' : '通用开发助手 更新 · 更新于 10 分钟前', s1: stale ? 'hl-stale' : '', s3: mark === 'select' ? 'hl-sel' : (mark === 'ann' ? 'hl-ann' : ''), banner: !!this.props.banner, pad: this.props.compact ? '28px 32px 40px' : '36px 56px 40px' };
   }
 }
