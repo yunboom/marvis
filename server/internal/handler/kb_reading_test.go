@@ -216,6 +216,28 @@ func TestListKbPagesDraftOverlay(t *testing.T) {
 	testutil.Call(t, testHandler.ListKbPages, withURLParam(other, "kb", slug)).Want(http.StatusForbidden)
 }
 
+func TestListKbPagesNamesDraftDeletedPageByMainline(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	slug := fmt.Sprintf("overlay-del-%d", time.Now().UnixNano())
+	base := insertTestKbBase(t, "Overlay KB", slug)
+	disco := createTestKbPage(t, base, kb.NewPage{Slug: "discovery", Title: "服务发现", Position: "a0", Markdown: "d"})
+
+	// A deletion merged in from the mainline leaves the draft row without a header.
+	draft := insertTestKbDraft(t, base, testUserID, 2)
+	dbfx.InsertNoID(t, "kb_draft_page", testutil.Cols{
+		"draft_id": draft, "page_id": disco, "op": kb.DraftOpDelete, "parent_id": nil, "position": "a0",
+		"slug": "discovery", "frontmatter": "{}", "blocks": "[]", "claims": "[]",
+	}, "draft_id = $1 AND page_id = $2", draft, disco)
+
+	top := listKbLevel(t, slug, "draft="+draft, http.StatusOK)
+	if got := kbLevelTitles(top); got != "服务发现(deleted)" {
+		t.Fatalf("draft top level = %s, want the deleted page under its mainline title", got)
+	}
+}
+
 func getKbPage(t *testing.T, ref, query string, want int) KbPageResponse {
 	t.Helper()
 
