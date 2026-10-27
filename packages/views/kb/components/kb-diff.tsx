@@ -131,7 +131,7 @@ export function KbFileCard({
   const change = page.change || "modified";
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="shrink-0 overflow-hidden rounded-xl border bg-card">
       <div className={cn("flex items-center gap-2 bg-surface-sunken/40 px-3 py-2", open && "border-b")}>
         <button
           type="button"
