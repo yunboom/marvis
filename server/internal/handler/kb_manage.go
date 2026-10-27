@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"slices"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
@@ -30,7 +31,7 @@ type DeleteKbBaseRequest struct {
 // DeleteKbBaseResponse is the body of DELETE /api/kb/bases/{kb}.
 type DeleteKbBaseResponse struct {
 	Deleted bool `json:"deleted"`
-	// ClosedMRs lists the open merge requests removed with the knowledge base.
+	// ClosedMRs lists the open merge requests closed with the knowledge base.
 	ClosedMRs []int32 `json:"closed_mrs"`
 }
 
@@ -46,9 +47,10 @@ func (h *Handler) publishKbBaseChanged(r *http.Request, base db.KbBase, action s
 	})
 }
 
-// DeleteKbBase deletes a knowledge base and everything in it in one
-// transaction (decision 102: its creator or an owner / admin, confirming by
-// name). Raw file objects are removed from storage after the commit.
+// DeleteKbBase deletes a knowledge base (decision 102: its creator or an
+// owner / admin, confirming by name). The delete is soft: the knowledge base
+// disappears from every read, its slug is free again, and its rows and raw
+// file objects stay.
 func (h *Handler) DeleteKbBase(w http.ResponseWriter, r *http.Request) {
 	var req DeleteKbBaseRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -73,67 +75,60 @@ func (h *Handler) DeleteKbBase(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	closed, keys, err := h.deleteKnowledgeBase(r, base)
+	closed, err := h.deleteKnowledgeBase(r, base)
 	if err != nil {
 		h.writeKbError(w, r, err)
 		return
 	}
 
-	h.deleteKbRawObjects(keys)
 	h.publishKbBaseChanged(r, base, kbBaseActionDeleted)
 
 	writeJSON(w, http.StatusOK, DeleteKbBaseResponse{Deleted: true, ClosedMRs: closed})
 }
 
-// deleteKnowledgeBase removes the rows of a knowledge base under its row
-// lock and returns the open merge requests it had and the storage keys of
-// its raw files.
-func (h *Handler) deleteKnowledgeBase(r *http.Request, base db.KbBase) ([]int32, []string, error) {
+// deleteKnowledgeBase marks a knowledge base deleted under its row lock and
+// closes its active merge requests, returning their numbers.
+func (h *Handler) deleteKnowledgeBase(r *http.Request, base db.KbBase) ([]int32, error) {
 	ctx := r.Context()
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "begin knowledge base delete")
+		return nil, errors.Wrap(err, "begin knowledge base delete")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
 
 	if _, err := qtx.GetKbBaseForUpdate(ctx, db.GetKbBaseForUpdateParams{WorkspaceID: base.WorkspaceID, ID: base.ID}); err != nil {
 		if isNotFound(err) {
-			return nil, nil, kbFail(http.StatusNotFound, kbCodeKnowledgeBaseNF, "knowledge base not found")
+			return nil, kbFail(http.StatusNotFound, kbCodeKnowledgeBaseNF, "knowledge base not found")
 		}
-		return nil, nil, errors.Wrapf(err, "lock knowledge base knowledge_base_id=%s", uuidToString(base.ID))
+		return nil, errors.Wrapf(err, "lock knowledge base knowledge_base_id=%s", uuidToString(base.ID))
 	}
 
-	closed, err := qtx.ListKbOpenMergeRequestNumbers(ctx, db.ListKbOpenMergeRequestNumbersParams{KnowledgeBaseID: base.ID, Statuses: kbActiveMergeRequestStatuses})
+	userID := parseUUID(requestUserID(r))
+	closed, err := qtx.CloseKbActiveMergeRequestsByBase(ctx, db.CloseKbActiveMergeRequestsByBaseParams{
+		ClosedStatus:    kb.MergeRequestStatusClosed,
+		ClosedBy:        userID,
+		KnowledgeBaseID: base.ID,
+		Statuses:        kbActiveMergeRequestStatuses,
+	})
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "list open merge requests knowledge_base_id=%s", uuidToString(base.ID))
-	}
-	keys, err := qtx.ListKbRawStorageKeys(ctx, base.ID)
-	if err != nil {
-		return nil, nil, errors.Wrapf(err, "list raw storage keys knowledge_base_id=%s", uuidToString(base.ID))
+		return nil, errors.Wrapf(err, "close merge requests knowledge_base_id=%s", uuidToString(base.ID))
 	}
 
-	hasEmbeddings, err := qtx.KbBlockEmbeddingTableExists(ctx)
-	if err != nil {
-		return nil, nil, errors.WithStack(err)
-	}
-	if hasEmbeddings {
-		if err := qtx.DeleteKbBlockEmbeddingsByBase(ctx, base.ID); err != nil {
-			return nil, nil, errors.Wrapf(err, "delete block embeddings knowledge_base_id=%s", uuidToString(base.ID))
-		}
-	}
-	if err := qtx.DeleteKnowledgeBase(ctx, base.ID); err != nil {
-		return nil, nil, errors.Wrapf(err, "delete knowledge base knowledge_base_id=%s", uuidToString(base.ID))
+	if err := qtx.SoftDeleteKbBase(ctx, db.SoftDeleteKbBaseParams{DeletedBy: userID, ID: base.ID}); err != nil {
+		return nil, errors.Wrapf(err, "delete knowledge base knowledge_base_id=%s", uuidToString(base.ID))
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, nil, errors.Wrap(err, "commit knowledge base delete")
+		return nil, errors.Wrap(err, "commit knowledge base delete")
 	}
+
 	if closed == nil {
 		closed = []int32{}
 	}
+	slices.Sort(closed)
 
-	return closed, keys, nil
+	return closed, nil
 }
 
 // KbGraphNodeResponse is a page of the relationship graph.

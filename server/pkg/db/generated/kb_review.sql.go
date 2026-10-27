@@ -24,8 +24,9 @@ func (q *Queries) BumpKbContentVersion(ctx context.Context, id pgtype.UUID) erro
 const countKbMergeRequestsByStatus = `-- name: CountKbMergeRequestsByStatus :many
 SELECT status, count(*)::bigint AS merge_request_count
 FROM kb_merge_request
-WHERE workspace_id = $1
+WHERE kb_merge_request.workspace_id = $1
   AND ($2::uuid IS NULL OR knowledge_base_id = $2::uuid)
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 GROUP BY status
 `
 
@@ -525,7 +526,8 @@ func (q *Queries) DeleteKbMrReviewComments(ctx context.Context, arg DeleteKbMrRe
 
 const getKbMergeRequestByNumber = `-- name: GetKbMergeRequestByNumber :one
 SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
-WHERE workspace_id = $1 AND number = $2
+WHERE kb_merge_request.workspace_id = $1 AND kb_merge_request.number = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 type GetKbMergeRequestByNumberParams struct {
@@ -533,6 +535,7 @@ type GetKbMergeRequestByNumberParams struct {
 	Number      int32       `json:"number"`
 }
 
+// Merge requests of a deleted knowledge base are not found.
 func (q *Queries) GetKbMergeRequestByNumber(ctx context.Context, arg GetKbMergeRequestByNumberParams) (KbMergeRequest, error) {
 	row := q.db.QueryRow(ctx, getKbMergeRequestByNumber, arg.WorkspaceID, arg.Number)
 	var i KbMergeRequest
@@ -566,7 +569,8 @@ func (q *Queries) GetKbMergeRequestByNumber(ctx context.Context, arg GetKbMergeR
 
 const getKbMergeRequestForUpdate = `-- name: GetKbMergeRequestForUpdate :one
 SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_merge_request.workspace_id = $1 AND kb_merge_request.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE
 `
 
@@ -608,7 +612,8 @@ func (q *Queries) GetKbMergeRequestForUpdate(ctx context.Context, arg GetKbMerge
 
 const getKbMergeRequestInWorkspace = `-- name: GetKbMergeRequestInWorkspace :one
 SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_merge_request.workspace_id = $1 AND kb_merge_request.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 type GetKbMergeRequestInWorkspaceParams struct {
@@ -896,9 +901,10 @@ func (q *Queries) ListKbMergeRequestOrigins(ctx context.Context, arg ListKbMerge
 
 const listKbMergeRequests = `-- name: ListKbMergeRequests :many
 SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
-WHERE workspace_id = $1
+WHERE kb_merge_request.workspace_id = $1
   AND status = ANY($2::text[])
   AND ($3::uuid IS NULL OR knowledge_base_id = $3::uuid)
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 ORDER BY COALESCE(merged_at, updated_at) DESC, number DESC
 LIMIT $5 OFFSET $4
 `

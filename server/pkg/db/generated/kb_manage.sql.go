@@ -11,6 +11,51 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const closeKbActiveMergeRequestsByBase = `-- name: CloseKbActiveMergeRequestsByBase :many
+UPDATE kb_merge_request SET
+    status = $1,
+    closed_by = $2,
+    closed_at = now(),
+    updated_at = now()
+WHERE knowledge_base_id = $3
+  AND status = ANY($4::text[])
+RETURNING number
+`
+
+type CloseKbActiveMergeRequestsByBaseParams struct {
+	ClosedStatus    string      `json:"closed_status"`
+	ClosedBy        pgtype.UUID `json:"closed_by"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	Statuses        []string    `json:"statuses"`
+}
+
+// Closes the active merge requests of a knowledge base being deleted and
+// returns their numbers.
+func (q *Queries) CloseKbActiveMergeRequestsByBase(ctx context.Context, arg CloseKbActiveMergeRequestsByBaseParams) ([]int32, error) {
+	rows, err := q.db.Query(ctx, closeKbActiveMergeRequestsByBase,
+		arg.ClosedStatus,
+		arg.ClosedBy,
+		arg.KnowledgeBaseID,
+		arg.Statuses,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []int32{}
+	for rows.Next() {
+		var number int32
+		if err := rows.Scan(&number); err != nil {
+			return nil, err
+		}
+		items = append(items, number)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createKbRaws = `-- name: CreateKbRaws :many
 
 INSERT INTO kb_raw (
@@ -84,95 +129,10 @@ func (q *Queries) CreateKbRaws(ctx context.Context, arg CreateKbRawsParams) ([]K
 	return items, nil
 }
 
-const deleteKbBlockEmbeddingsByBase = `-- name: DeleteKbBlockEmbeddingsByBase :exec
-DELETE FROM kb_block_embedding
-WHERE knowledge_base_id = $1
-`
-
-func (q *Queries) DeleteKbBlockEmbeddingsByBase(ctx context.Context, knowledgeBaseID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteKbBlockEmbeddingsByBase, knowledgeBaseID)
-	return err
-}
-
-const deleteKnowledgeBase = `-- name: DeleteKnowledgeBase :exec
-WITH deleted_kb_config_revisions AS (
-    DELETE FROM kb_config_revision WHERE kb_config_revision.knowledge_base_id = $1
-),
-deleted_kb_builder_sessions AS (
-    DELETE FROM kb_builder_session WHERE kb_builder_session.knowledge_base_id = $1
-),
-deleted_kb_raws AS (
-    DELETE FROM kb_raw WHERE kb_raw.knowledge_base_id = $1
-),
-deleted_kb_pages AS (
-    DELETE FROM kb_page WHERE kb_page.knowledge_base_id = $1
-),
-deleted_kb_page_revisions AS (
-    DELETE FROM kb_page_revision WHERE kb_page_revision.knowledge_base_id = $1
-),
-deleted_kb_claims AS (
-    DELETE FROM kb_claim WHERE kb_claim.knowledge_base_id = $1
-),
-deleted_kb_links AS (
-    DELETE FROM kb_link WHERE kb_link.knowledge_base_id = $1
-),
-deleted_kb_draft_pages AS (
-    DELETE FROM kb_draft_page
-    USING kb_draft
-    WHERE kb_draft_page.draft_id = kb_draft.id
-      AND kb_draft.knowledge_base_id = $1
-),
-deleted_kb_drafts AS (
-    DELETE FROM kb_draft WHERE kb_draft.knowledge_base_id = $1
-),
-deleted_kb_job_drafts AS (
-    DELETE FROM kb_job_draft
-    USING kb_job
-    WHERE kb_job_draft.job_id = kb_job.id
-      AND kb_job.knowledge_base_id = $1
-),
-deleted_kb_jobs AS (
-    DELETE FROM kb_job WHERE kb_job.knowledge_base_id = $1
-),
-deleted_kb_annotations AS (
-    DELETE FROM kb_annotation WHERE kb_annotation.knowledge_base_id = $1
-),
-deleted_kb_mr_comments AS (
-    DELETE FROM kb_mr_comment
-    USING kb_merge_request
-    WHERE kb_mr_comment.merge_request_id = kb_merge_request.id
-      AND kb_merge_request.knowledge_base_id = $1
-),
-deleted_kb_mr_reviews AS (
-    DELETE FROM kb_mr_review
-    USING kb_merge_request
-    WHERE kb_mr_review.merge_request_id = kb_merge_request.id
-      AND kb_merge_request.knowledge_base_id = $1
-),
-deleted_kb_mr_events AS (
-    DELETE FROM kb_mr_event
-    USING kb_merge_request
-    WHERE kb_mr_event.merge_request_id = kb_merge_request.id
-      AND kb_merge_request.knowledge_base_id = $1
-),
-deleted_kb_merge_requests AS (
-    DELETE FROM kb_merge_request WHERE kb_merge_request.knowledge_base_id = $1
-)
-DELETE FROM kb_base
-WHERE kb_base.id = $1
-`
-
-// Removes a knowledge base and every row that belongs to it. The tables carry
-// no foreign keys; child tables without knowledge_base_id go through their
-// parent before the parent rows are removed. kb_block_embedding is optional
-// (migration 606) and swept separately.
-func (q *Queries) DeleteKnowledgeBase(ctx context.Context, knowledgeBaseID pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteKnowledgeBase, knowledgeBaseID)
-	return err
-}
-
 const getKbRawByID = `-- name: GetKbRawByID :one
-SELECT id, workspace_id, knowledge_base_id, kind, name, storage_key, size, content_type, uploaded_by, created_at FROM kb_raw WHERE id = $1
+SELECT id, workspace_id, knowledge_base_id, kind, name, storage_key, size, content_type, uploaded_by, created_at FROM kb_raw
+WHERE kb_raw.id = $1
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_raw.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 // A raw file by id alone, for capability URLs that carry no workspace.
@@ -196,7 +156,8 @@ func (q *Queries) GetKbRawByID(ctx context.Context, id pgtype.UUID) (KbRaw, erro
 
 const getKbRawInWorkspace = `-- name: GetKbRawInWorkspace :one
 SELECT id, workspace_id, knowledge_base_id, kind, name, storage_key, size, content_type, uploaded_by, created_at FROM kb_raw
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_raw.workspace_id = $1 AND kb_raw.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_raw.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 type GetKbRawInWorkspaceParams struct {
@@ -204,6 +165,8 @@ type GetKbRawInWorkspaceParams struct {
 	ID          pgtype.UUID `json:"id"`
 }
 
+// Raw files of a deleted knowledge base are not found; their objects stay in
+// storage.
 func (q *Queries) GetKbRawInWorkspace(ctx context.Context, arg GetKbRawInWorkspaceParams) (KbRaw, error) {
 	row := q.db.QueryRow(ctx, getKbRawInWorkspace, arg.WorkspaceID, arg.ID)
 	var i KbRaw
@@ -437,38 +400,6 @@ func (q *Queries) ListKbLivePagesAfter(ctx context.Context, arg ListKbLivePagesA
 	return items, nil
 }
 
-const listKbOpenMergeRequestNumbers = `-- name: ListKbOpenMergeRequestNumbers :many
-SELECT number FROM kb_merge_request
-WHERE knowledge_base_id = $1
-  AND status = ANY($2::text[])
-ORDER BY number
-`
-
-type ListKbOpenMergeRequestNumbersParams struct {
-	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
-	Statuses        []string    `json:"statuses"`
-}
-
-func (q *Queries) ListKbOpenMergeRequestNumbers(ctx context.Context, arg ListKbOpenMergeRequestNumbersParams) ([]int32, error) {
-	rows, err := q.db.Query(ctx, listKbOpenMergeRequestNumbers, arg.KnowledgeBaseID, arg.Statuses)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []int32{}
-	for rows.Next() {
-		var number int32
-		if err := rows.Scan(&number); err != nil {
-			return nil, err
-		}
-		items = append(items, number)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listKbRawCitations = `-- name: ListKbRawCitations :many
 SELECT DISTINCT c.page_id, (e.value->>'uri')::text AS uri
 FROM kb_claim c
@@ -531,31 +462,6 @@ func (q *Queries) ListKbRawNamesTaken(ctx context.Context, arg ListKbRawNamesTak
 			return nil, err
 		}
 		items = append(items, name)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listKbRawStorageKeys = `-- name: ListKbRawStorageKeys :many
-SELECT storage_key FROM kb_raw
-WHERE knowledge_base_id = $1
-`
-
-func (q *Queries) ListKbRawStorageKeys(ctx context.Context, knowledgeBaseID pgtype.UUID) ([]string, error) {
-	rows, err := q.db.Query(ctx, listKbRawStorageKeys, knowledgeBaseID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []string{}
-	for rows.Next() {
-		var storage_key string
-		if err := rows.Scan(&storage_key); err != nil {
-			return nil, err
-		}
-		items = append(items, storage_key)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -648,4 +554,25 @@ func (q *Queries) ListWorkspaceKbRawStorageKeys(ctx context.Context, workspaceID
 		return nil, err
 	}
 	return items, nil
+}
+
+const softDeleteKbBase = `-- name: SoftDeleteKbBase :exec
+UPDATE kb_base SET
+    deleted_at = now(),
+    deleted_by = $1,
+    updated_at = now()
+WHERE id = $2 AND deleted_at IS NULL
+`
+
+type SoftDeleteKbBaseParams struct {
+	DeletedBy pgtype.UUID `json:"deleted_by"`
+	ID        pgtype.UUID `json:"id"`
+}
+
+// Deleting a knowledge base only marks it: its rows and raw file objects
+// stay, and every read leaves it out. The slug is free again for a new
+// knowledge base (kb_base_ws_slug_live_uidx).
+func (q *Queries) SoftDeleteKbBase(ctx context.Context, arg SoftDeleteKbBaseParams) error {
+	_, err := q.db.Exec(ctx, softDeleteKbBase, arg.DeletedBy, arg.ID)
+	return err
 }

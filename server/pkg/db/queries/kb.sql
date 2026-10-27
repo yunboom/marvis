@@ -2,17 +2,20 @@
 -- passed as parameters from the constants in server/internal/kb.
 
 -- name: ListKbBases :many
+-- Deleted knowledge bases (deleted_at set) are left out of every read; the
+-- by-id and by-slug lookups below are the gate the rest of the API goes
+-- through.
 SELECT * FROM kb_base
-WHERE workspace_id = $1
+WHERE workspace_id = $1 AND deleted_at IS NULL
 ORDER BY updated_at DESC, id;
 
 -- name: GetKbBaseByID :one
 SELECT * FROM kb_base
-WHERE workspace_id = $1 AND id = $2;
+WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL;
 
 -- name: GetKbBaseBySlug :one
 SELECT * FROM kb_base
-WHERE workspace_id = $1 AND slug = $2;
+WHERE workspace_id = $1 AND slug = $2 AND deleted_at IS NULL;
 
 -- name: CreateKbBase :one
 INSERT INTO kb_base (
@@ -365,18 +368,21 @@ WHERE workspace_id = sqlc.arg('workspace_id')
   AND number = ANY(sqlc.arg('numbers')::int[]);
 
 -- name: GetKbPageInWorkspace :one
+-- Lookups by a child's own id also leave out deleted knowledge bases.
 SELECT * FROM kb_page
-WHERE workspace_id = $1 AND id = $2;
+WHERE kb_page.workspace_id = $1 AND kb_page.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_page.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbDraftInWorkspace :one
 SELECT * FROM kb_draft
-WHERE workspace_id = $1 AND id = $2;
+WHERE kb_draft.workspace_id = $1 AND kb_draft.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_draft.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbBaseForUpdate :one
 -- Locks a knowledge base for a configuration save so the stale-config check
 -- and the update are one step.
 SELECT * FROM kb_base
-WHERE workspace_id = $1 AND id = $2
+WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL
 FOR UPDATE;
 
 -- name: UpdateKbBaseConfig :one
@@ -455,13 +461,15 @@ WHERE s.workspace_id = sqlc.arg('workspace_id')
   AND cs.status = 'active'
   AND (sqlc.narg('mode')::text IS NULL OR s.mode = sqlc.narg('mode')::text)
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR s.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
+  AND (s.knowledge_base_id IS NULL OR EXISTS (SELECT 1 FROM kb_base b WHERE b.id = s.knowledge_base_id AND b.deleted_at IS NULL))
   AND (lm.created_at IS NOT NULL OR s.draft <> '{}'::jsonb)
 ORDER BY COALESCE(lm.created_at, s.updated_at) DESC;
 
 -- name: GetKbDraftForUpdate :one
 -- Locks a draft so its writes run one at a time.
 SELECT * FROM kb_draft
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_draft.workspace_id = $1 AND kb_draft.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_draft.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE;
 
 -- name: CreateKbDraft :one
@@ -563,6 +571,7 @@ SELECT p.id, p.knowledge_base_id, b.slug AS kb_slug, p.title, p.type, p.blocks
 FROM kb_page p
 JOIN kb_base b ON b.id = p.knowledge_base_id
 WHERE p.workspace_id = sqlc.arg('workspace_id')
+  AND b.deleted_at IS NULL
   AND p.deleted_at IS NULL
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR p.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
   AND (sqlc.narg('page_type')::text IS NULL OR lower(p.type) = lower(sqlc.narg('page_type')::text))
@@ -574,7 +583,9 @@ LIMIT sqlc.arg('row_limit');
 -- The number of pages SearchKbPages finds across all its pages.
 SELECT count(*)::bigint
 FROM kb_page p
+JOIN kb_base b ON b.id = p.knowledge_base_id
 WHERE p.workspace_id = sqlc.arg('workspace_id')
+  AND b.deleted_at IS NULL
   AND p.deleted_at IS NULL
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR p.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
   AND (sqlc.narg('page_type')::text IS NULL OR lower(p.type) = lower(sqlc.narg('page_type')::text))
@@ -599,7 +610,8 @@ LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
 -- name: GetKbJobForUpdate :one
 -- Locks a job so two drafts cannot be linked to it at once.
 SELECT * FROM kb_job
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_job.workspace_id = $1 AND kb_job.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE;
 
 -- name: GetKbJobDraftByJob :one

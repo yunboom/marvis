@@ -120,7 +120,8 @@ func (q *Queries) CreateKbAnnotation(ctx context.Context, arg CreateKbAnnotation
 
 const getKbAnnotationForUpdate = `-- name: GetKbAnnotationForUpdate :one
 SELECT id, workspace_id, knowledge_base_id, page_id, block_id, quote, prefix, suffix, body, author_type, author_id, status, merge_request_id, created_at, updated_at, original_quote FROM kb_annotation
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_annotation.workspace_id = $1 AND kb_annotation.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_annotation.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE
 `
 
@@ -155,7 +156,8 @@ func (q *Queries) GetKbAnnotationForUpdate(ctx context.Context, arg GetKbAnnotat
 
 const getKbAnnotationInWorkspace = `-- name: GetKbAnnotationInWorkspace :one
 SELECT id, workspace_id, knowledge_base_id, page_id, block_id, quote, prefix, suffix, body, author_type, author_id, status, merge_request_id, created_at, updated_at, original_quote FROM kb_annotation
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_annotation.workspace_id = $1 AND kb_annotation.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_annotation.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 type GetKbAnnotationInWorkspaceParams struct {
@@ -163,6 +165,7 @@ type GetKbAnnotationInWorkspaceParams struct {
 	ID          pgtype.UUID `json:"id"`
 }
 
+// Annotations of a deleted knowledge base are not found.
 func (q *Queries) GetKbAnnotationInWorkspace(ctx context.Context, arg GetKbAnnotationInWorkspaceParams) (KbAnnotation, error) {
 	row := q.db.QueryRow(ctx, getKbAnnotationInWorkspace, arg.WorkspaceID, arg.ID)
 	var i KbAnnotation

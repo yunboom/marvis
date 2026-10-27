@@ -16,14 +16,17 @@ RETURNING *;
 DELETE FROM kb_job WHERE workspace_id = $1 AND id = $2;
 
 -- name: GetKbJobInWorkspace :one
+-- Jobs of a deleted knowledge base are not found.
 SELECT * FROM kb_job
-WHERE workspace_id = $1 AND id = $2;
+WHERE kb_job.workspace_id = $1 AND kb_job.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbJobByDraft :one
 -- The job a draft is linked to.
 SELECT j.* FROM kb_job_draft jd
 JOIN kb_job j ON j.id = jd.job_id
-WHERE jd.draft_id = $1;
+WHERE jd.draft_id = $1
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = j.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: ListKbJobStates :many
 -- The parts of each job's state that are not stored on kb_job: the linked

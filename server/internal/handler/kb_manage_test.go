@@ -22,7 +22,7 @@ import (
 )
 
 // keyRecordingStorage is a mockStorage that reports the keys it is asked to
-// delete, which DeleteKbBase does in the background.
+// delete; DeleteKbBase must not ask.
 type keyRecordingStorage struct {
 	mockStorage
 	deleted chan []string
@@ -388,7 +388,7 @@ func TestKbGraph(t *testing.T) {
 }
 
 // kbTablesWithBase lists every kb table and how to count its rows of one
-// knowledge base; DeleteKbBase must leave none of them.
+// knowledge base; DeleteKbBase must keep all of them.
 var kbTablesWithBase = map[string]string{
 	"kb_base":            `SELECT count(*) FROM kb_base WHERE id = $1`,
 	"kb_config_revision": `SELECT count(*) FROM kb_config_revision WHERE knowledge_base_id = $1`,
@@ -485,9 +485,10 @@ func countKbRows(t *testing.T, base string) map[string]int {
 	return counts
 }
 
-// TestDeleteKbBase: only the creator or an owner / admin deletes, by name;
-// every kb table loses the knowledge base's rows and nothing else; raw
-// objects are removed from storage after the commit.
+// TestDeleteKbBase: only the creator or an owner / admin deletes, by name.
+// The delete is soft: every kb row and raw object stays, active merge
+// requests are closed, the knowledge base disappears from every read and its
+// slug can be taken again.
 func TestDeleteKbBase(t *testing.T) {
 	if testHandler == nil || testPool == nil {
 		t.Skip("database not available")
@@ -516,12 +517,29 @@ func TestDeleteKbBase(t *testing.T) {
 	creator := createPlainMember(t, fmt.Sprintf("kb-del-creator-%d@marvis.ai", suffix))
 	plain := createPlainMember(t, fmt.Sprintf("kb-del-plain-%d@marvis.ai", suffix))
 	slug := fmt.Sprintf("del-%d", suffix)
+	word := fmt.Sprintf("softdel%d", suffix)
 	base := insertTestKbBase(t, "要删除的知识库", slug, testutil.Cols{"created_by": creator})
 	keep := insertTestKbBase(t, "保留的知识库", fmt.Sprintf("keep-%d", suffix))
 	number := int(suffix%1_000_000) + 2_000_000
 	seedKbEverywhere(t, base, number)
 	seedKbEverywhere(t, keep, number+1)
+	createTestKbPage(t, base, kb.NewPage{Slug: "findme", Title: "Find " + word, Position: "a5", Markdown: "Body " + word + "."})
+	baseBefore := countKbRows(t, base)
 	keepBefore := countKbRows(t, keep)
+	var rawID, jobID, draftID, annotationID string
+	dbfx.QueryRow(t, `SELECT id FROM kb_raw WHERE knowledge_base_id = $1`, base).Scan(&rawID)
+	dbfx.QueryRow(t, `SELECT id FROM kb_job WHERE knowledge_base_id = $1`, base).Scan(&jobID)
+	dbfx.QueryRow(t, `SELECT id FROM kb_draft WHERE knowledge_base_id = $1`, base).Scan(&draftID)
+	dbfx.QueryRow(t, `SELECT id FROM kb_annotation WHERE knowledge_base_id = $1`, base).Scan(&annotationID)
+
+	searchWord := func() KbSearchResponse {
+		var search KbSearchResponse
+		testutil.Call(t, testHandler.SearchKb, newRequest(http.MethodGet, "/api/kb/search?q="+word, nil)).Want(http.StatusOK).JSON(&search)
+		return search
+	}
+	if before := searchWord(); before.Total != 1 {
+		t.Fatalf("search before delete = %+v", before)
+	}
 
 	deleteReq := func(userID, name string) *http.Request {
 		req := newRequestAs(userID, http.MethodDelete, "/api/kb/bases/"+slug, map[string]any{"confirm_name": name})
@@ -539,25 +557,92 @@ func TestDeleteKbBase(t *testing.T) {
 		t.Errorf("response = %+v", resp)
 	}
 
-	for table, n := range countKbRows(t, base) {
-		if n != 0 {
-			t.Errorf("%s still has %d rows of the deleted knowledge base", table, n)
+	t.Run("rows and raw objects stay", func(t *testing.T) {
+		for table, n := range countKbRows(t, base) {
+			if n != baseBefore[table] {
+				t.Errorf("%s rows of the deleted knowledge base: %d, want %d", table, n, baseBefore[table])
+			}
 		}
-	}
-	for table, n := range countKbRows(t, keep) {
-		if n != keepBefore[table] {
-			t.Errorf("%s rows of the other knowledge base: %d, want %d", table, n, keepBefore[table])
+		for table, n := range countKbRows(t, keep) {
+			if n != keepBefore[table] {
+				t.Errorf("%s rows of the other knowledge base: %d, want %d", table, n, keepBefore[table])
+			}
 		}
-	}
+		select {
+		case keys := <-store.deleted:
+			t.Errorf("raw objects deleted from storage: %v", keys)
+		default:
+		}
 
-	select {
-	case keys := <-store.deleted:
-		if len(keys) != 1 || !strings.Contains(keys[0], base) {
-			t.Errorf("deleted keys = %v", keys)
+		var deletedBy, status, closedBy string
+		var deleted bool
+		dbfx.QueryRow(t, `SELECT deleted_at IS NOT NULL, COALESCE(deleted_by::text, '') FROM kb_base WHERE id = $1`, base).Scan(&deleted, &deletedBy)
+		if !deleted || deletedBy != creator {
+			t.Errorf("deleted = %v by %q, want by %s", deleted, deletedBy, creator)
 		}
-	case <-time.After(5 * time.Second):
-		t.Error("raw objects were not deleted from storage")
-	}
+		dbfx.QueryRow(t, `SELECT status, COALESCE(closed_by::text, '') FROM kb_merge_request WHERE knowledge_base_id = $1`, base).Scan(&status, &closedBy)
+		if status != kb.MergeRequestStatusClosed || closedBy != creator {
+			t.Errorf("merge request = %s by %q, want closed by %s", status, closedBy, creator)
+		}
+	})
 
-	testutil.Call(t, testHandler.DeleteKbBase, deleteReq(creator, "要删除的知识库")).Want(http.StatusNotFound)
+	t.Run("gone from every read", func(t *testing.T) {
+		for _, ref := range []string{slug, base} {
+			req := withURLParam(newRequest(http.MethodGet, "/api/kb/bases/"+ref, nil), "kb", ref)
+			testutil.Call(t, testHandler.GetKbBase, req).Want(http.StatusNotFound)
+		}
+		testutil.Call(t, testHandler.DeleteKbBase, deleteReq(creator, "要删除的知识库")).Want(http.StatusNotFound)
+
+		var list []KbBaseResponse
+		testutil.Call(t, testHandler.ListKbBases, newRequest(http.MethodGet, "/api/kb/bases", nil)).Want(http.StatusOK).JSON(&list)
+		listed := false
+		for _, b := range list {
+			listed = listed || b.ID == base
+		}
+		if listed {
+			t.Error("the deleted knowledge base is listed")
+		}
+
+		briefs, _, err := testHandler.taskKnowledgeBases(context.Background(), parseUUID(testWorkspaceID))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, b := range briefs {
+			if b.Slug == slug {
+				t.Error("the deleted knowledge base is on the task brief")
+			}
+		}
+
+		if search := searchWord(); len(search.Hits) != 0 || search.Total != 0 {
+			t.Errorf("search across knowledge bases = %+v", search)
+		}
+
+		var mrs []KbMergeRequestResponse
+		req := newRequest(http.MethodGet, "/api/kb/merge-requests?status=all&limit=200", nil)
+		testutil.Call(t, testHandler.ListKbMergeRequests, req).Want(http.StatusOK).JSON(&mrs)
+		for _, mr := range mrs {
+			if mr.Number == number {
+				t.Error("a merge request of the deleted knowledge base is listed")
+			}
+		}
+		testutil.Call(t, testHandler.GetKbMergeRequest, kbMRRequest(http.MethodGet, number, nil, nil)).Want(http.StatusNotFound)
+		testutil.Call(t, testHandler.GetKbRawContent, kbRawContentRequest(rawID, "")).Want(http.StatusNotFound)
+		getKbJob(t, jobID, nil, http.StatusNotFound)
+		testutil.Call(t, testHandler.GetKbDraft, testutil.WithURLParams(newRequest(http.MethodGet, "/api/kb/drafts/x", nil), "draftId", draftID)).
+			Want(http.StatusNotFound)
+		testutil.Call(t, testHandler.GetKbAnnotation, testutil.WithURLParams(newRequest(http.MethodGet, "/api/kb/annotations/x", nil), "id", annotationID)).
+			Want(http.StatusNotFound)
+	})
+
+	t.Run("slug is free again", func(t *testing.T) {
+		created := createKbBaseRequest(t, map[string]any{
+			"name": "重建的知识库", "slug": slug, "schema_mode": kb.SchemaModeDefault,
+		}, http.StatusCreated)
+		var got KbBaseDetailResponse
+		req := withURLParam(newRequest(http.MethodGet, "/api/kb/bases/"+slug, nil), "kb", slug)
+		testutil.Call(t, testHandler.GetKbBase, req).Want(http.StatusOK).JSON(&got)
+		if got.ID != created.ID || got.ID == base {
+			t.Errorf("slug resolves to %s, want the new knowledge base %s", got.ID, created.ID)
+		}
+	})
 }

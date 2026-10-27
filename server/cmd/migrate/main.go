@@ -222,6 +222,7 @@ var concurrentIndexCleanups = map[string]string{
 	"638_kb_mr_review_mr_idx":                                   "kb_mr_review_mr_idx",
 	"639_kb_mr_active_draft_uidx":                               "kb_mr_active_draft_uidx",
 	"642_kb_mr_event_mr_idx":                                    "kb_mr_event_mr_idx",
+	"644_kb_base_ws_slug_live_uidx":                             "kb_base_ws_slug_live_uidx",
 	"035_task_queue_issue_id_index":                             "idx_agent_task_queue_issue_id",
 	"067_task_queue_claim_candidate_index":                      "idx_agent_task_queue_claim_candidates",
 	"074_task_usage_updated_at_index":                           "idx_task_usage_updated_at",
@@ -423,6 +424,7 @@ var concurrentDownIndexCleanups = map[string]string{
 	"463_drop_issue_description_bigm_index":                 "idx_issue_description_bigm",
 	"464_drop_issue_description_trgm_index":                 "idx_issue_description_trgm",
 	"640_kb_mr_open_draft_uidx_drop":                        "kb_mr_open_draft_uidx",
+	"645_kb_base_ws_slug_uidx_drop":                         "kb_base_ws_slug_uidx",
 	"473_drop_agent_task_queue_chat_with_session_index":     "idx_agent_task_queue_chat_with_session_created_at",
 }
 

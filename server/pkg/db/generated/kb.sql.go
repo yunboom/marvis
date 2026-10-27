@@ -364,7 +364,9 @@ func (q *Queries) CountKbRunningJobs(ctx context.Context, arg CountKbRunningJobs
 const countKbSearchPages = `-- name: CountKbSearchPages :one
 SELECT count(*)::bigint
 FROM kb_page p
+JOIN kb_base b ON b.id = p.knowledge_base_id
 WHERE p.workspace_id = $1
+  AND b.deleted_at IS NULL
   AND p.deleted_at IS NULL
   AND ($2::uuid IS NULL OR p.knowledge_base_id = $2::uuid)
   AND ($3::text IS NULL OR lower(p.type) = lower($3::text))
@@ -431,7 +433,7 @@ INSERT INTO kb_base (
     workspace_id, name, slug, description, schema_mode, purpose, schema, created_by
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at
+) RETURNING id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at, deleted_at, deleted_by
 `
 
 type CreateKbBaseParams struct {
@@ -470,6 +472,8 @@ func (q *Queries) CreateKbBase(ctx context.Context, arg CreateKbBaseParams) (KbB
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }
@@ -844,8 +848,8 @@ func (q *Queries) DeleteKbLinksFromPage(ctx context.Context, arg DeleteKbLinksFr
 }
 
 const getKbBaseByID = `-- name: GetKbBaseByID :one
-SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at FROM kb_base
-WHERE workspace_id = $1 AND id = $2
+SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at, deleted_at, deleted_by FROM kb_base
+WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL
 `
 
 type GetKbBaseByIDParams struct {
@@ -869,13 +873,15 @@ func (q *Queries) GetKbBaseByID(ctx context.Context, arg GetKbBaseByIDParams) (K
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }
 
 const getKbBaseBySlug = `-- name: GetKbBaseBySlug :one
-SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at FROM kb_base
-WHERE workspace_id = $1 AND slug = $2
+SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at, deleted_at, deleted_by FROM kb_base
+WHERE workspace_id = $1 AND slug = $2 AND deleted_at IS NULL
 `
 
 type GetKbBaseBySlugParams struct {
@@ -899,13 +905,15 @@ func (q *Queries) GetKbBaseBySlug(ctx context.Context, arg GetKbBaseBySlugParams
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }
 
 const getKbBaseForUpdate = `-- name: GetKbBaseForUpdate :one
-SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at FROM kb_base
-WHERE workspace_id = $1 AND id = $2
+SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at, deleted_at, deleted_by FROM kb_base
+WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL
 FOR UPDATE
 `
 
@@ -932,6 +940,8 @@ func (q *Queries) GetKbBaseForUpdate(ctx context.Context, arg GetKbBaseForUpdate
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }
@@ -957,7 +967,8 @@ func (q *Queries) GetKbBuilderSession(ctx context.Context, chatSessionID pgtype.
 
 const getKbDraftForUpdate = `-- name: GetKbDraftForUpdate :one
 SELECT id, workspace_id, knowledge_base_id, title, version, status, created_by, task_id, created_at, updated_at FROM kb_draft
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_draft.workspace_id = $1 AND kb_draft.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_draft.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE
 `
 
@@ -987,7 +998,8 @@ func (q *Queries) GetKbDraftForUpdate(ctx context.Context, arg GetKbDraftForUpda
 
 const getKbDraftInWorkspace = `-- name: GetKbDraftInWorkspace :one
 SELECT id, workspace_id, knowledge_base_id, title, version, status, created_by, task_id, created_at, updated_at FROM kb_draft
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_draft.workspace_id = $1 AND kb_draft.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_draft.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 type GetKbDraftInWorkspaceParams struct {
@@ -1065,7 +1077,8 @@ func (q *Queries) GetKbJobDraftByJob(ctx context.Context, jobID pgtype.UUID) (Kb
 
 const getKbJobForUpdate = `-- name: GetKbJobForUpdate :one
 SELECT id, workspace_id, knowledge_base_id, name, starter, agent_id, chat_session_id, annotation_ids, page_id, created_by, created_at, updated_at FROM kb_job
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_job.workspace_id = $1 AND kb_job.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE
 `
 
@@ -1132,7 +1145,8 @@ func (q *Queries) GetKbPage(ctx context.Context, arg GetKbPageParams) (KbPage, e
 
 const getKbPageInWorkspace = `-- name: GetKbPageInWorkspace :one
 SELECT id, workspace_id, knowledge_base_id, parent_id, position, slug, type, title, description, frontmatter, blocks, search_text, head_revision_id, stale_after, deleted_at, created_at, updated_at FROM kb_page
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_page.workspace_id = $1 AND kb_page.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_page.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 type GetKbPageInWorkspaceParams struct {
@@ -1140,6 +1154,7 @@ type GetKbPageInWorkspaceParams struct {
 	ID          pgtype.UUID `json:"id"`
 }
 
+// Lookups by a child's own id also leave out deleted knowledge bases.
 func (q *Queries) GetKbPageInWorkspace(ctx context.Context, arg GetKbPageInWorkspaceParams) (KbPage, error) {
 	row := q.db.QueryRow(ctx, getKbPageInWorkspace, arg.WorkspaceID, arg.ID)
 	var i KbPage
@@ -1346,13 +1361,16 @@ func (q *Queries) ListKbBacklinks(ctx context.Context, arg ListKbBacklinksParams
 
 const listKbBases = `-- name: ListKbBases :many
 
-SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at FROM kb_base
-WHERE workspace_id = $1
+SELECT id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at, deleted_at, deleted_by FROM kb_base
+WHERE workspace_id = $1 AND deleted_at IS NULL
 ORDER BY updated_at DESC, id
 `
 
 // Knowledge base v2 (migrations 604-630). Enum values such as statuses are
 // passed as parameters from the constants in server/internal/kb.
+// Deleted knowledge bases (deleted_at set) are left out of every read; the
+// by-id and by-slug lookups below are the gate the rest of the API goes
+// through.
 func (q *Queries) ListKbBases(ctx context.Context, workspaceID pgtype.UUID) ([]KbBase, error) {
 	rows, err := q.db.Query(ctx, listKbBases, workspaceID)
 	if err != nil {
@@ -1375,6 +1393,8 @@ func (q *Queries) ListKbBases(ctx context.Context, workspaceID pgtype.UUID) ([]K
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.DeletedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -1412,6 +1432,7 @@ WHERE s.workspace_id = $1
   AND cs.status = 'active'
   AND ($3::text IS NULL OR s.mode = $3::text)
   AND ($4::uuid IS NULL OR s.knowledge_base_id = $4::uuid)
+  AND (s.knowledge_base_id IS NULL OR EXISTS (SELECT 1 FROM kb_base b WHERE b.id = s.knowledge_base_id AND b.deleted_at IS NULL))
   AND (lm.created_at IS NOT NULL OR s.draft <> '{}'::jsonb)
 ORDER BY COALESCE(lm.created_at, s.updated_at) DESC
 `
@@ -2558,6 +2579,7 @@ SELECT p.id, p.knowledge_base_id, b.slug AS kb_slug, p.title, p.type, p.blocks
 FROM kb_page p
 JOIN kb_base b ON b.id = p.knowledge_base_id
 WHERE p.workspace_id = $1
+  AND b.deleted_at IS NULL
   AND p.deleted_at IS NULL
   AND ($2::uuid IS NULL OR p.knowledge_base_id = $2::uuid)
   AND ($3::text IS NULL OR lower(p.type) = lower($3::text))
@@ -2627,7 +2649,7 @@ SET name = $1,
     schema = $5,
     updated_at = now()
 WHERE id = $6
-RETURNING id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at
+RETURNING id, workspace_id, name, slug, description, schema_mode, purpose, schema, content_version, created_by, created_at, updated_at, deleted_at, deleted_by
 `
 
 type UpdateKbBaseConfigParams struct {
@@ -2662,6 +2684,8 @@ func (q *Queries) UpdateKbBaseConfig(ctx context.Context, arg UpdateKbBaseConfig
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return i, err
 }

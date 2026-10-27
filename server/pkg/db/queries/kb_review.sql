@@ -1,23 +1,28 @@
 -- name: GetKbMergeRequestByNumber :one
+-- Merge requests of a deleted knowledge base are not found.
 SELECT * FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id') AND number = sqlc.arg('number');
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id') AND kb_merge_request.number = sqlc.arg('number')
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbMergeRequestInWorkspace :one
 SELECT * FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id') AND id = sqlc.arg('id');
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id') AND kb_merge_request.id = sqlc.arg('id')
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbMergeRequestForUpdate :one
 SELECT * FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id') AND id = sqlc.arg('id')
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id') AND kb_merge_request.id = sqlc.arg('id')
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE;
 
 -- name: ListKbMergeRequests :many
 -- Merge requests of a workspace, optionally of one knowledge base, most
 -- recently updated first. Merged ones sort by merge time (the change log).
 SELECT * FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id')
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id')
   AND status = ANY(sqlc.arg('statuses')::text[])
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 ORDER BY COALESCE(merged_at, updated_at) DESC, number DESC
 LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
 
@@ -25,8 +30,9 @@ LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
 -- Per-status counts for the review list tabs.
 SELECT status, count(*)::bigint AS merge_request_count
 FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id')
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id')
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 GROUP BY status;
 
 -- name: ListKbMergeRequestsByIDs :many

@@ -2813,6 +2813,8 @@ CREATE TABLE public.kb_base (
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by uuid,
     CONSTRAINT kb_base_schema_mode_check CHECK ((schema_mode = ANY (ARRAY['default'::text, 'custom'::text])))
 );
 
@@ -7100,10 +7102,10 @@ CREATE INDEX issue_wakeup_workspace_history_idx ON public.issue_wakeup USING btr
 CREATE INDEX kb_annotation_base_status_idx ON public.kb_annotation USING btree (knowledge_base_id, status);
 
 --
--- Name: kb_base_ws_slug_uidx; Type: INDEX; Schema: public; Owner: -
+-- Name: kb_base_ws_slug_live_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX kb_base_ws_slug_uidx ON public.kb_base USING btree (workspace_id, slug);
+CREATE UNIQUE INDEX kb_base_ws_slug_live_uidx ON public.kb_base USING btree (workspace_id, slug) WHERE (deleted_at IS NULL);
 
 --
 -- Name: kb_block_embedding_base_idx; Type: INDEX; Schema: public; Owner: -
