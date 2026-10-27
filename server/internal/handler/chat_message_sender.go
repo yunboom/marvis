@@ -9,12 +9,15 @@ import (
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
+// chatMessageRoleUser is the chat_message role of a message a member sent.
+const chatMessageRoleUser = "user"
+
 // chatMessageSenders maps each user message to the member who sent it, read
 // from the initiator of the turn the message started. One query per page.
 func (h *Handler) chatMessageSenders(ctx context.Context, messages []db.ChatMessage) (map[string]*string, error) {
 	taskIDs := make([]pgtype.UUID, 0, len(messages))
 	for _, m := range messages {
-		if m.Role == kbChatRoleUser && m.TaskID.Valid {
+		if m.Role == chatMessageRoleUser && m.TaskID.Valid {
 			taskIDs = append(taskIDs, m.TaskID)
 		}
 	}
@@ -33,7 +36,7 @@ func (h *Handler) chatMessageSenders(ctx context.Context, messages []db.ChatMess
 
 	senders := make(map[string]*string, len(taskIDs))
 	for _, m := range messages {
-		if sender, ok := senderByTask[uuidToString(m.TaskID)]; ok && m.Role == kbChatRoleUser {
+		if sender, ok := senderByTask[uuidToString(m.TaskID)]; ok && m.Role == chatMessageRoleUser {
 			senders[uuidToString(m.ID)] = &sender
 		}
 	}
