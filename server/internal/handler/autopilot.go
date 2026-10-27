@@ -535,6 +535,15 @@ func (h *Handler) GetAutopilot(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	readable, err := h.canReadAutopilot(r.Context(), autopilot, requestUserID(r))
+	if err != nil {
+		h.writeAutopilotInternalError(w, r, err)
+		return
+	}
+	if !readable {
+		writeError(w, http.StatusNotFound, "autopilot not found")
+		return
+	}
 
 	subs, err := h.Queries.ListAutopilotSubscribers(r.Context(), autopilot.ID)
 	if err != nil {

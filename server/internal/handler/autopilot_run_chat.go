@@ -55,7 +55,7 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 	}
 	run, err := h.Queries.GetAutopilotRun(r.Context(), runUUID)
 	if err != nil && !isNotFound(err) {
-		h.writeAutopilotRunChatError(w, r, errors.Wrapf(err, "get run run_id=%s", uuidToString(runUUID)))
+		h.writeAutopilotInternalError(w, r, errors.Wrapf(err, "get run run_id=%s", uuidToString(runUUID)))
 		return
 	}
 	if err != nil || uuidToString(run.AutopilotID) != uuidToString(autopilot.ID) {
@@ -77,7 +77,7 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 			writeErrorCode(w, http.StatusConflict, autopilotRunChatCodeNoSession, "run has no agent task")
 			return
 		}
-		h.writeAutopilotRunChatError(w, r, errors.Wrapf(err, "get run task run_id=%s", uuidToString(run.ID)))
+		h.writeAutopilotInternalError(w, r, errors.Wrapf(err, "get run task run_id=%s", uuidToString(run.ID)))
 		return
 	}
 
@@ -87,7 +87,7 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err != nil {
-		h.writeAutopilotRunChatError(w, r, errors.Wrapf(err, "get run agent agent_id=%s", uuidToString(task.AgentID)))
+		h.writeAutopilotInternalError(w, r, errors.Wrapf(err, "get run agent agent_id=%s", uuidToString(task.AgentID)))
 		return
 	}
 	actorType, actorID := h.resolveActor(r, userID, workspaceID)
@@ -103,7 +103,7 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 
 	sessionID, err := h.ensureAutopilotRunChatSession(r.Context(), autopilot, run.ID, task.AgentID, userID)
 	if err != nil {
-		h.writeAutopilotRunChatError(w, r, err)
+		h.writeAutopilotInternalError(w, r, err)
 		return
 	}
 
@@ -218,7 +218,9 @@ func lockRunChatProject(ctx context.Context, qtx *db.Queries, autopilot db.Autop
 	return autopilot.ProjectID, nil
 }
 
-func (h *Handler) writeAutopilotRunChatError(w http.ResponseWriter, r *http.Request, err error) {
-	slog.Error("autopilot run chat request failed", append(logger.RequestAttrs(r), "error", fmt.Sprintf("%+v", err))...)
+// writeAutopilotInternalError logs an unexpected failure with its stack and
+// answers 500 without exposing it.
+func (h *Handler) writeAutopilotInternalError(w http.ResponseWriter, r *http.Request, err error) {
+	slog.Error("autopilot request failed", append(logger.RequestAttrs(r), "error", fmt.Sprintf("%+v", err))...)
 	writeError(w, http.StatusInternalServerError, "internal error")
 }

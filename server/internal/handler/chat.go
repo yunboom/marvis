@@ -1972,7 +1972,7 @@ func (h *Handler) CancelTaskByUser(w http.ResponseWriter, r *http.Request) {
 			// stop its turns and edit or remove its queued messages.
 			_, allowed, err := h.runChatAccess(r.Context(), cs, userID)
 			if err != nil {
-				h.writeAutopilotRunChatError(w, r, err)
+				h.writeAutopilotInternalError(w, r, err)
 				return
 			}
 			if !allowed {
