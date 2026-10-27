@@ -6,7 +6,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] 迁移：新表 `kb_mr_review`（`merge_request_id + reviewer_id` 进行中唯一索引）、`kb_mr_comment.review_id` 及索引、删 `kb_mr_comment.triggered`、`kb_merge_request.status` 加 `changes_requested`；每个 CONCURRENTLY 索引单独一个迁移文件
+- [ ] 迁移：新表 `kb_mr_review`（`merge_request_id + reviewer_user_id` 进行中唯一索引）、`kb_mr_comment.review_id` 及索引、删 `kb_mr_comment.triggered`、`kb_merge_request.status` 加 `changes_requested`；每个 CONCURRENTLY 索引单独一个迁移文件
 - [ ] 删掉评论派发智能体：`review_agent`、评论触发规则、评论框「发送后开始」、动态区「正在工作」
 - [ ] 接口：开启评审（已有进行中的评审时返回它）、评论增改删（待提交只作者可见）、提交评审（评论公开，状态改 `changes_requested`）、放弃评审、`POST /api/kb/merge-requests/{number}/ready`；评论列表 `state=published|all`，默认只列已公开
 - [ ] 权限：审核人的意见只能经评审留下；不带 `review_id` 的评论只有负责人（`kb_draft.created_by`）能发；「待解决」合并返回 409 `changes_requested`

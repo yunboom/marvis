@@ -1104,7 +1104,7 @@ GET`/api/kb/merge-requests/{number}`
     {
       "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",           // 变更请求 id（UUID）
       "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
-      "reviewer_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",  // 审核人
+      "reviewer_user_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",  // 审核人
       "reviewer_name": "王芳",                                  // 审核人显示名
       "state": "submitted",                                   // pending 进行中，评论只有审核人自己可见 / submitted 已提交，评论已公开
       "summary": "去重原因和生效时间补上后再合并。",                          // 提交时的总结（没写为空串）
@@ -1231,7 +1231,7 @@ POST`/api/kb/merge-requests/{number}/reviews`
 {
   "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",               // 评审 id
   "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
-  "reviewer_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",      // 审核人
+  "reviewer_user_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",  // 审核人
   "reviewer_name": "王芳",                                      // 审核人显示名
   "state": "pending",                                         // pending 进行中，评论只有审核人自己可见 / submitted 已提交，评论已公开
   "summary": "",                                              // 提交时的总结（没写为空串）
@@ -1379,7 +1379,7 @@ POST`/api/kb/merge-requests/{number}/reviews/{id}/submit`
 {
   "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",               // 评审 id
   "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
-  "reviewer_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",      // 审核人
+  "reviewer_user_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",  // 审核人
   "reviewer_name": "王芳",                                      // 审核人显示名
   "state": "submitted",                                       // pending 进行中，评论只有审核人自己可见 / submitted 已提交，评论已公开
   "summary": "去重原因和生效时间补上后再合并。",                              // 提交时的总结（没写为空串）
