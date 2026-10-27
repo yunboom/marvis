@@ -422,12 +422,12 @@ GET`/api/kb/merge-requests`
     "title": "去重键改为渠道交易号，补回调人工处理",                            // 标题
     "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
     "source": "annotations",                                  // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-    "status": "open",                                         // open / merged / closed
+    "status": "open",                                         // open 待审核 / changes_requested 待解决 / merged / closed
     "risk": "medium",                                         // low / medium / high
     "author_type": "agent",                                   // agent / member
     "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",      // 作者 id
     "author_name": "通用开发助手",                                  // 作者显示名
-    "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",       // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+    "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",       // 变更请求指向的草稿；草稿改了，diff 随之刷新
     "draft_version": 9,                                       // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
     "annotation_ids": [                                       // 本次处理的批注
       "a1b2c3d4-0000-4000-8000-000000000001"
@@ -469,12 +469,12 @@ POST`/api/kb/merge-requests/{number}/revert`
   "title": "Revert #15: 测试环境：部署时间改为 21:00",                   // 标题
   "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
   "source": "revert",                                         // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "open",                                           // open / merged / closed
+  "status": "open",                                           // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 1,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [],                                       // 本次处理的批注
   "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
@@ -948,36 +948,36 @@ GET`/api/kb/pages/{id}/history`
 
 #### 7.9 变更审核
 
-设计稿 · 8.1 待审核 · 8.2 详情 · 8.3 加入评论 · 8.4–8.5 评论后智能体修改 · 8.6 冲突 · 8.7 关闭确认 · 8.8 成员视角
+设计稿 · 8.1 待审核 · 8.2 详情 · 8.9 开启评审前 · 8.3–8.4 评审中 · 8.10 提交评审 · 8.5 待解决 · 8.11 负责人重新请求审核 · 8.6 冲突 · 8.7 关闭确认 · 8.8 成员视角 · 13.1–13.2 通知
 
 - 详情：草稿里每个改动页一张文件卡片（GitLab MR 式，可折叠），基准修订与草稿的块渲染成 Markdown 后做行级 diff；open 状态每次打开都和当前主线试合并，冲突报到块和行（决策 23）。
 - 检查：格式检查只看改动的页面（4.7）。
-- 评论照任务评论做（决策 26、39）：底部常驻评论框；选中 diff 的一行「加入评论」带引用；默认由作者智能体接手，@ 了谁就启动谁。判定复用任务评论的规则（`server/internal/handler/comment.go:2633` `computeCommentAgentTriggers`，@ 解析 `server/internal/util/mention.go:16`），在知识库服务里实现，不改任务评论代码。
+- 评审（决策 107）：审核人点「开启评审」，建一条 `state = pending` 的 `kb_mr_review`，一个审核人对一个变更请求最多一条进行中的评审。之后在 diff 行「加入评论」或底部评论框写的评论挂在这条评审下，只有自己可见，可改可删。「提交评审」可附总结，评论一次公开；「放弃评审」删掉这条评审和它的待提交评论。审核人的意见只能经评审留下。
+- 提交评审后，变更请求 `status` 改为 `changes_requested`（界面「待解决」），并给负责人发站内消息（「消息」里的通知，设计稿 13.1）。负责人是建草稿的人（`kb_draft.created_by`）；草稿由智能体建时，是它代表的成员。
+- 负责人在评论下直接回复，立即公开（`review_id` 为空）。「待解决」不能合并；负责人点「重新请求审核」或执行 `kb mr ready`，变更请求回到 `open`，并通知提交过评审的审核人（设计稿 13.2）。关闭、回滚不变。
+- 评论不派发智能体。负责人要智能体按意见修改，在作业页点「交给智能体处理」（7.10）。
 - 知识库作业中合并按钮不可用；合并、回滚、关闭要知识库创建者或 owner / admin，作者也能关闭自己的（决策 30、46、102），按令牌绑定的人判角色（`server/internal/middleware/workspace.go:240-260`）。
 
 ```
 sequenceDiagram
-  participant U as 审核人
+  participant R as 审核人
   participant API as KB API
-  participant CHAT as 聊天服务
-  participant AG as 作者智能体
-  U->>API: POST /merge-requests/16/comments（引用块 b8Xz）
-  API->>API: 判定接手的智能体：@ 了谁就是谁，否则是作者
-  alt 变更请求来自知识库作业
-    API->>CHAT: 把评论（8.6 模板）作为一条消息发进原作业的对话
-    CHAT->>AG: 派任务（任务令牌），草稿是原作业关联的那份
-  else 来自对话 / 自动化 / 任务
-    API->>AG: 照任务评论的规则派任务（任务令牌），不新建作业
-  end
-  AG->>API: page fetch → page patch --draft（草稿版本 +1）
-  API-->>U: kb.mr.updated（diff 刷新）
-  AG->>API: kb mr comment 16 --parent …
+  participant O as 负责人
+  R->>API: POST /merge-requests/16/reviews（开启评审）
+  R->>API: POST /merge-requests/16/comments（带 review_id，待提交）
+  R->>API: POST /merge-requests/16/reviews/{id}/submit（可附总结）
+  API->>API: 评论公开；status = changes_requested
+  API-->>O: 站内消息「提交了评审」
+  O->>API: POST /merge-requests/16/comments（带 parent_id，回复）
+  O->>API: POST /merge-requests/16/ready（重新请求审核）
+  API->>API: status = open
+  API-->>R: 站内消息「重新请求审核」
 ```
 
-图 5 · 审核评论后智能体就地修改
+图 5 · 评审：开启、提交、重新请求审核
 GET`/api/kb/merge-requests/{number}`
  
-变更请求详情。
+变更请求详情，含状态和已提交的评审。
 
  
 权限 工作区成员
@@ -991,14 +991,14 @@ GET`/api/kb/merge-requests/{number}`
   "number": 16,                                               // 工作区内编号，界面上的 #16
   "knowledge_base_id": "5b1f0c2e-8a6d-4e1b-9f7a-2c3d4e5f6a7b",  // 改动的知识库（一个变更请求只改一个知识库）
   "title": "去重键改为渠道交易号，补回调人工处理",                              // 页面标题
-  "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
+  "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 提交时的总结（没写为空串）
   "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "open",                                           // open / merged / closed
+  "status": "changes_requested",                              // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
@@ -1095,7 +1095,20 @@ GET`/api/kb/merge-requests/{number}`
         "draft_lines": "15-16"                                // 草稿里冲突的行范围
       }
     ]
-  }
+  },
+  "reviews": [                                                // 已提交的评审，按提交时间
+    {
+      "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",           // 变更请求 id（UUID）
+      "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+      "reviewer_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",  // 审核人
+      "reviewer_name": "王芳",                                  // 审核人显示名
+      "state": "submitted",                                   // pending 进行中，评论只有审核人自己可见 / submitted 已提交，评论已公开
+      "summary": "去重原因和生效时间补上后再合并。",                          // 提交时的总结（没写为空串）
+      "comment_count": 3,                                     // 这次评审的评论数
+      "created_at": "2026-10-25T10:36:00Z",                   // RFC3339
+      "submitted_at": "2026-10-25T10:41:00Z"                  // 提交时间（未提交为 null）
+    }
+  ]
 }
 ```
 
@@ -1108,6 +1121,10 @@ GET`/api/kb/merge-requests/{number}/comments`
 权限 工作区成员
 
  
+| 参数 | 位置 | 类型 | 必填 | 说明 / 示例 | 
+| `state` | query | string | 否 | `published`（默认）只列已公开的；`all` 再加上调用者自己待提交的评论（审核页用） | 
+
+ 
 响应 200
 
 ```
@@ -1115,42 +1132,67 @@ GET`/api/kb/merge-requests/{number}/comments`
   {
     "id": "c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f",             // 评论 id
     "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+    "review_id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",      // 所属评审；负责人的回复为 null
     "parent_id": null,                                        // 回复的评论（无则 null）
+    "state": "published",                                     // pending 待提交，只有作者可见 / published 已公开
     "quote": {                                                // 引用的行（「加入评论」带入；不引用为 null）
       "page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",      // 页面
       "block_id": "b8Xz",                                     // 块
       "text": "渠道回调按渠道交易号加幂等键去重。[^mar-142]"                   // 行内容
     },
-    "body": "补一下改成交易号的原因和生效时间。",                              // Markdown，可含 [@名字](mention://agent/id)
+    "body": "补一下改成交易号的原因和生效时间。",                              // Markdown
     "author_type": "member",                                  // member / agent
     "author_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",      // 作者
     "author_name": "王芳",                                      // 作者显示名
-    "triggered": [                                            // 这条评论启动的智能体（照任务评论规则）
-      {
-        "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",   // 智能体
-        "agent_name": "通用开发助手",                               // 名称
-        "reason": "author"                                    // author 变更请求作者 / mention 被 @
-      }
-    ],
     "created_at": "2026-10-25T10:38:00Z"                      // RFC3339
   }
 ]
 ```
 
  
-POST`/api/kb/merge-requests/{number}/comments`
+POST`/api/kb/merge-requests/{number}/reviews`
  
-发评论；按规则启动智能体。
+开启评审。调用者在这个变更请求上已有进行中的评审时，返回那一条（200），不新建。
 
  
 权限 工作区成员
+
+ 
+响应 201
+
+```
+{
+  "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",               // 评审 id
+  "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+  "reviewer_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",      // 审核人
+  "reviewer_name": "王芳",                                      // 审核人显示名
+  "state": "pending",                                         // pending 进行中，评论只有审核人自己可见 / submitted 已提交，评论已公开
+  "summary": "",                                              // 提交时的总结（没写为空串）
+  "comment_count": 0,                                         // 这次评审的评论数
+  "created_at": "2026-10-25T10:36:00Z",                       // 开启时间
+  "submitted_at": null                                        // 提交时间（未提交为 null）
+}
+```
+
+ 
+| 状态码 | 情况 | 
+| 409 | 变更请求已合并或已关闭 | 
+
+ 
+POST`/api/kb/merge-requests/{number}/comments`
+ 
+发评论。审核人带 `review_id` 写进自己的评审，待提交；负责人带 `parent_id` 回复已公开的评论，立即公开。
+
+ 
+权限 审核人（自己进行中的评审）或负责人（回复）
 
  
 请求体
 
 ```
 {
-  "parent_id": null,                                          // 回复某条评论时填
+  "review_id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",        // 审核人写评审评论时必填，负责人回复时不传
+  "parent_id": null,                                          // 负责人回复时必填，审核人回复评论时也可带
   "quote": {                                                  // 选填，引用的行
     "page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",        // 页面
     "block_id": "b8Xz",                                       // 块
@@ -1167,26 +1209,187 @@ POST`/api/kb/merge-requests/{number}/comments`
 {
   "id": "c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f",               // 评论 id
   "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+  "review_id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",        // 所属评审；负责人的回复为 null
   "parent_id": null,                                          // 回复的评论（无则 null）
+  "state": "pending",                                         // pending 待提交，只有作者可见 / published 已公开
   "quote": {                                                  // 引用的行（「加入评论」带入；不引用为 null）
     "page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",        // 页面
     "block_id": "b8Xz",                                       // 块
     "text": "渠道回调按渠道交易号加幂等键去重。[^mar-142]"                     // 行内容
   },
-  "body": "补一下改成交易号的原因和生效时间。",                                // Markdown，可含 [@名字](mention://agent/id)
+  "body": "补一下改成交易号的原因和生效时间。",                                // Markdown
   "author_type": "member",                                    // member / agent
   "author_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",        // 作者
   "author_name": "王芳",                                        // 作者显示名
-  "triggered": [                                              // 这条评论启动的智能体（照任务评论规则）
-    {
-      "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",     // 智能体
-      "agent_name": "通用开发助手",                                 // 名称
-      "reason": "author"                                      // author 变更请求作者 / mention 被 @
-    }
-  ],
   "created_at": "2026-10-25T10:38:00Z"                        // RFC3339
 }
 ```
+
+ 
+| 状态码 | 情况 | 
+| 403 | 不带 `review_id` 时只有负责人能发；`review_id` 不是调用者进行中的评审 | 
+| 409 | 评审已提交；变更请求已合并或已关闭 | 
+
+ 
+PATCH`/api/kb/merge-requests/{number}/comments/{id}`
+ 
+修改待提交的评论。
+
+ 
+权限 评论作者
+
+ 
+请求体
+
+```
+{
+  "body": "补一下改成交易号的原因，以及从哪天起生效。"                             // 必填
+}
+```
+
+ 
+响应 200
+
+```
+{
+  "id": "c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f",               // 评论 id
+  "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+  "review_id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",        // 所属评审；负责人的回复为 null
+  "parent_id": null,                                          // 回复的评论（无则 null）
+  "state": "pending",                                         // pending 待提交，只有作者可见 / published 已公开
+  "quote": {                                                  // 引用的行（「加入评论」带入；不引用为 null）
+    "page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",        // 页面
+    "block_id": "b8Xz",                                       // 块
+    "text": "渠道回调按渠道交易号加幂等键去重。[^mar-142]"                     // 行内容
+  },
+  "body": "补一下改成交易号的原因，以及从哪天起生效。",                            // Markdown
+  "author_type": "member",                                    // member / agent
+  "author_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",        // 作者
+  "author_name": "王芳",                                        // 作者显示名
+  "created_at": "2026-10-25T10:38:00Z"                        // RFC3339
+}
+```
+
+ 
+| 状态码 | 情况 | 
+| 403 | 不是自己的评论 | 
+| 409 | 评论已公开 | 
+
+ 
+DELETE`/api/kb/merge-requests/{number}/comments/{id}`
+ 
+删除待提交的评论。
+
+ 
+权限 评论作者
+
+ 
+| 状态码 | 情况 | 
+| 403 | 不是自己的评论 | 
+| 409 | 评论已公开 | 
+
+ 
+POST`/api/kb/merge-requests/{number}/reviews/{id}/submit`
+ 
+提交评审：这次评审的评论一次公开，变更请求改为 `changes_requested`，给负责人发站内消息。
+
+ 
+权限 审核人本人
+
+ 
+请求体
+
+```
+{
+  "summary": "去重原因和生效时间补上后再合并。"                               // 选填，评审总结
+}
+```
+
+ 
+响应 200
+
+```
+{
+  "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",               // 评审 id
+  "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+  "reviewer_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",      // 审核人
+  "reviewer_name": "王芳",                                      // 审核人显示名
+  "state": "submitted",                                       // pending 进行中，评论只有审核人自己可见 / submitted 已提交，评论已公开
+  "summary": "去重原因和生效时间补上后再合并。",                              // 提交时的总结（没写为空串）
+  "comment_count": 3,                                         // 这次评审的评论数
+  "created_at": "2026-10-25T10:36:00Z",                       // 开启时间
+  "submitted_at": "2026-10-25T10:41:00Z"                      // 提交时间（未提交为 null）
+}
+```
+
+ 
+| 状态码 | 情况 | 
+| 403 | 不是自己的评审 | 
+| 409 | 评审已提交；没有评论也没有总结；变更请求已合并或已关闭 | 
+
+ 
+DELETE`/api/kb/merge-requests/{number}/reviews/{id}`
+ 
+放弃评审：删除这条评审和它的待提交评论。
+
+ 
+权限 审核人本人
+
+ 
+| 状态码 | 情况 | 
+| 403 | 不是自己的评审 | 
+| 409 | 评审已提交 | 
+
+ 
+POST`/api/kb/merge-requests/{number}/ready`
+ 
+重新请求审核：变更请求回到 `open`，给提交过评审的审核人发站内消息（`kb mr ready`）。
+
+ 
+权限 负责人
+
+ 
+响应 200
+
+```
+{
+  "id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",               // 变更请求 id（UUID）
+  "number": 16,                                               // 工作区内编号，界面上的 #16
+  "knowledge_base_id": "5b1f0c2e-8a6d-4e1b-9f7a-2c3d4e5f6a7b",  // 改动的知识库（一个变更请求只改一个知识库）
+  "title": "去重键改为渠道交易号，补回调人工处理",                              // 标题
+  "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
+  "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
+  "status": "open",                                           // open 待审核 / changes_requested 待解决 / merged / closed
+  "risk": "medium",                                           // low / medium / high
+  "author_type": "agent",                                     // agent / member
+  "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
+  "author_name": "通用开发助手",                                    // 作者显示名
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
+  "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
+  "annotation_ids": [                                         // 本次处理的批注
+    "a1b2c3d4-0000-4000-8000-000000000001"
+  ],
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
+    "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
+    "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
+  },
+  "job_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f",           // 关联的知识库作业（无则 null）
+  "reverts": null,                                            // 回滚的变更请求编号（不是回滚为 null）
+  "merged_by": null,                                          // 合并人（未合并为 null）
+  "merged_at": null,                                          // 合并时间（未合并为 null）
+  "closed_by": null,                                          // 关闭人（未关闭为 null）
+  "closed_at": null,                                          // 关闭时间（未关闭为 null）
+  "close_reason": "",                                         // 关闭理由（未关闭为空串）
+  "created_at": "2026-10-25T10:31:00Z",                       // RFC3339
+  "updated_at": "2026-10-25T10:41:00Z"                        // RFC3339
+}
+```
+
+ 
+| 状态码 | 情况 | 
+| 403 | 不是负责人 | 
+| 409 | 不是 `changes_requested` | 
 
  
 POST`/api/kb/merge-requests/{number}/merge`
@@ -1216,12 +1419,12 @@ POST`/api/kb/merge-requests/{number}/merge`
   "title": "去重键改为渠道交易号，补回调人工处理",                              // 标题
   "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
   "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "merged",                                         // open / merged / closed
+  "status": "merged",                                         // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
@@ -1246,7 +1449,7 @@ POST`/api/kb/merge-requests/{number}/merge`
  
 | 状态码 | 情况 | 
 | 403 | 没有权限 | 
-| 409 | 不是 open；草稿在打开后又变了；与主线冲突（带 `conflicts`，先 `kb draft sync`）；草稿还有未解决的冲突；知识库作业中 | 
+| 409 | `changes_requested`：待解决；不是 open；草稿在打开后又变了；与主线冲突（带 `conflicts`，先 `kb draft sync`）；草稿还有未解决的冲突；知识库作业中 | 
 
  
 POST`/api/kb/merge-requests/{number}/close`
@@ -1276,12 +1479,12 @@ POST`/api/kb/merge-requests/{number}/close`
   "title": "去重键改为渠道交易号，补回调人工处理",                              // 标题
   "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
   "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "closed",                                         // open / merged / closed
+  "status": "closed",                                         // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
@@ -1305,13 +1508,13 @@ POST`/api/kb/merge-requests/{number}/close`
 
  
 | 状态码 | 情况 | 
-| 409 | 不是 open | 
+| 409 | 已合并或已关闭 | 
 
  
 
 #### 7.10 知识库作业
 
-设计稿 · 9.1 列表 · 9.2 新建对话 · 9.3–9.6 作业到提交 · 9.7 定时收录 · 9.8 批注带入 · 9.9–9.16 边界情况
+设计稿 · 9.1 列表 · 9.2 新建对话 · 9.3–9.6 作业到提交 · 9.7 定时收录 · 9.8 批注带入 · 9.9–9.18 边界情况
 
 - 一个作业 = 一个现有聊天会话 + 一行 `kb_job`，草稿由智能体用 `kb draft create --job` 建，建草稿时同时写进 `kb_job_draft` 关联到作业；一个作业只关联一份草稿，一份草稿只属于一个作业（决策 34、104）。左侧整块复用聊天消息列表和输入框（`packages/views/chat/components/chat-message-list.tsx:181`、`chat-input.tsx:152`），发送 / 停止 / 排队发送沿用同一个按钮位（`chat-input.tsx:828`，决策 47）。
 - 执行智能体由用户选，选择器复用自动化的执行者选择器，没有运行时的置灰（决策 39、28）。
@@ -1319,6 +1522,7 @@ POST`/api/kb/merge-requests/{number}/close`
 - 智能体建草稿之前，右侧是空状态，提交审核不可用；建好之后，右侧显示这份草稿，提交、放弃都作用于它（设计稿 9.17）。
 - 右侧草稿随写入刷新（`kb.draft.updated` 1 秒内合并发送），diff 与检查复用变更请求详情的计算（决策 43）。
 - 提交：用草稿建变更请求；智能体自己执行了 `kb mr create` 也算已提交，右侧自动转只读（决策 44）。
+- 变更请求「待解决」时，右侧草稿栏上方显示「#16 有 M 条审核意见待解决」和评论列表（读 `GET /api/kb/merge-requests/{number}/comments`，样式同任务评论），两个按钮：「交给智能体处理」以成员身份往作业对话发一条消息，带上变更请求编号和全部意见；「重新请求审核」同审核页（决策 107，设计稿 9.18）。
 - 定时收录 / 健康检查：开场白引导智能体用现有 `marvis autopilot create`（`server/cmd/marvis/cmd_autopilot.go:38`）建普通自动化（8.5 schedule）。
 
 ```
@@ -1588,12 +1792,12 @@ POST`/api/kb/jobs/{id}/submit`
   "title": "去重键改为渠道交易号，补回调人工处理",                              // 标题
   "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
   "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "open",                                           // open / merged / closed
+  "status": "open",                                           // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
@@ -1669,6 +1873,7 @@ POST`/api/kb/jobs/{id}/discard`
 | 没有改动（9.13） | 草稿没有页面 | 不显示提交 / 放弃，记为「无需修改」 | 
 | 变更请求被关闭（9.14） | 变更请求 closed | 草稿回到 open，可重新提交（新开变更请求） | 
 | 已合并（9.15） | 变更请求 merged | 只读，对话结束 | 
+| 变更请求待解决（9.18） | 变更请求 changes_requested | 右侧显示审核意见，「交给智能体处理」「重新请求审核」 | 
 
 #### 7.11 配置知识库
 
@@ -2310,12 +2515,12 @@ POST`/api/kb/merge-requests`
   "title": "每日收录 · 10-25",                                    // 标题
   "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
   "source": "ingest",                                         // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "open",                                           // open / merged / closed
+  "status": "open",                                           // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [],                                       // 本次处理的批注
   "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口

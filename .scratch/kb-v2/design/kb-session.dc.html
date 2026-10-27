@@ -88,6 +88,16 @@
           <sc-if value="{{s.empty}}" hint-placeholder-val="{{ false }}"><div class="muted" style="font-size: 13.5px; padding: 40px 0; text-align: center">智能体推送改动后显示在这里。</div></sc-if>
           <sc-if value="{{s.nodraft}}" hint-placeholder-val="{{ false }}"><div class="muted" style="font-size: 13.5px; padding: 40px 0; text-align: center">智能体建好草稿后，在这里显示改动。</div></sc-if>
           <sc-if value="{{s.nochange}}" hint-placeholder-val="{{ false }}"><div style="padding: 40px 0; text-align: center; display: flex; flex-direction: column; gap: 6px"><span style="font-size: 14px; font-weight: 500">这次没有需要修改的内容</span><span class="faint" style="font-size: 12.5px">运行结果记为「无需修改」，不生成变更请求</span></div></sc-if>
+          <sc-if value="{{s.changes}}" hint-placeholder-val="{{ false }}">
+            <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 10px">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 13.5px"><span class="dot d-amber"></span><span style="font-weight: 600; flex: 1">#16 有 3 条审核意见待解决</span><a href="#" style="font-size: 12.5px; color: #4f6f8a; text-decoration: none">去审核页</a></div>
+              <div style="font-size: 13px; display: flex; flex-direction: column; gap: 2px"><span><span style="font-weight: 500">王芳</span><span class="faint"> 提交了评审 · 10:40</span></span><span>去重原因和生效时间补上后再合并。</span></div>
+              <div style="display: flex; gap: 8px"><span class="av">王</span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12.5px; color: #5c5c5c; background: #f7f7f7; border-radius: 8px; padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">支付回调 第 15 行 · 渠道回调按渠道交易号加幂等键去重，重复回调直接返回成功。</span><span style="font-size: 13.5px">补一下改成交易号的原因和生效时间。</span></div></div>
+              <div style="display: flex; gap: 8px"><span class="av">王</span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span class="faint" style="font-size: 12.5px">回调人工处理</span><span style="font-size: 13.5px">缺少值班联系人和升级路径。</span></div></div>
+              <div style="display: flex; gap: 8px"><span class="av">王</span><div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px"><span class="faint" style="font-size: 12.5px">幂等键</span><span style="font-size: 13.5px">链接还指向旧路径 /payment/idempotency。</span></div></div>
+              <div style="display: flex; gap: 8px; justify-content: flex-end"><button class="btn btn-o">重新请求审核</button><button class="btn btn-p">交给智能体处理</button></div>
+            </div>
+          </sc-if>
           <sc-if value="{{s.hasFiles}}" hint-placeholder-val="{{ true }}">
             <sc-if value="{{s.banner}}" hint-placeholder-val="{{ false }}"><div class="{{bannerCls}}" style="padding: 10px 12px; font-size: 13px; display: flex; align-items: center; gap: 8px"><span class="{{bannerDot}}"></span><span style="flex: 1">{{bannerText}}</span><sc-if value="{{s.bannerLink}}" hint-placeholder-val="{{ false }}"><a href="#" style="color: #4f6f8a; text-decoration: none">{{bannerLink}}</a></sc-if></div></sc-if>
             <div style="display: flex; align-items: center"><span class="faint" style="font-size: 12.5px; flex: 1">{{summary}}</span><a href="#" style="font-size: 12.5px; color: #4f6f8a; text-decoration: none">全部折叠</a></div>
@@ -127,11 +137,13 @@
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"op":{"editor":"enum","default":"ann","options":["ann","page"]},"state":{"editor":"enum","default":"running","options":["new","welcome","prefill","auto","lintfail","autosub","queue","busy","conflict","nochange","closed","merged","ingest","running","draft","followup","submitted","nodraft"]},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"op":{"editor":"enum","default":"ann","options":["ann","page"]},"state":{"editor":"enum","default":"running","options":["new","welcome","prefill","auto","lintfail","autosub","queue","busy","conflict","nochange","closed","merged","ingest","running","draft","followup","submitted","nodraft","changes"]},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     var st = this.props.state ?? 'running';
     var nodraft = st === 'nodraft';
+    var changes = st === 'changes';
+    if (changes) st = 'submitted';
     if (nodraft) st = 'running';
     var welcome = st === 'welcome';
     if (welcome) st = 'new';
@@ -176,7 +188,7 @@ class Component extends DCLogic {
       quote: '已把这一行引用到左边，接着说要怎么改',
       preview: '预览是页面合并后的样子',
       lintfail: '有 1 个错误，修复后才能提交',
-      submitted: '之后的修改在审核页评论里继续，也可以在这里接着说',
+      submitted: '审核人提交评审后，意见显示在这里',
       busy: '等智能体这一轮结束再提交',
       conflict: '可以直接提交，审核时再处理冲突',
       nochange: '',
@@ -201,10 +213,10 @@ class Component extends DCLogic {
       title: st === 'new' ? '新对话' : pre ? (page ? '新页面' : '处理批注') : (st === 'auto' ? '创建定时收录' : (ingest ? '收录资料' : (page ? '新页面' : '处理批注'))),
       firstAsk: page ? '在「产品与业务 / 支付」下新增一页：回调人工处理的操作步骤。' : '处理团队知识库的全部 4 条待处理批注。',
       firstReply: nochange ? '核对完 4 条批注涉及的内容，页面都已经是对的，不需要修改。2 条批注我标成了不处理。' : st === 'running' || busy ? (busy ? '改好了「支付回调」，正在补「回调人工处理」这一页…' : (page ? '好的，先看「支付」下已有的页面，再起草。' : '好的，先核对 MAR-142 和回调代码，再按批注修改。')) : st === 'running' ? (page ? '好的，先看「支付」下已有的页面，再起草。' : '好的，先核对 MAR-142 和回调代码，再按批注修改。') : '按王芳和李雷的批注改好了「支付回调」的去重一节，右边是草稿。另外 2 条需要你确认是否保留。',
-      stateText: nodraft ? '暂无草稿' : st === 'submitted' ? '已提交审核' : merged ? '已合并' : closed ? '已关闭 · 可重新提交' : nochange ? '无需修改' : (diff ? '草稿 · 未提交' : '暂无改动'),
-      stateDot: st === 'submitted' ? 'dot d-blue' : merged ? 'dot d-green' : closed ? 'dot d-amber' : 'dot d-gray',
+      stateText: nodraft ? '暂无草稿' : changes ? '待解决' : st === 'submitted' ? '已提交审核' : merged ? '已合并' : closed ? '已关闭 · 可重新提交' : nochange ? '无需修改' : (diff ? '草稿 · 未提交' : '暂无改动'),
+      stateDot: changes ? 'dot d-amber' : st === 'submitted' ? 'dot d-blue' : merged ? 'dot d-green' : closed ? 'dot d-amber' : 'dot d-gray',
       addCount: st === 'followup' || st === 'submitted' ? '+2' : '+1',
-      footHint: nodraft ? '' : (hints[st] || ''),
+      footHint: nodraft || changes ? '' : (hints[st] || ''),
       files: files, lines: lines, checks: checks,
       summary: '2 个页面 · ' + (later ? '+20 −1' : '+19 −1'),
       segDiff: st === 'preview' ? '' : 'on', segPrev: st === 'preview' ? 'on' : '',
@@ -216,14 +228,14 @@ class Component extends DCLogic {
       bannerDot: closed ? 'dot d-amber' : (merged ? 'dot d-green' : 'dot d-blue'),
       bannerText: closed ? '#16 已被王芳关闭：「去重的例子和失败处理对不上」。草稿还在，可以继续调整。' : (merged ? '#16 已由王芳合并，改动已生效。' : (auto ? '通用开发助手已提交变更请求 #16，草稿转为待审核，这里只读。' : '你已提交变更请求 #16，草稿转为待审核，这里只读。')),
       bannerLink: closed ? '查看评论' : (merged ? '查看页面' : '去审核'),
-      subMsg: auto ? '按批注改完，格式检查通过，已直接提交变更请求 #16。还要调整的话接着说，我会更新这个变更请求。' : '已提交变更请求 #16，等待 owner 或 admin 合并。审核时的评论我也会接着处理。',
+      subMsg: auto ? '按批注改完，格式检查通过，已直接提交变更请求 #16。还要调整的话接着说，我会更新这个变更请求。' : '已提交变更请求 #16，等待 owner 或 admin 合并。',
       subBanner: auto ? '通用开发助手已提交变更请求 #16，草稿转为待审核，这里只读。' : '你已提交变更请求 #16，草稿转为待审核，这里只读。',
       s: { welcome: welcome,
         doneFirst: st !== 'running' && st !== 'busy', quick: st === 'draft', queued: queue,
         fresh: st === 'new' || st === 'prefill', starters: st === 'new', auto: st === 'auto',
         ingestStart: ingest, thread: !ingest && st !== 'new' && st !== 'prefill' && st !== 'auto', running: st === 'running' || busy,
         followup: ['followup', 'quote', 'preview', 'lintfail', 'submitted'].indexOf(st) >= 0, followupDiff: false,
-        submitted: st === 'submitted', nochange: nochange, banner: st === 'submitted' || closed || merged, bannerLink: true, goReview: st === 'submitted', fixBtn: lintFail || conflict, empty: ingest || st === 'new' || st === 'prefill' || st === 'auto' || (st === 'running' && !nodraft), nodraft: nodraft, hasDiff: diff, hasFiles: drafted,
+        submitted: st === 'submitted', nochange: nochange, banner: (st === 'submitted' && !changes) || closed || merged, changes: changes, bannerLink: true, goReview: st === 'submitted', fixBtn: lintFail || conflict, empty: ingest || st === 'new' || st === 'prefill' || st === 'auto' || (st === 'running' && !nodraft), nodraft: nodraft, hasDiff: diff, hasFiles: drafted,
         diffView: st !== 'preview', preview: st === 'preview', quote: st === 'quote', writing: st === 'running', lintFail: lintFail,
         canDiscard: drafted && !readonly, showSubmit: (drafted && !readonly) || nodraft,
         canSubmit: false

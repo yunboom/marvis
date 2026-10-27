@@ -18,7 +18,7 @@
 | kb raw list / get | 原始资料；`get` 下载到本地给智能体读 | 读 | 
 | kb annotation add / list / dismiss / reopen | 批注；发现缺内容或写错用 `add` | 写批注 | 
 | kb draft create / check | 建草稿（`--job` 关联到作业）；看草稿改动与检查 | 写 / 读 | 
-| kb mr create / update / list / get / comment / merge / close / revert | 审核相关；合并、关闭按现有权限（决策 46） | 写 | 
+| kb mr create / update / list / get / comment / ready / merge / close / revert | 审核相关；`comment list` 只列已公开评论，`ready` 重新请求审核；合并、关闭按现有权限（决策 46） | 写 | 
 | kb history | 已合并的改动 | 读 | 
 | chat list / get | 读对话（现有 `marvis chat` 命令组新增）；owner 读全员对话见 8.7 | 读 | 
 
@@ -1220,12 +1220,12 @@ marvis kb mr create --draft 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a --title "每日
   "title": "去重键改为渠道交易号，补回调人工处理",                              // 标题
   "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
   "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "open",                                           // open / merged / closed
+  "status": "open",                                           // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
@@ -1251,7 +1251,7 @@ marvis kb mr create --draft 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a --title "每日
  
 CLI`marvis kb mr list / get`
  
-变更请求列表 / 详情（含改动和检查）。
+变更请求列表 / 详情：状态、改动、检查和已提交评审的总结。
 
  
 对应接口 `GET /api/kb/merge-requests`、`GET /api/kb/merge-requests/{number}`
@@ -1259,13 +1259,13 @@ CLI`marvis kb mr list / get`
  
 
 ```
-marvis kb mr list [--status open|merged|closed|all] [--kb <kb>] [--limit <n>] [--output table|json]
+marvis kb mr list [--status open|changes_requested|merged|closed|all] [--kb <kb>] [--limit <n>] [--output table|json]
 marvis kb mr get <编号|id> [--output table|json]
 ```
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
-| `--status` | 否 | `list` 用：`open`（默认）/ `merged` / `closed` / `all` | `merged` | 
+| `--status` | 否 | `list` 用：`open`（默认）/ `changes_requested` 待解决 / `merged` / `closed` / `all` | `merged` | 
 | `--kb` | 否 | `list` 用：知识库 slug 或 id | `team` | 
 | `<编号|id>` | get 时是 | 变更请求编号（界面上 #16 的 16），或 id（UUID） | `16` | 
 | `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
@@ -1286,14 +1286,14 @@ marvis kb mr get 16
   "number": 16,                                               // 工作区内编号，界面上的 #16
   "knowledge_base_id": "5b1f0c2e-8a6d-4e1b-9f7a-2c3d4e5f6a7b",  // 改动的知识库（一个变更请求只改一个知识库）
   "title": "去重键改为渠道交易号，补回调人工处理",                              // 页面标题
-  "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
+  "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 提交时的总结（没写为空串）
   "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "open",                                           // open / merged / closed
+  "status": "changes_requested",                              // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
@@ -1391,6 +1391,19 @@ marvis kb mr get 16
       }
     ]
   },
+  "reviews": [                                                // 已提交的评审
+    {
+      "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",           // 变更请求 id（UUID）
+      "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+      "reviewer_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",  // 审核人
+      "reviewer_name": "王芳",                                  // 审核人显示名
+      "state": "submitted",                                   // pending 进行中，评论只有审核人自己可见 / submitted 已提交，评论已公开
+      "summary": "去重原因和生效时间补上后再合并。",                          // 提交时的总结（没写为空串）
+      "comment_count": 3,                                     // 这次评审的评论数
+      "created_at": "2026-10-25T10:36:00Z",                   // RFC3339
+      "submitted_at": "2026-10-25T10:41:00Z"                  // 提交时间（未提交为 null）
+    }
+  ],
   "mention": "[#16 去重键…](mention://kb_mr/e7f8a9b0…)"          // 原样贴进回复，渲染成卡片（7.14），不通知人；示例里的 id 截短了
 }
 ```
@@ -1435,12 +1448,12 @@ marvis kb mr update 16 --risk low
   "title": "去重键改为渠道交易号，补回调人工处理",                              // 标题
   "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
   "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "open",                                           // open / merged / closed
+  "status": "open",                                           // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "low",                                              // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
@@ -1466,25 +1479,23 @@ marvis kb mr update 16 --risk low
  
 CLI`marvis kb mr comment list / add`
  
-列出 / 发评论（照 `issue comment list / add`）。
+列出已公开的评论；负责人回复评论（照 `issue comment list / add`）。审核人的意见在审核页经评审留下，CLI 不提供。
 
  
-对应接口 `POST /api/kb/merge-requests/{number}/comments`
+对应接口 `GET /api/kb/merge-requests/{number}/comments`、`POST /api/kb/merge-requests/{number}/comments`
 
  
 
 ```
 marvis kb mr comment list <编号> [--output table|json]
-marvis kb mr comment add <编号> (--content <文本> | --content-file <path> | --content-stdin) [--parent <评论id>] [--output table|json]
-    [--quote-page <页面> --quote-block <块id>] [--output table|json]
+marvis kb mr comment add <编号> --parent <评论id> (--content <文本> | --content-file <path> | --content-stdin) [--output table|json]
 ```
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
 | `<编号>` | 是 | 变更请求编号，或 id（UUID） | `16` | 
-| `--content / --content-file / --content-stdin` | add 时是 | 评论 Markdown，三选一 | `--content-file ./reply.md` | 
-| `--parent` | 否 | 要回复的评论 id（UUID，`comment list` 输出里的 `id`）；评论触发的作业必须回在触发它的那条下面 | `c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f` | 
-| `--quote-page / --quote-block` | 否 | 引用页面里的一块：页面引用 + 块 id（4 位） | `--quote-page team:/payment/callback --quote-block b8Xz` | 
+| `--parent` | add 时是 | 要回复的评论 id（UUID，`comment list` 输出里的 `id`）；只有负责人能回复 | `c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f` | 
+| `--content / --content-file / --content-stdin` | add 时是 | 回复 Markdown，三选一 | `--content-file ./reply.md` | 
 | `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
 
  
@@ -1501,24 +1512,84 @@ marvis kb mr comment add 16 --parent c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f --cont
 {
   "id": "c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f",               // 评论 id
   "merge_request_id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",  // 变更请求
+  "review_id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",        // 所属评审；负责人的回复为 null
   "parent_id": null,                                          // 回复的评论（无则 null）
+  "state": "published",                                       // pending 待提交，只有作者可见 / published 已公开
   "quote": {                                                  // 引用的行（「加入评论」带入；不引用为 null）
     "page_id": "0c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f",        // 页面
     "block_id": "b8Xz",                                       // 块
     "text": "渠道回调按渠道交易号加幂等键去重。[^mar-142]"                     // 行内容
   },
-  "body": "补一下改成交易号的原因和生效时间。",                                // Markdown，可含 [@名字](mention://agent/id)
+  "body": "补一下改成交易号的原因和生效时间。",                                // Markdown
   "author_type": "member",                                    // member / agent
   "author_id": "7c6b5a49-3827-4615-a4f3-e2d1c0b9a887",        // 作者
   "author_name": "王芳",                                        // 作者显示名
-  "triggered": [                                              // 这条评论启动的智能体（照任务评论规则）
-    {
-      "agent_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",     // 智能体
-      "agent_name": "通用开发助手",                                 // 名称
-      "reason": "author"                                      // author 变更请求作者 / mention 被 @
-    }
-  ],
   "created_at": "2026-10-25T10:38:00Z"                        // RFC3339
+}
+```
+
+ 
+CLI`marvis kb mr ready`
+ 
+重新请求审核：变更请求从「待解决」回到「待审核」，并通知提交过评审的审核人。只有负责人能用。
+
+ 
+对应接口 `POST /api/kb/merge-requests/{number}/ready`
+
+ 
+
+```
+marvis kb mr ready <编号> [--output table|json]
+```
+
+ 
+| 参数 | 必填 | 传什么 | 示例 | 
+| `<编号>` | 是 | 变更请求编号，或 id（UUID） | `16` | 
+| `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
+
+ 
+示例
+
+```
+marvis kb mr ready 16
+```
+
+ 
+输出（JSON）
+
+```
+{
+  "id": "e7f8a9b0-c1d2-4e3f-9a8b-7c6d5e4f3a2b",               // 变更请求 id（UUID）
+  "number": 16,                                               // 工作区内编号，界面上的 #16
+  "knowledge_base_id": "5b1f0c2e-8a6d-4e1b-9f7a-2c3d4e5f6a7b",  // 改动的知识库（一个变更请求只改一个知识库）
+  "title": "去重键改为渠道交易号，补回调人工处理",                              // 标题
+  "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
+  "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
+  "status": "open",                                           // open 待审核 / changes_requested 待解决 / merged / closed
+  "risk": "medium",                                           // low / medium / high
+  "author_type": "agent",                                     // agent / member
+  "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
+  "author_name": "通用开发助手",                                    // 作者显示名
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
+  "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
+  "annotation_ids": [                                         // 本次处理的批注
+    "a1b2c3d4-0000-4000-8000-000000000001"
+  ],
+  "origin": {                                                 // 来源追溯：变更请求是从哪里发起的；判定顺序见 7.13 建变更请求接口
+    "type": "kb_job",                                         // kb_job 知识库作业 / revert 回滚 / chat 对话 / autopilot_run 自动化运行 / issue 任务 / none 无来源，只显示作者
+    "label": "知识库作业 · 处理批注",                                  // 来源的显示文字
+    "ref_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f"          // 来源对象 id，用于跳转
+  },
+  "job_id": "c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f",           // 关联的知识库作业（无则 null）
+  "reverts": null,                                            // 回滚的变更请求编号（不是回滚为 null）
+  "merged_by": null,                                          // 合并人（未合并为 null）
+  "merged_at": null,                                          // 合并时间（未合并为 null）
+  "closed_by": null,                                          // 关闭人（未关闭为 null）
+  "closed_at": null,                                          // 关闭时间（未关闭为 null）
+  "close_reason": "",                                         // 关闭理由（未关闭为空串）
+  "created_at": "2026-10-25T10:31:00Z",                       // RFC3339
+  "updated_at": "2026-10-25T10:41:00Z",                       // RFC3339
+  "mention": "[#16 去重键…](mention://kb_mr/e7f8a9b0…)"          // 原样贴进回复，渲染成卡片（7.14），不通知人；示例里的 id 截短了
 }
 ```
 
@@ -1563,12 +1634,12 @@ marvis kb mr merge 16 --draft-version 9
   "title": "去重键改为渠道交易号，补回调人工处理",                              // 标题
   "summary": "处理批注 a1b2c3d4：去重键改为渠道交易号，引用 MAR-142；新增「回调人工处理」。",  // 智能体的变更说明（含处理了哪些批注）
   "source": "annotations",                                    // 来源：ingest 收录资料 / health 健康检查 / merge 知识合并 / annotations 处理批注 / new_page 新页面 / revert 回滚 / custom 其他
-  "status": "merged",                                         // open / merged / closed
+  "status": "merged",                                         // open 待审核 / changes_requested 待解决 / merged / closed
   "risk": "medium",                                           // low / medium / high
   "author_type": "agent",                                     // agent / member
   "author_id": "3a9e2b10-77c4-4d1f-9b2e-6f5d4c3b2a19",        // 作者 id
   "author_name": "通用开发助手",                                    // 作者显示名
-  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；评论后智能体继续改这份草稿，diff 随之刷新
+  "draft_id": "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a",         // 变更请求指向的草稿；草稿改了，diff 随之刷新
   "draft_version": 9,                                         // 草稿版本，每次写入 +1；合并时带上，防止合并审核人没看过的改动
   "annotation_ids": [                                         // 本次处理的批注
     "a1b2c3d4-0000-4000-8000-000000000001"
@@ -2405,31 +2476,4 @@ English · 代码原文
 
 ```
 （无附加段落，只有通用部分和成员的消息）
-```
-
-8.6 审核评论转交给智能体
-
-变更请求来自作业时，复用原作业：这段作为一条消息发进原作业的对话，智能体接着改这个作业已关联的草稿，不新建作业、不重新关联（决策 104）。变更请求来自对话、任务或自动化时，照任务评论的规则给作者智能体派任务，这段作为任务的指令，不新建作业。
-
-评论转交
-English · 代码原文
-
-```
-Reviewer comment on change request #{{.Number}} ({{.Title}}) from {{.Author}}:
-{{- if .Quote}}
-> {{.QuotePage}}: {{.QuoteText}}
-{{- end}}
-{{.Body}}
-
-Update the draft of #{{.Number}} (`{{.DraftID}}`) to address it, run `marvis kb draft check {{.DraftID}}`, then reply on the change request: `marvis kb mr comment add {{.Number}} --parent {{.CommentID}} --content-file <path>`. If no change is needed, reply why.
-```
-
-中文对照
-
-```
-{{.Author}} 在变更请求 #{{.Number}}（{{.Title}}）上评论：
-> {{.QuotePage}}：{{.QuoteText}}（引用了行时）
-{{.Body}}
-
-修改 #{{.Number}} 的草稿（`{{.DraftID}}`）回应这条评论，运行`marvis kb draft check {{.DraftID}}`，然后在变更请求上回复：`marvis kb mr comment add {{.Number}} --parent {{.CommentID}} --content-file <路径>`。不需要修改时，回复原因。
 ```
