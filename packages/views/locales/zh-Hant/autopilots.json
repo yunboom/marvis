@@ -181,7 +181,6 @@
     "runtime_offline": "執行時離線",
     "not_executed": "本次執行未進行。",
     "transcript_failed": "執行過程載入失敗。",
-    "followup_after_run": "執行結束後開放追問",
     "not_found": "找不到這次執行",
     "forbidden": "無權檢視這次執行",
     "load_failed": "執行載入失敗"

@@ -181,7 +181,6 @@
     "runtime_offline": "运行时离线",
     "not_executed": "本次运行未执行。",
     "transcript_failed": "执行过程加载失败。",
-    "followup_after_run": "运行结束后开放追问",
     "not_found": "未找到这次运行",
     "forbidden": "无权查看这次运行",
     "load_failed": "运行加载失败"

@@ -181,7 +181,6 @@
     "runtime_offline": "Runtime offline",
     "not_executed": "This run did not execute.",
     "transcript_failed": "Couldn't load the execution log.",
-    "followup_after_run": "Follow up once the run finishes",
     "not_found": "Run not found",
     "forbidden": "You don't have access to this run",
     "load_failed": "Couldn't load this run"

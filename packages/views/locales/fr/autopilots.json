@@ -181,7 +181,6 @@
     "runtime_offline": "Runtime hors ligne",
     "not_executed": "Cette exécution n'a pas eu lieu.",
     "transcript_failed": "Impossible de charger le journal d'exécution.",
-    "followup_after_run": "Les questions de suivi s’ouvrent à la fin de l’exécution",
     "not_found": "Exécution introuvable",
     "forbidden": "Vous n'avez pas accès à cette exécution",
     "load_failed": "Impossible de charger cette exécution"

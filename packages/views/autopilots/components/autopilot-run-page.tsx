@@ -12,13 +12,14 @@ import {
   Zap,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { ApiError } from "@marvis/core/api";
+import { ApiError, api } from "@marvis/core/api";
 import { isAgentRuntimeBound, useAgentPresenceDetail, type AgentAvailability } from "@marvis/core/agents";
 import { useAuthStore } from "@marvis/core/auth";
 import { useEnsureAutopilotRunChat } from "@marvis/core/autopilots/mutations";
 import { autopilotDetailOptions, autopilotRunOptions } from "@marvis/core/autopilots/queries";
 import { isTaskMessageTaskId, useTaskMessages } from "@marvis/core/chat/queries";
 import { useWorkspaceId } from "@marvis/core/hooks";
+import { createLogger } from "@marvis/core/logger";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import type { Autopilot, AutopilotRun, AutopilotRunSource } from "@marvis/core/types";
 import { useActorName } from "@marvis/core/workspace/hooks";
@@ -56,6 +57,8 @@ const SOURCE_ICON: Record<AutopilotRunSource, typeof Clock> = {
 };
 
 const KNOWN_SOURCES = Object.keys(SOURCE_ICON) as AutopilotRunSource[];
+
+const logger = createLogger("autopilots.run-page");
 
 const FORBIDDEN_STATUS = 403;
 const NOT_FOUND_STATUS = 404;
@@ -368,7 +371,6 @@ function RunFollowUp({
   availability: AgentAvailability | undefined;
   firstTurn: ReactNode;
 }) {
-  const { t } = useT("autopilots");
   const wsId = useWorkspaceId();
   const user = useAuthStore((s) => s.user);
   const { data: agents = [] } = useQuery(agentListOptions(wsId));
@@ -383,15 +385,26 @@ function RunFollowUp({
     async () => (await ensureChatAsync({ autopilotId, runId })).chat_session_id,
     [ensureChatAsync, autopilotId, runId],
   );
-  const conversation = useAutopilotRunConversation(run.chat_session_id ?? null, ensureSession, draftKey);
+  // Follow-ups sent while the run executes queue behind it, like a turn
+  // queued behind the one in progress on the chat page.
+  const runInProgress = status === "running";
+  const conversation = useAutopilotRunConversation(run.chat_session_id ?? null, ensureSession, draftKey, runInProgress);
+  const runTaskId = run.task_id;
+  const stopRun = useCallback(async () => {
+    if (!runTaskId) return;
+    try {
+      await api.cancelTaskById(runTaskId);
+    } catch (err) {
+      // Like a chat turn, the run may have finished before the stop landed.
+      logger.warn("stopRun.error", { runId, taskId: runTaskId, err });
+    }
+  }, [runId, runTaskId]);
 
   const agent = agents.find((a) => a.id === agentId);
   const memberRole = members.find((m) => m.user_id === user?.id)?.role;
   const agentArchived = !!agent?.archived_at;
   const accessRevoked = !!agent && !canAssignAgent(agent, user?.id, memberRole);
   const runtimeRequired = !!agent && !isAgentRuntimeBound(agent);
-  // Follow-ups continue the run's session, so they open once the run ends.
-  const runInProgress = status === "running";
   const queuedTasks = conversation.pendingTask?.queued_tasks ?? [];
 
   let banner: ReactNode;
@@ -434,17 +447,16 @@ function RunFollowUp({
       />
       <ChatInput
         onSend={conversation.send}
-        onStop={conversation.stop}
-        isRunning={conversation.running}
-        allowSubmitWhileRunning={conversation.pendingTask?.supports_queue === true}
+        onStop={runInProgress ? stopRun : conversation.stop}
+        isRunning={runInProgress || conversation.running}
+        allowSubmitWhileRunning={runInProgress || conversation.pendingTask?.supports_queue === true}
         restoreDraftRequest={conversation.restoreDraftRequest}
         onRestoreDraftApplied={conversation.handleRestoreDraftApplied}
         uploadEnabled={!accessRevoked}
-        disabled={runInProgress || agentArchived || accessRevoked || runtimeRequired}
+        disabled={agentArchived || accessRevoked || runtimeRequired}
         agentArchived={agentArchived}
         agentAccessRevoked={accessRevoked}
         agentRuntimeRequired={runtimeRequired}
-        disabledPlaceholder={runInProgress ? t(($) => $.run_page.followup_after_run) : undefined}
         agentName={agent?.name}
         draftKeyOverride={draftKey}
         editorKeyOverride={draftKey}

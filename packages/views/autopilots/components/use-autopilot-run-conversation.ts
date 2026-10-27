@@ -13,6 +13,7 @@ import { useChatDraftRestore } from "../../chat/components/use-chat-draft-restor
 import { useChatTaskActions } from "../../chat/components/use-chat-task-actions";
 import { seedAcceptedPendingTask } from "../../chat/components/use-chat-controller";
 import { useT } from "../../i18n";
+import { queueFollowUpsBehindRun } from "./run-follow-up-queue";
 
 const CHAT_VIRTUOSO_INITIAL_FIRST_ITEM_INDEX = 1_000_000;
 
@@ -23,11 +24,16 @@ const CHAT_VIRTUOSO_INITIAL_FIRST_ITEM_INDEX = 1_000_000;
  *
  * `draftKey` is the composer's draft slot; restores of a stopped turn are
  * addressed to it so they land in this page's composer.
+ *
+ * While `runInProgress`, the server holds every turn until the run ends, so
+ * they all read as queued, including the one that would otherwise be the
+ * turn in progress.
  */
 export function useAutopilotRunConversation(
   sessionId: string | null,
   ensureSession: () => Promise<string>,
   draftKey: string,
+  runInProgress: boolean,
 ) {
   const { t } = useT("chat");
   const qc = useQueryClient();
@@ -39,12 +45,17 @@ export function useAutopilotRunConversation(
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery(chatMessagesPageOptions(activeSessionId));
-  const { data: pendingTask, isLoading: pendingLoading } = useQuery(pendingChatTaskOptions(activeSessionId));
+  const { data: serverPendingTask, isLoading: pendingLoading } = useQuery(pendingChatTaskOptions(activeSessionId));
 
   const pages = useMemo(() => (activeSessionId ? data?.pages ?? [] : []), [activeSessionId, data]);
+  const allMessages = useMemo(() => [...pages].reverse().flatMap((page) => page.messages), [pages]);
+  const pendingTask = useMemo(
+    () => (runInProgress ? queueFollowUpsBehindRun(serverPendingTask, allMessages) : serverPendingTask),
+    [runInProgress, serverPendingTask, allMessages],
+  );
   const messages = useMemo<ChatMessage[]>(
-    () => hideQueuedChatMessages([...pages].reverse().flatMap((page) => page.messages), pendingTask),
-    [pages, pendingTask],
+    () => hideQueuedChatMessages(allMessages, pendingTask),
+    [allMessages, pendingTask],
   );
   const olderMessageCount = pages.slice(1).reduce((count, page) => count + page.messages.length, 0);
 
@@ -55,6 +66,15 @@ export function useAutopilotRunConversation(
   );
   const taskActions = useChatTaskActions(sessionId, enqueueLocalRestore);
   const pendingTaskId = pendingTask?.task_id ?? null;
+  // Clearing keeps the server's head turn; while the run holds it, it is one
+  // of the queued rows, so clearing removes it too.
+  const heldHeadId = pendingTask === serverPendingTask ? null : serverPendingTask?.task_id ?? null;
+  const { handleClearQueuedTasks, handleRemoveQueuedTask } = taskActions;
+  const clearQueue = useCallback(async () => {
+    await handleClearQueuedTasks();
+    if (heldHeadId) await handleRemoveQueuedTask(heldHeadId);
+  }, [handleClearQueuedTasks, handleRemoveQueuedTask, heldHeadId]);
+  const queue = useMemo(() => ({ ...taskActions, handleClearQueuedTasks: clearQueue }), [taskActions, clearQueue]);
 
   const send = useCallback(
     async (
@@ -151,6 +171,6 @@ export function useAutopilotRunConversation(
     stop,
     restoreDraftRequest: restore,
     handleRestoreDraftApplied,
-    queue: taskActions,
+    queue,
   };
 }

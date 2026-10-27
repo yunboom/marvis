@@ -27,6 +27,7 @@ vi.mock("@marvis/core/api", async (importOriginal) => {
       sendChatMessage: vi.fn(),
       listChatMessagesPage: vi.fn(),
       getPendingChatTask: vi.fn(),
+      cancelTaskById: vi.fn(),
     },
   };
 });
@@ -75,24 +76,38 @@ vi.mock("../../chat/components/chat-message-list", async (importOriginal) => {
     ),
   };
 });
-vi.mock("../../chat/components/chat-queue", () => ({ ChatQueue: () => null }));
+vi.mock("../../chat/components/chat-queue", () => ({
+  ChatQueue: ({ tasks }: { tasks: { task_id: string; content?: string }[] }) =>
+    tasks.length === 0 ? null : (
+      <ol aria-label="queue">
+        {tasks.map((task) => (
+          <li key={task.task_id}>{task.content}</li>
+        ))}
+      </ol>
+    ),
+}));
 vi.mock("../../chat/components/use-chat-draft-restore", () => ({
   useChatDraftRestore: () => ({ restoreDraftRequest: null, enqueueLocalRestore: vi.fn(), handleRestoreDraftApplied: vi.fn() }),
 }));
 vi.mock("../../chat/components/use-chat-task-actions", () => ({ useChatTaskActions: () => ({ cancelChatTask: vi.fn() }) }));
 
 // The composer's real editor is out of scope: a textarea that reports what the
-// run page asked of it.
+// run page asked of it. Like ChatInput, a running composer offers Stop and,
+// when it may queue, a queue send.
 vi.mock("../../chat/components/chat-input", () => ({
   ChatInput: ({
     onSend,
+    onStop,
+    isRunning,
+    allowSubmitWhileRunning,
     disabled,
-    disabledPlaceholder,
     draftKeyOverride,
   }: {
     onSend: (content: string) => unknown;
+    onStop?: () => unknown;
+    isRunning?: boolean;
+    allowSubmitWhileRunning?: boolean;
     disabled?: boolean;
-    disabledPlaceholder?: string;
     draftKeyOverride?: string;
   }) => (
     <form
@@ -104,9 +119,14 @@ vi.mock("../../chat/components/chat-input", () => ({
         void onSend(input);
       }}
     >
-      <textarea name="text" aria-label="message" disabled={disabled} placeholder={disabled ? disabledPlaceholder : ""} />
-      <button type="submit" disabled={disabled}>
-        send
+      <textarea name="text" aria-label="message" disabled={disabled} />
+      {isRunning && (
+        <button type="button" onClick={() => void onStop?.()}>
+          stop
+        </button>
+      )}
+      <button type="submit" disabled={disabled || (isRunning && !allowSubmitWhileRunning)}>
+        {isRunning ? "queue send" : "send"}
       </button>
     </form>
   ),
@@ -124,6 +144,7 @@ const ensureAutopilotRunChat = vi.mocked(api.ensureAutopilotRunChat);
 const sendChatMessage = vi.mocked(api.sendChatMessage);
 const listChatMessagesPage = vi.mocked(api.listChatMessagesPage);
 const getPendingChatTask = vi.mocked(api.getPendingChatTask);
+const cancelTaskById = vi.mocked(api.cancelTaskById);
 
 const RUN_AGENT = "agent-run";
 
@@ -407,13 +428,70 @@ describe("AutopilotRunPage", () => {
       expect(sendChatMessage).not.toHaveBeenCalled();
     });
 
-    it("keeps the composer closed while the run is in progress", async () => {
-      getAutopilotRun.mockResolvedValue(run({ status: "running", completed_at: null, agent_id: RUN_AGENT }));
+    it("queues a follow-up sent while the run is in progress", async () => {
+      const user = userEvent.setup();
+      getAutopilotRun.mockResolvedValue(
+        run({ status: "running", completed_at: null, agent_id: RUN_AGENT, chat_session_id: null }),
+      );
+      ensureAutopilotRunChat.mockResolvedValue({ chat_session_id: "chat-1" });
+      sendChatMessage.mockResolvedValue({
+        message_id: "m-1",
+        task_id: "task-m-1",
+        created_at: "2026-10-27T02:00:30Z",
+        supports_queue: true,
+        queued: false,
+      } as Awaited<ReturnType<typeof api.sendChatMessage>>);
+      // The server holds the turn until the run ends: it stays the queued head.
+      listChatMessagesPage.mockResolvedValue({
+        messages: [chatMessage("m-1", "user", "Also sync the diffs")],
+        limit: 50,
+        has_more: false,
+        next_cursor: null,
+      });
+      getPendingChatTask.mockResolvedValue({
+        task_id: "task-m-1",
+        status: "queued",
+        created_at: "2026-10-27T02:00:30Z",
+        supports_queue: true,
+      });
       renderPage();
 
-      const input = within(await screen.findByRole("form", { name: "composer" })).getByRole("textbox", { name: "message" });
-      expect(input).toBeDisabled();
-      expect(input).toHaveAttribute("placeholder", "Follow up once the run finishes");
+      const composer = await screen.findByRole("form", { name: "composer" });
+      expect(within(composer).getByRole("textbox", { name: "message" })).toBeEnabled();
+      await user.type(within(composer).getByRole("textbox", { name: "message" }), "Also sync the diffs");
+      await user.click(within(composer).getByRole("button", { name: "queue send" }));
+
+      await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith("chat-1", "Also sync the diffs", undefined));
+      expect(await within(await screen.findByRole("list", { name: "queue" })).findByText("Also sync the diffs")).toBeInTheDocument();
+      expect(screen.queryByRole("list", { name: "follow-ups" })).not.toBeInTheDocument();
+    });
+
+    it("shows a held turn as a reply in progress once the run ends", async () => {
+      getAutopilotRun.mockResolvedValue(run({ agent_id: RUN_AGENT, chat_session_id: "chat-1" }));
+      listChatMessagesPage.mockResolvedValue({
+        messages: [chatMessage("m-1", "user", "Also sync the diffs")],
+        limit: 50,
+        has_more: false,
+        next_cursor: null,
+      });
+      getPendingChatTask.mockResolvedValue({ task_id: "task-m-1", status: "queued", supports_queue: true });
+      renderPage();
+
+      const followUps = await screen.findByRole("list", { name: "follow-ups" });
+      expect(await within(followUps).findByText("Also sync the diffs")).toBeInTheDocument();
+      expect(screen.queryByRole("list", { name: "queue" })).not.toBeInTheDocument();
+    });
+
+    it("stops the run itself while it is in progress", async () => {
+      const user = userEvent.setup();
+      getAutopilotRun.mockResolvedValue(run({ status: "running", completed_at: null, agent_id: RUN_AGENT }));
+      cancelTaskById.mockResolvedValue({} as Awaited<ReturnType<typeof api.cancelTaskById>>);
+      renderPage();
+
+      const composer = await screen.findByRole("form", { name: "composer" });
+      await user.click(within(composer).getByRole("button", { name: "stop" }));
+
+      await waitFor(() => expect(cancelTaskById).toHaveBeenCalledWith(TASK_ID));
     });
 
     it("has no composer for a run without a task", async () => {
