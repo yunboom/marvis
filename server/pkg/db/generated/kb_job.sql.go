@@ -188,6 +188,38 @@ func (q *Queries) DeleteKbJobDraftByJob(ctx context.Context, arg DeleteKbJobDraf
 	return err
 }
 
+const getKbJobByChatSession = `-- name: GetKbJobByChatSession :one
+SELECT id, workspace_id, knowledge_base_id, name, starter, agent_id, chat_session_id, annotation_ids, page_id, created_by, created_at, updated_at FROM kb_job
+WHERE kb_job.workspace_id = $1 AND kb_job.chat_session_id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL)
+`
+
+type GetKbJobByChatSessionParams struct {
+	WorkspaceID   pgtype.UUID `json:"workspace_id"`
+	ChatSessionID pgtype.UUID `json:"chat_session_id"`
+}
+
+// The job whose conversation is this chat session, if any.
+func (q *Queries) GetKbJobByChatSession(ctx context.Context, arg GetKbJobByChatSessionParams) (KbJob, error) {
+	row := q.db.QueryRow(ctx, getKbJobByChatSession, arg.WorkspaceID, arg.ChatSessionID)
+	var i KbJob
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.KnowledgeBaseID,
+		&i.Name,
+		&i.Starter,
+		&i.AgentID,
+		&i.ChatSessionID,
+		&i.AnnotationIds,
+		&i.PageID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getKbJobByDraft = `-- name: GetKbJobByDraft :one
 SELECT j.id, j.workspace_id, j.knowledge_base_id, j.name, j.starter, j.agent_id, j.chat_session_id, j.annotation_ids, j.page_id, j.created_by, j.created_at, j.updated_at FROM kb_job_draft jd
 JOIN kb_job j ON j.id = jd.job_id

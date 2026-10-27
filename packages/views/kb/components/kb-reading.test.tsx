@@ -444,7 +444,7 @@ describe("KbPageView", () => {
     expect(target.pathname).toBe("/acme/kb/team/jobs/new");
     expect(target.searchParams.get("starter")).toBe("health");
     expect(target.searchParams.get("page")).toBe("page-cb");
-    expect(target.searchParams.get("message")).toMatch(/^Check the page “.+”\.$/);
+    expect(target.searchParams.get("message")).toBeNull();
   });
 
   it("switches between the published page and the viewer's drafts", async () => {

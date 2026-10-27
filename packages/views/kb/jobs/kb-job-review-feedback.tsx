@@ -96,7 +96,7 @@ export function KbJobReviewFeedback({ kbSlug, number }: { kbSlug: string; number
           variant="outline"
           disabled={handoff.isPending}
           onClick={() =>
-            handoff.mutate(number, {
+            handoff.mutate({ number, message: t(($) => $.job.feedback.chat_message, { number }) }, {
               onSuccess: () => toast.success(t(($) => $.job.feedback.handed_off)),
               onError: () => toast.error(t(($) => $.job.feedback.handoff_failed)),
             })

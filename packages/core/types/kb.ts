@@ -556,7 +556,6 @@ export interface CreateKbJobRequest {
   message: string;
   annotation_ids?: string[];
   page_id?: string | null;
-  sources?: string[];
 }
 
 /** A merge request as created by a job submit. */

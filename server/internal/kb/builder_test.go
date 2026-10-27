@@ -96,8 +96,7 @@ func TestBuilderInstructionsCiteAnExistingSkillSection(t *testing.T) {
 func TestPromptTemplatesAvoidRetiredTerms(t *testing.T) {
 	sources := map[string]string{
 		"builder instructions": builderInstructionsSource,
-		"job first message":    jobMessageSource,
-		"review handoff":       reviewHandoffSource,
+		"instructions":         instructionsSource,
 		"purpose template":     PurposeTemplate,
 	}
 	// Decision 107: review comments no longer start agent runs.

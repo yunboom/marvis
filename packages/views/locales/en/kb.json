@@ -329,8 +329,7 @@
     "review_by": "Due by {{date}}",
     "hand_off": "Hand to an agent",
     "hand_off_all": "Hand all to an agent",
-    "empty": "No pages need re-checking.",
-    "all_message": "Re-check the pages in {{name}} whose review date has passed."
+    "empty": "No pages need re-checking."
   },
   "job": {
     "nav": "Knowledge base jobs",
@@ -403,7 +402,6 @@
         "description": "Create an automation that runs a health check every week"
       }
     },
-    "starter_message": "{{title}}: {{description}}",
     "names": {
       "ingest": "Ingest sources",
       "health": "Health check",
@@ -497,19 +495,11 @@
     },
     "entry": {
       "check_page": "Ask an agent to check this page",
-      "check_page_message": "Check the page “{{title}}”.",
       "write_here": "Ask an agent to write a page here",
       "write_under": "Write a page under {{title}}",
       "write_label": "What to write",
       "write_submit": "Hand to an agent",
-      "cancel": "Cancel",
-      "new_page_message": "Add a page under “{{title}}”: {{text}}",
-      "annotations_all_message_one": "Handle the {{count}} pending annotation in {{name}}.",
-      "annotations_all_message_other": "Handle all {{count}} pending annotations in {{name}}.",
-      "annotations_page_message_one": "Handle the {{count}} pending annotation on “{{title}}”.",
-      "annotations_page_message_other": "Handle the {{count}} pending annotations on “{{title}}”.",
-      "annotations_kb_message_one": "Handle the {{count}} pending annotation on the whole knowledge base.",
-      "annotations_kb_message_other": "Handle the {{count}} pending annotations on the whole knowledge base."
+      "cancel": "Cancel"
     },
     "feedback": {
       "label": "Review feedback",
@@ -521,6 +511,24 @@
       "handed_off": "Handed to the agent",
       "handoff_failed": "Couldn't hand it to the agent",
       "chat_message": "Resolve the review feedback on #{{number}}"
+    },
+    "prompts": {
+      "starters": {
+        "ingest": "Ingest material into {{kb}}. Ask me which sources first.",
+        "health": "Check {{kb}} for stale, contradictory or missing content.",
+        "merge": "Find pages in {{kb}} that repeat each other, and list them for me to confirm before merging.",
+        "annotations": "Handle the pending annotations in {{kb}}. List them for me to pick first.",
+        "schedule_ingest": "Create an automation for {{kb}} that ingests each day's issues, comments and chats.",
+        "schedule_health": "Create an automation for {{kb}} that runs a health check every week."
+      },
+      "leads": {
+        "ingest": "Ingest the material below into {{kb}}:",
+        "health_page": "Check this page of {{kb}} for stale, contradictory or missing content:",
+        "annotations": "Handle these annotations in {{kb}}:",
+        "new_page": "Add a page to {{kb}} under this page:",
+        "stale_all": "Re-check the pages in {{kb}} whose review date has passed."
+      },
+      "annotation_label": "Annotation · {{where}}"
     }
   },
   "review": {

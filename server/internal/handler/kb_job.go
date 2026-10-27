@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"path"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -65,10 +64,6 @@ const kbLastReplyRunes = 140
 // kbMergeRequestTitleRunes caps a merge request title taken from a reply.
 const kbMergeRequestTitleRunes = 120
 
-// kbWholeBaseWhere is how an annotation on the whole knowledge base is named
-// in a job's first message.
-const kbWholeBaseWhere = "knowledge base"
-
 var kbJobStates = []string{kbJobStateRunning, kbJobStateFailed}
 
 // CreateKbJobRequest starts a job (POST /api/kb/bases/{kb}/jobs).
@@ -79,8 +74,6 @@ type CreateKbJobRequest struct {
 	Message       string   `json:"message"`
 	AnnotationIDs []string `json:"annotation_ids"`
 	PageID        *string  `json:"page_id"`
-	// Sources are the uris of the material an ingest job starts from.
-	Sources []string `json:"sources"`
 }
 
 // KbJobDraftSummary is the linked draft at a glance. Added and deleted are
@@ -321,9 +314,11 @@ func kbSnippet(text string, n int) string {
 }
 
 // CreateKbJob starts a job (POST /api/kb/bases/{kb}/jobs): a chat session
-// with the chosen agent, a kb_job row and the first message, which the
-// server writes from the spec 08.4 / 08.5 templates. No draft is created;
-// the agent creates one with kb draft create --job.
+// with the chosen agent, a kb_job row and the first message. The message is
+// the member's request exactly as the job page wrote and showed it; starters
+// whose request is a multi-step process add a hidden instruction
+// (kb.JobInstruction) to the same turn. No draft is created; the agent's kb
+// draft create in this chat links one.
 func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
@@ -378,16 +373,20 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input, pageID, err := h.kbJobContext(ctx, base, req, annotationIDs, message)
+	pageID, err := h.kbJobContext(ctx, base, req, annotationIDs)
 	if err != nil {
 		h.writeKbError(w, r, err)
+		return
+	}
+	instruction, err := kb.JobInstruction(req.Starter)
+	if err != nil {
+		h.writeKbInternalError(w, r, err)
 		return
 	}
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
 		name = kb.DefaultJobName(req.Starter, message)
 	}
-	input.JobName = name
 
 	job, session, err := h.createKbJobRows(ctx, base, agent, userID, name, req.Starter, annotationIDs, pageID)
 	if err != nil {
@@ -395,16 +394,7 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input.JobID = uuidToString(job.ID)
-	content, err := kb.JobFirstMessage(input)
-	if err != nil {
-		if discardErr := h.discardKbJobRows(ctx, job, session); discardErr != nil {
-			err = errors.Wrapf(discardErr, "discard job after render failure (%v)", err)
-		}
-		h.writeKbInternalError(w, r, err)
-		return
-	}
-	sent, err := h.TaskService.SendDirectChatMessage(ctx, session, agent, parseUUID(userID), content, nil, actorType, parseUUID(actorID))
+	sent, err := h.TaskService.SendDirectChatMessageWithInstruction(ctx, session, agent, parseUUID(userID), message, instruction, nil, actorType, parseUUID(actorID))
 	if err != nil {
 		// The job is useless without its first message: take it back so the
 		// member can retry instead of finding an empty job in the list.
@@ -425,7 +415,7 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 		ChatSessionID: sessionID,
 		MessageID:     uuidToString(sent.Message.ID),
 		Role:          "user",
-		Content:       content,
+		Content:       message,
 		TaskID:        uuidToString(sent.Task.ID),
 		CreatedAt:     timestampToString(sent.Message.CreatedAt),
 	})
@@ -443,95 +433,37 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 // kbAgentKindSystem marks the hidden carrier agents, which cannot run jobs.
 const kbAgentKindSystem = "system"
 
-// kbJobContext validates what an entry point brought in and fills the
-// starter section of the first message with it.
-func (h *Handler) kbJobContext(ctx context.Context, base db.KbBase, req CreateKbJobRequest, annotationIDs []pgtype.UUID, message string) (kb.JobMessageInput, pgtype.UUID, error) {
-	input := kb.JobMessageInput{Name: base.Name, Slug: base.Slug, Starter: req.Starter, Message: message}
-
-	tree, err := loadKbTreeWith(ctx, h.Queries, base.ID, nil)
-	if err != nil {
-		return input, pgtype.UUID{}, err
-	}
-	ref := func(path string) string { return base.Slug + ":" + path }
-
+// kbJobContext validates what an entry point brought in: the page (checked,
+// or the parent of a new page) and the annotations, which the job keeps.
+func (h *Handler) kbJobContext(ctx context.Context, base db.KbBase, req CreateKbJobRequest, annotationIDs []pgtype.UUID) (pgtype.UUID, error) {
 	var pageID pgtype.UUID
 	if req.PageID != nil && *req.PageID != "" {
 		id, err := optionalPgUUID(*req.PageID)
 		if err != nil {
-			return input, pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodeInvalidRequest, "page_id is not a uuid")
+			return pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodeInvalidRequest, "page_id is not a uuid")
 		}
-		node, found := tree.Node(uuidToString(id))
-		path, hasPath := tree.PathByPageID(uuidToString(id))
-		if !found || !hasPath {
-			return input, pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodePageNotFound, "page_id is not a page of this knowledge base")
+
+		tree, err := loadKbTreeWith(ctx, h.Queries, base.ID, nil)
+		if err != nil {
+			return pgtype.UUID{}, err
+		}
+		if _, found := tree.PathByPageID(uuidToString(id)); !found {
+			return pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodePageNotFound, "page_id is not a page of this knowledge base")
 		}
 		pageID = id
-		named := node.Title + " (`" + ref(path) + "`)"
-		input.Page = named
-		input.Pages = named
-		input.ParentTitle = node.Title
-		input.ParentPath = ref(path)
-	}
-	if input.ParentPath == "" {
-		input.ParentTitle = base.Name
-		input.ParentPath = ref("/")
 	}
 
 	if len(annotationIDs) > 0 {
-		annotations, err := h.kbJobAnnotations(ctx, base, tree, annotationIDs)
+		rows, err := h.Queries.ListKbAnnotationsByIDs(ctx, db.ListKbAnnotationsByIDsParams{KnowledgeBaseID: base.ID, Ids: annotationIDs})
 		if err != nil {
-			return input, pgtype.UUID{}, err
+			return pgtype.UUID{}, errors.Wrapf(err, "list job annotations knowledge_base_id=%s", uuidToString(base.ID))
 		}
-		input.Annotations = annotations
-	}
-
-	for _, uri := range req.Sources {
-		uri = strings.TrimSpace(uri)
-		if uri == "" {
-			continue
+		if len(rows) != len(slices.Compact(slices.SortedFunc(slices.Values(annotationIDs), compareUUID))) {
+			return pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodeAnnotationNotFound, "annotation_ids names an annotation outside this knowledge base")
 		}
-		input.Sources = append(input.Sources, kb.JobSource{URI: uri, Title: path.Base(uri)})
 	}
 
-	return input, pageID, nil
-}
-
-// kbJobAnnotations loads the annotations brought into a job; each must be an
-// annotation of this knowledge base.
-func (h *Handler) kbJobAnnotations(ctx context.Context, base db.KbBase, tree *kb.PageTree, ids []pgtype.UUID) ([]kb.JobAnnotation, error) {
-	rows, err := h.Queries.ListKbAnnotationsByIDs(ctx, db.ListKbAnnotationsByIDsParams{KnowledgeBaseID: base.ID, Ids: ids})
-	if err != nil {
-		return nil, errors.Wrapf(err, "list job annotations knowledge_base_id=%s", uuidToString(base.ID))
-	}
-	if len(rows) != len(slices.Compact(slices.SortedFunc(slices.Values(ids), compareUUID))) {
-		return nil, kbFail(http.StatusBadRequest, kbCodeAnnotationNotFound, "annotation_ids names an annotation outside this knowledge base")
-	}
-
-	byID := make(map[string]db.KbAnnotation, len(rows))
-	for _, row := range rows {
-		byID[uuidToString(row.ID)] = row
-	}
-	out := make([]kb.JobAnnotation, 0, len(rows))
-	for _, id := range ids {
-		row, ok := byID[uuidToString(id)]
-		if !ok {
-			continue
-		}
-		delete(byID, uuidToString(id))
-
-		where := kbWholeBaseWhere
-		if row.PageID.Valid {
-			path, _ := tree.PathByPageID(uuidToString(row.PageID))
-			where = base.Slug + ":" + path
-			if row.BlockID != "" {
-				where += "#^" + row.BlockID
-			}
-			where = "`" + where + "`"
-		}
-		out = append(out, kb.JobAnnotation{ID: uuidToString(row.ID), Where: where, Quote: row.Quote, Body: row.Body})
-	}
-
-	return out, nil
+	return pageID, nil
 }
 
 func compareUUID(a, b pgtype.UUID) int {
