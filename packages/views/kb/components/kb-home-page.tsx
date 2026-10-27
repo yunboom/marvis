@@ -138,10 +138,6 @@ export function KbHomePage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader>
         <nav aria-label={t(($) => $.nav.breadcrumb)} className="flex min-w-0 flex-1 items-center gap-1.5 text-body text-muted-foreground">
-          <AppLink href={p.kb()} className="shrink-0 hover:text-foreground">
-            {t(($) => $.list.title)}
-          </AppLink>
-          <span aria-hidden="true">/</span>
           <span aria-current="page" className="truncate font-medium text-foreground">
             {base.name}
           </span>

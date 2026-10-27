@@ -89,6 +89,10 @@ export function KbRevisionDiffPage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader>
         <nav aria-label={t(($) => $.nav.breadcrumb)} className="flex min-w-0 flex-1 items-center gap-1.5 text-body text-muted-foreground">
+          <AppLink href={p.kbBase(kbSlug)} className="shrink-0 hover:text-foreground">
+            {base?.name ?? kbSlug}
+          </AppLink>
+          <span aria-hidden="true">/</span>
           <AppLink href={p.kbPage(kbSlug, pageId)} className="shrink-0 hover:text-foreground">
             {page ? pageTitle(page) : ""}
           </AppLink>
