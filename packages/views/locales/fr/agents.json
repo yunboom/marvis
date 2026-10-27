@@ -278,6 +278,7 @@
     "mcp_config": "MCP",
     "composio_mcp": "Applications MCP",
     "integrations": "Intégrations",
+    "integration_hint": "Intégrations non configurées",
     "runtime_config": "Routage",
     "qoder_agent": "Agent QCA",
     "discard_dialog_title": "Abandonner les modifications non enregistrées ?",

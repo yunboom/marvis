@@ -268,6 +268,7 @@
     "mcp_config": "MCP",
     "composio_mcp": "MCP 应用",
     "integrations": "集成",
+    "integration_hint": "未设置集成",
     "runtime_config": "路由",
     "qoder_agent": "QCA 智能体",
     "discard_dialog_title": "放弃未保存的修改？",

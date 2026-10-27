@@ -26,8 +26,11 @@ import {
   CornerDownRight,
   FolderKanban,
   GripVertical,
+  Lock,
   MoreHorizontal,
+  Pencil,
   Plus,
+  ToggleRight,
   Trash2,
   UserRound,
 } from "lucide-react";
@@ -62,13 +65,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
-import { Input } from "@marvis/ui/components/ui/input";
 import { Spinner } from "@marvis/ui/components/ui/spinner";
 import { Switch } from "@marvis/ui/components/ui/switch";
 import { cn } from "@marvis/ui/lib/utils";
+import { PickerItem, PickerSection, PropertyPicker } from "../issues/components/pickers/property-picker";
 import { StatusIcon } from "../issues/components/status-icon";
 import { useStatusLabel } from "../issues/utils/status-label";
 import { ActorAvatar } from "../common/actor-avatar";
@@ -83,7 +85,7 @@ import { WorkflowMappingDialog } from "./workflow-mapping-dialog";
  * them apart from the read-only note under them.
  */
 const INLINE_FIELD =
-  "-mx-1.5 block w-[calc(100%+0.75rem)] rounded-md bg-transparent px-1.5 outline-none transition-colors placeholder:text-muted-foreground read-only:cursor-default hover:[&:not(:read-only)]:bg-accent/60 focus-visible:[&:not(:read-only)]:bg-accent/60 focus-visible:[&:not(:read-only)]:ring-1 focus-visible:[&:not(:read-only)]:ring-ring/40";
+  "-mx-1.5 block w-[calc(100%+0.75rem)] rounded-md bg-transparent pl-1.5 pr-8 outline-none transition-colors placeholder:text-muted-foreground read-only:cursor-default hover:[&:not(:read-only)]:bg-accent/60 focus-visible:[&:not(:read-only)]:bg-accent/60 focus-visible:[&:not(:read-only)]:ring-1 focus-visible:[&:not(:read-only)]:ring-ring/40";
 
 /** 编辑器铺满工作流页：顶部 60px 页头带下描边，下方左右两栏。 */
 const EDITOR_BLEED = "flex min-h-full flex-col";
@@ -91,8 +93,20 @@ const EDITOR_BLEED = "flex min-h-full flex-col";
 /** 编辑器页头：面包屑在左，操作在右。 */
 const EDITOR_HEADER = "flex h-15 shrink-0 items-center gap-2 border-b border-surface-border pl-7 pr-5";
 
-/** 步骤卡片之间的竖向连接线，对齐状态图标中心；最后一步不画。 */
-const STEP_CONNECTOR = "ml-9.5 h-2.5 w-0.5 bg-input group-last/step:hidden";
+/** 步骤卡片的外形，新建状态的输入行沿用同一高度和圆角。 */
+const STEP_SHAPE = "flex h-12.5 items-center gap-2 rounded-xl border-[1.5px] pl-2 pr-3";
+
+/** Fixed statuses every workflow keeps; backlog and blocked can be switched off. */
+const LOCKED_STATUSES = ["todo", "done", "cancelled"] as const;
+type LockedStatus = (typeof LOCKED_STATUSES)[number];
+type OptionalStatus = "backlog" | "blocked";
+
+function isLocked(key: string | null): key is LockedStatus {
+  return (LOCKED_STATUSES as readonly string[]).includes(key ?? "");
+}
+
+/** How the editor treats a step: kept, optional, or arranged in the middle. */
+type StepKind = "locked" | "optional" | "middle" | "new";
 
 /** A new workflow starts from the common delivery loop instead of nothing. */
 const NEW_WORKFLOW_MIDDLE = ["in_progress", "in_review"];
@@ -396,29 +410,61 @@ export function WorkflowEditorPage({
   const current = listed.find((c) => c.id === selectedId) ?? listed[1]!;
   const nextOf = (column: DraftColumn, h: Handoff | undefined) =>
     h?.next_status_key ?? workflowNextStatus(draftFlow, columnKey(column));
+  const kindOf = (column: DraftColumn): StepKind => {
+    if (!("status_key" in column)) return "new";
+    if (isLocked(column.status_key)) return "locked";
+    return middleIds.has(column.id) ? "middle" : "optional";
+  };
   const card = (column: DraftColumn) => {
     const key = "status_key" in column ? column.status_key : null;
-    const optional = key === "backlog" || key === "blocked";
+    const kind = kindOf(column);
     const off = isOff(column);
+    const label = key ? labelOf(key) : "new_name" in column ? column.new_name : "";
     const props = {
       column,
       off,
       start: key === "todo",
+      note: key === "backlog" ? t(($) => $.workflows.editor.card_no_run) : key === "done" || key === "cancelled" ? t(($) => $.workflows.editor.card_ends) : undefined,
       handoff: off ? undefined : draft.handoffs[column.id],
       nextLabel: off ? undefined : columnLabel(nextOf(column, draft.handoffs[column.id])) || undefined,
       selected: current.id === column.id,
       onSelect: () => setSelected(column.id),
-      toggle: optional
-        ? { checked: !off, disabled: !canEdit, onChange: (on: boolean) => setDraft((d) => ({ ...d, [key]: on })) }
+      lock: isLocked(key)
+        ? { label: t(($) => $.workflows.editor.lock_why, { name: label }), why: t(($) => $.workflows.editor.why[key]) }
         : undefined,
+      toggle: kind === "optional"
+        ? { checked: !off, disabled: !canEdit, onChange: (on: boolean) => setDraft((d) => ({ ...d, [key as OptionalStatus]: on })) }
+        : undefined,
+      onRemove: canEdit && middleIds.has(column.id) ? () => removeColumn(column) : undefined,
     };
     return (
-      <li key={column.id} className="group/step flex flex-col">
+      <li key={column.id}>
         {middleIds.has(column.id) ? <SortableStepCard {...props} draggable={canEdit} /> : <StepCard {...props} />}
-        <span aria-hidden className={STEP_CONNECTOR} />
       </li>
     );
   };
+  const addStep = (key: string) => {
+    setDraft((d) => ({ ...d, middle: [...d.middle, { id: key, status_key: key }] }));
+    setSelected(key);
+  };
+  const createStep = (name: string) => {
+    if (!name) {
+      setNewName("");
+      return;
+    }
+    const id = `new:${name}:${Date.now()}`;
+    setDraft((d) => ({ ...d, middle: [...d.middle, { id, new_name: name }] }));
+    setSelected(id);
+  };
+  const addPicker = (placement: "header" | "slot") => (
+    <AddStepPicker
+      placement={placement}
+      addable={addable}
+      canCreateStatus={canCreateStatus}
+      onPick={addStep}
+      onCreate={createStep}
+    />
+  );
   const replaceStatus = (column: DraftColumn, key: string) => {
     setDraft((d) => {
       const { [column.id]: moved, ...rest } = d.handoffs;
@@ -498,24 +544,28 @@ export function WorkflowEditorPage({
       <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_23.75rem]">
         <div className="min-w-0 space-y-5 px-7 py-6">
           <div>
-            <input
-              aria-label={t(($) => $.workflows.editor.name)}
-              value={draft.name}
-              maxLength={64}
-              readOnly={!canEdit || isDefault}
-              placeholder={t(($) => $.workflows.editor.name_placeholder)}
-              onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-              className={cn(INLINE_FIELD, "h-9.5 text-display-sm font-bold")}
-            />
-            <input
-              aria-label={t(($) => $.workflows.editor.description)}
-              value={draft.description}
-              maxLength={256}
-              readOnly={!canEdit}
-              placeholder={canEdit ? t(($) => $.workflows.editor.description_placeholder) : ""}
-              onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-              className={cn(INLINE_FIELD, "mt-1 h-6.5 text-body-lg text-muted-foreground")}
-            />
+            <InlineField editable={canEdit && !isDefault}>
+              <input
+                aria-label={t(($) => $.workflows.editor.name)}
+                value={draft.name}
+                maxLength={64}
+                readOnly={!canEdit || isDefault}
+                placeholder={t(($) => $.workflows.editor.name_placeholder)}
+                onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                className={cn(INLINE_FIELD, "h-9.5 text-display-sm font-bold")}
+              />
+            </InlineField>
+            <InlineField editable={canEdit} className="mt-1">
+              <input
+                aria-label={t(($) => $.workflows.editor.description)}
+                value={draft.description}
+                maxLength={256}
+                readOnly={!canEdit}
+                placeholder={canEdit ? t(($) => $.workflows.editor.description_placeholder) : ""}
+                onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+                className={cn(INLINE_FIELD, "h-6.5 text-body-lg text-muted-foreground")}
+              />
+            </InlineField>
             <p className="mt-2.5 flex items-start gap-1.5 text-label leading-5 text-muted-foreground">
               <FolderKanban aria-hidden className="mt-0.75 size-3.5 shrink-0" />
               <span>
@@ -530,82 +580,60 @@ export function WorkflowEditorPage({
               </span>
             </p>
           </div>
-          <div>
-            <ol className="flex flex-col">
+          <div className="space-y-5">
+            <StepZone title={t(($) => $.workflows.editor.zone.start)} caption={t(($) => $.workflows.editor.zone.fixed)}>
               {card(listed[0]!)}
               {card(listed[1]!)}
+            </StepZone>
+            <StepZone
+              title={t(($) => $.workflows.editor.zone.middle)}
+              caption={t(($) => $.workflows.editor.zone.middle_caption, { count: draft.middle.length })}
+              action={canEdit ? addPicker("header") : undefined}
+              after={
+                canEdit && (
+                  <>
+                    {newName !== null && (
+                      <div className={cn(STEP_SHAPE, "border-dashed border-input pr-2")}>
+                        <span aria-hidden className="w-4 shrink-0" />
+                        <Plus aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
+                        <input
+                          autoFocus
+                          maxLength={64}
+                          value={newName}
+                          aria-label={t(($) => $.workflows.columns.name_placeholder)}
+                          placeholder={t(($) => $.workflows.columns.name_placeholder)}
+                          onChange={(e) => setNewName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") addNew();
+                            if (e.key === "Escape") setNewName(null);
+                          }}
+                          className="h-full min-w-0 flex-1 bg-transparent text-body-lg outline-none placeholder:text-muted-foreground"
+                        />
+                        <Button variant="ghost" className="h-8 px-3" onClick={() => setNewName(null)}>
+                          {t(($) => $.workflows.editor.cancel)}
+                        </Button>
+                        <Button variant="secondary" className="h-8 px-3.5" onClick={addNew} disabled={!newName.trim()}>
+                          {t(($) => $.workflows.columns.add)}
+                        </Button>
+                      </div>
+                    )}
+                    {addPicker("slot")}
+                  </>
+                )
+              }
+            >
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                 <SortableContext items={ids} strategy={verticalListSortingStrategy}>
                   {draft.middle.map(card)}
                 </SortableContext>
               </DndContext>
-              {listed.slice(-3).map(card)}
-            </ol>
-            {canEdit && (
-              <div className="mt-2.5 flex flex-col gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        className="h-11 w-full gap-1.5 rounded-xl border-[1.5px] border-dashed border-input font-normal text-muted-foreground"
-                      >
-                        <Plus className="size-3.5" />
-                        {t(($) => $.workflows.editor.add_step)}
-                      </Button>
-                    }
-                  />
-                  <DropdownMenuContent align="start" className="max-h-80 w-56 overflow-y-auto">
-                    {addable.map((key) => (
-                      <DropdownMenuItem
-                        key={key}
-                        onClick={() => {
-                          setDraft((d) => ({ ...d, middle: [...d.middle, { id: key, status_key: key }] }));
-                          setSelected(key);
-                        }}
-                      >
-                        <StatusIcon
-                          status={key}
-                          category={catalog.categoryOf(key)}
-                          color={catalog.colorOf(key)}
-                          icon={catalog.iconOf(key)}
-                          className="h-3.5 w-3.5"
-                        />
-                        <span className="truncate">{labelOf(key)}</span>
-                      </DropdownMenuItem>
-                    ))}
-                    {canCreateStatus && (
-                      <>
-                        {addable.length > 0 && <DropdownMenuSeparator />}
-                        <DropdownMenuItem onClick={() => setNewName("")}>
-                          <Plus className="size-3.5" />
-                          {t(($) => $.workflows.columns.new_status)}
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                {newName !== null && (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      autoFocus
-                      maxLength={64}
-                      value={newName}
-                      className="h-9 min-w-0 flex-1"
-                      placeholder={t(($) => $.workflows.columns.name_placeholder)}
-                      onChange={(e) => setNewName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") addNew();
-                        if (e.key === "Escape") setNewName(null);
-                      }}
-                    />
-                    <Button variant="secondary" className="h-9 px-4" onClick={addNew} disabled={!newName.trim()}>
-                      {t(($) => $.workflows.columns.add)}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
+            </StepZone>
+            <StepZone title={t(($) => $.workflows.editor.zone.blocked)} caption={t(($) => $.workflows.editor.zone.blocked_caption)}>
+              {card(listed[listed.length - 3]!)}
+            </StepZone>
+            <StepZone title={t(($) => $.workflows.editor.zone.end)} caption={t(($) => $.workflows.editor.zone.fixed)}>
+              {listed.slice(-2).map(card)}
+            </StepZone>
             {canEdit && missingStatuses.length > 0 && (
               <p role="alert" className="mt-2.5 text-caption leading-5 text-destructive">
                 {t(($) => $.workflows.editor.status_needs_admin, {
@@ -620,6 +648,7 @@ export function WorkflowEditorPage({
         <StepDetail
           key={current.id}
           column={current}
+          kind={kindOf(current)}
           off={isOff(current)}
           handoff={draft.handoffs[current.id]}
           flow={flow}
@@ -677,18 +706,172 @@ function Breadcrumb({ onBack, current }: { onBack: () => void; current: string }
   );
 }
 
+/** 名称和描述的就地编辑框：悬停时右侧出现铅笔，提示这里可以改。 */
+function InlineField({ editable, className, children }: { editable: boolean; className?: string; children: React.ReactNode }) {
+  return (
+    <div className={cn("group/field relative", className)}>
+      {children}
+      {editable && (
+        <Pencil
+          aria-hidden
+          className="pointer-events-none absolute right-1 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground opacity-0 transition-opacity duration-(--motion-fast) group-hover/field:opacity-100 group-focus-within/field:opacity-0"
+        />
+      )}
+    </div>
+  );
+}
+
+/** 步骤分组：组头是标题、灰字说明和可选操作，下面是这一组的步骤。 */
+function StepZone({
+  title,
+  caption,
+  action,
+  after,
+  children,
+}: {
+  title: string;
+  caption: string;
+  action?: React.ReactNode;
+  /** Rendered under the steps, outside the list. */
+  after?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section aria-label={title} className="space-y-2">
+      <header className="flex h-7 items-center gap-2 px-1">
+        <h3 className="text-label font-semibold">{title}</h3>
+        <span className="min-w-0 truncate text-caption text-muted-foreground">{caption}</span>
+        {action && <span className="ml-auto shrink-0">{action}</span>}
+      </header>
+      <ol className="flex flex-col gap-1.5">{children}</ol>
+      {after && <div className="flex flex-col gap-1.5">{after}</div>}
+    </section>
+  );
+}
+
+/**
+ * 添加步骤：组头按钮和组尾虚线框共用一份菜单。可搜索状态库，
+ * 有搜索词时「新建状态」直接用这个名字建一步。
+ */
+function AddStepPicker({
+  placement,
+  addable,
+  canCreateStatus,
+  onPick,
+  onCreate,
+}: {
+  placement: "header" | "slot";
+  addable: string[];
+  canCreateStatus: boolean;
+  onPick: (key: string) => void;
+  /** An empty name asks for one inline. */
+  onCreate: (name: string) => void;
+}) {
+  const { t } = useT("issues");
+  const wsId = useWorkspaceId();
+  const catalog = useIssueStatuses(wsId);
+  const labelOf = useStatusLabel(wsId);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const name = query.trim();
+  const q = name.toLowerCase();
+  const matched = addable.filter((key) => !q || labelOf(key).toLowerCase().includes(q) || key.includes(q));
+  const label = (
+    <>
+      <Plus aria-hidden className="size-3.5" />
+      {t(($) => $.workflows.editor.add_step)}
+    </>
+  );
+
+  return (
+    <PropertyPicker
+      open={open}
+      onOpenChange={setOpen}
+      align={placement === "header" ? "end" : "start"}
+      width="w-64"
+      searchable
+      searchPlaceholder={t(($) => $.workflows.editor.search_status)}
+      onSearchChange={setQuery}
+      triggerRender={
+        placement === "header" ? (
+          <Button variant="ghost" className="h-7 gap-1 px-2.5 text-label font-medium" />
+        ) : (
+          <Button
+            variant="ghost"
+            className="h-11 w-full gap-1.5 rounded-xl border-[1.5px] border-dashed border-input font-normal text-muted-foreground"
+          />
+        )
+      }
+      trigger={label}
+      footer={
+        canCreateStatus && (
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              onCreate(name);
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-body transition-colors hover:bg-accent"
+          >
+            <Plus aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">
+              {name ? t(($) => $.workflows.editor.new_status_named, { name }) : t(($) => $.workflows.columns.new_status)}
+            </span>
+          </button>
+        )
+      }
+    >
+      {matched.length > 0 ? (
+        <PickerSection label={t(($) => $.workflows.editor.library)}>
+          {matched.map((key) => (
+            <PickerItem
+              key={key}
+              selected={false}
+              onClick={() => {
+                setOpen(false);
+                onPick(key);
+              }}
+            >
+              <StatusIcon
+                status={key}
+                category={catalog.categoryOf(key)}
+                color={catalog.colorOf(key)}
+                icon={catalog.iconOf(key)}
+                className="h-3.5 w-3.5 shrink-0"
+              />
+              <span className="min-w-0 flex-1 truncate">{labelOf(key)}</span>
+              <span className="shrink-0 text-caption text-muted-foreground">
+                {t(($) => $.board.status_column[catalog.groupOf(key)])}
+              </span>
+            </PickerItem>
+          ))}
+        </PickerSection>
+      ) : (
+        <p className="px-2 py-3 text-center text-caption text-muted-foreground">
+          {addable.length > 0 ? t(($) => $.workflows.editor.no_match) : t(($) => $.workflows.editor.no_other_status)}
+        </p>
+      )}
+    </PropertyPicker>
+  );
+}
+
 interface StepCardProps {
   column: DraftColumn;
   /** Backlog or blocked switched off: the workflow leaves the status out. */
   off: boolean;
   /** The step new issues start on. */
   start: boolean;
+  /** What a step that never hands off does, in place of a handler. */
+  note?: string;
   handoff: Handoff | undefined;
   /** Where the handler is told to move the issue next, by label. */
   nextLabel: string | undefined;
   selected: boolean;
   onSelect: () => void;
+  /** A step every workflow keeps, and why. */
+  lock?: { label: string; why: string };
   toggle?: { checked: boolean; disabled: boolean; onChange: (on: boolean) => void };
+  onRemove?: () => void;
 }
 
 function SortableStepCard({ draggable, ...props }: StepCardProps & { draggable: boolean }) {
@@ -717,11 +900,14 @@ function StepCard({
   column,
   off,
   start,
+  note,
   handoff,
   nextLabel,
   selected,
   onSelect,
+  lock,
   toggle,
+  onRemove,
   sortable,
 }: StepCardProps & {
   sortable?: {
@@ -747,7 +933,8 @@ function StepCard({
       ref={sortable?.ref}
       style={sortable?.style}
       className={cn(
-        "flex h-12.5 items-center gap-2 rounded-xl border-[1.5px] pl-2 pr-3 transition-colors duration-(--motion-fast) ease-out",
+        STEP_SHAPE,
+        "group/card transition-colors duration-(--motion-fast) ease-out",
         selected ? "border-foreground bg-field" : "border-transparent bg-field hover:bg-field-hover",
         off && !selected && "border-dashed border-input bg-transparent hover:bg-transparent",
         sortable?.dragging && "z-10 shadow-[var(--surface-shadow)]",
@@ -792,6 +979,8 @@ function StepCard({
         <span className="flex min-w-0 flex-1 items-center gap-1.5 text-label text-muted-foreground">
           {off ? (
             <span className="truncate">{t(($) => $.workflows.editor.step_off_short)}</span>
+          ) : note ? (
+            <span className="truncate">{note}</span>
           ) : who ? (
             <>
               <CornerDownRight aria-hidden className="size-3.25 shrink-0" />
@@ -810,6 +999,17 @@ function StepCard({
           )}
         </span>
       </button>
+      {lock && (
+        <TooltipHint label={<span className="block max-w-64">{lock.why}</span>}>
+          <button
+            type="button"
+            aria-label={lock.label}
+            className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-field-hover hover:text-foreground"
+          >
+            <Lock className="size-3.25" />
+          </button>
+        </TooltipHint>
+      )}
       {toggle && (
         <Switch
           checked={toggle.checked}
@@ -817,6 +1017,17 @@ function StepCard({
           onCheckedChange={toggle.onChange}
           aria-label={t(($) => $.workflows.editor.include_status, { status: label })}
         />
+      )}
+      {onRemove && (
+        <IconButton
+          variant="ghost"
+          size="icon"
+          className="size-7 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-(--motion-fast) group-hover/card:opacity-100 focus-visible:opacity-100"
+          label={t(($) => $.workflows.editor.remove_named, { name: label })}
+          onClick={onRemove}
+        >
+          <Trash2 className="size-3.5" />
+        </IconButton>
       )}
     </div>
   );
@@ -831,6 +1042,7 @@ function Badge({ children }: { children: React.ReactNode }) {
 /** The selected step: its status and its handoff. */
 function StepDetail({
   column,
+  kind,
   off,
   handoff,
   flow,
@@ -843,6 +1055,7 @@ function StepDetail({
   defaultNextLabel,
 }: {
   column: DraftColumn;
+  kind: StepKind;
   off: boolean;
   handoff: Handoff | undefined;
   flow: Pick<IssueWorkflow, "steps">;
@@ -877,29 +1090,48 @@ function StepDetail({
       <span className="truncate">{label}</span>
     </span>
   );
+  const kindLabel = {
+    locked: t(($) => $.workflows.editor.kind.locked),
+    optional: off ? t(($) => $.workflows.editor.kind.optional_off) : t(($) => $.workflows.editor.kind.optional),
+    middle: t(($) => $.workflows.editor.kind.middle),
+    new: t(($) => $.workflows.editor.kind.new),
+  }[kind];
+  const rule =
+    kind === "locked" && isLocked(key)
+      ? { icon: Lock, title: t(($) => $.workflows.editor.rule_locked), body: t(($) => $.workflows.editor.why[key]) }
+      : kind === "optional" && (key === "backlog" || key === "blocked")
+        ? { icon: ToggleRight, title: t(($) => $.workflows.editor.rule_optional), body: t(($) => $.workflows.editor.why[key]) }
+        : null;
 
   return (
     <section className="min-w-0 space-y-5 border-t border-surface-border p-6 lg:border-t-0 lg:border-l">
       <header className="flex min-h-8 items-center gap-2">
         {key ? icon(key, "h-4 w-4 shrink-0") : <Plus aria-hidden className="size-4 shrink-0 text-muted-foreground" />}
         <h3 className="min-w-0 truncate text-title-sm font-semibold">{label}</h3>
-        {key ? (
-          <code className="truncate font-mono text-caption text-muted-foreground">{key}</code>
-        ) : (
-          <Badge>{t(($) => $.workflows.editor.new_badge)}</Badge>
-        )}
+        <code className="shrink truncate font-mono text-caption text-muted-foreground">
+          {key ?? t(($) => $.workflows.editor.key_on_save)}
+        </code>
+        <Badge>{kindLabel}</Badge>
         {onRemove && (
-          <IconButton
+          <Button
             variant="ghost"
-            size="icon"
-            className="ml-auto text-muted-foreground"
-            label={t(($) => $.workflows.editor.remove)}
+            className="ml-auto h-8 shrink-0 gap-1.5 px-2.5 text-label text-destructive hover:text-destructive"
             onClick={onRemove}
           >
-            <Trash2 className="size-4" />
-          </IconButton>
+            <Trash2 aria-hidden className="size-3.5" />
+            {t(($) => $.workflows.editor.remove)}
+          </Button>
         )}
       </header>
+      {rule && (
+        <div className="flex gap-2.5 rounded-lg bg-field px-3.5 py-3">
+          <rule.icon aria-hidden className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-label font-medium">{rule.title}</p>
+            <p className="text-caption leading-5 text-muted-foreground">{rule.body}</p>
+          </div>
+        </div>
+      )}
       <div className="space-y-5">
         <DetailField label={t(($) => $.workflows.editor.status)} hint={key ? t(($) => $.workflows.editor.status_hint) : t(($) => $.workflows.editor.status_new_hint)}>
           {statusOptions && canEdit ? (

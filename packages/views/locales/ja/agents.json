@@ -260,6 +260,7 @@
     "mcp_config": "MCP",
     "composio_mcp": "MCP アプリ",
     "integrations": "連携",
+    "integration_hint": "連携が未設定",
     "runtime_config": "ルーティング",
     "qoder_agent": "QCA エージェント",
     "discard_dialog_title": "保存していない変更を破棄しますか？",

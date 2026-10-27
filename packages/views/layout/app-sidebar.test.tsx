@@ -216,6 +216,7 @@ vi.mock("@marvis/core/pins/mutations", () => ({ useDeletePin: () => ({ mutate: d
 vi.mock("@marvis/core/pins/queries", () => ({ pinListOptions: () => ({ queryKey: ["pins"] }) }));
 vi.mock("@marvis/core/projects/queries", () => ({ projectDetailOptions: () => ({ queryKey: ["project"] }) }));
 vi.mock("@marvis/core/workspace/queries", () => ({
+  agentListOptions: () => ({ queryKey: ["agents"] }),
   myInvitationListOptions: () => ({ queryKey: ["invitations"] }),
   workspaceKeys: { myInvitations: () => ["invitations"] },
   workspaceListOptions: () => ({ queryKey: ["workspaces"] }),

@@ -268,6 +268,7 @@
     "mcp_config": "MCP",
     "composio_mcp": "MCP 앱",
     "integrations": "연동",
+    "integration_hint": "연동 미설정",
     "runtime_config": "라우팅",
     "qoder_agent": "QCA 에이전트",
     "discard_dialog_title": "저장하지 않은 변경사항을 버릴까요?",

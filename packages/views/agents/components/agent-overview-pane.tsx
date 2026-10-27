@@ -12,6 +12,7 @@ import { slackInstallationsOptions } from "@marvis/core/slack";
 import { dingtalkInstallationsOptions } from "@marvis/core/dingtalk";
 import { wecomInstallationsOptions } from "@marvis/core/wecom";
 import { telegramInstallationsOptions } from "@marvis/core/telegram";
+import { useAgentIntegrationHintStore } from "@marvis/core/agents/stores";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,8 @@ import { RuntimeConfigTab } from "./tabs/runtime-config-tab";
 import { AgentDetailInspector } from "./agent-detail-inspector";
 import { AgentAccessSettings } from "./agent-access-settings";
 import { AgentOverviewSummary } from "./agent-overview-summary";
+import { IntegrationHintDot } from "./integration-hint-dot";
+import { useAgentIntegrationHints } from "../use-agent-integration-hints";
 import { ActorIssuesPanel } from "../../common/actor-issues-panel";
 import { useT } from "../../i18n";
 import { useNavigation } from "../../navigation";
@@ -257,6 +260,15 @@ export function AgentOverviewPane({
   const effectiveView = visibleViews.has(activeView) ? activeView : "overview";
   const activeSection = sectionForView(effectiveView);
 
+  const integrationHinted =
+    useAgentIntegrationHints(wsId).has(agent.id) &&
+    visibleViews.has("integrations");
+  const markIntegrationSeen = useAgentIntegrationHintStore((s) => s.markSeen);
+
+  useEffect(() => {
+    if (effectiveView === "integrations") markIntegrationSeen(agent.id);
+  }, [agent.id, effectiveView, markIntegrationSeen]);
+
   const commitView = useCallback(
     (next: DetailTab) => {
       setActiveView(next);
@@ -358,7 +370,12 @@ export function AgentOverviewPane({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {t(($) => $.tabs[tab.labelKey])}
+              <span className="inline-flex items-center gap-1.5">
+                {t(($) => $.tabs[tab.labelKey])}
+                {tab.id === "capabilities" && integrationHinted && (
+                  <IntegrationHintDot />
+                )}
+              </span>
             </button>
           ))}
         </div>
@@ -444,6 +461,9 @@ export function AgentOverviewPane({
                       )}
                     >
                       {t(($) => $.tabs[tab.labelKey])}
+                      {tab.id === "integrations" && integrationHinted && (
+                        <IntegrationHintDot className="ml-1.5 md:ml-auto" />
+                      )}
                     </button>
                   );
                 })}

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildIssueStatusCatalog } from "@marvis/core/issue-statuses";
@@ -49,11 +49,7 @@ describe("WorkflowEditorPage", () => {
     createWorkflow.mockResolvedValue({ id: "wf-1" });
     renderEditor();
 
-    fireEvent.click(screen.getByRole("button", { name: /Add step/ }));
-    fireEvent.click(await screen.findByRole("menuitem", { name: /New status/ }));
-    const input = screen.getByPlaceholderText("Status name");
-    fireEvent.change(input, { target: { value: "Deploy" } });
-    fireEvent.keyDown(input, { key: "Enter" });
+    await addNewStatus("Deploy");
 
     // The new step is selected, and its handoff can be edited right away.
     expect(screen.getByRole("heading", { name: "Deploy" })).toBeTruthy();
@@ -95,6 +91,37 @@ describe("WorkflowEditorPage", () => {
   });
 });
 
+describe("WorkflowEditorPage step zones", () => {
+  it("keeps blocked in its own zone, apart from the end steps", () => {
+    renderEditor();
+
+    const blocked = screen.getByRole("region", { name: "Blocked" });
+    expect(within(blocked).getByRole("switch", { name: /Blocked/ })).toBeTruthy();
+    const end = screen.getByRole("region", { name: "End" });
+    expect(within(end).queryByRole("switch")).toBeNull();
+    expect(within(end).getAllByRole("button", { name: /can't be removed/ })).toHaveLength(2);
+  });
+
+  it("creates a step straight from the search query", async () => {
+    renderEditor();
+    openAddStep();
+    fireEvent.change(await screen.findByPlaceholderText("Search the status library"), { target: { value: "QA" } });
+    fireEvent.click(screen.getByRole("button", { name: "New status “QA”" }));
+
+    expect(screen.getByRole("heading", { name: "QA" })).toBeTruthy();
+    expect(screen.queryByPlaceholderText("Status name")).toBeNull();
+  });
+
+  it("removes a middle step from its card", async () => {
+    renderEditor();
+    await addNewStatus("QA");
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove QA" }));
+    expect(screen.queryByRole("heading", { name: "QA" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Remove QA" })).toBeNull();
+  });
+});
+
 // Statuses are shared by every board, so only admins add them (MUL-8120).
 describe("WorkflowEditorPage status creation", () => {
   it("blocks saving a template that needs new statuses for a member", () => {
@@ -119,9 +146,15 @@ function stepCard(name: string) {
   return card;
 }
 
+/** The add-step menu at the end of the middle steps. */
+function openAddStep() {
+  const buttons = screen.getAllByRole("button", { name: /Add step/ });
+  fireEvent.click(buttons[buttons.length - 1]!);
+}
+
 async function addNewStatus(name: string) {
-  fireEvent.click(screen.getByRole("button", { name: /Add step/ }));
-  fireEvent.click(await screen.findByRole("menuitem", { name: /New status/ }));
+  openAddStep();
+  fireEvent.click(await screen.findByRole("button", { name: /New status/ }));
   const input = screen.getByPlaceholderText("Status name");
   fireEvent.change(input, { target: { value: name } });
   fireEvent.keyDown(input, { key: "Enter" });
