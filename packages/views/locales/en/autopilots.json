@@ -180,6 +180,7 @@
     "runtime_online": "Runtime online",
     "runtime_offline": "Runtime offline",
     "not_executed": "This run did not execute.",
+    "shared_conversation": "Members who can view this autopilot share this conversation.",
     "transcript_failed": "Couldn't load the execution log.",
     "not_found": "Run not found",
     "forbidden": "You don't have access to this run",

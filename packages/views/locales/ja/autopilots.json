@@ -180,6 +180,7 @@
     "runtime_online": "ランタイム オンライン",
     "runtime_offline": "ランタイム オフライン",
     "not_executed": "この実行は行われませんでした。",
+    "shared_conversation": "このオートパイロットを閲覧できるメンバーは、この会話を共有します。",
     "transcript_failed": "実行ログを読み込めませんでした。",
     "not_found": "実行が見つかりません",
     "forbidden": "この実行を表示する権限がありません",

@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, dispatchReasonCode } from "@marvis/core/api";
+import { useAuthStore } from "@marvis/core/auth";
 import { chatKeys, chatMessagesPageOptions, pendingChatTaskOptions } from "@marvis/core/chat/queries";
 import { upsertChatMessageToCaches } from "@marvis/core/chat/message-cache";
 import { hideQueuedChatMessages } from "@marvis/core/chat/pending";
@@ -37,6 +38,7 @@ export function useAutopilotRunConversation(
 ) {
   const { t } = useT("chat");
   const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id ?? null);
   const activeSessionId = sessionId ?? "";
   const {
     data,
@@ -122,6 +124,7 @@ export function useAutopilotRunConversation(
           task_id: result.task_id,
           created_at: result.created_at,
           attachments: draftAttachments,
+          sender_user_id: userId,
         },
         { seedIfMissing: true },
       );
@@ -139,7 +142,7 @@ export function useAutopilotRunConversation(
 
       return true;
     },
-    [sessionId, ensureSession, pendingTaskId, pendingTask?.supports_queue, qc, t],
+    [sessionId, ensureSession, pendingTaskId, pendingTask?.supports_queue, qc, t, userId],
   );
 
   const stop = useCallback(() => {

@@ -180,6 +180,7 @@
     "runtime_online": "运行时在线",
     "runtime_offline": "运行时离线",
     "not_executed": "本次运行未执行。",
+    "shared_conversation": "能查看这个自动化的成员共用这段对话。",
     "transcript_failed": "执行过程加载失败。",
     "not_found": "未找到这次运行",
     "forbidden": "无权查看这次运行",

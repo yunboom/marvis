@@ -27,6 +27,7 @@ vi.mock("@marvis/core/api", async (importOriginal) => {
       sendChatMessage: vi.fn(),
       listChatMessagesPage: vi.fn(),
       getPendingChatTask: vi.fn(),
+      getChatSession: vi.fn(),
       cancelTaskById: vi.fn(),
     },
   };
@@ -49,7 +50,9 @@ vi.mock("@marvis/core/paths", async (importOriginal) => {
   };
 });
 vi.mock("@marvis/core/workspace/hooks", () => ({
-  useActorName: () => ({ getActorName: () => "Coding agent" }),
+  useActorName: () => ({
+    getActorName: (type: string, id: string) => (type === "member" ? `member ${id}` : "Coding agent"),
+  }),
 }));
 vi.mock("@marvis/core/agents", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@marvis/core/agents")>();
@@ -64,12 +67,23 @@ vi.mock("../../chat/components/chat-message-list", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../chat/components/chat-message-list")>();
   return {
     ...actual,
-    ChatMessageList: ({ header, messages }: { header?: ReactNode; messages: { id: string; content: string }[] }) => (
+    ChatMessageList: ({
+      header,
+      messages,
+      renderUserMessageSender,
+    }: {
+      header?: ReactNode;
+      messages: ChatMessage[];
+      renderUserMessageSender?: (message: ChatMessage) => ReactNode;
+    }) => (
       <div>
         {header}
         <ol aria-label="follow-ups">
           {messages.map((m) => (
-            <li key={m.id}>{m.content}</li>
+            <li key={m.id}>
+              {m.role === "user" && renderUserMessageSender?.(m)}
+              {m.content}
+            </li>
           ))}
         </ol>
       </div>
@@ -144,6 +158,7 @@ const ensureAutopilotRunChat = vi.mocked(api.ensureAutopilotRunChat);
 const sendChatMessage = vi.mocked(api.sendChatMessage);
 const listChatMessagesPage = vi.mocked(api.listChatMessagesPage);
 const getPendingChatTask = vi.mocked(api.getPendingChatTask);
+const getChatSession = vi.mocked(api.getChatSession);
 const cancelTaskById = vi.mocked(api.cancelTaskById);
 
 const RUN_AGENT = "agent-run";
@@ -238,6 +253,9 @@ describe("AutopilotRunPage", () => {
     listMembers.mockResolvedValue([]);
     listChatMessagesPage.mockResolvedValue({ messages: [], limit: 50, has_more: false, next_cursor: null });
     getPendingChatTask.mockResolvedValue({} as Awaited<ReturnType<typeof api.getPendingChatTask>>);
+    getChatSession.mockResolvedValue({ id: "chat-1", creator_id: "user-1" } as Awaited<
+      ReturnType<typeof api.getChatSession>
+    >);
   });
 
   it("shows the trigger, the execution reply and the run details", async () => {
@@ -263,6 +281,9 @@ describe("AutopilotRunPage", () => {
       "/ws/autopilots/ap-1",
     );
     expect(within(panel).queryByText("Webhook payload")).not.toBeInTheDocument();
+    expect(
+      within(panel).getByText("Members who can view this autopilot share this conversation."),
+    ).toBeInTheDocument();
   });
 
   it("collapses and reopens the run details", async () => {
@@ -412,6 +433,28 @@ describe("AutopilotRunPage", () => {
 
       await waitFor(() => expect(sendChatMessage).toHaveBeenCalledWith("chat-1", "Fix them", undefined));
       expect(ensureAutopilotRunChat).not.toHaveBeenCalled();
+    });
+
+    it("names who sent each follow-up, falling back to who opened the conversation", async () => {
+      getAutopilotRun.mockResolvedValue(run({ agent_id: RUN_AGENT, chat_session_id: "chat-1" }));
+      listChatMessagesPage.mockResolvedValue({
+        messages: [
+          { ...chatMessage("m-1", "user", "Which ones?"), sender_user_id: "user-2" },
+          chatMessage("m-2", "assistant", "Three, listed above."),
+          chatMessage("m-3", "user", "Fix them"),
+        ],
+        limit: 50,
+        has_more: false,
+        next_cursor: null,
+      });
+      renderPage();
+
+      const followUps = await screen.findByRole("list", { name: "follow-ups" });
+      const [first, reply, last] = within(followUps).getAllByRole("listitem");
+      expect(within(first!).getByText("member user-2")).toBeInTheDocument();
+      expect(within(reply!).queryByText(/^member /)).not.toBeInTheDocument();
+      expect(await within(last!).findByText("member user-1")).toBeInTheDocument();
+      expect(getChatSession).toHaveBeenCalledWith("chat-1");
     });
 
     it("does not send when the conversation cannot be created", async () => {

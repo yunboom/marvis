@@ -17,11 +17,11 @@ import { isAgentRuntimeBound, useAgentPresenceDetail, type AgentAvailability } f
 import { useAuthStore } from "@marvis/core/auth";
 import { useEnsureAutopilotRunChat } from "@marvis/core/autopilots/mutations";
 import { autopilotDetailOptions, autopilotRunOptions } from "@marvis/core/autopilots/queries";
-import { isTaskMessageTaskId, useTaskMessages } from "@marvis/core/chat/queries";
+import { chatSessionOptions, isTaskMessageTaskId, useTaskMessages } from "@marvis/core/chat/queries";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { createLogger } from "@marvis/core/logger";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import type { Autopilot, AutopilotRun, AutopilotRunSource } from "@marvis/core/types";
+import type { Autopilot, AutopilotRun, AutopilotRunSource, ChatMessage } from "@marvis/core/types";
 import { useActorName } from "@marvis/core/workspace/hooks";
 import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
@@ -389,6 +389,19 @@ function RunFollowUp({
   // queued behind the one in progress on the chat page.
   const runInProgress = status === "running";
   const conversation = useAutopilotRunConversation(run.chat_session_id ?? null, ensureSession, draftKey, runInProgress);
+  const { data: session } = useQuery(chatSessionOptions(wsId, run.chat_session_id ?? ""));
+  const sessionCreatorId = session?.creator_id || null;
+  // Members who can view the autopilot share this conversation, so each
+  // message names who sent it; turns without a recorded sender belong to the
+  // member who opened the conversation.
+  const renderSender = useCallback(
+    (message: ChatMessage) => {
+      const senderId = message.sender_user_id || sessionCreatorId;
+
+      return senderId ? <MessageSender userId={senderId} /> : null;
+    },
+    [sessionCreatorId],
+  );
   const runTaskId = run.task_id;
   const stopRun = useCallback(async () => {
     if (!runTaskId) return;
@@ -427,6 +440,7 @@ function RunFollowUp({
           onQuickAction={(action) => conversation.send(action.prompt)}
           quickActionsDisabled={conversation.running || accessRevoked || agentArchived || runtimeRequired}
           header={firstTurn}
+          renderUserMessageSender={renderSender}
         />
       ) : (
         <div ref={setScrollRoot} className="min-h-0 flex-1 overflow-y-auto">
@@ -462,6 +476,18 @@ function RunFollowUp({
         editorKeyOverride={draftKey}
       />
     </>
+  );
+}
+
+/** The member who sent a follow-up, above their message. */
+function MessageSender({ userId }: { userId: string }) {
+  const { getActorName } = useActorName();
+
+  return (
+    <span className="flex max-w-[80%] items-center gap-1.5 text-caption text-faint-foreground">
+      <ActorAvatar actorType="member" actorId={userId} size="xs" profileLink={false} />
+      <span className="truncate">{getActorName("member", userId)}</span>
+    </span>
   );
 }
 
@@ -569,6 +595,7 @@ function RunInfoPanel({
   const executor = runExecutorOf(autopilot, run);
   const source = sourceOf(run.source);
   const showPayload = run.source === "webhook" && run.trigger_payload != null;
+  const hasConversation = isTaskMessageTaskId(run.task_id) && executor.type === "agent";
 
   return (
     <aside
@@ -619,6 +646,11 @@ function RunInfoPanel({
           </InfoRow>
         )}
       </dl>
+      {hasConversation && (
+        <p className="rounded-xl bg-muted px-3 py-2.5 text-caption text-muted-foreground">
+          {t(($) => $.run_page.shared_conversation)}
+        </p>
+      )}
       {showPayload && (
         <section className="flex flex-col gap-2">
           <h3 className="text-label text-muted-foreground">{t(($) => $.run_page.field_payload)}</h3>

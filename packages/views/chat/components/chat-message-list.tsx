@@ -101,6 +101,11 @@ interface ChatMessageListProps {
    * loaded, so it never sits above a gap of unloaded history.
    */
   header?: ReactNode;
+  /**
+   * Who sent a user message, shown above its bubble. Only surfaces where
+   * several members share one conversation pass it; the chat page does not.
+   */
+  renderUserMessageSender?: (message: ChatMessage) => ReactNode;
 }
 
 // ─── Virtuoso chrome ─────────────────────────────────────────────────────
@@ -201,6 +206,7 @@ export function ChatMessageList({
   onRegenerateQuickActions,
   quickActionsPendingMessageId = null,
   header,
+  renderUserMessageSender,
 }: ChatMessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollContainerEl, setScrollContainerEl] = useState<HTMLDivElement | null>(null);
@@ -402,6 +408,7 @@ export function ChatMessageList({
               latestAssistantMessageId={latestAssistantMessageId}
               quickActionsPendingMessageId={quickActionsPendingMessageId}
               starterCardsMessageId={starterCardsMessageId}
+              renderUserMessageSender={renderUserMessageSender}
             />
           </div>
         )}
@@ -467,6 +474,7 @@ const MessageBubble = memo(function MessageBubble({
   latestAssistantMessageId,
   quickActionsPendingMessageId,
   starterCardsMessageId,
+  renderUserMessageSender,
 }: {
   item: ChatRenderItem;
   isPending: boolean;
@@ -477,6 +485,7 @@ const MessageBubble = memo(function MessageBubble({
   latestAssistantMessageId: string | null;
   quickActionsPendingMessageId: string | null;
   starterCardsMessageId: string | null;
+  renderUserMessageSender?: (message: ChatMessage) => ReactNode;
 }) {
   // The live row and the persisted assistant row both land here under one key,
   // and both render <AssistantMessage> — same component type, same position —
@@ -497,7 +506,8 @@ const MessageBubble = memo(function MessageBubble({
 
   if (message.role === "user") {
     return (
-      <div className="flex justify-end">
+      <div className="flex flex-col items-end gap-1">
+        {renderUserMessageSender?.(message)}
         <div className="max-w-[80%] break-words rounded-xl bg-muted px-4 py-2.5 text-body-lg">
           {/* User messages are authored as markdown in ContentEditor, so they
            * render through the SAME RichContent as assistant replies and as
