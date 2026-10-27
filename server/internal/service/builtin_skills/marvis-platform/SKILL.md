@@ -27,7 +27,7 @@ Read the invariants below, then open the reference(s) your task actually needs
 | `references/projects.md` | Projects and their durable resources (`github_repo`, `local_directory`, worktree mode); project workflows — status columns, handoffs, a `[Project workflow]` block in your prompt |
 | `references/runtimes.md` | Runtimes, daemons, `repo checkout`, and the task CLI boundary |
 | `references/skill-import.md` | Importing a skill into this workspace from a URL or a local archive |
-| `references/knowledge-bases.md` | Creating and evolving knowledge bases: creating and configuring a knowledge base (name, purpose, schema); finding knowledge; writing new knowledge, lessons and key decisions back through a draft and a change request, following the knowledge base's schema (sections, page types, fields, claims and evidence), then addressing review comments and resolving merge conflicts; ingesting sources others hand over (issues, chats, documents, uploaded files); health checks for outdated, contradictory or missing content; recording problems as annotations and resolving them in change requests |
+| `references/knowledge-bases.md` | Knowledge bases: creating and configuring, finding knowledge, writing back through drafts and change requests per the schema, review fixes and merge conflicts, ingesting sources, health checks, annotations |
 
 Open what the task needs. A single-domain task usually needs one; a task that
 crosses domains needs each domain it touches — creating a squad, assigning it an
