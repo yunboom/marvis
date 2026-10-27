@@ -134,5 +134,12 @@
     "view_all_other": "Voir les {{count}} commentaires",
     "view_feedback": "Voir les remarques",
     "go_review": "Aller à la revue"
+  },
+  "categories": {
+    "label": "Type de notification",
+    "all": "Tout",
+    "issue": "Tickets",
+    "kb": "Connaissances",
+    "autopilot": "Automatisations"
   }
 }

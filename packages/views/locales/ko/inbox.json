@@ -131,5 +131,12 @@
     "view_all_other": "의견 {{count}}개 모두 보기",
     "view_feedback": "리뷰 의견 보기",
     "go_review": "리뷰 페이지로"
+  },
+  "categories": {
+    "label": "알림 유형",
+    "all": "전체",
+    "issue": "작업",
+    "kb": "지식",
+    "autopilot": "자동화"
   }
 }

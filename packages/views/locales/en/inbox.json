@@ -134,5 +134,12 @@
     "view_all_other": "View all {{count}} comments",
     "view_feedback": "View feedback",
     "go_review": "Go to review"
+  },
+  "categories": {
+    "label": "Notification type",
+    "all": "All",
+    "issue": "Issues",
+    "kb": "Knowledge",
+    "autopilot": "Autopilot"
   }
 }

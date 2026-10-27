@@ -131,5 +131,12 @@
     "view_all_other": "查看全部 {{count}} 條意見",
     "view_feedback": "查看稽核意見",
     "go_review": "去稽核頁"
+  },
+  "categories": {
+    "label": "通知類型",
+    "all": "全部",
+    "issue": "任務",
+    "kb": "知識庫",
+    "autopilot": "自動化"
   }
 }

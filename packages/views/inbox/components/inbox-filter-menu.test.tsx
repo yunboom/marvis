@@ -20,6 +20,7 @@ import {
   useInboxFilterStore,
 } from "@marvis/core/inbox/filter-store";
 import type { InboxItem, IssueStatusEntry } from "@marvis/core/types";
+import type { InboxCategory } from "@marvis/core/inbox/category";
 import { renderWithI18n } from "../../test/i18n";
 import { InboxFilterMenu } from "./inbox-filter-menu";
 
@@ -94,6 +95,7 @@ function renderMenu({
   activeIssueIds,
   getArchivedInboxFacets = vi.fn(async () => ({ statuses: {}, priorities: {}, actors: {}, unreadCount: 0 })),
   statusEntries = BUILT_IN_STATUS_ORDER.map(statusEntry),
+  category = null,
 }: {
   items?: InboxItem[];
   priorityFilterSupport?: InboxPriorityFilterSupport;
@@ -101,6 +103,7 @@ function renderMenu({
   activeIssueIds?: ReadonlySet<string>;
   getArchivedInboxFacets?: ReturnType<typeof vi.fn>;
   statusEntries?: IssueStatusEntry[];
+  category?: InboxCategory | null;
 } = {}) {
   setApiInstance({
     getArchivedInboxFacets,
@@ -122,6 +125,7 @@ function renderMenu({
         priorityFilterSupport={priorityFilterSupport}
         activeIssueIds={activeIssueIds}
         archived={archived}
+        category={category}
       />
     </QueryClientProvider>,
   );
@@ -314,6 +318,19 @@ describe("InboxFilterMenu", () => {
     fireEvent.click(screen.getByRole("button", { name: "Filter inbox" }));
     await screen.findByRole("menuitemcheckbox", { name: /Unread only/ });
     expect(screen.queryByRole("menuitemcheckbox", { name: /No agents working/ })).toBeNull();
+  });
+
+  it("keeps only unread and From in a category without issues, and asks the archive for it", async () => {
+    useInboxFilterStore.getState().toggleStatusFilter("ws-1", "done");
+    const getArchivedInboxFacets = vi.fn(async () => ({ statuses: {}, priorities: {}, actors: {}, unreadCount: 0 }));
+    renderMenu({ category: "kb", archived: true, getArchivedInboxFacets });
+
+    // The carried-over status selection is not counted on the trigger.
+    fireEvent.click(screen.getByRole("button", { name: "Filter inbox" }));
+    await screen.findByRole("menuitemcheckbox", { name: /Unread only/ });
+    expect(screen.queryByRole("menuitem", { name: /^Status/ })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: /^Priority/ })).toBeNull();
+    await waitFor(() => expect(getArchivedInboxFacets).toHaveBeenCalledWith(expect.anything(), expect.anything(), "kb"));
   });
 
   it("hides priority and clears its filter for a legacy response", async () => {
