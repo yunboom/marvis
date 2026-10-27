@@ -36,6 +36,7 @@ import { parseKbJobRoute } from "../jobs/kb-job-state";
 import { parseKbReviewRoute } from "../review/kb-review-route";
 import { parseKbManageRoute } from "../manage/kb-manage-route";
 import { KbPageTree, readsDraftDiff } from "./kb-page-tree";
+import { KbGlobalSearch } from "./kb-search";
 
 export function KbInitial({ name, className }: { name: string; className?: string }) {
   // Array.from keeps a leading emoji or astral character whole.
@@ -342,7 +343,12 @@ export function KbShell({ children }: { children: ReactNode }) {
   // The configuration builder (design 10.x), a job's conversation (9.2–9.17)
   // and review (8.x) are full-width flows of their own.
   if (parseKbBuilderRoute(pathname).mode === "config" || jobView === "new" || jobView === "job" || reviewView === "reviews") {
-    return <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>;
+    return (
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {children}
+        <KbGlobalSearch />
+      </div>
+    );
   }
 
   return (
@@ -358,6 +364,7 @@ export function KbShell({ children }: { children: ReactNode }) {
           onChanges={reviewView === "changes" || manageView === "manage"}
         />}
       <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      <KbGlobalSearch />
     </div>
   );
 }

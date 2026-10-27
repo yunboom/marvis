@@ -42,7 +42,11 @@
     "pages_other": "{{count}} pages",
     "no_results": "Aucun résultat pour « {{query}} »",
     "no_results_hint": "Essayez d’autres mots-clés.",
-    "failed": "La recherche a échoué"
+    "failed": "La recherche a échoué",
+    "all_placeholder": "Rechercher dans toutes les bases de connaissances"
+  },
+  "find": {
+    "placeholder": "Rechercher dans la page"
   },
   "home": {
     "pending_title": "En attente",

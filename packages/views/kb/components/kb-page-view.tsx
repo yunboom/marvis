@@ -35,6 +35,7 @@ import { parseKbRoute, type KbQuoteMark } from "../utils/kb-markdown";
 import { sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
 import { KbPageBody, pageTitle } from "./kb-page-body";
 import { KbAnnotationPanel, KbSelectionAnnotator } from "./kb-annotations";
+import { KbFindInPage } from "./kb-find";
 import { KbHistoryPanel, KbInfoPanel, KbTocPanel } from "./kb-page-panels";
 import { readsDraftDiff, withDraft } from "./kb-page-tree";
 import { useKbRawFilePreview } from "../manage/use-kb-raw-files";
@@ -499,6 +500,7 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
 
       <div className="flex min-h-0 flex-1">
         <div ref={scroller} className="relative min-w-0 flex-1 overflow-y-auto">
+          <KbFindInPage container={scroller} pageId={page.id} />
           <article
             className={cn(
               // The body fills the width beside any panel; the text column, with

@@ -42,7 +42,11 @@
     "pages_other": "{{count}} pages",
     "no_results": "No results for “{{query}}”",
     "no_results_hint": "Try different keywords.",
-    "failed": "Search failed"
+    "failed": "Search failed",
+    "all_placeholder": "Search all knowledge bases"
+  },
+  "find": {
+    "placeholder": "Find in page"
   },
   "home": {
     "pending_title": "Pending",

@@ -12,6 +12,7 @@ export type ShortcutActionId =
   | "toggleRightSidebar"
   | "toggleChat"
   | "findInIssue"
+  | "searchKnowledgeBases"
   | "archiveInboxItem"
   | "send"
   | "goBack"
@@ -94,6 +95,14 @@ export const SHORTCUT_ACTIONS: readonly ShortcutActionDefinition[] = [
   // to keep working while the caret sits in the chat composer itself.
   { id: "toggleChat", category: "general", defaultShortcut: primary("J"), allowInEditable: true },
   { id: "findInIssue", category: "general", defaultShortcut: primary("F"), allowInEditable: true },
+  // Mod+Shift+F pairs with find-in-page the way editors pair find with
+  // find-in-files; knowledge base pages listen for it.
+  {
+    id: "searchKnowledgeBases",
+    category: "general",
+    defaultShortcut: createShortcutChord("F", { primary: true, shift: true }),
+    allowInEditable: true,
+  },
   {
     id: "archiveInboxItem",
     category: "general",

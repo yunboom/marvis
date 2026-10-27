@@ -41,7 +41,11 @@
     "pages_other": "{{count}} 个页面",
     "no_results": "没有找到「{{query}}」",
     "no_results_hint": "换个关键词试试。",
-    "failed": "搜索失败"
+    "failed": "搜索失败",
+    "all_placeholder": "搜索全部知识库"
+  },
+  "find": {
+    "placeholder": "在页面中查找"
   },
   "home": {
     "pending_title": "待处理",

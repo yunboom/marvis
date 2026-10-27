@@ -41,7 +41,11 @@
     "pages_other": "{{count}} ページ",
     "no_results": "「{{query}}」は見つかりませんでした",
     "no_results_hint": "別のキーワードをお試しください。",
-    "failed": "検索に失敗しました"
+    "failed": "検索に失敗しました",
+    "all_placeholder": "すべてのナレッジベースを検索"
+  },
+  "find": {
+    "placeholder": "ページ内を検索"
   },
   "home": {
     "pending_title": "未対応",

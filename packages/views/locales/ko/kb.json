@@ -41,7 +41,11 @@
     "pages_other": "페이지 {{count}}개",
     "no_results": "“{{query}}”에 대한 결과가 없습니다",
     "no_results_hint": "다른 키워드로 검색해 보세요.",
-    "failed": "검색에 실패했습니다"
+    "failed": "검색에 실패했습니다",
+    "all_placeholder": "모든 지식 베이스 검색"
+  },
+  "find": {
+    "placeholder": "페이지에서 찾기"
   },
   "home": {
     "pending_title": "대기 중",

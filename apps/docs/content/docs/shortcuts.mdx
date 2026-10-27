@@ -32,7 +32,8 @@ Selecting a result opens it. Hold `⌘` (`Ctrl` on Windows and Linux) while clic
 | Toggle left sidebar | `⌘B` | `Ctrl+B` | |
 | Toggle right sidebar | `⌘/` | `Ctrl+/` | Only on pages with a right sidebar, such as an issue. |
 | Toggle chat window | `⌘J` | `Ctrl+J` | Opening it puts the cursor in the message input. See [Chat from any page](/chat#chat-from-any-page). |
-| Find in issue | `⌘F` | `Ctrl+F` | See below. |
+| Find in page | `⌘F` | `Ctrl+F` | See below. |
+| Search knowledge bases | `⌘⇧F` | `Ctrl+Shift+F` | Searches pages across every knowledge base. Works inside a knowledge base. |
 | Archive notification | `E` | `E` | Archives the open inbox notification, or restores it while you're reading the archive. |
 | Send | `⌘↵` | `Ctrl+Enter` | Sends comments and chat messages, and also submits new issues. |
 | Go back | `⌘[` | `Ctrl+[` | |
@@ -81,18 +82,20 @@ Recording rejects a few kinds of combinations and says why under the keys:
 
 - A combination already assigned to another action.
 - Combinations the browser, the desktop window, or the operating system owns, such as `⌘W`, `⌘R`, `⌘Q`, `⌘,`, editing keys like copy and paste, `⌘0`–`⌘9`, and the zoom keys. In a browser, `⌘P`, `⌘L`, `⌘T`, `⌘N`, `⌘D`, and `⌘U` are off-limits too; the desktop app allows them. On Windows and Linux, any combination with the Win / Super key is rejected.
-- Actions that also work inside an input, such as Open search, Toggle chat window, and Find in issue, need `⌘`, `Ctrl`, or `Control`, so they never fire while you type.
+- Actions that also work inside an input, such as Open search, Toggle chat window, and Find in page, need `⌘`, `Ctrl`, or `Control`, so they never fire while you type.
 - **Send** can only be `↵` or `⌘↵`.
 
 <Callout>
 If you set **Send** to `↵`, use `Shift+Enter` for a new line: it inserts a paragraph, continues a list, or adds a line break in a code block.
 </Callout>
 
-## Find in issue
+## Find in page
 
-On an issue page, `⌘F` opens Marvis's own find bar instead of the browser's. Browser find only sees the comments currently rendered on screen; this one searches the whole timeline, including the title, the description, and every comment.
+On an issue page or a knowledge base page, `⌘F` opens Marvis's own find bar instead of the browser's. Browser find only sees the comments currently rendered on screen; this one searches the whole timeline, including the title, the description, and every comment.
 
 Matching ignores case. The bar shows "current/total", or "No matches". Press `↵` for the next match, `Shift+Enter` for the previous one, and `Esc` to close. Text that spans a formatting change (say, half of it bold) isn't found.
+
+On a knowledge base page, the bar searches the page being read.
 
 In the desktop app, only the visible tab responds to `⌘F`.
 

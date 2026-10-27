@@ -253,8 +253,12 @@
         "description": "開啟或關閉懸浮聊天窗，開啟時自動聚焦輸入框。"
       },
       "findInIssue": {
-        "label": "在任務中查詢",
-        "description": "搜尋當前開啟的任務詳情。"
+        "label": "在頁面中查詢",
+        "description": "搜尋當前開啟的任務詳情或知識庫頁面。"
+      },
+      "searchKnowledgeBases": {
+        "label": "搜尋全部知識庫",
+        "description": "在所有知識庫中搜尋頁面，在知識庫內可用。"
       },
       "archiveInboxItem": {
         "label": "歸檔通知",

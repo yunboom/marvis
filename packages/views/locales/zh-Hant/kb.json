@@ -41,7 +41,11 @@
     "pages_other": "{{count}} 個頁面",
     "no_results": "沒有找到「{{query}}」",
     "no_results_hint": "換個關鍵詞試試。",
-    "failed": "搜尋失敗"
+    "failed": "搜尋失敗",
+    "all_placeholder": "搜尋全部知識庫"
+  },
+  "find": {
+    "placeholder": "在頁面中查詢"
   },
   "home": {
     "pending_title": "待處理",
