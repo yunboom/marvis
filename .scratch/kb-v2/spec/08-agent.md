@@ -1849,13 +1849,13 @@ SKILL.md Routing 表新增一行
 English · 代码原文
 
 ```
-| `references/knowledge-bases.md` | Creating and evolving knowledge bases: creating and configuring a knowledge base (name, purpose, schema); finding knowledge; writing new knowledge, lessons and key decisions back through a draft and a change request, following the knowledge base's schema (sections, page types, fields, claims and evidence), then addressing review comments and resolving merge conflicts; ingesting sources others hand over (issues, chats, documents, uploaded files); health checks for outdated, contradictory or missing content; recording problems as annotations and resolving them in change requests |
+| `references/knowledge-bases.md` | Knowledge bases: creating and configuring, finding knowledge, writing back through drafts and change requests per the schema, review fixes and merge conflicts, ingesting sources, health checks, annotations |
 ```
 
 中文对照
 
 ```
-| `references/knowledge-bases.md` | 知识库的创建与迭代：创建和修改知识库（名称、目标、Schema）；查找知识；按知识库 Schema 的规范（分区、页面类型、字段、论断与证据）把工作中得到的新知识、经验教训和重要决策通过草稿和变更请求写回知识库，按审核意见修改、解决合并冲突；收录别人交来的资料（任务、对话、文档、上传的文件）；健康检查，找出过期、矛盾和缺失的内容；用批注记录问题，并在变更请求里关闭已解决的批注 |
+| `references/knowledge-bases.md` | 知识库：创建和配置、查找知识、按 Schema 通过草稿和变更请求写回、审核修改与合并冲突、收录资料、健康检查、批注 |
 ```
 
 references/knowledge-bases.md
