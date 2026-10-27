@@ -46,7 +46,7 @@ import { ROUTE_ICON_COMPONENTS } from "../../layout/route-icon-components";
 import { matchesPinyin } from "../../editor/extensions/pinyin-match";
 import { useLocale, useT, useTimeAgo } from "../../i18n";
 
-const KbIcon = ROUTE_ICON_COMPONENTS.BookOpen;
+const KbIcon = ROUTE_ICON_COMPONENTS.Layers;
 
 // Column template. Narrow (<@2xl): name, pages, updated, kebab. Wide adds
 // description and pending work. Hidden cells drop out of the grid flow, so

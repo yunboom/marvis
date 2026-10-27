@@ -591,8 +591,15 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   }, [wsId]);
   const visiblePinned = localPinnedWsId === (wsId ?? null) ? localPinned : EMPTY_PINS;
   const pinsExpanded = expandedPinsWorkspaceId === wsId;
-  // Sub-nav groups default open; landing on a sub route reopens its group.
-  const [collapsedSubNav, setCollapsedSubNav] = useState<Partial<Record<NavKey, boolean>>>({});
+  // Sub-nav groups default collapsed, except the one holding the current
+  // route; landing on a sub route later reopens its group.
+  const [collapsedSubNav, setCollapsedSubNav] = useState<Partial<Record<NavKey, boolean>>>(() => {
+    const collapsed: Partial<Record<NavKey, boolean>> = {};
+    for (const key of Object.keys(workSubNav) as NavKey[]) {
+      collapsed[key] = !workSubNav[key]?.some((sub) => isNavActive(pathname, p[sub.key]()));
+    }
+    return collapsed;
+  });
   const toggleSubNav = (key: NavKey) =>
     setCollapsedSubNav((current) => ({ ...current, [key]: !current[key] }));
   // Clicking a parent row that owns a page: from elsewhere it navigates and

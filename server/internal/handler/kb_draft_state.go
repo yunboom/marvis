@@ -477,6 +477,7 @@ func lintKbDraftPages(ctx context.Context, q *db.Queries, base db.KbBase, overla
 			UnresolvedLinks: unresolved[id],
 			LinkedPages:     len(linked[id]) + len(unresolved[id]),
 			Inbound:         inbound[id],
+			TopLevel:        page.parentID == "",
 		})...)
 	}
 

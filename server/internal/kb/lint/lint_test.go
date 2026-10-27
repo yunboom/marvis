@@ -39,6 +39,24 @@ func TestCheckCleanPage(t *testing.T) {
 	}
 }
 
+func TestCheckTopLevelPageIsNotOrphan(t *testing.T) {
+	p := Page{
+		ID:          "p1",
+		Path:        "/quickstart",
+		Frontmatter: map[string]any{"type": "Guide", "title": "Quickstart", "description": "d"},
+		LinkedPages: 2,
+		TopLevel:    true,
+	}
+	if got := codes(Check(p)); got != "" {
+		t.Errorf("top-level page findings = %s, want none", got)
+	}
+
+	p.TopLevel = false
+	if got := codes(Check(p)); got != CodeOrphanPage {
+		t.Errorf("nested page findings = %s, want %s", got, CodeOrphanPage)
+	}
+}
+
 func TestCheckRules(t *testing.T) {
 	p := Page{
 		ID:          "p1",

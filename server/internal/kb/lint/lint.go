@@ -70,6 +70,9 @@ type Page struct {
 	LinkedPages int
 	// Inbound is the number of other pages linking to this one.
 	Inbound int
+	// TopLevel reports a page with no parent. Top-level pages head the table
+	// of contents, so readers reach them without an inbound link.
+	TopLevel bool
 }
 
 // footnoteRefRe finds footnote references [^id]; definitions ([^id]:) are
@@ -120,7 +123,7 @@ func Check(p Page) []Finding {
 	for _, path := range p.UnresolvedLinks {
 		add(CodeUnresolvedLink, SeverityWarning, "", fmt.Sprintf("%s is not written yet", path))
 	}
-	if p.Inbound == 0 {
+	if p.Inbound == 0 && !p.TopLevel {
 		add(CodeOrphanPage, SeverityWarning, "", "no other page links to this page")
 	}
 	if len(p.Blocks) > 0 && p.LinkedPages < minRelatedPages {

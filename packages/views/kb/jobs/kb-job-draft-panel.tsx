@@ -164,7 +164,7 @@ export function KbJobDraftPanel({
 
   const showFiles = state.view === "changes" || state.view === "submitted" || state.view === "merged";
   const checks = (
-    <div className="flex flex-col gap-1.5 rounded-xl bg-surface-sunken/60 px-3 py-2.5">
+    <div className="flex shrink-0 flex-col gap-1.5 rounded-xl bg-surface-sunken/60 px-3 py-2.5">
       <span className="text-caption text-faint-foreground">{t(($) => $.job.draft.checks)}</span>
       {running && state.view === "changes" ? (
         <span className="flex items-center gap-1.5 text-label">
