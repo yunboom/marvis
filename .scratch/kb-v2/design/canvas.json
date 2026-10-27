@@ -769,6 +769,30 @@
    "x": 16720,
    "y": 0,
    "title": "3.12 新建页面 · 草稿：没有「正式 / 草稿」分段，横幅只有「草稿」标签和「显示差异」开关；打开时整页为新增"
+  },
+  "inbox-cat.dc.html": {
+   "h": 900,
+   "page": "notify",
+   "w": 1440,
+   "x": 3040,
+   "y": 0,
+   "title": "13.3 消息弹窗 · 分类「全部」：列表上方「全部 / 任务 / 知识库 / 自动化」，各类带未读数"
+  },
+  "inbox-cat-kb.dc.html": {
+   "h": 900,
+   "page": "notify",
+   "w": 1440,
+   "x": 4560,
+   "y": 0,
+   "title": "13.4 分类「知识库」选中 · 只列评审通知，筛选里任务专属的状态、优先级、没有智能体在工作隐藏，右侧为评审通知详情"
+  },
+  "inbox-cat-page.dc.html": {
+   "h": 900,
+   "page": "notify",
+   "w": 1440,
+   "x": 6080,
+   "y": 0,
+   "title": "13.5 /inbox 完整页 · 分类「任务」选中，筛选带状态 / 优先级（地址 ?category=issue）"
   }
  },
  "createdOnFiles": {
@@ -891,7 +915,7 @@
   },
   "t-notify": {
    "kind": "title1",
-   "maxW": 2960,
+   "maxW": 7520,
    "page": "notify",
    "text": "通知：评审提交与重新请求审核进「消息」",
    "w": 240,
@@ -995,7 +1019,10 @@
   "read-diff.dc.html",
   "read-new-draft.dc.html",
   "notify-box.dc.html",
-  "notify-reviewer.dc.html"
+  "notify-reviewer.dc.html",
+  "inbox-cat.dc.html",
+  "inbox-cat-kb.dc.html",
+  "inbox-cat-page.dc.html"
  ],
  "pages": [
   {
