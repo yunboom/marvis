@@ -40,7 +40,7 @@ import {
   KbJobPage,
   KbJobsPage,
   KbReviewPage,
-  KbListPage,
+  KbEntryPage,
   KbPageView,
   KbRevisionDiffPage,
   KbShell,
@@ -270,7 +270,7 @@ export const appRoutes: RouteObject[] = [
             element: <SquadDetailPageView />,
             handle: { title: "Squad" },
           },
-          { path: "kb", element: <KbListPage />, handle: { title: "Knowledge base" } },
+          { path: "kb", element: <KbEntryPage />, handle: { title: "Knowledge base" } },
           { path: "kb/new", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
           { path: "kb/new/:sessionId", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
           {

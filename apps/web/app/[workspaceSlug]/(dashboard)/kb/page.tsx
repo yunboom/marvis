@@ -1,1 +1,1 @@
-export { KbListPage as default } from "@marvis/views/kb";
+export { KbEntryPage as default } from "@marvis/views/kb";

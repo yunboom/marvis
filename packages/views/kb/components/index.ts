@@ -1,4 +1,4 @@
-export { KbListPage } from "./kb-list-page";
+export { KbEntryPage } from "./kb-entry-page";
 export { KbShell } from "./kb-shell";
 export { KbHomePage } from "./kb-home-page";
 export { KbPageView } from "./kb-page-view";

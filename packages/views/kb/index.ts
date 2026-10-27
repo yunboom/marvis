@@ -1,7 +1,7 @@
 export {
   KbAnnotationsPage,
+  KbEntryPage,
   KbHomePage,
-  KbListPage,
   KbPageView,
   KbRevisionDiffPage,
   KbShell,

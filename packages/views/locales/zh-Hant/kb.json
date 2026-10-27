@@ -2,24 +2,6 @@
   "list": {
     "title": "知識庫",
     "new_button": "新建知識庫",
-    "pending_reviews_other": "待稽核修改 {{count}}",
-    "search_placeholder": "搜尋知識庫和頁面...",
-    "search_label": "搜尋知識庫",
-    "sort": {
-      "recent": "最近更新",
-      "name": "名稱"
-    },
-    "table": {
-      "name": "名稱",
-      "description": "簡介",
-      "pages": "頁面",
-      "pending": "待處理",
-      "updated": "更新時間"
-    },
-    "pending": {
-      "annotations_other": "批註 {{count}}",
-      "stale_pages_other": "待複核 {{count}}"
-    },
     "copy_link": "複製連結",
     "link_copied": "連結已複製",
     "no_matches": "沒有匹配的知識庫",

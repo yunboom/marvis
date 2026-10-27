@@ -2,24 +2,6 @@
   "list": {
     "title": "知识库",
     "new_button": "新建知识库",
-    "pending_reviews_other": "待审核修改 {{count}}",
-    "search_placeholder": "搜索知识库和页面...",
-    "search_label": "搜索知识库",
-    "sort": {
-      "recent": "最近更新",
-      "name": "名称"
-    },
-    "table": {
-      "name": "名称",
-      "description": "简介",
-      "pages": "页面",
-      "pending": "待处理",
-      "updated": "更新时间"
-    },
-    "pending": {
-      "annotations_other": "批注 {{count}}",
-      "stale_pages_other": "待复核 {{count}}"
-    },
     "copy_link": "复制链接",
     "link_copied": "链接已复制",
     "no_matches": "没有匹配的知识库",

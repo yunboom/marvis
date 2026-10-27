@@ -2,24 +2,6 @@
   "list": {
     "title": "지식 베이스",
     "new_button": "새 지식 베이스",
-    "pending_reviews_other": "검토 대기 변경 {{count}}",
-    "search_placeholder": "지식 베이스와 페이지 검색...",
-    "search_label": "지식 베이스 검색",
-    "sort": {
-      "recent": "최근 업데이트",
-      "name": "이름"
-    },
-    "table": {
-      "name": "이름",
-      "description": "설명",
-      "pages": "페이지",
-      "pending": "대기 중",
-      "updated": "업데이트"
-    },
-    "pending": {
-      "annotations_other": "주석 {{count}}",
-      "stale_pages_other": "재검토 {{count}}"
-    },
     "copy_link": "링크 복사",
     "link_copied": "링크를 복사했습니다",
     "no_matches": "일치하는 지식 베이스가 없습니다",
