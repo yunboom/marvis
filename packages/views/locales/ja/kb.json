@@ -16,6 +16,7 @@
     "more_actions": "ナレッジベースの操作",
     "home": "ホーム",
     "pending": "未対応 {{count}}",
+    "open_mrs_other": "レビュー待ちの変更 {{count}} 件",
     "pages": "ページ",
     "breadcrumb": "現在地",
     "configure": "ナレッジベースを設定",

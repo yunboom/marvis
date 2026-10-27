@@ -16,6 +16,7 @@
     "more_actions": "知识库更多操作",
     "home": "首页",
     "pending": "待处理 {{count}}",
+    "open_mrs_other": "待审核修改 {{count}}",
     "pages": "页面",
     "breadcrumb": "位置",
     "configure": "配置知识库",

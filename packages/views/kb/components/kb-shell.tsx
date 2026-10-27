@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@marvis/ui/components/ui/dropdown-menu";
 import { Input } from "@marvis/ui/components/ui/input";
+import { CountBadge } from "@marvis/ui/components/common/count-badge";
 import { copyText } from "@marvis/ui/lib/clipboard";
 import { cn } from "@marvis/ui/lib/utils";
 import { AppLink, useNavigation } from "../../navigation";
@@ -123,6 +124,7 @@ function KbSwitcher({ kbSlug, name }: { kbSlug: string; name: string }) {
           )}
           {rows.map((base) => {
             const pending = countKbPending(base.pending);
+            const openMRs = base.pending.open_mrs;
             const current = base.slug === kbSlug;
 
             return (
@@ -137,6 +139,12 @@ function KbSwitcher({ kbSlug, name }: { kbSlug: string; name: string }) {
                   <span className="shrink-0 text-caption text-faint-foreground">
                     {t(($) => $.nav.pending, { count: pending })}
                   </span>
+                )}
+                {openMRs > 0 && (
+                  <>
+                    <CountBadge count={openMRs} data-testid="kb-switcher-open-mr-badge" />
+                    <span className="sr-only">{t(($) => $.nav.open_mrs, { count: openMRs })}</span>
+                  </>
                 )}
                 <Check aria-hidden="true" className={cn("size-3.5 shrink-0", !current && "invisible")} />
               </DropdownMenuItem>

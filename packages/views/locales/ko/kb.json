@@ -16,6 +16,7 @@
     "more_actions": "지식 베이스 작업",
     "home": "홈",
     "pending": "대기 {{count}}",
+    "open_mrs_other": "검토 대기 변경 {{count}}건",
     "pages": "페이지",
     "breadcrumb": "현재 위치",
     "configure": "지식 베이스 설정",

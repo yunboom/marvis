@@ -249,6 +249,29 @@ describe("KbShell page tree", () => {
     expect(screen.queryByRole("menuitem", { name: "Graph" })).not.toBeInTheDocument();
   });
 
+  it("marks the knowledge bases with change requests to review in the switcher", async () => {
+    const user = userEvent.setup();
+    const quiet = { ...BASE, id: "kb-2", name: "运维手册", slug: "ops", pending: { annotations: 1, stale_pages: 0, open_mrs: 0 } };
+    mocked.listKnowledgeBases.mockResolvedValue([BASE, quiet]);
+    mount(
+      <KbShell>
+        <div />
+      </KbShell>,
+      makeAdapter("/acme/kb/team"),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Switch knowledge base" }));
+
+    const marked = await screen.findByRole("menuitem", { name: /团队知识库/ });
+    expect(marked).toHaveTextContent("7 pending");
+    expect(within(marked).getByTestId("kb-switcher-open-mr-badge")).toHaveTextContent("1");
+    expect(within(marked).getByText("1 change to review")).toBeInTheDocument();
+
+    const unmarked = screen.getByRole("menuitem", { name: /运维手册/ });
+    expect(unmarked).toHaveTextContent("1 pending");
+    expect(within(unmarked).queryByTestId("kb-switcher-open-mr-badge")).toBeNull();
+  });
+
   it("expands the tree to the page being read and marks it", async () => {
     mount(
       <KbShell>

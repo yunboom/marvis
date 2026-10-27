@@ -16,6 +16,8 @@
     "more_actions": "Actions de la base",
     "home": "Accueil",
     "pending": "{{count}} en attente",
+    "open_mrs_one": "{{count}} modification à valider",
+    "open_mrs_other": "{{count}} modifications à valider",
     "pages": "Pages",
     "breadcrumb": "Fil d’Ariane",
     "configure": "Configurer la base",

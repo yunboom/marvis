@@ -16,6 +16,7 @@
     "more_actions": "知識庫更多操作",
     "home": "首頁",
     "pending": "待處理 {{count}}",
+    "open_mrs_other": "待稽核修改 {{count}}",
     "pages": "頁面",
     "breadcrumb": "位置",
     "configure": "配置知識庫",

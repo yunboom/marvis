@@ -67,6 +67,8 @@
     "show_fewer_pins": "Afficher moins",
     "expand_sub_nav": "Développer {{label}}",
     "collapse_sub_nav": "Réduire {{label}}",
+    "kb_reviews_badge_one": "{{count}} modification à valider",
+    "kb_reviews_badge_other": "{{count}} modifications à valider",
     "unread_overflow": "99+"
   },
   "lark_invite_welcome": {
