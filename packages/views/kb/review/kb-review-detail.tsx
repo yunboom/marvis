@@ -162,10 +162,12 @@ function TriggerRow({
   const { t } = useT("kb");
   const p = useWorkspacePaths();
   // The job's agent works in the job's chat, which only opens from the job page.
-  const runHref =
-    mr.origin.type === "kb_job" && mr.origin.ref_id && trigger.agent_id === mr.review_agent?.id
+  const jobRun = mr.origin.type === "kb_job" && !!mr.origin.ref_id && trigger.agent_id === mr.review_agent?.id;
+  const runHref = jobRun
+    ? mr.origin.openable && mr.origin.ref_id
       ? p.kbJob(kbSlug, mr.origin.ref_id)
-      : trigger.chat_session_id
+      : null
+    : trigger.chat_session_id
         ? p.chatSession(trigger.chat_session_id)
         : null;
 

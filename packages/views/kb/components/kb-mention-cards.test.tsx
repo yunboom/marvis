@@ -112,7 +112,7 @@ const MR = {
   draft_id: "d-1",
   draft_version: 3,
   annotation_ids: [],
-  origin: { type: "chat", label: "修正支付回调去重键", ref_id: "chat-1" },
+  origin: { type: "chat", label: "修正支付回调去重键", ref_id: "chat-1", openable: true },
   job_id: null,
   reverts: null,
   merged_by: null,

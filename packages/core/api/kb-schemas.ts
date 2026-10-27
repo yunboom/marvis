@@ -784,10 +784,12 @@ const KbMergeRequestOriginSchema = z
     type: z.enum(KB_ORIGIN_TYPES).catch("none"),
     label: text,
     ref_id: nullableId,
+    // Servers before this field link every origin.
+    openable: z.boolean().catch(true).default(true),
   })
   .loose();
 
-const NO_ORIGIN = { type: "none", label: "", ref_id: null } as const;
+const NO_ORIGIN = { type: "none", label: "", ref_id: null, openable: false } as const;
 
 export const KbMergeRequestSchema = z
   .object({

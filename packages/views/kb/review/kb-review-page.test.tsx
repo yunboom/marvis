@@ -84,7 +84,7 @@ function mergeRequest(over: Partial<KbMergeRequest> = {}): KbMergeRequest {
     draft_id: "draft-1",
     draft_version: 9,
     annotation_ids: ["a-1", "a-2"],
-    origin: { type: "kb_job", label: "Handle annotations", ref_id: "job-1" },
+    origin: { type: "kb_job", label: "Handle annotations", ref_id: "job-1", openable: true },
     job_id: "job-1",
     reverts: null,
     merged_by: null,
@@ -189,12 +189,14 @@ describe("review route helpers", () => {
 
   it("links each origin to where it was started", () => {
     const p = paths.workspace("acme");
-    expect(kbOriginHref(p, "team", { type: "kb_job", label: "", ref_id: "job-1" }, null)).toBe("/acme/kb/team/jobs/job-1");
-    expect(kbOriginHref(p, "team", { type: "revert", label: "", ref_id: "mr-1" }, 15)).toBe("/acme/kb/team/reviews/15");
-    expect(kbOriginHref(p, "team", { type: "issue", label: "", ref_id: "i-1" }, null)).toBe("/acme/issues/i-1");
-    expect(kbOriginHref(p, "team", { type: "chat", label: "", ref_id: "c-1" }, null)).toBe("/acme/chat?session=c-1");
-    expect(kbOriginHref(p, "team", { type: "autopilot_run", label: "", ref_id: "ap-1" }, null)).toBe("/acme/autopilots/ap-1");
-    expect(kbOriginHref(p, "team", { type: "none", label: "", ref_id: null }, null)).toBeNull();
+    expect(kbOriginHref(p, "team", { type: "kb_job", label: "", ref_id: "job-1", openable: true }, null)).toBe("/acme/kb/team/jobs/job-1");
+    expect(kbOriginHref(p, "team", { type: "revert", label: "", ref_id: "mr-1", openable: true }, 15)).toBe("/acme/kb/team/reviews/15");
+    expect(kbOriginHref(p, "team", { type: "issue", label: "", ref_id: "i-1", openable: true }, null)).toBe("/acme/issues/i-1");
+    expect(kbOriginHref(p, "team", { type: "chat", label: "", ref_id: "c-1", openable: true }, null)).toBe("/acme/chat?session=c-1");
+    expect(kbOriginHref(p, "team", { type: "autopilot_run", label: "", ref_id: "ap-1", openable: true }, null)).toBe("/acme/autopilots/ap-1");
+    expect(kbOriginHref(p, "team", { type: "none", label: "", ref_id: null, openable: true }, null)).toBeNull();
+    // A job or chat started by someone else does not open for this viewer.
+    expect(kbOriginHref(p, "team", { type: "kb_job", label: "", ref_id: "job-1", openable: false }, null)).toBeNull();
   });
 });
 

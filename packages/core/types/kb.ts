@@ -556,6 +556,8 @@ export interface KbMergeRequestOrigin {
   label: string;
   /** What to open: the job, reverted request, autopilot, issue or chat id. */
   ref_id: string | null;
+  /** Whether the viewer may open it: a job or chat opens only for its starter. */
+  openable: boolean;
 }
 
 /** A merge request: one draft under review. */

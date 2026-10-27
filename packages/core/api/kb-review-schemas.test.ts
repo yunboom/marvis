@@ -27,7 +27,7 @@ const mr = {
   draft_id: "draft-1",
   draft_version: 9,
   annotation_ids: ["a-1"],
-  origin: { type: "kb_job", label: "处理批注", ref_id: "job-1" },
+  origin: { type: "kb_job", label: "处理批注", ref_id: "job-1", openable: true },
   job_id: "job-1",
   reverts: null,
   merged_by: null,
@@ -111,7 +111,7 @@ describe("review schemas", () => {
     );
 
     expect(parsed.status).toBe("open");
-    expect(parsed.origin).toEqual({ type: "none", label: "x", ref_id: null });
+    expect(parsed.origin).toEqual({ type: "none", label: "x", ref_id: null, openable: true });
     expect(parsed.reverts).toBeNull();
     expect(parsed.draft_version).toBe(0);
     expect(parsed.can_merge).toBe(false);

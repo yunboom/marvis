@@ -34,6 +34,7 @@ export function kbOriginHref(
   origin: KbMergeRequestOrigin,
   reverts: number | null,
 ): string | null {
+  if (!origin.openable) return null;
   switch (origin.type) {
     case "kb_job":
       return origin.ref_id ? p.kbJob(kbSlug, origin.ref_id) : null;
