@@ -287,6 +287,7 @@ The daemon auto-detects these AI CLIs on your PATH:
 | Kimi | `kimi` | Moonshot coding agent |
 | [Reasonix](https://github.com/esengine/DeepSeek-Reasonix) | `reasonix` | DeepSeek-focused ACP coding agent (run `reasonix setup` first) |
 | Dim | `dim` | DimCode ACP coding agent (speaks the ACP protocol via `dim acp`) |
+| [Devin CLI](https://docs.devin.ai/cli/quickstart) | `devin` | Version 3000.3.22+. Host-local ACP (`devin acp`), not cloud Devin VMs. Run `devin auth login` first. |
 | Kiro CLI | `kiro-cli` | Kiro ACP coding agent |
 | [Qoder CLI](https://docs.qoder.com/) | `qodercli` | Qoder ACP coding agent |
 | [Qoder CN CLI](https://help.aliyun.com/en/lingma/qodercli-cn/product-overview/what-is-qoder-cli-cn) | `qoderclicn` | Qoder CN ACP coding agent |
@@ -390,7 +391,7 @@ Agent-specific overrides:
 | `MARVIS_OPENCODE_PATH` | Custom path to the `opencode` binary |
 | `MARVIS_OPENCODE_MODEL` | Override the OpenCode model used |
 | `MARVIS_OPENCLAW_PATH` | Custom path to the `openclaw` binary |
-| `MARVIS_OPENCLAW_MODEL` | Override the OpenClaw model used |
+| `MARVIS_OPENCLAW_MODEL` | Select the registered OpenClaw agent ID used by default; the agent's `runtime_config.model_override` persistently overrides its underlying model for all newly claimed runs until changed or cleared |
 | `MARVIS_OPENCLAW_CLI_TIMEOUT` | Deadline for each `openclaw config ...` call during task preparation (default 30s; accepts `45s` or `45`). Raise it when the local CLI is slow to start; the daemon also reads it from `backends.openclaw.cli_timeout` in the CLI config |
 | `MARVIS_HERMES_PATH` | Custom path to the `hermes` binary |
 | `MARVIS_HERMES_MODEL` | Override the Hermes model used |
@@ -404,6 +405,8 @@ Agent-specific overrides:
 | `MARVIS_REASONIX_MODEL` | Override the Reasonix model used |
 | `MARVIS_DIM_PATH` | Custom path to the `dim` binary |
 | `MARVIS_DIM_MODEL` | Override the Dim model used |
+| `MARVIS_DEVIN_PATH` | Custom path to the `devin` binary |
+| `MARVIS_DEVIN_MODEL` | Override the Devin model used |
 | `MARVIS_KIRO_PATH` | Custom path to the `kiro-cli` binary |
 | `MARVIS_KIRO_MODEL` | Override the Kiro model used |
 | `MARVIS_QODER_PATH` | Custom path to the `qodercli` binary |
