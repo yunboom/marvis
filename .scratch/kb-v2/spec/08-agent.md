@@ -1915,7 +1915,7 @@ English · 代码原文
 - `builtin_skills_test.go`：`references/<领域>/` 下的文件只要在 `references/<领域>.md` 里写出完整路径就算可达，并反向检查路由引用的每个路径都存在。
 - 和其他提示词改动一样单独开 MR 给用户审。
 
-SKILL.md Routing 表（改动前）
+SKILL.md Routing 表（改动前，旧文本，已替换）
 
 English · 代码原文
 
