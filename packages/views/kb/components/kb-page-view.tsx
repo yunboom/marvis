@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Clock, Info, Link2, List, MessageSquare, MoreHorizontal, ShieldCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,11 +11,11 @@ import {
   isOpenAnnotation,
   kbAnnotationListOptions,
   kbBaseDetailOptions,
-  kbDraftOptions,
   kbPageOptions,
 } from "@marvis/core/kb/queries";
-import type { KbAnnotation, KbDraftPageChange, KbPage, KbPageDraft, KbSource } from "@marvis/core/types";
+import type { KbAnnotation, KbBlock, KbPage, KbPageDraft, KbSource } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
+import { Switch } from "@marvis/ui/components/ui/switch";
 import { Toggle } from "@marvis/ui/components/ui/toggle";
 import {
   DropdownMenu,
@@ -36,8 +36,7 @@ import { sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
 import { KbPageBody, pageTitle } from "./kb-page-body";
 import { KbAnnotationPanel, KbSelectionAnnotator } from "./kb-annotations";
 import { KbHistoryPanel, KbInfoPanel, KbTocPanel } from "./kb-page-panels";
-import { KbFileCard } from "./kb-diff";
-import { KB_DIFF_VIEW, withDraft, withDraftDiff } from "./kb-page-tree";
+import { readsDraftDiff, withDraft } from "./kb-page-tree";
 import { useKbRawFilePreview } from "../manage/use-kb-raw-files";
 
 type Panel = "none" | "info" | "toc" | "history" | "annotations";
@@ -48,7 +47,9 @@ const PANEL_TOGGLE = "text-muted-foreground aria-pressed:bg-surface-selected ari
 // The draft change of a page the draft creates: it has no official version.
 const DRAFT_ADDED = "added";
 
-// One side of the official / draft / diff segmented switch.
+const NO_BLOCKS: readonly KbBlock[] = [];
+
+// One side of the official / draft segmented switch.
 const SEGMENT =
   "h-6 px-2.5 font-normal text-muted-foreground hover:bg-transparent aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm";
 
@@ -74,8 +75,9 @@ export function useDraftLabel() {
 }
 
 /**
- * Banner over a page the viewer has drafts for: official / draft / diff
- * switch. A page the draft creates has no official version to switch to.
+ * Banner over a page the viewer has drafts for: official / draft switch, and
+ * on a draft read a switch that marks its edits. A page the draft creates has
+ * no official version to switch to.
  */
 export function KbDraftBar({
   drafts,
@@ -85,7 +87,7 @@ export function KbDraftBar({
 }: {
   drafts: KbPageDraft[];
   activeDraft: string;
-  /** The page's changes in the draft are shown instead of its text. */
+  /** The draft's edits are marked on the page. */
   diff?: boolean;
   /** The draft change of the page as read through `activeDraft`. */
   pageDraftChange?: string;
@@ -94,19 +96,17 @@ export function KbDraftBar({
   const { pathname, replace } = useNavigation();
   const timeAgo = useTimeAgo();
   const draftLabel = useDraftLabel();
+  const diffLabel = useId();
   const selected = drafts.find((d) => d.id === activeDraft) ?? drafts[0];
   if (!selected) return null;
 
   const added = (activeDraft ? pageDraftChange : selected.draft_change) === DRAFT_ADDED;
-  const showDraft = (draftId: string) => replace(withDraft(pathname, draftId));
-  const showDiff = (draftId: string) => replace(withDraftDiff(pathname, draftId));
-  const show = (draftId: string) => (diff ? showDiff(draftId) : showDraft(draftId));
 
   return (
     <div className="mb-[18px] flex items-center gap-3 rounded-xl bg-status-review/5 px-3.5 py-2.5 text-label ring-1 ring-status-review/45 ring-inset">
       <span className="rounded-md bg-status-review px-1.5 text-caption leading-5 text-primary-foreground">{t(($) => $.draft.label)}</span>
       <span className="min-w-0 flex-1">
-        {drafts.length > 1 ? t(($) => $.draft.multi, { count: drafts.length }) : t(($) => $.draft.single)}
+        {!added && (drafts.length > 1 ? t(($) => $.draft.multi, { count: drafts.length }) : t(($) => $.draft.single))}
       </span>
       {drafts.length > 1 && (
         <DropdownMenu>
@@ -119,7 +119,10 @@ export function KbDraftBar({
             }
           />
           <DropdownMenuContent align="end" className="w-[300px]">
-            <DropdownMenuRadioGroup value={selected.id} onValueChange={(value) => show(String(value))}>
+            <DropdownMenuRadioGroup
+              value={selected.id}
+              onValueChange={(value) => replace(withDraft(pathname, String(value), !!activeDraft && diff))}
+            >
               {drafts.map((draft) => (
                 <DropdownMenuRadioItem key={draft.id} value={draft.id}>
                   <span className="flex min-w-0 flex-col">
@@ -134,19 +137,27 @@ export function KbDraftBar({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-      <div role="group" className="flex shrink-0 rounded-lg bg-surface-sunken p-0.5">
-        {!added && (
+      {!added && (
+        <div role="group" className="flex shrink-0 rounded-lg bg-surface-sunken p-0.5">
           <Toggle size="sm" pressed={!activeDraft} onPressedChange={() => replace(pathname)} className={SEGMENT}>
             {t(($) => $.draft.official)}
           </Toggle>
-        )}
-        <Toggle size="sm" pressed={!!activeDraft && !diff} onPressedChange={() => showDraft(selected.id)} className={SEGMENT}>
-          {t(($) => $.draft.draft)}
-        </Toggle>
-        <Toggle size="sm" pressed={!!activeDraft && diff} onPressedChange={() => showDiff(selected.id)} className={SEGMENT}>
-          {t(($) => $.draft.diff)}
-        </Toggle>
-      </div>
+          <Toggle size="sm" pressed={!!activeDraft} onPressedChange={() => replace(withDraft(pathname, selected.id))} className={SEGMENT}>
+            {t(($) => $.draft.draft)}
+          </Toggle>
+        </div>
+      )}
+      {activeDraft && (
+        <label className="flex shrink-0 cursor-pointer items-center gap-2">
+          <Switch
+            size="sm"
+            aria-labelledby={diffLabel}
+            checked={diff}
+            onCheckedChange={(checked: boolean) => replace(withDraft(pathname, activeDraft, checked))}
+          />
+          <span id={diffLabel}>{t(($) => $.draft.show_diff)}</span>
+        </label>
+      )}
     </div>
   );
 }
@@ -243,7 +254,7 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   const rawPreview = useKbRawFilePreview(kbSlug);
   const rawFileActions = rawFileActionsProp ?? rawPreview.actions;
   const draft = searchParams.get("draft") ?? "";
-  const diff = !!draft && searchParams.get("view") === KB_DIFF_VIEW;
+  const diff = readsDraftDiff(searchParams);
   const [panel, setPanel] = useState<Panel>("none");
   const [activeHeading, setActiveHeading] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -252,13 +263,13 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   const { data: page, isLoading, isError, error } = useQuery(kbPageOptions(wsId, pageId, draft));
   // Someone else's draft the reader may not see stays an error, not the published page.
   const draftForbidden = !!draft && error instanceof ApiError && error.status === 403;
-  // A draft copy is compared with the published page.
+  // Marking a draft's edits compares it with the official page, which a page
+  // the draft creates does not have.
+  const added = page?.draft_change === DRAFT_ADDED;
   const { data: published } = useQuery({
     ...kbPageOptions(wsId, pageId, ""),
-    enabled: !!wsId && !!pageId && !!draft && !diff && page?.draft_change === "modified",
+    enabled: !!wsId && !!pageId && diff && !!page?.draft_change && !added,
   });
-  // The diff view shows this page's file card from the draft's changes.
-  const { data: draftDetail } = useQuery({ ...kbDraftOptions(wsId, draft), enabled: !!wsId && diff });
   const loaded = !!page && page.id === pageId;
   // Annotated sentences are marked while the annotation panel is open.
   const { data: annotations = [] } = useQuery({
@@ -304,6 +315,17 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   }
 
   const title = pageTitle(page);
+  // With edits marked, a page the draft creates is all new, and a draft that
+  // leaves the page alone compares with itself.
+  const diffBase = !diff
+    ? undefined
+    : added
+      ? NO_BLOCKS
+      : !page.draft_change
+        ? page.blocks
+        : published?.id === page.id
+          ? published.blocks
+          : undefined;
   // Mainline reads list the viewer's drafts; a draft read of a page the
   // draft creates has no mainline to list them from.
   const drafts = page.drafts.length > 0 ? page.drafts : draft ? [syntheticDraft(draft, page)] : [];
@@ -326,7 +348,7 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
           {page.breadcrumb.map((crumb) => (
             <span key={crumb.id} className="flex min-w-0 items-center gap-1.5">
               <span aria-hidden="true">/</span>
-              <AppLink href={withDraft(p.kbPage(kbSlug, crumb.id), draft)} className="truncate hover:text-foreground">
+              <AppLink href={withDraft(p.kbPage(kbSlug, crumb.id), draft, diff)} className="truncate hover:text-foreground">
                 {crumb.title}
               </AppLink>
             </span>
@@ -345,16 +367,14 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
           <MessageSquare className="size-4" />
           {page.annotations_open > 0 && <span className="text-label tabular-nums">{page.annotations_open}</span>}
         </Toggle>
-        {!diff && (
-          <Toggle
-            aria-label={t(($) => $.page.toc)}
-            pressed={panel === "toc"}
-            onPressedChange={() => togglePanel("toc")}
-            className={PANEL_TOGGLE}
-          >
-            <List className="size-4" />
-          </Toggle>
-        )}
+        <Toggle
+          aria-label={t(($) => $.page.toc)}
+          pressed={panel === "toc"}
+          onPressedChange={() => togglePanel("toc")}
+          className={PANEL_TOGGLE}
+        >
+          <List className="size-4" />
+        </Toggle>
         <Toggle
           aria-label={t(($) => $.page.info)}
           pressed={panel === "info"}
@@ -385,29 +405,23 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
         <div ref={scroller} className="relative min-w-0 flex-1 overflow-y-auto">
           <article
             className={cn(
-              "mx-auto w-full max-w-[760px] pb-10",
-              panel === "none" ? "px-14 pt-9" : "px-8 pt-7",
+              // The body fills the width beside any panel; the text column, with
+              // the title and banners, stops at 1080px (1176 - 2*48) and centers.
+              "mx-auto w-full max-w-[1176px] px-12 pb-10",
+              panel === "none" ? "pt-9" : "pt-7",
             )}
           >
-            {diff ? (
-              <KbPageDiff
-                title={title}
-                banners={banners}
-                change={draftDetail?.id === draft ? (draftDetail.pages.find((c) => c.page_id === page.id) ?? null) : undefined}
-                pageHref={withDraft(p.kbPage(kbSlug, page.id), draft)}
-              />
-            ) : (
-              <KbPageBody
-                page={page}
-                published={published?.id === page.id ? published : null}
-                rawFileActions={rawFileActions}
-                onRawLink={rawPreview.openLinked}
-                annotatedQuotes={panel === "annotations" ? annotatedQuotes(annotations) : undefined}
-                kbSlug={kbSlug}
-                draft={draft}
-                banners={banners}
-              />
-            )}
+            <KbPageBody
+              page={page}
+              diffBase={diffBase}
+              rawFileActions={rawFileActions}
+              onRawLink={rawPreview.openLinked}
+              annotatedQuotes={panel === "annotations" ? annotatedQuotes(annotations) : undefined}
+              kbSlug={kbSlug}
+              draft={draft}
+              diff={diff}
+              banners={banners}
+            />
           </article>
           <KbSelectionAnnotator
             container={scroller}
@@ -429,7 +443,7 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
         {panel === "info" && (
           <KbInfoPanel page={page} kbSlug={kbSlug} draft={draft} onClose={() => setPanel("none")} onOpenSource={openSource} />
         )}
-        {panel === "toc" && !diff && (
+        {panel === "toc" && (
           <KbTocPanel page={page} activeBlockId={activeHeading} onJump={jumpTo} onClose={() => setPanel("none")} />
         )}
         {panel === "history" && (
@@ -437,34 +451,6 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
         )}
       </div>
       {rawPreview.modal}
-    </div>
-  );
-}
-
-/**
- * A page's changes in the draft being read, as its file card. `change` is
- * undefined while the draft loads and null when the draft leaves the page as is.
- */
-function KbPageDiff({
-  title,
-  banners,
-  change,
-  pageHref,
-}: {
-  title: string;
-  banners: ReactNode;
-  change: KbDraftPageChange | null | undefined;
-  pageHref: string;
-}) {
-  const { t } = useT("kb");
-  const [open, setOpen] = useState(true);
-
-  return (
-    <div className="kb-doc">
-      <h1 className="mb-[18px] text-display-sm font-semibold">{title}</h1>
-      {banners}
-      {change === null && <p className="text-body text-muted-foreground">{t(($) => $.draft.diff_empty)}</p>}
-      {change && <KbFileCard page={change} open={open} onToggle={() => setOpen((v) => !v)} href={pageHref} />}
     </div>
   );
 }

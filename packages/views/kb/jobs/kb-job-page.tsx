@@ -70,7 +70,7 @@ function JobShell({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
-      <header className="flex h-[72px] shrink-0 items-center gap-3 border-b px-5">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b px-5">
         <IconButton
           type="button"
           variant="ghost"

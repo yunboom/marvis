@@ -16,7 +16,6 @@ import type {
   KnowledgeBasePending,
   KbSearchMode,
   KbSearchResult,
-  KbDraftDetail,
   KbDraftDiffLine,
   KbDraftStatus,
   KbJob,
@@ -729,18 +728,6 @@ export const KbJobDetailSchema = KbJobSchema.extend({
   checks: KbDraftChecksSchema,
 }).loose();
 
-export const KbDraftDetailSchema = z
-  .object({
-    id: z.string(),
-    knowledge_base_id: text,
-    title: text,
-    version: countSchema,
-    status: z.enum(KB_DRAFT_STATUSES).catch("open"),
-    pages: lenientArray(KbDraftPageChangeSchema),
-    checks: KbDraftChecksSchema,
-  })
-  .loose();
-
 export const KbMergeRequestCreatedSchema = z
   .object({
     id: z.string(),
@@ -779,10 +766,6 @@ export function kbJobFallback(id = ""): KbJob {
 
 export function kbJobDetailFallback(id = ""): KbJobDetail {
   return { ...kbJobFallback(id), pages: [], checks: { lint: [], conflicts: [] } };
-}
-
-export function kbDraftDetailFallback(id = ""): KbDraftDetail {
-  return { id, knowledge_base_id: "", title: "", version: 0, status: "open", pages: [], checks: { lint: [], conflicts: [] } };
 }
 
 export const EMPTY_KB_MERGE_REQUEST_CREATED: KbMergeRequestCreated = {

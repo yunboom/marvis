@@ -9,7 +9,6 @@ import type {
   KbRawFileItem,
   KbBuilderSession,
   KbTemplates,
-  KbDraftDetail,
   KbHome,
   KbJob,
   KbJobDetail,
@@ -67,8 +66,6 @@ export const kbKeys = {
   jobList: (wsId: string, kb: string, state: KbJobListState | "") => [...kbKeys.jobs(wsId, kb), state] as const,
   /** A job with its draft's changes and checks. */
   job: (wsId: string, jobId: string) => [...kbKeys.all(wsId), "job", jobId] as const,
-  /** A draft's changed pages and checks. */
-  draft: (wsId: string, draftId: string) => [...kbKeys.all(wsId), "draft", draftId] as const,
   /** Every merge request list (the review list and the change log). */
   reviews: (wsId: string) => [...kbKeys.all(wsId), "reviews"] as const,
   /** One merge request list; an empty kb lists every knowledge base. */
@@ -194,15 +191,6 @@ export function kbJobOptions(wsId: string, jobId: string) {
     queryKey: kbKeys.job(wsId, jobId),
     queryFn: () => api.getKnowledgeBaseJob(jobId),
     enabled: !!wsId && !!jobId,
-  });
-}
-
-/** A draft's changed pages; draft writes refresh it through kb.draft.updated. */
-export function kbDraftOptions(wsId: string, draftId: string) {
-  return queryOptions<KbDraftDetail>({
-    queryKey: kbKeys.draft(wsId, draftId),
-    queryFn: () => api.getKbDraft(draftId),
-    enabled: !!wsId && !!draftId,
   });
 }
 

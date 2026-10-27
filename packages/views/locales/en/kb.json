@@ -102,7 +102,7 @@
     "multi_other": "You have {{count}} drafts changing this page, none merged yet. Others still see the official version.",
     "official": "Official",
     "draft": "Draft",
-    "diff": "Changes",
+    "show_diff": "Show changes",
     "diff_empty": "This draft does not change this page",
     "choose": "Choose draft",
     "origin": {

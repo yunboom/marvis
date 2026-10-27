@@ -174,7 +174,7 @@ export function KbTocPanel({
 
   return (
     <KbPanel title={t(($) => $.page.toc)} onClose={onClose} className="w-[240px]">
-      <nav className="flex flex-col gap-0.5 text-body">
+      <nav className="flex flex-col gap-0.5 text-body-lg">
         {headings.length === 0 && <span className="text-label text-muted-foreground">{t(($) => $.toc.empty)}</span>}
         {headings.map((heading) => (
           <button

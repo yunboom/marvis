@@ -102,7 +102,7 @@
     "multi_other": "Vous avez {{count}} brouillons qui modifient cette page, aucun fusionné. Les autres voient toujours la version officielle.",
     "official": "Officiel",
     "draft": "Brouillon",
-    "diff": "Différences",
+    "show_diff": "Afficher les différences",
     "diff_empty": "Ce brouillon ne modifie pas cette page",
     "choose": "Choisir un brouillon",
     "origin": {

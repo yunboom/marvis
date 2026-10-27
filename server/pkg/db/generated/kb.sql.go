@@ -1704,7 +1704,10 @@ SELECT
     dp.page_id, dp.op, dp.parent_id, dp.position, dp.slug, dp.frontmatter,
     p.parent_id AS main_parent_id,
     (p.id IS NOT NULL AND p.deleted_at IS NULL)::boolean AS on_mainline,
-    p.stale_after AS main_stale_after
+    p.stale_after AS main_stale_after,
+    p.title AS main_title,
+    p.type AS main_type,
+    p.description AS main_description
 FROM kb_draft_page dp
 LEFT JOIN kb_page p ON p.id = dp.page_id AND p.knowledge_base_id = $1
 WHERE dp.draft_id = $2
@@ -1716,19 +1719,23 @@ type ListKbDraftPagesParams struct {
 }
 
 type ListKbDraftPagesRow struct {
-	PageID         pgtype.UUID        `json:"page_id"`
-	Op             string             `json:"op"`
-	ParentID       pgtype.UUID        `json:"parent_id"`
-	Position       string             `json:"position"`
-	Slug           string             `json:"slug"`
-	Frontmatter    []byte             `json:"frontmatter"`
-	MainParentID   pgtype.UUID        `json:"main_parent_id"`
-	OnMainline     bool               `json:"on_mainline"`
-	MainStaleAfter pgtype.Timestamptz `json:"main_stale_after"`
+	PageID          pgtype.UUID        `json:"page_id"`
+	Op              string             `json:"op"`
+	ParentID        pgtype.UUID        `json:"parent_id"`
+	Position        string             `json:"position"`
+	Slug            string             `json:"slug"`
+	Frontmatter     []byte             `json:"frontmatter"`
+	MainParentID    pgtype.UUID        `json:"main_parent_id"`
+	OnMainline      bool               `json:"on_mainline"`
+	MainStaleAfter  pgtype.Timestamptz `json:"main_stale_after"`
+	MainTitle       pgtype.Text        `json:"main_title"`
+	MainType        pgtype.Text        `json:"main_type"`
+	MainDescription pgtype.Text        `json:"main_description"`
 }
 
 // Every page a draft touches, with the mainline parent of pages that exist
-// on the mainline (NULL for pages the draft creates).
+// on the mainline (NULL for pages the draft creates) and the mainline header
+// fields, which name a page the draft deletes.
 func (q *Queries) ListKbDraftPages(ctx context.Context, arg ListKbDraftPagesParams) ([]ListKbDraftPagesRow, error) {
 	rows, err := q.db.Query(ctx, listKbDraftPages, arg.KnowledgeBaseID, arg.DraftID)
 	if err != nil {
@@ -1748,6 +1755,9 @@ func (q *Queries) ListKbDraftPages(ctx context.Context, arg ListKbDraftPagesPara
 			&i.MainParentID,
 			&i.OnMainline,
 			&i.MainStaleAfter,
+			&i.MainTitle,
+			&i.MainType,
+			&i.MainDescription,
 		); err != nil {
 			return nil, err
 		}

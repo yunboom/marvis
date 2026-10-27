@@ -19,22 +19,38 @@ function isDraftChange(value: string): value is DraftChange {
   return (DRAFT_CHANGES as readonly string[]).includes(value);
 }
 
-/** Appends ?draft=<id> so the tree and page stay on the draft being viewed. */
-export function withDraft(href: string, draft: string): string {
-  return draft ? `${href}?draft=${encodeURIComponent(draft)}` : href;
+const DRAFT_DELETED: DraftChange = "deleted";
+
+// ?diff=1 marks a draft's edits on the page and in the tree; links from
+// before the switch carried ?view=diff.
+const DIFF_PARAM = "diff";
+const DIFF_ON = "1";
+const LEGACY_VIEW_PARAM = "view";
+const LEGACY_DIFF_VIEW = "diff";
+
+/** Whether a draft read marks the draft's edits. */
+export function readsDraftDiff(searchParams: URLSearchParams): boolean {
+  return (
+    !!searchParams.get("draft") &&
+    (searchParams.get(DIFF_PARAM) === DIFF_ON || searchParams.get(LEGACY_VIEW_PARAM) === LEGACY_DIFF_VIEW)
+  );
 }
 
-/** The `view` value that shows a page's changes in the draft instead of its text. */
-export const KB_DIFF_VIEW = "diff";
-
-/** A page's changes in a draft: ?draft=<id>&view=diff. */
-export function withDraftDiff(href: string, draft: string): string {
-  return `${withDraft(href, draft)}&view=${KB_DIFF_VIEW}`;
+/**
+ * Appends ?draft=<id> so the tree and page stay on the draft being viewed,
+ * and &diff=1 while its edits are marked.
+ */
+export function withDraft(href: string, draft: string, diff = false): string {
+  if (!draft) return href;
+  const read = `${href}?draft=${encodeURIComponent(draft)}`;
+  return diff ? `${read}&${DIFF_PARAM}=${DIFF_ON}` : read;
 }
 
 interface TreeContext {
   kbSlug: string;
   draft: string;
+  /** The draft's edits are marked: deleted pages stay, struck through, and rows carry their change. */
+  diff: boolean;
   selectedId: string;
   expanded: ReadonlySet<string>;
   toggle: (id: string) => void;
@@ -55,13 +71,13 @@ function TreeRow({ page, depth, ctx }: { page: KbTreePage; depth: number; ctx: T
   const p = useWorkspacePaths();
   const open = ctx.expanded.has(page.id);
   const selected = page.id === ctx.selectedId;
-  const change = isDraftChange(page.draft_change) ? page.draft_change : null;
+  const change = ctx.diff && isDraftChange(page.draft_change) ? page.draft_change : null;
 
   return (
     <li>
       <div
         className={cn(
-          "group/tree flex h-8 items-center gap-1 rounded-lg pr-1.5 text-body text-foreground transition-colors hover:bg-surface-hover",
+          "group/tree flex h-8 items-center gap-1 rounded-lg pr-1.5 text-body-lg text-foreground transition-colors hover:bg-surface-hover",
           selected && "bg-surface-selected font-medium text-foreground hover:bg-surface-selected",
         )}
         style={{ paddingLeft: 6 + depth * 16 }}
@@ -80,12 +96,12 @@ function TreeRow({ page, depth, ctx }: { page: KbTreePage; depth: number; ctx: T
           <span aria-hidden="true" className="size-4 shrink-0" />
         )}
         <AppLink
-          href={withDraft(p.kbPage(ctx.kbSlug, page.id), ctx.draft)}
+          href={withDraft(p.kbPage(ctx.kbSlug, page.id), ctx.draft, ctx.diff)}
           aria-current={selected ? "page" : undefined}
           title={page.description || page.title}
           className={cn(
             "min-w-0 flex-1 truncate outline-none",
-            change === "deleted" && "text-muted-foreground line-through",
+            change === DRAFT_DELETED && "text-muted-foreground line-through",
           )}
         >
           {page.title || page.path}
@@ -125,7 +141,11 @@ function TreeLevel({ parentId, depth, ctx }: { parentId: string; depth: number; 
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const pages = data?.pages.flatMap((level) => level.pages) ?? [];
+  // Without the edits marked, the tree is the knowledge base as the draft
+  // would leave it.
+  const pages = (data?.pages.flatMap((level) => level.pages) ?? []).filter(
+    (page) => ctx.diff || page.draft_change !== DRAFT_DELETED,
+  );
 
   if (isLoading) {
     return (
@@ -168,13 +188,15 @@ interface KbPageTreeProps {
   ancestorIds: readonly string[];
   /** Draft whose changes the tree shows; empty for the mainline. */
   draft: string;
+  /** The draft's edits are marked. */
+  diff?: boolean;
 }
 
 /**
  * The page tree of one knowledge base. Each level is fetched when it is first
  * shown; opening a page expands its ancestors so their levels load together.
  */
-export function KbPageTree({ kbSlug, selectedId, ancestorIds, draft }: KbPageTreeProps) {
+export function KbPageTree({ kbSlug, selectedId, ancestorIds, draft, diff = false }: KbPageTreeProps) {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set(ancestorIds));
 
   const ancestorKey = ancestorIds.join("/");
@@ -195,5 +217,5 @@ export function KbPageTree({ kbSlug, selectedId, ancestorIds, draft }: KbPageTre
     });
   }, []);
 
-  return <TreeLevel parentId="" depth={0} ctx={{ kbSlug, draft, selectedId, expanded, toggle }} />;
+  return <TreeLevel parentId="" depth={0} ctx={{ kbSlug, draft, diff, selectedId, expanded, toggle }} />;
 }

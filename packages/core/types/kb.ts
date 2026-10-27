@@ -535,17 +535,6 @@ export interface KbJobDetail extends KbJob {
   checks: KbDraftChecks;
 }
 
-/** A draft with its changed pages and checks. */
-export interface KbDraftDetail {
-  id: string;
-  knowledge_base_id: string;
-  title: string;
-  version: number;
-  status: KbDraftStatus;
-  pages: KbDraftPageChange[];
-  checks: KbDraftChecks;
-}
-
 export interface CreateKbJobRequest {
   agent_id: string;
   starter: KbJobStarter;

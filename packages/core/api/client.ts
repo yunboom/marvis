@@ -289,7 +289,6 @@ import type {
   UpdateKnowledgeBaseRequest,
   CreateKbJobRequest,
   KbJob,
-  KbDraftDetail,
   KbJobDetail,
   KbJobState,
   KbMergeRequestCreated,
@@ -341,12 +340,10 @@ import {
   KbRawUploadSchema,
   EMPTY_KB_JOB_LIST,
   EMPTY_KB_MERGE_REQUEST_CREATED,
-  KbDraftDetailSchema,
   KbJobDetailSchema,
   KbJobListSchema,
   KbJobSchema,
   KbMergeRequestCreatedSchema,
-  kbDraftDetailFallback,
   kbJobDetailFallback,
   kbJobFallback,
   EMPTY_KB_BUILDER_SESSION_LIST,
@@ -5157,14 +5154,6 @@ export class ApiClient {
     const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}`);
     return parseWithFallback(raw, KbJobDetailSchema, kbJobDetailFallback(id), {
       endpoint: "GET /api/kb/jobs/:id",
-    });
-  }
-
-  /** A draft's changed pages and checks; its creator and the linked job's starter may read it. */
-  async getKbDraft(id: string): Promise<KbDraftDetail> {
-    const raw = await this.fetch<unknown>(`/api/kb/drafts/${encodeURIComponent(id)}`);
-    return parseWithFallback(raw, KbDraftDetailSchema, kbDraftDetailFallback(id), {
-      endpoint: "GET /api/kb/drafts/:id",
     });
   }
 

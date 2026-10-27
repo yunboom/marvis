@@ -894,7 +894,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                         {item.key === "kb" && kbOpenMergeRequests > 0 && (
                           <span
                             data-testid="kb-open-mr-badge"
-                            className="ml-auto inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1.25 text-micro font-normal tabular-nums text-primary-foreground"
+                            className="ml-auto inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-destructive px-1.25 text-micro font-normal tabular-nums text-white"
                           >
                             {kbOpenMergeRequests > 99 ? "99+" : kbOpenMergeRequests}
                           </span>

@@ -199,12 +199,16 @@ GROUP BY author_type;
 
 -- name: ListKbDraftPages :many
 -- Every page a draft touches, with the mainline parent of pages that exist
--- on the mainline (NULL for pages the draft creates).
+-- on the mainline (NULL for pages the draft creates) and the mainline header
+-- fields, which name a page the draft deletes.
 SELECT
     dp.page_id, dp.op, dp.parent_id, dp.position, dp.slug, dp.frontmatter,
     p.parent_id AS main_parent_id,
     (p.id IS NOT NULL AND p.deleted_at IS NULL)::boolean AS on_mainline,
-    p.stale_after AS main_stale_after
+    p.stale_after AS main_stale_after,
+    p.title AS main_title,
+    p.type AS main_type,
+    p.description AS main_description
 FROM kb_draft_page dp
 LEFT JOIN kb_page p ON p.id = dp.page_id AND p.knowledge_base_id = sqlc.arg('knowledge_base_id')
 WHERE dp.draft_id = sqlc.arg('draft_id');
