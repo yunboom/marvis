@@ -29,6 +29,7 @@ const (
 	kbCodeNotChangesRequested   = "merge_request_not_changes_requested"
 	kbCodeReviewMemberOnly      = "review_member_only"
 	kbCodeMergeRequestOwnerOnly = "merge_request_owner_only"
+	kbCodeReviewOwnMergeRequest = "review_own_merge_request"
 )
 
 // Inbox notifications of reviews.
@@ -84,6 +85,13 @@ var kbActiveMergeRequestStatuses = []string{kb.MergeRequestStatusOpen, kb.MergeR
 
 func isKbMergeRequestActive(status string) bool {
 	return slices.Contains(kbActiveMergeRequestStatuses, status)
+}
+
+// mayReviewKbMergeRequest: any member reviews someone else's merge request;
+// its owner reviews it only as a knowledge base maintainer, so a maintainer
+// can send feedback to the agent working on their own job (decision 107).
+func mayReviewKbMergeRequest(member db.Member, base db.KbBase, isOwner bool) bool {
+	return !isOwner || canMaintainKb(member, base)
 }
 
 // KbMrReviewResponse is one review of a merge request.
@@ -142,7 +150,9 @@ func (h *Handler) kbMrReviews(ctx context.Context, mr db.KbMergeRequest, viewer 
 // OpenKbMrReview starts the caller's review (POST
 // /api/kb/merge-requests/{number}/reviews). A member has one pending review
 // per merge request: when it exists it is returned with 200, a new one with
-// 201. Only members review; agents get 403 review_member_only.
+// 201. Only members review; agents get 403 review_member_only. The owner
+// reviews their own request only as a knowledge base maintainer, otherwise
+// 403 review_own_merge_request.
 func (h *Handler) OpenKbMrReview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
@@ -159,6 +169,20 @@ func (h *Handler) OpenKbMrReview(w http.ResponseWriter, r *http.Request) {
 	}
 	if !isKbMergeRequestActive(mr.Status) {
 		writeErrorCode(w, http.StatusConflict, kbCodeMergeRequestNotOpen, "the merge request is "+mr.Status)
+		return
+	}
+
+	member, ok := h.workspaceMember(w, r, uuidToString(base.WorkspaceID))
+	if !ok {
+		return
+	}
+	owner, err := kbMergeRequestOwner(ctx, h.Queries, mr)
+	if err != nil {
+		h.writeKbInternalError(w, r, err)
+		return
+	}
+	if !mayReviewKbMergeRequest(member, base, uuidToString(owner) == userID) {
+		writeErrorCode(w, http.StatusForbidden, kbCodeReviewOwnMergeRequest, "only a knowledge base maintainer reviews their own merge request")
 		return
 	}
 

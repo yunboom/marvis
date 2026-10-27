@@ -241,6 +241,55 @@ func TestKbMrReviewFlow(t *testing.T) {
 	}
 }
 
+// TestKbMrReviewByOwner: a knowledge base maintainer reviews their own merge
+// request and is never notified of their own review or review request; an
+// owner who does not maintain the knowledge base cannot, while other members
+// still can.
+func TestKbMrReviewByOwner(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	f := newKbReviewFixture(t)
+	cleanupKbReviews(t, f.baseID, f.slug)
+	plain := createPlainMember(t, fmt.Sprintf("kb-own-reviewer-%d@marvis.ai", time.Now().UnixNano()))
+
+	// The workspace owner reviews their own request and sends feedback.
+	own := openKbMR(t, f.draftWith(t, map[int]string{2: "Dedup by trade no."}))
+	if detail := getKbMR(t, own.Number, nil); detail.OwnerID != testUserID || !detail.CanReview {
+		t.Fatalf("maintainer owner detail = %+v", detail)
+	}
+	review := openKbReview(t, own.Number, nil, http.StatusCreated)
+	addKbReviewComment(t, own.Number, review.ID, map[string]any{"body": "Keep the order id too."}, nil)
+	submitKbReview(t, own.Number, review.ID, "One more pass.", nil, http.StatusOK)
+	if detail := getKbMR(t, own.Number, nil); detail.Status != kb.MergeRequestStatusChangesRequested || !detail.CanRequestReview {
+		t.Fatalf("after self review = %+v", detail)
+	}
+	if n := kbInboxCount(t, testUserID, kbInboxChangesRequested, f.slug); n != 0 {
+		t.Errorf("owner notified of their own review = %d", n)
+	}
+	testutil.Call(t, testHandler.RequestKbMrReview, kbMRRequest(http.MethodPost, own.Number, nil, nil)).Want(http.StatusOK)
+	if n := kbInboxCount(t, testUserID, kbInboxReviewRequested, f.slug); n != 0 {
+		t.Errorf("owner notified of their own review request = %d", n)
+	}
+
+	// An owner who does not maintain the knowledge base cannot review.
+	theirs := openKbMR(t, f.draftWith(t, map[int]string{3: "Retry every hour."}))
+	dbfx.Exec(t, `UPDATE kb_draft SET created_by = $2 WHERE id = (SELECT draft_id FROM kb_merge_request WHERE workspace_id = $1 AND number = $3)`,
+		testWorkspaceID, plain, theirs.Number)
+	if detail := getKbMR(t, theirs.Number, asMember(plain)); detail.OwnerID != plain || detail.CanReview {
+		t.Fatalf("plain owner detail = %+v", detail)
+	}
+	req := kbReviewRequest(http.MethodPost, theirs.Number, map[string]any{}, asMember(plain))
+	if got := testutil.Call(t, testHandler.OpenKbMrReview, req).Want(http.StatusForbidden).Map(); got["code"] != kbCodeReviewOwnMergeRequest {
+		t.Errorf("plain owner open review = %v", got)
+	}
+	if detail := getKbMR(t, theirs.Number, nil); !detail.CanReview {
+		t.Errorf("other member may not review = %+v", detail)
+	}
+	openKbReview(t, theirs.Number, nil, http.StatusCreated)
+}
+
 // TestKbMrReviewDiscardAndClose: discarding drops the review and its
 // comments; a changes_requested request can still be closed.
 func TestKbMrReviewDiscardAndClose(t *testing.T) {

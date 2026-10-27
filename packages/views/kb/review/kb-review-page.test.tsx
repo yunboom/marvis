@@ -292,6 +292,20 @@ describe("KbReviewPage", () => {
     await waitFor(() => expect(mocked.openKnowledgeBaseMrReview).toHaveBeenCalledWith(16));
   });
 
+  it("lets the owner start a review when the server allows it", async () => {
+    auth.state.user.id = "user-1";
+    await openReview(detail());
+
+    expect(screen.getByRole("button", { name: "Start review" })).toBeInTheDocument();
+  });
+
+  it("hides start review when the server does not allow it", async () => {
+    auth.state.user.id = "user-1";
+    await openReview(detail({ can_review: false }));
+
+    expect(screen.queryByRole("button", { name: "Start review" })).not.toBeInTheDocument();
+  });
+
   it("quotes a diff line into a pending comment and submits the review with a summary", async () => {
     const pending: KbMrComment = { ...COMMENT, id: "c-2", state: "pending", body: "Add the date." };
     mocked.createKnowledgeBaseMrComment.mockResolvedValue(pending);

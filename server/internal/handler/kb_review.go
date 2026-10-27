@@ -117,8 +117,9 @@ type KbMergeRequestDetailResponse struct {
 	CanMerge      bool                `json:"can_merge"`
 	CanClose      bool                `json:"can_close"`
 	CanRevert     bool                `json:"can_revert"`
-	// CanReview: the viewer may start or continue a review (a member, and
-	// the request is still under review).
+	// CanReview: the viewer may start or continue a review (a member, the
+	// request is still under review, and not their own unless they maintain
+	// the knowledge base).
 	CanReview bool `json:"can_review"`
 	// CanRequestReview: the viewer is the owner and the request waits on
 	// them (changes_requested).
@@ -302,7 +303,8 @@ func (h *Handler) GetKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	detail.CanMerge = canMaintainKb(member, base)
 	detail.CanRevert = detail.CanMerge
 	detail.CanClose = canCloseKbMergeRequest(member, base, mr, actorType, actorID)
-	detail.CanReview = actorType == kbActorMember && isKbMergeRequestActive(mr.Status)
+	detail.CanReview = actorType == kbActorMember && isKbMergeRequestActive(mr.Status) &&
+		mayReviewKbMergeRequest(member, base, detail.OwnerID == userID)
 	detail.CanRequestReview = detail.OwnerID == userID && mr.Status == kb.MergeRequestStatusChangesRequested
 	detail.Origin.restrictTo(userID)
 

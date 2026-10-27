@@ -678,7 +678,8 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
   const isOwner = !!userId && mr.owner_id === userId;
   const review = mr.pending_review;
   const reviewing = !!review && active;
-  const canStartReview = open && mr.can_review && !review && !isOwner;
+  // can_review already folds in who may review their own request.
+  const canStartReview = open && mr.can_review && !review;
   const conflicts = active ? mr.checks.conflicts : [];
   const lintErrors = mr.checks.lint.filter((f) => f.severity === "error").length;
   const canMerge = open && mr.can_merge && !mr.agent_running && conflicts.length === 0 && lintErrors === 0;
@@ -781,8 +782,8 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
 
   const hiddenCount = showEarlier ? 0 : Math.max(0, items.length - VISIBLE_ACTIVITY);
   const visibleItems = hiddenCount > 0 ? items.slice(-VISIBLE_ACTIVITY) : items;
-  // Diff lines quote into a review: a reviewer who can review, not the owner.
-  const canQuote = active && mr.can_review && !isOwner && (open || reviewing);
+  // Diff lines quote into a review, for whoever the server lets review.
+  const canQuote = active && mr.can_review && (open || reviewing);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -956,7 +957,8 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
                 replies={item.replies}
                 pageTitle={pageTitle}
                 onReply={reviewing ? setReplyTo : null}
-                canReplyInline={isOwner && active}
+                // An owner reviewing their own request replies through the review.
+                canReplyInline={isOwner && active && !reviewing}
               />
             ),
           )}
