@@ -128,10 +128,10 @@ var kbMRCommentListCmd = &cobra.Command{
 
 var kbMRCommentAddCmd = &cobra.Command{
 	Use:   "add <number>",
-	Short: "Reply to review feedback as the merge request's owner; reply under a comment with --parent",
-	Long: `Post a published comment on a merge request. Only the owner of the merge
-request (the member who created its draft, or an agent acting for them) may;
-reviewers leave feedback through a review on the review page.`,
+	Short: "Reply under a review comment (--parent) as the merge request's owner",
+	Long: `Reply under a published comment of a merge request. Only the owner of the
+merge request (the member who created its draft, or an agent acting for them)
+may; reviewers leave feedback through a review on the review page.`,
 	Args: exactArgs(1),
 	RunE: runKbMRCommentAdd,
 }
@@ -540,6 +540,9 @@ func runKbMRCommentAdd(cmd *cobra.Command, args []string) error {
 	}
 	if !ok {
 		return fmt.Errorf("--content, --content-file or --content-stdin is required")
+	}
+	if kbString(cmd, "parent") == "" {
+		return fmt.Errorf("--parent is required: the owner replies under a published comment")
 	}
 	if (kbString(cmd, "quote-page") == "") != (kbString(cmd, "quote-block") == "") {
 		return fmt.Errorf("--quote-page and --quote-block go together")

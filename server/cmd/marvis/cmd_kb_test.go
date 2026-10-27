@@ -369,4 +369,14 @@ func TestKbMRReadyAndListDefaults(t *testing.T) {
 	if _, ok := (*seen)[1].Query["status"]; ok {
 		t.Errorf("list sends a status by default: %+v", (*seen)[1])
 	}
+
+	if _, err := runKbTestCmd(t, kbMRCommentAddCmd, "16", "--content", "done"); err == nil {
+		t.Error("comment add without --parent accepted")
+	}
+	if _, err := runKbTestCmd(t, kbMRCommentAddCmd, "16", "--content", "done", "--parent", "c1"); err != nil {
+		t.Fatalf("comment add: %v", err)
+	}
+	if req := (*seen)[2]; req.Path != "/api/kb/merge-requests/16/comments" || req.Body["parent_id"] != "c1" || req.Body["body"] != "done" {
+		t.Errorf("comment add request = %+v", req)
+	}
 }
