@@ -6,10 +6,10 @@
 
 **Status:** ready-for-agent
 
-- [ ] 新路由 `/{ws}/autopilots/{id}/runs/{runId}`，web 与 desktop 都接入，paths 加对应方法
-- [ ] 执行过程与原日志弹窗同源，运行中实时刷新
-- [ ] Webhook 触发的运行显示载荷（原弹窗顶部的载荷预览）
-- [ ] 没有任务的运行（跳过、派发前失败）只显示运行信息
-- [ ] 详情页运行记录：仅运行点进本页；创建任务跳任务详情；原日志按钮与临时任务构造删除
-- [ ] 加载、找不到、无权限状态
-- [ ] `pnpm typecheck`、`pnpm lint`、相关 `pnpm test` 通过
+- [x] 新路由 `/{ws}/autopilots/{id}/runs/{runId}`，web 与 desktop 都接入，paths 加对应方法
+- [x] 执行过程与原日志弹窗同源，运行中实时刷新
+- [x] Webhook 触发的运行显示载荷（原弹窗顶部的载荷预览）
+- [x] 没有任务的运行（跳过、派发前失败）只显示运行信息
+- [x] 详情页运行记录：仅运行点进本页；创建任务跳任务详情；原日志按钮与临时任务构造删除
+- [x] 加载、找不到、无权限状态
+- [x] `pnpm typecheck`、`pnpm lint`、相关 `pnpm test` 通过
