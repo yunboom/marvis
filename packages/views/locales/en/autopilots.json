@@ -180,6 +180,7 @@
     "runtime_online": "Runtime online",
     "runtime_offline": "Runtime offline",
     "not_executed": "This run did not execute.",
+    "autopilot_deleted": "This autopilot was deleted. The conversation can't continue.",
     "shared_conversation": "Members who can view this autopilot share this conversation.",
     "transcript_failed": "Couldn't load the execution log.",
     "not_found": "Run not found",

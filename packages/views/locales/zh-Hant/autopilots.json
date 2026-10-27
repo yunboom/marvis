@@ -180,6 +180,7 @@
     "runtime_online": "執行時線上",
     "runtime_offline": "執行時離線",
     "not_executed": "本次執行未進行。",
+    "autopilot_deleted": "自動化已刪除，無法繼續對話。",
     "shared_conversation": "能查看這個自動化的成員共用這段對話。",
     "transcript_failed": "執行過程載入失敗。",
     "not_found": "找不到這次執行",

@@ -457,6 +457,27 @@ describe("AutopilotRunPage", () => {
       expect(getChatSession).toHaveBeenCalledWith("chat-1");
     });
 
+    it("closes the input with a notice once the autopilot is deleted", async () => {
+      getAutopilot.mockResolvedValue({ autopilot: autopilot({ status: "archived" }), triggers: [], collaborators: [] });
+      getAutopilotRun.mockResolvedValue(run({ agent_id: RUN_AGENT, chat_session_id: null }));
+      renderPage();
+
+      expect(await screen.findByText("This autopilot was deleted. The conversation can't continue.")).toBeInTheDocument();
+      const composer = screen.getByRole("form", { name: "composer" });
+      expect(within(composer).getByRole("textbox", { name: "message" })).toBeDisabled();
+    });
+
+    it("closes the input when the run's conversation is archived", async () => {
+      getAutopilotRun.mockResolvedValue(run({ agent_id: RUN_AGENT, chat_session_id: "chat-1" }));
+      getChatSession.mockResolvedValue({ id: "chat-1", creator_id: "user-1", status: "archived" } as Awaited<
+        ReturnType<typeof api.getChatSession>
+      >);
+      renderPage();
+
+      const composer = await screen.findByRole("form", { name: "composer" });
+      await waitFor(() => expect(within(composer).getByRole("textbox", { name: "message" })).toBeDisabled());
+    });
+
     it("does not send when the conversation cannot be created", async () => {
       const user = userEvent.setup();
       getAutopilotRun.mockResolvedValue(run({ agent_id: RUN_AGENT, chat_session_id: null }));

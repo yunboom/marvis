@@ -180,6 +180,7 @@
     "runtime_online": "Runtime en ligne",
     "runtime_offline": "Runtime hors ligne",
     "not_executed": "Cette exécution n'a pas eu lieu.",
+    "autopilot_deleted": "Cette automatisation a été supprimée. La conversation ne peut plus continuer.",
     "shared_conversation": "Les membres qui peuvent voir cette automatisation partagent cette conversation.",
     "transcript_failed": "Impossible de charger le journal d'exécution.",
     "not_found": "Exécution introuvable",

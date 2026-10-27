@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
+  Archive,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -21,7 +22,7 @@ import { chatSessionOptions, isTaskMessageTaskId, useTaskMessages } from "@marvi
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { createLogger } from "@marvis/core/logger";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import type { Autopilot, AutopilotRun, AutopilotRunSource, ChatMessage } from "@marvis/core/types";
+import type { Autopilot, AutopilotRun, AutopilotRunSource, ChatMessage, ChatSession } from "@marvis/core/types";
 import { useActorName } from "@marvis/core/workspace/hooks";
 import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
@@ -30,6 +31,7 @@ import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { AgentAccessRevokedBanner } from "../../chat/components/agent-access-revoked-banner";
 import { ArchivedAgentBanner } from "../../chat/components/archived-agent-banner";
+import { CHAT_COLUMN, CHAT_GUTTER } from "../../chat/components/chat-column";
 import { ChatInput } from "../../chat/components/chat-input";
 import { ChatMessageList, TaskTimelineReply } from "../../chat/components/chat-message-list";
 import { ChatQueue } from "../../chat/components/chat-queue";
@@ -57,6 +59,9 @@ const SOURCE_ICON: Record<AutopilotRunSource, typeof Clock> = {
 };
 
 const KNOWN_SOURCES = Object.keys(SOURCE_ICON) as AutopilotRunSource[];
+
+const AUTOPILOT_STATUS_ARCHIVED: Autopilot["status"] = "archived";
+const CHAT_SESSION_STATUS_ARCHIVED: ChatSession["status"] = "archived";
 
 const logger = createLogger("autopilots.run-page");
 
@@ -333,6 +338,7 @@ function RunConversation({
       {hasTask && isAgent ? (
         <RunFollowUp
           autopilotId={autopilot.id}
+          autopilotDeleted={autopilot.status === AUTOPILOT_STATUS_ARCHIVED}
           run={run}
           agentId={executor.id}
           status={status}
@@ -358,6 +364,7 @@ function RunConversation({
  */
 function RunFollowUp({
   autopilotId,
+  autopilotDeleted,
   run,
   agentId,
   status,
@@ -365,6 +372,8 @@ function RunFollowUp({
   firstTurn,
 }: {
   autopilotId: string;
+  /** Deleting an autopilot archives its runs' chats, so the input closes. */
+  autopilotDeleted: boolean;
   run: AutopilotRun;
   agentId: string;
   status: RunStatus;
@@ -419,9 +428,14 @@ function RunFollowUp({
   const accessRevoked = !!agent && !canAssignAgent(agent, user?.id, memberRole);
   const runtimeRequired = !!agent && !isAgentRuntimeBound(agent);
   const queuedTasks = conversation.pendingTask?.queued_tasks ?? [];
+  // A deleted autopilot archives the chat; either signal closes the input up
+  // front instead of letting the server refuse the send.
+  const closed = autopilotDeleted || session?.status === CHAT_SESSION_STATUS_ARCHIVED;
 
   let banner: ReactNode;
-  if (accessRevoked) banner = <AgentAccessRevokedBanner agentName={agent?.name} />;
+  if (autopilotDeleted) banner = <AutopilotDeletedBanner />;
+  else if (closed) banner = null;
+  else if (accessRevoked) banner = <AgentAccessRevokedBanner agentName={agent?.name} />;
   else if (agentArchived) banner = <ArchivedAgentBanner agentName={agent?.name} />;
   else if (runtimeRequired && agent) banner = <RuntimeRequiredBanner agentId={agent.id} agentName={agent.name} />;
   else banner = <OfflineBanner agentName={agent?.name} availability={availability} />;
@@ -438,7 +452,7 @@ function RunFollowUp({
           isFetchingOlderMessages={conversation.isFetchingOlderMessages}
           onLoadOlderMessages={conversation.fetchOlderMessages}
           onQuickAction={(action) => conversation.send(action.prompt)}
-          quickActionsDisabled={conversation.running || accessRevoked || agentArchived || runtimeRequired}
+          quickActionsDisabled={conversation.running || closed || accessRevoked || agentArchived || runtimeRequired}
           header={firstTurn}
           renderUserMessageSender={renderSender}
         />
@@ -466,16 +480,35 @@ function RunFollowUp({
         allowSubmitWhileRunning={runInProgress || conversation.pendingTask?.supports_queue === true}
         restoreDraftRequest={conversation.restoreDraftRequest}
         onRestoreDraftApplied={conversation.handleRestoreDraftApplied}
-        uploadEnabled={!accessRevoked}
-        disabled={agentArchived || accessRevoked || runtimeRequired}
-        agentArchived={agentArchived}
-        agentAccessRevoked={accessRevoked}
-        agentRuntimeRequired={runtimeRequired}
+        uploadEnabled={!closed && !accessRevoked}
+        disabled={closed || agentArchived || accessRevoked || runtimeRequired}
+        agentArchived={!closed && agentArchived}
+        agentAccessRevoked={!closed && accessRevoked}
+        agentRuntimeRequired={!closed && runtimeRequired}
         agentName={agent?.name}
         draftKeyOverride={draftKey}
         editorKeyOverride={draftKey}
       />
     </>
+  );
+}
+
+/** Above the closed input of a deleted autopilot's run, in the banner slot. */
+function AutopilotDeletedBanner() {
+  const { t } = useT("autopilots");
+
+  return (
+    <div className={cn(CHAT_GUTTER, "mb-2")}>
+      <div
+        className={cn(
+          CHAT_COLUMN,
+          "flex items-center gap-2 rounded-lg bg-surface-sunken px-3 py-2 text-label text-muted-foreground ring-1 ring-inset ring-border",
+        )}
+      >
+        <Archive className="size-3.5 shrink-0" aria-hidden="true" />
+        <span className="truncate">{t(($) => $.run_page.autopilot_deleted)}</span>
+      </div>
+    </div>
   );
 }
 
