@@ -69,6 +69,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2 AND cs.status = 'active'
   )
   -- A knowledge base job's chat lives on the job page, not in chat lists.
   AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
+  -- An autopilot run's follow-up chat lives on the run page, not in chat lists.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC;
 
 -- name: ListAllChatSessionsByCreator :many
@@ -108,6 +110,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2
   )
   -- A knowledge base job's chat lives on the job page, not in chat lists.
   AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
+  -- An autopilot run's follow-up chat lives on the run page, not in chat lists.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC;
 
 -- name: ListAgentBuilderSessionsByCreator :many
@@ -1491,6 +1495,8 @@ WHERE atq.chat_session_id IS NOT NULL
   AND atq.regenerate_quick_actions_for IS NULL
   AND cs.workspace_id = $1
   AND cs.creator_id = $2
+  -- A run's follow-up chat is not a chat-window conversation.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY atq.created_at DESC;
 
 -- name: HasPendingChatTasksByCreator :one
@@ -1515,6 +1521,8 @@ SELECT EXISTS (
     AND cs.workspace_id = sqlc.arg(workspace_id)
     AND cs.creator_id = sqlc.arg(creator_id)
     AND cs.agent_id = ANY(sqlc.arg(agent_ids)::uuid[])
+    -- A run's follow-up chat is not a chat-window conversation.
+    AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ) AS has_pending;
 
 -- name: MarkChatSessionRead :exec
@@ -1552,14 +1560,32 @@ VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: ListChatDraftRestoresBySession :many
-SELECT * FROM chat_draft_restore
-WHERE chat_session_id = $1
-ORDER BY created_at ASC;
+-- An autopilot run's follow-up chat is shared by every member who can view
+-- the autopilot, so there each member only gets back the prompts they sent.
+SELECT dr.* FROM chat_draft_restore dr
+WHERE dr.chat_session_id = @chat_session_id
+  AND (
+    NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = dr.chat_session_id)
+    OR EXISTS (SELECT 1 FROM agent_task_queue t WHERE t.id = dr.task_id AND t.initiator_user_id = @user_id)
+  )
+ORDER BY dr.created_at ASC;
 
 -- name: DeleteChatDraftRestore :execrows
 -- Idempotent consume: deleting an already-consumed restore matches no row.
-DELETE FROM chat_draft_restore
-WHERE id = $1 AND chat_session_id = $2;
+-- Same per-sender rule as ListChatDraftRestoresBySession.
+DELETE FROM chat_draft_restore dr
+WHERE dr.id = @id AND dr.chat_session_id = @chat_session_id
+  AND (
+    NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = dr.chat_session_id)
+    OR EXISTS (SELECT 1 FROM agent_task_queue t WHERE t.id = dr.task_id AND t.initiator_user_id = @user_id)
+  );
+
+-- name: ListChatMessageSenders :many
+-- The member who sent each listed turn: a user message's task is the turn it
+-- started, and that task's initiator is its sender.
+SELECT id AS task_id, initiator_user_id FROM agent_task_queue
+WHERE id = ANY(@task_ids::uuid[])
+  AND initiator_user_id IS NOT NULL;
 
 -- name: DeleteChatDraftRestoresBySession :exec
 -- chat_draft_restore carries no chat_session FK (MUL-3515), so DeleteChatSession

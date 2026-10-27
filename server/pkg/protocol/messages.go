@@ -261,6 +261,8 @@ type ChatMessagePayload struct {
 	Content       string `json:"content"`
 	TaskID        string `json:"task_id,omitempty"`
 	CreatedAt     string `json:"created_at"`
+	// SenderUserID is the member who sent a user message.
+	SenderUserID string `json:"sender_user_id,omitempty"`
 }
 
 // Chat message kinds (chat_message.message_kind). Additive: unknown values

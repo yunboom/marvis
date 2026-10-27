@@ -436,6 +436,33 @@ UPDATE autopilot_run
 SET chat_session_id = $2
 WHERE id = $1;
 
+-- name: GetAutopilotByRunChatSession :one
+-- The autopilot owning the run a follow-up chat session continues. Members who
+-- can view that autopilot share the session instead of only its creator.
+SELECT a.* FROM autopilot a
+JOIN autopilot_run r ON r.autopilot_id = a.id
+WHERE r.chat_session_id = @chat_session_id AND a.workspace_id = @workspace_id;
+
+-- name: GetLatestSettledAutopilotRunTaskWithSession :one
+-- The newest settled task of a run that recorded a provider session: the
+-- auto-retry child when the run task was retried, else the run task itself.
+SELECT * FROM agent_task_queue
+WHERE autopilot_run_id = @autopilot_run_id
+  AND status IN ('completed', 'failed', 'cancelled')
+  AND session_id IS NOT NULL
+ORDER BY created_at DESC, id DESC
+LIMIT 1;
+
+-- name: ArchiveAutopilotRunChatSessions :exec
+-- Archives the follow-up chat sessions of every run of an autopilot when the
+-- autopilot is deleted. Archived sessions refuse new messages.
+UPDATE chat_session cs
+SET status = 'archived', updated_at = now()
+FROM autopilot_run r
+WHERE r.autopilot_id = @autopilot_id
+  AND r.chat_session_id = cs.id
+  AND cs.status = 'active';
+
 -- name: ListAutopilotRuns :many
 SELECT * FROM autopilot_run
 WHERE autopilot_id = $1

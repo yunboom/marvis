@@ -162,7 +162,11 @@ func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot d
 		return pgtype.UUID{}, errors.Wrapf(err, "mark run chat session chat_session_id=%s", uuidToString(session.ID))
 	}
 	if runTaskTerminal(task.Status) {
-		if err := qtx.UpdateChatSessionSession(ctx, service.RunChatResumePointer(session.ID, task)); err != nil {
+		resumeTask, err := runChatResumeTask(ctx, qtx, runID, task)
+		if err != nil {
+			return pgtype.UUID{}, err
+		}
+		if err := qtx.UpdateChatSessionSession(ctx, service.RunChatResumePointer(session.ID, resumeTask)); err != nil {
 			return pgtype.UUID{}, errors.Wrapf(err, "prefill run chat session chat_session_id=%s", uuidToString(session.ID))
 		}
 	}
@@ -175,6 +179,21 @@ func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot d
 	}
 
 	return session.ID, nil
+}
+
+// runChatResumeTask picks the task a settled run's chat continues: the run's
+// newest settled task that recorded a provider session — the auto-retry child
+// when the run task was retried — or the run task itself when none did.
+func runChatResumeTask(ctx context.Context, qtx *db.Queries, runID pgtype.UUID, runTask db.AgentTaskQueue) (db.AgentTaskQueue, error) {
+	latest, err := qtx.GetLatestSettledAutopilotRunTaskWithSession(ctx, runID)
+	if isNotFound(err) {
+		return runTask, nil
+	}
+	if err != nil {
+		return db.AgentTaskQueue{}, errors.Wrapf(err, "get run resume task run_id=%s", uuidToString(runID))
+	}
+
+	return latest, nil
 }
 
 // lockRunChatProject takes the project lock chat session creation requires.

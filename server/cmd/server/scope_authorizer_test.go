@@ -17,6 +17,8 @@ type fakeScopeQuerier struct {
 	tasks    map[[16]byte]db.AgentTaskQueue
 	issues   map[[16]byte]db.Issue
 	sessions map[[16]byte]db.ChatSession
+	// runChats maps a run follow-up chat session to its autopilot.
+	runChats map[[16]byte]db.Autopilot
 }
 
 func (f *fakeScopeQuerier) GetAgentTask(_ context.Context, id pgtype.UUID) (db.AgentTaskQueue, error) {
@@ -36,6 +38,49 @@ func (f *fakeScopeQuerier) GetChatSession(_ context.Context, id pgtype.UUID) (db
 		return s, nil
 	}
 	return db.ChatSession{}, pgx.ErrNoRows
+}
+func (f *fakeScopeQuerier) GetAutopilotByRunChatSession(_ context.Context, arg db.GetAutopilotByRunChatSessionParams) (db.Autopilot, error) {
+	if ap, ok := f.runChats[arg.ChatSessionID.Bytes]; ok && ap.WorkspaceID == arg.WorkspaceID {
+		return ap, nil
+	}
+	return db.Autopilot{}, pgx.ErrNoRows
+}
+
+// TestScopeAuthorizer_RunChatIsShared: an autopilot run's follow-up chat is
+// shared by the members of its workspace, on both the chat and the task scope.
+func TestScopeAuthorizer_RunChatIsShared(t *testing.T) {
+	wsStr, wsUUID := mustUUID(t)
+	_, creatorUUID := mustUUID(t)
+	peerStr, _ := mustUUID(t)
+	otherWsStr, _ := mustUUID(t)
+	sessStr, sessUUID := mustUUID(t)
+	taskStr, taskUUID := mustUUID(t)
+
+	q := &fakeScopeQuerier{
+		tasks: map[[16]byte]db.AgentTaskQueue{
+			taskUUID.Bytes: {ID: taskUUID, ChatSessionID: sessUUID},
+		},
+		sessions: map[[16]byte]db.ChatSession{
+			sessUUID.Bytes: {ID: sessUUID, WorkspaceID: wsUUID, CreatorID: creatorUUID},
+		},
+		runChats: map[[16]byte]db.Autopilot{
+			sessUUID.Bytes: {WorkspaceID: wsUUID},
+		},
+	}
+	a := newScopeAuthorizer(q)
+	ctx := context.Background()
+
+	for _, scope := range []struct{ typ, id string }{{realtime.ScopeChat, sessStr}, {realtime.ScopeTask, taskStr}} {
+		ok, err := a.AuthorizeScope(ctx, peerStr, wsStr, scope.typ, scope.id)
+		if err != nil || !ok {
+			t.Fatalf("%s: peer should share a run chat: ok=%v err=%v", scope.typ, ok, err)
+		}
+
+		ok, err = a.AuthorizeScope(ctx, peerStr, otherWsStr, scope.typ, scope.id)
+		if err != nil || ok {
+			t.Fatalf("%s: cross-workspace must be denied: ok=%v err=%v", scope.typ, ok, err)
+		}
+	}
 }
 
 func mustUUID(t *testing.T) (string, pgtype.UUID) {
@@ -201,6 +246,9 @@ func (failingScopeQuerier) GetIssue(context.Context, pgtype.UUID) (db.Issue, err
 func (failingScopeQuerier) GetChatSession(context.Context, pgtype.UUID) (db.ChatSession, error) {
 	return db.ChatSession{}, errors.New("connection reset by peer")
 }
+func (failingScopeQuerier) GetAutopilotByRunChatSession(context.Context, db.GetAutopilotByRunChatSessionParams) (db.Autopilot, error) {
+	return db.Autopilot{}, errors.New("connection reset by peer")
+}
 
 // errOnInnerQuerier succeeds for GetAgentTask (so the task path reaches its
 // inner lookups) but fails GetIssue / GetChatSession with a non-ErrNoRows
@@ -217,6 +265,9 @@ func (*errOnInnerQuerier) GetIssue(context.Context, pgtype.UUID) (db.Issue, erro
 }
 func (*errOnInnerQuerier) GetChatSession(context.Context, pgtype.UUID) (db.ChatSession, error) {
 	return db.ChatSession{}, errors.New("connection reset by peer")
+}
+func (*errOnInnerQuerier) GetAutopilotByRunChatSession(context.Context, db.GetAutopilotByRunChatSessionParams) (db.Autopilot, error) {
+	return db.Autopilot{}, errors.New("connection reset by peer")
 }
 
 // TestScopeAuthorizer_DoesNotSwallowQueryErrors pins #6037: a real database

@@ -1387,6 +1387,13 @@ func (h *Handler) DeleteAutopilot(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to delete autopilot")
 		return
 	}
+	// Runs' follow-up chats go with the autopilot. Archiving keeps them
+	// readable and stops new messages, like archiving a chat; queued turns are
+	// left alone, as archiving a web chat leaves them.
+	if err := qtx.ArchiveAutopilotRunChatSessions(r.Context(), idUUID); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete autopilot")
+		return
+	}
 	ap.Status = "archived" // reflect the post-archive state in the version snapshot
 	if err := h.recordAutopilotRuleVersion(r.Context(), qtx, ap, "member", actor.UserID); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to delete autopilot")

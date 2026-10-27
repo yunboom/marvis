@@ -279,8 +279,7 @@ func (h *Handler) loadChatSessionForUser(w http.ResponseWriter, r *http.Request,
 		writeError(w, http.StatusNotFound, "chat session not found")
 		return db.ChatSession{}, false
 	}
-	if uuidToString(session.CreatorID) != userID {
-		writeError(w, http.StatusForbidden, "not your chat session")
+	if !h.authorizeChatSessionUser(w, r, session, userID) {
 		return db.ChatSession{}, false
 	}
 	return session, true
@@ -387,6 +386,9 @@ func (h *Handler) UpdateChatSession(w http.ResponseWriter, r *http.Request) {
 
 	session, ok := h.gatePublicChatSessionForUser(w, r, userID, workspaceID, sessionID)
 	if !ok {
+		return
+	}
+	if !requireChatSessionCreator(w, session, userID) {
 		return
 	}
 
@@ -506,6 +508,9 @@ func (h *Handler) SetChatSessionPinned(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if !requireChatSessionCreator(w, session, userID) {
+		return
+	}
 
 	updated, err := h.Queries.SetChatSessionPinned(r.Context(), db.SetChatSessionPinnedParams{
 		ID:     session.ID,
@@ -573,6 +578,9 @@ func (h *Handler) SetChatSessionArchived(w http.ResponseWriter, r *http.Request)
 
 	session, ok := h.gateChatSessionForUser(w, r, userID, workspaceID, sessionID)
 	if !ok {
+		return
+	}
+	if !requireChatSessionCreator(w, session, userID) {
 		return
 	}
 
@@ -703,6 +711,9 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 
 	session, ok := h.loadChatSessionForUser(w, r, userID, workspaceID, sessionID)
 	if !ok {
+		return
+	}
+	if !requireChatSessionCreator(w, session, userID) {
 		return
 	}
 
@@ -1062,6 +1073,7 @@ func (h *Handler) SendChatMessage(w http.ResponseWriter, r *http.Request) {
 		Content:       req.Content,
 		TaskID:        uuidToString(task.ID),
 		CreatedAt:     timestampToString(msg.CreatedAt),
+		SenderUserID:  userID,
 	})
 
 	// First user message → kick off best-effort LLM auto-titling (MUL-4295).
@@ -1263,9 +1275,16 @@ func (h *Handler) ListChatMessages(w http.ResponseWriter, r *http.Request) {
 	}
 	groupedAtt := h.groupChatMessageAttachments(r.Context(), workspaceID, messageIDs)
 
+	senders, err := h.chatMessageSenders(r.Context(), messages)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to list chat messages")
+		return
+	}
+
 	resp := make([]ChatMessageResponse, len(messages))
 	for i, m := range messages {
 		resp[i] = chatMessageToResponse(m, groupedAtt[uuidToString(m.ID)])
+		resp[i].SenderUserID = senders[uuidToString(m.ID)]
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -1337,9 +1356,16 @@ func (h *Handler) ListChatMessagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	groupedAtt := h.groupChatMessageAttachments(r.Context(), workspaceID, messageIDs)
 
+	senders, err := h.chatMessageSenders(r.Context(), messages)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to list chat messages")
+		return
+	}
+
 	resp := make([]ChatMessageResponse, len(messages))
 	for i, m := range messages {
 		resp[i] = chatMessageToResponse(m, groupedAtt[uuidToString(m.ID)])
+		resp[i].SenderUserID = senders[uuidToString(m.ID)]
 	}
 	writeJSON(w, http.StatusOK, ChatMessagesPageResponse{
 		Messages:   resp,
@@ -1460,7 +1486,10 @@ func (h *Handler) ListChatDraftRestores(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	rows, err := h.Queries.ListChatDraftRestoresBySession(r.Context(), session.ID)
+	rows, err := h.Queries.ListChatDraftRestoresBySession(r.Context(), db.ListChatDraftRestoresBySessionParams{
+		ChatSessionID: session.ID,
+		UserID:        parseUUID(userID),
+	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to list draft restores")
 		return
@@ -1529,6 +1558,7 @@ func (h *Handler) ConsumeChatDraftRestore(w http.ResponseWriter, r *http.Request
 	if _, err := h.Queries.DeleteChatDraftRestore(r.Context(), db.DeleteChatDraftRestoreParams{
 		ID:            restoreUUID,
 		ChatSessionID: session.ID,
+		UserID:        parseUUID(userID),
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to consume draft restore")
 		return
@@ -1938,8 +1968,17 @@ func (h *Handler) CancelTaskByUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if uuidToString(cs.CreatorID) != userID {
-			writeError(w, http.StatusForbidden, "not your task")
-			return
+			// A run's follow-up chat is shared: any member who can use it may
+			// stop its turns and edit or remove its queued messages.
+			_, allowed, err := h.runChatAccess(r.Context(), cs, userID)
+			if err != nil {
+				h.writeAutopilotRunChatError(w, r, err)
+				return
+			}
+			if !allowed {
+				writeError(w, http.StatusForbidden, "not your task")
+				return
+			}
 		}
 	} else {
 		// Issue / autopilot / quick_create tasks are all visible on the
@@ -2114,6 +2153,10 @@ type ChatMessageResponse struct {
 	// agent can `marvis attachment download <id>` rather than guessing
 	// from a markdown URL that may expire.
 	Attachments []AttachmentResponse `json:"attachments,omitempty"`
+	// SenderUserID is the member who sent a user message: the initiator of
+	// the turn it started. Null for assistant rows and for user rows whose
+	// turn carries no initiator; clients fall back to the session creator.
+	SenderUserID *string `json:"sender_user_id"`
 }
 
 func chatSessionToResponse(s db.ChatSession) ChatSessionResponse {

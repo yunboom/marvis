@@ -92,6 +92,22 @@ func (q *Queries) ArchiveAutopilot(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const archiveAutopilotRunChatSessions = `-- name: ArchiveAutopilotRunChatSessions :exec
+UPDATE chat_session cs
+SET status = 'archived', updated_at = now()
+FROM autopilot_run r
+WHERE r.autopilot_id = $1
+  AND r.chat_session_id = cs.id
+  AND cs.status = 'active'
+`
+
+// Archives the follow-up chat sessions of every run of an autopilot when the
+// autopilot is deleted. Archived sessions refuse new messages.
+func (q *Queries) ArchiveAutopilotRunChatSessions(ctx context.Context, autopilotID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, archiveAutopilotRunChatSessions, autopilotID)
+	return err
+}
+
 const createAutopilot = `-- name: CreateAutopilot :one
 INSERT INTO autopilot (
     workspace_id, title, description, assignee_type, assignee_id,
@@ -730,6 +746,43 @@ func (q *Queries) GetAutopilot(ctx context.Context, id pgtype.UUID) (Autopilot, 
 	return i, err
 }
 
+const getAutopilotByRunChatSession = `-- name: GetAutopilotByRunChatSession :one
+SELECT a.id, a.workspace_id, a.title, a.description, a.assignee_id, a.status, a.execution_mode, a.issue_title_template, a.created_by_type, a.created_by_id, a.last_run_at, a.created_at, a.updated_at, a.assignee_type, a.project_id, a.pause_reason FROM autopilot a
+JOIN autopilot_run r ON r.autopilot_id = a.id
+WHERE r.chat_session_id = $1 AND a.workspace_id = $2
+`
+
+type GetAutopilotByRunChatSessionParams struct {
+	ChatSessionID pgtype.UUID `json:"chat_session_id"`
+	WorkspaceID   pgtype.UUID `json:"workspace_id"`
+}
+
+// The autopilot owning the run a follow-up chat session continues. Members who
+// can view that autopilot share the session instead of only its creator.
+func (q *Queries) GetAutopilotByRunChatSession(ctx context.Context, arg GetAutopilotByRunChatSessionParams) (Autopilot, error) {
+	row := q.db.QueryRow(ctx, getAutopilotByRunChatSession, arg.ChatSessionID, arg.WorkspaceID)
+	var i Autopilot
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.Title,
+		&i.Description,
+		&i.AssigneeID,
+		&i.Status,
+		&i.ExecutionMode,
+		&i.IssueTitleTemplate,
+		&i.CreatedByType,
+		&i.CreatedByID,
+		&i.LastRunAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.AssigneeType,
+		&i.ProjectID,
+		&i.PauseReason,
+	)
+	return i, err
+}
+
 const getAutopilotInWorkspace = `-- name: GetAutopilotInWorkspace :one
 SELECT id, workspace_id, title, description, assignee_id, status, execution_mode, issue_title_template, created_by_type, created_by_id, last_run_at, created_at, updated_at, assignee_type, project_id, pause_reason FROM autopilot
 WHERE id = $1 AND workspace_id = $2
@@ -1141,6 +1194,85 @@ func (q *Queries) GetLatestAutopilotRunForIssueAttribution(ctx context.Context, 
 		&i.QuotaReservationID,
 		&i.ReasonCode,
 		&i.ChatSessionID,
+	)
+	return i, err
+}
+
+const getLatestSettledAutopilotRunTaskWithSession = `-- name: GetLatestSettledAutopilotRunTaskWithSession :one
+SELECT id, agent_id, issue_id, status, priority, dispatched_at, started_at, completed_at, result, error, created_at, context, runtime_id, session_id, work_dir, trigger_comment_id, chat_session_id, autopilot_run_id, attempt, max_attempts, parent_task_id, failure_reason, trigger_summary, force_fresh_session, is_leader_task, wait_reason, initiator_user_id, handoff_note, prepare_lease_expires_at, squad_id, runtime_mcp_overlay, escalation_for_task_id, fire_at, originator_user_id, runtime_connected_apps, coalesced_comment_ids, delivered_comment_ids, chat_input_task_id, chat_finalize_deferred_at, originator_source, delegated_from_task_id, retry_of_task_id, rerun_of_task_id, rule_version_id, trigger_evidence_kind, trigger_evidence_ref_id, accountable_user_id, session_rollout_missing, retired_session_id, quick_actions_disabled, regenerate_quick_actions_for, branch_name, durable_work_dir, channel_context_revision, comment_thread_id, cancelled_by_type, cancelled_by_id, cancelled_by_name, issue_snapshot, workflow_step FROM agent_task_queue
+WHERE autopilot_run_id = $1
+  AND status IN ('completed', 'failed', 'cancelled')
+  AND session_id IS NOT NULL
+ORDER BY created_at DESC, id DESC
+LIMIT 1
+`
+
+// The newest settled task of a run that recorded a provider session: the
+// auto-retry child when the run task was retried, else the run task itself.
+func (q *Queries) GetLatestSettledAutopilotRunTaskWithSession(ctx context.Context, autopilotRunID pgtype.UUID) (AgentTaskQueue, error) {
+	row := q.db.QueryRow(ctx, getLatestSettledAutopilotRunTaskWithSession, autopilotRunID)
+	var i AgentTaskQueue
+	err := row.Scan(
+		&i.ID,
+		&i.AgentID,
+		&i.IssueID,
+		&i.Status,
+		&i.Priority,
+		&i.DispatchedAt,
+		&i.StartedAt,
+		&i.CompletedAt,
+		&i.Result,
+		&i.Error,
+		&i.CreatedAt,
+		&i.Context,
+		&i.RuntimeID,
+		&i.SessionID,
+		&i.WorkDir,
+		&i.TriggerCommentID,
+		&i.ChatSessionID,
+		&i.AutopilotRunID,
+		&i.Attempt,
+		&i.MaxAttempts,
+		&i.ParentTaskID,
+		&i.FailureReason,
+		&i.TriggerSummary,
+		&i.ForceFreshSession,
+		&i.IsLeaderTask,
+		&i.WaitReason,
+		&i.InitiatorUserID,
+		&i.HandoffNote,
+		&i.PrepareLeaseExpiresAt,
+		&i.SquadID,
+		&i.RuntimeMcpOverlay,
+		&i.EscalationForTaskID,
+		&i.FireAt,
+		&i.OriginatorUserID,
+		&i.RuntimeConnectedApps,
+		&i.CoalescedCommentIds,
+		&i.DeliveredCommentIds,
+		&i.ChatInputTaskID,
+		&i.ChatFinalizeDeferredAt,
+		&i.OriginatorSource,
+		&i.DelegatedFromTaskID,
+		&i.RetryOfTaskID,
+		&i.RerunOfTaskID,
+		&i.RuleVersionID,
+		&i.TriggerEvidenceKind,
+		&i.TriggerEvidenceRefID,
+		&i.AccountableUserID,
+		&i.SessionRolloutMissing,
+		&i.RetiredSessionID,
+		&i.QuickActionsDisabled,
+		&i.RegenerateQuickActionsFor,
+		&i.BranchName,
+		&i.DurableWorkDir,
+		&i.ChannelContextRevision,
+		&i.CommentThreadID,
+		&i.CancelledByType,
+		&i.CancelledByID,
+		&i.CancelledByName,
+		&i.IssueSnapshot,
+		&i.WorkflowStep,
 	)
 	return i, err
 }

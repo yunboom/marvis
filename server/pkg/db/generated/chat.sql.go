@@ -662,18 +662,24 @@ func (q *Queries) DeferChatTaskForSealedPendingMedia(ctx context.Context, taskID
 }
 
 const deleteChatDraftRestore = `-- name: DeleteChatDraftRestore :execrows
-DELETE FROM chat_draft_restore
-WHERE id = $1 AND chat_session_id = $2
+DELETE FROM chat_draft_restore dr
+WHERE dr.id = $1 AND dr.chat_session_id = $2
+  AND (
+    NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = dr.chat_session_id)
+    OR EXISTS (SELECT 1 FROM agent_task_queue t WHERE t.id = dr.task_id AND t.initiator_user_id = $3)
+  )
 `
 
 type DeleteChatDraftRestoreParams struct {
 	ID            pgtype.UUID `json:"id"`
 	ChatSessionID pgtype.UUID `json:"chat_session_id"`
+	UserID        pgtype.UUID `json:"user_id"`
 }
 
 // Idempotent consume: deleting an already-consumed restore matches no row.
+// Same per-sender rule as ListChatDraftRestoresBySession.
 func (q *Queries) DeleteChatDraftRestore(ctx context.Context, arg DeleteChatDraftRestoreParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteChatDraftRestore, arg.ID, arg.ChatSessionID)
+	result, err := q.db.Exec(ctx, deleteChatDraftRestore, arg.ID, arg.ChatSessionID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
@@ -1372,6 +1378,8 @@ SELECT EXISTS (
     AND cs.workspace_id = $1
     AND cs.creator_id = $2
     AND cs.agent_id = ANY($3::uuid[])
+    -- A run's follow-up chat is not a chat-window conversation.
+    AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ) AS has_pending
 `
 
@@ -1733,6 +1741,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2
   )
   -- A knowledge base job's chat lives on the job page, not in chat lists.
   AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
+  -- An autopilot run's follow-up chat lives on the run page, not in chat lists.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC
 `
 
@@ -1876,13 +1886,24 @@ func (q *Queries) ListChannelOutboundMessageIDsForContext(ctx context.Context, a
 }
 
 const listChatDraftRestoresBySession = `-- name: ListChatDraftRestoresBySession :many
-SELECT id, chat_session_id, task_id, content, attachment_ids, created_at FROM chat_draft_restore
-WHERE chat_session_id = $1
-ORDER BY created_at ASC
+SELECT dr.id, dr.chat_session_id, dr.task_id, dr.content, dr.attachment_ids, dr.created_at FROM chat_draft_restore dr
+WHERE dr.chat_session_id = $1
+  AND (
+    NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = dr.chat_session_id)
+    OR EXISTS (SELECT 1 FROM agent_task_queue t WHERE t.id = dr.task_id AND t.initiator_user_id = $2)
+  )
+ORDER BY dr.created_at ASC
 `
 
-func (q *Queries) ListChatDraftRestoresBySession(ctx context.Context, chatSessionID pgtype.UUID) ([]ChatDraftRestore, error) {
-	rows, err := q.db.Query(ctx, listChatDraftRestoresBySession, chatSessionID)
+type ListChatDraftRestoresBySessionParams struct {
+	ChatSessionID pgtype.UUID `json:"chat_session_id"`
+	UserID        pgtype.UUID `json:"user_id"`
+}
+
+// An autopilot run's follow-up chat is shared by every member who can view
+// the autopilot, so there each member only gets back the prompts they sent.
+func (q *Queries) ListChatDraftRestoresBySession(ctx context.Context, arg ListChatDraftRestoresBySessionParams) ([]ChatDraftRestore, error) {
+	rows, err := q.db.Query(ctx, listChatDraftRestoresBySession, arg.ChatSessionID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -1950,6 +1971,39 @@ func (q *Queries) ListChatInputMessages(ctx context.Context, taskID pgtype.UUID)
 			&i.ChannelOutboundMessageIds,
 			&i.ChannelTypingSettled,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listChatMessageSenders = `-- name: ListChatMessageSenders :many
+SELECT id AS task_id, initiator_user_id FROM agent_task_queue
+WHERE id = ANY($1::uuid[])
+  AND initiator_user_id IS NOT NULL
+`
+
+type ListChatMessageSendersRow struct {
+	TaskID          pgtype.UUID `json:"task_id"`
+	InitiatorUserID pgtype.UUID `json:"initiator_user_id"`
+}
+
+// The member who sent each listed turn: a user message's task is the turn it
+// started, and that task's initiator is its sender.
+func (q *Queries) ListChatMessageSenders(ctx context.Context, taskIds []pgtype.UUID) ([]ListChatMessageSendersRow, error) {
+	rows, err := q.db.Query(ctx, listChatMessageSenders, taskIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListChatMessageSendersRow{}
+	for rows.Next() {
+		var i ListChatMessageSendersRow
+		if err := rows.Scan(&i.TaskID, &i.InitiatorUserID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -2325,6 +2379,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2 AND cs.status = 'active'
   )
   -- A knowledge base job's chat lives on the job page, not in chat lists.
   AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
+  -- An autopilot run's follow-up chat lives on the run page, not in chat lists.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC
 `
 
@@ -2417,6 +2473,8 @@ WHERE atq.chat_session_id IS NOT NULL
   AND atq.regenerate_quick_actions_for IS NULL
   AND cs.workspace_id = $1
   AND cs.creator_id = $2
+  -- A run's follow-up chat is not a chat-window conversation.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY atq.created_at DESC
 `
 
