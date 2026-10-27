@@ -2738,13 +2738,27 @@ func (q *Queries) UpdateKbPageHead(ctx context.Context, arg UpdateKbPageHeadPara
 	return i, err
 }
 
-const upsertKbDraftPage = `-- name: UpsertKbDraftPage :exec
+const upsertKbDraftPages = `-- name: UpsertKbDraftPages :exec
 INSERT INTO kb_draft_page (
     draft_id, page_id, op, base_revision_id, parent_id, position, slug,
     frontmatter, blocks, claims, conflicts, version, updated_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now()
 )
+SELECT
+    $1::uuid, u.page_id, u.op, u.base_revision_id, u.parent_id, u.position, u.slug,
+    u.frontmatter, u.blocks, u.claims, u.conflicts, $2::bigint, now()
+FROM (
+    SELECT
+        unnest($3::uuid[]) AS page_id,
+        unnest($4::text[]) AS op,
+        unnest($5::uuid[]) AS base_revision_id,
+        unnest($6::uuid[]) AS parent_id,
+        unnest($7::text[]) AS position,
+        unnest($8::text[]) AS slug,
+        unnest($9::jsonb[]) AS frontmatter,
+        unnest($10::jsonb[]) AS blocks,
+        unnest($11::jsonb[]) AS claims,
+        unnest($12::jsonb[]) AS conflicts
+) AS u
 ON CONFLICT (draft_id, page_id) DO UPDATE SET
     op = EXCLUDED.op,
     base_revision_id = EXCLUDED.base_revision_id,
@@ -2759,35 +2773,36 @@ ON CONFLICT (draft_id, page_id) DO UPDATE SET
     updated_at = now()
 `
 
-type UpsertKbDraftPageParams struct {
-	DraftID        pgtype.UUID `json:"draft_id"`
-	PageID         pgtype.UUID `json:"page_id"`
-	Op             string      `json:"op"`
-	BaseRevisionID pgtype.UUID `json:"base_revision_id"`
-	ParentID       pgtype.UUID `json:"parent_id"`
-	Position       string      `json:"position"`
-	Slug           string      `json:"slug"`
-	Frontmatter    []byte      `json:"frontmatter"`
-	Blocks         []byte      `json:"blocks"`
-	Claims         []byte      `json:"claims"`
-	Conflicts      []byte      `json:"conflicts"`
-	Version        int64       `json:"version"`
+type UpsertKbDraftPagesParams struct {
+	DraftID         pgtype.UUID   `json:"draft_id"`
+	Version         int64         `json:"version"`
+	PageIds         []pgtype.UUID `json:"page_ids"`
+	Ops             []string      `json:"ops"`
+	BaseRevisionIds []pgtype.UUID `json:"base_revision_ids"`
+	ParentIds       []pgtype.UUID `json:"parent_ids"`
+	Positions       []string      `json:"positions"`
+	Slugs           []string      `json:"slugs"`
+	Frontmatters    [][]byte      `json:"frontmatters"`
+	Blocks          [][]byte      `json:"blocks"`
+	Claims          [][]byte      `json:"claims"`
+	Conflicts       [][]byte      `json:"conflicts"`
 }
 
-func (q *Queries) UpsertKbDraftPage(ctx context.Context, arg UpsertKbDraftPageParams) error {
-	_, err := q.db.Exec(ctx, upsertKbDraftPage,
+// Writes pages into a draft at one draft version; the arrays are parallel.
+func (q *Queries) UpsertKbDraftPages(ctx context.Context, arg UpsertKbDraftPagesParams) error {
+	_, err := q.db.Exec(ctx, upsertKbDraftPages,
 		arg.DraftID,
-		arg.PageID,
-		arg.Op,
-		arg.BaseRevisionID,
-		arg.ParentID,
-		arg.Position,
-		arg.Slug,
-		arg.Frontmatter,
+		arg.Version,
+		arg.PageIds,
+		arg.Ops,
+		arg.BaseRevisionIds,
+		arg.ParentIds,
+		arg.Positions,
+		arg.Slugs,
+		arg.Frontmatters,
 		arg.Blocks,
 		arg.Claims,
 		arg.Conflicts,
-		arg.Version,
 	)
 	return err
 }

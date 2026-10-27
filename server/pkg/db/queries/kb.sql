@@ -458,13 +458,28 @@ UPDATE kb_draft SET version = version + 1, updated_at = now()
 WHERE id = $1
 RETURNING *;
 
--- name: UpsertKbDraftPage :exec
+-- name: UpsertKbDraftPages :exec
+-- Writes pages into a draft at one draft version; the arrays are parallel.
 INSERT INTO kb_draft_page (
     draft_id, page_id, op, base_revision_id, parent_id, position, slug,
     frontmatter, blocks, claims, conflicts, version, updated_at
-) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now()
 )
+SELECT
+    sqlc.arg('draft_id')::uuid, u.page_id, u.op, u.base_revision_id, u.parent_id, u.position, u.slug,
+    u.frontmatter, u.blocks, u.claims, u.conflicts, sqlc.arg('version')::bigint, now()
+FROM (
+    SELECT
+        unnest(sqlc.arg('page_ids')::uuid[]) AS page_id,
+        unnest(sqlc.arg('ops')::text[]) AS op,
+        unnest(sqlc.arg('base_revision_ids')::uuid[]) AS base_revision_id,
+        unnest(sqlc.arg('parent_ids')::uuid[]) AS parent_id,
+        unnest(sqlc.arg('positions')::text[]) AS position,
+        unnest(sqlc.arg('slugs')::text[]) AS slug,
+        unnest(sqlc.arg('frontmatters')::jsonb[]) AS frontmatter,
+        unnest(sqlc.arg('blocks')::jsonb[]) AS blocks,
+        unnest(sqlc.arg('claims')::jsonb[]) AS claims,
+        unnest(sqlc.arg('conflicts')::jsonb[]) AS conflicts
+) AS u
 ON CONFLICT (draft_id, page_id) DO UPDATE SET
     op = EXCLUDED.op,
     base_revision_id = EXCLUDED.base_revision_id,

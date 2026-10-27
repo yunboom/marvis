@@ -569,8 +569,8 @@ func syncKbDraft(ctx context.Context, q *db.Queries, base db.KbBase, draft db.Kb
 			return KbSyncResponse{}, err
 		}
 
-		for _, page := range merged {
-			version, err := saveKbDraftPage(ctx, q, draft, page)
+		if len(merged) > 0 {
+			version, err := saveKbDraftPages(ctx, q, draft, merged)
 			if err != nil {
 				return KbSyncResponse{}, err
 			}

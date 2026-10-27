@@ -175,49 +175,57 @@ func checkKbPageVersion(page kbDraftPage, draft db.KbDraft, version string) erro
 // saveKbDraftPage writes a page into the draft and bumps the draft version.
 // It returns the new draft version.
 func saveKbDraftPage(ctx context.Context, q *db.Queries, draft db.KbDraft, page *kbDraftPage) (int64, error) {
+	return saveKbDraftPages(ctx, q, draft, []*kbDraftPage{page})
+}
+
+// saveKbDraftPages writes pages into the draft under a single version bump
+// and one batched upsert. It returns the new draft version.
+func saveKbDraftPages(ctx context.Context, q *db.Queries, draft db.KbDraft, pages []*kbDraftPage) (int64, error) {
 	bumped, err := q.BumpKbDraftVersion(ctx, draft.ID)
 	if err != nil {
 		return 0, errors.Wrapf(err, "bump draft version draft_id=%s", uuidToString(draft.ID))
 	}
-	page.version = bumped.Version
-	page.inDraft = true
 
-	header, err := json.Marshal(page.header)
-	if err != nil {
-		return 0, errors.WithStack(err)
-	}
-	blocks, err := json.Marshal(page.blocks)
-	if err != nil {
-		return 0, errors.WithStack(err)
-	}
-	claims, err := json.Marshal(page.claims)
-	if err != nil {
-		return 0, errors.WithStack(err)
-	}
-	conflicts, err := json.Marshal(page.conflicts)
-	if err != nil {
-		return 0, errors.WithStack(err)
-	}
-	parentID, err := optionalPgUUID(page.parentID)
-	if err != nil {
-		return 0, err
+	params := db.UpsertKbDraftPagesParams{DraftID: draft.ID, Version: bumped.Version}
+	for _, page := range pages {
+		page.version = bumped.Version
+		page.inDraft = true
+
+		header, err := json.Marshal(page.header)
+		if err != nil {
+			return 0, errors.WithStack(err)
+		}
+		blocks, err := json.Marshal(page.blocks)
+		if err != nil {
+			return 0, errors.WithStack(err)
+		}
+		claims, err := json.Marshal(page.claims)
+		if err != nil {
+			return 0, errors.WithStack(err)
+		}
+		conflicts, err := json.Marshal(page.conflicts)
+		if err != nil {
+			return 0, errors.WithStack(err)
+		}
+		parentID, err := optionalPgUUID(page.parentID)
+		if err != nil {
+			return 0, err
+		}
+
+		params.PageIds = append(params.PageIds, parseUUID(page.pageID))
+		params.Ops = append(params.Ops, page.op)
+		params.BaseRevisionIds = append(params.BaseRevisionIds, page.baseRevision)
+		params.ParentIds = append(params.ParentIds, parentID)
+		params.Positions = append(params.Positions, page.position)
+		params.Slugs = append(params.Slugs, page.slug)
+		params.Frontmatters = append(params.Frontmatters, header)
+		params.Blocks = append(params.Blocks, blocks)
+		params.Claims = append(params.Claims, claims)
+		params.Conflicts = append(params.Conflicts, conflicts)
 	}
 
-	if err := q.UpsertKbDraftPage(ctx, db.UpsertKbDraftPageParams{
-		DraftID:        draft.ID,
-		PageID:         parseUUID(page.pageID),
-		Op:             page.op,
-		BaseRevisionID: page.baseRevision,
-		ParentID:       parentID,
-		Position:       page.position,
-		Slug:           page.slug,
-		Frontmatter:    header,
-		Blocks:         blocks,
-		Claims:         claims,
-		Conflicts:      conflicts,
-		Version:        page.version,
-	}); err != nil {
-		return 0, errors.Wrapf(err, "save draft page draft_id=%s page_id=%s", uuidToString(draft.ID), page.pageID)
+	if err := q.UpsertKbDraftPages(ctx, params); err != nil {
+		return 0, errors.Wrapf(err, "save draft pages draft_id=%s pages=%d", uuidToString(draft.ID), len(pages))
 	}
 
 	return bumped.Version, nil
