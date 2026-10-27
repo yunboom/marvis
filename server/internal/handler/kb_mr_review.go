@@ -38,8 +38,25 @@ const (
 	kbInboxChangesRequested = "kb_mr_changes_requested"
 	// kbInboxReviewRequested tells reviewers the owner asked for review again.
 	kbInboxReviewRequested = "kb_mr_review_requested"
+	// kbInboxReviewNeeded tells the knowledge base maintainers a merge
+	// request waits for their approval.
+	kbInboxReviewNeeded    = "kb_mr_review_needed"
 	kbInboxSeverity        = "action_required"
 	kbInboxRecipientMember = "member"
+)
+
+// kbMaintainerRoles are the workspace roles that maintain every knowledge
+// base, as isWorkspaceAdmin.
+var kbMaintainerRoles = []string{"owner", "admin"}
+
+// Notification kinds a merge request status change makes obsolete.
+var (
+	// kbInboxAwaitingReview no longer apply once a review asks for changes.
+	kbInboxAwaitingReview = []string{kbInboxReviewNeeded, kbInboxReviewRequested}
+	// kbInboxAwaitingOwner no longer applies once the owner asks for review again.
+	kbInboxAwaitingOwner = []string{kbInboxChangesRequested}
+	// kbInboxAllReview no longer apply once the merge request is merged or closed.
+	kbInboxAllReview = []string{kbInboxReviewNeeded, kbInboxReviewRequested, kbInboxChangesRequested}
 )
 
 // Merge request event kinds (kb_mr_event.kind).
@@ -325,7 +342,7 @@ func (h *Handler) SubmitKbMrReview(w http.ResponseWriter, r *http.Request) {
 	h.publishKbMergeRequestEvent(protocol.EventKbMrUpdated, out.mr, kbActorMember, reviewerID, nil)
 	h.publishKbMrCommented(out.mr, kbActorMember, reviewerID, pgtype.UUID{}, review.ID)
 	h.publishKbMergeRequestJob(out.mr, db.KbDraft{ID: out.mr.DraftID}, kbActorMember, reviewerID)
-	h.publishKbInboxItems(out.notified, reviewerID)
+	h.publishKbInbox(out.mr.WorkspaceID, out.inbox, kbActorMember, reviewerID)
 
 	resp, err := h.kbMrReviewResponses(ctx, out.mr, []db.KbMrReview{out.review})
 	if err != nil {
@@ -338,9 +355,9 @@ func (h *Handler) SubmitKbMrReview(w http.ResponseWriter, r *http.Request) {
 
 // kbReviewOutcome is what a review submit or a review request changed.
 type kbReviewOutcome struct {
-	mr       db.KbMergeRequest
-	review   db.KbMrReview
-	notified []db.InboxItem
+	mr     db.KbMergeRequest
+	review db.KbMrReview
+	inbox  kbInboxChanges
 }
 
 func (h *Handler) submitKbMrReview(ctx context.Context, base db.KbBase, mr db.KbMergeRequest, review db.KbMrReview, summary string) (kbReviewOutcome, error) {
@@ -392,13 +409,19 @@ func (h *Handler) submitKbMrReview(ctx context.Context, base db.KbBase, mr db.Kb
 		return kbReviewOutcome{}, err
 	}
 
+	// Nobody approves a request waiting on its owner; the owner, even when
+	// they wrote the review themselves, has feedback to resolve.
+	archived, err := archiveKbMrInboxItems(ctx, qtx, updated, kbInboxAwaitingReview)
+	if err != nil {
+		return kbReviewOutcome{}, err
+	}
 	owner, err := kbMergeRequestOwner(ctx, qtx, mr)
 	if err != nil {
 		return kbReviewOutcome{}, err
 	}
 	notified, err := createKbReviewInboxItems(ctx, qtx, kbReviewNotice{
 		kind: kbInboxChangesRequested, base: base, mr: updated, review: submitted,
-		actorID: review.ReviewerUserID, recipients: []pgtype.UUID{owner}, body: summary,
+		actorType: kbActorMember, actorID: review.ReviewerUserID, recipients: []pgtype.UUID{owner}, body: summary,
 	})
 	if err != nil {
 		return kbReviewOutcome{}, err
@@ -408,12 +431,13 @@ func (h *Handler) submitKbMrReview(ctx context.Context, base db.KbBase, mr db.Kb
 		return kbReviewOutcome{}, errors.Wrap(err, "commit review submit")
 	}
 
-	return kbReviewOutcome{mr: updated, review: submitted, notified: notified}, nil
+	return kbReviewOutcome{mr: updated, review: submitted, inbox: kbInboxChanges{created: notified, archived: archived}}, nil
 }
 
 // RequestKbMrReview puts a changes_requested merge request back up for
 // review (POST /api/kb/merge-requests/{number}/ready; kb mr ready): only its
-// owner may, and everyone who submitted a review on it is notified.
+// owner may. The maintainers are asked to approve it again and the other
+// members who submitted a review on it are asked to review it again.
 func (h *Handler) RequestKbMrReview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
@@ -443,7 +467,7 @@ func (h *Handler) RequestKbMrReview(w http.ResponseWriter, r *http.Request) {
 
 	h.publishKbMergeRequestEvent(protocol.EventKbMrUpdated, out.mr, actorType, actorID, nil)
 	h.publishKbMergeRequestJob(out.mr, db.KbDraft{ID: out.mr.DraftID}, actorType, actorID)
-	h.publishKbInboxItems(out.notified, userID)
+	h.publishKbInbox(out.mr.WorkspaceID, out.inbox, actorType, actorID)
 
 	resp, err := h.kbMergeRequestResponseOf(ctx, out.mr)
 	if err != nil {
@@ -477,12 +501,23 @@ func (h *Handler) requestKbMrReview(ctx context.Context, base db.KbBase, mr db.K
 	if err := recordKbMrEvent(ctx, qtx, updated, actorType, actorID, kbMrEventReviewRequested, nil); err != nil {
 		return kbReviewOutcome{}, err
 	}
+	archived, err := archiveKbMrInboxItems(ctx, qtx, updated, kbInboxAwaitingOwner)
+	if err != nil {
+		return kbReviewOutcome{}, err
+	}
+	needed, maintainers, err := notifyKbReviewNeeded(ctx, qtx, base, updated, kbActorMember, owner)
+	if err != nil {
+		return kbReviewOutcome{}, err
+	}
+
+	// A maintainer who reviewed already has the approval notice above.
 	reviewers, err := qtx.ListKbMrReviewerUserIDs(ctx, db.ListKbMrReviewerUserIDsParams{MergeRequestID: mr.ID, State: kb.ReviewStateSubmitted})
 	if err != nil {
 		return kbReviewOutcome{}, errors.Wrapf(err, "list reviewers merge_request_id=%s", uuidToString(mr.ID))
 	}
-	notified, err := createKbReviewInboxItems(ctx, qtx, kbReviewNotice{
-		kind: kbInboxReviewRequested, base: base, mr: updated, actorID: owner, recipients: reviewers,
+	reviewers = slices.DeleteFunc(reviewers, func(id pgtype.UUID) bool { return slices.Contains(maintainers, id) })
+	requested, err := createKbReviewInboxItems(ctx, qtx, kbReviewNotice{
+		kind: kbInboxReviewRequested, base: base, mr: updated, actorType: kbActorMember, actorID: owner, recipients: reviewers,
 	})
 	if err != nil {
 		return kbReviewOutcome{}, err
@@ -492,7 +527,7 @@ func (h *Handler) requestKbMrReview(ctx context.Context, base db.KbBase, mr db.K
 		return kbReviewOutcome{}, errors.Wrap(err, "commit review request")
 	}
 
-	return kbReviewOutcome{mr: updated, notified: notified}, nil
+	return kbReviewOutcome{mr: updated, inbox: kbInboxChanges{created: append(needed, requested...), archived: archived}}, nil
 }
 
 // kbReviewNotice is one review notification to some members.
@@ -501,17 +536,19 @@ type kbReviewNotice struct {
 	base       db.KbBase
 	mr         db.KbMergeRequest
 	review     db.KbMrReview
+	actorType  string
 	actorID    pgtype.UUID
 	recipients []pgtype.UUID
 	body       string
 }
 
-// createKbReviewInboxItems writes the notice to each recipient but the actor
-// in one statement; members who left the workspace are skipped.
+// createKbReviewInboxItems writes the notice to each recipient once in one
+// statement; members who left the workspace are skipped. The actor is
+// notified too: a maintainer reviews and merges their own requests.
 func createKbReviewInboxItems(ctx context.Context, q *db.Queries, n kbReviewNotice) ([]db.InboxItem, error) {
 	recipients := make([]pgtype.UUID, 0, len(n.recipients))
 	for _, id := range n.recipients {
-		if id.Valid && id != n.actorID && !slices.Contains(recipients, id) {
+		if id.Valid && !slices.Contains(recipients, id) {
 			recipients = append(recipients, id)
 		}
 	}
@@ -540,7 +577,7 @@ func createKbReviewInboxItems(ctx context.Context, q *db.Queries, n kbReviewNoti
 		Severity:      kbInboxSeverity,
 		Title:         fmt.Sprintf("#%d %s", n.mr.Number, n.mr.Title),
 		Body:          n.body,
-		ActorType:     kbActorMember,
+		ActorType:     n.actorType,
 		ActorID:       n.actorID,
 		Details:       details,
 		Ids:           ids,
@@ -553,11 +590,73 @@ func createKbReviewInboxItems(ctx context.Context, q *db.Queries, n kbReviewNoti
 	return items, nil
 }
 
-// publishKbInboxItems sends inbox:new for each written notification, in the
-// item shape the inbox listener routes to its recipient.
-func (h *Handler) publishKbInboxItems(items []db.InboxItem, actorID string) {
-	for _, item := range items {
-		h.publish(protocol.EventInboxNew, uuidToString(item.WorkspaceID), kbActorMember, actorID, map[string]any{
+// kbInboxChanges are the review notifications one merge request change wrote
+// and archived, published after its commit.
+type kbInboxChanges struct {
+	created []db.InboxItem
+	// archived counts the archived notifications per recipient member.
+	archived map[string]int64
+}
+
+// notifyKbReviewNeeded asks every maintainer of the knowledge base (canMaintainKb),
+// the author and the owner included, to approve a merge request that was
+// just opened or put back up for review. It returns the maintainers too.
+func notifyKbReviewNeeded(ctx context.Context, q *db.Queries, base db.KbBase, mr db.KbMergeRequest, actorType string, actorID pgtype.UUID) ([]db.InboxItem, []pgtype.UUID, error) {
+	maintainers, err := q.ListKbMaintainerUserIDs(ctx, db.ListKbMaintainerUserIDsParams{
+		WorkspaceID: base.WorkspaceID,
+		Roles:       kbMaintainerRoles,
+		CreatorID:   base.CreatedBy,
+	})
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "list maintainers knowledge_base_id=%s", uuidToString(base.ID))
+	}
+
+	items, err := createKbReviewInboxItems(ctx, q, kbReviewNotice{
+		kind: kbInboxReviewNeeded, base: base, mr: mr, actorType: actorType, actorID: actorID, recipients: maintainers,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return items, maintainers, nil
+}
+
+// archiveKbMrInboxItems archives the merge request's unarchived notifications
+// of the given kinds, which no longer ask for action, and counts them per
+// recipient member.
+func archiveKbMrInboxItems(ctx context.Context, q *db.Queries, mr db.KbMergeRequest, kinds []string) (map[string]int64, error) {
+	rows, err := q.ArchiveKbMrInboxItems(ctx, db.ArchiveKbMrInboxItemsParams{
+		WorkspaceID:        mr.WorkspaceID,
+		Types:              kinds,
+		MergeRequestNumber: mr.Number,
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "archive review notifications merge_request_id=%s", uuidToString(mr.ID))
+	}
+
+	counts := make(map[string]int64, len(rows))
+	for _, row := range rows {
+		if row.RecipientType == kbInboxRecipientMember {
+			counts[uuidToString(row.RecipientID)]++
+		}
+	}
+
+	return counts, nil
+}
+
+// publishKbInbox sends inbox:batch-archived to each member whose review
+// notifications were archived, then inbox:new for each written one.
+func (h *Handler) publishKbInbox(workspaceID pgtype.UUID, c kbInboxChanges, actorType, actorID string) {
+	wsID := uuidToString(workspaceID)
+	for recipientID, count := range c.archived {
+		h.publish(protocol.EventInboxBatchArchived, wsID, actorType, actorID, map[string]any{
+			"recipient_id": recipientID,
+			"count":        count,
+		})
+	}
+
+	for _, item := range c.created {
+		h.publish(protocol.EventInboxNew, uuidToString(item.WorkspaceID), actorType, actorID, map[string]any{
 			"item": map[string]any{
 				"id": uuidToString(item.ID), "workspace_id": uuidToString(item.WorkspaceID),
 				"recipient_type": item.RecipientType, "recipient_id": uuidToString(item.RecipientID),

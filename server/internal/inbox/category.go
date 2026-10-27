@@ -22,7 +22,7 @@ var categoryTypes = map[string][]string{
 		"agent_blocked", "agent_completed", "reaction_added", "children_done",
 		"quick_create_done", "quick_create_failed", "quick_create_unconfirmed",
 	},
-	CategoryKb:        {"kb_mr_changes_requested", "kb_mr_review_requested"},
+	CategoryKb:        {"kb_mr_changes_requested", "kb_mr_review_requested", "kb_mr_review_needed"},
 	CategoryAutopilot: {"autopilot_paused", "autopilot_quota_exceeded"},
 }
 

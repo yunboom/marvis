@@ -403,3 +403,21 @@ WHERE EXISTS (
     WHERE m.workspace_id = sqlc.arg('workspace_id')::uuid AND m.user_id = u.recipient_id
 )
 RETURNING *;
+
+-- name: ArchiveKbMrInboxItems :many
+-- Archives the review notifications of one merge request that no longer ask
+-- for action; merge request numbers are unique within a workspace.
+UPDATE inbox_item SET archived = true
+WHERE workspace_id = sqlc.arg('workspace_id')
+  AND type = ANY(sqlc.arg('types')::text[])
+  AND details->>'merge_request_number' = (sqlc.arg('merge_request_number')::int)::text
+  AND archived = false
+RETURNING recipient_type, recipient_id;
+
+-- name: ListKbMaintainerUserIDs :many
+-- Members who can merge the knowledge base's merge requests: its creator and
+-- the workspace roles passed in (owners and admins), as canMaintainKb.
+SELECT user_id FROM member
+WHERE workspace_id = sqlc.arg('workspace_id')
+  AND (role = ANY(sqlc.arg('roles')::text[]) OR user_id = sqlc.arg('creator_id'))
+ORDER BY user_id;

@@ -11,6 +11,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const archiveKbMrInboxItems = `-- name: ArchiveKbMrInboxItems :many
+UPDATE inbox_item SET archived = true
+WHERE workspace_id = $1
+  AND type = ANY($2::text[])
+  AND details->>'merge_request_number' = ($3::int)::text
+  AND archived = false
+RETURNING recipient_type, recipient_id
+`
+
+type ArchiveKbMrInboxItemsParams struct {
+	WorkspaceID        pgtype.UUID `json:"workspace_id"`
+	Types              []string    `json:"types"`
+	MergeRequestNumber int32       `json:"merge_request_number"`
+}
+
+type ArchiveKbMrInboxItemsRow struct {
+	RecipientType string      `json:"recipient_type"`
+	RecipientID   pgtype.UUID `json:"recipient_id"`
+}
+
+// Archives the review notifications of one merge request that no longer ask
+// for action; merge request numbers are unique within a workspace.
+func (q *Queries) ArchiveKbMrInboxItems(ctx context.Context, arg ArchiveKbMrInboxItemsParams) ([]ArchiveKbMrInboxItemsRow, error) {
+	rows, err := q.db.Query(ctx, archiveKbMrInboxItems, arg.WorkspaceID, arg.Types, arg.MergeRequestNumber)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ArchiveKbMrInboxItemsRow{}
+	for rows.Next() {
+		var i ArchiveKbMrInboxItemsRow
+		if err := rows.Scan(&i.RecipientType, &i.RecipientID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const bumpKbContentVersion = `-- name: BumpKbContentVersion :exec
 UPDATE kb_base SET content_version = content_version + 1, updated_at = now()
 WHERE id = $1
@@ -798,6 +840,41 @@ func (q *Queries) ListKbDraftsByIDs(ctx context.Context, arg ListKbDraftsByIDsPa
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbMaintainerUserIDs = `-- name: ListKbMaintainerUserIDs :many
+SELECT user_id FROM member
+WHERE workspace_id = $1
+  AND (role = ANY($2::text[]) OR user_id = $3)
+ORDER BY user_id
+`
+
+type ListKbMaintainerUserIDsParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	Roles       []string    `json:"roles"`
+	CreatorID   pgtype.UUID `json:"creator_id"`
+}
+
+// Members who can merge the knowledge base's merge requests: its creator and
+// the workspace roles passed in (owners and admins), as canMaintainKb.
+func (q *Queries) ListKbMaintainerUserIDs(ctx context.Context, arg ListKbMaintainerUserIDsParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listKbMaintainerUserIDs, arg.WorkspaceID, arg.Roles, arg.CreatorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []pgtype.UUID{}
+	for rows.Next() {
+		var user_id pgtype.UUID
+		if err := rows.Scan(&user_id); err != nil {
+			return nil, err
+		}
+		items = append(items, user_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

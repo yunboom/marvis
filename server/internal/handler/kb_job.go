@@ -767,7 +767,7 @@ func (h *Handler) SubmitKbJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := requestUserID(r)
-	created, draft, err := h.openKbMergeRequest(ctx, base, parseUUID(*current.DraftID), kbOpenMergeRequest{
+	opened, err := h.openKbMergeRequest(ctx, base, parseUUID(*current.DraftID), kbOpenMergeRequest{
 		title:         title,
 		summary:       summary,
 		source:        kb.StarterSource(job.Starter),
@@ -782,9 +782,9 @@ func (h *Handler) SubmitKbJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.publishKbMergeRequestCreated(created, draft, &job, kbActorMember, userID)
+	h.publishKbMergeRequestCreated(opened, &job, kbActorMember, userID)
 
-	resp, err := h.kbMergeRequestResponseOf(ctx, created.MergeRequest)
+	resp, err := h.kbMergeRequestResponseOf(ctx, opened.MergeRequest)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -1146,7 +1146,7 @@ func (h *Handler) CreateKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	actorType, actorID := h.resolveActor(r, userID, uuidToString(wsUUID))
 
-	created, locked, err := h.openKbMergeRequest(ctx, base, draft.ID, kbOpenMergeRequest{
+	opened, err := h.openKbMergeRequest(ctx, base, draft.ID, kbOpenMergeRequest{
 		title:         title,
 		summary:       strings.TrimSpace(req.Summary),
 		source:        source,
@@ -1161,9 +1161,9 @@ func (h *Handler) CreateKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.publishKbMergeRequestCreated(created, locked, job, actorType, actorID)
+	h.publishKbMergeRequestCreated(opened, job, actorType, actorID)
 
-	resp, err := h.kbMergeRequestResponseOf(ctx, created.MergeRequest)
+	resp, err := h.kbMergeRequestResponseOf(ctx, opened.MergeRequest)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -1181,45 +1181,54 @@ type kbOpenMergeRequest struct {
 	annotationIDs                []pgtype.UUID
 }
 
+// kbOpenedMergeRequest is an opened merge request, its draft and the
+// approval notifications it sent, for the events published after commit.
+type kbOpenedMergeRequest struct {
+	kb.CreatedMergeRequest
+	draft    db.KbDraft
+	notified []db.InboxItem
+}
+
 // openKbMergeRequest checks a draft can be submitted and opens its merge
 // request in one transaction: the draft must be open with changes, no format
 // check may report an error, and it must have no open merge request.
-// Conflicts with the mainline do not block; review handles them.
-func (h *Handler) openKbMergeRequest(ctx context.Context, base db.KbBase, draftID pgtype.UUID, in kbOpenMergeRequest) (kb.CreatedMergeRequest, db.KbDraft, error) {
+// Conflicts with the mainline do not block; review handles them. The
+// knowledge base maintainers are asked to approve it.
+func (h *Handler) openKbMergeRequest(ctx context.Context, base db.KbBase, draftID pgtype.UUID, in kbOpenMergeRequest) (kbOpenedMergeRequest, error) {
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrap(err, "begin merge request create")
+		return kbOpenedMergeRequest{}, errors.Wrap(err, "begin merge request create")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
 
 	draft, err := lockKbDraft(ctx, qtx, db.KbDraft{WorkspaceID: base.WorkspaceID, ID: draftID})
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
 	}
 	if _, err := qtx.GetOpenKbMergeRequestByDraft(ctx, db.GetOpenKbMergeRequestByDraftParams{DraftID: draft.ID, Statuses: kbActiveMergeRequestStatuses}); err == nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeMergeRequestOpen, "the draft already has an open merge request")
+		return kbOpenedMergeRequest{}, kbFail(http.StatusConflict, kbCodeMergeRequestOpen, "the draft already has an open merge request")
 	} else if !isNotFound(err) {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrapf(err, "load open merge request draft_id=%s", uuidToString(draft.ID))
+		return kbOpenedMergeRequest{}, errors.Wrapf(err, "load open merge request draft_id=%s", uuidToString(draft.ID))
 	}
 	if draft.Status != kb.DraftStatusOpen {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeDraftNotOpen, "the draft is "+draft.Status+" and cannot be submitted")
+		return kbOpenedMergeRequest{}, kbFail(http.StatusConflict, kbCodeDraftNotOpen, "the draft is "+draft.Status+" and cannot be submitted")
 	}
 
 	overlay, err := loadKbOverlay(ctx, qtx, base.ID, draft.ID)
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
 	}
 	if len(overlay.rows) == 0 {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeDraftEmpty, "the draft changes nothing")
+		return kbOpenedMergeRequest{}, kbFail(http.StatusConflict, kbCodeDraftEmpty, "the draft changes nothing")
 	}
 	findings, err := lintKbDraftPages(ctx, qtx, base, overlay, nil)
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
 	}
 	for _, f := range findings {
 		if f.Severity == lint.SeverityError {
-			return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeDraftCheckFailed, "the draft check reports errors; fix them before submitting")
+			return kbOpenedMergeRequest{}, kbFail(http.StatusConflict, kbCodeDraftCheckFailed, "the draft check reports errors; fix them before submitting")
 		}
 	}
 
@@ -1239,18 +1248,23 @@ func (h *Handler) openKbMergeRequest(ctx context.Context, base db.KbBase, draftI
 		AnnotationIDs: in.annotationIDs,
 	})
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
+	}
+	notified, _, err := notifyKbReviewNeeded(ctx, qtx, base, created.MergeRequest, in.authorType, in.authorID)
+	if err != nil {
+		return kbOpenedMergeRequest{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrap(err, "commit merge request create")
+		return kbOpenedMergeRequest{}, errors.Wrap(err, "commit merge request create")
 	}
 
-	return created, draft, nil
+	return kbOpenedMergeRequest{CreatedMergeRequest: created, draft: draft, notified: notified}, nil
 }
 
-func (h *Handler) publishKbMergeRequestCreated(created kb.CreatedMergeRequest, draft db.KbDraft, job *db.KbJob, actorType, actorID string) {
-	mr := created.MergeRequest
+func (h *Handler) publishKbMergeRequestCreated(opened kbOpenedMergeRequest, job *db.KbJob, actorType, actorID string) {
+	mr := opened.MergeRequest
+	draft := opened.draft
 	workspaceID := uuidToString(mr.WorkspaceID)
 	var jobID any
 	if job != nil {
@@ -1267,9 +1281,9 @@ func (h *Handler) publishKbMergeRequestCreated(created kb.CreatedMergeRequest, d
 	if job != nil {
 		h.publishKbJobUpdated(*job, actorType, actorID, draft.ID)
 	}
-	if len(created.Annotations) > 0 {
-		ids := make([]string, len(created.Annotations))
-		for i, id := range created.Annotations {
+	if len(opened.Annotations) > 0 {
+		ids := make([]string, len(opened.Annotations))
+		for i, id := range opened.Annotations {
 			ids[i] = uuidToString(id)
 		}
 		h.publish(protocol.EventKbAnnotationChanged, workspaceID, actorType, actorID, map[string]any{
@@ -1278,4 +1292,5 @@ func (h *Handler) publishKbMergeRequestCreated(created kb.CreatedMergeRequest, d
 			"page_ids":          []string{},
 		})
 	}
+	h.publishKbInbox(mr.WorkspaceID, kbInboxChanges{created: opened.notified}, actorType, actorID)
 }

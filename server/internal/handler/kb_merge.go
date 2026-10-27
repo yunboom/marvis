@@ -344,6 +344,8 @@ type kbMergeOutcome struct {
 	draft       db.KbDraft
 	pageIDs     []pgtype.UUID
 	annotations []pgtype.UUID
+	// inboxArchived counts the archived review notifications per member.
+	inboxArchived map[string]int64
 }
 
 func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db.KbMergeRequest, draftVersion int64, userID, actorType, actorID string) (kbMergeOutcome, error) {
@@ -466,6 +468,10 @@ func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db
 	if err := recordKbMrEvent(ctx, qtx, mergedMR, actorType, actorID, kbMrEventMerged, nil); err != nil {
 		return kbMergeOutcome{}, err
 	}
+	inboxArchived, err := archiveKbMrInboxItems(ctx, qtx, mergedMR, kbInboxAllReview)
+	if err != nil {
+		return kbMergeOutcome{}, err
+	}
 	mergedDraft, err := qtx.SetKbDraftStatus(ctx, db.SetKbDraftStatusParams{ID: draft.ID, Status: kb.DraftStatusMerged})
 	if err != nil {
 		return kbMergeOutcome{}, errors.Wrapf(err, "mark draft merged draft_id=%s", uuidToString(draft.ID))
@@ -479,10 +485,11 @@ func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db
 	}
 
 	return kbMergeOutcome{
-		mr:          mergedMR,
-		draft:       mergedDraft,
-		pageIDs:     pageIDs,
-		annotations: append(moved, resolved...),
+		mr:            mergedMR,
+		draft:         mergedDraft,
+		pageIDs:       pageIDs,
+		annotations:   append(moved, resolved...),
+		inboxArchived: inboxArchived,
 	}, nil
 }
 
@@ -501,6 +508,7 @@ func (h *Handler) publishKbMergeRequestMerged(base db.KbBase, out kbMergeOutcome
 	h.publishKbMergeRequestEvent(protocol.EventKbMrMerged, out.mr, actorType, actorID, pageIDs)
 	h.publishKbAnnotationIDs(base, actorType, actorID, out.annotations, pageIDs)
 	h.publishKbMergeRequestJob(out.mr, out.draft, actorType, actorID)
+	h.publishKbInbox(out.mr.WorkspaceID, kbInboxChanges{archived: out.inboxArchived}, actorType, actorID)
 }
 
 // publishKbMergeRequestEvent sends one of the kb.mr.* events.
@@ -612,17 +620,18 @@ func (h *Handler) CloseKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	closed, draft, released, err := h.closeKbMergeRequest(ctx, mr, strings.TrimSpace(req.Reason), userID, actorType, actorID)
+	out, err := h.closeKbMergeRequest(ctx, mr, strings.TrimSpace(req.Reason), userID, actorType, actorID)
 	if err != nil {
 		h.writeKbError(w, r, err)
 		return
 	}
 
-	h.publishKbMergeRequestEvent(protocol.EventKbMrClosed, closed, actorType, actorID, nil)
-	h.publishKbAnnotationIDs(base, actorType, actorID, released, nil)
-	h.publishKbMergeRequestJob(closed, draft, actorType, actorID)
+	h.publishKbMergeRequestEvent(protocol.EventKbMrClosed, out.mr, actorType, actorID, nil)
+	h.publishKbAnnotationIDs(base, actorType, actorID, out.released, nil)
+	h.publishKbMergeRequestJob(out.mr, out.draft, actorType, actorID)
+	h.publishKbInbox(out.mr.WorkspaceID, kbInboxChanges{archived: out.inboxArchived}, actorType, actorID)
 
-	resp, err := h.kbMergeRequestResponseOf(ctx, closed)
+	resp, err := h.kbMergeRequestResponseOf(ctx, out.mr)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -631,24 +640,33 @@ func (h *Handler) CloseKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func (h *Handler) closeKbMergeRequest(ctx context.Context, mr db.KbMergeRequest, reason, userID, actorType, actorID string) (db.KbMergeRequest, db.KbDraft, []pgtype.UUID, error) {
+// kbCloseOutcome is what a close changed, for the events sent after commit.
+type kbCloseOutcome struct {
+	mr       db.KbMergeRequest
+	draft    db.KbDraft
+	released []pgtype.UUID
+	// inboxArchived counts the archived review notifications per member.
+	inboxArchived map[string]int64
+}
+
+func (h *Handler) closeKbMergeRequest(ctx context.Context, mr db.KbMergeRequest, reason, userID, actorType, actorID string) (kbCloseOutcome, error) {
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
-		return db.KbMergeRequest{}, db.KbDraft{}, nil, errors.Wrap(err, "begin close")
+		return kbCloseOutcome{}, errors.Wrap(err, "begin close")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
 
 	draft, err := lockKbDraft(ctx, qtx, db.KbDraft{WorkspaceID: mr.WorkspaceID, ID: mr.DraftID})
 	if err != nil {
-		return db.KbMergeRequest{}, db.KbDraft{}, nil, err
+		return kbCloseOutcome{}, err
 	}
 	locked, err := qtx.GetKbMergeRequestForUpdate(ctx, db.GetKbMergeRequestForUpdateParams{WorkspaceID: mr.WorkspaceID, ID: mr.ID})
 	if err != nil {
-		return db.KbMergeRequest{}, db.KbDraft{}, nil, errors.Wrapf(err, "lock merge request merge_request_id=%s", uuidToString(mr.ID))
+		return kbCloseOutcome{}, errors.Wrapf(err, "lock merge request merge_request_id=%s", uuidToString(mr.ID))
 	}
 	if !isKbMergeRequestActive(locked.Status) {
-		return db.KbMergeRequest{}, db.KbDraft{}, nil, kbFail(http.StatusConflict, kbCodeMergeRequestNotOpen, "the merge request is "+locked.Status)
+		return kbCloseOutcome{}, kbFail(http.StatusConflict, kbCodeMergeRequestNotOpen, "the merge request is "+locked.Status)
 	}
 
 	closed, err := qtx.SetKbMergeRequestClosed(ctx, db.SetKbMergeRequestClosedParams{
@@ -658,24 +676,28 @@ func (h *Handler) closeKbMergeRequest(ctx context.Context, mr db.KbMergeRequest,
 		CloseReason: reason,
 	})
 	if err != nil {
-		return db.KbMergeRequest{}, db.KbDraft{}, nil, errors.Wrapf(err, "close merge request merge_request_id=%s", uuidToString(mr.ID))
+		return kbCloseOutcome{}, errors.Wrapf(err, "close merge request merge_request_id=%s", uuidToString(mr.ID))
 	}
 	if err := recordKbMrEvent(ctx, qtx, closed, actorType, actorID, kbMrEventClosed, map[string]any{"close_reason": reason}); err != nil {
-		return db.KbMergeRequest{}, db.KbDraft{}, nil, err
+		return kbCloseOutcome{}, err
 	}
 	if draft.Status == kb.DraftStatusSubmitted {
 		if draft, err = qtx.SetKbDraftStatus(ctx, db.SetKbDraftStatusParams{ID: draft.ID, Status: kb.DraftStatusOpen}); err != nil {
-			return db.KbMergeRequest{}, db.KbDraft{}, nil, errors.Wrapf(err, "reopen draft draft_id=%s", uuidToString(draft.ID))
+			return kbCloseOutcome{}, errors.Wrapf(err, "reopen draft draft_id=%s", uuidToString(draft.ID))
 		}
 	}
 	released, err := kb.ReleaseAnnotations(ctx, qtx, mr.ID)
 	if err != nil {
-		return db.KbMergeRequest{}, db.KbDraft{}, nil, err
+		return kbCloseOutcome{}, err
+	}
+	inboxArchived, err := archiveKbMrInboxItems(ctx, qtx, closed, kbInboxAllReview)
+	if err != nil {
+		return kbCloseOutcome{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return db.KbMergeRequest{}, db.KbDraft{}, nil, errors.Wrap(err, "commit close")
+		return kbCloseOutcome{}, errors.Wrap(err, "commit close")
 	}
 
-	return closed, draft, released, nil
+	return kbCloseOutcome{mr: closed, draft: draft, released: released, inboxArchived: inboxArchived}, nil
 }

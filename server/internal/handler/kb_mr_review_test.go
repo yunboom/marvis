@@ -83,6 +83,81 @@ func kbInboxCount(t *testing.T, recipient, kind, slug string) int {
 	return n
 }
 
+// kbActiveInboxCount counts the recipient's unarchived notifications of one
+// kind about a merge request.
+func kbActiveInboxCount(t *testing.T, recipient, kind string, number int) int {
+	t.Helper()
+
+	var n int
+	dbfx.QueryRow(t, `SELECT count(*) FROM inbox_item WHERE workspace_id = $1 AND recipient_id = $2 AND type = $3
+		AND details->>'merge_request_number' = $4 AND NOT archived`, testWorkspaceID, recipient, kind, strconv.Itoa(number)).Scan(&n)
+
+	return n
+}
+
+// TestKbMrReviewNeededNotice: opening a merge request asks every knowledge
+// base maintainer to approve it, its author and the workspace owner
+// included, but no plain member. Requested changes archive those notices,
+// asking for review again sends them anew (and asks the other past reviewers
+// to review again), and closing or merging archives every pending one.
+func TestKbMrReviewNeededNotice(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	f := newKbReviewFixture(t)
+	cleanupKbReviews(t, f.baseID, f.slug)
+	admin := createPlainMember(t, fmt.Sprintf("kb-needed-admin-%d@marvis.ai", time.Now().UnixNano()))
+	dbfx.Exec(t, `UPDATE member SET role = 'admin' WHERE workspace_id = $1 AND user_id = $2`, testWorkspaceID, admin)
+	plain := createPlainMember(t, fmt.Sprintf("kb-needed-plain-%d@marvis.ai", time.Now().UnixNano()))
+	active := func(recipient, kind string, number int) int { return kbActiveInboxCount(t, recipient, kind, number) }
+
+	// The author is the workspace owner and the knowledge base creator.
+	mr := openKbMR(t, f.draftWith(t, map[int]string{2: "Dedup by trade no."}))
+	if a, o, p := active(testUserID, kbInboxReviewNeeded, mr.Number), active(admin, kbInboxReviewNeeded, mr.Number), active(plain, kbInboxReviewNeeded, mr.Number); a != 1 || o != 1 || p != 0 {
+		t.Fatalf("approval notices on create: owner=%d admin=%d plain=%d, want 1 1 0", a, o, p)
+	}
+
+	// A plain member requests changes: nobody is asked to approve any more.
+	review := openKbReview(t, mr.Number, asMember(plain), http.StatusCreated)
+	submitKbReview(t, mr.Number, review.ID, "Fix the id.", asMember(plain), http.StatusOK)
+	if a, o := active(testUserID, kbInboxReviewNeeded, mr.Number), active(admin, kbInboxReviewNeeded, mr.Number); a != 0 || o != 0 {
+		t.Errorf("approval notices after changes requested: owner=%d admin=%d, want 0 0", a, o)
+	}
+	if n := active(testUserID, kbInboxChangesRequested, mr.Number); n != 1 {
+		t.Errorf("owner feedback notices = %d, want 1", n)
+	}
+
+	// Asking for review again resolves the feedback notice and asks again.
+	testutil.Call(t, testHandler.RequestKbMrReview, kbMRRequest(http.MethodPost, mr.Number, nil, nil)).Want(http.StatusOK)
+	if n := active(testUserID, kbInboxChangesRequested, mr.Number); n != 0 {
+		t.Errorf("feedback notices after asking again = %d, want 0", n)
+	}
+	if a, o, p := active(testUserID, kbInboxReviewNeeded, mr.Number), active(admin, kbInboxReviewNeeded, mr.Number), active(plain, kbInboxReviewRequested, mr.Number); a != 1 || o != 1 || p != 1 {
+		t.Errorf("notices after asking again: owner=%d admin=%d reviewer=%d, want 1 1 1", a, o, p)
+	}
+
+	// Closing archives every pending notice of the request.
+	testutil.Call(t, testHandler.CloseKbMergeRequest, kbMRRequest(http.MethodPost, mr.Number, map[string]any{}, nil)).Want(http.StatusOK)
+	for _, kind := range kbInboxAllReview {
+		for _, who := range []string{testUserID, admin, plain} {
+			if n := active(who, kind, mr.Number); n != 0 {
+				t.Errorf("%s notices of %s after close = %d", kind, who, n)
+			}
+		}
+	}
+
+	// Merging archives them too.
+	merged := openKbMR(t, f.draftWith(t, map[int]string{3: "Retry every hour."}))
+	if n := active(admin, kbInboxReviewNeeded, merged.Number); n != 1 {
+		t.Fatalf("admin approval notices on create = %d, want 1", n)
+	}
+	mergeKbMR(t, merged.Number, getKbMR(t, merged.Number, nil).DraftVersion, nil, http.StatusOK)
+	if a, o := active(testUserID, kbInboxReviewNeeded, merged.Number), active(admin, kbInboxReviewNeeded, merged.Number); a != 0 || o != 0 {
+		t.Errorf("approval notices after merge: owner=%d admin=%d, want 0 0", a, o)
+	}
+}
+
 // TestKbMrReviewFlow walks decision 107: a reviewer cannot comment outside a
 // review; a review is opened once, its comments stay private until it is
 // submitted, which moves the request to changes_requested and notifies the
@@ -204,7 +279,7 @@ func TestKbMrReviewFlow(t *testing.T) {
 		t.Errorf("reviewer notifications = %d, want 1", n)
 	}
 	if n := kbInboxCount(t, testUserID, kbInboxReviewRequested, f.slug); n != 0 {
-		t.Errorf("owner notified of their own request = %d", n)
+		t.Errorf("maintainer owner asked to review again instead of to approve = %d", n)
 	}
 	if n := len(updated.all()); n != 2 {
 		t.Errorf("kb.mr.updated events = %d, want 2", n)
@@ -242,7 +317,8 @@ func TestKbMrReviewFlow(t *testing.T) {
 }
 
 // TestKbMrReviewByOwner: a knowledge base maintainer reviews their own merge
-// request and is never notified of their own review or review request; an
+// request and is notified like anyone else: their own review leaves them
+// feedback to resolve, and asking for review again asks them to approve; an
 // owner who does not maintain the knowledge base cannot, while other members
 // still can.
 func TestKbMrReviewByOwner(t *testing.T) {
@@ -265,12 +341,15 @@ func TestKbMrReviewByOwner(t *testing.T) {
 	if detail := getKbMR(t, own.Number, nil); detail.Status != kb.MergeRequestStatusChangesRequested || !detail.CanRequestReview {
 		t.Fatalf("after self review = %+v", detail)
 	}
-	if n := kbInboxCount(t, testUserID, kbInboxChangesRequested, f.slug); n != 0 {
-		t.Errorf("owner notified of their own review = %d", n)
+	if n := kbActiveInboxCount(t, testUserID, kbInboxChangesRequested, own.Number); n != 1 {
+		t.Errorf("owner feedback notices for their own review = %d, want 1", n)
 	}
 	testutil.Call(t, testHandler.RequestKbMrReview, kbMRRequest(http.MethodPost, own.Number, nil, nil)).Want(http.StatusOK)
-	if n := kbInboxCount(t, testUserID, kbInboxReviewRequested, f.slug); n != 0 {
-		t.Errorf("owner notified of their own review request = %d", n)
+	if n := kbActiveInboxCount(t, testUserID, kbInboxChangesRequested, own.Number); n != 0 {
+		t.Errorf("feedback notices left after asking for review again = %d", n)
+	}
+	if n := kbActiveInboxCount(t, testUserID, kbInboxReviewNeeded, own.Number); n != 1 {
+		t.Errorf("owner approval notices after asking for review again = %d, want 1", n)
 	}
 
 	// An owner who does not maintain the knowledge base cannot review.

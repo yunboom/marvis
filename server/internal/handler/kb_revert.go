@@ -61,7 +61,7 @@ func (h *Handler) RevertKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	created, draft, err := h.revertKbMergeRequest(ctx, base, mr, kbOpenMergeRequest{
+	opened, err := h.revertKbMergeRequest(ctx, base, mr, kbOpenMergeRequest{
 		title:      fmt.Sprintf("Revert #%d: %s", mr.Number, mr.Title),
 		summary:    fmt.Sprintf("Reverts #%d.", mr.Number),
 		source:     kb.MergeRequestSourceRevert,
@@ -74,9 +74,9 @@ func (h *Handler) RevertKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.publishKbMergeRequestCreated(created, draft, nil, actorType, actorID)
+	h.publishKbMergeRequestCreated(opened, nil, actorType, actorID)
 
-	resp, err := h.kbMergeRequestResponseOf(ctx, created.MergeRequest)
+	resp, err := h.kbMergeRequestResponseOf(ctx, opened.MergeRequest)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -85,17 +85,17 @@ func (h *Handler) RevertKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, resp)
 }
 
-func (h *Handler) revertKbMergeRequest(ctx context.Context, base db.KbBase, mr db.KbMergeRequest, in kbOpenMergeRequest, userID string, taskID pgtype.UUID) (kb.CreatedMergeRequest, db.KbDraft, error) {
+func (h *Handler) revertKbMergeRequest(ctx context.Context, base db.KbBase, mr db.KbMergeRequest, in kbOpenMergeRequest, userID string, taskID pgtype.UUID) (kbOpenedMergeRequest, error) {
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrap(err, "begin revert")
+		return kbOpenedMergeRequest{}, errors.Wrap(err, "begin revert")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
 
 	pages, err := planKbRevert(ctx, qtx, base, mr)
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
 	}
 
 	draft, err := qtx.CreateKbDraft(ctx, db.CreateKbDraftParams{
@@ -106,29 +106,29 @@ func (h *Handler) revertKbMergeRequest(ctx context.Context, base db.KbBase, mr d
 		TaskID:          taskID,
 	})
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrapf(err, "create revert draft merge_request_id=%s", uuidToString(mr.ID))
+		return kbOpenedMergeRequest{}, errors.Wrapf(err, "create revert draft merge_request_id=%s", uuidToString(mr.ID))
 	}
 	if draft, err = qtx.BumpKbDraftVersion(ctx, draft.ID); err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrapf(err, "bump revert draft draft_id=%s", uuidToString(draft.ID))
+		return kbOpenedMergeRequest{}, errors.Wrapf(err, "bump revert draft draft_id=%s", uuidToString(draft.ID))
 	}
 
 	params := db.CreateKbDraftPagesParams{DraftID: draft.ID, Version: draft.Version}
 	for _, p := range pages {
 		header, err := json.Marshal(p.page.Frontmatter)
 		if err != nil {
-			return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.WithStack(err)
+			return kbOpenedMergeRequest{}, errors.WithStack(err)
 		}
 		blocks, err := json.Marshal(p.page.Blocks)
 		if err != nil {
-			return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.WithStack(err)
+			return kbOpenedMergeRequest{}, errors.WithStack(err)
 		}
 		claims, err := json.Marshal(p.page.Claims)
 		if err != nil {
-			return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.WithStack(err)
+			return kbOpenedMergeRequest{}, errors.WithStack(err)
 		}
 		parentID, err := optionalPgUUID(p.page.ParentID)
 		if err != nil {
-			return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+			return kbOpenedMergeRequest{}, err
 		}
 		params.PageIds = append(params.PageIds, p.pageID)
 		params.Ops = append(params.Ops, p.op)
@@ -141,7 +141,7 @@ func (h *Handler) revertKbMergeRequest(ctx context.Context, base db.KbBase, mr d
 		params.Claims = append(params.Claims, claims)
 	}
 	if err := qtx.CreateKbDraftPages(ctx, params); err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrapf(err, "write revert draft draft_id=%s", uuidToString(draft.ID))
+		return kbOpenedMergeRequest{}, errors.Wrapf(err, "write revert draft draft_id=%s", uuidToString(draft.ID))
 	}
 
 	created, err := kb.CreateMergeRequest(ctx, qtx, kb.NewMergeRequest{
@@ -155,19 +155,23 @@ func (h *Handler) revertKbMergeRequest(ctx context.Context, base db.KbBase, mr d
 		RevertsID:  mr.ID,
 	})
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
 	}
 	if err := recordKbMrEvent(ctx, qtx, mr, in.authorType, uuidToString(in.authorID), kbMrEventReverted, map[string]any{
 		"revert_number": created.MergeRequest.Number,
 	}); err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
+	}
+	notified, _, err := notifyKbReviewNeeded(ctx, qtx, base, created.MergeRequest, in.authorType, in.authorID)
+	if err != nil {
+		return kbOpenedMergeRequest{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrap(err, "commit revert")
+		return kbOpenedMergeRequest{}, errors.Wrap(err, "commit revert")
 	}
 
-	return created, draft, nil
+	return kbOpenedMergeRequest{CreatedMergeRequest: created, draft: draft, notified: notified}, nil
 }
 
 // planKbRevert works out the revert draft's pages. Pages already back where
