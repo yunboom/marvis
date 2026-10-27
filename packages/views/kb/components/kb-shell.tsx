@@ -187,7 +187,7 @@ function KbNav({
       aria-label={t(($) => $.nav.label)}
       className="flex w-[260px] shrink-0 flex-col border-r bg-sidebar/60 max-md:hidden"
     >
-      <div className="flex h-14 shrink-0 items-center gap-1 border-b pr-2 pl-3">
+      <div className="flex h-12 shrink-0 items-center gap-1 border-b pr-2 pl-3">
         <KbSwitcher kbSlug={kbSlug} name={base?.name ?? kbSlug} />
         <KbMoreMenu kbSlug={kbSlug} canConfigure={canConfigure} />
       </div>
