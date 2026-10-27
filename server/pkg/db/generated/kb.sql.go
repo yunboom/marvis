@@ -1842,7 +1842,7 @@ func (q *Queries) ListKbLinksFromPage(ctx context.Context, arg ListKbLinksFromPa
 }
 
 const listKbOpenMergeRequestsForPage = `-- name: ListKbOpenMergeRequestsForPage :many
-SELECT mr.number, mr.title
+SELECT mr.number, mr.title, mr.draft_id
 FROM kb_merge_request mr
 JOIN kb_draft_page dp ON dp.draft_id = mr.draft_id
 WHERE mr.knowledge_base_id = $1
@@ -1858,8 +1858,9 @@ type ListKbOpenMergeRequestsForPageParams struct {
 }
 
 type ListKbOpenMergeRequestsForPageRow struct {
-	Number int32  `json:"number"`
-	Title  string `json:"title"`
+	Number  int32       `json:"number"`
+	Title   string      `json:"title"`
+	DraftID pgtype.UUID `json:"draft_id"`
 }
 
 // Open merge requests whose draft touches the page, newest first.
@@ -1872,7 +1873,7 @@ func (q *Queries) ListKbOpenMergeRequestsForPage(ctx context.Context, arg ListKb
 	items := []ListKbOpenMergeRequestsForPageRow{}
 	for rows.Next() {
 		var i ListKbOpenMergeRequestsForPageRow
-		if err := rows.Scan(&i.Number, &i.Title); err != nil {
+		if err := rows.Scan(&i.Number, &i.Title, &i.DraftID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

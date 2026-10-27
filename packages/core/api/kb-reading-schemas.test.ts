@@ -47,8 +47,9 @@ const page = {
   updated_at: "2026-10-25T00:00:00Z",
   stale: true,
   backlinks: [{ id: "page-2", title: "幂等键" }],
-  pending_mr: { number: 16, title: "去重键" },
-  pending_mr_count: 1,
+  pending_mr: { number: 18, title: "退款回调" },
+  pending_mr_count: 2,
+  pending_mrs: [{ number: 18, title: "退款回调", status: "open" }],
   annotations_open: 2,
   draft_change: "",
   drafts: [
@@ -60,6 +61,7 @@ const page = {
       draft_change: "modified",
       changed_blocks: 1,
       origin: { type: "chat", label: "回调去重键", ref_id: "s-1" },
+      merge_request: { number: 16, title: "去重键" },
     },
   ],
 };
@@ -82,6 +84,7 @@ describe("knowledge base page schema", () => {
       sources: [],
       last_mr: null,
       pending_mr: null,
+      pending_mrs: [],
       drafts: [],
       stale: false,
       annotations_open: 0,
@@ -98,6 +101,13 @@ describe("knowledge base page schema", () => {
     expect(parsed.blocks).toEqual([{ id: "ok", kind: "text", content: "x" }]);
     expect(parsed.sources[0]).toMatchObject({ id: "s", kind: "other", raw: null, openable: false });
     expect(parsed.last_mr).toBeNull();
+  });
+
+  it("reads a draft without a merge request field as not submitted", () => {
+    const { merge_request: _omitted, ...draft } = page.drafts[0]!;
+    const parsed = parsePage({ ...page, drafts: [draft], pending_mrs: [{ title: "no number" }, 5] });
+    expect(parsed.drafts[0]!.merge_request).toBeNull();
+    expect(parsed.pending_mrs).toEqual([{ number: 0, title: "no number", status: "" }]);
   });
 
   it("falls back to the empty page for a malformed response", () => {

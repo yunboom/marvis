@@ -106,6 +106,17 @@ type KbPageDraftResponse struct {
 	DraftChange   string                `json:"draft_change"`
 	ChangedBlocks int                   `json:"changed_blocks"`
 	Origin        KbDraftOriginResponse `json:"origin"`
+	// MergeRequest is the open merge request made from the draft, nil until
+	// it is submitted.
+	MergeRequest *KbMergeRequestRefResponse `json:"merge_request"`
+}
+
+// KbPendingMergeRequestResponse is another author's open merge request that
+// changes the page.
+type KbPendingMergeRequestResponse struct {
+	Number int32  `json:"number"`
+	Title  string `json:"title"`
+	Status string `json:"status"`
 }
 
 // KbPageResponse is a page as the reading page shows it (GET
@@ -126,7 +137,10 @@ type KbPageResponse struct {
 	Backlinks       []KbPageLinkResponse       `json:"backlinks"`
 	PendingMR       *KbMergeRequestRefResponse `json:"pending_mr"`
 	PendingMRCount  int                        `json:"pending_mr_count"`
-	AnnotationsOpen int64                      `json:"annotations_open"`
+	// PendingMRs are the open merge requests that change the page, except
+	// those made from the caller's drafts, newest first.
+	PendingMRs      []KbPendingMergeRequestResponse `json:"pending_mrs"`
+	AnnotationsOpen int64                           `json:"annotations_open"`
 	// DraftChange is what the requested draft did to this page.
 	DraftChange string `json:"draft_change"`
 	// Drafts are the caller's live drafts that change this page.
@@ -511,6 +525,7 @@ func (h *Handler) buildKbPageView(ctx context.Context, src kbPageSource, userID 
 		Backlinks:       []KbPageLinkResponse{},
 		DraftChange:     src.draftChange,
 		Drafts:          []KbPageDraftResponse{},
+		PendingMRs:      []KbPendingMergeRequestResponse{},
 	}
 
 	if src.mainline == nil {
@@ -574,7 +589,32 @@ func (h *Handler) fillKbPageActivity(ctx context.Context, src kbPageSource, user
 	}
 	view.Drafts = drafts
 
+	attachKbPageMergeRequests(view, pending)
+
 	return nil
+}
+
+// attachKbPageMergeRequests hands each of the caller's drafts its open merge
+// request and lists the others as pending.
+func attachKbPageMergeRequests(view *KbPageResponse, pending []db.ListKbOpenMergeRequestsForPageRow) {
+	own := make(map[string]int, len(view.Drafts))
+	for i, draft := range view.Drafts {
+		own[draft.ID] = i
+	}
+
+	for _, mr := range pending {
+		if i, ok := own[uuidToString(mr.DraftID)]; ok {
+			if view.Drafts[i].MergeRequest == nil {
+				view.Drafts[i].MergeRequest = &KbMergeRequestRefResponse{Number: mr.Number, Title: mr.Title}
+			}
+			continue
+		}
+		view.PendingMRs = append(view.PendingMRs, KbPendingMergeRequestResponse{
+			Number: mr.Number,
+			Title:  mr.Title,
+			Status: kb.MergeRequestStatusOpen,
+		})
+	}
 }
 
 func (h *Handler) loadKbMainlineClaims(ctx context.Context, baseID, pageID pgtype.UUID) ([]kb.Claim, error) {

@@ -240,7 +240,7 @@ WHERE r.page_id = $1 AND r.id = $2;
 
 -- name: ListKbOpenMergeRequestsForPage :many
 -- Open merge requests whose draft touches the page, newest first.
-SELECT mr.number, mr.title
+SELECT mr.number, mr.title, mr.draft_id
 FROM kb_merge_request mr
 JOIN kb_draft_page dp ON dp.draft_id = mr.draft_id
 WHERE mr.knowledge_base_id = sqlc.arg('knowledge_base_id')

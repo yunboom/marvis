@@ -81,7 +81,7 @@
     "updated": "{{time}} 업데이트",
     "verified": "확인됨 · {{name}} · {{date}}",
     "stale": "재검토 필요",
-    "pending_mr_other": "이 페이지에 검토 대기 중인 변경이 {{count}}건 있습니다: {{title}} (#{{number}})",
+    "pending_mr_other": "이 페이지에 검토 대기 중인 변경이 {{count}}건 있습니다 #{{number}} · {{title}}",
     "not_found": "페이지가 없거나 삭제되었습니다",
     "sources": "출처",
     "missing_page": "아직 작성되지 않은 페이지입니다",
@@ -91,11 +91,19 @@
   },
   "draft": {
     "label": "초안",
-    "single": "내 초안이 이 페이지를 변경했으며 아직 병합되지 않았습니다. 다른 사람에게는 정식 버전이 보입니다.",
-    "multi_other": "이 페이지를 변경한 초안이 {{count}}개 있으며 모두 병합되지 않았습니다. 다른 사람에게는 정식 버전이 보입니다.",
+    "single": "내 초안이 이 페이지를 변경했으며 아직 병합되지 않았습니다.",
+    "multi_other": "이 페이지를 변경한 초안이 {{count}}개 있으며 모두 병합되지 않았습니다.",
     "official": "정식",
     "draft": "초안",
     "show_diff": "차이 표시",
+    "bar": {
+      "review": "검토 대기",
+      "resolve": "해결 필요",
+      "submitted": "검토 요청됨 #{{number}} · {{title}}",
+      "resolve_text": "해결 필요 #{{number}} · {{title}}",
+      "review_text": "검토 대기 #{{number}} · {{title}}",
+      "others_other": "검토 대기 중인 다른 변경 {{count}}건"
+    },
     "diff_empty": "이 초안은 이 페이지를 변경하지 않았습니다",
     "choose": "초안 선택",
     "origin": {

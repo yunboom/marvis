@@ -90,6 +90,7 @@ const PAGE: KbPage = {
   backlinks: [],
   pending_mr: null,
   pending_mr_count: 0,
+  pending_mrs: [],
   annotations_open: 2,
   draft_change: "",
   drafts: [],

@@ -13,7 +13,7 @@ import {
   kbBaseDetailOptions,
   kbPageOptions,
 } from "@marvis/core/kb/queries";
-import type { KbAnnotation, KbBlock, KbPage, KbPageDraft, KbSource } from "@marvis/core/types";
+import type { KbAnnotation, KbBlock, KbPage, KbPageDraft, KbPendingMergeRequest, KbSource } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Switch } from "@marvis/ui/components/ui/switch";
 import { Toggle } from "@marvis/ui/components/ui/toggle";
@@ -74,45 +74,140 @@ export function useDraftLabel() {
   );
 }
 
+// The banner's state tags: the viewer's unsubmitted draft and changes in
+// review in 花青, a submitted draft that other open requests also change in
+// deep 藤黄 (#9a6b1c), which has no theme token.
+const BAR_TAG = "shrink-0 rounded-md px-1.5 text-caption leading-5 text-primary-foreground";
+const BAR_TAG_TONE = {
+  draft: "bg-status-review",
+  review: "bg-status-review",
+  resolve: "bg-[oklch(0.5634_0.1081_75.14)]",
+} as const;
+type BarTone = keyof typeof BAR_TAG_TONE;
+
+// Radio value of the viewer's own entry in the other-changes menu.
+const OWN_CHANGE = "own";
+
+/** Other authors' open requests on the page; an older backend names only the latest. */
+function otherMergeRequests(page: KbPage, ownDrafts: number): KbPendingMergeRequest[] {
+  if (page.pending_mrs.length > 0) return page.pending_mrs;
+  if (ownDrafts > 0 || !page.pending_mr) return [];
+
+  return [{ ...page.pending_mr, status: "open" }];
+}
+
 /**
- * Banner over a page the viewer has drafts for: official / draft switch, and
- * on a draft read a switch that marks its edits. A page the draft creates has
- * no official version to switch to.
+ * The banner over a page with a draft of the viewer's or changes in review.
+ * It names the viewer's draft, or the request it was submitted as; other
+ * authors' requests on the page are listed beside it and can be picked
+ * instead. With a draft it carries the show changes switch and the official
+ * / draft switch; a page the draft creates has no official version.
  */
-export function KbDraftBar({
+export function KbReadBar({
+  kbSlug,
+  page,
   drafts,
   activeDraft,
   diff = true,
-  pageDraftChange = "",
 }: {
+  kbSlug: string;
+  page: KbPage;
+  /** The viewer's drafts that change the page. */
   drafts: KbPageDraft[];
   activeDraft: string;
   /** The draft's edits are marked on the page. */
   diff?: boolean;
-  /** The draft change of the page as read through `activeDraft`. */
-  pageDraftChange?: string;
 }) {
   const { t } = useT("kb");
+  const p = useWorkspacePaths();
   const { pathname, replace } = useNavigation();
   const timeAgo = useTimeAgo();
   const draftLabel = useDraftLabel();
   const diffLabel = useId();
-  const selected = drafts.find((d) => d.id === activeDraft) ?? drafts[0];
-  if (!selected) return null;
+  const [picked, setPicked] = useState<number | null>(null);
 
-  const added = (activeDraft ? pageDraftChange : selected.draft_change) === DRAFT_ADDED;
+  const others = otherMergeRequests(page, drafts.length);
+  const selected = drafts.find((d) => d.id === activeDraft) ?? drafts[0];
+  const pickedMr = others.find((mr) => mr.number === picked);
+  if (!selected && others.length === 0) return null;
+
+  const added = (activeDraft ? page.draft_change : selected?.draft_change) === DRAFT_ADDED;
+  const ownMr = selected?.merge_request ?? null;
+
+  let tone: BarTone;
+  let text: string;
+  let target: { number: number } | null;
+  if (pickedMr) {
+    tone = "review";
+    text = t(($) => $.draft.bar.review_text, { number: pickedMr.number, title: pickedMr.title });
+    target = pickedMr;
+  } else if (selected && !ownMr) {
+    tone = "draft";
+    text = added ? "" : drafts.length > 1 ? t(($) => $.draft.multi, { count: drafts.length }) : t(($) => $.draft.single);
+    target = null;
+  } else if (ownMr) {
+    tone = others.length > 0 ? "resolve" : "review";
+    text =
+      others.length > 0
+        ? t(($) => $.draft.bar.resolve_text, { number: ownMr.number, title: ownMr.title })
+        : t(($) => $.draft.bar.submitted, { number: ownMr.number, title: ownMr.title });
+    target = ownMr;
+  } else {
+    const latest = others[0]!;
+    tone = "review";
+    text = t(($) => $.page.pending_mr, {
+      count: page.pending_mrs.length > 0 ? others.length : Math.max(page.pending_mr_count, 1),
+      number: latest.number,
+      title: latest.title,
+    });
+    target = latest;
+  }
+
+  const tag = tone === "draft" ? t(($) => $.draft.label) : tone === "resolve" ? t(($) => $.draft.bar.resolve) : t(($) => $.draft.bar.review);
 
   return (
-    <div className="mb-[18px] flex items-center gap-3 rounded-xl bg-status-review/5 px-3.5 py-2.5 text-label ring-1 ring-status-review/45 ring-inset">
-      <span className="rounded-md bg-status-review px-1.5 text-caption leading-5 text-primary-foreground">{t(($) => $.draft.label)}</span>
-      <span className="min-w-0 flex-1">
-        {!added && (drafts.length > 1 ? t(($) => $.draft.multi, { count: drafts.length }) : t(($) => $.draft.single))}
+    <div className="mb-[18px] flex items-center gap-2.5 rounded-xl bg-status-review/5 px-3.5 py-2.5 text-label ring-1 ring-status-review/45 ring-inset">
+      <span className={cn(BAR_TAG, BAR_TAG_TONE[tone])}>{tag}</span>
+      <span className="min-w-0 flex-1 truncate" title={text || undefined}>
+        {text}
       </span>
-      {drafts.length > 1 && (
+      {target && (
+        <AppLink href={p.kbMergeRequest(kbSlug, target.number)} className="shrink-0 text-status-review hover:underline">
+          {t(($) => $.page.view_change)}
+        </AppLink>
+      )}
+      {selected && others.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button variant="outline" size="sm" aria-label={t(($) => $.draft.choose)} className="max-w-60 gap-1.5">
+              <Button variant="ghost" size="sm" className="shrink-0 gap-1 px-2 text-muted-foreground">
+                {t(($) => $.draft.bar.others, { count: others.length })}
+                <ChevronDown aria-hidden="true" className="size-3" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-[300px]">
+            <DropdownMenuRadioGroup
+              value={pickedMr ? String(pickedMr.number) : OWN_CHANGE}
+              onValueChange={(value) => setPicked(value === OWN_CHANGE ? null : Number(value))}
+            >
+              <DropdownMenuRadioItem value={OWN_CHANGE}>
+                <span className="truncate">{ownMr ? `#${ownMr.number} · ${ownMr.title}` : draftLabel(selected)}</span>
+              </DropdownMenuRadioItem>
+              {others.map((mr) => (
+                <DropdownMenuRadioItem key={mr.number} value={String(mr.number)}>
+                  <span className="truncate">{`#${mr.number} · ${mr.title}`}</span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+      {selected && drafts.length > 1 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="outline" size="sm" aria-label={t(($) => $.draft.choose)} className="max-w-60 shrink-0 gap-1.5">
                 <span className="min-w-0 truncate">{draftLabel(selected)}</span>
                 <ChevronDown aria-hidden="true" className="size-3" />
               </Button>
@@ -137,17 +232,7 @@ export function KbDraftBar({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
-      {!added && (
-        <div role="group" className="flex shrink-0 rounded-lg bg-surface-sunken p-0.5">
-          <Toggle size="sm" pressed={!activeDraft} onPressedChange={() => replace(pathname)} className={SEGMENT}>
-            {t(($) => $.draft.official)}
-          </Toggle>
-          <Toggle size="sm" pressed={!!activeDraft} onPressedChange={() => replace(withDraft(pathname, selected.id))} className={SEGMENT}>
-            {t(($) => $.draft.draft)}
-          </Toggle>
-        </div>
-      )}
-      {activeDraft && (
+      {selected && activeDraft && (
         <label className="flex shrink-0 cursor-pointer items-center gap-2">
           <Switch
             size="sm"
@@ -158,28 +243,16 @@ export function KbDraftBar({
           <span id={diffLabel}>{t(($) => $.draft.show_diff)}</span>
         </label>
       )}
-    </div>
-  );
-}
-
-function PendingReviewBanner({ kbSlug, page }: { kbSlug: string; page: KbPage }) {
-  const { t } = useT("kb");
-  const p = useWorkspacePaths();
-  if (!page.pending_mr) return null;
-
-  return (
-    <div className="mb-[18px] flex items-center gap-2.5 rounded-xl bg-info/5 px-3.5 py-2.5 text-label">
-      <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-info" />
-      <span className="flex-1">
-        {t(($) => $.page.pending_mr, {
-          count: Math.max(page.pending_mr_count, 1),
-          title: page.pending_mr.title,
-          number: page.pending_mr.number,
-        })}
-      </span>
-      <AppLink href={p.kbMergeRequest(kbSlug, page.pending_mr.number)} className="shrink-0 text-info hover:underline">
-        {t(($) => $.page.view_change)}
-      </AppLink>
+      {selected && !added && (
+        <div role="group" className="flex shrink-0 rounded-lg bg-surface-sunken p-0.5">
+          <Toggle size="sm" pressed={!activeDraft} onPressedChange={() => replace(pathname)} className={SEGMENT}>
+            {t(($) => $.draft.official)}
+          </Toggle>
+          <Toggle size="sm" pressed={!!activeDraft} onPressedChange={() => replace(withDraft(pathname, selected.id))} className={SEGMENT}>
+            {t(($) => $.draft.draft)}
+          </Toggle>
+        </div>
+      )}
     </div>
   );
 }
@@ -329,14 +402,7 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   // Mainline reads list the viewer's drafts; a draft read of a page the
   // draft creates has no mainline to list them from.
   const drafts = page.drafts.length > 0 ? page.drafts : draft ? [syntheticDraft(draft, page)] : [];
-  const banners = (
-    <>
-      {drafts.length > 0 && (
-        <KbDraftBar drafts={drafts} activeDraft={draft} diff={diff} pageDraftChange={page.draft_change} />
-      )}
-      <PendingReviewBanner kbSlug={kbSlug} page={page} />
-    </>
-  );
+  const banners = <KbReadBar key={page.id} kbSlug={kbSlug} page={page} drafts={drafts} activeDraft={draft} diff={diff} />;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -475,5 +541,6 @@ function syntheticDraft(draftId: string, page: KbPage): KbPageDraft {
     draft_change: page.draft_change,
     changed_blocks: page.blocks.length,
     origin: { type: "none", label: "", ref_id: "" },
+    merge_request: null,
   };
 }

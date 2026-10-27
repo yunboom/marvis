@@ -297,6 +297,7 @@ describe("raw links on the reading page", () => {
       backlinks: [],
       pending_mr: null,
       pending_mr_count: 0,
+      pending_mrs: [],
       annotations_open: 0,
       draft_change: "",
       drafts: [],

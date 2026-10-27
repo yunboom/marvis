@@ -81,7 +81,7 @@
     "updated": "更新於 {{time}}",
     "verified": "已核實 · {{name}} · {{date}}",
     "stale": "需要複核",
-    "pending_mr_other": "本頁有 {{count}} 個待稽核的修改：{{title}}（#{{number}}）",
+    "pending_mr_other": "本頁有 {{count}} 個待稽核的修改 #{{number}} · {{title}}",
     "not_found": "頁面不存在或已刪除",
     "sources": "引用來源",
     "missing_page": "這一頁還沒有寫",
@@ -91,11 +91,19 @@
   },
   "draft": {
     "label": "草稿",
-    "single": "你的草稿改了這一頁，還沒有合併。其他人看到的仍是正式版本。",
-    "multi_other": "你有 {{count}} 份草稿改了這一頁，都還沒有合併。其他人看到的仍是正式版本。",
+    "single": "你的草稿改了這一頁，還沒有合併。",
+    "multi_other": "你有 {{count}} 份草稿改了這一頁，都還沒有合併。",
     "official": "正式",
     "draft": "草稿",
     "show_diff": "顯示差異",
+    "bar": {
+      "review": "待稽核",
+      "resolve": "待解決",
+      "submitted": "已提交稽核 #{{number}} · {{title}}",
+      "resolve_text": "待解決 #{{number}} · {{title}}",
+      "review_text": "待稽核 #{{number}} · {{title}}",
+      "others_other": "另有 {{count}} 個待稽核的修改"
+    },
     "diff_empty": "這一頁在草稿裡沒有改動",
     "choose": "選擇草稿",
     "origin": {

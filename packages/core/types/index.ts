@@ -392,6 +392,7 @@ export type {
   KbPage,
   KbPageDraft,
   KbPageRef,
+  KbPendingMergeRequest,
   KbRawFile,
   KbRecentPage,
   KbRevision,

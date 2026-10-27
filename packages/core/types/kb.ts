@@ -120,6 +120,16 @@ export interface KbPageDraft {
   draft_change: string;
   changed_blocks: number;
   origin: KbDraftOrigin;
+  /** The open merge request made from the draft; null until it is submitted. */
+  merge_request: KbMergeRequestRef | null;
+}
+
+/** Another author's open merge request that changes a page. */
+export interface KbPendingMergeRequest {
+  number: number;
+  title: string;
+  /** A {@link KbMergeRequestStatus}, widened so a newer backend still parses. */
+  status: string;
 }
 
 /** A page as the reading page shows it. */
@@ -140,6 +150,8 @@ export interface KbPage {
   backlinks: KbPageRef[];
   pending_mr: KbMergeRequestRef | null;
   pending_mr_count: number;
+  /** Open merge requests changing the page, except those from the viewer's drafts. */
+  pending_mrs: KbPendingMergeRequest[];
   annotations_open: number;
   /** A {@link KbDraftChange}, widened so a newer backend still parses. */
   draft_change: string;

@@ -197,8 +197,11 @@ const KbPageDraftSchema = z
       .object({ type: text, label: text, ref_id: text })
       .loose()
       .catch({ type: "none", label: "", ref_id: "" }),
+    merge_request: nullableObject(KbMergeRequestRefSchema),
   })
   .loose();
+
+const KbPendingMergeRequestSchema = z.object({ number: countSchema, title: text, status: text }).loose();
 
 export const KbPageSchema = z
   .object({
@@ -222,6 +225,7 @@ export const KbPageSchema = z
     backlinks: lenientArray(KbPageRefSchema),
     pending_mr: nullableObject(KbMergeRequestRefSchema),
     pending_mr_count: countSchema,
+    pending_mrs: lenientArray(KbPendingMergeRequestSchema),
     annotations_open: countSchema,
     draft_change: text,
     drafts: lenientArray(KbPageDraftSchema),
@@ -349,6 +353,7 @@ export const EMPTY_KB_PAGE: KbPage = {
   backlinks: [],
   pending_mr: null,
   pending_mr_count: 0,
+  pending_mrs: [],
   annotations_open: 0,
   draft_change: "",
   drafts: [],

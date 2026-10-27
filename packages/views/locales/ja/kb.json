@@ -81,7 +81,7 @@
     "updated": "{{time}} に更新",
     "verified": "確認済み · {{name}} · {{date}}",
     "stale": "要再確認",
-    "pending_mr_other": "このページにはレビュー待ちの変更が {{count}} 件あります：{{title}}（#{{number}}）",
+    "pending_mr_other": "このページにはレビュー待ちの変更が {{count}} 件あります #{{number}} · {{title}}",
     "not_found": "ページが存在しないか削除されました",
     "sources": "出典",
     "missing_page": "このページはまだ書かれていません",
@@ -91,11 +91,19 @@
   },
   "draft": {
     "label": "下書き",
-    "single": "あなたの下書きがこのページを変更しています（未マージ）。他のメンバーには正式版が表示されます。",
-    "multi_other": "このページを変更している下書きが {{count}} 件あります（いずれも未マージ）。他のメンバーには正式版が表示されます。",
+    "single": "あなたの下書きがこのページを変更しています（未マージ）。",
+    "multi_other": "このページを変更している下書きが {{count}} 件あります（いずれも未マージ）。",
     "official": "正式版",
     "draft": "下書き",
     "show_diff": "差分を表示",
+    "bar": {
+      "review": "レビュー待ち",
+      "resolve": "要解決",
+      "submitted": "レビューに提出済み #{{number}} · {{title}}",
+      "resolve_text": "要解決 #{{number}} · {{title}}",
+      "review_text": "レビュー待ち #{{number}} · {{title}}",
+      "others_other": "ほかにレビュー待ちの変更 {{count}} 件"
+    },
     "diff_empty": "この下書きはこのページを変更していません",
     "choose": "下書きを選択",
     "origin": {

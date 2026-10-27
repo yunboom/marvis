@@ -81,7 +81,7 @@
     "updated": "更新于 {{time}}",
     "verified": "已核实 · {{name}} · {{date}}",
     "stale": "需要复核",
-    "pending_mr_other": "本页有 {{count}} 个待审核的修改：{{title}}（#{{number}}）",
+    "pending_mr_other": "本页有 {{count}} 个待审核的修改 #{{number}} · {{title}}",
     "not_found": "页面不存在或已删除",
     "sources": "引用来源",
     "missing_page": "这一页还没有写",
@@ -91,11 +91,19 @@
   },
   "draft": {
     "label": "草稿",
-    "single": "你的草稿改了这一页，还没有合并。其他人看到的仍是正式版本。",
-    "multi_other": "你有 {{count}} 份草稿改了这一页，都还没有合并。其他人看到的仍是正式版本。",
+    "single": "你的草稿改了这一页，还没有合并。",
+    "multi_other": "你有 {{count}} 份草稿改了这一页，都还没有合并。",
     "official": "正式",
     "draft": "草稿",
     "show_diff": "显示差异",
+    "bar": {
+      "review": "待审核",
+      "resolve": "待解决",
+      "submitted": "已提交审核 #{{number}} · {{title}}",
+      "resolve_text": "待解决 #{{number}} · {{title}}",
+      "review_text": "待审核 #{{number}} · {{title}}",
+      "others_other": "另有 {{count}} 个待审核的修改"
+    },
     "diff_empty": "这一页在草稿里没有改动",
     "choose": "选择草稿",
     "origin": {
