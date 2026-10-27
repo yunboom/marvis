@@ -257,6 +257,30 @@ export function parseKbRoute(pathname: string): KbRouteParams {
   return params;
 }
 
+/** A body link to a page of one knowledge base: the page and its #block fragment. */
+export interface KbPageLink {
+  pageId: string;
+  hash: string;
+}
+
+/**
+ * The page a body link opens when it is an in-app link to a page of the
+ * knowledge base `kbSlug`: `/kb/{slug}/p/{page}` as the server writes it, or
+ * the same route under a workspace slug. Anything else is null.
+ */
+export function kbPageLink(href: string | null, kbSlug: string): KbPageLink | null {
+  if (!href?.startsWith("/") || href.startsWith("//") || !kbSlug) return null;
+
+  const hashAt = href.indexOf("#");
+  const hash = hashAt < 0 ? "" : href.slice(hashAt);
+  const path = (hashAt < 0 ? href : href.slice(0, hashAt)).split("?")[0] ?? "";
+  const parts = path.split("/").filter(Boolean).map(safeDecode);
+  const route = parts[0] === "kb" ? parts : parts.slice(1);
+  if (route.length !== 4 || route[0] !== "kb" || route[1] !== kbSlug || route[2] !== "p" || !route[3]) return null;
+
+  return { pageId: route[3], hash };
+}
+
 function safeDecode(segment: string): string {
   try {
     return decodeURIComponent(segment);

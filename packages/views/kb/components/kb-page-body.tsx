@@ -15,10 +15,12 @@ import {
   compareBlocks,
   inlineDiffMarkdown,
   isFootnoteDefinitionBlock,
+  kbPageLink,
   prepareBlockMarkdown,
   type KbBlockChange,
 } from "../utils/kb-markdown";
 import { KB_TAG, KbCiteCard, sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
+import { withDraft } from "./kb-page-tree";
 import { parseKbRawHref } from "../manage/use-kb-raw-files";
 import "./kb.css";
 
@@ -179,6 +181,10 @@ interface KbPageBodyProps {
   onRawLink?: (id: string, page: number) => void;
   /** Annotated sentences to mark, by block id. */
   annotatedQuotes?: ReadonlyMap<string, readonly string[]>;
+  /** The knowledge base the page belongs to; its page links stay on `draft`. */
+  kbSlug?: string;
+  /** The draft being read; links to pages of `kbSlug` keep it. */
+  draft?: string;
 }
 
 /**
@@ -186,7 +192,16 @@ interface KbPageBodyProps {
  * become numbered citations with a hover card; a draft copy is compared with
  * the published page block by block.
  */
-export function KbPageBody({ page, published, banners, rawFileActions, onRawLink, annotatedQuotes }: KbPageBodyProps) {
+export function KbPageBody({
+  page,
+  published,
+  banners,
+  rawFileActions,
+  onRawLink,
+  annotatedQuotes,
+  kbSlug = "",
+  draft = "",
+}: KbPageBodyProps) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
   const { push } = useNavigation();
@@ -243,8 +258,8 @@ export function KbPageBody({ page, published, banners, rawFileActions, onRawLink
     <div
       ref={container}
       className="kb-doc relative"
-      // Citation and unwritten-page links are handled here, before the
-      // Markdown link handler would treat them as navigation.
+      // Raw file, draft page, citation and unwritten-page links are handled
+      // here, before the Markdown link handler would treat them as navigation.
       onClickCapture={(e) => {
         const rawLink = onRawLink && e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href]") : null;
         const raw = rawLink ? parseKbRawHref(rawLink.getAttribute("href")) : null;
@@ -254,6 +269,19 @@ export function KbPageBody({ page, published, banners, rawFileActions, onRawLink
           onRawLink(raw.id, raw.page);
           return;
         }
+
+        // A page link read from a draft opens that page in the same draft.
+        // Modified clicks keep their native new-tab handling.
+        const plain = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+        const pageAnchor = draft && plain && e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href]") : null;
+        const pageLink = pageAnchor ? kbPageLink(pageAnchor.getAttribute("href"), kbSlug) : null;
+        if (pageLink) {
+          e.preventDefault();
+          e.stopPropagation();
+          push(withDraft(p.kbPage(kbSlug, pageLink.pageId), draft) + pageLink.hash);
+          return;
+        }
+
         const anchor = anchorOf(e.target);
         if (!anchor) return;
         e.preventDefault();
