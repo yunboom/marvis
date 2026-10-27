@@ -17,7 +17,7 @@
 | kb sources list | 还没收录的资料（读内容用各自现有命令） | 读 | 
 | kb raw list / get | 原始资料；`get` 下载到本地给智能体读 | 读 | 
 | kb annotation add / list / dismiss / reopen | 批注；发现缺内容或写错用 `add` | 写批注 | 
-| kb draft create / check | 建草稿（`--job` 关联到作业）；看草稿改动与检查 | 写 / 读 | 
+| kb draft create / check | 建草稿（在作业对话里自动关联到作业）；看草稿改动与检查 | 写 / 读 | 
 | kb mr create / update / list / get / comment / ready / merge / close / revert | 审核相关；`comment list` 只列已公开评论，`ready` 重新请求审核；合并、关闭按现有权限（决策 46） | 写 | 
 | kb history | 已合并的改动 | 读 | 
 | chat list / get | 读对话（现有 `marvis chat` 命令组新增）；owner 读全员对话见 8.7 | 读 | 
@@ -519,7 +519,7 @@ marvis kb stale team
 
 CLI`marvis kb draft create`
  
-建一份草稿。在知识库作业的对话里运行时，草稿自动关联到这个作业，返回结果带 `job_id`；`--job` 用于显式关联，作业已有草稿时以 `job_draft_exists` 失败并给出那份草稿的 `draft_id`。一个变更请求对应一份草稿：从建草稿、提交，到按审核意见修改，读写都带同一个草稿 id；分几次改、改了几个页面，都写进这份草稿。
+建一份草稿。在知识库作业的对话里运行时，草稿自动关联到这个作业，返回结果带 `job_id`；作业已有草稿时以 `job_draft_exists` 失败并给出那份草稿的 `draft_id`。一个变更请求对应一份草稿：从建草稿、提交，到按审核意见修改，读写都带同一个草稿 id；分几次改、改了几个页面，都写进这份草稿。
 
  
 对应接口 `POST /api/kb/drafts`
@@ -527,14 +527,13 @@ CLI`marvis kb draft create`
  
 
 ```
-marvis kb draft create <kb> [--title <标题>] [--job <作业 id>] [--output table|json]
+marvis kb draft create <kb> [--title <标题>] [--output table|json]
 ```
 
  
 | 参数 | 必填 | 传什么 | 示例 | 
 | `<kb>` | 是 | 知识库 slug，或知识库 id（UUID） | `team` | 
 | `--title` | 否 | 草稿标题，说明这份草稿改了什么；和变更请求标题无关 | `"每日收录 · 10-25"` | 
-| `--job` | 否 | 作业 id（完整 UUID），把新草稿关联到这个作业；在作业自己的对话里不需要，草稿会自动关联 | `c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f` | 
 | `--output` | 否 | `table` 或 `json`；默认 `json`（与现有命令一致：列表默认 table，其余默认 json） | `--output json` | 
 
  
@@ -2379,9 +2378,6 @@ Start a draft, check it before submitting, and bring main into it when a merge c
 # Start a change
 marvis kb draft create team --title "Callback dedup key"
 
-# Link to a job explicitly (inside a job's chat this happens on its own)
-marvis kb draft create team --title "Callback dedup key" --job <job id>
-
 # Changes and checks; exits 1 when a check has an error
 marvis kb draft check <draft>
 
@@ -2395,7 +2391,6 @@ marvis kb draft sync <draft>
 |-----------|----------|-------------|
 | `<kb>` | Yes (`create`) | Knowledge base slug or id |
 | `--title <text>` | No | What this draft changes |
-| `--job <job id>` | No | Link the draft to this job |
 | `<draft>` | Yes (`check`, `sync`) | Draft id from `kb draft create` |
 
 ## Workflow
@@ -2427,9 +2422,6 @@ Example response (`draft create`):
 # 开始一个改动
 marvis kb draft create team --title "Callback dedup key"
 
-# 显式关联到作业（在作业的对话里会自动关联）
-marvis kb draft create team --title "Callback dedup key" --job <job id>
-
 # 改动和检查结果；有检查报错时退出码为 1
 marvis kb draft check <draft>
 
@@ -2443,7 +2435,6 @@ marvis kb draft sync <draft>
 |-----------|----------|-------------|
 | `<kb>` | 是（`create`） | 知识库 slug 或 id |
 | `--title <text>` | 否 | 这份草稿改什么 |
-| `--job <job id>` | 否 | 把草稿关联到这个作业 |
 | `<draft>` | 是（`check`、`sync`） | `kb draft create` 返回的草稿 id |
 
 ## 流程
@@ -3512,6 +3503,6 @@ How to resolve the review feedback on change request #<N>:
 
 8.7.1 作业对话里建草稿自动关联作业
 
-- 智能体在作业的对话里运行 `marvis kb draft create <kb>`（不带 `--job`）时，服务端按调用任务的 `X-Task-ID` 找到任务所在对话，再找这个对话对应的作业（`GetKbJobByChatSession`）；作业属于同一个知识库就把草稿关联上，返回结果带 `job_id`。首条消息里因此不再需要作业 id。
-- `--job` 照旧可用（显式关联）。不在作业对话里（普通任务、成员自己建草稿）、或在作业对话里给别的知识库建草稿，都不关联。
+- 智能体在作业的对话里运行 `marvis kb draft create <kb>` 时，服务端按调用任务的 `X-Task-ID` 找到任务所在对话，再找这个对话对应的作业（`GetKbJobByChatSession`）；作业属于同一个知识库就把草稿关联上，返回结果带 `job_id`。首条消息里因此不再需要作业 id。
+- 草稿只按调用任务所在的作业对话关联，CLI 没有 `--job`，`POST /api/kb/drafts` 也不收 `job_id`。不在作业对话里（普通任务、成员自己建草稿）、或在作业对话里给别的知识库建草稿，都不关联。
 - 作业已经有草稿时返回 409 `job_draft_exists` 并带上那份草稿的 `draft_id`，提醒智能体继续往那份里写。

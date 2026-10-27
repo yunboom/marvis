@@ -150,32 +150,31 @@ func TestCreateKbDraftLinksJob(t *testing.T) {
 	f := newKbDraftFixture(t)
 	agentID := dbfx.Agent(t, fmt.Sprintf("kb-job-agent-%d", time.Now().UnixNano()), testRuntimeID)
 	session := dbfx.ChatSession(t, agentID)
-	insertJob := func(baseID, createdBy, chatSession string) string {
+	insertJob := func(createdBy, chatSession string) string {
 		return dbfx.Insert(t, "kb_job", testutil.Cols{
-			"workspace_id": testWorkspaceID, "knowledge_base_id": baseID, "name": "Job", "starter": "custom",
+			"workspace_id": testWorkspaceID, "knowledge_base_id": f.baseID, "name": "Job", "starter": "custom",
 			"agent_id": agentID, "chat_session_id": chatSession, "created_by": createdBy,
 		})
 	}
-	job := insertJob(f.baseID, testUserID, session)
+	job := insertJob(testUserID, session)
 	dbfx.Cleanup(t, `DELETE FROM kb_job_draft WHERE job_id = $1`, job)
+	inJob := asJobAgent(testUserID, agentID, dbfx.Task(t, agentID, testutil.Cols{"runtime_id": testRuntimeID, "chat_session_id": session}))
 
-	create := func(jobID string, mutate func(*http.Request), want int) map[string]any {
-		req := newRequest(http.MethodPost, "/api/kb/drafts", map[string]any{"knowledge_base": f.slug, "job_id": jobID})
-		if mutate != nil {
-			mutate(req)
-		}
+	create := func(want int) map[string]any {
+		req := newRequest(http.MethodPost, "/api/kb/drafts", map[string]any{"knowledge_base": f.slug})
+		inJob(req)
 
 		return testutil.Call(t, testHandler.CreateKbDraft, req).Want(want).Map()
 	}
 
-	linked := create(job, nil, http.StatusCreated)
+	linked := create(http.StatusCreated)
 	var draftOfJob string
 	dbfx.QueryRow(t, `SELECT draft_id::text FROM kb_job_draft WHERE job_id = $1`, job).Scan(&draftOfJob)
 	if draftOfJob != linked["id"] {
 		t.Fatalf("kb_job_draft draft = %s, want %v", draftOfJob, linked["id"])
 	}
 
-	dup := create(job, nil, http.StatusConflict)
+	dup := create(http.StatusConflict)
 	if dup["code"] != kbCodeJobDraftExists || dup["draft_id"] != draftOfJob {
 		t.Errorf("second link = %v, want job_draft_exists with draft_id", dup)
 	}
@@ -183,28 +182,18 @@ func TestCreateKbDraftLinksJob(t *testing.T) {
 		t.Errorf("drafts = %d, want the rejected draft rolled back", n)
 	}
 
-	other := insertTestKbBase(t, "Other KB", f.slug+"-o")
-	foreign := insertJob(other, testUserID, dbfx.ChatSession(t, agentID))
-	if got := create(foreign, nil, http.StatusNotFound); got["code"] != kbCodeJobNotFound {
-		t.Errorf("job of another knowledge base = %v", got)
-	}
-
+	// The job's creator need not be the runtime owner: the agent running in
+	// the job's chat links its draft all the same.
 	member := createPlainMember(t, fmt.Sprintf("kb-job-%d@marvis.ai", time.Now().UnixNano()))
-	notMine := insertJob(f.baseID, member, dbfx.ChatSession(t, agentID))
-	dbfx.Cleanup(t, `DELETE FROM kb_job_draft WHERE job_id = $1`, notMine)
-	if got := create(notMine, nil, http.StatusForbidden); got["code"] != kbCodeForbidden {
-		t.Errorf("job of another member = %v", got)
-	}
-
 	jobSession := dbfx.ChatSession(t, agentID)
-	agentJob := insertJob(f.baseID, member, jobSession)
+	agentJob := insertJob(member, jobSession)
 	dbfx.Cleanup(t, `DELETE FROM kb_job_draft WHERE job_id = $1`, agentJob)
 	task := dbfx.Task(t, agentID, testutil.Cols{"chat_session_id": jobSession, "runtime_id": testRuntimeID})
-	create(agentJob, func(r *http.Request) {
-		r.Header.Set("X-Actor-Source", "task_token")
-		r.Header.Set("X-Agent-ID", agentID)
-		r.Header.Set("X-Task-ID", task)
-	}, http.StatusCreated)
+	req := newRequest(http.MethodPost, "/api/kb/drafts", map[string]any{"knowledge_base": f.slug})
+	asJobAgent(testUserID, agentID, task)(req)
+	if got := testutil.Call(t, testHandler.CreateKbDraft, req).Want(http.StatusCreated).Map(); got["job_id"] != agentJob {
+		t.Errorf("draft in the chat of another member's job = %v", got)
+	}
 }
 
 func TestFetchKbPageScopes(t *testing.T) {

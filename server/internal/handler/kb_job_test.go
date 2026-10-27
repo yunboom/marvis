@@ -97,6 +97,17 @@ func asJobAgent(runtimeOwner, agentID, taskID string) func(*http.Request) {
 	}
 }
 
+// createKbJobDraft creates a draft as the agent running in the job's chat,
+// which links it to the job.
+func createKbJobDraft(t *testing.T, f kbJobFixture, jobID string) string {
+	t.Helper()
+
+	var taskID string
+	dbfx.QueryRow(t, `SELECT t.id FROM agent_task_queue t JOIN kb_job j ON j.chat_session_id = t.chat_session_id WHERE j.id = $1 ORDER BY t.created_at LIMIT 1`, jobID).Scan(&taskID)
+
+	return createKbDraftAs(t, f.slug, asJobAgent(testUserID, f.agentID, taskID))
+}
+
 // kbEventRecorder collects one event type for the given knowledge base.
 type kbEventRecorder struct {
 	mu     sync.Mutex
@@ -445,9 +456,9 @@ func TestCreateKbJobStoresTheVisibleMessage(t *testing.T) {
 }
 
 // TestCreateKbDraftLinksTheJobOfTheCallingChat: an agent's kb draft create in
-// a job's chat links the draft to that job; --job still links explicitly;
-// a draft created anywhere else, or for another knowledge base, stays
-// unlinked; a second draft in the same job is refused with the first one's id.
+// a job's chat links the draft to that job; a draft created anywhere else, or
+// for another knowledge base, stays unlinked, and a job_id in the body links
+// nothing; a second draft in the same job is refused with the first one's id.
 func TestCreateKbDraftLinksTheJobOfTheCallingChat(t *testing.T) {
 	if testHandler == nil || testPool == nil {
 		t.Skip("database not available")
@@ -496,10 +507,13 @@ func TestCreateKbDraftLinksTheJobOfTheCallingChat(t *testing.T) {
 		t.Errorf("member's draft = %v", got)
 	}
 
-	// --job still links explicitly.
-	explicitJob, _ := startJob()
-	if got := createDraft(f.slug, map[string]any{"job_id": explicitJob}, nil, http.StatusCreated); got["job_id"] != explicitJob {
-		t.Errorf("draft with --job = %v", got)
+	// A job_id in the body is not read: the draft stays unlinked.
+	otherJob, _ := startJob()
+	if got := createDraft(f.slug, map[string]any{"job_id": otherJob}, nil, http.StatusCreated); got["job_id"] != nil {
+		t.Errorf("draft with job_id in the body = %v", got)
+	}
+	if n := dbfx.Count(t, `SELECT count(*) FROM kb_job_draft WHERE job_id = $1`, otherJob); n != 0 {
+		t.Errorf("job_id in the body linked %d drafts", n)
 	}
 }
 
@@ -520,9 +534,7 @@ func TestKbJobDraftEndings(t *testing.T) {
 		return jobID, sessionID
 	}
 	linkDraft := func(jobID string) string {
-		return createKbDraftAs(t, f.slug, func(r *http.Request) {
-			r.Body = jsonBody(map[string]any{"knowledge_base": f.slug, "job_id": jobID})
-		})
+		return createKbJobDraft(t, f, jobID)
 	}
 
 	// Empty draft: nothing to submit.

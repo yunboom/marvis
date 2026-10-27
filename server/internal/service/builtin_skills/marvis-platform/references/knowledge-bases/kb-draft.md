@@ -8,9 +8,6 @@ Start a draft, check it before submitting, and bring main into it when a merge c
 # Start a change
 marvis kb draft create team --title "Callback dedup key"
 
-# Link to a job explicitly (inside a job's chat this happens on its own)
-marvis kb draft create team --title "Callback dedup key" --job <job id>
-
 # Changes and checks; exits 1 when a check has an error
 marvis kb draft check <draft>
 
@@ -24,7 +21,6 @@ marvis kb draft sync <draft>
 |-----------|----------|-------------|
 | `<kb>` | Yes (`create`) | Knowledge base slug or id |
 | `--title <text>` | No | What this draft changes |
-| `--job <job id>` | No | Link the draft to this job |
 | `<draft>` | Yes (`check`, `sync`) | Draft id from `kb draft create` |
 
 ## Workflow

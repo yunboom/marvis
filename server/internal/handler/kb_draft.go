@@ -37,12 +37,10 @@ var kbDiffKinds = map[string]string{
 	kb.DiffDeleted: kbDiffDelete,
 }
 
-// CreateKbDraftRequest starts a draft. JobID links it to a knowledge base
-// job in the same transaction.
+// CreateKbDraftRequest starts a draft.
 type CreateKbDraftRequest struct {
-	KnowledgeBase string  `json:"knowledge_base"`
-	Title         string  `json:"title"`
-	JobID         *string `json:"job_id"`
+	KnowledgeBase string `json:"knowledge_base"`
+	Title         string `json:"title"`
 }
 
 // KbDraftResponse is a created draft. The task that created it is recorded
@@ -123,10 +121,9 @@ type KbSyncResponse struct {
 }
 
 // CreateKbDraft starts a draft (POST /api/kb/drafts). Called with a task
-// token it records the task in kb_draft.task_id; with job_id it links the
-// draft to that knowledge base job. Without job_id, an agent running in a
-// job's chat gets its draft linked to that job, so the job id never has to
-// travel through the conversation.
+// token it records the task in kb_draft.task_id, and an agent running in a
+// knowledge base job's chat gets its draft linked to that job, so the job id
+// never has to travel through the conversation.
 func (h *Handler) CreateKbDraft(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
@@ -148,13 +145,6 @@ func (h *Handler) CreateKbDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var jobID pgtype.UUID
-	if req.JobID != nil && *req.JobID != "" {
-		if jobID, ok = parseUUIDOrBadRequest(w, *req.JobID, "job_id"); !ok {
-			return
-		}
-	}
-
 	actorType, actorID := h.resolveActor(r, userID, uuidToString(base.WorkspaceID))
 	var task *db.AgentTaskQueue
 	if actorType == kbActorAgent {
@@ -163,7 +153,8 @@ func (h *Handler) CreateKbDraft(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !jobID.Valid && task != nil {
+	var jobID pgtype.UUID
+	if task != nil {
 		found, err := h.kbJobOfTaskChat(ctx, base, *task)
 		if err != nil {
 			h.writeKbInternalError(w, r, err)
