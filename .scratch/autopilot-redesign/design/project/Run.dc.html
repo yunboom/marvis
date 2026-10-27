@@ -66,16 +66,7 @@ body{margin:0}
                   <span style="padding-left: 4px">· 微信支付 4200001931：金额差 0.01 元</span>
                   <span style="padding-left: 4px">· 支付宝 2026102622001：只在渠道账单出现</span>
                   <span style="padding-left: 4px">· Stripe pi_3Q8…：渠道已退款，订单仍为已支付</span>
-                  <sc-if value="{{runOnly}}" hint-placeholder-val="{{ true }}">
-                    <span>报告已写入「对账 / 2026-10-26」，并在「支付值班」群提醒了周宁、林晓。</span>
-                  </sc-if>
-                  <sc-if value="{{issueMode}}" hint-placeholder-val="{{ false }}">
-                    <span>差异已写进任务描述，并 @ 了周宁、林晓。</span>
-                    <a href="#" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; background: #ffffff; color: #0f0f0f; text-decoration: none; font-size: 13px">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a6f8a" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0"></path></svg>
-                      <span style="color: #666666">MAR-318</span>支付对账差异 · 10月26日
-                    </a>
-                  </sc-if>
+                  <span>报告已写入「对账 / 2026-10-26」，并在「支付值班」群提醒了周宁、林晓。</span>
                   <span style="display: inline-flex; gap: 10px; font-size: 12px; color: #858585">用时 1 分 52 秒<span>复制</span></span>
                 </sc-if>
               </div>
@@ -128,10 +119,6 @@ body{margin:0}
           <dt style="color: #666666">完成时间</dt><dd style="margin: 0; font-variant-numeric: tabular-nums">{{doneTime}}</dd>
           <dt style="color: #666666">执行者</dt><dd style="margin: 0; display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 18px; border-radius: 5px; background: #ededed; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">编</span>编码智能体</dd>
           <dt style="color: #666666">自动化</dt><dd style="margin: 0"><a href="Detail.dc.html" style="color: #0f0f0f; text-decoration: none">支付对账 ›</a></dd>
-          <dt style="color: #666666">输出方式</dt><dd style="margin: 0">{{modeLabel}}</dd>
-          <sc-if value="{{issueMode}}" hint-placeholder-val="{{ false }}">
-            <dt style="color: #666666">任务</dt><dd style="margin: 0"><a href="#" style="color: #0f0f0f; text-decoration: none">MAR-318 支付对账差异 ›</a></dd>
-          </sc-if>
         </dl>
         <div style="padding: 10px 12px; border-radius: 12px; background: #f7f7f7; font-size: 12.5px; line-height: 1.6; color: #666666">能查看这个自动化的成员共用这段对话。</div>
         <sc-if value="{{webhook}}" hint-placeholder-val="{{ false }}">
@@ -145,7 +132,7 @@ body{margin:0}
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["done","issue","live","queue","followup","webhook"],"default":"done"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["done","live","queue","followup","webhook"],"default":"done"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -180,9 +167,6 @@ class Component extends DCLogic {
       live,
       done: !live,
       webhook,
-      runOnly: mode !== 'issue',
-      issueMode: mode === 'issue',
-      modeLabel: mode === 'issue' ? '创建任务' : '仅运行',
       runTime: live ? '今天 10:31' : webhook ? '10月24日 14:12' : '昨天 02:00',
       doneTime: live ? '—' : webhook ? '10月24日 14:13' : '昨天 02:01',
       source: live ? '手动 · 周宁' : webhook ? 'Webhook' : '时间表',

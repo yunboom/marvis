@@ -47,7 +47,8 @@
 - 右栏：
   - 指令：`ReadonlyContent` 默认折叠约 5 行 + 渐隐，「显示全部 / 收起」。原来指令为空时不渲染，保持。
   - 运行记录：每行 = 状态图标 + 时间 + 摘要（已关联任务 / 失败原因）+ 来源 + 右箭头。
-    - 两种模式的运行都点进运行对话页（取代 `TranscriptButton` 弹窗）；`create_issue` 运行在对话页里和右侧面板都能跳到创建的任务。
+    - `run_only` 运行：点进运行对话页（取代 `TranscriptButton` 弹窗）。
+    - `create_issue` 运行：点击跳任务详情，和现在一致（用户 2026-10-27 拍板，不开运行对话）。
     - 没派出任务的运行（跳过、派发前失败）没有会话，点进去只看运行信息，不显示输入框。
     - 跳过的运行仍折叠成一组。
 - 危险区删除；删除按钮在顶栏，确认框文案不变。
@@ -61,9 +62,9 @@
 - 运行结束后，`CompleteAgentTask / FailAgentTask` 会把 `session_id / work_dir` 写回 task 行，因此**一次运行跑完，就有可以 resume 的会话**。
 - 聊天发消息时，daemon 认领聊天 task 会读 `chat_session.session_id / work_dir`；只有 `runtime_id` 一致才 resume（`handler/daemon.go:3644`），否则退回最近一条带 session 的聊天 task。
 - 已有「把聊天嵌进业务页」的先例：知识库 job（`kb_job.chat_session_id` + `kb-job-page.tsx` + `use-kb-job-conversation.ts`），并在聊天列表里用 `NOT EXISTS` 排除这些会话。
-- `create_issue` 运行同样有会话：`dispatchCreateIssue` 派出任务后由 `linkDispatchTask` 把它记到 `autopilot_run.task_id`（`service/autopilot.go:868`、`:1457`），任务结束同样写回 `session_id / work_dir`。任务里后续的评论回合按 `(agent_id, issue_id)` 取最近一条带 session 的任务接着用（`GetLastTaskSession`）。
-- 结论：两种模式都以 `autopilot_run.task_id` 指向的派发任务为起点续聊，机制相同。`task_id` 为空（跳过、派发前失败）的运行没有会话，不提供续聊。
-- 共用一个对话（用户 2026-10-27 拍板，见 4.2）：不需要分叉。`create_issue` 模式下，任务里后续的评论回合和这里的对话接的是同一个会话，彼此能看到对方聊过的内容，这是预期行为。
+- `create_issue` 运行不在本次范围：和现在一样跳到任务，在任务里评论 / @ 智能体继续（用户 2026-10-27 拍板）。
+- 结论：只给 `run_only` 运行开对话，以 `autopilot_run.task_id` 指向的任务为起点续聊。`task_id` 为空（跳过、派发前失败）的运行没有会话，不提供续聊。
+- 一次运行共用一个对话（用户 2026-10-27 拍板，见 4.2），不需要分叉：`run_only` 每次运行都是全新会话，这个会话只有这里会接着用。
 
 ### 4.2 方案：一次运行一个共用对话，懒创建
 
@@ -78,7 +79,7 @@
 **接口**
 
 - `POST /api/autopilots/{id}/runs/{runId}/chat`：获取或创建这次运行的对话，返回 `{ chat_session_id }`。
-  - 两种模式都接受；要求 `run.task_id` 不为空且该任务已结束（completed / failed）。运行中返回 409 `run_in_progress`，前端在运行结束前不建会话；`task_id` 为空返回 409 `run_has_no_session`。
+  - 只接受 `run_only` 运行，`create_issue` 返回 409 `run_mode_unsupported`；要求 `run.task_id` 不为空且该任务已结束（completed / failed）。运行中返回 409 `run_in_progress`，前端在运行结束前不建会话；`task_id` 为空返回 409 `run_has_no_session`。
   - 权限：调用者能查看该自动化。
   - 事务内 `SELECT … FOR UPDATE` 锁 run 行，已有 `chat_session_id` 直接返回；否则 `CreateChatSession`（agent = task.agent_id，project = autopilot.project_id，title = 自动化标题，creator = 第一个发消息的人），再用原 task 的 `session_id / work_dir / runtime_id` 调 `UpdateChatSessionSession` 预填续接指针，最后写回 `autopilot_run.chat_session_id`。
   - 原 task 因 `context_overflow` 等不适合续接的原因失败时不预填 session（过滤条件对齐 `GetLastTaskSession`），只预填 `work_dir`。
@@ -100,9 +101,9 @@
   - 消息区第一块是「触发卡片」（来源 + 时间 + 指令摘要），第二块是原 task 的执行过程，用 `taskMessagesOptions(taskId)` 渲染成一轮智能体回复（与 `TranscriptButton` 同源，运行中实时刷新）。
   - 后续消息：照抄 `useKbJobConversation` 写 `useAutopilotRunConversation(sessionId)`，组合 `ChatMessageList` + `ChatQueue` + `ChatInput`（`draftKeyOverride` 隔离草稿），与聊天页行为一致：发送中、停止、排队、重试、附件。
   - 会话懒创建：第一次发送前调 `POST …/chat` 拿 `chat_session_id`，再发送。运行未结束时允许打字，消息先进前端排队，运行结束后自动建会话并发出。
-  - 右侧面板：状态、来源、触发 / 完成时间、执行者、所属自动化、输出方式、创建的任务（`create_issue`）、失败原因、Webhook 载荷（复用 `WebhookPayloadSlot`），以及一行「能查看这个自动化的成员共用这段对话。」。窄屏收起。
+  - 右侧面板：状态、来源、触发 / 完成时间、执行者、所属自动化、失败原因、Webhook 载荷（复用 `WebhookPayloadSlot`），以及一行「能查看这个自动化的成员共用这段对话。」。窄屏收起。
   - 离线 / 无权限：复用 `OfflineBanner`、`AgentAccessRevokedBanner`、`RuntimeRequiredBanner`。
-- 两种模式的运行都进此页；`task_id` 为空的运行只显示运行信息，不显示输入框。
+- 只有 `run_only` 运行进此页；`task_id` 为空的运行只显示运行信息，不显示输入框。`create_issue` 运行仍跳任务详情。
 - 原 `RunRow` 里的 `TranscriptButton` 与 `syntheticTask` 构造删除。
 - core：`autopilotRunChatOptions` / `useEnsureAutopilotRunChat` mutation，`AutopilotRun` schema 加 `chat_session_id`。
 
@@ -141,12 +142,11 @@
 2. 详情页两栏（纯前端）。
 3. 后端：迁移 + 获取或创建会话接口 + 聊天列表排除 + 删除清理 + 测试（DB 测试用 `testutil` fixture）。
 4. 前端运行对话页 + web / desktop 路由 + core schema。
-5. 校验：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`；本地 `make up` 各跑一次 run_only 和 create_issue 自动化，两个账号在同一运行页先后追问，确认消息带发送人、排队顺序执行、续接到同一会话和工作目录。
+5. 校验：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`；本地 `make up` 跑一次 run_only 自动化，两个账号在同一运行页先后追问，确认消息带发送人、排队顺序执行、续接到同一会话和工作目录；create_issue 运行点击仍跳任务。
 
 ## 7. 风险
 
 - **resume 依赖同一 runtime**：智能体换过运行时则只继承工作目录或全新开始，靠第 4.2 的前置说明兜底。
-- **任务回合与对话并发**（`create_issue`）：聊天队列只管同一个聊天会话；任务里的评论回合可能和这里的对话同时接着同一个会话、同一个工作目录。需要在认领时检查同一会话是否已有在跑的任务，有就等它结束（实现时核实现有排队机制能否复用）。
 - **工作目录回收**：daemon 可能已回收 `work_dir`；需要确认 GC 策略，必要时改用 `durable_work_dir`（待核实）。
 - **列表信息密度**：卡片一屏约 8 个，比表格少；自动化数量通常不多，可接受。
 - **翻译**：新文案需同步 en / zh-Hans / zh-Hant / ja / ko / fr（`parity.test.ts` 会拦）。
