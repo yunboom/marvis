@@ -1,0 +1,1 @@
+ALTER TABLE kb_mr_comment ADD COLUMN IF NOT EXISTS triggered JSONB NOT NULL DEFAULT '[]'::jsonb;

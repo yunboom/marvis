@@ -218,6 +218,10 @@ var concurrentIndexCleanups = map[string]string{
 	"628_kb_block_embedding_base_idx":                           "kb_block_embedding_base_idx",
 	"629_kb_job_draft_job_id_key":                               "kb_job_draft_job_id_key",
 	"630_kb_job_draft_draft_id_key":                             "kb_job_draft_draft_id_key",
+	"637_kb_mr_review_pending_uidx":                             "kb_mr_review_pending_uidx",
+	"638_kb_mr_review_mr_idx":                                   "kb_mr_review_mr_idx",
+	"639_kb_mr_active_draft_uidx":                               "kb_mr_active_draft_uidx",
+	"642_kb_mr_event_mr_idx":                                    "kb_mr_event_mr_idx",
 	"035_task_queue_issue_id_index":                             "idx_agent_task_queue_issue_id",
 	"067_task_queue_claim_candidate_index":                      "idx_agent_task_queue_claim_candidates",
 	"074_task_usage_updated_at_index":                           "idx_task_usage_updated_at",
@@ -418,6 +422,7 @@ var concurrentDownIndexCleanups = map[string]string{
 	"455_drop_comment_content_trgm_index":                   "idx_comment_content_trgm",
 	"463_drop_issue_description_bigm_index":                 "idx_issue_description_bigm",
 	"464_drop_issue_description_trgm_index":                 "idx_issue_description_trgm",
+	"640_kb_mr_open_draft_uidx_drop":                        "kb_mr_open_draft_uidx",
 	"473_drop_agent_task_queue_chat_with_session_index":     "idx_agent_task_queue_chat_with_session_created_at",
 }
 

@@ -117,7 +117,7 @@ RETURNING *;
 
 -- name: GetOpenKbMergeRequestByDraft :one
 SELECT * FROM kb_merge_request
-WHERE draft_id = sqlc.arg('draft_id') AND status = sqlc.arg('status')::text;
+WHERE draft_id = sqlc.arg('draft_id') AND status = ANY(sqlc.arg('statuses')::text[]);
 
 -- name: ListKbAnnotationsByIDs :many
 -- Annotations brought into a job; ids outside the knowledge base are left

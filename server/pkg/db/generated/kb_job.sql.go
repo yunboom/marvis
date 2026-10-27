@@ -78,7 +78,7 @@ INSERT INTO kb_merge_request (
     $9, $10, $11, $12::uuid[],
     $13
 )
-RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at
+RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at
 `
 
 type CreateKbMergeRequestParams struct {
@@ -137,6 +137,7 @@ func (q *Queries) CreateKbMergeRequest(ctx context.Context, arg CreateKbMergeReq
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
@@ -213,17 +214,17 @@ func (q *Queries) GetKbJobInWorkspace(ctx context.Context, arg GetKbJobInWorkspa
 }
 
 const getOpenKbMergeRequestByDraft = `-- name: GetOpenKbMergeRequestByDraft :one
-SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request
-WHERE draft_id = $1 AND status = $2::text
+SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
+WHERE draft_id = $1 AND status = ANY($2::text[])
 `
 
 type GetOpenKbMergeRequestByDraftParams struct {
-	DraftID pgtype.UUID `json:"draft_id"`
-	Status  string      `json:"status"`
+	DraftID  pgtype.UUID `json:"draft_id"`
+	Statuses []string    `json:"statuses"`
 }
 
 func (q *Queries) GetOpenKbMergeRequestByDraft(ctx context.Context, arg GetOpenKbMergeRequestByDraftParams) (KbMergeRequest, error) {
-	row := q.db.QueryRow(ctx, getOpenKbMergeRequestByDraft, arg.DraftID, arg.Status)
+	row := q.db.QueryRow(ctx, getOpenKbMergeRequestByDraft, arg.DraftID, arg.Statuses)
 	var i KbMergeRequest
 	err := row.Scan(
 		&i.ID,
@@ -248,6 +249,7 @@ func (q *Queries) GetOpenKbMergeRequestByDraft(ctx context.Context, arg GetOpenK
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
@@ -346,7 +348,7 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) lm ON true
 LEFT JOIN LATERAL (
-    SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request r
+    SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request r
     WHERE r.draft_id = jd.draft_id
     ORDER BY r.created_at DESC
     LIMIT 1

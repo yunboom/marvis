@@ -60,6 +60,45 @@ func (q *Queries) CountKbMergeRequestsByStatus(ctx context.Context, arg CountKbM
 	return items, nil
 }
 
+const countKbMrReviewComments = `-- name: CountKbMrReviewComments :many
+SELECT review_id, count(*)::bigint AS comment_count
+FROM kb_mr_comment
+WHERE merge_request_id = $1
+  AND review_id = ANY($2::uuid[])
+GROUP BY review_id
+`
+
+type CountKbMrReviewCommentsParams struct {
+	MergeRequestID pgtype.UUID   `json:"merge_request_id"`
+	ReviewIds      []pgtype.UUID `json:"review_ids"`
+}
+
+type CountKbMrReviewCommentsRow struct {
+	ReviewID     pgtype.UUID `json:"review_id"`
+	CommentCount int64       `json:"comment_count"`
+}
+
+// Comment counts of reviews, for the review list and submit.
+func (q *Queries) CountKbMrReviewComments(ctx context.Context, arg CountKbMrReviewCommentsParams) ([]CountKbMrReviewCommentsRow, error) {
+	rows, err := q.db.Query(ctx, countKbMrReviewComments, arg.MergeRequestID, arg.ReviewIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountKbMrReviewCommentsRow{}
+	for rows.Next() {
+		var i CountKbMrReviewCommentsRow
+		if err := rows.Scan(&i.ReviewID, &i.CommentCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createKbClaims = `-- name: CreateKbClaims :exec
 INSERT INTO kb_claim (
     workspace_id, knowledge_base_id, page_id, block_id, key, text, evidence, checked_at
@@ -193,18 +232,104 @@ func (q *Queries) CreateKbLinksOfPages(ctx context.Context, arg CreateKbLinksOfP
 	return err
 }
 
+const createKbMemberInboxItems = `-- name: CreateKbMemberInboxItems :many
+INSERT INTO inbox_item (
+    id, workspace_id, recipient_type, recipient_id, type, severity, title, body, actor_type, actor_id, details
+)
+SELECT
+    u.id, $1::uuid, $2::text, u.recipient_id,
+    $3::text, $4::text, $5::text, $6::text,
+    $7::text, $8::uuid, $9::jsonb
+FROM (
+    SELECT
+        unnest($10::uuid[]) AS id,
+        unnest($11::uuid[]) AS recipient_id
+) AS u
+WHERE EXISTS (
+    SELECT 1 FROM member m
+    WHERE m.workspace_id = $1::uuid AND m.user_id = u.recipient_id
+)
+RETURNING id, workspace_id, recipient_type, recipient_id, type, severity, issue_id, title, body, read, archived, created_at, actor_type, actor_id, details
+`
+
+type CreateKbMemberInboxItemsParams struct {
+	WorkspaceID   pgtype.UUID   `json:"workspace_id"`
+	RecipientType string        `json:"recipient_type"`
+	Type          string        `json:"type"`
+	Severity      string        `json:"severity"`
+	Title         string        `json:"title"`
+	Body          string        `json:"body"`
+	ActorType     string        `json:"actor_type"`
+	ActorID       pgtype.UUID   `json:"actor_id"`
+	Details       []byte        `json:"details"`
+	Ids           []pgtype.UUID `json:"ids"`
+	RecipientIds  []pgtype.UUID `json:"recipient_ids"`
+}
+
+// Batch insert of one notification for several members; the id and
+// recipient arrays are parallel. Recipients no longer in the workspace are
+// skipped, like CreateInboxItem does.
+func (q *Queries) CreateKbMemberInboxItems(ctx context.Context, arg CreateKbMemberInboxItemsParams) ([]InboxItem, error) {
+	rows, err := q.db.Query(ctx, createKbMemberInboxItems,
+		arg.WorkspaceID,
+		arg.RecipientType,
+		arg.Type,
+		arg.Severity,
+		arg.Title,
+		arg.Body,
+		arg.ActorType,
+		arg.ActorID,
+		arg.Details,
+		arg.Ids,
+		arg.RecipientIds,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []InboxItem{}
+	for rows.Next() {
+		var i InboxItem
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.RecipientType,
+			&i.RecipientID,
+			&i.Type,
+			&i.Severity,
+			&i.IssueID,
+			&i.Title,
+			&i.Body,
+			&i.Read,
+			&i.Archived,
+			&i.CreatedAt,
+			&i.ActorType,
+			&i.ActorID,
+			&i.Details,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createKbMrComment = `-- name: CreateKbMrComment :one
 INSERT INTO kb_mr_comment (
-    merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id
+    merge_request_id, review_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id
 ) VALUES (
     $1, $2, $3, $4,
-    $5, $6, $7, $8
+    $5, $6, $7, $8, $9
 )
-RETURNING id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, triggered
+RETURNING id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, review_id
 `
 
 type CreateKbMrCommentParams struct {
 	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	ReviewID       pgtype.UUID `json:"review_id"`
 	ParentID       pgtype.UUID `json:"parent_id"`
 	QuotePageID    pgtype.UUID `json:"quote_page_id"`
 	QuoteBlockID   string      `json:"quote_block_id"`
@@ -217,6 +342,7 @@ type CreateKbMrCommentParams struct {
 func (q *Queries) CreateKbMrComment(ctx context.Context, arg CreateKbMrCommentParams) (KbMrComment, error) {
 	row := q.db.QueryRow(ctx, createKbMrComment,
 		arg.MergeRequestID,
+		arg.ReviewID,
 		arg.ParentID,
 		arg.QuotePageID,
 		arg.QuoteBlockID,
@@ -237,9 +363,38 @@ func (q *Queries) CreateKbMrComment(ctx context.Context, arg CreateKbMrCommentPa
 		&i.AuthorType,
 		&i.AuthorID,
 		&i.CreatedAt,
-		&i.Triggered,
+		&i.ReviewID,
 	)
 	return i, err
+}
+
+const createKbMrEvent = `-- name: CreateKbMrEvent :exec
+INSERT INTO kb_mr_event (workspace_id, merge_request_id, actor_type, actor_id, kind, payload)
+VALUES (
+    $1, $2, $3, $4,
+    $5, $6
+)
+`
+
+type CreateKbMrEventParams struct {
+	WorkspaceID    pgtype.UUID `json:"workspace_id"`
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	ActorType      string      `json:"actor_type"`
+	ActorID        pgtype.UUID `json:"actor_id"`
+	Kind           string      `json:"kind"`
+	Payload        []byte      `json:"payload"`
+}
+
+func (q *Queries) CreateKbMrEvent(ctx context.Context, arg CreateKbMrEventParams) error {
+	_, err := q.db.Exec(ctx, createKbMrEvent,
+		arg.WorkspaceID,
+		arg.MergeRequestID,
+		arg.ActorType,
+		arg.ActorID,
+		arg.Kind,
+		arg.Payload,
+	)
+	return err
 }
 
 const createKbPageRevisions = `-- name: CreateKbPageRevisions :exec
@@ -334,8 +489,42 @@ func (q *Queries) DeleteKbLinksFromPages(ctx context.Context, arg DeleteKbLinksF
 	return err
 }
 
+const deleteKbMrComment = `-- name: DeleteKbMrComment :exec
+DELETE FROM kb_mr_comment WHERE id = $1
+`
+
+func (q *Queries) DeleteKbMrComment(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteKbMrComment, id)
+	return err
+}
+
+const deleteKbMrReview = `-- name: DeleteKbMrReview :exec
+DELETE FROM kb_mr_review WHERE id = $1
+`
+
+func (q *Queries) DeleteKbMrReview(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteKbMrReview, id)
+	return err
+}
+
+const deleteKbMrReviewComments = `-- name: DeleteKbMrReviewComments :exec
+DELETE FROM kb_mr_comment
+WHERE merge_request_id = $1
+  AND review_id = $2
+`
+
+type DeleteKbMrReviewCommentsParams struct {
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	ReviewID       pgtype.UUID `json:"review_id"`
+}
+
+func (q *Queries) DeleteKbMrReviewComments(ctx context.Context, arg DeleteKbMrReviewCommentsParams) error {
+	_, err := q.db.Exec(ctx, deleteKbMrReviewComments, arg.MergeRequestID, arg.ReviewID)
+	return err
+}
+
 const getKbMergeRequestByNumber = `-- name: GetKbMergeRequestByNumber :one
-SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request
+SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
 WHERE workspace_id = $1 AND number = $2
 `
 
@@ -370,12 +559,13 @@ func (q *Queries) GetKbMergeRequestByNumber(ctx context.Context, arg GetKbMergeR
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
 
 const getKbMergeRequestForUpdate = `-- name: GetKbMergeRequestForUpdate :one
-SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request
+SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
 WHERE workspace_id = $1 AND id = $2
 FOR UPDATE
 `
@@ -411,12 +601,13 @@ func (q *Queries) GetKbMergeRequestForUpdate(ctx context.Context, arg GetKbMerge
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
 
 const getKbMergeRequestInWorkspace = `-- name: GetKbMergeRequestInWorkspace :one
-SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request
+SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
 WHERE workspace_id = $1 AND id = $2
 `
 
@@ -451,22 +642,81 @@ func (q *Queries) GetKbMergeRequestInWorkspace(ctx context.Context, arg GetKbMer
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
 
-const getKbMrComment = `-- name: GetKbMrComment :one
-SELECT id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, triggered FROM kb_mr_comment
+const getKbMrPendingReview = `-- name: GetKbMrPendingReview :one
+SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
+WHERE merge_request_id = $1
+  AND reviewer_id = $2
+  AND state = $3::text
+`
+
+type GetKbMrPendingReviewParams struct {
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	ReviewerID     pgtype.UUID `json:"reviewer_id"`
+	State          string      `json:"state"`
+}
+
+func (q *Queries) GetKbMrPendingReview(ctx context.Context, arg GetKbMrPendingReviewParams) (KbMrReview, error) {
+	row := q.db.QueryRow(ctx, getKbMrPendingReview, arg.MergeRequestID, arg.ReviewerID, arg.State)
+	var i KbMrReview
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.MergeRequestID,
+		&i.ReviewerID,
+		&i.State,
+		&i.Summary,
+		&i.CreatedAt,
+		&i.SubmittedAt,
+	)
+	return i, err
+}
+
+const getKbMrReview = `-- name: GetKbMrReview :one
+SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
 WHERE merge_request_id = $1 AND id = $2
 `
 
-type GetKbMrCommentParams struct {
+type GetKbMrReviewParams struct {
 	MergeRequestID pgtype.UUID `json:"merge_request_id"`
 	ID             pgtype.UUID `json:"id"`
 }
 
-func (q *Queries) GetKbMrComment(ctx context.Context, arg GetKbMrCommentParams) (KbMrComment, error) {
-	row := q.db.QueryRow(ctx, getKbMrComment, arg.MergeRequestID, arg.ID)
+func (q *Queries) GetKbMrReview(ctx context.Context, arg GetKbMrReviewParams) (KbMrReview, error) {
+	row := q.db.QueryRow(ctx, getKbMrReview, arg.MergeRequestID, arg.ID)
+	var i KbMrReview
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.MergeRequestID,
+		&i.ReviewerID,
+		&i.State,
+		&i.Summary,
+		&i.CreatedAt,
+		&i.SubmittedAt,
+	)
+	return i, err
+}
+
+const getKbMrReviewComment = `-- name: GetKbMrReviewComment :one
+SELECT id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, review_id FROM kb_mr_comment
+WHERE merge_request_id = $1
+  AND review_id = $2
+  AND id = $3
+`
+
+type GetKbMrReviewCommentParams struct {
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	ReviewID       pgtype.UUID `json:"review_id"`
+	ID             pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) GetKbMrReviewComment(ctx context.Context, arg GetKbMrReviewCommentParams) (KbMrComment, error) {
+	row := q.db.QueryRow(ctx, getKbMrReviewComment, arg.MergeRequestID, arg.ReviewID, arg.ID)
 	var i KbMrComment
 	err := row.Scan(
 		&i.ID,
@@ -479,119 +729,36 @@ func (q *Queries) GetKbMrComment(ctx context.Context, arg GetKbMrCommentParams) 
 		&i.AuthorType,
 		&i.AuthorID,
 		&i.CreatedAt,
-		&i.Triggered,
+		&i.ReviewID,
 	)
 	return i, err
 }
 
-const listKbAgentsByIDs = `-- name: ListKbAgentsByIDs :many
-SELECT id, workspace_id, name, avatar_url, runtime_mode, runtime_config, visibility, status, max_concurrent_tasks, owner_id, created_at, updated_at, description, runtime_id, instructions, archived_at, archived_by, custom_env, custom_args, mcp_config, model, thinking_level, composio_toolkit_allowlist, permission_mode, kind, system_key, disabled_runtime_skills, service_tier, conversation_starters FROM agent
-WHERE workspace_id = $1
-  AND id = ANY($2::uuid[])
+const getKbMrReviewForUpdate = `-- name: GetKbMrReviewForUpdate :one
+SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
+WHERE merge_request_id = $1 AND id = $2
+FOR UPDATE
 `
 
-type ListKbAgentsByIDsParams struct {
-	WorkspaceID pgtype.UUID   `json:"workspace_id"`
-	Ids         []pgtype.UUID `json:"ids"`
+type GetKbMrReviewForUpdateParams struct {
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	ID             pgtype.UUID `json:"id"`
 }
 
-func (q *Queries) ListKbAgentsByIDs(ctx context.Context, arg ListKbAgentsByIDsParams) ([]Agent, error) {
-	rows, err := q.db.Query(ctx, listKbAgentsByIDs, arg.WorkspaceID, arg.Ids)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Agent{}
-	for rows.Next() {
-		var i Agent
-		if err := rows.Scan(
-			&i.ID,
-			&i.WorkspaceID,
-			&i.Name,
-			&i.AvatarUrl,
-			&i.RuntimeMode,
-			&i.RuntimeConfig,
-			&i.Visibility,
-			&i.Status,
-			&i.MaxConcurrentTasks,
-			&i.OwnerID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Description,
-			&i.RuntimeID,
-			&i.Instructions,
-			&i.ArchivedAt,
-			&i.ArchivedBy,
-			&i.CustomEnv,
-			&i.CustomArgs,
-			&i.McpConfig,
-			&i.Model,
-			&i.ThinkingLevel,
-			&i.ComposioToolkitAllowlist,
-			&i.PermissionMode,
-			&i.Kind,
-			&i.SystemKey,
-			&i.DisabledRuntimeSkills,
-			&i.ServiceTier,
-			&i.ConversationStarters,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listKbChatSessionsByIDs = `-- name: ListKbChatSessionsByIDs :many
-SELECT id, workspace_id, agent_id, creator_id, title, session_id, work_dir, status, created_at, updated_at, unread_since, runtime_id, last_read_at, is_agent_intro, pinned_at, project_id, explicitly_created_at FROM chat_session
-WHERE workspace_id = $1
-  AND id = ANY($2::uuid[])
-`
-
-type ListKbChatSessionsByIDsParams struct {
-	WorkspaceID pgtype.UUID   `json:"workspace_id"`
-	Ids         []pgtype.UUID `json:"ids"`
-}
-
-func (q *Queries) ListKbChatSessionsByIDs(ctx context.Context, arg ListKbChatSessionsByIDsParams) ([]ChatSession, error) {
-	rows, err := q.db.Query(ctx, listKbChatSessionsByIDs, arg.WorkspaceID, arg.Ids)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ChatSession{}
-	for rows.Next() {
-		var i ChatSession
-		if err := rows.Scan(
-			&i.ID,
-			&i.WorkspaceID,
-			&i.AgentID,
-			&i.CreatorID,
-			&i.Title,
-			&i.SessionID,
-			&i.WorkDir,
-			&i.Status,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.UnreadSince,
-			&i.RuntimeID,
-			&i.LastReadAt,
-			&i.IsAgentIntro,
-			&i.PinnedAt,
-			&i.ProjectID,
-			&i.ExplicitlyCreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetKbMrReviewForUpdate(ctx context.Context, arg GetKbMrReviewForUpdateParams) (KbMrReview, error) {
+	row := q.db.QueryRow(ctx, getKbMrReviewForUpdate, arg.MergeRequestID, arg.ID)
+	var i KbMrReview
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.MergeRequestID,
+		&i.ReviewerID,
+		&i.State,
+		&i.Summary,
+		&i.CreatedAt,
+		&i.SubmittedAt,
+	)
+	return i, err
 }
 
 const listKbDraftsByIDs = `-- name: ListKbDraftsByIDs :many
@@ -731,7 +898,7 @@ func (q *Queries) ListKbMergeRequestOrigins(ctx context.Context, arg ListKbMerge
 }
 
 const listKbMergeRequests = `-- name: ListKbMergeRequests :many
-SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request
+SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
 WHERE workspace_id = $1
   AND status = ANY($2::text[])
   AND ($3::uuid IS NULL OR knowledge_base_id = $3::uuid)
@@ -787,6 +954,7 @@ func (q *Queries) ListKbMergeRequests(ctx context.Context, arg ListKbMergeReques
 			&i.CloseReason,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ReviewRequestedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -799,7 +967,7 @@ func (q *Queries) ListKbMergeRequests(ctx context.Context, arg ListKbMergeReques
 }
 
 const listKbMergeRequestsByIDs = `-- name: ListKbMergeRequestsByIDs :many
-SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request
+SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
 WHERE workspace_id = $1
   AND id = ANY($2::uuid[])
 `
@@ -841,6 +1009,7 @@ func (q *Queries) ListKbMergeRequestsByIDs(ctx context.Context, arg ListKbMergeR
 			&i.CloseReason,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ReviewRequestedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -853,13 +1022,28 @@ func (q *Queries) ListKbMergeRequestsByIDs(ctx context.Context, arg ListKbMergeR
 }
 
 const listKbMrComments = `-- name: ListKbMrComments :many
-SELECT id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, triggered FROM kb_mr_comment
-WHERE merge_request_id = $1
-ORDER BY created_at, id
+SELECT c.id, c.merge_request_id, c.parent_id, c.quote_page_id, c.quote_block_id, c.quote_text, c.body, c.author_type, c.author_id, c.created_at, c.review_id FROM kb_mr_comment c
+LEFT JOIN kb_mr_review rv ON rv.id = c.review_id
+WHERE c.merge_request_id = $1
+  AND (
+    c.review_id IS NULL
+    OR rv.state = $2::text
+    OR rv.reviewer_id = $3::uuid
+  )
+ORDER BY c.created_at, c.id
 `
 
-func (q *Queries) ListKbMrComments(ctx context.Context, mergeRequestID pgtype.UUID) ([]KbMrComment, error) {
-	rows, err := q.db.Query(ctx, listKbMrComments, mergeRequestID)
+type ListKbMrCommentsParams struct {
+	MergeRequestID    pgtype.UUID `json:"merge_request_id"`
+	SubmittedState    string      `json:"submitted_state"`
+	PendingReviewerID pgtype.UUID `json:"pending_reviewer_id"`
+}
+
+// A merge request's comments, oldest first: the published ones (direct
+// comments and those of submitted reviews), plus, with pending_reviewer_id,
+// the comments of that reviewer's pending review.
+func (q *Queries) ListKbMrComments(ctx context.Context, arg ListKbMrCommentsParams) ([]KbMrComment, error) {
+	rows, err := q.db.Query(ctx, listKbMrComments, arg.MergeRequestID, arg.SubmittedState, arg.PendingReviewerID)
 	if err != nil {
 		return nil, err
 	}
@@ -878,7 +1062,118 @@ func (q *Queries) ListKbMrComments(ctx context.Context, mergeRequestID pgtype.UU
 			&i.AuthorType,
 			&i.AuthorID,
 			&i.CreatedAt,
-			&i.Triggered,
+			&i.ReviewID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbMrEvents = `-- name: ListKbMrEvents :many
+SELECT id, workspace_id, merge_request_id, actor_type, actor_id, kind, payload, created_at FROM kb_mr_event
+WHERE merge_request_id = $1
+ORDER BY created_at, id
+`
+
+func (q *Queries) ListKbMrEvents(ctx context.Context, mergeRequestID pgtype.UUID) ([]KbMrEvent, error) {
+	rows, err := q.db.Query(ctx, listKbMrEvents, mergeRequestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KbMrEvent{}
+	for rows.Next() {
+		var i KbMrEvent
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.MergeRequestID,
+			&i.ActorType,
+			&i.ActorID,
+			&i.Kind,
+			&i.Payload,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbMrReviewerIDs = `-- name: ListKbMrReviewerIDs :many
+SELECT DISTINCT reviewer_id FROM kb_mr_review
+WHERE merge_request_id = $1
+  AND state = $2::text
+`
+
+type ListKbMrReviewerIDsParams struct {
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	State          string      `json:"state"`
+}
+
+// Members who submitted a review on the merge request.
+func (q *Queries) ListKbMrReviewerIDs(ctx context.Context, arg ListKbMrReviewerIDsParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listKbMrReviewerIDs, arg.MergeRequestID, arg.State)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []pgtype.UUID{}
+	for rows.Next() {
+		var reviewer_id pgtype.UUID
+		if err := rows.Scan(&reviewer_id); err != nil {
+			return nil, err
+		}
+		items = append(items, reviewer_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKbMrReviews = `-- name: ListKbMrReviews :many
+SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
+WHERE merge_request_id = $1
+  AND (state = $2::text OR reviewer_id = $3::uuid)
+ORDER BY submitted_at NULLS LAST, created_at, id
+`
+
+type ListKbMrReviewsParams struct {
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	SubmittedState string      `json:"submitted_state"`
+	ViewerID       pgtype.UUID `json:"viewer_id"`
+}
+
+// A merge request's submitted reviews in submission order, plus the
+// viewer's pending review (viewer_id) last.
+func (q *Queries) ListKbMrReviews(ctx context.Context, arg ListKbMrReviewsParams) ([]KbMrReview, error) {
+	rows, err := q.db.Query(ctx, listKbMrReviews, arg.MergeRequestID, arg.SubmittedState, arg.ViewerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []KbMrReview{}
+	for rows.Next() {
+		var i KbMrReview
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.MergeRequestID,
+			&i.ReviewerID,
+			&i.State,
+			&i.Summary,
+			&i.CreatedAt,
+			&i.SubmittedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -928,36 +1223,6 @@ func (q *Queries) ListKbRevisionsByMergeRequest(ctx context.Context, arg ListKbR
 			&i.Deleted,
 			&i.CreatedAt,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listKbTaskStatuses = `-- name: ListKbTaskStatuses :many
-SELECT id, status FROM agent_task_queue
-WHERE id = ANY($1::uuid[])
-`
-
-type ListKbTaskStatusesRow struct {
-	ID     pgtype.UUID `json:"id"`
-	Status string      `json:"status"`
-}
-
-func (q *Queries) ListKbTaskStatuses(ctx context.Context, ids []pgtype.UUID) ([]ListKbTaskStatusesRow, error) {
-	rows, err := q.db.Query(ctx, listKbTaskStatuses, ids)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListKbTaskStatusesRow{}
-	for rows.Next() {
-		var i ListKbTaskStatusesRow
-		if err := rows.Scan(&i.ID, &i.Status); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1021,6 +1286,43 @@ func (q *Queries) LockKbPagesByIDs(ctx context.Context, arg LockKbPagesByIDsPara
 	return items, nil
 }
 
+const openKbMrReview = `-- name: OpenKbMrReview :one
+INSERT INTO kb_mr_review (workspace_id, merge_request_id, reviewer_id, state)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (merge_request_id, reviewer_id) WHERE state = 'pending' DO NOTHING
+RETURNING id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at
+`
+
+type OpenKbMrReviewParams struct {
+	WorkspaceID    pgtype.UUID `json:"workspace_id"`
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	ReviewerID     pgtype.UUID `json:"reviewer_id"`
+	State          string      `json:"state"`
+}
+
+// Starts the reviewer's pending review; returns no row when one is already
+// pending (kb_mr_review_pending_uidx), so the caller reads that one instead.
+func (q *Queries) OpenKbMrReview(ctx context.Context, arg OpenKbMrReviewParams) (KbMrReview, error) {
+	row := q.db.QueryRow(ctx, openKbMrReview,
+		arg.WorkspaceID,
+		arg.MergeRequestID,
+		arg.ReviewerID,
+		arg.State,
+	)
+	var i KbMrReview
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.MergeRequestID,
+		&i.ReviewerID,
+		&i.State,
+		&i.Summary,
+		&i.CreatedAt,
+		&i.SubmittedAt,
+	)
+	return i, err
+}
+
 const resolveKbDanglingLinks = `-- name: ResolveKbDanglingLinks :exec
 UPDATE kb_link AS l SET to_page_id = u.page_id
 FROM (
@@ -1053,7 +1355,7 @@ UPDATE kb_merge_request SET
     close_reason = $3,
     updated_at = now()
 WHERE id = $4
-RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at
+RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at
 `
 
 type SetKbMergeRequestClosedParams struct {
@@ -1094,6 +1396,7 @@ func (q *Queries) SetKbMergeRequestClosed(ctx context.Context, arg SetKbMergeReq
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
@@ -1105,7 +1408,7 @@ UPDATE kb_merge_request SET
     merged_at = now(),
     updated_at = now()
 WHERE id = $3
-RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at
+RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at
 `
 
 type SetKbMergeRequestMergedParams struct {
@@ -1140,36 +1443,86 @@ func (q *Queries) SetKbMergeRequestMerged(ctx context.Context, arg SetKbMergeReq
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
 
-const setKbMrCommentTriggered = `-- name: SetKbMrCommentTriggered :one
-UPDATE kb_mr_comment SET triggered = $1
-WHERE id = $2
-RETURNING id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, triggered
+const setKbMergeRequestStatus = `-- name: SetKbMergeRequestStatus :one
+UPDATE kb_merge_request SET
+    status = $1,
+    review_requested_at = CASE WHEN $2::boolean THEN now() ELSE review_requested_at END,
+    updated_at = now()
+WHERE id = $3
+RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at
 `
 
-type SetKbMrCommentTriggeredParams struct {
-	Triggered []byte      `json:"triggered"`
-	ID        pgtype.UUID `json:"id"`
+type SetKbMergeRequestStatusParams struct {
+	Status          string      `json:"status"`
+	ReviewRequested bool        `json:"review_requested"`
+	ID              pgtype.UUID `json:"id"`
 }
 
-func (q *Queries) SetKbMrCommentTriggered(ctx context.Context, arg SetKbMrCommentTriggeredParams) (KbMrComment, error) {
-	row := q.db.QueryRow(ctx, setKbMrCommentTriggered, arg.Triggered, arg.ID)
-	var i KbMrComment
+// Moves a merge request between open and changes_requested. Asking for
+// review again (back to open) also stamps review_requested_at.
+func (q *Queries) SetKbMergeRequestStatus(ctx context.Context, arg SetKbMergeRequestStatusParams) (KbMergeRequest, error) {
+	row := q.db.QueryRow(ctx, setKbMergeRequestStatus, arg.Status, arg.ReviewRequested, arg.ID)
+	var i KbMergeRequest
 	err := row.Scan(
 		&i.ID,
-		&i.MergeRequestID,
-		&i.ParentID,
-		&i.QuotePageID,
-		&i.QuoteBlockID,
-		&i.QuoteText,
-		&i.Body,
+		&i.WorkspaceID,
+		&i.Number,
+		&i.KnowledgeBaseID,
+		&i.Title,
+		&i.Summary,
+		&i.Source,
+		&i.Risk,
 		&i.AuthorType,
 		&i.AuthorID,
+		&i.DraftID,
+		&i.JobID,
+		&i.AnnotationIds,
+		&i.RevertsID,
+		&i.Status,
+		&i.MergedBy,
+		&i.MergedAt,
+		&i.ClosedBy,
+		&i.ClosedAt,
+		&i.CloseReason,
 		&i.CreatedAt,
-		&i.Triggered,
+		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
+	)
+	return i, err
+}
+
+const submitKbMrReview = `-- name: SubmitKbMrReview :one
+UPDATE kb_mr_review SET
+    state = $1,
+    summary = $2,
+    submitted_at = now()
+WHERE id = $3
+RETURNING id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at
+`
+
+type SubmitKbMrReviewParams struct {
+	State   string      `json:"state"`
+	Summary string      `json:"summary"`
+	ID      pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) SubmitKbMrReview(ctx context.Context, arg SubmitKbMrReviewParams) (KbMrReview, error) {
+	row := q.db.QueryRow(ctx, submitKbMrReview, arg.State, arg.Summary, arg.ID)
+	var i KbMrReview
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.MergeRequestID,
+		&i.ReviewerID,
+		&i.State,
+		&i.Summary,
+		&i.CreatedAt,
+		&i.SubmittedAt,
 	)
 	return i, err
 }
@@ -1181,7 +1534,7 @@ UPDATE kb_merge_request SET
     risk = $3,
     updated_at = now()
 WHERE id = $4
-RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at
+RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at
 `
 
 type UpdateKbMergeRequestTextParams struct {
@@ -1222,6 +1575,37 @@ func (q *Queries) UpdateKbMergeRequestText(ctx context.Context, arg UpdateKbMerg
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
+	)
+	return i, err
+}
+
+const updateKbMrCommentBody = `-- name: UpdateKbMrCommentBody :one
+UPDATE kb_mr_comment SET body = $1
+WHERE id = $2
+RETURNING id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, review_id
+`
+
+type UpdateKbMrCommentBodyParams struct {
+	Body string      `json:"body"`
+	ID   pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateKbMrCommentBody(ctx context.Context, arg UpdateKbMrCommentBodyParams) (KbMrComment, error) {
+	row := q.db.QueryRow(ctx, updateKbMrCommentBody, arg.Body, arg.ID)
+	var i KbMrComment
+	err := row.Scan(
+		&i.ID,
+		&i.MergeRequestID,
+		&i.ParentID,
+		&i.QuotePageID,
+		&i.QuoteBlockID,
+		&i.QuoteText,
+		&i.Body,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.CreatedAt,
+		&i.ReviewID,
 	)
 	return i, err
 }

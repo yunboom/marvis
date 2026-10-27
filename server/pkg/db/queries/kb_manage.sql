@@ -92,7 +92,7 @@ WHERE l.knowledge_base_id = sqlc.arg('knowledge_base_id')
 -- name: ListKbOpenMergeRequestNumbers :many
 SELECT number FROM kb_merge_request
 WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
-  AND status = sqlc.arg('status')
+  AND status = ANY(sqlc.arg('statuses')::text[])
 ORDER BY number;
 
 -- name: ListKbRawStorageKeys :many
@@ -158,6 +158,18 @@ deleted_kb_mr_comments AS (
     DELETE FROM kb_mr_comment
     USING kb_merge_request
     WHERE kb_mr_comment.merge_request_id = kb_merge_request.id
+      AND kb_merge_request.knowledge_base_id = sqlc.arg('knowledge_base_id')
+),
+deleted_kb_mr_reviews AS (
+    DELETE FROM kb_mr_review
+    USING kb_merge_request
+    WHERE kb_mr_review.merge_request_id = kb_merge_request.id
+      AND kb_merge_request.knowledge_base_id = sqlc.arg('knowledge_base_id')
+),
+deleted_kb_mr_events AS (
+    DELETE FROM kb_mr_event
+    USING kb_merge_request
+    WHERE kb_mr_event.merge_request_id = kb_merge_request.id
       AND kb_merge_request.knowledge_base_id = sqlc.arg('knowledge_base_id')
 ),
 deleted_kb_merge_requests AS (

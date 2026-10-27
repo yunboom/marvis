@@ -143,6 +143,18 @@ deleted_kb_mr_comments AS (
     WHERE kb_mr_comment.merge_request_id = kb_merge_request.id
       AND kb_merge_request.knowledge_base_id = $1
 ),
+deleted_kb_mr_reviews AS (
+    DELETE FROM kb_mr_review
+    USING kb_merge_request
+    WHERE kb_mr_review.merge_request_id = kb_merge_request.id
+      AND kb_merge_request.knowledge_base_id = $1
+),
+deleted_kb_mr_events AS (
+    DELETE FROM kb_mr_event
+    USING kb_merge_request
+    WHERE kb_mr_event.merge_request_id = kb_merge_request.id
+      AND kb_merge_request.knowledge_base_id = $1
+),
 deleted_kb_merge_requests AS (
     DELETE FROM kb_merge_request WHERE kb_merge_request.knowledge_base_id = $1
 )
@@ -428,17 +440,17 @@ func (q *Queries) ListKbLivePagesAfter(ctx context.Context, arg ListKbLivePagesA
 const listKbOpenMergeRequestNumbers = `-- name: ListKbOpenMergeRequestNumbers :many
 SELECT number FROM kb_merge_request
 WHERE knowledge_base_id = $1
-  AND status = $2
+  AND status = ANY($2::text[])
 ORDER BY number
 `
 
 type ListKbOpenMergeRequestNumbersParams struct {
 	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
-	Status          string      `json:"status"`
+	Statuses        []string    `json:"statuses"`
 }
 
 func (q *Queries) ListKbOpenMergeRequestNumbers(ctx context.Context, arg ListKbOpenMergeRequestNumbersParams) ([]int32, error) {
-	rows, err := q.db.Query(ctx, listKbOpenMergeRequestNumbers, arg.KnowledgeBaseID, arg.Status)
+	rows, err := q.db.Query(ctx, listKbOpenMergeRequestNumbers, arg.KnowledgeBaseID, arg.Statuses)
 	if err != nil {
 		return nil, err
 	}

@@ -1198,7 +1198,7 @@ func (q *Queries) GetKbPageRevision(ctx context.Context, arg GetKbPageRevisionPa
 }
 
 const getKbRevisionMergeRequest = `-- name: GetKbRevisionMergeRequest :one
-SELECT mr.id, mr.workspace_id, mr.number, mr.knowledge_base_id, mr.title, mr.summary, mr.source, mr.risk, mr.author_type, mr.author_id, mr.draft_id, mr.job_id, mr.annotation_ids, mr.reverts_id, mr.status, mr.merged_by, mr.merged_at, mr.closed_by, mr.closed_at, mr.close_reason, mr.created_at, mr.updated_at FROM kb_page_revision r
+SELECT mr.id, mr.workspace_id, mr.number, mr.knowledge_base_id, mr.title, mr.summary, mr.source, mr.risk, mr.author_type, mr.author_id, mr.draft_id, mr.job_id, mr.annotation_ids, mr.reverts_id, mr.status, mr.merged_by, mr.merged_at, mr.closed_by, mr.closed_at, mr.close_reason, mr.created_at, mr.updated_at, mr.review_requested_at FROM kb_page_revision r
 JOIN kb_merge_request mr ON mr.id = r.merge_request_id
 WHERE r.page_id = $1 AND r.id = $2
 `
@@ -1235,6 +1235,7 @@ func (q *Queries) GetKbRevisionMergeRequest(ctx context.Context, arg GetKbRevisi
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }

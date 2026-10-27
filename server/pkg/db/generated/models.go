@@ -1253,28 +1253,29 @@ type KbLink struct {
 }
 
 type KbMergeRequest struct {
-	ID              pgtype.UUID        `json:"id"`
-	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
-	Number          int32              `json:"number"`
-	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
-	Title           string             `json:"title"`
-	Summary         string             `json:"summary"`
-	Source          string             `json:"source"`
-	Risk            string             `json:"risk"`
-	AuthorType      string             `json:"author_type"`
-	AuthorID        pgtype.UUID        `json:"author_id"`
-	DraftID         pgtype.UUID        `json:"draft_id"`
-	JobID           pgtype.UUID        `json:"job_id"`
-	AnnotationIds   []pgtype.UUID      `json:"annotation_ids"`
-	RevertsID       pgtype.UUID        `json:"reverts_id"`
-	Status          string             `json:"status"`
-	MergedBy        pgtype.UUID        `json:"merged_by"`
-	MergedAt        pgtype.Timestamptz `json:"merged_at"`
-	ClosedBy        pgtype.UUID        `json:"closed_by"`
-	ClosedAt        pgtype.Timestamptz `json:"closed_at"`
-	CloseReason     string             `json:"close_reason"`
-	CreatedAt       pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	ID                pgtype.UUID        `json:"id"`
+	WorkspaceID       pgtype.UUID        `json:"workspace_id"`
+	Number            int32              `json:"number"`
+	KnowledgeBaseID   pgtype.UUID        `json:"knowledge_base_id"`
+	Title             string             `json:"title"`
+	Summary           string             `json:"summary"`
+	Source            string             `json:"source"`
+	Risk              string             `json:"risk"`
+	AuthorType        string             `json:"author_type"`
+	AuthorID          pgtype.UUID        `json:"author_id"`
+	DraftID           pgtype.UUID        `json:"draft_id"`
+	JobID             pgtype.UUID        `json:"job_id"`
+	AnnotationIds     []pgtype.UUID      `json:"annotation_ids"`
+	RevertsID         pgtype.UUID        `json:"reverts_id"`
+	Status            string             `json:"status"`
+	MergedBy          pgtype.UUID        `json:"merged_by"`
+	MergedAt          pgtype.Timestamptz `json:"merged_at"`
+	ClosedBy          pgtype.UUID        `json:"closed_by"`
+	ClosedAt          pgtype.Timestamptz `json:"closed_at"`
+	CloseReason       string             `json:"close_reason"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	ReviewRequestedAt pgtype.Timestamptz `json:"review_requested_at"`
 }
 
 type KbMrComment struct {
@@ -1288,7 +1289,29 @@ type KbMrComment struct {
 	AuthorType     string             `json:"author_type"`
 	AuthorID       pgtype.UUID        `json:"author_id"`
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	Triggered      []byte             `json:"triggered"`
+	ReviewID       pgtype.UUID        `json:"review_id"`
+}
+
+type KbMrEvent struct {
+	ID             pgtype.UUID        `json:"id"`
+	WorkspaceID    pgtype.UUID        `json:"workspace_id"`
+	MergeRequestID pgtype.UUID        `json:"merge_request_id"`
+	ActorType      string             `json:"actor_type"`
+	ActorID        pgtype.UUID        `json:"actor_id"`
+	Kind           string             `json:"kind"`
+	Payload        []byte             `json:"payload"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
+type KbMrReview struct {
+	ID             pgtype.UUID        `json:"id"`
+	WorkspaceID    pgtype.UUID        `json:"workspace_id"`
+	MergeRequestID pgtype.UUID        `json:"merge_request_id"`
+	ReviewerID     pgtype.UUID        `json:"reviewer_id"`
+	State          string             `json:"state"`
+	Summary        string             `json:"summary"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	SubmittedAt    pgtype.Timestamptz `json:"submitted_at"`
 }
 
 type KbPage struct {
