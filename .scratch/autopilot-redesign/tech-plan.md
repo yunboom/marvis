@@ -47,8 +47,8 @@
 - 右栏：
   - 指令：`ReadonlyContent` 默认折叠约 5 行 + 渐隐，「显示全部 / 收起」。原来指令为空时不渲染，保持。
   - 运行记录：每行 = 状态图标 + 时间 + 摘要（已关联任务 / 失败原因）+ 来源 + 右箭头。
-    - `create_issue` 运行：点击跳任务详情（不变）。
-    - `run_only` 运行：点击进入新的运行对话页（取代 `TranscriptButton` 弹窗）。
+    - 两种模式的运行都点进运行对话页（取代 `TranscriptButton` 弹窗）；`create_issue` 运行在对话页里和右侧面板都能跳到创建的任务。
+    - 没派出任务的运行（跳过、派发前失败）没有会话，点进去只看运行信息，不显示输入框。
     - 跳过的运行仍折叠成一组。
 - 危险区删除；删除按钮在顶栏，确认框文案不变。
 - 窄屏（< 980px）两栏堆叠成一栏，顺序：状态 → 指令 → 运行记录 → 其余配置。
@@ -61,28 +61,38 @@
 - 运行结束后，`CompleteAgentTask / FailAgentTask` 会把 `session_id / work_dir` 写回 task 行，因此**一次运行跑完，就有可以 resume 的会话**。
 - 聊天发消息时，daemon 认领聊天 task 会读 `chat_session.session_id / work_dir`；只有 `runtime_id` 一致才 resume（`handler/daemon.go:3644`），否则退回最近一条带 session 的聊天 task。
 - 已有「把聊天嵌进业务页」的先例：知识库 job（`kb_job.chat_session_id` + `kb-job-page.tsx` + `use-kb-job-conversation.ts`），并在聊天列表里用 `NOT EXISTS` 排除这些会话。
-- `create_issue` 运行产出的是任务，在任务里评论 / @ 智能体已经能续上会话（按 `(agent_id, issue_id)` resume），不需要新能力。
+- `create_issue` 运行同样有会话：`dispatchCreateIssue` 派出任务后由 `linkDispatchTask` 把它记到 `autopilot_run.task_id`（`service/autopilot.go:868`、`:1457`），任务结束同样写回 `session_id / work_dir`。任务里后续的评论回合按 `(agent_id, issue_id)` 取最近一条带 session 的任务接着用（`GetLastTaskSession`）。
+- 结论：两种模式都以 `autopilot_run.task_id` 指向的派发任务为起点续聊，机制相同。`task_id` 为空（跳过、派发前失败）的运行没有会话，不提供续聊。
+- Claude 续接用 `--resume <id>`（`pkg/agent/claude.go:1117`），默认沿用原会话 ID；仓库里没有分叉会话的支持。多人私聊、以及 `create_issue` 任务里的后续评论回合都从同一个会话接着写，会互相串上下文，所以续聊的第一轮必须**分叉**。
 
-### 4.2 方案：运行 ↔ 聊天会话，懒创建
+### 4.2 方案：运行 ↔ 每人一个私聊会话，懒创建，首轮分叉
 
 **数据**
 
-- 新迁移：新表 `autopilot_run_chat(run_id, user_id, chat_session_id, created_at)`，主键 `(run_id, user_id)`，`chat_session_id` 唯一索引（`CREATE UNIQUE INDEX CONCURRENTLY`，单独一个迁移文件）。不加外键。
-  - 为什么按人分会话：`chat_session` 只属于创建者（`gatePublicChatSessionForUser`），多人看同一次运行时各聊各的，互不干扰。
+- 新迁移：新表 `autopilot_run_chat(run_id, user_id, chat_session_id, source_task_id, source_session_id, created_at)`，主键 `(run_id, user_id)`，`chat_session_id` 唯一索引（`CREATE UNIQUE INDEX CONCURRENTLY`，单独一个迁移文件）。不加外键。
+  - 每人一个（用户 2026-10-27 拍板）：`chat_session` 本就只属于创建者，各聊各的，仅自己可见。
+  - `source_session_id` 记下分叉的起点，daemon 用它判断这一轮是否需要分叉。
   - 迁移编号：当前最大是 `633_rebrand_marvis`，按仓库规则 rebrand 排最后：新迁移用 633/634，rebrand 顺延到 635，同步改 `scripts/rebrand-marvis.py` 的 `KEEP`、`cmd/migrate/main.go` 并发索引表和引用文件名的测试。
 - 聊天列表查询（`ListChatSessionsByCreator` 等）加 `NOT EXISTS (SELECT 1 FROM autopilot_run_chat r WHERE r.chat_session_id = cs.id)`，这些会话不出现在「我的对话」里。
 
 **接口**
 
 - `POST /api/autopilots/{id}/runs/{runId}/chat`：获取或创建当前用户在这次运行上的会话，返回 `{ chat_session_id }`。
-  - 只接受 `run_only` 且 task 已结束（completed / failed）的运行；运行中返回 409 `run_in_progress`，前端在运行结束前不建会话。
+  - 两种模式都接受；要求 `run.task_id` 不为空且该任务已结束（completed / failed）。运行中返回 409 `run_in_progress`，前端在运行结束前不建会话；`task_id` 为空返回 409 `run_has_no_session`。
   - 权限：调用者对该自动化有读权限，且 `canInvokeAgent` 通过（与聊天发送一致）。
   - 事务内 `SELECT … FOR UPDATE` 锁 run 行，已存在直接返回；否则 `CreateChatSession`（agent = task.agent_id，project = autopilot.project_id，title = 自动化标题，creator = 当前用户），再用原 task 的 `session_id / work_dir / runtime_id` 调 `UpdateChatSessionSession` 预填 resume 指针，最后写 `autopilot_run_chat`。
   - 原 task 因 `context_overflow` 等不适合 resume 的原因失败时不预填 session（过滤条件对齐 `GetLastTaskSession`），只预填 `work_dir`。
-- 发消息、停止、排队直接复用 `POST /api/chat/sessions/{id}/messages` 等现有聊天接口，daemon claim 逻辑不改。
+- 发消息、停止、排队直接复用 `POST /api/chat/sessions/{id}/messages` 等现有聊天接口。
+
+**首轮分叉（daemon 认领聊天任务时）**
+
+- `handler/daemon.go` 认领聊天任务、得到 `PriorSessionID` 后，查 `autopilot_run_chat`（按 `chat_session_id`）：若 `PriorSessionID == source_session_id`，说明还没分叉过，响应里带 `ForkSession: true`。
+- `pkg/agent` 的 `ExecOptions` 加 `ForkSession`：Claude 加 `--fork-session`，新会话 ID 照常回报，`UpdateChatSessionSession` 把指针换成新 ID，之后的回合正常续接、不再分叉。
+- 不支持分叉的智能体（逐家核实，先只做 Claude）：不传 `PriorSessionID`，只沿用 `PriorWorkDir`，再加下面的上下文兜底，从这次运行的结果重新开始。
+- 这样任务里的评论回合、其他人的私聊都各自接着自己的会话，互不串。
 - `GET /api/autopilots/{id}/runs/{runId}` 响应增加 `chat_session_id`（当前用户的，可空），schema 加可选字段 + 默认 `null`，补 malformed 响应测试。
 
-**上下文兜底**：runtime 换过或 session 文件已丢失时 resume 失败。第一条用户消息由服务端拼一段前置说明（自动化标题、指令摘要、本次运行结果摘要 `task.result` 截断），保证新会话也知道在聊哪次运行。拼接放在创建会话的接口里，以「服务端写入部分」的方式存（同知识库 job 的做法：用户只看到自己打的字）。
+**上下文兜底**：runtime 换过、session 文件已丢失或智能体不支持分叉时，无法接着原会话。第一条用户消息由服务端拼一段前置说明（自动化标题、指令摘要、本次运行结果摘要 `task.result` 截断），保证新会话也知道在聊哪次运行。拼接放在创建会话的接口里，以「服务端写入部分」的方式存（同知识库 job 的做法：用户只看到自己打的字）。
 
 **清理**：删除自动化时，`DeleteAutopilot` 事务里一并软删 / 归档关联的 chat_session 并删 `autopilot_run_chat` 行。
 
@@ -96,9 +106,9 @@
   - 消息区第一块是「触发卡片」（来源 + 时间 + 指令摘要），第二块是原 task 的执行过程，用 `taskMessagesOptions(taskId)` 渲染成一轮智能体回复（与 `TranscriptButton` 同源，运行中实时刷新）。
   - 后续消息：照抄 `useKbJobConversation` 写 `useAutopilotRunConversation(sessionId)`，组合 `ChatMessageList` + `ChatQueue` + `ChatInput`（`draftKeyOverride` 隔离草稿），与聊天页行为一致：发送中、停止、排队、重试、附件。
   - 会话懒创建：第一次发送前调 `POST …/chat` 拿 `chat_session_id`，再发送。运行未结束时允许打字，消息先进前端排队，运行结束后自动建会话并发出。
-  - 右侧面板：状态、来源、触发 / 完成时间、执行者、失败原因、Webhook 载荷（复用 `WebhookPayloadSlot`）、返回自动化链接。窄屏收起。
+  - 右侧面板：状态、来源、触发 / 完成时间、执行者、所属自动化、输出方式、创建的任务（`create_issue`）、失败原因、Webhook 载荷（复用 `WebhookPayloadSlot`），以及一行「这段对话仅你可见。」。窄屏收起。
   - 离线 / 无权限：复用 `OfflineBanner`、`AgentAccessRevokedBanner`、`RuntimeRequiredBanner`。
-- `create_issue` 运行不进此页，行点击仍跳任务详情。
+- 两种模式的运行都进此页；`task_id` 为空的运行只显示运行信息，不显示输入框。
 - 原 `RunRow` 里的 `TranscriptButton` 与 `syntheticTask` 构造删除。
 - core：`autopilotRunChatOptions` / `useEnsureAutopilotRunChat` mutation，`AutopilotRun` schema 加 `chat_session_id`。
 
@@ -137,11 +147,13 @@
 2. 详情页两栏（纯前端）。
 3. 后端：迁移 + 获取或创建会话接口 + 聊天列表排除 + 删除清理 + 测试（DB 测试用 `testutil` fixture）。
 4. 前端运行对话页 + web / desktop 路由 + core schema。
-5. 校验：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`；本地 `make up` 跑一次 run_only 自动化，在运行页追问，确认 resume 到同一工作目录。
+5. 校验：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`；本地 `make up` 各跑一次 run_only 和 create_issue 自动化，两个账号分别在运行页追问，确认各自分叉、工作目录沿用，且任务里再 @ 智能体时看不到私聊内容。
 
 ## 7. 风险
 
 - **resume 依赖同一 runtime**：智能体换过运行时则只继承工作目录或全新开始，靠第 4.2 的前置说明兜底。
+- **分叉只先支持 Claude**：其他智能体走「工作目录 + 运行背景」兜底，续聊体验弱一些；逐家补分叉是后续工作。
+- **共用工作目录**：多人私聊和任务里的回合沿用同一个工作目录，可能同时改同一批文件。是否需要每个私聊复制一份工作目录待评估（未核实各执行环境的目录隔离方式），一期记为已知限制。
 - **工作目录回收**：daemon 可能已回收 `work_dir`；需要确认 GC 策略，必要时改用 `durable_work_dir`（待核实）。
 - **列表信息密度**：卡片一屏约 8 个，比表格少；自动化数量通常不多，可接受。
 - **翻译**：新文案需同步 en / zh-Hans / zh-Hant / ja / ko / fr（`parity.test.ts` 会拦）。
@@ -149,5 +161,5 @@
 ## 8. 待确认
 
 1. 卡片上展示两行指令摘要，可以吗？（列表原来不显示指令）
-2. 续聊会话按「每人一个」还是「每次运行一个、只允许负责人聊」？方案默认每人一个。
+2. ~~续聊会话每人一个还是每次运行一个~~：已定每人一个（2026-10-27）。
 3. 运行中能否追问？方案默认：可以打字排队，运行结束后自动发出；不打断正在执行的运行。
