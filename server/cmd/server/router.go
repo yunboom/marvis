@@ -2292,6 +2292,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Get("/pages/{id}/claims", h.GetKbPageClaims)
 				r.Get("/bases/{kb}/claims", h.ListKbClaims)
 				r.Get("/bases/{kb}/stale", h.ListKbStalePages)
+				r.Get("/sources", h.ListKbSources)
 				r.Get("/bases/{kb}/annotations", h.ListKbAnnotations)
 				r.Post("/bases/{kb}/annotations", h.CreateKbAnnotation)
 				r.Get("/annotations/{id}", h.GetKbAnnotation)
