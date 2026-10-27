@@ -389,7 +389,9 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 	input.JobID = uuidToString(job.ID)
 	content, err := kb.JobFirstMessage(input)
 	if err != nil {
-		h.discardKbJobRows(ctx, job, session)
+		if discardErr := h.discardKbJobRows(ctx, job, session); discardErr != nil {
+			err = errors.Wrapf(discardErr, "discard job after render failure (%v)", err)
+		}
 		h.writeKbInternalError(w, r, err)
 		return
 	}
@@ -397,7 +399,10 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// The job is useless without its first message: take it back so the
 		// member can retry instead of finding an empty job in the list.
-		h.discardKbJobRows(ctx, job, session)
+		if discardErr := h.discardKbJobRows(ctx, job, session); discardErr != nil {
+			h.writeKbInternalError(w, r, errors.Wrapf(discardErr, "discard job after send failure (%v)", err))
+			return
+		}
 		if errors.Is(err, service.ErrChatTaskAgentNoRuntime) || errors.Is(err, service.ErrChatTaskAgentArchived) {
 			writeErrorCode(w, http.StatusUnprocessableEntity, kbCodeAgentUnavailable, "agent cannot run")
 			return
@@ -580,25 +585,25 @@ func (h *Handler) createKbJobRows(ctx context.Context, base db.KbBase, agent db.
 
 // discardKbJobRows removes a job whose first message could not be sent. The
 // session has no message and no task, so nothing else references it.
-// Best effort: the caller is already answering with the send error.
-func (h *Handler) discardKbJobRows(ctx context.Context, job db.KbJob, session db.ChatSession) {
+func (h *Handler) discardKbJobRows(ctx context.Context, job db.KbJob, session db.ChatSession) error {
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
-		return
+		return errors.Wrapf(err, "begin job discard job_id=%s", uuidToString(job.ID))
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
 
 	if _, err := qtx.LockChatSessionForDelete(ctx, session.ID); err != nil {
-		return
+		return errors.Wrapf(err, "lock job chat session chat_session_id=%s", uuidToString(session.ID))
 	}
 	if err := qtx.DeleteKbJob(ctx, db.DeleteKbJobParams{WorkspaceID: job.WorkspaceID, ID: job.ID}); err != nil {
-		return
+		return errors.Wrapf(err, "delete job job_id=%s", uuidToString(job.ID))
 	}
 	if err := qtx.DeleteChatSession(ctx, db.DeleteChatSessionParams{ID: session.ID, WorkspaceID: session.WorkspaceID}); err != nil {
-		return
+		return errors.Wrapf(err, "delete job chat session chat_session_id=%s", uuidToString(session.ID))
 	}
-	_ = tx.Commit(ctx)
+
+	return errors.Wrapf(tx.Commit(ctx), "commit job discard job_id=%s", uuidToString(job.ID))
 }
 
 func (h *Handler) publishKbJobUpdated(job db.KbJob, actorType, actorID string, draftID ...pgtype.UUID) {

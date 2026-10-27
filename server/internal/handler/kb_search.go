@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -154,7 +155,7 @@ func (h *Handler) searchKb(ctx context.Context, q kbSearchQuery) (KbSearchRespon
 	switch {
 	case vectorErr != nil:
 		// Degrading to keyword is the handling; keep a trace for operators.
-		slog.Warn("kb search vector half failed, keyword only", "error", vectorErr.Error())
+		slog.Warn("kb search vector half failed, keyword only", "error", fmt.Sprintf("%+v", vectorErr))
 	case vectorList != nil:
 		mode = kb.SearchModeHybrid
 	}

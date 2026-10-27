@@ -16,6 +16,7 @@ import (
 
 	"github.com/yunboom/marvis/server/internal/kb"
 	"github.com/yunboom/marvis/server/internal/logger"
+	"github.com/yunboom/marvis/server/internal/storage"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
@@ -196,9 +197,12 @@ func (h *Handler) copyKbRawIntoExport(ctx context.Context, bundle zipBundle, exp
 
 	reader, err := h.Storage.GetReader(ctx, raw.StorageKey)
 	if err != nil {
+		if !storage.IsNotFound(err) {
+			return errors.Wrapf(err, "open raw file raw_id=%s", uuidToString(raw.ID))
+		}
 		// A lost object leaves its file out rather than cutting the archive
 		// short; pages still link to where it would be.
-		slog.Warn("knowledge base export skipped a raw file", "raw_id", uuidToString(raw.ID), "error", err)
+		slog.Warn("knowledge base export skipped a missing raw file", "raw_id", uuidToString(raw.ID), "error", err)
 		return nil
 	}
 	defer func() { _ = reader.Close() }()

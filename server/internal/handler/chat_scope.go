@@ -279,16 +279,16 @@ func (h *Handler) loadChatSessionForScopedRead(w http.ResponseWriter, r *http.Re
 	if !ok {
 		return db.ChatSession{}, false
 	}
-	session, err := h.Queries.GetChatSessionInWorkspace(r.Context(), db.GetChatSessionInWorkspaceParams{ID: sessionUUID, WorkspaceID: parseUUID(workspaceID)})
+	session, err := h.Queries.GetPublicChatSessionInWorkspace(r.Context(), db.GetPublicChatSessionInWorkspaceParams{
+		ID:          sessionUUID,
+		WorkspaceID: parseUUID(workspaceID),
+	})
 	if err != nil {
-		writeError(w, http.StatusNotFound, "chat session not found")
-		return db.ChatSession{}, false
-	}
-	if _, err := h.Queries.GetPublicChatSessionInWorkspace(r.Context(), db.GetPublicChatSessionInWorkspaceParams{
-		ID:          session.ID,
-		WorkspaceID: session.WorkspaceID,
-	}); err != nil {
-		writeError(w, http.StatusNotFound, "chat session not found")
+		if isNotFound(err) {
+			writeError(w, http.StatusNotFound, "chat session not found")
+			return db.ChatSession{}, false
+		}
+		h.writeKbInternalError(w, r, errors.Wrapf(err, "load scoped chat session chat_session_id=%s", sessionID))
 		return db.ChatSession{}, false
 	}
 
