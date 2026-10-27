@@ -120,7 +120,7 @@ func TestStartMikaOnboarding_WritesTheOpeningWithoutRunningAnAgent(t *testing.T)
 	// shared now() would let the kickoff sort last and become the session's
 	// "last message" — which buildChatLastMessage reports as none at all.
 	kickoff, opening := got[0], got[1]
-	if kickoff.role != "user" || kickoff.kind != protocol.ChatMessageKindOnboardingKickoff {
+	if kickoff.role != "user" || kickoff.kind != protocol.ChatMessageKindInstruction {
 		t.Fatalf("first row must be the hidden kickoff, got %+v", kickoff)
 	}
 	if kickoff.hasTask {

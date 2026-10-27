@@ -153,17 +153,17 @@ func TestBuildMikaOnboardingKickoffCarriesMemberTimezone(t *testing.T) {
 	})
 }
 
-func TestNormalizeMessageKindPreservesOnboardingKickoff(t *testing.T) {
-	if got := normalizeMessageKind(protocol.ChatMessageKindOnboardingKickoff); got != protocol.ChatMessageKindOnboardingKickoff {
-		t.Fatalf("normalizeMessageKind() = %q, want %q", got, protocol.ChatMessageKindOnboardingKickoff)
+func TestNormalizeMessageKindPreservesInstruction(t *testing.T) {
+	if got := normalizeMessageKind(protocol.ChatMessageKindInstruction); got != protocol.ChatMessageKindInstruction {
+		t.Fatalf("normalizeMessageKind() = %q, want %q", got, protocol.ChatMessageKindInstruction)
 	}
 }
 
-func TestVisibleChatMessagesHidesOnboardingKickoff(t *testing.T) {
+func TestVisibleChatMessagesHidesInstructions(t *testing.T) {
 	messages := []db.ChatMessage{
 		{
 			Content:     "internal kickoff",
-			MessageKind: protocol.ChatMessageKindOnboardingKickoff,
+			MessageKind: protocol.ChatMessageKindInstruction,
 		},
 		{
 			Content:     "Hi, I'm Mika.",

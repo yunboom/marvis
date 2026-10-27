@@ -33,8 +33,8 @@ PATTERN = re.compile(r"multica(?!st)", re.IGNORECASE)
 KEEP = {
     "scripts/rebrand-marvis.py",
     "CLAUDE.md",
-    "server/migrations/646_rebrand_marvis.up.sql",
-    "server/migrations/646_rebrand_marvis.down.sql",
+    "server/migrations/648_rebrand_marvis.up.sql",
+    "server/migrations/648_rebrand_marvis.down.sql",
 }
 
 
