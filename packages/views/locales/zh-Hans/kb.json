@@ -169,22 +169,35 @@
     "starters": {
       "dev": {
         "title": "研发知识库",
-        "description": "系统架构、服务与接口、排障手册、技术决策"
+        "description": "系统架构、服务与接口、排障手册、技术决策",
+        "message": "帮我创建一个研发岗位使用的知识库"
       },
       "qa": {
         "title": "测试知识库",
-        "description": "用例设计方法、测试环境、回归清单、缺陷复盘"
+        "description": "用例设计方法、测试环境、回归清单、缺陷复盘",
+        "message": "帮我创建一个测试岗位使用的知识库"
       },
       "product": {
         "title": "产品知识库",
-        "description": "功能说明、业务规则、计费规则、对客话术"
+        "description": "功能说明、业务规则、计费规则、对客话术",
+        "message": "帮我创建一个产品岗位使用的知识库"
       },
       "team": {
         "title": "团队综合知识库",
-        "description": "研发、测试、产品共用，按领域标签区分"
+        "description": "研发、测试、产品共用，按领域标签区分",
+        "message": "帮我创建一个研发、测试、产品共用的知识库"
+      },
+      "agent_team": {
+        "title": "Agent 团队",
+        "description": "从任务、对话里持续沉淀 Agent 团队的决策和经验",
+        "message": "帮我创建一个当作 Agent 团队记忆的知识库"
+      },
+      "other": {
+        "title": "其他知识库",
+        "description": "说说你的职位，我来推荐要沉淀什么",
+        "message": "帮我创建一个知识库"
       }
     },
-    "starter_message": "建一个{{title}}：{{description}}",
     "questions": {
       "readers": "这个知识库给谁看？他们最常查什么？",
       "scope": "收录哪些内容，哪些不收？",

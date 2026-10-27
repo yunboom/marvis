@@ -177,22 +177,35 @@
     "starters": {
       "dev": {
         "title": "Engineering knowledge base",
-        "description": "System architecture, services and interfaces, runbooks, technical decisions"
+        "description": "System architecture, services and interfaces, runbooks, technical decisions",
+        "message": "Help me create a knowledge base for engineers"
       },
       "qa": {
         "title": "Testing knowledge base",
-        "description": "Test design methods, test environments, regression checklists, defect reviews"
+        "description": "Test design methods, test environments, regression checklists, defect reviews",
+        "message": "Help me create a knowledge base for testers"
       },
       "product": {
         "title": "Product knowledge base",
-        "description": "Feature descriptions, business rules, billing rules, customer replies"
+        "description": "Feature descriptions, business rules, billing rules, customer replies",
+        "message": "Help me create a knowledge base for product managers"
       },
       "team": {
         "title": "Team knowledge base",
-        "description": "Shared by engineering, testing and product, separated by domain tags"
+        "description": "Shared by engineering, testing and product, separated by domain tags",
+        "message": "Help me create a knowledge base shared by engineering, testing and product"
+      },
+      "agent_team": {
+        "title": "Agent team",
+        "description": "Keep the agent team's decisions and lessons from issues and chats",
+        "message": "Help me create a knowledge base that serves as our agent team's memory"
+      },
+      "other": {
+        "title": "Something else",
+        "description": "Tell me your role and I'll suggest what to build up",
+        "message": "Help me create a knowledge base"
       }
     },
-    "starter_message": "{{title}}: {{description}}",
     "questions": {
       "readers": "Who reads this knowledge base, and what do they look up most?",
       "scope": "What belongs here, and what does not?",

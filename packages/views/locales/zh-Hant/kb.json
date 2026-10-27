@@ -169,22 +169,35 @@
     "starters": {
       "dev": {
         "title": "研發知識庫",
-        "description": "系統架構、服務與介面、排障手冊、技術決策"
+        "description": "系統架構、服務與介面、排障手冊、技術決策",
+        "message": "幫我建立一個研發職位使用的知識庫"
       },
       "qa": {
         "title": "測試知識庫",
-        "description": "用例設計方法、測試環境、迴歸清單、缺陷覆盤"
+        "description": "用例設計方法、測試環境、迴歸清單、缺陷覆盤",
+        "message": "幫我建立一個測試職位使用的知識庫"
       },
       "product": {
         "title": "產品知識庫",
-        "description": "功能說明、業務規則、計費規則、對客話術"
+        "description": "功能說明、業務規則、計費規則、對客話術",
+        "message": "幫我建立一個產品職位使用的知識庫"
       },
       "team": {
         "title": "團隊綜合知識庫",
-        "description": "研發、測試、產品共用，按領域標籤區分"
+        "description": "研發、測試、產品共用，按領域標籤區分",
+        "message": "幫我建立一個研發、測試、產品共用的知識庫"
+      },
+      "agent_team": {
+        "title": "Agent 團隊",
+        "description": "從任務、對話中持續沉澱 Agent 團隊的決策和經驗",
+        "message": "幫我建立一個當作 Agent 團隊記憶的知識庫"
+      },
+      "other": {
+        "title": "其他知識庫",
+        "description": "說說你的職位，我來推薦要沉澱什麼",
+        "message": "幫我建立一個知識庫"
       }
     },
-    "starter_message": "建一個{{title}}：{{description}}",
     "questions": {
       "readers": "這個知識庫給誰看？他們最常查什麼？",
       "scope": "收錄哪些內容，哪些不收？",
