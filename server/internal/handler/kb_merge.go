@@ -139,21 +139,29 @@ func planKbMerge(ctx context.Context, q *db.Queries, base db.KbBase, overlay kbO
 		return kbMergePlan{}, err
 	}
 	plan.tree = tree
-	for _, id := range clashes {
-		if conflicted[id] {
+	for _, c := range clashes {
+		if conflicted[c.pageID] {
 			continue
 		}
-		path, _ := overlay.tree.PathByPageID(id)
-		plan.conflicts = append(plan.conflicts, KbDraftConflictResponse{PageID: id, Path: path, Kind: kb.ConflictMove})
-		conflicted[id] = true
+		path, _ := overlay.tree.PathByPageID(c.pageID)
+		plan.conflicts = append(plan.conflicts, KbDraftConflictResponse{PageID: c.pageID, Path: path, Kind: c.kind})
+		conflicted[c.pageID] = true
 	}
 
 	return plan, nil
 }
 
+// kbTreeClash is a merged page that cannot take its place in the tree.
+type kbTreeClash struct {
+	pageID string
+	kind   string
+}
+
 // kbMergedTree lays the merged pages over the mainline tree and reports the
-// merged pages whose slug clashes with a live sibling.
-func kbMergedTree(ctx context.Context, q *db.Queries, base db.KbBase, pages []kbMergePage) (*kb.PageTree, []string, error) {
+// merged pages that cannot take their place: a slug that clashes with a live
+// sibling or a parent that is gone (move), and a deleted page that still has
+// live children (page). Either would leave a page outside the tree.
+func kbMergedTree(ctx context.Context, q *db.Queries, base db.KbBase, pages []kbMergePage) (*kb.PageTree, []kbTreeClash, error) {
 	rows, err := q.ListKbPageTree(ctx, base.ID)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "list page tree knowledge_base_id=%s", uuidToString(base.ID))
@@ -174,17 +182,26 @@ func kbMergedTree(ctx context.Context, q *db.Queries, base db.KbBase, pages []kb
 	}
 
 	bySibling := make(map[string][]string)
+	hasChildren := make(map[string]bool)
 	for id, node := range nodes {
 		key := node.ParentID + "\x00" + node.Slug
 		bySibling[key] = append(bySibling[key], id)
+		if node.ParentID != "" {
+			hasChildren[node.ParentID] = true
+		}
 	}
-	clashes := make([]string, 0)
+	clashes := make([]kbTreeClash, 0)
 	for _, p := range pages {
 		if p.page.Deleted {
+			if hasChildren[p.pageID] {
+				clashes = append(clashes, kbTreeClash{pageID: p.pageID, kind: kb.ConflictPage})
+			}
 			continue
 		}
-		if len(bySibling[p.page.ParentID+"\x00"+p.page.Slug]) > 1 {
-			clashes = append(clashes, p.pageID)
+		_, parentLive := nodes[p.page.ParentID]
+		orphaned := p.page.ParentID != "" && !parentLive
+		if orphaned || len(bySibling[p.page.ParentID+"\x00"+p.page.Slug]) > 1 {
+			clashes = append(clashes, kbTreeClash{pageID: p.pageID, kind: kb.ConflictMove})
 		}
 	}
 

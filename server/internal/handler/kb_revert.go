@@ -263,6 +263,24 @@ func planKbRevert(ctx context.Context, q *db.Queries, base db.KbBase, mr db.KbMe
 		out = append(out, kbRevertPage{pageID: page.ID, op: kbRevertOp(target, now), head: page.HeadRevisionID, page: target})
 	}
 
+	// The reverted pages must still fit the tree as it is now: a page put
+	// back under a parent deleted since, a page removed while it gained
+	// children, or a slug taken since.
+	if len(conflicts) == 0 && len(out) > 0 {
+		merged := make([]kbMergePage, 0, len(out))
+		for _, r := range out {
+			merged = append(merged, kbMergePage{pageID: uuidToString(r.pageID), page: r.page})
+		}
+		_, clashes, err := kbMergedTree(ctx, q, base, merged)
+		if err != nil {
+			return nil, err
+		}
+		for _, c := range clashes {
+			path, _ := mainTree.PathByPageID(c.pageID)
+			conflicts = append(conflicts, KbDraftConflictResponse{PageID: c.pageID, Path: path, Kind: c.kind})
+		}
+	}
+
 	if len(conflicts) > 0 {
 		return nil, &kbRequestError{
 			status:  http.StatusConflict,
