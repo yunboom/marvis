@@ -172,13 +172,17 @@ func TestReviewHandoffMessage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	want := "Change request #16 (Dedup key) needs changes. Review feedback to resolve:\n\n" +
+	want := "Change request #16 (Dedup key) has review feedback to resolve.\n\n" +
 		"Review summary from Wang Fang:\nTwo things to fix.\n\n" +
-		"Comment `c-1` from Wang Fang:\n> Callback: Dedup by trade no.\nSay why.\n\n" +
+		"Comment `c-1` from Wang Fang, on the page \"Callback\":\n> Dedup by trade no.\nSay why.\n\n" +
 		"Comment `c-2` from Li Lei:\nAdd an example.\n\n" +
-		"Read the full thread with `marvis kb mr comment list 16`. Make the changes in the same draft (`d-1`), " +
-		"do not open a new change request, and run `marvis kb draft check d-1` when done. " +
-		"Then tell me what you changed; I will request review again."
+		"To resolve it:\n" +
+		"- Read the full feedback with `marvis kb mr comment list 16`.\n" +
+		"- Make the changes in the same draft (`d-1`). It is the same change request; do not open a new one.\n" +
+		"- Run `marvis kb draft check d-1` when you are done.\n" +
+		"- Answer under each comment with `marvis kb mr comment add 16 --parent <comment id> --content-file ./reply.md`: " +
+		"what you changed, or why you left it.\n" +
+		"- Then tell me what you changed, so I can request review again."
 	if got != want {
 		t.Errorf("message:\n%s\nwant:\n%s", got, want)
 	}
