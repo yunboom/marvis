@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Virtuoso, type Components, type VirtuosoHandle } from "react-virtuoso";
@@ -95,6 +95,12 @@ interface ChatMessageListProps {
    * that reply until chat:quick_actions resolves it.
    */
   quickActionsPendingMessageId?: string | null;
+  /**
+   * Content that precedes the session's first message, such as the autopilot
+   * run a follow-up conversation continues. Shown once the oldest page is
+   * loaded, so it never sits above a gap of unloaded history.
+   */
+  header?: ReactNode;
 }
 
 // ─── Virtuoso chrome ─────────────────────────────────────────────────────
@@ -115,6 +121,7 @@ interface ChatListContext {
   pendingTask: ChatPendingTask | null | undefined;
   liveTaskMessages: readonly TaskMessagePayload[] | undefined;
   availability: AgentAvailability | undefined;
+  header: ReactNode;
 }
 
 /**
@@ -143,6 +150,7 @@ function ChatListHeader({ context }: { context?: ChatListContext }) {
   const { t } = useT("chat");
   return (
     <div className={cn(CHAT_COLUMN, "pt-4")}>
+      {context?.header}
       {context?.isFetchingOlderMessages && (
         <div className="text-center text-caption text-muted-foreground">
           {t(($) => $.message_list.loading_older)}
@@ -192,6 +200,7 @@ export function ChatMessageList({
   quickActionsDisabled = false,
   onRegenerateQuickActions,
   quickActionsPendingMessageId = null,
+  header,
 }: ChatMessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollContainerEl, setScrollContainerEl] = useState<HTMLDivElement | null>(null);
@@ -291,6 +300,7 @@ export function ChatMessageList({
     pendingTask,
     liveTaskMessages,
     availability,
+    header: hasOlderMessages ? null : header,
   };
 
   // Every previewable file in this session, in message order, so opening one

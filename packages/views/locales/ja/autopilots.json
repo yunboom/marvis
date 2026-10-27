@@ -181,6 +181,7 @@
     "runtime_offline": "ランタイム オフライン",
     "not_executed": "この実行は行われませんでした。",
     "transcript_failed": "実行ログを読み込めませんでした。",
+    "followup_after_run": "実行の完了後に追加で質問できます",
     "not_found": "実行が見つかりません",
     "forbidden": "この実行を表示する権限がありません",
     "load_failed": "実行を読み込めませんでした"

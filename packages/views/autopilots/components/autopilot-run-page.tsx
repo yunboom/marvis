@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,19 +13,29 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "@marvis/core/api";
-import { useAgentPresenceDetail, type AgentAvailability } from "@marvis/core/agents";
+import { isAgentRuntimeBound, useAgentPresenceDetail, type AgentAvailability } from "@marvis/core/agents";
+import { useAuthStore } from "@marvis/core/auth";
+import { useEnsureAutopilotRunChat } from "@marvis/core/autopilots/mutations";
 import { autopilotDetailOptions, autopilotRunOptions } from "@marvis/core/autopilots/queries";
 import { isTaskMessageTaskId, useTaskMessages } from "@marvis/core/chat/queries";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import type { Autopilot, AutopilotRun, AutopilotRunSource } from "@marvis/core/types";
 import { useActorName } from "@marvis/core/workspace/hooks";
+import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
-import { TaskTimelineReply } from "../../chat/components/chat-message-list";
+import { AgentAccessRevokedBanner } from "../../chat/components/agent-access-revoked-banner";
+import { ArchivedAgentBanner } from "../../chat/components/archived-agent-banner";
+import { ChatInput } from "../../chat/components/chat-input";
+import { ChatMessageList, TaskTimelineReply } from "../../chat/components/chat-message-list";
+import { ChatQueue } from "../../chat/components/chat-queue";
+import { OfflineBanner } from "../../chat/components/offline-banner";
+import { RuntimeRequiredBanner } from "../../chat/components/runtime-required-banner";
 import { TaskStatusPill } from "../../chat/components/task-status-pill";
+import { canAssignAgent } from "../../issues/components/pickers/assignee-picker";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { formatInTimeZone } from "../../common/format-in-time-zone";
 import { buildTimeline } from "../../common/task-transcript";
@@ -35,6 +45,7 @@ import { AppLink, useNavigation } from "../../navigation";
 import { RichContentScrollRootProvider } from "../../rich-content/scroll-root";
 import { instructionsPreview } from "./instructions-preview";
 import { RUN_VISUAL, runStatusOf, type RunStatus } from "./run-status";
+import { useAutopilotRunConversation } from "./use-autopilot-run-conversation";
 import { WebhookPayloadPreview } from "./webhook-payload-preview";
 
 const SOURCE_ICON: Record<AutopilotRunSource, typeof Clock> = {
@@ -246,7 +257,23 @@ function RunPageSkeleton() {
   );
 }
 
-/** Left column: the executor bar, the trigger card and the execution reply. */
+interface RunExecutor {
+  type: Autopilot["assignee_type"];
+  id: string;
+}
+
+/** The agent the run executed on, or the autopilot's assignee for older servers. */
+function runExecutorOf(autopilot: Autopilot, run: AutopilotRun): RunExecutor {
+  if (run.agent_id) return { type: "agent", id: run.agent_id };
+
+  return { type: autopilot.assignee_type, id: autopilot.assignee_id };
+}
+
+/**
+ * Left column: the executor bar, then one conversation — the trigger card and
+ * the execution reply as its first turn, the follow-up chat after it, and the
+ * chat composer (designs 3.1, 3.4).
+ */
 function RunConversation({
   autopilot,
   run,
@@ -259,23 +286,30 @@ function RunConversation({
   const { t } = useT("autopilots");
   const wsId = useWorkspaceId();
   const { getActorName } = useActorName();
-  const isAgent = autopilot.assignee_type === "agent";
-  const presence = useAgentPresenceDetail(wsId, isAgent ? autopilot.assignee_id : undefined);
+  const executor = runExecutorOf(autopilot, run);
+  const isAgent = executor.type === "agent";
+  const presence = useAgentPresenceDetail(wsId, isAgent ? executor.id : undefined);
   const availability = presence === "loading" ? undefined : presence.availability;
-  const assigneeName = getActorName(autopilot.assignee_type, autopilot.assignee_id);
+  const executorName = getActorName(executor.type, executor.id);
   const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
   const hasTask = isTaskMessageTaskId(run.task_id);
 
+  const firstTurn = (
+    <div className="flex flex-col gap-4 pb-3">
+      <TriggerCard autopilot={autopilot} run={run} />
+      {hasTask && run.task_id ? (
+        <RunReply taskId={run.task_id} executor={executor} run={run} status={status} availability={availability} />
+      ) : (
+        <p className="text-label text-muted-foreground">{t(($) => $.run_page.not_executed)}</p>
+      )}
+    </div>
+  );
+
   return (
-    <section aria-label={assigneeName} className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <section aria-label={executorName} className="flex min-h-0 min-w-0 flex-1 flex-col @container">
       <div className="flex h-[52px] shrink-0 items-center gap-2 border-b px-6">
-        <ActorAvatar
-          actorType={autopilot.assignee_type}
-          actorId={autopilot.assignee_id}
-          size="sm"
-          profileLink={false}
-        />
-        <span className="truncate font-semibold">{assigneeName}</span>
+        <ActorAvatar actorType={executor.type} actorId={executor.id} size="sm" profileLink={false} />
+        <span className="truncate font-semibold">{executorName}</span>
         <span className="flex-1" />
         {isAgent && availability && (
           <span className="flex shrink-0 items-center gap-1.5 text-caption text-muted-foreground">
@@ -293,25 +327,129 @@ function RunConversation({
         )}
       </div>
 
-      <div ref={setScrollRoot} className="min-h-0 flex-1 overflow-y-auto">
-        <RichContentScrollRootProvider scrollRoot={scrollRoot}>
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-7 py-6">
-            <TriggerCard autopilot={autopilot} run={run} />
-            {hasTask && run.task_id ? (
-              <RunReply
-                taskId={run.task_id}
-                autopilot={autopilot}
-                run={run}
-                status={status}
-                availability={availability}
-              />
-            ) : (
-              <p className="text-label text-muted-foreground">{t(($) => $.run_page.not_executed)}</p>
-            )}
-          </div>
-        </RichContentScrollRootProvider>
-      </div>
+      {hasTask && isAgent ? (
+        <RunFollowUp
+          autopilotId={autopilot.id}
+          run={run}
+          agentId={executor.id}
+          status={status}
+          availability={availability}
+          firstTurn={firstTurn}
+        />
+      ) : (
+        <div ref={setScrollRoot} className="min-h-0 flex-1 overflow-y-auto">
+          <RichContentScrollRootProvider scrollRoot={scrollRoot}>
+            <div className="mx-auto w-full max-w-3xl px-7 py-6">{firstTurn}</div>
+          </RichContentScrollRootProvider>
+        </div>
+      )}
     </section>
+  );
+}
+
+/**
+ * The run's follow-up chat under its first turn, sent, stopped, queued and
+ * retried like the chat page. The chat session is created on the first send.
+ * Until follow-ups exist the first turn scrolls on its own; after that it
+ * heads the chat list so the whole run reads as one conversation.
+ */
+function RunFollowUp({
+  autopilotId,
+  run,
+  agentId,
+  status,
+  availability,
+  firstTurn,
+}: {
+  autopilotId: string;
+  run: AutopilotRun;
+  agentId: string;
+  status: RunStatus;
+  availability: AgentAvailability | undefined;
+  firstTurn: ReactNode;
+}) {
+  const { t } = useT("autopilots");
+  const wsId = useWorkspaceId();
+  const user = useAuthStore((s) => s.user);
+  const { data: agents = [] } = useQuery(agentListOptions(wsId));
+  const { data: members = [] } = useQuery(memberListOptions(wsId));
+  const ensureChat = useEnsureAutopilotRunChat();
+  const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
+
+  const draftKey = `autopilot-run:${run.id}`;
+  const runId = run.id;
+  const { mutateAsync: ensureChatAsync } = ensureChat;
+  const ensureSession = useCallback(
+    async () => (await ensureChatAsync({ autopilotId, runId })).chat_session_id,
+    [ensureChatAsync, autopilotId, runId],
+  );
+  const conversation = useAutopilotRunConversation(run.chat_session_id ?? null, ensureSession, draftKey);
+
+  const agent = agents.find((a) => a.id === agentId);
+  const memberRole = members.find((m) => m.user_id === user?.id)?.role;
+  const agentArchived = !!agent?.archived_at;
+  const accessRevoked = !!agent && !canAssignAgent(agent, user?.id, memberRole);
+  const runtimeRequired = !!agent && !isAgentRuntimeBound(agent);
+  // Follow-ups continue the run's session, so they open once the run ends.
+  const runInProgress = status === "running";
+  const queuedTasks = conversation.pendingTask?.queued_tasks ?? [];
+
+  let banner: ReactNode;
+  if (accessRevoked) banner = <AgentAccessRevokedBanner agentName={agent?.name} />;
+  else if (agentArchived) banner = <ArchivedAgentBanner agentName={agent?.name} />;
+  else if (runtimeRequired && agent) banner = <RuntimeRequiredBanner agentId={agent.id} agentName={agent.name} />;
+  else banner = <OfflineBanner agentName={agent?.name} availability={availability} />;
+
+  return (
+    <>
+      {conversation.messages.length > 0 ? (
+        <ChatMessageList
+          messages={conversation.messages}
+          pendingTask={conversation.pendingTask}
+          availability={availability}
+          firstItemIndex={conversation.firstItemIndex}
+          hasOlderMessages={conversation.hasOlderMessages}
+          isFetchingOlderMessages={conversation.isFetchingOlderMessages}
+          onLoadOlderMessages={conversation.fetchOlderMessages}
+          onQuickAction={(action) => conversation.send(action.prompt)}
+          quickActionsDisabled={conversation.running || accessRevoked || agentArchived || runtimeRequired}
+          header={firstTurn}
+        />
+      ) : (
+        <div ref={setScrollRoot} className="min-h-0 flex-1 overflow-y-auto">
+          <RichContentScrollRootProvider scrollRoot={scrollRoot}>
+            <div className="mx-auto w-full max-w-3xl px-7 py-6">{firstTurn}</div>
+          </RichContentScrollRootProvider>
+        </div>
+      )}
+      {banner}
+      <ChatQueue
+        tasks={queuedTasks}
+        headStatus={conversation.pendingTask?.status}
+        onSendNow={conversation.queue.handleSendQueuedTaskNow}
+        sendNowDisabled={accessRevoked}
+        onEdit={conversation.queue.handleEditQueuedTask}
+        onRemove={conversation.queue.handleRemoveQueuedTask}
+        onClear={conversation.queue.handleClearQueuedTasks}
+      />
+      <ChatInput
+        onSend={conversation.send}
+        onStop={conversation.stop}
+        isRunning={conversation.running}
+        allowSubmitWhileRunning={conversation.pendingTask?.supports_queue === true}
+        restoreDraftRequest={conversation.restoreDraftRequest}
+        onRestoreDraftApplied={conversation.handleRestoreDraftApplied}
+        uploadEnabled={!accessRevoked}
+        disabled={runInProgress || agentArchived || accessRevoked || runtimeRequired}
+        agentArchived={agentArchived}
+        agentAccessRevoked={accessRevoked}
+        agentRuntimeRequired={runtimeRequired}
+        disabledPlaceholder={runInProgress ? t(($) => $.run_page.followup_after_run) : undefined}
+        agentName={agent?.name}
+        draftKeyOverride={draftKey}
+        editorKeyOverride={draftKey}
+      />
+    </>
   );
 }
 
@@ -349,13 +487,13 @@ function TriggerCard({ autopilot, run }: { autopilot: Autopilot; run: AutopilotR
  */
 function RunReply({
   taskId,
-  autopilot,
+  executor,
   run,
   status,
   availability,
 }: {
   taskId: string;
-  autopilot: Autopilot;
+  executor: RunExecutor;
   run: AutopilotRun;
   status: RunStatus;
   availability: AgentAvailability | undefined;
@@ -397,12 +535,7 @@ function RunReply({
 
   return (
     <div className="flex gap-2.5">
-      <ActorAvatar
-        actorType={autopilot.assignee_type}
-        actorId={autopilot.assignee_id}
-        size="sm"
-        profileLink={false}
-      />
+      <ActorAvatar actorType={executor.type} actorId={executor.id} size="sm" profileLink={false} />
       <div className="flex min-w-0 flex-1 flex-col gap-2">{body}</div>
     </div>
   );
@@ -421,6 +554,7 @@ function RunInfoPanel({
   const { t, i18n } = useT("autopilots");
   const wsPaths = useWorkspacePaths();
   const { getActorName } = useActorName();
+  const executor = runExecutorOf(autopilot, run);
   const source = sourceOf(run.source);
   const showPayload = run.source === "webhook" && run.trigger_payload != null;
 
@@ -450,12 +584,12 @@ function RunInfoPanel({
         <InfoRow label={t(($) => $.run_page.field_assignee)}>
           <span className="flex min-w-0 items-center gap-1.5">
             <ActorAvatar
-              actorType={autopilot.assignee_type}
-              actorId={autopilot.assignee_id}
+              actorType={executor.type}
+              actorId={executor.id}
               size="xs"
-              enableHoverCard={autopilot.assignee_type === "agent"}
+              enableHoverCard={executor.type === "agent"}
             />
-            <span className="truncate">{getActorName(autopilot.assignee_type, autopilot.assignee_id)}</span>
+            <span className="truncate">{getActorName(executor.type, executor.id)}</span>
           </span>
         </InfoRow>
         <InfoRow label={t(($) => $.run_page.field_autopilot)}>
