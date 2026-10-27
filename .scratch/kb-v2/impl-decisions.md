@@ -360,3 +360,17 @@
     - 回滚确认照 7.3，省略「之后的修改（#14）不受影响」半句（要另算后续变更请求）；成功提示「已生成回滚变更请求 #18」带「去审核」，冲突提示照 2.9。
 13. **前端失效**：`kb.mr.created / updated` 失效作业、首页、读页、知识库列表和审核列表 / 详情；`kb.mr.merged / closed` 再失效页面、树、历史、检索（`kbKeys.searches`）和批注；`kb.mr.commented` 失效该变更请求的详情和评论；`kb.draft.updated` 一并失效所有审核详情（详情键里没有草稿 id）。
 14. **共用组件**：作业页右侧的文件卡片、diff 行、状态点、格式检查文案抽到 `kb/components/kb-diff.tsx`，审核页、变更记录和作业页共用；`kbErrorCode` 抽到 `kb/utils/kb-api-error.ts`。
+
+
+## 票 11
+
+1. **只有构建器指令需要改**：作业首条消息（8.4）、六段开场白附加段（8.5）、审核评论转交（8.6）、默认 Schema 和目标模板（04）在 efa775847 已与 spec 英文原文逐行一致，未改动，快照不变。构建器指令按决策 106 换成 spec 8.3 的原文，`BuilderInstructions` 不再传 `DefaultSchema`；快照放 `internal/kb/testdata/builder/{create_default,config_custom}.golden`（`-update-builder-golden` 重写）。
+2. **构建器引用的 skill 小节加测试守住**：`builder_test.go` 读 `service/builtin_skills/marvis-platform/references/knowledge-bases.md`，确认「Creating and configuring a knowledge base」这个标题存在，改标题会直接报错。另加一条测试：构建器指令、作业首条消息、审核评论、目标模板都不出现 quickstart、`kb job link-draft`、`marvis kb templates`、`DefaultSchema`。
+3. **knowledge-bases.md 与 spec 的两处出入**
+   - 「Annotations」一节 `kb mr create` 示例在 spec 导出里换行丢了，成了一行中间夹 9 个空格；改成与其他示例一致的 `\` 续行。
+   - spec 里两处句中硬换行（`build the\nlink`、`material to\ningest`）原样保留，Markdown 渲染相同。
+4. **mentions.md 的知识库链接**：spec 只说三种链接写进 mentions.md、没给原文；写成紧跟 project 段之后的一段：四种 `mention://kb*` 链接都不在解析器里，不通知、不启动智能体，客户端渲染成卡片；页面链接可加 `#<块 id>`；不要自己拼，用 `marvis kb` 输出的 `mention` 字段。页面那一行也写在这里（任务说明要求），运行时说明 Mentions 的那一行归票 10。
+5. **SKILL.md 连带改动**：description 加 `knowledge bases`（259 字符，上限 300）；「What is never right is reading all eight」改为 nine；`builtin_skills_test.go` 的触发词表、路由表断言补上 knowledge-bases.md，并给它加内容锚点（含 notWant quickstart）。
+6. **留给票 10 的缺口**
+   - `marvis kb schema templates` 命令还不存在。`prompt_cli_commands_test` 只检查围栏代码块和行内代码，不检查缩进代码块，所以 skill 里那条命令没被拦；构建器指令不在它的检查范围。票 10 加上命令后两处才能用。
+   - spec 8.2.2 要求 `writeSkills` 的提示句（`runtime_config_sections.go`）补上 knowledge bases，属于运行时说明，本票没改。
