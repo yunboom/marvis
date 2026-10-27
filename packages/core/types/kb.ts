@@ -431,8 +431,11 @@ export type KbJobState = "running" | "idle" | "failed" | "stopped";
 /** Draft statuses (kb_draft.status). */
 export type KbDraftStatus = "open" | "submitted" | "merged" | "discarded";
 
-/** Merge request statuses. */
-export type KbMergeRequestStatus = "open" | "merged" | "closed";
+/**
+ * Merge request statuses. changes_requested: a submitted review waits on the
+ * owner, who asks for review again before it can merge.
+ */
+export type KbMergeRequestStatus = "open" | "changes_requested" | "merged" | "closed";
 
 /** The linked draft at a glance; added / deleted are only counted on the detail. */
 export interface KbJobDraft {
@@ -605,9 +608,27 @@ export interface KbMergeRequest {
   closed_by_name: string;
   closed_at: string | null;
   close_reason: string;
+  /** When the owner last asked for review again; later reviews are still to be resolved. */
+  review_requested_at: string | null;
   created_at: string;
   updated_at: string;
   mention: string;
+}
+
+/** Review states (decision 107): pending comments show only to their reviewer. */
+export type KbMrReviewState = "pending" | "submitted";
+
+/** A reviewer's batch of comments on a merge request. */
+export interface KbMrReview {
+  id: string;
+  merge_request_id: string;
+  reviewer_id: string;
+  reviewer_name: string;
+  state: KbMrReviewState;
+  summary: string;
+  comment_count: number;
+  created_at: string;
+  submitted_at: string | null;
 }
 
 /** A merge request with its file cards, checks and what the viewer may do. */
@@ -616,34 +637,35 @@ export interface KbMergeRequestDetail extends KbMergeRequest {
   knowledge_base_name: string;
   pages: KbDraftPageChange[];
   checks: { lint: KbLintFinding[]; conflicts: KbDraftConflict[] };
-  /** The agent a plain review comment goes to; null when no agent stands behind it. */
-  review_agent: { id: string; name: string } | null;
-  /** The job's agent, or one a comment started, is still working. */
+  /** The job's agent is still working on the draft. */
   agent_running: boolean;
+  /** The member who created the draft: replies to feedback and asks for review again. */
+  owner_id: string;
+  owner_name: string;
+  /** Submitted reviews in submission order. */
+  reviews: KbMrReview[];
+  /** The viewer's unsubmitted review. */
+  pending_review: KbMrReview | null;
   can_merge: boolean;
   can_close: boolean;
   can_revert: boolean;
+  /** The viewer may start or continue a review. */
+  can_review: boolean;
+  /** The viewer is the owner and the request waits on them. */
+  can_request_review: boolean;
 }
 
-/** Review list filters; "merged,closed" is every ended request. */
-export type KbMergeRequestListStatus = KbMergeRequestStatus | "all" | "merged,closed";
+/**
+ * Review list filters; "open,changes_requested" is every request still under
+ * review, "merged,closed" every ended one.
+ */
+export type KbMergeRequestListStatus = KbMergeRequestStatus | "all" | "open,changes_requested" | "merged,closed";
 
 /** The diff line a review comment quotes. */
 export interface KbMrCommentQuote {
   page_id: string;
   block_id: string;
   text: string;
-}
-
-/** An agent a review comment started. */
-export interface KbMrCommentTrigger {
-  agent_id: string;
-  agent_name: string;
-  /** author: the request's agent picked it up; mention: it was @-named. */
-  reason: string;
-  chat_session_id: string | null;
-  task_id: string | null;
-  running: boolean;
 }
 
 /** A review comment. */
@@ -656,14 +678,60 @@ export interface KbMrComment {
   author_type: string;
   author_id: string;
   author_name: string;
-  triggered: KbMrCommentTrigger[];
+  /** The review it was written in; null for the owner's replies. */
+  review_id: string | null;
+  /** pending: in the viewer's unsubmitted review, seen only by them. */
+  state: KbMrCommentPublishState;
   created_at: string;
 }
 
+/** Whether a comment is published or still in its author's pending review. */
+export type KbMrCommentPublishState = "pending" | "published";
+
+/**
+ * A new comment: with review_id it goes into the caller's pending review;
+ * without, the owner replies to a published comment (parent_id).
+ */
 export interface CreateKbMrCommentRequest {
   body: string;
+  review_id?: string | null;
   parent_id?: string | null;
   quote?: KbMrCommentQuote | null;
+}
+
+/** Which comments a list returns: published (default) or all, adding the viewer's pending ones. */
+export type KbMrCommentState = "published" | "all";
+
+/** Kinds of merge request events; unknown kinds parse as "unknown". */
+export type KbMrEventKind =
+  | "review_submitted"
+  | "review_requested"
+  | "merged"
+  | "closed"
+  | "reverted"
+  | "edited"
+  | "unknown";
+
+/** Something that happened to a merge request. payload carries the kind's facts. */
+export interface KbMrEvent {
+  id: string;
+  kind: KbMrEventKind;
+  actor_type: string;
+  actor_id: string;
+  actor_name: string;
+  /** review_submitted: review_id, comment_count; closed: close_reason; reverted: revert_number; edited: fields. */
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+/** One entry of the review timeline, oldest first: a comment or an event with its own fields. */
+export type KbMrTimelineEntry = ({ type: "comment" } & KbMrComment) | ({ type: "event" } & KbMrEvent);
+
+/** The chat turn review feedback was handed to the job's agent in. */
+export interface KbMrHandoff {
+  chat_session_id: string;
+  message_id: string;
+  task_id: string;
 }
 
 /** Kinds of raw files: uploaded source documents and images pages embed. */

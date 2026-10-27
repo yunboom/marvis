@@ -31,7 +31,12 @@ export type InboxItemType =
   | "autopilot_quota_exceeded"
   // Sub-issues of an issue assigned to the recipient closed (the child_done
   // system rule notifies a member assignee instead of waking an agent).
-  | "children_done";
+  | "children_done"
+  // Knowledge base reviews, issue-less: a review asked the owner for changes,
+  // or the owner asked the reviewers to review again. details carries
+  // knowledge_base_slug, merge_request_number and review_id.
+  | "kb_mr_changes_requested"
+  | "kb_mr_review_requested";
 
 /**
  * One workspace's unread inbox count in the cross-workspace summary

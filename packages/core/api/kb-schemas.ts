@@ -29,6 +29,11 @@ import type {
   KbMergeRequestDetail,
   KbMergeRequestOriginType,
   KbMrComment,
+  KbMrReview,
+  KbMrReviewState,
+  KbMrEventKind,
+  KbMrTimelineEntry,
+  KbMrHandoff,
   KbRawFileItem,
   KbStalePage,
   KbRawUploadedFile,
@@ -594,7 +599,17 @@ const KB_JOB_STARTERS = [
 ] as const satisfies readonly KbJobStarter[];
 const KB_JOB_STATES = ["running", "idle", "failed", "stopped"] as const satisfies readonly KbJobState[];
 const KB_DRAFT_STATUSES = ["open", "submitted", "merged", "discarded"] as const satisfies readonly KbDraftStatus[];
-const KB_MR_STATUSES = ["open", "merged", "closed"] as const satisfies readonly KbMergeRequestStatus[];
+const KB_MR_STATUSES = ["open", "changes_requested", "merged", "closed"] as const satisfies readonly KbMergeRequestStatus[];
+const KB_MR_REVIEW_STATES = ["pending", "submitted"] as const satisfies readonly KbMrReviewState[];
+const KB_MR_EVENT_KINDS = [
+  "review_submitted",
+  "review_requested",
+  "merged",
+  "closed",
+  "reverted",
+  "edited",
+  "unknown",
+] as const satisfies readonly KbMrEventKind[];
 const KB_DIFF_KINDS = ["context", "add", "delete"] as const satisfies readonly KbDraftDiffLine["kind"][];
 const KB_DRAFT_CHANGES = ["added", "modified", "moved", "deleted"] as const;
 
@@ -845,11 +860,29 @@ export const KbMergeRequestSchema = z
     closed_by_name: text,
     closed_at: nullableId,
     close_reason: text,
+    review_requested_at: nullableId,
     created_at: text,
     updated_at: text,
     mention: text,
   })
   .loose();
+
+export const KbMrReviewSchema = z
+  .object({
+    id: z.string(),
+    merge_request_id: text,
+    reviewer_id: text,
+    reviewer_name: text,
+    // A state this client does not know counts as submitted: shown, not editable.
+    state: z.enum(KB_MR_REVIEW_STATES).catch("submitted"),
+    summary: text,
+    comment_count: countSchema,
+    created_at: text,
+    submitted_at: nullableId,
+  })
+  .loose();
+
+export const KbMrReviewListSchema = lenientArray(KbMrReviewSchema);
 
 export const KbMergeRequestListSchema = lenientArray(KbMergeRequestSchema);
 
@@ -858,25 +891,19 @@ export const KbMergeRequestDetailSchema = KbMergeRequestSchema.extend({
   knowledge_base_name: text,
   pages: lenientArray(KbDraftPageChangeSchema),
   checks: KbDraftChecksSchema,
-  review_agent: nullableObject(z.object({ id: z.string(), name: text }).loose()),
   agent_running: flag,
+  owner_id: text,
+  owner_name: text,
+  reviews: lenientArray(KbMrReviewSchema),
+  pending_review: nullableObject(KbMrReviewSchema),
   can_merge: flag,
   can_close: flag,
   can_revert: flag,
+  can_review: flag,
+  can_request_review: flag,
 }).loose();
 
 const KbMrCommentQuoteSchema = z.object({ page_id: text, block_id: text, text: text }).loose();
-
-const KbMrCommentTriggerSchema = z
-  .object({
-    agent_id: z.string(),
-    agent_name: text,
-    reason: text,
-    chat_session_id: nullableId,
-    task_id: nullableId,
-    running: flag,
-  })
-  .loose();
 
 export const KbMrCommentSchema = z
   .object({
@@ -888,12 +915,61 @@ export const KbMrCommentSchema = z
     author_type: text,
     author_id: text,
     author_name: text,
-    triggered: lenientArray(KbMrCommentTriggerSchema),
+    review_id: nullableId,
+    // A state this client does not know shows as published: read-only.
+    state: z.enum(["pending", "published"]).catch("published"),
     created_at: text,
   })
   .loose();
 
 export const KbMrCommentListSchema = lenientArray(KbMrCommentSchema);
+
+const KbMrEventSchema = z
+  .object({
+    id: z.string(),
+    kind: z.enum(KB_MR_EVENT_KINDS).catch("unknown"),
+    actor_type: text,
+    actor_id: text,
+    actor_name: text,
+    payload: z
+      .record(z.string(), z.unknown())
+      .nullable()
+      .optional()
+      .catch({})
+      .transform((v) => v ?? {}),
+    created_at: text,
+  })
+  .loose();
+
+// An entry of a type this client does not know, or without an id, is dropped.
+const KbMrTimelineEntrySchema = z.union([
+  KbMrCommentSchema.extend({ type: z.literal("comment") }),
+  KbMrEventSchema.extend({ type: z.literal("event") }),
+]);
+
+export const KbMrTimelineSchema = lenientArray(KbMrTimelineEntrySchema);
+
+export const KbMrHandoffSchema = z
+  .object({ chat_session_id: text, message_id: text, task_id: text })
+  .loose();
+
+export const EMPTY_KB_MR_REVIEW_LIST: KbMrReview[] = [];
+export const EMPTY_KB_MR_TIMELINE: KbMrTimelineEntry[] = [];
+export const EMPTY_KB_MR_HANDOFF: KbMrHandoff = { chat_session_id: "", message_id: "", task_id: "" };
+
+export function kbMrReviewFallback(id = ""): KbMrReview {
+  return {
+    id,
+    merge_request_id: "",
+    reviewer_id: "",
+    reviewer_name: "",
+    state: "submitted",
+    summary: "",
+    comment_count: 0,
+    created_at: "",
+    submitted_at: null,
+  };
+}
 
 export const EMPTY_KB_MERGE_REQUEST_LIST: KbMergeRequest[] = [];
 export const EMPTY_KB_MR_COMMENT_LIST: KbMrComment[] = [];
@@ -924,6 +1000,7 @@ export function kbMergeRequestFallback(id = ""): KbMergeRequest {
     closed_by_name: "",
     closed_at: null,
     close_reason: "",
+    review_requested_at: null,
     created_at: "",
     updated_at: "",
     mention: "",
@@ -938,11 +1015,16 @@ export function kbMergeRequestDetailFallback(id = ""): KbMergeRequestDetail {
     knowledge_base_name: "",
     pages: [],
     checks: { lint: [], conflicts: [] },
-    review_agent: null,
     agent_running: false,
+    owner_id: "",
+    owner_name: "",
+    reviews: [],
+    pending_review: null,
     can_merge: false,
     can_close: false,
     can_revert: false,
+    can_review: false,
+    can_request_review: false,
   };
 }
 
@@ -956,7 +1038,8 @@ export function kbMrCommentFallback(id = ""): KbMrComment {
     author_type: "",
     author_id: "",
     author_name: "",
-    triggered: [],
+    review_id: null,
+    state: "published",
     created_at: "",
   };
 }

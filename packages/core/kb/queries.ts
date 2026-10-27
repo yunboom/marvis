@@ -18,6 +18,8 @@ import type {
   KbMergeRequestDetail,
   KbMergeRequestListStatus,
   KbMrComment,
+  KbMrCommentState,
+  KbMrTimelineEntry,
   KbPage,
   KbRevision,
   KbRevisionDiff,
@@ -78,7 +80,11 @@ export const kbKeys = {
   reviewById: (wsId: string, id: string) => [...kbKeys.all(wsId), "review", "id", id] as const,
   /** One annotation by id, as a mention card reads it. */
   annotation: (wsId: string, id: string) => [...kbKeys.all(wsId), "annotation", id] as const,
-  reviewComments: (wsId: string, number: number) => [...kbKeys.review(wsId, number), "comments"] as const,
+  reviewComments: (wsId: string, number: number, state: KbMrCommentState = "published") =>
+    [...kbKeys.review(wsId, number), "comments", state] as const,
+  /** Comments and events of a merge request, under it so its refreshes cover them. */
+  reviewTimeline: (wsId: string, number: number, state: KbMrCommentState = "published") =>
+    [...kbKeys.review(wsId, number), "timeline", state] as const,
   /** Raw files of a knowledge base. */
   raws: (wsId: string, kb: string) => [...kbKeys.all(wsId), "raws", kb] as const,
   /** The relationship graph; merges change it. */
@@ -125,10 +131,20 @@ export function kbAnnotationOptions(wsId: string, id: string) {
   });
 }
 
-export function kbMrCommentListOptions(wsId: string, number: number) {
+/** Published comments; `all` adds the viewer's pending review comments. */
+export function kbMrCommentListOptions(wsId: string, number: number, state: KbMrCommentState = "published") {
   return queryOptions<KbMrComment[]>({
-    queryKey: kbKeys.reviewComments(wsId, number),
-    queryFn: () => api.listKnowledgeBaseMrComments(number),
+    queryKey: kbKeys.reviewComments(wsId, number, state),
+    queryFn: () => api.listKnowledgeBaseMrComments(number, state),
+    enabled: !!wsId && number > 0,
+  });
+}
+
+/** The review page's activity: comments and events, oldest first. */
+export function kbMrTimelineOptions(wsId: string, number: number, state: KbMrCommentState = "published") {
+  return queryOptions<KbMrTimelineEntry[]>({
+    queryKey: kbKeys.reviewTimeline(wsId, number, state),
+    queryFn: () => api.listKnowledgeBaseMrTimeline(number, state),
     enabled: !!wsId && number > 0,
   });
 }

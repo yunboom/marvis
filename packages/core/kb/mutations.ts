@@ -149,7 +149,7 @@ export function useRevertKbMergeRequest() {
   });
 }
 
-/** Posts a review comment; the agents it starts show on the comment. */
+/** Posts a comment: into the viewer's review with review_id, else the owner's reply. */
 export function useCreateKbMrComment() {
   const qc = useQueryClient();
   const wsId = useWorkspaceId();
@@ -158,6 +158,87 @@ export function useCreateKbMrComment() {
     mutationFn: ({ number, data }: { number: number; data: CreateKbMrCommentRequest }) =>
       api.createKnowledgeBaseMrComment(number, data),
     onSettled: (_comment, _error, { number }) => invalidateKbMrComments(qc, wsId, number),
+  });
+}
+
+/** Starts the viewer's review, or returns the one already pending. */
+export function useOpenKbMrReview() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: (number: number) => api.openKnowledgeBaseMrReview(number),
+    onSettled: (_review, _error, number) => invalidateKbMrComments(qc, wsId, number),
+  });
+}
+
+/** Edits one of the viewer's pending comments. */
+export function useUpdateKbMrComment() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ number, commentId, body }: { number: number; commentId: string; body: string }) =>
+      api.updateKnowledgeBaseMrComment(number, commentId, body),
+    onSettled: (_comment, _error, { number }) => invalidateKbMrComments(qc, wsId, number),
+  });
+}
+
+/** Removes one of the viewer's pending comments. */
+export function useDeleteKbMrComment() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ number, commentId }: { number: number; commentId: string }) =>
+      api.deleteKnowledgeBaseMrComment(number, commentId),
+    onSettled: (_result, _error, { number }) => invalidateKbMrComments(qc, wsId, number),
+  });
+}
+
+/** Publishes the viewer's review; the merge request becomes changes_requested. */
+export function useSubmitKbMrReview() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ number, reviewId, summary }: { number: number; reviewId: string; summary?: string }) =>
+      api.submitKnowledgeBaseMrReview(number, reviewId, summary),
+    onSettled: () => invalidateKbMergeRequests(qc, wsId),
+  });
+}
+
+/** Drops the viewer's pending review and its comments. */
+export function useDiscardKbMrReview() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: ({ number, reviewId }: { number: number; reviewId: string }) =>
+      api.discardKnowledgeBaseMrReview(number, reviewId),
+    onSettled: (_result, _error, { number }) => invalidateKbMrComments(qc, wsId, number),
+  });
+}
+
+/** The owner asks for review again. */
+export function useRequestKbMrReview() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: (number: number) => api.requestKnowledgeBaseMrReview(number),
+    onSettled: () => invalidateKbMergeRequests(qc, wsId),
+  });
+}
+
+/** Sends the open review feedback into the job's chat for its agent. */
+export function useHandoffKbMrReview() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+
+  return useMutation({
+    mutationFn: (number: number) => api.handoffKnowledgeBaseMrReview(number),
+    onSettled: () => invalidateKbJobs(qc, wsId),
   });
 }
 

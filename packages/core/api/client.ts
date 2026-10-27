@@ -296,6 +296,10 @@ import type {
   KbMergeRequestDetail,
   KbMergeRequestListStatus,
   KbMrComment,
+  KbMrCommentState,
+  KbMrReview,
+  KbMrTimelineEntry,
+  KbMrHandoff,
   CreateKbMrCommentRequest,
   KbRawKind,
   KbRawFileItem,
@@ -307,6 +311,14 @@ import type {
 import {
   EMPTY_KB_MERGE_REQUEST_LIST,
   EMPTY_KB_MR_COMMENT_LIST,
+  EMPTY_KB_MR_REVIEW_LIST,
+  EMPTY_KB_MR_TIMELINE,
+  EMPTY_KB_MR_HANDOFF,
+  KbMrReviewSchema,
+  KbMrReviewListSchema,
+  KbMrTimelineSchema,
+  KbMrHandoffSchema,
+  kbMrReviewFallback,
   KbMergeRequestDetailSchema,
   KbMergeRequestListSchema,
   KbMergeRequestSchema,
@@ -5235,8 +5247,11 @@ export class ApiClient {
     });
   }
 
-  async listKnowledgeBaseMrComments(ref: string | number): Promise<KbMrComment[]> {
-    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments`);
+  /** `state: "all"` adds the viewer's pending review comments to the published ones. */
+  async listKnowledgeBaseMrComments(ref: string | number, state: KbMrCommentState = "published"): Promise<KbMrComment[]> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments?state=${state}`,
+    );
     return parseWithFallback(raw, KbMrCommentListSchema, EMPTY_KB_MR_COMMENT_LIST, {
       endpoint: "GET /api/kb/merge-requests/:number/comments",
     });
@@ -5249,6 +5264,91 @@ export class ApiClient {
     });
     return parseWithFallback(raw, KbMrCommentSchema, kbMrCommentFallback(), {
       endpoint: "POST /api/kb/merge-requests/:number/comments",
+    });
+  }
+
+  /** Comments and events of a merge request, oldest first. */
+  async listKnowledgeBaseMrTimeline(ref: string | number, state: KbMrCommentState = "published"): Promise<KbMrTimelineEntry[]> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/merge-requests/${encodeURIComponent(String(ref))}/timeline?state=${state}`,
+    );
+    return parseWithFallback(raw, KbMrTimelineSchema, EMPTY_KB_MR_TIMELINE, {
+      endpoint: "GET /api/kb/merge-requests/:number/timeline",
+    });
+  }
+
+  /** Submitted reviews, plus the viewer's pending one last. */
+  async listKnowledgeBaseMrReviews(ref: string | number): Promise<KbMrReview[]> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/reviews`);
+    return parseWithFallback(raw, KbMrReviewListSchema, EMPTY_KB_MR_REVIEW_LIST, {
+      endpoint: "GET /api/kb/merge-requests/:number/reviews",
+    });
+  }
+
+  /** Starts the viewer's review, or returns the one already pending. */
+  async openKnowledgeBaseMrReview(ref: string | number): Promise<KbMrReview> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/reviews`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    return parseWithFallback(raw, KbMrReviewSchema, kbMrReviewFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/reviews",
+    });
+  }
+
+  /** Publishes the review; with neither comments nor a summary it is refused (422 review_empty). */
+  async submitKnowledgeBaseMrReview(ref: string | number, reviewId: string, summary = ""): Promise<KbMrReview> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/merge-requests/${encodeURIComponent(String(ref))}/reviews/${encodeURIComponent(reviewId)}/submit`,
+      { method: "POST", body: JSON.stringify({ summary }) },
+    );
+    return parseWithFallback(raw, KbMrReviewSchema, kbMrReviewFallback(reviewId), {
+      endpoint: "POST /api/kb/merge-requests/:number/reviews/:id/submit",
+    });
+  }
+
+  /** Drops the pending review and its comments. */
+  async discardKnowledgeBaseMrReview(ref: string | number, reviewId: string): Promise<void> {
+    await this.fetch(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/reviews/${encodeURIComponent(reviewId)}`, {
+      method: "DELETE",
+    });
+  }
+
+  /** Edits one of the caller's pending comments. */
+  async updateKnowledgeBaseMrComment(ref: string | number, commentId: string, body: string): Promise<KbMrComment> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments/${encodeURIComponent(commentId)}`,
+      { method: "PATCH", body: JSON.stringify({ body }) },
+    );
+    return parseWithFallback(raw, KbMrCommentSchema, kbMrCommentFallback(commentId), {
+      endpoint: "PATCH /api/kb/merge-requests/:number/comments/:id",
+    });
+  }
+
+  /** Removes one of the caller's pending comments. */
+  async deleteKnowledgeBaseMrComment(ref: string | number, commentId: string): Promise<void> {
+    await this.fetch(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments/${encodeURIComponent(commentId)}`, {
+      method: "DELETE",
+    });
+  }
+
+  /** The owner asks for review again; changes_requested goes back to open. */
+  async requestKnowledgeBaseMrReview(ref: string | number): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/ready`, {
+      method: "POST",
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/ready",
+    });
+  }
+
+  /** Sends the open review feedback into the job's chat for its agent. */
+  async handoffKnowledgeBaseMrReview(ref: string | number): Promise<KbMrHandoff> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/handoff`, {
+      method: "POST",
+    });
+    return parseWithFallback(raw, KbMrHandoffSchema, EMPTY_KB_MR_HANDOFF, {
+      endpoint: "POST /api/kb/merge-requests/:number/handoff",
     });
   }
 
