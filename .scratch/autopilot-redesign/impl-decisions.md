@@ -123,3 +123,30 @@
 38. **运行中的「停止」**（工单 05）
    - 选择：运行中输入框按钮与聊天页一致（空内容「停止」、有内容「排队发送」）；「停止」停的是运行任务本身，调 `cancelTaskById`（智能体活动页取消自动化任务用的同一接口），失败只记日志，与聊天页停止一致。删掉 `ChatInput` 的 `disabledPlaceholder` 和六种语言的 `run_page.followup_after_run`。
    - 理由：设计稿 3.2「正在工作，输入框按钮为停止」，此时进行中的一轮就是运行本身。
+39. **共用访问的判定**（工单 06）
+   - 选择：「能查看该自动化」= 会话挂在本工作区某自动化的运行上，且调用者是该工作区成员（自动化的读权限就是工作区成员，与运行详情同一道门）。在 `loadChatSessionForUser` 里放行，走它的接口随之放开：单会话读取、拉消息、发送、停止、排队（读 / 插队 / 清空）、草稿恢复、标记已读、快捷动作刷新、附件上传。私有智能体的查看门 `canAccessPrivateAgent` 和每次发送的 `canInvokeAgent` 仍按请求人判断；追问任务的 `initiator_user_id` 是发送人（`SendDirectChatMessage` 现有行为，已测）。看不到的运行会话返回 404；普通聊天的非创建者仍是 403。
+40. **仅创建者的操作**（工单 06）
+   - 选择：重命名 / 改项目、置顶、归档、删除对共用成员返回 403（`requireChatSessionCreator`），创建者行为不变。
+   - 理由：这些改的是会话本身，会影响所有共用者；运行会话不在聊天列表里，界面上也没有这些入口。
+41. **停止与排队消息的操作**（工单 06）
+   - 选择：`CancelTaskByUser` 原本只给会话创建者，对运行会话改为共用成员都能停止当前轮、编辑或移除排队消息，与走会话门的「清空排队」一致；编辑或停止拿回的提示词回到操作者自己的输入框。
+   - 理由：决策 10「多人同时发消息靠会话自带的排队」，排队是会话级的。
+42. **草稿恢复按发送人**（工单 06）
+   - 选择：运行会话里 `chat_draft_restore` 只返回、只消费任务发起人是自己的那条（在 SQL 里按 `autopilot_run` 判断，普通会话不变）。
+   - 理由：草稿恢复是持久化的，运行页打开时会自动填进输入框；不按人过滤，B 打开运行页会拿到 A 被停下的提示词并把它消费掉。
+43. **发送人的取法**（工单 06）
+   - 选择：不改 `ListChatMessages` / `ListChatMessagesPage` 的返回类型，新增 `ListChatMessageSenders`，按当前页用户消息的 `task_id` 批量取 `initiator_user_id`（每页一条查询）；只给用户消息填 `sender_user_id`，助手消息为 null。`chat:message` 事件也带 `sender_user_id`，运行页本地乐观写入带当前用户。
+   - 理由：这两个查询的 `db.ChatMessage` 行被可见性过滤、分页裁剪、快捷动作上下文、渠道历史和大量测试直接复用，改成联表的行类型牵连面大；批量查询同样不加列、不在循环里查库。
+44. **运行页的发送人展示**（工单 06）
+   - 选择：`ChatMessageList` 加可选 `renderUserMessageSender`，只有运行页传入；头像 + 名字在气泡上方右对齐（设计稿 3.4），用 `ActorAvatar` / `useActorName`。缺省回退会话创建者（`chatSessionOptions` 取 `creator_id`）。普通聊天页不传，保持现状。右侧运行信息在有对话能力时（有任务、执行者是智能体）显示「能查看这个自动化的成员共用这段对话。」。
+45. **聊天侧排除的范围**（工单 06）
+   - 选择：`ListChatSessionsByCreator` / `ListAllChatSessionsByCreator`（未读数由列表派生，随之排除）、`ListPendingChatTasksByCreator` / `HasPendingChatTasksByCreator`（浮动入口运行中指示）加 `NOT EXISTS (… autopilot_run …)`。
+   - 不排除：快捷动作生成（运行页渲染快捷动作，知识库作业会话也照常生成）；`scope=workspace` 的全工作区会话读取（owner 给知识库摄取用，知识库作业会话同样没排除）；首条消息自动起标题（标题不展示，无副作用）。
+46. **实时订阅的授权**（工单 06）
+   - 选择：`cmd/server/scope_authorizer.go` 的 chat 和聊天任务 scope 同步放开运行会话（同工作区即可）。
+   - 理由：按 scope 路由目前未启用（事件仍按工作区广播，共用成员现在就能收到），但授权与 HTTP 门不一致会在日后开启时让共用成员收不到消息。
+47. **删除自动化时归档对话**（工单 06）
+   - 选择：在 `DeleteAutopilot` 的同一事务里执行一条 `ArchiveAutopilotRunChatSessions`（`UPDATE chat_session … FROM autopilot_run`）。删除自动化本身是归档（软删），运行和会话都保留、可读；不取消已排队的追问，与归档网页聊天一致。
+   - 缺口：运行页对已删除自动化不额外禁用输入框，发送会被服务端以「会话已归档」拒绝。
+48. **预填指针取最新重试**（工单 06，补工单 05）
+   - 选择：运行任务已终态时，按 `autopilot_run_id` 取该运行最新一条带 `session_id` 的终态任务（自动重试子任务）作续接指针；没有就用运行任务本身（失败未建会话时只填工作目录，同前）。
