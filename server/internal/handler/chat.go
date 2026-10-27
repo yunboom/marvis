@@ -728,72 +728,9 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Claim, clear, prioritize, and direct send all lock the agent before task
-	// rows. Keep delete on the same agent -> task suffix after its session lock,
-	// otherwise a builder-agent delete can deadlock with a concurrent claim.
-	if _, err := qtx.GetAgentForClaimUpdate(r.Context(), session.AgentID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to lock chat agent")
-		return
-	}
-
-	cancelled, err := qtx.CancelAgentTasksByChatSession(r.Context(), session.ID)
+	purged, err := purgeChatSession(r.Context(), qtx, session)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to cancel chat session tasks")
-		return
-	}
-	if err := service.SettleTerminalTaskState(r.Context(), qtx, cancelled...); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to settle terminal task state")
-		return
-	}
-
-	reactionTargets, err := service.CaptureChannelReactionTargets(r.Context(), qtx, cancelled)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to capture channel reaction targets")
-		return
-	}
-
-	// channel_chat_session_binding used to carry a chat_session FK with
-	// ON DELETE CASCADE; MUL-3515 §4 dropped every channel_* foreign key, so
-	// prune the binding here in the same tx that deletes its chat_session.
-	if err := qtx.DeleteChannelChatSessionBindingBySession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete chat session binding")
-		return
-	}
-	// channel_outbound_card_message is also keyed by chat_session_id with no FK
-	// and no reaper, so prune it in the same tx or a deleted chat session leaves
-	// permanent orphan card rows (#4810 follow-up).
-	if err := qtx.DeleteChannelOutboundCardMessagesBySession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete chat session outbound cards")
-		return
-	}
-	// chat_draft_restore is keyed by chat_session_id with no FK either, so its
-	// pending restores are pruned here rather than by a DB cascade (#5219). The
-	// LockChatSessionForDelete above doubles as the deleter half of the
-	// draft-restore protocol: FinalizeDeferredCancelledChat takes the same
-	// chat_session lock before inserting a restore, so it cannot slip one past
-	// this sweep (see LockChatSessionForTask in chat.sql).
-	if err := qtx.DeleteChatDraftRestoresBySession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete chat session draft restores")
-		return
-	}
-
-	// Same no-FK chore, for the agent configuration a builder conversation was
-	// editing. A no-op for ordinary chats, which never have one.
-	if err := qtx.DeleteAgentBuilderDraft(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete agent builder draft")
-		return
-	}
-	// And for the knowledge base builder's row; a no-op for other chats.
-	if err := qtx.DeleteKbBuilderSession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete knowledge base builder session")
-		return
-	}
-
-	if err := qtx.DeleteChatSession(r.Context(), db.DeleteChatSessionParams{
-		ID:          session.ID,
-		WorkspaceID: session.WorkspaceID,
-	}); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete chat session")
+		writeChatSessionPurgeError(w, sessionID, err)
 		return
 	}
 	if err := qtx.DeleteAgentLabelAssignmentsByAgent(r.Context(), session.AgentID); err != nil {
@@ -817,7 +754,7 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 	// The workspace has to come from the session we just deleted: the tasks were
 	// cancelled and returned before the delete, so they still carry its id, but
 	// the row they would be resolved through is gone by now.
-	h.TaskService.BroadcastCancelledTasks(r.Context(), workspaceID, cancelled, reactionTargets)
+	h.TaskService.BroadcastCancelledTasks(r.Context(), workspaceID, purged.cancelled, purged.reactionTargets)
 
 	resolvedSessionID := uuidToString(session.ID)
 	h.publishChat(protocol.EventChatSessionDeleted, workspaceID, "member", userID, resolvedSessionID, protocol.ChatSessionDeletedPayload{
@@ -825,6 +762,106 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// purgedChatSession is what purgeChatSession cancelled, for the caller to
+// broadcast once its transaction commits.
+type purgedChatSession struct {
+	cancelled       []db.AgentTaskQueue
+	reactionTargets map[string]*events.ChannelReactionTarget
+}
+
+// chatSessionPurgeError names the purge step that failed; its message is the
+// response the delete endpoints write.
+type chatSessionPurgeError struct {
+	message string
+	err     error
+}
+
+func (e *chatSessionPurgeError) Error() string { return e.message + ": " + e.err.Error() }
+
+func (e *chatSessionPurgeError) Unwrap() error { return e.err }
+
+func chatPurgeFailed(message string, err error) error {
+	return &chatSessionPurgeError{message: message, err: err}
+}
+
+// writeChatSessionPurgeError answers a failed purgeChatSession.
+func writeChatSessionPurgeError(w http.ResponseWriter, sessionID string, err error) {
+	var purgeErr *chatSessionPurgeError
+	if !errors.As(err, &purgeErr) {
+		purgeErr = &chatSessionPurgeError{message: "failed to delete chat session", err: err}
+	}
+	slog.Warn("purge chat session failed", "session_id", sessionID, "error", err)
+	writeError(w, http.StatusInternalServerError, purgeErr.message)
+}
+
+// purgeChatSession cancels a chat session's tasks and hard-deletes the session
+// with the rows keyed by it. It runs inside the caller's transaction, which
+// must already hold LockChatSessionForDelete on the session. The session's
+// agent and its labels are the caller's to clean up: only builder chats own
+// their agent. Shared by DeleteChatSession and DeleteKbJob.
+func purgeChatSession(ctx context.Context, qtx *db.Queries, session db.ChatSession) (purgedChatSession, error) {
+	// Claim, clear, prioritize, and direct send all lock the agent before task
+	// rows. Keep delete on the same agent -> task suffix after its session lock,
+	// otherwise a builder-agent delete can deadlock with a concurrent claim.
+	if _, err := qtx.GetAgentForClaimUpdate(ctx, session.AgentID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to lock chat agent", err)
+	}
+
+	cancelled, err := qtx.CancelAgentTasksByChatSession(ctx, session.ID)
+	if err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to cancel chat session tasks", err)
+	}
+	if err := service.SettleTerminalTaskState(ctx, qtx, cancelled...); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to settle terminal task state", err)
+	}
+
+	reactionTargets, err := service.CaptureChannelReactionTargets(ctx, qtx, cancelled)
+	if err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to capture channel reaction targets", err)
+	}
+
+	// channel_chat_session_binding used to carry a chat_session FK with
+	// ON DELETE CASCADE; MUL-3515 §4 dropped every channel_* foreign key, so
+	// prune the binding here in the same tx that deletes its chat_session.
+	if err := qtx.DeleteChannelChatSessionBindingBySession(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete chat session binding", err)
+	}
+	// channel_outbound_card_message is also keyed by chat_session_id with no FK
+	// and no reaper, so prune it in the same tx or a deleted chat session leaves
+	// permanent orphan card rows (#4810 follow-up).
+	if err := qtx.DeleteChannelOutboundCardMessagesBySession(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete chat session outbound cards", err)
+	}
+	// chat_draft_restore is keyed by chat_session_id with no FK either, so its
+	// pending restores are pruned here rather than by a DB cascade (#5219). The
+	// LockChatSessionForDelete the caller holds doubles as the deleter half of
+	// the draft-restore protocol: FinalizeDeferredCancelledChat takes the same
+	// chat_session lock before inserting a restore, so it cannot slip one past
+	// this sweep (see LockChatSessionForTask in chat.sql).
+	if err := qtx.DeleteChatDraftRestoresBySession(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete chat session draft restores", err)
+	}
+
+	// Same no-FK chore, for the agent configuration a builder conversation was
+	// editing. A no-op for ordinary chats, which never have one.
+	if err := qtx.DeleteAgentBuilderDraft(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete agent builder draft", err)
+	}
+	// And for the knowledge base builder's row; a no-op for other chats.
+	if err := qtx.DeleteKbBuilderSession(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete knowledge base builder session", err)
+	}
+
+	if err := qtx.DeleteChatSession(ctx, db.DeleteChatSessionParams{
+		ID:          session.ID,
+		WorkspaceID: session.WorkspaceID,
+	}); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete chat session", err)
+	}
+
+	return purgedChatSession{cancelled: cancelled, reactionTargets: reactionTargets}, nil
 }
 
 // Chat Messages

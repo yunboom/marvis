@@ -569,6 +569,7 @@ func (h *Handler) kbMergeRequestJobRunning(ctx context.Context, mr db.KbMergeReq
 
 	rows, err := h.Queries.ListKbJobStates(ctx, db.ListKbJobStatesParams{
 		RunningStatuses: kbRunningTaskStatuses,
+		ArchivedStatus:  kbChatSessionArchived,
 		WorkspaceID:     mr.WorkspaceID,
 		JobIds:          []pgtype.UUID{mr.JobID},
 	})

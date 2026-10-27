@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const clearKbMergeRequestJob = `-- name: ClearKbMergeRequestJob :exec
+UPDATE kb_merge_request SET job_id = NULL
+WHERE workspace_id = $1 AND job_id = $2
+`
+
+type ClearKbMergeRequestJobParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	JobID       pgtype.UUID `json:"job_id"`
+}
+
+// Detaches a deleted job from the merge requests made from its draft, which
+// stay and keep working without it.
+func (q *Queries) ClearKbMergeRequestJob(ctx context.Context, arg ClearKbMergeRequestJobParams) error {
+	_, err := q.db.Exec(ctx, clearKbMergeRequestJob, arg.WorkspaceID, arg.JobID)
+	return err
+}
+
 const createKbJob = `-- name: CreateKbJob :one
 
 INSERT INTO kb_job (
@@ -153,6 +170,21 @@ type DeleteKbJobParams struct {
 
 func (q *Queries) DeleteKbJob(ctx context.Context, arg DeleteKbJobParams) error {
 	_, err := q.db.Exec(ctx, deleteKbJob, arg.WorkspaceID, arg.ID)
+	return err
+}
+
+const deleteKbJobDraftByJob = `-- name: DeleteKbJobDraftByJob :exec
+DELETE FROM kb_job_draft WHERE workspace_id = $1 AND job_id = $2
+`
+
+type DeleteKbJobDraftByJobParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	JobID       pgtype.UUID `json:"job_id"`
+}
+
+// Unlinks a deleted job's draft; the draft itself stays.
+func (q *Queries) DeleteKbJobDraftByJob(ctx context.Context, arg DeleteKbJobDraftByJobParams) error {
+	_, err := q.db.Exec(ctx, deleteKbJobDraftByJob, arg.WorkspaceID, arg.JobID)
 	return err
 }
 
@@ -311,6 +343,7 @@ const listKbJobStates = `-- name: ListKbJobStates :many
 SELECT
     j.id,
     COALESCE(a.name, '')::text AS agent_name,
+    (COALESCE(cs.status, '') = $1::text)::bool AS archived,
     jd.draft_id,
     COALESCE(d.version, 0)::bigint AS draft_version,
     COALESCE(d.status, '')::text AS draft_status,
@@ -320,7 +353,7 @@ SELECT
     EXISTS (
         SELECT 1 FROM agent_task_queue atq
         WHERE atq.chat_session_id = j.chat_session_id
-          AND atq.status = ANY($1::text[])
+          AND atq.status = ANY($2::text[])
     )::bool AS running,
     COALESCE(lm.content, '')::text AS last_reply,
     lm.created_at AS last_reply_at,
@@ -335,6 +368,7 @@ SELECT
     COALESCE(mr.close_reason, '')::text AS mr_close_reason
 FROM kb_job j
 LEFT JOIN agent a ON a.id = j.agent_id
+LEFT JOIN chat_session cs ON cs.id = j.chat_session_id
 LEFT JOIN kb_job_draft jd ON jd.job_id = j.id
 LEFT JOIN kb_draft d ON d.id = jd.draft_id
 LEFT JOIN LATERAL (
@@ -356,11 +390,12 @@ LEFT JOIN LATERAL (
     ORDER BY r.created_at DESC
     LIMIT 1
 ) mr ON true
-WHERE j.workspace_id = $2
-  AND j.id = ANY($3::uuid[])
+WHERE j.workspace_id = $3
+  AND j.id = ANY($4::uuid[])
 `
 
 type ListKbJobStatesParams struct {
+	ArchivedStatus  string        `json:"archived_status"`
 	RunningStatuses []string      `json:"running_statuses"`
 	WorkspaceID     pgtype.UUID   `json:"workspace_id"`
 	JobIds          []pgtype.UUID `json:"job_ids"`
@@ -369,6 +404,7 @@ type ListKbJobStatesParams struct {
 type ListKbJobStatesRow struct {
 	ID             pgtype.UUID        `json:"id"`
 	AgentName      string             `json:"agent_name"`
+	Archived       bool               `json:"archived"`
 	DraftID        pgtype.UUID        `json:"draft_id"`
 	DraftVersion   int64              `json:"draft_version"`
 	DraftStatus    string             `json:"draft_status"`
@@ -391,10 +427,16 @@ type ListKbJobStatesRow struct {
 
 // The parts of each job's state that are not stored on kb_job: the linked
 // draft, the chat's latest task and whether a turn is in flight, the last
-// reply and the draft's latest merge request. Detail and list share it;
-// job_ids narrows it to the given jobs.
+// reply, the draft's latest merge request and whether the job's chat is
+// archived (the chat's status is the job's archived flag). Detail and list
+// share it; job_ids narrows it to the given jobs.
 func (q *Queries) ListKbJobStates(ctx context.Context, arg ListKbJobStatesParams) ([]ListKbJobStatesRow, error) {
-	rows, err := q.db.Query(ctx, listKbJobStates, arg.RunningStatuses, arg.WorkspaceID, arg.JobIds)
+	rows, err := q.db.Query(ctx, listKbJobStates,
+		arg.ArchivedStatus,
+		arg.RunningStatuses,
+		arg.WorkspaceID,
+		arg.JobIds,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -405,6 +447,7 @@ func (q *Queries) ListKbJobStates(ctx context.Context, arg ListKbJobStatesParams
 		if err := rows.Scan(
 			&i.ID,
 			&i.AgentName,
+			&i.Archived,
 			&i.DraftID,
 			&i.DraftVersion,
 			&i.DraftStatus,

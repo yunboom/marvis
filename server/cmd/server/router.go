@@ -2316,6 +2316,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Get("/jobs/{jobId}", h.GetKbJob)
 				r.Post("/jobs/{jobId}/submit", h.SubmitKbJob)
 				r.Post("/jobs/{jobId}/discard", h.DiscardKbJob)
+				r.Patch("/jobs/{jobId}/archive", h.SetKbJobArchived)
+				r.Delete("/jobs/{jobId}", h.DeleteKbJob)
 				r.Post("/merge-requests", h.CreateKbMergeRequest)
 				// Review: merge requests are listed and read by every
 				// member; merge, revert and close check the knowledge base
