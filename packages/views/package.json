@@ -41,6 +41,7 @@
     "./dashboard": "./dashboard/index.ts",
     "./squads": "./squads/index.ts",
     "./squads/components": "./squads/components/index.ts",
+    "./kb": "./kb/index.ts",
     "./workspace/workspace-avatar": "./workspace/workspace-avatar.tsx",
     "./workspace/no-access-page": "./workspace/no-access-page.tsx",
     "./workspace/new-workspace-page": "./workspace/new-workspace-page.tsx",

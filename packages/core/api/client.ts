@@ -263,6 +263,107 @@ import { type Logger, noopLogger } from "../logger";
 import { createRequestId, createSafeId } from "../utils";
 import { getCurrentSlug } from "../platform/workspace-storage";
 import { parseWithFallback } from "./schema";
+import type {
+  CreateKbBuilderSessionRequest,
+  CreateKnowledgeBaseRequest,
+  KbBuilderMode,
+  KbBuilderSession,
+  KbBuilderSessionStart,
+  KbHome,
+  KbPage,
+  KbRevision,
+  KbRevisionDiff,
+  KbTreeLevel,
+  KbAnnotation,
+  KbAnnotationStatus,
+  KbAnnotationStatusFilter,
+  CreateKbAnnotationRequest,
+  KbSearchParams,
+  KbSearchResult,
+  KnowledgeBase,
+  KnowledgeBaseDetail,
+  KnowledgeBaseMutation,
+  StoredKbDraft,
+  KbTemplates,
+  UpdateKnowledgeBaseRequest,
+  CreateKbJobRequest,
+  KbJob,
+  KbJobDetail,
+  KbJobState,
+  KbMergeRequestCreated,
+  KbMergeRequest,
+  KbMergeRequestDetail,
+  KbMergeRequestListStatus,
+  KbMrComment,
+  CreateKbMrCommentRequest,
+  KbRawKind,
+  KbRawFileItem,
+  KbRawUploadedFile,
+  KbGraph,
+  KbStalePage,
+  KbDeleteResult,
+} from "../types/kb";
+import {
+  EMPTY_KB_MERGE_REQUEST_LIST,
+  EMPTY_KB_MR_COMMENT_LIST,
+  KbMergeRequestDetailSchema,
+  KbMergeRequestListSchema,
+  KbMergeRequestSchema,
+  KbMrCommentListSchema,
+  KbMrCommentSchema,
+  kbMergeRequestDetailFallback,
+  kbMergeRequestFallback,
+  kbMrCommentFallback,
+  EMPTY_KB_GRAPH,
+  EMPTY_KB_RAW_FILE_LIST,
+  EMPTY_KB_STALE_PAGE_LIST,
+  EMPTY_KB_RAW_UPLOAD,
+  KB_DELETE_RESULT_FALLBACK,
+  KbDeleteResultSchema,
+  KbGraphSchema,
+  KbRawContentURLSchema,
+  KbRawFileListSchema,
+  KbStalePageListSchema,
+  KbRawUploadSchema,
+  EMPTY_KB_JOB_LIST,
+  EMPTY_KB_MERGE_REQUEST_CREATED,
+  KbJobDetailSchema,
+  KbJobListSchema,
+  KbJobSchema,
+  KbMergeRequestCreatedSchema,
+  kbJobDetailFallback,
+  kbJobFallback,
+  EMPTY_KB_BUILDER_SESSION_LIST,
+  EMPTY_KB_BUILDER_SESSION_START,
+  KbBuilderRuntimeSwitchSchema,
+  KbBuilderSessionListSchema,
+  KbBuilderSessionStartSchema,
+  kbBuilderRuntimeSwitchFallback,
+  knowledgeBaseMutationFallback,
+  KnowledgeBaseMutationSchema,
+  KbTemplatesSchema,
+  EMPTY_KB_TEMPLATES,
+  EMPTY_KB_HOME,
+  EMPTY_KB_PAGE,
+  EMPTY_KB_REVISION_DIFF,
+  EMPTY_KB_REVISION_LIST,
+  EMPTY_KB_TREE_LEVEL,
+  EMPTY_KNOWLEDGE_BASE_DETAIL,
+  EMPTY_KNOWLEDGE_BASE_LIST,
+  KbHomeSchema,
+  KbPageSchema,
+  KbRevisionDiffSchema,
+  KbRevisionListSchema,
+  KbTreeLevelSchema,
+  KbAnnotationListSchema,
+  KbAnnotationSchema,
+  EMPTY_KB_ANNOTATION_LIST,
+  kbAnnotationFallback,
+  KbSearchResultSchema,
+  EMPTY_KB_SEARCH_RESULT,
+  KnowledgeBaseDetailSchema,
+  KnowledgeBaseListSchema,
+} from "./kb-schemas";
 import {
   RuntimeProfileSchema,
   RuntimeProfileListSchema,
@@ -4803,6 +4904,412 @@ export class ApiClient {
     await this.fetch("/api/pins/reorder", {
       method: "PUT",
       body: JSON.stringify(data),
+    });
+  }
+
+  // Knowledge bases
+  async listKnowledgeBases(): Promise<KnowledgeBase[]> {
+    const raw = await this.fetch<unknown>("/api/kb/bases");
+    return parseWithFallback(raw, KnowledgeBaseListSchema, EMPTY_KNOWLEDGE_BASE_LIST, {
+      endpoint: "GET /api/kb/bases",
+    });
+  }
+
+  /** `kb` is the knowledge base id or slug. */
+  async getKnowledgeBase(kb: string): Promise<KnowledgeBaseDetail> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}`);
+    return parseWithFallback(raw, KnowledgeBaseDetailSchema, EMPTY_KNOWLEDGE_BASE_DETAIL, {
+      endpoint: "GET /api/kb/bases/:kb",
+    });
+  }
+
+  /** Creates a knowledge base; `schema` only in the custom schema mode. */
+  async createKnowledgeBase(data: CreateKnowledgeBaseRequest): Promise<KnowledgeBaseMutation> {
+    const raw = await this.fetch<unknown>("/api/kb/bases", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KnowledgeBaseMutationSchema, knowledgeBaseMutationFallback(data.slug), {
+      endpoint: "POST /api/kb/bases",
+    });
+  }
+
+  /** Saves a knowledge base's configuration; 409 when someone saved after `base_updated_at`. */
+  async updateKnowledgeBase(kb: string, data: UpdateKnowledgeBaseRequest): Promise<KnowledgeBaseMutation> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KnowledgeBaseMutationSchema, knowledgeBaseMutationFallback(kb), {
+      endpoint: "PATCH /api/kb/bases/:kb",
+    });
+  }
+
+  /** The built-in default schema and purpose outline. */
+  async getKnowledgeBaseTemplates(): Promise<KbTemplates> {
+    const raw = await this.fetch<unknown>("/api/kb/templates");
+    return parseWithFallback(raw, KbTemplatesSchema, EMPTY_KB_TEMPLATES, {
+      endpoint: "GET /api/kb/templates",
+    });
+  }
+
+  /** The caller's unfinished builder conversations, optionally of one mode or knowledge base. */
+  async listKbBuilderSessions(params: { mode?: KbBuilderMode; kb?: string } = {}): Promise<KbBuilderSession[]> {
+    const search = new URLSearchParams();
+    if (params.mode) search.set("mode", params.mode);
+    if (params.kb) search.set("kb", params.kb);
+    const qs = search.toString();
+    const raw = await this.fetch<unknown>(`/api/kb/builder/sessions${qs ? `?${qs}` : ""}`);
+    return parseWithFallback(raw, KbBuilderSessionListSchema, EMPTY_KB_BUILDER_SESSION_LIST, {
+      endpoint: "GET /api/kb/builder/sessions",
+    });
+  }
+
+  async createKbBuilderSession(data: CreateKbBuilderSessionRequest): Promise<KbBuilderSessionStart> {
+    const raw = await this.fetch<unknown>("/api/kb/builder/sessions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbBuilderSessionStartSchema, EMPTY_KB_BUILDER_SESSION_START, {
+      endpoint: "POST /api/kb/builder/sessions",
+    });
+  }
+
+  /** Rebinds a builder conversation; reaching the parse means `runtime_id` is bound. */
+  async switchKbBuilderRuntime(sessionId: string, data: { runtime_id: string }): Promise<{ runtime_id: string }> {
+    const raw = await this.fetch<unknown>(`/api/kb/builder/sessions/${encodeURIComponent(sessionId)}/runtime`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbBuilderRuntimeSwitchSchema, kbBuilderRuntimeSwitchFallback(data.runtime_id), {
+      endpoint: "PATCH /api/kb/builder/sessions/:id/runtime",
+    });
+  }
+
+  /** Stores the right-hand configuration (whole-object, last write wins). */
+  async saveKbBuilderDraft(sessionId: string, draft: StoredKbDraft): Promise<void> {
+    await this.fetch(`/api/kb/builder/sessions/${encodeURIComponent(sessionId)}/draft`, {
+      method: "PUT",
+      body: JSON.stringify({ draft }),
+    });
+  }
+
+  /** Discards a builder conversation with its configuration. */
+  async deleteKbBuilderSession(sessionId: string): Promise<void> {
+    await this.fetch(`/api/kb/builder/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
+  }
+
+  /** Home overview of a knowledge base. */
+  async getKnowledgeBaseHome(kb: string): Promise<KbHome> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/home`);
+    return parseWithFallback(raw, KbHomeSchema, EMPTY_KB_HOME, {
+      endpoint: "GET /api/kb/bases/:kb/home",
+    });
+  }
+
+  /** One cursor page of a page tree level; no parent lists the top level. */
+  async listKnowledgeBasePages(
+    kb: string,
+    params: { parent?: string; cursor?: string; limit?: number; draft?: string } = {},
+  ): Promise<KbTreeLevel> {
+    const search = new URLSearchParams();
+    if (params.parent) search.set("parent", params.parent);
+    if (params.cursor) search.set("cursor", params.cursor);
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.draft) search.set("draft", params.draft);
+    const qs = search.toString();
+    const raw = await this.fetch<unknown>(
+      `/api/kb/bases/${encodeURIComponent(kb)}/pages${qs ? `?${qs}` : ""}`,
+    );
+    return parseWithFallback(raw, KbTreeLevelSchema, EMPTY_KB_TREE_LEVEL, {
+      endpoint: "GET /api/kb/bases/:kb/pages",
+    });
+  }
+
+  /** A page by id or `<kb>:/<path>`; `draft` reads the caller's draft copy. */
+  async getKnowledgeBasePage(ref: string, draft?: string): Promise<KbPage> {
+    const qs = draft ? `?draft=${encodeURIComponent(draft)}` : "";
+    const raw = await this.fetch<unknown>(`/api/kb/pages/${encodeURIComponent(ref)}${qs}`);
+    return parseWithFallback(raw, KbPageSchema, EMPTY_KB_PAGE, {
+      endpoint: "GET /api/kb/pages/:id",
+    });
+  }
+
+  async listKnowledgeBasePageHistory(pageId: string): Promise<KbRevision[]> {
+    const raw = await this.fetch<unknown>(`/api/kb/pages/${encodeURIComponent(pageId)}/history`);
+    return parseWithFallback(raw, KbRevisionListSchema, EMPTY_KB_REVISION_LIST, {
+      endpoint: "GET /api/kb/pages/:id/history",
+    });
+  }
+
+  async getKnowledgeBaseRevisionDiff(pageId: string, revisionId: string): Promise<KbRevisionDiff> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/pages/${encodeURIComponent(pageId)}/history/${encodeURIComponent(revisionId)}`,
+    );
+    return parseWithFallback(raw, KbRevisionDiffSchema, EMPTY_KB_REVISION_DIFF, {
+      endpoint: "GET /api/kb/pages/:id/history/:revision",
+    });
+  }
+
+  /** Annotations of a knowledge base; `page` is a page id or `-` for the knowledge base ones. */
+  async listKnowledgeBaseAnnotations(
+    kb: string,
+    params: { status?: KbAnnotationStatusFilter; page?: string } = {},
+  ): Promise<KbAnnotation[]> {
+    const search = new URLSearchParams();
+    if (params.status) search.set("status", params.status);
+    if (params.page) search.set("page", params.page);
+    const qs = search.toString();
+    const raw = await this.fetch<unknown>(
+      `/api/kb/bases/${encodeURIComponent(kb)}/annotations${qs ? `?${qs}` : ""}`,
+    );
+    return parseWithFallback(raw, KbAnnotationListSchema, EMPTY_KB_ANNOTATION_LIST, {
+      endpoint: "GET /api/kb/bases/:kb/annotations",
+    });
+  }
+
+  async createKnowledgeBaseAnnotation(kb: string, data: CreateKbAnnotationRequest): Promise<KbAnnotation> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/annotations`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbAnnotationSchema, kbAnnotationFallback(), {
+      endpoint: "POST /api/kb/bases/:kb/annotations",
+    });
+  }
+
+  async getKnowledgeBaseAnnotation(id: string): Promise<KbAnnotation> {
+    const raw = await this.fetch<unknown>(`/api/kb/annotations/${encodeURIComponent(id)}`);
+    return parseWithFallback(raw, KbAnnotationSchema, kbAnnotationFallback(id), {
+      endpoint: "GET /api/kb/annotations/:id",
+    });
+  }
+
+  /** Dismisses an annotation, or puts a dismissed one back to pending. */
+  async updateKnowledgeBaseAnnotation(
+    id: string,
+    data: { status: Extract<KbAnnotationStatus, "pending" | "dismissed"> },
+  ): Promise<KbAnnotation> {
+    const raw = await this.fetch<unknown>(`/api/kb/annotations/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbAnnotationSchema, kbAnnotationFallback(id), {
+      endpoint: "PATCH /api/kb/annotations/:id",
+    });
+  }
+
+  /** Hybrid search over mainline pages; the top `limit` hits by relevance, no paging. */
+  async searchKnowledgeBases(params: KbSearchParams): Promise<KbSearchResult> {
+    const search = new URLSearchParams({ q: params.q });
+    if (params.kb) search.set("kb", params.kb);
+    if (params.type) search.set("type", params.type);
+    if (params.limit) search.set("limit", String(params.limit));
+    const raw = await this.fetch<unknown>(`/api/kb/search?${search.toString()}`);
+    return parseWithFallback(raw, KbSearchResultSchema, EMPTY_KB_SEARCH_RESULT, {
+      endpoint: "GET /api/kb/search",
+    });
+  }
+
+  /** The caller's jobs of a knowledge base, newest first. */
+  async listKnowledgeBaseJobs(kb: string, params: { state?: Extract<KbJobState, "running" | "failed"> } = {}): Promise<KbJob[]> {
+    const qs = params.state ? `?state=${params.state}` : "";
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/jobs${qs}`);
+    return parseWithFallback(raw, KbJobListSchema, EMPTY_KB_JOB_LIST, {
+      endpoint: "GET /api/kb/bases/:kb/jobs",
+    });
+  }
+
+  /** Starts a job: the server opens its chat and sends the first message. */
+  async createKnowledgeBaseJob(kb: string, data: CreateKbJobRequest): Promise<KbJob> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/jobs`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbJobSchema, kbJobFallback(), {
+      endpoint: "POST /api/kb/bases/:kb/jobs",
+    });
+  }
+
+  async getKnowledgeBaseJob(id: string): Promise<KbJobDetail> {
+    const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}`);
+    return parseWithFallback(raw, KbJobDetailSchema, kbJobDetailFallback(id), {
+      endpoint: "GET /api/kb/jobs/:id",
+    });
+  }
+
+  /** Opens a merge request from the job's draft. */
+  async submitKnowledgeBaseJob(id: string, data: { title?: string; summary?: string } = {}): Promise<KbMergeRequestCreated> {
+    const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}/submit`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbMergeRequestCreatedSchema, EMPTY_KB_MERGE_REQUEST_CREATED, {
+      endpoint: "POST /api/kb/jobs/:id/submit",
+    });
+  }
+
+  async discardKnowledgeBaseJob(id: string): Promise<KbJob> {
+    const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}/discard`, { method: "POST" });
+    return parseWithFallback(raw, KbJobSchema, kbJobFallback(id), {
+      endpoint: "POST /api/kb/jobs/:id/discard",
+    });
+  }
+
+  /** Merge requests; the change log is `status: "merged"`. */
+  async listKnowledgeBaseMergeRequests(
+    params: { status?: KbMergeRequestListStatus; kb?: string; limit?: number; offset?: number } = {},
+  ): Promise<KbMergeRequest[]> {
+    const search = new URLSearchParams();
+    if (params.status) search.set("status", params.status);
+    if (params.kb) search.set("kb", params.kb);
+    if (params.limit !== undefined) search.set("limit", String(params.limit));
+    if (params.offset !== undefined) search.set("offset", String(params.offset));
+    const qs = search.toString();
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests${qs ? `?${qs}` : ""}`);
+    return parseWithFallback(raw, KbMergeRequestListSchema, EMPTY_KB_MERGE_REQUEST_LIST, {
+      endpoint: "GET /api/kb/merge-requests",
+    });
+  }
+
+  /** `ref` is the workspace merge request number or its id. */
+  async getKnowledgeBaseMergeRequest(ref: string | number): Promise<KbMergeRequestDetail> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}`);
+    return parseWithFallback(raw, KbMergeRequestDetailSchema, kbMergeRequestDetailFallback(), {
+      endpoint: "GET /api/kb/merge-requests/:number",
+    });
+  }
+
+  async updateKnowledgeBaseMergeRequest(
+    ref: string | number,
+    data: { title?: string; summary?: string; risk?: string },
+  ): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "PATCH /api/kb/merge-requests/:number",
+    });
+  }
+
+  /** Merges with the draft version the reviewer saw; a newer draft is refused (409). */
+  async mergeKnowledgeBaseMergeRequest(ref: string | number, draftVersion: number): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/merge`, {
+      method: "POST",
+      body: JSON.stringify({ draft_version: draftVersion }),
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/merge",
+    });
+  }
+
+  async closeKnowledgeBaseMergeRequest(ref: string | number, reason = ""): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/close`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/close",
+    });
+  }
+
+  /** Opens a merge request that undoes a merged one. */
+  async revertKnowledgeBaseMergeRequest(ref: string | number): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/revert`, {
+      method: "POST",
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/revert",
+    });
+  }
+
+  async listKnowledgeBaseMrComments(ref: string | number): Promise<KbMrComment[]> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments`);
+    return parseWithFallback(raw, KbMrCommentListSchema, EMPTY_KB_MR_COMMENT_LIST, {
+      endpoint: "GET /api/kb/merge-requests/:number/comments",
+    });
+  }
+
+  async createKnowledgeBaseMrComment(ref: string | number, data: CreateKbMrCommentRequest): Promise<KbMrComment> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return parseWithFallback(raw, KbMrCommentSchema, kbMrCommentFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/comments",
+    });
+  }
+
+  /** Raw files of a knowledge base, newest first; `kind` narrows to sources or assets. */
+  async listKnowledgeBaseRawFiles(kb: string, kind?: KbRawKind): Promise<KbRawFileItem[]> {
+    const qs = kind ? `?kind=${kind}` : "";
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/raw${qs}`);
+    return parseWithFallback(raw, KbRawFileListSchema, EMPTY_KB_RAW_FILE_LIST, {
+      endpoint: "GET /api/kb/bases/:kb/raw",
+    });
+  }
+
+  /** Uploads raw files; a name already taken answers 409 `raw_name_taken`. */
+  async uploadKnowledgeBaseRawFiles(kb: string, files: readonly File[], kind?: KbRawKind): Promise<KbRawUploadedFile[]> {
+    const formData = new FormData();
+    if (kind) formData.append("kind", kind);
+    for (const file of files) formData.append("file", file);
+
+    const res = await this.fetchRaw(`/api/kb/bases/${encodeURIComponent(kb)}/raw`, {
+      method: "POST",
+      body: formData,
+    });
+    const raw = (await res.json()) as unknown;
+    return parseWithFallback(raw, KbRawUploadSchema, EMPTY_KB_RAW_UPLOAD, {
+      endpoint: "POST /api/kb/bases/:kb/raw",
+    });
+  }
+
+  /**
+   * A URL that loads a raw file without credentials (a signed storage URL or
+   * a short-lived capability), for previews and downloads; empty when the
+   * server gave none.
+   */
+  async getKnowledgeBaseRawFileUrl(id: string, opts: { download?: boolean } = {}): Promise<string> {
+    const search = new URLSearchParams({ format: "url" });
+    if (opts.download) search.set("download", "1");
+    const raw = await this.fetch<unknown>(`/api/kb/raw/${encodeURIComponent(id)}/content?${search.toString()}`);
+    const { url } = parseWithFallback(raw, KbRawContentURLSchema, { url: "" }, {
+      endpoint: "GET /api/kb/raw/:id/content",
+    });
+    return url && url.startsWith("/") ? `${this.baseUrl.replace(/\/+$/, "")}${url}` : url;
+  }
+
+  /** The OKF bundle of a knowledge base as a zip. */
+  async exportKnowledgeBase(kb: string): Promise<Blob> {
+    const res = await this.fetchRaw(`/api/kb/bases/${encodeURIComponent(kb)}/export`);
+    return res.blob();
+  }
+
+  /** Pages past their review date, the home page's "needs review" list. */
+  async listKnowledgeBaseStalePages(kb: string): Promise<KbStalePage[]> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/stale`);
+    return parseWithFallback(raw, KbStalePageListSchema, EMPTY_KB_STALE_PAGE_LIST, {
+      endpoint: "GET /api/kb/bases/:kb/stale",
+    });
+  }
+
+  async getKnowledgeBaseGraph(kb: string): Promise<KbGraph> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/graph`);
+    return parseWithFallback(raw, KbGraphSchema, EMPTY_KB_GRAPH, {
+      endpoint: "GET /api/kb/bases/:kb/graph",
+    });
+  }
+
+  /** Deletes a knowledge base; `confirmName` must be its name. */
+  async deleteKnowledgeBase(kb: string, confirmName: string): Promise<KbDeleteResult> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}`, {
+      method: "DELETE",
+      body: JSON.stringify({ confirm_name: confirmName }),
+    });
+    return parseWithFallback(raw, KbDeleteResultSchema, KB_DELETE_RESULT_FALLBACK, {
+      endpoint: "DELETE /api/kb/bases/:kb",
     });
   }
 

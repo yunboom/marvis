@@ -1,0 +1,679 @@
+{
+  "list": {
+    "title": "知识库",
+    "new_button": "新建知识库",
+    "pending_reviews_other": "待审核修改 {{count}}",
+    "search_placeholder": "搜索知识库和页面...",
+    "search_label": "搜索知识库",
+    "sort": {
+      "recent": "最近更新",
+      "name": "名称"
+    },
+    "table": {
+      "name": "名称",
+      "description": "简介",
+      "pages": "页面",
+      "pending": "待处理",
+      "updated": "更新时间"
+    },
+    "pending": {
+      "annotations_other": "批注 {{count}}",
+      "stale_pages_other": "待复核 {{count}}"
+    },
+    "copy_link": "复制链接",
+    "link_copied": "链接已复制",
+    "no_matches": "没有匹配的知识库",
+    "empty_title": "还没有知识库",
+    "empty_description": "智能体负责写和维护页面，团队成员阅读、批注、审核修改。"
+  },
+  "nav": {
+    "label": "知识库导航",
+    "switch": "切换知识库",
+    "more_actions": "知识库更多操作",
+    "home": "首页",
+    "pending": "待处理 {{count}}",
+    "pages": "页面",
+    "breadcrumb": "位置",
+    "configure": "配置知识库",
+    "configure_hint": "目标与 Schema",
+    "manage": "知识库管理",
+    "graph": "关系图"
+  },
+  "tree": {
+    "expand": "展开{{title}}",
+    "collapse": "收起{{title}}",
+    "load_more": "加载更多",
+    "stale": "需要复核",
+    "empty": "还没有页面",
+    "draft": {
+      "added": "草稿 · 新",
+      "modified": "草稿",
+      "moved": "草稿 · 移",
+      "deleted": "草稿 · 删"
+    }
+  },
+  "search": {
+    "placeholder": "在本知识库搜索",
+    "pages_other": "{{count}} 个页面",
+    "no_results": "没有找到「{{query}}」",
+    "no_results_hint": "换个关键词试试。",
+    "failed": "搜索失败"
+  },
+  "home": {
+    "pending_title": "待处理",
+    "pending_reviews": "待审核修改",
+    "latest_review": "最近：{{title}}",
+    "annotations": "批注",
+    "agent_reported_other": "含 {{count}} 条智能体上报的缺口",
+    "stale_pages": "需要复核的页面",
+    "stale_hint": "代码改动或过了复核日期",
+    "recent_title": "最近更新",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "还没有合并的修改",
+    "not_found": "知识库不存在或已删除"
+  },
+  "page": {
+    "toc": "目录",
+    "info": "页面信息",
+    "more": "更多",
+    "history": "页面历史",
+    "updated_by": "{{name}} 更新 · 更新于 {{time}}",
+    "updated": "更新于 {{time}}",
+    "verified": "已核实 · {{name}} · {{date}}",
+    "stale": "需要复核",
+    "pending_mr_other": "本页有 {{count}} 个待审核的修改：{{title}}（#{{number}}）",
+    "not_found": "页面不存在或已删除",
+    "sources": "引用来源",
+    "missing_page": "这一页还没有写",
+    "close_panel": "关闭",
+    "view_change": "查看修改"
+  },
+  "draft": {
+    "label": "草稿",
+    "single": "你的草稿改了这一页，还没有合并。其他人看到的仍是已发布版本。",
+    "multi_other": "你有 {{count}} 份草稿改了这一页，都还没有合并。其他人看到的仍是已发布版本。",
+    "published": "已发布",
+    "draft": "草稿",
+    "choose": "选择草稿",
+    "origin": {
+      "chat": "对话「{{label}}」",
+      "issue": "任务「{{label}}」",
+      "kb_job": "作业「{{label}}」",
+      "none": "草稿"
+    },
+    "meta_other": "{{time}} · 改了 {{count}} 段",
+    "removed": "草稿中删除",
+    "added": "草稿中新增"
+  },
+  "cite": {
+    "kind": {
+      "task": "任务",
+      "chat": "对话",
+      "pr": "合并请求",
+      "repo": "代码",
+      "raw": "文件",
+      "web": "网页",
+      "other": "来源"
+    },
+    "checked_at": "核对于 {{version}}",
+    "lines": "第 {{from}}–{{to}} 行",
+    "uploaded": "上传 · {{name}} · {{date}}",
+    "page": "第 {{page}} 页",
+    "open_file": "打开文件",
+    "download": "下载",
+    "open_issue": "打开任务",
+    "open_chat": "打开对话",
+    "open_link": "打开链接",
+    "chat_private": "仅发起人可查看",
+    "file_missing": "文件已不在知识库中"
+  },
+  "info": {
+    "verified": "核实",
+    "verified_by": "{{name}} · {{date}} 核实",
+    "next_review": "下次复核 {{date}}",
+    "tags": "领域",
+    "sources": "引用来源 {{count}}",
+    "backlinks": "链接到本页",
+    "none": "无"
+  },
+  "toc": {
+    "empty": "没有标题"
+  },
+  "history": {
+    "current": "当前版本",
+    "initial": "初始版本",
+    "meta": "{{author}} · {{merger}}合并 · {{time}}",
+    "submitted_by": "{{author}} 提交，",
+    "merged_by": "{{merger}} {{date}} 合并",
+    "annotations_other": "处理批注 {{count}} 条",
+    "close": "关闭历史",
+    "no_changes": "这次修改没有改动正文",
+    "not_found": "修订不存在",
+    "empty": "还没有历史",
+    "revert": "回滚这次修改"
+  },
+  "builder": {
+    "create_title": "新建知识库",
+    "create_sub": "通过对话创建",
+    "config_title": "配置知识库",
+    "via_chat": "通过对话配置",
+    "setup_create_title": "通过对话创建知识库",
+    "setup_config_title": "通过对话配置知识库",
+    "setup_description": "选择构建器运行的运行时和模型。",
+    "chat_title": "知识库构建器",
+    "change_runtime": "更换",
+    "change_runtime_label": "更换运行时",
+    "intro_create": "想建一个什么样的知识库？选一个方向开始，我来起草名称、目标和 Schema，再一起细调。",
+    "intro_config": "我会根据你的需求修改目标和 Schema。可以从下面的问题开始，也可以直接说想改什么。",
+    "describe_hint": "也可以直接描述你的需求。",
+    "starters": {
+      "dev": {
+        "title": "研发知识库",
+        "description": "系统架构、服务与接口、排障手册、技术决策"
+      },
+      "qa": {
+        "title": "测试知识库",
+        "description": "用例设计方法、测试环境、回归清单、缺陷复盘"
+      },
+      "product": {
+        "title": "产品知识库",
+        "description": "功能说明、业务规则、计费规则、对客话术"
+      },
+      "team": {
+        "title": "团队综合知识库",
+        "description": "研发、测试、产品共用，按领域标签区分"
+      }
+    },
+    "starter_message": "建一个{{title}}：{{description}}",
+    "questions": {
+      "readers": "这个知识库给谁看？他们最常查什么？",
+      "scope": "收录哪些内容，哪些不收？",
+      "structure": "页面怎么组织：按系统模块、业务流程，还是团队？",
+      "writing": "引用和写法有什么要求？"
+    },
+    "drafts_create_other": "您有 {{count}} 条未完成的创建",
+    "drafts_config_other": "您有 {{count}} 条未完成的配置",
+    "pick_create": "创建草稿",
+    "pick_config": "配置草稿",
+    "panel": {
+      "title": "知识库配置",
+      "basics": "基本信息",
+      "name": "名称",
+      "description": "简介",
+      "slug": "目录名",
+      "generated_placeholder": "说完需求后自动生成",
+      "slug_placeholder": "按名称生成",
+      "slug_invalid": "只能用小写字母、数字和连字符",
+      "purpose": "目标",
+      "purpose_placeholder": "# 目标",
+      "just_updated": "刚更新",
+      "expand_edit": "放大编辑",
+      "expand_view": "放大查看",
+      "schema": "Schema",
+      "schema_mode": "Schema 模式",
+      "schema_default": "默认",
+      "schema_custom": "自定义",
+      "read_only": "只读",
+      "schema_default_hint": "使用平台内置的维护规则，不能编辑，构建器也不会改它；要按团队习惯调整，切到「自定义」。",
+      "schema_placeholder": "说完需求后按内置 Schema 起草"
+    },
+    "footer": {
+      "unsaved": "有未保存的修改",
+      "discard_create": "放弃创建",
+      "discard_config": "放弃修改",
+      "create": "创建",
+      "save": "保存"
+    },
+    "discard": {
+      "create_title": "放弃这次创建？",
+      "config_title": "放弃这次修改？",
+      "description": "对话和右侧配置都会被永久删除。",
+      "keep": "继续编辑"
+    },
+    "expand": {
+      "edit": "编辑",
+      "split": "分栏",
+      "preview": "预览",
+      "read_only": "默认 · 只读",
+      "edit_hint": "改动回到右侧配置，保存后生效",
+      "read_only_hint": "默认 Schema 只能查看；要修改，先在右侧切到「自定义」",
+      "cancel": "取消",
+      "done": "完成",
+      "close": "关闭"
+    },
+    "saved": "已保存",
+    "errors": {
+      "name_required": "请填写名称",
+      "slug_taken": "工作区里已有这个目录名",
+      "conflict": "打开配置后有人保存过，刷新后再修改。",
+      "forbidden": "只有知识库创建者或工作区 owner、admin 可以配置",
+      "create_failed": "创建知识库失败",
+      "save_failed": "保存配置失败"
+    }
+  },
+  "welcome": {
+    "created": "知识库「{{name}}」已创建。先看看怎么用。",
+    "guide_title": "这个知识库怎么用",
+    "suggested": "建议先做",
+    "dismiss": "知道了",
+    "steps": {
+      "ingest": {
+        "title": "收录资料",
+        "description": "新建知识库作业，把任务、对话、上传的文件或网页交给智能体，它把知识整理进页面，每条事实都标来源。"
+      },
+      "review": {
+        "title": "审核后生效",
+        "description": "智能体的改动先进草稿，你看过后提交审核，知识库创建者或 owner、admin 合并后才生效。"
+      },
+      "read": {
+        "title": "阅读和批注",
+        "description": "发现写错或过时，选中那句话加一条批注；批注可以一键交给智能体处理。"
+      },
+      "maintain": {
+        "title": "定时维护",
+        "description": "建一个定时收录和定时健康检查，知识库会自己跟上最新的任务和代码。"
+      }
+    }
+  },
+  "annotation": {
+    "action": "批注",
+    "compose_label": "批注内容",
+    "compose_hint": "智能体处理时会看到这句原文",
+    "cancel": "取消",
+    "submit": "批注",
+    "add": "添加批注",
+    "page_panel": "本页批注",
+    "kb_panel": "知识库批注",
+    "page_compose_label": "批注本页",
+    "kb_compose_label": "批注整个知识库",
+    "hand_off": "交给智能体处理",
+    "hand_off_all": "全部交给智能体（{{n}}）",
+    "status": {
+      "pending": "待处理",
+      "processing": "处理中",
+      "resolved": "已解决",
+      "dismissed": "不处理"
+    },
+    "dismiss": "不处理",
+    "reopen": "恢复",
+    "where_block": "{{title}} · 第 {{n}} 段",
+    "where_page": "{{title}} · 整页",
+    "where_kb": "整个知识库",
+    "followed": "已跟随改写",
+    "lost": "原句已删除",
+    "original": "批注时的原句：{{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "批注",
+    "empty": "没有批注",
+    "create_failed": "批注失败",
+    "quote_not_found": "没有找到这句原文",
+    "update_failed": "操作失败",
+    "panel_empty": "还没有批注"
+  },
+  "stale_list": {
+    "count_other": "{{count}} 个页面",
+    "page": "页面",
+    "reason": "原因",
+    "overdue": "过了复核日期",
+    "review_by": "应在 {{date}} 前复核",
+    "hand_off": "交给智能体复核",
+    "hand_off_all": "全部交给智能体复核",
+    "empty": "没有需要复核的页面。",
+    "all_message": "复核「{{name}}」里过了复核日期的页面。"
+  },
+  "job": {
+    "nav": "知识库作业",
+    "nav_running": "{{count}} 运行中",
+    "list_title": "知识库作业",
+    "new": "新建作业",
+    "tabs": {
+      "all": "全部",
+      "running": "运行中",
+      "failed": "失败"
+    },
+    "state": {
+      "running": "运行中",
+      "idle": "等待输入",
+      "failed": "失败",
+      "stopped": "已停止"
+    },
+    "empty": "还没有作业",
+    "subtitle": "{{name}} · 知识库作业",
+    "new_title": "新对话",
+    "back": "返回",
+    "executor": "执行智能体",
+    "pick_agent": "选择智能体",
+    "pick_agent_first": "先选择执行智能体",
+    "runtime_online": "运行时在线",
+    "runtime_offline": "运行时离线",
+    "start_question": "要对{{name}}做什么？",
+    "start_hint": "也可以直接描述你的需求。定时任务建成自动化后，在「自动化」页管理。",
+    "start_failed": "作业没有建成",
+    "not_found": "作业不存在或无权查看",
+    "ended": "这段对话已结束",
+    "starters": {
+      "ingest": {
+        "title": "收录资料",
+        "description": "读取任务、对话或网页，把知识写进页面"
+      },
+      "health": {
+        "title": "健康检查",
+        "description": "检查过期页面、互相矛盾的内容、孤立页面和代码已变的论断"
+      },
+      "merge": {
+        "title": "知识合并",
+        "description": "找出内容重复的页面并合成一页"
+      },
+      "annotations": {
+        "title": "处理批注",
+        "description": "按待处理的批注修改页面"
+      },
+      "schedule_ingest": {
+        "title": "创建定时收录",
+        "description": "建一个自动化，每天收录当天的任务、评论和聊天"
+      },
+      "schedule_health": {
+        "title": "创建定时健康检查",
+        "description": "建一个自动化，每周做一次健康检查"
+      }
+    },
+    "starter_message": "{{title}}：{{description}}",
+    "names": {
+      "ingest": "收录资料",
+      "health": "健康检查",
+      "merge": "知识合并",
+      "annotations": "处理批注",
+      "new_page": "新页面",
+      "schedule": "定时运行",
+      "custom": "新对话"
+    },
+    "draft": {
+      "title": "草稿改动",
+      "state": {
+        "none": "暂无草稿",
+        "empty": "暂无改动",
+        "open": "草稿 · 未提交",
+        "submitted": "已提交审核",
+        "merged": "已合并",
+        "closed": "已关闭 · 可重新提交",
+        "nochange": "无需修改",
+        "discarded": "已放弃"
+      },
+      "nodraft": "智能体建好草稿后，在这里显示改动。",
+      "empty": "智能体推送改动后显示在这里。",
+      "nochange_title": "这次没有需要修改的内容",
+      "nochange_hint": "运行结果记为「无需修改」，不生成变更请求",
+      "discarded": "草稿已放弃，改动不会合并。",
+      "summary_other": "{{count}} 个页面 · +{{added}} −{{deleted}}",
+      "collapse_all": "全部折叠",
+      "expand_all": "全部展开",
+      "change": {
+        "added": "新增",
+        "modified": "修改",
+        "moved": "移动",
+        "deleted": "删除"
+      },
+      "view_in_page": "在页面中查看",
+      "checks": "提交前检查",
+      "checks_pending": "改完后自动检查",
+      "lint_ok": "格式检查通过",
+      "lint": {
+        "missing_type": "页头缺少 type",
+        "missing_title": "页头缺少 title",
+        "missing_description": "页头缺少 description",
+        "undefined_footnote": "引用了没有来源的脚注",
+        "claim_without_evidence": "有论断没有证据",
+        "invalid_evidence_uri": "证据的地址无法识别",
+        "duplicate_slug": "同一层已有同名页面",
+        "unresolved_conflict": "还有没解决的冲突",
+        "missing_evidence_version": "代码证据缺少版本",
+        "unresolved_link": "链接指向还没写的页面",
+        "orphan_page": "没有其他页面链接到这一页",
+        "isolated_page": "这一页链接的相关页面少于 2 个"
+      },
+      "conflict": "与主线冲突：{{path}}",
+      "fix": "让智能体修复",
+      "rebase": "让智能体基于主线更新",
+      "fix_message": "修复 `marvis kb draft check {{draft}}` 报的错误，修完再检查一遍。",
+      "rebase_message": "草稿与主线有冲突。用 `marvis kb draft sync {{draft}}` 基于主线更新，解决冲突后再检查一遍。",
+      "hint": {
+        "open": "只有你能看到草稿，提交后进入审核",
+        "busy": "等智能体这一轮结束再提交",
+        "lint_other": "有 {{count}} 个错误，修复后才能提交",
+        "conflict": "可以直接提交，审核时再处理冲突",
+        "submitted": "之后的修改在审核页评论里继续，也可以在这里接着说",
+        "closed": "调整后可重新提交，会开一个新的变更请求",
+        "merged": "这段对话已结束",
+        "running": "可以随时在左边补充要求"
+      },
+      "banner": {
+        "submitted_self": "你已提交变更请求 #{{number}}，草稿转为待审核，这里只读。",
+        "submitted_agent": "{{name}}已提交变更请求 #{{number}}，草稿转为待审核，这里只读。",
+        "closed": "#{{number}} 已被{{name}}关闭：「{{reason}}」。草稿还在，可以继续调整。",
+        "closed_no_reason": "#{{number}} 已被{{name}}关闭。草稿还在，可以继续调整。",
+        "merged": "#{{number}} 已由{{name}}合并，改动已生效。"
+      },
+      "banner_review": "去审核",
+      "banner_view_page": "查看页面",
+      "banner_comments": "查看评论",
+      "discard": "放弃草稿",
+      "keep": "保留",
+      "discard_confirm_title": "放弃这份草稿？",
+      "discard_confirm_description": "草稿里的改动会丢弃，作业保留在列表里。",
+      "discard_failed": "没有放弃成功",
+      "submit": "提交审核",
+      "resubmit": "重新提交审核",
+      "submit_failed": "没有提交成功",
+      "go_review": "去审核 #{{number}}",
+      "submitted_toast": "已提交变更请求 #{{number}}"
+    },
+    "entry": {
+      "check_page": "让智能体检查本页",
+      "check_page_message": "检查「{{title}}」这一页。",
+      "write_here": "让智能体在这里写一页",
+      "write_under": "在 {{title}} 下写一页",
+      "write_label": "要写什么",
+      "write_submit": "交给智能体",
+      "cancel": "取消",
+      "new_page_message": "在「{{title}}」下新增一页：{{text}}",
+      "annotations_all_message_other": "处理{{name}}的全部 {{count}} 条待处理批注。",
+      "annotations_page_message_other": "处理「{{title}}」的 {{count}} 条待处理批注。",
+      "annotations_kb_message_other": "处理整个知识库的 {{count}} 条待处理批注。"
+    }
+  },
+  "review": {
+    "title": "审核",
+    "list_label": "变更请求",
+    "select": "选择一个变更请求",
+    "not_found": "变更请求不存在",
+    "conflict_banner": "主线改了同一段内容。",
+    "conflict_main": "主线第 {{lines}} 行",
+    "conflict_draft": "本分支第 {{lines}} 行",
+    "working": "正在工作",
+    "view_run": "查看执行过程",
+    "remove_quote": "移除引用",
+    "reply": "回复",
+    "replying_to": "回复 {{name}}",
+    "quote_line": "{{page}} 第 {{line}} 行",
+    "comment_label": "评论",
+    "comment_placeholder": "留下评论...",
+    "trigger_hint": "发送后开始",
+    "send": "发送",
+    "hint_member": "知识库创建者或 owner / admin 合并",
+    "hint_conflict": "先解决冲突",
+    "hint_running": "智能体改完后再合并",
+    "comment_failed": "评论没有发出",
+    "merged_toast": "已合并 #{{number}}",
+    "close_failed": "没有关闭成功",
+    "agent_working": "{{name}} 在工作",
+    "close": "关闭",
+    "merge": "合并",
+    "revert": "回滚此次变更",
+    "merged_by": "{{name}} 合并 · {{time}}",
+    "closed_by": "{{name}} 关闭 · {{time}}",
+    "closed_by_reason": "{{name}} 关闭 · {{time}} · {{reason}}",
+    "self_check": "智能体自查",
+    "summary": "变更说明",
+    "checks": "检查",
+    "conflicting": "与主线冲突",
+    "mergeable": "可以合并到主线",
+    "add_comment": "加入评论",
+    "activity": "动态",
+    "close_confirm_title": "关闭这个变更请求？",
+    "close_reason": "关闭理由（选填）",
+    "cancel": "取消",
+    "reverted": "已生成回滚变更请求 #{{number}}",
+    "go_review": "去审核",
+    "revert_conflict": "之后的改动动了同样的内容，需要手动处理",
+    "revert_failed": "没有回滚成功",
+    "revert_confirm_title": "回滚 #{{number}}「{{title}}」？",
+    "revert_confirm_description": "会生成一个反向修改的变更请求，合并后生效。",
+    "revert_submit": "提交回滚",
+    "meta_other": "风险 {{risk}} · 影响 {{count}} 个页面",
+    "meta_annotations_other": "处理 {{count}} 条批注",
+    "activity_count_other": "{{count}} 条动态",
+    "close_confirm_annotations_other": "处理的 {{count}} 条批注会退回待处理。",
+    "tabs": {
+      "open": "待审核",
+      "ended": "已结束",
+      "all": "全部"
+    },
+    "status": {
+      "open": "待审核",
+      "merged": "已合并",
+      "closed": "已关闭"
+    },
+    "empty": {
+      "open": "没有待审核的修改",
+      "ended": "还没有结束的变更请求",
+      "all": "还没有变更请求"
+    },
+    "source": {
+      "ingest": "收录资料",
+      "health": "健康检查",
+      "merge": "知识合并",
+      "annotations": "处理批注",
+      "new_page": "新页面",
+      "revert": "回滚",
+      "custom": "其他"
+    },
+    "origin": {
+      "kb_job": "知识库作业 · {{label}}",
+      "revert": "回滚 #{{number}}",
+      "autopilot_run": "自动化 · {{label}}",
+      "issue": "任务 · {{label}}",
+      "chat": "对话 · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "按评论修改",
+      "mention": "被 @ 后开始"
+    },
+    "merge_error": {
+      "stale": "草稿在你打开后又改过，刷新后再合并",
+      "conflict": "与主线冲突，先解决冲突",
+      "running": "智能体改完后再合并",
+      "not_open": "这个变更请求已经结束",
+      "failed": "没有合并成功"
+    },
+    "risk": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "changes": {
+      "title": "变更记录",
+      "list_label": "已合并的变更",
+      "empty": "还没有合并的修改",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · {{merger}}合并",
+      "revert_hint": "回滚会生成新的变更请求，合并后生效。"
+    }
+  },
+  "manage": {
+    "title": "知识库管理",
+    "tabs_label": "管理分区",
+    "tab": {
+      "raw": "原始资料",
+      "export": "导出",
+      "delete": "删除知识库"
+    },
+    "raw": {
+      "title": "原始资料",
+      "upload": "上传资料",
+      "uploading": "上传中…",
+      "description": "导入时原样保存，页面引用它们作为来源。",
+      "col": {
+        "name": "资料",
+        "source": "来源",
+        "created": "导入",
+        "cited": "引用它的页面"
+      },
+      "source_upload": "上传 · {{name}}",
+      "empty": "还没有原始资料",
+      "ingest": "交给智能体收录",
+      "ingest_count": "交给智能体收录（{{count}}）",
+      "select": "选择 {{name}}",
+      "select_all": "全选",
+      "open": "打开 {{name}}",
+      "name_taken": "已有同名文件：{{names}}",
+      "name_invalid": "文件名不能为空，也不能包含 / \\ # ?",
+      "upload_failed": "上传失败",
+      "open_failed": "无法打开文件",
+      "cited_other": "{{count}} 个页面",
+      "uploaded_other": "已上传 {{count}} 个文件"
+    },
+    "export": {
+      "title": "导出",
+      "okf": "OKF bundle",
+      "okf_description": "按 Open Knowledge Format v0.2 导出全部页面：每页一个 Markdown 文件，带 frontmatter，每个目录一份 index.md，打包成 zip。",
+      "spec_link": "OKF 规范",
+      "button": "导出 zip",
+      "exporting": "导出中…",
+      "failed": "导出失败"
+    },
+    "delete": {
+      "title": "删除知识库",
+      "description": "删除这个知识库的全部页面、修订和批注，界面不提供恢复。",
+      "button": "删除",
+      "dialog_title": "删除「{{name}}」？",
+      "dialog_body": "移除 {{slug}}/ 目录，关闭它的 {{annotations}} 条批注和 {{mrs}} 个待审核修改。",
+      "confirm_label": "输入知识库名称确认",
+      "cancel": "取消",
+      "confirm": "删除",
+      "deleting": "删除中…",
+      "deleted": "已删除「{{name}}」",
+      "failed": "删除失败",
+      "forbidden": "知识库创建者或 owner / admin 才能删除。"
+    }
+  },
+  "graph": {
+    "title": "关系图",
+    "label": "页面之间的链接",
+    "no_links": "无链接",
+    "hint": "颜色按一级页面区分，点击打开页面",
+    "missing": "{{title}} · 还没写",
+    "empty": "还没有页面",
+    "legend": "图例",
+    "open_other": "打开{{title}} · {{count}} 个链接"
+  },
+  "mention": {
+    "kb": "知识库 · {{slug}}",
+    "schema_default": "默认 Schema",
+    "schema_custom": "自定义 Schema",
+    "no_pending": "没有待处理",
+    "pending_other": "{{count}} 项待处理",
+    "created": "{{name}} 创建于 {{time}}",
+    "claims_other": "{{count}} 条论断",
+    "open_annotations_other": "{{count}} 条待处理批注",
+    "review_by": "复核期 {{date}}",
+    "last_change": "最近修改 #{{number}}",
+    "merged": "{{name}} 合并于 {{time}}",
+    "page_deleted": "页面已删除",
+    "risk": "风险 {{risk}}",
+    "submitted": "{{name}} 提交于 {{time}}",
+    "origin": "来源：{{origin}}",
+    "annotation": "批注",
+    "annotation_status": "批注 · {{status}}",
+    "recorded": "{{name}} 记于 {{time}}"
+  }
+}

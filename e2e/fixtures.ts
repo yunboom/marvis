@@ -346,6 +346,15 @@ export class TestApiClient {
     return (await res.json()) as { id: string };
   }
 
+  /** An authenticated JSON request in this client's workspace; throws on a non-2xx answer. */
+  async requestJSON<T>(method: string, path: string, body?: unknown): Promise<T> {
+    const res = await this.authedFetch(path, { method, body: body === undefined ? undefined : JSON.stringify(body) });
+    if (!res.ok) {
+      throw new Error(`${method} ${path} failed: ${res.status} ${await res.text()}`);
+    }
+    return (await res.json()) as T;
+  }
+
   /** Seed an owned runtime without launching an actual agent tool. */
   async seedRuntime(name: string): Promise<string> {
     if (!this.workspaceId || !this.email) throw new Error("Select a workspace before seeding a runtime");

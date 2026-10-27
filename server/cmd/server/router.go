@@ -49,6 +49,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/util/secretbox"
 	composiosdk "github.com/yunboom/marvis/server/pkg/composio"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/embedding"
 	"github.com/yunboom/marvis/server/pkg/featureflag"
 	"github.com/yunboom/marvis/server/pkg/llm"
 	publicapiv1 "github.com/yunboom/marvis/server/pkg/publicapi/v1"
@@ -490,6 +491,10 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 		LLMDefaultModel:                strings.TrimSpace(os.Getenv("MARVIS_LLM_DEFAULT_MODEL")),
 		LLMMaxRetries:                  opts.LLMMaxRetries,
 		LLMDisableThinking:             opts.LLMDisableThinking,
+		EmbeddingBaseURL:               strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_BASE_URL")),
+		EmbeddingAPIKey:                strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_API_KEY")),
+		EmbeddingModel:                 strings.TrimSpace(os.Getenv("MARVIS_EMBEDDING_MODEL")),
+		EmbeddingBatchSize:             embedding.ParseBatchSize(os.Getenv("MARVIS_EMBEDDING_BATCH_SIZE")),
 		ServerVersion:                  normalizeServerVersion(version),
 		ServerName:                     opts.LAN.Name,
 		InstanceID:                     opts.InstanceID,
@@ -1544,6 +1549,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 	// The authenticated /api/attachments/{id}/download route below is
 	// unchanged — this one is purely additive.
 	r.Get("/api/attachments/{id}/signed-download", h.DownloadAttachmentWithCapability)
+	r.Get("/api/kb/raw/{id}/signed-content", h.GetKbRawContentWithCapability)
 
 	// Avatar serving. Public for the same reason as the capability download
 	// above: the auth cookie is SameSite=Strict, so an auth-gated URL cannot
@@ -2256,6 +2262,72 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Put("/resources/{resourceId}", h.UpdateProjectResource)
 					r.Delete("/resources/{resourceId}", h.DeleteProjectResource)
 				})
+			})
+
+			// Knowledge bases
+			r.Route("/api/kb", func(r chi.Router) {
+				r.Get("/bases", h.ListKbBases)
+				r.Post("/bases", h.CreateKbBase)
+				r.Get("/bases/{kb}", h.GetKbBase)
+				r.Patch("/bases/{kb}", h.UpdateKbBase)
+				r.Delete("/bases/{kb}", h.DeleteKbBase)
+				// Management: raw files (any member uploads), the OKF
+				// export and the relationship graph.
+				r.Get("/bases/{kb}/raw", h.ListKbRaw)
+				r.Post("/bases/{kb}/raw", h.UploadKbRaw)
+				r.Get("/raw/{id}/content", h.GetKbRawContent)
+				r.Get("/bases/{kb}/export", h.ExportKb)
+				r.Get("/bases/{kb}/graph", h.GetKbGraph)
+				r.Get("/templates", h.GetKbTemplates)
+				// Builder conversations (create / configure). Hidden from
+				// every chat list; messages go through /api/chat.
+				r.Get("/builder/sessions", h.ListKbBuilderSessions)
+				r.Post("/builder/sessions", h.CreateKbBuilderSession)
+				r.Patch("/builder/sessions/{sessionId}/runtime", h.SwitchKbBuilderRuntime)
+				r.Put("/builder/sessions/{sessionId}/draft", h.SaveKbBuilderDraft)
+				r.Delete("/builder/sessions/{sessionId}", h.DeleteKbBuilderSession)
+				r.Get("/bases/{kb}/home", h.GetKbHome)
+				r.Get("/bases/{kb}/pages", h.ListKbPages)
+				r.Get("/pages/{id}", h.GetKbPage)
+				r.Get("/pages/{id}/history", h.ListKbPageHistory)
+				r.Get("/pages/{id}/history/{revisionId}", h.GetKbRevisionDiff)
+				r.Get("/pages/{id}/fetch", h.FetchKbPage)
+				r.Get("/pages/{id}/claims", h.GetKbPageClaims)
+				r.Get("/bases/{kb}/claims", h.ListKbClaims)
+				r.Get("/bases/{kb}/stale", h.ListKbStalePages)
+				r.Get("/sources", h.ListKbSources)
+				r.Get("/bases/{kb}/annotations", h.ListKbAnnotations)
+				r.Post("/bases/{kb}/annotations", h.CreateKbAnnotation)
+				r.Get("/annotations/{id}", h.GetKbAnnotation)
+				r.Patch("/annotations/{id}", h.UpdateKbAnnotation)
+				r.Get("/search", h.SearchKb)
+				// Drafts: agents write pages here; a merge request merges
+				// one draft. Only the draft creator reads or writes it.
+				r.Post("/drafts", h.CreateKbDraft)
+				r.Get("/drafts/{draftId}", h.GetKbDraft)
+				r.Post("/drafts/{draftId}/sync", h.SyncKbDraft)
+				r.Post("/drafts/{draftId}/pages", h.CreateKbDraftPage)
+				r.Post("/drafts/{draftId}/pages/{id}/ops", h.ApplyKbPageOps)
+				r.Put("/drafts/{draftId}/pages/{id}/claims", h.PutKbDraftClaims)
+				// Jobs: a chat with an agent that writes one draft. Only
+				// the member who started a job sees it.
+				r.Get("/bases/{kb}/jobs", h.ListKbJobs)
+				r.Post("/bases/{kb}/jobs", h.CreateKbJob)
+				r.Get("/jobs/{jobId}", h.GetKbJob)
+				r.Post("/jobs/{jobId}/submit", h.SubmitKbJob)
+				r.Post("/jobs/{jobId}/discard", h.DiscardKbJob)
+				r.Post("/merge-requests", h.CreateKbMergeRequest)
+				// Review: merge requests are listed and read by every
+				// member; merge, revert and close check the knowledge base
+				// creator or an owner / admin (the author may close).
+				r.Get("/merge-requests", h.ListKbMergeRequests)
+				r.Get("/merge-requests/{number}", h.GetKbMergeRequest)
+				r.Patch("/merge-requests/{number}", h.UpdateKbMergeRequest)
+				r.Post("/merge-requests/{number}/merge", h.MergeKbMergeRequest)
+				r.Post("/merge-requests/{number}/close", h.CloseKbMergeRequest)
+				r.Post("/merge-requests/{number}/revert", h.RevertKbMergeRequest)
+				r.Get("/merge-requests/{number}/comments", h.ListKbMrComments)
+				r.Post("/merge-requests/{number}/comments", h.CreateKbMrComment)
 			})
 
 			// Squads

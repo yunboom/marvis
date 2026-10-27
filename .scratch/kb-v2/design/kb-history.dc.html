@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>变更记录</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main" style="position: relative">
+    <dc-import name="KbNav" sel="" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar"><div class="crumb"><span>知识库</span><span>/</span><span>团队知识库</span><span>/</span><b>变更记录</b></div></div>
+      <div style="flex: 1; min-height: 0; display: flex">
+        <aside aria-label="已合并的变更" style="width: 340px; flex: none; border-right: 1px solid rgba(0,0,0,.06); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; background: #fbfbfb">
+          <sc-for list="{{list}}" as="c" hint-placeholder-count="6">
+            <div style="{{c.style}}">
+              <div style="display: flex; gap: 8px"><span class="faint mono" style="font-size: 12px">{{c.commit}}</span><span style="font-size: 13.5px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.title}}</span></div>
+              <span class="faint" style="font-size: 12px">#{{c.n}} · {{c.source}} · {{c.author}} · {{c.date}}</span>
+            </div>
+          </sc-for>
+        </aside>
+        <div style="flex: 1; min-width: 0; padding: 20px 28px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+          <div style="display: flex; align-items: flex-start; gap: 12px">
+            <div style="flex: 1; min-width: 0">
+              <div class="faint" style="font-size: 12.5px">9f2c1ab · #15 · 通用开发助手 · 王芳合并</div>
+              <h2 style="font-size: 20px; font-weight: 600; margin: 4px 0 0">测试环境：部署时间改为 21:00</h2>
+            </div>
+            <button class="btn">回滚此次变更</button>
+          </div>
+          <div class="faint" style="font-size: 12.5px">回滚会生成新的变更请求，合并后生效。</div>
+          <div class="card" style="overflow: hidden">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,.06); background: #fafafa"><span class="tag">修改</span><span style="font-size: 13px; font-weight: 500">测试环境</span><span class="faint" style="font-size: 12px">测试</span><span style="margin-left: auto; font-size: 12px"><span style="color: #3f7a5d">+1</span> <span style="color: #a33d29">−1</span></span></div>
+            <div class="dl"><span class="ln">8</span><span class="sg"></span><span class="tx">## 部署</span></div>
+            <div class="dl del"><span class="ln">9</span><span class="sg">−</span><span class="tx">测试环境每个工作日 20:00 从主干重新部署。</span></div>
+            <div class="dl add"><span class="ln">9</span><span class="sg">+</span><span class="tx">测试环境每个工作日 21:00 从主干重新部署。[^2]</span></div>
+            <div class="dl"><span class="ln">10</span><span class="sg"></span><span class="tx">部署期间约 10 分钟不可用。</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); background: #1c1c1c; color: #fff; font-size: 13.5px; padding: 10px 16px; border-radius: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18)"><span class="{{toastDot}}"></span>{{toast}}<sc-if value="{{toastLink}}" hint-placeholder-val="{{ false }}"><a href="#" style="color: #9cc3e6; text-decoration: none">去审核</a></sc-if></div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"toast":{"editor":"enum","default":"none","options":["none","reverted","conflict"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var tt = this.props.toast ?? 'none';
+    var list = [
+      { commit: '9f2c1ab', title: '测试环境：部署时间改为 21:00', n: 15, source: '处理批注', author: '通用开发助手', date: '10-25', on: true },
+      { commit: '4e81d0c', title: '每日收录 · 10-24', n: 14, source: '收录资料', author: '通用开发助手', date: '10-24' },
+      { commit: '7a3b92e', title: '新页面：回调人工处理', n: 13, source: '新页面', author: '通用开发助手', date: '10-23' },
+      { commit: '1c0f5d4', title: '配置团队知识库：引用必须附核对版本', n: 12, source: '配置', author: '通用开发助手', date: '10-22' },
+      { commit: 'b62e7a1', title: '合并重复页面：幂等键 / 幂等设计', n: 11, source: '知识合并', author: '通用开发助手', date: '10-22' },
+      { commit: '0d9e4f8', title: '健康检查：补查间隔改为 5 分钟', n: 9, source: '健康检查', author: '通用开发助手', date: '10-19' }
+    ];
+    return {
+      list: list.map(function (c) { return Object.assign({}, c, { style: 'display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: ' + (c.on ? 'rgba(0,0,0,.055)' : 'transparent') }); }),
+      hasToast: tt !== 'none',
+      toast: tt === 'reverted' ? '已生成回滚变更请求 #18' : '之后的改动动了同样的内容，需要手动处理',
+      toastDot: tt === 'reverted' ? 'dot d-green' : 'dot d-red',
+      toastLink: tt === 'reverted'
+    };
+  }
+}
+</script>
+</body>
+</html>

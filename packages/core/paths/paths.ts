@@ -22,6 +22,44 @@ const encode = (id: string) => encodeURIComponent(id);
  */
 export const AGENT_FOCUS_CONVERSATION_STARTERS = "conversation_starters";
 
+/**
+ * What an entry point brings into a new knowledge base job: the starter, the
+ * annotations, the page (checked, or the parent of a new page), raw source
+ * uris, and the member's request already written out.
+ */
+export interface KbNewJobContext {
+  starter?: string;
+  annotations?: readonly string[];
+  page?: string;
+  sources?: readonly string[];
+  message?: string;
+}
+
+/** Tabs of knowledge base management; raw files is the default route. */
+export const KB_MANAGE_TABS = ["raw", "export", "delete"] as const;
+export type KbManageTab = (typeof KB_MANAGE_TABS)[number];
+
+/** Query keys of the new job route; the page reads them back. */
+export const KB_NEW_JOB_PARAMS = {
+  starter: "starter",
+  annotations: "annotations",
+  page: "page",
+  sources: "sources",
+  message: "message",
+} as const;
+
+function kbNewJobQuery(context: KbNewJobContext): string {
+  const search = new URLSearchParams();
+  if (context.starter) search.set(KB_NEW_JOB_PARAMS.starter, context.starter);
+  if (context.annotations?.length) search.set(KB_NEW_JOB_PARAMS.annotations, context.annotations.join(","));
+  if (context.page) search.set(KB_NEW_JOB_PARAMS.page, context.page);
+  if (context.sources?.length) search.set(KB_NEW_JOB_PARAMS.sources, context.sources.join(","));
+  if (context.message) search.set(KB_NEW_JOB_PARAMS.message, context.message);
+  const qs = search.toString();
+
+  return qs ? `?${qs}` : "";
+}
+
 function workspaceScoped(slug: string) {
   const ws = `/${encode(slug)}`;
   return {
@@ -58,6 +96,38 @@ function workspaceScoped(slug: string) {
     memberDetail: (id: string) => `${ws}/members/${encode(id)}`,
     squads: () => `${ws}/squads`,
     squadDetail: (id: string) => `${ws}/squads/${encode(id)}`,
+    kb: () => `${ws}/kb`,
+    kbBase: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}`,
+    kbNew: () => `${ws}/kb/new`,
+    kbNewSession: (sessionId: string) => `${ws}/kb/new/${encode(sessionId)}`,
+    kbConfig: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/config`,
+    kbConfigSession: (kbSlug: string, sessionId: string) =>
+      `${ws}/kb/${encode(kbSlug)}/config/${encode(sessionId)}`,
+    kbAnnotations: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/annotations`,
+    /** Pages past their review date (design 2.5). */
+    kbStale: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/stale`,
+    kbJobs: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/jobs`,
+    /** A new job; entry points bring in a starter and its context. */
+    kbNewJob: (kbSlug: string, context: KbNewJobContext = {}) =>
+      `${ws}/kb/${encode(kbSlug)}/jobs/new${kbNewJobQuery(context)}`,
+    kbJob: (kbSlug: string, jobId: string) => `${ws}/kb/${encode(kbSlug)}/jobs/${encode(jobId)}`,
+    /** The review list of a knowledge base. */
+    kbReviews: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/reviews`,
+    /** A merge request under review. */
+    kbMergeRequest: (kbSlug: string, number: number | string) =>
+      `${ws}/kb/${encode(kbSlug)}/reviews/${encode(String(number))}`,
+    /** The change log: merged requests, newest first (design 2.7). */
+    kbChanges: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/changes`,
+    kbChange: (kbSlug: string, number: number | string) =>
+      `${ws}/kb/${encode(kbSlug)}/changes/${encode(String(number))}`,
+    /** Knowledge base management (design 11.x): raw files, export, delete. */
+    kbManage: (kbSlug: string, tab: KbManageTab = "raw") =>
+      `${ws}/kb/${encode(kbSlug)}/manage${tab === "raw" ? "" : `/${tab}`}`,
+    /** The relationship graph of a knowledge base (design 2.10). */
+    kbGraph: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/graph`,
+    kbPage: (kbSlug: string, pageId: string) => `${ws}/kb/${encode(kbSlug)}/p/${encode(pageId)}`,
+    kbRevision: (kbSlug: string, pageId: string, revisionId: string) =>
+      `${ws}/kb/${encode(kbSlug)}/p/${encode(pageId)}/history/${encode(revisionId)}`,
     inbox: () => `${ws}/inbox`,
     chat: () => `${ws}/chat`,
     chatWithAgent: (agentId: string) =>

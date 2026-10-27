@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>知识库列表</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <div class="col">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 26px 28px 18px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM13 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5z"></path></svg>
+        <h1 class="ptitle">知识库</h1><span class="faint" style="font-size: 15px">4</span>
+        <a class="tag" href="#" style="margin-left: 8px; text-decoration: none; height: 26px; padding: 0 10px; font-size: 13px"><span class="dot d-blue"></span>待审核修改 3</a>
+        <div style="flex: 1"></div>
+        <button class="btn btn-p btn-l"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>新建知识库</button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 0 28px 12px">
+        <div style="position: relative; width: 280px">
+          <label for="kbq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">搜索知识库</label>
+          <input id="kbq" class="field" placeholder="搜索知识库和页面..." style="padding-left: 34px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#757575" stroke-width="2" aria-hidden="true" style="position: absolute; left: 12px; top: 10px"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        </div>
+        <div style="flex: 1"></div>
+        <button class="btn btn-o"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"></path></svg>最近更新</button>
+      </div>
+      <div style="margin: 0 16px; display: grid; grid-template-columns: 2.2fr 3fr 0.8fr 1.2fr 1fr 40px; align-items: center; height: 40px; padding: 0 12px; border-radius: 12px; background: #f6f6f6; font-size: 12.5px; color: #5c5c5c">
+        <span>名称</span><span>简介</span><span>页面</span><span>待处理</span><span>更新时间</span><span></span>
+      </div>
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+        <div style="margin: 0 16px; display: grid; grid-template-columns: 2.2fr 3fr 0.8fr 1.2fr 1fr 40px; align-items: center; height: 64px; padding: 0 12px; border-bottom: 1px solid rgba(0,0,0,.06)">
+          <span style="display: flex; align-items: center; gap: 10px; min-width: 0"><span style="width: 30px; height: 30px; border-radius: 8px; background: #f2f2f2; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex: none">{{r.initial}}</span><span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 500">{{r.name}}</span><span class="faint mono" style="font-size: 11.5px">{{r.slug}}/</span></span></span>
+          <span class="muted" style="font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 16px">{{r.desc}}</span>
+          <span style="font-size: 13px">{{r.pages}}</span>
+          <span style="display: flex; gap: 6px"><sc-if value="{{r.hasPending}}" hint-placeholder-val="{{ true }}"><span class="tag">{{r.pending}}</span></sc-if><sc-if value="{{r.noPending}}" hint-placeholder-val="{{ false }}"><span class="faint" style="font-size: 13px">—</span></sc-if></span>
+          <span class="muted" style="font-size: 13px">{{r.when}}</span>
+          <button class="ib" aria-label="更多操作"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>
+        </div>
+      </sc-for>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var rows = [
+      { initial: '团', name: '团队知识库', slug: 'team', desc: '订单、支付、发布与测试流程，团队共用的业务和系统知识。', pages: 23, pending: '批注 3 · 待复核 2', when: '10 分钟前' },
+      { initial: '支', name: '支付中台', slug: 'payments', desc: '渠道网关、对账、退款链路的设计与排障手册。', pages: 14, pending: '批注 1', when: '昨天' },
+      { initial: '测', name: '测试实验室', slug: 'qa-lab', desc: '用例设计方法、测试环境与缺陷复盘。', pages: 9, pending: '', when: '3 天前' },
+      { initial: '产', name: '产品手册', slug: 'product', desc: '功能说明、计费规则和对客话术。', pages: 31, pending: '待复核 4', when: '1 周前' }
+    ];
+    return { rows: rows.map(function (r) { return Object.assign({}, r, { hasPending: !!r.pending, noPending: !r.pending }); }) };
+  }
+}
+</script>
+</body>
+</html>

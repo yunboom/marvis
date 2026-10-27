@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>知识库管理</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <dc-import name="KbNav" sel="" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar"><div class="crumb"><span>团队知识库</span><span>/</span><b>知识库管理</b></div></div>
+      <div style="flex: 1; min-height: 0; display: flex">
+        <nav aria-label="管理分区" style="width: 180px; flex: none; padding: 16px 10px; display: flex; flex-direction: column; gap: 2px">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5"><a href="#" style="{{t.style}}">{{t.label}}</a></sc-for>
+        </nav>
+        <div style="flex: 1; min-width: 0; padding: 18px 28px 0 12px; display: flex; flex-direction: column; gap: 16px; max-width: 760px">
+          <sc-if value="{{s.raw}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; align-items: center; gap: 10px"><h2 style="margin: 0; font-size: 17px; font-weight: 600; flex: 1">原始资料</h2><button class="btn btn-p">上传资料</button></div>
+            <div class="muted" style="font-size: 13px">导入时原样保存，页面引用它们作为来源。上传后会在聊天里交给智能体沉淀。</div>
+            <div>
+              <div style="display: grid; grid-template-columns: 2.4fr 1.4fr 1fr 1fr; align-items: center; height: 36px; padding: 0 10px; border-radius: 10px; background: #f6f6f6; font-size: 12.5px; color: #5c5c5c"><span>资料</span><span>来源</span><span>导入</span><span>引用它的页面</span></div>
+              <sc-for list="{{raws}}" as="r" hint-placeholder-count="4">
+                <div style="display: grid; grid-template-columns: 2.4fr 1.4fr 1fr 1fr; align-items: center; padding: 12px 10px; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 13px">
+                  <span style="display: flex; align-items: center; gap: 8px; min-width: 0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="1.8" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"></path><path d="M14 3v4h4"></path></svg><span style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span></span>
+                  <span class="muted">{{r.src}}</span><span class="muted">{{r.when}}</span><span class="muted">{{r.refs}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{s.repo}}" hint-placeholder-val="{{ false }}">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 600">仓库</h2>
+            <div class="muted" style="font-size: 13px">工作区的所有知识库共用一个仓库，按目录隔离。</div>
+            <div class="card" style="padding: 4px">
+              <button style="{{repoHostedStyle}}"><span style="flex: 1; display: flex; flex-direction: column; text-align: left"><span style="font-weight: 500">内部托管</span><span class="faint" style="font-size: 12.5px">由 Marvis 服务端保存</span></span><sc-if value="{{hosted}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="2" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if></button>
+              <button style="{{repoExtStyle}}"><span style="flex: 1; display: flex; flex-direction: column; text-align: left"><span style="font-weight: 500">关联外部仓库</span><span class="faint" style="font-size: 12.5px">GitHub、GitLab、Gitea，可指定子目录</span></span><sc-if value="{{external}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="2" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></sc-if></button>
+            </div>
+            <sc-if value="{{external}}" hint-placeholder-val="{{ false }}">
+              <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+                <div><label class="lbl" for="rc">连接</label><select id="rc" class="field"><option>GitHub · acme-org</option><option>GitLab · gitlab.acme.dev</option></select><div class="faint" style="font-size: 12px; margin-top: 6px">使用工作区在「设置 › 代码」里已连接的账号。</div></div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px"><div><label class="lbl" for="rr">仓库</label><input id="rr" class="field" value="acme-org/knowledge"></div><div><label class="lbl" for="rb">主分支</label><select id="rb" class="field"><option>master</option><option>main</option><option>develop</option></select></div><div><label class="lbl" for="rd">目录</label><input id="rd" class="field" value="/"></div></div><div class="faint" style="font-size: 12px; margin-top: -4px">主分支按外部仓库的默认分支自动识别，可以改。合并改动进这个分支，智能体不能直接推送到它。</div>
+                <div class="banner b-red" style="padding: 10px 12px"><span class="dot d-red"></span><span>切换时推送完整历史，之后外部仓库是唯一仓库，不能切回内部托管。变更请求会以 PR 形式出现在外部仓库。</span></div>
+                <div style="height: 6px; border-radius: 3px; background: rgba(0,0,0,.06); overflow: hidden"><div style="width: 60%; height: 100%; background: #0f0f0f"></div></div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px"><button class="btn btn-g">取消</button><button class="btn btn-p" disabled="{{ true }}">推送中 6 / 10</button></div>
+              </div>
+            </sc-if>
+            <div class="faint" style="font-size: 12px">需要 owner 或 admin 修改。</div>
+          </sc-if>
+          <sc-if value="{{s.export}}" hint-placeholder-val="{{ false }}">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 600">导出</h2>
+            <div class="card" style="padding: 16px; display: flex; align-items: center; gap: 14px"><div style="flex: 1; display: flex; flex-direction: column; gap: 3px"><div style="font-weight: 500">OKF bundle</div><div class="faint" style="font-size: 12.5px">按 Open Knowledge Format v0.2 导出全部页面：每页一个 markdown 文件，带 frontmatter，每个目录一份 index.md，打包成 zip。</div><a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md" target="_blank" rel="noopener" style="font-size: 12px; color: #4f6f8a; text-decoration: none">OKF 规范</a></div><button class="btn btn-o">导出 zip</button></div>
+          </sc-if>
+          <sc-if value="{{s.digest}}" hint-placeholder-val="{{ false }}">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 600">每日知识沉淀</h2>
+            <div class="muted" style="font-size: 13px">工作区共用一份。每天读取任务、评论和执行者自己的对话，产出一个变更请求。</div>
+            <div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+              <div style="display: flex; align-items: center; gap: 12px"><span style="width: 36px; height: 20px; border-radius: 10px; background: #0f0f0f; position: relative; flex: none" role="switch" aria-checked="true" aria-label="启用每日知识沉淀"><span style="position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 8px; background: #fff"></span></span><span style="font-weight: 500; flex: 1">已启用</span><a class="btn btn-o" href="#" style="height: 30px; font-size: 12.5px">在自动化中打开</a></div>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+                <div><label class="lbl" for="dg-r">运行时</label><select id="dg-r" class="field"><option>Claude（DJ-mayunpeng.local）</option></select></div>
+                <div><label class="lbl" for="dg-t">每天</label><input id="dg-t" class="field" value="22:00 · Asia/Shanghai"></div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{s.danger}}" hint-placeholder-val="{{ false }}">
+            <h2 style="margin: 0; font-size: 17px; font-weight: 600; color: #a33d29">删除知识库</h2>
+            <div class="card" style="padding: 16px; display: flex; align-items: center; gap: 14px"><span class="muted" style="flex: 1; font-size: 13px">删除这个知识库的全部页面、修订和批注，界面不提供恢复。</span><button class="btn btn-d">删除</button></div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"section":{"editor":"enum","default":"raw","options":["raw","repo","repo-switch","export","digest","danger"]},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var sec = this.props.section ?? 'raw';
+    var key = sec === 'repo-switch' ? 'repo' : sec;
+    var ext = sec === 'repo-switch';
+    var tabs = [['raw', '原始资料'], ['export', '导出'], ['danger', '删除知识库']];
+    var rowStyle = function (on) { return 'display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px; border: 0; border-radius: 10px; font: inherit; background: ' + (on ? 'rgba(0,0,0,.05)' : 'transparent'); };
+    return {
+      s: { raw: key === 'raw', repo: key === 'repo', export: key === 'export', digest: key === 'digest', danger: key === 'danger' },
+      tabs: tabs.map(function (t) { return { label: t[1], style: 'display: flex; align-items: center; height: 34px; padding: 0 10px; border-radius: 8px; text-decoration: none; font-size: 13.5px; color: ' + (t[0] === 'danger' ? '#a33d29' : '#0f0f0f') + '; background: ' + (t[0] === key ? 'rgba(0,0,0,.055)' : 'transparent') + '; font-weight: ' + (t[0] === key ? '500' : '400') }; }),
+      hosted: !ext, external: ext,
+      repoHostedStyle: rowStyle(!ext), repoExtStyle: rowStyle(ext),
+      raws: [
+        { name: '渠道接入规范 v3.pdf', src: '上传 · 王芳', when: '10-08', refs: '3 个页面' },
+        { name: '退款规则 v4.pdf', src: '上传 · 韩梅梅', when: '10-15', refs: '2 个页面' },
+        { name: 'MAR-131 回归清单补充', src: '任务', when: '10-23', refs: '1 个页面' },
+        { name: '发布规范（飞书文档）', src: '链接 · 李雷', when: '10-02', refs: '1 个页面' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

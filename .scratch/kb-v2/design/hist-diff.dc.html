@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>查看一次修改</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <dc-import name="KbNav" sel="支付回调" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar">
+        <div class="crumb"><span>支付回调</span><span>/</span><span>页面历史</span><span>/</span><b>#9 处理批注：补查间隔</b></div>
+        <div style="flex: 1"></div>
+        <button class="btn btn-o">回滚这次修改</button>
+        <button class="ib on" aria-label="关闭历史"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+      </div>
+      <div style="flex: 1; min-height: 0; display: flex">
+        <div style="flex: 1; min-width: 0; padding: 22px 28px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 13px" class="muted"><span class="av bot">通</span><span style="color: #0f0f0f">通用开发助手</span><span>提交，</span><span class="av">王</span><span style="color: #0f0f0f">王芳</span><span>10-19 合并 · 处理批注 1 条</span></div>
+          <div class="card" style="overflow: hidden">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid rgba(0,0,0,.06); background: #fafafa"><span style="font-size: 13px; font-weight: 500">处理顺序</span><span style="margin-left: auto; font-size: 12px"><span style="color: #3f7a5d">+1</span> <span style="color: #a33d29">−1</span></span></div>
+            <div class="dl"><span class="ln">8</span><span class="sg"></span><span class="tx">渠道回调先经过网关验签，再进入支付服务的回调队列。</span></div>
+            <div class="dl"><span class="ln">9</span><span class="sg"></span><span class="tx">支付服务按支付单加锁处理，同一支付单的回调串行执行。</span></div>
+            <div class="dl del"><span class="ln">10</span><span class="sg">−</span><span class="tx">超时未回调的支付单由对账任务每 30 分钟补查一次。</span></div>
+            <div class="dl add"><span class="ln">10</span><span class="sg">+</span><span class="tx">超时未回调的支付单由对账任务每 10 分钟补查一次。[^2]</span></div>
+            <div class="dl add"><span class="ln">22</span><span class="sg">+</span><span class="tx">[^2]: task://MAR-128 回调补查改为对账任务</span></div>
+          </div>
+        </div>
+        <aside class="panel" aria-label="页面历史">
+          <div class="ph"><span style="flex: 1">页面历史</span></div>
+          <div class="pb" style="gap: 4px; padding: 10px">
+            <div style="display: flex; flex-direction: column; gap: 3px; padding: 10px; border-radius: 10px"><div style="display: flex; gap: 6px"><span class="faint mono">#14</span><span style="font-weight: 500; font-size: 13.5px">每日收录 · 10-24</span></div><div class="faint" style="font-size: 12px">通用开发助手 · 韩梅梅合并 · 昨天 22:06</div><span class="tag" style="align-self: flex-start">当前版本</span></div>
+            <div style="display: flex; flex-direction: column; gap: 3px; padding: 10px; border-radius: 10px; background: rgba(0,0,0,.055)"><div style="display: flex; gap: 6px"><span class="faint mono">#9</span><span style="font-weight: 500; font-size: 13.5px">处理批注：补查间隔</span></div><div class="faint" style="font-size: 12px">通用开发助手 · 王芳合并 · 10-19</div></div>
+            <div style="display: flex; flex-direction: column; gap: 3px; padding: 10px; border-radius: 10px"><div style="display: flex; gap: 6px"><span class="faint mono">#6</span><span style="font-weight: 500; font-size: 13.5px">知识合并：并入「回调重试」</span></div><div class="faint" style="font-size: 12px">通用开发助手 · 李雷合并 · 10-12</div></div>
+            <div style="display: flex; flex-direction: column; gap: 3px; padding: 10px; border-radius: 10px"><div style="display: flex; gap: 6px"><span class="faint mono">#2</span><span style="font-weight: 500; font-size: 13.5px">收录资料：渠道接入规范 v3</span></div><div class="faint" style="font-size: 12px">通用开发助手 · 王芳合并 · 10-08</div></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -816,6 +816,9 @@ func main() {
 	if h.TelegramOutbound != nil {
 		h.TelegramOutbound.Start(sweepCtx)
 	}
+	// Knowledge base block embeddings for hybrid search; returns at once
+	// without an embedding model or pgvector.
+	go h.KbEmbeddings.Run(sweepCtx)
 	// GitHub PR-card API snapshot pipeline (MUL-5265): worker pool + TTL sweeper.
 	// No-op when unconfigured (no App private key).
 	h.PRRefresh.Start(sweepCtx)

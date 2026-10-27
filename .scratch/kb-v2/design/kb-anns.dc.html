@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>待处理 · 批注</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <dc-import name="KbNav" home="{{ true }}" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar"><div class="crumb"><span>团队知识库</span><span>/</span><span>首页</span><span>/</span><b>批注</b></div></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 16px 24px 12px">
+        <div class="seg"><button class="on">待处理 4</button><button>处理中 1</button><button>已解决</button><button>不处理</button></div>
+        <div style="flex: 1"></div>
+        <button class="btn btn-p">{{sendLabel}}</button>
+      </div>
+      <div style="padding: 0 24px">
+        <sc-for list="{{rows}}" as="a" hint-placeholder-count="4">
+          <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 4px; border-bottom: 1px solid rgba(0,0,0,.06)">
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px" class="muted"><span class="{{a.avCls}}">{{a.av}}</span><span style="color: #0f0f0f">{{a.who}}</span><span class="faint">{{a.when}}</span><sc-if value="{{a.link}}" hint-placeholder-val="{{ true }}"><a class="tag" href="#" style="text-decoration: none; color: #4f6f8a"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>{{a.where}}</a></sc-if><sc-if value="{{a.noLink}}" hint-placeholder-val="{{ false }}"><span class="tag">{{a.where}}</span></sc-if></div>
+              <sc-if value="{{a.hasQuote}}" hint-placeholder-val="{{ true }}"><div style="font-size: 13px; color: #5c5c5c; background: #f7f7f7; border-radius: 8px; padding: 6px 10px">{{a.quote}}</div></sc-if>
+              <div style="font-size: 14px">{{a.text}}</div>
+            </div>
+            <button class="btn btn-g" style="height: 28px; font-size: 12.5px; padding: 0 10px">不处理</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"checked":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var checked = !!this.props.checked;
+    var rows = [
+      { av: '王', who: '王芳', when: '昨天 17:40', where: '支付回调 · 第 2 段', quote: '渠道回调按订单号加幂等键去重，重复回调直接返回成功。', text: '去重键已经改成渠道交易号，不是订单号。', pick: true },
+      { av: '通', bot: true, who: '通用开发助手', when: '今天 08:02', where: '支付回调 · 第 1 段', quote: '超时未回调的支付单由对账任务每 10 分钟补查一次。', text: '代码已变更：补查间隔可能已调整，需要核对。', pick: true },
+      { av: '李', who: '李雷', when: '10-23', where: '整个知识库', quote: '', text: '缺少发布回滚的操作步骤，出事故时找不到。' },
+      { av: '通', bot: true, who: '通用开发助手', when: '10-22', where: '整个知识库', quote: '', text: '对话中被问到「渠道限流阈值」，知识库里没有，需要补充。' }
+    ];
+    return {
+      sendLabel: '全部交给智能体（4）',
+      rows: rows.map(function (r) {
+        var on = checked && !!r.pick;
+        return Object.assign({}, r, { on: on, avCls: 'av' + (r.bot ? ' bot' : ''), hasQuote: !!r.quote, link: !!r.quote, noLink: !r.quote });
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -35,6 +35,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/integrations/telegram"
 	"github.com/yunboom/marvis/server/internal/integrations/wecom"
 	"github.com/yunboom/marvis/server/internal/issuestatus"
+	"github.com/yunboom/marvis/server/internal/kb"
 	obsmetrics "github.com/yunboom/marvis/server/internal/metrics"
 	"github.com/yunboom/marvis/server/internal/middleware"
 	"github.com/yunboom/marvis/server/internal/realtime"
@@ -44,6 +45,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/util"
 	"github.com/yunboom/marvis/server/internal/util/secretbox"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/embedding"
 	"github.com/yunboom/marvis/server/pkg/featureflag"
 	"github.com/yunboom/marvis/server/pkg/llm"
 )
@@ -158,6 +160,17 @@ type Config struct {
 	// cmd/server validates the raw value before the boot continues, so a
 	// non-boolean never reaches this struct.
 	LLMDisableThinking bool
+	// Embedding* configure the embedding model behind the vector half of
+	// knowledge base search (pkg/embedding). All three must be set to enable
+	// it; otherwise search is keyword only.
+	//   - EmbeddingBaseURL -> MARVIS_EMBEDDING_BASE_URL
+	//   - EmbeddingAPIKey  -> MARVIS_EMBEDDING_API_KEY
+	//   - EmbeddingModel   -> MARVIS_EMBEDDING_MODEL
+	//   - EmbeddingBatchSize -> MARVIS_EMBEDDING_BATCH_SIZE (inputs per request)
+	EmbeddingBaseURL   string
+	EmbeddingAPIKey    string
+	EmbeddingModel     string
+	EmbeddingBatchSize int
 	// ServerVersion is the build version of the running API binary (the same
 	// value main.go stamps via -X main.version and reports on /metrics).
 	// Surfaced through /api/config so self-hosted operators can confirm which
@@ -441,6 +454,17 @@ type Handler struct {
 	// Config); when unconfigured its Enabled() reports false and callers fall
 	// back silently.
 	LLM *llm.Client
+	// KbEmbedder embeds knowledge base search queries. Always non-nil; when
+	// unconfigured its Enabled() reports false and search is keyword only.
+	KbEmbedder kb.Embedder
+	// KbEmbeddings indexes mainline blocks for the vector half of search.
+	// Mainline writes call KbEmbeddings.Enqueue after they commit; main.go
+	// runs it.
+	KbEmbeddings *kb.EmbeddingIndexer
+	// kbDraftEvents coalesces kb.draft.updated per draft (one event per
+	// second of writes). Nil on handlers not built by New; events are then
+	// dropped.
+	kbDraftEvents *kbDraftNotifier
 	// VCSSecretBox encrypts/decrypts per-workspace Git provider access tokens and
 	// webhook secrets at rest (Forgejo / Gitea / GitLab). Nil when
 	// MARVIS_VCS_SECRET_KEY is unset; connect returns 403 and webhook returns 404
@@ -520,6 +544,15 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 		"disable_thinking", llmClient.DisableThinking(),
 	)
 
+	embedder := embedding.New(embedding.Config{
+		BaseURL:   cfg.EmbeddingBaseURL,
+		APIKey:    cfg.EmbeddingAPIKey,
+		Model:     cfg.EmbeddingModel,
+		BatchSize: cfg.EmbeddingBatchSize,
+	})
+	// The model only; never the key or the base URL, which may embed a token.
+	slog.Info("kb embedding", "enabled", embedder.Enabled(), "model", embedder.Model(), "batch_size", embedder.BatchSize())
+
 	taskSvc := service.NewTaskService(queries, txStarter, hub, bus, daemonHub)
 	taskSvc.Analytics = analyticsClient
 	taskSvc.SourceContextStorage = store
@@ -563,6 +596,9 @@ func New(queries *db.Queries, txStarter txStarter, hub *realtime.Hub, bus *event
 			Timeout: cfg.CloudTimeout,
 		}),
 		LLM:               llmClient,
+		KbEmbedder:        embedder,
+		KbEmbeddings:      kb.NewEmbeddingIndexer(queries, embedder),
+		kbDraftEvents:     &kbDraftNotifier{},
 		cfg:               cfg,
 		bootstrapUsed:     &atomic.Bool{},
 		larkDesktopStates: &larkDesktopStateStore{},
