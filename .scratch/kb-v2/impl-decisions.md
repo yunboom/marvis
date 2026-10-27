@@ -432,3 +432,22 @@
 8. **批注卡片没有「来源」**：设计稿 12.4 写了「来源：对话」，但批注接口没有来源字段，本票不加接口字段，悬停只显示作者和时间。变更请求的来源沿用审核页的 `review.origin` 文案（「对话 · 标题」）。
 9. **编辑器里的知识库链接**：`mention-view` 同样渲染这四种卡片；`mention-extension` 把 kb 四种类型和 issue / project 一样当实体，序列化时不加 `@`（否则编辑一次就会变成 `[@支付回调](…)`）。通用 Markdown 渲染器（`packages/ui/markdown`）的兜底正则也加上四种类型，无卡片时显示为文字。服务端 `MentionRe` 不改，加测试断言 kb 链接不被当成提及。
 10. **`kb schema templates`**：放在新文件 `cmd_kb_schema.go`（自己的 `init` 挂到 `kbCmd`），不动 `cmd_kb.go` 的注册表；JSON 只输出 `{"schema": …}`，`--output table` 直接打印 Schema 正文（末尾补换行）。
+
+## 票 12
+
+审查中发现、在本票补上的缺口：
+
+1. **`GET /api/kb/sources`（票 04 留下、后续票都没接）**
+   - 新文件 `kb_sources.go` / `kb_sources.sql`，一条 UNION 查询列任务、任务评论、对话、本库原始资料（只列 `source`，不列 `asset`），按更新时间倒序，`limit` / `offset` 同其他列表（默认 50，最多 200）。
+   - uri：任务 `task://<KEY>`；评论没有自己的 scheme，写成 `task://<KEY>#comment-<id>`；对话 `chat://<id>`，标题固定写中性标签 `chat`（spec 04）；原始资料 `raw://sources/<名字>`。
+   - `ingested`：本库有论断的证据 uri 等于它（走 `kb_claim_evidence_gin`）；原始资料另外认 `uri#page=N`。
+   - 对话按 8.7 的规则：能读全员对话的调用方（owner 本人、owner 的私有智能体）列全员公开对话，否则只列自己发起的；作业的对话和隐藏的系统智能体对话不列。
+   - 多返回 `read_with`（spec 08 CLI 示例里有，接口示例没写）：`marvis issue get` / `issue comment list` / `chat get [--scope workspace]` / `kb raw get`。
+2. **合并 / 回滚不能留下孤儿页**：`kbMergedTree` 除同级重名外，还报「父页面已不在」（move）和「删掉的页面在主线上还有子页面」（page）；合并按 409 `merge_conflict`、回滚按 409 `revert_conflict` 返回，审核详情的试合并同样显示。
+3. **草稿 sync 批量写**：合并出的页一次版本 +1、一条 unnest 批量 upsert（`UpsertKbDraftPages`），与票 04 第 5 条「有页合并时草稿版本 +1」一致；原来每页各 +1。单页写入也走同一函数。
+4. **审核页来源的可打开性**：作业只对发起人可见、对话只对发起人可见，审核人点「来源」或「查看执行过程」会 403。`origin` 多返回 `openable`（只增字段，旧客户端忽略；旧服务端缺字段时前端按 true），列表和详情按读者算；不可打开时只显示文字。
+5. **需要复核的页面列表（设计稿 2.5，票 02 第 8 条留下）**：`/kb/{slug}/stale`（web、desktop 都接），首页卡片链过去；每行「交给智能体复核」建 health 作业带这一页，页头「全部交给智能体复核」建不带页面的 health 作业。设计稿的「引用的代码有改动」和「上次核实」两列服务端没有数据，只画「过了复核日期 · 应在 X 前复核」。
+6. **作业默认执行智能体**：默认选第一个本人有调用权限的智能体（`canAssignAgent`，与聊天一致），不再可能默认成别人的私有智能体再 403。选择器里仍列出全部智能体（沿用自动化的 AgentPicker）。
+7. **实时失效补漏**：`kb.base.changed` 一并失效首页（名称、简介在首页查询里）；`kb.draft.updated` 按 `page_ids` 失效这些页的已发布读取（草稿条）。
+8. **错误处理**：作业首条消息失败后的回收、全员对话读取、导出时读原始资料的错误不再吞掉（只有对象不存在时跳过，新增 `storage.IsNotFound`）。
+9. **未改的审查意见**：首页不画运行中的作业（设计稿 2.1 没有，导航行已有数量）；知识库检索下拉、Markdown 放大编辑框仍用手写结构（输入框要保持焦点、编辑区是整块编辑面，换成 Popover / Textarea 原语反而要覆盖大半样式）；ETag 未实现（spec 只在字段注释里提到，没有缓存需求）。
