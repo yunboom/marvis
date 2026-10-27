@@ -303,7 +303,8 @@ export function KbPageBody({
       }}
       onBlur={scheduleHide}
     >
-      <h1 className="mb-2 text-display-sm font-semibold">{pageTitle(page)}</h1>
+      {/* 28px sits between the scale's 24 and 36: above the body's 24px h1, below hero type. */}
+      <h1 className="mb-2 text-[28px] leading-[36px] font-semibold">{pageTitle(page)}</h1>
       <PageMeta page={page} />
 
       {banners}

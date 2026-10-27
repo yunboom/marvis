@@ -61,7 +61,7 @@ function TreeRow({ page, depth, ctx }: { page: KbTreePage; depth: number; ctx: T
     <li>
       <div
         className={cn(
-          "group/tree flex h-8 items-center gap-1 rounded-lg pr-1.5 text-body text-foreground transition-colors hover:bg-surface-hover",
+          "group/tree flex h-8 items-center gap-1 rounded-lg pr-1.5 text-body-lg text-foreground transition-colors hover:bg-surface-hover",
           selected && "bg-surface-selected font-medium text-foreground hover:bg-surface-selected",
         )}
         style={{ paddingLeft: 6 + depth * 16 }}

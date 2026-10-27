@@ -378,8 +378,10 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
         <div ref={scroller} className="relative min-w-0 flex-1 overflow-y-auto">
           <article
             className={cn(
-              "mx-auto w-full max-w-[760px] pb-10",
-              panel === "none" ? "px-14 pt-9" : "px-8 pt-7",
+              // The text column is about 800px either way (912 - 2*56, 864 - 2*32),
+              // some 50 CJK characters a line at the 16px body.
+              "mx-auto w-full pb-10",
+              panel === "none" ? "max-w-[912px] px-14 pt-9" : "max-w-[864px] px-8 pt-7",
             )}
           >
             {diff ? (
@@ -454,7 +456,8 @@ function KbPageDiff({
 
   return (
     <div className="kb-doc">
-      <h1 className="mb-[18px] text-display-sm font-semibold">{title}</h1>
+      {/* 28px sits between the scale's 24 and 36: above the body's 24px h1, below hero type. */}
+      <h1 className="mb-[18px] text-[28px] leading-[36px] font-semibold">{title}</h1>
       {banners}
       {change === null && <p className="text-body text-muted-foreground">{t(($) => $.draft.diff_empty)}</p>}
       {change && <KbFileCard page={change} open={open} onToggle={() => setOpen((v) => !v)} href={pageHref} />}
