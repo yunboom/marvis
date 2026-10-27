@@ -21,6 +21,7 @@
   <div style="padding: 10px 8px 4px; display: flex; flex-direction: column; gap: 2px">
     <a class="{{homeCls}}" href="#" style="height: 34px; font-size: 13.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"></path></svg><span style="flex: 1">首页</span><span class="faint" style="font-size: 12px">待处理 6</span></a>
     <a class="{{runsCls}}" href="#" style="height: 34px; font-size: 13.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M13 3 4 14h7l-1 7 9-11h-7z"></path></svg><span style="flex: 1">知识库作业</span><span class="faint" style="font-size: 12px; display: inline-flex; align-items: center; gap: 5px"><span class="dot d-green"></span>1 运行中</span></a>
+    <a class="{{graphCls}}" href="#" style="height: 34px; font-size: 13.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="6" cy="6" r="2.5"></circle><circle cx="18" cy="8" r="2.5"></circle><circle cx="10" cy="18" r="2.5"></circle><path d="m8 7 8 1M7 8l2 8M16 10l-5 6"></path></svg><span style="flex: 1">关系图</span></a>
   </div>
   <div style="padding: 8px 16px 4px; font-size: 12px; color: #757575">页面</div>
   <div style="padding: 0 8px; display: flex; flex-direction: column; gap: 1px; flex: 1; min-height: 0; overflow: hidden">
@@ -36,10 +37,10 @@
   </div>
 </aside>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"sel":{"editor":"text","default":"支付回调"},"hover":{"editor":"text","default":""},"home":{"editor":"boolean","default":false},"runs":{"editor":"boolean","default":false},"menu":{"editor":"boolean","default":false},"plusOn":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"$preview":{"width":260,"height":868}}'>
+<script type="text/x-dc" data-dc-script data-props='{"sel":{"editor":"text","default":"支付回调"},"hover":{"editor":"text","default":""},"home":{"editor":"boolean","default":false},"runs":{"editor":"boolean","default":false},"graph":{"editor":"boolean","default":false},"menu":{"editor":"boolean","default":false},"plusOn":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"$preview":{"width":260,"height":868}}'>
 class Component extends DCLogic {
   renderVals() {
-    var sel = (this.props.home || this.props.runs) ? '' : (this.props.sel ?? '支付回调');
+    var sel = (this.props.home || this.props.runs || this.props.graph) ? '' : (this.props.sel ?? '支付回调');
     var hover = this.props.hover ?? '';
     var plusOn = !!this.props.plusOn;
     var draft = !!this.props.draft;
@@ -56,6 +57,7 @@ class Component extends DCLogic {
       moreCls: 'ib' + (this.props.menu ? ' on' : ''),
       homeCls: 'nav-i' + (this.props.home ? ' on' : ''),
       runsCls: 'nav-i' + (this.props.runs ? ' on' : ''),
+      graphCls: 'nav-i' + (this.props.graph ? ' on' : ''),
       rows: tree.map(function (t) {
         var on = t[0] === sel, hv = t[0] === hover;
         return {
