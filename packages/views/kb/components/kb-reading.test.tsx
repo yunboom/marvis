@@ -262,7 +262,21 @@ describe("KbShell page tree", () => {
     expect(screen.queryByRole("link", { name: "支付" })).not.toBeInTheDocument();
   });
 
-  it("shows the tree as the draft would leave it, without draft labels", async () => {
+  it("shows the tree as the draft would leave it, without draft labels, while its changes are off", async () => {
+    mount(
+      <KbShell>
+        <div />
+      </KbShell>,
+      makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1&diff=0"),
+    );
+
+    const link = await screen.findByRole("link", { name: "支付回调" });
+    expect(link).toHaveAttribute("href", "/acme/kb/team/p/page-cb?draft=d-1&diff=0");
+    expect(within(link.parentElement!).queryByText("Draft")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "旧回调" })).not.toBeInTheDocument();
+  });
+
+  it("labels the draft's changes in the tree by default", async () => {
     mount(
       <KbShell>
         <div />
@@ -272,20 +286,6 @@ describe("KbShell page tree", () => {
 
     const link = await screen.findByRole("link", { name: "支付回调" });
     expect(link).toHaveAttribute("href", "/acme/kb/team/p/page-cb?draft=d-1");
-    expect(within(link.parentElement!).queryByText("Draft")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "旧回调" })).not.toBeInTheDocument();
-  });
-
-  it("labels the draft's changes in the tree while they are shown", async () => {
-    mount(
-      <KbShell>
-        <div />
-      </KbShell>,
-      makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1&diff=1"),
-    );
-
-    const link = await screen.findByRole("link", { name: "支付回调" });
-    expect(link).toHaveAttribute("href", "/acme/kb/team/p/page-cb?draft=d-1&diff=1");
     expect(within(link.parentElement!).getByText("Draft")).toBeInTheDocument();
     const deleted = screen.getByRole("link", { name: "旧回调" });
     expect(deleted).toHaveClass("line-through");
@@ -424,7 +424,47 @@ describe("KbPageView", () => {
     expect(published.replace).toHaveBeenCalledWith("/acme/kb/team/p/page-cb?draft=d-1");
   });
 
-  it("renders a draft as is until its changes are shown", async () => {
+  it("renders a draft as is while its changes are off", async () => {
+    mocked.getKnowledgeBasePage.mockImplementation(async (_ref, draft) =>
+      draft
+        ? {
+            ...CALLBACK,
+            draft_change: "modified",
+            blocks: CALLBACK.blocks.map((b) =>
+              b.id === "b4" ? { ...b, content: "渠道回调按渠道交易号加幂等键去重。[^mar-142]" } : b,
+            ),
+            drafts: [
+              { id: "d-1", title: "", status: "open", updated_at: new Date().toISOString(), draft_change: "modified", changed_blocks: 1, origin: { type: "chat", label: "回调去重键", ref_id: "s-1" } },
+              { id: "d-2", title: "", status: "open", updated_at: new Date().toISOString(), draft_change: "modified", changed_blocks: 2, origin: { type: "issue", label: "回调重试次数", ref_id: "150" } },
+            ],
+          }
+        : CALLBACK,
+    );
+
+    const { adapter } = mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-2&diff=0"));
+    expect(await screen.findByText(/渠道回调按渠道交易号加幂等键去重/)).toBeInTheDocument();
+    expect(document.querySelector("ins, del, .kb-block-added, .kb-block-removed")).toBeNull();
+    expect(screen.getByRole("button", { name: "Draft" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: "Changes" })).not.toBeInTheDocument();
+
+    const diffSwitch = screen.getByRole("switch", { name: "Show changes" });
+    expect(diffSwitch).toHaveAttribute("aria-checked", "false");
+    await userEvent.click(diffSwitch);
+    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team/p/page-cb?draft=d-2");
+
+    // Another draft keeps the changes off.
+    await userEvent.click(screen.getByRole("button", { name: "Choose draft" }));
+    const items = await screen.findAllByRole("menuitemradio");
+    expect(items.map((i) => i.textContent)).toEqual([
+      expect.stringContaining("Chat “回调去重键”"),
+      expect.stringContaining("Issue “回调重试次数”"),
+    ]);
+    expect(items[1]).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(items[0]!);
+    expect(adapter.replace).toHaveBeenLastCalledWith("/acme/kb/team/p/page-cb?draft=d-1&diff=0");
+  });
+
+  it("marks a draft's edits against the official page by default", async () => {
     mocked.getKnowledgeBasePage.mockImplementation(async (_ref, draft) =>
       draft
         ? {
@@ -442,70 +482,33 @@ describe("KbPageView", () => {
     );
 
     const { adapter } = mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-2"));
-    expect(await screen.findByText(/渠道回调按渠道交易号加幂等键去重/)).toBeInTheDocument();
-    expect(document.querySelector("ins, del, .kb-block-added, .kb-block-removed")).toBeNull();
-    expect(screen.getByRole("button", { name: "Draft" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.queryByRole("button", { name: "Changes" })).not.toBeInTheDocument();
-
-    const diffSwitch = screen.getByRole("switch", { name: "Show changes" });
-    expect(diffSwitch).toHaveAttribute("aria-checked", "false");
-    await userEvent.click(diffSwitch);
-    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team/p/page-cb?draft=d-2&diff=1");
-
-    await userEvent.click(screen.getByRole("button", { name: "Choose draft" }));
-    const items = await screen.findAllByRole("menuitemradio");
-    expect(items.map((i) => i.textContent)).toEqual([
-      expect.stringContaining("Chat “回调去重键”"),
-      expect.stringContaining("Issue “回调重试次数”"),
-    ]);
-    expect(items[1]).toHaveAttribute("aria-checked", "true");
-  });
-
-  it("marks a draft's edits against the official page while its changes are shown", async () => {
-    mocked.getKnowledgeBasePage.mockImplementation(async (_ref, draft) =>
-      draft
-        ? {
-            ...CALLBACK,
-            draft_change: "modified",
-            blocks: CALLBACK.blocks.map((b) =>
-              b.id === "b4" ? { ...b, content: "渠道回调按渠道交易号加幂等键去重。[^mar-142]" } : b,
-            ),
-            drafts: [
-              { id: "d-1", title: "", status: "open", updated_at: new Date().toISOString(), draft_change: "modified", changed_blocks: 1, origin: { type: "chat", label: "回调去重键", ref_id: "s-1" } },
-              { id: "d-2", title: "", status: "open", updated_at: new Date().toISOString(), draft_change: "modified", changed_blocks: 2, origin: { type: "issue", label: "回调重试次数", ref_id: "150" } },
-            ],
-          }
-        : CALLBACK,
-    );
-
-    const { adapter } = mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-2&diff=1"));
     expect(await screen.findByText("渠道交易")).toHaveProperty("tagName", "INS");
     expect(screen.getByText("订单")).toHaveProperty("tagName", "DEL");
     expect(screen.getByRole("switch", { name: "Show changes" })).toHaveAttribute("aria-checked", "true");
 
-    // Another draft keeps the changes shown; switching them off drops ?diff.
+    // Another draft keeps the changes shown; switching them off writes ?diff=0.
     await userEvent.click(screen.getByRole("button", { name: "Choose draft" }));
     await userEvent.click((await screen.findAllByRole("menuitemradio"))[0]!);
-    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team/p/page-cb?draft=d-1&diff=1");
+    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team/p/page-cb?draft=d-1");
     await userEvent.click(screen.getByRole("switch", { name: "Show changes" }));
-    expect(adapter.replace).toHaveBeenLastCalledWith("/acme/kb/team/p/page-cb?draft=d-2");
+    expect(adapter.replace).toHaveBeenLastCalledWith("/acme/kb/team/p/page-cb?draft=d-2&diff=0");
   });
 
-  it("reads a ?view=diff link as showing the changes", async () => {
+  it.each(["diff=1", "view=diff"])("reads a ?%s link as showing the changes", async (param) => {
     mocked.getKnowledgeBasePage.mockImplementation(async (_ref, draft) =>
       draft
         ? { ...CALLBACK, draft_change: "modified", blocks: CALLBACK.blocks.filter((b) => b.id !== "b2") }
         : CALLBACK,
     );
-    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1&view=diff"));
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", `draft=d-1&${param}`));
 
     expect(await screen.findByLabelText("Removed in the draft")).toHaveTextContent("渠道回调先经过网关验签");
     expect(screen.getByRole("switch", { name: "Show changes" })).toHaveAttribute("aria-checked", "true");
   });
 
-  it("shows a page the draft creates without an official version, all new when its changes are shown", async () => {
+  it("shows a page the draft creates without an official version, all new by default", async () => {
     mocked.getKnowledgeBasePage.mockResolvedValue({ ...CALLBACK, pending_mr: null, draft_change: "added", drafts: [] });
-    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1&diff=1"));
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1"));
 
     expect(await screen.findByRole("switch", { name: "Show changes" })).toHaveAttribute("aria-checked", "true");
     expect(screen.queryByRole("button", { name: "Official" })).not.toBeInTheDocument();
@@ -519,12 +522,12 @@ describe("KbPageView", () => {
 
   it("keeps page links of a draft read on that draft", async () => {
     mocked.getKnowledgeBasePage.mockResolvedValue({ ...CALLBACK, draft_change: "modified" });
-    const { adapter } = mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1&diff=1"));
+    const { adapter } = mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1&diff=0"));
 
     const body = await screen.findByRole("heading", { level: 1, name: "支付回调" });
     fireEvent.click(within(body.parentElement!).getByRole("link", { name: "幂等键" }));
-    expect(adapter.push).toHaveBeenCalledWith("/acme/kb/team/p/page-idem?draft=d-1&diff=1#b9");
-    expect(screen.getByRole("link", { name: "支付" })).toHaveAttribute("href", "/acme/kb/team/p/page-payment?draft=d-1&diff=1");
+    expect(adapter.push).toHaveBeenCalledWith("/acme/kb/team/p/page-idem?draft=d-1&diff=0#b9");
+    expect(screen.getByRole("link", { name: "支付" })).toHaveAttribute("href", "/acme/kb/team/p/page-payment?draft=d-1&diff=0");
 
     await userEvent.click(screen.getByRole("button", { name: "Page info" }));
     const info = screen.getByRole("complementary", { name: "Page info" });
@@ -541,7 +544,7 @@ describe("KbPageView", () => {
 
   it("says so when the shown changes leave the page as it is", async () => {
     mocked.getKnowledgeBasePage.mockResolvedValue(CALLBACK);
-    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1&diff=1"));
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1"));
 
     expect(await screen.findByText("This draft does not change this page")).toBeInTheDocument();
   });

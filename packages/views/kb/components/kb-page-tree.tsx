@@ -21,29 +21,25 @@ function isDraftChange(value: string): value is DraftChange {
 
 const DRAFT_DELETED: DraftChange = "deleted";
 
-// ?diff=1 marks a draft's edits on the page and in the tree; links from
-// before the switch carried ?view=diff.
+// A draft read marks the draft's edits on the page and in the tree unless
+// ?diff=0 turns them off; ?diff=1 and the older ?view=diff read as on.
 const DIFF_PARAM = "diff";
-const DIFF_ON = "1";
-const LEGACY_VIEW_PARAM = "view";
-const LEGACY_DIFF_VIEW = "diff";
+const DIFF_OFF = "0";
 
 /** Whether a draft read marks the draft's edits. */
 export function readsDraftDiff(searchParams: URLSearchParams): boolean {
-  return (
-    !!searchParams.get("draft") &&
-    (searchParams.get(DIFF_PARAM) === DIFF_ON || searchParams.get(LEGACY_VIEW_PARAM) === LEGACY_DIFF_VIEW)
-  );
+  return !!searchParams.get("draft") && searchParams.get(DIFF_PARAM) !== DIFF_OFF;
 }
 
 /**
  * Appends ?draft=<id> so the tree and page stay on the draft being viewed,
- * and &diff=1 while its edits are marked.
+ * and &diff=0 while its edits are not marked.
  */
-export function withDraft(href: string, draft: string, diff = false): string {
+export function withDraft(href: string, draft: string, diff = true): string {
   if (!draft) return href;
   const read = `${href}?draft=${encodeURIComponent(draft)}`;
-  return diff ? `${read}&${DIFF_PARAM}=${DIFF_ON}` : read;
+
+  return diff ? read : `${read}&${DIFF_PARAM}=${DIFF_OFF}`;
 }
 
 interface TreeContext {
@@ -196,7 +192,7 @@ interface KbPageTreeProps {
  * The page tree of one knowledge base. Each level is fetched when it is first
  * shown; opening a page expands its ancestors so their levels load together.
  */
-export function KbPageTree({ kbSlug, selectedId, ancestorIds, draft, diff = false }: KbPageTreeProps) {
+export function KbPageTree({ kbSlug, selectedId, ancestorIds, draft, diff = true }: KbPageTreeProps) {
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set(ancestorIds));
 
   const ancestorKey = ancestorIds.join("/");

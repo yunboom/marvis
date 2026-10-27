@@ -82,7 +82,7 @@ export function useDraftLabel() {
 export function KbDraftBar({
   drafts,
   activeDraft,
-  diff = false,
+  diff = true,
   pageDraftChange = "",
 }: {
   drafts: KbPageDraft[];
@@ -121,7 +121,7 @@ export function KbDraftBar({
           <DropdownMenuContent align="end" className="w-[300px]">
             <DropdownMenuRadioGroup
               value={selected.id}
-              onValueChange={(value) => replace(withDraft(pathname, String(value), !!activeDraft && diff))}
+              onValueChange={(value) => replace(withDraft(pathname, String(value), !activeDraft || diff))}
             >
               {drafts.map((draft) => (
                 <DropdownMenuRadioItem key={draft.id} value={draft.id}>

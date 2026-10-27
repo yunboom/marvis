@@ -203,7 +203,7 @@ export function KbPageBody({
   annotatedQuotes,
   kbSlug = "",
   draft = "",
-  diff = false,
+  diff = true,
 }: KbPageBodyProps) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
