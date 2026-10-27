@@ -109,7 +109,7 @@ var kbMRListCmd = &cobra.Command{
 
 var kbMRGetCmd = &cobra.Command{
 	Use:   "get <number>",
-	Short: "Show a merge request with its changes and checks",
+	Short: "Show a merge request with its status, review summaries, changes and checks",
 	Args:  exactArgs(1),
 	RunE:  runKbMRGet,
 }
@@ -121,16 +121,26 @@ var kbMRCommentCmd = &cobra.Command{
 
 var kbMRCommentListCmd = &cobra.Command{
 	Use:   "list <number>",
-	Short: "List a merge request's comments",
+	Short: "List a merge request's submitted reviews (with their summaries) and published comments",
 	Args:  exactArgs(1),
 	RunE:  runKbMRCommentList,
 }
 
 var kbMRCommentAddCmd = &cobra.Command{
 	Use:   "add <number>",
-	Short: "Comment on a merge request; reply under the comment that triggered you with --parent",
+	Short: "Reply to review feedback as the merge request's owner; reply under a comment with --parent",
+	Long: `Post a published comment on a merge request. Only the owner of the merge
+request (the member who created its draft, or an agent acting for them) may;
+reviewers leave feedback through a review on the review page.`,
+	Args: exactArgs(1),
+	RunE: runKbMRCommentAdd,
+}
+
+var kbMRReadyCmd = &cobra.Command{
+	Use:   "ready <number>",
+	Short: "Ask for review again after addressing the feedback of a changes_requested merge request",
 	Args:  exactArgs(1),
-	RunE:  runKbMRCommentAdd,
+	RunE:  runKbMRReady,
 }
 
 var kbMRMergeCmd = &cobra.Command{
@@ -181,7 +191,7 @@ func init() {
 	addKbOutput(kbAnnotationDismissCmd, kbOutputJSON)
 	addKbOutput(kbAnnotationReopenCmd, kbOutputJSON)
 
-	kbMRCmd.AddCommand(kbMRCreateCmd, kbMRUpdateCmd, kbMRListCmd, kbMRGetCmd, kbMRCommentCmd, kbMRMergeCmd, kbMRCloseCmd, kbMRRevertCmd)
+	kbMRCmd.AddCommand(kbMRCreateCmd, kbMRUpdateCmd, kbMRListCmd, kbMRGetCmd, kbMRCommentCmd, kbMRMergeCmd, kbMRCloseCmd, kbMRRevertCmd, kbMRReadyCmd)
 	kbMRCommentCmd.AddCommand(kbMRCommentListCmd, kbMRCommentAddCmd)
 
 	kbMRCreateCmd.Flags().String("draft", "", kbDraftFlagHelp)
@@ -195,7 +205,7 @@ func init() {
 		addKbOutput(c, kbOutputJSON)
 	}
 
-	kbMRListCmd.Flags().String("status", "open", "open, merged, closed or all")
+	kbMRListCmd.Flags().String("status", "", "open, changes_requested, merged, closed or all; open and changes_requested when omitted")
 	kbMRListCmd.Flags().String("kb", "", "Knowledge base slug or ID")
 	kbMRListCmd.Flags().Int("limit", 50, "Rows per call")
 	kbMRListCmd.Flags().Bool("full-id", false, "Show full UUIDs in table output")
@@ -203,6 +213,7 @@ func init() {
 	addKbOutput(kbMRGetCmd, kbOutputJSON)
 
 	addKbOutput(kbMRCommentListCmd, kbOutputJSON)
+	kbMRCommentListCmd.Flags().Bool("full-id", false, "Show full UUIDs in table output")
 	addKbTextFlags(kbMRCommentAddCmd, "content", "Comment Markdown")
 	kbMRCommentAddCmd.Flags().String("parent", "", "ID of the comment to reply to")
 	kbMRCommentAddCmd.Flags().String("quote-page", "", "Page reference of the quoted block")
@@ -212,7 +223,7 @@ func init() {
 
 	kbMRMergeCmd.Flags().Int64("draft-version", -1, "The draft_version from kb mr get; merging is refused when the draft changed since")
 	kbMRCloseCmd.Flags().String("reason", "", "Why the merge request is closed")
-	for _, c := range []*cobra.Command{kbMRMergeCmd, kbMRCloseCmd, kbMRRevertCmd} {
+	for _, c := range []*cobra.Command{kbMRMergeCmd, kbMRCloseCmd, kbMRRevertCmd, kbMRReadyCmd} {
 		addKbOutput(c, kbOutputJSON)
 	}
 }
@@ -470,15 +481,56 @@ func runKbMRGet(cmd *cobra.Command, args []string) error {
 	})
 }
 
+// kbReviewStateSubmitted is a published review (kb_mr_review.state).
+const kbReviewStateSubmitted = "submitted"
+
+// runKbMRCommentList prints the feedback everyone can see: the submitted
+// reviews with their summaries, and the published comments. The caller's
+// own pending review is left out.
 func runKbMRCommentList(cmd *cobra.Command, args []string) error {
 	return kbCall(cmd, func(ctx context.Context, client *cli.APIClient) error {
-		var comments any
-		if err := client.GetJSON(ctx, "/api/kb/merge-requests/"+kbRef(args[0])+"/comments", &comments); err != nil {
+		base := "/api/kb/merge-requests/" + kbRef(args[0])
+		var comments []map[string]any
+		if err := client.GetJSON(ctx, base+"/comments?state=published", &comments); err != nil {
 			return fmt.Errorf("list merge request comments: %w", err)
 		}
+		var all []map[string]any
+		if err := client.GetJSON(ctx, base+"/reviews", &all); err != nil {
+			return fmt.Errorf("list merge request reviews: %w", err)
+		}
 
-		return kbOutput(cmd, comments, nil)
+		reviews := make([]map[string]any, 0, len(all))
+		for _, rv := range all {
+			if strVal(rv, "state") == kbReviewStateSubmitted {
+				reviews = append(reviews, rv)
+			}
+		}
+		out := map[string]any{"reviews": reviews, "comments": comments}
+
+		return kbOutput(cmd, out, func() {
+			full := kbFullID(cmd)
+			reviewRows := make([][]string, len(reviews))
+			for i, rv := range reviews {
+				reviewRows[i] = []string{displayID(strVal(rv, "id"), full), strVal(rv, "reviewer_name"), numVal(rv, "comment_count"), strVal(rv, "summary"), strVal(rv, "submitted_at")}
+			}
+			cli.PrintTable(os.Stdout, []string{"REVIEW", "REVIEWER", "COMMENTS", "SUMMARY", "SUBMITTED"}, reviewRows)
+			_, _ = fmt.Fprintln(os.Stdout)
+
+			commentRows := make([][]string, len(comments))
+			for i, c := range comments {
+				quote := ""
+				if q, ok := c["quote"].(map[string]any); ok {
+					quote = strVal(q, "text")
+				}
+				commentRows[i] = []string{displayID(strVal(c, "id"), full), displayID(strVal(c, "parent_id"), full), strVal(c, "author_name"), quote, strVal(c, "body")}
+			}
+			cli.PrintTable(os.Stdout, []string{"ID", "PARENT", "AUTHOR", "QUOTE", "BODY"}, commentRows)
+		})
 	})
+}
+
+func runKbMRReady(cmd *cobra.Command, args []string) error {
+	return kbMRAction(cmd, args[0], "ready", map[string]any{})
 }
 
 func runKbMRCommentAdd(cmd *cobra.Command, args []string) error {
