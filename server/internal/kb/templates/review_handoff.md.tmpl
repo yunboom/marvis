@@ -1,0 +1,21 @@
+Change request #{{.Number}} ({{.Title}}) has review feedback to resolve.
+{{- range .Summaries}}
+
+Review summary from {{.Reviewer}}:
+{{.Text}}
+{{- end}}
+{{- range .Comments}}
+
+Comment `{{.ID}}` from {{.Author}}{{if .QuotePage}}, on the page "{{.QuotePage}}"{{end}}:
+{{- if .QuoteText}}
+> {{.QuoteText}}
+{{- end}}
+{{.Body}}
+{{- end}}
+
+To resolve it:
+- Read the full feedback with `marvis kb mr comment list {{.Number}}`.
+- Make the changes in the same draft (`{{.DraftID}}`). It is the same change request; do not open a new one.
+- Run `marvis kb draft check {{.DraftID}}` when you are done.
+- Answer under each comment with `marvis kb mr comment add {{.Number}} --parent <comment id> --content-file ./reply.md`: what you changed, or why you left it.
+- Then tell me what you changed, so I can request review again.

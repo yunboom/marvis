@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import type { KbDraftDiffLine, KbDraftPageChange, KbLintFinding } from "@marvis/core/types";
+import type { KbDraftDiffLine, KbDraftPageChange, KbLintFinding, KbMergeRequestStatus } from "@marvis/core/types";
 import { cn } from "@marvis/ui/lib/utils";
 import { AppLink } from "../../navigation";
 import { useT } from "../../i18n";
@@ -48,6 +48,14 @@ const DOT_CLASS: Record<KbDot, string> = {
   green: "bg-success",
   amber: "bg-warning",
   red: "bg-destructive",
+};
+
+/** The dot of each merge request status: under review, waiting on the owner, ended. */
+export const KB_MR_STATUS_DOT: Record<KbMergeRequestStatus, KbDot> = {
+  open: "blue",
+  changes_requested: "amber",
+  merged: "green",
+  closed: "gray",
 };
 
 export function KbStateDot({ dot }: { dot: KbDot }) {

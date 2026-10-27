@@ -15,24 +15,39 @@ RETURNING *;
 -- name: DeleteKbJob :exec
 DELETE FROM kb_job WHERE workspace_id = $1 AND id = $2;
 
+-- name: DeleteKbJobDraftByJob :exec
+-- Unlinks a deleted job's draft; the draft itself stays.
+DELETE FROM kb_job_draft WHERE workspace_id = $1 AND job_id = $2;
+
+-- name: ClearKbMergeRequestJob :exec
+-- Detaches a deleted job from the merge requests made from its draft, which
+-- stay and keep working without it.
+UPDATE kb_merge_request SET job_id = NULL
+WHERE workspace_id = $1 AND job_id = $2;
+
 -- name: GetKbJobInWorkspace :one
+-- Jobs of a deleted knowledge base are not found.
 SELECT * FROM kb_job
-WHERE workspace_id = $1 AND id = $2;
+WHERE kb_job.workspace_id = $1 AND kb_job.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbJobByDraft :one
 -- The job a draft is linked to.
 SELECT j.* FROM kb_job_draft jd
 JOIN kb_job j ON j.id = jd.job_id
-WHERE jd.draft_id = $1;
+WHERE jd.draft_id = $1
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = j.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: ListKbJobStates :many
 -- The parts of each job's state that are not stored on kb_job: the linked
 -- draft, the chat's latest task and whether a turn is in flight, the last
--- reply and the draft's latest merge request. Detail and list share it;
--- job_ids narrows it to the given jobs.
+-- reply, the draft's latest merge request and whether the job's chat is
+-- archived (the chat's status is the job's archived flag). Detail and list
+-- share it; job_ids narrows it to the given jobs.
 SELECT
     j.id,
     COALESCE(a.name, '')::text AS agent_name,
+    (COALESCE(cs.status, '') = sqlc.arg('archived_status')::text)::bool AS archived,
     jd.draft_id,
     COALESCE(d.version, 0)::bigint AS draft_version,
     COALESCE(d.status, '')::text AS draft_status,
@@ -57,6 +72,7 @@ SELECT
     COALESCE(mr.close_reason, '')::text AS mr_close_reason
 FROM kb_job j
 LEFT JOIN agent a ON a.id = j.agent_id
+LEFT JOIN chat_session cs ON cs.id = j.chat_session_id
 LEFT JOIN kb_job_draft jd ON jd.job_id = j.id
 LEFT JOIN kb_draft d ON d.id = jd.draft_id
 LEFT JOIN LATERAL (
@@ -117,7 +133,7 @@ RETURNING *;
 
 -- name: GetOpenKbMergeRequestByDraft :one
 SELECT * FROM kb_merge_request
-WHERE draft_id = sqlc.arg('draft_id') AND status = sqlc.arg('status')::text;
+WHERE draft_id = sqlc.arg('draft_id') AND status = ANY(sqlc.arg('statuses')::text[]);
 
 -- name: ListKbAnnotationsByIDs :many
 -- Annotations brought into a job; ids outside the knowledge base are left

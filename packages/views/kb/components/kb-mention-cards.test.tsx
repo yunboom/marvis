@@ -90,6 +90,7 @@ const PAGE: KbPage = {
   backlinks: [],
   pending_mr: null,
   pending_mr_count: 0,
+  pending_mrs: [],
   annotations_open: 2,
   draft_change: "",
   drafts: [],
@@ -122,6 +123,7 @@ const MR = {
   closed_by_name: "",
   closed_at: null,
   close_reason: "",
+  review_requested_at: null,
   created_at: "2026-10-25T00:00:00Z",
   updated_at: "2026-10-25T00:00:00Z",
   mention: "",
@@ -130,11 +132,16 @@ const MR = {
     { page_id: "page-m", path: "/payment/manual", old_path: "", title: "回调人工处理", change: "added", added: 8, deleted: 0, lines: [] },
   ],
   checks: { lint: [], conflicts: [] },
-  review_agent: null,
   agent_running: false,
+  owner_id: "",
+  owner_name: "",
+  reviews: [],
+  pending_review: null,
   can_merge: false,
   can_close: false,
   can_revert: false,
+  can_review: false,
+  can_request_review: false,
 } satisfies KbMergeRequestDetail;
 
 const ANNOTATION: KbAnnotation = {

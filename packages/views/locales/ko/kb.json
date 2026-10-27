@@ -2,24 +2,6 @@
   "list": {
     "title": "지식 베이스",
     "new_button": "새 지식 베이스",
-    "pending_reviews_other": "검토 대기 변경 {{count}}",
-    "search_placeholder": "지식 베이스와 페이지 검색...",
-    "search_label": "지식 베이스 검색",
-    "sort": {
-      "recent": "최근 업데이트",
-      "name": "이름"
-    },
-    "table": {
-      "name": "이름",
-      "description": "설명",
-      "pages": "페이지",
-      "pending": "대기 중",
-      "updated": "업데이트"
-    },
-    "pending": {
-      "annotations_other": "주석 {{count}}",
-      "stale_pages_other": "재검토 {{count}}"
-    },
     "copy_link": "링크 복사",
     "link_copied": "링크를 복사했습니다",
     "no_matches": "일치하는 지식 베이스가 없습니다",
@@ -29,9 +11,12 @@
   "nav": {
     "label": "지식 베이스 탐색",
     "switch": "지식 베이스 전환",
+    "filter_placeholder": "이름으로 필터",
+    "filter_label": "이름으로 지식 베이스 필터",
     "more_actions": "지식 베이스 작업",
     "home": "홈",
     "pending": "대기 {{count}}",
+    "open_mrs_other": "검토 대기 변경 {{count}}건",
     "pages": "페이지",
     "breadcrumb": "현재 위치",
     "configure": "지식 베이스 설정",
@@ -57,7 +42,11 @@
     "pages_other": "페이지 {{count}}개",
     "no_results": "“{{query}}”에 대한 결과가 없습니다",
     "no_results_hint": "다른 키워드로 검색해 보세요.",
-    "failed": "검색에 실패했습니다"
+    "failed": "검색에 실패했습니다",
+    "all_placeholder": "모든 지식 베이스 검색"
+  },
+  "find": {
+    "placeholder": "페이지에서 찾기"
   },
   "home": {
     "pending_title": "대기 중",
@@ -81,20 +70,29 @@
     "updated": "{{time}} 업데이트",
     "verified": "확인됨 · {{name}} · {{date}}",
     "stale": "재검토 필요",
-    "pending_mr_other": "이 페이지에 검토 대기 중인 변경이 {{count}}건 있습니다: {{title}} (#{{number}})",
+    "pending_mr_other": "이 페이지에 검토 대기 중인 변경이 {{count}}건 있습니다 #{{number}} · {{title}}",
     "not_found": "페이지가 없거나 삭제되었습니다",
     "sources": "출처",
     "missing_page": "아직 작성되지 않은 페이지입니다",
     "close_panel": "닫기",
-    "view_change": "변경 보기"
+    "view_change": "변경 보기",
+    "draft_forbidden": "이 초안을 볼 권한이 없습니다"
   },
   "draft": {
     "label": "초안",
-    "single": "내 초안이 이 페이지를 변경했으며 아직 병합되지 않았습니다. 다른 사람에게는 정식 버전이 보입니다.",
-    "multi_other": "이 페이지를 변경한 초안이 {{count}}개 있으며 모두 병합되지 않았습니다. 다른 사람에게는 정식 버전이 보입니다.",
+    "single": "내 초안이 이 페이지를 변경했으며 아직 병합되지 않았습니다.",
+    "multi_other": "이 페이지를 변경한 초안이 {{count}}개 있으며 모두 병합되지 않았습니다.",
     "official": "정식",
     "draft": "초안",
-    "diff": "차이",
+    "show_diff": "차이 표시",
+    "bar": {
+      "review": "검토 대기",
+      "resolve": "해결 필요",
+      "submitted": "검토 요청됨 #{{number}} · {{title}}",
+      "resolve_text": "해결 필요 #{{number}} · {{title}}",
+      "review_text": "검토 대기 #{{number}} · {{title}}",
+      "others_other": "검토 대기 중인 다른 변경 {{count}}건"
+    },
     "diff_empty": "이 초안은 이 페이지를 변경하지 않았습니다",
     "choose": "초안 선택",
     "origin": {
@@ -353,6 +351,21 @@
     "start_failed": "작업을 만들지 못했습니다",
     "not_found": "작업이 없거나 볼 수 없습니다",
     "ended": "이 대화는 종료되었습니다",
+    "archive": "보관",
+    "unarchive": "보관 해제",
+    "delete": "삭제",
+    "archived_title": "보관됨",
+    "archived_notice": "보관된 작업입니다",
+    "row_actions": "작업 메뉴",
+    "archive_failed": "작업을 업데이트하지 못했습니다",
+    "delete_failed": "작업을 삭제하지 못했습니다",
+    "delete_dialog": {
+      "title": "작업 삭제",
+      "description": "\"{{name}}\"과(와) 대화가 영구 삭제되고, 제출하지 않은 초안은 버려집니다. 이 작업은 되돌릴 수 없습니다.",
+      "cancel": "취소",
+      "confirm": "삭제",
+      "confirming": "삭제하는 중..."
+    },
     "starters": {
       "ingest": {
         "title": "자료 수집",
@@ -399,7 +412,8 @@
         "merged": "병합됨",
         "closed": "닫힘 · 다시 제출 가능",
         "nochange": "변경 불필요",
-        "discarded": "버림"
+        "discarded": "버림",
+        "changes_requested": "수정 필요"
       },
       "nodraft": "에이전트가 초안을 만들면 여기에 변경이 표시됩니다.",
       "empty": "에이전트가 변경을 쓰면 여기에 표시됩니다.",
@@ -443,7 +457,7 @@
         "busy": "에이전트의 이번 턴이 끝난 뒤 제출하세요",
         "lint_other": "오류 {{count}}개를 고쳐야 제출할 수 있습니다",
         "conflict": "바로 제출하고 검토에서 충돌을 해결해도 됩니다",
-        "submitted": "이후 수정은 검토 댓글이나 여기에서 이어갈 수 있습니다",
+        "submitted": "리뷰 의견이 여기에 표시됩니다. 왼쪽에서 계속 이야기할 수도 있습니다",
         "closed": "조정 후 다시 제출하면 새 변경 요청이 만들어집니다",
         "merged": "이 대화는 종료되었습니다",
         "running": "왼쪽에서 언제든 요청을 보탤 수 있습니다"
@@ -455,7 +469,6 @@
         "closed_no_reason": "{{name}}이(가) #{{number}}을(를) 닫았습니다. 초안은 남아 있어 계속 조정할 수 있습니다.",
         "merged": "{{name}}이(가) #{{number}}을(를) 병합해 변경이 반영되었습니다."
       },
-      "banner_review": "검토하기",
       "banner_view_page": "페이지 보기",
       "banner_comments": "댓글 보기",
       "discard": "초안 버리기",
@@ -481,6 +494,16 @@
       "annotations_all_message_other": "{{name}}의 대기 중인 주석 {{count}}개를 모두 처리하세요.",
       "annotations_page_message_other": "「{{title}}」의 대기 중인 주석 {{count}}개를 처리하세요.",
       "annotations_kb_message_other": "지식 베이스 전체의 대기 중인 주석 {{count}}개를 처리하세요."
+    },
+    "feedback": {
+      "label": "리뷰 의견",
+      "title_other": "#{{number}}에 해결할 의견 {{count}}개",
+      "go_review": "리뷰 페이지로",
+      "submitted": "님이 리뷰를 제출 · {{time}}",
+      "handoff": "에이전트에게 맡기기",
+      "handed_off": "에이전트에게 맡겼습니다",
+      "handoff_failed": "에이전트에게 맡기지 못했습니다",
+      "chat_message": "#{{number}}의 리뷰 의견 처리"
     }
   },
   "review": {
@@ -491,23 +514,19 @@
     "conflict_banner": "메인라인이 같은 내용을 바꿨습니다.",
     "conflict_main": "메인라인 {{lines}}행",
     "conflict_draft": "브랜치 {{lines}}행",
-    "working": "작업 중",
-    "view_run": "실행 보기",
     "remove_quote": "인용 제거",
     "reply": "답글",
     "replying_to": "{{name}}에게 답글",
     "quote_line": "{{page}} {{line}}행",
     "comment_label": "댓글",
-    "comment_placeholder": "댓글 남기기...",
-    "trigger_hint": "보내면 시작",
-    "send": "보내기",
+    "comment_placeholder": "댓글을 쓰거나 diff 줄을 선택해 인용",
     "hint_member": "지식 베이스 작성자 또는 owner / admin이 병합합니다",
     "hint_conflict": "먼저 충돌을 해결하세요",
     "hint_running": "에이전트 작업이 끝난 뒤 병합",
     "comment_failed": "댓글을 보내지 못했습니다",
     "merged_toast": "#{{number}} 병합됨",
     "close_failed": "닫지 못했습니다",
-    "agent_working": "{{name}} 작업 중",
+    "agent_working": "에이전트 작업 중",
     "close": "닫기",
     "merge": "병합",
     "revert": "이 변경 되돌리기",
@@ -533,7 +552,6 @@
     "revert_submit": "되돌리기 제출",
     "meta_other": "위험 {{risk}} · 페이지 {{count}}개 변경",
     "meta_annotations_other": "주석 {{count}}개 처리",
-    "activity_count_other": "{{count}}개",
     "close_confirm_annotations_other": "처리 중인 주석 {{count}}개가 대기로 돌아갑니다.",
     "tabs": {
       "open": "검토 대기",
@@ -543,7 +561,8 @@
     "status": {
       "open": "검토 대기",
       "merged": "병합됨",
-      "closed": "닫힘"
+      "closed": "닫힘",
+      "changes_requested": "수정 필요"
     },
     "empty": {
       "open": "검토할 변경이 없습니다",
@@ -566,16 +585,13 @@
       "issue": "작업 · {{label}}",
       "chat": "대화 · {{label}}"
     },
-    "trigger_reason": {
-      "author": "댓글 반영 중",
-      "mention": "멘션으로 시작"
-    },
     "merge_error": {
       "stale": "연 뒤에 초안이 바뀌었습니다. 새로고침한 뒤 병합하세요",
       "conflict": "메인라인과 충돌합니다. 먼저 해결하세요",
       "running": "에이전트 작업이 끝난 뒤 병합",
       "not_open": "이 변경 요청은 종료되었습니다",
-      "failed": "병합하지 못했습니다"
+      "failed": "병합하지 못했습니다",
+      "changes_requested": "수정 필요 상태입니다. 담당자가 먼저 다시 리뷰를 요청해야 합니다"
     },
     "risk": {
       "low": "낮음",
@@ -589,6 +605,46 @@
       "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
       "header": "#{{number}} · {{author}} · {{merger}} 병합",
       "revert_hint": "되돌리면 새 변경 요청이 만들어지고, 병합되면 적용됩니다."
+    },
+    "pending": "제출 전",
+    "edit": "편집",
+    "delete": "삭제",
+    "save": "저장",
+    "reply_placeholder": "답글...",
+    "add_to_review": "리뷰에 추가",
+    "reviewing": "리뷰 중",
+    "pending_count_other": "제출 전 댓글 {{count}}개, 나만 볼 수 있음",
+    "pending_none": "제출 전 댓글이 아직 없습니다",
+    "discard": "리뷰 취소",
+    "discard_confirm_title": "이 리뷰를 취소할까요?",
+    "discard_confirm_description_other": "제출 전 댓글 {{count}}개가 삭제됩니다.",
+    "discard_failed": "리뷰를 취소하지 못했습니다",
+    "submit": "리뷰 제출",
+    "submit_count_other": "리뷰 제출 ({{count}}개)",
+    "summary_label": "요약 (선택)",
+    "submit_note_other": "댓글 {{count}}개가 모두에게 공개되고, 변경 요청은 '수정 필요'로 바뀌며 담당자에게 알림이 갑니다.",
+    "submitted_toast": "리뷰를 제출했습니다",
+    "submit_failed": "리뷰를 제출하지 못했습니다",
+    "start": "리뷰 시작",
+    "start_failed": "리뷰를 시작하지 못했습니다",
+    "request_review": "다시 리뷰 요청",
+    "ready_failed": "다시 리뷰를 요청하지 못했습니다",
+    "hint_changes_owner": "의견을 반영한 뒤 다시 리뷰를 요청하세요",
+    "hint_changes": "수정 필요. 담당자가 다시 리뷰를 요청하면 병합할 수 있습니다",
+    "show_earlier_other": "이전 활동 {{count}}개 보기",
+    "field_separator": ", ",
+    "event": {
+      "review_submitted_other": "님이 리뷰를 제출 · 의견 {{count}}개",
+      "review_requested": "님이 다시 리뷰를 요청",
+      "merged": "님이 이 변경을 병합",
+      "closed": "님이 이 변경을 닫음",
+      "reverted": "님이 되돌리기 #{{number}} 생성",
+      "edited": "님이 {{fields}} 수정"
+    },
+    "field": {
+      "title": "제목",
+      "summary": "설명",
+      "risk": "위험"
     }
   },
   "manage": {

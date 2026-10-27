@@ -52,6 +52,15 @@ import {
   useInboxFilters,
   useInboxFilterStore,
 } from "@marvis/core/inbox/filter-store";
+import {
+  INBOX_CATEGORY_TABS,
+  filterInboxByCategory,
+  inboxFiltersForCategory,
+  inboxUnreadByCategory,
+  parseInboxCategory,
+  type InboxCategory,
+} from "@marvis/core/inbox/category";
+import { Tabs, TabsList, TabsTrigger } from "@marvis/ui/components/ui/tabs";
 
 import { IssueDetail, issueHighlightMementoKey } from "../../issues/components/issue-detail";
 import { ActionShortcutKeycaps } from "../../common/shortcut-keycaps";
@@ -100,7 +109,7 @@ import { useTimeAgo } from "./inbox-list-item";
 import { InboxList } from "./inbox-list";
 import { InboxFilterMenu } from "./inbox-filter-menu";
 import { InboxContextMenuProvider } from "./inbox-context-menu";
-import { ARCHIVED_VIEW_PARAM, type InboxView } from "./inbox-view";
+import { ALL_CATEGORY, ARCHIVED_VIEW_PARAM, CATEGORY_PARAM, type InboxView } from "./inbox-view";
 import { useTypeLabels } from "./inbox-detail-label";
 import {
   getInboxDisplayTitle,
@@ -109,14 +118,16 @@ import {
   resolveDetailItem,
 } from "./inbox-display";
 import { AutopilotQuotaNotice } from "./autopilot-quota-notice";
+import { KbReviewNotice, KbReviewNoticeAction, isKbReviewNotice } from "./kb-review-notice";
 import { useT } from "../../i18n";
 import { useIssueLimitUpgradePrompt } from "../../modals/use-issue-limit-upgrade-prompt";
 
 // The page keeps a narrow list so the open item gets the room. The message box
 // is a wide dialog, so its list can afford the labelled mark-all-read button.
+// Both fit the four category tabs (decision 108).
 const LIST_SIZES = {
-  page: { default: 260, min: 240, max: 400 },
-  dialog: { default: 340, min: 300, max: 440 },
+  page: { default: 320, min: 240, max: 440 },
+  dialog: { default: 380, min: 320, max: 480 },
 } as const;
 
 interface InboxPageProps {
@@ -146,10 +157,13 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
   const urlIssue = isDialog ? "" : (searchParams.get("issue") ?? "");
   const urlView: InboxView =
     !isDialog && searchParams.get("view") === ARCHIVED_VIEW_PARAM ? "archived" : "inbox";
+  const urlCategory = isDialog ? null : parseInboxCategory(searchParams.get(CATEGORY_PARAM));
   const wsPaths = useWorkspacePaths();
 
   const [selectedKey, setSelectedKeyState] = useState(() => urlIssue);
   const [view, setViewState] = useState<InboxView>(() => urlView);
+  // The category tab (decision 108); null is "All".
+  const [category, setCategoryState] = useState<InboxCategory | null>(() => urlCategory);
   // The row the user opened under the unread filter. Opening it marks it read,
   // so the filter would otherwise drop the row before the detail finishes
   // mounting. Scoped to the selection: moving away releases it.
@@ -167,6 +181,9 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
   useEffect(() => {
     setViewState(urlView);
   }, [urlView]);
+  useEffect(() => {
+    setCategoryState(urlCategory);
+  }, [urlCategory]);
 
   const wsId = useWorkspaceId();
   const isArchivedView = view === "archived";
@@ -177,7 +194,7 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
   });
   const items = useMemo(() => deduplicateInboxItems(rawItems), [rawItems]);
   const archiveQuery = useInfiniteQuery({
-    ...archivedInboxPagesOptions(wsId, filters), enabled: isArchivedView,
+    ...archivedInboxPagesOptions(wsId, filters, category), enabled: isArchivedView,
   });
   const fetchNextArchivedPage = archiveQuery.fetchNextPage;
   const loadNextArchivedPage = useCallback(() => { void fetchNextArchivedPage(); }, [fetchNextArchivedPage]);
@@ -186,13 +203,18 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
   const archivedItems = useMemo(() => deduplicateArchivedInboxItems(
     archiveQuery.data?.pages.flatMap((page) => page.items) ?? [],
   ), [archiveQuery.data]);
-  const viewItems = isArchivedView ? archivedItems : items;
+  // The archive is narrowed to the category by the server.
+  const viewItems = useMemo(
+    () => (isArchivedView ? archivedItems : filterInboxByCategory(items, category)),
+    [isArchivedView, archivedItems, items, category],
+  );
+  const categoryUnread = useMemo(() => inboxUnreadByCategory(items), [items]);
   // The paginated endpoint guarantees the projection, including on empty pages.
   const priorityFilterSupport = isArchivedView ? "supported" : inboxPriorityFilterSupport(rawItems);
   const effectiveFilters = useMemo(() => {
-    const supported = inboxFiltersForPrioritySupport(filters, priorityFilterSupport);
+    const supported = inboxFiltersForCategory(inboxFiltersForPrioritySupport(filters, priorityFilterSupport), category);
     return isArchivedView ? inboxFiltersForArchive(supported) : supported;
-  }, [filters, priorityFilterSupport, isArchivedView]);
+  }, [filters, priorityFilterSupport, isArchivedView, category]);
   // "Active" is the same running-or-queued rule the row's activity badge uses.
   const { activityByIssueId } = useIssueSurfaceActivity();
   const activeIssueIds = useMemo(() => new Set(activityByIssueId.keys()), [activityByIssueId]);
@@ -271,9 +293,10 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
   // carry the other one — a bare `?issue=` would silently drop the user out of
   // the archived view on the next selection.
   const buildInboxUrl = useCallback(
-    (nextView: InboxView, key: string) => {
+    (nextView: InboxView, key: string, nextCategory: InboxCategory | null) => {
       const params = new URLSearchParams();
       if (nextView === "archived") params.set("view", ARCHIVED_VIEW_PARAM);
+      if (nextCategory) params.set(CATEGORY_PARAM, nextCategory);
       if (key) params.set("issue", key);
       const query = params.toString();
       const inboxPath = wsPaths.inbox();
@@ -284,8 +307,8 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
 
   const setSelectedKey = useCallback((key: string) => {
     setSelectedKeyState(key);
-    if (!isDialog) replace(buildInboxUrl(view, key));
-  }, [isDialog, replace, buildInboxUrl, view]);
+    if (!isDialog) replace(buildInboxUrl(view, key, category));
+  }, [isDialog, replace, buildInboxUrl, view, category]);
 
   // Switching views always clears the selection: the two lists are mutually
   // exclusive, so a key carried across would never resolve, and the fallback
@@ -293,8 +316,15 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
   const setView = useCallback((nextView: InboxView) => {
     setViewState(nextView);
     setSelectedKeyState("");
-    if (!isDialog) replace(buildInboxUrl(nextView, ""));
-  }, [isDialog, replace, buildInboxUrl]);
+    if (!isDialog) replace(buildInboxUrl(nextView, "", category));
+  }, [isDialog, replace, buildInboxUrl, category]);
+
+  // Switching tabs keeps the open row when it belongs to the new tab; a row
+  // the tab leaves out is cleared by the filtered-out effect below.
+  const setCategory = useCallback((next: InboxCategory | null) => {
+    setCategoryState(next);
+    if (!isDialog) replace(buildInboxUrl(view, selectedKey, next));
+  }, [isDialog, replace, buildInboxUrl, view, selectedKey]);
 
   // Stable identity: InboxList memoizes the archive entry on this callback, so
   // an inline arrow here would rebuild (and remount) the entry every render.
@@ -563,8 +593,9 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
   }, [isDialog]);
 
   // Batch operations
+  // Marks the current tab read: "All" marks everything (decision 108).
   const handleMarkAllRead = () => {
-    markAllReadMutation.mutate(undefined, {
+    markAllReadMutation.mutate(category, {
       onError: (err) =>
         toast.error(
           err instanceof Error && err.message
@@ -628,7 +659,7 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
           />
         )}
       </div>
-      {!isArchivedView && unreadCount > 0 && (
+      {!isArchivedView && (category ? categoryUnread[category] : unreadCount) > 0 && (
         // The page's narrow list has no room for the label beside the title.
         isDialog ? (
           <Button variant="secondary" size="sm" className="mr-1 gap-1.5" onClick={handleMarkAllRead}>
@@ -653,6 +684,7 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
         priorityFilterSupport={priorityFilterSupport}
         activeIssueIds={activeIssueIds}
         archived={isArchivedView}
+        category={category}
       />
       {/* Batch actions are main-view only. Every entry archives from the MAIN
           inbox, so offering them while the archived list is on screen reads as
@@ -755,9 +787,31 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
     </InboxContextMenuProvider>
   );
 
+  const categoryTabs = (
+    <div className="shrink-0 px-3 pb-2.5">
+      <Tabs
+        value={category ?? ALL_CATEGORY}
+        onValueChange={(next) => setCategory(parseInboxCategory(String(next)))}
+      >
+        <TabsList aria-label={t(($) => $.categories.label)} className="w-full">
+          {INBOX_CATEGORY_TABS.map((tab) => {
+            const count = categoryUnread[tab ?? ALL_CATEGORY];
+            return (
+              <TabsTrigger key={tab ?? ALL_CATEGORY} value={tab ?? ALL_CATEGORY} className="flex-1 gap-1">
+                {t(($) => $.categories[tab ?? ALL_CATEGORY])}
+                {count > 0 && <span className="text-caption tabular-nums text-faint-foreground">{count}</span>}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+      </Tabs>
+    </div>
+  );
+
   const listPanel = (
     <>
       {listHeader}
+      {categoryTabs}
       {isArchivedView && archivedBackRow}
       {lookupLoading && (
         <p role="status" className="shrink-0 px-6 py-2 text-caption text-muted-foreground">
@@ -874,6 +928,8 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
           item={detailItem}
           onOpenRecovery={showAutopilotQuotaRecoveryPrompt}
         />
+      ) : isKbReviewNotice(detailItem.type) ? (
+        <KbReviewNotice item={detailItem} />
       ) : detailItem.body ? (
         <div className="mt-4.5 whitespace-pre-wrap text-body leading-relaxed text-foreground">
           {detailItem.body}
@@ -888,6 +944,7 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
         </div>
       )}
       <div className="mt-5 flex flex-wrap gap-2">
+        {isKbReviewNotice(detailItem.type) && <KbReviewNoticeAction item={detailItem} />}
         {detailItem.type === "quick_create_failed" &&
           detailItem.details?.source_context_id &&
           detailItem.details?.task_id && (

@@ -11,7 +11,7 @@ import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
-import { KbStateDot, type KbDot } from "../components/kb-diff";
+import { KB_MR_STATUS_DOT, KbStateDot } from "../components/kb-diff";
 import { KbReviewDetail, useKbSourceLabel } from "./kb-review-detail";
 import { parseKbReviewRoute } from "./kb-review-route";
 
@@ -19,9 +19,8 @@ type Tab = "open" | "ended" | "all";
 
 const TABS: readonly Tab[] = ["open", "ended", "all"];
 
-const TAB_STATUS: Record<Tab, KbMergeRequestListStatus> = { open: "open", ended: "merged,closed", all: "all" };
-
-const STATUS_DOT: Record<KbMergeRequest["status"], KbDot> = { open: "blue", merged: "green", closed: "gray" };
+// Waiting on the owner (changes_requested) is still under review.
+const TAB_STATUS: Record<Tab, KbMergeRequestListStatus> = { open: "open,changes_requested", ended: "merged,closed", all: "all" };
 
 function ReviewRow({ kbSlug, mr, selected }: { kbSlug: string; mr: KbMergeRequest; selected: boolean }) {
   const { t } = useT("kb");
@@ -45,7 +44,7 @@ function ReviewRow({ kbSlug, mr, selected }: { kbSlug: string; mr: KbMergeReques
         <span className="flex items-center gap-2 text-caption text-faint-foreground">
           <span className="min-w-0 truncate">{source}</span>
           <span className="ml-auto flex shrink-0 items-center gap-1">
-            <KbStateDot dot={STATUS_DOT[mr.status]} />
+            <KbStateDot dot={KB_MR_STATUS_DOT[mr.status]} />
             {t(($) => $.review.status[mr.status])}
           </span>
         </span>
@@ -67,7 +66,7 @@ export function KbReviewPage() {
   const { kbSlug, number } = parseKbReviewRoute(pathname);
   const [tab, setTab] = useState<Tab>("open");
   const { data: base } = useQuery(kbBaseDetailOptions(wsId, kbSlug));
-  const { data: openList = [] } = useQuery(kbMergeRequestListOptions(wsId, kbSlug, "open"));
+  const { data: openList = [] } = useQuery(kbMergeRequestListOptions(wsId, kbSlug, TAB_STATUS.open));
   const { data: list = [], isLoading } = useQuery(kbMergeRequestListOptions(wsId, kbSlug, TAB_STATUS[tab]));
 
   const selected = number || list[0]?.number || 0;
@@ -76,10 +75,6 @@ export function KbReviewPage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader>
         <nav aria-label={t(($) => $.nav.breadcrumb)} className="flex min-w-0 flex-1 items-center gap-1.5 text-body text-muted-foreground">
-          <AppLink href={p.kb()} className="shrink-0 hover:text-foreground">
-            {t(($) => $.list.title)}
-          </AppLink>
-          <span aria-hidden="true">/</span>
           <AppLink href={p.kbBase(kbSlug)} className="shrink-0 hover:text-foreground">
             {base?.name ?? kbSlug}
           </AppLink>

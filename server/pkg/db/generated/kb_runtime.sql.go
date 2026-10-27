@@ -14,7 +14,7 @@ import (
 const listKbBaseBriefs = `-- name: ListKbBaseBriefs :many
 
 SELECT slug, name, description FROM kb_base
-WHERE workspace_id = $1
+WHERE workspace_id = $1 AND deleted_at IS NULL
 ORDER BY name, slug
 LIMIT $2
 `

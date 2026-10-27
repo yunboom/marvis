@@ -253,8 +253,12 @@
         "description": "フローティングチャットを開閉します。開いたときは入力欄にフォーカスします。"
       },
       "findInIssue": {
-        "label": "タスク内を検索",
-        "description": "開いているタスクの詳細を検索します。"
+        "label": "ページ内を検索",
+        "description": "開いているタスクの詳細やナレッジベースのページを検索します。"
+      },
+      "searchKnowledgeBases": {
+        "label": "ナレッジベースを検索",
+        "description": "すべてのナレッジベースのページを検索します。ナレッジベース内で使用できます。"
       },
       "archiveInboxItem": {
         "label": "通知をアーカイブ",

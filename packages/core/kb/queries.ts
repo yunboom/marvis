@@ -9,7 +9,6 @@ import type {
   KbRawFileItem,
   KbBuilderSession,
   KbTemplates,
-  KbDraftDetail,
   KbHome,
   KbJob,
   KbJobDetail,
@@ -18,12 +17,15 @@ import type {
   KbMergeRequestDetail,
   KbMergeRequestListStatus,
   KbMrComment,
+  KbMrCommentState,
+  KbMrTimelineEntry,
   KbPage,
   KbRevision,
   KbRevisionDiff,
   KbSearchResult,
   KnowledgeBase,
   KnowledgeBaseDetail,
+  KnowledgeBasePending,
 } from "../types/kb";
 
 /** Page size of a page tree level; the server caps it at 200. */
@@ -65,8 +67,6 @@ export const kbKeys = {
   jobList: (wsId: string, kb: string, state: KbJobListState | "") => [...kbKeys.jobs(wsId, kb), state] as const,
   /** A job with its draft's changes and checks. */
   job: (wsId: string, jobId: string) => [...kbKeys.all(wsId), "job", jobId] as const,
-  /** A draft's changed pages and checks. */
-  draft: (wsId: string, draftId: string) => [...kbKeys.all(wsId), "draft", draftId] as const,
   /** Every merge request list (the review list and the change log). */
   reviews: (wsId: string) => [...kbKeys.all(wsId), "reviews"] as const,
   /** One merge request list; an empty kb lists every knowledge base. */
@@ -78,7 +78,11 @@ export const kbKeys = {
   reviewById: (wsId: string, id: string) => [...kbKeys.all(wsId), "review", "id", id] as const,
   /** One annotation by id, as a mention card reads it. */
   annotation: (wsId: string, id: string) => [...kbKeys.all(wsId), "annotation", id] as const,
-  reviewComments: (wsId: string, number: number) => [...kbKeys.review(wsId, number), "comments"] as const,
+  reviewComments: (wsId: string, number: number, state: KbMrCommentState = "published") =>
+    [...kbKeys.review(wsId, number), "comments", state] as const,
+  /** Comments and events of a merge request, under it so its refreshes cover them. */
+  reviewTimeline: (wsId: string, number: number, state: KbMrCommentState = "published") =>
+    [...kbKeys.review(wsId, number), "timeline", state] as const,
   /** Raw files of a knowledge base. */
   raws: (wsId: string, kb: string) => [...kbKeys.all(wsId), "raws", kb] as const,
   /** The relationship graph; merges change it. */
@@ -125,10 +129,20 @@ export function kbAnnotationOptions(wsId: string, id: string) {
   });
 }
 
-export function kbMrCommentListOptions(wsId: string, number: number) {
+/** Published comments; `all` adds the viewer's pending review comments. */
+export function kbMrCommentListOptions(wsId: string, number: number, state: KbMrCommentState = "published") {
   return queryOptions<KbMrComment[]>({
-    queryKey: kbKeys.reviewComments(wsId, number),
-    queryFn: () => api.listKnowledgeBaseMrComments(number),
+    queryKey: kbKeys.reviewComments(wsId, number, state),
+    queryFn: () => api.listKnowledgeBaseMrComments(number, state),
+    enabled: !!wsId && number > 0,
+  });
+}
+
+/** The review page's activity: comments and events, oldest first. */
+export function kbMrTimelineOptions(wsId: string, number: number, state: KbMrCommentState = "published") {
+  return queryOptions<KbMrTimelineEntry[]>({
+    queryKey: kbKeys.reviewTimeline(wsId, number, state),
+    queryFn: () => api.listKnowledgeBaseMrTimeline(number, state),
     enabled: !!wsId && number > 0,
   });
 }
@@ -178,15 +192,6 @@ export function kbJobOptions(wsId: string, jobId: string) {
     queryKey: kbKeys.job(wsId, jobId),
     queryFn: () => api.getKnowledgeBaseJob(jobId),
     enabled: !!wsId && !!jobId,
-  });
-}
-
-/** A draft's changed pages; draft writes refresh it through kb.draft.updated. */
-export function kbDraftOptions(wsId: string, draftId: string) {
-  return queryOptions<KbDraftDetail>({
-    queryKey: kbKeys.draft(wsId, draftId),
-    queryFn: () => api.getKbDraft(draftId),
-    enabled: !!wsId && !!draftId,
   });
 }
 
@@ -306,4 +311,9 @@ export function countOpenMergeRequests(bases: readonly KnowledgeBase[]): number 
   let total = 0;
   for (const base of bases) total += base.pending.open_mrs;
   return total;
+}
+
+/** Work waiting in one knowledge base: open reviews, open annotations and pages to re-check. */
+export function countKbPending(pending: KnowledgeBasePending): number {
+  return pending.open_mrs + pending.annotations + pending.stale_pages;
 }

@@ -48,6 +48,69 @@ describe("prepareBlockMarkdown", () => {
     });
     expect(out).toBe("<mark>渠道回调先验签。</mark>支付服务加锁。");
   });
+
+  it("underlines annotated sentences with the annotations on them", () => {
+    const out = prepareBlockMarkdown("渠道回调先验签。支付服务加锁。", {
+      citeNumbers: numbers,
+      annotations: [
+        { quote: "支付服务加锁。", ids: ["a-1", "a-2"] },
+        { quote: "不在正文里", ids: ["a-3"] },
+        { quote: "渠道回调先验签。", ids: ['x" onclick="y'] },
+      ],
+    });
+    expect(out).toBe('渠道回调先验签。<mark class="kb-annotated" data-annotation-ids="a-1,a-2">支付服务加锁。</mark>');
+  });
+
+  // Regression: the quote used to be replaced at its first match in the raw
+  // Markdown, so a sentence repeated in an earlier link label (or matching a
+  // link destination or citation) put the underline on the link instead.
+  it("underlines the annotated occurrence, not a link label or destination that repeats it", () => {
+    const content = "见[支付回调](/kb/team/p/page-pay)。支付回调先验签。[^spec]";
+    const out = prepareBlockMarkdown(content, {
+      citeNumbers: numbers,
+      annotations: [{ quote: "支付回调", ids: ["a-1"], prefix: "## 处理顺序\n见支付回调。", suffix: "先验签。 " }],
+    });
+    expect(out).toBe(
+      '见[支付回调](/kb/team/p/page-pay)。<mark class="kb-annotated" data-annotation-ids="a-1">支付回调</mark>先验签。[2](#kb-cite-spec)',
+    );
+
+    const inUrl = prepareBlockMarkdown("[退款](/kb/team/p/refund) refund 走原路。", {
+      citeNumbers: numbers,
+      annotations: [{ quote: "refund", ids: ["a-2"] }],
+    });
+    expect(inUrl).toBe('[退款](/kb/team/p/refund) <mark class="kb-annotated" data-annotation-ids="a-2">refund</mark> 走原路。');
+
+    const inCite = prepareBlockMarkdown("去重。[^mar-142] 保存 1 天。", {
+      citeNumbers: numbers,
+      annotations: [{ quote: "1", ids: ["a-3"] }],
+    });
+    expect(inCite).toBe('去重。[1](#kb-cite-mar-142) 保存 <mark class="kb-annotated" data-annotation-ids="a-3">1</mark> 天。');
+  });
+
+  it("marks a sentence inside a link label when that is the annotated one", () => {
+    const out = prepareBlockMarkdown("支付回调说明见[支付回调](/kb/team/p/page-pay)。", {
+      citeNumbers: numbers,
+      annotations: [{ quote: "支付回调", ids: ["a-1"], prefix: "说明见", suffix: "。" }],
+    });
+    expect(out).toBe('支付回调说明见[<mark class="kb-annotated" data-annotation-ids="a-1">支付回调</mark>](/kb/team/p/page-pay)。');
+  });
+
+  it("matches across collapsed whitespace and list markers but never splits markup or marks deleted text", () => {
+    const out = prepareBlockMarkdown("- 回调先验签，\n  再加锁。\n- **重试**三次。", {
+      citeNumbers: numbers,
+      annotations: [
+        { quote: "回调先验签， 再加锁。", ids: ["a-1"] },
+        { quote: "重试三次", ids: ["a-2"] },
+      ],
+    });
+    expect(out).toBe('- <mark class="kb-annotated" data-annotation-ids="a-1">回调先验签，\n  再加锁。</mark>\n- **重试**三次。');
+
+    const draft = prepareBlockMarkdown("渠道<del>按订单号</del><ins>按交易号</ins>去重。按订单号查询。", {
+      citeNumbers: numbers,
+      annotations: [{ quote: "按订单号", ids: ["a-3"] }],
+    });
+    expect(draft).toBe('渠道<del>按订单号</del><ins>按交易号</ins>去重。<mark class="kb-annotated" data-annotation-ids="a-3">按订单号</mark>查询。');
+  });
 });
 
 describe("block helpers", () => {

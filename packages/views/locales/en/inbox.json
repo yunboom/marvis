@@ -82,7 +82,10 @@
     "quick_create_unconfirmed": "Create with agent unconfirmed",
     "autopilot_paused": "Autopilot paused",
     "children_done": "Sub-issues finished",
-    "autopilot_quota_exceeded": "Autopilot run limit reached"
+    "autopilot_quota_exceeded": "Autopilot run limit reached",
+    "kb_mr_changes_requested": "Changes requested",
+    "kb_mr_review_requested": "Review requested again",
+    "kb_mr_review_needed": "Approval needed"
   },
   "labels": {
     "set_status_to": "Set status to",
@@ -97,7 +100,10 @@
     "created_with_agent": "Created with agent: {{identifier}}",
     "failed_with_detail": "Failed: {{detail}}",
     "autopilot_quota_blocked": "Run blocked because the limit was reached",
-    "children_done_stage": "Stage {{stage}}'s sub-issues finished"
+    "children_done_stage": "Stage {{stage}}'s sub-issues finished",
+    "kb_mr_changes_requested": "{{name}} submitted a review",
+    "kb_mr_review_requested": "{{name}} requested review again",
+    "kb_mr_review_needed": "{{name}} submitted a change request"
   },
   "toasts": {
     "source_context_retry_started": "Retry started with the original context",
@@ -119,5 +125,24 @@
     "unarchive_failed": "Failed to unarchive",
     "archived_load_failed": "Failed to load archived notifications",
     "filters_load_failed": "Could not load filters"
+  },
+  "kb_review": {
+    "changes_requested_action": "submitted a review; the change request now needs changes",
+    "review_requested_action": "requested review again; the change request is open for review",
+    "summary": "Review summary",
+    "your_summary": "Your review summary",
+    "comments": "Comments",
+    "view_all_one": "View all {{count}} comment",
+    "view_all_other": "View all {{count}} comments",
+    "view_feedback": "View feedback",
+    "go_review": "Go to review",
+    "review_needed_action": "submitted a change request; it needs your approval"
+  },
+  "categories": {
+    "label": "Notification type",
+    "all": "All",
+    "issue": "Issues",
+    "kb": "Knowledge",
+    "autopilot": "Autopilot"
   }
 }

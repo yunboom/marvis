@@ -362,9 +362,9 @@ describe("InboxPage", () => {
     render(<InboxPage />);
 
     const listPanel = screen.getByTestId("panel-list");
-    expect(listPanel).toHaveAttribute("data-default-size", "260");
+    expect(listPanel).toHaveAttribute("data-default-size", "320");
     expect(listPanel).toHaveAttribute("data-min-size", "240");
-    expect(listPanel).toHaveAttribute("data-max-size", "400");
+    expect(listPanel).toHaveAttribute("data-max-size", "440");
   });
 
   it("keeps the title unread count static", () => {
@@ -693,6 +693,58 @@ describe("InboxPage", () => {
     expect(replace).not.toHaveBeenCalled();
     expect(issueDetailProps.at(-1)?.issueId).toBe("issue-3");
     expect(issueDetailProps.at(-1)?.trailingActions).toBe(close);
+  });
+
+  it("narrows the list to a category tab and keeps it in the URL (decision 108)", () => {
+    reset();
+    layout.width = DESKTOP;
+    listData.active = [
+      item({ id: "issue-row", issue_id: "issue-a", read: false }),
+      item({ id: "kb-row", issue_id: null, type: "kb_mr_changes_requested", read: false }),
+      item({ id: "needed-row", issue_id: null, type: "kb_mr_review_needed", read: false }),
+      item({ id: "auto-row", issue_id: null, type: "autopilot_paused" }),
+      item({ id: "new-row", issue_id: null, type: "something_new" as InboxItem["type"] }),
+    ];
+    render(<InboxPage />);
+
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs).toHaveLength(4);
+    // Unread per tab; a tab without unread shows no number.
+    expect(tabs[0]).toHaveTextContent("Inbox3");
+    expect(tabs[1]).toHaveTextContent("Inbox1");
+    expect(tabs[2]).toHaveTextContent("Inbox2");
+    expect(tabs[3]).toHaveTextContent(/^Inbox$/);
+    expect(screen.getAllByTestId("row")).toHaveLength(5);
+
+    fireEvent.click(tabs[2]!);
+    expect(screen.getAllByTestId("row").map((row) => row.textContent).sort()).toEqual(["kb-row", "needed-row"]);
+    expect(replace).toHaveBeenLastCalledWith("/acme/inbox?category=kb");
+  });
+
+  it("reads the category from the URL and marks only it read", () => {
+    reset();
+    searchParams = new URLSearchParams("category=autopilot");
+    listData.active = [
+      item({ id: "issue-row", issue_id: "issue-a", read: false }),
+      item({ id: "auto-row", issue_id: null, type: "autopilot_paused", read: false }),
+    ];
+    render(<InboxPage />);
+
+    expect(screen.getAllByTestId("row").map((row) => row.textContent)).toEqual(["auto-row"]);
+    const buttons = screen.getAllByRole("button", { name: "Inbox" });
+    fireEvent.click(buttons.find((b) => !b.hasAttribute("aria-haspopup"))!);
+    expect(markAllReadMutate).toHaveBeenCalledWith("autopilot", expect.anything());
+  });
+
+  it("ignores the issue-only filters in a category without issues", () => {
+    reset();
+    searchParams = new URLSearchParams("category=kb");
+    listData.active = [item({ id: "kb-row", issue_id: null, type: "kb_mr_review_requested", read: true })];
+    useInboxFilterStore.getState().toggleIdleOnly("workspace-1");
+    useInboxFilterStore.getState().toggleStatusFilter("workspace-1", "done");
+    render(<InboxPage />);
+
+    expect(screen.getAllByTestId("row").map((row) => row.textContent)).toEqual(["kb-row"]);
   });
 
   it("puts mark-all-read in the header, not the batch menu", () => {

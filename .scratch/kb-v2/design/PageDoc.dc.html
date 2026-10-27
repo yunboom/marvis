@@ -8,21 +8,36 @@
 </head>
 <body>
 <x-dc>
-<helmet><style>body{margin:0}.hl-stale{background:rgba(184,134,46,.16);border-radius:3px}</style></helmet>
-<article class="doc" style="width: 100%; max-width: 760px; padding: {{pad}}; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f">
-  <h1>支付回调</h1>
+<helmet><style>body{margin:0}.hl-stale{background:rgba(184,134,46,.16);border-radius:3px}.rd{font-size:16px;line-height:1.75}.rd h1{font-size:28px}.rd h2{font-size:20px}.rd h3{font-size:18px}.rd p,.rd li{font-size:16px;line-height:1.75}.dd{color:#a33d29;background:rgba(181,69,47,.08);text-decoration:line-through}.di{background:rgba(78,138,109,.16);text-decoration:none}.bd{color:#a33d29;background:rgba(181,69,47,.07);text-decoration:line-through;border-radius:6px;padding:2px 8px;margin-left:-8px;margin-right:-8px}.bi{background:rgba(78,138,109,.13);border-radius:6px;padding:2px 8px;margin-left:-8px;margin-right:-8px}</style></helmet>
+<article class="{{docCls}}" style="width: 100%; max-width: {{maxW}}; padding: {{pad}}; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f">
+  <h1>{{pageTitle}}</h1>
   <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5c5c5c; margin-bottom: 18px; flex-wrap: wrap">
-    <span class="av bot" style="width: 20px; height: 20px; font-size: 10px">通</span><span>通用开发助手 更新 · 更新于 10 分钟前</span>
-    <sc-if value="{{fresh}}" hint-placeholder-val="{{ true }}"><span class="tag"><span class="dot d-green"></span>已核实 · 王芳 · 10-20</span></sc-if>
+    <span class="av bot" style="width: 20px; height: 20px; font-size: 10px">通</span><span>{{metaText}}</span>
+    <sc-if value="{{showFresh}}" hint-placeholder-val="{{ true }}"><span class="tag"><span class="dot d-green"></span>已核实 · 王芳 · 10-20</span></sc-if>
     <sc-if value="{{stale}}" hint-placeholder-val="{{ false }}"><span class="tag" style="background: rgba(184,134,46,.12); color: #7a5a1c"><span class="dot d-amber"></span>需要复核</span></sc-if>
     <span class="tag">开发</span><span class="tag">测试</span>
   </div>
-  <sc-if value="{{draft}}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{newBar}}" hint-placeholder-val="{{ false }}">
+    <div class="banner" style="margin-bottom: 18px; background: rgba(79,111,138,.05); box-shadow: inset 0 0 0 1px rgba(79,111,138,.45); border-radius: 12px; gap: 10px; flex-wrap: nowrap; position: relative">
+      <span class="tag" style="background: {{barTagBg}}; color: #fff; flex: none">{{barTag}}</span>
+      <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{barText}}</span>
+      <sc-if value="{{barLink}}" hint-placeholder-val="{{ false }}"><a href="#" style="color: #4f6f8a; text-decoration: none; flex: none">查看修改</a></sc-if>
+      <sc-if value="{{barOthers}}" hint-placeholder-val="{{ false }}"><button class="btn btn-g" aria-haspopup="menu" aria-expanded="true" style="height: 28px; font-size: 12.5px; gap: 4px; padding: 0 8px; flex: none; color: #5c5c5c">另有 1 个待审核的修改<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></sc-if>
+      <sc-if value="{{barOwn}}" hint-placeholder-val="{{ false }}"><button role="switch" aria-checked="{{diff}}" style="display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; font: inherit; font-size: 13px; color: #0f0f0f; padding: 0 4px; cursor: pointer; flex: none"><span style="width: 32px; height: 18px; border-radius: 9px; background: {{swBg}}; position: relative; flex: none"><span style="position: absolute; top: 2px; left: {{swX}}; width: 14px; height: 14px; border-radius: 7px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2)"></span></span>显示差异</button><div class="seg" style="flex: none"><button>正式</button><button class="on">草稿</button></div></sc-if>
+      <sc-if value="{{barOthers}}" hint-placeholder-val="{{ false }}">
+        <div class="menu" role="menu" aria-label="选择修改" style="top: 48px; right: 230px; width: 340px">
+          <button class="mi hl" role="menuitemradio" aria-checked="true"><span style="width: 16px; display: inline-flex; justify-content: center; flex: none">✓</span>#16 待解决 · 你的草稿<span class="sub">去重键改为渠道交易号…</span></button>
+          <button class="mi" role="menuitemradio" aria-checked="false"><span style="width: 16px; display: inline-flex; justify-content: center; flex: none"></span>#18 待审核 · 李雷<span class="sub">退款回调也按渠道交易号去重…</span></button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{oldBar}}" hint-placeholder-val="{{ false }}">
     <div class="banner" style="margin-bottom: 18px; background: rgba(79,111,138,.05); box-shadow: inset 0 0 0 1px rgba(79,111,138,.45); border-radius: 12px; position: relative">
       <span class="tag" style="background: #4f6f8a; color: #fff">草稿</span>
       <span style="flex: 1">{{draftText}}</span>
       <sc-if value="{{multi}}" hint-placeholder-val="{{ false }}"><button class="btn btn-o" aria-haspopup="menu" aria-expanded="{{menuOpen}}" style="height: 28px; font-size: 12.5px; gap: 6px; padding: 0 10px">{{draftPick}}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button></sc-if>
-      <div class="seg"><button>已发布</button><button class="on">草稿</button></div>
+      <button role="switch" aria-checked="{{diff}}" style="display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; font: inherit; font-size: 13px; color: #0f0f0f; padding: 0 4px; cursor: pointer"><span style="width: 32px; height: 18px; border-radius: 9px; background: {{swBg}}; position: relative; flex: none"><span style="position: absolute; top: 2px; left: {{swX}}; width: 14px; height: 14px; border-radius: 7px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2)"></span></span>显示差异</button><sc-if value="{{existing}}" hint-placeholder-val="{{ true }}"><div class="seg"><button>正式</button><button class="on">草稿</button></div></sc-if>
       <sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
         <div class="menu" role="menu" aria-label="选择草稿" style="top: 48px; right: 132px; width: 300px">
           <sc-for list="{{draftList}}" as="d" hint-placeholder-count="2">
@@ -38,27 +53,42 @@
   <sc-if value="{{stale}}" hint-placeholder-val="{{ false }}">
     <div class="banner b-amber" style="margin-bottom: 18px; align-items: flex-start"><span class="dot d-amber" style="margin-top: 7px"></span><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span>引用的代码有改动，标黄的句子可能已经过期</span><span class="mono" style="color: #5c5c5c">payment-service/internal/callback/handler.go 第 40–82 行 · 3f2a91c 之后有 2 次提交</span></span><button class="btn btn-o" style="height: 28px; font-size: 12.5px">交给智能体复核</button></div>
   </sc-if>
+  <sc-if value="{{existing}}" hint-placeholder-val="{{ true }}">
   <p>支付服务接收各支付渠道的异步回调，更新支付单状态并通知订单服务。本页说明回调的处理顺序、去重方式和失败处理。</p>
   <h2>处理顺序</h2>
-  <p><span class="{{s1}}">渠道回调先经过网关验签，再进入支付服务的回调队列。</span><span class="cite">[1]</span><span class="{{s1}}">支付服务按支付单加锁处理，同一支付单的回调串行执行。</span><span class="cite">[1]</span>超时未回调的支付单由对账任务每 10 分钟补查一次。<span class="cite">[2]</span></p>
+  <p><span class="{{s1}}">渠道回调先经过网关验签，再进入支付服务的回调队列。</span><span class="cite">[1]</span><span class="{{s1}}">支付服务按支付单加锁处理，同一支付单的回调串行执行。</span><span class="cite">[1]</span><sc-if value="{{showOld}}" hint-placeholder-val="{{ true }}"><span class="{{oldCls}}">超时未回调的支付单由对账任务每 10 分钟补查一次。</span><span class="cite">[2]</span></sc-if><sc-if value="{{showNew}}" hint-placeholder-val="{{ false }}"><span class="{{newCls}}">超时未回调的支付单由对账任务每 5 分钟补查一次，补查 3 次仍无结果的转人工处理。</span><span class="cite">[2]</span></sc-if></p>
   <h2>去重</h2>
-  <p><sc-if value="{{notDraft}}" hint-placeholder-val="{{ true }}"><span class="{{s3}}">渠道回调按订单号加幂等键去重，重复回调直接返回成功。</span><span class="cite">[3]</span></sc-if><sc-if value="{{draft}}" hint-placeholder-val="{{ false }}"><span>渠道回调按<del style="color: #a33d29; background: rgba(181,69,47,.08)">订单号</del><ins style="text-decoration: none; background: rgba(78,138,109,.16)">渠道交易号</ins>加幂等键去重，重复回调直接返回成功。</span><ins class="cite" style="text-decoration: none; background: rgba(78,138,109,.16)">[5]</ins></sc-if>幂等键在 Redis 中保存 24 小时，过期后由数据库唯一索引兜底。<span class="cite">[3]</span></p>
+  <sc-if value="{{showOld}}" hint-placeholder-val="{{ true }}"><p class="{{oldBlk}}"><span class="{{s3}}">渠道回调按订单号加幂等键去重，重复回调直接返回成功。</span><span class="cite">[3]</span>幂等键在 Redis 中保存 24 小时，过期后由数据库唯一索引兜底。<span class="cite">[3]</span></p></sc-if>
+  <sc-if value="{{showNew}}" hint-placeholder-val="{{ false }}"><p class="{{newBlk}}">渠道回调按渠道交易号加幂等键去重，重复回调直接返回成功。<span class="cite">[5]</span>幂等键在 Redis 中保存 24 小时，过期后由数据库唯一索引兜底。<span class="cite">[3]</span></p>
+  <div class="{{newBlk}}"><h3>生效时间</h3><p>自 10 月 20 日起改用渠道交易号：部分渠道的订单号会重复，按订单号去重会漏掉真正的重复回调。<span class="cite">[5]</span></p></div></sc-if>
   <h2>失败处理</h2>
   <ul style="margin: 0 0 10px; padding-left: 22px">
-    <li><span class="{{s1}}">验签失败直接丢弃并记录告警，不重试。</span><span class="cite">[1]</span></li>
+    <sc-if value="{{showOld}}" hint-placeholder-val="{{ true }}"><li class="{{oldBlk}}"><span class="{{s1}}">验签失败直接丢弃并记录告警，不重试。</span><span class="cite">[1]</span></li></sc-if>
     <li>处理异常返回失败，由渠道按退避策略重推，最多 8 次。<span class="cite">[4]</span></li>
     <li>8 次后仍失败的回调进入人工处理队列，见<a href="#" style="color: #4f6f8a; text-decoration: none">回调人工处理</a>。</li>
   </ul>
+  </sc-if>
+  <sc-if value="{{newPage}}" hint-placeholder-val="{{ false }}">
+  <p class="{{allNew}}">重推 8 次仍失败的支付回调进入人工处理队列，由支付值班处理。<span class="cite">[1]</span></p>
+  <div class="{{allNew}}"><h2>处理步骤</h2>
+  <ol style="margin: 0 0 10px; padding-left: 22px">
+    <li>在运营后台「支付 › 异常回调」找到这笔支付单。<span class="cite">[2]</span></li>
+    <li>到渠道商户后台核对实际支付结果。</li>
+    <li>点「按渠道结果更新」，系统补发订单通知。<span class="cite">[2]</span></li>
+    <li>在值班群回复处理结果，附支付单号。</li>
+  </ol></div>
+  </sc-if>
   <div style="margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,.06); font-size: 12.5px; color: #5c5c5c; display: flex; flex-direction: column; gap: 4px">
     <span style="color: #757575">引用来源</span>
     <span>[1] 代码 · payment-service/internal/callback/handler.go</span>
     <span>[2] 任务 · MAR-128 回调补查改为对账任务</span>
     <span>[3] 对话 · 仅发起人可查看</span>
     <span>[4] 文档 · 渠道接入规范 v3（原始资料）</span>
+    <sc-if value="{{showNew}}" hint-placeholder-val="{{ false }}"><span class="{{newCls}}">[5] 任务 · MAR-142 回调改用渠道交易号去重</span></sc-if>
   </div>
 </article>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"mark":{"editor":"enum","default":"none","options":["none","select","ann"]},"banner":{"editor":"boolean","default":false},"compact":{"editor":"boolean","default":false},"stale":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"drafts":{"editor":"int","default":1},"draftMenu":{"editor":"boolean","default":false},"$preview":{"width":760,"height":812}}'>
+<script type="text/x-dc" data-dc-script data-props='{"mark":{"editor":"enum","default":"none","options":["none","select","ann"]},"banner":{"editor":"boolean","default":false},"compact":{"editor":"boolean","default":false},"stale":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"drafts":{"editor":"int","default":1},"draftMenu":{"editor":"boolean","default":false},"diff":{"editor":"boolean","default":false},"newPage":{"editor":"boolean","default":false},"bar":{"editor":"enum","default":"none","options":["none","own-draft","own-review","others","both"]},"$preview":{"width":760,"height":812}}'>
 class Component extends DCLogic {
   renderVals() {
     var mark = this.props.mark ?? 'none';
@@ -66,13 +96,29 @@ class Component extends DCLogic {
     var draft = !!this.props.draft;
     var drafts = this.props.drafts ?? 1;
     var menuOpen = !!this.props.draftMenu && drafts > 1;
+    var newPage = !!this.props.newPage;
+    if (newPage) draft = true;
+    var diff = draft && !!this.props.diff;
+    var bar = this.props.bar ?? 'none';
+    var own = { 'own-draft': 1, 'own-review': 1, both: 1 }[bar] === 1;
+    var barTag = { 'own-draft': '草稿', 'own-review': '待审核', others: '待审核', both: '待解决' }[bar] || '';
+    var barText = { 'own-draft': '你的草稿改了这一页，还没有合并。',
+      'own-review': '已提交审核 #16 · 去重键改为渠道交易号，补回调人工处理',
+      others: '本页有 1 个待审核的修改 #18 · 退款回调也按渠道交易号去重，补充对账脚本的说明',
+      both: '待解决 #16 · 去重键改为渠道交易号，补回调人工处理' }[bar] || '';
     var list = [
       { name: '对话「回调去重键」', meta: '10 分钟前 · 改了 1 段' },
       { name: '任务 MAR-150「回调重试次数」', meta: '2 小时前 · 改了 2 段' }
     ].slice(0, Math.max(drafts, 1)).map(function (d, i) { return { name: d.name, meta: d.meta, on: i === 0, mark: i === 0 ? '✓' : '', cls: 'mi' + (i === 0 ? ' hl' : '') }; });
     return { multi: drafts > 1, menuOpen: menuOpen, draftList: list, draftPick: list[0].name,
-      draftText: drafts > 1 ? '你有 ' + drafts + ' 份草稿改了这一页，都还没有合并。其他人看到的仍是已发布版本。' : '你在对话里的修改，还没有合并。其他人看到的仍是已发布版本。',
-      draft: draft, notDraft: !draft, stale: stale, fresh: !stale, s1: stale ? 'hl-stale' : '', s3: mark === 'select' ? 'hl-sel' : (mark === 'ann' ? 'hl-ann' : ''), banner: !!this.props.banner, pad: this.props.compact ? '28px 32px 40px' : '36px 56px 40px' };
+      draftText: newPage ? '这一页是你在对话里新建的，还没有合并。' : drafts > 1 ? '你有 ' + drafts + ' 份草稿改了这一页，还没有合并。' : '你的草稿改了这一页，还没有合并。',
+      draft: draft, notDraft: !draft, stale: stale, fresh: !stale, showFresh: !stale && !newPage,
+      newPage: newPage, existing: !newPage, diff: diff, swBg: diff ? '#0f0f0f' : '#d4d4d4', swX: diff ? '16px' : '2px',
+      showOld: !draft || diff, showNew: draft, oldCls: diff ? 'dd' : '', newCls: diff ? 'di' : '', oldBlk: diff ? 'bd' : '', newBlk: diff ? 'bi' : '', allNew: diff ? 'bi' : '',
+      docCls: draft || bar !== 'none' ? 'doc rd' : 'doc', maxW: draft || bar !== 'none' ? '800px' : '760px',
+      newBar: bar !== 'none', oldBar: draft && bar === 'none', barOwn: own, barTag: barTag, barText: barText,
+      barTagBg: bar === 'both' ? '#9a6b1c' : '#4f6f8a', barLink: bar !== 'own-draft', barOthers: bar === 'both',
+      pageTitle: newPage ? '回调人工处理' : '支付回调', metaText: newPage ? '通用开发助手 新建 · 10 分钟前' : '通用开发助手 更新 · 更新于 10 分钟前', s1: stale ? 'hl-stale' : '', s3: mark === 'select' ? 'hl-sel' : (mark === 'ann' ? 'hl-ann' : ''), banner: !!this.props.banner, pad: this.props.compact ? '28px 32px 40px' : '36px 56px 40px' };
   }
 }
 </script>

@@ -4,11 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { api } from "@marvis/core/api";
-import type { ChatPendingTask, KbJobDetail, KnowledgeBaseDetail } from "@marvis/core/types";
+import type { ChatPendingTask, KbJobDetail, KbMergeRequestDetail, KnowledgeBaseDetail } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
 import { KbJobPage } from "./kb-job-page";
-import { kbJobPanelState, memberPartOfJobMessage, parseKbJobRoute } from "./kb-job-state";
+import { kbJobPanelState, memberPartOfJobMessage, parseKbJobRoute, reviewHandoffNumber } from "./kb-job-state";
 
 vi.mock("@marvis/core/api", () => {
   class ApiError extends Error {
@@ -28,10 +28,16 @@ vi.mock("@marvis/core/api", () => {
       createKnowledgeBaseJob: vi.fn(),
       submitKnowledgeBaseJob: vi.fn(),
       discardKnowledgeBaseJob: vi.fn(),
+      setKnowledgeBaseJobArchived: vi.fn(),
+      deleteKnowledgeBaseJob: vi.fn(),
       listAgents: vi.fn(),
       listMembers: vi.fn(),
       listRuntimes: vi.fn(),
       sendChatMessage: vi.fn(),
+      getKnowledgeBaseMergeRequest: vi.fn(),
+      listKnowledgeBaseMrComments: vi.fn(),
+      handoffKnowledgeBaseMrReview: vi.fn(),
+      requestKnowledgeBaseMrReview: vi.fn(),
     },
   };
 });
@@ -171,6 +177,7 @@ function job(over: Partial<KbJobDetail> = {}): KbJobDetail {
     draft_id: "draft-1",
     created_by: "user-1",
     state: "idle",
+    archived: false,
     last_reply: "",
     draft: { version: 3, status: "open", pages: 1, added: 1, deleted: 1 },
     merge_request: null,
@@ -256,6 +263,12 @@ describe("job state helpers", () => {
     const first = "Knowledge base: Team (`team`)\nJob: x\n\nHow to work:\n- ...\n\nMember's message:\n处理 4 条批注。";
     expect(memberPartOfJobMessage(first)).toBe("处理 4 条批注。");
     expect(memberPartOfJobMessage("just a follow-up")).toBe("just a follow-up");
+  });
+
+  it("recognizes the review hand-off the server writes for the agent", () => {
+    expect(reviewHandoffNumber("Change request #12 (Fix (a) typo) has review feedback to resolve.\n\nTo resolve it:")).toBe(12);
+    expect(reviewHandoffNumber("Change request #12 is done")).toBeNull();
+    expect(reviewHandoffNumber("hello")).toBeNull();
   });
 
   it("covers the edge cases of designs 9.9–9.17", () => {
@@ -354,8 +367,51 @@ describe("KbJobPage", () => {
 
     expect(within(panel).getByText("通用开发助手 submitted change request #16. The draft is in review and read-only here.")).toBeInTheDocument();
     expect(within(panel).getByText("Review #16").closest("a")).toHaveAttribute("href", "/acme/kb/team/reviews/16");
+    expect(within(within(panel).getByRole("status")).queryByRole("link")).toBeNull();
     expect(within(panel).queryByRole("button", { name: "Submit for review" })).toBeNull();
     expect(within(panel).queryByRole("button", { name: "Discard draft" })).toBeNull();
+  });
+
+  it("shows the open review feedback, hands it to the agent and asks for review again (9.18)", async () => {
+    const reviewed = { reviewer_user_id: "user-2", reviewer_name: "王芳", state: "submitted" as const, merge_request_id: "mr-1", created_at: "" };
+    mocked.getKnowledgeBaseMergeRequest.mockResolvedValue({
+      ...({} as KbMergeRequestDetail),
+      number: 16,
+      pages: job().pages,
+      // A review answered before the last request for review is resolved.
+      review_requested_at: "2026-10-25T10:00:00Z",
+      reviews: [
+        { ...reviewed, id: "rv-0", summary: "Old.", comment_count: 1, submitted_at: "2026-10-25T09:00:00Z" },
+        { ...reviewed, id: "rv-1", summary: "去重原因补上后再合并。", comment_count: 1, submitted_at: "2026-10-25T10:40:00Z" },
+      ],
+    });
+    const comment = { merge_request_id: "mr-1", parent_id: null, author_type: "member", author_id: "user-2", author_name: "王芳", state: "published" as const, created_at: "" };
+    mocked.listKnowledgeBaseMrComments.mockResolvedValue([
+      { ...comment, id: "c-0", review_id: "rv-0", quote: null, body: "旧意见" },
+      { ...comment, id: "c-1", review_id: "rv-1", quote: { page_id: "page-cb", block_id: "b4", text: "按渠道交易号去重。" }, body: "补一下原因。" },
+    ]);
+    mocked.handoffKnowledgeBaseMrReview.mockResolvedValue({ chat_session_id: "chat-1", message_id: "m-1", task_id: "t-1" });
+    const panel = await openJob(
+      job({
+        draft: { version: 3, status: "submitted", pages: 1, added: 1, deleted: 1 },
+        merge_request: { id: "mr-1", number: 16, title: "t", status: "changes_requested", author_type: "member", author_id: "user-1", author_name: "我", merged_by_name: "", closed_by_name: "", close_reason: "" },
+      }),
+    );
+
+    const feedback = await within(panel).findByRole("region", { name: "Review feedback" });
+    expect(within(feedback).getByText("#16 has 1 comment to resolve")).toBeInTheDocument();
+    expect(within(feedback).getByText("去重原因补上后再合并。")).toBeInTheDocument();
+    expect(within(feedback).getByText("支付回调 · 按渠道交易号去重。")).toBeInTheDocument();
+    expect(within(feedback).queryByText("旧意见")).toBeNull();
+    expect(within(feedback).getByRole("link", { name: "Go to review" })).toHaveAttribute("href", "/acme/kb/team/reviews/16");
+    expect(within(panel).getByText("Changes requested")).toBeInTheDocument();
+
+    await userEvent.click(within(feedback).getByRole("button", { name: "Hand to agent" }));
+    await waitFor(() => expect(mocked.handoffKnowledgeBaseMrReview).toHaveBeenCalledWith(16));
+
+    expect(within(panel).queryByText("Review #16")).toBeNull();
+    await userEvent.click(within(panel).getByRole("button", { name: "Request review again" }));
+    await waitFor(() => expect(mocked.requestKnowledgeBaseMrReview).toHaveBeenCalledWith(16));
   });
 
   it("offers resubmitting after the change request is closed (9.14)", async () => {
@@ -390,6 +446,37 @@ describe("KbJobPage", () => {
     const dialog = await screen.findByRole("alertdialog");
     await userEvent.click(within(dialog).getByRole("button", { name: "Discard draft" }));
     await waitFor(() => expect(mocked.discardKnowledgeBaseJob).toHaveBeenCalledWith("job-1"));
+  });
+
+  it("archives from the ⋯ menu and offers no delete until archived", async () => {
+    mocked.setKnowledgeBaseJobArchived.mockResolvedValue({ ...job(), archived: true });
+    await openJob(job());
+
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.queryByRole("menuitem", { name: "Delete" })).toBeNull();
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Archive" }));
+    await waitFor(() => expect(mocked.setKnowledgeBaseJobArchived).toHaveBeenCalledWith("job-1", true));
+  });
+
+  it("turns read-only once archived and deletes after confirming, then leaves for the list", async () => {
+    mocked.deleteKnowledgeBaseJob.mockResolvedValue(undefined);
+    mocked.getKnowledgeBaseJob.mockResolvedValue(job({ archived: true }));
+    const adapter = makeAdapter("/acme/kb/team/jobs/job-1");
+    mount(adapter);
+    await screen.findByRole("region", { name: "Draft changes" });
+
+    expect(screen.queryByRole("form", { name: "composer" })).toBeNull();
+    expect(screen.getByText("This job is archived")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Unarchive" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(mocked.deleteKnowledgeBaseJob).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(mocked.deleteKnowledgeBaseJob).toHaveBeenCalledWith("job-1"));
+    await waitFor(() => expect(adapter.push).toHaveBeenCalledWith("/acme/kb/team/jobs"));
   });
 });
 

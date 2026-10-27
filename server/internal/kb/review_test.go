@@ -159,75 +159,44 @@ func TestMergePageMatrix(t *testing.T) {
 	})
 }
 
-func TestReviewCommentTriggers(t *testing.T) {
-	const (
-		member = "11111111-1111-4111-8111-111111111111"
-		author = "22222222-2222-4222-8222-222222222222"
-		other  = "33333333-3333-4333-8333-333333333333"
-	)
-	mention := func(kind, id string) string { return "[@x](mention://" + kind + "/" + id + ")" }
-
-	cases := []struct {
-		name          string
-		body          string
-		commenterType string
-		commenterID   string
-		authorAgent   string
-		want          []ReviewTrigger
-	}{
-		{name: "member comment goes to the author agent", body: "please fix", commenterType: ActorMember, commenterID: member, authorAgent: author,
-			want: []ReviewTrigger{{AgentID: author, Reason: TriggerReasonAuthor}}},
-		{name: "no agent behind the request", body: "please fix", commenterType: ActorMember, commenterID: member},
-		{name: "a named agent wins", body: "ask " + mention("agent", other), commenterType: ActorMember, commenterID: member, authorAgent: author,
-			want: []ReviewTrigger{{AgentID: other, Reason: TriggerReasonMention}}},
-		{name: "a named agent wins over @all", body: mention("all", "all") + " " + mention("agent", other), commenterType: ActorMember, commenterID: member, authorAgent: author,
-			want: []ReviewTrigger{{AgentID: other, Reason: TriggerReasonMention}}},
-		{name: "@all starts nobody", body: mention("all", "all") + " fyi", commenterType: ActorMember, commenterID: member, authorAgent: author},
-		{name: "naming a member starts nobody", body: mention("member", member) + " look", commenterType: ActorMember, commenterID: member, authorAgent: author},
-		{name: "an agent reply does not wake the author", body: "done", commenterType: ActorAgent, commenterID: author, authorAgent: author},
-		{name: "an agent naming itself is skipped", body: mention("agent", author), commenterType: ActorAgent, commenterID: author, authorAgent: author},
-		{name: "an agent naming another agent starts it", body: mention("agent", other), commenterType: ActorAgent, commenterID: author, authorAgent: author,
-			want: []ReviewTrigger{{AgentID: other, Reason: TriggerReasonMention}}},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := ReviewCommentTriggers(ReviewTriggerInput{
-				Body: tc.body, CommenterType: tc.commenterType, CommenterID: tc.commenterID, AuthorAgentID: tc.authorAgent,
-			})
-			if len(got) == 0 && len(tc.want) == 0 {
-				return
-			}
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("triggers = %+v, want %+v", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestReviewCommentMessage(t *testing.T) {
-	got, err := ReviewCommentMessage(ReviewCommentInput{
-		Number: 16, Title: "Dedup key", Author: "Wang Fang", QuotePage: "Callback", QuoteText: "Dedup by trade no.",
-		Body: "Say why.", DraftID: "d-1", CommentID: "c-1",
+func TestReviewHandoffMessage(t *testing.T) {
+	got, err := ReviewHandoffMessage(ReviewHandoffInput{
+		Number: 16, Title: "Dedup key", DraftID: "d-1",
+		Summaries: []ReviewHandoffSummary{{Reviewer: "Wang Fang", Text: "Two things to fix."}},
+		Comments: []ReviewHandoffComment{
+			{ID: "c-1", Author: "Wang Fang", QuotePage: "Callback", QuoteText: "Dedup by trade no.", Body: "Say why."},
+			{ID: "c-2", Author: "Li Lei", Body: "Add an example."},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "Reviewer comment on change request #16 (Dedup key) from Wang Fang:\n" +
-		"> Callback: Dedup by trade no.\n" +
-		"Say why.\n\n" +
-		"Update the draft of #16 (`d-1`) to address it, run `marvis kb draft check d-1`, then reply on the change request: " +
-		"`marvis kb mr comment add 16 --parent c-1 --content-file <path>`. If no change is needed, reply why."
+
+	want := "Change request #16 (Dedup key) has review feedback to resolve.\n\n" +
+		"Review summary from Wang Fang:\nTwo things to fix.\n\n" +
+		"Comment `c-1` from Wang Fang, on the page \"Callback\":\n> Dedup by trade no.\nSay why.\n\n" +
+		"Comment `c-2` from Li Lei:\nAdd an example.\n\n" +
+		"To resolve it:\n" +
+		"- Read the full feedback with `marvis kb mr comment list 16`.\n" +
+		"- Make the changes in the same draft (`d-1`). It is the same change request; do not open a new one.\n" +
+		"- Run `marvis kb draft check d-1` when you are done.\n" +
+		"- Answer under each comment with `marvis kb mr comment add 16 --parent <comment id> --content-file ./reply.md`: " +
+		"what you changed, or why you left it.\n" +
+		"- Then tell me what you changed, so I can request review again."
 	if got != want {
 		t.Errorf("message:\n%s\nwant:\n%s", got, want)
 	}
 
-	plain, err := ReviewCommentMessage(ReviewCommentInput{Number: 3, Title: "T", Author: "A", Body: "B", DraftID: "d", CommentID: "c"})
+	// The job page shows a short line in place of the message, keyed on its lead.
+	if m := ReviewHandoffLead.FindStringSubmatch(got); m == nil || m[1] != "16" {
+		t.Errorf("lead match = %q", m)
+	}
+	titled, err := ReviewHandoffMessage(ReviewHandoffInput{Number: 3, Title: "Fix (a) typo\nsecond line", DraftID: "d-1"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(plain, "Reviewer comment on change request #3 (T) from A:\nB\n\n") {
-		t.Errorf("without a quote:\n%s", plain)
+	if m := ReviewHandoffLead.FindStringSubmatch(titled); m == nil || m[1] != "3" {
+		t.Errorf("lead match with an odd title = %q", m)
 	}
 }
 

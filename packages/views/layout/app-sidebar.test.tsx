@@ -11,7 +11,9 @@ import { AppSidebar } from "./app-sidebar";
 
 const { appForeground, chatSessions, chatStore, detail, deletePin, invitationApi, knowledgeBases, navigation, pins, sidebarState, summary, workspaces } = vi.hoisted(() => ({
   appForeground: { current: true },
-  knowledgeBases: { current: [] as { id: string; pending: { annotations: number; stale_pages: number; open_mrs: number } }[] },
+  knowledgeBases: {
+    current: [] as { id: string; name: string; slug: string; pending: { annotations: number; stale_pages: number; open_mrs: number } }[],
+  },
   sidebarState: { setOpenMobile: vi.fn() },
   chatSessions: { current: [] as { id?: string; unread_count?: number }[] },
   chatStore: { current: { activeSessionId: null as string | null, isOpen: false } },
@@ -25,7 +27,7 @@ const { appForeground, chatSessions, chatStore, detail, deletePin, invitationApi
     invalidateQueries: vi.fn(),
     mutations: [] as Array<Record<string, unknown>>,
   },
-  navigation: { current: { pathname: "/acme/issues" } },
+  navigation: { current: { pathname: "/acme/issues" }, push: vi.fn() },
   summary: { current: [] as { workspace_id: string; count: number }[] },
   workspaces: {
     current: [] as { id: string; name: string; slug: string; avatar_url: string | null }[],
@@ -111,7 +113,14 @@ vi.mock("@marvis/ui/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DropdownMenuItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DropdownMenuItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) =>
+    onClick ? (
+      <div role="menuitem" onClick={onClick}>
+        {children}
+      </div>
+    ) : (
+      <>{children}</>
+    ),
   DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DropdownMenuSeparator: () => null,
   DropdownMenuTrigger: ({ render }: { render: React.ReactNode }) => <>{render}</>,
@@ -135,8 +144,8 @@ vi.mock("./help-launcher", () => ({
 vi.mock("../auth", () => ({ useLogout: () => vi.fn() }));
 vi.mock("../issues/components/status-icon", () => ({ StatusIcon: () => <span /> }));
 vi.mock("../navigation", () => ({
-  AppLink: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
-  useNavigation: () => ({ pathname: navigation.current.pathname, push: vi.fn() }),
+  AppLink: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props}>{children}</a>,
+  useNavigation: () => ({ pathname: navigation.current.pathname, push: navigation.push }),
 }));
 vi.mock("../projects/components/project-icon", () => ({ ProjectIcon: () => <span /> }));
 vi.mock("../workspace/workspace-avatar", () => ({ WorkspaceAvatar: () => <span /> }));
@@ -171,6 +180,7 @@ vi.mock("@marvis/core/paths", async (importOriginal) => ({
     agents: () => "/acme/agents",
     squads: () => "/acme/squads",
     kb: () => "/acme/kb",
+    kbReviews: (slug: string) => `/acme/kb/${slug}/reviews`,
     usage: () => "/acme/usage",
     runtimes: () => "/acme/runtimes",
     skills: () => "/acme/skills",
@@ -630,11 +640,18 @@ describe("AI team nav — Knowledge base", () => {
   beforeEach(() => {
     knowledgeBases.current = [];
     navigation.current = { pathname: "/acme/issues" };
+    navigation.push.mockClear();
   });
 
-  const pending = (open_mrs: number) => ({ annotations: 1, stale_pages: 1, open_mrs });
+  const base = (id: string, open_mrs: number) => ({
+    id,
+    name: `Base ${id}`,
+    slug: id,
+    pending: { annotations: 1, stale_pages: 1, open_mrs },
+  });
   const kbNav = (container: HTMLElement) =>
     container.querySelector<HTMLElement>('button[data-href="/acme/kb"]');
+  const badge = (container: HTMLElement) => container.querySelector<HTMLElement>('[data-testid="kb-open-mr-badge"]');
 
   it("places Knowledge base right after Squads", () => {
     const { container } = renderWithI18n(<AppSidebar />);
@@ -645,20 +662,37 @@ describe("AI team nav — Knowledge base", () => {
     expect(kbNav(container)).toHaveTextContent("Knowledge base");
   });
 
-  it("badges the nav with open merge requests summed across knowledge bases", () => {
-    knowledgeBases.current = [
-      { id: "a", pending: pending(2) },
-      { id: "b", pending: pending(1) },
-      { id: "c", pending: pending(0) },
-    ];
-    const { container } = render(<AppSidebar />);
-    expect(kbNav(container)?.querySelector('[data-testid="kb-open-mr-badge"]')).toHaveTextContent("3");
+  it("badges the nav with open merge requests summed across knowledge bases, outside the row link", () => {
+    knowledgeBases.current = [base("a", 2), base("b", 1), base("c", 0)];
+    const { container } = renderWithI18n(<AppSidebar />);
+    expect(badge(container)).toHaveTextContent("3");
+    expect(kbNav(container)?.contains(badge(container))).toBe(false);
   });
 
   it("hides the badge when nothing is waiting for review", () => {
-    knowledgeBases.current = [{ id: "a", pending: pending(0) }];
-    const { container } = render(<AppSidebar />);
-    expect(kbNav(container)?.querySelector('[data-testid="kb-open-mr-badge"]')).toBeNull();
+    knowledgeBases.current = [base("a", 0)];
+    const { container } = renderWithI18n(<AppSidebar />);
+    expect(badge(container)).toBeNull();
+  });
+
+  it("links the badge to the reviews of the only knowledge base holding them", () => {
+    knowledgeBases.current = [base("a", 0), base("b", 2)];
+    renderWithI18n(<AppSidebar />);
+    expect(screen.getByRole("link", { name: "2 changes to review" })).toHaveAttribute("href", "/acme/kb/b/reviews");
+  });
+
+  it("lists the knowledge bases holding reviews and opens the one picked", () => {
+    knowledgeBases.current = [base("a", 2), base("b", 0), base("c", 1)];
+    renderWithI18n(<AppSidebar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "3 changes to review" }));
+    expect(navigation.push).not.toHaveBeenCalled();
+
+    const items = screen.getAllByRole("menuitem").filter((item) => item.textContent?.startsWith("Base"));
+    expect(items.map((item) => item.textContent)).toEqual(["Base a2", "Base c1"]);
+    fireEvent.click(items[1]!);
+    expect(navigation.push).toHaveBeenCalledTimes(1);
+    expect(navigation.push).toHaveBeenCalledWith("/acme/kb/c/reviews");
   });
 });
 

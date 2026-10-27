@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import { api } from "@marvis/core/api";
 import type { KbAnnotation, KbHome, KbPage, KnowledgeBaseDetail } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
-import { KbAnnotationsPage, readSelectedSentence } from "./kb-annotations";
+import { KbAnnotationComposer, KbAnnotationsPage, readSelectedSentence } from "./kb-annotations";
 import { KbHomePage } from "./kb-home-page";
 import { KbPageView } from "./kb-page-view";
 
@@ -175,6 +175,7 @@ const PAGE: KbPage = {
   backlinks: [],
   pending_mr: null,
   pending_mr_count: 0,
+  pending_mrs: [],
   annotations_open: 1,
   draft_change: "",
   drafts: [],
@@ -300,6 +301,144 @@ describe("page annotations", () => {
     expect(mocked.createKnowledgeBaseAnnotation).toHaveBeenCalledWith("team", { page_id: "page-cb", body: "整页都需要复核" });
   });
 
+  it("underlines sentences with open annotations without opening the panel", async () => {
+    const resolved = annotation({ id: "a-done", status: "resolved", quote: "幂等键保存 24 小时。", body: "已处理" });
+    const lost = annotation({ id: "a-gone", anchor_lost: true, quote: "幂等键保存 24 小时。", body: "原句没了" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, resolved, lost, DISMISSED]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await waitFor(() => expect(document.querySelectorAll("[data-block-id='b4'] mark.kb-annotated")).toHaveLength(1));
+    const mark = document.querySelector("[data-block-id='b4'] mark.kb-annotated")!;
+    expect(mark.textContent).toBe("渠道回调按订单号加幂等键去重。");
+    expect(mark.getAttribute("data-annotation-ids")).toBe("a-mine");
+    expect(screen.queryByRole("complementary", { name: /Page annotations/ })).not.toBeInTheDocument();
+  });
+
+  it("does not fetch annotations for a page without open ones", async () => {
+    mocked.getKnowledgeBasePage.mockResolvedValue({ ...PAGE, annotations_open: 0 });
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await screen.findByRole("heading", { level: 1, name: "支付回调" });
+    expect(mocked.listKnowledgeBaseAnnotations).not.toHaveBeenCalled();
+    expect(document.querySelector("mark.kb-annotated")).toBeNull();
+  });
+
+  it("opens the panel on the annotations of a clicked sentence and scrolls to the earliest", async () => {
+    const scrolled: Element[] = [];
+    const scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoView;
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const earlier = annotation({ id: "a-early", author_id: "user-2", body: "更早的一条", created_at: "2026-10-24T09:00:00Z" });
+    const other = annotation({ id: "a-other", quote: "幂等键保存 24 小时。", body: "另一句" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, earlier, other]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await waitFor(() => expect(document.querySelectorAll("mark.kb-annotated")).toHaveLength(2));
+    const mark = document.querySelector<HTMLElement>("mark[data-annotation-ids='a-mine,a-early']")!;
+    await userEvent.click(mark);
+
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 3" });
+    const card = (body: string) => within(panel).getByRole("article", { name: body });
+    expect(card("去重键已经改成渠道交易号。")).toHaveAttribute("aria-current", "true");
+    expect(card("更早的一条")).toHaveAttribute("aria-current", "true");
+    expect(card("另一句")).not.toHaveAttribute("aria-current");
+    await waitFor(() => expect(scrolled.at(-1)).toBe(card("更早的一条")));
+
+    // Clicking again keeps the panel open and scrolls to it again.
+    const calls = scrollIntoView.mock.calls.length;
+    await userEvent.click(document.querySelector<HTMLElement>("mark[data-annotation-ids='a-mine,a-early']")!);
+    expect(screen.getByRole("complementary", { name: "Page annotations 3" })).toBeInTheDocument();
+    await waitFor(() => expect(scrollIntoView.mock.calls.length).toBeGreaterThan(calls));
+    expect(scrolled.at(-1)).toBe(card("更早的一条"));
+  });
+
+  // Regression: the quote was matched at its first occurrence in the raw
+  // Markdown, so a sentence repeated in a link before it underlined the link.
+  it("underlines the annotated sentence, not a link that repeats its words", async () => {
+    mocked.getKnowledgeBasePage.mockResolvedValue({
+      ...PAGE,
+      blocks: [
+        { id: "b3", kind: "text", content: "## 去重" },
+        { id: "b4", kind: "text", content: "参见[幂等键保存 24 小时。](/kb/team/p/page-idem)。幂等键保存 24 小时。[^mar-142]" },
+      ],
+    });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([
+      annotation({ id: "a-ttl", quote: "幂等键保存 24 小时。", prefix: "去重\n参见幂等键保存 24 小时。。", suffix: "" }),
+    ]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await waitFor(() => expect(document.querySelector("mark.kb-annotated")).not.toBeNull());
+    const marks = document.querySelectorAll("[data-block-id='b4'] mark.kb-annotated");
+    expect(marks).toHaveLength(1);
+    expect(marks[0]!.closest("a")).toBeNull();
+    expect(marks[0]!.textContent).toBe("幂等键保存 24 小时。");
+    expect(document.querySelector("[data-block-id='b4'] a[href='/kb/team/p/page-idem'] mark")).toBeNull();
+  });
+
+  it("scrolls to and flashes the sentence of a clicked annotation card", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const other = annotation({ id: "a-other", quote: "幂等键保存 24 小时。", body: "另一句" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, other]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await userEvent.click(await screen.findByRole("button", { name: "Page annotations" }));
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 2" });
+    const mark = document.querySelector<HTMLElement>("mark[data-annotation-ids='a-other']")!;
+    expect(mark).not.toBeNull();
+
+    // Clicking the card body, not only its quote, jumps to the sentence.
+    fireEvent.click(within(within(panel).getByRole("article", { name: "另一句" })).getByText("另一句"));
+    expect(scrolled.at(-1)).toBe(mark);
+    expect(mark).toHaveAttribute("data-flash", "true");
+    expect(document.querySelector("mark[data-annotation-ids='a-mine']")).not.toHaveAttribute("data-flash");
+
+    // The flash fades; the next card moves it.
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+    expect(mark).not.toHaveAttribute("data-flash");
+    fireEvent.click(within(panel).getByRole("button", { name: /渠道回调按订单号加幂等键去重/ }));
+    expect(scrolled.at(-1)).toBe(document.querySelector("mark[data-annotation-ids='a-mine']"));
+    expect(document.querySelector("mark[data-annotation-ids='a-mine']")).toHaveAttribute("data-flash", "true");
+  });
+
+  it("falls back to the block when an annotation card's sentence is not on the page", async () => {
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const rewritten = annotation({ id: "a-rewritten", quote: "这句已经改写了。", body: "原句改了" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([rewritten]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await userEvent.click(await screen.findByRole("button", { name: "Page annotations" }));
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 1" });
+    await userEvent.click(within(panel).getByRole("article", { name: "原句改了" }));
+
+    expect(scrolled.at(-1)).toBe(document.querySelector("[data-block-id='b4']"));
+    expect(document.querySelector("[data-flash]")).toBeNull();
+  });
+
   it("annotates a selected sentence", async () => {
     mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
 
@@ -329,6 +468,55 @@ describe("page annotations", () => {
     });
     // The page panel opens on the new annotation.
     expect(await screen.findByRole("complementary", { name: /Page annotations/ })).toBeInTheDocument();
+  });
+});
+
+describe("KbAnnotationComposer keyboard", () => {
+  function renderComposer(pending = false) {
+    const onSubmit = vi.fn();
+    const onCancel = vi.fn();
+    renderWithI18n(<KbAnnotationComposer label="Annotation" pending={pending} onSubmit={onSubmit} onCancel={onCancel} />);
+
+    return { onSubmit, onCancel, box: screen.getByRole("textbox", { name: "Annotation" }) };
+  }
+
+  it("submits on Enter and breaks the line on Shift+Enter", async () => {
+    const { onSubmit, box } = renderComposer();
+
+    await userEvent.type(box, "第一行{Shift>}{Enter}{/Shift}第二行");
+    expect(box).toHaveValue("第一行\n第二行");
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await userEvent.keyboard("{Enter}");
+    expect(onSubmit).toHaveBeenCalledWith("第一行\n第二行");
+  });
+
+  it("does not submit an empty body", async () => {
+    const empty = renderComposer();
+    await userEvent.type(empty.box, "  {Enter}");
+    expect(empty.onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("does not submit while a submit is pending", async () => {
+    const busy = renderComposer(true);
+    await userEvent.type(busy.box, "内容{Enter}");
+    expect(busy.onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("ignores the Enter that confirms an input method composition", () => {
+    const { onSubmit, box } = renderComposer();
+    fireEvent.change(box, { target: { value: "huifu" } });
+
+    fireEvent.keyDown(box, { key: "Enter", isComposing: true });
+    fireEvent.keyDown(box, { key: "Enter", keyCode: 229 });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("cancels on Escape", async () => {
+    const { onCancel, box } = renderComposer();
+
+    await userEvent.type(box, "草稿{Escape}");
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });
 

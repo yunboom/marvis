@@ -97,10 +97,11 @@ func TestPromptTemplatesAvoidRetiredTerms(t *testing.T) {
 	sources := map[string]string{
 		"builder instructions": builderInstructionsSource,
 		"job first message":    jobMessageSource,
-		"review comment":       reviewCommentSource,
+		"review handoff":       reviewHandoffSource,
 		"purpose template":     PurposeTemplate,
 	}
-	retired := []string{"quickstart", "kb job link-draft", "marvis kb templates", "DefaultSchema"}
+	// Decision 107: review comments no longer start agent runs.
+	retired := []string{"quickstart", "kb job link-draft", "marvis kb templates", "DefaultSchema", "starts a new run", "new run for you"}
 
 	for name, source := range sources {
 		for _, term := range retired {

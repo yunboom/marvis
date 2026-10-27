@@ -27,6 +27,9 @@ const (
 const (
 	// MergeRequestStatusOpen is waiting for review.
 	MergeRequestStatusOpen = "open"
+	// MergeRequestStatusChangesRequested has a submitted review waiting on
+	// its owner; it cannot merge until the owner asks for review again.
+	MergeRequestStatusChangesRequested = "changes_requested"
 	// MergeRequestStatusMerged is applied to the mainline.
 	MergeRequestStatusMerged = "merged"
 	// MergeRequestStatusClosed is closed without merging.

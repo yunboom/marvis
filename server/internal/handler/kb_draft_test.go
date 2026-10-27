@@ -558,6 +558,55 @@ func TestKbDraftOnlyCreatorWrites(t *testing.T) {
 	testutil.Call(t, testHandler.GetKbDraft, req).Want(http.StatusForbidden)
 }
 
+// TestKbDraftReaders: besides its creator, a draft is read by whoever may
+// merge into the knowledge base (an owner or admin, the knowledge base
+// creator); other members get 403. The page's draft banner still lists the
+// reader's own drafts only.
+func TestKbDraftReaders(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	f := newKbDraftFixture(t)
+	blocks := blockIDsOf(t, kbFetch(t, f.pageA, "detail=with-ids", http.StatusOK))
+	kbOps(t, f.draftID, f.pageA, f.headA, http.StatusOK, map[string]any{"op": kb.OpBlockReplace, "block": blocks[2], "content": "By trade no."})
+
+	readDraft := func(userID string, want int) {
+		t.Helper()
+		req := testutil.WithURLParams(newRequestAs(userID, http.MethodGet, "/api/kb/drafts/x", nil), "draftId", f.draftID)
+		testutil.Call(t, testHandler.GetKbDraft, req).Want(want)
+	}
+	readPage := func(userID, query string, want int) KbPageResponse {
+		t.Helper()
+		req := withURLParam(newRequestAs(userID, http.MethodGet, "/api/kb/pages/x?"+query, nil), "id", f.pageA)
+		var got KbPageResponse
+		rec := testutil.Call(t, testHandler.GetKbPage, req).Want(want)
+		if want == http.StatusOK {
+			rec.JSON(&got)
+		}
+		return got
+	}
+
+	plain := createPlainMember(t, fmt.Sprintf("kb-draft-plain-%d@marvis.ai", time.Now().UnixNano()))
+	readDraft(plain, http.StatusForbidden)
+	readPage(plain, "draft="+f.draftID, http.StatusForbidden)
+
+	admin := createPlainMember(t, fmt.Sprintf("kb-draft-admin-%d@marvis.ai", time.Now().UnixNano()))
+	dbfx.Exec(t, `UPDATE member SET role = 'admin' WHERE workspace_id = $1 AND user_id = $2`, testWorkspaceID, admin)
+	readDraft(admin, http.StatusOK)
+	readPage(admin, "draft="+f.draftID, http.StatusOK)
+	if got := readPage(admin, "", http.StatusOK); len(got.Drafts) != 0 {
+		t.Errorf("admin's draft banner lists someone else's draft: %+v", got.Drafts)
+	}
+	if got := readPage(testUserID, "", http.StatusOK); len(got.Drafts) != 1 {
+		t.Errorf("creator's draft banner = %+v", got.Drafts)
+	}
+
+	creator := createPlainMember(t, fmt.Sprintf("kb-draft-creator-%d@marvis.ai", time.Now().UnixNano()))
+	dbfx.Exec(t, `UPDATE kb_base SET created_by = $2 WHERE id = $1`, f.baseID, creator)
+	readDraft(creator, http.StatusOK)
+}
+
 func TestListKbPagesTypeFilterAndTotal(t *testing.T) {
 	if testHandler == nil || testPool == nil {
 		t.Skip("database not available")

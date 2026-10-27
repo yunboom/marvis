@@ -38,11 +38,36 @@ export function citeSourceId(href: string | null | undefined): string | null {
   }
 }
 
+/** Class of the mark under an annotated sentence. */
+export const KB_ANNOTATED_CLASS = "kb-annotated";
+
+/** Attribute listing the annotations on a marked sentence, comma separated. */
+export const KB_ANNOTATION_IDS_ATTR = "data-annotation-ids";
+
+const ANNOTATION_ID = /^[\w-]+$/;
+
+/** An annotated sentence of a block and the annotations on it. */
+export interface KbQuoteMark {
+  quote: string;
+  ids: readonly string[];
+  /** Page text right before the sentence; picks the occurrence when it repeats. */
+  prefix?: string;
+  /** Page text right after the sentence. */
+  suffix?: string;
+}
+
 export interface PrepareBlockOptions {
   /** Citation number of each source id, 1-based, in page order. */
   citeNumbers: ReadonlyMap<string, number>;
   /** Claim sentences to highlight as possibly outdated. */
   highlights?: readonly string[];
+  /** Annotated sentences to underline. */
+  annotations?: readonly KbQuoteMark[];
+}
+
+/** The annotation ids a marked sentence carries. */
+export function annotationIdsOf(element: Element): string[] {
+  return (element.getAttribute(KB_ANNOTATION_IDS_ATTR) ?? "").split(",").filter(Boolean);
 }
 
 /** Rewrites a block's Markdown for rendering on the reading page. */
@@ -54,6 +79,8 @@ export function prepareBlockMarkdown(content: string, options: PrepareBlockOptio
 
   out = out.replace(UNWRITTEN_PAGE_LINK, `](${KB_MISSING_PAGE_HREF})`);
 
+  out = markAnnotatedSentences(out, options.annotations ?? []);
+
   for (const sentence of options.highlights ?? []) {
     const text = sentence.trim();
     if (!text || !out.includes(text) || out.includes(`<mark>${text}`)) continue;
@@ -61,6 +88,157 @@ export function prepareBlockMarkdown(content: string, options: PrepareBlockOptio
   }
 
   return out;
+}
+
+// Annotated sentences
+
+/**
+ * How a character of a block's Markdown reads on the page: shown as written
+ * (`text`), markup that shows nothing such as link brackets and destinations,
+ * tags, emphasis and list markers (`markup`), or markup that reads as a space
+ * (`gap`): a citation, which the server drops as one when anchoring.
+ */
+type CharRole = "text" | "markup" | "gap";
+
+// Markup of prepared Markdown, in the order roles are claimed: a character
+// keeps the first role given to it.
+const CITE_LINK = /\[\d+\]\(#kb-cite-[^)\s]*\)/g;
+const DELETED_TEXT = /<del>[\s\S]*?<\/del>/g;
+const HTML_TAG = /<\/?[A-Za-z][^>\n]*>/g;
+const INLINE_LINK = /!?\[([^\]\n]*)\]\([^)\n]*\)/g;
+// Indentation before a marker is whitespace, which a quote may span.
+const LINE_MARKERS = /(?<=^[ \t]*)(?:(?:#{1,6}|>|[-*+]|\d+[.)])[ \t]+)+(?:\[[ xX]\][ \t]+)?/gm;
+const ESCAPE = /\\(?=[!-/:-@[-`{-~])/g;
+const EMPHASIS_MARKERS = /\*+|~~|`+|(?<![\p{L}\p{N}])_+|_+(?![\p{L}\p{N}])/gu;
+
+/**
+ * The text a block's Markdown shows, whitespace collapsed like the server's
+ * anchor text, with where each character came from in the source.
+ */
+interface ReadableText {
+  text: string;
+  /** Source offset of each character of `text`. */
+  from: number[];
+  /** Role of each source character. */
+  roles: CharRole[];
+}
+
+function readableText(markdown: string): ReadableText {
+  const roles = new Array<CharRole>(markdown.length).fill("text");
+  const claim = (start: number, end: number, role: CharRole) => {
+    for (let i = start; i < end; i++) {
+      if (roles[i] === "text") roles[i] = role;
+    }
+  };
+  const claimAll = (pattern: RegExp, role: CharRole) => {
+    for (const match of markdown.matchAll(pattern)) claim(match.index, match.index + match[0].length, role);
+  };
+
+  claimAll(CITE_LINK, "gap");
+  claimAll(FOOTNOTE_REF, "gap");
+  claimAll(DELETED_TEXT, "markup");
+  claimAll(HTML_TAG, "markup");
+  for (const match of markdown.matchAll(INLINE_LINK)) {
+    // The label reads as text; the brackets and the destination do not.
+    const labelStart = match.index + match[0].indexOf("[") + 1;
+    const labelEnd = labelStart + (match[1] ?? "").length;
+    claim(match.index, labelStart, "markup");
+    claim(labelEnd, match.index + match[0].length, "markup");
+  }
+  claimAll(LINE_MARKERS, "markup");
+  claimAll(ESCAPE, "markup");
+  claimAll(EMPHASIS_MARKERS, "markup");
+
+  let text = "";
+  const from: number[] = [];
+  for (let i = 0; i < markdown.length; i++) {
+    if (roles[i] === "markup") continue;
+
+    const char = markdown[i]!;
+    if (roles[i] === "gap" || /\s/.test(char)) {
+      if (text && !text.endsWith(" ")) {
+        text += " ";
+        from.push(i);
+      }
+      continue;
+    }
+
+    text += char;
+    from.push(i);
+  }
+
+  return { text, from, roles };
+}
+
+/** Collapses whitespace runs into one space, as the server stores quotes and context. */
+function collapseSpaces(s: string): string {
+  return s.replace(/\s+/g, " ").trim();
+}
+
+/** How many characters of the remembered context sit right next to text[start:end]. */
+function contextScore(text: string, start: number, end: number, prefix: string, suffix: string): number {
+  let score = 0;
+  for (let i = 1; i <= prefix.length && start - i >= 0 && text[start - i] === prefix[prefix.length - i]; i++) score++;
+  for (let i = 0; i < suffix.length && end + i < text.length && text[end + i] === suffix[i]; i++) score++;
+
+  return score;
+}
+
+/**
+ * Wraps each annotated sentence in a mark. The sentence is looked up in the
+ * text the block shows, as the server anchored it, never in link
+ * destinations, citations or deleted text; when it repeats, the occurrence
+ * whose surroundings match the remembered context wins. A sentence that
+ * crosses markup (a link edge, emphasis) is left unmarked rather than
+ * splitting that markup.
+ */
+function markAnnotatedSentences(markdown: string, marks: readonly KbQuoteMark[]): string {
+  if (marks.length === 0) return markdown;
+
+  const readable = readableText(markdown);
+  const placed: { start: number; end: number; ids: string[] }[] = [];
+  for (const mark of marks) {
+    const quote = collapseSpaces(mark.quote);
+    const ids = mark.ids.filter((id) => ANNOTATION_ID.test(id));
+    if (!quote || ids.length === 0) continue;
+
+    const prefix = (mark.prefix ?? "").replace(/\s+/g, " ");
+    const suffix = (mark.suffix ?? "").replace(/\s+/g, " ");
+    let best: { start: number; end: number; score: number } | null = null;
+    for (let at = readable.text.indexOf(quote); at >= 0; at = readable.text.indexOf(quote, at + 1)) {
+      const start = readable.from[at]!;
+      const end = readable.from[at + quote.length - 1]! + 1;
+      if (readable.roles.slice(start, end).some((role) => role !== "text")) continue;
+      // A mark cannot span two paragraphs of the block.
+      if (/\n[ \t]*\n/.test(markdown.slice(start, end))) continue;
+
+      const score = contextScore(readable.text, at, at + quote.length, prefix, suffix);
+      if (!best || score > best.score) best = { start, end, score };
+    }
+    if (!best) continue;
+
+    // Annotations on the same sentence share its mark; marks cannot nest.
+    const { start, end } = best;
+    const same = placed.find((other) => other.start === start && other.end === end);
+    if (same) same.ids.push(...ids);
+    else if (!placed.some((other) => start < other.end && other.start < end)) placed.push({ start, end, ids: [...ids] });
+  }
+
+  let out = markdown;
+  for (const { start, end, ids } of placed.sort((a, b) => b.start - a.start)) {
+    const open = `<mark class="${KB_ANNOTATED_CLASS}" ${KB_ANNOTATION_IDS_ATTR}="${ids.join(",")}">`;
+    out = out.slice(0, start) + open + out.slice(start, end) + "</mark>" + out.slice(end);
+  }
+
+  return out;
+}
+
+/** The mark of an annotation on the reading page, or null when its sentence is not shown. */
+export function findAnnotationMark(root: ParentNode | null | undefined, annotationId: string): HTMLElement | null {
+  if (!root) return null;
+
+  const marks = root.querySelectorAll<HTMLElement>(`mark.${KB_ANNOTATED_CLASS}`);
+  return Array.from(marks).find((mark) => annotationIdsOf(mark).includes(annotationId)) ?? null;
 }
 
 /** Numbers sources in page order for citation links. */

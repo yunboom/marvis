@@ -164,6 +164,20 @@ describe.each(SURFACES)("sanitize contract — $name", ({ render: renderSurface 
     expect(container.querySelector("mark")?.textContent).toBe("hi");
   });
 
+  it("keeps only the annotated-sentence class and annotation ids on <mark>", () => {
+    const container = renderSurface(
+      '<mark class="kb-annotated evil" data-annotation-ids="a-1,a-2" onclick="x()" style="color:red">hi</mark>' +
+        '<mark data-annotation-ids="a b&quot;">no</mark>',
+    );
+
+    const [annotated, other] = Array.from(container.querySelectorAll("mark"));
+    expect(annotated?.className).toBe("kb-annotated");
+    expect(annotated?.getAttribute("data-annotation-ids")).toBe("a-1,a-2");
+    expect(annotated?.hasAttribute("onclick")).toBe(false);
+    expect(annotated?.hasAttribute("style")).toBe(false);
+    expect(other?.hasAttribute("data-annotation-ids")).toBe(false);
+  });
+
   it("allows the slash:// protocol", () => {
     const container = renderSurface("[/deploy](slash://skill/abc-123)");
 

@@ -85,6 +85,29 @@ describe("getInboxDisplayTitle", () => {
 });
 
 describe("getInboxNavigationTarget", () => {
+  it("opens knowledge base review notices in the sheet, not a page", () => {
+    expect(
+      getInboxNavigationTarget(
+        item({ issue_id: null, type: "kb_mr_changes_requested" }),
+        "acme",
+        "history-1",
+      ),
+    ).toEqual({
+      pathname: "/[workspace]/inbox/[id]",
+      params: { workspace: "acme", id: "inbox-1" },
+    });
+    expect(
+      getInboxNavigationTarget(
+        item({ issue_id: null, type: "kb_mr_review_needed" }),
+        "acme",
+        "history-1",
+      ),
+    ).toEqual({
+      pathname: "/[workspace]/inbox/[id]",
+      params: { workspace: "acme", id: "inbox-1" },
+    });
+  });
+
   it("opens issue-less quota notices in their workspace sheet", () => {
     expect(
       getInboxNavigationTarget(

@@ -106,6 +106,17 @@ type KbPageDraftResponse struct {
 	DraftChange   string                `json:"draft_change"`
 	ChangedBlocks int                   `json:"changed_blocks"`
 	Origin        KbDraftOriginResponse `json:"origin"`
+	// MergeRequest is the merge request under review made from the draft,
+	// nil until it is submitted.
+	MergeRequest *KbPendingMergeRequestResponse `json:"merge_request"`
+}
+
+// KbPendingMergeRequestResponse is a merge request under review (open or
+// changes requested) that changes the page.
+type KbPendingMergeRequestResponse struct {
+	Number int32  `json:"number"`
+	Title  string `json:"title"`
+	Status string `json:"status"`
 }
 
 // KbPageResponse is a page as the reading page shows it (GET
@@ -126,7 +137,10 @@ type KbPageResponse struct {
 	Backlinks       []KbPageLinkResponse       `json:"backlinks"`
 	PendingMR       *KbMergeRequestRefResponse `json:"pending_mr"`
 	PendingMRCount  int                        `json:"pending_mr_count"`
-	AnnotationsOpen int64                      `json:"annotations_open"`
+	// PendingMRs are the open merge requests that change the page, except
+	// those made from the caller's drafts, newest first.
+	PendingMRs      []KbPendingMergeRequestResponse `json:"pending_mrs"`
+	AnnotationsOpen int64                           `json:"annotations_open"`
 	// DraftChange is what the requested draft did to this page.
 	DraftChange string `json:"draft_change"`
 	// Drafts are the caller's live drafts that change this page.
@@ -247,8 +261,9 @@ func (h *Handler) loadKbPageSource(w http.ResponseWriter, r *http.Request, ref, 
 	}, true
 }
 
-// loadKbDraftForReader loads a draft its creator, or the creator of the job
-// it is linked to, may read.
+// loadKbDraftForReader loads a draft the caller may read: its creator, the
+// creator of the job it is linked to, or whoever may merge into its
+// knowledge base (the knowledge base creator, a workspace owner or admin).
 func (h *Handler) loadKbDraftForReader(w http.ResponseWriter, r *http.Request, wsUUID pgtype.UUID, draftParam string) (db.KbDraft, bool) {
 	draftID, ok := parseUUIDOrBadRequest(w, draftParam, "draft")
 	if !ok {
@@ -270,11 +285,41 @@ func (h *Handler) loadKbDraftForReader(w http.ResponseWriter, r *http.Request, w
 		return db.KbDraft{}, false
 	}
 	if !readable {
-		writeError(w, http.StatusForbidden, "only the draft creator or the creator of its job can read it")
+		if readable, err = h.canMaintainKbOfDraft(r.Context(), draft, requestUserID(r)); err != nil {
+			h.writeKbInternalError(w, r, err)
+			return db.KbDraft{}, false
+		}
+	}
+	if !readable {
+		writeErrorCode(w, http.StatusForbidden, kbCodeForbidden, "only the draft creator, the creator of its job, the knowledge base creator or an owner or admin can read it")
 		return db.KbDraft{}, false
 	}
 
 	return draft, true
+}
+
+// canMaintainKbOfDraft reports whether a user may merge into the draft's
+// knowledge base (its creator, a workspace owner or admin); someone outside
+// the workspace may not.
+func (h *Handler) canMaintainKbOfDraft(ctx context.Context, draft db.KbDraft, userID string) (bool, error) {
+	member, err := h.getWorkspaceMember(ctx, userID, uuidToString(draft.WorkspaceID))
+	if err != nil {
+		if isNotFound(err) {
+			return false, nil
+		}
+
+		return false, errors.Wrapf(err, "load member of draft reader draft_id=%s", uuidToString(draft.ID))
+	}
+	base, err := h.Queries.GetKbBaseByID(ctx, db.GetKbBaseByIDParams{WorkspaceID: draft.WorkspaceID, ID: draft.KnowledgeBaseID})
+	if err != nil {
+		if isNotFound(err) {
+			return false, nil
+		}
+
+		return false, errors.Wrapf(err, "load knowledge base of draft draft_id=%s", uuidToString(draft.ID))
+	}
+
+	return canMaintainKb(member, base), nil
 }
 
 // canReadKbDraft reports whether a user may read a draft: its creator, or the
@@ -480,6 +525,7 @@ func (h *Handler) buildKbPageView(ctx context.Context, src kbPageSource, userID 
 		Backlinks:       []KbPageLinkResponse{},
 		DraftChange:     src.draftChange,
 		Drafts:          []KbPageDraftResponse{},
+		PendingMRs:      []KbPendingMergeRequestResponse{},
 	}
 
 	if src.mainline == nil {
@@ -514,7 +560,7 @@ func (h *Handler) fillKbPageActivity(ctx context.Context, src kbPageSource, user
 
 	pending, err := h.Queries.ListKbOpenMergeRequestsForPage(ctx, db.ListKbOpenMergeRequestsForPageParams{
 		KnowledgeBaseID: src.base.ID,
-		Status:          kb.MergeRequestStatusOpen,
+		Statuses:        kbActiveMergeRequestStatuses,
 		PageID:          page.ID,
 	})
 	if err != nil {
@@ -543,7 +589,32 @@ func (h *Handler) fillKbPageActivity(ctx context.Context, src kbPageSource, user
 	}
 	view.Drafts = drafts
 
+	attachKbPageMergeRequests(view, pending)
+
 	return nil
+}
+
+// attachKbPageMergeRequests hands each of the caller's drafts its open merge
+// request and lists the others as pending.
+func attachKbPageMergeRequests(view *KbPageResponse, pending []db.ListKbOpenMergeRequestsForPageRow) {
+	own := make(map[string]int, len(view.Drafts))
+	for i, draft := range view.Drafts {
+		own[draft.ID] = i
+	}
+
+	for _, mr := range pending {
+		if i, ok := own[uuidToString(mr.DraftID)]; ok {
+			if view.Drafts[i].MergeRequest == nil {
+				view.Drafts[i].MergeRequest = &KbPendingMergeRequestResponse{Number: mr.Number, Title: mr.Title, Status: mr.Status}
+			}
+			continue
+		}
+		view.PendingMRs = append(view.PendingMRs, KbPendingMergeRequestResponse{
+			Number: mr.Number,
+			Title:  mr.Title,
+			Status: mr.Status,
+		})
+	}
 }
 
 func (h *Handler) loadKbMainlineClaims(ctx context.Context, baseID, pageID pgtype.UUID) ([]kb.Claim, error) {
@@ -609,6 +680,8 @@ func (h *Handler) loadKbPageDrafts(ctx context.Context, base db.KbBase, page *db
 		CreatedBy:       userUUID,
 		Statuses:        liveDraftStatuses,
 		PageID:          page.ID,
+		ReopenedStatus:  kb.DraftStatusOpen,
+		ClosedStatus:    kb.MergeRequestStatusClosed,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "list drafts page_id=%s", uuidToString(page.ID))

@@ -139,7 +139,10 @@ export interface KbMrCommentedPayload {
   merge_request_id: string;
   number: number;
   knowledge_base_id: string;
-  comment_id: string;
+  /** The direct comment posted; null when a review was submitted. */
+  comment_id: string | null;
+  /** The review submitted; null for a direct comment. */
+  review_id: string | null;
 }
 
 /** A knowledge base was created, configured or deleted (spec 9). */

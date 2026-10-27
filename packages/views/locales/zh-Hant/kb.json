@@ -2,24 +2,6 @@
   "list": {
     "title": "知識庫",
     "new_button": "新建知識庫",
-    "pending_reviews_other": "待稽核修改 {{count}}",
-    "search_placeholder": "搜尋知識庫和頁面...",
-    "search_label": "搜尋知識庫",
-    "sort": {
-      "recent": "最近更新",
-      "name": "名稱"
-    },
-    "table": {
-      "name": "名稱",
-      "description": "簡介",
-      "pages": "頁面",
-      "pending": "待處理",
-      "updated": "更新時間"
-    },
-    "pending": {
-      "annotations_other": "批註 {{count}}",
-      "stale_pages_other": "待複核 {{count}}"
-    },
     "copy_link": "複製連結",
     "link_copied": "連結已複製",
     "no_matches": "沒有匹配的知識庫",
@@ -29,9 +11,12 @@
   "nav": {
     "label": "知識庫導航",
     "switch": "切換知識庫",
+    "filter_placeholder": "依名稱篩選",
+    "filter_label": "依名稱篩選知識庫",
     "more_actions": "知識庫更多操作",
     "home": "首頁",
     "pending": "待處理 {{count}}",
+    "open_mrs_other": "待稽核修改 {{count}}",
     "pages": "頁面",
     "breadcrumb": "位置",
     "configure": "配置知識庫",
@@ -57,7 +42,11 @@
     "pages_other": "{{count}} 個頁面",
     "no_results": "沒有找到「{{query}}」",
     "no_results_hint": "換個關鍵詞試試。",
-    "failed": "搜尋失敗"
+    "failed": "搜尋失敗",
+    "all_placeholder": "搜尋全部知識庫"
+  },
+  "find": {
+    "placeholder": "在頁面中查詢"
   },
   "home": {
     "pending_title": "待處理",
@@ -81,20 +70,29 @@
     "updated": "更新於 {{time}}",
     "verified": "已核實 · {{name}} · {{date}}",
     "stale": "需要複核",
-    "pending_mr_other": "本頁有 {{count}} 個待稽核的修改：{{title}}（#{{number}}）",
+    "pending_mr_other": "本頁有 {{count}} 個待稽核的修改 #{{number}} · {{title}}",
     "not_found": "頁面不存在或已刪除",
     "sources": "引用來源",
     "missing_page": "這一頁還沒有寫",
     "close_panel": "關閉",
-    "view_change": "檢視修改"
+    "view_change": "檢視修改",
+    "draft_forbidden": "沒有權限查看這份草稿"
   },
   "draft": {
     "label": "草稿",
-    "single": "你的草稿改了這一頁，還沒有合併。其他人看到的仍是正式版本。",
-    "multi_other": "你有 {{count}} 份草稿改了這一頁，都還沒有合併。其他人看到的仍是正式版本。",
+    "single": "你的草稿改了這一頁，還沒有合併。",
+    "multi_other": "你有 {{count}} 份草稿改了這一頁，都還沒有合併。",
     "official": "正式",
     "draft": "草稿",
-    "diff": "差異",
+    "show_diff": "顯示差異",
+    "bar": {
+      "review": "待稽核",
+      "resolve": "待解決",
+      "submitted": "已提交稽核 #{{number}} · {{title}}",
+      "resolve_text": "待解決 #{{number}} · {{title}}",
+      "review_text": "待稽核 #{{number}} · {{title}}",
+      "others_other": "另有 {{count}} 個待稽核的修改"
+    },
     "diff_empty": "這一頁在草稿裡沒有改動",
     "choose": "選擇草稿",
     "origin": {
@@ -353,6 +351,21 @@
     "start_failed": "作業沒有建成",
     "not_found": "作業不存在或無權檢視",
     "ended": "這段對話已結束",
+    "archive": "歸檔",
+    "unarchive": "取消歸檔",
+    "delete": "刪除",
+    "archived_title": "已歸檔",
+    "archived_notice": "此作業已歸檔",
+    "row_actions": "作業操作",
+    "archive_failed": "作業沒有更新成功",
+    "delete_failed": "作業沒有刪除成功",
+    "delete_dialog": {
+      "title": "刪除作業",
+      "description": "\"{{name}}\" 及其對話會被永久刪除，未提交的草稿會被放棄，無法撤銷。",
+      "cancel": "取消",
+      "confirm": "刪除",
+      "confirming": "刪除中..."
+    },
     "starters": {
       "ingest": {
         "title": "收錄資料",
@@ -399,7 +412,8 @@
         "merged": "已合併",
         "closed": "已關閉 · 可重新提交",
         "nochange": "無需修改",
-        "discarded": "已放棄"
+        "discarded": "已放棄",
+        "changes_requested": "待解決"
       },
       "nodraft": "智慧體建好草稿後，在這裡顯示改動。",
       "empty": "智慧體推送改動後顯示在這裡。",
@@ -443,7 +457,7 @@
         "busy": "等智慧體這一輪結束再提交",
         "lint_other": "有 {{count}} 個錯誤，修復後才能提交",
         "conflict": "可以直接提交，稽核時再處理衝突",
-        "submitted": "之後的修改在稽核頁評論裡繼續，也可以在這裡接著說",
+        "submitted": "稽核人提交意見後會顯示在這裡，也可以在左邊接著說",
         "closed": "調整後可重新提交，會開一個新的變更請求",
         "merged": "這段對話已結束",
         "running": "可以隨時在左邊補充要求"
@@ -455,7 +469,6 @@
         "closed_no_reason": "#{{number}} 已被{{name}}關閉。草稿還在，可以繼續調整。",
         "merged": "#{{number}} 已由{{name}}合併，改動已生效。"
       },
-      "banner_review": "去稽核",
       "banner_view_page": "檢視頁面",
       "banner_comments": "檢視評論",
       "discard": "放棄草稿",
@@ -481,6 +494,16 @@
       "annotations_all_message_other": "處理{{name}}的全部 {{count}} 條待處理批註。",
       "annotations_page_message_other": "處理「{{title}}」的 {{count}} 條待處理批註。",
       "annotations_kb_message_other": "處理整個知識庫的 {{count}} 條待處理批註。"
+    },
+    "feedback": {
+      "label": "稽核意見",
+      "title_other": "#{{number}} 有 {{count}} 條稽核意見待解決",
+      "go_review": "去稽核頁",
+      "submitted": "提交了評審 · {{time}}",
+      "handoff": "交給智慧體處理",
+      "handed_off": "已交給智慧體",
+      "handoff_failed": "沒有交給智慧體",
+      "chat_message": "處理 #{{number}} 的稽核意見"
     }
   },
   "review": {
@@ -491,23 +514,19 @@
     "conflict_banner": "主線改了同一段內容。",
     "conflict_main": "主線第 {{lines}} 行",
     "conflict_draft": "本分支第 {{lines}} 行",
-    "working": "正在工作",
-    "view_run": "檢視執行過程",
     "remove_quote": "移除引用",
     "reply": "回覆",
     "replying_to": "回覆 {{name}}",
     "quote_line": "{{page}} 第 {{line}} 行",
     "comment_label": "評論",
-    "comment_placeholder": "留下評論...",
-    "trigger_hint": "傳送後開始",
-    "send": "傳送",
+    "comment_placeholder": "寫評論，或選中 diff 的一行加入評論",
     "hint_member": "知識庫建立者或 owner / admin 合併",
     "hint_conflict": "先解決衝突",
     "hint_running": "智慧體改完後再合併",
     "comment_failed": "評論沒有發出",
     "merged_toast": "已合併 #{{number}}",
     "close_failed": "沒有關閉成功",
-    "agent_working": "{{name}} 在工作",
+    "agent_working": "智慧體在工作",
     "close": "關閉",
     "merge": "合併",
     "revert": "回滾此次變更",
@@ -533,7 +552,6 @@
     "revert_submit": "提交回滾",
     "meta_other": "風險 {{risk}} · 影響 {{count}} 個頁面",
     "meta_annotations_other": "處理 {{count}} 條批註",
-    "activity_count_other": "{{count}} 條動態",
     "close_confirm_annotations_other": "處理的 {{count}} 條批註會退回待處理。",
     "tabs": {
       "open": "待稽核",
@@ -543,7 +561,8 @@
     "status": {
       "open": "待稽核",
       "merged": "已合併",
-      "closed": "已關閉"
+      "closed": "已關閉",
+      "changes_requested": "待解決"
     },
     "empty": {
       "open": "沒有待稽核的修改",
@@ -566,16 +585,13 @@
       "issue": "任務 · {{label}}",
       "chat": "對話 · {{label}}"
     },
-    "trigger_reason": {
-      "author": "按評論修改",
-      "mention": "被 @ 後開始"
-    },
     "merge_error": {
       "stale": "草稿在你開啟後又改過，重新整理後再合併",
       "conflict": "與主線衝突，先解決衝突",
       "running": "智慧體改完後再合併",
       "not_open": "這個變更請求已經結束",
-      "failed": "沒有合併成功"
+      "failed": "沒有合併成功",
+      "changes_requested": "待解決，負責人重新請求稽核後可以合併"
     },
     "risk": {
       "low": "低",
@@ -589,6 +605,46 @@
       "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
       "header": "#{{number}} · {{author}} · {{merger}}合併",
       "revert_hint": "回滾會生成新的變更請求，合併後生效。"
+    },
+    "pending": "待提交",
+    "edit": "編輯",
+    "delete": "刪除",
+    "save": "儲存",
+    "reply_placeholder": "回覆...",
+    "add_to_review": "加入評審",
+    "reviewing": "評審中",
+    "pending_count_other": "{{count}} 條待提交，只有你能看到",
+    "pending_none": "還沒有待提交的評論",
+    "discard": "放棄評審",
+    "discard_confirm_title": "放棄這次評審？",
+    "discard_confirm_description_other": "{{count}} 條待提交的評論會被刪除。",
+    "discard_failed": "沒有放棄成功",
+    "submit": "提交評審",
+    "submit_count_other": "提交評審（{{count}} 條）",
+    "summary_label": "總結（選填）",
+    "submit_note_other": "{{count}} 條評論將對所有人可見，變更請求改為「待解決」，並通知負責人。",
+    "submitted_toast": "評審已提交",
+    "submit_failed": "評審沒有提交成功",
+    "start": "開啟評審",
+    "start_failed": "沒有開啟評審",
+    "request_review": "重新請求稽核",
+    "ready_failed": "沒有重新請求稽核",
+    "hint_changes_owner": "按意見改完後重新請求稽核",
+    "hint_changes": "待解決，負責人重新請求稽核後可以合併",
+    "show_earlier_other": "展開更早 {{count}} 條動態",
+    "field_separator": "、",
+    "event": {
+      "review_submitted_other": "提交了評審 · {{count}} 條意見",
+      "review_requested": "重新請求稽核",
+      "merged": "合併了這次變更",
+      "closed": "關閉了這次變更",
+      "reverted": "產生了回滾 #{{number}}",
+      "edited": "修改了{{fields}}"
+    },
+    "field": {
+      "title": "標題",
+      "summary": "說明",
+      "risk": "風險"
     }
   },
   "manage": {

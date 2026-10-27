@@ -2,17 +2,20 @@
 -- passed as parameters from the constants in server/internal/kb.
 
 -- name: ListKbBases :many
+-- Deleted knowledge bases (deleted_at set) are left out of every read; the
+-- by-id and by-slug lookups below are the gate the rest of the API goes
+-- through.
 SELECT * FROM kb_base
-WHERE workspace_id = $1
+WHERE workspace_id = $1 AND deleted_at IS NULL
 ORDER BY updated_at DESC, id;
 
 -- name: GetKbBaseByID :one
 SELECT * FROM kb_base
-WHERE workspace_id = $1 AND id = $2;
+WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL;
 
 -- name: GetKbBaseBySlug :one
 SELECT * FROM kb_base
-WHERE workspace_id = $1 AND slug = $2;
+WHERE workspace_id = $1 AND slug = $2 AND deleted_at IS NULL;
 
 -- name: CreateKbBase :one
 INSERT INTO kb_base (
@@ -199,12 +202,16 @@ GROUP BY author_type;
 
 -- name: ListKbDraftPages :many
 -- Every page a draft touches, with the mainline parent of pages that exist
--- on the mainline (NULL for pages the draft creates).
+-- on the mainline (NULL for pages the draft creates) and the mainline header
+-- fields, which name a page the draft deletes.
 SELECT
     dp.page_id, dp.op, dp.parent_id, dp.position, dp.slug, dp.frontmatter,
     p.parent_id AS main_parent_id,
     (p.id IS NOT NULL AND p.deleted_at IS NULL)::boolean AS on_mainline,
-    p.stale_after AS main_stale_after
+    p.stale_after AS main_stale_after,
+    p.title AS main_title,
+    p.type AS main_type,
+    p.description AS main_description
 FROM kb_draft_page dp
 LEFT JOIN kb_page p ON p.id = dp.page_id AND p.knowledge_base_id = sqlc.arg('knowledge_base_id')
 WHERE dp.draft_id = sqlc.arg('draft_id');
@@ -235,12 +242,12 @@ JOIN kb_merge_request mr ON mr.id = r.merge_request_id
 WHERE r.page_id = $1 AND r.id = $2;
 
 -- name: ListKbOpenMergeRequestsForPage :many
--- Open merge requests whose draft touches the page, newest first.
-SELECT mr.number, mr.title
+-- Merge requests in the given statuses whose draft touches the page, newest first.
+SELECT mr.number, mr.title, mr.draft_id, mr.status
 FROM kb_merge_request mr
 JOIN kb_draft_page dp ON dp.draft_id = mr.draft_id
 WHERE mr.knowledge_base_id = sqlc.arg('knowledge_base_id')
-  AND mr.status = sqlc.arg('status')::text
+  AND mr.status = ANY(sqlc.arg('statuses')::text[])
   AND dp.page_id = sqlc.arg('page_id')
 ORDER BY mr.updated_at DESC, mr.number DESC;
 
@@ -248,7 +255,10 @@ ORDER BY mr.updated_at DESC, mr.number DESC;
 -- The caller's live drafts (their own, or linked to their jobs) that change a
 -- page, most recently updated first,
 -- with where each draft came from: a knowledge base job's chat, or the task
--- (issue or chat) that created it.
+-- (issue or chat) that created it. Closing a merge request reopens its
+-- draft; such a draft is left out until it is edited or submitted again,
+-- that is while a closed request of it was closed no earlier than the
+-- draft's last update (closing and reopening share one transaction's now()).
 SELECT
     d.id, d.title, d.status, d.updated_at,
     dp.op, dp.blocks,
@@ -269,6 +279,15 @@ WHERE d.workspace_id = sqlc.arg('workspace_id')
   AND (d.created_by = sqlc.arg('created_by') OR j.created_by = sqlc.arg('created_by'))
   AND d.status = ANY(sqlc.arg('statuses')::text[])
   AND dp.page_id = sqlc.arg('page_id')
+  AND NOT (
+      d.status = sqlc.arg('reopened_status')::text
+      AND EXISTS (
+          SELECT 1 FROM kb_merge_request mr
+          WHERE mr.draft_id = d.id
+            AND mr.status = sqlc.arg('closed_status')::text
+            AND mr.closed_at >= d.updated_at
+      )
+  )
 ORDER BY d.updated_at DESC, d.id;
 
 -- name: GetLatestKbMergeRequest :one
@@ -349,18 +368,21 @@ WHERE workspace_id = sqlc.arg('workspace_id')
   AND number = ANY(sqlc.arg('numbers')::int[]);
 
 -- name: GetKbPageInWorkspace :one
+-- Lookups by a child's own id also leave out deleted knowledge bases.
 SELECT * FROM kb_page
-WHERE workspace_id = $1 AND id = $2;
+WHERE kb_page.workspace_id = $1 AND kb_page.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_page.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbDraftInWorkspace :one
 SELECT * FROM kb_draft
-WHERE workspace_id = $1 AND id = $2;
+WHERE kb_draft.workspace_id = $1 AND kb_draft.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_draft.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbBaseForUpdate :one
 -- Locks a knowledge base for a configuration save so the stale-config check
 -- and the update are one step.
 SELECT * FROM kb_base
-WHERE workspace_id = $1 AND id = $2
+WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL
 FOR UPDATE;
 
 -- name: UpdateKbBaseConfig :one
@@ -439,13 +461,15 @@ WHERE s.workspace_id = sqlc.arg('workspace_id')
   AND cs.status = 'active'
   AND (sqlc.narg('mode')::text IS NULL OR s.mode = sqlc.narg('mode')::text)
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR s.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
+  AND (s.knowledge_base_id IS NULL OR EXISTS (SELECT 1 FROM kb_base b WHERE b.id = s.knowledge_base_id AND b.deleted_at IS NULL))
   AND (lm.created_at IS NOT NULL OR s.draft <> '{}'::jsonb)
 ORDER BY COALESCE(lm.created_at, s.updated_at) DESC;
 
 -- name: GetKbDraftForUpdate :one
 -- Locks a draft so its writes run one at a time.
 SELECT * FROM kb_draft
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_draft.workspace_id = $1 AND kb_draft.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_draft.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE;
 
 -- name: CreateKbDraft :one
@@ -547,6 +571,7 @@ SELECT p.id, p.knowledge_base_id, b.slug AS kb_slug, p.title, p.type, p.blocks
 FROM kb_page p
 JOIN kb_base b ON b.id = p.knowledge_base_id
 WHERE p.workspace_id = sqlc.arg('workspace_id')
+  AND b.deleted_at IS NULL
   AND p.deleted_at IS NULL
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR p.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
   AND (sqlc.narg('page_type')::text IS NULL OR lower(p.type) = lower(sqlc.narg('page_type')::text))
@@ -558,7 +583,9 @@ LIMIT sqlc.arg('row_limit');
 -- The number of pages SearchKbPages finds across all its pages.
 SELECT count(*)::bigint
 FROM kb_page p
+JOIN kb_base b ON b.id = p.knowledge_base_id
 WHERE p.workspace_id = sqlc.arg('workspace_id')
+  AND b.deleted_at IS NULL
   AND p.deleted_at IS NULL
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR p.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
   AND (sqlc.narg('page_type')::text IS NULL OR lower(p.type) = lower(sqlc.narg('page_type')::text))
@@ -583,7 +610,8 @@ LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
 -- name: GetKbJobForUpdate :one
 -- Locks a job so two drafts cannot be linked to it at once.
 SELECT * FROM kb_job
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_job.workspace_id = $1 AND kb_job.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE;
 
 -- name: GetKbJobDraftByJob :one

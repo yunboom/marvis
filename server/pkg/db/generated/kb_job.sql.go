@@ -11,6 +11,23 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const clearKbMergeRequestJob = `-- name: ClearKbMergeRequestJob :exec
+UPDATE kb_merge_request SET job_id = NULL
+WHERE workspace_id = $1 AND job_id = $2
+`
+
+type ClearKbMergeRequestJobParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	JobID       pgtype.UUID `json:"job_id"`
+}
+
+// Detaches a deleted job from the merge requests made from its draft, which
+// stay and keep working without it.
+func (q *Queries) ClearKbMergeRequestJob(ctx context.Context, arg ClearKbMergeRequestJobParams) error {
+	_, err := q.db.Exec(ctx, clearKbMergeRequestJob, arg.WorkspaceID, arg.JobID)
+	return err
+}
+
 const createKbJob = `-- name: CreateKbJob :one
 
 INSERT INTO kb_job (
@@ -78,7 +95,7 @@ INSERT INTO kb_merge_request (
     $9, $10, $11, $12::uuid[],
     $13
 )
-RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at
+RETURNING id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at
 `
 
 type CreateKbMergeRequestParams struct {
@@ -137,6 +154,7 @@ func (q *Queries) CreateKbMergeRequest(ctx context.Context, arg CreateKbMergeReq
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
@@ -155,10 +173,26 @@ func (q *Queries) DeleteKbJob(ctx context.Context, arg DeleteKbJobParams) error 
 	return err
 }
 
+const deleteKbJobDraftByJob = `-- name: DeleteKbJobDraftByJob :exec
+DELETE FROM kb_job_draft WHERE workspace_id = $1 AND job_id = $2
+`
+
+type DeleteKbJobDraftByJobParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	JobID       pgtype.UUID `json:"job_id"`
+}
+
+// Unlinks a deleted job's draft; the draft itself stays.
+func (q *Queries) DeleteKbJobDraftByJob(ctx context.Context, arg DeleteKbJobDraftByJobParams) error {
+	_, err := q.db.Exec(ctx, deleteKbJobDraftByJob, arg.WorkspaceID, arg.JobID)
+	return err
+}
+
 const getKbJobByDraft = `-- name: GetKbJobByDraft :one
 SELECT j.id, j.workspace_id, j.knowledge_base_id, j.name, j.starter, j.agent_id, j.chat_session_id, j.annotation_ids, j.page_id, j.created_by, j.created_at, j.updated_at FROM kb_job_draft jd
 JOIN kb_job j ON j.id = jd.job_id
 WHERE jd.draft_id = $1
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = j.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 // The job a draft is linked to.
@@ -184,7 +218,8 @@ func (q *Queries) GetKbJobByDraft(ctx context.Context, draftID pgtype.UUID) (KbJ
 
 const getKbJobInWorkspace = `-- name: GetKbJobInWorkspace :one
 SELECT id, workspace_id, knowledge_base_id, name, starter, agent_id, chat_session_id, annotation_ids, page_id, created_by, created_at, updated_at FROM kb_job
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_job.workspace_id = $1 AND kb_job.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL)
 `
 
 type GetKbJobInWorkspaceParams struct {
@@ -192,6 +227,7 @@ type GetKbJobInWorkspaceParams struct {
 	ID          pgtype.UUID `json:"id"`
 }
 
+// Jobs of a deleted knowledge base are not found.
 func (q *Queries) GetKbJobInWorkspace(ctx context.Context, arg GetKbJobInWorkspaceParams) (KbJob, error) {
 	row := q.db.QueryRow(ctx, getKbJobInWorkspace, arg.WorkspaceID, arg.ID)
 	var i KbJob
@@ -213,17 +249,17 @@ func (q *Queries) GetKbJobInWorkspace(ctx context.Context, arg GetKbJobInWorkspa
 }
 
 const getOpenKbMergeRequestByDraft = `-- name: GetOpenKbMergeRequestByDraft :one
-SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request
-WHERE draft_id = $1 AND status = $2::text
+SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request
+WHERE draft_id = $1 AND status = ANY($2::text[])
 `
 
 type GetOpenKbMergeRequestByDraftParams struct {
-	DraftID pgtype.UUID `json:"draft_id"`
-	Status  string      `json:"status"`
+	DraftID  pgtype.UUID `json:"draft_id"`
+	Statuses []string    `json:"statuses"`
 }
 
 func (q *Queries) GetOpenKbMergeRequestByDraft(ctx context.Context, arg GetOpenKbMergeRequestByDraftParams) (KbMergeRequest, error) {
-	row := q.db.QueryRow(ctx, getOpenKbMergeRequestByDraft, arg.DraftID, arg.Status)
+	row := q.db.QueryRow(ctx, getOpenKbMergeRequestByDraft, arg.DraftID, arg.Statuses)
 	var i KbMergeRequest
 	err := row.Scan(
 		&i.ID,
@@ -248,6 +284,7 @@ func (q *Queries) GetOpenKbMergeRequestByDraft(ctx context.Context, arg GetOpenK
 		&i.CloseReason,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ReviewRequestedAt,
 	)
 	return i, err
 }
@@ -306,6 +343,7 @@ const listKbJobStates = `-- name: ListKbJobStates :many
 SELECT
     j.id,
     COALESCE(a.name, '')::text AS agent_name,
+    (COALESCE(cs.status, '') = $1::text)::bool AS archived,
     jd.draft_id,
     COALESCE(d.version, 0)::bigint AS draft_version,
     COALESCE(d.status, '')::text AS draft_status,
@@ -315,7 +353,7 @@ SELECT
     EXISTS (
         SELECT 1 FROM agent_task_queue atq
         WHERE atq.chat_session_id = j.chat_session_id
-          AND atq.status = ANY($1::text[])
+          AND atq.status = ANY($2::text[])
     )::bool AS running,
     COALESCE(lm.content, '')::text AS last_reply,
     lm.created_at AS last_reply_at,
@@ -330,6 +368,7 @@ SELECT
     COALESCE(mr.close_reason, '')::text AS mr_close_reason
 FROM kb_job j
 LEFT JOIN agent a ON a.id = j.agent_id
+LEFT JOIN chat_session cs ON cs.id = j.chat_session_id
 LEFT JOIN kb_job_draft jd ON jd.job_id = j.id
 LEFT JOIN kb_draft d ON d.id = jd.draft_id
 LEFT JOIN LATERAL (
@@ -346,16 +385,17 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) lm ON true
 LEFT JOIN LATERAL (
-    SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at FROM kb_merge_request r
+    SELECT id, workspace_id, number, knowledge_base_id, title, summary, source, risk, author_type, author_id, draft_id, job_id, annotation_ids, reverts_id, status, merged_by, merged_at, closed_by, closed_at, close_reason, created_at, updated_at, review_requested_at FROM kb_merge_request r
     WHERE r.draft_id = jd.draft_id
     ORDER BY r.created_at DESC
     LIMIT 1
 ) mr ON true
-WHERE j.workspace_id = $2
-  AND j.id = ANY($3::uuid[])
+WHERE j.workspace_id = $3
+  AND j.id = ANY($4::uuid[])
 `
 
 type ListKbJobStatesParams struct {
+	ArchivedStatus  string        `json:"archived_status"`
 	RunningStatuses []string      `json:"running_statuses"`
 	WorkspaceID     pgtype.UUID   `json:"workspace_id"`
 	JobIds          []pgtype.UUID `json:"job_ids"`
@@ -364,6 +404,7 @@ type ListKbJobStatesParams struct {
 type ListKbJobStatesRow struct {
 	ID             pgtype.UUID        `json:"id"`
 	AgentName      string             `json:"agent_name"`
+	Archived       bool               `json:"archived"`
 	DraftID        pgtype.UUID        `json:"draft_id"`
 	DraftVersion   int64              `json:"draft_version"`
 	DraftStatus    string             `json:"draft_status"`
@@ -386,10 +427,16 @@ type ListKbJobStatesRow struct {
 
 // The parts of each job's state that are not stored on kb_job: the linked
 // draft, the chat's latest task and whether a turn is in flight, the last
-// reply and the draft's latest merge request. Detail and list share it;
-// job_ids narrows it to the given jobs.
+// reply, the draft's latest merge request and whether the job's chat is
+// archived (the chat's status is the job's archived flag). Detail and list
+// share it; job_ids narrows it to the given jobs.
 func (q *Queries) ListKbJobStates(ctx context.Context, arg ListKbJobStatesParams) ([]ListKbJobStatesRow, error) {
-	rows, err := q.db.Query(ctx, listKbJobStates, arg.RunningStatuses, arg.WorkspaceID, arg.JobIds)
+	rows, err := q.db.Query(ctx, listKbJobStates,
+		arg.ArchivedStatus,
+		arg.RunningStatuses,
+		arg.WorkspaceID,
+		arg.JobIds,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -400,6 +447,7 @@ func (q *Queries) ListKbJobStates(ctx context.Context, arg ListKbJobStatesParams
 		if err := rows.Scan(
 			&i.ID,
 			&i.AgentName,
+			&i.Archived,
 			&i.DraftID,
 			&i.DraftVersion,
 			&i.DraftStatus,

@@ -44,6 +44,20 @@ export function memberPartOfJobMessage(content: string): string {
   return at < 0 ? content : content.slice(at + MEMBER_MESSAGE_MARKER.length);
 }
 
+/** Lead of the server-written review hand-off message; mirrors kb.ReviewHandoffLead on the server. */
+const REVIEW_HANDOFF_LEAD = /^Change request #(\d+) \([\s\S]*?\) has review feedback to resolve\./;
+
+/**
+ * The change request number of a review hand-off message, which the server
+ * writes in the member's name for the agent; the job page shows a short line
+ * in its place. Null for any other message.
+ */
+export function reviewHandoffNumber(content: string): number | null {
+  const match = REVIEW_HANDOFF_LEAD.exec(content);
+
+  return match ? Number(match[1]) : null;
+}
+
 /**
  * What the draft side of a job shows (designs 9.3–9.17):
  *  - nodraft: the agent has not created the draft (9.17), submit disabled

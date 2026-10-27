@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useWorkspacePaths } from "@marvis/core/paths";
+import { useRequestKbMrReview } from "@marvis/core/kb/mutations";
 import type { KbJobDetail } from "@marvis/core/types";
 import {
   AlertDialog,
@@ -22,8 +24,19 @@ import { KB_TAG } from "../components/kb-cite-card";
 import { KbFileCard, KbStateDot as StateDot, useLintText, type KbDot as Dot } from "../components/kb-diff";
 import { withDraft } from "../components/kb-page-tree";
 import { kbJobPanelState, type KbJobDraftView } from "./kb-job-state";
+import { KbJobReviewFeedback } from "./kb-job-review-feedback";
 
-function StateTag({ view, reopened, running }: { view: KbJobDraftView; reopened: boolean; running: boolean }) {
+function StateTag({
+  view,
+  reopened,
+  running,
+  changesRequested,
+}: {
+  view: KbJobDraftView;
+  reopened: boolean;
+  running: boolean;
+  changesRequested: boolean;
+}) {
   const { t } = useT("kb");
   let dot: Dot = "gray";
   let label = t(($) => $.job.draft.state.open);
@@ -38,8 +51,8 @@ function StateTag({ view, reopened, running }: { view: KbJobDraftView; reopened:
       label = t(($) => $.job.draft.state.nochange);
       break;
     case "submitted":
-      dot = "blue";
-      label = t(($) => $.job.draft.state.submitted);
+      dot = changesRequested ? "amber" : "blue";
+      label = changesRequested ? t(($) => $.job.draft.state.changes_requested) : t(($) => $.job.draft.state.submitted);
       break;
     case "merged":
       dot = "green";
@@ -99,6 +112,10 @@ export function KbJobDraftPanel({
   const mr = job.merge_request;
   const draftId = job.draft_id ?? "";
   const draft = job.draft;
+  const requestReview = useRequestKbMrReview();
+  // A review asked for changes: the feedback shows above the files and the
+  // owner asks for review again once it is addressed (design 9.18).
+  const changesRequested = state.view === "submitted" && mr?.status === "changes_requested";
 
   const allCollapsed = job.pages.length > 0 && job.pages.every((page) => collapsed.has(page.page_id));
   const toggle = (pageId: string) =>
@@ -126,30 +143,31 @@ export function KbJobDraftPanel({
       hint = t(($) => $.job.draft.hint.running);
       break;
     case "submitted":
-      hint = t(($) => $.job.draft.hint.submitted);
+      hint = changesRequested ? "" : t(($) => $.job.draft.hint.submitted);
       break;
     case "merged":
       hint = t(($) => $.job.draft.hint.merged);
       break;
   }
 
-  let banner: { dot: Dot; text: string; href: string; link: string } | null = null;
-  if (mr && state.view === "submitted") {
+  // The submitted banner has no link: the footer already offers the review button.
+  let banner: { dot: Dot; text: string; link?: { href: string; label: string } } | null = null;
+  if (mr && state.view === "submitted" && !changesRequested) {
     banner = {
       dot: "blue",
       text:
         mr.author_type === "agent"
           ? t(($) => $.job.draft.banner.submitted_agent, { name: mr.author_name || job.agent_name, number: mr.number })
           : t(($) => $.job.draft.banner.submitted_self, { number: mr.number }),
-      href: p.kbMergeRequest(kbSlug, mr.number),
-      link: t(($) => $.job.draft.banner_review),
     };
   } else if (mr && state.view === "merged") {
     banner = {
       dot: "green",
       text: t(($) => $.job.draft.banner.merged, { number: mr.number, name: mr.merged_by_name }),
-      href: job.pages[0] ? p.kbPage(kbSlug, job.pages[0].page_id) : p.kbBase(kbSlug),
-      link: t(($) => $.job.draft.banner_view_page),
+      link: {
+        href: job.pages[0] ? p.kbPage(kbSlug, job.pages[0].page_id) : p.kbBase(kbSlug),
+        label: t(($) => $.job.draft.banner_view_page),
+      },
     };
   } else if (mr && state.reopened) {
     banner = {
@@ -157,8 +175,10 @@ export function KbJobDraftPanel({
       text: mr.close_reason
         ? t(($) => $.job.draft.banner.closed, { number: mr.number, name: mr.closed_by_name, reason: mr.close_reason })
         : t(($) => $.job.draft.banner.closed_no_reason, { number: mr.number, name: mr.closed_by_name }),
-      href: p.kbMergeRequest(kbSlug, mr.number),
-      link: t(($) => $.job.draft.banner_comments),
+      link: {
+        href: p.kbMergeRequest(kbSlug, mr.number),
+        label: t(($) => $.job.draft.banner_comments),
+      },
     };
   }
 
@@ -227,7 +247,7 @@ export function KbJobDraftPanel({
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-6 py-5">
         <div className="flex items-center gap-2">
           <h2 className="flex-1 text-title font-semibold">{t(($) => $.job.draft.title)}</h2>
-          <StateTag view={state.view} reopened={state.reopened} running={running} />
+          <StateTag view={state.view} reopened={state.reopened} running={running} changesRequested={changesRequested} />
         </div>
 
         {state.view === "nodraft" && (
@@ -246,6 +266,8 @@ export function KbJobDraftPanel({
           <p className="py-10 text-center text-body text-muted-foreground">{t(($) => $.job.draft.discarded)}</p>
         )}
 
+        {changesRequested && mr && <KbJobReviewFeedback kbSlug={kbSlug} number={mr.number} />}
+
         {showFiles && (
           <>
             {banner && (
@@ -260,9 +282,11 @@ export function KbJobDraftPanel({
               >
                 <StateDot dot={banner.dot} />
                 <span className="min-w-0 flex-1">{banner.text}</span>
-                <AppLink href={banner.href} className="shrink-0 text-info hover:underline">
-                  {banner.link}
-                </AppLink>
+                {banner.link && (
+                  <AppLink href={banner.link.href} className="shrink-0 text-info hover:underline">
+                    {banner.link.label}
+                  </AppLink>
+                )}
               </div>
             )}
             <div className="flex items-center">
@@ -305,7 +329,19 @@ export function KbJobDraftPanel({
               {state.reopened ? t(($) => $.job.draft.resubmit) : t(($) => $.job.draft.submit)}
             </Button>
           )}
-          {state.view === "submitted" && mr && (
+          {state.view === "submitted" && mr && changesRequested && (
+            <Button
+              type="button"
+              disabled={requestReview.isPending}
+              onClick={() =>
+                requestReview.mutate(mr.number, { onError: () => toast.error(t(($) => $.review.ready_failed)) })
+              }
+            >
+              {requestReview.isPending && <Loader2 className="size-4 animate-spin" />}
+              {t(($) => $.review.request_review)}
+            </Button>
+          )}
+          {state.view === "submitted" && mr && !changesRequested && (
             <Button render={<AppLink href={p.kbMergeRequest(kbSlug, mr.number)} />} nativeButton={false}>
               {t(($) => $.job.draft.go_review, { number: mr.number })}
             </Button>

@@ -93,6 +93,7 @@ import { ProjectIcon } from "../projects/components/project-icon";
 import { IntegrationHintDot } from "../agents/components/integration-hint-dot";
 import { useAgentIntegrationHints } from "../agents/use-agent-integration-hints";
 import { routeIconForPath } from "./route-icon-components";
+import { KbReviewsBadge } from "./kb-reviews-badge";
 import { useT } from "../i18n";
 import {
   useShortcut,
@@ -882,25 +883,19 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
                   const isActive = isNavActive(pathname, href);
+                  const kbBadge = item.key === "kb" && kbOpenMergeRequests > 0;
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
                         isActive={isActive}
                         render={<AppLink href={href} />}
-                        className={NAV_ITEM_CLASS_NAME}
+                        className={cn(NAV_ITEM_CLASS_NAME, kbBadge && "pr-9")}
                       >
                         <Icon />
                         <span>{t(($) => $.nav[item.labelKey])}</span>
-                        {item.key === "kb" && kbOpenMergeRequests > 0 && (
-                          <span
-                            data-testid="kb-open-mr-badge"
-                            className="ml-auto inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1.25 text-micro font-normal tabular-nums text-primary-foreground"
-                          >
-                            {kbOpenMergeRequests > 99 ? "99+" : kbOpenMergeRequests}
-                          </span>
-                        )}
                         {item.key === "agents" && <AgentsIntegrationHintDot wsId={wsId} />}
                       </SidebarMenuButton>
+                      {kbBadge && <KbReviewsBadge bases={knowledgeBases ?? []} count={kbOpenMergeRequests} />}
                     </SidebarMenuItem>
                   );
                 })}

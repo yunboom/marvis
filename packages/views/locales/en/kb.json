@@ -2,27 +2,6 @@
   "list": {
     "title": "Knowledge base",
     "new_button": "New knowledge base",
-    "pending_reviews_one": "{{count}} change to review",
-    "pending_reviews_other": "{{count}} changes to review",
-    "search_placeholder": "Search knowledge bases and pages...",
-    "search_label": "Search knowledge bases",
-    "sort": {
-      "recent": "Recently updated",
-      "name": "Name"
-    },
-    "table": {
-      "name": "Name",
-      "description": "Description",
-      "pages": "Pages",
-      "pending": "Pending",
-      "updated": "Updated"
-    },
-    "pending": {
-      "annotations_one": "{{count}} annotation",
-      "annotations_other": "{{count}} annotations",
-      "stale_pages_one": "{{count}} to re-check",
-      "stale_pages_other": "{{count}} to re-check"
-    },
     "copy_link": "Copy link",
     "link_copied": "Link copied",
     "no_matches": "No matching knowledge bases",
@@ -32,9 +11,13 @@
   "nav": {
     "label": "Knowledge base navigation",
     "switch": "Switch knowledge base",
+    "filter_placeholder": "Filter by name",
+    "filter_label": "Filter knowledge bases by name",
     "more_actions": "Knowledge base actions",
     "home": "Home",
     "pending": "{{count}} pending",
+    "open_mrs_one": "{{count}} change to review",
+    "open_mrs_other": "{{count}} changes to review",
     "pages": "Pages",
     "breadcrumb": "Breadcrumb",
     "configure": "Configure knowledge base",
@@ -61,7 +44,11 @@
     "pages_other": "{{count}} pages",
     "no_results": "No results for “{{query}}”",
     "no_results_hint": "Try different keywords.",
-    "failed": "Search failed"
+    "failed": "Search failed",
+    "all_placeholder": "Search all knowledge bases"
+  },
+  "find": {
+    "placeholder": "Find in page"
   },
   "home": {
     "pending_title": "Pending",
@@ -86,22 +73,32 @@
     "updated": "Updated {{time}}",
     "verified": "Verified · {{name}} · {{date}}",
     "stale": "Needs review",
-    "pending_mr_one": "{{count}} change to this page is waiting for review: {{title}} (#{{number}})",
-    "pending_mr_other": "{{count}} changes to this page are waiting for review, latest: {{title}} (#{{number}})",
+    "pending_mr_one": "{{count}} change to this page is waiting for review #{{number}} · {{title}}",
+    "pending_mr_other": "{{count}} changes to this page are waiting for review, latest #{{number}} · {{title}}",
     "not_found": "This page does not exist or was deleted",
     "sources": "Sources",
     "missing_page": "This page has not been written yet",
     "close_panel": "Close",
-    "view_change": "View change"
+    "view_change": "View change",
+    "draft_forbidden": "You don't have access to this draft"
   },
   "draft": {
     "label": "Draft",
-    "single": "Your draft changes this page and is not merged yet. Others still see the official version.",
-    "multi_one": "You have {{count}} draft changing this page, not merged yet. Others still see the official version.",
-    "multi_other": "You have {{count}} drafts changing this page, none merged yet. Others still see the official version.",
+    "single": "Your draft changes this page and is not merged yet.",
+    "multi_one": "You have {{count}} draft changing this page, not merged yet.",
+    "multi_other": "You have {{count}} drafts changing this page, none merged yet.",
     "official": "Official",
     "draft": "Draft",
-    "diff": "Changes",
+    "show_diff": "Show changes",
+    "bar": {
+      "review": "In review",
+      "resolve": "To resolve",
+      "submitted": "Submitted for review #{{number}} · {{title}}",
+      "resolve_text": "To resolve #{{number}} · {{title}}",
+      "review_text": "In review #{{number}} · {{title}}",
+      "others_one": "{{count}} more change in review",
+      "others_other": "{{count}} more changes in review"
+    },
     "diff_empty": "This draft does not change this page",
     "choose": "Choose draft",
     "origin": {
@@ -365,6 +362,21 @@
     "start_failed": "Could not start the job",
     "not_found": "The job does not exist or you cannot open it",
     "ended": "This conversation has ended",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "delete": "Delete",
+    "archived_title": "Archived",
+    "archived_notice": "This job is archived",
+    "row_actions": "Job actions",
+    "archive_failed": "Could not update the job",
+    "delete_failed": "Could not delete the job",
+    "delete_dialog": {
+      "title": "Delete job",
+      "description": "\"{{name}}\" and its conversation will be permanently removed, and an unsubmitted draft is discarded. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "confirming": "Deleting..."
+    },
     "starters": {
       "ingest": {
         "title": "Ingest sources",
@@ -411,7 +423,8 @@
         "merged": "Merged",
         "closed": "Closed · can resubmit",
         "nochange": "No change needed",
-        "discarded": "Discarded"
+        "discarded": "Discarded",
+        "changes_requested": "Changes requested"
       },
       "nodraft": "The agent's changes show here once it creates the draft.",
       "empty": "Changes show here once the agent writes them.",
@@ -457,7 +470,7 @@
         "lint_one": "{{count}} error to fix before submitting",
         "lint_other": "{{count}} errors to fix before submitting",
         "conflict": "You can submit now and resolve the conflicts in review",
-        "submitted": "Keep going in the review comments, or here",
+        "submitted": "Review feedback shows up here; you can keep talking on the left",
         "closed": "Adjust and resubmit; that opens a new change request",
         "merged": "This conversation has ended",
         "running": "Add to the request on the left at any time"
@@ -469,7 +482,6 @@
         "closed_no_reason": "{{name}} closed #{{number}}. The draft is kept; you can keep adjusting it.",
         "merged": "{{name}} merged #{{number}}. The changes are live."
       },
-      "banner_review": "Review",
       "banner_view_page": "View page",
       "banner_comments": "View comments",
       "discard": "Discard draft",
@@ -498,6 +510,17 @@
       "annotations_page_message_other": "Handle the {{count}} pending annotations on “{{title}}”.",
       "annotations_kb_message_one": "Handle the {{count}} pending annotation on the whole knowledge base.",
       "annotations_kb_message_other": "Handle the {{count}} pending annotations on the whole knowledge base."
+    },
+    "feedback": {
+      "label": "Review feedback",
+      "title_one": "#{{number}} has {{count}} comment to resolve",
+      "title_other": "#{{number}} has {{count}} comments to resolve",
+      "go_review": "Go to review",
+      "submitted": "submitted a review · {{time}}",
+      "handoff": "Hand to agent",
+      "handed_off": "Handed to the agent",
+      "handoff_failed": "Couldn't hand it to the agent",
+      "chat_message": "Resolve the review feedback on #{{number}}"
     }
   },
   "review": {
@@ -508,23 +531,19 @@
     "conflict_banner": "The mainline changed the same content.",
     "conflict_main": "Mainline lines {{lines}}",
     "conflict_draft": "Branch lines {{lines}}",
-    "working": "Working",
-    "view_run": "View run",
     "remove_quote": "Remove quote",
     "reply": "Reply",
     "replying_to": "Replying to {{name}}",
     "quote_line": "{{page}} line {{line}}",
     "comment_label": "Comment",
-    "comment_placeholder": "Leave a comment...",
-    "trigger_hint": "starts on send",
-    "send": "Send",
+    "comment_placeholder": "Write a comment, or select a diff line to quote it",
     "hint_member": "The knowledge base creator or an owner / admin merges",
     "hint_conflict": "Resolve the conflicts first",
     "hint_running": "Merge after the agent finishes",
     "comment_failed": "The comment was not sent",
     "merged_toast": "Merged #{{number}}",
     "close_failed": "Could not close",
-    "agent_working": "{{name}} is working",
+    "agent_working": "Agent is working",
     "close": "Close",
     "merge": "Merge",
     "revert": "Revert this change",
@@ -552,8 +571,6 @@
     "meta_other": "Risk {{risk}} · {{count}} pages changed",
     "meta_annotations_one": "{{count}} annotation handled",
     "meta_annotations_other": "{{count}} annotations handled",
-    "activity_count_one": "{{count}} item",
-    "activity_count_other": "{{count}} items",
     "close_confirm_annotations_one": "The {{count}} annotation it handles goes back to pending.",
     "close_confirm_annotations_other": "The {{count}} annotations it handles go back to pending.",
     "tabs": {
@@ -564,7 +581,8 @@
     "status": {
       "open": "Open",
       "merged": "Merged",
-      "closed": "Closed"
+      "closed": "Closed",
+      "changes_requested": "Changes requested"
     },
     "empty": {
       "open": "Nothing waiting for review",
@@ -587,16 +605,13 @@
       "issue": "Issue · {{label}}",
       "chat": "Chat · {{label}}"
     },
-    "trigger_reason": {
-      "author": "Working on the comment",
-      "mention": "Started by mention"
-    },
     "merge_error": {
       "stale": "The draft changed after you opened it; reload before merging",
       "conflict": "Conflicts with the mainline; resolve them first",
       "running": "Merge after the agent finishes",
       "not_open": "This change request has ended",
-      "failed": "Could not merge"
+      "failed": "Could not merge",
+      "changes_requested": "Changes requested; the owner must request review again first"
     },
     "risk": {
       "low": "low",
@@ -610,6 +625,52 @@
       "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
       "header": "#{{number}} · {{author}} · merged by {{merger}}",
       "revert_hint": "Reverting opens a new change request; it takes effect once merged."
+    },
+    "pending": "Pending",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "reply_placeholder": "Reply...",
+    "add_to_review": "Add to review",
+    "reviewing": "Reviewing",
+    "pending_count_one": "{{count}} pending comment, visible only to you",
+    "pending_count_other": "{{count}} pending comments, visible only to you",
+    "pending_none": "No pending comments yet",
+    "discard": "Discard review",
+    "discard_confirm_title": "Discard this review?",
+    "discard_confirm_description_one": "{{count}} pending comment will be deleted.",
+    "discard_confirm_description_other": "{{count}} pending comments will be deleted.",
+    "discard_failed": "Couldn't discard the review",
+    "submit": "Submit review",
+    "submit_count_one": "Submit review ({{count}})",
+    "submit_count_other": "Submit review ({{count}})",
+    "summary_label": "Summary (optional)",
+    "submit_note_one": "{{count}} comment becomes visible to everyone, the change request moves to Changes requested, and its owner is notified.",
+    "submit_note_other": "{{count}} comments become visible to everyone, the change request moves to Changes requested, and its owner is notified.",
+    "submitted_toast": "Review submitted",
+    "submit_failed": "Couldn't submit the review",
+    "start": "Start review",
+    "start_failed": "Couldn't start the review",
+    "request_review": "Request review again",
+    "ready_failed": "Couldn't request review again",
+    "hint_changes_owner": "Request review again once the feedback is addressed",
+    "hint_changes": "Changes requested; can merge after the owner requests review again",
+    "show_earlier_one": "Show {{count}} earlier activity",
+    "show_earlier_other": "Show {{count}} earlier activities",
+    "field_separator": ", ",
+    "event": {
+      "review_submitted_one": "submitted a review · {{count}} comment",
+      "review_submitted_other": "submitted a review · {{count}} comments",
+      "review_requested": "requested review again",
+      "merged": "merged this change",
+      "closed": "closed this change",
+      "reverted": "opened revert #{{number}}",
+      "edited": "edited the {{fields}}"
+    },
+    "field": {
+      "title": "title",
+      "summary": "summary",
+      "risk": "risk"
     }
   },
   "manage": {

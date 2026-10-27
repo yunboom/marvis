@@ -163,7 +163,7 @@ const listKbPagesForSearchHits = `-- name: ListKbPagesForSearchHits :many
 SELECT p.id, p.knowledge_base_id, b.slug AS kb_slug, p.title, p.type, p.blocks
 FROM kb_page p
 JOIN kb_base b ON b.id = p.knowledge_base_id
-WHERE p.id = ANY($1::uuid[]) AND p.deleted_at IS NULL
+WHERE p.id = ANY($1::uuid[]) AND p.deleted_at IS NULL AND b.deleted_at IS NULL
 `
 
 type ListKbPagesForSearchHitsRow struct {
@@ -208,6 +208,7 @@ SELECT p.id
 FROM kb_page p
 WHERE p.id > $1::uuid
   AND p.deleted_at IS NULL
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = p.knowledge_base_id AND b.deleted_at IS NULL)
   AND (
     NOT EXISTS (
         SELECT 1 FROM kb_block_embedding e
@@ -228,9 +229,9 @@ type ListKbPagesNeedingEmbeddingParams struct {
 	RowLimit int32       `json:"row_limit"`
 }
 
-// Live pages, after a keyset cursor, without vectors of the current model or
-// changed since they were indexed. Pages without any text to embed come back
-// on every pass; indexing them is a no-op.
+// Live pages of live knowledge bases, after a keyset cursor, without vectors
+// of the current model or changed since they were indexed. Pages without any
+// text to embed come back on every pass; indexing them is a no-op.
 func (q *Queries) ListKbPagesNeedingEmbedding(ctx context.Context, arg ListKbPagesNeedingEmbeddingParams) ([]pgtype.UUID, error) {
 	rows, err := q.db.Query(ctx, listKbPagesNeedingEmbedding, arg.AfterID, arg.Model, arg.RowLimit)
 	if err != nil {
@@ -256,7 +257,9 @@ WITH nearest AS MATERIALIZED (
     SELECT e.page_id, e.block_id, (e.embedding <=> $2::text::vector) AS distance
     FROM kb_block_embedding e
     JOIN kb_page p ON p.id = e.page_id
+    JOIN kb_base b ON b.id = e.knowledge_base_id
     WHERE e.workspace_id = $3
+      AND b.deleted_at IS NULL
       AND e.model = $4::text
       AND ($5::uuid IS NULL OR e.knowledge_base_id = $5::uuid)
       AND p.deleted_at IS NULL

@@ -213,7 +213,7 @@
   "kb-graph.dc.html": {
    "h": 900,
    "page": "kb",
-   "title": "2.10 「…」→ 关系图 · 页面之间的链接",
+   "title": "2.10 左侧导航「关系图」· 页面之间的链接",
    "w": 1440,
    "x": 13680,
    "y": 0
@@ -245,7 +245,7 @@
   "kb-menu.dc.html": {
    "h": 900,
    "page": "kb",
-   "title": "2.2 知识库「…」菜单 · 配置 → 第 10 页，管理 → 第 11 页，变更记录 → 2.7，关系图 → 2.10，复制链接 → 2.12",
+   "title": "2.2 知识库「…」菜单 · 配置 → 第 10 页，管理 → 第 11 页，变更记录 → 2.7，复制链接 → 2.12",
    "w": 1440,
    "x": 1520,
    "y": 0
@@ -429,7 +429,7 @@
   "rv-comment.dc.html": {
    "h": 900,
    "page": "review",
-   "title": "8.3 选中一行「加入评论」· 引用进底部评论框",
+   "title": "8.3 评审中选中一行「加入评论」· 引用进评论框（评审第 2 步）",
    "w": 1440,
    "x": 3040,
    "y": 0
@@ -453,7 +453,7 @@
   "rv-list.dc.html": {
    "h": 900,
    "page": "review",
-   "title": "8.1 待审核",
+   "title": "8.1 待审核 ·「智能体自查」「检查」两张卡片等高固定高度，内容超出在卡片内滚动",
    "w": 1440,
    "x": 0,
    "y": 0
@@ -461,7 +461,7 @@
   "rv-live-done.dc.html": {
    "h": 900,
    "page": "review",
-   "title": "8.5 改完回复 · diff 实时更新",
+   "title": "8.5 提交评审后 · 审核人视角：评论公开，状态「待解决」，合并不可用并提示（评审第 4 步）",
    "w": 1440,
    "x": 6080,
    "y": 0
@@ -469,7 +469,7 @@
   "rv-live.dc.html": {
    "h": 900,
    "page": "review",
-   "title": "8.4 评论后 · 作者智能体在本变更请求上修改",
+   "title": "8.4 评审中 · 已加 3 条待提交评论，只有自己可见，可编辑、删除（评审第 2 步）",
    "w": 1440,
    "x": 4560,
    "y": 0
@@ -680,7 +680,7 @@
    "w": 1440,
    "x": 12160,
    "y": 0,
-   "title": "3.9 草稿视图 · 自己的草稿改了这一页：顶部草稿条，可切回已发布；行内显示改动；页面树标「草稿」"
+   "title": "3.9 草稿 · 显示差异关闭（diff=0）：只显示草稿内容，不带改动标记；横幅有「正式 / 草稿」分段和「显示差异」开关；页面树标「草稿」"
   },
   "read-drafts.dc.html": {
    "h": 900,
@@ -688,7 +688,7 @@
    "w": 1440,
    "x": 13680,
    "y": 0,
-   "title": "3.10 多份草稿改了同一页 · 草稿条默认显示最近更新的一份，下拉切换，每项标明来自哪段对话或哪个任务"
+   "title": "3.10 多份草稿改了同一页 · 草稿条默认显示最近更新的一份，下拉切换，每项标明来自哪段对话或哪个任务；「显示差异」默认打开"
   },
   "kb-session-nodraft.dc.html": {
    "h": 900,
@@ -697,6 +697,134 @@
    "w": 1440,
    "x": 24320,
    "y": 0
+  },
+  "rv-start.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.9 开启评审前 · 右上角「开启评审」，没有评论框（评审第 1 步）",
+   "w": 1440,
+   "x": 12160,
+   "y": 0
+  },
+  "rv-submit.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.10 提交评审 · 弹层填总结（选填），提交后评论一次公开（评审第 3 步）",
+   "w": 1440,
+   "x": 13680,
+   "y": 0
+  },
+  "rv-owner.dc.html": {
+   "h": 900,
+   "page": "review",
+   "title": "8.11 负责人视角 · 「待解决」，可在评论下回复，改完点「重新请求审核」（评审第 5 步）",
+   "w": 1440,
+   "x": 15200,
+   "y": 0
+  },
+  "kb-session-changes.dc.html": {
+   "h": 900,
+   "page": "session",
+   "w": 1440,
+   "x": 25840,
+   "y": 0,
+   "title": "9.18 变更请求「待解决」· 右侧「审核意见」区：评审总结和评论，右上「去审核页」，「交给智能体处理」；底部主按钮「重新请求审核」"
+  },
+  "notify-box.dc.html": {
+   "h": 900,
+   "page": "notify",
+   "w": 1440,
+   "x": 0,
+   "y": 0,
+   "title": "13.1 负责人收到「提交了评审」· 消息列表里的未读条目，详情为评审总结、意见摘要（最多 2 条，其余「查看全部」）和「查看审核意见」"
+  },
+  "notify-reviewer.dc.html": {
+   "h": 900,
+   "page": "notify",
+   "w": 1440,
+   "x": 1520,
+   "y": 0,
+   "title": "13.2 审核人收到「重新请求审核」· 未读条目与已读的「提交了评审」条目，详情为自己的评审摘要和「去审核页」"
+  },
+  "rv-timeline.dc.html": {
+   "h": 900,
+   "page": "review",
+   "w": 1440,
+   "x": 16720,
+   "y": 0,
+   "title": "8.12 动态 · 评论与事件按时间混排（提交评审、重新请求审核、合并），较早的折叠为「展开更早 N 条动态」"
+  },
+  "read-diff.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 15200,
+   "y": 0,
+   "title": "3.11 草稿 · 显示差异打开（默认）：在渲染后的正文上标出改动，删除为红色删除线、浅红底，新增为浅绿底，修改的块先旧后新"
+  },
+  "read-new-draft.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 16720,
+   "y": 0,
+   "title": "3.12 新建页面 · 草稿：没有「正式 / 草稿」分段，横幅只有「草稿」标签和「显示差异」开关；打开时整页为新增"
+  },
+  "inbox-cat.dc.html": {
+   "h": 900,
+   "page": "notify",
+   "w": 1440,
+   "x": 3040,
+   "y": 0,
+   "title": "13.3 消息弹窗 · 分类「全部」：列表上方「全部 / 任务 / 知识库 / 自动化」，各类带未读数"
+  },
+  "inbox-cat-kb.dc.html": {
+   "h": 900,
+   "page": "notify",
+   "w": 1440,
+   "x": 4560,
+   "y": 0,
+   "title": "13.4 分类「知识库」选中 · 只列评审通知，筛选里任务专属的状态、优先级、没有智能体在工作隐藏，右侧为评审通知详情"
+  },
+  "inbox-cat-page.dc.html": {
+   "h": 900,
+   "page": "notify",
+   "w": 1440,
+   "x": 6080,
+   "y": 0,
+   "title": "13.5 /inbox 完整页 · 分类「任务」选中，筛选带状态 / 优先级（地址 ?category=issue）"
+  },
+  "read-bar-draft.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 18240,
+   "y": 0,
+   "title": "3.13 合并后的横幅 · 自己的草稿未提交：「草稿」标签，「你的草稿改了这一页，还没有合并。」，右侧「显示差异」开关和「正式 / 草稿」分段"
+  },
+  "read-bar-review.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 19760,
+   "y": 0,
+   "title": "3.14 合并后的横幅 · 自己的草稿已提交：「待审核」标签，「已提交审核 #16 · 标题」一行截断，「查看修改」跳到 #16 审核页，保留开关和分段"
+  },
+  "read-bar-others.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 21280,
+   "y": 0,
+   "title": "3.15 合并后的横幅 · 只有别人的待审核修改：「待审核」标签，「本页有 1 个待审核的修改 #18 · 标题」，「查看修改」跳到 #18 审核页，不显示开关和分段"
+  },
+  "read-bar-both.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 22800,
+   "y": 0,
+   "title": "3.16 合并后的横幅 · 自己的草稿与别人的待审核修改都有：主文案按自己的草稿（「待解决 #16」），「另有 1 个待审核的修改」是下拉选择，选中哪个就显示哪个，「查看修改」跳到选中的那个"
   }
  },
  "createdOnFiles": {
@@ -758,7 +886,7 @@
    "kind": "title1",
    "maxW": 8000,
    "page": "kb",
-   "text": "知识库首页：简介、最近更新、待处理；「…」菜单的变更记录、关系图、复制链接",
+   "text": "知识库首页：简介、最近更新、待处理；「…」菜单的变更记录、复制链接；左侧导航的关系图",
    "w": 240,
    "x": 0,
    "y": -300
@@ -816,6 +944,15 @@
    "w": 240,
    "x": 0,
    "y": -300
+  },
+  "t-notify": {
+   "kind": "title1",
+   "maxW": 7520,
+   "page": "notify",
+   "text": "通知：评审提交与重新请求审核进「消息」",
+   "w": 240,
+   "x": 0,
+   "y": -300
   }
  },
  "order": [
@@ -866,6 +1003,10 @@
   "rv-conflict.dc.html",
   "rv-merge.dc.html",
   "rv-member.dc.html",
+  "rv-start.dc.html",
+  "rv-submit.dc.html",
+  "rv-owner.dc.html",
+  "rv-timeline.dc.html",
   "kb-runs.dc.html",
   "kb-session-new.dc.html",
   "kb-session-auto.dc.html",
@@ -879,6 +1020,7 @@
   "kb-session-merged.dc.html",
   "kb-session-queue.dc.html",
   "kb-session-nodraft.dc.html",
+  "kb-session-changes.dc.html",
   "kb-session.dc.html",
   "kb-session-draft.dc.html",
   "kb-session-followup.dc.html",
@@ -905,7 +1047,18 @@
   "read-cite-raw.dc.html",
   "read-raw-preview.dc.html",
   "read-draft.dc.html",
-  "read-drafts.dc.html"
+  "read-drafts.dc.html",
+  "read-diff.dc.html",
+  "read-new-draft.dc.html",
+  "read-bar-draft.dc.html",
+  "read-bar-review.dc.html",
+  "read-bar-others.dc.html",
+  "read-bar-both.dc.html",
+  "notify-box.dc.html",
+  "notify-reviewer.dc.html",
+  "inbox-cat.dc.html",
+  "inbox-cat-kb.dc.html",
+  "inbox-cat-page.dc.html"
  ],
  "pages": [
   {
@@ -955,6 +1108,10 @@
   {
    "id": "chat",
    "name": "12 对话里的知识库卡片"
+  },
+  {
+   "id": "notify",
+   "name": "13 通知"
   },
   {
    "id": "comp",

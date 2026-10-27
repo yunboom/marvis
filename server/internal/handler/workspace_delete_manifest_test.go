@@ -162,6 +162,8 @@ var workspaceDeletionManifest = map[string]workspaceDeleteAction{
 	"kb_link":                            workspaceDelete,
 	"kb_merge_request":                   workspaceDelete,
 	"kb_mr_comment":                      workspaceDelete,
+	"kb_mr_event":                        workspaceDelete,
+	"kb_mr_review":                       workspaceDelete,
 	"kb_page":                            workspaceDelete,
 	"kb_page_revision":                   workspaceDelete,
 	"kb_raw":                             workspaceDelete,

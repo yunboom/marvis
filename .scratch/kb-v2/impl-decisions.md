@@ -463,3 +463,32 @@
 5. **繁体中文语言包**：上游新增 `zh-Hant`，没有知识库的 `kb.json` 和 `layout.nav.knowledge_base`，parity 测试会拦。用 OpenCC `s2twp` 从 `zh-Hans` 转出，再按现有 `zh-Hant` 的用词替换（`許可權`→`權限`、`賬`→`帳`、`郵箱`→`信箱`、`繫結`→`綁定`、`身份`→`身分`）。拿 `s2twp` 转现有 `zh-Hans` 文案，和上游的 `zh-Hant` 有 97.7% 完全一致，所以用词与上游保持一致（例如「审核」同样转成「稽核」）。没做人工校对。
 6. 本地 worktree 库 `marvis_kb_v2_270` 删掉重建后从头跑迁移（迁移改了编号）。
 7. 第一次合并推送后 redesign 又进了 4 个提交（到 `902c404bd`，智能体集成红点、工作流编辑器分组），再合一次。唯一冲突在 `app-sidebar.tsx` 导航行尾：知识库的待审核数徽标和智能体的集成红点按各自的 `item.key` 渲染，两个都保留。
+
+## 决策 107 · 评审
+
+1. **迁移编号**：634 删 `triggered`，635 建 `kb_mr_review` 并给 `kb_mr_comment` 加 `review_id`，636 改状态约束（约束实名 `kb_merge_request_status_check`）并加 `review_requested_at`，637 进行中评审的部分唯一索引，638 `(merge_request_id, submitted_at)`，639 / 640 换掉「一份草稿一个 open 变更请求」的唯一索引，641 `kb_mr_event`，642 事件索引，rebrand 顺延到 643。
+   - 原来的 `kb_mr_open_draft_uidx` 只锁 `status='open'`，加了 `changes_requested` 后同一份草稿会漏锁，所以 639 新建覆盖两种状态的索引、640 再删旧的（`concurrentDownIndexCleanups` 登记 640）。
+   - `kb_mr_comment.review_id` 不建索引：评论都按 `merge_request_id` 查（624 的索引），提交 / 放弃时按 `merge_request_id + review_id` 过滤。
+   - `reviewer_id` 后来按用户要求改名 `reviewer_user_id`；635、637 直接改了原文件（未发布），已跑过的本地库手动 `RENAME COLUMN`。
+2. **哪些状态算「审核中」**：`open` 和 `changes_requested` 都算（草稿查重、删知识库时关闭、关闭、PATCH、开启评审）。合并只认 `open`，`changes_requested` 返回 409 `changes_requested`。知识库列表和首页的「待审核」数、阅读页横幅仍只数 `open`：「待解决」等的是负责人，不是审核人。列表接口不带 `status` 时默认 `open,changes_requested`（审核页「待审核」页签和 CLI 默认都看得到待解决的）。
+3. **「待解决」的范围**：负责人点「重新请求审核」时写 `kb_merge_request.review_requested_at`，之后提交的评审才算本轮待解决（作业页卡片、「交给智能体处理」的消息都只取这一轮）。规格没有这一列，不加的话第二轮会把上一轮已处理的意见再算一遍。
+4. **评论接口的契约**（以技术方案 v97 为准）：
+   - `POST /comments` 带 `review_id` 写进调用者自己的进行中评审（别人的评审 403，已提交 409，变更请求已结束 409）；不带时只有负责人能发，且必须带 `parent_id` 回复已公开的评论，其他人 403 `review_required`。
+   - `PATCH|DELETE /comments/{id}` 只改删自己的待提交评论（不是作者 403，已公开 409 `comment_published`）。
+   - 没有评论也没有总结的评审提交返回 409 `review_empty`（任务说明写 422，技术方案 v97 写 409，按方案）。
+   - 评论响应用 `state: pending|published`，列表与时间线 `state=published|all`，默认 `published`。
+5. **谁能评审**：工作区成员；智能体令牌开启或写评审返回 403 `review_member_only`（决策「不允许让 agent 参与」）。负责人接口上也能开评审（单人工作区里成员既是草稿负责人也是审核人），但审核页按设计稿不给负责人显示「开启评审」。
+6. **负责人**：`kb_draft.created_by`。智能体建的草稿记的是它代表的成员，所以智能体按负责人身份回复评论也行（CLI `kb mr comment add` 现在必须带 `--parent`）。
+7. **站内消息**：类型 `kb_mr_changes_requested`、`kb_mr_review_requested`，`severity=action_required`，`details` 只放 `knowledge_base_slug`、`merge_request_number`、`review_id`（重新请求审核时为 null），标题 `#16 标题`、正文为评审总结。多个审核人一条 unnest 批量插入（`CreateKbMemberInboxItems`，不在工作区的人跳过），不发给操作人自己。前端详情现查变更请求，读不到时退回标题和正文。
+8. **事件**：`kb_mr_event` 在同一事务里写；`review_submitted` 带 `review_id`、`comment_count`、`summary`，`closed` 带 `close_reason`，`reverted` 写在被回滚的变更请求上、带新请求编号 `revert_number`，`edited` 带改了的 `fields`（没改动不写）。时间线是平铺数组，评论项与评论接口同字段，事件项带 `kind`、`actor_name`、`payload`；同一时刻事件排在评论前；前端不认识的 `kind` 解析成 `unknown` 并隐藏。WebSocket 复用 `kb.mr.updated`（提交、重新请求审核都带新 `status`）和 `kb.mr.commented`（提交时带 `review_id`），前端已有的失效覆盖详情、时间线、列表和作业页。
+9. **「交给智能体处理」**：`POST /api/kb/merge-requests/{number}/handoff`，只有作业发起人能调，变更请求须为 `changes_requested` 且来自作业；后端用 `templates/review_handoff.md.tmpl` 拼英文消息（编号、每条意见的引用和正文、评论 id、`marvis kb mr comment list <编号>`、改同一份草稿、改完由成员重新请求审核），以成员身份发进作业对话。技术方案里原本没有这个接口，需补进方案。
+10. **审核页**：没开评审的审核人看不到评论框；在 diff 上「加入评论」会自动开启评审。冲突横幅原来的「让智能体基于主线更新」按钮去掉了（它靠评论触发智能体，现在评论不派发）。提交评审弹层里没有评论只有总结也能提交。
+11. **草稿读取权限**（同批并入）：带 `?draft=` 读取时，除草稿创建人、关联作业发起人外，知识库创建者和工作区 owner / admin 也能读（与合并权限一致）；草稿横幅仍只列自己的。阅读页 403 时显示「没有权限查看这份草稿」，不退回正式版本。
+
+## 决策 108 · 收件箱分类
+
+1. 归类表在 core（`INBOX_CATEGORY_OF: Record<InboxItemType, InboxCategory>`，新类型不归类就过不了类型检查），服务端 `internal/inbox/category.go` 镜像同一份；不认识的类型只出现在「全部」。
+2. 进行中列表是整表拉取，分类和未读数都在前端算；归档是服务端分页，所以归档页、归档筛选计数和「全部标为已读」加 `category` 参数，服务端按同一张表过滤。未知 `category` 返回 400。
+3. 「全部标为已读」设计稿没写范围，按当前分类：在「知识库」下只标知识库的。
+4. 切到知识库 / 自动化时不清掉状态、优先级、「没有智能体在工作」的选择，只在过滤和计数时忽略、菜单里隐藏：切回「任务」时选择还在，也不会因为切分类误删用户的筛选。
+5. 分类写在 `?category=`（只在 `/inbox` 页面；弹窗用本地状态，URL 属于下面的页面）；切分类保留当前打开的消息，若它不在新分类里则按原有「被筛掉」的逻辑清掉。

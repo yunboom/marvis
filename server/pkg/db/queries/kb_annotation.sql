@@ -10,12 +10,15 @@ INSERT INTO kb_annotation (
 ) RETURNING *;
 
 -- name: GetKbAnnotationInWorkspace :one
+-- Annotations of a deleted knowledge base are not found.
 SELECT * FROM kb_annotation
-WHERE workspace_id = $1 AND id = $2;
+WHERE kb_annotation.workspace_id = $1 AND kb_annotation.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_annotation.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbAnnotationForUpdate :one
 SELECT * FROM kb_annotation
-WHERE workspace_id = $1 AND id = $2
+WHERE kb_annotation.workspace_id = $1 AND kb_annotation.id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_annotation.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE;
 
 -- name: ListKbAnnotations :many

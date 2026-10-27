@@ -419,9 +419,16 @@ func (h *Handler) MarkAllInboxRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// category narrows to the inbox tab the member is on (decision 108).
+	types, ok := parseInboxCategory(w, r)
+	if !ok {
+		return
+	}
+
 	count, err := h.Queries.MarkAllInboxRead(r.Context(), db.MarkAllInboxReadParams{
 		WorkspaceID: wsUUID,
 		RecipientID: parseUUID(userID),
+		Types:       types,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to mark all inbox read")

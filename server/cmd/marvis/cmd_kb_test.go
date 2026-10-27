@@ -323,3 +323,60 @@ func TestKbAnnotationRequests(t *testing.T) {
 		}
 	}
 }
+
+// TestKbMRCommentListShowsPublishedFeedback: comment list reads the
+// published comments and the submitted reviews with their summaries.
+func TestKbMRCommentListShowsPublishedFeedback(t *testing.T) {
+	seen := newKbTestServer(t, http.StatusOK, []map[string]any{
+		{"id": "r1", "state": "submitted", "summary": "Fix the key.", "reviewer_name": "Wang", "body": "Say why."},
+		{"id": "r2", "state": "pending", "summary": "", "body": "draft"},
+	})
+
+	out, err := runKbTestCmd(t, kbMRCommentListCmd, "16")
+	if err != nil {
+		t.Fatalf("comment list: %v", err)
+	}
+	if len(*seen) != 2 || (*seen)[0].Path != "/api/kb/merge-requests/16/comments" || (*seen)[0].Query["state"] != "published" ||
+		(*seen)[1].Path != "/api/kb/merge-requests/16/reviews" {
+		t.Fatalf("requests = %+v", *seen)
+	}
+
+	var got struct {
+		Reviews  []map[string]any `json:"reviews"`
+		Comments []map[string]any `json:"comments"`
+	}
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("output %s: %v", out, err)
+	}
+	if len(got.Reviews) != 1 || got.Reviews[0]["summary"] != "Fix the key." || len(got.Comments) != 2 {
+		t.Errorf("output = %+v", got)
+	}
+}
+
+func TestKbMRReadyAndListDefaults(t *testing.T) {
+	seen := newKbTestServer(t, http.StatusOK, map[string]any{"number": 16, "status": "open"})
+
+	if _, err := runKbTestCmd(t, kbMRReadyCmd, "16"); err != nil {
+		t.Fatalf("ready: %v", err)
+	}
+	if req := (*seen)[0]; req.Method != http.MethodPost || req.Path != "/api/kb/merge-requests/16/ready" {
+		t.Errorf("ready request = %+v", req)
+	}
+
+	if _, err := runKbTestCmd(t, kbMRListCmd); err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if _, ok := (*seen)[1].Query["status"]; ok {
+		t.Errorf("list sends a status by default: %+v", (*seen)[1])
+	}
+
+	if _, err := runKbTestCmd(t, kbMRCommentAddCmd, "16", "--content", "done"); err == nil {
+		t.Error("comment add without --parent accepted")
+	}
+	if _, err := runKbTestCmd(t, kbMRCommentAddCmd, "16", "--content", "done", "--parent", "c1"); err != nil {
+		t.Fatalf("comment add: %v", err)
+	}
+	if req := (*seen)[2]; req.Path != "/api/kb/merge-requests/16/comments" || req.Body["parent_id"] != "c1" || req.Body["body"] != "done" {
+		t.Errorf("comment add request = %+v", req)
+	}
+}
