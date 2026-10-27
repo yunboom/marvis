@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>自动化列表</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; gap: 16px; padding: 16px; background: #f7f7f7; color: #0f0f0f; font-family: 'PingFang SC', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; overflow: hidden">
+  <dc-import name="Sidebar" active="autopilots" hint-size="216px,868px"></dc-import>
+
+  <main style="position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 24px; overflow: hidden">
+    <header style="display: flex; align-items: center; gap: 10px; height: 72px; flex-shrink: 0; padding: 0 24px 0 28px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700">自动化</h1>
+      <sc-if value="{{hasRows}}" hint-placeholder-val="{{ true }}">
+        <span style="font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 15px; font-variant-numeric: tabular-nums; color: #666666">6</span>
+      </sc-if>
+      <button type="button" style="margin-left: auto; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px 0 14px; border: 0; border-radius: 18px; background: #0f0f0f; color: #ffffff; font: inherit; font-size: 14px; font-weight: 500">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>新建自动化
+      </button>
+    </header>
+
+    <div role="tablist" aria-label="自动化" style="display: flex; gap: 20px; height: 40px; flex-shrink: 0; padding: 0 28px; border-bottom: 1px solid rgba(0,0,0,0.06)">
+      <button type="button" role="tab" aria-selected="true" style="position: relative; height: 40px; padding: 0 2px; border: 0; background: transparent; color: #0f0f0f; font: inherit; font-size: 14px; font-weight: 500">自动化<span style="position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 1px; background: #0f0f0f"></span></button>
+      <button type="button" role="tab" aria-selected="false" style="height: 40px; padding: 0 2px; border: 0; background: transparent; color: #666666; font: inherit; font-size: 14px">任务唤醒</button>
+    </div>
+
+    <sc-if value="{{hasRows}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; flex-shrink: 0; padding: 0 24px 0 28px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <div role="group" aria-label="范围" style="display: flex; gap: 2px; padding: 3px; border-radius: 16px; background: rgba(0,0,0,0.04)">
+            <button type="button" aria-pressed="true" style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border: 0; border-radius: 13px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.06); color: #0f0f0f; font: inherit; font-size: 13px; font-weight: 500">全部<span style="font-weight: 400; color: #666666">6</span></button>
+            <button type="button" aria-pressed="false" style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border: 0; border-radius: 13px; background: transparent; color: #666666; font: inherit; font-size: 13px">启用<span>5</span></button>
+            <button type="button" aria-pressed="false" style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border: 0; border-radius: 13px; background: transparent; color: #666666; font: inherit; font-size: 13px">已暂停<span>1</span></button>
+          </div>
+          <sc-if value="{{filtered}}" hint-placeholder-val="{{ false }}">
+            <span title="当前结果 / 全部自动化" style="font-size: 13px; font-variant-numeric: tabular-nums; color: #666666">4 / 6</span>
+          </sc-if>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px">
+          <sc-if value="{{filtered}}" hint-placeholder-val="{{ false }}">
+            <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px 0 12px; border: 0; border-radius: 16px; background: #7b4835; color: #ffffff; font: inherit; font-size: 13px; font-weight: 500">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>触发器：时间表
+              <span aria-label="清除筛选" style="display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 9px; background: rgba(255,255,255,0.18)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></span>
+            </button>
+          </sc-if>
+          <sc-if value="{{filterIdle}}" hint-placeholder-val="{{ true }}">
+            <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 16px; background: transparent; color: #666666; font: inherit; font-size: 13px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>筛选
+            </button>
+          </sc-if>
+          <button type="button" title="排序与显示" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 16px; background: {{sortBg}}; color: #666666; font: inherit; font-size: 13px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg>上次运行
+          </button>
+        </div>
+      </div>
+
+      <div style="flex: 1; min-height: 0; overflow: hidden; padding: 4px 24px 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start">
+        <sc-for list="{{rows}}" as="a" hint-placeholder-count="6">
+          <div style="{{a.cardStyle}}">
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; padding-right: 64px">
+              <a href="Detail.dc.html" style="font-size: 15px; font-weight: 600; color: #0f0f0f; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.name}}</a>
+              <sc-if value="{{a.paused}}" hint-placeholder-val="{{ false }}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c48a2c" stroke-width="1.8" role="img" aria-label="{{a.pauseTitle}}"><path d="M8 4h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM15 4h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"></path></svg>
+              </sc-if>
+            </div>
+            <div style="color: #666666; font-size: 13.5px; line-height: 1.65; height: 44px; overflow: hidden">{{a.desc}}</div>
+            <div style="display: flex; align-items: center; flex-wrap: wrap; row-gap: 4px; font-size: 13px; color: #666666">
+              <sc-for list="{{a.meta}}" as="m" hint-placeholder-count="4">
+                <span style="display: inline-flex; align-items: center; gap: 5px; white-space: nowrap">
+                  <sc-if value="{{m.sep}}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="color: #858585; padding: 0 7px 0 2px">·</span></sc-if>
+                  <sc-if value="{{m.av}}" hint-placeholder-val="{{ false }}"><span style="{{m.avStyle}}">{{m.av}}</span></sc-if>
+                  <sc-if value="{{m.icon}}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{m.icon}}"></path></svg></sc-if>
+                  <sc-if value="{{m.dot}}" hint-placeholder-val="{{ false }}"><span style="width: 6px; height: 6px; border-radius: 3px; background: {{m.dot}}"></span></sc-if>
+                  <span style="{{m.textStyle}}">{{m.text}}</span>
+                </span>
+              </sc-for>
+            </div>
+            <sc-if value="{{a.tools}}" hint-placeholder-val="{{ false }}">
+              <div style="position: absolute; top: 12px; right: 12px; display: flex; gap: 2px">
+                <button type="button" aria-label="选择" aria-pressed="{{a.checked}}" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: transparent; display: inline-flex; align-items: center; justify-content: center; padding: 0">
+                  <span style="{{a.boxStyle}}"><sc-if value="{{a.checked}}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>
+                </button>
+                <button type="button" aria-label="更多操作" style="{{a.moreStyle}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; align-items: center; padding: 64px 28px">
+        <span style="width: 48px; height: 48px; border-radius: 24px; background: #f7f7f7; color: #666666; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg></span>
+        <p style="margin: 14px 0 0; font-size: 16px; font-weight: 600">还没有自动化</p>
+        <p style="margin: 6px 0 0; font-size: 13px; color: #666666">为你的智能体安排周期性工作。从模板选一个，或从空白开始。</p>
+        <div style="margin-top: 28px; width: 100%; max-width: 768px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{templates}}" as="t" hint-placeholder-count="6">
+            <button type="button" style="display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; background: #ffffff; font: inherit; text-align: left">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg>
+              <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span style="font-size: 14px; font-weight: 500; color: #0f0f0f">{{t.title}}</span><span style="font-size: 13px; line-height: 1.5; color: #666666">{{t.summary}}</span></span>
+            </button>
+          </sc-for>
+        </div>
+        <button type="button" style="margin-top: 20px; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px 0 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 16px; background: transparent; color: #0f0f0f; font: inherit; font-size: 13px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>从空白开始
+        </button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showSortMenu}}" hint-placeholder-val="{{ false }}">
+      <div role="menu" aria-label="排序与显示" style="position: absolute; top: 172px; right: 24px; width: 220px; box-sizing: border-box; padding: 6px; background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); font-size: 14px">
+        <div style="padding: 6px 10px 2px; font-size: 12px; color: #858585">排序</div>
+        <sc-for list="{{sortItems}}" as="s" hint-placeholder-count="6">
+          <button type="button" role="menuitem" style="display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; font: inherit; color: #0f0f0f; text-align: left">
+            <span style="flex: 1">{{s.label}}</span>
+            <sc-if value="{{s.on}}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+          </button>
+        </sc-for>
+        <div style="height: 1px; background: rgba(0,0,0,0.06); margin: 4px 6px"></div>
+        <div style="padding: 6px 10px 2px; font-size: 12px; color: #858585">显示字段</div>
+        <sc-for list="{{fieldItems}}" as="s" hint-placeholder-count="7">
+          <button type="button" role="menuitemcheckbox" aria-checked="{{s.on}}" style="display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; font: inherit; color: #0f0f0f; text-align: left">
+            <span style="flex: 1">{{s.label}}</span>
+            <sc-if value="{{s.on}}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showRowMenu}}" hint-placeholder-val="{{ false }}">
+      <div role="menu" aria-label="更多操作" style="position: absolute; top: 216px; left: 368px; width: 200px; box-sizing: border-box; padding: 6px; background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); font-size: 14px">
+        <button type="button" role="menuitem" style="display: flex; align-items: center; gap: 10px; width: 100%; height: 36px; padding: 0 10px; border: 0; border-radius: 10px; background: #f5f5f5; font: inherit; color: #0f0f0f; text-align: left"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>在新标签页打开</button>
+        <div style="height: 1px; background: rgba(0,0,0,0.06); margin: 4px 6px"></div>
+        <button type="button" role="menuitem" style="display: flex; align-items: center; gap: 10px; width: 100%; height: 36px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; font: inherit; color: #0f0f0f; text-align: left"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 4h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM15 4h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"></path></svg>暂停</button>
+        <button type="button" role="menuitem" style="display: flex; align-items: center; gap: 10px; width: 100%; height: 36px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; font: inherit; color: #b8452f; text-align: left"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>删除</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showBatch}}" hint-placeholder-val="{{ false }}">
+      <div role="toolbar" aria-label="批量操作" style="position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 2px; height: 44px; box-sizing: border-box; padding: 0 6px 0 16px; background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); font-size: 13px; white-space: nowrap">
+        <span>已选择 2 项</span>
+        <span style="width: 1px; height: 18px; background: rgba(0,0,0,0.06); margin: 0 6px"></span>
+        <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: transparent; font: inherit; color: #0f0f0f">全选</button>
+        <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: transparent; font: inherit; color: #0f0f0f"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 4h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM15 4h1a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"></path></svg>暂停</button>
+        <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: transparent; font: inherit; color: #0f0f0f"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3l14 9-14 9z"></path></svg>启用</button>
+        <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: transparent; font: inherit; color: #b8452f"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>删除</button>
+        <span style="width: 1px; height: 18px; background: rgba(0,0,0,0.06); margin: 0 4px"></span>
+        <button type="button" aria-label="清除选择" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: transparent; display: inline-flex; align-items: center; justify-content: center; color: #666666; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["default","filter","select","menu","empty"],"default":"default"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const state = this.props.state ?? 'default';
+    const filtered = state === 'filter';
+    const isEmpty = state === 'empty';
+
+    const I = {
+      schedule: 'M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M12 6v6l4 2',
+      webhook: 'M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2M6 17l3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06M12 6l3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8',
+    };
+    const RUN = { completed: '#3f7f5f', issue_created: '#3f7f5f', failed: '#b8452f', skipped: '#c48a2c' };
+    const AVATAR = 'width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; background: #ededed; color: #0f0f0f; font-size: 10px; font-weight: 600; border-radius: ';
+
+    const list = [
+      { name: '新任务自动分诊', desc: '读取新建任务的描述和附件，按影响面评估严重程度，设置优先级并留评论说明理由。', who: ['通', '通用开发助手', true], trig: ['webhook'], last: ['completed', '12 分钟前'], next: null },
+      { name: '每日站会纪要', desc: '汇总昨天到今天的任务变化和对话，按人整理成站会纪要，创建任务并 @ 订阅者。', who: ['内', '内容智能体', true], trig: ['schedule'], last: ['issue_created', '2 小时前'], next: '10月28日 09:30' },
+      { name: '支付对账', desc: '拉取前一天的渠道账单与订单流水，逐笔核对金额和状态，差异写进对账报告。', who: ['编', '编码智能体', true], trig: ['schedule', 'webhook'], last: ['failed', '8 小时前'], next: '10月28日 02:00' },
+      { name: '周报生成', desc: '汇总过去 7 天已完成、进行中和阻塞的任务，计算关闭数、新增数和净变化，写成周报。', who: ['研', '研究智能体', true], trig: ['schedule'], last: ['completed', '6 天前'], next: '10月31日 18:00' },
+      { name: '依赖升级检查', desc: '运行依赖审计工具，列出有已知漏洞的包和落后两个大版本以上的包，给出修复建议。', who: ['编', '编码智能体', true], trig: ['schedule'], last: ['skipped', '13 天前'], next: null, paused: true },
+      { name: '发布说明草稿', desc: '根据本次发布合并的 PR 生成发布说明草稿，按新功能、修复、破坏性变更分组。', who: ['林', '林晓', false], trig: ['webhook'], last: null, next: null },
+    ];
+    const shown = filtered ? list.filter((a) => a.trig.indexOf('schedule') >= 0) : list;
+    const checkedIdx = state === 'select' ? [0, 2] : [];
+    const toolsIdx = state === 'select' ? [0, 1, 2] : state === 'menu' ? [0] : [];
+
+    const rows = shown.map((a, i) => {
+      const meta = [];
+      meta.push({ av: a.who[0], avStyle: AVATAR + (a.who[2] ? '6px' : '10px'), text: a.who[1] });
+      meta.push({ icon: I[a.trig[0]], text: a.trig.map((k) => (k === 'schedule' ? '时间表' : 'Webhook')).join(' + ') });
+      if (a.last) meta.push({ dot: RUN[a.last[0]], text: a.last[1] });
+      else meta.push({ text: '未运行', textStyle: 'color: #858585' });
+      if (a.next) meta.push({ text: '下次 ' + a.next });
+      const checked = checkedIdx.indexOf(i) >= 0;
+      const hovered = toolsIdx.indexOf(i) >= 0;
+      return {
+        name: a.name,
+        desc: a.desc,
+        paused: !!a.paused,
+        pauseTitle: '已暂停——执行智能体需绑定运行时',
+        meta: meta.map((m, j) => Object.assign({ sep: j > 0, av: '', icon: '', dot: '', textStyle: '' }, m)),
+        tools: hovered || checked,
+        checked,
+        boxStyle: 'width: 16px; height: 16px; box-sizing: border-box; border-radius: 5px; display: flex; align-items: center; justify-content: center; border: 1.5px solid ' + (checked ? '#0f0f0f' : 'rgba(0,0,0,0.15)') + '; background: ' + (checked ? '#0f0f0f' : '#ffffff'),
+        moreStyle: 'width: 28px; height: 28px; border: 0; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; padding: 0; color: #666666; background: ' + (state === 'menu' && i === 0 ? 'rgba(0,0,0,0.05)' : 'transparent'),
+        cardStyle: 'position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; box-sizing: border-box; padding: 16px 18px; border-radius: 16px; border: 1px solid ' + (checked ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.06)') + '; background: ' + (checked ? 'rgba(0,0,0,0.035)' : hovered ? '#f5f5f5' : '#ffffff'),
+      };
+    });
+
+    const on = (k) => ['assignee', 'trigger', 'lastRun', 'nextRun'].indexOf(k) >= 0;
+    return {
+      hasRows: !isEmpty,
+      isEmpty,
+      filtered,
+      filterIdle: !filtered,
+      rows,
+      sortBg: filtered ? '#f5f5f5' : 'transparent',
+      showSortMenu: filtered,
+      showRowMenu: state === 'menu',
+      showBatch: state === 'select',
+      sortItems: [
+        { label: '名称', on: false }, { label: '上次运行', on: true }, { label: '下次运行', on: false }, { label: '创建时间', on: false },
+        { label: '升序', on: false }, { label: '降序', on: true },
+      ],
+      fieldItems: [['assignee', '执行者'], ['trigger', '触发器'], ['lastRun', '上次运行'], ['nextRun', '下次运行'], ['mode', '模式'], ['creator', '创建者'], ['created', '创建时间']].map(([k, label]) => ({ label, on: on(k) })),
+      templates: [
+        { title: '每日新闻摘要', summary: '每天搜集当日行业新闻，汇总成摘要发到任务评论', icon: 'M4 4h13v16H6a2 2 0 0 1-2-2zM17 8h3v10a2 2 0 0 1-2 2M8 8h5M8 12h5M8 16h3' },
+        { title: 'PR 评审提醒', summary: '工作日找出超过 24 小时未评审的 PR 并提醒', icon: 'M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9a9 9 0 0 1-9 9' },
+        { title: '缺陷分级', summary: '评估未定优先级缺陷的严重程度并设置优先级', icon: 'M9 7.1a3 3 0 0 1 6 0M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6zM12 20v-9' },
+        { title: '每周进度报告', summary: '汇总本周完成、进行中和阻塞的任务', icon: 'M3 3v18h18M7 16v-5M12 16V8M17 16v-3' },
+        { title: '依赖安全审计', summary: '检查有漏洞或严重落后的依赖', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
+        { title: '文档缺口检查', summary: '找出近一周缺少文档的代码改动', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

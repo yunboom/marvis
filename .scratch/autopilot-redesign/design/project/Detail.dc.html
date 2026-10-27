@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>自动化详情</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; gap: 16px; padding: 16px; background: #f7f7f7; color: #0f0f0f; font-family: 'PingFang SC', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; overflow: hidden">
+  <dc-import name="Sidebar" active="autopilots" hint-size="216px,868px"></dc-import>
+
+  <main style="position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 24px; overflow: hidden">
+    <header style="display: flex; align-items: center; gap: 12px; height: 72px; flex-shrink: 0; padding: 0 20px; border-bottom: 1px solid rgba(0,0,0,0.06)">
+      <a href="Main.dc.html" aria-label="返回自动化" style="width: 32px; height: 32px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; color: #666666"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+        <span style="font-size: 16px; font-weight: 600">支付对账</span>
+        <span style="font-size: 12.5px; color: #858585">自动化</span>
+      </div>
+      <button type="button" aria-label="编辑" title="编辑" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></button>
+      <button type="button" aria-label="删除" title="删除" style="{{delBtnStyle}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+      <button type="button" disabled="{{runDisabled}}" style="{{runStyle}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3l14 9-14 9z"></path></svg>立即运行</button>
+    </header>
+
+    <sc-if value="{{paused}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 13px; background: rgba(196,138,44,0.10); border-bottom: 1px solid rgba(0,0,0,0.06)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c48a2c" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 4h18v7H3zM3 13h18v7H3zM7 7.5h.01M7 16.5h.01"></path></svg>
+        <span style="flex: 1">由于执行智能体失去运行时，自动化已暂停。绑定运行时后请重新启用。</span>
+        <a href="#" style="font-weight: 500; color: #0f0f0f">绑定运行时</a>
+      </div>
+    </sc-if>
+
+    <div style="flex: 1; min-height: 0; overflow: hidden; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px; padding: 28px 40px 40px">
+      <div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: #666666">状态</span>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button type="button" role="switch" aria-checked="{{active}}" aria-label="{{switchLabel}}" style="{{switchStyle}}"><span style="{{knobStyle}}"></span></button>
+            <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 12px; background: rgba(0,0,0,0.05); font-size: 12.5px">
+              <span style="width: 6px; height: 6px; border-radius: 3px; background: {{statusDot}}"></span>{{statusLabel}}
+            </span>
+            <sc-if value="{{active}}" hint-placeholder-val="{{ true }}"><span style="font-size: 13px; color: #666666; font-variant-numeric: tabular-nums">下次运行：明天 02:00</span></sc-if>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px">
+          <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #666666">执行者</span><span style="display: flex; align-items: center; gap: 8px"><span style="position: relative; width: 24px; height: 24px; border-radius: 7px; background: #ededed; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">编<span style="position: absolute; right: -2px; bottom: -2px; width: 7px; height: 7px; border-radius: 4px; border: 1.5px solid #ffffff; background: {{presence}}"></span></span>编码智能体</span></div>
+          <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #666666">创建者</span><span style="display: flex; align-items: center; gap: 8px"><span style="width: 24px; height: 24px; border-radius: 12px; background: #ededed; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">周</span>周宁</span></div>
+          <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #666666">输出方式</span><span>仅运行</span></div>
+          <div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; color: #666666">项目</span><a href="#" style="display: flex; align-items: center; gap: 8px; color: #0f0f0f; text-decoration: none"><span style="width: 16px; height: 16px; border-radius: 5px; background: #7b4835"></span>支付中台</a></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; justify-content: space-between; height: 28px">
+            <span style="font-size: 13px; color: #666666">触发器</span>
+            <button type="button" style="display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 6px; border: 0; border-radius: 8px; background: transparent; color: #666666; font: inherit; font-size: 13px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>添加</button>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: #f7f7f7">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="margin-top: 3px"><path d="M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M12 6v6l4 2"></path></svg>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-weight: 500">时间表</span>
+              <span style="font-size: 13px; color: #666666">每天 02:00（Asia/Shanghai）</span>
+              <span style="font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 11.5px; color: #858585">0 2 * * *</span>
+              <span style="font-size: 13px; color: #666666">下次：明天 02:00</span>
+            </div>
+            <button type="button" aria-label="编辑时间表" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: transparent; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg></button>
+            <button type="button" aria-label="删除触发器" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: transparent; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: #f7f7f7">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-top: 3px"><path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2M6 17l3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06M12 6l3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"></path></svg>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+              <span style="font-weight: 500">Webhook <span style="font-weight: 400; color: #858585">（渠道补单）</span></span>
+              <div style="display: flex; align-items: center; gap: 2px; height: 34px; box-sizing: border-box; padding: 0 3px 0 10px; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; background: #ffffff; min-width: 0">
+                <code style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 12px">https://api.marvis.ai/autopilots/hooks/9f2c…e1a7</code>
+                <button type="button" aria-label="复制地址" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: transparent; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 8h12v12H8zM16 8V4H4v12h4"></path></svg></button>
+                <button type="button" aria-label="重置地址" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: transparent; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"></path></svg></button>
+                <button type="button" aria-label="删除触发器" style="width: 28px; height: 28px; border: 0; border-radius: 14px; background: transparent; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: #666666">Webhook 投递</span>
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px; border-radius: 12px; background: #f7f7f7; font-size: 13px"><span style="width: 6px; height: 6px; border-radius: 3px; background: #3f7f5f"></span><span style="flex: 1">channel.reconcile_requested</span><span style="color: #858585">10月24日 14:12</span></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: #666666">指令</span>
+          <div style="{{promptStyle}}">{{prompt}}</div>
+          <button type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 6px; margin-left: -6px; border: 0; border-radius: 8px; background: transparent; color: #666666; font: inherit; font-size: 13px">{{promptToggle}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{promptChevron}}"></path></svg></button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; color: #666666">运行记录</span>
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <sc-for list="{{runs}}" as="r" hint-placeholder-count="6">
+              <a href="{{r.href}}" style="{{r.rowStyle}}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{r.color}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.icon}}"></path></svg>
+                <span style="width: 112px; flex-shrink: 0; font-variant-numeric: tabular-nums">{{r.time}}</span>
+                <span style="{{r.msgStyle}}">{{r.msg}}</span>
+                <span style="flex-shrink: 0; font-size: 12.5px; color: #858585">{{r.source}}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#858585" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>
+              </a>
+            </sc-for>
+            <button type="button" aria-expanded="{{skippedOpen}}" style="display: flex; align-items: center; gap: 10px; height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px dashed rgba(0,0,0,0.1); border-radius: 12px; background: transparent; font: inherit; font-size: 14px; color: #0f0f0f; text-align: left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#858585" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{skipChevron}}"></path></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#858585" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M5 5l14 14"></path></svg>
+              <span style="width: 112px; flex-shrink: 0">已跳过</span>
+              <span style="flex: 1; font-size: 13px; color: #666666">2 条跳过的运行</span>
+              <span style="font-size: 12.5px; color: #858585">10月20日 02:00</span>
+            </button>
+            <sc-for list="{{skipped}}" as="r" hint-placeholder-count="0">
+              <a href="Run.dc.html" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px 0 38px; border-radius: 12px; background: #f7f7f7; color: #0f0f0f; text-decoration: none; font-size: 14px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#858585" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M5 5l14 14"></path></svg>
+                <span style="width: 112px; flex-shrink: 0; font-variant-numeric: tabular-nums">{{r.time}}</span>
+                <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #666666">{{r.msg}}</span>
+                <span style="font-size: 12.5px; color: #858585">时间表</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <sc-if value="{{confirmDelete}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; inset: 0; background: rgba(15,15,15,0.2); display: flex; align-items: center; justify-content: center">
+        <div role="alertdialog" aria-labelledby="del-title" style="width: 420px; box-sizing: border-box; padding: 24px; background: #ffffff; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.12)">
+          <h2 id="del-title" style="margin: 0 0 8px; font-size: 17px; font-weight: 600">删除自动化？</h2>
+          <p style="margin: 0; color: #666666; line-height: 1.6">将删除「支付对账」及其所有触发器。此操作无法撤销。</p>
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px">
+            <button type="button" style="height: 36px; padding: 0 16px; border: 1px solid rgba(0,0,0,0.1); border-radius: 18px; background: transparent; font: inherit; color: #0f0f0f">取消</button>
+            <button type="button" style="height: 36px; padding: 0 16px; border: 0; border-radius: 18px; background: #b8452f; color: #ffffff; font: inherit; font-weight: 500">删除</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["default","paused","expand","delete"],"default":"default"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const state = this.props.state ?? 'default';
+    const paused = state === 'paused';
+    const active = !paused;
+    const expand = state === 'expand';
+
+    const ICON = {
+      ok: 'M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M8 12l3 3 5-6',
+      fail: 'M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M15 9l-6 6M9 9l6 6',
+      issue: 'M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0',
+    };
+    const runs = [
+      { kind: 'running', time: '今天 10:31', msg: '运行中…', source: '手动' },
+      { kind: 'failed', time: '今天 02:00', msg: 'runtime offline: daemon not reachable', source: '时间表' },
+      { kind: 'done', time: '昨天 02:00', msg: '核对 4,812 笔，发现 3 笔差异', source: '时间表' },
+      { kind: 'done', time: '10月25日 02:00', msg: '核对 4,390 笔，没有差异', source: '时间表' },
+      { kind: 'done', time: '10月24日 14:12', msg: '渠道补单回调，核对 18 笔', source: 'Webhook' },
+      { kind: 'done', time: '10月24日 02:00', msg: '核对 5,021 笔，发现 1 笔差异', source: '时间表' },
+    ].map((r) => ({
+      time: r.time,
+      msg: r.msg,
+      source: r.source,
+      href: 'Run.dc.html',
+      icon: r.kind === 'failed' ? ICON.fail : r.kind === 'running' ? ICON.issue : ICON.ok,
+      color: r.kind === 'failed' ? '#b8452f' : r.kind === 'running' ? '#4a6f8a' : '#3f7f5f',
+      rowStyle: 'display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border-radius: 12px; background: #f7f7f7; color: #0f0f0f; text-decoration: none; font-size: 14px',
+      msgStyle: 'flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: ' + (r.kind === 'failed' ? '#b8452f' : '#666666'),
+    }));
+
+    return {
+      paused,
+      active,
+      switchLabel: active ? '暂停自动化' : '启用自动化',
+      switchStyle: 'position: relative; width: 36px; height: 20px; border: 0; border-radius: 10px; padding: 0; background: ' + (active ? '#0f0f0f' : 'rgba(0,0,0,0.15)'),
+      knobStyle: 'position: absolute; top: 2px; left: ' + (active ? '18px' : '2px') + '; width: 16px; height: 16px; border-radius: 8px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.2)',
+      statusDot: active ? '#3f7f5f' : '#c48a2c',
+      statusLabel: active ? '启用' : '已暂停',
+      presence: paused ? '#858585' : '#23a55a',
+      runDisabled: paused,
+      runStyle: 'display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px 0 14px; border: 0; border-radius: 18px; background: #0f0f0f; color: #ffffff; font: inherit; font-size: 14px; font-weight: 500; opacity: ' + (paused ? '0.4' : '1'),
+      delBtnStyle: 'width: 32px; height: 32px; border: 0; border-radius: 16px; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: ' + (state === 'delete' ? 'rgba(0,0,0,0.05)' : 'transparent'),
+      prompt: '1. 拉取前一天的渠道账单和订单流水\n2. 按渠道交易号逐笔核对金额、币种和状态\n3. 找出金额不一致、只在一边出现、状态不同步的记录\n4. 差异按渠道分组写进对账报告，附原始记录链接\n5. 有差异时在「支付值班」群里提醒，没有差异只记一条“已核对”\n6. 报告末尾附上本次核对的笔数、耗时和数据截止时间\n7. 渠道账单缺失时不要核对，直接说明缺了哪个渠道',
+      promptStyle: 'white-space: pre-line; line-height: 1.75; overflow: hidden; max-height: ' + (expand ? 'none' : '8.75em') + (expand ? '' : '; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent)'),
+      promptToggle: expand ? '收起' : '显示全部',
+      promptChevron: expand ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6',
+      runs: expand ? runs.slice(0, 3) : runs,
+      skippedOpen: expand,
+      skipChevron: expand ? 'm6 9 6 6 6-6' : 'm9 6 6 6-6 6',
+      skipped: expand ? [{ time: '10月20日 02:00', msg: 'assignee runtime offline' }, { time: '10月19日 02:00', msg: 'a recent run already covers this' }] : [],
+      confirmDelete: state === 'delete',
+    };
+  }
+}
+</script>
+</body>
+</html>

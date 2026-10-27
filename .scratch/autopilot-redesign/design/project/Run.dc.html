@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>自动化运行对话</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; gap: 16px; padding: 16px; background: #f7f7f7; color: #0f0f0f; font-family: 'PingFang SC', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; overflow: hidden">
+  <dc-import name="Sidebar" active="autopilots" hint-size="216px,868px"></dc-import>
+
+  <main style="position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; background: #ffffff; border: 1px solid rgba(0,0,0,0.06); border-radius: 24px; overflow: hidden">
+    <header style="display: flex; align-items: center; gap: 12px; height: 72px; flex-shrink: 0; padding: 0 20px; border-bottom: 1px solid rgba(0,0,0,0.06)">
+      <a href="Detail.dc.html" aria-label="返回自动化" style="width: 32px; height: 32px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; color: #666666"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+        <span style="font-size: 16px; font-weight: 600">支付对账 · {{runTime}}</span>
+        <span style="font-size: 12.5px; color: #858585">自动化运行</span>
+      </div>
+      <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 14px; background: rgba(0,0,0,0.05); font-size: 12.5px"><span style="width: 6px; height: 6px; border-radius: 3px; background: {{statusDot}}"></span>{{statusLabel}}</span>
+      <button type="button" aria-label="收起运行信息" title="收起运行信息" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18v16H3zM15 4v16"></path></svg></button>
+    </header>
+
+    <div style="flex: 1; min-height: 0; display: flex">
+      <section aria-label="编码智能体" style="flex: 1; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid rgba(0,0,0,0.06)">
+        <div style="height: 52px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 24px; border-bottom: 1px solid rgba(0,0,0,0.05)">
+          <span style="position: relative; width: 20px; height: 20px; border-radius: 6px; background: #ededed; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">编<span style="position: absolute; right: -2px; bottom: -2px; width: 7px; height: 7px; border-radius: 4px; border: 1.5px solid #ffffff; background: #23a55a"></span></span>
+          <span style="font-weight: 600">编码智能体</span>
+          <span style="flex: 1"></span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #666666"><span style="width: 6px; height: 6px; border-radius: 3px; background: #23a55a"></span>运行时在线</span>
+        </div>
+
+        <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end">
+          <div style="padding: 24px 28px; display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid rgba(0,0,0,0.06); border-radius: 14px; font-size: 13px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-top: 2px"><path d="{{triggerIcon}}"></path></svg>
+              <div style="flex: 1; min-width: 0">
+                <div><span style="font-weight: 500">{{triggerLabel}}</span><span style="color: #858585"> · {{triggerMeta}}</span></div>
+                <div style="margin-top: 2px; color: #666666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">按指令执行：拉取前一天的渠道账单和订单流水，按渠道交易号逐笔核对金额、币种和状态…</div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px">
+              <span style="width: 24px; height: 24px; flex-shrink: 0; border-radius: 7px; background: #ededed; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">编</span>
+              <div style="flex: 1; min-width: 0; font-size: 14px; line-height: 1.8; display: flex; flex-direction: column; gap: 6px">
+                <sc-if value="{{live}}" hint-placeholder-val="{{ false }}">
+                  <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #666666"><span style="width: 6px; height: 6px; border-radius: 3px; background: #23a55a"></span>正在工作 · 2 步</span>
+                  <span style="color: #858585">正在比对渠道交易号…</span>
+                </sc-if>
+                <sc-if value="{{done}}" hint-placeholder-val="{{ true }}">
+                  <button type="button" onClick="{{toggleSteps}}" aria-expanded="{{stepsOpen}}" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 12.5px; color: #858585"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{stepsChevron}}"></path></svg>4 步 · 3 个工具 · 查看详情</button>
+                  <sc-if value="{{stepsOpen}}" hint-placeholder-val="{{ false }}">
+                    <div style="border-left: 2px solid rgba(0,0,0,0.06); padding-left: 12px; display: flex; flex-direction: column; font-size: 12.5px; line-height: 1.7; color: #666666">
+                      <span>已拉取 3 个渠道 10月26日 的账单</span>
+                      <span>已查询订单流水 4,812 笔</span>
+                      <span>已比对渠道交易号</span>
+                      <span>已写入对账报告并在「支付值班」群提醒</span>
+                    </div>
+                  </sc-if>
+                  <span>核对 4,812 笔，发现 3 笔差异：</span>
+                  <span style="padding-left: 4px">· 微信支付 4200001931：金额差 0.01 元</span>
+                  <span style="padding-left: 4px">· 支付宝 2026102622001：只在渠道账单出现</span>
+                  <span style="padding-left: 4px">· Stripe pi_3Q8…：渠道已退款，订单仍为已支付</span>
+                  <span>报告已写入「对账 / 2026-10-26」，并在「支付值班」群提醒了周宁、林晓。</span>
+                  <span style="display: inline-flex; gap: 10px; font-size: 12px; color: #858585">用时 1 分 52 秒<span>复制</span></span>
+                </sc-if>
+              </div>
+            </div>
+
+            <sc-for list="{{thread}}" as="m" hint-placeholder-count="0">
+              <sc-if value="{{m.user}}" hint-placeholder-val="{{ true }}">
+                <div style="align-self: flex-end; max-width: 80%; padding: 10px 14px; border-radius: 18px; background: #f5f5f5; white-space: pre-wrap; line-height: 1.7">{{m.text}}</div>
+              </sc-if>
+              <sc-if value="{{m.agent}}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; gap: 10px">
+                  <span style="width: 24px; height: 24px; flex-shrink: 0; border-radius: 7px; background: #ededed; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">编</span>
+                  <div style="flex: 1; min-width: 0; font-size: 14px; line-height: 1.8; display: flex; flex-direction: column; gap: 6px">
+                    <sc-if value="{{m.working}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: #666666"><span style="width: 6px; height: 6px; border-radius: 3px; background: #23a55a"></span>正在工作 · 1 步</span></sc-if>
+                    <sc-if value="{{m.finished}}" hint-placeholder-val="{{ true }}"><span style="font-size: 12.5px; color: #858585">2 步 · 2 个工具 · 查看详情</span></sc-if>
+                    <span style="{{m.textStyle}}">{{m.text}}</span>
+                    <sc-if value="{{m.finished}}" hint-placeholder-val="{{ true }}"><span style="display: inline-flex; gap: 10px; font-size: 12px; color: #858585">38 秒内回复<span>复制</span></span></sc-if>
+                  </div>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{hasQueue}}" hint-placeholder-val="{{ false }}">
+          <div style="margin: 0 28px -4px; padding: 8px 12px; border-radius: 12px; background: #f5f5f5; font-size: 12.5px; display: flex; flex-direction: column; gap: 2px"><span style="color: #858585">1 条排队消息</span><span>{{queued}}</span></div>
+        </sc-if>
+        <div style="padding: 12px 28px 20px; flex-shrink: 0">
+          <div style="display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 6px; border: 1px solid #e3e3e3; border-radius: 26px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05)">
+            <button type="button" aria-label="添加" style="width: 36px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: #666666; display: inline-flex; align-items: center; justify-content: center; padding: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+            <label for="run-input" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">给编码智能体发消息</label>
+            <textarea id="run-input" rows="1" value="{{draft}}" onChange="{{onDraft}}" placeholder="继续追问这次运行..." style="flex: 1; min-width: 0; border: 0; outline: none; resize: none; background: none; font: inherit; font-size: 14px; line-height: 1.7; padding: 8px 4px; color: #0f0f0f"></textarea>
+            <button type="button" aria-label="{{actLabel}}" title="{{actLabel}}" onClick="{{onAct}}" style="{{actStyle}}">
+              <sc-if value="{{actStop}}" hint-placeholder-val="{{ false }}"><span style="width: 11px; height: 11px; border-radius: 2px; background: currentColor"></span></sc-if>
+              <sc-if value="{{actArrow}}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg></sc-if>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <aside aria-label="运行信息" style="width: 340px; flex-shrink: 0; box-sizing: border-box; padding: 20px 24px; background: #fcfcfc; display: flex; flex-direction: column; gap: 20px; overflow: hidden">
+        <span style="font-size: 17px; font-weight: 600">运行信息</span>
+        <dl style="margin: 0; display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px 12px; font-size: 13.5px">
+          <dt style="color: #666666">状态</dt><dd style="margin: 0">{{statusLabel}}</dd>
+          <dt style="color: #666666">来源</dt><dd style="margin: 0">{{source}}</dd>
+          <dt style="color: #666666">触发时间</dt><dd style="margin: 0; font-variant-numeric: tabular-nums">{{runTime}}</dd>
+          <dt style="color: #666666">完成时间</dt><dd style="margin: 0; font-variant-numeric: tabular-nums">{{doneTime}}</dd>
+          <dt style="color: #666666">执行者</dt><dd style="margin: 0; display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 18px; border-radius: 5px; background: #ededed; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">编</span>编码智能体</dd>
+          <dt style="color: #666666">自动化</dt><dd style="margin: 0"><a href="Detail.dc.html" style="color: #0f0f0f; text-decoration: none">支付对账 ›</a></dd>
+        </dl>
+        <sc-if value="{{webhook}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="font-size: 13px; color: #666666">Webhook 载荷</span>
+            <pre style="margin: 0; padding: 10px 12px; background: #f7f7f7; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap; word-break: break-all">{{payload}}</pre>
+          </div>
+        </sc-if>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["done","live","queue","followup","webhook"],"default":"done"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { draft: null, sent: [], replying: false, stepsOpen: false };
+    this.timers = [];
+  }
+  componentWillUnmount() {
+    this.timers.forEach((t) => clearTimeout(t));
+  }
+  renderVals() {
+    const mode = this.props.state ?? 'done';
+    const live = mode === 'live' || mode === 'queue';
+    const webhook = mode === 'webhook';
+    const presetDraft = mode === 'queue' ? '把这几笔差异也同步到对账群' : '';
+    const draft = this.state.draft ?? presetDraft;
+
+    const followup = mode === 'followup' ? [
+      { user: true, agent: false, text: '支付宝那笔为什么只在渠道账单出现？' },
+      { user: false, agent: true, working: false, finished: true, text: '这是用户在 23:59 发起、00:01 回调成功的跨日订单：渠道记在 10月26日，我们按回调时间记在 10月27日。不是漏单，今晚的对账会对上。要不要把「按下单时间归属日期」加进指令？', textStyle: '' },
+      { user: true, agent: false, text: '先不改指令，帮我在报告里给这笔加个备注' },
+      { user: false, agent: true, working: true, finished: false, text: '正在更新「对账 / 2026-10-26」…', textStyle: 'color: #858585' },
+    ] : [];
+    const thread = followup.concat(this.state.sent);
+    const busy = live || this.state.replying || (mode === 'followup' && this.state.sent.length === 0);
+    const hasText = draft.trim().length > 0;
+
+    const actStop = busy && !hasText;
+    const actLabel = busy ? (hasText ? '排队发送' : '停止') : '发送';
+    const actOff = !busy && !hasText;
+
+    return {
+      live,
+      done: !live,
+      webhook,
+      runTime: live ? '今天 10:31' : webhook ? '10月24日 14:12' : '昨天 02:00',
+      doneTime: live ? '—' : webhook ? '10月24日 14:13' : '昨天 02:01',
+      source: live ? '手动 · 周宁' : webhook ? 'Webhook' : '时间表',
+      statusLabel: live ? '运行中' : '已完成',
+      statusDot: live ? '#23a55a' : '#3f7f5f',
+      triggerIcon: webhook
+        ? 'M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2M6 17l3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06M12 6l3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8'
+        : live ? 'M6 3l14 9-14 9z' : 'M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0M12 6v6l4 2',
+      triggerLabel: webhook ? 'Webhook 触发' : live ? '手动运行' : '时间表触发',
+      triggerMeta: webhook ? '10月24日 14:12 · channel.reconcile_requested' : live ? '今天 10:31 · 周宁' : '昨天 02:00',
+      payload: '{\n  "event": "channel.reconcile_requested",\n  "channel": "wechat_pay",\n  "date": "2026-10-24",\n  "orders": 18\n}',
+      stepsOpen: this.state.stepsOpen,
+      stepsChevron: this.state.stepsOpen ? 'm6 9 6 6 6-6' : 'm9 6 6 6-6 6',
+      toggleSteps: () => this.setState({ stepsOpen: !this.state.stepsOpen }),
+      thread,
+      hasQueue: !!this.state.queued,
+      queued: this.state.queued || '',
+      draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      actStop,
+      actArrow: !actStop,
+      actLabel,
+      actStyle: 'width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: ' + (actOff ? 'rgba(0,0,0,0.05)' : '#0f0f0f') + '; color: ' + (actOff ? '#858585' : '#ffffff'),
+      onAct: () => {
+        if (!hasText) return;
+        if (busy) {
+          this.setState({ draft: '', queued: draft.trim() });
+          return;
+        }
+        const text = draft.trim();
+        const reply = { user: false, agent: true, working: true, finished: false, text: '正在查看…', textStyle: 'color: #858585' };
+        this.setState({ draft: '', replying: true, sent: this.state.sent.concat([{ user: true, agent: false, text }, reply]) });
+        this.timers.push(setTimeout(() => {
+          const sent = this.state.sent.slice(0, -1).concat([{ user: false, agent: true, working: false, finished: true, text: '查过了：三笔差异里两笔是跨日订单，今晚会自动对上；Stripe 那笔需要人工补退款状态，已在报告里标出。', textStyle: '' }]);
+          this.setState({ replying: false, sent });
+        }, 6000));
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
