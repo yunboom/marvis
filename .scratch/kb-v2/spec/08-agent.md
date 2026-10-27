@@ -1950,7 +1950,7 @@ English · 代码原文
 ```
 # Knowledge bases
 
-Agents write knowledge base pages into a draft; a person reviews the draft as a change request and merges it. Each knowledge base has its own `schema` (how to organise and write pages) and `purpose` (who reads it, what belongs): read both with `marvis kb get <kb>` before you write anything.
+The design of Marvis knowledge bases comes from Andrej Karpathy's LLM Wiki method. Agents write knowledge base pages into a draft; a person reviews the draft as a change request and merges it. Each knowledge base has its own `schema` (how to organise and write pages) and `purpose` (who reads it, what belongs): read both with `marvis kb get <kb>` before you write anything.
 
 ## Pick the scenario, then open only that reference
 
@@ -2010,7 +2010,7 @@ A job is a conversation a member started from a knowledge base.
 ```
 # 知识库
 
-智能体把知识库页面写进草稿；成员把草稿当作变更请求审核并合并。每个知识库有自己的 `schema`（页面怎么组织、怎么写）和 `purpose`（谁来读、什么内容属于这里）：动笔之前先用 `marvis kb get <kb>` 把两者都读一遍。
+Marvis 知识库的设计来自 Andrej Karpathy 提出的 LLM Wiki 方法论。智能体把知识库页面写进草稿；成员把草稿当作变更请求审核并合并。每个知识库有自己的 `schema`（页面怎么组织、怎么写）和 `purpose`（谁来读、什么内容属于这里）：动笔之前先用 `marvis kb get <kb>` 把两者都读一遍。
 
 ## 先选场景，只打开那一份 reference
 
@@ -3148,12 +3148,15 @@ marvis kb update pay-troubleshoot --description "Payment, refund and order flows
 | `--schema-mode <mode>` | Yes (`create`) | `default` (the built-in schema, read-only, updated with the platform) or `custom` |
 | `--schema` / `--schema-file` / `--schema-stdin` | With `custom` | Schema Markdown |
 
-## Workflow
+## How to shape a knowledge base
 
-1. Find out four things: who reads it, what belongs in it, what does not, and which questions readers come to answer. Do not ask again about what the member already said; ask at most two questions at a time.
-2. Write the purpose in the member's language (pages are written in the same language), under 40 lines, in four parts: readers and what they use it for; what belongs here; what does not and where it lives instead; 3 to 8 questions readers come to answer.
-3. Use the default schema unless the team needs its own sections or page types; a custom schema starts from `kb schema templates`.
-4. Create, or update an existing one.
+Members often do not know yet what their knowledge base should hold, and that is where you help most. Start from their job: once you know the role, from the starter they picked or from asking, you can work out the rest yourself.
+
+Each role works from its own kind of knowledge. To give a few examples: support and sales depend on knowing the business well and on phrasing that works with customers, a UX designer on design guidelines, engineers on architecture notes and runbooks. These only hint at the range; what a given role really relies on is wider and more specific, and finding it is the point of your research. Look into what people in the member's role work from and build up over time. Search the web when you can, favouring official documentation and well-known handbooks, and say so when you cannot.
+
+Then bring the member a concrete proposal rather than questions: what the knowledge base is for, what goes in and what stays out, a few sections with an example of what each holds, and the situations people will use it in. They keep, drop or add, and you write the purpose from what they settle on: in their language, under 40 lines, in four parts, namely who uses it and what for, what belongs, what does not and where it lives instead, and 3 to 8 typical uses.
+
+Most knowledge bases use the default schema. Write a custom one only when the team needs its own sections or page types; get the default schema with `marvis kb schema templates` and use it as a reference.
 
 Pages follow Open Knowledge Format v0.2 (https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
 ````
@@ -3195,19 +3198,22 @@ marvis kb update pay-troubleshoot --description "Payment, refund and order flows
 | `--schema-mode <mode>` | 是（`create`） | `default`（内置 Schema，只读，随平台更新）或 `custom` |
 | `--schema` / `--schema-file` / `--schema-stdin` | `custom` 时 | Schema Markdown |
 
-## 流程
+## 怎么规划一个知识库
 
-1. 弄清四件事：谁来读、什么内容属于这里、什么不属于、读者来这里想找哪些问题的答案。成员已经说过的不要再问；一次最多问两个问题。
-2. 用成员的语言写目标（页面也用同一种语言），不超过 40 行，分四部分：读者是谁、用它做什么；什么内容属于这里；什么不属于、它在哪里；读者来这里要找答案的 3 到 8 个问题。
-3. 除非团队需要自己的分区或页面类型，否则用默认 Schema；自定义 Schema 从 `kb schema templates` 开始改。
-4. 新建，或修改已有的知识库。
+成员常常自己也说不清知识库该放什么，这正是你最能帮上忙的地方。从他的岗位入手：知道了职位（从他选的开场卡片里看出来，或者问一句），其余的就可以由你来想清楚。
+
+每个岗位依赖的知识各不相同。举几个例子：客服和销售靠对业务的熟练和跟客户沟通时管用的话术，UX 设计师靠设计规范，研发靠架构说明和排障手册。这些只是举例，一个岗位真正依赖的知识要宽得多、具体得多，找出它们正是你调研要做的事。调研这个岗位的人工作中依据什么、长期积累什么。能联网就搜索，优先参考官方文档和公认的手册；不能联网就直说。
+
+然后给成员一份具体的建议，而不是一串问题：这个知识库用来做什么，收什么、不收什么，分几个区、每个区放什么并各举一个例子，以及大家会在哪些场景用到它。成员在此基础上保留、删减或补充，你再按定下来的内容写目标：用成员的语言，不超过 40 行，分四部分——谁在用、用来做什么，收什么，不收什么、这些内容在哪里，以及 3 到 8 个典型用法。
+
+多数知识库用默认 Schema。只有团队需要自己的分区或页面类型时才写自定义 Schema，用 `marvis kb schema templates` 获取默认 Schema 作为参考。
 
 页面遵循 Open Knowledge Format v0.2（https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md）。
 ````
 
 8.3 构建器（创建 / 配置知识库）
 
-写成隐藏构建器智能体的指令常量（`server/internal/kb/templates/builder_instructions.md.tmpl`），`{{.Mode}}` 等变量在建会话时用 `text/template` 填入。指令只留会话特有的部分；怎么了解需求、起名、写目标和 Schema 引用平台 skill 的 `references/knowledge-bases/kb-create-update.md`（目标的四部分、slug 规则、两种 Schema 模式都在那份 reference 的流程和参数表里），默认 Schema 由构建器用 `kb schema templates` 取，不嵌进指令（决策 106）。
+写成隐藏构建器智能体的指令常量（`server/internal/kb/templates/builder_instructions.md.tmpl`），`{{.Mode}}` 等变量在建会话时用 `text/template` 填入。指令只留会话特有的部分；怎么了解需求、起名、写目标和 Schema 引用平台 skill 的 `references/knowledge-bases/kb-create-update.md`（目标的四部分、slug 规则、两种 Schema 模式都在那份 reference 的「怎么规划一个知识库」一节和参数表里），默认 Schema 由构建器用 `kb schema templates` 取，不嵌进指令（决策 106）。
 
 构建器指令
 
