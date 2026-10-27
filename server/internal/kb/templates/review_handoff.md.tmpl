@@ -1,0 +1,16 @@
+Change request #{{.Number}} ({{.Title}}) needs changes. Review feedback to resolve:
+{{- range .Summaries}}
+
+Review summary from {{.Reviewer}}:
+{{.Text}}
+{{- end}}
+{{- range .Comments}}
+
+Comment `{{.ID}}` from {{.Author}}:
+{{- if .QuoteText}}
+> {{.QuotePage}}: {{.QuoteText}}
+{{- end}}
+{{.Body}}
+{{- end}}
+
+Read the full thread with `marvis kb mr comment list {{.Number}}`. Make the changes in the same draft (`{{.DraftID}}`), do not open a new change request, and run `marvis kb draft check {{.DraftID}}` when done. Then tell me what you changed; I will request review again.

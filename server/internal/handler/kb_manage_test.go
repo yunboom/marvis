@@ -405,6 +405,8 @@ var kbTablesWithBase = map[string]string{
 	"kb_annotation":      `SELECT count(*) FROM kb_annotation WHERE knowledge_base_id = $1`,
 	"kb_merge_request":   `SELECT count(*) FROM kb_merge_request WHERE knowledge_base_id = $1`,
 	"kb_mr_comment":      `SELECT count(*) FROM kb_mr_comment WHERE merge_request_id IN (SELECT id FROM kb_merge_request WHERE knowledge_base_id = $1)`,
+	"kb_mr_review":       `SELECT count(*) FROM kb_mr_review WHERE merge_request_id IN (SELECT id FROM kb_merge_request WHERE knowledge_base_id = $1)`,
+	"kb_mr_event":        `SELECT count(*) FROM kb_mr_event WHERE merge_request_id IN (SELECT id FROM kb_merge_request WHERE knowledge_base_id = $1)`,
 	"kb_block_embedding": `SELECT count(*) FROM kb_block_embedding WHERE knowledge_base_id = $1`,
 }
 
@@ -449,6 +451,10 @@ func seedKbEverywhere(t *testing.T, base string, number int) {
 		"author_type": "member", "author_id": testUserID, "draft_id": draft,
 	})
 	dbfx.Insert(t, "kb_mr_comment", testutil.Cols{"merge_request_id": mr, "body": "c", "author_type": "member", "author_id": testUserID})
+	dbfx.Insert(t, "kb_mr_review", testutil.Cols{"workspace_id": testWorkspaceID, "merge_request_id": mr, "reviewer_id": testUserID})
+	dbfx.Insert(t, "kb_mr_event", testutil.Cols{
+		"workspace_id": testWorkspaceID, "merge_request_id": mr, "actor_type": "member", "actor_id": testUserID, "kind": "edited",
+	})
 
 	var hasEmbeddings bool
 	dbfx.QueryRow(t, `SELECT to_regclass('public.kb_block_embedding') IS NOT NULL`).Scan(&hasEmbeddings)

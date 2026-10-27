@@ -40,7 +40,7 @@ const (
 	kbMergeRequestListMax     = 100
 )
 
-var kbMergeRequestStatuses = []string{kb.MergeRequestStatusOpen, kb.MergeRequestStatusMerged, kb.MergeRequestStatusClosed}
+var kbMergeRequestStatuses = []string{kb.MergeRequestStatusOpen, kb.MergeRequestStatusChangesRequested, kb.MergeRequestStatusMerged, kb.MergeRequestStatusClosed}
 
 // KbMergeRequestOriginResponse says where a merge request was started.
 type KbMergeRequestOriginResponse struct {
@@ -87,8 +87,11 @@ type KbMergeRequestResponse struct {
 	ClosedByName    string                       `json:"closed_by_name"`
 	ClosedAt        *string                      `json:"closed_at"`
 	CloseReason     string                       `json:"close_reason"`
-	CreatedAt       string                       `json:"created_at"`
-	UpdatedAt       string                       `json:"updated_at"`
+	// ReviewRequestedAt is when the owner last asked for review again;
+	// reviews submitted after it are the feedback still to be resolved.
+	ReviewRequestedAt *string `json:"review_requested_at"`
+	CreatedAt         string  `json:"created_at"`
+	UpdatedAt         string  `json:"updated_at"`
 	// Mention is pasted into a reply to show the merge request card (7.14).
 	Mention string `json:"mention"`
 }
@@ -101,21 +104,25 @@ type KbMergeRequestDetailResponse struct {
 	KnowledgeBaseName string                      `json:"knowledge_base_name"`
 	Pages             []KbDraftPageChangeResponse `json:"pages"`
 	Checks            KbDraftChecksResponse       `json:"checks"`
-	// ReviewAgent is the agent a plain review comment goes to (the author
-	// agent, else the job's or the draft task's agent); null when none.
-	ReviewAgent *KbReviewAgentResponse `json:"review_agent"`
-	// AgentRunning is set while the job's agent, or an agent a review comment
-	// started, is still working on the draft.
+	// AgentRunning is set while the job's agent is still working on the draft.
 	AgentRunning bool `json:"agent_running"`
-	CanMerge     bool `json:"can_merge"`
-	CanClose     bool `json:"can_close"`
-	CanRevert    bool `json:"can_revert"`
-}
-
-// KbReviewAgentResponse names the agent behind a merge request.
-type KbReviewAgentResponse struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	// OwnerID is the member the merge request answers to: who created its
+	// draft. They reply to feedback directly and ask for review again.
+	OwnerID   string `json:"owner_id"`
+	OwnerName string `json:"owner_name"`
+	// Reviews are the submitted reviews in submission order.
+	Reviews []KbMrReviewResponse `json:"reviews"`
+	// PendingReview is the viewer's unsubmitted review, if any.
+	PendingReview *KbMrReviewResponse `json:"pending_review"`
+	CanMerge      bool                `json:"can_merge"`
+	CanClose      bool                `json:"can_close"`
+	CanRevert     bool                `json:"can_revert"`
+	// CanReview: the viewer may start or continue a review (a member, and
+	// the request is still under review).
+	CanReview bool `json:"can_review"`
+	// CanRequestReview: the viewer is the owner and the request waits on
+	// them (changes_requested).
+	CanRequestReview bool `json:"can_request_review"`
 }
 
 // UpdateKbMergeRequestRequest changes a merge request's title, summary or
@@ -232,7 +239,7 @@ func parseKbMergeRequestStatuses(w http.ResponseWriter, raw string) ([]string, b
 	raw = strings.TrimSpace(raw)
 	switch raw {
 	case "":
-		return []string{kb.MergeRequestStatusOpen}, true
+		return kbActiveMergeRequestStatuses, true
 	case kbMergeRequestStatusAll:
 		return kbMergeRequestStatuses, true
 	}
@@ -241,7 +248,7 @@ func parseKbMergeRequestStatuses(w http.ResponseWriter, raw string) ([]string, b
 	for _, s := range strings.Split(raw, ",") {
 		s = strings.TrimSpace(s)
 		if !slices.Contains(kbMergeRequestStatuses, s) {
-			writeErrorCode(w, http.StatusBadRequest, kbCodeInvalidRequest, "status must be open, merged, closed or all")
+			writeErrorCode(w, http.StatusBadRequest, kbCodeInvalidRequest, "status must be open, changes_requested, merged, closed or all")
 			return nil, false
 		}
 		out = append(out, s)
@@ -287,7 +294,7 @@ func (h *Handler) GetKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	actorType, actorID := h.resolveActor(r, userID, uuidToString(base.WorkspaceID))
 
-	detail, err := h.kbMergeRequestDetail(ctx, base, mr)
+	detail, err := h.kbMergeRequestDetail(ctx, base, mr, parseUUID(userID))
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -295,12 +302,14 @@ func (h *Handler) GetKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	detail.CanMerge = canMaintainKb(member, base)
 	detail.CanRevert = detail.CanMerge
 	detail.CanClose = canCloseKbMergeRequest(member, base, mr, actorType, actorID)
+	detail.CanReview = actorType == kbActorMember && isKbMergeRequestActive(mr.Status)
+	detail.CanRequestReview = detail.OwnerID == userID && mr.Status == kb.MergeRequestStatusChangesRequested
 	detail.Origin.restrictTo(userID)
 
 	writeJSON(w, http.StatusOK, detail)
 }
 
-func (h *Handler) kbMergeRequestDetail(ctx context.Context, base db.KbBase, mr db.KbMergeRequest) (KbMergeRequestDetailResponse, error) {
+func (h *Handler) kbMergeRequestDetail(ctx context.Context, base db.KbBase, mr db.KbMergeRequest, viewer pgtype.UUID) (KbMergeRequestDetailResponse, error) {
 	responses, err := h.kbMergeRequestResponses(ctx, base.WorkspaceID, []db.KbMergeRequest{mr})
 	if err != nil {
 		return KbMergeRequestDetailResponse{}, err
@@ -310,6 +319,30 @@ func (h *Handler) kbMergeRequestDetail(ctx context.Context, base db.KbBase, mr d
 		KnowledgeBaseSlug:      base.Slug,
 		KnowledgeBaseName:      base.Name,
 		Checks:                 KbDraftChecksResponse{Lint: []lint.Finding{}, Conflicts: []KbDraftConflictResponse{}},
+		Reviews:                []KbMrReviewResponse{},
+	}
+
+	owner, err := kbMergeRequestOwner(ctx, h.Queries, mr)
+	if err != nil {
+		return KbMergeRequestDetailResponse{}, err
+	}
+	ownerNames, err := h.loadKbActorNames(ctx, mr.WorkspaceID, []kbActor{{kind: kbActorMember, id: owner}})
+	if err != nil {
+		return KbMergeRequestDetailResponse{}, err
+	}
+	detail.OwnerID = uuidToString(owner)
+	detail.OwnerName = ownerNames.name(kbActorMember, owner)
+
+	reviews, err := h.kbMrReviews(ctx, mr, viewer)
+	if err != nil {
+		return KbMergeRequestDetailResponse{}, err
+	}
+	for i := range reviews {
+		if reviews[i].State == kb.ReviewStatePending {
+			detail.PendingReview = &reviews[i]
+			continue
+		}
+		detail.Reviews = append(detail.Reviews, reviews[i])
 	}
 
 	overlay, err := loadKbOverlay(ctx, h.Queries, base.ID, mr.DraftID)
@@ -322,13 +355,7 @@ func (h *Handler) kbMergeRequestDetail(ctx context.Context, base db.KbBase, mr d
 	}
 	detail.Pages = pages
 
-	reviewAgent, err := h.kbReviewAgent(ctx, mr)
-	if err != nil {
-		return KbMergeRequestDetailResponse{}, err
-	}
-	detail.ReviewAgent = reviewAgent
-
-	if mr.Status != kb.MergeRequestStatusOpen {
+	if !isKbMergeRequestActive(mr.Status) {
 		return detail, nil
 	}
 
@@ -354,52 +381,9 @@ func (h *Handler) kbMergeRequestDetail(ctx context.Context, base db.KbBase, mr d
 	if err != nil {
 		return KbMergeRequestDetailResponse{}, err
 	}
-	if !running {
-		running, err = h.kbReviewAgentsRunning(ctx, mr)
-		if err != nil {
-			return KbMergeRequestDetailResponse{}, err
-		}
-	}
 	detail.AgentRunning = running
 
 	return detail, nil
-}
-
-// kbReviewAgent names the agent a plain review comment starts.
-func (h *Handler) kbReviewAgent(ctx context.Context, mr db.KbMergeRequest) (*KbReviewAgentResponse, error) {
-	origins, err := h.Queries.ListKbMergeRequestOrigins(ctx, db.ListKbMergeRequestOriginsParams{WorkspaceID: mr.WorkspaceID, DraftIds: []pgtype.UUID{mr.DraftID}})
-	if err != nil {
-		return nil, errors.Wrapf(err, "load merge request origin merge_request_id=%s", uuidToString(mr.ID))
-	}
-	var origin db.ListKbMergeRequestOriginsRow
-	if len(origins) > 0 {
-		origin = origins[0]
-	}
-	agentID := kbReviewAgentID(mr, origin)
-	if !agentID.Valid {
-		return nil, nil
-	}
-
-	names, err := h.loadKbActorNames(ctx, mr.WorkspaceID, []kbActor{{kind: kbActorAgent, id: agentID}})
-	if err != nil {
-		return nil, err
-	}
-
-	return &KbReviewAgentResponse{ID: uuidToString(agentID), Name: names.name(kbActorAgent, agentID)}, nil
-}
-
-// kbReviewAgentID is the agent behind a merge request: its author when an
-// agent wrote it, else the agent of the job it came from or of the task
-// that created its draft.
-func kbReviewAgentID(mr db.KbMergeRequest, origin db.ListKbMergeRequestOriginsRow) pgtype.UUID {
-	switch {
-	case mr.AuthorType == kbActorAgent:
-		return mr.AuthorID
-	case origin.JobAgentID.Valid:
-		return origin.JobAgentID
-	}
-
-	return origin.TaskAgentID
 }
 
 // kbMergeRequestResponseOf renders one merge request.
@@ -503,6 +487,10 @@ func (h *Handler) kbMergeRequestResponses(ctx context.Context, wsUUID pgtype.UUI
 			at := timestampToString(mr.ClosedAt)
 			resp.ClosedAt = &at
 		}
+		if mr.ReviewRequestedAt.Valid {
+			at := timestampToString(mr.ReviewRequestedAt)
+			resp.ReviewRequestedAt = &at
+		}
 		var revertedMR *db.KbMergeRequest
 		if mr.RevertsID.Valid {
 			if row, ok := reverted[mr.RevertsID]; ok {
@@ -581,7 +569,7 @@ func (h *Handler) UpdateKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 		h.writeKbError(w, r, kbFail(http.StatusForbidden, kbCodeForbidden, "only the author, the knowledge base creator or an owner or admin can edit this merge request"))
 		return
 	}
-	if mr.Status != kb.MergeRequestStatusOpen {
+	if !isKbMergeRequestActive(mr.Status) {
 		writeErrorCode(w, http.StatusConflict, kbCodeMergeRequestNotOpen, "the merge request is "+mr.Status)
 		return
 	}
@@ -605,9 +593,9 @@ func (h *Handler) UpdateKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 		params.Risk = *req.Risk
 	}
 
-	updated, err := h.Queries.UpdateKbMergeRequestText(ctx, params)
+	updated, err := h.updateKbMergeRequestText(ctx, mr, params, actorType, actorID)
 	if err != nil {
-		h.writeKbInternalError(w, r, errors.Wrapf(err, "update merge request merge_request_id=%s", uuidToString(mr.ID)))
+		h.writeKbInternalError(w, r, err)
 		return
 	}
 
@@ -621,3 +609,48 @@ func (h *Handler) UpdateKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, resp)
 }
+
+// updateKbMergeRequestText writes the new text and an edited event naming
+// the fields that changed, in one transaction.
+func (h *Handler) updateKbMergeRequestText(ctx context.Context, mr db.KbMergeRequest, params db.UpdateKbMergeRequestTextParams, actorType, actorID string) (db.KbMergeRequest, error) {
+	tx, err := h.TxStarter.Begin(ctx)
+	if err != nil {
+		return db.KbMergeRequest{}, errors.Wrap(err, "begin merge request update")
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	qtx := h.Queries.WithTx(tx)
+
+	updated, err := qtx.UpdateKbMergeRequestText(ctx, params)
+	if err != nil {
+		return db.KbMergeRequest{}, errors.Wrapf(err, "update merge request merge_request_id=%s", uuidToString(mr.ID))
+	}
+
+	fields := make([]string, 0, 3)
+	if updated.Title != mr.Title {
+		fields = append(fields, kbMrFieldTitle)
+	}
+	if updated.Summary != mr.Summary {
+		fields = append(fields, kbMrFieldSummary)
+	}
+	if updated.Risk != mr.Risk {
+		fields = append(fields, kbMrFieldRisk)
+	}
+	if len(fields) > 0 {
+		if err := recordKbMrEvent(ctx, qtx, updated, actorType, actorID, kbMrEventEdited, map[string]any{"fields": fields}); err != nil {
+			return db.KbMergeRequest{}, err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return db.KbMergeRequest{}, errors.Wrap(err, "commit merge request update")
+	}
+
+	return updated, nil
+}
+
+// Fields an edited event names.
+const (
+	kbMrFieldTitle   = "title"
+	kbMrFieldSummary = "summary"
+	kbMrFieldRisk    = "risk"
+)

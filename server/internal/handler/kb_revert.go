@@ -157,6 +157,11 @@ func (h *Handler) revertKbMergeRequest(ctx context.Context, base db.KbBase, mr d
 	if err != nil {
 		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
 	}
+	if err := recordKbMrEvent(ctx, qtx, mr, in.authorType, uuidToString(in.authorID), kbMrEventReverted, map[string]any{
+		"revert_number": created.MergeRequest.Number,
+	}); err != nil {
+		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrap(err, "commit revert")

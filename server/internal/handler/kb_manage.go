@@ -104,7 +104,7 @@ func (h *Handler) deleteKnowledgeBase(r *http.Request, base db.KbBase) ([]int32,
 		return nil, nil, errors.Wrapf(err, "lock knowledge base knowledge_base_id=%s", uuidToString(base.ID))
 	}
 
-	closed, err := qtx.ListKbOpenMergeRequestNumbers(ctx, db.ListKbOpenMergeRequestNumbersParams{KnowledgeBaseID: base.ID, Status: kb.MergeRequestStatusOpen})
+	closed, err := qtx.ListKbOpenMergeRequestNumbers(ctx, db.ListKbOpenMergeRequestNumbersParams{KnowledgeBaseID: base.ID, Statuses: kbActiveMergeRequestStatuses})
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "list open merge requests knowledge_base_id=%s", uuidToString(base.ID))
 	}

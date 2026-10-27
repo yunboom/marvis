@@ -321,7 +321,7 @@ func (h *Handler) MergeKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	actorType, actorID := h.resolveActor(r, userID, uuidToString(base.WorkspaceID))
-	merged, err := h.mergeKbMergeRequest(ctx, base, mr, *req.DraftVersion, userID)
+	merged, err := h.mergeKbMergeRequest(ctx, base, mr, *req.DraftVersion, userID, actorType, actorID)
 	if err != nil {
 		h.writeKbError(w, r, err)
 		return
@@ -346,7 +346,7 @@ type kbMergeOutcome struct {
 	annotations []pgtype.UUID
 }
 
-func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db.KbMergeRequest, draftVersion int64, userID string) (kbMergeOutcome, error) {
+func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db.KbMergeRequest, draftVersion int64, userID, actorType, actorID string) (kbMergeOutcome, error) {
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
 		return kbMergeOutcome{}, errors.Wrap(err, "begin merge")
@@ -361,6 +361,9 @@ func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db
 	locked, err := qtx.GetKbMergeRequestForUpdate(ctx, db.GetKbMergeRequestForUpdateParams{WorkspaceID: mr.WorkspaceID, ID: mr.ID})
 	if err != nil {
 		return kbMergeOutcome{}, errors.Wrapf(err, "lock merge request merge_request_id=%s", uuidToString(mr.ID))
+	}
+	if locked.Status == kb.MergeRequestStatusChangesRequested {
+		return kbMergeOutcome{}, kbFail(http.StatusConflict, kbCodeChangesRequested, "a review asked for changes; the owner must request review again before merging")
 	}
 	if locked.Status != kb.MergeRequestStatusOpen {
 		return kbMergeOutcome{}, kbFail(http.StatusConflict, kbCodeMergeRequestNotOpen, "the merge request is "+locked.Status)
@@ -459,6 +462,9 @@ func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db
 	})
 	if err != nil {
 		return kbMergeOutcome{}, errors.Wrapf(err, "mark merged merge_request_id=%s", uuidToString(mr.ID))
+	}
+	if err := recordKbMrEvent(ctx, qtx, mergedMR, actorType, actorID, kbMrEventMerged, nil); err != nil {
+		return kbMergeOutcome{}, err
 	}
 	mergedDraft, err := qtx.SetKbDraftStatus(ctx, db.SetKbDraftStatusParams{ID: draft.ID, Status: kb.DraftStatusMerged})
 	if err != nil {
@@ -605,7 +611,7 @@ func (h *Handler) CloseKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	closed, draft, released, err := h.closeKbMergeRequest(ctx, mr, strings.TrimSpace(req.Reason), userID)
+	closed, draft, released, err := h.closeKbMergeRequest(ctx, mr, strings.TrimSpace(req.Reason), userID, actorType, actorID)
 	if err != nil {
 		h.writeKbError(w, r, err)
 		return
@@ -624,7 +630,7 @@ func (h *Handler) CloseKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-func (h *Handler) closeKbMergeRequest(ctx context.Context, mr db.KbMergeRequest, reason, userID string) (db.KbMergeRequest, db.KbDraft, []pgtype.UUID, error) {
+func (h *Handler) closeKbMergeRequest(ctx context.Context, mr db.KbMergeRequest, reason, userID, actorType, actorID string) (db.KbMergeRequest, db.KbDraft, []pgtype.UUID, error) {
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
 		return db.KbMergeRequest{}, db.KbDraft{}, nil, errors.Wrap(err, "begin close")
@@ -640,7 +646,7 @@ func (h *Handler) closeKbMergeRequest(ctx context.Context, mr db.KbMergeRequest,
 	if err != nil {
 		return db.KbMergeRequest{}, db.KbDraft{}, nil, errors.Wrapf(err, "lock merge request merge_request_id=%s", uuidToString(mr.ID))
 	}
-	if locked.Status != kb.MergeRequestStatusOpen {
+	if !isKbMergeRequestActive(locked.Status) {
 		return db.KbMergeRequest{}, db.KbDraft{}, nil, kbFail(http.StatusConflict, kbCodeMergeRequestNotOpen, "the merge request is "+locked.Status)
 	}
 
@@ -652,6 +658,9 @@ func (h *Handler) closeKbMergeRequest(ctx context.Context, mr db.KbMergeRequest,
 	})
 	if err != nil {
 		return db.KbMergeRequest{}, db.KbDraft{}, nil, errors.Wrapf(err, "close merge request merge_request_id=%s", uuidToString(mr.ID))
+	}
+	if err := recordKbMrEvent(ctx, qtx, closed, actorType, actorID, kbMrEventClosed, map[string]any{"close_reason": reason}); err != nil {
+		return db.KbMergeRequest{}, db.KbDraft{}, nil, err
 	}
 	if draft.Status == kb.DraftStatusSubmitted {
 		if draft, err = qtx.SetKbDraftStatus(ctx, db.SetKbDraftStatusParams{ID: draft.ID, Status: kb.DraftStatusOpen}); err != nil {

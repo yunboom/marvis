@@ -1031,7 +1031,7 @@ func (h *Handler) openKbMergeRequest(ctx context.Context, base db.KbBase, draftI
 	if err != nil {
 		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
 	}
-	if _, err := qtx.GetOpenKbMergeRequestByDraft(ctx, db.GetOpenKbMergeRequestByDraftParams{DraftID: draft.ID, Status: kb.MergeRequestStatusOpen}); err == nil {
+	if _, err := qtx.GetOpenKbMergeRequestByDraft(ctx, db.GetOpenKbMergeRequestByDraftParams{DraftID: draft.ID, Statuses: kbActiveMergeRequestStatuses}); err == nil {
 		return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeMergeRequestOpen, "the draft already has an open merge request")
 	} else if !isNotFound(err) {
 		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrapf(err, "load open merge request draft_id=%s", uuidToString(draft.ID))

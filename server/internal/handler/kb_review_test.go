@@ -148,7 +148,7 @@ func TestKbMergeRequestMerge(t *testing.T) {
 	mr := openKbMR(t, draftID, annotation)
 	detail := getKbMR(t, mr.Number, nil)
 	if len(detail.Pages) != 2 || !detail.CanMerge || !detail.CanClose || detail.KnowledgeBaseSlug != f.slug ||
-		len(detail.Checks.Conflicts) != 0 || detail.Origin.Type != kbOriginNone || detail.DraftVersion != 2 || detail.ReviewAgent != nil {
+		len(detail.Checks.Conflicts) != 0 || detail.Origin.Type != kbOriginNone || detail.DraftVersion != 2 || detail.OwnerID != testUserID {
 		t.Fatalf("detail = %+v", detail)
 	}
 	if !strings.HasPrefix(detail.Mention, fmt.Sprintf("[#%d Change", mr.Number)) {

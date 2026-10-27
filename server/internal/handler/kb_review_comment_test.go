@@ -1,18 +1,15 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/yunboom/marvis/server/internal/kb"
 	"github.com/yunboom/marvis/server/internal/testutil"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
-	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func postKbMrComment(t *testing.T, number int, body map[string]any, mutate func(*http.Request), want int) KbMrCommentResponse {
@@ -61,149 +58,6 @@ func kbSubmittedJob(t *testing.T, f kbJobFixture) (string, string, KbMergeReques
 	testutil.Call(t, testHandler.SubmitKbJob, req).Want(http.StatusCreated).JSON(&mr)
 
 	return jobID, sessionID, mr, agent
-}
-
-// TestKbMrCommentsFromJob: on a request from a job, a member's comment goes
-// to the job's agent as the 8.6 message in the job's own chat; replies stay
-// one level deep, the agent's own reply starts nobody, and an @-mentioned
-// agent gets a chat of its own that later comments reuse.
-func TestKbMrCommentsFromJob(t *testing.T) {
-	if testHandler == nil || testPool == nil {
-		t.Skip("database not available")
-	}
-
-	f := newKbJobFixture(t)
-	dbfx.Cleanup(t, `DELETE FROM kb_mr_comment WHERE merge_request_id IN (SELECT id FROM kb_merge_request WHERE knowledge_base_id = $1)`, f.baseID)
-	commented := recordKbEvents(protocol.EventKbMrCommented, f.baseID)
-	jobID, sessionID, mr, agent := kbSubmittedJob(t, f)
-	if mr.Origin.Type != kbOriginJob || mr.Origin.RefID == nil || *mr.Origin.RefID != jobID {
-		t.Fatalf("origin = %+v", mr.Origin)
-	}
-
-	blocks := blockIDsOf(t, kbFetch(t, f.pageID, "detail=with-ids", http.StatusOK))
-	comment := postKbMrComment(t, mr.Number, map[string]any{
-		"body":  "Say why the key changed.",
-		"quote": map[string]any{"page_id": f.pageID, "block_id": blocks[1]},
-	}, nil, http.StatusCreated)
-	if comment.Quote == nil || comment.Quote.Text != "Dedup by channel transaction id." {
-		t.Errorf("quote = %+v", comment.Quote)
-	}
-	if len(comment.Triggered) != 1 || comment.Triggered[0].AgentID != f.agentID || comment.Triggered[0].Reason != kb.TriggerReasonAuthor ||
-		comment.Triggered[0].ChatSessionID == nil || *comment.Triggered[0].ChatSessionID != sessionID || !comment.Triggered[0].Running {
-		t.Fatalf("triggered = %+v", comment.Triggered)
-	}
-
-	// The 8.6 message lands in the job's chat; no second job appears.
-	var content string
-	dbfx.QueryRow(t, `SELECT content FROM chat_message WHERE chat_session_id = $1 AND role = 'user' ORDER BY created_at DESC LIMIT 1`, sessionID).Scan(&content)
-	want, err := kb.ReviewCommentMessage(kb.ReviewCommentInput{
-		Number: mr.Number, Title: mr.Title, Author: comment.AuthorName, QuotePage: "Callback",
-		QuoteText: "Dedup by channel transaction id.", Body: "Say why the key changed.", DraftID: mr.DraftID, CommentID: comment.ID,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if content != want {
-		t.Errorf("job chat message:\n%s\nwant:\n%s", content, want)
-	}
-	var jobs int
-	dbfx.QueryRow(t, `SELECT count(*) FROM kb_job WHERE knowledge_base_id = $1`, f.baseID).Scan(&jobs)
-	if jobs != 1 {
-		t.Errorf("jobs = %d, want the original only", jobs)
-	}
-
-	// While the agent works, merging waits.
-	detail := getKbMR(t, mr.Number, nil)
-	if !detail.AgentRunning || detail.ReviewAgent == nil || detail.ReviewAgent.ID != f.agentID {
-		t.Error("agent_running = false while the job's agent works on the comment")
-	}
-	if got := mergeKbMR(t, mr.Number, detail.DraftVersion, nil, http.StatusConflict); got["code"] != kbCodeJobRunning {
-		t.Errorf("merge while the agent works = %v", got)
-	}
-
-	// The agent replies under the comment; that starts nobody. A reply to the
-	// reply still hangs under the first comment.
-	reply := postKbMrComment(t, mr.Number, map[string]any{"body": "Added the reason.", "parent_id": comment.ID}, agent, http.StatusCreated)
-	if reply.ParentID == nil || *reply.ParentID != comment.ID || reply.AuthorType != kbActorAgent || len(reply.Triggered) != 0 {
-		t.Errorf("agent reply = %+v", reply)
-	}
-	nested := postKbMrComment(t, mr.Number, map[string]any{"body": "[@all](mention://all/all) thanks", "parent_id": reply.ID}, nil, http.StatusCreated)
-	if nested.ParentID == nil || *nested.ParentID != comment.ID || len(nested.Triggered) != 0 {
-		t.Errorf("nested reply = %+v", nested)
-	}
-	postKbMrComment(t, mr.Number, map[string]any{"body": "x", "parent_id": "00000000-0000-4000-8000-000000000000"}, nil, http.StatusBadRequest)
-
-	// Naming another agent starts it in a chat of its own, reused next time.
-	other := createHandlerTestAgent(t, fmt.Sprintf("kb-review-other-%d", time.Now().UnixNano()), nil)
-	mention := fmt.Sprintf("[@Other](mention://agent/%s) please check", other)
-	first := postKbMrComment(t, mr.Number, map[string]any{"body": mention}, nil, http.StatusCreated)
-	if len(first.Triggered) != 1 || first.Triggered[0].AgentID != other || first.Triggered[0].Reason != kb.TriggerReasonMention ||
-		first.Triggered[0].ChatSessionID == nil || *first.Triggered[0].ChatSessionID == sessionID {
-		t.Fatalf("mention triggered = %+v", first.Triggered)
-	}
-	otherChat := *first.Triggered[0].ChatSessionID
-	dbfx.Cleanup(t, `DELETE FROM chat_session WHERE id = $1`, otherChat)
-	var chatTitle string
-	dbfx.QueryRow(t, `SELECT title FROM chat_session WHERE id = $1`, otherChat).Scan(&chatTitle)
-	if chatTitle != fmt.Sprintf("#%d %s", mr.Number, mr.Title) {
-		t.Errorf("review chat title = %q", chatTitle)
-	}
-	second := postKbMrComment(t, mr.Number, map[string]any{"body": mention}, nil, http.StatusCreated)
-	if len(second.Triggered) != 1 || *second.Triggered[0].ChatSessionID != otherChat {
-		t.Errorf("second mention = %+v, want chat %s", second.Triggered, otherChat)
-	}
-
-	var list []KbMrCommentResponse
-	testutil.Call(t, testHandler.ListKbMrComments, kbMRRequest(http.MethodGet, mr.Number, nil, nil)).Want(http.StatusOK).JSON(&list)
-	if len(list) != 5 || list[0].ID != comment.ID || list[0].Triggered[0].AgentName == "" {
-		t.Errorf("comments = %+v", list)
-	}
-	if n := len(commented.all()); n != 5 {
-		t.Errorf("kb.mr.commented events = %d, want 5", n)
-	}
-	postKbMrComment(t, mr.Number, map[string]any{"body": "  "}, nil, http.StatusBadRequest)
-}
-
-// TestKbMrCommentFromChat: a request an agent opened from a chat sends a
-// member's comment back into that chat, and reports the chat as its origin.
-func TestKbMrCommentFromChat(t *testing.T) {
-	if testHandler == nil || testPool == nil {
-		t.Skip("database not available")
-	}
-
-	f := newKbReviewFixture(t)
-	agentID := createHandlerTestAgent(t, fmt.Sprintf("kb-review-chat-%d", time.Now().UnixNano()), nil)
-	session := dbfx.Insert(t, "chat_session", testutil.Cols{
-		"workspace_id": testWorkspaceID, "agent_id": agentID, "creator_id": testUserID, "title": "Talk about callbacks",
-	})
-	task := dbfx.Task(t, agentID, testutil.Cols{"runtime_id": handlerTestRuntimeID(t), "chat_session_id": session, "status": "running"})
-	agent := asJobAgent(testUserID, agentID, task)
-
-	draftID := createKbDraftAs(t, f.slug, agent)
-	opsReq := testutil.WithURLParams(newRequest(http.MethodPost, "/api/kb/drafts/x/pages/x/ops", map[string]any{
-		"version": kbPageHead(t, f.pageA),
-		"ops":     []map[string]any{{"op": kb.OpBlockReplace, "block": f.blocks[2], "content": "Dedup by trade no."}},
-	}), "draftId", draftID, "id", f.pageA)
-	agent(opsReq)
-	testutil.Call(t, testHandler.ApplyKbPageOps, opsReq).Want(http.StatusOK)
-	mrReq := newRequest(http.MethodPost, "/api/kb/merge-requests", map[string]any{"draft_id": draftID, "title": "From chat", "summary": "s"})
-	agent(mrReq)
-	var mr KbMergeRequestResponse
-	testutil.Call(t, testHandler.CreateKbMergeRequest, mrReq).Want(http.StatusCreated).JSON(&mr)
-	if mr.AuthorType != kbActorAgent || mr.Origin.Type != kbOriginChat || mr.Origin.RefID == nil || *mr.Origin.RefID != session || mr.Origin.Label != "Talk about callbacks" {
-		t.Fatalf("merge request = %+v", mr)
-	}
-
-	dbfx.Exec(t, `UPDATE agent_task_queue SET status = 'completed' WHERE id = $1`, task)
-	comment := postKbMrComment(t, mr.Number, map[string]any{"body": "Cite the issue."}, nil, http.StatusCreated)
-	if len(comment.Triggered) != 1 || comment.Triggered[0].AgentID != agentID || *comment.Triggered[0].ChatSessionID != session {
-		t.Errorf("triggered = %+v", comment.Triggered)
-	}
-	var messages int
-	dbfx.QueryRow(t, `SELECT count(*) FROM chat_message WHERE chat_session_id = $1 AND role = 'user'`, session).Scan(&messages)
-	if messages != 1 {
-		t.Errorf("messages in the original chat = %d, want 1", messages)
-	}
 }
 
 // TestKbMergeRequestOrigin walks the spec 7.13 decision order.

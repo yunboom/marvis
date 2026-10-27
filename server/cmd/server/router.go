@@ -2328,6 +2328,19 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Post("/merge-requests/{number}/revert", h.RevertKbMergeRequest)
 				r.Get("/merge-requests/{number}/comments", h.ListKbMrComments)
 				r.Post("/merge-requests/{number}/comments", h.CreateKbMrComment)
+				r.Get("/merge-requests/{number}/timeline", h.ListKbMrTimeline)
+				// Reviews (decision 107): a reviewer batches comments in a
+				// pending review only they see, then submits it; the owner
+				// asks for review again with ready.
+				r.Get("/merge-requests/{number}/reviews", h.ListKbMrReviews)
+				r.Post("/merge-requests/{number}/reviews", h.OpenKbMrReview)
+				r.Delete("/merge-requests/{number}/reviews/{reviewId}", h.DiscardKbMrReview)
+				r.Post("/merge-requests/{number}/reviews/{reviewId}/submit", h.SubmitKbMrReview)
+				r.Post("/merge-requests/{number}/reviews/{reviewId}/comments", h.CreateKbMrReviewComment)
+				r.Patch("/merge-requests/{number}/reviews/{reviewId}/comments/{commentId}", h.UpdateKbMrReviewComment)
+				r.Delete("/merge-requests/{number}/reviews/{reviewId}/comments/{commentId}", h.DeleteKbMrReviewComment)
+				r.Post("/merge-requests/{number}/ready", h.RequestKbMrReview)
+				r.Post("/merge-requests/{number}/handoff", h.HandoffKbMrReview)
 			})
 
 			// Squads
