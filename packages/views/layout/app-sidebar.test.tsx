@@ -473,19 +473,29 @@ describe("navigation item presentation", () => {
     navigation.current = { pathname: "/acme/issues" };
   });
 
-  it("collapses and expands the Projects sub-nav", () => {
+  it("starts the Projects sub-nav collapsed and toggles it", () => {
+    const { container } = render(<AppSidebar />);
+    const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-projects"]');
+
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+
+    fireEvent.click(toggle!);
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+
+    fireEvent.click(toggle!);
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+  });
+
+  it("starts the Projects sub-nav open on one of its sub routes", () => {
+    navigation.current = { pathname: "/acme/workflows" };
     const { container } = render(<AppSidebar />);
     const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-projects"]');
 
     expect(toggle?.getAttribute("aria-expanded")).toBe("true");
     expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
-
-    fireEvent.click(toggle!);
-    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
-
-    fireEvent.click(toggle!);
-    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+    navigation.current = { pathname: "/acme/issues" };
   });
 
   it("toggles the sub-nav when Projects is clicked on its own page", () => {
@@ -494,10 +504,10 @@ describe("navigation item presentation", () => {
     const projects = container.querySelector<HTMLElement>('button[data-href="/acme/projects"]')!;
 
     fireEvent.click(projects);
-    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
+    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
 
     fireEvent.click(projects);
-    expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
+    expect(screen.queryByTestId("sidebar-menu-sub")).toBeNull();
     navigation.current = { pathname: "/acme/issues" };
   });
 
