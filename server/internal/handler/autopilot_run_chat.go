@@ -54,6 +54,10 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	run, err := h.Queries.GetAutopilotRun(r.Context(), runUUID)
+	if err != nil && !isNotFound(err) {
+		h.writeAutopilotRunChatError(w, r, errors.Wrapf(err, "get run run_id=%s", uuidToString(runUUID)))
+		return
+	}
 	if err != nil || uuidToString(run.AutopilotID) != uuidToString(autopilot.ID) {
 		writeError(w, http.StatusNotFound, "run not found")
 		return
@@ -78,8 +82,12 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 	}
 
 	agent, err := h.Queries.GetAgentInWorkspace(r.Context(), db.GetAgentInWorkspaceParams{ID: task.AgentID, WorkspaceID: autopilot.WorkspaceID})
-	if err != nil {
+	if isNotFound(err) {
 		writeError(w, http.StatusNotFound, "agent not found")
+		return
+	}
+	if err != nil {
+		h.writeAutopilotRunChatError(w, r, errors.Wrapf(err, "get run agent agent_id=%s", uuidToString(task.AgentID)))
 		return
 	}
 	actorType, actorID := h.resolveActor(r, userID, workspaceID)
