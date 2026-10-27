@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
 import { MessageSquare, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -191,20 +191,33 @@ function PanelCard({
   /** One of the annotations on the sentence the reader clicked. */
   focused?: boolean;
   canChange: boolean;
-  onJump?: (blockId: string) => void;
+  onJump?: (annotation: KbAnnotation) => void;
 }) {
   const { t } = useT("kb");
   const timeAgo = useTimeAgo();
   const status = useSetAnnotationStatus();
   const jumpable = !!onJump && !!annotation.block_id && !annotation.anchor_lost;
 
+  // Clicking anywhere on the card jumps too; its own buttons and a text
+  // selection inside it keep their behavior. The quote button below is the
+  // keyboard path.
+  const jumpFromCard = (event: ReactMouseEvent<HTMLElement>) => {
+    if (!jumpable) return;
+    if (event.target instanceof Element && event.target.closest("button, a, input, textarea")) return;
+    if (window.getSelection()?.isCollapsed === false) return;
+
+    onJump(annotation);
+  };
+
   return (
     <article
       aria-label={annotation.body}
       aria-current={focused ? "true" : undefined}
       data-annotation-id={annotation.id}
+      onClick={jumpFromCard}
       className={cn(
         "flex flex-col gap-1.5 rounded-xl border bg-card p-3",
+        jumpable && "cursor-pointer",
         highlighted && "ring-[1.5px] ring-warning/60",
       )}
     >
@@ -217,7 +230,7 @@ function PanelCard({
         <StatusTag status={annotation.status} />
       </div>
       {jumpable ? (
-        <button type="button" className="text-left" onClick={() => onJump(annotation.block_id)}>
+        <button type="button" className="text-left" onClick={() => onJump(annotation)}>
           <QuoteBox annotation={annotation} />
         </button>
       ) : (
@@ -262,7 +275,8 @@ export function KbAnnotationPanel({
   /** Changes on every click, so clicking the same sentence again scrolls again. */
   focusSeq?: number;
   onClose: () => void;
-  onJump?: (blockId: string) => void;
+  /** Scrolls the page to an annotation's sentence. */
+  onJump?: (annotation: KbAnnotation) => void;
 }) {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();

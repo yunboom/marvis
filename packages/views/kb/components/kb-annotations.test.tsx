@@ -357,6 +357,88 @@ describe("page annotations", () => {
     expect(scrolled.at(-1)).toBe(card("更早的一条"));
   });
 
+  // Regression: the quote was matched at its first occurrence in the raw
+  // Markdown, so a sentence repeated in a link before it underlined the link.
+  it("underlines the annotated sentence, not a link that repeats its words", async () => {
+    mocked.getKnowledgeBasePage.mockResolvedValue({
+      ...PAGE,
+      blocks: [
+        { id: "b3", kind: "text", content: "## 去重" },
+        { id: "b4", kind: "text", content: "参见[幂等键保存 24 小时。](/kb/team/p/page-idem)。幂等键保存 24 小时。[^mar-142]" },
+      ],
+    });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([
+      annotation({ id: "a-ttl", quote: "幂等键保存 24 小时。", prefix: "去重\n参见幂等键保存 24 小时。。", suffix: "" }),
+    ]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await waitFor(() => expect(document.querySelector("mark.kb-annotated")).not.toBeNull());
+    const marks = document.querySelectorAll("[data-block-id='b4'] mark.kb-annotated");
+    expect(marks).toHaveLength(1);
+    expect(marks[0]!.closest("a")).toBeNull();
+    expect(marks[0]!.textContent).toBe("幂等键保存 24 小时。");
+    expect(document.querySelector("[data-block-id='b4'] a[href='/kb/team/p/page-idem'] mark")).toBeNull();
+  });
+
+  it("scrolls to and flashes the sentence of a clicked annotation card", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const other = annotation({ id: "a-other", quote: "幂等键保存 24 小时。", body: "另一句" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, other]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await userEvent.click(await screen.findByRole("button", { name: "Page annotations" }));
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 2" });
+    const mark = document.querySelector<HTMLElement>("mark[data-annotation-ids='a-other']")!;
+    expect(mark).not.toBeNull();
+
+    // Clicking the card body, not only its quote, jumps to the sentence.
+    fireEvent.click(within(within(panel).getByRole("article", { name: "另一句" })).getByText("另一句"));
+    expect(scrolled.at(-1)).toBe(mark);
+    expect(mark).toHaveAttribute("data-flash", "true");
+    expect(document.querySelector("mark[data-annotation-ids='a-mine']")).not.toHaveAttribute("data-flash");
+
+    // The flash fades; the next card moves it.
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+    expect(mark).not.toHaveAttribute("data-flash");
+    fireEvent.click(within(panel).getByRole("button", { name: /渠道回调按订单号加幂等键去重/ }));
+    expect(scrolled.at(-1)).toBe(document.querySelector("mark[data-annotation-ids='a-mine']"));
+    expect(document.querySelector("mark[data-annotation-ids='a-mine']")).toHaveAttribute("data-flash", "true");
+  });
+
+  it("falls back to the block when an annotation card's sentence is not on the page", async () => {
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const rewritten = annotation({ id: "a-rewritten", quote: "这句已经改写了。", body: "原句改了" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([rewritten]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await userEvent.click(await screen.findByRole("button", { name: "Page annotations" }));
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 1" });
+    await userEvent.click(within(panel).getByRole("article", { name: "原句改了" }));
+
+    expect(scrolled.at(-1)).toBe(document.querySelector("[data-block-id='b4']"));
+    expect(document.querySelector("[data-flash]")).toBeNull();
+  });
+
   it("annotates a selected sentence", async () => {
     mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
 

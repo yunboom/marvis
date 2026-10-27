@@ -31,7 +31,7 @@ import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
-import { parseKbRoute, type KbQuoteMark } from "../utils/kb-markdown";
+import { findAnnotationMark, parseKbRoute, type KbQuoteMark } from "../utils/kb-markdown";
 import { sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
 import { KbPageBody, pageTitle } from "./kb-page-body";
 import { KbAnnotationPanel, KbSelectionAnnotator } from "./kb-annotations";
@@ -334,6 +334,42 @@ function useBlockAnchor(hash: string, ready: boolean) {
   }, [hash, ready]);
 }
 
+/** How long an annotated sentence stays flashed after its card is clicked; matches the kb-annotation-flash animation. */
+const MARK_FLASH_MS = 1200;
+
+/**
+ * Flashes a sentence mark: sets data-flash, which kb.css animates, and
+ * clears it afterwards. Flashing again restarts the animation.
+ */
+function useMarkFlash() {
+  const current = useRef<{ mark: HTMLElement; timer: ReturnType<typeof setTimeout> } | null>(null);
+
+  const clear = useCallback(() => {
+    if (!current.current) return;
+
+    clearTimeout(current.current.timer);
+    delete current.current.mark.dataset.flash;
+    current.current = null;
+  }, []);
+
+  useEffect(() => clear, [clear]);
+
+  return useCallback(
+    (mark: HTMLElement) => {
+      clear();
+      // Reading layout between removing and setting the attribute restarts the animation.
+      void mark.offsetWidth;
+      mark.dataset.flash = "true";
+      current.current = { mark, timer: setTimeout(clear, MARK_FLASH_MS) };
+    },
+    [clear],
+  );
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
 interface KbPageViewProps {
   /** Opens or downloads raw files cited by the page. */
   rawFileActions?: KbRawFileActions;
@@ -389,6 +425,23 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
     setActiveHeading(blockId);
     const node = scroller.current?.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(blockId)}"]`);
     node?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+  };
+
+  const flashMark = useMarkFlash();
+
+  // An annotation card scrolls to its underlined sentence and flashes it.
+  // When the sentence is not on the page (rewritten, or a draft removed it),
+  // the card jumps to the block as before.
+  const jumpToAnnotation = (annotation: KbAnnotation) => {
+    const mark = findAnnotationMark(scroller.current, annotation.id);
+    if (!mark) {
+      jumpTo(annotation.block_id);
+      return;
+    }
+
+    setActiveHeading(annotation.block_id);
+    mark.scrollIntoView?.({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    flashMark(mark);
   };
 
   const openSource = (source: KbSource) => {
@@ -538,7 +591,7 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
             pageId={page.id}
             focusIds={annotationFocus?.ids}
             focusSeq={annotationFocus?.seq}
-            onJump={jumpTo}
+            onJump={jumpToAnnotation}
             onClose={() => {
               setPanel("none");
               setAnnotationFocus(null);
@@ -569,18 +622,21 @@ interface AnnotationFocus {
 /**
  * The sentences of open annotations, by block, to underline on the page. An
  * annotation whose sentence is gone reads as one on the whole page and is not
- * marked; annotations on the same sentence share one mark.
+ * marked. The context around each sentence picks the occurrence it was made
+ * on; annotations on the same occurrence share one mark.
  */
 function annotationMarks(annotations: readonly KbAnnotation[]): Map<string, KbQuoteMark[]> {
   const out = new Map<string, KbQuoteMark[]>();
   for (const annotation of annotations) {
     if (!isOpenAnnotation(annotation) || annotation.anchor_lost || !annotation.block_id || !annotation.quote) continue;
 
-    const marks = out.get(annotation.block_id) ?? [];
-    const same = marks.find((mark) => mark.quote === annotation.quote);
-    if (same) same.ids = [...same.ids, annotation.id];
-    else marks.push({ quote: annotation.quote, ids: [annotation.id] });
-    out.set(annotation.block_id, marks);
+    const mark: KbQuoteMark = {
+      quote: annotation.quote,
+      ids: [annotation.id],
+      prefix: annotation.prefix,
+      suffix: annotation.suffix,
+    };
+    out.set(annotation.block_id, [...(out.get(annotation.block_id) ?? []), mark]);
   }
 
   return out;

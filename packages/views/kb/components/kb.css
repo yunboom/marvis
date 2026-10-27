@@ -67,6 +67,37 @@
   background-color: color-mix(in oklch, var(--color-warning) 16%, transparent);
 }
 
+/*
+ * The sentence of a clicked annotation card: a 藤黄 glow that rises quickly
+ * and fades back to the sentence's own style. 1200ms matches MARK_FLASH_MS
+ * in kb-page-view.tsx, which clears data-flash afterwards.
+ */
+@keyframes kb-annotation-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  15% {
+    background-color: color-mix(in oklch, var(--color-warning) 40%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-warning) 40%, transparent);
+  }
+}
+
+.kb-doc mark.kb-annotated[data-flash="true"] {
+  border-radius: 3px;
+  animation: kb-annotation-flash 1200ms var(--ease-out) both;
+}
+
+/* Reduced motion: no pulse; the sentence stays highlighted until the flash clears. */
+@media (prefers-reduced-motion: reduce) {
+  .kb-doc mark.kb-annotated[data-flash="true"] {
+    animation: none;
+    background-color: color-mix(in oklch, var(--color-warning) 40%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-warning) 40%, transparent);
+  }
+}
+
 /* A draft's edits against the published page. */
 .kb-doc del {
   color: var(--color-destructive);
