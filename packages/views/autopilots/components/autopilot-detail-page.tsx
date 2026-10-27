@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Zap, Play, Clock, Plus, Trash2, CheckCircle2, XCircle, Loader2, Pencil,
-  Ban, ChevronDown, ChevronRight,
+  Ban, ChevronDown, ChevronLeft, ChevronRight,
   Webhook, RotateCw, Server,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +23,6 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { useActorName } from "@marvis/core/workspace/hooks";
 import { useNavigation, AppLink } from "../../navigation";
-import { BreadcrumbHeader } from "../../layout/breadcrumb-header";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { Button } from "@marvis/ui/components/ui/button";
@@ -62,8 +61,9 @@ import type {
   AutopilotTrigger,
 } from "@marvis/core/types";
 import type { AgentTask } from "@marvis/core/types/agent";
-import { ReadonlyContent } from "../../editor";
 import { TranscriptButton } from "../../common/task-transcript";
+import { CollapsibleInstructions } from "./collapsible-instructions";
+import { earliestScheduledRun } from "./next-run";
 import { AutopilotDialog } from "./autopilot-dialog";
 import { EditScheduleTriggerDialog } from "./edit-schedule-trigger-dialog";
 import { runNowToastKind, runNowBlockedKey } from "./run-now-toast";
@@ -108,7 +108,20 @@ function WebhookPayloadSlot({ autopilotId, runId }: { autopilotId: string; runId
   return <WebhookPayloadPreview payload={data.trigger_payload} />;
 }
 
-function RunRow({ run, agentId, agentName }: { run: AutopilotRun; agentId: string; agentName: string }) {
+const RUN_ROW = "flex h-11 items-center gap-2.5 rounded-xl bg-surface-sunken px-3.5 text-body";
+
+function RunRow({
+  run,
+  agentId,
+  agentName,
+  nested = false,
+}: {
+  run: AutopilotRun;
+  agentId: string;
+  agentName: string;
+  /** A run listed under the skipped group, indented past the group's chevron. */
+  nested?: boolean;
+}) {
   const { t, i18n } = useT("autopilots");
   const wsPaths = useWorkspacePaths();
   const status = (RUN_VISUAL[run.status as RunStatus] ? (run.status as RunStatus) : "issue_created");
@@ -138,25 +151,33 @@ function RunRow({ run, agentId, agentName }: { run: AutopilotRun; agentId: strin
       }
     : null;
 
+  const statusLabel = t(($) => $.run_status[status]);
+  // The summary says what the run produced; with nothing to say, it falls back
+  // to the status itself so the icon never stands alone.
+  const summaryIsStatus = !run.issue_id && !run.failure_reason;
+
   const content = (
     <>
-      <StatusIcon className={cn("h-4 w-4 shrink-0", visual.color, visual.spin && "animate-spin")} />
-      <span className={cn("w-24 shrink-0 text-caption font-medium", visual.color)}>
-        {t(($) => $.run_status[status])}
-      </span>
-      <span className="w-20 shrink-0 text-caption text-muted-foreground">
-        {t(($) => $.run_source[run.source as "schedule" | "manual" | "webhook" | "api"]) ?? run.source}
-      </span>
-      <span className="flex-1 min-w-0 text-caption text-muted-foreground truncate">
-        {run.issue_id ? (
-          t(($) => $.run.issue_linked)
-        ) : run.failure_reason ? (
-          <span className="text-destructive">{run.failure_reason}</span>
-        ) : null}
-      </span>
-      <span className="w-32 shrink-0 text-right text-caption text-muted-foreground tabular-nums">
+      <StatusIcon
+        aria-hidden="true"
+        className={cn("size-4 shrink-0", visual.color, visual.spin && "animate-spin")}
+      />
+      {!summaryIsStatus && <span className="sr-only">{statusLabel}</span>}
+      <span className="w-32 shrink-0 tabular-nums">
         {formatInTimeZone(run.triggered_at || run.created_at, undefined, i18n.language)}
       </span>
+      <span
+        className={cn(
+          "min-w-0 flex-1 truncate text-label",
+          run.failure_reason && !run.issue_id ? "text-destructive" : "text-muted-foreground",
+        )}
+      >
+        {run.issue_id ? t(($) => $.run.issue_linked) : run.failure_reason || statusLabel}
+      </span>
+      <span className="shrink-0 text-caption text-faint-foreground">
+        {t(($) => $.run_source[run.source as "schedule" | "manual" | "webhook" | "api"]) ?? run.source}
+      </span>
+      {run.issue_id && <ChevronRight aria-hidden="true" className="size-3.5 shrink-0 text-faint-foreground" />}
       {syntheticTask && !run.issue_id && (
         <TranscriptButton
           task={syntheticTask}
@@ -173,11 +194,14 @@ function RunRow({ run, agentId, agentName }: { run: AutopilotRun; agentId: strin
     </>
   );
 
-  const rowClass = "flex items-center gap-3 px-4 py-2.5 text-body hover:bg-accent/30 transition-colors";
+  const rowClass = cn(RUN_ROW, nested && "pl-9.5");
 
   if (run.issue_id) {
     return (
-      <AppLink href={wsPaths.issueDetail(run.issue_id)} className={cn(rowClass, "cursor-pointer")}>
+      <AppLink
+        href={wsPaths.issueDetail(run.issue_id)}
+        className={cn(rowClass, "cursor-pointer transition-colors hover:bg-surface-hover")}
+      >
         {content}
       </AppLink>
     );
@@ -199,7 +223,7 @@ function RunHistoryList({
   const skippedRuns = runs.filter((run) => run.status === "skipped");
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="flex flex-col gap-1">
       {visibleRuns.map((run) => (
         <RunRow key={run.id} run={run} agentId={agentId} agentName={agentName} />
       ))}
@@ -225,35 +249,30 @@ function SkippedRunsGroup({
   const ToggleIcon = open ? ChevronDown : ChevronRight;
 
   return (
-    <div className="border-t bg-muted/20">
+    <>
       <button
         type="button"
-        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-body hover:bg-accent/30 transition-colors"
+        className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-dashed px-3.5 text-left text-body transition-colors hover:bg-surface-hover"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
       >
-        <ToggleIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <Ban className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <span className="w-24 shrink-0 text-caption font-medium text-muted-foreground">
-          {t(($) => $.run.skipped_group.label)}
-        </span>
-        <span className="flex-1 min-w-0 text-caption text-muted-foreground truncate">
+        <ToggleIcon aria-hidden="true" className="size-3.5 shrink-0 text-faint-foreground" />
+        <Ban aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+        <span className="w-28 shrink-0">{t(($) => $.run.skipped_group.label)}</span>
+        <span className="min-w-0 flex-1 truncate text-label text-muted-foreground">
           {t(($) => $.run.skipped_group.summary, { count: runs.length })}
         </span>
         {latestRun && (
-          <span className="w-32 shrink-0 text-right text-caption text-muted-foreground tabular-nums">
+          <span className="shrink-0 text-caption text-faint-foreground tabular-nums">
             {formatInTimeZone(latestRun.triggered_at || latestRun.created_at, undefined, i18n.language)}
           </span>
         )}
       </button>
-      {open && (
-        <div className="border-t bg-background">
-          {runs.map((run) => (
-            <RunRow key={run.id} run={run} agentId={agentId} agentName={agentName} />
-          ))}
-        </div>
-      )}
-    </div>
+      {open &&
+        runs.map((run) => (
+          <RunRow key={run.id} run={run} agentId={agentId} agentName={agentName} nested />
+        ))}
+    </>
   );
 }
 
@@ -356,7 +375,7 @@ export function TriggerRow({ trigger, autopilotId, canWrite }: { trigger: Autopi
     ) : null;
 
   return (
-    <div className="flex items-start gap-3 rounded-md border px-3 py-2">
+    <div className="flex items-start gap-2.5 rounded-xl bg-surface-sunken px-3.5 py-3">
       <Icon className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
@@ -674,8 +693,84 @@ function SubscriberChips({
   );
 }
 
+const SECTION_TITLE = "text-label text-muted-foreground";
+
+function DetailSection({
+  title,
+  action,
+  className,
+  children,
+}: {
+  title: ReactNode;
+  action?: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className={cn("flex min-w-0 flex-col gap-2", className)}>
+      <div className="flex min-h-7 items-center justify-between gap-2">
+        <h2 className={SECTION_TITLE}>{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function DetailField({ label, children }: { label: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <span className={SECTION_TITLE}>{label}</span>
+      <div className="min-w-0 text-body">{children}</div>
+    </div>
+  );
+}
+
+const STATUS_DOT: Record<string, string> = {
+  active: "bg-emerald-500",
+  paused: "bg-amber-500",
+};
+
+function DetailSkeleton() {
+  return (
+    <div className="flex h-full flex-col">
+      <PageHeader className="h-16">
+        <Skeleton className="size-8 rounded-full" />
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      </PageHeader>
+      <div className="@container flex-1 overflow-y-auto">
+        <div className="grid grid-cols-1 gap-6 px-6 py-6 @4xl:grid-cols-2 @4xl:gap-14 @4xl:px-10 @4xl:py-7">
+          <div className="flex flex-col gap-6">
+            <Skeleton className="h-12 w-56" />
+            <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-2">
+                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+              ))}
+            </div>
+            <Skeleton className="h-16 w-full rounded-xl" />
+          </div>
+          <div className="flex flex-col gap-6">
+            <Skeleton className="h-28 w-full" />
+            <div className="flex flex-col gap-1">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-11 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
-  const { t } = useT("autopilots");
+  const { t, i18n } = useT("autopilots");
   const wsId = useWorkspaceId();
   const wsPaths = useWorkspacePaths();
   const router = useNavigation();
@@ -698,42 +793,7 @@ export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
   const [deleting, setDeleting] = useState(false);
 
   if (isLoading) {
-    return (
-      <div className="flex h-full flex-col">
-        <PageHeader>
-          <Skeleton className="h-4 w-4" />
-          <span className="text-muted-foreground">/</span>
-          <Skeleton className="h-4 w-32" />
-        </PageHeader>
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto p-6 space-y-8">
-            <section className="space-y-4">
-              <Skeleton className="h-3 w-20" />
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Skeleton className="h-3 w-12" />
-                  <Skeleton className="h-5 w-32" />
-                </div>
-                <div className="space-y-1">
-                  <Skeleton className="h-3 w-12" />
-                  <Skeleton className="h-5 w-24" />
-                </div>
-              </div>
-            </section>
-            <section className="space-y-3">
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-10 w-full rounded-md" />
-            </section>
-            <section className="space-y-3">
-              <Skeleton className="h-4 w-24" />
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </section>
-          </div>
-        </div>
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!data) {
@@ -754,6 +814,9 @@ export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
   // edit/run but cannot grant/revoke. Fall back to canWrite when the server
   // doesn't send the field (older backend).
   const canManageAccess = autopilot.can_manage_access ?? canWrite;
+  const isActive = autopilot.status === "active";
+  // A paused autopilot keeps its triggers' next_run_at, but nothing will fire.
+  const nextRun = isActive ? earliestScheduledRun(triggers) : null;
 
   const handleRunNow = async () => {
     try {
@@ -810,64 +873,58 @@ export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <BreadcrumbHeader
-        segments={[{ href: wsPaths.autopilots(), label: t(($) => $.page.title) }]}
-        leaf={
-          <>
-            <h1 className="min-w-0 truncate text-body font-medium text-foreground">{autopilot.title}</h1>
-            <div className="ml-1 flex items-center gap-1.5 shrink-0">
-              <Switch
-                size="sm"
-                checked={autopilot.status === "active"}
-                onCheckedChange={handleToggleStatus}
-                disabled={autopilot.status === "archived"}
-                aria-label={
-                  autopilot.status === "active"
-                    ? t(($) => $.detail.pause_aria)
-                    : t(($) => $.detail.activate_aria)
-                }
-              />
-              <span className={cn(
-                "text-caption font-medium hidden sm:inline",
-                autopilot.status === "active" ? "text-emerald-500" :
-                autopilot.status === "paused" ? "text-amber-500" :
-                "text-muted-foreground",
-              )}>
-                {t(($) => $.status[autopilot.status])}
-              </span>
-            </div>
-          </>
-        }
-        actions={
-          canWrite ? (
-            <>
-              <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)} className="px-2 sm:px-2.5" aria-label={t(($) => $.detail.edit)}>
-                <Pencil className="h-3.5 w-3.5 sm:mr-1" />
-                <span className="hidden sm:inline">{t(($) => $.detail.edit)}</span>
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleRunNow}
-                disabled={autopilot.status !== "active" || triggerAutopilot.isPending}
-                className="px-2 sm:px-2.5"
-                aria-label={triggerAutopilot.isPending ? t(($) => $.detail.running) : t(($) => $.detail.run_now)}
-              >
-                {triggerAutopilot.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 sm:mr-1 animate-spin" />
-                ) : (
-                  <Play className="h-3.5 w-3.5 sm:mr-1" />
-                )}
-                <span className="hidden sm:inline">
-                  {triggerAutopilot.isPending
-                    ? t(($) => $.detail.running)
-                    : t(($) => $.detail.run_now)}
-                </span>
-              </Button>
-            </>
-          ) : null
-        }
-      />
+      <PageHeader className="h-16 gap-3">
+        <IconButton
+          type="button"
+          size="icon"
+          label={t(($) => $.detail.back)}
+          onClick={() => router.push(wsPaths.autopilots())}
+        >
+          <ChevronLeft className="size-4" aria-hidden="true" />
+        </IconButton>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h1 className="truncate text-title-sm font-semibold">{autopilot.title}</h1>
+          <span className="truncate text-caption text-faint-foreground">{t(($) => $.page.title)}</span>
+        </div>
+        {canWrite && (
+          <div className="flex shrink-0 items-center gap-1">
+            <IconButton
+              type="button"
+              size="icon"
+              className="text-muted-foreground"
+              label={t(($) => $.detail.edit)}
+              onClick={() => setEditDialogOpen(true)}
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+            </IconButton>
+            <IconButton
+              type="button"
+              size="icon"
+              className="text-muted-foreground"
+              label={t(($) => $.detail.delete_button)}
+              onClick={() => setDeleteConfirmOpen(true)}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+            </IconButton>
+            <Button
+              type="button"
+              className="ml-1"
+              onClick={handleRunNow}
+              disabled={!isActive || triggerAutopilot.isPending}
+              aria-busy={triggerAutopilot.isPending || undefined}
+            >
+              {triggerAutopilot.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Play className="size-3.5" aria-hidden="true" />
+              )}
+              {triggerAutopilot.isPending
+                ? t(($) => $.detail.running)
+                : t(($) => $.detail.run_now)}
+            </Button>
+          </div>
+        )}
+      </PageHeader>
 
       {autopilot.pause_reason === "agent_runtime_required" && (
         <div className="flex shrink-0 items-center gap-2 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 text-caption text-amber-900 dark:text-amber-100">
@@ -886,60 +943,83 @@ export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-6 space-y-8">
-          {/* Properties */}
-          <section className="space-y-4">
-            <h2 className="text-body font-medium text-muted-foreground uppercase tracking-wider">
-              {t(($) => $.detail.section_properties)}
-            </h2>
-            <div className="grid grid-cols-2 gap-4 text-body">
-              <div>
-                <label className="text-caption text-muted-foreground">{t(($) => $.detail.field_agent)}</label>
-                <div className="mt-1 flex items-center gap-2">
-                  <ActorAvatar
-                    actorType={autopilot.assignee_type}
-                    actorId={autopilot.assignee_id}
-                    size="sm"
-                    enableHoverCard={autopilot.assignee_type === "agent"}
-                    showStatusDot={autopilot.assignee_type === "agent"}
+      <div className="@container flex-1 overflow-y-auto">
+        {/* Two columns from @4xl up. Below it each column wrapper turns into
+            `display: contents`, so the sections become siblings of one flex
+            column and `order-*` sets the stacked sequence: status, prompt,
+            runs, then the rest of the configuration. */}
+        <div className="flex flex-col gap-6 px-6 py-6 @4xl:grid @4xl:grid-cols-2 @4xl:items-start @4xl:gap-14 @4xl:px-10 @4xl:py-7">
+          <div className="contents @4xl:flex @4xl:min-w-0 @4xl:flex-col @4xl:gap-6">
+            <DetailSection title={t(($) => $.detail.section_status)} className="order-1">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Switch
+                  checked={isActive}
+                  onCheckedChange={handleToggleStatus}
+                  disabled={autopilot.status === "archived"}
+                  aria-label={
+                    isActive
+                      ? t(($) => $.detail.pause_aria)
+                      : t(($) => $.detail.activate_aria)
+                  }
+                />
+                <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-muted px-2.5 text-caption">
+                  <span
+                    aria-hidden="true"
+                    className={cn("size-1.5 rounded-full", STATUS_DOT[autopilot.status] ?? "bg-muted-foreground")}
                   />
-                  <span className="cursor-pointer">
-                    {getActorName(autopilot.assignee_type, autopilot.assignee_id)}
+                  {t(($) => $.status[autopilot.status])}
+                </span>
+                {nextRun && (
+                  <span className="text-label text-muted-foreground tabular-nums">
+                    {t(($) => $.detail.next_run, {
+                      date: formatInTimeZone(nextRun.at, nextRun.timeZone, i18n.language),
+                    })}
                   </span>
-                </div>
+                )}
               </div>
-              <div>
-                <label className="text-caption text-muted-foreground">{t(($) => $.detail.field_created_by)}</label>
-                <div className="mt-1 flex items-center gap-2">
-                  {/* Creator may be a member or an agent: the HTTP create path stamps
-                      member today, but backend logic also writes created_by_type=agent.
-                      ActorAvatar/getActorName resolve both, so never assume member. */}
-                  <ActorAvatar
-                    actorType={autopilot.created_by_type}
-                    actorId={autopilot.created_by_id}
-                    size="sm"
-                    enableHoverCard
-                    showStatusDot={autopilot.created_by_type === "agent"}
-                  />
-                  <span className="cursor-pointer">
-                    {getActorName(autopilot.created_by_type, autopilot.created_by_id)}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <label className="text-caption text-muted-foreground">{t(($) => $.detail.field_output_mode)}</label>
-                <div className="mt-1">
+            </DetailSection>
+
+            <div className="order-4 flex min-w-0 flex-col gap-6">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+                <DetailField label={t(($) => $.detail.field_agent)}>
+                  <div className="flex items-center gap-2">
+                    <ActorAvatar
+                      actorType={autopilot.assignee_type}
+                      actorId={autopilot.assignee_id}
+                      size="sm"
+                      enableHoverCard={autopilot.assignee_type === "agent"}
+                      showStatusDot={autopilot.assignee_type === "agent"}
+                    />
+                    <span className="min-w-0 cursor-pointer truncate">
+                      {getActorName(autopilot.assignee_type, autopilot.assignee_id)}
+                    </span>
+                  </div>
+                </DetailField>
+                <DetailField label={t(($) => $.detail.field_created_by)}>
+                  <div className="flex items-center gap-2">
+                    {/* Creator may be a member or an agent: the HTTP create path stamps
+                        member today, but backend logic also writes created_by_type=agent.
+                        ActorAvatar/getActorName resolve both, so never assume member. */}
+                    <ActorAvatar
+                      actorType={autopilot.created_by_type}
+                      actorId={autopilot.created_by_id}
+                      size="sm"
+                      enableHoverCard
+                      showStatusDot={autopilot.created_by_type === "agent"}
+                    />
+                    <span className="min-w-0 cursor-pointer truncate">
+                      {getActorName(autopilot.created_by_type, autopilot.created_by_id)}
+                    </span>
+                  </div>
+                </DetailField>
+                <DetailField label={t(($) => $.detail.field_output_mode)}>
                   {t(($) => $.execution_mode[autopilot.execution_mode as AutopilotExecutionMode])}
-                </div>
-              </div>
-              {/* Shown for BOTH output modes (MUL-6681): a run_only autopilot's
-                  project decides its execution environment (repository /
-                  local_directory, and therefore worktree isolation), so an
-                  operator debugging a run needs to see it here. */}
-              <div>
-                <label className="text-caption text-muted-foreground">{t(($) => $.detail.field_project)}</label>
-                <div className="mt-1 min-w-0">
+                </DetailField>
+                {/* Shown for BOTH output modes (MUL-6681): a run_only autopilot's
+                    project decides its execution environment (repository /
+                    local_directory, and therefore worktree isolation), so an
+                    operator debugging a run needs to see it here. */}
+                <DetailField label={t(($) => $.detail.field_project)}>
                   {!autopilot.project_id ? (
                     <span className="text-muted-foreground">{t(($) => $.detail.no_project)}</span>
                   ) : projectLoading ? (
@@ -955,99 +1035,83 @@ export function AutopilotDetailPage({ autopilotId }: { autopilotId: string }) {
                   ) : (
                     <span className="text-muted-foreground">{t(($) => $.detail.project_unavailable)}</span>
                   )}
-                </div>
+                </DetailField>
               </div>
+
               {autopilot.execution_mode === "create_issue" && (
-                <div className="col-span-2">
-                  <label className="text-caption text-muted-foreground">
-                    {t(($) => $.detail.field_subscribers)}
-                  </label>
-                  <SubscriberChips
-                    subscribers={autopilot.subscribers}
-                  />
-                </div>
+                <DetailSection title={t(($) => $.detail.field_subscribers)}>
+                  <SubscriberChips subscribers={autopilot.subscribers} />
+                </DetailSection>
               )}
-              {autopilot.description && (
-                <div className="col-span-2">
-                  <label className="text-caption text-muted-foreground">{t(($) => $.detail.field_prompt)}</label>
-                  <div className="mt-1">
-                    <ReadonlyContent content={autopilot.description} />
+
+              <DetailSection
+                title={t(($) => $.detail.section_triggers)}
+                action={
+                  canWrite ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="-mr-2 text-muted-foreground"
+                      aria-label={t(($) => $.detail.add_trigger)}
+                      onClick={() => setTriggerDialogOpen(true)}
+                    >
+                      <Plus aria-hidden="true" />
+                      {t(($) => $.detail.add)}
+                    </Button>
+                  ) : null
+                }
+              >
+                {triggers.length === 0 ? (
+                  <div className="rounded-xl border border-dashed p-4 text-center text-body text-muted-foreground">
+                    {t(($) => $.detail.no_triggers)}
                   </div>
-                </div>
-              )}
-            </div>
-          </section>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {triggers.map((trig) => (
+                      <TriggerRow key={trig.id} trigger={trig} autopilotId={autopilotId} canWrite={canWrite} />
+                    ))}
+                  </div>
+                )}
+              </DetailSection>
 
-          {/* Triggers */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-body font-medium text-muted-foreground uppercase tracking-wider">
-                {t(($) => $.detail.section_triggers)}
-              </h2>
-              {canWrite && (
-                <Button size="sm" variant="outline" onClick={() => setTriggerDialogOpen(true)}>
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  {t(($) => $.detail.add_trigger)}
-                </Button>
-              )}
-            </div>
-            {triggers.length === 0 ? (
-              <div className="rounded-md border border-dashed p-4 text-center text-body text-muted-foreground">
-                {t(($) => $.detail.no_triggers)}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {triggers.map((trig) => (
-                  <TriggerRow key={trig.id} trigger={trig} autopilotId={autopilotId} canWrite={canWrite} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Webhook deliveries — only renders when at least one webhook
-              trigger is configured. The component does its own fetch so
-              schedule-only autopilots don't pay for an empty list query. */}
-          <WebhookDeliveriesSection
-            autopilotId={autopilotId}
-            hasWebhookTrigger={triggers.some((trig) => trig.kind === "webhook")}
-          />
-
-          {/* Run History */}
-          <section className="space-y-3">
-            <h2 className="text-body font-medium text-muted-foreground uppercase tracking-wider">
-              {t(($) => $.detail.section_run_history)}
-            </h2>
-            {runsLoading ? (
-              <div className="space-y-1">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : runs.length === 0 ? (
-              <div className="rounded-md border border-dashed p-4 text-center text-body text-muted-foreground">
-                {t(($) => $.detail.no_runs)}
-              </div>
-            ) : (
-              <RunHistoryList
-                runs={runs}
-                agentId={autopilot.assignee_id}
-                agentName={getActorName(autopilot.assignee_type, autopilot.assignee_id)}
+              {/* Webhook deliveries — only renders when at least one webhook
+                  trigger is configured. The component does its own fetch so
+                  schedule-only autopilots don't pay for an empty list query. */}
+              <WebhookDeliveriesSection
+                autopilotId={autopilotId}
+                hasWebhookTrigger={triggers.some((trig) => trig.kind === "webhook")}
               />
-            )}
-          </section>
+            </div>
+          </div>
 
-          {/* Danger zone */}
-          {canWrite && (
-            <section className="space-y-3 pt-4 border-t">
-              <h2 className="text-body font-medium text-destructive uppercase tracking-wider">
-                {t(($) => $.detail.section_danger)}
-              </h2>
-              <Button size="sm" variant="destructive" onClick={() => setDeleteConfirmOpen(true)}>
-                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                {t(($) => $.detail.delete_button)}
-              </Button>
-            </section>
-          )}
+          <div className="contents @4xl:flex @4xl:min-w-0 @4xl:flex-col @4xl:gap-6">
+            {autopilot.description && (
+              <DetailSection title={t(($) => $.detail.field_prompt)} className="order-2">
+                <CollapsibleInstructions content={autopilot.description} />
+              </DetailSection>
+            )}
+
+            <DetailSection title={t(($) => $.detail.section_run_history)} className="order-3">
+              {runsLoading ? (
+                <div className="flex flex-col gap-1">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-11 w-full rounded-xl" />
+                  ))}
+                </div>
+              ) : runs.length === 0 ? (
+                <div className="rounded-xl border border-dashed p-4 text-center text-body text-muted-foreground">
+                  {t(($) => $.detail.no_runs)}
+                </div>
+              ) : (
+                <RunHistoryList
+                  runs={runs}
+                  agentId={autopilot.assignee_id}
+                  agentName={getActorName(autopilot.assignee_type, autopilot.assignee_id)}
+                />
+              )}
+            </DetailSection>
+          </div>
         </div>
       </div>
 
