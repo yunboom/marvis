@@ -680,7 +680,7 @@
    "w": 1440,
    "x": 12160,
    "y": 0,
-   "title": "3.9 草稿视图 · 自己的草稿改了这一页：顶部草稿条，可切回已发布；行内显示改动；页面树标「草稿」"
+   "title": "3.9 草稿 · 显示差异关闭：只显示草稿内容，不带改动标记；横幅有「正式 / 草稿」分段和「显示差异」开关；页面树标「草稿」"
   },
   "read-drafts.dc.html": {
    "h": 900,
@@ -753,6 +753,22 @@
    "x": 16720,
    "y": 0,
    "title": "8.12 动态 · 评论与事件按时间混排（提交评审、重新请求审核、合并），较早的折叠为「展开更早 N 条动态」"
+  },
+  "read-diff.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 15200,
+   "y": 0,
+   "title": "3.11 草稿 · 显示差异打开：在渲染后的正文上标出改动，删除为红色删除线、浅红底，新增为浅绿底，修改的块先旧后新"
+  },
+  "read-new-draft.dc.html": {
+   "h": 900,
+   "page": "read",
+   "w": 1440,
+   "x": 16720,
+   "y": 0,
+   "title": "3.12 新建页面 · 草稿：没有「正式 / 草稿」分段，横幅只有「草稿」标签和「显示差异」开关；打开时整页为新增"
   }
  },
  "createdOnFiles": {
@@ -976,6 +992,8 @@
   "read-raw-preview.dc.html",
   "read-draft.dc.html",
   "read-drafts.dc.html",
+  "read-diff.dc.html",
+  "read-new-draft.dc.html",
   "notify-box.dc.html",
   "notify-reviewer.dc.html"
  ],
