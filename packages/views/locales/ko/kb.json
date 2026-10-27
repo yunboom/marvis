@@ -29,6 +29,8 @@
   "nav": {
     "label": "지식 베이스 탐색",
     "switch": "지식 베이스 전환",
+    "filter_placeholder": "이름으로 필터",
+    "filter_label": "이름으로 지식 베이스 필터",
     "more_actions": "지식 베이스 작업",
     "home": "홈",
     "pending": "대기 {{count}}",

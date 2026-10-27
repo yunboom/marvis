@@ -32,6 +32,8 @@
   "nav": {
     "label": "Navigation de la base",
     "switch": "Changer de base de connaissances",
+    "filter_placeholder": "Filtrer par nom",
+    "filter_label": "Filtrer les bases de connaissances par nom",
     "more_actions": "Actions de la base",
     "home": "Accueil",
     "pending": "{{count}} en attente",

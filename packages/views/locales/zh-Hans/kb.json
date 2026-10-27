@@ -29,6 +29,8 @@
   "nav": {
     "label": "知识库导航",
     "switch": "切换知识库",
+    "filter_placeholder": "按名称过滤",
+    "filter_label": "按名称过滤知识库",
     "more_actions": "知识库更多操作",
     "home": "首页",
     "pending": "待处理 {{count}}",

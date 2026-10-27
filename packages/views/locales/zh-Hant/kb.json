@@ -29,6 +29,8 @@
   "nav": {
     "label": "知識庫導航",
     "switch": "切換知識庫",
+    "filter_placeholder": "依名稱篩選",
+    "filter_label": "依名稱篩選知識庫",
     "more_actions": "知識庫更多操作",
     "home": "首頁",
     "pending": "待處理 {{count}}",

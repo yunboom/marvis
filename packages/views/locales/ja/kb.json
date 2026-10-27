@@ -29,6 +29,8 @@
   "nav": {
     "label": "ナレッジベースのナビゲーション",
     "switch": "ナレッジベースを切り替え",
+    "filter_placeholder": "名前で絞り込む",
+    "filter_label": "ナレッジベースを名前で絞り込む",
     "more_actions": "ナレッジベースの操作",
     "home": "ホーム",
     "pending": "未対応 {{count}}",

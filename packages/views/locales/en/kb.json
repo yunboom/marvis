@@ -32,6 +32,8 @@
   "nav": {
     "label": "Knowledge base navigation",
     "switch": "Switch knowledge base",
+    "filter_placeholder": "Filter by name",
+    "filter_label": "Filter knowledge bases by name",
     "more_actions": "Knowledge base actions",
     "home": "Home",
     "pending": "{{count}} pending",
