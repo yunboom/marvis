@@ -83,7 +83,10 @@ body{margin:0}
 
             <sc-for list="{{thread}}" as="m" hint-placeholder-count="0">
               <sc-if value="{{m.user}}" hint-placeholder-val="{{ true }}">
-                <div style="align-self: flex-end; max-width: 80%; padding: 10px 14px; border-radius: 18px; background: #f5f5f5; white-space: pre-wrap; line-height: 1.7">{{m.text}}</div>
+                <div style="align-self: flex-end; max-width: 80%; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+                  <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #858585"><span style="width: 18px; height: 18px; border-radius: 9px; background: #ededed; color: #0f0f0f; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">{{m.initial}}</span>{{m.who}}</span>
+                  <div style="padding: 10px 14px; border-radius: 18px; background: #f5f5f5; white-space: pre-wrap; line-height: 1.7">{{m.text}}</div>
+                </div>
               </sc-if>
               <sc-if value="{{m.agent}}" hint-placeholder-val="{{ false }}">
                 <div style="display: flex; gap: 10px">
@@ -130,7 +133,7 @@ body{margin:0}
             <dt style="color: #666666">任务</dt><dd style="margin: 0"><a href="#" style="color: #0f0f0f; text-decoration: none">MAR-318 支付对账差异 ›</a></dd>
           </sc-if>
         </dl>
-        <div style="padding: 10px 12px; border-radius: 12px; background: #f7f7f7; font-size: 12.5px; line-height: 1.6; color: #666666">这段对话仅你可见。</div>
+        <div style="padding: 10px 12px; border-radius: 12px; background: #f7f7f7; font-size: 12.5px; line-height: 1.6; color: #666666">能查看这个自动化的成员共用这段对话。</div>
         <sc-if value="{{webhook}}" hint-placeholder-val="{{ false }}">
           <div style="display: flex; flex-direction: column; gap: 8px">
             <span style="font-size: 13px; color: #666666">Webhook 载荷</span>
@@ -160,9 +163,9 @@ class Component extends DCLogic {
     const draft = this.state.draft ?? presetDraft;
 
     const followup = mode === 'followup' ? [
-      { user: true, agent: false, text: '支付宝那笔为什么只在渠道账单出现？' },
+      { user: true, agent: false, who: '周宁', initial: '周', text: '支付宝那笔为什么只在渠道账单出现？' },
       { user: false, agent: true, working: false, finished: true, text: '这是用户在 23:59 发起、00:01 回调成功的跨日订单：渠道记在 10月26日，我们按回调时间记在 10月27日。不是漏单，今晚的对账会对上。要不要把「按下单时间归属日期」加进指令？', textStyle: '' },
-      { user: true, agent: false, text: '先不改指令，帮我在报告里给这笔加个备注' },
+      { user: true, agent: false, who: '林晓', initial: '林', text: '先不改指令，帮我在报告里给这笔加个备注' },
       { user: false, agent: true, working: true, finished: false, text: '正在更新「对账 / 2026-10-26」…', textStyle: 'color: #858585' },
     ] : [];
     const thread = followup.concat(this.state.sent);
@@ -211,7 +214,7 @@ class Component extends DCLogic {
         }
         const text = draft.trim();
         const reply = { user: false, agent: true, working: true, finished: false, text: '正在查看…', textStyle: 'color: #858585' };
-        this.setState({ draft: '', replying: true, sent: this.state.sent.concat([{ user: true, agent: false, text }, reply]) });
+        this.setState({ draft: '', replying: true, sent: this.state.sent.concat([{ user: true, agent: false, who: '你', initial: '你', text }, reply]) });
         this.timers.push(setTimeout(() => {
           const sent = this.state.sent.slice(0, -1).concat([{ user: false, agent: true, working: false, finished: true, text: '查过了：三笔差异里两笔是跨日订单，今晚会自动对上；Stripe 那笔需要人工补退款状态，已在报告里标出。', textStyle: '' }]);
           this.setState({ replying: false, sent });
