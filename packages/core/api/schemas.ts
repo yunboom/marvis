@@ -989,6 +989,8 @@ export const ChatMessageSchema = z.object({
   // Optional additive data degrades independently: a malformed suggestion
   // must not hide the assistant reply that contains it.
   quick_actions: z.array(ChatQuickActionSchema).catch([]).optional().default([]),
+  // Who sent a user message; absent on older servers and assistant rows.
+  sender_user_id: z.string().nullable().catch(null).optional(),
 }).loose();
 
 export const ChatMessageListSchema = z.array(ChatMessageSchema).default([]);

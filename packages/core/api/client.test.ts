@@ -1820,6 +1820,43 @@ describe("ApiClient", () => {
       ]);
     });
 
+    it("keeps a message whose sender is malformed and reads a valid sender", async () => {
+      const messages = [
+        {
+          id: "m1",
+          chat_session_id: "session-1",
+          role: "user",
+          content: "first",
+          task_id: "task-1",
+          created_at: "2026-06-01T00:00:00Z",
+          sender_user_id: "user-2",
+        },
+        {
+          id: "m2",
+          chat_session_id: "session-1",
+          role: "user",
+          content: "second",
+          task_id: "task-2",
+          created_at: "2026-06-01T00:00:01Z",
+          sender_user_id: 42,
+        },
+        {
+          id: "m3",
+          chat_session_id: "session-1",
+          role: "assistant",
+          content: "reply",
+          task_id: "task-2",
+          created_at: "2026-06-01T00:00:02Z",
+        },
+      ];
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(messages, 200)));
+
+      const client = new ApiClient("https://api.example.test");
+      const parsed = await client.listChatMessages("session-1");
+
+      expect(parsed.map((m) => m.sender_user_id)).toEqual(["user-2", null, undefined]);
+    });
+
     it("falls back to an empty page for a malformed paged response", async () => {
       vi.stubGlobal(
         "fetch",

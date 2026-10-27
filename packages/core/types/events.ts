@@ -489,6 +489,8 @@ export interface ChatMessageEventPayload {
   content: string;
   task_id?: string;
   created_at: string;
+  /** The member who sent the message; absent on older servers. */
+  sender_user_id?: string;
 }
 
 export interface ChatDonePayload {

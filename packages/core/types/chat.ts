@@ -172,6 +172,12 @@ export interface ChatMessage {
   message_kind?: ChatMessageKind;
   /** Up to three server-validated follow-ups generated with this reply. */
   quick_actions?: ChatQuickAction[];
+  /**
+   * The member who sent a user message (the initiator of the turn it
+   * started). Null or absent on assistant rows, on older servers and on turns
+   * with no initiator; surfaces showing senders fall back to the creator.
+   */
+  sender_user_id?: string | null;
 }
 
 export interface ChatMessagesCursor {
