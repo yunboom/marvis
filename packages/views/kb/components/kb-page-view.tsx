@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronDown, Clock, Info, Link2, List, MessageSquare, MoreHorizontal, ShieldCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ApiError } from "@marvis/core/api";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import {
@@ -248,7 +249,9 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   const scroller = useRef<HTMLDivElement>(null);
 
   const { data: base } = useQuery(kbBaseDetailOptions(wsId, kbSlug));
-  const { data: page, isLoading, isError } = useQuery(kbPageOptions(wsId, pageId, draft));
+  const { data: page, isLoading, isError, error } = useQuery(kbPageOptions(wsId, pageId, draft));
+  // Someone else's draft the reader may not see stays an error, not the published page.
+  const draftForbidden = !!draft && error instanceof ApiError && error.status === 403;
   // A draft copy is compared with the published page.
   const { data: published } = useQuery({
     ...kbPageOptions(wsId, pageId, ""),
@@ -290,7 +293,11 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
           <span className="text-body text-muted-foreground">{base?.name}</span>
         </PageHeader>
         <div className="flex flex-1 items-center justify-center text-body text-muted-foreground">
-          {isError || (!isLoading && !page?.id) ? t(($) => $.page.not_found) : null}
+          {draftForbidden
+            ? t(($) => $.page.draft_forbidden)
+            : isError || (!isLoading && !page?.id)
+              ? t(($) => $.page.not_found)
+              : null}
         </div>
       </div>
     );

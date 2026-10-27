@@ -14,6 +14,14 @@ import { KbStalePagesPage } from "./kb-stale";
 import { KbShell } from "./kb-shell";
 
 vi.mock("@marvis/core/api", () => ({
+  ApiError: class ApiError extends Error {
+    constructor(
+      message: string,
+      readonly status: number,
+    ) {
+      super(message);
+    }
+  },
   api: {
     listKnowledgeBases: vi.fn(),
     getKnowledgeBase: vi.fn(),
@@ -519,6 +527,14 @@ describe("KbPageView", () => {
     mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=d-1&view=diff"));
 
     expect(await screen.findByText("This draft does not change this page")).toBeInTheDocument();
+  });
+
+  it("says so when someone else's draft may not be read", async () => {
+    const { ApiError } = await import("@marvis/core/api");
+    mocked.getKnowledgeBasePage.mockRejectedValue(new ApiError("forbidden", 403, "Forbidden"));
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb", "draft=draft-x"));
+
+    expect(await screen.findByText("You don't have access to this draft")).toBeInTheDocument();
   });
 
   it("reports a missing page", async () => {
