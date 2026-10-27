@@ -1857,13 +1857,11 @@ Judge from the descriptions above which knowledge base, if any, helps with the c
 
 - `marvis kb get <slug>` — read the `schema` field it returns: how pages are laid out and what each page type and field means.
 - `marvis kb search "<query>" [--kb <slug>]` — find pages by keyword.
-- `marvis kb page list <slug> [--parent <slug>:<path>]` — the table of contents. Without `--parent` it lists the top-level pages; with it, the child pages of the given page. Each comes with a one-line description.
+- `marvis kb page list <slug> [--parent <slug>:<path>]` — lists the knowledge base's table of contents, each entry with a short description of the page.
 - `marvis kb page fetch <slug>:<path>` — read a page.
 
 More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:
 
-- Ingest: write new knowledge, lessons and key decisions from your work back into the knowledge base.
-- Health check: find outdated, contradictory or missing content and record it.
 ```
 
 中文对照
@@ -1884,13 +1882,11 @@ More operations are in the `marvis-platform` skill, under `references/knowledge-
 
 - `marvis kb get <slug>` — 读取返回的 `schema` 字段：知识库的页面结构和各类页面、字段的定义。
 - `marvis kb search "<关键词>" [--kb <slug>]` — 按关键词找页面。
-- `marvis kb page list <slug> [--parent <slug>:<路径>]` — 像一本书的目录：不带 `--parent` 列出最顶层的页面，带上则列出指定页的子页面，每页附一句说明。
+- `marvis kb page list <slug> [--parent <slug>:<路径>]` — 列出知识库目录，每行目录附带该页的大致描述
 - `marvis kb page fetch <slug>:<路径>` — 读页面。
 
 更多操作见 `marvis-platform` skill 的 `references/knowledge-bases.md`：
 
-- 收录：把工作中得到的新知识、经验教训和重要决策写回知识库。
-- 健康检查：找出过期、互相矛盾或缺失的内容并记录下来。
 ```
 
 8.2.1 「Mentions」一节加一行
@@ -1947,7 +1943,7 @@ The slug identifies the knowledge base in commands and links. It uses only lower
 
 People own the purpose, and agents read it before every change. Write it in four sections of plain sentences, under 40 lines: who the readers are and what they use it for; what belongs here; what does not belong here and where it lives instead; 3 to 8 questions readers come here to answer. Write it in the member's language; pages are written in the same language.
 
-The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema: start from the default, change only what needs changing, and keep its nine sections (roles, sections, page format, evidence, contradictions and outdated content, links, operations, before submitting, changing this schema). Also keep the `type`, `title` and `description` fields and claims with footnotes; agents depend on them. Divide sections by system, domain and workflow, not by code layout or page type, and give each section one line on what goes there. Adapt common types, page skeletons, tags and review periods to the team. Get the default schema with the command below and use it as a reference when you write one.
+The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema: Get the default schema with the command below and use it as a reference when you write one.
 
     marvis kb schema templates
 
@@ -1956,7 +1952,7 @@ Pages follow Open Knowledge Format v0.2, and a knowledge base can be exported as
     marvis kb create --name "Payment troubleshooting" --slug pay-troubleshoot \
         --description "Payment and order flows, with troubleshooting steps" --purpose-file ./purpose.md --schema-mode default
 
-Change the name, description, purpose or schema with `kb update`. Changes take effect on save, without a change request, and only the knowledge base's creator and the workspace's owners and admins can make them. The schema decides how every later page is written, so confirm with the member before you change it; existing pages are not adjusted to a new schema automatically.
+Change the name, description, purpose or schema with `kb update`. Changes take effect on save.
 
     marvis kb update pay-troubleshoot --schema-mode custom --schema-file ./schema.md
 
@@ -2092,7 +2088,7 @@ slug 是知识库在命令和链接里的标识，只用小写字母、数字和
 
 目标由人定，智能体每次改动前都会读。分四节，用平实的句子，40 行以内：读者是谁、读了用来做什么；收录哪些内容；不收哪些内容，以及这些内容在哪里；读者常来查的 3 到8 个问题。用成员的语言写，页面也用同一种语言。
 
-Schema 告诉维护知识库的智能体怎么组织和书写页面。多数知识库直接用内置的默认 Schema，它只读，随平台更新。团队需要自己的分区或页面类型时，改用自定义 Schema：从默认 Schema出发，只改需要改的部分，保留九节结构（分工、分区、页面格式、证据、矛盾与过时、链接、维护操作、提交前、修改本 Schema），也保留 `type`、`title`、`description` 三个字段和论断、脚注，智能体依赖它们。分区按系统、领域和流程划分，不照搬代码目录，也不按页面类型分，每个分区写一句放什么。常用类型、页面骨架、标签、复核周期按团队调整。默认Schema 用下面的命令取出，可以当作写 Schema 的参考示例。
+Schema 告诉维护知识库的智能体怎么组织和书写页面。多数知识库直接用内置的默认 Schema，它只读，随平台更新。团队需要自己的分区或页面类型时，改用自定义 Schema：默认Schema 用下面的命令取出，可以当作写 Schema 的参考示例。
 
     marvis kb schema templates
 
@@ -2101,7 +2097,7 @@ Schema 告诉维护知识库的智能体怎么组织和书写页面。多数知�
     marvis kb create --name "支付排障手册" --slug pay-troubleshoot \
         --description "支付、订单链路与排障步骤" --purpose-file ./purpose.md --schema-mode default
 
-修改名称、简介、目标或 Schema 用 `kb update`，保存即生效，不走变更请求，只有知识库创建者和工作区的 owner、admin 能改。Schema 决定之后每一页怎么写，改之前先和成员确认；已有的页面不会自动按新 Schema 调整。
+修改名称、简介、目标或 Schema 用 `kb update`，保存即生效。
 
     marvis kb update pay-troubleshoot --schema-mode custom --schema-file ./schema.md
 

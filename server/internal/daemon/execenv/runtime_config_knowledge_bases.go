@@ -17,11 +17,9 @@ const (
 		"Judge from the descriptions above which knowledge base, if any, helps with the current work, and load only what you need:\n\n" +
 		"- `marvis kb get <slug>` — read the `schema` field it returns: how pages are laid out and what each page type and field means.\n" +
 		"- `marvis kb search \"<query>\" [--kb <slug>]` — find pages by keyword.\n" +
-		"- `marvis kb page list <slug> [--parent <slug>:<path>]` — the table of contents. Without `--parent` it lists the top-level pages; with it, the child pages of the given page. Each comes with a one-line description.\n" +
+		"- `marvis kb page list <slug> [--parent <slug>:<path>]` — lists the knowledge base's table of contents, each entry with a short description of the page.\n" +
 		"- `marvis kb page fetch <slug>:<path>` — read a page.\n\n" +
-		"More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:\n\n" +
-		"- Ingest: write new knowledge, lessons and key decisions from your work back into the knowledge base.\n" +
-		"- Health check: find outdated, contradictory or missing content and record it.\n\n"
+		"More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:\n\n"
 )
 
 // writeKnowledgeBases emits the Knowledge Bases section (spec 8.2): the
