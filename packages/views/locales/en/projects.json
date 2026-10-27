@@ -182,41 +182,5 @@
     "direction_desc": "Descending",
     "section_columns": "Columns",
     "view": "View"
-  },
-  "icon_picker": {
-    "glyphs": {
-      "folder": "Folder",
-      "briefcase": "Briefcase",
-      "rocket": "Rocket",
-      "target": "Target",
-      "flag": "Flag",
-      "compass": "Compass",
-      "layers": "Layers",
-      "box": "Box",
-      "code": "Code",
-      "terminal": "Terminal",
-      "git-branch": "Branch",
-      "database": "Database",
-      "server": "Server",
-      "cloud": "Cloud",
-      "smartphone": "Phone",
-      "monitor": "Monitor",
-      "palette": "Palette",
-      "pen-tool": "Pen",
-      "book-open": "Book",
-      "file-text": "Document",
-      "megaphone": "Megaphone",
-      "chart-line": "Chart",
-      "lightbulb": "Light bulb",
-      "sparkles": "Sparkles",
-      "users": "People",
-      "shield": "Shield",
-      "bug": "Bug",
-      "wrench": "Wrench",
-      "calendar": "Calendar",
-      "mountain": "Mountain",
-      "leaf": "Leaf",
-      "feather": "Feather"
-    }
   }
 }

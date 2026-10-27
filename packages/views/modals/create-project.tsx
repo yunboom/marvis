@@ -28,7 +28,6 @@ import {
   PROJECT_STATUS_CONFIG,
   PROJECT_STATUS_ORDER,
   PROJECT_PRIORITY_ORDER,
-  parseProjectIcon,
 } from "@marvis/core/projects/config";
 import { splitGithubUrlRef } from "@marvis/core/github";
 import { useWorkspaceId } from "@marvis/core/hooks";
@@ -49,7 +48,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@marvis/ui/components/u
 import { Tooltip, TooltipTrigger, TooltipContent } from "@marvis/ui/components/ui/tooltip";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { Button } from "@marvis/ui/components/ui/button";
-import { ProjectIconPicker } from "../projects/components/project-icon-picker";
+import { EmojiPicker } from "@marvis/ui/components/common/emoji-picker";
 import { ContentEditor, type ContentEditorRef, TitleEditor } from "../editor";
 import { PriorityIcon } from "../issues/components/priority-icon";
 import { ActorAvatar } from "../common/actor-avatar";
@@ -168,14 +167,14 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
   const [priority, setPriority] = useState<ProjectPriority>(draft.priority);
   const [leadType, setLeadType] = useState<"member" | "agent" | undefined>(draft.leadType);
   const [leadId, setLeadId] = useState<string | undefined>(draft.leadId);
-  // Drafts saved before icons became glyph keys may still hold an emoji.
-  const [icon, setIcon] = useState<string | undefined>(parseProjectIcon(draft.icon) ?? undefined);
+  const [icon, setIcon] = useState<string | undefined>(draft.icon);
   const [startDate, setStartDate] = useState<string>(draft.startDate ?? "");
   const [dueDate, setDueDate] = useState<string>(draft.dueDate ?? "");
   // Dates are collapsed into the ⋯ overflow by default (progressive
   // disclosure, mirroring create-issue); these flip a pill inline + open.
   const [startDatePickerOpen, setStartDatePickerOpen] = useState(false);
   const [dueDatePickerOpen, setDueDatePickerOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   // Repos selected to attach as github_repo resources after the project is
@@ -527,17 +526,35 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        <div className="px-5 pb-2 shrink-0 flex items-center gap-3">
-          <ProjectIconPicker
-            icon={icon}
-            label={t(($) => $.create_project.icon_tooltip)}
-            onChange={updateIcon}
-          />
+        <div className="px-5 pb-2 shrink-0">
+          <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
+            <TooltipHint label={t(($) => $.create_project.icon_tooltip)}>
+              <PopoverTrigger
+                render={
+                  <button
+                    type="button"
+                    className="text-display-sm cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
+                    aria-label={t(($) => $.create_project.icon_tooltip)}
+                  >
+                    {icon || "📁"}
+                  </button>
+                }
+              />
+            </TooltipHint>
+            <PopoverContent align="start" className="w-auto p-0">
+              <EmojiPicker
+                onSelect={(emoji) => {
+                  updateIcon(emoji);
+                  setIconPickerOpen(false);
+                }}
+              />
+            </PopoverContent>
+          </Popover>
           <TitleEditor
             autoFocus
             defaultValue={draft.title}
             placeholder={t(($) => $.create_project.title_placeholder)}
-            className="min-w-0 flex-1 text-title font-semibold"
+            className="text-title font-semibold"
             onChange={(v) => updateTitle(v)}
             onSubmit={handleSubmit}
           />

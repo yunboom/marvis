@@ -218,7 +218,7 @@ describe("Board grouped by project", () => {
             visibleStatuses={["todo"]}
             onMoveIssue={() => {}}
             projectMap={
-              new Map([[ACME_ID, makeProject(ACME_ID, "Acme Corp", "rocket")]])
+              new Map([[ACME_ID, makeProject(ACME_ID, "Acme Corp", "🚀")]])
             }
             groupBranches={makeGroupBranches(descriptors, issues)}
           />
@@ -279,7 +279,7 @@ describe("Board grouped by project", () => {
     // which renders the same title text next to a no-assignee actor glyph. The
     // icon is what tells the two apart.
     const header = screen.getByText("Acme Corp").parentElement!;
-    expect(header.querySelector("svg.lucide-rocket")).not.toBeNull();
+    expect(header.textContent).toContain("\u{1F680}");
   });
 
   it("puts each card in its own project column", () => {

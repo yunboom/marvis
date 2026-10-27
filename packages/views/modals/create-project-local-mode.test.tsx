@@ -74,7 +74,7 @@ vi.mock("@marvis/core/projects", () => ({
         description: "",
         status: "planned",
         priority: "none",
-        icon: "folder",
+        icon: "📁",
         leadId: null,
         leadType: null,
         startDate: null,

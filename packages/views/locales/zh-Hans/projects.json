@@ -180,41 +180,5 @@
     "direction_desc": "降序",
     "section_columns": "列",
     "view": "视图"
-  },
-  "icon_picker": {
-    "glyphs": {
-      "folder": "文件夹",
-      "briefcase": "公文包",
-      "rocket": "火箭",
-      "target": "靶心",
-      "flag": "旗帜",
-      "compass": "指南针",
-      "layers": "图层",
-      "box": "盒子",
-      "code": "代码",
-      "terminal": "终端",
-      "git-branch": "分支",
-      "database": "数据库",
-      "server": "服务器",
-      "cloud": "云",
-      "smartphone": "手机",
-      "monitor": "显示器",
-      "palette": "调色板",
-      "pen-tool": "钢笔",
-      "book-open": "书",
-      "file-text": "文档",
-      "megaphone": "喇叭",
-      "chart-line": "图表",
-      "lightbulb": "灯泡",
-      "sparkles": "星光",
-      "users": "成员",
-      "shield": "盾牌",
-      "bug": "缺陷",
-      "wrench": "扳手",
-      "calendar": "日历",
-      "mountain": "山",
-      "leaf": "叶子",
-      "feather": "羽毛"
-    }
   }
 }
