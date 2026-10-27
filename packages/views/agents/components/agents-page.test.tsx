@@ -154,6 +154,12 @@ vi.mock("./agent-list-toolbar", () => ({
   countActiveFilterDimensions: () => 0,
 }));
 vi.mock("../presence", () => ({ availabilityConfig: {} }));
+const integrationHintsRef = vi.hoisted(() => ({
+  current: new Set<string>() as ReadonlySet<string>,
+}));
+vi.mock("../use-agent-integration-hints", () => ({
+  useAgentIntegrationHints: () => integrationHintsRef.current,
+}));
 vi.mock("@marvis/ui/components/ui/skeleton", () => ({
   Skeleton: (props: Record<string, unknown>) => (
     <div data-testid="skeleton" {...props} />
@@ -241,6 +247,7 @@ function betaPrecedesAlpha(): boolean {
 }
 
 beforeEach(() => {
+  integrationHintsRef.current = new Set();
   mocks.agents = [ALPHA, BETA];
   mocks.agentsLoading = false;
   mocks.runCounts = [];
@@ -372,5 +379,19 @@ describe("AgentsPage search + model column (GitHub #9500)", () => {
 
     expect(screen.getByText("Model")).toBeInTheDocument();
     expect(screen.getAllByTitle("claude").length).toBeGreaterThan(0);
+  });
+});
+
+describe("AgentsPage integration hint", () => {
+  it("dots only the row of the agent that still needs integrations", () => {
+    integrationHintsRef.current = new Set([BETA.id]);
+
+    renderPage();
+
+    const dots = screen.getAllByTestId("agent-integration-hint-dot");
+    expect(dots).toHaveLength(1);
+    expect(dots[0]!.closest("[role='row'], a, li, div")?.textContent).toContain(
+      "Beta Agent",
+    );
   });
 });

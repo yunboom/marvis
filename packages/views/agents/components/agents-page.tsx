@@ -75,6 +75,8 @@ import {
 import { cn } from "@marvis/ui/lib/utils";
 import { availabilityConfig } from "../presence";
 import { AgentRowActions } from "./agent-row-actions";
+import { IntegrationHintDot } from "./integration-hint-dot";
+import { useAgentIntegrationHints } from "../use-agent-integration-hints";
 import {
   AgentListToolbar,
   countActiveFilterDimensions,
@@ -378,7 +380,13 @@ function CheckboxCell({
 // documented exception to the single-line rule — agents are few and
 // identity-rich, so this is the "team roster" form (GitHub org members,
 // Slack member list).
-function NameCell({ row }: { row: AgentListRow }) {
+function NameCell({
+  row,
+  integrationHinted,
+}: {
+  row: AgentListRow;
+  integrationHinted: boolean;
+}) {
   const { t } = useT("agents");
   const { agent, isOwnedByMe } = row;
   const isArchived = !!agent.archived_at;
@@ -416,6 +424,7 @@ function NameCell({ row }: { row: AgentListRow }) {
               {t(($) => $.row.you)}
             </span>
           )}
+          {integrationHinted && <IntegrationHintDot />}
         </div>
         {agent.description ? (
           <div className="mt-0.5 truncate text-label text-muted-foreground">
@@ -786,6 +795,7 @@ export function AgentsPage(_props: AgentsPageProps = {}) {
   const navigation = useNavigation();
   const rowLink = useRowLink();
   const currentUser = useAuthStore((s) => s.user);
+  const integrationHints = useAgentIntegrationHints(wsId);
 
   const {
     data: agents = [],
@@ -1135,7 +1145,10 @@ export function AgentsPage(_props: AgentsPageProps = {}) {
                         checked={selectedIds.has(row.agent.id)}
                         onToggle={() => toggleSelected(row.agent.id)}
                       />
-                      <NameCell row={row} />
+                      <NameCell
+                        row={row}
+                        integrationHinted={integrationHints.has(row.agent.id)}
+                      />
                       {isColVisible("status") ? (
                         <StatusCell row={row} />
                       ) : (
