@@ -22,7 +22,11 @@
     },
     "scope_all": "전체",
     "no_matches": "일치하는 자동화가 없습니다",
-    "retry": "다시 시도"
+    "retry": "다시 시도",
+    "from_template": "템플릿으로 만들기",
+    "never_run": "실행 기록 없음",
+    "next_run_at": "다음 {{time}}",
+    "created_at": "{{date}} 생성"
   },
   "status": {
     "active": "활성",
@@ -464,18 +468,16 @@
     "sort_by": "정렬",
     "direction_asc": "오름차순",
     "direction_desc": "내림차순",
-    "section_columns": "열"
+    "section_columns": "표시 항목"
   },
   "actions": {
     "row_menu": "자동화 작업",
     "pause": "일시중지",
     "resume": "재개",
     "delete": "삭제",
-    "selected_other": "{{count}}개 선택됨",
-    "clear_selection": "선택 해제",
     "delete_dialog": {
       "title": "자동화를 삭제할까요?",
-      "description_other": "자동화 {{count}}개와 실행 기록이 영구 삭제됩니다.",
+      "description": "\"{{name}}\"와(과) 실행 기록이 영구 삭제됩니다.",
       "warning": "이 작업은 되돌릴 수 없습니다.",
       "cancel": "취소",
       "confirm": "영구 삭제",

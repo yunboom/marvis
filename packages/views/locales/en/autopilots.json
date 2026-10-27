@@ -22,7 +22,11 @@
     },
     "scope_all": "All",
     "no_matches": "No automations match",
-    "retry": "Retry"
+    "retry": "Retry",
+    "from_template": "From a template",
+    "never_run": "Never run",
+    "next_run_at": "Next {{time}}",
+    "created_at": "Created {{date}}"
   },
   "status": {
     "active": "Active",
@@ -465,20 +469,16 @@
     "sort_by": "Sort by",
     "direction_asc": "Ascending",
     "direction_desc": "Descending",
-    "section_columns": "Columns"
+    "section_columns": "Card fields"
   },
   "actions": {
     "row_menu": "Automation actions",
     "pause": "Pause",
     "resume": "Resume",
     "delete": "Delete",
-    "selected_one": "{{count}} selected",
-    "selected_other": "{{count}} selected",
-    "clear_selection": "Clear selection",
     "delete_dialog": {
       "title": "Delete automation?",
-      "description_one": "This will permanently delete \"{{name}}\" and its run history.",
-      "description_other": "This will permanently delete {{count}} automations and their run history.",
+      "description": "This will permanently delete \"{{name}}\" and its run history.",
       "warning": "This action cannot be undone.",
       "cancel": "Cancel",
       "confirm": "Delete permanently",

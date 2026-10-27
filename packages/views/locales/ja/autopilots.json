@@ -22,7 +22,11 @@
     },
     "scope_all": "すべて",
     "no_matches": "該当する自動化はありません",
-    "retry": "再試行"
+    "retry": "再試行",
+    "from_template": "テンプレートから作成",
+    "never_run": "未実行",
+    "next_run_at": "次回 {{time}}",
+    "created_at": "{{date}} 作成"
   },
   "status": {
     "active": "アクティブ",
@@ -464,18 +468,16 @@
     "sort_by": "並び替え",
     "direction_asc": "昇順",
     "direction_desc": "降順",
-    "section_columns": "列"
+    "section_columns": "表示項目"
   },
   "actions": {
     "row_menu": "自動化の操作",
     "pause": "一時停止",
     "resume": "再開",
     "delete": "削除",
-    "selected_other": "{{count}} 件選択中",
-    "clear_selection": "選択を解除",
     "delete_dialog": {
       "title": "自動化を削除しますか？",
-      "description_other": "{{count}} 件の自動化とその実行履歴を完全に削除します。",
+      "description": "「{{name}}」とその実行履歴を完全に削除します。",
       "warning": "この操作は取り消せません。",
       "cancel": "キャンセル",
       "confirm": "完全に削除",

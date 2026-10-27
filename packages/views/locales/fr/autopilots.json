@@ -22,7 +22,11 @@
     },
     "scope_all": "Toutes",
     "no_matches": "Aucune automatisation correspondante",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "from_template": "À partir d'un modèle",
+    "never_run": "Jamais exécutée",
+    "next_run_at": "Prochaine {{time}}",
+    "created_at": "Créée le {{date}}"
   },
   "status": {
     "active": "Active",
@@ -465,20 +469,16 @@
     "sort_by": "Trier par",
     "direction_asc": "Croissant",
     "direction_desc": "Décroissant",
-    "section_columns": "Colonnes"
+    "section_columns": "Champs affichés"
   },
   "actions": {
     "row_menu": "Actions de l'automatisation",
     "pause": "Mettre en pause",
     "resume": "Reprendre",
     "delete": "Supprimer",
-    "selected_one": "{{count}} sélectionnée",
-    "selected_other": "{{count}} sélectionnées",
-    "clear_selection": "Effacer la sélection",
     "delete_dialog": {
       "title": "Supprimer l'automatisation ?",
-      "description_one": "« {{name}} » et son historique d'exécutions seront définitivement supprimés.",
-      "description_other": "{{count}} automatisations et leur historique d'exécutions seront définitivement supprimés.",
+      "description": "« {{name}} » et son historique d'exécutions seront définitivement supprimés.",
       "warning": "Cette action est irréversible.",
       "cancel": "Annuler",
       "confirm": "Supprimer définitivement",
