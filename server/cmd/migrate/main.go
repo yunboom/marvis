@@ -223,6 +223,7 @@ var concurrentIndexCleanups = map[string]string{
 	"639_kb_mr_active_draft_uidx":                               "kb_mr_active_draft_uidx",
 	"642_kb_mr_event_mr_idx":                                    "kb_mr_event_mr_idx",
 	"644_kb_base_ws_slug_live_uidx":                             "kb_base_ws_slug_live_uidx",
+	"647_autopilot_run_chat_session_uidx":                       "autopilot_run_chat_session_uidx",
 	"035_task_queue_issue_id_index":                             "idx_agent_task_queue_issue_id",
 	"067_task_queue_claim_candidate_index":                      "idx_agent_task_queue_claim_candidates",
 	"074_task_usage_updated_at_index":                           "idx_task_usage_updated_at",

@@ -414,6 +414,17 @@ SELECT count(*)::bigint FROM updated_run;
 SELECT * FROM autopilot_run
 WHERE id = $1;
 
+-- name: LockAutopilotRunForUpdate :one
+-- Serializes get-or-create of a run's follow-up chat session.
+SELECT * FROM autopilot_run
+WHERE id = $1
+FOR UPDATE;
+
+-- name: SetAutopilotRunChatSession :exec
+UPDATE autopilot_run
+SET chat_session_id = $2
+WHERE id = $1;
+
 -- name: ListAutopilotRuns :many
 SELECT * FROM autopilot_run
 WHERE autopilot_id = $1

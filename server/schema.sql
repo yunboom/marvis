@@ -1607,6 +1607,7 @@ CREATE TABLE public.autopilot_run (
     webhook_delivery_id uuid,
     quota_reservation_id uuid,
     reason_code text,
+    chat_session_id uuid,
     CONSTRAINT autopilot_run_source_check CHECK ((source = ANY (ARRAY['schedule'::text, 'manual'::text, 'webhook'::text, 'api'::text]))),
     CONSTRAINT autopilot_run_status_check CHECK ((status = ANY (ARRAY['issue_created'::text, 'running'::text, 'completed'::text, 'failed'::text, 'skipped'::text])))
 );
@@ -5420,6 +5421,12 @@ CREATE INDEX agent_task_wakeup_terminal_idx ON public.agent_task_queue USING btr
 --
 
 CREATE INDEX agent_to_label_label_idx ON public.agent_to_label USING btree (label_id);
+
+--
+-- Name: autopilot_run_chat_session_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX autopilot_run_chat_session_uidx ON public.autopilot_run USING btree (chat_session_id) WHERE (chat_session_id IS NOT NULL);
 
 --
 -- Name: channel_chat_context_generation_session_revision_idx; Type: INDEX; Schema: public; Owner: -
