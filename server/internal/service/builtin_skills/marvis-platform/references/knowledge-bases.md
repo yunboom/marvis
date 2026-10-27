@@ -12,7 +12,7 @@ The slug identifies the knowledge base in commands and links. It uses only lower
 
 People own the purpose, and agents read it before every change. Write it in four sections of plain sentences, under 40 lines: who the readers are and what they use it for; what belongs here; what does not belong here and where it lives instead; 3 to 8 questions readers come here to answer. Write it in the member's language; pages are written in the same language.
 
-The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema: start from the default, change only what needs changing, and keep its nine sections (roles, sections, page format, evidence, contradictions and outdated content, links, operations, before submitting, changing this schema). Also keep the `type`, `title` and `description` fields and claims with footnotes; agents depend on them. Divide sections by system, domain and workflow, not by code layout or page type, and give each section one line on what goes there. Adapt common types, page skeletons, tags and review periods to the team. Get the default schema with the command below and use it as a reference when you write one.
+The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema. When you write one, use the default schema as a reference; get it with the command below.
 
     marvis kb schema templates
 
@@ -21,7 +21,7 @@ Pages follow Open Knowledge Format v0.2, and a knowledge base can be exported as
     marvis kb create --name "Payment troubleshooting" --slug pay-troubleshoot \
         --description "Payment and order flows, with troubleshooting steps" --purpose-file ./purpose.md --schema-mode default
 
-Change the name, description, purpose or schema with `kb update`. Changes take effect on save, without a change request, and only the knowledge base's creator and the workspace's owners and admins can make them. The schema decides how every later page is written, so confirm with the member before you change it; existing pages are not adjusted to a new schema automatically.
+Change the name, description, purpose or schema with `kb update`. Changes take effect on save.
 
     marvis kb update pay-troubleshoot --schema-mode custom --schema-file ./schema.md
 
