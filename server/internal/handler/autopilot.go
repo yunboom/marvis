@@ -178,6 +178,12 @@ type AutopilotRunResponse struct {
 	TriggerPayload any     `json:"trigger_payload"`
 	Result         any     `json:"result"`
 	CreatedAt      string  `json:"created_at"`
+	// ChatSessionID is the run's follow-up conversation (run_only runs only);
+	// nil until the first follow-up is sent.
+	ChatSessionID *string `json:"chat_session_id"`
+	// AgentID is the agent the run's task executed on. Only the run detail
+	// endpoint resolves it; it is omitted from lists.
+	AgentID *string `json:"agent_id,omitempty"`
 }
 
 // ── Converters ──────────────────────────────────────────────────────────────
@@ -340,6 +346,7 @@ func runToResponse(r db.AutopilotRun) AutopilotRunResponse {
 		TriggerPayload: payload,
 		Result:         result,
 		CreatedAt:      timestampToString(r.CreatedAt),
+		ChatSessionID:  uuidToPtr(r.ChatSessionID),
 	}
 }
 
@@ -2331,7 +2338,19 @@ func (h *Handler) GetAutopilotRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, runToResponse(run))
+	resp := runToResponse(run)
+	if run.TaskID.Valid {
+		task, err := h.Queries.GetAgentTask(r.Context(), run.TaskID)
+		if err != nil && !isNotFound(err) {
+			writeError(w, http.StatusInternalServerError, "failed to load run task")
+			return
+		}
+		if err == nil {
+			resp.AgentID = uuidToPtr(task.AgentID)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // ── Manual trigger ──────────────────────────────────────────────────────────
