@@ -13,6 +13,7 @@ import { useT, useTimeAgo } from "../../i18n";
 import { pageHeadings } from "../utils/kb-markdown";
 import { KB_TAG, sourceKind } from "./kb-cite-card";
 import { formatShortDate, pageTags, pageVerifications, useVerifierName } from "./kb-page-body";
+import { withDraft } from "./kb-page-tree";
 
 export function KbPanel({
   title,
@@ -68,11 +69,14 @@ function sourceSubtitle(source: KbSource): string {
 export function KbInfoPanel({
   page,
   kbSlug,
+  draft = "",
   onClose,
   onOpenSource,
 }: {
   page: KbPage;
   kbSlug: string;
+  /** The draft being read; page links keep it. */
+  draft?: string;
   onClose: () => void;
   onOpenSource: (source: KbSource) => void;
 }) {
@@ -142,7 +146,7 @@ export function KbInfoPanel({
       <Section title={t(($) => $.info.backlinks)}>
         <div className="flex flex-col gap-1 text-label">
           {page.backlinks.map((link) => (
-            <AppLink key={link.id} href={p.kbPage(kbSlug, link.id)} className="text-info hover:underline">
+            <AppLink key={link.id} href={withDraft(p.kbPage(kbSlug, link.id), draft)} className="text-info hover:underline">
               {link.title}
             </AppLink>
           ))}

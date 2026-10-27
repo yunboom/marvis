@@ -534,7 +534,7 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
               <>
                 {mr.checks.lint.map((finding, index) => (
                   <span key={index} className="flex items-start gap-2 text-label">
-                    <span className="mt-1.5">
+                    <span className="flex h-lh shrink-0 items-center">
                       <KbStateDot dot={finding.severity === "error" ? "red" : "amber"} />
                     </span>
                     <span className="min-w-0 flex-1 break-words">{lintText(finding)}</span>

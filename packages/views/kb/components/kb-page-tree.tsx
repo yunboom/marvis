@@ -24,6 +24,14 @@ export function withDraft(href: string, draft: string): string {
   return draft ? `${href}?draft=${encodeURIComponent(draft)}` : href;
 }
 
+/** The `view` value that shows a page's changes in the draft instead of its text. */
+export const KB_DIFF_VIEW = "diff";
+
+/** A page's changes in a draft: ?draft=<id>&view=diff. */
+export function withDraftDiff(href: string, draft: string): string {
+  return `${withDraft(href, draft)}&view=${KB_DIFF_VIEW}`;
+}
+
 interface TreeContext {
   kbSlug: string;
   draft: string;
@@ -36,7 +44,7 @@ function DraftTag({ change }: { change: DraftChange }) {
   const { t } = useT("kb");
 
   return (
-    <span className="shrink-0 rounded-md px-1.5 text-caption leading-[17px] text-info ring-1 ring-info/50 ring-inset">
+    <span className="shrink-0 rounded-md px-1.5 text-caption leading-[17px] text-status-review ring-1 ring-status-review/50 ring-inset">
       {t(($) => $.tree.draft[change])}
     </span>
   );

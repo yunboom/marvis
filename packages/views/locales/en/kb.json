@@ -96,11 +96,13 @@
   },
   "draft": {
     "label": "Draft",
-    "single": "Your draft changes this page and is not merged yet. Others still see the published version.",
-    "multi_one": "You have {{count}} draft changing this page, not merged yet. Others still see the published version.",
-    "multi_other": "You have {{count}} drafts changing this page, none merged yet. Others still see the published version.",
-    "published": "Published",
+    "single": "Your draft changes this page and is not merged yet. Others still see the official version.",
+    "multi_one": "You have {{count}} draft changing this page, not merged yet. Others still see the official version.",
+    "multi_other": "You have {{count}} drafts changing this page, none merged yet. Others still see the official version.",
+    "official": "Official",
     "draft": "Draft",
+    "diff": "Changes",
+    "diff_empty": "This draft does not change this page",
     "choose": "Choose draft",
     "origin": {
       "chat": "Chat “{{label}}”",

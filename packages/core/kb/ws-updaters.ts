@@ -21,8 +21,8 @@ export function invalidateKbJobs(qc: QueryClient, wsId: string) {
 }
 
 /**
- * A draft took writes: the job pages (their right-hand diff and checks) and
- * every tree level and page read through that draft. Tree and page keys end
+ * A draft took writes: the job pages and the draft's own detail (their diff
+ * and checks) and every tree level and page read through that draft. Tree and page keys end
  * with the draft they were read through. The published reads of the pages it
  * touched list their open drafts (the draft bar), so they refetch too.
  */
@@ -31,6 +31,7 @@ export function invalidateKbDraft(qc: QueryClient, wsId: string, draftId: string
   // A merge request's diff follows its draft; its key has no draft id.
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "review"] });
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "jobs"] });
+  void qc.invalidateQueries({ queryKey: kbKeys.draft(wsId, draftId) });
   for (const scope of ["level", "page"] as const) {
     void qc.invalidateQueries({
       queryKey: [...kbKeys.all(wsId), scope],

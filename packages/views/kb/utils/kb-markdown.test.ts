@@ -9,6 +9,7 @@ import {
   compareBlocks,
   inlineDiffMarkdown,
   isFootnoteDefinitionBlock,
+  kbPageLink,
   pageHeadings,
   parseKbRoute,
   prepareBlockMarkdown,
@@ -131,5 +132,23 @@ describe("parseKbRoute", () => {
       revisionId: "r1",
     });
     expect(parseKbRoute("/acme/issues/kb")).toEqual({ kbSlug: "", pageId: "", revisionId: "" });
+  });
+});
+
+describe("kbPageLink", () => {
+  it("reads a page link of the knowledge base, with or without the workspace slug", () => {
+    expect(kbPageLink("/kb/team/p/page-idem#b9", "team")).toEqual({ pageId: "page-idem", hash: "#b9" });
+    expect(kbPageLink("/acme/kb/team/p/p%201?x=1", "team")).toEqual({ pageId: "p 1", hash: "" });
+  });
+
+  it("ignores other knowledge bases, other routes and non-app links", () => {
+    expect(kbPageLink("/kb/other/p/page-idem", "team")).toBeNull();
+    expect(kbPageLink("/acme/kb/team/p/p1/history/r1", "team")).toBeNull();
+    expect(kbPageLink("/acme/issues/MAR-1", "team")).toBeNull();
+    expect(kbPageLink("#kb-cite-spec", "team")).toBeNull();
+    expect(kbPageLink("raw://raw-1", "team")).toBeNull();
+    expect(kbPageLink("https://example.com/kb/team/p/p1", "team")).toBeNull();
+    expect(kbPageLink("//example.com/kb/team/p/p1", "team")).toBeNull();
+    expect(kbPageLink(null, "team")).toBeNull();
   });
 });

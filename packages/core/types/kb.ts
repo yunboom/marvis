@@ -520,10 +520,27 @@ export interface KbDraftConflict {
   draft_lines: string;
 }
 
+/** A draft's format check findings and unresolved conflicts. */
+export interface KbDraftChecks {
+  lint: KbLintFinding[];
+  conflicts: KbDraftConflict[];
+}
+
 /** A job with its draft's changes and checks. */
 export interface KbJobDetail extends KbJob {
   pages: KbDraftPageChange[];
-  checks: { lint: KbLintFinding[]; conflicts: KbDraftConflict[] };
+  checks: KbDraftChecks;
+}
+
+/** A draft with its changed pages and checks. */
+export interface KbDraftDetail {
+  id: string;
+  knowledge_base_id: string;
+  title: string;
+  version: number;
+  status: KbDraftStatus;
+  pages: KbDraftPageChange[];
+  checks: KbDraftChecks;
 }
 
 export interface CreateKbJobRequest {

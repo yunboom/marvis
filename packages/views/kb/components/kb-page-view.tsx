@@ -1,13 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, Clock, Info, Link2, List, MessageSquare, MoreHorizontal, ShieldCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import { isOpenAnnotation, kbAnnotationListOptions, kbBaseDetailOptions, kbPageOptions } from "@marvis/core/kb/queries";
-import type { KbAnnotation, KbPage, KbPageDraft, KbSource } from "@marvis/core/types";
+import {
+  isOpenAnnotation,
+  kbAnnotationListOptions,
+  kbBaseDetailOptions,
+  kbDraftOptions,
+  kbPageOptions,
+} from "@marvis/core/kb/queries";
+import type { KbAnnotation, KbDraftPageChange, KbPage, KbPageDraft, KbSource } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Toggle } from "@marvis/ui/components/ui/toggle";
 import {
@@ -29,7 +35,8 @@ import { sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
 import { KbPageBody, pageTitle } from "./kb-page-body";
 import { KbAnnotationPanel, KbSelectionAnnotator } from "./kb-annotations";
 import { KbHistoryPanel, KbInfoPanel, KbTocPanel } from "./kb-page-panels";
-import { withDraft } from "./kb-page-tree";
+import { KbFileCard } from "./kb-diff";
+import { KB_DIFF_VIEW, withDraft, withDraftDiff } from "./kb-page-tree";
 import { useKbRawFilePreview } from "../manage/use-kb-raw-files";
 
 type Panel = "none" | "info" | "toc" | "history" | "annotations";
@@ -37,7 +44,10 @@ type Panel = "none" | "info" | "toc" | "history" | "annotations";
 // Header panel toggles share the reading page's muted icon look.
 const PANEL_TOGGLE = "text-muted-foreground aria-pressed:bg-surface-selected aria-pressed:text-foreground";
 
-// One side of the published / draft segmented switch.
+// The draft change of a page the draft creates: it has no official version.
+const DRAFT_ADDED = "added";
+
+// One side of the official / draft / diff segmented switch.
 const SEGMENT =
   "h-6 px-2.5 font-normal text-muted-foreground hover:bg-transparent aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm";
 
@@ -62,8 +72,23 @@ export function useDraftLabel() {
   );
 }
 
-/** Banner over a page the viewer has drafts for: published / draft switch. */
-export function KbDraftBar({ drafts, activeDraft }: { drafts: KbPageDraft[]; activeDraft: string }) {
+/**
+ * Banner over a page the viewer has drafts for: official / draft / diff
+ * switch. A page the draft creates has no official version to switch to.
+ */
+export function KbDraftBar({
+  drafts,
+  activeDraft,
+  diff = false,
+  pageDraftChange = "",
+}: {
+  drafts: KbPageDraft[];
+  activeDraft: string;
+  /** The page's changes in the draft are shown instead of its text. */
+  diff?: boolean;
+  /** The draft change of the page as read through `activeDraft`. */
+  pageDraftChange?: string;
+}) {
   const { t } = useT("kb");
   const { pathname, replace } = useNavigation();
   const timeAgo = useTimeAgo();
@@ -71,11 +96,14 @@ export function KbDraftBar({ drafts, activeDraft }: { drafts: KbPageDraft[]; act
   const selected = drafts.find((d) => d.id === activeDraft) ?? drafts[0];
   if (!selected) return null;
 
-  const show = (draftId: string) => replace(withDraft(pathname, draftId));
+  const added = (activeDraft ? pageDraftChange : selected.draft_change) === DRAFT_ADDED;
+  const showDraft = (draftId: string) => replace(withDraft(pathname, draftId));
+  const showDiff = (draftId: string) => replace(withDraftDiff(pathname, draftId));
+  const show = (draftId: string) => (diff ? showDiff(draftId) : showDraft(draftId));
 
   return (
-    <div className="mb-[18px] flex items-center gap-3 rounded-xl bg-info/5 px-3.5 py-2.5 text-label ring-1 ring-info/45 ring-inset">
-      <span className="rounded-md bg-info px-1.5 text-caption leading-5 text-primary-foreground">{t(($) => $.draft.label)}</span>
+    <div className="mb-[18px] flex items-center gap-3 rounded-xl bg-status-review/5 px-3.5 py-2.5 text-label ring-1 ring-status-review/45 ring-inset">
+      <span className="rounded-md bg-status-review px-1.5 text-caption leading-5 text-primary-foreground">{t(($) => $.draft.label)}</span>
       <span className="min-w-0 flex-1">
         {drafts.length > 1 ? t(($) => $.draft.multi, { count: drafts.length }) : t(($) => $.draft.single)}
       </span>
@@ -106,11 +134,16 @@ export function KbDraftBar({ drafts, activeDraft }: { drafts: KbPageDraft[]; act
         </DropdownMenu>
       )}
       <div role="group" className="flex shrink-0 rounded-lg bg-surface-sunken p-0.5">
-        <Toggle size="sm" pressed={!activeDraft} onPressedChange={() => replace(pathname)} className={SEGMENT}>
-          {t(($) => $.draft.published)}
-        </Toggle>
-        <Toggle size="sm" pressed={!!activeDraft} onPressedChange={() => show(selected.id)} className={SEGMENT}>
+        {!added && (
+          <Toggle size="sm" pressed={!activeDraft} onPressedChange={() => replace(pathname)} className={SEGMENT}>
+            {t(($) => $.draft.official)}
+          </Toggle>
+        )}
+        <Toggle size="sm" pressed={!!activeDraft && !diff} onPressedChange={() => showDraft(selected.id)} className={SEGMENT}>
           {t(($) => $.draft.draft)}
+        </Toggle>
+        <Toggle size="sm" pressed={!!activeDraft && diff} onPressedChange={() => showDiff(selected.id)} className={SEGMENT}>
+          {t(($) => $.draft.diff)}
         </Toggle>
       </div>
     </div>
@@ -209,6 +242,7 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   const rawPreview = useKbRawFilePreview(kbSlug);
   const rawFileActions = rawFileActionsProp ?? rawPreview.actions;
   const draft = searchParams.get("draft") ?? "";
+  const diff = !!draft && searchParams.get("view") === KB_DIFF_VIEW;
   const [panel, setPanel] = useState<Panel>("none");
   const [activeHeading, setActiveHeading] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -218,8 +252,10 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   // A draft copy is compared with the published page.
   const { data: published } = useQuery({
     ...kbPageOptions(wsId, pageId, ""),
-    enabled: !!wsId && !!pageId && !!draft && page?.draft_change === "modified",
+    enabled: !!wsId && !!pageId && !!draft && !diff && page?.draft_change === "modified",
   });
+  // The diff view shows this page's file card from the draft's changes.
+  const { data: draftDetail } = useQuery({ ...kbDraftOptions(wsId, draft), enabled: !!wsId && diff });
   const loaded = !!page && page.id === pageId;
   // Annotated sentences are marked while the annotation panel is open.
   const { data: annotations = [] } = useQuery({
@@ -264,6 +300,14 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   // Mainline reads list the viewer's drafts; a draft read of a page the
   // draft creates has no mainline to list them from.
   const drafts = page.drafts.length > 0 ? page.drafts : draft ? [syntheticDraft(draft, page)] : [];
+  const banners = (
+    <>
+      {drafts.length > 0 && (
+        <KbDraftBar drafts={drafts} activeDraft={draft} diff={diff} pageDraftChange={page.draft_change} />
+      )}
+      <PendingReviewBanner kbSlug={kbSlug} page={page} />
+    </>
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -294,14 +338,16 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
           <MessageSquare className="size-4" />
           {page.annotations_open > 0 && <span className="text-label tabular-nums">{page.annotations_open}</span>}
         </Toggle>
-        <Toggle
-          aria-label={t(($) => $.page.toc)}
-          pressed={panel === "toc"}
-          onPressedChange={() => togglePanel("toc")}
-          className={PANEL_TOGGLE}
-        >
-          <List className="size-4" />
-        </Toggle>
+        {!diff && (
+          <Toggle
+            aria-label={t(($) => $.page.toc)}
+            pressed={panel === "toc"}
+            onPressedChange={() => togglePanel("toc")}
+            className={PANEL_TOGGLE}
+          >
+            <List className="size-4" />
+          </Toggle>
+        )}
         <Toggle
           aria-label={t(($) => $.page.info)}
           pressed={panel === "info"}
@@ -336,19 +382,25 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
               panel === "none" ? "px-14 pt-9" : "px-8 pt-7",
             )}
           >
-            <KbPageBody
-              page={page}
-              published={published?.id === page.id ? published : null}
-              rawFileActions={rawFileActions}
-              onRawLink={rawPreview.openLinked}
-              annotatedQuotes={panel === "annotations" ? annotatedQuotes(annotations) : undefined}
-              banners={
-                <>
-                  {drafts.length > 0 && <KbDraftBar drafts={drafts} activeDraft={draft} />}
-                  <PendingReviewBanner kbSlug={kbSlug} page={page} />
-                </>
-              }
-            />
+            {diff ? (
+              <KbPageDiff
+                title={title}
+                banners={banners}
+                change={draftDetail?.id === draft ? (draftDetail.pages.find((c) => c.page_id === page.id) ?? null) : undefined}
+                pageHref={withDraft(p.kbPage(kbSlug, page.id), draft)}
+              />
+            ) : (
+              <KbPageBody
+                page={page}
+                published={published?.id === page.id ? published : null}
+                rawFileActions={rawFileActions}
+                onRawLink={rawPreview.openLinked}
+                annotatedQuotes={panel === "annotations" ? annotatedQuotes(annotations) : undefined}
+                kbSlug={kbSlug}
+                draft={draft}
+                banners={banners}
+              />
+            )}
           </article>
           <KbSelectionAnnotator
             container={scroller}
@@ -368,9 +420,9 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
           />
         )}
         {panel === "info" && (
-          <KbInfoPanel page={page} kbSlug={kbSlug} onClose={() => setPanel("none")} onOpenSource={openSource} />
+          <KbInfoPanel page={page} kbSlug={kbSlug} draft={draft} onClose={() => setPanel("none")} onOpenSource={openSource} />
         )}
-        {panel === "toc" && (
+        {panel === "toc" && !diff && (
           <KbTocPanel page={page} activeBlockId={activeHeading} onJump={jumpTo} onClose={() => setPanel("none")} />
         )}
         {panel === "history" && (
@@ -378,6 +430,34 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
         )}
       </div>
       {rawPreview.modal}
+    </div>
+  );
+}
+
+/**
+ * A page's changes in the draft being read, as its file card. `change` is
+ * undefined while the draft loads and null when the draft leaves the page as is.
+ */
+function KbPageDiff({
+  title,
+  banners,
+  change,
+  pageHref,
+}: {
+  title: string;
+  banners: ReactNode;
+  change: KbDraftPageChange | null | undefined;
+  pageHref: string;
+}) {
+  const { t } = useT("kb");
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div className="kb-doc">
+      <h1 className="mb-[18px] text-display-sm font-semibold">{title}</h1>
+      {banners}
+      {change === null && <p className="text-body text-muted-foreground">{t(($) => $.draft.diff_empty)}</p>}
+      {change && <KbFileCard page={change} open={open} onToggle={() => setOpen((v) => !v)} href={pageHref} />}
     </div>
   );
 }
