@@ -4,17 +4,17 @@
 
 **Blocked by:** 08
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] 迁移：新表 `kb_mr_review`（`merge_request_id + reviewer_user_id` 进行中唯一索引）、`kb_mr_comment.review_id` 及索引、删 `kb_mr_comment.triggered`、`kb_merge_request.status` 加 `changes_requested`；每个 CONCURRENTLY 索引单独一个迁移文件
-- [ ] 删掉评论派发智能体：`review_agent`、评论触发规则、评论框「发送后开始」、动态区「正在工作」
-- [ ] 接口：开启评审（已有进行中的评审时返回它）、评论增改删（待提交只作者可见）、提交评审（评论公开，状态改 `changes_requested`）、放弃评审、`POST /api/kb/merge-requests/{number}/ready`；评论列表 `state=published|all`，默认只列已公开
-- [ ] 权限：审核人的意见只能经评审留下；不带 `review_id` 的评论只有负责人（`kb_draft.created_by`）能发；「待解决」合并返回 409 `changes_requested`
-- [ ] 站内消息：提交评审通知负责人，重新请求审核通知提交过评审的审核人；接入「消息」列表与详情（设计稿 13.1–13.2）
-- [ ] 变更请求详情返回已提交的评审（总结、评论数）；CLI `kb mr get` 显示状态与评审总结，`kb mr comment list` 只列已公开评论，`kb mr comment add` 只给负责人回复，新增 `kb mr ready`
-- [ ] 审核页：开启评审、待提交评论标记、评审栏「提交评审（N 条）/ 放弃评审」、提交评审弹层、状态标签「待解决」、「待解决」时合并不可用与提示、负责人「重新请求审核」
-- [ ] 作业页「审核意见」区：「#N 有 M 条审核意见待解决」和评论列表，「交给智能体处理」（以成员身份往作业对话发一条带意见和编号的消息）与「重新请求审核」
-- [ ] WebSocket：评论公开、状态切换使审核页、作业详情、待审核列表失效
-- [ ] 事件表 `kb_mr_event` 与时间线：提交评审、重新请求审核、合并、关闭、回滚、改标题 / 说明 / 风险时写事件；`GET /api/kb/merge-requests/{number}/timeline` 返回评论与事件按 `created_at` 混排；审核页动态区较早的折叠为「展开更早 N 条动态」；删知识库、删工作区时一并清理（设计稿 8.12）
-- [ ] 审核详情「智能体自查」「检查」两张卡片等高、固定高度，内容超出在卡片内滚动
-- [ ] 测试：评审状态流转、待提交评论可见性、负责人与审核人权限、「待解决」不能合并、重复开启返回同一条评审
+- [x] 迁移：新表 `kb_mr_review`（`merge_request_id + reviewer_user_id` 进行中唯一索引）、`kb_mr_comment.review_id`（不单独建索引，评论都按 `merge_request_id` 查，见决策记录「决策 107 · 评审」）、删 `kb_mr_comment.triggered`、`kb_merge_request.status` 加 `changes_requested`；每个 CONCURRENTLY 索引单独一个迁移文件
+- [x] 删掉评论派发智能体：`review_agent`、评论触发规则、评论框「发送后开始」、动态区「正在工作」
+- [x] 接口：开启评审（已有进行中的评审时返回它）、评论增改删（待提交只作者可见）、提交评审（评论公开，状态改 `changes_requested`）、放弃评审、`POST /api/kb/merge-requests/{number}/ready`；评论列表 `state=published|all`，默认只列已公开
+- [x] 权限：审核人的意见只能经评审留下；不带 `review_id` 的评论只有负责人（`kb_draft.created_by`）能发；「待解决」合并返回 409 `changes_requested`
+- [x] 站内消息：提交评审通知负责人，重新请求审核通知提交过评审的审核人；接入「消息」列表与详情（设计稿 13.1–13.2）
+- [x] 变更请求详情返回已提交的评审（总结、评论数）；CLI `kb mr get` 显示状态与评审总结，`kb mr comment list` 只列已公开评论，`kb mr comment add` 只给负责人回复，新增 `kb mr ready`
+- [x] 审核页：开启评审、待提交评论标记、评审栏「提交评审（N 条）/ 放弃评审」、提交评审弹层、状态标签「待解决」、「待解决」时合并不可用与提示、负责人「重新请求审核」
+- [x] 作业页「审核意见」区：只展示评审总结和评论（右上「去审核页」），卡片内「交给智能体处理」（以成员身份往作业对话发一条带意见和编号的消息）；「待解决」时底部主按钮为「重新请求审核」
+- [x] WebSocket：评论公开、状态切换使审核页、作业详情、待审核列表失效
+- [x] 事件表 `kb_mr_event` 与时间线：提交评审、重新请求审核、合并、关闭、回滚、改标题 / 说明 / 风险时写事件；`GET /api/kb/merge-requests/{number}/timeline` 返回评论与事件按 `created_at` 混排；审核页动态区较早的折叠为「展开更早 N 条动态」；删知识库、删工作区时一并清理（设计稿 8.12）
+- [x] 审核详情「智能体自查」「检查」两张卡片等高、固定高度，内容超出在卡片内滚动
+- [x] 测试：评审状态流转、待提交评论可见性、负责人与审核人权限、「待解决」不能合并、重复开启返回同一条评审
