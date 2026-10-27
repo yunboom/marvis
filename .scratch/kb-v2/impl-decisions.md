@@ -360,3 +360,44 @@
     - 回滚确认照 7.3，省略「之后的修改（#14）不受影响」半句（要另算后续变更请求）；成功提示「已生成回滚变更请求 #18」带「去审核」，冲突提示照 2.9。
 13. **前端失效**：`kb.mr.created / updated` 失效作业、首页、读页、知识库列表和审核列表 / 详情；`kb.mr.merged / closed` 再失效页面、树、历史、检索（`kbKeys.searches`）和批注；`kb.mr.commented` 失效该变更请求的详情和评论；`kb.draft.updated` 一并失效所有审核详情（详情键里没有草稿 id）。
 14. **共用组件**：作业页右侧的文件卡片、diff 行、状态点、格式检查文案抽到 `kb/components/kb-diff.tsx`，审核页、变更记录和作业页共用；`kbErrorCode` 抽到 `kb/utils/kb-api-error.ts`。
+
+
+## 票 09
+
+1. **原始资料的存储与上传**
+   - 对象存储键 `workspaces/<ws>/kb/<kb>/<UUIDv7><扩展名>`，`kb_raw.storage_key` 存键（不存 URL）；内容类型照 `UploadFile` 嗅探 + 扩展名覆盖。不复用 `attachment` 表：附件行有自己的归属与回收规则，知识库资料按名字被 `raw://` 引用，生命周期跟着知识库走。
+   - 一次请求可带多个 `file`，总大小沿用附件上限 100MB；文件名取 `path.Base`，不能为空、`.` / `..`、超过 255 字节，不能含 `/ \ # ?` 和控制字符（400 `raw_name_invalid`）——`#` 是 `raw://` 的片段分隔符。
+   - 同种类重名（已有或同一请求里两个同名）409 `raw_name_taken`，带 `names`；source 和 asset 可以同名（唯一索引按 kind）。并发撞唯一索引同样 409，并删掉刚写的对象。
+   - 对象存储没有批量写，多个文件用 errgroup 并发写（上限 4），失败时删掉已写的对象；行用一条 unnest 批量 INSERT。
+   - `uploaded_by` 记调用人（任务令牌时是令牌绑定的人）。`raw://` 地址按存储的名字原样拼（不转义），与 CLI `kb raw get` 一致。
+2. **内容接口的 URL 形态（`GET /api/kb/raw/{id}/content`）**
+   - 默认 302：CloudFront 签名或预签名，`download=1` 带 attachment disposition；判断沿用附件的 `resolveAttachmentDownloadMode`。本地存储 / 私有地址（proxy 模式）由服务端直接输出，支持 Range。
+   - 新增 `format=url` 返回 `{url}`：桌面端和跨域部署的 `<iframe>` / `<img>` 带不上登录凭据，前端先拿一个免凭据的地址再交给附件预览。proxy 模式下给的是公开路由 `/api/kb/raw/{id}/signed-content?exp&sig[&dl=1]`，复用附件下载能力的 HMAC，intent 为 `kb_raw` / `kb_raw|attachment`，附件的能力签名不能用来打开同 id 的资料；有效期同预签名 TTL（默认 30 分钟），因为 PDF 预览打开期间会继续按 Range 读。
+   - CLI `kb raw get` 仍走默认 302（Go 客户端跟随跳转）。
+3. **`raw://` 引用解析**
+   - 来源（论断证据）的解析票 02 已做；本票补正文：读页接口把块里 `raw://` 链接和图片改写成 `/api/kb/raw/{id}/content[#page=N]`（`kb.RawLinks`，只改本库存在的文件，查不到的保留原样，被前端 Markdown 的 URL 过滤去掉链接）。
+   - 阅读页拦截这类链接的点击，按 id 在原始资料列表里找到文件后用附件预览打开（带 `#page=`）。
+   - 已知限制：正文图片用的是需要登录的相对地址，web 同源靠 cookie 能显示，桌面端和跨域部署显示不出（要像附件那样换签名地址，留给后续）。
+   - `cited_pages` 按「论断证据里引用它的未删除页面」数，uri 在 Go 里解析，`%20` 转义和 `#page=` 都算同一个文件。
+4. **预览接入方式**：票 02 留的 `rawFileActions` 改为在 views 里默认实现（`useKbRawFilePreview`：`format=url` → `useAttachmentPreview().tryOpen({kind: "url"})`），web 和 desktop 路由不需要各自传；附件预览按 url 只能看 PDF、图片、视频、音频，其他格式直接下载（下载在桌面端走 `desktopAPI.downloadURL`）。传了 `rawFileActions` 时仍以传入的为准。设计稿 3.8 弹窗底部「由某页脚注打开」一行不画（附件预览没有这个插槽）。
+5. **OKF 导出**
+   - 目录：`<slug>/PURPOSE.md`、`SCHEMA.md`、`raw/sources|assets/<名字>`、`wiki/<路径>.md`、每个目录 `index.md`（根目录带 `okf_version: 0.2`，列直接子页面的标题、链接、简介）、`wiki/.claims/<路径>.json`（这一页的论断数组，`kb.Claim` 格式，没有论断不写）。
+   - 页头：JSON 转 YAML，`type`、`title`、`description` 在前，其余按键名排序，最后加 `marvis_id`。
+   - 链接：`kb://` 和还没写的路径链接改成相对路径；指向标题块写 `#标题文字`，其他块写 `#^块id`，并在目标块末尾加锚点（段落末尾 ` ^id`，列表、引用、表格、代码块在下一段单独一行 `^id`，照 Obsidian 规则）；`raw://` 链接和图片改成 `../…/raw/sources/x.pdf#page=N`。只转义会打断 Markdown 链接的字符（空格、括号、尖括号、`%`），中文保持可读。指向已删除页面的 `kb://` 原样保留（没有文件可指）。
+   - 某一层有 slug 为 `index` 的页面时，那一层不生成 index.md，以页面为准。
+   - 流式：先查页面树和被链接的块（`ListKbLinkedBlocks`，用来决定标题锚点和 `^id`），正文按页面 id 键集每批 100 页读、每批一次论断查询，zip 直接写进响应；原始资料逐个从对象存储流式拷进 zip（没有批量读接口）。对象丢失时跳过这个文件并记 Warn，不中断整个下载；响应头发出后的其他错误只能截断 zip，记 Error 日志。
+   - 前端用带凭据的 fetch 取 blob 再保存（桌面端令牌认证无法直接下载），浏览器端内存里会有一份 zip。
+6. **删除知识库**
+   - 权限同配置（`canConfigureKb`）；`confirm_name` 必须与名称完全一致，否则 400 `confirm_name_mismatch`。
+   - 一个事务：锁 `kb_base` 行 → 记下打开的变更请求编号（响应 `closed_mrs`）和资料对象键 → 有向量表时删 `kb_block_embedding` → 一条 CTE 删 `kb_config_revision`、`kb_builder_session`、`kb_raw`、`kb_page`、`kb_page_revision`、`kb_claim`、`kb_link`、`kb_draft_page`、`kb_draft`、`kb_job_draft`、`kb_job`、`kb_annotation`、`kb_mr_comment`、`kb_merge_request`、`kb_base`。变更请求直接删掉，「关闭」即包含在删除里。`kb_workspace`（工作区编号计数）保留。
+   - 提交后后台 goroutine 调 `Storage.DeleteKeys` 删对象（接口就是批量调用；S3 实现内部逐个删除，本票不改存储层），发 `kb.base.changed`（`action=deleted`）。删除工作区时同样清理这些对象（票 01 留的缺口）。
+   - 作业的聊天会话和配置构建器的聊天会话不删：作业对话随之出现在「我的对话」里（列表只排除仍有 `kb_job` 的会话），作为执行记录保留；仍在运行的作业任务不取消，之后对草稿的写入会 404。
+   - 测试按 information_schema 列出全部 `kb_*` 表（除 `kb_workspace`），新增表没纳入删除检查时测试失败。
+7. **`kb.base.changed`**：spec 09 列了新建 / 配置保存 / 删除，此前没有发；本票三处都发，payload `{knowledge_base_id, slug, action}`。前端：新建 / 保存失效知识库列表和详情；删除失效该工作区全部知识库查询。
+8. **关系图**
+   - 接口多返回 `key`（页面 id，或还没写页面的路径）和 `path`，边的 `from` / `to` 用 `key`：spec 里还没写的页面 `id` 为 null，边无法引用它。只增字段。
+   - 节点：未删除页面 + 链接到的还没写路径；分组是一级祖先页面的标题（一级页面自己的标题），还没写的页面按路径第一段找一级页面，找不到用路径第一段；`degree` 是去重后的邻居数（不分方向）。边去重、去掉自链接和指向已删除页面的链接；`to_path` 后来有了页面的按路径解析过去。
+   - 前端布局用确定性的简化力导向（300 轮，O(n²)），页面多时会慢，留作后续优化（分组聚合或 Web Worker）。颜色按分组首次出现的顺序取 identity 色；无链接和还没写的页面画虚线圈；悬停只亮自己和邻居及相连的边，提示「打开 X · N 个链接」；还没写的节点不可点。
+9. **管理页路由与可见范围**：`/kb/{slug}/manage`（原始资料）、`/manage/export`、`/manage/delete`，`/kb/{slug}/graph`；都在知识库导航里显示，导航不高亮任何一行。「删除知识库」标签只对创建者和 owner / admin 显示；直接打开 `/manage/delete` 的成员看到无权限说明。「…」菜单加「知识库管理」（所有成员）和「关系图」。
+10. **交给智能体收录**：原始资料行可多选（上传成功后自动选中刚上传的文件），「交给智能体收录（N）」跳 `paths.kbNewJob(slug, {starter: "ingest", sources: uri 列表})`。作业页按逗号拆 `sources`，文件名含逗号时会被拆错（票 07 的参数格式），留作缺口。
+11. **文案**：设计稿 11.1 说明里「上传后会在聊天里交给智能体沉淀」与实际流程（手动选文件建作业）不符，只保留「导入时原样保存，页面引用它们作为来源。」；11.3 的「这是最后一个知识库，每日知识沉淀会停用」横幅不画（没有每日沉淀功能）；11.1 设计稿里「任务」「链接」来源的行（非上传来源）没有对应数据，来源列只有「上传 · 上传人」。
