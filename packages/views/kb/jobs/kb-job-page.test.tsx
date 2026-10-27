@@ -8,7 +8,7 @@ import type { ChatPendingTask, KbJobDetail, KbMergeRequestDetail, KnowledgeBaseD
 import { renderWithI18n } from "../../test/i18n";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
 import { KbJobPage } from "./kb-job-page";
-import { kbJobPanelState, memberPartOfJobMessage, parseKbJobRoute } from "./kb-job-state";
+import { kbJobPanelState, memberPartOfJobMessage, parseKbJobRoute, reviewHandoffNumber } from "./kb-job-state";
 
 vi.mock("@marvis/core/api", () => {
   class ApiError extends Error {
@@ -263,6 +263,12 @@ describe("job state helpers", () => {
     const first = "Knowledge base: Team (`team`)\nJob: x\n\nHow to work:\n- ...\n\nMember's message:\n处理 4 条批注。";
     expect(memberPartOfJobMessage(first)).toBe("处理 4 条批注。");
     expect(memberPartOfJobMessage("just a follow-up")).toBe("just a follow-up");
+  });
+
+  it("recognizes the review hand-off the server writes for the agent", () => {
+    expect(reviewHandoffNumber("Change request #12 (Fix (a) typo) has review feedback to resolve.\n\nTo resolve it:")).toBe(12);
+    expect(reviewHandoffNumber("Change request #12 is done")).toBeNull();
+    expect(reviewHandoffNumber("hello")).toBeNull();
   });
 
   it("covers the edge cases of designs 9.9–9.17", () => {

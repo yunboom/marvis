@@ -13,18 +13,19 @@ import { useChatDraftRestore } from "../../chat/components/use-chat-draft-restor
 import { useChatTaskActions } from "../../chat/components/use-chat-task-actions";
 import { seedAcceptedPendingTask } from "../../chat/components/use-chat-controller";
 import { useT } from "../../i18n";
-import { memberPartOfJobMessage } from "./kb-job-state";
+import { memberPartOfJobMessage, reviewHandoffNumber } from "./kb-job-state";
 
 const CHAT_VIRTUOSO_INITIAL_FIRST_ITEM_INDEX = 1_000_000;
 
 /**
  * The conversation of one job: the job's chat session, sent, stopped and
  * queued exactly like the chat page (designs 9.11, 9.16). The first message
- * shows only what the member typed; the server-written part goes to the
- * agent.
+ * shows only what the member typed and a review hand-off shows a short line;
+ * the server-written prompt goes to the agent.
  */
 export function useKbJobConversation(sessionId: string) {
   const { t } = useT("chat");
+  const { t: tKb } = useT("kb");
   const qc = useQueryClient();
   const {
     data,
@@ -33,15 +34,36 @@ export function useKbJobConversation(sessionId: string) {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery(chatMessagesPageOptions(sessionId));
-  const { data: pendingTask, isLoading: pendingLoading } = useQuery(pendingChatTaskOptions(sessionId));
+  const { data: serverPendingTask, isLoading: pendingLoading } = useQuery(pendingChatTaskOptions(sessionId));
+
+  const displayContent = useCallback(
+    (content: string) => {
+      const number = reviewHandoffNumber(content);
+
+      return number === null ? memberPartOfJobMessage(content) : tKb(($) => $.job.feedback.chat_message, { number });
+    },
+    [tKb],
+  );
+  const pendingTask = useMemo(
+    () =>
+      serverPendingTask?.queued_tasks
+        ? {
+            ...serverPendingTask,
+            queued_tasks: serverPendingTask.queued_tasks.map((task) =>
+              task.content ? { ...task, content: displayContent(task.content) } : task,
+            ),
+          }
+        : serverPendingTask,
+    [serverPendingTask, displayContent],
+  );
 
   const pages = useMemo(() => (sessionId ? data?.pages ?? [] : []), [sessionId, data]);
   const messages = useMemo<ChatMessage[]>(() => {
     const all = [...pages].reverse().flatMap((page) => page.messages);
     return hideQueuedChatMessages(all, pendingTask).map((message) =>
-      message.role === "user" ? { ...message, content: memberPartOfJobMessage(message.content) } : message,
+      message.role === "user" ? { ...message, content: displayContent(message.content) } : message,
     );
-  }, [pages, pendingTask]);
+  }, [pages, pendingTask, displayContent]);
   const olderMessageCount = pages.slice(1).reduce((count, page) => count + page.messages.length, 0);
 
   const appForeground = useAppForeground();
@@ -117,11 +139,11 @@ export function useKbJobConversation(sessionId: string) {
     });
   }, [pendingTaskId, sessionId, taskActions]);
 
-  // A stopped first turn restores the whole server-written message; the
-  // composer only ever held the member's part.
+  // A stopped turn restores the whole server-written message; the composer
+  // gets what the chat showed for it.
   const restore = useMemo(
-    () => (restoreDraftRequest ? { ...restoreDraftRequest, content: memberPartOfJobMessage(restoreDraftRequest.content) } : null),
-    [restoreDraftRequest],
+    () => (restoreDraftRequest ? { ...restoreDraftRequest, content: displayContent(restoreDraftRequest.content) } : null),
+    [restoreDraftRequest, displayContent],
   );
 
   return {

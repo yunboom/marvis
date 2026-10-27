@@ -502,7 +502,8 @@
       "submitted": "님이 리뷰를 제출 · {{time}}",
       "handoff": "에이전트에게 맡기기",
       "handed_off": "에이전트에게 맡겼습니다",
-      "handoff_failed": "에이전트에게 맡기지 못했습니다"
+      "handoff_failed": "에이전트에게 맡기지 못했습니다",
+      "chat_message": "#{{number}}의 리뷰 의견 처리"
     }
   },
   "review": {

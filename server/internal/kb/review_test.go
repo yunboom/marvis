@@ -186,6 +186,18 @@ func TestReviewHandoffMessage(t *testing.T) {
 	if got != want {
 		t.Errorf("message:\n%s\nwant:\n%s", got, want)
 	}
+
+	// The job page shows a short line in place of the message, keyed on its lead.
+	if m := ReviewHandoffLead.FindStringSubmatch(got); m == nil || m[1] != "16" {
+		t.Errorf("lead match = %q", m)
+	}
+	titled, err := ReviewHandoffMessage(ReviewHandoffInput{Number: 3, Title: "Fix (a) typo\nsecond line", DraftID: "d-1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m := ReviewHandoffLead.FindStringSubmatch(titled); m == nil || m[1] != "3" {
+		t.Errorf("lead match with an odd title = %q", m)
+	}
 }
 
 func TestRevertPage(t *testing.T) {

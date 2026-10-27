@@ -519,7 +519,8 @@
       "submitted": "a envoyé une revue · {{time}}",
       "handoff": "Confier à l'agent",
       "handed_off": "Confié à l'agent",
-      "handoff_failed": "Impossible de confier à l'agent"
+      "handoff_failed": "Impossible de confier à l'agent",
+      "chat_message": "Traiter les remarques de revue de #{{number}}"
     }
   },
   "review": {

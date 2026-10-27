@@ -502,7 +502,8 @@
       "submitted": "がレビューを送信 · {{time}}",
       "handoff": "エージェントに任せる",
       "handed_off": "エージェントに任せました",
-      "handoff_failed": "エージェントに任せられませんでした"
+      "handoff_failed": "エージェントに任せられませんでした",
+      "chat_message": "#{{number}} のレビューの指摘に対応"
     }
   },
   "review": {

@@ -519,7 +519,8 @@
       "submitted": "submitted a review · {{time}}",
       "handoff": "Hand to agent",
       "handed_off": "Handed to the agent",
-      "handoff_failed": "Couldn't hand it to the agent"
+      "handoff_failed": "Couldn't hand it to the agent",
+      "chat_message": "Resolve the review feedback on #{{number}}"
     }
   },
   "review": {

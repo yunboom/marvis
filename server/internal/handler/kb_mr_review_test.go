@@ -365,4 +365,9 @@ func TestKbMrReviewHandoff(t *testing.T) {
 	if content != want {
 		t.Errorf("job chat message:\n%s\nwant:\n%s", content, want)
 	}
+	// The agent gets the whole prompt; the job page shows a short line keyed
+	// on its lead.
+	if m := kb.ReviewHandoffLead.FindStringSubmatch(content); m == nil || m[1] != strconv.Itoa(mr.Number) {
+		t.Errorf("job chat message lead = %q, want change request #%d", m, mr.Number)
+	}
 }

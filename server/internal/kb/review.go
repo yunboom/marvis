@@ -2,6 +2,7 @@ package kb
 
 import (
 	_ "embed"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -54,6 +55,12 @@ type ReviewHandoffInput struct {
 	Summaries []ReviewHandoffSummary
 	Comments  []ReviewHandoffComment
 }
+
+// ReviewHandoffLead matches the lead of every review hand-off message. The
+// message goes to the agent in full; the job page keys on the same pattern
+// (packages/views/kb/jobs/kb-job-state.ts) to show a short line in the
+// member's language in its place.
+var ReviewHandoffLead = regexp.MustCompile(`(?s)^Change request #(\d+) \(.*?\) has review feedback to resolve\.`)
 
 // ReviewHandoffMessage renders the review feedback hand-off message.
 func ReviewHandoffMessage(in ReviewHandoffInput) (string, error) {

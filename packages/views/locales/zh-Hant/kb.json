@@ -502,7 +502,8 @@
       "submitted": "提交了評審 · {{time}}",
       "handoff": "交給智慧體處理",
       "handed_off": "已交給智慧體",
-      "handoff_failed": "沒有交給智慧體"
+      "handoff_failed": "沒有交給智慧體",
+      "chat_message": "處理 #{{number}} 的稽核意見"
     }
   },
   "review": {

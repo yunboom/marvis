@@ -502,7 +502,8 @@
       "submitted": "提交了评审 · {{time}}",
       "handoff": "交给智能体处理",
       "handed_off": "已交给智能体",
-      "handoff_failed": "没有交给智能体"
+      "handoff_failed": "没有交给智能体",
+      "chat_message": "处理 #{{number}} 的审核意见"
     }
   },
   "review": {
