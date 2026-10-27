@@ -4051,6 +4051,20 @@ func (h *Handler) buildClaimedTaskResponse(r *http.Request, task *db.AgentTaskQu
 		}
 	}
 
+	// Knowledge bases for the brief's Knowledge Bases section (spec 8.2). Like
+	// the status catalog, a failure degrades to a brief without the section
+	// rather than failing the claim.
+	if bases, truncated, err := h.taskKnowledgeBases(r.Context(), parseUUID(resp.WorkspaceID)); err != nil {
+		slog.Warn("task claim: failed to load knowledge bases for brief injection",
+			"task_id", uuidToString(task.ID),
+			"workspace_id", resp.WorkspaceID,
+			"error", err,
+		)
+	} else if len(bases) > 0 {
+		resp.KnowledgeBases = bases
+		resp.KnowledgeBasesTruncated = truncated
+	}
+
 	// Last gate before dispatch: refuse to hand a worktree-mode local_directory
 	// task to a daemon that cannot implement the mode.
 	//

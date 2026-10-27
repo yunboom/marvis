@@ -149,3 +149,18 @@ describe("mention tokenizer", () => {
     expect(elapsed).toBeLessThan(100);
   });
 });
+
+describe("knowledge base mentions", () => {
+  it.each([
+    ["kb", "kb-1", "支付排障手册"],
+    ["kb_page", "page-1#b8Xz", "支付回调"],
+    ["kb_mr", "mr-1", "#16 去重键"],
+    ["kb_annotation", "a-1", "批注 · 支付回调"],
+  ])("round-trips a %s link without an @ prefix", (type, id, label) => {
+    const md = renderMarkdown({ attrs: { id, label, type } });
+    expect(md).toBe(`[${label}](mention://${type}/${id})`);
+
+    const token = tokenize(md);
+    expect(token!.attributes).toEqual({ label, type, id });
+  });
+});

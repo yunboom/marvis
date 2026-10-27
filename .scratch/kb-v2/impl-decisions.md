@@ -414,3 +414,21 @@
 6. **留给票 10 的缺口**
    - `marvis kb schema templates` 命令还不存在。`prompt_cli_commands_test` 只检查围栏代码块和行内代码，不检查缩进代码块，所以 skill 里那条命令没被拦；构建器指令不在它的检查范围。票 10 加上命令后两处才能用。
    - spec 8.2.2 要求 `writeSkills` 的提示句（`runtime_config_sections.go`）补上 knowledge bases，属于运行时说明，本票没改。
+
+## 票 10
+
+1. **认领响应的字段与截断**：`knowledge_bases: [{slug, name, description}]` 按名称（再按 slug）排序，最多 30 个；超出时多返回 `knowledge_bases_truncated: true`（不返回数量，运行时说明只需要知道「还有」）。查询取 31 条判断截断，放在新文件 `kb_runtime.sql`，不与票 09 的 `kb.sql` / `kb_manage.sql` 冲突；没有迁移。读取失败照状态目录的做法降级：打警告、这一节不写，不让认领失败。
+2. **截断提示的写法**：spec 只给了「run `marvis kb list` for the rest」，没说放哪；放在表格之后单独一行：`More knowledge bases exist than are listed — run \`marvis kb list\` for the rest.`，不塞进表格行。
+3. **slug 的防注入**：slug 放在反引号里，按 `sanitizeBriefCodeToken` 校验，不合法的整行跳过（服务端本来只允许小写字母、数字、连字符）；名称和简介按 spec 用 `sanitizeNameForBriefMarkdown` 压成一行再转义 `|`。全部被跳过时整节不写。
+4. **快照**：`internal/daemon/execenv/testdata/knowledge_bases/*.golden`（两个知识库、截断、用户文本转义），`-update-kb-brief-golden` 重写；没有知识库与旧服务端（字段缺失）断言与不带字段时逐字节相同。Skills 提示句按 8.2.2 加上 knowledge bases（协调方补充）。
+5. **卡片取数**：
+   - 知识库卡片读工作区知识库列表（`kbBaseListOptions`，一次请求给所有卡片用），不按 id 单独请求；页面、批注卡片也靠它拿 slug 和知识库名。
+   - 变更请求卡片按 id 读详情（新键 `kbKeys.reviewById`，在 `review` 前缀下，随审核事件和草稿写入失效），所以卡片状态实时；代价是 open 的变更请求每次读都跑一遍试合并，同一个 id 只请求一次并缓存。以后对话里卡片很多时再加轻量接口。
+   - 批注卡片按 id 读（新键 `kbKeys.annotation`，`invalidateKbAnnotations` 一并失效）。
+   - 页面卡片复用阅读页的 `kbPageOptions`（主线）。带块时「› 小节」取该块自身标题或它上面最近的标题（`blockSection`），悬停里的原文用 `blockPlainText` 压成一行。
+   - 接口和 zod schema 票 02 / 05 / 08 已有（含畸形响应测试），本票不加 schema。
+6. **失效退回**：读不到（404 / 403 / 畸形响应退回的空对象）就显示链接原文，不是链接、不出悬停；页面 404 时在原文后加「· 页面已删除」（跨工作区的链接也是 404，无法区分，同样显示）。加载中显示不可点的卡片外形（链接原文），与任务卡片一致。
+7. **点击去向**：知识库 → 首页；页面 → 阅读页 `#块`（阅读页已有按 hash 滚动高亮）；变更请求 → `kbMergeRequest(slug, 编号)`；批注 → 所在页面 `#块`（原句丢失时不带块），整库批注 → 知识库批注列表。
+8. **批注卡片没有「来源」**：设计稿 12.4 写了「来源：对话」，但批注接口没有来源字段，本票不加接口字段，悬停只显示作者和时间。变更请求的来源沿用审核页的 `review.origin` 文案（「对话 · 标题」）。
+9. **编辑器里的知识库链接**：`mention-view` 同样渲染这四种卡片；`mention-extension` 把 kb 四种类型和 issue / project 一样当实体，序列化时不加 `@`（否则编辑一次就会变成 `[@支付回调](…)`）。通用 Markdown 渲染器（`packages/ui/markdown`）的兜底正则也加上四种类型，无卡片时显示为文字。服务端 `MentionRe` 不改，加测试断言 kb 链接不被当成提及。
+10. **`kb schema templates`**：放在新文件 `cmd_kb_schema.go`（自己的 `init` 挂到 `kbCmd`），不动 `cmd_kb.go` 的注册表；JSON 只输出 `{"schema": …}`，`--output table` 直接打印 Schema 正文（末尾补换行）。

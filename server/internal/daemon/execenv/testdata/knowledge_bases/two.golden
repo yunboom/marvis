@@ -1,0 +1,23 @@
+## Knowledge Bases
+
+These knowledge bases are the team's shared memory: reviewed facts, decisions and lessons from earlier work.
+
+| Slug | Name | Description |
+| --- | --- | --- |
+| `team` | Team knowledge | Orders, payments, release and test processes. |
+| `pay-troubleshoot` | Payment troubleshooting | Payment and order flows, with troubleshooting steps. |
+
+### Getting information
+
+Judge from the descriptions above which knowledge base, if any, helps with the current work, and load only what you need:
+
+- `marvis kb get <slug>` — read the `schema` field it returns: how pages are laid out and what each page type and field means.
+- `marvis kb search "<query>" [--kb <slug>]` — find pages by keyword.
+- `marvis kb page list <slug> [--parent <slug>:<path>]` — the table of contents. Without `--parent` it lists the top-level pages; with it, the child pages of the given page. Each comes with a one-line description.
+- `marvis kb page fetch <slug>:<path>` — read a page.
+
+More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:
+
+- Ingest: write new knowledge, lessons and key decisions from your work back into the knowledge base.
+- Health check: find outdated, contradictory or missing content and record it.
+

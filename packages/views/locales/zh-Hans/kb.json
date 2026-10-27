@@ -644,5 +644,25 @@
     "empty": "还没有页面",
     "legend": "图例",
     "open_other": "打开{{title}} · {{count}} 个链接"
+  },
+  "mention": {
+    "kb": "知识库 · {{slug}}",
+    "schema_default": "默认 Schema",
+    "schema_custom": "自定义 Schema",
+    "no_pending": "没有待处理",
+    "pending_other": "{{count}} 项待处理",
+    "created": "{{name}} 创建于 {{time}}",
+    "claims_other": "{{count}} 条论断",
+    "open_annotations_other": "{{count}} 条待处理批注",
+    "review_by": "复核期 {{date}}",
+    "last_change": "最近修改 #{{number}}",
+    "merged": "{{name}} 合并于 {{time}}",
+    "page_deleted": "页面已删除",
+    "risk": "风险 {{risk}}",
+    "submitted": "{{name}} 提交于 {{time}}",
+    "origin": "来源：{{origin}}",
+    "annotation": "批注",
+    "annotation_status": "批注 · {{status}}",
+    "recorded": "{{name}} 记于 {{time}}"
   }
 }

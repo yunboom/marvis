@@ -2,6 +2,8 @@
 import { describe, expect, it } from "vitest";
 import {
   KB_MISSING_PAGE_HREF,
+  blockPlainText,
+  blockSection,
   citeNumbers,
   citeSourceId,
   compareBlocks,
@@ -61,6 +63,25 @@ describe("block helpers", () => {
       { blockId: "b1", level: 2, text: "处理 顺序" },
       { blockId: "b3", level: 3, text: "去重" },
     ]);
+  });
+});
+
+describe("block mentions", () => {
+  const blocks = [block("h1", "# 支付回调"), block("p1", "导语"), block("h2", "## 去重"), block("p2", "按交易号去重。"), block("p3", "幂等键。")];
+
+  it("names the section a block sits in", () => {
+    expect(blockSection(blocks, "h2")).toBe("去重");
+    expect(blockSection(blocks, "p3")).toBe("去重");
+    expect(blockSection(blocks, "p1")).toBe("支付回调");
+    expect(blockSection([block("p0", "无标题")], "p0")).toBe("");
+    expect(blockSection(blocks, "gone")).toBe("");
+  });
+
+  it("reduces a block to one line of text", () => {
+    expect(blockPlainText("## 去重 `键`")).toBe("去重 键");
+    expect(blockPlainText("渠道回调按[交易号](/kb/x)去重。[^mar-142]\n- 重复回调返回 **成功**")).toBe(
+      "渠道回调按交易号去重。 重复回调返回 成功",
+    );
   });
 });
 

@@ -7,6 +7,7 @@ import { kbKeys } from "./queries";
  */
 export function invalidateKbAnnotations(qc: QueryClient, wsId: string) {
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "annotations"] });
+  void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "annotation"] });
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "home"] });
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "page"] });
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "level"] });

@@ -667,5 +667,28 @@
     "legend": "Légende",
     "open_one": "Ouvrir {{title}} · {{count}} lien",
     "open_other": "Ouvrir {{title}} · {{count}} liens"
+  },
+  "mention": {
+    "kb": "Base de connaissances · {{slug}}",
+    "schema_default": "Schéma par défaut",
+    "schema_custom": "Schéma personnalisé",
+    "no_pending": "Rien en attente",
+    "pending_one": "{{count}} en attente",
+    "pending_other": "{{count}} en attente",
+    "created": "Créée par {{name}} {{time}}",
+    "claims_one": "{{count}} affirmation",
+    "claims_other": "{{count}} affirmations",
+    "open_annotations_one": "{{count}} annotation en attente",
+    "open_annotations_other": "{{count}} annotations en attente",
+    "review_by": "À revoir le {{date}}",
+    "last_change": "Dernière modification #{{number}}",
+    "merged": "Fusionnée par {{name}} {{time}}",
+    "page_deleted": "Page supprimée",
+    "risk": "Risque {{risk}}",
+    "submitted": "Soumise par {{name}} {{time}}",
+    "origin": "Origine : {{origin}}",
+    "annotation": "Annotation",
+    "annotation_status": "Annotation · {{status}}",
+    "recorded": "Notée par {{name}} {{time}}"
   }
 }

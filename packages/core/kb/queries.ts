@@ -70,6 +70,10 @@ export const kbKeys = {
     [...kbKeys.reviews(wsId), kb, status] as const,
   /** One merge request by its workspace number, and its comments under it. */
   review: (wsId: string, number: number) => [...kbKeys.all(wsId), "review", number] as const,
+  /** One merge request by id, as a mention card reads it; refreshed with the reviews. */
+  reviewById: (wsId: string, id: string) => [...kbKeys.all(wsId), "review", "id", id] as const,
+  /** One annotation by id, as a mention card reads it. */
+  annotation: (wsId: string, id: string) => [...kbKeys.all(wsId), "annotation", id] as const,
   reviewComments: (wsId: string, number: number) => [...kbKeys.review(wsId, number), "comments"] as const,
   /** Raw files of a knowledge base. */
   raws: (wsId: string, kb: string) => [...kbKeys.all(wsId), "raws", kb] as const,
@@ -95,6 +99,24 @@ export function kbMergeRequestOptions(wsId: string, number: number) {
     queryKey: kbKeys.review(wsId, number),
     queryFn: () => api.getKnowledgeBaseMergeRequest(number),
     enabled: !!wsId && number > 0,
+  });
+}
+
+/** A merge request addressed by id (a `mention://kb_mr/<id>` link). */
+export function kbMergeRequestByIdOptions(wsId: string, id: string) {
+  return queryOptions<KbMergeRequestDetail>({
+    queryKey: kbKeys.reviewById(wsId, id),
+    queryFn: () => api.getKnowledgeBaseMergeRequest(id),
+    enabled: !!wsId && !!id,
+  });
+}
+
+/** One annotation (a `mention://kb_annotation/<id>` link). */
+export function kbAnnotationOptions(wsId: string, id: string) {
+  return queryOptions<KbAnnotation>({
+    queryKey: kbKeys.annotation(wsId, id),
+    queryFn: () => api.getKnowledgeBaseAnnotation(id),
+    enabled: !!wsId && !!id,
   });
 }
 

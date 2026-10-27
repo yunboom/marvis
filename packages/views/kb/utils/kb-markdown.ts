@@ -94,6 +94,34 @@ export function pageHeadings(blocks: readonly KbBlock[]): KbHeading[] {
   return headings;
 }
 
+/**
+ * The section a block sits in: its own heading when it is one, otherwise the
+ * nearest heading above it. Empty when the block is missing or no heading
+ * precedes it.
+ */
+export function blockSection(blocks: readonly KbBlock[], blockId: string): string {
+  const index = blocks.findIndex((block) => block.id === blockId);
+  if (index < 0) return "";
+
+  const headings = new Map(pageHeadings(blocks.slice(0, index + 1)).map((h) => [h.blockId, h.text]));
+  for (let i = index; i >= 0; i--) {
+    const text = headings.get(blocks[i]!.id);
+    if (text) return text;
+  }
+
+  return "";
+}
+
+/** A block as one line of plain text: no heading or list markers, links reduced to their text, footnote marks dropped. */
+export function blockPlainText(content: string): string {
+  return content
+    .replace(FOOTNOTE_REF, "")
+    .replace(/^\s{0,3}(?:#{1,6}\s+|>\s?|[-*+]\s+|\d+[.)]\s+)/gm, "")
+    .replace(INLINE_MARKUP, (_, label?: string) => label ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // Draft comparison
 
 export type KbBlockChange =
