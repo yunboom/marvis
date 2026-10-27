@@ -48,6 +48,16 @@ func newRunChatFixture(t *testing.T, mode string) runChatFixture {
 func (fx runChatFixture) run(t *testing.T, task testutil.Cols) string {
 	t.Helper()
 
+	runID, _ := fx.runWithTask(t, task)
+
+	return runID
+}
+
+// runWithTask is run that also returns the task id ("" without a task). The
+// task points back at its run, as dispatched run_only tasks do.
+func (fx runChatFixture) runWithTask(t *testing.T, task testutil.Cols) (runID, taskID string) {
+	t.Helper()
+
 	cols := testutil.Cols{
 		"autopilot_id": fx.autopilotID,
 		"source":       "manual",
@@ -58,10 +68,16 @@ func (fx runChatFixture) run(t *testing.T, task testutil.Cols) string {
 		for k, v := range task {
 			taskCols[k] = v
 		}
-		cols["task_id"] = dbfx.Task(t, fx.agentID, taskCols)
+		taskID = dbfx.Task(t, fx.agentID, taskCols)
+		cols["task_id"] = taskID
 	}
 
-	return dbfx.Insert(t, "autopilot_run", cols)
+	runID = dbfx.Insert(t, "autopilot_run", cols)
+	if taskID != "" {
+		dbfx.Exec(t, `UPDATE agent_task_queue SET autopilot_run_id = $1 WHERE id = $2`, runID, taskID)
+	}
+
+	return runID, taskID
 }
 
 func ensureRunChatRequest(userID, autopilotID, runID string) *http.Request {
@@ -174,7 +190,6 @@ func TestEnsureAutopilotRunChat_Refusals(t *testing.T) {
 	}{
 		{name: "create_issue run", mode: "create_issue", task: testutil.Cols{"status": "completed"}, wantCode: autopilotRunChatCodeModeUnsupported},
 		{name: "run without a task", mode: "run_only", task: nil, wantCode: autopilotRunChatCodeNoSession},
-		{name: "run still executing", mode: "run_only", task: testutil.Cols{"status": "running"}, wantCode: autopilotRunChatCodeInProgress},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -191,6 +206,38 @@ func TestEnsureAutopilotRunChat_Refusals(t *testing.T) {
 				t.Fatal("a refused run got a chat session")
 			}
 		})
+	}
+}
+
+func TestEnsureAutopilotRunChat_RunningRunGetsSessionWithoutPointer(t *testing.T) {
+	if testHandler == nil {
+		t.Skip("database not available")
+	}
+	fx := newRunChatFixture(t, "run_only")
+	runID := fx.run(t, testutil.Cols{
+		"status":     "running",
+		"session_id": "mid-flight-session",
+		"work_dir":   "/tmp/run-chat-mid-flight",
+		"runtime_id": fx.runtimeID,
+	})
+
+	var resp ensureRunChatResponse
+	testutil.Call(t, testHandler.EnsureAutopilotRunChat, ensureRunChatRequest(testUserID, fx.autopilotID, runID)).
+		Want(http.StatusOK).JSON(&resp)
+	if resp.ChatSessionID == "" {
+		t.Fatal("chat_session_id is empty")
+	}
+
+	var sessionID, workDir *string
+	dbfx.QueryRow(t, `SELECT session_id, work_dir FROM chat_session WHERE id = $1`, resp.ChatSessionID).
+		Scan(&sessionID, &workDir)
+	if sessionID != nil || workDir != nil {
+		t.Fatalf("resume pointer = %v %v, want empty until the run settles", sessionID, workDir)
+	}
+	var linked string
+	dbfx.QueryRow(t, `SELECT chat_session_id::text FROM autopilot_run WHERE id = $1`, runID).Scan(&linked)
+	if linked != resp.ChatSessionID {
+		t.Fatalf("autopilot_run.chat_session_id = %s, want %s", linked, resp.ChatSessionID)
 	}
 }
 

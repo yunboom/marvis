@@ -3760,6 +3760,40 @@ func (q *Queries) UpdateChatSessionSession(ctx context.Context, arg UpdateChatSe
 	return err
 }
 
+const updateChatSessionSessions = `-- name: UpdateChatSessionSessions :exec
+UPDATE chat_session cs
+SET session_id = COALESCE(NULLIF(p.session_id, ''), cs.session_id),
+    work_dir = COALESCE(NULLIF(p.work_dir, ''), cs.work_dir),
+    runtime_id = COALESCE(p.runtime_id, cs.runtime_id),
+    updated_at = now()
+FROM (
+    SELECT unnest($1::uuid[]) AS id,
+           unnest($2::text[]) AS session_id,
+           unnest($3::text[]) AS work_dir,
+           unnest($4::uuid[]) AS runtime_id
+) AS p
+WHERE cs.id = p.id
+`
+
+type UpdateChatSessionSessionsParams struct {
+	Ids        []pgtype.UUID `json:"ids"`
+	SessionIds []string      `json:"session_ids"`
+	WorkDirs   []string      `json:"work_dirs"`
+	RuntimeIds []pgtype.UUID `json:"runtime_ids"`
+}
+
+// Batch form of UpdateChatSessionSession with the same COALESCE semantics:
+// an empty session_id / work_dir or a NULL runtime_id keeps the stored value.
+func (q *Queries) UpdateChatSessionSessions(ctx context.Context, arg UpdateChatSessionSessionsParams) error {
+	_, err := q.db.Exec(ctx, updateChatSessionSessions,
+		arg.Ids,
+		arg.SessionIds,
+		arg.WorkDirs,
+		arg.RuntimeIds,
+	)
+	return err
+}
+
 const updateChatSessionTitle = `-- name: UpdateChatSessionTitle :one
 UPDATE chat_session SET title = $2, updated_at = now()
 WHERE id = $1

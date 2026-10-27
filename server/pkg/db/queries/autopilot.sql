@@ -420,6 +420,17 @@ SELECT * FROM autopilot_run
 WHERE id = $1
 FOR UPDATE;
 
+-- name: LockAutopilotRunChatSessionsForTaskSettle :many
+-- Locks the runs of tasks entering a terminal state so a follow-up chat
+-- session created concurrently (EnsureAutopilotRunChat holds FOR UPDATE while
+-- it links one) is either seen here or sees the settled task. No filter on
+-- chat_session_id: a row whose link is still uncommitted must be waited on,
+-- and FOR KEY SHARE returns its latest version once that commits.
+SELECT id, chat_session_id FROM autopilot_run
+WHERE id = ANY(@run_ids::uuid[])
+ORDER BY id
+FOR KEY SHARE;
+
 -- name: SetAutopilotRunChatSession :exec
 UPDATE autopilot_run
 SET chat_session_id = $2

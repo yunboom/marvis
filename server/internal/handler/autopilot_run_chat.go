@@ -24,7 +24,6 @@ const autopilotExecutionModeRunOnly = "run_only"
 const (
 	autopilotRunChatCodeModeUnsupported = "run_mode_unsupported"
 	autopilotRunChatCodeNoSession       = "run_has_no_session"
-	autopilotRunChatCodeInProgress      = "run_in_progress"
 )
 
 // Terminal agent_task_queue statuses: a run's task in one of these has written
@@ -43,7 +42,10 @@ type AutopilotRunChatResponse struct {
 // EnsureAutopilotRunChat returns the follow-up chat session of a run_only run,
 // creating it on first use. The run itself stays an autopilot task; the chat
 // session continues the run task's provider session and work dir, so the
-// second turn onward goes through the ordinary chat endpoints.
+// second turn onward goes through the ordinary chat endpoints. A session
+// created while the run executes starts without a resume pointer: the run's
+// task writes it when it settles, and the claim query holds the session's
+// messages until then.
 func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request) {
 	userID, ok := requireUserID(w, r)
 	if !ok {
@@ -98,12 +100,8 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, AutopilotRunChatResponse{ChatSessionID: uuidToString(run.ChatSessionID)})
 		return
 	}
-	if !runTaskTerminal(task.Status) {
-		writeErrorCode(w, http.StatusConflict, autopilotRunChatCodeInProgress, "run is still in progress")
-		return
-	}
 
-	sessionID, err := h.ensureAutopilotRunChatSession(r.Context(), autopilot, run.ID, task, userID)
+	sessionID, err := h.ensureAutopilotRunChatSession(r.Context(), autopilot, run.ID, task.AgentID, userID)
 	if err != nil {
 		h.writeAutopilotRunChatError(w, r, err)
 		return
@@ -114,7 +112,7 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 
 // ensureAutopilotRunChatSession creates the run's chat session under the run
 // row lock, or returns the one a concurrent caller created first.
-func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot db.Autopilot, runID pgtype.UUID, task db.AgentTaskQueue, userID string) (pgtype.UUID, error) {
+func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot db.Autopilot, runID, agentID pgtype.UUID, userID string) (pgtype.UUID, error) {
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
 		return pgtype.UUID{}, errors.Wrap(err, "begin run chat create")
@@ -128,6 +126,13 @@ func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot d
 	}
 	if run.ChatSessionID.Valid {
 		return run.ChatSessionID, nil
+	}
+	// Read under the run lock: a task settling concurrently locks the run
+	// before it pins the pointer, so either its terminal status is visible
+	// here or it sees the session linked below and pins it itself.
+	task, err := qtx.GetAgentTask(ctx, run.TaskID)
+	if err != nil {
+		return pgtype.UUID{}, errors.Wrapf(err, "get run task run_id=%s", uuidToString(runID))
 	}
 
 	// Same workspace delete/create protocol every chat session creator follows
@@ -143,7 +148,7 @@ func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot d
 	session, err := qtx.CreateChatSession(ctx, db.CreateChatSessionParams{
 		ID:          dbid.NewV7(),
 		WorkspaceID: autopilot.WorkspaceID,
-		AgentID:     task.AgentID,
+		AgentID:     agentID,
 		CreatorID:   parseUUID(userID),
 		Title:       autopilot.Title,
 		ProjectID:   projectID,
@@ -156,8 +161,10 @@ func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot d
 	if _, err := qtx.MarkChatSessionExplicitlyCreated(ctx, session.ID); err != nil {
 		return pgtype.UUID{}, errors.Wrapf(err, "mark run chat session chat_session_id=%s", uuidToString(session.ID))
 	}
-	if err := qtx.UpdateChatSessionSession(ctx, runChatResumePointer(session.ID, task)); err != nil {
-		return pgtype.UUID{}, errors.Wrapf(err, "prefill run chat session chat_session_id=%s", uuidToString(session.ID))
+	if runTaskTerminal(task.Status) {
+		if err := qtx.UpdateChatSessionSession(ctx, service.RunChatResumePointer(session.ID, task)); err != nil {
+			return pgtype.UUID{}, errors.Wrapf(err, "prefill run chat session chat_session_id=%s", uuidToString(session.ID))
+		}
 	}
 	if err := qtx.SetAutopilotRunChatSession(ctx, db.SetAutopilotRunChatSessionParams{ID: runID, ChatSessionID: session.ID}); err != nil {
 		return pgtype.UUID{}, errors.Wrapf(err, "link run chat session run_id=%s", uuidToString(runID))
@@ -190,27 +197,6 @@ func lockRunChatProject(ctx context.Context, qtx *db.Queries, autopilot db.Autop
 	}
 
 	return autopilot.ProjectID, nil
-}
-
-// runChatResumePointer points the chat session at the run task's provider
-// session, work dir and runtime. A task that failed in a way that poisons its
-// conversation keeps only the work dir, matching the GetLastTaskSession
-// resume filter.
-func runChatResumePointer(sessionID pgtype.UUID, task db.AgentTaskQueue) db.UpdateChatSessionSessionParams {
-	params := db.UpdateChatSessionSessionParams{
-		ID:        sessionID,
-		SessionID: task.SessionID,
-		WorkDir:   task.WorkDir,
-		RuntimeID: task.RuntimeID,
-	}
-
-	unresumable := task.Status == runTaskStatusFailed && service.ResumeUnsafeFailure(task.FailureReason.String, task.Error.String)
-	retired := task.RetiredSessionID.Valid && task.RetiredSessionID.String == task.SessionID.String
-	if unresumable || retired {
-		params.SessionID = pgtype.Text{}
-	}
-
-	return params
 }
 
 func runTaskTerminal(status string) bool {

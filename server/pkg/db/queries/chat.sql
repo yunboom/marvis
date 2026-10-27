@@ -288,6 +288,22 @@ SET session_id = COALESCE(sqlc.narg('session_id'), session_id),
     updated_at = now()
 WHERE id = sqlc.arg('id');
 
+-- name: UpdateChatSessionSessions :exec
+-- Batch form of UpdateChatSessionSession with the same COALESCE semantics:
+-- an empty session_id / work_dir or a NULL runtime_id keeps the stored value.
+UPDATE chat_session cs
+SET session_id = COALESCE(NULLIF(p.session_id, ''), cs.session_id),
+    work_dir = COALESCE(NULLIF(p.work_dir, ''), cs.work_dir),
+    runtime_id = COALESCE(p.runtime_id, cs.runtime_id),
+    updated_at = now()
+FROM (
+    SELECT unnest(@ids::uuid[]) AS id,
+           unnest(@session_ids::text[]) AS session_id,
+           unnest(@work_dirs::text[]) AS work_dir,
+           unnest(@runtime_ids::uuid[]) AS runtime_id
+) AS p
+WHERE cs.id = p.id;
+
 -- name: ClearChatSessionSessionIfMatches :exec
 -- Drops the chat session's resume pointer, but only while it still points at
 -- the exact session the caller proved unresumable.

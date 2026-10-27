@@ -1682,6 +1682,43 @@ func (q *Queries) LockAutopilotForUpdate(ctx context.Context, arg LockAutopilotF
 	return i, err
 }
 
+const lockAutopilotRunChatSessionsForTaskSettle = `-- name: LockAutopilotRunChatSessionsForTaskSettle :many
+SELECT id, chat_session_id FROM autopilot_run
+WHERE id = ANY($1::uuid[])
+ORDER BY id
+FOR KEY SHARE
+`
+
+type LockAutopilotRunChatSessionsForTaskSettleRow struct {
+	ID            pgtype.UUID `json:"id"`
+	ChatSessionID pgtype.UUID `json:"chat_session_id"`
+}
+
+// Locks the runs of tasks entering a terminal state so a follow-up chat
+// session created concurrently (EnsureAutopilotRunChat holds FOR UPDATE while
+// it links one) is either seen here or sees the settled task. No filter on
+// chat_session_id: a row whose link is still uncommitted must be waited on,
+// and FOR KEY SHARE returns its latest version once that commits.
+func (q *Queries) LockAutopilotRunChatSessionsForTaskSettle(ctx context.Context, runIds []pgtype.UUID) ([]LockAutopilotRunChatSessionsForTaskSettleRow, error) {
+	rows, err := q.db.Query(ctx, lockAutopilotRunChatSessionsForTaskSettle, runIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []LockAutopilotRunChatSessionsForTaskSettleRow{}
+	for rows.Next() {
+		var i LockAutopilotRunChatSessionsForTaskSettleRow
+		if err := rows.Scan(&i.ID, &i.ChatSessionID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockAutopilotRunForUpdate = `-- name: LockAutopilotRunForUpdate :one
 SELECT id, autopilot_id, trigger_id, source, status, issue_id, task_id, triggered_at, completed_at, failure_reason, trigger_payload, result, created_at, squad_id, planned_at, webhook_delivery_id, quota_reservation_id, reason_code, chat_session_id FROM autopilot_run
 WHERE id = $1

@@ -1587,6 +1587,17 @@ WHERE id = (
               )
             )
       )
+      -- A follow-up chat of an autopilot run waits for the run: its turns
+      -- continue the run's provider session, which the run's task (or its
+      -- auto-retry) writes onto the chat session when it settles.
+      AND NOT EXISTS (
+          SELECT 1
+          FROM autopilot_run run
+          JOIN agent_task_queue run_task ON run_task.autopilot_run_id = run.id
+          WHERE atq.chat_session_id IS NOT NULL
+            AND run.chat_session_id = atq.chat_session_id
+            AND run_task.status IN ('queued', 'dispatched', 'running', 'waiting_local_directory', 'deferred')
+      )
     ORDER BY atq.priority DESC, atq.created_at ASC, atq.id ASC
     LIMIT 1
     FOR UPDATE SKIP LOCKED
