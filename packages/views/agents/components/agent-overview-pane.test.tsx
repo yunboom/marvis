@@ -92,6 +92,14 @@ vi.mock("@marvis/core/telegram", () => ({
   }),
 }));
 
+const integrationHintsRef = vi.hoisted(() => ({
+  current: new Set<string>() as ReadonlySet<string>,
+}));
+vi.mock("../use-agent-integration-hints", () => ({
+  useAgentIntegrationHints: () => integrationHintsRef.current,
+}));
+
+import { useAgentIntegrationHintStore } from "@marvis/core/agents/stores";
 import { AgentOverviewPane } from "./agent-overview-pane";
 
 const baseAgent: Agent = {
@@ -186,6 +194,8 @@ beforeEach(() => {
   larkListingRef.current = { installations: [], configured: false };
   slackListingRef.current = { installations: [], configured: false };
   telegramListingRef.current = { installations: [], configured: false };
+  integrationHintsRef.current = new Set();
+  useAgentIntegrationHintStore.setState({ pendingAgentIds: [] });
 });
 
 describe("AgentOverviewPane MCP tab visibility", () => {
@@ -372,5 +382,44 @@ describe("AgentOverviewPane horizontal alignment", () => {
     // and that aside, not the form behind it, is what meets the tabs above.
     expect(panelFor(container as HTMLElement)).toHaveClass(RAIL_SENTINEL);
     expect(container.querySelector("aside")).toHaveClass(GUTTER_SENTINEL);
+  });
+});
+
+describe("AgentOverviewPane integration hint", () => {
+  it("dots Capabilities and Integrations, and clears the hint for good once Integrations opens", async () => {
+    larkListingRef.current = { installations: [], configured: true };
+    integrationHintsRef.current = new Set([baseAgent.id]);
+    useAgentIntegrationHintStore.getState().markPending(baseAgent.id);
+
+    renderPane([makeRuntime("claude")]);
+    const capabilitiesTab = await screen.findByRole("tab", {
+      name: /^Capabilities\s*Integrations not set up$/i,
+    });
+    expect(capabilitiesTab).toBeInTheDocument();
+
+    fireEvent.click(capabilitiesTab);
+    const tab = await screen.findByRole("tab", {
+      name: /^Integrations\s*Integrations not set up$/i,
+    });
+    expect(useAgentIntegrationHintStore.getState().pendingAgentIds).toEqual([
+      baseAgent.id,
+    ]);
+
+    fireEvent.click(tab);
+    expect(useAgentIntegrationHintStore.getState().pendingAgentIds).toEqual([]);
+  });
+
+  it("shows no dot when the agent is not hinted", async () => {
+    larkListingRef.current = { installations: [], configured: true };
+
+    renderPane([makeRuntime("claude")]);
+    openCapabilities();
+
+    expect(
+      await screen.findByRole("tab", { name: /^Integrations$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("agent-integration-hint-dot"),
+    ).not.toBeInTheDocument();
   });
 });
