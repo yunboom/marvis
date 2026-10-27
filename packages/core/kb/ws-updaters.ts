@@ -23,9 +23,10 @@ export function invalidateKbJobs(qc: QueryClient, wsId: string) {
 /**
  * A draft took writes: the job pages (their right-hand diff and checks) and
  * every tree level and page read through that draft. Tree and page keys end
- * with the draft they were read through.
+ * with the draft they were read through. The published reads of the pages it
+ * touched list their open drafts (the draft bar), so they refetch too.
  */
-export function invalidateKbDraft(qc: QueryClient, wsId: string, draftId: string) {
+export function invalidateKbDraft(qc: QueryClient, wsId: string, draftId: string, pageIds: readonly string[] = []) {
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "job"] });
   // A merge request's diff follows its draft; its key has no draft id.
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "review"] });
@@ -35,6 +36,9 @@ export function invalidateKbDraft(qc: QueryClient, wsId: string, draftId: string
       queryKey: [...kbKeys.all(wsId), scope],
       predicate: (query) => query.queryKey[query.queryKey.length - 1] === draftId,
     });
+  }
+  for (const pageId of pageIds) {
+    void qc.invalidateQueries({ queryKey: kbKeys.page(wsId, pageId, ""), exact: true });
   }
 }
 
@@ -65,8 +69,9 @@ export function invalidateKbMainline(qc: QueryClient, wsId: string) {
 }
 
 /**
- * A knowledge base was created, configured or deleted: the list and the
- * detail. A deleted one also drops everything cached under it.
+ * A knowledge base was created, configured or deleted: the list, the detail
+ * and the home page (name and description). A deleted one also drops
+ * everything cached under it.
  */
 export function invalidateKbBase(qc: QueryClient, wsId: string, deleted: boolean) {
   if (deleted) {
@@ -74,6 +79,7 @@ export function invalidateKbBase(qc: QueryClient, wsId: string, deleted: boolean
     return;
   }
   void qc.invalidateQueries({ queryKey: kbKeys.bases(wsId) });
+  void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "home"] });
 }
 
 /** A review comment: the thread, and the detail's agent-at-work state. */

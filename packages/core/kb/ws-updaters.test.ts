@@ -2,7 +2,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import { kbKeys } from "./queries";
-import { invalidateKbAnnotations, invalidateKbDraft, invalidateKbMergeRequests } from "./ws-updaters";
+import { invalidateKbAnnotations, invalidateKbBase, invalidateKbDraft, invalidateKbMergeRequests } from "./ws-updaters";
 
 const WS = "ws-1";
 
@@ -35,5 +35,27 @@ describe("mention card queries", () => {
     const qc = seeded(key);
     invalidateKbAnnotations(qc, WS);
     expect(invalidated(qc, key)).toBe(true);
+  });
+});
+
+describe("invalidateKbDraft", () => {
+  it("refreshes the published read of each touched page for its draft bar", () => {
+    const touched = kbKeys.page(WS, "p-1", "");
+    const other = kbKeys.page(WS, "p-2", "");
+    const throughDraft = kbKeys.page(WS, "p-2", "d-1");
+    const qc = seeded(touched, other, throughDraft);
+    invalidateKbDraft(qc, WS, "d-1", ["p-1"]);
+    expect(invalidated(qc, touched)).toBe(true);
+    expect(invalidated(qc, other)).toBe(false);
+    expect(invalidated(qc, throughDraft)).toBe(true);
+  });
+});
+
+describe("invalidateKbBase", () => {
+  it("refreshes the home page when a knowledge base is configured", () => {
+    const home = kbKeys.home(WS, "team");
+    const qc = seeded(home);
+    invalidateKbBase(qc, WS, false);
+    expect(invalidated(qc, home)).toBe(true);
   });
 });

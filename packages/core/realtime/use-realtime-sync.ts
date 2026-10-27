@@ -1370,8 +1370,8 @@ export function useRealtimeSync(
     // and the tree and pages read through that draft.
     const unsubKbDraftUpdated = ws.on("kb.draft.updated", (p) => {
       const wsId = getCurrentWsId();
-      const { draft_id } = p as KbDraftUpdatedPayload;
-      if (wsId && draft_id) invalidateKbDraft(qc, wsId, draft_id);
+      const { draft_id, page_ids } = p as KbDraftUpdatedPayload;
+      if (wsId && draft_id) invalidateKbDraft(qc, wsId, draft_id, Array.isArray(page_ids) ? page_ids : []);
     });
 
     const unsubKbMrCreated = ws.on("kb.mr.created", () => {
