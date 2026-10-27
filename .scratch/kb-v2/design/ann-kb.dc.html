@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>知识库首页 · 批注整个知识库</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f">
+  <dc-import name="kb-overview" hint-size="1440px,900px"></dc-import>
+  <button class="ib on" aria-label="知识库批注" style="position: absolute; top: 28px; right: 252px; width: auto; padding: 0 8px; gap: 4px; background: #ececec"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 5h14v10H10l-5 4z"></path></svg><span style="font-size: 12.5px">1</span></button>
+  <aside class="panel" aria-label="知识库批注" style="position: absolute; top: 73px; right: 16px; height: 811px; border-bottom-right-radius: 20px">
+    <div class="ph"><span style="flex: 1">知识库批注 1</span><button class="btn btn-o" style="height: 28px; font-size: 12.5px; margin-right: 4px">交给智能体处理</button><button class="ib" aria-label="关闭"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+    <div class="pb">
+      <div class="card" style="padding: 12px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px"><span class="av bot">通</span><span>通用开发助手</span><span class="faint">10-22</span><span style="flex: 1"></span><span class="tag"><span class="dot d-amber"></span>待处理</span></div>
+        <div style="font-size: 13.5px">对话中被问到「渠道限流阈值」，知识库里没有，需要补充。</div>
+      </div>
+      <sc-if value="{{compose}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 10px; display: flex; flex-direction: column; gap: 8px"><label for="kk" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">批注整个知识库</label><textarea id="kk" class="field focus" rows="2" value="缺少发布回滚的操作步骤，出事故时找不到。"></textarea><div style="display: flex; justify-content: flex-end; gap: 8px"><button class="btn btn-g" style="height: 30px">取消</button><button class="btn btn-p" style="height: 30px">批注</button></div></div></sc-if>
+      <sc-if value="{{idle}}" hint-placeholder-val="{{ true }}"><button class="btn btn-g" style="align-self: flex-start; height: 30px; gap: 5px; color: #5c5c5c; padding: 0 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>添加批注</button></sc-if>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compose":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return { compose: !!this.props.compose, idle: !this.props.compose }; } }
+</script>
+</body>
+</html>

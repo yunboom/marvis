@@ -2,8 +2,10 @@ export {
   paths,
   isGlobalPath,
   AGENT_FOCUS_CONVERSATION_STARTERS,
+  KB_NEW_JOB_PARAMS,
+  KB_MANAGE_TABS,
 } from "./paths";
-export type { WorkspacePaths } from "./paths";
+export type { WorkspacePaths, KbNewJobContext, KbManageTab } from "./paths";
 export { RESERVED_SLUGS, isReservedSlug } from "./reserved-slugs";
 export {
   WORKSPACE_PAGES,

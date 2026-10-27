@@ -457,19 +457,34 @@ func (h *Handler) SwitchAgentBuilderRuntime(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	workspaceUUID, ok := parseUUIDOrBadRequest(w, workspaceID, "workspace id")
+	updated, ok := h.rebindBuilderCarrier(w, r, workspaceID, session, agent, runtimeID)
 	if !ok {
 		return
 	}
+
+	writeJSON(w, http.StatusOK, SwitchAgentBuilderRuntimeResponse{
+		RuntimeID: uuidToString(updated.RuntimeID),
+	})
+}
+
+// rebindBuilderCarrier re-points a builder carrier (agent builder or knowledge
+// base builder) at another runtime. Shared so both builders enforce the same
+// gates in the same lock order. It writes the error response and returns
+// false on failure.
+func (h *Handler) rebindBuilderCarrier(w http.ResponseWriter, r *http.Request, workspaceID string, session db.ChatSession, agent db.Agent, runtimeID string) (db.Agent, bool) {
+	workspaceUUID, ok := parseUUIDOrBadRequest(w, workspaceID, "workspace id")
+	if !ok {
+		return db.Agent{}, false
+	}
 	runtime, ok := h.resolveBuilderRuntime(w, r, workspaceID, workspaceUUID, runtimeID, "switch")
 	if !ok {
-		return
+		return db.Agent{}, false
 	}
 
 	tx, err := h.TxStarter.Begin(r.Context())
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to switch agent builder runtime")
-		return
+		return db.Agent{}, false
 	}
 	defer tx.Rollback(r.Context())
 	qtx := h.Queries.WithTx(tx)
@@ -482,24 +497,24 @@ func (h *Handler) SwitchAgentBuilderRuntime(w http.ResponseWriter, r *http.Reque
 		} else {
 			writeError(w, http.StatusInternalServerError, "failed to lock workspace")
 		}
-		return
+		return db.Agent{}, false
 	}
 	runtime, err = qtx.LockAgentRuntimeForAccessChange(r.Context(), runtime.ID)
 	if err != nil || runtime.WorkspaceID != workspaceUUID {
 		writeError(w, http.StatusBadRequest, "invalid runtime_id")
-		return
+		return db.Agent{}, false
 	}
 	if !h.authorizeBuilderRuntime(w, r, workspaceID, runtime, "switch") {
-		return
+		return db.Agent{}, false
 	}
 
 	if _, err := qtx.LockChatSessionForRuntimeBind(r.Context(), session.ID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeError(w, http.StatusNotFound, "chat session not found")
-			return
+			return db.Agent{}, false
 		}
 		writeError(w, http.StatusInternalServerError, "failed to lock chat session")
-		return
+		return db.Agent{}, false
 	}
 
 	// Checked under the lock, so a send cannot slip in behind it. A task that is
@@ -507,10 +522,10 @@ func (h *Handler) SwitchAgentBuilderRuntime(w http.ResponseWriter, r *http.Reque
 	// expected to stop it first, which restores the message to the composer.
 	if _, err := qtx.GetPendingChatTask(r.Context(), session.ID); err == nil {
 		writeError(w, http.StatusConflict, "stop the current reply before switching runtime")
-		return
+		return db.Agent{}, false
 	} else if !errors.Is(err, pgx.ErrNoRows) {
 		writeError(w, http.StatusInternalServerError, "failed to check pending builder task")
-		return
+		return db.Agent{}, false
 	}
 
 	// Model ids are per-runtime, so the carrier's model is cleared rather than
@@ -523,19 +538,17 @@ func (h *Handler) SwitchAgentBuilderRuntime(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeError(w, http.StatusNotFound, "agent builder session not found")
-			return
+			return db.Agent{}, false
 		}
 		writeError(w, http.StatusInternalServerError, "failed to switch agent builder runtime")
-		return
+		return db.Agent{}, false
 	}
 	if err := tx.Commit(r.Context()); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to commit agent builder runtime switch")
-		return
+		return db.Agent{}, false
 	}
 
-	writeJSON(w, http.StatusOK, SwitchAgentBuilderRuntimeResponse{
-		RuntimeID: uuidToString(updated.RuntimeID),
-	})
+	return updated, true
 }
 
 // isAgentBuilderCarrier reports whether an agent is a hidden builder execution

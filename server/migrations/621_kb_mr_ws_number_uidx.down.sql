@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS kb_mr_ws_number_uidx;

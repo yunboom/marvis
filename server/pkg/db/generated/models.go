@@ -1110,6 +1110,243 @@ type IssueWorkflow struct {
 	OwnerID          pgtype.UUID        `json:"owner_id"`
 }
 
+type KbAnnotation struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	PageID          pgtype.UUID        `json:"page_id"`
+	BlockID         string             `json:"block_id"`
+	Quote           string             `json:"quote"`
+	Prefix          string             `json:"prefix"`
+	Suffix          string             `json:"suffix"`
+	Body            string             `json:"body"`
+	AuthorType      string             `json:"author_type"`
+	AuthorID        pgtype.UUID        `json:"author_id"`
+	Status          string             `json:"status"`
+	MergeRequestID  pgtype.UUID        `json:"merge_request_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	OriginalQuote   string             `json:"original_quote"`
+}
+
+type KbBase struct {
+	ID             pgtype.UUID        `json:"id"`
+	WorkspaceID    pgtype.UUID        `json:"workspace_id"`
+	Name           string             `json:"name"`
+	Slug           string             `json:"slug"`
+	Description    string             `json:"description"`
+	SchemaMode     string             `json:"schema_mode"`
+	Purpose        string             `json:"purpose"`
+	Schema         string             `json:"schema"`
+	ContentVersion int64              `json:"content_version"`
+	CreatedBy      pgtype.UUID        `json:"created_by"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbBlockEmbedding struct {
+	PageID          pgtype.UUID        `json:"page_id"`
+	BlockID         string             `json:"block_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	ContentHash     string             `json:"content_hash"`
+	Model           string             `json:"model"`
+	Embedding       string             `json:"embedding"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbBuilderSession struct {
+	ChatSessionID   pgtype.UUID        `json:"chat_session_id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	Mode            string             `json:"mode"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	Draft           []byte             `json:"draft"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbClaim struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	PageID          pgtype.UUID        `json:"page_id"`
+	BlockID         string             `json:"block_id"`
+	Key             string             `json:"key"`
+	Text            string             `json:"text"`
+	Evidence        []byte             `json:"evidence"`
+	CheckedAt       pgtype.Timestamptz `json:"checked_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbConfigRevision struct {
+	ID              pgtype.UUID        `json:"id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	Name            string             `json:"name"`
+	Description     string             `json:"description"`
+	SchemaMode      string             `json:"schema_mode"`
+	Purpose         string             `json:"purpose"`
+	Schema          string             `json:"schema"`
+	SavedBy         pgtype.UUID        `json:"saved_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
+type KbDraft struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	Title           string             `json:"title"`
+	Version         int64              `json:"version"`
+	Status          string             `json:"status"`
+	CreatedBy       pgtype.UUID        `json:"created_by"`
+	TaskID          pgtype.UUID        `json:"task_id"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbDraftPage struct {
+	DraftID        pgtype.UUID        `json:"draft_id"`
+	PageID         pgtype.UUID        `json:"page_id"`
+	Op             string             `json:"op"`
+	BaseRevisionID pgtype.UUID        `json:"base_revision_id"`
+	ParentID       pgtype.UUID        `json:"parent_id"`
+	Position       string             `json:"position"`
+	Slug           string             `json:"slug"`
+	Frontmatter    []byte             `json:"frontmatter"`
+	Blocks         []byte             `json:"blocks"`
+	Claims         []byte             `json:"claims"`
+	Conflicts      []byte             `json:"conflicts"`
+	Version        int64              `json:"version"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbJob struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	Name            string             `json:"name"`
+	Starter         string             `json:"starter"`
+	AgentID         pgtype.UUID        `json:"agent_id"`
+	ChatSessionID   pgtype.UUID        `json:"chat_session_id"`
+	AnnotationIds   []pgtype.UUID      `json:"annotation_ids"`
+	PageID          pgtype.UUID        `json:"page_id"`
+	CreatedBy       pgtype.UUID        `json:"created_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbJobDraft struct {
+	ID          pgtype.UUID        `json:"id"`
+	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	JobID       pgtype.UUID        `json:"job_id"`
+	DraftID     pgtype.UUID        `json:"draft_id"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type KbLink struct {
+	WorkspaceID     pgtype.UUID `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
+	FromPageID      pgtype.UUID `json:"from_page_id"`
+	FromBlockID     string      `json:"from_block_id"`
+	ToPageID        pgtype.UUID `json:"to_page_id"`
+	ToBlockID       string      `json:"to_block_id"`
+	ToPath          string      `json:"to_path"`
+}
+
+type KbMergeRequest struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	Number          int32              `json:"number"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	Title           string             `json:"title"`
+	Summary         string             `json:"summary"`
+	Source          string             `json:"source"`
+	Risk            string             `json:"risk"`
+	AuthorType      string             `json:"author_type"`
+	AuthorID        pgtype.UUID        `json:"author_id"`
+	DraftID         pgtype.UUID        `json:"draft_id"`
+	JobID           pgtype.UUID        `json:"job_id"`
+	AnnotationIds   []pgtype.UUID      `json:"annotation_ids"`
+	RevertsID       pgtype.UUID        `json:"reverts_id"`
+	Status          string             `json:"status"`
+	MergedBy        pgtype.UUID        `json:"merged_by"`
+	MergedAt        pgtype.Timestamptz `json:"merged_at"`
+	ClosedBy        pgtype.UUID        `json:"closed_by"`
+	ClosedAt        pgtype.Timestamptz `json:"closed_at"`
+	CloseReason     string             `json:"close_reason"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbMrComment struct {
+	ID             pgtype.UUID        `json:"id"`
+	MergeRequestID pgtype.UUID        `json:"merge_request_id"`
+	ParentID       pgtype.UUID        `json:"parent_id"`
+	QuotePageID    pgtype.UUID        `json:"quote_page_id"`
+	QuoteBlockID   string             `json:"quote_block_id"`
+	QuoteText      string             `json:"quote_text"`
+	Body           string             `json:"body"`
+	AuthorType     string             `json:"author_type"`
+	AuthorID       pgtype.UUID        `json:"author_id"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	Triggered      []byte             `json:"triggered"`
+}
+
+type KbPage struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	ParentID        pgtype.UUID        `json:"parent_id"`
+	Position        string             `json:"position"`
+	Slug            string             `json:"slug"`
+	Type            string             `json:"type"`
+	Title           string             `json:"title"`
+	Description     string             `json:"description"`
+	Frontmatter     []byte             `json:"frontmatter"`
+	Blocks          []byte             `json:"blocks"`
+	SearchText      string             `json:"search_text"`
+	HeadRevisionID  pgtype.UUID        `json:"head_revision_id"`
+	StaleAfter      pgtype.Timestamptz `json:"stale_after"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
+type KbPageRevision struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	PageID          pgtype.UUID        `json:"page_id"`
+	PrevRevisionID  pgtype.UUID        `json:"prev_revision_id"`
+	MergeRequestID  pgtype.UUID        `json:"merge_request_id"`
+	ParentID        pgtype.UUID        `json:"parent_id"`
+	Position        string             `json:"position"`
+	Slug            string             `json:"slug"`
+	Frontmatter     []byte             `json:"frontmatter"`
+	Blocks          []byte             `json:"blocks"`
+	Claims          []byte             `json:"claims"`
+	Deleted         bool               `json:"deleted"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
+type KbRaw struct {
+	ID              pgtype.UUID        `json:"id"`
+	WorkspaceID     pgtype.UUID        `json:"workspace_id"`
+	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
+	Kind            string             `json:"kind"`
+	Name            string             `json:"name"`
+	StorageKey      string             `json:"storage_key"`
+	Size            int64              `json:"size"`
+	ContentType     string             `json:"content_type"`
+	UploadedBy      pgtype.UUID        `json:"uploaded_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
+type KbWorkspace struct {
+	WorkspaceID  pgtype.UUID        `json:"workspace_id"`
+	NextMrNumber int32              `json:"next_mr_number"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
 type LarkBindingToken struct {
 	TokenHash      string             `json:"token_hash"`
 	WorkspaceID    pgtype.UUID        `json:"workspace_id"`

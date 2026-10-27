@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>关系图</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <dc-import name="KbNav" sel="" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar"><div class="crumb"><span>知识库</span><span>/</span><span>团队知识库</span><span>/</span><b>关系图</b></div></div>
+      <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 16px 24px; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 16px; font-size: 12.5px" class="muted">
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 5px; background: #4f6f8a"></span>产品与业务</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 5px; background: #3f7a5d"></span>测试</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 5px; background: #b8862e"></span>发布</span>
+          <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 5px; border: 1px dashed #888"></span>无链接</span>
+          <span style="flex: 1"></span><span class="faint">颜色按一级页面区分，点击打开页面</span>
+        </div>
+        <div class="card" style="flex: 1; min-height: 0; position: relative; overflow: hidden">
+          <svg viewBox="0 0 860 700" width="100%" height="100%" role="img" aria-label="页面之间的链接">
+            <g stroke="#d4d4d4" stroke-width="1">
+              <line x1="300" y1="300" x2="420" y2="220" opacity="{{eHi}}"></line>
+              <line x1="300" y1="300" x2="200" y2="200" opacity="{{eHi}}"></line>
+              <line x1="300" y1="300" x2="260" y2="430" opacity="{{eHi}}"></line>
+              <line x1="420" y1="220" x2="540" y2="260" opacity="{{eLo}}"></line>
+              <line x1="540" y1="260" x2="620" y2="380" opacity="{{eLo}}"></line>
+              <line x1="620" y1="380" x2="700" y2="300" opacity="{{eLo}}"></line>
+              <line x1="260" y1="430" x2="380" y2="500" opacity="{{eLo}}"></line>
+              <line x1="380" y1="500" x2="520" y2="520" opacity="{{eLo}}"></line>
+              <line x1="200" y1="200" x2="130" y2="300" opacity="{{eLo}}"></line>
+            </g>
+            <g>
+              <circle cx="300" cy="300" r="12" fill="#4f6f8a" stroke="{{focusStroke}}" stroke-width="2"></circle>
+              <text x="300" y="330" text-anchor="middle" font-size="13" fill="#0f0f0f">支付回调</text>
+              <circle cx="420" cy="220" r="9" fill="#4f6f8a" opacity="{{nHi}}"></circle><text x="420" y="246" text-anchor="middle" font-size="12" fill="#333" opacity="{{nHi}}">幂等键</text>
+              <circle cx="200" cy="200" r="10" fill="#4f6f8a" opacity="{{nHi}}"></circle><text x="200" y="226" text-anchor="middle" font-size="12" fill="#333" opacity="{{nHi}}">支付</text>
+              <circle cx="260" cy="430" r="8" fill="#4f6f8a" opacity="{{nHi}}"></circle><text x="260" y="456" text-anchor="middle" font-size="12" fill="#333" opacity="{{nHi}}">回调人工处理</text>
+              <circle cx="540" cy="260" r="8" fill="#4f6f8a" opacity="{{nLo}}"></circle>
+              <circle cx="620" cy="380" r="10" fill="#3f7a5d" opacity="{{nLo}}"></circle><text x="620" y="406" text-anchor="middle" font-size="12" fill="#333" opacity="{{nLo}}">测试环境</text>
+              <circle cx="700" cy="300" r="8" fill="#3f7a5d" opacity="{{nLo}}"></circle>
+              <circle cx="380" cy="500" r="9" fill="#b8862e" opacity="{{nLo}}"></circle><text x="380" y="526" text-anchor="middle" font-size="12" fill="#333" opacity="{{nLo}}">发布流程</text>
+              <circle cx="520" cy="520" r="7" fill="#b8862e" opacity="{{nLo}}"></circle>
+              <circle cx="130" cy="300" r="7" fill="#4f6f8a" opacity="{{nLo}}"></circle>
+              <circle cx="740" cy="560" r="7" fill="#fff" stroke="#888" stroke-width="1.5" stroke-dasharray="3 2" opacity="{{nLo}}"></circle><text x="740" y="584" text-anchor="middle" font-size="12" fill="#888" opacity="{{nLo}}">渠道接入规范</text>
+            </g>
+          </svg>
+          <sc-if value="{{hover}}" hint-placeholder-val="{{ false }}">
+            <div role="tooltip" style="position: absolute; left: 330px; top: 250px; background: #1c1c1c; color: #fff; font-size: 12.5px; padding: 6px 10px; border-radius: 8px">打开支付回调 · 3 个链接</div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"hover":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var h = !!this.props.hover;
+    return { hover: h, eHi: 1, eLo: h ? 0.2 : 1, nHi: 1, nLo: h ? 0.25 : 1, focusStroke: h ? '#0f0f0f' : 'none' };
+  }
+}
+</script>
+</body>
+</html>

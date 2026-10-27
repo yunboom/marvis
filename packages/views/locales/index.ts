@@ -23,6 +23,7 @@ import enLayout from "./en/layout.json";
 import enUsage from "./en/usage.json";
 import enUi from "./en/ui.json";
 import enSquads from "./en/squads.json";
+import enKb from "./en/kb.json";
 import enBilling from "./en/billing.json";
 import zhHansCommon from "./zh-Hans/common.json";
 import zhHansAuth from "./zh-Hans/auth.json";
@@ -48,6 +49,7 @@ import zhHansLayout from "./zh-Hans/layout.json";
 import zhHansUsage from "./zh-Hans/usage.json";
 import zhHansUi from "./zh-Hans/ui.json";
 import zhHansSquads from "./zh-Hans/squads.json";
+import zhHansKb from "./zh-Hans/kb.json";
 import zhHansBilling from "./zh-Hans/billing.json";
 import zhHantCommon from "./zh-Hant/common.json";
 import zhHantAuth from "./zh-Hant/auth.json";
@@ -73,6 +75,7 @@ import zhHantLayout from "./zh-Hant/layout.json";
 import zhHantUsage from "./zh-Hant/usage.json";
 import zhHantUi from "./zh-Hant/ui.json";
 import zhHantSquads from "./zh-Hant/squads.json";
+import zhHantKb from "./zh-Hant/kb.json";
 import zhHantBilling from "./zh-Hant/billing.json";
 import koCommon from "./ko/common.json";
 import koAuth from "./ko/auth.json";
@@ -98,6 +101,7 @@ import koLayout from "./ko/layout.json";
 import koUsage from "./ko/usage.json";
 import koUi from "./ko/ui.json";
 import koSquads from "./ko/squads.json";
+import koKb from "./ko/kb.json";
 import koBilling from "./ko/billing.json";
 import jaCommon from "./ja/common.json";
 import jaAuth from "./ja/auth.json";
@@ -123,6 +127,7 @@ import jaLayout from "./ja/layout.json";
 import jaUsage from "./ja/usage.json";
 import jaUi from "./ja/ui.json";
 import jaSquads from "./ja/squads.json";
+import jaKb from "./ja/kb.json";
 import jaBilling from "./ja/billing.json";
 import frCommon from "./fr/common.json";
 import frAuth from "./fr/auth.json";
@@ -148,6 +153,7 @@ import frLayout from "./fr/layout.json";
 import frUsage from "./fr/usage.json";
 import frUi from "./fr/ui.json";
 import frSquads from "./fr/squads.json";
+import frKb from "./fr/kb.json";
 import frBilling from "./fr/billing.json";
 
 // Single source of truth for the resource bundle. Both apps (web layout +
@@ -179,6 +185,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     usage: enUsage,
     ui: enUi,
     squads: enSquads,
+    kb: enKb,
     billing: enBilling,
   },
   "zh-Hans": {
@@ -206,6 +213,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     usage: zhHansUsage,
     ui: zhHansUi,
     squads: zhHansSquads,
+    kb: zhHansKb,
     billing: zhHansBilling,
   },
   "zh-Hant": {
@@ -233,6 +241,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     usage: zhHantUsage,
     ui: zhHantUi,
     squads: zhHantSquads,
+    kb: zhHantKb,
     billing: zhHantBilling,
   },
   ko: {
@@ -260,6 +269,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     usage: koUsage,
     ui: koUi,
     squads: koSquads,
+    kb: koKb,
     billing: koBilling,
   },
   ja: {
@@ -287,6 +297,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     usage: jaUsage,
     ui: jaUi,
     squads: jaSquads,
+    kb: jaKb,
     billing: jaBilling,
   },
   fr: {
@@ -314,6 +325,7 @@ export const RESOURCES: Record<SupportedLocale, LocaleResources> = {
     usage: frUsage,
     ui: frUi,
     squads: frSquads,
+    kb: frKb,
     billing: frBilling,
   },
 };

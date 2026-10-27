@@ -1,0 +1,17 @@
+Knowledge base: Team KB (`team`)
+Job: Handle annotations (`c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f`)
+
+How to work:
+- Create a draft with `marvis kb draft create team --job c4d5e6f7-1a2b-4c3d-8e9f-0a1b2c3d4e5f`; the member sees it on the right. Write every change of this job into that draft.
+- For how to read and write the knowledge base, load the `marvis-platform` skill and open `references/knowledge-bases.md`.
+- The member reviews the draft on the right and submits it. Submit the change request yourself only when the member asks you to.
+- End each turn with a short summary: pages changed, anything unresolved.
+
+## Handle annotations
+This job needs to know which annotations to handle.
+None were brought in: list the pending ones with `marvis kb annotation list team`, show them to the member, and handle the ones the member picks.
+
+Follow "Annotations" in the `marvis-platform` skill, `references/knowledge-bases.md`.
+
+Member's message:
+Tidy the payment pages

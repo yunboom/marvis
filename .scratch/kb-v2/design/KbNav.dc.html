@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>知识库导航</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<aside aria-label="知识库导航" style="width: 260px; height: 868px; flex: none; border-right: 1px solid rgba(0,0,0,.06); display: flex; flex-direction: column; background: #fbfbfb; font-family: 'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; color: #0f0f0f; font-size: 14px">
+  <div style="display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 8px 0 12px; border-bottom: 1px solid rgba(0,0,0,.05)">
+    <button style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px; border: 0; border-radius: 10px; background: {{switchBg}}; font: inherit; flex: 1; min-width: 0">
+      <span style="width: 24px; height: 24px; border-radius: 6px; background: #ececec; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex: none">团</span>
+      <span style="font-weight: 600; white-space: nowrap">团队知识库</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5c5c5c" stroke-width="2" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>
+    </button>
+    <button class="{{moreCls}}" aria-label="知识库更多操作"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>
+  </div>
+  <div style="padding: 10px 8px 4px; display: flex; flex-direction: column; gap: 2px">
+    <a class="{{homeCls}}" href="#" style="height: 34px; font-size: 13.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"></path></svg><span style="flex: 1">首页</span><span class="faint" style="font-size: 12px">待处理 6</span></a>
+    <a class="{{runsCls}}" href="#" style="height: 34px; font-size: 13.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M13 3 4 14h7l-1 7 9-11h-7z"></path></svg><span style="flex: 1">知识库作业</span><span class="faint" style="font-size: 12px; display: inline-flex; align-items: center; gap: 5px"><span class="dot d-green"></span>1 运行中</span></a>
+  </div>
+  <div style="padding: 8px 16px 4px; font-size: 12px; color: #757575">页面</div>
+  <div style="padding: 0 8px; display: flex; flex-direction: column; gap: 1px; flex: 1; min-height: 0; overflow: hidden">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="14">
+      <div class="{{r.cls}}" style="{{r.indent}}">
+        <span style="width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; color: #757575; flex: none"><sc-if value="{{r.open}}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></sc-if><sc-if value="{{r.closed}}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></sc-if></span>
+        <span style="flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.title}}</span>
+        <sc-if value="{{r.stale}}" hint-placeholder-val="{{ false }}"><span class="dot d-amber" title="需要复核" style="margin-right: 4px"></span></sc-if>
+        <sc-if value="{{r.hasDraft}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; color: #4f6f8a; box-shadow: inset 0 0 0 1px rgba(79,111,138,.5); border-radius: 6px; padding: 0 5px; line-height: 17px; margin-right: 2px">{{r.draftLabel}}</span></sc-if>
+        <sc-if value="{{r.hover}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; gap: 2px"><button class="ib" aria-label="让智能体在这里写一页" style="width: 24px; height: 24px; border-radius: 6px; background: {{r.plusBg}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></span></sc-if>
+      </div>
+    </sc-for>
+  </div>
+</aside>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sel":{"editor":"text","default":"支付回调"},"hover":{"editor":"text","default":""},"home":{"editor":"boolean","default":false},"runs":{"editor":"boolean","default":false},"menu":{"editor":"boolean","default":false},"plusOn":{"editor":"boolean","default":false},"draft":{"editor":"boolean","default":false},"$preview":{"width":260,"height":868}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var sel = (this.props.home || this.props.runs) ? '' : (this.props.sel ?? '支付回调');
+    var hover = this.props.hover ?? '';
+    var plusOn = !!this.props.plusOn;
+    var draft = !!this.props.draft;
+    var tree = [
+      ['产品与业务', 0, 'open'], ['订单', 1, 'open'], ['订单状态流转', 2], ['退款规则', 2],
+      ['支付', 1, 'open'], ['支付回调', 2, null, true], ['幂等键', 2],
+      ['研发', 0, 'open'], ['系统架构', 1], ['服务清单', 1, 'closed'], ['发布流程', 1, null, true],
+      ['测试', 0, 'open'], ['测试环境', 1], ['回归清单', 1], ['常见问题', 0]
+    ];
+    if (draft) tree.splice(7, 0, ['回调人工处理', 2, null, false, '草稿 · 新']);
+    var draftOf = function (t) { return t[4] || (draft && t[0] === '支付回调' ? '草稿' : ''); };
+    return {
+      switchBg: 'transparent',
+      moreCls: 'ib' + (this.props.menu ? ' on' : ''),
+      homeCls: 'nav-i' + (this.props.home ? ' on' : ''),
+      runsCls: 'nav-i' + (this.props.runs ? ' on' : ''),
+      rows: tree.map(function (t) {
+        var on = t[0] === sel, hv = t[0] === hover;
+        return {
+          title: t[0], open: t[2] === 'open', closed: t[2] === 'closed', stale: !!t[3], hover: hv,
+          hasDraft: !!draftOf(t), draftLabel: draftOf(t),
+          plusBg: hv && plusOn ? 'rgba(0,0,0,.08)' : 'transparent',
+          cls: 'tree-row' + (on ? ' on' : ''),
+          indent: 'display: flex; align-items: center; gap: 4px; height: 32px; padding: 0 6px 0 ' + (6 + t[1] * 16) + 'px; border-radius: 8px; font-size: 13.5px; color: ' + (on ? '#0f0f0f' : '#333') + '; background: ' + (on ? 'rgba(0,0,0,.055)' : (hv ? 'rgba(0,0,0,.03)' : 'transparent')) + '; font-weight: ' + (on ? '500' : '400')
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

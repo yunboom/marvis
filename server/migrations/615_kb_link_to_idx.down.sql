@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS kb_link_to_idx;

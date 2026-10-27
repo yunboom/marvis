@@ -47,6 +47,8 @@ export function BuilderSetup({
   onStart,
   connectRuntimeHref,
   banner,
+  title,
+  description,
 }: {
   draft: AgentDraft;
   onChange: (draft: AgentDraft) => void;
@@ -62,6 +64,9 @@ export function BuilderSetup({
   /** Rendered above the card: the way back to an unfinished conversation, so
    *  this screen cannot silently start yet another one. */
   banner?: ReactNode;
+  /** Card copy; defaults to the agent builder's. */
+  title?: string;
+  description?: string;
 }) {
   const { t } = useT("agents");
   const hasOnline = runtimes.some(
@@ -78,10 +83,10 @@ export function BuilderSetup({
           <MessageSquare className="size-5" />
         </span>
         <h2 className="mt-5 text-title-lg font-semibold">
-          {t(($) => $.creation_studio.builder.setup_title)}
+          {title ?? t(($) => $.creation_studio.builder.setup_title)}
         </h2>
         <p className="mt-2 text-body leading-6 text-muted-foreground">
-          {t(($) => $.creation_studio.builder.setup_description)}
+          {description ?? t(($) => $.creation_studio.builder.setup_description)}
         </p>
         <div className="mt-6 space-y-4">
           <RuntimePicker
@@ -145,6 +150,10 @@ export function BuilderConversation({
   onRestoreDraftApplied,
   error,
   onDismissError,
+  title,
+  draftKey: draftKeyOverride,
+  transformContent = stripBuilderDraft,
+  emptyState,
 }: {
   sessionId: string;
   messages: ChatMessage[];
@@ -161,11 +170,21 @@ export function BuilderConversation({
   onRestoreDraftApplied: () => void;
   error: string | null;
   onDismissError?: () => void;
+  /** Header and composer name; defaults to the agent builder's. Other
+   *  builders (the knowledge base builder) reuse this conversation. */
+  title?: string;
+  /** Composer draft key; defaults to `agent-builder:<session>`. */
+  draftKey?: string;
+  /** Strips the builder's structured block from replies, live and stored. */
+  transformContent?: (content: string) => string;
+  /** Replaces the agent builder's empty state before the first message. */
+  emptyState?: ReactNode;
 }) {
   const { t } = useT("agents");
   const { t: tModals } = useT("modals");
   const pending = !!pendingTask?.task_id;
-  const draftKey = `agent-builder:${sessionId}`;
+  const draftKey = draftKeyOverride ?? `agent-builder:${sessionId}`;
+  const chatTitle = title ?? t(($) => $.creation_studio.builder.chat_title);
   const prompts = [
     t(($) => $.creation_studio.builder.prompt_review),
     t(($) => $.creation_studio.builder.prompt_research),
@@ -178,9 +197,7 @@ export function BuilderConversation({
     <section className="flex h-full min-h-0 flex-col bg-background @container">
       <header className="flex min-h-14 shrink-0 items-center justify-between gap-4 border-b px-5 py-2.5">
         <div className="min-w-0">
-          <h2 className="truncate text-body font-semibold">
-            {t(($) => $.creation_studio.builder.chat_title)}
-          </h2>
+          <h2 className="truncate text-body font-semibold">{chatTitle}</h2>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 text-caption text-muted-foreground">
           <span
@@ -205,8 +222,10 @@ export function BuilderConversation({
           availability={runtimeOnline ? "online" : "offline"}
           // Applies to the live stream as well as history, which is what keeps
           // the half-written JSON block off the screen mid-reply.
-          transformContent={stripBuilderDraft}
+          transformContent={transformContent}
         />
+      ) : emptyState ? (
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">{emptyState}</div>
       ) : (
         <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-5 py-8">
           <div className="w-full max-w-xl text-center">
@@ -266,7 +285,7 @@ export function BuilderConversation({
         onStop={onStop}
         isRunning={pending}
         disabled={!runtimeOnline}
-        agentName={t(($) => $.creation_studio.builder.chat_title)}
+        agentName={chatTitle}
         draftKeyOverride={draftKey}
         editorKeyOverride={draftKey}
         restoreDraftRequest={restoreDraftRequest}

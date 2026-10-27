@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>跟随改写与原句删除</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <dc-import name="KbNav" home="{{ true }}" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar"><div class="crumb"><span>团队知识库</span><span>/</span><span>首页</span><span>/</span><b>批注</b></div></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 16px 24px 12px">
+        <div class="seg"><button class="on">待处理 2</button><button>处理中 1</button><button>已解决</button><button>不处理</button></div>
+        <div style="flex: 1"></div>
+        <button class="btn btn-p">全部交给智能体（2）</button>
+      </div>
+      <div style="padding: 0 24px">
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 4px; border-bottom: 1px solid rgba(0,0,0,.06)">
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px" class="muted"><span class="av">韩</span><span style="color: #0f0f0f">韩梅梅</span><span class="faint">10-22</span><span class="tag">退款规则 · 第 3 段</span><span class="tag"><span class="dot d-blue"></span>已跟随改写</span></div>
+            <div style="font-size: 13px; color: #5c5c5c; background: #f7f7f7; border-radius: 8px; padding: 6px 10px">原路退款在次日 02:00 批量提交渠道，到账时间是 T+1 起。</div>
+            <div class="faint" style="font-size: 12px">批注时的原句：原路退款在次日批量提交渠道，所以到账时间是 T+1 起。</div>
+            <div style="font-size: 14px">补充一下为什么不实时提交。</div>
+          </div>
+          <button class="btn btn-g" style="height: 28px; font-size: 12.5px; padding: 0 10px">不处理</button>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 4px; border-bottom: 1px solid rgba(0,0,0,.06)">
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px" class="muted"><span class="av">李</span><span style="color: #0f0f0f">李雷</span><span class="faint">10-23</span><span class="tag">发布流程 · 整页</span><span class="tag"><span class="dot d-amber"></span>原句已删除</span></div>
+            <div class="faint" style="font-size: 12px">批注时的原句：灰度比例为 10% → 50% → 100%。</div>
+            <div style="font-size: 14px">灰度比例写错了，应该是 5% → 30% → 100%。</div>
+          </div>
+          <button class="btn btn-g" style="height: 28px; font-size: 12.5px; padding: 0 10px">不处理</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

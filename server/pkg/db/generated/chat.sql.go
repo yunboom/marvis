@@ -1731,6 +1731,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2
     OR
     lm.created_at IS NOT NULL
   )
+  -- A knowledge base job's chat lives on the job page, not in chat lists.
+  AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC
 `
 
@@ -2321,6 +2323,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2 AND cs.status = 'active'
     OR
     lm.created_at IS NOT NULL
   )
+  -- A knowledge base job's chat lives on the job page, not in chat lists.
+  AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC
 `
 

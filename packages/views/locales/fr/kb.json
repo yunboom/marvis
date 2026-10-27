@@ -1,0 +1,706 @@
+{
+  "list": {
+    "title": "Base de connaissances",
+    "new_button": "Nouvelle base de connaissances",
+    "pending_reviews_one": "{{count}} modification à valider",
+    "pending_reviews_other": "{{count}} modifications à valider",
+    "search_placeholder": "Rechercher des bases et des pages...",
+    "search_label": "Rechercher des bases de connaissances",
+    "sort": {
+      "recent": "Mises à jour récentes",
+      "name": "Nom"
+    },
+    "table": {
+      "name": "Nom",
+      "description": "Description",
+      "pages": "Pages",
+      "pending": "En attente",
+      "updated": "Mise à jour"
+    },
+    "pending": {
+      "annotations_one": "{{count}} annotation",
+      "annotations_other": "{{count}} annotations",
+      "stale_pages_one": "{{count}} à revérifier",
+      "stale_pages_other": "{{count}} à revérifier"
+    },
+    "copy_link": "Copier le lien",
+    "link_copied": "Lien copié",
+    "no_matches": "Aucune base de connaissances correspondante",
+    "empty_title": "Aucune base de connaissances",
+    "empty_description": "Les agents rédigent et maintiennent les pages. Les membres de l'équipe lisent, annotent et valident les modifications."
+  },
+  "nav": {
+    "label": "Navigation de la base",
+    "switch": "Changer de base de connaissances",
+    "more_actions": "Actions de la base",
+    "home": "Accueil",
+    "pending": "{{count}} en attente",
+    "pages": "Pages",
+    "breadcrumb": "Fil d’Ariane",
+    "configure": "Configurer la base",
+    "configure_hint": "Objectif et schéma",
+    "manage": "Gérer la base",
+    "graph": "Graphe"
+  },
+  "tree": {
+    "expand": "Déplier {{title}}",
+    "collapse": "Replier {{title}}",
+    "load_more": "Charger plus",
+    "stale": "À revérifier",
+    "empty": "Aucune page",
+    "draft": {
+      "added": "Brouillon · Nouveau",
+      "modified": "Brouillon",
+      "moved": "Brouillon · Déplacé",
+      "deleted": "Brouillon · Supprimé"
+    }
+  },
+  "search": {
+    "placeholder": "Rechercher dans cette base",
+    "pages_one": "{{count}} page",
+    "pages_other": "{{count}} pages",
+    "no_results": "Aucun résultat pour « {{query}} »",
+    "no_results_hint": "Essayez d’autres mots-clés.",
+    "failed": "La recherche a échoué"
+  },
+  "home": {
+    "pending_title": "En attente",
+    "pending_reviews": "Modifications à valider",
+    "latest_review": "Dernière : {{title}}",
+    "annotations": "Annotations",
+    "agent_reported_one": "Dont {{count}} lacune signalée par les agents",
+    "agent_reported_other": "Dont {{count}} lacunes signalées par les agents",
+    "stale_pages": "Pages à revérifier",
+    "stale_hint": "Code modifié ou date de revue dépassée",
+    "recent_title": "Mises à jour récentes",
+    "recent_change": "#{{number}} {{title}}",
+    "recent_empty": "Aucune modification fusionnée",
+    "not_found": "Cette base de connaissances n’existe pas ou a été supprimée"
+  },
+  "page": {
+    "toc": "Sommaire",
+    "info": "Infos de la page",
+    "more": "Plus",
+    "history": "Historique de la page",
+    "updated_by": "Mise à jour par {{name}} · {{time}}",
+    "updated": "Mise à jour {{time}}",
+    "verified": "Vérifiée · {{name}} · {{date}}",
+    "stale": "À revérifier",
+    "pending_mr_one": "{{count}} modification de cette page attend une validation : {{title}} (#{{number}})",
+    "pending_mr_other": "{{count}} modifications de cette page attendent une validation, dernière : {{title}} (#{{number}})",
+    "not_found": "Cette page n’existe pas ou a été supprimée",
+    "sources": "Sources",
+    "missing_page": "Cette page n’est pas encore écrite",
+    "close_panel": "Fermer",
+    "view_change": "Voir la modification"
+  },
+  "draft": {
+    "label": "Brouillon",
+    "single": "Votre brouillon modifie cette page et n’est pas encore fusionné. Les autres voient toujours la version publiée.",
+    "multi_one": "Vous avez {{count}} brouillon qui modifie cette page, non fusionné. Les autres voient toujours la version publiée.",
+    "multi_other": "Vous avez {{count}} brouillons qui modifient cette page, aucun fusionné. Les autres voient toujours la version publiée.",
+    "published": "Publié",
+    "draft": "Brouillon",
+    "choose": "Choisir un brouillon",
+    "origin": {
+      "chat": "Discussion « {{label}} »",
+      "issue": "Tâche « {{label}} »",
+      "kb_job": "Travail « {{label}} »",
+      "none": "Brouillon"
+    },
+    "meta_one": "{{time}} · {{count}} bloc modifié",
+    "meta_other": "{{time}} · {{count}} blocs modifiés",
+    "removed": "Supprimé dans le brouillon",
+    "added": "Ajouté dans le brouillon"
+  },
+  "cite": {
+    "kind": {
+      "task": "Tâche",
+      "chat": "Discussion",
+      "pr": "Pull request",
+      "repo": "Code",
+      "raw": "Fichier",
+      "web": "Web",
+      "other": "Source"
+    },
+    "checked_at": "Vérifié à {{version}}",
+    "lines": "Lignes {{from}}–{{to}}",
+    "uploaded": "Importé · {{name}} · {{date}}",
+    "page": "Page {{page}}",
+    "open_file": "Ouvrir le fichier",
+    "download": "Télécharger",
+    "open_issue": "Ouvrir la tâche",
+    "open_chat": "Ouvrir la discussion",
+    "open_link": "Ouvrir le lien",
+    "chat_private": "Visible uniquement par la personne qui l’a lancée",
+    "file_missing": "Le fichier n’est plus dans la base"
+  },
+  "info": {
+    "verified": "Vérification",
+    "verified_by": "{{name}} · vérifiée le {{date}}",
+    "next_review": "Prochaine revue {{date}}",
+    "tags": "Domaines",
+    "sources": "Sources {{count}}",
+    "backlinks": "Pages qui y renvoient",
+    "none": "Aucune"
+  },
+  "toc": {
+    "empty": "Aucun titre"
+  },
+  "history": {
+    "current": "Version actuelle",
+    "initial": "Version initiale",
+    "meta": "{{author}} · fusionnée par {{merger}} · {{time}}",
+    "submitted_by": "{{author}} a proposé,",
+    "merged_by": "{{merger}} a fusionné le {{date}}",
+    "annotations_one": "{{count}} annotation traitée",
+    "annotations_other": "{{count}} annotations traitées",
+    "close": "Fermer l’historique",
+    "no_changes": "Aucune modification du texte dans cette révision",
+    "not_found": "Cette révision n’existe pas",
+    "empty": "Aucun historique",
+    "revert": "Annuler cette modification"
+  },
+  "builder": {
+    "create_title": "Nouvelle base de connaissances",
+    "create_sub": "Créer par conversation",
+    "config_title": "Configurer la base de connaissances",
+    "via_chat": "Configuré par conversation",
+    "setup_create_title": "Créer une base de connaissances par conversation",
+    "setup_config_title": "Configurer la base de connaissances par conversation",
+    "setup_description": "Choisissez l'environnement d'exécution et le modèle du constructeur.",
+    "chat_title": "Constructeur de base de connaissances",
+    "change_runtime": "Changer",
+    "change_runtime_label": "Changer d'environnement d'exécution",
+    "intro_create": "Quelle base de connaissances voulez-vous ? Choisissez une direction : je rédige le nom, l'objectif et le schéma, puis nous les affinons ensemble.",
+    "intro_config": "Je modifie l'objectif et le schéma selon vos besoins. Partez d'une question ci-dessous ou dites ce que vous voulez changer.",
+    "describe_hint": "Vous pouvez aussi décrire votre besoin.",
+    "starters": {
+      "dev": {
+        "title": "Base de connaissances technique",
+        "description": "Architecture, services et interfaces, procédures de dépannage, décisions techniques"
+      },
+      "qa": {
+        "title": "Base de connaissances de test",
+        "description": "Méthodes de conception de tests, environnements, listes de régression, analyses de défauts"
+      },
+      "product": {
+        "title": "Base de connaissances produit",
+        "description": "Descriptions des fonctions, règles métier, règles de facturation, réponses clients"
+      },
+      "team": {
+        "title": "Base de connaissances d'équipe",
+        "description": "Partagée par le développement, les tests et le produit, organisée par étiquettes de domaine"
+      }
+    },
+    "starter_message": "{{title}} : {{description}}",
+    "questions": {
+      "readers": "Qui lit cette base de connaissances et que cherche-t-on le plus ?",
+      "scope": "Qu'est-ce qui y entre, et qu'est-ce qui n'y entre pas ?",
+      "structure": "Comment organiser les pages : par module système, processus métier ou équipe ?",
+      "writing": "Quelles règles pour les citations et la rédaction ?"
+    },
+    "drafts_create_one": "Vous avez {{count}} création inachevée",
+    "drafts_create_other": "Vous avez {{count}} créations inachevées",
+    "drafts_config_one": "Vous avez {{count}} configuration inachevée",
+    "drafts_config_other": "Vous avez {{count}} configurations inachevées",
+    "pick_create": "Brouillons de création",
+    "pick_config": "Brouillons de configuration",
+    "panel": {
+      "title": "Configuration de la base",
+      "basics": "Informations de base",
+      "name": "Nom",
+      "description": "Description",
+      "slug": "Nom de répertoire",
+      "generated_placeholder": "Généré après la description de vos besoins",
+      "slug_placeholder": "Généré à partir du nom",
+      "slug_invalid": "Utilisez des minuscules, des chiffres et des traits d'union",
+      "purpose": "Objectif",
+      "purpose_placeholder": "# Objectif",
+      "just_updated": "Mis à jour",
+      "expand_edit": "Agrandir pour modifier",
+      "expand_view": "Agrandir pour consulter",
+      "schema": "Schéma",
+      "schema_mode": "Mode du schéma",
+      "schema_default": "Par défaut",
+      "schema_custom": "Personnalisé",
+      "read_only": "Lecture seule",
+      "schema_default_hint": "Utilise les règles de maintenance intégrées, non modifiables et que le constructeur ne change pas. Passez à Personnalisé pour les adapter à votre équipe.",
+      "schema_placeholder": "Rédigé à partir du schéma intégré après la description de vos besoins"
+    },
+    "footer": {
+      "unsaved": "Modifications non enregistrées",
+      "discard_create": "Abandonner la création",
+      "discard_config": "Abandonner les modifications",
+      "create": "Créer",
+      "save": "Enregistrer"
+    },
+    "discard": {
+      "create_title": "Abandonner cette création ?",
+      "config_title": "Abandonner ces modifications ?",
+      "description": "La conversation et la configuration à droite seront supprimées définitivement.",
+      "keep": "Continuer"
+    },
+    "expand": {
+      "edit": "Modifier",
+      "split": "Côte à côte",
+      "preview": "Aperçu",
+      "read_only": "Par défaut · lecture seule",
+      "edit_hint": "Les modifications reviennent dans la configuration à droite et s'appliquent à l'enregistrement",
+      "read_only_hint": "Le schéma par défaut est en lecture seule. Pour le modifier, passez d'abord à Personnalisé à droite",
+      "cancel": "Annuler",
+      "done": "Terminé",
+      "close": "Fermer"
+    },
+    "saved": "Enregistré",
+    "errors": {
+      "name_required": "Saisissez un nom",
+      "slug_taken": "Ce nom de répertoire est déjà utilisé dans l'espace de travail",
+      "conflict": "Quelqu'un a enregistré cette configuration après votre ouverture. Rechargez pour voir ses modifications.",
+      "forbidden": "Seul le créateur de la base ou un propriétaire ou administrateur peut la configurer",
+      "create_failed": "Impossible de créer la base de connaissances",
+      "save_failed": "Impossible d'enregistrer la configuration"
+    }
+  },
+  "welcome": {
+    "created": "La base de connaissances « {{name}} » a été créée. Voici comment l'utiliser.",
+    "guide_title": "Utiliser cette base de connaissances",
+    "suggested": "À faire en premier",
+    "dismiss": "Compris",
+    "steps": {
+      "ingest": {
+        "title": "Intégrer des sources",
+        "description": "Lancez une tâche de base de connaissances et confiez à un agent des tickets, conversations, fichiers ou pages web. Il rédige les pages et cite une source pour chaque fait."
+      },
+      "review": {
+        "title": "Effectif après revue",
+        "description": "Les modifications d'un agent passent d'abord par un brouillon. Vous le relisez et le soumettez ; il s'applique une fois fusionné par le créateur de la base, un propriétaire ou un administrateur."
+      },
+      "read": {
+        "title": "Lire et annoter",
+        "description": "Si une information est fausse ou obsolète, sélectionnez la phrase et ajoutez une annotation. Les annotations peuvent être confiées à un agent en un clic."
+      },
+      "maintain": {
+        "title": "Maintenance planifiée",
+        "description": "Planifiez une intégration et un contrôle de santé réguliers pour que la base suive les derniers tickets et le code."
+      }
+    }
+  },
+  "annotation": {
+    "action": "Annoter",
+    "compose_label": "Annotation",
+    "compose_hint": "Les agents voient cette phrase lorsqu'ils la traitent",
+    "cancel": "Annuler",
+    "submit": "Annoter",
+    "add": "Ajouter une annotation",
+    "page_panel": "Annotations de la page",
+    "kb_panel": "Annotations de la base",
+    "page_compose_label": "Annoter cette page",
+    "kb_compose_label": "Annoter toute la base de connaissances",
+    "hand_off": "Confier à un agent",
+    "hand_off_all": "Tout confier à un agent ({{n}})",
+    "status": {
+      "pending": "En attente",
+      "processing": "En cours",
+      "resolved": "Résolue",
+      "dismissed": "Ignorée"
+    },
+    "dismiss": "Ignorer",
+    "reopen": "Rouvrir",
+    "where_block": "{{title}} · paragraphe {{n}}",
+    "where_page": "{{title}} · page entière",
+    "where_kb": "Toute la base",
+    "followed": "Suit la réécriture",
+    "lost": "Phrase supprimée",
+    "original": "Phrase annotée : {{quote}}",
+    "mr_ref": "#{{n}}",
+    "list_title": "Annotations",
+    "empty": "Aucune annotation",
+    "create_failed": "Impossible d'enregistrer l'annotation",
+    "quote_not_found": "Phrase introuvable",
+    "update_failed": "Impossible de modifier l'annotation",
+    "panel_empty": "Aucune annotation pour l'instant"
+  },
+  "stale_list": {
+    "count_one": "{{count}} page",
+    "count_other": "{{count}} pages",
+    "page": "Page",
+    "reason": "Motif",
+    "overdue": "Date de revue dépassée",
+    "review_by": "À revoir avant le {{date}}",
+    "hand_off": "Confier à un agent",
+    "hand_off_all": "Tout confier à un agent",
+    "empty": "Aucune page à revérifier.",
+    "all_message": "Revérifie les pages de {{name}} dont la date de revue est dépassée."
+  },
+  "job": {
+    "nav": "Tâches de la base",
+    "nav_running": "{{count}} en cours",
+    "list_title": "Tâches de la base",
+    "new": "Nouvelle tâche",
+    "tabs": {
+      "all": "Toutes",
+      "running": "En cours",
+      "failed": "Échouées"
+    },
+    "state": {
+      "running": "En cours",
+      "idle": "En attente",
+      "failed": "Échouée",
+      "stopped": "Arrêtée"
+    },
+    "empty": "Aucune tâche pour l’instant",
+    "subtitle": "{{name}} · Tâche de base de connaissances",
+    "new_title": "Nouvelle conversation",
+    "back": "Retour",
+    "executor": "Agent",
+    "pick_agent": "Choisir un agent",
+    "pick_agent_first": "Choisissez d’abord l’agent",
+    "runtime_online": "Runtime en ligne",
+    "runtime_offline": "Runtime hors ligne",
+    "start_question": "Que faire dans {{name}} ?",
+    "start_hint": "Vous pouvez aussi décrire votre besoin. Les exécutions planifiées deviennent des automatisations, gérées sur la page Automatisations.",
+    "start_failed": "Impossible de lancer la tâche",
+    "not_found": "La tâche n’existe pas ou vous ne pouvez pas l’ouvrir",
+    "ended": "Cette conversation est terminée",
+    "starters": {
+      "ingest": {
+        "title": "Intégrer des sources",
+        "description": "Lire des tickets, conversations ou pages web et écrire les connaissances dans des pages"
+      },
+      "health": {
+        "title": "Bilan de santé",
+        "description": "Repérer les pages périmées, les contradictions, les pages orphelines et les affirmations dont le code a changé"
+      },
+      "merge": {
+        "title": "Fusionner les doublons",
+        "description": "Trouver les pages qui se répètent et les fusionner en une seule"
+      },
+      "annotations": {
+        "title": "Traiter les annotations",
+        "description": "Modifier les pages selon les annotations en attente"
+      },
+      "schedule_ingest": {
+        "title": "Planifier l’intégration",
+        "description": "Créer une automatisation qui intègre chaque jour les tickets, commentaires et conversations"
+      },
+      "schedule_health": {
+        "title": "Planifier un bilan de santé",
+        "description": "Créer une automatisation qui fait un bilan de santé chaque semaine"
+      }
+    },
+    "starter_message": "{{title}} : {{description}}",
+    "names": {
+      "ingest": "Intégrer des sources",
+      "health": "Bilan de santé",
+      "merge": "Fusionner les doublons",
+      "annotations": "Traiter les annotations",
+      "new_page": "Nouvelle page",
+      "schedule": "Exécution planifiée",
+      "custom": "Nouvelle conversation"
+    },
+    "draft": {
+      "title": "Modifications du brouillon",
+      "state": {
+        "none": "Pas encore de brouillon",
+        "empty": "Aucune modification",
+        "open": "Brouillon · non soumis",
+        "submitted": "En revue",
+        "merged": "Fusionné",
+        "closed": "Fermé · peut être resoumis",
+        "nochange": "Aucun changement nécessaire",
+        "discarded": "Abandonné"
+      },
+      "nodraft": "Les modifications s’affichent ici une fois le brouillon créé par l’agent.",
+      "empty": "Les modifications s’affichent ici dès que l’agent les écrit.",
+      "nochange_title": "Rien à modifier cette fois",
+      "nochange_hint": "Enregistré comme sans changement ; aucune demande de modification n’est ouverte",
+      "discarded": "Le brouillon a été abandonné ; ses modifications ne seront pas fusionnées.",
+      "summary_one": "{{count}} page · +{{added}} −{{deleted}}",
+      "summary_other": "{{count}} pages · +{{added}} −{{deleted}}",
+      "collapse_all": "Tout replier",
+      "expand_all": "Tout déplier",
+      "change": {
+        "added": "Ajoutée",
+        "modified": "Modifiée",
+        "moved": "Déplacée",
+        "deleted": "Supprimée"
+      },
+      "view_in_page": "Voir dans la page",
+      "checks": "Vérifications avant soumission",
+      "checks_pending": "Vérifié quand l’agent a terminé",
+      "lint_ok": "Vérification du format réussie",
+      "lint": {
+        "missing_type": "L’en-tête de la page n’a pas de type",
+        "missing_title": "L’en-tête de la page n’a pas de title",
+        "missing_description": "L’en-tête de la page n’a pas de description",
+        "undefined_footnote": "Une note de bas de page ne cite aucune source",
+        "claim_without_evidence": "Une affirmation n’a pas de preuve",
+        "invalid_evidence_uri": "L’adresse d’une preuve n’est pas reconnue",
+        "duplicate_slug": "Une page sœur porte le même nom",
+        "unresolved_conflict": "Un conflit n’est pas résolu",
+        "missing_evidence_version": "Une preuve de code n’a pas de version",
+        "unresolved_link": "Un lien pointe vers une page pas encore écrite",
+        "orphan_page": "Aucune autre page ne renvoie à celle-ci",
+        "isolated_page": "Cette page renvoie à moins de 2 pages liées"
+      },
+      "conflict": "Conflit avec la branche principale : {{path}}",
+      "fix": "Demander à l’agent de corriger",
+      "rebase": "Demander à l’agent de se mettre à jour",
+      "fix_message": "Corrige les erreurs signalées par `marvis kb draft check {{draft}}`, puis vérifie à nouveau.",
+      "rebase_message": "Le brouillon est en conflit avec la branche principale. Mets-le à jour avec `marvis kb draft sync {{draft}}`, résous les conflits, puis vérifie à nouveau.",
+      "hint": {
+        "open": "Vous seul voyez le brouillon ; le soumettre l’envoie en revue",
+        "busy": "Soumettez quand l’agent a fini ce tour",
+        "lint_one": "{{count}} erreur à corriger avant de soumettre",
+        "lint_other": "{{count}} erreurs à corriger avant de soumettre",
+        "conflict": "Vous pouvez soumettre maintenant et résoudre les conflits en revue",
+        "submitted": "Continuez dans les commentaires de revue, ou ici",
+        "closed": "Ajustez puis resoumettez ; cela ouvre une nouvelle demande de modification",
+        "merged": "Cette conversation est terminée",
+        "running": "Complétez la demande à gauche à tout moment"
+      },
+      "banner": {
+        "submitted_self": "Vous avez soumis la demande de modification #{{number}}. Le brouillon est en revue et en lecture seule ici.",
+        "submitted_agent": "{{name}} a soumis la demande de modification #{{number}}. Le brouillon est en revue et en lecture seule ici.",
+        "closed": "{{name}} a fermé #{{number}} : « {{reason}} ». Le brouillon est conservé ; vous pouvez continuer à l’ajuster.",
+        "closed_no_reason": "{{name}} a fermé #{{number}}. Le brouillon est conservé ; vous pouvez continuer à l’ajuster.",
+        "merged": "{{name}} a fusionné #{{number}}. Les modifications sont en ligne."
+      },
+      "banner_review": "Examiner",
+      "banner_view_page": "Voir la page",
+      "banner_comments": "Voir les commentaires",
+      "discard": "Abandonner le brouillon",
+      "keep": "Garder",
+      "discard_confirm_title": "Abandonner ce brouillon ?",
+      "discard_confirm_description": "Ses modifications sont perdues. La tâche reste dans la liste.",
+      "discard_failed": "Impossible d’abandonner le brouillon",
+      "submit": "Soumettre en revue",
+      "resubmit": "Resoumettre en revue",
+      "submit_failed": "Impossible de soumettre le brouillon",
+      "go_review": "Examiner #{{number}}",
+      "submitted_toast": "Demande de modification #{{number}} soumise"
+    },
+    "entry": {
+      "check_page": "Demander à un agent de vérifier cette page",
+      "check_page_message": "Vérifie la page « {{title}} ».",
+      "write_here": "Demander à un agent d’écrire une page ici",
+      "write_under": "Écrire une page sous {{title}}",
+      "write_label": "Contenu à écrire",
+      "write_submit": "Confier à un agent",
+      "cancel": "Annuler",
+      "new_page_message": "Ajoute une page sous « {{title}} » : {{text}}",
+      "annotations_all_message_one": "Traite l’annotation en attente de {{name}} ({{count}}).",
+      "annotations_all_message_other": "Traite les {{count}} annotations en attente de {{name}}.",
+      "annotations_page_message_one": "Traite l’annotation en attente de « {{title}} » ({{count}}).",
+      "annotations_page_message_other": "Traite les {{count}} annotations en attente de « {{title}} ».",
+      "annotations_kb_message_one": "Traite l’annotation en attente sur toute la base ({{count}}).",
+      "annotations_kb_message_other": "Traite les {{count}} annotations en attente sur toute la base."
+    }
+  },
+  "review": {
+    "title": "Revue",
+    "list_label": "Demandes de modification",
+    "select": "Choisissez une demande de modification",
+    "not_found": "Cette demande de modification n’existe pas",
+    "conflict_banner": "La branche principale a modifié le même contenu.",
+    "conflict_main": "Principale, lignes {{lines}}",
+    "conflict_draft": "Branche, lignes {{lines}}",
+    "working": "En cours",
+    "view_run": "Voir l’exécution",
+    "remove_quote": "Retirer la citation",
+    "reply": "Répondre",
+    "replying_to": "Réponse à {{name}}",
+    "quote_line": "{{page}}, ligne {{line}}",
+    "comment_label": "Commentaire",
+    "comment_placeholder": "Laisser un commentaire...",
+    "trigger_hint": "démarre à l’envoi",
+    "send": "Envoyer",
+    "hint_member": "Le créateur de la base ou un owner / admin fusionne",
+    "hint_conflict": "Résolvez d’abord les conflits",
+    "hint_running": "Fusionnez quand l’agent a terminé",
+    "comment_failed": "Le commentaire n’a pas été envoyé",
+    "merged_toast": "#{{number}} fusionnée",
+    "close_failed": "Impossible de fermer",
+    "agent_working": "{{name}} travaille",
+    "close": "Fermer",
+    "merge": "Fusionner",
+    "revert": "Annuler cette modification",
+    "merged_by": "Fusionnée par {{name}} · {{time}}",
+    "closed_by": "Fermée par {{name}} · {{time}}",
+    "closed_by_reason": "Fermée par {{name}} · {{time}} · {{reason}}",
+    "self_check": "Résumé de l’agent",
+    "summary": "Résumé",
+    "checks": "Vérifications",
+    "conflicting": "En conflit avec la branche principale",
+    "mergeable": "Peut être fusionnée",
+    "add_comment": "Commenter",
+    "activity": "Activité",
+    "close_confirm_title": "Fermer cette demande de modification ?",
+    "close_reason": "Motif (facultatif)",
+    "cancel": "Annuler",
+    "reverted": "Demande d’annulation #{{number}} ouverte",
+    "go_review": "Revoir",
+    "revert_conflict": "Des modifications ultérieures touchent le même contenu ; annulez à la main",
+    "revert_failed": "Impossible d’annuler",
+    "revert_confirm_title": "Annuler #{{number}} « {{title}} » ?",
+    "revert_confirm_description": "Une demande de modification inverse est ouverte ; elle s’applique une fois fusionnée.",
+    "revert_submit": "Soumettre l’annulation",
+    "meta_one": "Risque {{risk}} · {{count}} page modifiée",
+    "meta_other": "Risque {{risk}} · {{count}} pages modifiées",
+    "meta_annotations_one": "{{count}} annotation traitée",
+    "meta_annotations_other": "{{count}} annotations traitées",
+    "activity_count_one": "{{count}} élément",
+    "activity_count_other": "{{count}} éléments",
+    "close_confirm_annotations_one": "L’annotation traitée repasse en attente.",
+    "close_confirm_annotations_other": "Les {{count}} annotations traitées repassent en attente.",
+    "tabs": {
+      "open": "À revoir",
+      "ended": "Terminées",
+      "all": "Toutes"
+    },
+    "status": {
+      "open": "À revoir",
+      "merged": "Fusionnée",
+      "closed": "Fermée"
+    },
+    "empty": {
+      "open": "Rien à revoir",
+      "ended": "Aucune demande terminée",
+      "all": "Aucune demande de modification"
+    },
+    "source": {
+      "ingest": "Collecte",
+      "health": "Contrôle",
+      "merge": "Fusion de pages",
+      "annotations": "Annotations",
+      "new_page": "Nouvelle page",
+      "revert": "Annulation",
+      "custom": "Autre"
+    },
+    "origin": {
+      "kb_job": "Tâche de base · {{label}}",
+      "revert": "Annule #{{number}}",
+      "autopilot_run": "Autopilote · {{label}}",
+      "issue": "Ticket · {{label}}",
+      "chat": "Conversation · {{label}}"
+    },
+    "trigger_reason": {
+      "author": "Traite le commentaire",
+      "mention": "Démarré par mention"
+    },
+    "merge_error": {
+      "stale": "Le brouillon a changé depuis l’ouverture ; rechargez avant de fusionner",
+      "conflict": "En conflit avec la branche principale ; résolvez d’abord",
+      "running": "Fusionnez quand l’agent a terminé",
+      "not_open": "Cette demande est terminée",
+      "failed": "Impossible de fusionner"
+    },
+    "risk": {
+      "low": "faible",
+      "medium": "moyen",
+      "high": "élevé"
+    },
+    "changes": {
+      "title": "Historique des modifications",
+      "list_label": "Modifications fusionnées",
+      "empty": "Aucune modification fusionnée",
+      "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
+      "header": "#{{number}} · {{author}} · fusionnée par {{merger}}",
+      "revert_hint": "L’annulation ouvre une nouvelle demande ; elle s’applique une fois fusionnée."
+    }
+  },
+  "manage": {
+    "title": "Gérer la base",
+    "tabs_label": "Sections de gestion",
+    "tab": {
+      "raw": "Fichiers sources",
+      "export": "Exporter",
+      "delete": "Supprimer la base"
+    },
+    "raw": {
+      "title": "Fichiers sources",
+      "upload": "Importer des fichiers",
+      "uploading": "Import…",
+      "description": "Conservés tels quels. Les pages les citent comme sources.",
+      "col": {
+        "name": "Fichier",
+        "source": "Source",
+        "created": "Importé",
+        "cited": "Cité par"
+      },
+      "source_upload": "Importé · {{name}}",
+      "empty": "Aucun fichier source",
+      "ingest": "Confier à un agent",
+      "ingest_count": "Confier à un agent ({{count}})",
+      "select": "Sélectionner {{name}}",
+      "select_all": "Tout sélectionner",
+      "open": "Ouvrir {{name}}",
+      "name_taken": "Un fichier porte déjà ce nom : {{names}}",
+      "name_invalid": "Le nom ne peut pas être vide ni contenir / \\ # ?",
+      "upload_failed": "Échec de l’import",
+      "open_failed": "Impossible d’ouvrir le fichier",
+      "cited_one": "{{count}} page",
+      "cited_other": "{{count}} pages",
+      "uploaded_one": "{{count}} fichier importé",
+      "uploaded_other": "{{count}} fichiers importés"
+    },
+    "export": {
+      "title": "Exporter",
+      "okf": "Bundle OKF",
+      "okf_description": "Exporte toutes les pages au format Open Knowledge Format v0.2 : un fichier Markdown par page avec frontmatter et un index.md par dossier, compressés en zip.",
+      "spec_link": "Spécification OKF",
+      "button": "Exporter en zip",
+      "exporting": "Export…",
+      "failed": "Échec de l’export"
+    },
+    "delete": {
+      "title": "Supprimer la base",
+      "description": "Supprime toutes les pages, révisions et annotations de cette base. Aucune restauration possible.",
+      "button": "Supprimer",
+      "dialog_title": "Supprimer « {{name}} » ?",
+      "dialog_body": "Retire le dossier {{slug}}/ et ferme ses {{annotations}} annotations et {{mrs}} modifications en attente.",
+      "confirm_label": "Saisissez le nom de la base pour confirmer",
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "deleting": "Suppression…",
+      "deleted": "« {{name}} » supprimée",
+      "failed": "Échec de la suppression",
+      "forbidden": "Seul le créateur de la base ou un owner / admin peut la supprimer."
+    }
+  },
+  "graph": {
+    "title": "Graphe",
+    "label": "Liens entre les pages",
+    "no_links": "Sans lien",
+    "hint": "Couleur par page de premier niveau. Cliquez pour ouvrir.",
+    "missing": "{{title}} · pas encore écrite",
+    "empty": "Aucune page",
+    "legend": "Légende",
+    "open_one": "Ouvrir {{title}} · {{count}} lien",
+    "open_other": "Ouvrir {{title}} · {{count}} liens"
+  },
+  "mention": {
+    "kb": "Base de connaissances · {{slug}}",
+    "schema_default": "Schéma par défaut",
+    "schema_custom": "Schéma personnalisé",
+    "no_pending": "Rien en attente",
+    "pending_one": "{{count}} en attente",
+    "pending_other": "{{count}} en attente",
+    "created": "Créée par {{name}} {{time}}",
+    "claims_one": "{{count}} affirmation",
+    "claims_other": "{{count}} affirmations",
+    "open_annotations_one": "{{count}} annotation en attente",
+    "open_annotations_other": "{{count}} annotations en attente",
+    "review_by": "À revoir le {{date}}",
+    "last_change": "Dernière modification #{{number}}",
+    "merged": "Fusionnée par {{name}} {{time}}",
+    "page_deleted": "Page supprimée",
+    "risk": "Risque {{risk}}",
+    "submitted": "Soumise par {{name}} {{time}}",
+    "origin": "Origine : {{origin}}",
+    "annotation": "Annotation",
+    "annotation_status": "Annotation · {{status}}",
+    "recorded": "Notée par {{name}} {{time}}"
+  }
+}

@@ -42,6 +42,14 @@ type RepoData struct {
 	Ref         string `json:"ref,omitempty"`
 }
 
+// KnowledgeBaseData mirrors handler.TaskKnowledgeBaseData: one knowledge base
+// for the brief's Knowledge Bases section (spec 8.2).
+type KnowledgeBaseData struct {
+	Slug        string `json:"slug"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 // ProjectResourceData mirrors handler.ProjectResourceData — a single project
 // resource as delivered to the daemon. resource_ref is type-specific JSON.
 type ProjectResourceData struct {
@@ -104,14 +112,19 @@ type Task struct {
 	// order. Rendered into the brief's status-command line; empty (including on
 	// old servers that never send the field) keeps the brief byte-identical to
 	// the built-in-only form. IssueStatusesOmitted is the cap overflow count.
-	IssueStatuses                 []IssueStatusData      `json:"issue_statuses,omitempty"`
-	IssueStatusesOmitted          int                    `json:"issue_statuses_omitted,omitempty"`
-	ProjectWorkflow               *ProjectWorkflowData   `json:"project_workflow,omitempty"`
-	ThreadName                    string                 `json:"thread_name,omitempty"` // semantic title for provider-native session/thread history
-	Agent                         *AgentData             `json:"agent,omitempty"`
-	ModelOverride                 string                 `json:"model_override,omitempty"` // claim-time snapshot of the agent's persistent OpenClaw model override
-	ConnectedApps                 []ConnectedAppData     `json:"connected_apps,omitempty"` // per-run app capabilities mounted through runtime MCP overlays
-	Repos                         []RepoData             `json:"repos,omitempty"`
+	IssueStatuses        []IssueStatusData    `json:"issue_statuses,omitempty"`
+	IssueStatusesOmitted int                  `json:"issue_statuses_omitted,omitempty"`
+	ProjectWorkflow      *ProjectWorkflowData `json:"project_workflow,omitempty"`
+	ThreadName           string               `json:"thread_name,omitempty"` // semantic title for provider-native session/thread history
+	Agent                *AgentData           `json:"agent,omitempty"`
+	ModelOverride        string               `json:"model_override,omitempty"` // claim-time snapshot of the agent's persistent OpenClaw model override
+	ConnectedApps        []ConnectedAppData   `json:"connected_apps,omitempty"` // per-run app capabilities mounted through runtime MCP overlays
+	Repos                []RepoData           `json:"repos,omitempty"`
+	// KnowledgeBases mirrors the claim's knowledge base list (spec 8.2), by
+	// name and capped by the server; KnowledgeBasesTruncated says more exist.
+	// Old servers never send it, which keeps the brief without the section.
+	KnowledgeBases                []KnowledgeBaseData    `json:"knowledge_bases,omitempty"`
+	KnowledgeBasesTruncated       bool                   `json:"knowledge_bases_truncated,omitempty"`
 	ProjectID                     string                 `json:"project_id,omitempty"`                       // active project for this task, when present
 	ProjectTitle                  string                 `json:"project_title,omitempty"`                    // human-readable project title for context injection
 	ProjectDescription            string                 `json:"project_description,omitempty"`              // durable project-level context injected into the brief

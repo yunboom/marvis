@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>知识库作业</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/ec070e18ef59b2b36beba8dc45712468">
+</head>
+<body>
+<x-dc>
+<helmet><style>body{margin:0}</style></helmet>
+<div class="app">
+  <dc-import name="Sidebar" active="kb" badge="{{ 3 }}" hint-size="254px,868px"></dc-import>
+  <main class="main">
+    <dc-import name="KbNav" runs="{{ true }}" hint-size="260px,868px"></dc-import>
+    <div class="col">
+      <div class="topbar"><div class="crumb"><span>知识库</span><span>/</span><span>团队知识库</span><span>/</span><b>知识库作业</b></div></div>
+      <div style="padding: 32px 56px; max-width: 980px; display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; align-items: center; gap: 8px"><h1 style="font-size: 24px; font-weight: 600; margin: 0; flex: 1">知识库作业</h1><span style="position: relative; display: inline-flex"><button aria-label="新建作业" title="新建作业" style="width: 40px; height: 40px; border-radius: 20px; border: 0; background: #ececec; color: #0f0f0f; display: inline-flex; align-items: center; justify-content: center; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button><span role="tooltip" style="{{tipStyle}}">新建作业</span></span></div>
+        <div class="seg" style="align-self: flex-start"><button class="on">全部</button><button>运行中 1</button><button>失败</button></div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <sc-for list="{{runs}}" as="u" hint-placeholder-count="6">
+            <div style="{{u.rowStyle}}">
+              <span class="av bot" style="width: 40px; height: 40px; font-size: 15px; border-radius: 10px; flex: none">通</span>
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <div style="display: flex; align-items: center; gap: 8px"><span style="font-weight: 600; font-size: 14.5px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{u.op}}</span><sc-if value="{{u.flag}}" hint-placeholder-val="{{ false }}"><span class="tag" style="height: 20px; font-size: 11.5px; gap: 5px"><span class="{{u.dot}}"></span>{{u.status}}</span></sc-if><span style="flex: 1"></span><span class="faint" style="font-size: 12.5px; flex: none">{{u.when}}</span></div>
+                <div class="faint" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{u.agent}} · {{u.last}}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <button aria-label="问 Marvis" style="position: absolute; right: 24px; bottom: 24px; width: 48px; height: 48px; border-radius: 24px; border: 0; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.08), 0 0 0 1px #e8e8e8; display: inline-flex; align-items: center; justify-content: center; color: #666; z-index: 3"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></button>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tip":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var list = [
+      { op: '处理批注', flag: true, status: '运行中', dot: 'dot d-green', agent: '通用开发助手', last: '正在核对 MAR-142 和回调代码，再按批注修改「去重」一节…', when: '刚刚' },
+      { op: '收录资料', agent: '通用开发助手', last: '已提交变更请求 #16：渠道接入规范 v3 整理进「支付」下 3 个页面。', when: '10 分钟前' },
+      { op: '新页面 · 回调人工处理', agent: '通用开发助手', last: '已提交变更请求 #13，新增「回调人工处理」并在支付回调里加了链接。', when: '10/23' },
+      { op: '健康检查', agent: '通用开发助手', last: '核对完 12 个页面，内容都还准确；补查间隔一处记了批注。', when: '10/23' },
+      { op: '知识合并', flag: true, status: '失败', dot: 'dot d-red', agent: '通用开发助手', last: '运行时离线，未开始。', when: '10/22' }
+    ];
+    return { tipStyle: 'position: absolute; right: 0; top: 48px; white-space: nowrap; background: #1c1c1c; color: #fff; font-size: 12.5px; padding: 5px 9px; border-radius: 8px' + (this.props.tip ? '' : '; display: none'), runs: list.map(function (u) { return Object.assign({}, u, { rowStyle: 'display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; border-radius: 14px' + (u.op === '处理批注' ? '; background: #f2f2f2' : '') }); }) };
+  }
+}
+</script>
+</body>
+</html>

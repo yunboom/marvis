@@ -194,6 +194,30 @@ var concurrentIndexCleanups = map[string]string{
 	"598_lark_invite_idempotency_uidx":                          "idx_lark_invite_idempotency",
 	"599_lark_invite_join_uidx":                                 "idx_lark_invite_join_invite_user",
 	"600_lark_invite_join_user_idx":                             "idx_lark_invite_join_user_workspace",
+	"607_kb_base_ws_slug_uidx":                                  "kb_base_ws_slug_uidx",
+	"608_kb_page_sibling_slug_uidx":                             "kb_page_sibling_slug_uidx",
+	"609_kb_raw_base_name_uidx":                                 "kb_raw_base_name_uidx",
+	"610_kb_page_parent_idx":                                    "kb_page_parent_idx",
+	"611_kb_page_stale_idx":                                     "kb_page_stale_idx",
+	"612_kb_revision_page_idx":                                  "kb_revision_page_idx",
+	"613_kb_claim_page_idx":                                     "kb_claim_page_idx",
+	"614_kb_claim_evidence_gin":                                 "kb_claim_evidence_gin",
+	"615_kb_link_to_idx":                                        "kb_link_to_idx",
+	"616_kb_link_from_idx":                                      "kb_link_from_idx",
+	"617_kb_draft_page_page_idx":                                "kb_draft_page_page_idx",
+	"618_kb_job_chat_session_uidx":                              "kb_job_chat_session_uidx",
+	"619_kb_job_base_created_idx":                               "kb_job_base_created_idx",
+	"620_kb_annotation_base_status_idx":                         "kb_annotation_base_status_idx",
+	"621_kb_mr_ws_number_uidx":                                  "kb_mr_ws_number_uidx",
+	"622_kb_mr_open_draft_uidx":                                 "kb_mr_open_draft_uidx",
+	"623_kb_mr_ws_status_idx":                                   "kb_mr_ws_status_idx",
+	"624_kb_mr_comment_idx":                                     "kb_mr_comment_idx",
+	"625_kb_page_search_bigm_index":                             "kb_page_search_bigm",
+	"626_kb_page_search_trgm_index":                             "kb_page_search_trgm",
+	"627_kb_block_embedding_hnsw":                               "kb_block_embedding_hnsw",
+	"628_kb_block_embedding_base_idx":                           "kb_block_embedding_base_idx",
+	"629_kb_job_draft_job_id_key":                               "kb_job_draft_job_id_key",
+	"630_kb_job_draft_draft_id_key":                             "kb_job_draft_draft_id_key",
 	"035_task_queue_issue_id_index":                             "idx_agent_task_queue_issue_id",
 	"067_task_queue_claim_candidate_index":                      "idx_agent_task_queue_claim_candidates",
 	"074_task_usage_updated_at_index":                           "idx_task_usage_updated_at",
@@ -486,7 +510,21 @@ var upMigrationConditions = map[string]migrationCondition{
 	// else, rather than failing the run (and with it backend startup) on every
 	// database without the extension.
 	"446_issue_properties_bigm_index": whenOperatorClassAvailable(pgBigmOperatorClass),
+	// Knowledge base hybrid search. pgvector ships with the pgvector images but
+	// not with the desktop standalone Postgres; without it the vector half is
+	// skipped and search stays keyword-only. The page keyword index takes the
+	// bigram opclass where pg_bigm exists and the trigram fallback elsewhere.
+	"605_kb_vector_extension":         whenExtensionAvailable(pgvectorExtension),
+	"606_kb_block_embedding":          whenExtensionInstalled(pgvectorExtension),
+	"625_kb_page_search_bigm_index":   whenOperatorClassAvailable(pgBigmOperatorClass),
+	"626_kb_page_search_trgm_index":   whenOperatorClassUnavailable(pgBigmOperatorClass),
+	"627_kb_block_embedding_hnsw":     whenExtensionInstalled(pgvectorExtension),
+	"628_kb_block_embedding_base_idx": whenExtensionInstalled(pgvectorExtension),
 }
+
+// pgvectorExtension names the optional extension behind knowledge base vector
+// search.
+const pgvectorExtension = "vector"
 
 // Migrations 454 and 455 restore the mutually exclusive comment search index
 // selected before its retirement: pg_bigm deployments get the preferred bigram
@@ -614,6 +652,46 @@ func whenOperatorClassUnavailable(opclass extensionOperatorClass) migrationCondi
 		if available {
 			return false, fmt.Sprintf("operator class %s (%s) is installed", opclass.OperatorClass, opclass.Extension), nil
 		}
+		return true, "", nil
+	}
+}
+
+// whenExtensionAvailable runs a migration only where the server's Postgres
+// build ships the extension, so CREATE EXTENSION can succeed.
+func whenExtensionAvailable(extension string) migrationCondition {
+	return func(ctx context.Context, conn *pgxpool.Conn) (bool, string, error) {
+		var available bool
+		if err := conn.QueryRow(ctx,
+			`SELECT EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = $1)`,
+			extension,
+		).Scan(&available); err != nil {
+			return false, "", fmt.Errorf("inspect available extension %q: %w", extension, err)
+		}
+
+		if !available {
+			return false, fmt.Sprintf("extension %s is not available", extension), nil
+		}
+
+		return true, "", nil
+	}
+}
+
+// whenExtensionInstalled runs a migration only where the extension is already
+// installed in the database, typically by an earlier conditional migration.
+func whenExtensionInstalled(extension string) migrationCondition {
+	return func(ctx context.Context, conn *pgxpool.Conn) (bool, string, error) {
+		var installed bool
+		if err := conn.QueryRow(ctx,
+			`SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = $1)`,
+			extension,
+		).Scan(&installed); err != nil {
+			return false, "", fmt.Errorf("inspect installed extension %q: %w", extension, err)
+		}
+
+		if !installed {
+			return false, fmt.Sprintf("extension %s is not installed", extension), nil
+		}
+
 		return true, "", nil
 	}
 }

@@ -1,0 +1,7 @@
+Reviewer comment on change request #{{.Number}} ({{.Title}}) from {{.Author}}:
+{{- if .Quote}}
+> {{.QuotePage}}: {{.QuoteText}}
+{{- end}}
+{{.Body}}
+
+Update the draft of #{{.Number}} (`{{.DraftID}}`) to address it, run `marvis kb draft check {{.DraftID}}`, then reply on the change request: `marvis kb mr comment add {{.Number}} --parent {{.CommentID}} --content-file <path>`. If no change is needed, reply why.

@@ -29,6 +29,22 @@ import {
 import { DesktopChooseRuntimePage } from "./components/desktop-choose-runtime-page";
 import { AgentCreatedPage } from "./pages/agent-created-page";
 import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@marvis/views/squads/components";
+import {
+  KbBuilderPage,
+  KbAnnotationsPage,
+  KbStalePagesPage,
+  KbHomePage,
+  KbChangesPage,
+  KbGraphPage,
+  KbManagePage,
+  KbJobPage,
+  KbJobsPage,
+  KbReviewPage,
+  KbListPage,
+  KbPageView,
+  KbRevisionDiffPage,
+  KbShell,
+} from "@marvis/views/kb";
 import { InboxPage } from "@marvis/views/inbox";
 import { ChatPage } from "@marvis/views/chat";
 import { SettingsPage } from "@marvis/views/settings";
@@ -106,6 +122,15 @@ function PageShell() {
       <TitleSync />
       <Outlet />
     </>
+  );
+}
+
+/** Knowledge base frame: the page tree stays mounted while pages change. */
+function KbShellRoute() {
+  return (
+    <KbShell>
+      <Outlet />
+    </KbShell>
   );
 }
 
@@ -244,6 +269,41 @@ export const appRoutes: RouteObject[] = [
             path: "squads/:id",
             element: <SquadDetailPageView />,
             handle: { title: "Squad" },
+          },
+          { path: "kb", element: <KbListPage />, handle: { title: "Knowledge base" } },
+          { path: "kb/new", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
+          { path: "kb/new/:sessionId", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
+          {
+            path: "kb/:kbSlug",
+            element: <KbShellRoute />,
+            children: [
+              { index: true, element: <KbHomePage />, handle: { title: "Knowledge base" } },
+              { path: "config", element: <KbBuilderPage />, handle: { title: "Configure knowledge base" } },
+              {
+                path: "config/:sessionId",
+                element: <KbBuilderPage />,
+                handle: { title: "Configure knowledge base" },
+              },
+              { path: "annotations", element: <KbAnnotationsPage />, handle: { title: "Annotations" } },
+              { path: "stale", element: <KbStalePagesPage />, handle: { title: "Pages to re-check" } },
+              { path: "jobs", element: <KbJobsPage />, handle: { title: "Knowledge base jobs" } },
+              { path: "jobs/new", element: <KbJobPage />, handle: { title: "New job" } },
+              { path: "jobs/:jobId", element: <KbJobPage />, handle: { title: "Knowledge base job" } },
+              { path: "reviews", element: <KbReviewPage />, handle: { title: "Review" } },
+              { path: "reviews/:number", element: <KbReviewPage />, handle: { title: "Change request" } },
+              { path: "changes", element: <KbChangesPage />, handle: { title: "Change log" } },
+              { path: "changes/:number", element: <KbChangesPage />, handle: { title: "Change log" } },
+              { path: "manage", element: <KbManagePage />, handle: { title: "Manage knowledge base" } },
+              { path: "manage/export", element: <KbManagePage />, handle: { title: "Manage knowledge base" } },
+              { path: "manage/delete", element: <KbManagePage />, handle: { title: "Manage knowledge base" } },
+              { path: "graph", element: <KbGraphPage />, handle: { title: "Knowledge base graph" } },
+              { path: "p/:pageId", element: <KbPageView />, handle: { title: "Knowledge base" } },
+              {
+                path: "p/:pageId/history/:revisionId",
+                element: <KbRevisionDiffPage />,
+                handle: { title: "Page history" },
+              },
+            ],
           },
           { path: "inbox", element: <InboxPage />, handle: { title: "Inbox" } },
           { path: "chat", element: <ChatPage />, handle: { title: "Chat" } },

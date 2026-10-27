@@ -78,6 +78,7 @@ import { resolvePublicFileUrl } from "@marvis/core/workspace/avatar-url";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inboxUnreadSummaryEnabled, inboxUnreadSummaryOptions, useInboxUnreadCount, hasOtherWorkspaceUnread, unreadWorkspaceIds } from "@marvis/core/inbox/queries";
 import { chatSessionsOptions } from "@marvis/core/chat/queries";
+import { countOpenMergeRequests, kbBaseListOptions } from "@marvis/core/kb/queries";
 import { countUnreadChatMessages } from "@marvis/core/chat/unread";
 import { useChatStore } from "@marvis/core/chat";
 import { api, ApiError } from "@marvis/core/api";
@@ -137,6 +138,7 @@ type NavKey =
   | "autopilots"
   | "agents"
   | "squads"
+  | "kb"
   | "usage"
   | "runtimes"
   | "skills"
@@ -153,6 +155,7 @@ type NavLabelKey =
   | "autopilots"
   | "agents"
   | "squads"
+  | "knowledge_base"
   | "usage"
   | "runtimes"
   | "skills"
@@ -182,6 +185,7 @@ const workSubNav: Partial<Record<NavKey, { key: NavKey; labelKey: NavLabelKey }[
 const aiTeamNav: { key: NavKey; labelKey: NavLabelKey }[] = [
   { key: "agents", labelKey: "agents" },
   { key: "squads", labelKey: "squads" },
+  { key: "kb", labelKey: "knowledge_base" },
   { key: "skills", labelKey: "skills" },
   { key: "runtimes", labelKey: "runtimes" },
 ];
@@ -526,6 +530,13 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   const chatUnreadCount = React.useMemo(
     () => countUnreadChatMessages(chatSessions, viewedChatSessionId),
     [chatSessions, viewedChatSessionId],
+  );
+  // Knowledge base badge: merge requests waiting for review across the
+  // workspace, summed from the list the knowledge base page reads anyway.
+  const { data: knowledgeBases } = useQuery(kbBaseListOptions(wsId ?? ""));
+  const kbOpenMergeRequests = React.useMemo(
+    () => countOpenMergeRequests(knowledgeBases ?? []),
+    [knowledgeBases],
   );
   // Cross-workspace unread summary backs the workspace-switcher dot. One
   // shared cache entry across workspaces; gated on an active workspace since
@@ -873,6 +884,14 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                       >
                         <Icon />
                         <span>{t(($) => $.nav[item.labelKey])}</span>
+                        {item.key === "kb" && kbOpenMergeRequests > 0 && (
+                          <span
+                            data-testid="kb-open-mr-badge"
+                            className="ml-auto inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1.25 text-micro font-normal tabular-nums text-primary-foreground"
+                          >
+                            {kbOpenMergeRequests > 99 ? "99+" : kbOpenMergeRequests}
+                          </span>
+                        )}
                         {item.key === "agents" && <AgentsIntegrationHintDot wsId={wsId} />}
                       </SidebarMenuButton>
                     </SidebarMenuItem>

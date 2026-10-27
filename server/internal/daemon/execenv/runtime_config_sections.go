@@ -797,7 +797,7 @@ func writeSkills(b *strings.Builder, ctx TaskContextForEnv) {
 	// what keeps that consolidation from costing recall, and it must therefore
 	// name the skill that actually holds those contracts.
 	if platformSlug != "" {
-		b.WriteString("For a Marvis platform action this brief does not fully cover — issue and PR contracts, mentions, agents, squads, autopilots, projects, runtimes, skill import — load the `" + platformSlug + "` skill and open the reference(s) its routing table names for the domains your task touches.\n\n")
+		b.WriteString("For a Marvis platform action this brief does not fully cover — issue and PR contracts, mentions, agents, squads, autopilots, projects, runtimes, skill import, knowledge bases — load the `" + platformSlug + "` skill and open the reference(s) its routing table names for the domains your task touches.\n\n")
 	}
 }
 
@@ -810,6 +810,7 @@ func writeMentions(b *strings.Builder) {
 	// agent writes this form (or pastes the project URL, which the reader's
 	// client unfurls into the same chip) a project reference stays dead text.
 	b.WriteString("- `[Project Name](mention://project/<project-id>)` — clickable link (no side effect)\n")
+	b.WriteString("- `[Page title](mention://kb_page/<page-id>)` — clickable link to a knowledge base page (no side effect); `marvis kb` output carries it ready to paste in the `mention` field\n")
 	b.WriteString("- `[@Name](mention://member/<user-id>)` — **notifies a human**\n")
 	b.WriteString("- `[@Name](mention://agent/<agent-id>)` — **enqueues a new run for that agent**\n\n")
 	// No prescriptive default here (MUL-6417): the mention syntax hides its
@@ -949,6 +950,7 @@ func writeOutput(b *strings.Builder, kind taskKind, ctx TaskContextForEnv) {
 //	Issue Body Formatting |    ✓    |   ✓    |     ✓     |      ✓       |  ✓
 //	Comment Formatting    |    ✓    |   ✓    |     —     |      —       |  —
 //	Repositories          |    △    |   △    |     △     |      —       |  △
+//	Knowledge Bases       |    △    |   △    |     △     |      —       |  △
 //	Project Context       |    △    |   △    |     △     |      △       |  △
 //	Instruction Precedence|    —    |   ✓    |     —     |      —       |  —
 //	Sub-issue Creation    |    ✓    |   ✓    |     —     |      —       |  —
@@ -989,6 +991,7 @@ func buildMetaSkillContentSlim(provider string, ctx TaskContextForEnv) string {
 
 	if kind != kindQuickCreate {
 		writeRepositories(&b, ctx)
+		writeKnowledgeBases(&b, ctx)
 	}
 
 	writeProjectContext(&b, ctx)

@@ -42,6 +42,27 @@ describe("bucketDiagnosticPath", () => {
     expect(bucketDiagnosticPath("/acme/agents/agt_9")).toBe("/:slug/agents/:id");
     expect(bucketDiagnosticPath("/acme/members/m-3")).toBe("/:slug/members/:id");
     expect(bucketDiagnosticPath("/acme/squads/sq.4")).toBe("/:slug/squads/:id");
+    expect(bucketDiagnosticPath("/acme/kb")).toBe("/:slug/kb");
+    expect(bucketDiagnosticPath("/acme/kb/new")).toBe("/:slug/kb/new");
+    expect(bucketDiagnosticPath("/acme/kb/new/sess-1")).toBe("/:slug/kb/new/:sessionId");
+    expect(bucketDiagnosticPath("/acme/kb/team/config")).toBe("/:slug/kb/:kb/config");
+    expect(bucketDiagnosticPath("/acme/kb/team/config/sess-1")).toBe("/:slug/kb/:kb/config/:sessionId");
+    expect(bucketDiagnosticPath("/acme/kb/team")).toBe("/:slug/kb/:kb");
+    expect(bucketDiagnosticPath("/acme/kb/team/annotations")).toBe("/:slug/kb/:kb/annotations");
+    expect(bucketDiagnosticPath("/acme/kb/team/jobs")).toBe("/:slug/kb/:kb/jobs");
+    expect(bucketDiagnosticPath("/acme/kb/team/jobs/new")).toBe("/:slug/kb/:kb/jobs/new");
+    expect(bucketDiagnosticPath("/acme/kb/team/jobs/job-1")).toBe("/:slug/kb/:kb/jobs/:jobId");
+    expect(bucketDiagnosticPath("/acme/kb/team/reviews")).toBe("/:slug/kb/:kb/reviews");
+    expect(bucketDiagnosticPath("/acme/kb/team/manage")).toBe("/:slug/kb/:kb/manage");
+    expect(bucketDiagnosticPath("/acme/kb/team/manage/export")).toBe("/:slug/kb/:kb/manage/export");
+    expect(bucketDiagnosticPath("/acme/kb/team/graph")).toBe("/:slug/kb/:kb/graph");
+    expect(bucketDiagnosticPath("/acme/kb/team/reviews/16")).toBe("/:slug/kb/:kb/reviews/:number");
+    expect(bucketDiagnosticPath("/acme/kb/team/changes")).toBe("/:slug/kb/:kb/changes");
+    expect(bucketDiagnosticPath("/acme/kb/team/changes/15")).toBe("/:slug/kb/:kb/changes/:number");
+    expect(bucketDiagnosticPath("/acme/kb/team/p/page-1")).toBe("/:slug/kb/:kb/p/:pageId");
+    expect(bucketDiagnosticPath("/acme/kb/team/p/page-1/history/rev-1")).toBe(
+      "/:slug/kb/:kb/p/:pageId/history/:revisionId",
+    );
     expect(bucketDiagnosticPath("/acme/runtimes/machine-1")).toBe("/:slug/runtimes/:id");
     expect(bucketDiagnosticPath("/acme/skills/skl_123")).toBe("/:slug/skills/:id");
     expect(bucketDiagnosticPath("/acme/attachments/att-8/preview")).toBe(

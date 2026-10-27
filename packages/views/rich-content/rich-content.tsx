@@ -59,6 +59,7 @@ import {
 import { IssueMentionCard } from "../issues/components/issue-mention-card";
 import { useResolveIssueIdentifier } from "../issues/hooks";
 import { ProjectMentionCard } from "../projects/components/project-mention-card";
+import { KbMention, isKbMentionType } from "../kb/components/kb-mention-cards";
 import { useLinkHover, LinkHoverCard } from "../editor/link-hover-card";
 import {
   openLink,
@@ -285,6 +286,10 @@ function RichLink({ href, children }: { href?: string; children?: ReactNode }) {
     }
     if (match?.[1] === "project" && match[2]) {
       return <ProjectMentionLink projectId={match[2]} label={childrenToLabel(children)} />;
+    }
+    const kbMatch = href.match(/^mention:\/\/(kb|kb_page|kb_mr|kb_annotation)\/(.+)$/);
+    if (kbMatch?.[1] && kbMatch[2] && isKbMentionType(kbMatch[1])) {
+      return <KbMention type={kbMatch[1]} id={kbMatch[2]} label={childrenToLabel(children)} />;
     }
     // Member / agent / all mentions
     return <span className="mention">{children}</span>;
