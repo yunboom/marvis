@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ApiError } from "@marvis/core/api";
 import { isAgentRuntimeBound, useAgentPresenceDetail } from "@marvis/core/agents";
+import { useAuthStore } from "@marvis/core/auth";
 import { useChatStore } from "@marvis/core/chat";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { KB_NEW_JOB_PARAMS, useWorkspacePaths } from "@marvis/core/paths";
@@ -13,7 +14,7 @@ import { kbBaseDetailOptions, kbJobOptions, kbKeys } from "@marvis/core/kb/queri
 import { useCreateKbJob, useDiscardKbJob, useSubmitKbJob } from "@marvis/core/kb/mutations";
 import { runtimeDisplayLabel } from "@marvis/core/runtimes";
 import { runtimeListOptions } from "@marvis/core/runtimes/queries";
-import { agentListOptions } from "@marvis/core/workspace/queries";
+import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
 import type { CreateKbJobRequest, KbJobStarter } from "@marvis/core/types";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
 import { cn } from "@marvis/ui/lib/utils";
@@ -22,6 +23,7 @@ import { ChatInput } from "../../chat/components/chat-input";
 import { ChatQueue } from "../../chat/components/chat-queue";
 import { ChatMessageList, ChatMessageSkeleton } from "../../chat/components/chat-message-list";
 import { AgentPicker } from "../../autopilots/components/pickers/agent-picker";
+import { canAssignAgent } from "../../issues/components/pickers/assignee-picker";
 import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { KbJobDraftPanel } from "./kb-job-draft-panel";
@@ -182,6 +184,8 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
   const { searchParams, replace } = useNavigation();
   const { data: base } = useQuery(kbBaseDetailOptions(wsId, kbSlug));
   const { data: agents = [] } = useQuery(agentListOptions(wsId));
+  const { data: members = [] } = useQuery(memberListOptions(wsId));
+  const user = useAuthStore((s) => s.user);
   const createJob = useCreateKbJob();
 
   const starter = readStarter(searchParams.get(KB_NEW_JOB_PARAMS.starter));
@@ -191,7 +195,13 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
   const prefill = searchParams.get(KB_NEW_JOB_PARAMS.message) ?? "";
   const draftKey = `kb-job-new:${kbSlug}`;
 
-  const runnable = useMemo(() => agents.filter((a) => !a.archived_at && isAgentRuntimeBound(a)), [agents]);
+  // The default executor must be one the member may invoke (spec 10); the
+  // server rejects the rest with 403.
+  const memberRole = members.find((m) => m.user_id === user?.id)?.role;
+  const runnable = useMemo(
+    () => agents.filter((a) => !a.archived_at && isAgentRuntimeBound(a) && canAssignAgent(a, user?.id, memberRole)),
+    [agents, user?.id, memberRole],
+  );
   const [agentId, setAgentId] = useState("");
   const chosen = agentId || runnable[0]?.id || "";
   const runtimeLabel = useAgentRuntimeLabel(chosen);

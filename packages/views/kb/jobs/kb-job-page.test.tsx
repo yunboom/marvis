@@ -29,6 +29,7 @@ vi.mock("@marvis/core/api", () => {
       submitKnowledgeBaseJob: vi.fn(),
       discardKnowledgeBaseJob: vi.fn(),
       listAgents: vi.fn(),
+      listMembers: vi.fn(),
       listRuntimes: vi.fn(),
       sendChatMessage: vi.fn(),
     },
@@ -36,6 +37,15 @@ vi.mock("@marvis/core/api", () => {
 });
 
 vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
+
+vi.mock("@marvis/core/auth", () => {
+  const state = { user: { id: "user-1" } };
+  const useAuthStore = Object.assign(
+    (selector?: (s: typeof state) => unknown) => (selector ? selector(state) : state),
+    { getState: () => state },
+  );
+  return { useAuthStore };
+});
 
 const setInputDraft = vi.fn();
 vi.mock("@marvis/core/chat", () => ({ useChatStore: { getState: () => ({ setInputDraft }) } }));
@@ -227,8 +237,10 @@ beforeEach(() => {
   conversation.pendingTask = undefined;
   mocked.getKnowledgeBase.mockResolvedValue(BASE);
   mocked.listAgents.mockResolvedValue([
-    { id: "agent-1", name: "通用开发助手", runtime_id: "rt-1", archived_at: null },
+    { id: "agent-0", name: "同事的助手", runtime_id: "rt-1", archived_at: null, owner_id: "user-2", permission_mode: "private" },
+    { id: "agent-1", name: "通用开发助手", runtime_id: "rt-1", archived_at: null, owner_id: "user-1", permission_mode: "private" },
   ] as never);
+  mocked.listMembers.mockResolvedValue([{ user_id: "user-1", role: "member" }] as never);
   mocked.listRuntimes.mockResolvedValue([] as never);
 });
 
