@@ -132,6 +132,28 @@ describe("KbListPage", () => {
     expect(screen.getByRole("link", { name: "New knowledge base" })).toHaveAttribute("href", "/acme/kb/new");
   });
 
+  it("opens the reviews of the one knowledge base with changes waiting", async () => {
+    listKnowledgeBases.mockResolvedValue([PAYMENTS, LAB]);
+    mount();
+
+    expect(await screen.findByRole("link", { name: "2 changes to review" })).toHaveAttribute(
+      "href",
+      "/acme/kb/payments/reviews",
+    );
+  });
+
+  it("lists the knowledge bases with changes waiting and opens the one picked", async () => {
+    const user = userEvent.setup();
+    const adapter = mount();
+
+    await user.click(await screen.findByRole("button", { name: "3 changes to review" }));
+    const items = await screen.findAllByRole("menuitem");
+    expect(items.map((item) => item.textContent)).toEqual(["Team handbook1", "Payments2"]);
+
+    await user.click(items[1]!);
+    expect(adapter.push).toHaveBeenCalledWith("/acme/kb/payments/reviews");
+  });
+
   it("hides the review tag when nothing is waiting", async () => {
     listKnowledgeBases.mockResolvedValue([LAB]);
     mount();

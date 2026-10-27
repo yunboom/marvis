@@ -272,6 +272,55 @@ function KbListToolbar({
 }
 
 // A destination, so a link styled as the primary button rather than a button.
+const KB_TAG_LINK = "cursor-pointer transition-colors hover:bg-surface-hover";
+
+/**
+ * Header tag counting changes waiting for review. With one knowledge base
+ * holding them it opens that base's reviews; with several it lists them.
+ */
+function PendingReviewsTag({ bases, count }: { bases: readonly KnowledgeBase[]; count: number }) {
+  const { t } = useT("kb");
+  const p = useWorkspacePaths();
+  const navigation = useNavigation();
+
+  const pendingBases = bases.filter((base) => base.pending.open_mrs > 0);
+  const label = (
+    <>
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-info" />
+      {t(($) => $.list.pending_reviews, { count })}
+    </>
+  );
+
+  const only = pendingBases.length === 1 ? pendingBases[0] : undefined;
+  if (only) {
+    return (
+      <AppLink href={p.kbReviews(only.slug)} className={cn(KB_TAG, KB_TAG_LINK)}>
+        {label}
+      </AppLink>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <button type="button" className={cn(KB_TAG, KB_TAG_LINK)}>
+            {label}
+          </button>
+        }
+      />
+      <DropdownMenuContent align="start" className="w-60">
+        {pendingBases.map((base) => (
+          <DropdownMenuItem key={base.id} onClick={() => navigation.push(p.kbReviews(base.slug))}>
+            <span className="min-w-0 flex-1 truncate">{base.name}</span>
+            <span className="shrink-0 tabular-nums text-muted-foreground">{base.pending.open_mrs}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function NewKbLink() {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
@@ -310,12 +359,7 @@ export function KbListPage() {
         title={t(($) => $.list.title)}
         count={bases.length}
         description={
-          openMergeRequests > 0 ? (
-            <span className={KB_TAG}>
-              <span aria-hidden="true" className="size-1.5 rounded-full bg-info" />
-              {t(($) => $.list.pending_reviews, { count: openMergeRequests })}
-            </span>
-          ) : undefined
+          openMergeRequests > 0 ? <PendingReviewsTag bases={bases} count={openMergeRequests} /> : undefined
         }
         actions={<NewKbLink />}
       />
