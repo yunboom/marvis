@@ -81,13 +81,15 @@
 - `POST /api/autopilots/{id}/runs/{runId}/chat`：获取或创建这次运行的对话，返回 `{ chat_session_id }`。
   - 只接受 `run_only` 运行，`create_issue` 返回 409 `run_mode_unsupported`；要求 `run.task_id` 不为空，`task_id` 为空返回 409 `run_has_no_session`。运行中也可以创建（用户 2026-10-27 拍板：运行中允许发消息排队）。
   - 权限：调用者能查看该自动化。
-  - 事务内 `SELECT … FOR UPDATE` 锁 run 行，已有 `chat_session_id` 直接返回；否则 `CreateChatSession`（agent = task.agent_id，project = autopilot.project_id，title = 自动化标题，creator = 第一个发消息的人），再用原 task 的 `session_id / work_dir / runtime_id` 调 `UpdateChatSessionSession` 预填续接指针，最后写回 `autopilot_run.chat_session_id`。
-  - 原 task 因 `context_overflow` 等不适合续接的原因失败时不预填 session（过滤条件对齐 `GetLastTaskSession`），只预填 `work_dir`。
+  - 事务内 `SELECT … FOR UPDATE` 锁 run 行，已有 `chat_session_id` 直接返回；否则 `CreateChatSession`（agent = task.agent_id，project = autopilot.project_id，title = 自动化标题，creator = 第一个发消息的人），然后把派发任务的 `agent_task_queue.chat_session_id` 指向这个会话，最后写回 `autopilot_run.chat_session_id`。
+    - 派发任务还没结束：不用预填，任务结束时现有逻辑会把 `session_id / work_dir / runtime_id` 写进会话指针（`service/task.go:4614`）。
+    - 派发任务已结束：用它的 `session_id / work_dir / runtime_id` 调 `UpdateChatSessionSession` 预填续接指针。原 task 因 `context_overflow` 等不适合续接的原因失败时不预填 session（过滤条件对齐 `GetLastTaskSession`），只预填 `work_dir`。
 - 发消息、停止、排队、拉消息复用现有聊天接口（`POST /api/chat/sessions/{id}/messages` 等）。改两处：
   - 访问控制：`loadChatSessionForUser` 现在只放行创建者（`handler/chat.go:282`）。会话挂在某次运行上时，改为按「能查看该自动化」放行；其余聊天不变。
   - 发送人：消息列表查询按 `chat_message.task_id` 关联 `agent_task_queue`，返回 `initiator_user_id` 作为 `sender_user_id`（可空，普通聊天前端回退到会话创建者）；schema 加可选字段。每次发送仍按发送人做 `canInvokeAgent` 检查，任务归属记发送人。
 - 多人同时发送：聊天本身按会话排队（同一会话有任务在跑时新消息进队列），无需额外处理。
-- 运行中发送：聊天队列只看同一聊天会话里的任务，运行的派发任务不在其中，需要补一处衔接——会话挂在运行上且派发任务未结束时，新消息的任务先挂起，派发任务结束（完成或失败）时再放行，同时把那时的 `session_id / work_dir` 写进会话指针。挂起放在后端，关页面不丢消息。现有 `deferred` 状态是失败重试用的，不是「等某个任务结束」，不能直接复用；实现时定挂起方式（新状态，或认领时检查派发任务是否结束）。
+- 运行中发送：复用现有聊天排队，不新增机制。派发任务挂上 `chat_session_id` 后就属于这个对话，认领时「同一智能体、同一聊天会话已有任务在跑就不派」的规则（`pkg/db/queries/agent.sql:779`）让新消息自动排在运行后面；运行结束写回会话指针，下一条消息接着用。
+  - 实现时核实：派发任务带上 `chat_session_id` 后，daemon 认领（`handler/daemon.go:3574` 的聊天分支与 `:3835` 的自动化分支同时命中）、提示词组装、重试匹配（`:2768`）仍按自动化任务处理，不被当成聊天回合。
 - `GET /api/autopilots/{id}/runs/{runId}` 响应增加 `chat_session_id`（可空），schema 加可选字段 + 默认 `null`，补 malformed 响应测试。
 
 **上下文兜底**：runtime 换过或会话文件已丢失时无法续接。第一条用户消息由服务端拼一段前置说明（自动化标题、指令摘要、本次运行结果摘要 `task.result` 截断），以「服务端写入部分」的方式存（同知识库 job：页面只显示用户打的字）。
