@@ -800,7 +800,9 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
               <OriginLink kbSlug={kbSlug} mr={mr} />
             </div>
             <div className="mt-1.5 flex min-w-0 items-center gap-2.5">
-              <h2 className="min-w-0 text-title font-semibold break-words">{mr.title}</h2>
+              <h2 title={mr.title} className="line-clamp-2 min-w-0 text-title-lg font-semibold break-words">
+                {mr.title}
+              </h2>
               <span className={cn(KB_TAG, "shrink-0 gap-1.5")}>
                 <KbStateDot dot={KB_MR_STATUS_DOT[mr.status]} />
                 {t(($) => $.review.status[mr.status])}
