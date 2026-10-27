@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, dispatchReasonCode } from "@marvis/core/api";
+import { DISPATCH_REASON } from "@marvis/core/constants/dispatch-reason";
 import { useAuthStore } from "@marvis/core/auth";
 import { chatKeys, chatMessagesPageOptions, pendingChatTaskOptions } from "@marvis/core/chat/queries";
 import { upsertChatMessageToCaches } from "@marvis/core/chat/message-cache";
@@ -104,9 +105,9 @@ export function useAutopilotRunConversation(
       } catch (err) {
         const reason = dispatchReasonCode(err);
         toast.error(
-          reason === "invocation_not_allowed"
+          reason === DISPATCH_REASON.invocationNotAllowed
             ? t(($) => $.input.send_blocked_toast)
-            : reason === "agent_runtime_required"
+            : reason === DISPATCH_REASON.agentRuntimeRequired
               ? t(($) => $.input.runtime_required_toast)
               : t(($) => $.input.send_failed_toast),
         );

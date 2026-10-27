@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { DISPATCH_REASON } from "@marvis/core/constants/dispatch-reason";
 import { autopilotListOptions } from "@marvis/core/autopilots/queries";
 import {
   useAutopilotsViewStore,
@@ -332,7 +333,7 @@ function AutopilotCard({
         {autopilot.status === "paused" && (
           <span
             title={
-              autopilot.pause_reason === "agent_runtime_required"
+              autopilot.pause_reason === DISPATCH_REASON.agentRuntimeRequired
                 ? t(($) => $.status.paused_runtime_required)
                 : t(($) => $.status.paused)
             }
