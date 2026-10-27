@@ -575,5 +575,25 @@
       "header": "#{{number}} · {{author}} · {{merger}} がマージ",
       "revert_hint": "取り消すと新しい変更リクエストが作成され、マージ後に反映されます。"
     }
+  },
+  "mention": {
+    "kb": "ナレッジベース · {{slug}}",
+    "schema_default": "デフォルト Schema",
+    "schema_custom": "カスタム Schema",
+    "no_pending": "未対応なし",
+    "pending_other": "未対応 {{count}} 件",
+    "created": "{{name}} が {{time}} に作成",
+    "claims_other": "主張 {{count}} 件",
+    "open_annotations_other": "未対応の注釈 {{count}} 件",
+    "review_by": "見直し期限 {{date}}",
+    "last_change": "最終変更 #{{number}}",
+    "merged": "{{name}} が {{time}} にマージ",
+    "page_deleted": "ページは削除されました",
+    "risk": "リスク {{risk}}",
+    "submitted": "{{name}} が {{time}} に提出",
+    "origin": "出典：{{origin}}",
+    "annotation": "注釈",
+    "annotation_status": "注釈 · {{status}}",
+    "recorded": "{{name}} が {{time}} に記録"
   }
 }

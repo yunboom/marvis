@@ -575,5 +575,25 @@
       "header": "#{{number}} · {{author}} · {{merger}} 병합",
       "revert_hint": "되돌리면 새 변경 요청이 만들어지고, 병합되면 적용됩니다."
     }
+  },
+  "mention": {
+    "kb": "지식 베이스 · {{slug}}",
+    "schema_default": "기본 Schema",
+    "schema_custom": "사용자 지정 Schema",
+    "no_pending": "대기 항목 없음",
+    "pending_other": "대기 {{count}}건",
+    "created": "{{name}} · {{time}} 생성",
+    "claims_other": "주장 {{count}}개",
+    "open_annotations_other": "대기 중인 주석 {{count}}개",
+    "review_by": "검토 기한 {{date}}",
+    "last_change": "최근 변경 #{{number}}",
+    "merged": "{{name}} · {{time}} 병합",
+    "page_deleted": "삭제된 페이지",
+    "risk": "위험 {{risk}}",
+    "submitted": "{{name}} · {{time}} 제출",
+    "origin": "출처: {{origin}}",
+    "annotation": "주석",
+    "annotation_status": "주석 · {{status}}",
+    "recorded": "{{name}} · {{time}} 기록"
   }
 }

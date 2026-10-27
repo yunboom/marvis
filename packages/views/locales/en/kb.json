@@ -595,5 +595,28 @@
       "header": "#{{number}} · {{author}} · merged by {{merger}}",
       "revert_hint": "Reverting opens a new change request; it takes effect once merged."
     }
+  },
+  "mention": {
+    "kb": "Knowledge base · {{slug}}",
+    "schema_default": "Default schema",
+    "schema_custom": "Custom schema",
+    "no_pending": "Nothing pending",
+    "pending_one": "{{count}} pending",
+    "pending_other": "{{count}} pending",
+    "created": "{{name}} created {{time}}",
+    "claims_one": "{{count}} claim",
+    "claims_other": "{{count}} claims",
+    "open_annotations_one": "{{count}} open annotation",
+    "open_annotations_other": "{{count}} open annotations",
+    "review_by": "Review by {{date}}",
+    "last_change": "Last change #{{number}}",
+    "merged": "{{name}} merged {{time}}",
+    "page_deleted": "Page deleted",
+    "risk": "Risk {{risk}}",
+    "submitted": "{{name}} submitted {{time}}",
+    "origin": "From {{origin}}",
+    "annotation": "Annotation",
+    "annotation_status": "Annotation · {{status}}",
+    "recorded": "{{name}} noted {{time}}"
   }
 }
