@@ -48,6 +48,11 @@ export function saveUrl(url: string, filename = "") {
     return;
   }
 
+  clickDownloadAnchor(url, filename);
+}
+
+/** Starts a browser download of a URL (including a blob: URL) through a hidden anchor. */
+export function clickDownloadAnchor(url: string, filename = "") {
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;

@@ -275,7 +275,7 @@ export function KbPageBody({ page, published, banners, rawFileActions, onRawLink
       }}
       onBlur={scheduleHide}
     >
-      <h1 className="mb-2 text-[28px] leading-tight font-semibold">{pageTitle(page)}</h1>
+      <h1 className="mb-2 text-display-sm font-semibold">{pageTitle(page)}</h1>
       <PageMeta page={page} />
 
       {banners}

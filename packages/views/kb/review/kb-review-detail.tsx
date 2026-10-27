@@ -54,7 +54,7 @@ type MergeError = (typeof MERGE_ERRORS)[keyof typeof MERGE_ERRORS];
 function mergeError(error: unknown): MergeError | "failed" {
   const code = kbErrorCode(error);
 
-  return code in MERGE_ERRORS ? MERGE_ERRORS[code as keyof typeof MERGE_ERRORS] : "failed";
+  return Object.hasOwn(MERGE_ERRORS, code) ? MERGE_ERRORS[code as keyof typeof MERGE_ERRORS] : "failed";
 }
 
 const STATUS_DOT: Record<KbMergeRequestDetail["status"], KbDot> = { open: "blue", merged: "green", closed: "gray" };

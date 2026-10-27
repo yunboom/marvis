@@ -9,6 +9,7 @@ import { useWorkspacePaths } from "@marvis/core/paths";
 import { isOpenAnnotation, kbAnnotationListOptions, kbBaseDetailOptions, kbPageOptions } from "@marvis/core/kb/queries";
 import type { KbAnnotation, KbPage, KbPageDraft, KbSource } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
+import { Toggle } from "@marvis/ui/components/ui/toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,8 +34,12 @@ import { useKbRawFilePreview } from "../manage/use-kb-raw-files";
 
 type Panel = "none" | "info" | "toc" | "history" | "annotations";
 
-const ICON_BUTTON =
-  "flex h-8 min-w-8 items-center justify-center gap-1 rounded-lg px-1.5 text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground aria-pressed:bg-surface-selected aria-pressed:text-foreground data-popup-open:bg-surface-selected";
+// Header panel toggles share the reading page's muted icon look.
+const PANEL_TOGGLE = "text-muted-foreground aria-pressed:bg-surface-selected aria-pressed:text-foreground";
+
+// One side of the published / draft segmented switch.
+const SEGMENT =
+  "h-6 px-2.5 font-normal text-muted-foreground hover:bg-transparent aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm";
 
 /** The label a draft carries in the draft switcher. */
 export function useDraftLabel() {
@@ -70,7 +75,7 @@ export function KbDraftBar({ drafts, activeDraft }: { drafts: KbPageDraft[]; act
 
   return (
     <div className="mb-[18px] flex items-center gap-3 rounded-xl bg-info/5 px-3.5 py-2.5 text-label ring-1 ring-info/45 ring-inset">
-      <span className="rounded-md bg-info px-1.5 text-caption leading-5 text-white">{t(($) => $.draft.label)}</span>
+      <span className="rounded-md bg-info px-1.5 text-caption leading-5 text-primary-foreground">{t(($) => $.draft.label)}</span>
       <span className="min-w-0 flex-1">
         {drafts.length > 1 ? t(($) => $.draft.multi, { count: drafts.length }) : t(($) => $.draft.single)}
       </span>
@@ -101,22 +106,12 @@ export function KbDraftBar({ drafts, activeDraft }: { drafts: KbPageDraft[]; act
         </DropdownMenu>
       )}
       <div role="group" className="flex shrink-0 rounded-lg bg-surface-sunken p-0.5">
-        <button
-          type="button"
-          aria-pressed={!activeDraft}
-          onClick={() => replace(pathname)}
-          className="rounded-md px-2.5 py-0.5 text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm"
-        >
+        <Toggle size="sm" pressed={!activeDraft} onPressedChange={() => replace(pathname)} className={SEGMENT}>
           {t(($) => $.draft.published)}
-        </button>
-        <button
-          type="button"
-          aria-pressed={!!activeDraft}
-          onClick={() => show(selected.id)}
-          className="rounded-md px-2.5 py-0.5 text-muted-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-sm"
-        >
+        </Toggle>
+        <Toggle size="sm" pressed={!!activeDraft} onPressedChange={() => show(selected.id)} className={SEGMENT}>
           {t(($) => $.draft.draft)}
-        </button>
+        </Toggle>
       </div>
     </div>
   );
@@ -158,9 +153,9 @@ function PageMenu({ onHistory, onCheck, shareHref }: { onHistory: () => void; on
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <button type="button" aria-label={t(($) => $.page.more)} className={ICON_BUTTON}>
+          <Button variant="ghost" size="icon-sm" aria-label={t(($) => $.page.more)} className="text-muted-foreground data-popup-open:bg-surface-selected">
             <MoreHorizontal className="size-4" />
-          </button>
+          </Button>
         }
       />
       <DropdownMenuContent align="end" className="w-[240px]">
@@ -290,34 +285,31 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
             {title}
           </span>
         </nav>
-        <button
-          type="button"
+        <Toggle
           aria-label={t(($) => $.annotation.page_panel)}
-          aria-pressed={panel === "annotations"}
-          onClick={() => togglePanel("annotations")}
-          className={ICON_BUTTON}
+          pressed={panel === "annotations"}
+          onPressedChange={() => togglePanel("annotations")}
+          className={PANEL_TOGGLE}
         >
           <MessageSquare className="size-4" />
           {page.annotations_open > 0 && <span className="text-label tabular-nums">{page.annotations_open}</span>}
-        </button>
-        <button
-          type="button"
+        </Toggle>
+        <Toggle
           aria-label={t(($) => $.page.toc)}
-          aria-pressed={panel === "toc"}
-          onClick={() => togglePanel("toc")}
-          className={ICON_BUTTON}
+          pressed={panel === "toc"}
+          onPressedChange={() => togglePanel("toc")}
+          className={PANEL_TOGGLE}
         >
           <List className="size-4" />
-        </button>
-        <button
-          type="button"
+        </Toggle>
+        <Toggle
           aria-label={t(($) => $.page.info)}
-          aria-pressed={panel === "info"}
-          onClick={() => togglePanel("info")}
-          className={ICON_BUTTON}
+          pressed={panel === "info"}
+          onPressedChange={() => togglePanel("info")}
+          className={PANEL_TOGGLE}
         >
           <Info className="size-4" />
-        </button>
+        </Toggle>
         <PageMenu
           onHistory={() => setPanel("history")}
           onCheck={

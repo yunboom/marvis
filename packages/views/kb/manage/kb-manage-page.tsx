@@ -30,7 +30,7 @@ import { useCanConfigureKb } from "../components/kb-shell";
 import { formatShortDate } from "../components/kb-page-body";
 import { kbErrorCode } from "../utils/kb-api-error";
 import { parseKbManageRoute } from "./kb-manage-route";
-import { rawFileFromItem, useKbRawFilePreview } from "./use-kb-raw-files";
+import { clickDownloadAnchor, rawFileFromItem, useKbRawFilePreview } from "./use-kb-raw-files";
 
 const API_CODE_RAW_NAME_TAKEN = "raw_name_taken";
 const API_CODE_RAW_NAME_INVALID = "raw_name_invalid";
@@ -221,10 +221,7 @@ function ExportSection({ kbSlug }: { kbSlug: string }) {
       .exportKnowledgeBase(kbSlug)
       .then((blob) => {
         const url = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = `${kbSlug}.zip`;
-        anchor.click();
+        clickDownloadAnchor(url, `${kbSlug}.zip`);
         // Let the click start the download before the URL goes away.
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       })

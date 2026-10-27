@@ -35,7 +35,7 @@ function PendingCard({
         <span aria-hidden="true" className={cn("size-1.5 rounded-full", tone === "info" ? "bg-info" : "bg-warning")} />
         {label}
       </span>
-      <span className="text-[26px] leading-tight font-semibold tabular-nums">{count}</span>
+      <span className="text-display-sm font-semibold tabular-nums">{count}</span>
       {hint && <span className="min-w-0 truncate text-caption text-faint-foreground">{hint}</span>}
     </>
   );
@@ -163,7 +163,7 @@ export function KbHomePage() {
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <div className="flex max-w-[900px] flex-col gap-7 px-14 py-8">
             <div>
-              <h1 className="mb-2 text-[28px] leading-tight font-semibold">{base.name}</h1>
+              <h1 className="mb-2 text-display-sm font-semibold">{base.name}</h1>
               {base.description && <p className="text-body text-muted-foreground">{base.description}</p>}
             </div>
 
