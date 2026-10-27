@@ -120,7 +120,7 @@ func TestDefaultTemplates(t *testing.T) {
 	if strings.Contains(DefaultSchema, "home page") || strings.Contains(DefaultSchema, "never delete or move it") {
 		t.Errorf("default schema still treats quickstart as a reserved home page")
 	}
-	if !strings.HasPrefix(PurposeTemplate, "# Purpose\n") || !strings.Contains(PurposeTemplate, "## Common questions") {
+	if !strings.HasPrefix(PurposeTemplate, "# Purpose\n") || !strings.Contains(PurposeTemplate, "## Typical uses") {
 		t.Errorf("purpose template = %q", PurposeTemplate)
 	}
 }
