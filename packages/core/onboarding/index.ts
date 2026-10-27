@@ -2,7 +2,6 @@ export type {
   OnboardingStep,
   OnboardingCompletionPath,
   QuestionnaireAnswers,
-  Source,
   Role,
   UseCase,
 } from "./types";
