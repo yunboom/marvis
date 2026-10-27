@@ -1,3 +1,4 @@
+import { Kanban } from "@phosphor-icons/react/ssr";
 import type { Project } from "@marvis/core/types";
 import { cn } from "@marvis/ui/lib/utils";
 
@@ -15,6 +16,7 @@ const SIZE_CLASS: Record<ProjectIconSize, string> = {
   lg: "size-6 text-display-sm leading-none",
 };
 
+// Projects without an emoji show a solid kanban glyph.
 export function ProjectIcon({ project, size = "sm", className }: ProjectIconProps) {
   return (
     <span
@@ -25,7 +27,9 @@ export function ProjectIcon({ project, size = "sm", className }: ProjectIconProp
         className,
       )}
     >
-      {project?.icon || "📁"}
+      {project?.icon || (
+        <Kanban weight="fill" className="size-full text-muted-foreground" />
+      )}
     </span>
   );
 }

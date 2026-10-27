@@ -27,7 +27,7 @@
     "add_resource": "新增資源"
   },
   "form": {
-    "icon": "圖示",
+    "icon_emoji": "圖示（emoji）",
     "title": "標題",
     "title_placeholder": "專案標題",
     "description": "描述",

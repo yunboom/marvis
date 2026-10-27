@@ -61,6 +61,7 @@ import {
 } from "../projects/components/labels";
 import { ProjectStartDatePicker } from "../projects/components/project-start-date-picker";
 import { ProjectDueDatePicker } from "../projects/components/project-due-date-picker";
+import { ProjectIcon } from "../projects/components/project-icon";
 import { PillButton } from "../common/pill-button";
 import { WorkflowPill } from "../workflows/workflow-pill";
 import { githubShortLabel } from "../common/github-url";
@@ -536,7 +537,7 @@ export function CreateProjectModal({ onClose }: { onClose: () => void }) {
                     className="text-display-sm cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
                     aria-label={t(($) => $.create_project.icon_tooltip)}
                   >
-                    {icon || "📁"}
+                    <ProjectIcon project={{ icon: icon ?? null }} size="lg" />
                   </button>
                 }
               />

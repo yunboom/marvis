@@ -180,41 +180,5 @@
     "direction_desc": "降序",
     "section_columns": "列",
     "view": "檢視"
-  },
-  "icon_picker": {
-    "glyphs": {
-      "folder": "資料夾",
-      "briefcase": "公文包",
-      "rocket": "火箭",
-      "target": "靶心",
-      "flag": "旗幟",
-      "compass": "指南針",
-      "layers": "圖層",
-      "box": "盒子",
-      "code": "程式碼",
-      "terminal": "終端",
-      "git-branch": "分支",
-      "database": "資料庫",
-      "server": "伺服器",
-      "cloud": "雲",
-      "smartphone": "手機",
-      "monitor": "顯示器",
-      "palette": "調色盤",
-      "pen-tool": "鋼筆",
-      "book-open": "書",
-      "file-text": "文件",
-      "megaphone": "喇叭",
-      "chart-line": "圖表",
-      "lightbulb": "燈泡",
-      "sparkles": "星光",
-      "users": "成員",
-      "shield": "盾牌",
-      "bug": "缺陷",
-      "wrench": "扳手",
-      "calendar": "日曆",
-      "mountain": "山",
-      "leaf": "葉子",
-      "feather": "羽毛"
-    }
   }
 }

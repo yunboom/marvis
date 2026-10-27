@@ -28,6 +28,7 @@ import { PriorityIcon } from "../../issues/components/priority-icon";
 import { ProjectResourcesSection } from "./project-resources-section";
 import { ProjectStartDatePicker } from "./project-start-date-picker";
 import { ProjectDueDatePicker } from "./project-due-date-picker";
+import { ProjectIcon } from "./project-icon";
 import { ProjectWorkflowControl } from "../../workflows/project-workflow-row";
 import { ProjectWorkflowMenu } from "../../workflows/project-workflow-menu";
 import { IssueSurface } from "../../issues/surface/issue-surface";
@@ -259,7 +260,7 @@ export function ProjectDetail({ projectId }: { projectId: string }) {
                   className="text-display-sm cursor-pointer rounded-lg p-1 -ml-1 hover:bg-accent/60 transition-colors"
                   aria-label={t(($) => $.detail.icon_tooltip)}
                 >
-                  {project.icon || "📁"}
+                  <ProjectIcon project={project} size="lg" />
                 </button>
               }
             />
