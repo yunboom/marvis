@@ -24,6 +24,14 @@ export function withDraft(href: string, draft: string): string {
   return draft ? `${href}?draft=${encodeURIComponent(draft)}` : href;
 }
 
+/** The `view` value that shows a page's changes in the draft instead of its text. */
+export const KB_DIFF_VIEW = "diff";
+
+/** A page's changes in a draft: ?draft=<id>&view=diff. */
+export function withDraftDiff(href: string, draft: string): string {
+  return `${withDraft(href, draft)}&view=${KB_DIFF_VIEW}`;
+}
+
 interface TreeContext {
   kbSlug: string;
   draft: string;

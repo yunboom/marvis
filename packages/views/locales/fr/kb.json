@@ -96,11 +96,13 @@
   },
   "draft": {
     "label": "Brouillon",
-    "single": "Votre brouillon modifie cette page et n’est pas encore fusionné. Les autres voient toujours la version publiée.",
-    "multi_one": "Vous avez {{count}} brouillon qui modifie cette page, non fusionné. Les autres voient toujours la version publiée.",
-    "multi_other": "Vous avez {{count}} brouillons qui modifient cette page, aucun fusionné. Les autres voient toujours la version publiée.",
-    "published": "Publié",
+    "single": "Votre brouillon modifie cette page et n’est pas encore fusionné. Les autres voient toujours la version officielle.",
+    "multi_one": "Vous avez {{count}} brouillon qui modifie cette page, non fusionné. Les autres voient toujours la version officielle.",
+    "multi_other": "Vous avez {{count}} brouillons qui modifient cette page, aucun fusionné. Les autres voient toujours la version officielle.",
+    "official": "Officiel",
     "draft": "Brouillon",
+    "diff": "Différences",
+    "diff_empty": "Ce brouillon ne modifie pas cette page",
     "choose": "Choisir un brouillon",
     "origin": {
       "chat": "Discussion « {{label}} »",
