@@ -1,6 +1,6 @@
 ---
 name: marvis-platform
-description: "Use for Marvis platform actions the runtime brief does not fully cover: issue and PR contracts, charts and files in comments, mentions, agents, squads, autopilots, projects, runtimes, skill import. Not for the product code you are working on."
+description: "Use for Marvis platform actions the runtime brief does not fully cover: issue and PR contracts, charts and files in comments, mentions, agents, squads, autopilots, projects, runtimes, skill import, knowledge bases. Not for the product code you are working on."
 user-invocable: false
 allowed-tools: Bash(marvis *), Bash(git *), Bash(gh *)
 ---
@@ -27,13 +27,14 @@ Read the invariants below, then open the reference(s) your task actually needs
 | `references/projects.md` | Projects and their durable resources (`github_repo`, `local_directory`, worktree mode); project workflows — status columns, handoffs, a `[Project workflow]` block in your prompt |
 | `references/runtimes.md` | Runtimes, daemons, `repo checkout`, and the task CLI boundary |
 | `references/skill-import.md` | Importing a skill into this workspace from a URL or a local archive |
+| `references/knowledge-bases.md` | Creating and evolving knowledge bases: creating and configuring a knowledge base (name, purpose, schema); finding knowledge; writing new knowledge, lessons and key decisions back through a draft and a change request, following the knowledge base's schema (sections, page types, fields, claims and evidence), then addressing review comments and resolving merge conflicts; ingesting sources others hand over (issues, chats, documents, uploaded files); health checks for outdated, contradictory or missing content; recording problems as annotations and resolving them in change requests |
 
 Open what the task needs. A single-domain task usually needs one; a task that
 crosses domains needs each domain it touches — creating a squad, assigning it an
 issue, then writing a mention needs `squads.md`, `issues.md` and `mentions.md`,
 and skipping one of those means acting on a contract you have not read.
 
-What is never right is reading all eight because you are not sure. Each
+What is never right is reading all nine because you are not sure. Each
 reference states its own contracts in full and none depends on another, so
 pick by domain and skip the rest.
 
