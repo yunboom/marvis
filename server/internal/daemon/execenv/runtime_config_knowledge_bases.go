@@ -19,7 +19,7 @@ const (
 		"- `marvis kb search \"<query>\" [--kb <slug>]` — find pages by keyword.\n" +
 		"- `marvis kb page list <slug> [--parent <slug>:<path>]` — lists the knowledge base's table of contents, each entry with a short description of the page.\n" +
 		"- `marvis kb page fetch <slug>:<path>` — read a page.\n\n" +
-		"More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:\n\n"
+		"More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`.\n\n"
 )
 
 // writeKnowledgeBases emits the Knowledge Bases section (spec 8.2): the

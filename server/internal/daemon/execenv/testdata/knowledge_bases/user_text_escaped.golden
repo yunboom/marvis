@@ -15,5 +15,5 @@ Judge from the descriptions above which knowledge base, if any, helps with the c
 - `marvis kb page list <slug> [--parent <slug>:<path>]` — lists the knowledge base's table of contents, each entry with a short description of the page.
 - `marvis kb page fetch <slug>:<path>` — read a page.
 
-More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:
+More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`.
 

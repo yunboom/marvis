@@ -1860,7 +1860,7 @@ Judge from the descriptions above which knowledge base, if any, helps with the c
 - `marvis kb page list <slug> [--parent <slug>:<path>]` — lists the knowledge base's table of contents, each entry with a short description of the page.
 - `marvis kb page fetch <slug>:<path>` — read a page.
 
-More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`:
+More operations are in the `marvis-platform` skill, under `references/knowledge-bases.md`.
 
 ```
 
@@ -1885,7 +1885,7 @@ More operations are in the `marvis-platform` skill, under `references/knowledge-
 - `marvis kb page list <slug> [--parent <slug>:<路径>]` — 列出知识库目录，每行目录附带该页的大致描述
 - `marvis kb page fetch <slug>:<路径>` — 读页面。
 
-更多操作见 `marvis-platform` skill 的 `references/knowledge-bases.md`：
+更多操作见 `marvis-platform` skill 的 `references/knowledge-bases.md`。
 
 ```
 
@@ -1943,7 +1943,7 @@ The slug identifies the knowledge base in commands and links. It uses only lower
 
 People own the purpose, and agents read it before every change. Write it in four sections of plain sentences, under 40 lines: who the readers are and what they use it for; what belongs here; what does not belong here and where it lives instead; 3 to 8 questions readers come here to answer. Write it in the member's language; pages are written in the same language.
 
-The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema: Get the default schema with the command below and use it as a reference when you write one.
+The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema. When you write one, use the default schema as a reference; get it with the command below.
 
     marvis kb schema templates
 
@@ -2088,7 +2088,7 @@ slug 是知识库在命令和链接里的标识，只用小写字母、数字和
 
 目标由人定，智能体每次改动前都会读。分四节，用平实的句子，40 行以内：读者是谁、读了用来做什么；收录哪些内容；不收哪些内容，以及这些内容在哪里；读者常来查的 3 到8 个问题。用成员的语言写，页面也用同一种语言。
 
-Schema 告诉维护知识库的智能体怎么组织和书写页面。多数知识库直接用内置的默认 Schema，它只读，随平台更新。团队需要自己的分区或页面类型时，改用自定义 Schema：默认Schema 用下面的命令取出，可以当作写 Schema 的参考示例。
+Schema 告诉维护知识库的智能体怎么组织和书写页面。多数知识库直接用内置的默认 Schema，它只读，随平台更新。团队需要自己的分区或页面类型时，改用自定义 Schema。写的时候参考默认 Schema，用下面的命令取出。
 
     marvis kb schema templates
 

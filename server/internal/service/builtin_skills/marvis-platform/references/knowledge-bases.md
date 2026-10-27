@@ -12,7 +12,7 @@ The slug identifies the knowledge base in commands and links. It uses only lower
 
 People own the purpose, and agents read it before every change. Write it in four sections of plain sentences, under 40 lines: who the readers are and what they use it for; what belongs here; what does not belong here and where it lives instead; 3 to 8 questions readers come here to answer. Write it in the member's language; pages are written in the same language.
 
-The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema: Get the default schema with the command below and use it as a reference when you write one.
+The schema tells the agents that maintain the knowledge base how to organise and write pages. Most knowledge bases use the built-in default schema, which is read-only and updated with the platform. When the team needs its own sections or page types, switch to a custom schema. When you write one, use the default schema as a reference; get it with the command below.
 
     marvis kb schema templates
 
