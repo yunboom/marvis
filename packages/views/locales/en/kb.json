@@ -38,7 +38,9 @@
     "pages": "Pages",
     "breadcrumb": "Breadcrumb",
     "configure": "Configure knowledge base",
-    "configure_hint": "Purpose and schema"
+    "configure_hint": "Purpose and schema",
+    "manage": "Manage knowledge base",
+    "graph": "Graph"
   },
   "tree": {
     "expand": "Expand {{title}}",
@@ -595,5 +597,75 @@
       "header": "#{{number}} · {{author}} · merged by {{merger}}",
       "revert_hint": "Reverting opens a new change request; it takes effect once merged."
     }
+  },
+  "manage": {
+    "title": "Manage knowledge base",
+    "tabs_label": "Management sections",
+    "tab": {
+      "raw": "Raw files",
+      "export": "Export",
+      "delete": "Delete knowledge base"
+    },
+    "raw": {
+      "title": "Raw files",
+      "upload": "Upload files",
+      "uploading": "Uploading…",
+      "description": "Stored as uploaded. Pages cite them as sources.",
+      "col": {
+        "name": "File",
+        "source": "Source",
+        "created": "Imported",
+        "cited": "Cited by"
+      },
+      "source_upload": "Uploaded · {{name}}",
+      "empty": "No raw files yet",
+      "ingest": "Hand to an agent to ingest",
+      "ingest_count": "Hand to an agent to ingest ({{count}})",
+      "select": "Select {{name}}",
+      "select_all": "Select all",
+      "open": "Open {{name}}",
+      "name_taken": "A file with this name exists: {{names}}",
+      "name_invalid": "File names cannot be empty or contain / \\ # ?",
+      "upload_failed": "Upload failed",
+      "open_failed": "Could not open the file",
+      "cited_one": "{{count}} page",
+      "cited_other": "{{count}} pages",
+      "uploaded_one": "Uploaded {{count}} file",
+      "uploaded_other": "Uploaded {{count}} files"
+    },
+    "export": {
+      "title": "Export",
+      "okf": "OKF bundle",
+      "okf_description": "Exports every page as Open Knowledge Format v0.2: one Markdown file per page with frontmatter and an index.md per directory, zipped.",
+      "spec_link": "OKF specification",
+      "button": "Export zip",
+      "exporting": "Exporting…",
+      "failed": "Export failed"
+    },
+    "delete": {
+      "title": "Delete knowledge base",
+      "description": "Deletes every page, revision and annotation of this knowledge base. It cannot be restored.",
+      "button": "Delete",
+      "dialog_title": "Delete “{{name}}”?",
+      "dialog_body": "Removes the {{slug}}/ directory and closes its {{annotations}} annotations and {{mrs}} pending changes.",
+      "confirm_label": "Type the knowledge base name to confirm",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting…",
+      "deleted": "Deleted “{{name}}”",
+      "failed": "Delete failed",
+      "forbidden": "Only the knowledge base creator or an owner / admin can delete it."
+    }
+  },
+  "graph": {
+    "title": "Graph",
+    "label": "Links between pages",
+    "no_links": "No links",
+    "hint": "Colored by top-level page. Click to open.",
+    "missing": "{{title}} · not written yet",
+    "empty": "No pages yet",
+    "legend": "Legend",
+    "open_one": "Open {{title}} · {{count}} link",
+    "open_other": "Open {{title}} · {{count}} links"
   }
 }

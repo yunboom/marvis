@@ -29,6 +29,7 @@ import { KbPageBody, pageTitle } from "./kb-page-body";
 import { KbAnnotationPanel, KbSelectionAnnotator } from "./kb-annotations";
 import { KbHistoryPanel, KbInfoPanel, KbTocPanel } from "./kb-page-panels";
 import { withDraft } from "./kb-page-tree";
+import { useKbRawFilePreview } from "../manage/use-kb-raw-files";
 
 type Panel = "none" | "info" | "toc" | "history" | "annotations";
 
@@ -204,12 +205,14 @@ interface KbPageViewProps {
 }
 
 /** The reading page of one knowledge base page. */
-export function KbPageView({ rawFileActions }: KbPageViewProps) {
+export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewProps) {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
   const { pathname, searchParams, hash, push } = useNavigation();
   const { kbSlug, pageId } = parseKbRoute(pathname);
+  const rawPreview = useKbRawFilePreview(kbSlug);
+  const rawFileActions = rawFileActionsProp ?? rawPreview.actions;
   const draft = searchParams.get("draft") ?? "";
   const [panel, setPanel] = useState<Panel>("none");
   const [activeHeading, setActiveHeading] = useState("");
@@ -345,6 +348,7 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
               page={page}
               published={published?.id === page.id ? published : null}
               rawFileActions={rawFileActions}
+              onRawLink={rawPreview.openLinked}
               annotatedQuotes={panel === "annotations" ? annotatedQuotes(annotations) : undefined}
               banners={
                 <>
@@ -381,6 +385,7 @@ export function KbPageView({ rawFileActions }: KbPageViewProps) {
           <KbHistoryPanel kbSlug={kbSlug} pageId={page.id} onClose={() => setPanel("none")} />
         )}
       </div>
+      {rawPreview.modal}
     </div>
   );
 }

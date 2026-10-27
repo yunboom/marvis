@@ -35,7 +35,9 @@
     "pages": "페이지",
     "breadcrumb": "현재 위치",
     "configure": "지식 베이스 설정",
-    "configure_hint": "목적과 스키마"
+    "configure_hint": "목적과 스키마",
+    "manage": "지식 베이스 관리",
+    "graph": "관계도"
   },
   "tree": {
     "expand": "{{title}} 펼치기",
@@ -575,5 +577,72 @@
       "header": "#{{number}} · {{author}} · {{merger}} 병합",
       "revert_hint": "되돌리면 새 변경 요청이 만들어지고, 병합되면 적용됩니다."
     }
+  },
+  "manage": {
+    "title": "지식 베이스 관리",
+    "tabs_label": "관리 섹션",
+    "tab": {
+      "raw": "원본 자료",
+      "export": "내보내기",
+      "delete": "지식 베이스 삭제"
+    },
+    "raw": {
+      "title": "원본 자료",
+      "upload": "자료 업로드",
+      "uploading": "업로드 중…",
+      "description": "올린 그대로 저장되며, 페이지가 출처로 인용합니다.",
+      "col": {
+        "name": "자료",
+        "source": "출처",
+        "created": "가져온 날",
+        "cited": "인용한 페이지"
+      },
+      "source_upload": "업로드 · {{name}}",
+      "empty": "아직 원본 자료가 없습니다",
+      "ingest": "에이전트에게 수록 맡기기",
+      "ingest_count": "에이전트에게 수록 맡기기 ({{count}})",
+      "select": "{{name}} 선택",
+      "select_all": "모두 선택",
+      "open": "{{name}} 열기",
+      "name_taken": "같은 이름의 파일이 있습니다: {{names}}",
+      "name_invalid": "파일 이름은 비울 수 없고 / \\ # ? 를 포함할 수 없습니다",
+      "upload_failed": "업로드 실패",
+      "open_failed": "파일을 열 수 없습니다",
+      "cited_other": "{{count}}개 페이지",
+      "uploaded_other": "파일 {{count}}개를 업로드했습니다"
+    },
+    "export": {
+      "title": "내보내기",
+      "okf": "OKF bundle",
+      "okf_description": "모든 페이지를 Open Knowledge Format v0.2로 내보냅니다. 페이지마다 frontmatter가 있는 Markdown 파일, 디렉터리마다 index.md를 만들어 zip으로 묶습니다.",
+      "spec_link": "OKF 사양",
+      "button": "zip 내보내기",
+      "exporting": "내보내는 중…",
+      "failed": "내보내기 실패"
+    },
+    "delete": {
+      "title": "지식 베이스 삭제",
+      "description": "이 지식 베이스의 모든 페이지, 수정본, 주석을 삭제합니다. 복구할 수 없습니다.",
+      "button": "삭제",
+      "dialog_title": "「{{name}}」을(를) 삭제할까요?",
+      "dialog_body": "{{slug}}/ 디렉터리를 제거하고 주석 {{annotations}}개와 검토 대기 변경 {{mrs}}개를 닫습니다.",
+      "confirm_label": "확인을 위해 지식 베이스 이름 입력",
+      "cancel": "취소",
+      "confirm": "삭제",
+      "deleting": "삭제 중…",
+      "deleted": "「{{name}}」을(를) 삭제했습니다",
+      "failed": "삭제 실패",
+      "forbidden": "지식 베이스 생성자나 owner / admin만 삭제할 수 있습니다."
+    }
+  },
+  "graph": {
+    "title": "관계도",
+    "label": "페이지 간 링크",
+    "no_links": "링크 없음",
+    "hint": "1단계 페이지별로 색을 구분합니다. 클릭하면 열립니다",
+    "missing": "{{title}} · 아직 작성 안 됨",
+    "empty": "아직 페이지가 없습니다",
+    "legend": "범례",
+    "open_other": "{{title}} 열기 · 링크 {{count}}개"
   }
 }

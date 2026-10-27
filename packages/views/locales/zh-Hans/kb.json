@@ -35,7 +35,9 @@
     "pages": "页面",
     "breadcrumb": "位置",
     "configure": "配置知识库",
-    "configure_hint": "目标与 Schema"
+    "configure_hint": "目标与 Schema",
+    "manage": "知识库管理",
+    "graph": "关系图"
   },
   "tree": {
     "expand": "展开{{title}}",
@@ -575,5 +577,72 @@
       "header": "#{{number}} · {{author}} · {{merger}}合并",
       "revert_hint": "回滚会生成新的变更请求，合并后生效。"
     }
+  },
+  "manage": {
+    "title": "知识库管理",
+    "tabs_label": "管理分区",
+    "tab": {
+      "raw": "原始资料",
+      "export": "导出",
+      "delete": "删除知识库"
+    },
+    "raw": {
+      "title": "原始资料",
+      "upload": "上传资料",
+      "uploading": "上传中…",
+      "description": "导入时原样保存，页面引用它们作为来源。",
+      "col": {
+        "name": "资料",
+        "source": "来源",
+        "created": "导入",
+        "cited": "引用它的页面"
+      },
+      "source_upload": "上传 · {{name}}",
+      "empty": "还没有原始资料",
+      "ingest": "交给智能体收录",
+      "ingest_count": "交给智能体收录（{{count}}）",
+      "select": "选择 {{name}}",
+      "select_all": "全选",
+      "open": "打开 {{name}}",
+      "name_taken": "已有同名文件：{{names}}",
+      "name_invalid": "文件名不能为空，也不能包含 / \\ # ?",
+      "upload_failed": "上传失败",
+      "open_failed": "无法打开文件",
+      "cited_other": "{{count}} 个页面",
+      "uploaded_other": "已上传 {{count}} 个文件"
+    },
+    "export": {
+      "title": "导出",
+      "okf": "OKF bundle",
+      "okf_description": "按 Open Knowledge Format v0.2 导出全部页面：每页一个 Markdown 文件，带 frontmatter，每个目录一份 index.md，打包成 zip。",
+      "spec_link": "OKF 规范",
+      "button": "导出 zip",
+      "exporting": "导出中…",
+      "failed": "导出失败"
+    },
+    "delete": {
+      "title": "删除知识库",
+      "description": "删除这个知识库的全部页面、修订和批注，界面不提供恢复。",
+      "button": "删除",
+      "dialog_title": "删除「{{name}}」？",
+      "dialog_body": "移除 {{slug}}/ 目录，关闭它的 {{annotations}} 条批注和 {{mrs}} 个待审核修改。",
+      "confirm_label": "输入知识库名称确认",
+      "cancel": "取消",
+      "confirm": "删除",
+      "deleting": "删除中…",
+      "deleted": "已删除「{{name}}」",
+      "failed": "删除失败",
+      "forbidden": "知识库创建者或 owner / admin 才能删除。"
+    }
+  },
+  "graph": {
+    "title": "关系图",
+    "label": "页面之间的链接",
+    "no_links": "无链接",
+    "hint": "颜色按一级页面区分，点击打开页面",
+    "missing": "{{title}} · 还没写",
+    "empty": "还没有页面",
+    "legend": "图例",
+    "open_other": "打开{{title}} · {{count}} 个链接"
   }
 }

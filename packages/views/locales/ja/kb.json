@@ -35,7 +35,9 @@
     "pages": "ページ",
     "breadcrumb": "現在地",
     "configure": "ナレッジベースを設定",
-    "configure_hint": "目的とスキーマ"
+    "configure_hint": "目的とスキーマ",
+    "manage": "ナレッジベースの管理",
+    "graph": "関係図"
   },
   "tree": {
     "expand": "{{title}}を展開",
@@ -575,5 +577,72 @@
       "header": "#{{number}} · {{author}} · {{merger}} がマージ",
       "revert_hint": "取り消すと新しい変更リクエストが作成され、マージ後に反映されます。"
     }
+  },
+  "manage": {
+    "title": "ナレッジベースの管理",
+    "tabs_label": "管理セクション",
+    "tab": {
+      "raw": "元資料",
+      "export": "エクスポート",
+      "delete": "ナレッジベースを削除"
+    },
+    "raw": {
+      "title": "元資料",
+      "upload": "資料をアップロード",
+      "uploading": "アップロード中…",
+      "description": "そのまま保存され、ページの出典として引用されます。",
+      "col": {
+        "name": "資料",
+        "source": "出所",
+        "created": "取り込み",
+        "cited": "引用しているページ"
+      },
+      "source_upload": "アップロード · {{name}}",
+      "empty": "元資料はまだありません",
+      "ingest": "エージェントに取り込ませる",
+      "ingest_count": "エージェントに取り込ませる（{{count}}）",
+      "select": "{{name}} を選択",
+      "select_all": "すべて選択",
+      "open": "{{name}} を開く",
+      "name_taken": "同じ名前のファイルがあります：{{names}}",
+      "name_invalid": "ファイル名は空にできず、/ \\ # ? を含められません",
+      "upload_failed": "アップロードに失敗しました",
+      "open_failed": "ファイルを開けませんでした",
+      "cited_other": "{{count}} ページ",
+      "uploaded_other": "{{count}} 件のファイルをアップロードしました"
+    },
+    "export": {
+      "title": "エクスポート",
+      "okf": "OKF bundle",
+      "okf_description": "全ページを Open Knowledge Format v0.2 でエクスポートします。ページごとに frontmatter 付きの Markdown、ディレクトリごとに index.md を作り、zip にまとめます。",
+      "spec_link": "OKF 仕様",
+      "button": "zip をエクスポート",
+      "exporting": "エクスポート中…",
+      "failed": "エクスポートに失敗しました"
+    },
+    "delete": {
+      "title": "ナレッジベースを削除",
+      "description": "このナレッジベースのページ、改訂、注釈をすべて削除します。復元はできません。",
+      "button": "削除",
+      "dialog_title": "「{{name}}」を削除しますか？",
+      "dialog_body": "{{slug}}/ ディレクトリを削除し、注釈 {{annotations}} 件とレビュー待ちの変更 {{mrs}} 件を閉じます。",
+      "confirm_label": "確認のためナレッジベース名を入力",
+      "cancel": "キャンセル",
+      "confirm": "削除",
+      "deleting": "削除中…",
+      "deleted": "「{{name}}」を削除しました",
+      "failed": "削除に失敗しました",
+      "forbidden": "ナレッジベースの作成者または owner / admin のみ削除できます。"
+    }
+  },
+  "graph": {
+    "title": "関係図",
+    "label": "ページ間のリンク",
+    "no_links": "リンクなし",
+    "hint": "第 1 階層のページごとに色分け。クリックで開きます",
+    "missing": "{{title}} · 未作成",
+    "empty": "ページはまだありません",
+    "legend": "凡例",
+    "open_other": "{{title}} を開く · リンク {{count}} 件"
   }
 }

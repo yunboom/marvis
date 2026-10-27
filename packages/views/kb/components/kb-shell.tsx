@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Bot, Check, ChevronDown, GitMerge, History, House, Link2, MessageSquareText, MoreHorizontal } from "lucide-react";
+import { Bot, Check, ChevronDown, GitMerge, History, House, Link2, MessageSquareText, MoreHorizontal, Network, Settings2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthStore } from "@marvis/core/auth";
@@ -24,6 +24,7 @@ import { parseKbBuilderRoute } from "../builder/kb-builder-route";
 import { parseKbRoute } from "../utils/kb-markdown";
 import { parseKbJobRoute } from "../jobs/kb-job-state";
 import { parseKbReviewRoute } from "../review/kb-review-route";
+import { parseKbManageRoute } from "../manage/kb-manage-route";
 import { KbPageTree } from "./kb-page-tree";
 
 export function KbInitial({ name, className }: { name: string; className?: string }) {
@@ -119,15 +120,17 @@ function KbMoreMenu({ kbSlug, canConfigure }: { kbSlug: string; canConfigure: bo
       />
       <DropdownMenuContent align="end" className="w-60">
         {canConfigure && (
-          <>
-            <DropdownMenuItem render={<AppLink href={p.kbConfig(kbSlug)} />}>
-              <MessageSquareText className="size-3.5" />
-              <span className="flex-1">{t(($) => $.nav.configure)}</span>
-              <span className="text-caption text-faint-foreground">{t(($) => $.nav.configure_hint)}</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
+          <DropdownMenuItem render={<AppLink href={p.kbConfig(kbSlug)} />}>
+            <MessageSquareText className="size-3.5" />
+            <span className="flex-1">{t(($) => $.nav.configure)}</span>
+            <span className="text-caption text-faint-foreground">{t(($) => $.nav.configure_hint)}</span>
+          </DropdownMenuItem>
         )}
+        <DropdownMenuItem render={<AppLink href={p.kbManage(kbSlug)} />}>
+          <Settings2 className="size-3.5" />
+          {t(($) => $.nav.manage)}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem render={<AppLink href={p.kbReviews(kbSlug)} />}>
           <GitMerge className="size-3.5" />
           {t(($) => $.review.title)}
@@ -135,6 +138,10 @@ function KbMoreMenu({ kbSlug, canConfigure }: { kbSlug: string; canConfigure: bo
         <DropdownMenuItem render={<AppLink href={p.kbChanges(kbSlug)} />}>
           <History className="size-3.5" />
           {t(($) => $.review.changes.title)}
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<AppLink href={p.kbGraph(kbSlug)} />}>
+          <Network className="size-3.5" />
+          {t(($) => $.nav.graph)}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={copyLink}>
@@ -157,7 +164,7 @@ function KbNav({
   pageId: string;
   draft: string;
   onJobs: boolean;
-  /** The change log, reached from the "…" menu: no nav row is current. */
+  /** A page reached from the "…" menu (change log, management, graph): no nav row is current. */
   onChanges: boolean;
 }) {
   const { t } = useT("kb");
@@ -247,7 +254,7 @@ export function KbShell({ children }: { children: ReactNode }) {
           pageId={pageId}
           draft={draft}
           onJobs={jobView === "list"}
-          onChanges={reviewView === "changes"}
+          onChanges={reviewView === "changes" || parseKbManageRoute(pathname).view !== null}
         />}
       <div className="flex min-w-0 flex-1 flex-col">{children}</div>
     </div>

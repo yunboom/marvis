@@ -38,7 +38,9 @@
     "pages": "Pages",
     "breadcrumb": "Fil d’Ariane",
     "configure": "Configurer la base",
-    "configure_hint": "Objectif et schéma"
+    "configure_hint": "Objectif et schéma",
+    "manage": "Gérer la base",
+    "graph": "Graphe"
   },
   "tree": {
     "expand": "Déplier {{title}}",
@@ -595,5 +597,75 @@
       "header": "#{{number}} · {{author}} · fusionnée par {{merger}}",
       "revert_hint": "L’annulation ouvre une nouvelle demande ; elle s’applique une fois fusionnée."
     }
+  },
+  "manage": {
+    "title": "Gérer la base",
+    "tabs_label": "Sections de gestion",
+    "tab": {
+      "raw": "Fichiers sources",
+      "export": "Exporter",
+      "delete": "Supprimer la base"
+    },
+    "raw": {
+      "title": "Fichiers sources",
+      "upload": "Importer des fichiers",
+      "uploading": "Import…",
+      "description": "Conservés tels quels. Les pages les citent comme sources.",
+      "col": {
+        "name": "Fichier",
+        "source": "Source",
+        "created": "Importé",
+        "cited": "Cité par"
+      },
+      "source_upload": "Importé · {{name}}",
+      "empty": "Aucun fichier source",
+      "ingest": "Confier à un agent",
+      "ingest_count": "Confier à un agent ({{count}})",
+      "select": "Sélectionner {{name}}",
+      "select_all": "Tout sélectionner",
+      "open": "Ouvrir {{name}}",
+      "name_taken": "Un fichier porte déjà ce nom : {{names}}",
+      "name_invalid": "Le nom ne peut pas être vide ni contenir / \\ # ?",
+      "upload_failed": "Échec de l’import",
+      "open_failed": "Impossible d’ouvrir le fichier",
+      "cited_one": "{{count}} page",
+      "cited_other": "{{count}} pages",
+      "uploaded_one": "{{count}} fichier importé",
+      "uploaded_other": "{{count}} fichiers importés"
+    },
+    "export": {
+      "title": "Exporter",
+      "okf": "Bundle OKF",
+      "okf_description": "Exporte toutes les pages au format Open Knowledge Format v0.2 : un fichier Markdown par page avec frontmatter et un index.md par dossier, compressés en zip.",
+      "spec_link": "Spécification OKF",
+      "button": "Exporter en zip",
+      "exporting": "Export…",
+      "failed": "Échec de l’export"
+    },
+    "delete": {
+      "title": "Supprimer la base",
+      "description": "Supprime toutes les pages, révisions et annotations de cette base. Aucune restauration possible.",
+      "button": "Supprimer",
+      "dialog_title": "Supprimer « {{name}} » ?",
+      "dialog_body": "Retire le dossier {{slug}}/ et ferme ses {{annotations}} annotations et {{mrs}} modifications en attente.",
+      "confirm_label": "Saisissez le nom de la base pour confirmer",
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "deleting": "Suppression…",
+      "deleted": "« {{name}} » supprimée",
+      "failed": "Échec de la suppression",
+      "forbidden": "Seul le créateur de la base ou un owner / admin peut la supprimer."
+    }
+  },
+  "graph": {
+    "title": "Graphe",
+    "label": "Liens entre les pages",
+    "no_links": "Sans lien",
+    "hint": "Couleur par page de premier niveau. Cliquez pour ouvrir.",
+    "missing": "{{title}} · pas encore écrite",
+    "empty": "Aucune page",
+    "legend": "Légende",
+    "open_one": "Ouvrir {{title}} · {{count}} lien",
+    "open_other": "Ouvrir {{title}} · {{count}} liens"
   }
 }

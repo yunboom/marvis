@@ -19,6 +19,7 @@ import {
   type KbBlockChange,
 } from "../utils/kb-markdown";
 import { KB_TAG, KbCiteCard, sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
+import { parseKbRawHref } from "../manage/use-kb-raw-files";
 import "./kb.css";
 
 /** A verified entry of the page header: `{by: "human:<user id>", at}`. */
@@ -174,6 +175,8 @@ interface KbPageBodyProps {
   /** Banners shown under the meta row. */
   banners?: ReactNode;
   rawFileActions?: KbRawFileActions;
+  /** Opens a raw:// link of the body, which the server routes to the file's content path. */
+  onRawLink?: (id: string, page: number) => void;
   /** Annotated sentences to mark, by block id. */
   annotatedQuotes?: ReadonlyMap<string, readonly string[]>;
 }
@@ -183,7 +186,7 @@ interface KbPageBodyProps {
  * become numbered citations with a hover card; a draft copy is compared with
  * the published page block by block.
  */
-export function KbPageBody({ page, published, banners, rawFileActions, annotatedQuotes }: KbPageBodyProps) {
+export function KbPageBody({ page, published, banners, rawFileActions, onRawLink, annotatedQuotes }: KbPageBodyProps) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
   const { push } = useNavigation();
@@ -243,6 +246,14 @@ export function KbPageBody({ page, published, banners, rawFileActions, annotated
       // Citation and unwritten-page links are handled here, before the
       // Markdown link handler would treat them as navigation.
       onClickCapture={(e) => {
+        const rawLink = onRawLink && e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href]") : null;
+        const raw = rawLink ? parseKbRawHref(rawLink.getAttribute("href")) : null;
+        if (raw && onRawLink) {
+          e.preventDefault();
+          e.stopPropagation();
+          onRawLink(raw.id, raw.page);
+          return;
+        }
         const anchor = anchorOf(e.target);
         if (!anchor) return;
         e.preventDefault();
