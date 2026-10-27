@@ -44,7 +44,7 @@ function DraftTag({ change }: { change: DraftChange }) {
   const { t } = useT("kb");
 
   return (
-    <span className="shrink-0 rounded-md px-1.5 text-caption leading-[17px] text-muted-foreground ring-1 ring-border ring-inset">
+    <span className="shrink-0 rounded-md px-1.5 text-caption leading-[17px] text-status-review ring-1 ring-status-review/50 ring-inset">
       {t(($) => $.tree.draft[change])}
     </span>
   );
