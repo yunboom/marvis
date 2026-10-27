@@ -89,7 +89,8 @@
   - 发送人：消息列表查询按 `chat_message.task_id` 关联 `agent_task_queue`，返回 `initiator_user_id` 作为 `sender_user_id`（可空，普通聊天前端回退到会话创建者）；schema 加可选字段。每次发送仍按发送人做 `canInvokeAgent` 检查，任务归属记发送人。
 - 多人同时发送：聊天本身按会话排队（同一会话有任务在跑时新消息进队列），无需额外处理。
 - 运行中发送：复用现有聊天排队，不新增机制。派发任务挂上 `chat_session_id` 后就属于这个对话，认领时「同一智能体、同一聊天会话已有任务在跑就不派」的规则（`pkg/db/queries/agent.sql:779`）让新消息自动排在运行后面；运行结束写回会话指针，下一条消息接着用。
-  - 实现时核实：派发任务带上 `chat_session_id` 后，daemon 认领（`handler/daemon.go:3574` 的聊天分支与 `:3835` 的自动化分支同时命中）、提示词组装、重试匹配（`:2768`）仍按自动化任务处理，不被当成聊天回合。
+  - 提示词：自动化运行和聊天是两套提示词（`internal/daemon/prompt.go` 的 `buildAutopilotPrompt` / `buildChatPrompt`）。`buildPrompt` 先判断 `ChatSessionID`（`:305`）再判断 `AutopilotRunID`（`:311`），排队中的派发任务挂上对话后会被组装成聊天提示词、丢掉指令。修法：两个判断对调，带 `AutopilotRunID` 的任务始终用自动化提示词；补单测覆盖「同时带两个 ID」。
+  - 实现时还要核实：认领时聊天分支（`handler/daemon.go:3574`）与自动化分支（`:3835`）同时命中、重试匹配（`:2768`）仍按自动化任务处理。
 - `GET /api/autopilots/{id}/runs/{runId}` 响应增加 `chat_session_id`（可空），schema 加可选字段 + 默认 `null`，补 malformed 响应测试。
 
 **上下文兜底**：runtime 换过或会话文件已丢失时无法续接。第一条用户消息由服务端拼一段前置说明（自动化标题、指令摘要、本次运行结果摘要 `task.result` 截断），以「服务端写入部分」的方式存（同知识库 job：页面只显示用户打的字）。
