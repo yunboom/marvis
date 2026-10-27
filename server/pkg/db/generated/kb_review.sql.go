@@ -647,6 +647,35 @@ func (q *Queries) GetKbMergeRequestInWorkspace(ctx context.Context, arg GetKbMer
 	return i, err
 }
 
+const getKbMrComment = `-- name: GetKbMrComment :one
+SELECT id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, review_id FROM kb_mr_comment
+WHERE merge_request_id = $1 AND id = $2
+`
+
+type GetKbMrCommentParams struct {
+	MergeRequestID pgtype.UUID `json:"merge_request_id"`
+	ID             pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) GetKbMrComment(ctx context.Context, arg GetKbMrCommentParams) (KbMrComment, error) {
+	row := q.db.QueryRow(ctx, getKbMrComment, arg.MergeRequestID, arg.ID)
+	var i KbMrComment
+	err := row.Scan(
+		&i.ID,
+		&i.MergeRequestID,
+		&i.ParentID,
+		&i.QuotePageID,
+		&i.QuoteBlockID,
+		&i.QuoteText,
+		&i.Body,
+		&i.AuthorType,
+		&i.AuthorID,
+		&i.CreatedAt,
+		&i.ReviewID,
+	)
+	return i, err
+}
+
 const getKbMrPendingReview = `-- name: GetKbMrPendingReview :one
 SELECT id, workspace_id, merge_request_id, reviewer_id, state, summary, created_at, submitted_at FROM kb_mr_review
 WHERE merge_request_id = $1
@@ -698,38 +727,6 @@ func (q *Queries) GetKbMrReview(ctx context.Context, arg GetKbMrReviewParams) (K
 		&i.Summary,
 		&i.CreatedAt,
 		&i.SubmittedAt,
-	)
-	return i, err
-}
-
-const getKbMrReviewComment = `-- name: GetKbMrReviewComment :one
-SELECT id, merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id, created_at, review_id FROM kb_mr_comment
-WHERE merge_request_id = $1
-  AND review_id = $2
-  AND id = $3
-`
-
-type GetKbMrReviewCommentParams struct {
-	MergeRequestID pgtype.UUID `json:"merge_request_id"`
-	ReviewID       pgtype.UUID `json:"review_id"`
-	ID             pgtype.UUID `json:"id"`
-}
-
-func (q *Queries) GetKbMrReviewComment(ctx context.Context, arg GetKbMrReviewCommentParams) (KbMrComment, error) {
-	row := q.db.QueryRow(ctx, getKbMrReviewComment, arg.MergeRequestID, arg.ReviewID, arg.ID)
-	var i KbMrComment
-	err := row.Scan(
-		&i.ID,
-		&i.MergeRequestID,
-		&i.ParentID,
-		&i.QuotePageID,
-		&i.QuoteBlockID,
-		&i.QuoteText,
-		&i.Body,
-		&i.AuthorType,
-		&i.AuthorID,
-		&i.CreatedAt,
-		&i.ReviewID,
 	)
 	return i, err
 }

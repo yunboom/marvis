@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pkg/errors"
 
@@ -30,6 +31,9 @@ const (
 	kbCommentStatePublished = "published"
 	// kbCommentStateAll adds the comments of the viewer's pending review.
 	kbCommentStateAll = "all"
+	// kbCommentStatePending is a comment of an unsubmitted review (a
+	// comment's state, never a list filter).
+	kbCommentStatePending = "pending"
 )
 
 // kbCodeReviewRequired rejects a reviewer's comment outside a review.
@@ -53,10 +57,11 @@ type KbMrCommentResponse struct {
 	AuthorID       string            `json:"author_id"`
 	AuthorName     string            `json:"author_name"`
 	// ReviewID is the review the comment was written in; null for the
-	// owner's direct comments.
+	// owner's replies.
 	ReviewID *string `json:"review_id"`
-	// Pending is set on the comments of the viewer's unsubmitted review.
-	Pending   bool   `json:"pending"`
+	// State is pending for a comment of the viewer's unsubmitted review,
+	// published otherwise.
+	State     string `json:"state"`
 	CreatedAt string `json:"created_at"`
 }
 
@@ -64,6 +69,9 @@ type KbMrCommentResponse struct {
 // spec's quote object or, from the CLI, as a page reference and a block id;
 // the quoted text is then read from the block.
 type CreateKbMrCommentRequest struct {
+	// ReviewID is the caller's pending review the comment goes into; without
+	// it only the owner may post, as a reply (parent_id).
+	ReviewID     *string           `json:"review_id"`
 	ParentID     *string           `json:"parent_id"`
 	Quote        *KbMrCommentQuote `json:"quote"`
 	QuotePage    string            `json:"quote_page"`
@@ -113,11 +121,13 @@ func (h *Handler) listKbMrComments(ctx context.Context, mr db.KbMergeRequest, pe
 	return rows, nil
 }
 
-// CreateKbMrComment posts a published comment directly (POST
-// /api/kb/merge-requests/{number}/comments). Only the owner of the merge
-// request (the member who created its draft, or an agent acting for them)
-// may: they reply to review feedback here. Reviewers write their comments
-// in a review (decision 107) and get 403 review_required. No agent starts.
+// CreateKbMrComment posts a comment (POST
+// /api/kb/merge-requests/{number}/comments; decision 107). With review_id
+// the comment goes into the caller's pending review and stays private until
+// it is submitted. Without it only the owner of the merge request (the
+// member who created its draft, or an agent acting for them) may post, as a
+// reply to a published comment, public at once; reviewers get 403
+// review_required. No agent starts.
 func (h *Handler) CreateKbMrComment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
@@ -139,6 +149,14 @@ func (h *Handler) CreateKbMrComment(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	workspaceID := uuidToString(base.WorkspaceID)
+	actorType, actorID := h.resolveActor(r, userID, workspaceID)
+
+	if req.ReviewID != nil && strings.TrimSpace(*req.ReviewID) != "" {
+		h.createKbMrReviewComment(w, r, base, mr, req, actorType)
+		return
+	}
+
 	owner, err := kbMergeRequestOwner(ctx, h.Queries, mr)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
@@ -148,9 +166,11 @@ func (h *Handler) CreateKbMrComment(w http.ResponseWriter, r *http.Request) {
 		writeErrorCode(w, http.StatusForbidden, kbCodeReviewRequired, "only the owner of the merge request comments directly; start a review to leave feedback")
 		return
 	}
+	if req.ParentID == nil || strings.TrimSpace(*req.ParentID) == "" {
+		writeErrorCode(w, http.StatusBadRequest, kbCodeInvalidRequest, "the owner replies to a published comment: parent_id is required")
+		return
+	}
 
-	workspaceID := uuidToString(base.WorkspaceID)
-	actorType, actorID := h.resolveActor(r, userID, workspaceID)
 	comment, err := h.createKbMrComment(ctx, base, mr, req, pgtype.UUID{}, actorType, actorID)
 	if err != nil {
 		h.writeKbError(w, r, err)
@@ -166,6 +186,157 @@ func (h *Handler) CreateKbMrComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, resp[0])
+}
+
+// createKbMrReviewComment writes a pending comment into the caller's review:
+// 403 when the review is someone else's or the caller is an agent, 409 when
+// it is submitted or the merge request ended.
+func (h *Handler) createKbMrReviewComment(w http.ResponseWriter, r *http.Request, base db.KbBase, mr db.KbMergeRequest, req CreateKbMrCommentRequest, actorType string) {
+	ctx := r.Context()
+	reviewID, ok := parseUUIDOrBadRequest(w, strings.TrimSpace(*req.ReviewID), "review_id")
+	if !ok {
+		return
+	}
+	if actorType != kbActorMember {
+		writeErrorCode(w, http.StatusForbidden, kbCodeReviewMemberOnly, "only members review merge requests")
+		return
+	}
+
+	review, err := h.Queries.GetKbMrReview(ctx, db.GetKbMrReviewParams{MergeRequestID: mr.ID, ID: reviewID})
+	if err != nil && !isNotFound(err) {
+		h.writeKbInternalError(w, r, errors.Wrapf(err, "load review review_id=%s", uuidToString(reviewID)))
+		return
+	}
+	if err != nil || uuidToString(review.ReviewerID) != requestUserID(r) {
+		writeErrorCode(w, http.StatusForbidden, kbCodeForbidden, "review_id is not your review of this merge request")
+		return
+	}
+	if review.State != kb.ReviewStatePending {
+		writeErrorCode(w, http.StatusConflict, kbCodeReviewNotPending, "the review is already submitted")
+		return
+	}
+	if !isKbMergeRequestActive(mr.Status) {
+		writeErrorCode(w, http.StatusConflict, kbCodeMergeRequestNotOpen, "the merge request is "+mr.Status)
+		return
+	}
+
+	comment, err := h.createKbMrComment(ctx, base, mr, req, review.ID, kbActorMember, uuidToString(review.ReviewerID))
+	if err != nil {
+		h.writeKbError(w, r, err)
+		return
+	}
+
+	resp, err := h.kbMrCommentResponses(ctx, mr.WorkspaceID, []db.KbMrComment{comment}, review.ID)
+	if err != nil {
+		h.writeKbInternalError(w, r, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, resp[0])
+}
+
+// UpdateKbMrCommentRequest edits a pending comment.
+type UpdateKbMrCommentRequest struct {
+	Body string `json:"body"`
+}
+
+// loadKbMrPendingComment loads the {commentId} URL param as one of the
+// caller's pending comments: 403 when it is someone else's, 409 when it is
+// published.
+func (h *Handler) loadKbMrPendingComment(w http.ResponseWriter, r *http.Request) (db.KbMergeRequest, db.KbMrComment, bool) {
+	userID, ok := requireUserID(w, r)
+	if !ok {
+		return db.KbMergeRequest{}, db.KbMrComment{}, false
+	}
+	commentID, ok := parseUUIDOrBadRequest(w, chi.URLParam(r, "commentId"), "comment_id")
+	if !ok {
+		return db.KbMergeRequest{}, db.KbMrComment{}, false
+	}
+	mr, _, ok := h.loadKbMergeRequest(w, r)
+	if !ok {
+		return db.KbMergeRequest{}, db.KbMrComment{}, false
+	}
+	ctx := r.Context()
+
+	comment, err := h.Queries.GetKbMrComment(ctx, db.GetKbMrCommentParams{MergeRequestID: mr.ID, ID: commentID})
+	if err != nil {
+		if isNotFound(err) {
+			writeErrorCode(w, http.StatusNotFound, kbCodeCommentNotFound, "comment not found")
+			return db.KbMergeRequest{}, db.KbMrComment{}, false
+		}
+		h.writeKbInternalError(w, r, errors.Wrapf(err, "load comment comment_id=%s", uuidToString(commentID)))
+		return db.KbMergeRequest{}, db.KbMrComment{}, false
+	}
+	if comment.AuthorType != kbActorMember || uuidToString(comment.AuthorID) != userID {
+		writeErrorCode(w, http.StatusForbidden, kbCodeForbidden, "only the author changes a comment")
+		return db.KbMergeRequest{}, db.KbMrComment{}, false
+	}
+	if !comment.ReviewID.Valid {
+		writeErrorCode(w, http.StatusConflict, kbCodeCommentPublished, "the comment is published")
+		return db.KbMergeRequest{}, db.KbMrComment{}, false
+	}
+	review, err := h.Queries.GetKbMrReview(ctx, db.GetKbMrReviewParams{MergeRequestID: mr.ID, ID: comment.ReviewID})
+	if err != nil {
+		h.writeKbInternalError(w, r, errors.Wrapf(err, "load review review_id=%s", uuidToString(comment.ReviewID)))
+		return db.KbMergeRequest{}, db.KbMrComment{}, false
+	}
+	if review.State != kb.ReviewStatePending {
+		writeErrorCode(w, http.StatusConflict, kbCodeCommentPublished, "the comment is published")
+		return db.KbMergeRequest{}, db.KbMrComment{}, false
+	}
+
+	return mr, comment, true
+}
+
+// UpdateKbMrComment edits a pending comment (PATCH
+// /api/kb/merge-requests/{number}/comments/{commentId}).
+func (h *Handler) UpdateKbMrComment(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var req UpdateKbMrCommentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	body := strings.TrimSpace(req.Body)
+	if body == "" {
+		writeErrorCode(w, http.StatusBadRequest, kbCodeInvalidRequest, "body is required")
+		return
+	}
+
+	mr, comment, ok := h.loadKbMrPendingComment(w, r)
+	if !ok {
+		return
+	}
+
+	updated, err := h.Queries.UpdateKbMrCommentBody(ctx, db.UpdateKbMrCommentBodyParams{ID: comment.ID, Body: body})
+	if err != nil {
+		h.writeKbInternalError(w, r, errors.Wrapf(err, "update comment comment_id=%s", uuidToString(comment.ID)))
+		return
+	}
+
+	resp, err := h.kbMrCommentResponses(ctx, mr.WorkspaceID, []db.KbMrComment{updated}, comment.ReviewID)
+	if err != nil {
+		h.writeKbInternalError(w, r, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp[0])
+}
+
+// DeleteKbMrComment removes a pending comment (DELETE
+// /api/kb/merge-requests/{number}/comments/{commentId}).
+func (h *Handler) DeleteKbMrComment(w http.ResponseWriter, r *http.Request) {
+	_, comment, ok := h.loadKbMrPendingComment(w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.Queries.DeleteKbMrComment(r.Context(), comment.ID); err != nil {
+		h.writeKbInternalError(w, r, errors.Wrapf(err, "delete comment comment_id=%s", uuidToString(comment.ID)))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // createKbMrComment validates the parent and quote of a new comment and
@@ -337,8 +508,11 @@ func (h *Handler) kbMrCommentResponses(ctx context.Context, wsUUID pgtype.UUID, 
 			AuthorID:       uuidToString(c.AuthorID),
 			AuthorName:     names.name(c.AuthorType, c.AuthorID),
 			ReviewID:       uuidToPtr(c.ReviewID),
-			Pending:        pendingReview.Valid && c.ReviewID == pendingReview,
+			State:          kbCommentStatePublished,
 			CreatedAt:      timestampToString(c.CreatedAt),
+		}
+		if pendingReview.Valid && c.ReviewID == pendingReview {
+			resp.State = kbCommentStatePending
 		}
 		if c.QuoteBlockID != "" {
 			resp.Quote = &KbMrCommentQuote{PageID: uuidOrEmpty(c.QuotePageID), BlockID: c.QuoteBlockID, Text: c.QuoteText}

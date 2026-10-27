@@ -30,14 +30,18 @@ type KbMrEventResponse struct {
 	CreatedAt string          `json:"created_at"`
 }
 
-// KbMrTimelineEntry is one comment or event of the timeline; the one that
-// matches type is set, the other is null.
-type KbMrTimelineEntry struct {
-	Type      string               `json:"type"`
-	ID        string               `json:"id"`
-	CreatedAt string               `json:"created_at"`
-	Comment   *KbMrCommentResponse `json:"comment"`
-	Event     *KbMrEventResponse   `json:"event"`
+// KbMrTimelineComment is a comment entry of the timeline: type plus the
+// comment's own fields.
+type KbMrTimelineComment struct {
+	Type string `json:"type"`
+	KbMrCommentResponse
+}
+
+// KbMrTimelineEvent is an event entry of the timeline: type plus the
+// event's own fields.
+type KbMrTimelineEvent struct {
+	Type string `json:"type"`
+	KbMrEventResponse
 }
 
 // kbCommentState reads the state query parameter of the comment list and
@@ -123,20 +127,18 @@ type kbMrEventRow struct {
 
 // mergeKbMrTimeline interleaves comments and events by time; on a tie the
 // event comes first (a review's submit event before its comments).
-func mergeKbMrTimeline(rows []db.KbMrComment, comments []KbMrCommentResponse, events []kbMrEventRow) []KbMrTimelineEntry {
-	out := make([]KbMrTimelineEntry, 0, len(comments)+len(events))
+func mergeKbMrTimeline(rows []db.KbMrComment, comments []KbMrCommentResponse, events []kbMrEventRow) []any {
+	out := make([]any, 0, len(comments)+len(events))
 	i, j := 0, 0
 	for i < len(comments) || j < len(events) {
 		takeEvent := j < len(events) && (i >= len(comments) || !rows[i].CreatedAt.Time.Before(events[j].at.Time))
 		if takeEvent {
-			e := events[j].resp
-			out = append(out, KbMrTimelineEntry{Type: kbTimelineEvent, ID: e.ID, CreatedAt: e.CreatedAt, Event: &e})
+			out = append(out, KbMrTimelineEvent{Type: kbTimelineEvent, KbMrEventResponse: events[j].resp})
 			j++
 			continue
 		}
 
-		c := comments[i]
-		out = append(out, KbMrTimelineEntry{Type: kbTimelineComment, ID: c.ID, CreatedAt: c.CreatedAt, Comment: &c})
+		out = append(out, KbMrTimelineComment{Type: kbTimelineComment, KbMrCommentResponse: comments[i]})
 		i++
 	}
 

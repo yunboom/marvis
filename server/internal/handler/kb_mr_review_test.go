@@ -46,9 +46,9 @@ func openKbReview(t *testing.T, number int, mutate func(*http.Request), want int
 func addKbReviewComment(t *testing.T, number int, reviewID string, body map[string]any, mutate func(*http.Request)) KbMrCommentResponse {
 	t.Helper()
 
+	body["review_id"] = reviewID
 	var got KbMrCommentResponse
-	req := kbReviewRequest(http.MethodPost, number, body, mutate, "reviewId", reviewID)
-	testutil.Call(t, testHandler.CreateKbMrReviewComment, req).Want(http.StatusCreated).JSON(&got)
+	testutil.Call(t, testHandler.CreateKbMrComment, kbMRRequest(http.MethodPost, number, body, mutate)).Want(http.StatusCreated).JSON(&got)
 
 	return got
 }
@@ -115,7 +115,7 @@ func TestKbMrReviewFlow(t *testing.T) {
 	comment := addKbReviewComment(t, mr.Number, review.ID, map[string]any{
 		"body": "Say why the key changed.", "quote": map[string]any{"page_id": f.pageA, "block_id": f.blocks[2]},
 	}, asReviewer)
-	if !comment.Pending || comment.ReviewID == nil || *comment.ReviewID != review.ID || comment.Quote == nil || comment.Quote.Text != "Dedup by trade no." {
+	if comment.State != kbCommentStatePending || comment.ReviewID == nil || *comment.ReviewID != review.ID || comment.Quote == nil || comment.Quote.Text != "Dedup by trade no." {
 		t.Fatalf("pending comment = %+v", comment)
 	}
 	extra := addKbReviewComment(t, mr.Number, review.ID, map[string]any{"body": "typo"}, asReviewer)
@@ -124,7 +124,7 @@ func TestKbMrReviewFlow(t *testing.T) {
 	if got := listKbMrComments(t, mr.Number, "", asReviewer); len(got) != 0 {
 		t.Errorf("published comments before submit = %+v", got)
 	}
-	if got := listKbMrComments(t, mr.Number, kbCommentStateAll, asReviewer); len(got) != 2 || !got[0].Pending {
+	if got := listKbMrComments(t, mr.Number, kbCommentStateAll, asReviewer); len(got) != 2 || got[0].State != kbCommentStatePending {
 		t.Errorf("reviewer's own comments = %+v", got)
 	}
 	if got := listKbMrComments(t, mr.Number, kbCommentStateAll, nil); len(got) != 0 {
@@ -136,23 +136,28 @@ func TestKbMrReviewFlow(t *testing.T) {
 		return req
 	}()).Want(http.StatusBadRequest)
 
-	// Pending comments can be edited and removed; another member cannot touch them.
-	editReq := kbReviewRequest(http.MethodPatch, mr.Number, map[string]any{"body": "Say why the dedup key changed."}, asReviewer, "reviewId", review.ID, "commentId", comment.ID)
+	// Another member cannot write into the review.
+	testutil.Call(t, testHandler.CreateKbMrComment, kbMRRequest(http.MethodPost, mr.Number, map[string]any{"body": "x", "review_id": review.ID}, nil)).
+		Want(http.StatusForbidden)
+
+	// Pending comments can be edited and removed by their author only.
+	editReq := kbReviewRequest(http.MethodPatch, mr.Number, map[string]any{"body": "Say why the dedup key changed."}, asReviewer, "commentId", comment.ID)
 	var edited KbMrCommentResponse
-	testutil.Call(t, testHandler.UpdateKbMrReviewComment, editReq).Want(http.StatusOK).JSON(&edited)
-	if edited.Body != "Say why the dedup key changed." {
+	testutil.Call(t, testHandler.UpdateKbMrComment, editReq).Want(http.StatusOK).JSON(&edited)
+	if edited.Body != "Say why the dedup key changed." || edited.State != kbCommentStatePending {
 		t.Errorf("edited = %+v", edited)
 	}
-	testutil.Call(t, testHandler.DeleteKbMrReviewComment, kbReviewRequest(http.MethodDelete, mr.Number, nil, nil, "reviewId", review.ID, "commentId", extra.ID)).
-		Want(http.StatusNotFound)
-	testutil.Call(t, testHandler.DeleteKbMrReviewComment, kbReviewRequest(http.MethodDelete, mr.Number, nil, asReviewer, "reviewId", review.ID, "commentId", extra.ID)).
+	testutil.Call(t, testHandler.DeleteKbMrComment, kbReviewRequest(http.MethodDelete, mr.Number, nil, nil, "commentId", extra.ID)).
+		Want(http.StatusForbidden)
+	testutil.Call(t, testHandler.DeleteKbMrComment, kbReviewRequest(http.MethodDelete, mr.Number, nil, asReviewer, "commentId", extra.ID)).
 		Want(http.StatusNoContent)
 
-	// An empty review is refused.
+	// An empty review is refused; another member's review cannot be submitted.
 	ownReview := openKbReview(t, mr.Number, nil, http.StatusCreated)
-	if got := submitKbReview(t, mr.Number, ownReview.ID, " ", nil, http.StatusUnprocessableEntity); got["code"] != kbCodeReviewEmpty {
+	if got := submitKbReview(t, mr.Number, ownReview.ID, " ", nil, http.StatusConflict); got["code"] != kbCodeReviewEmpty {
 		t.Errorf("empty submit = %v", got)
 	}
+	submitKbReview(t, mr.Number, ownReview.ID, "mine", asReviewer, http.StatusForbidden)
 	testutil.Call(t, testHandler.DiscardKbMrReview, kbReviewRequest(http.MethodDelete, mr.Number, nil, nil, "reviewId", ownReview.ID)).Want(http.StatusNoContent)
 
 	// Submitting publishes the comments, requests changes and notifies the owner.
@@ -165,7 +170,7 @@ func TestKbMrReviewFlow(t *testing.T) {
 		!detail.CanRequestReview || detail.PendingReview != nil {
 		t.Fatalf("detail after submit = %+v", detail)
 	}
-	if got := listKbMrComments(t, mr.Number, "", nil); len(got) != 1 || got[0].ID != comment.ID || got[0].Pending {
+	if got := listKbMrComments(t, mr.Number, "", nil); len(got) != 1 || got[0].ID != comment.ID || got[0].State != kbCommentStatePublished {
 		t.Errorf("published comments after submit = %+v", got)
 	}
 	if n := kbInboxCount(t, testUserID, kbInboxChangesRequested, f.slug); n != 1 {
@@ -175,12 +180,17 @@ func TestKbMrReviewFlow(t *testing.T) {
 		t.Errorf("merge while changes are requested = %v", got)
 	}
 
+	// Published comments cannot be edited.
+	testutil.Call(t, testHandler.UpdateKbMrComment, kbReviewRequest(http.MethodPatch, mr.Number, map[string]any{"body": "late"}, asReviewer, "commentId", comment.ID)).
+		Want(http.StatusConflict)
+
 	// The owner replies directly; the reply is public at once.
 	reply := postKbMrComment(t, mr.Number, map[string]any{"body": "Added the reason.", "parent_id": comment.ID}, nil, http.StatusCreated)
-	if reply.ParentID == nil || *reply.ParentID != comment.ID || reply.ReviewID != nil || reply.Pending {
+	if reply.ParentID == nil || *reply.ParentID != comment.ID || reply.ReviewID != nil || reply.State != kbCommentStatePublished {
 		t.Errorf("owner reply = %+v", reply)
 	}
 	postKbMrComment(t, mr.Number, map[string]any{"body": "x", "parent_id": "00000000-0000-4000-8000-000000000000"}, nil, http.StatusBadRequest)
+	postKbMrComment(t, mr.Number, map[string]any{"body": "top level"}, nil, http.StatusBadRequest)
 
 	// Only the owner asks for review again; the reviewer is notified.
 	testutil.Call(t, testHandler.RequestKbMrReview, kbMRRequest(http.MethodPost, mr.Number, nil, asReviewer)).Want(http.StatusForbidden)
@@ -205,12 +215,19 @@ func TestKbMrReviewFlow(t *testing.T) {
 	testutil.Call(t, testHandler.UpdateKbMergeRequest, patch).Want(http.StatusOK)
 	mergeKbMR(t, mr.Number, detail.DraftVersion, nil, http.StatusOK)
 
-	var timeline []KbMrTimelineEntry
+	var timeline []struct {
+		Type      string         `json:"type"`
+		ID        string         `json:"id"`
+		Kind      string         `json:"kind"`
+		ActorName string         `json:"actor_name"`
+		Payload   map[string]any `json:"payload"`
+		Body      string         `json:"body"`
+	}
 	testutil.Call(t, testHandler.ListKbMrTimeline, kbMRRequest(http.MethodGet, mr.Number, nil, nil)).Want(http.StatusOK).JSON(&timeline)
 	kinds := make([]string, 0, len(timeline))
 	for _, e := range timeline {
 		if e.Type == kbTimelineEvent {
-			kinds = append(kinds, e.Event.Kind)
+			kinds = append(kinds, e.Kind)
 			continue
 		}
 		kinds = append(kinds, kbTimelineComment)
@@ -219,8 +236,8 @@ func TestKbMrReviewFlow(t *testing.T) {
 	if fmt.Sprint(kinds) != want {
 		t.Errorf("timeline = %v, want %s", kinds, want)
 	}
-	if timeline[1].Event.ActorName == "" || string(timeline[1].Event.Payload) == "" {
-		t.Errorf("review event = %+v", timeline[1].Event)
+	if timeline[1].ActorName == "" || timeline[1].Payload["summary"] != "One thing to fix." || timeline[1].Payload["comment_count"] != float64(1) {
+		t.Errorf("review event = %+v", timeline[1])
 	}
 }
 

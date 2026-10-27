@@ -291,11 +291,9 @@ WHERE c.merge_request_id = sqlc.arg('merge_request_id')
   )
 ORDER BY c.created_at, c.id;
 
--- name: GetKbMrReviewComment :one
+-- name: GetKbMrComment :one
 SELECT * FROM kb_mr_comment
-WHERE merge_request_id = sqlc.arg('merge_request_id')
-  AND review_id = sqlc.arg('review_id')
-  AND id = sqlc.arg('id');
+WHERE merge_request_id = sqlc.arg('merge_request_id') AND id = sqlc.arg('id');
 
 -- name: UpdateKbMrCommentBody :one
 UPDATE kb_mr_comment SET body = sqlc.arg('body')
