@@ -180,8 +180,11 @@ WHERE newest.read = false
 GROUP BY newest.workspace_id;
 
 -- name: MarkAllInboxRead :execrows
+-- types narrows to one inbox category; empty marks every notification.
 UPDATE inbox_item SET read = true
-WHERE workspace_id = $1 AND recipient_type = 'member' AND recipient_id = $2 AND archived = false AND read = false;
+WHERE workspace_id = sqlc.arg(workspace_id) AND recipient_type = 'member' AND recipient_id = sqlc.arg(recipient_id)
+  AND archived = false AND read = false
+  AND (COALESCE(cardinality(sqlc.arg(types)::text[]), 0) = 0 OR type = ANY(sqlc.arg(types)::text[]));
 
 -- name: ArchiveAllInbox :execrows
 UPDATE inbox_item SET archived = true

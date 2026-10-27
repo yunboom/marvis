@@ -600,16 +600,20 @@ func (q *Queries) ListInboxItems(ctx context.Context, arg ListInboxItemsParams) 
 
 const markAllInboxRead = `-- name: MarkAllInboxRead :execrows
 UPDATE inbox_item SET read = true
-WHERE workspace_id = $1 AND recipient_type = 'member' AND recipient_id = $2 AND archived = false AND read = false
+WHERE workspace_id = $1 AND recipient_type = 'member' AND recipient_id = $2
+  AND archived = false AND read = false
+  AND (COALESCE(cardinality($3::text[]), 0) = 0 OR type = ANY($3::text[]))
 `
 
 type MarkAllInboxReadParams struct {
 	WorkspaceID pgtype.UUID `json:"workspace_id"`
 	RecipientID pgtype.UUID `json:"recipient_id"`
+	Types       []string    `json:"types"`
 }
 
+// types narrows to one inbox category; empty marks every notification.
 func (q *Queries) MarkAllInboxRead(ctx context.Context, arg MarkAllInboxReadParams) (int64, error) {
-	result, err := q.db.Exec(ctx, markAllInboxRead, arg.WorkspaceID, arg.RecipientID)
+	result, err := q.db.Exec(ctx, markAllInboxRead, arg.WorkspaceID, arg.RecipientID, arg.Types)
 	if err != nil {
 		return 0, err
 	}
