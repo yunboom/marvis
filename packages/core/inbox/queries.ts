@@ -1,6 +1,7 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
 import type { ArchivedInboxPage } from "../types/inbox";
 import { EMPTY_INBOX_FILTERS, type ArchivedInboxFilters } from "./filter-store";
+import type { InboxCategory } from "./category";
 import { infiniteQueryOptions, queryOptions, useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import type { InboxItem, InboxWorkspaceUnread } from "../types";
@@ -44,11 +45,11 @@ function normalizedInboxFilters(filters: ArchivedInboxFilters): ArchivedInboxFil
     actors: [...filters.actors].sort(), unreadOnly: filters.unreadOnly };
 }
 
-export function archivedInboxPagesOptions(wsId: string, filters: ArchivedInboxFilters) {
+export function archivedInboxPagesOptions(wsId: string, filters: ArchivedInboxFilters, category: InboxCategory | null = null) {
   return infiniteQueryOptions({
-    queryKey: [...inboxKeys.pages(wsId), normalizedInboxFilters(filters)],
+    queryKey: [...inboxKeys.pages(wsId), normalizedInboxFilters(filters), category],
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam, signal }) => api.listArchivedInboxPage(filters, { cursor: pageParam, signal }),
+    queryFn: ({ pageParam, signal }) => api.listArchivedInboxPage(filters, { cursor: pageParam, signal, category }),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     retry: false,
   });
@@ -63,10 +64,10 @@ export function archivedInboxLookupOptions(wsId: string, groupId: string, filter
   });
 }
 
-export function archivedInboxFacetsOptions(wsId: string, filters: ArchivedInboxFilters) {
+export function archivedInboxFacetsOptions(wsId: string, filters: ArchivedInboxFilters, category: InboxCategory | null = null) {
   return queryOptions({
-    queryKey: [...inboxKeys.facets(wsId), normalizedInboxFilters(filters)],
-    queryFn: ({ signal }) => api.getArchivedInboxFacets(filters, signal),
+    queryKey: [...inboxKeys.facets(wsId), normalizedInboxFilters(filters), category],
+    queryFn: ({ signal }) => api.getArchivedInboxFacets(filters, signal, category),
     retry: false,
   });
 }

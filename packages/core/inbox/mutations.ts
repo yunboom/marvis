@@ -5,6 +5,7 @@ import { inboxKeys, mapArchivedInboxCache, patchArchivedInboxCaches, type Archiv
 import { onInboxInvalidate, onInboxSummaryInvalidate } from "./ws-updaters";
 import { useWorkspaceId } from "../hooks";
 import type { InboxItem } from "../types";
+import { inboxCategoryOf, type InboxCategory } from "./category";
 
 /**
  * Refresh workspace inbox lists and the account-level unread summary after a
@@ -165,17 +166,18 @@ export function useUnarchiveInbox() {
   });
 }
 
+/** Marks the active notifications read: all of them, or one inbox tab's (`category`). */
 export function useMarkAllInboxRead() {
   const qc = useQueryClient();
   const wsId = useWorkspaceId();
   return useMutation({
-    mutationFn: () => api.markAllInboxRead(),
-    onMutate: async () => {
+    mutationFn: (category: InboxCategory | null | void) => api.markAllInboxRead(category ?? null),
+    onMutate: async (category) => {
       await qc.cancelQueries({ queryKey: inboxKeys.list(wsId) });
       const prev = qc.getQueryData<InboxItem[]>(inboxKeys.list(wsId));
       qc.setQueryData<InboxItem[]>(inboxKeys.list(wsId), (old) =>
         old?.map((item) =>
-          !item.archived ? { ...item, read: true } : item,
+          !item.archived && (!category || inboxCategoryOf(item.type) === category) ? { ...item, read: true } : item,
         ),
       );
       return { prev };

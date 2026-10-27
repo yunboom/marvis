@@ -4,6 +4,7 @@ import type { IssueWakeup, IssueWakeupInput, IssueWakeupSummaryRow, PausedWakeup
 import type { WorkspaceWakeupPage, WorkspaceWakeupFilters } from "../types/issue-wakeup";
 import { WorkspaceWakeupPageSchema, IssueWakeupSchema, IssueWakeupSummaryRowSchema, PausedWakeupSchema, SystemWakeupSchema, WakeupRunSchema, WorkspaceSystemWakeupSchema } from "./schemas";
 import type { ArchivedInboxFilters } from "../inbox/filter-store";
+import type { InboxCategory } from "../inbox/category";
 import type { ArchivedInboxPage, ArchivedInboxFacets } from "../types/inbox";
 import { parseQoderConnection, parseQoderCatalog, type QoderInput } from "../runtimes/qoder-schema";
 import { configStore } from "../config";
@@ -3087,8 +3088,9 @@ export class ApiClient {
     });
   }
 
-  private archivedInboxParams(filters: ArchivedInboxFilters): URLSearchParams {
+  private archivedInboxParams(filters: ArchivedInboxFilters, category?: InboxCategory | null): URLSearchParams {
     const params = new URLSearchParams();
+    if (category) params.set("category", category);
     if (filters.statuses.length) params.set("statuses", [...filters.statuses].sort().join(","));
     if (filters.priorities.length) params.set("priorities", [...filters.priorities].sort().join(","));
     if (filters.actors.length) params.set("actors", [...filters.actors].sort().join(","));
@@ -3097,9 +3099,9 @@ export class ApiClient {
   }
 
   async listArchivedInboxPage(filters: ArchivedInboxFilters, options: {
-    cursor?: string | null; groupId?: string; signal?: AbortSignal;
+    cursor?: string | null; groupId?: string; signal?: AbortSignal; category?: InboxCategory | null;
   } = {}): Promise<ArchivedInboxPage> {
-    const params = this.archivedInboxParams(filters);
+    const params = this.archivedInboxParams(filters, options.category);
     params.set("limit", "50");
     if (options.cursor) params.set("cursor", options.cursor);
     if (options.groupId) params.set("group_id", options.groupId);
@@ -3111,8 +3113,12 @@ export class ApiClient {
     return page;
   }
 
-  async getArchivedInboxFacets(filters: ArchivedInboxFilters, signal?: AbortSignal): Promise<ArchivedInboxFacets> {
-    const raw = await this.fetch<unknown>(`/api/inbox/archived/facets?${this.archivedInboxParams(filters)}`, { signal });
+  async getArchivedInboxFacets(
+    filters: ArchivedInboxFilters,
+    signal?: AbortSignal,
+    category?: InboxCategory | null,
+  ): Promise<ArchivedInboxFacets> {
+    const raw = await this.fetch<unknown>(`/api/inbox/archived/facets?${this.archivedInboxParams(filters, category)}`, { signal });
     const facets = parseWithFallback<ArchivedInboxFacets | null>(raw, ArchivedInboxFacetsSchema, null, {
       endpoint: "GET /api/inbox/archived/facets",
     });
@@ -3145,8 +3151,9 @@ export class ApiClient {
     });
   }
 
-  async markAllInboxRead(): Promise<{ count: number }> {
-    return this.fetch("/api/inbox/mark-all-read", { method: "POST" });
+  /** Marks the active notifications read; `category` narrows to one inbox tab. */
+  async markAllInboxRead(category?: InboxCategory | null): Promise<{ count: number }> {
+    return this.fetch(`/api/inbox/mark-all-read${category ? `?category=${category}` : ""}`, { method: "POST" });
   }
 
   async archiveAllInbox(): Promise<{ count: number }> {
