@@ -48,6 +48,18 @@ describe("prepareBlockMarkdown", () => {
     });
     expect(out).toBe("<mark>渠道回调先验签。</mark>支付服务加锁。");
   });
+
+  it("underlines annotated sentences with the annotations on them", () => {
+    const out = prepareBlockMarkdown("渠道回调先验签。支付服务加锁。", {
+      citeNumbers: numbers,
+      annotations: [
+        { quote: "支付服务加锁。", ids: ["a-1", "a-2"] },
+        { quote: "不在正文里", ids: ["a-3"] },
+        { quote: "渠道回调先验签。", ids: ['x" onclick="y'] },
+      ],
+    });
+    expect(out).toBe('渠道回调先验签。<mark class="kb-annotated" data-annotation-ids="a-1,a-2">支付服务加锁。</mark>');
+  });
 });
 
 describe("block helpers", () => {

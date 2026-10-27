@@ -38,11 +38,32 @@ export function citeSourceId(href: string | null | undefined): string | null {
   }
 }
 
+/** Class of the mark under an annotated sentence. */
+export const KB_ANNOTATED_CLASS = "kb-annotated";
+
+/** Attribute listing the annotations on a marked sentence, comma separated. */
+export const KB_ANNOTATION_IDS_ATTR = "data-annotation-ids";
+
+const ANNOTATION_ID = /^[\w-]+$/;
+
+/** An annotated sentence of a block and the annotations on it. */
+export interface KbQuoteMark {
+  quote: string;
+  ids: readonly string[];
+}
+
 export interface PrepareBlockOptions {
   /** Citation number of each source id, 1-based, in page order. */
   citeNumbers: ReadonlyMap<string, number>;
   /** Claim sentences to highlight as possibly outdated. */
   highlights?: readonly string[];
+  /** Annotated sentences to underline. */
+  annotations?: readonly KbQuoteMark[];
+}
+
+/** The annotation ids a marked sentence carries. */
+export function annotationIdsOf(element: Element): string[] {
+  return (element.getAttribute(KB_ANNOTATION_IDS_ATTR) ?? "").split(",").filter(Boolean);
 }
 
 /** Rewrites a block's Markdown for rendering on the reading page. */
@@ -53,6 +74,13 @@ export function prepareBlockMarkdown(content: string, options: PrepareBlockOptio
   });
 
   out = out.replace(UNWRITTEN_PAGE_LINK, `](${KB_MISSING_PAGE_HREF})`);
+
+  for (const mark of options.annotations ?? []) {
+    const text = mark.quote.trim();
+    const ids = mark.ids.filter((id) => ANNOTATION_ID.test(id));
+    if (!text || ids.length === 0 || !out.includes(text)) continue;
+    out = out.replace(text, `<mark class="${KB_ANNOTATED_CLASS}" ${KB_ANNOTATION_IDS_ATTR}="${ids.join(",")}">${text}</mark>`);
+  }
 
   for (const sentence of options.highlights ?? []) {
     const text = sentence.trim();

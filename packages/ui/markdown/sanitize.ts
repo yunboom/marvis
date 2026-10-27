@@ -19,8 +19,9 @@ import { defaultSchema, type Options } from 'rehype-sanitize'
  */
 export const markdownSanitizeSchema: Options = {
   ...defaultSchema,
-  // Allow <mark> (text highlight) — emitted by highlightToHtml from `==text==`.
-  // It carries no attributes, so only the tag name needs whitelisting.
+  // Allow <mark> (text highlight) — emitted by highlightToHtml from `==text==`,
+  // and by the knowledge base reading page under annotated sentences, which
+  // tags the mark with its class and the annotation ids (see attributes.mark).
   tagNames: [...(defaultSchema.tagNames ?? []), 'mark'],
   protocols: {
     ...defaultSchema.protocols,
@@ -32,6 +33,10 @@ export const markdownSanitizeSchema: Options = {
   },
   attributes: {
     ...defaultSchema.attributes,
+    mark: [
+      ['className', 'kb-annotated'],
+      ['dataAnnotationIds', /^[\w,-]+$/],
+    ],
     div: [
       ...(defaultSchema.attributes?.div ?? []),
       'dataType',

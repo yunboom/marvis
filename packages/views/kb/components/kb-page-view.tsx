@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ChevronDown, Clock, Info, Link2, List, MessageSquare, MoreHorizontal, ShieldCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
-import { parseKbRoute } from "../utils/kb-markdown";
+import { parseKbRoute, type KbQuoteMark } from "../utils/kb-markdown";
 import { sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
 import { KbPageBody, pageTitle } from "./kb-page-body";
 import { KbAnnotationPanel, KbSelectionAnnotator } from "./kb-annotations";
@@ -344,15 +344,24 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
     enabled: !!wsId && !!pageId && diff && !!page?.draft_change && !added,
   });
   const loaded = !!page && page.id === pageId;
-  // Annotated sentences are marked while the annotation panel is open.
+  // Open annotations' sentences are underlined; the page says whether it has any.
+  const [annotationFocus, setAnnotationFocus] = useState<AnnotationFocus | null>(null);
   const { data: annotations = [] } = useQuery({
     ...kbAnnotationListOptions(wsId, kbSlug, "all", pageId),
-    enabled: !!wsId && !!kbSlug && !!pageId && panel === "annotations",
+    enabled: !!wsId && !!kbSlug && !!pageId && (panel === "annotations" || (!!page && page.annotations_open > 0)),
   });
+  const marks = useMemo(() => annotationMarks(annotations), [annotations]);
 
   useBlockAnchor(hash, loaded);
 
   const togglePanel = (next: Panel) => setPanel((current) => (current === next ? "none" : next));
+
+  // Opens the annotation panel on the annotations of a clicked sentence; a
+  // click while the panel is open keeps it open.
+  const focusAnnotations = (ids: string[]) => {
+    setPanel("annotations");
+    setAnnotationFocus((current) => ({ ids, seq: (current?.seq ?? 0) + 1 }));
+  };
 
   const jumpTo = (blockId: string) => {
     setActiveHeading(blockId);
@@ -482,7 +491,9 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
               diffBase={diffBase}
               rawFileActions={rawFileActions}
               onRawLink={rawPreview.openLinked}
-              annotatedQuotes={panel === "annotations" ? annotatedQuotes(annotations) : undefined}
+              annotationMarks={marks}
+              annotationsOpen={panel === "annotations"}
+              onAnnotationClick={focusAnnotations}
               kbSlug={kbSlug}
               draft={draft}
               diff={diff}
@@ -502,8 +513,13 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
             kbSlug={kbSlug}
             createdBy={base?.created_by}
             pageId={page.id}
+            focusIds={annotationFocus?.ids}
+            focusSeq={annotationFocus?.seq}
             onJump={jumpTo}
-            onClose={() => setPanel("none")}
+            onClose={() => {
+              setPanel("none");
+              setAnnotationFocus(null);
+            }}
           />
         )}
         {panel === "info" && (
@@ -521,13 +537,29 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   );
 }
 
-/** The sentences of open annotations, by block, to mark on the page. */
-function annotatedQuotes(annotations: readonly KbAnnotation[]): Map<string, string[]> {
-  const out = new Map<string, string[]>();
+/** The annotations a clicked sentence carries; `seq` repeats a click on the same one. */
+interface AnnotationFocus {
+  ids: string[];
+  seq: number;
+}
+
+/**
+ * The sentences of open annotations, by block, to underline on the page. An
+ * annotation whose sentence is gone reads as one on the whole page and is not
+ * marked; annotations on the same sentence share one mark.
+ */
+function annotationMarks(annotations: readonly KbAnnotation[]): Map<string, KbQuoteMark[]> {
+  const out = new Map<string, KbQuoteMark[]>();
   for (const annotation of annotations) {
-    if (!isOpenAnnotation(annotation) || !annotation.block_id || !annotation.quote) continue;
-    out.set(annotation.block_id, [...(out.get(annotation.block_id) ?? []), annotation.quote]);
+    if (!isOpenAnnotation(annotation) || annotation.anchor_lost || !annotation.block_id || !annotation.quote) continue;
+
+    const marks = out.get(annotation.block_id) ?? [];
+    const same = marks.find((mark) => mark.quote === annotation.quote);
+    if (same) same.ids = [...same.ids, annotation.id];
+    else marks.push({ quote: annotation.quote, ids: [annotation.id] });
+    out.set(annotation.block_id, marks);
   }
+
   return out;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { MessageSquare, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -175,11 +175,14 @@ function useSetAnnotationStatus() {
 function PanelCard({
   annotation,
   highlighted,
+  focused = false,
   canChange,
   onJump,
 }: {
   annotation: KbAnnotation;
   highlighted: boolean;
+  /** One of the annotations on the sentence the reader clicked. */
+  focused?: boolean;
   canChange: boolean;
   onJump?: (blockId: string) => void;
 }) {
@@ -191,6 +194,8 @@ function PanelCard({
   return (
     <article
       aria-label={annotation.body}
+      aria-current={focused ? "true" : undefined}
+      data-annotation-id={annotation.id}
       className={cn(
         "flex flex-col gap-1.5 rounded-xl border bg-card p-3",
         highlighted && "ring-[1.5px] ring-warning/60",
@@ -237,12 +242,18 @@ export function KbAnnotationPanel({
   kbSlug,
   createdBy,
   pageId,
+  focusIds,
+  focusSeq = 0,
   onClose,
   onJump,
 }: {
   kbSlug: string;
   createdBy: string | undefined;
   pageId?: string;
+  /** Annotations to highlight, those on a sentence the reader clicked; the earliest is scrolled to. */
+  focusIds?: readonly string[];
+  /** Changes on every click, so clicking the same sentence again scrolls again. */
+  focusSeq?: number;
   onClose: () => void;
   onJump?: (blockId: string) => void;
 }) {
@@ -258,6 +269,19 @@ export function KbAnnotationPanel({
   const { push } = useNavigation();
   const pendingIds = open.filter((annotation) => annotation.status === "pending").map((annotation) => annotation.id);
   const pageTitle = open.find((annotation) => annotation.page_title)?.page_title ?? "";
+  const list = useRef<HTMLDivElement>(null);
+
+  const focused = focusIds ? open.filter((annotation) => focusIds.includes(annotation.id)) : [];
+  const earliest = focused.reduce<KbAnnotation | undefined>(
+    (first, annotation) => (!first || annotation.created_at < first.created_at ? annotation : first),
+    undefined,
+  )?.id;
+  useEffect(() => {
+    if (!earliest) return;
+    list.current
+      ?.querySelector<HTMLElement>(`[data-annotation-id="${CSS.escape(earliest)}"]`)
+      ?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }, [earliest, focusSeq]);
 
   return (
     <KbPanel
@@ -286,7 +310,7 @@ export function KbAnnotationPanel({
         </Button>
       }
     >
-      <div className="flex flex-col gap-2.5">
+      <div ref={list} className="flex flex-col gap-2.5">
         {open.length === 0 && !composing && (
           <p className="text-label text-muted-foreground">{t(($) => $.annotation.panel_empty)}</p>
         )}
@@ -294,7 +318,12 @@ export function KbAnnotationPanel({
           <PanelCard
             key={annotation.id}
             annotation={annotation}
-            highlighted={index === 0 && !!annotation.quote && !annotation.anchor_lost}
+            highlighted={
+              focused.length > 0
+                ? focused.includes(annotation)
+                : index === 0 && !!annotation.quote && !annotation.anchor_lost
+            }
+            focused={focused.includes(annotation)}
             canChange={canChange(annotation)}
             onJump={onJump}
           />

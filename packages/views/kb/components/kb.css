@@ -47,6 +47,26 @@
   color: inherit;
 }
 
+/*
+ * Sentences with open annotations: a 藤黄 underline, highlighted as well
+ * while the annotation panel is open. Clicking one opens its annotations.
+ */
+.kb-doc mark.kb-annotated {
+  cursor: pointer;
+  border-radius: 0;
+  background-color: transparent;
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-status-progress);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  text-decoration-skip-ink: none;
+}
+
+.kb-doc.kb-annotations-open mark.kb-annotated {
+  border-radius: 3px;
+  background-color: color-mix(in oklch, var(--color-warning) 16%, transparent);
+}
+
 /* A draft's edits against the published page. */
 .kb-doc del {
   color: var(--color-destructive);

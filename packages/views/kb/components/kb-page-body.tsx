@@ -10,14 +10,17 @@ import { RichContent } from "../../rich-content";
 import { useNavigation } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
 import {
+  annotationIdsOf,
   citeNumbers,
   citeSourceId,
   compareBlocks,
   inlineDiffMarkdown,
   isFootnoteDefinitionBlock,
   kbPageLink,
+  KB_ANNOTATED_CLASS,
   prepareBlockMarkdown,
   type KbBlockChange,
+  type KbQuoteMark,
 } from "../utils/kb-markdown";
 import { KB_TAG, KbCiteCard, sourceHref, sourceKind, type KbRawFileActions } from "./kb-cite-card";
 import { withDraft } from "./kb-page-tree";
@@ -122,14 +125,16 @@ interface BlockViewProps {
   change: KbBlockChange;
   numbers: ReadonlyMap<string, number>;
   highlights: readonly string[];
+  /** Annotated sentences of the block; text the draft removed is not marked. */
+  annotations: readonly KbQuoteMark[];
 }
 
-const NO_QUOTES: readonly string[] = [];
+const NO_MARKS: readonly KbQuoteMark[] = [];
 
-function BlockView({ change, numbers, highlights }: BlockViewProps) {
+function BlockView({ change, numbers, highlights, annotations }: BlockViewProps) {
   const { t } = useT("kb");
-  const prepare = (block: KbBlock) =>
-    prepareBlockMarkdown(block.content, { citeNumbers: numbers, highlights: highlights });
+  const prepare = (block: KbBlock, marks: readonly KbQuoteMark[] = annotations) =>
+    prepareBlockMarkdown(block.content, { citeNumbers: numbers, highlights, annotations: marks });
 
   if (change.kind === "changed") {
     const inline = inlineDiffMarkdown(change.previous.content, change.block.content);
@@ -143,7 +148,7 @@ function BlockView({ change, numbers, highlights }: BlockViewProps) {
     return (
       <div data-block-id={change.block.id} data-change="changed" className="kb-block">
         <div aria-label={t(($) => $.draft.removed)} className="kb-block-removed">
-          <RichContent content={prepare(change.previous)} density="document" phase="settled" />
+          <RichContent content={prepare(change.previous, NO_MARKS)} density="document" phase="settled" />
         </div>
         <div aria-label={t(($) => $.draft.added)} className="kb-block-added">
           <RichContent content={prepare(change.block)} density="document" phase="settled" />
@@ -165,7 +170,7 @@ function BlockView({ change, numbers, highlights }: BlockViewProps) {
         change.kind === "added" && "kb-block-added",
       )}
     >
-      <RichContent content={prepare(change.block)} density="document" phase="settled" />
+      <RichContent content={prepare(change.block, change.kind === "removed" ? NO_MARKS : annotations)} density="document" phase="settled" />
     </div>
   );
 }
@@ -179,8 +184,12 @@ interface KbPageBodyProps {
   rawFileActions?: KbRawFileActions;
   /** Opens a raw:// link of the body, which the server routes to the file's content path. */
   onRawLink?: (id: string, page: number) => void;
-  /** Annotated sentences to mark, by block id. */
-  annotatedQuotes?: ReadonlyMap<string, readonly string[]>;
+  /** Open annotations' sentences to underline, by block id. */
+  annotationMarks?: ReadonlyMap<string, readonly KbQuoteMark[]>;
+  /** The annotation panel is open: underlined sentences are highlighted too. */
+  annotationsOpen?: boolean;
+  /** An underlined sentence was clicked; `ids` are the annotations on it. */
+  onAnnotationClick?: (ids: string[]) => void;
   /** The knowledge base the page belongs to; its page links stay on `draft`. */
   kbSlug?: string;
   /** The draft being read; links to pages of `kbSlug` keep it. */
@@ -200,7 +209,9 @@ export function KbPageBody({
   banners,
   rawFileActions,
   onRawLink,
-  annotatedQuotes,
+  annotationMarks,
+  annotationsOpen = false,
+  onAnnotationClick,
   kbSlug = "",
   draft = "",
   diff = true,
@@ -260,10 +271,21 @@ export function KbPageBody({
   return (
     <div
       ref={container}
-      className="kb-doc relative"
+      className={cn("kb-doc relative", annotationsOpen && "kb-annotations-open")}
       // Raw file, draft page, citation and unwritten-page links are handled
       // here, before the Markdown link handler would treat them as navigation.
       onClickCapture={(e) => {
+        // An underlined sentence opens its annotations, unless a link inside it was clicked.
+        const inLink = e.target instanceof Element && !!e.target.closest("a[href]");
+        const annotated =
+          onAnnotationClick && !inLink && e.target instanceof Element
+            ? e.target.closest<HTMLElement>(`mark.${KB_ANNOTATED_CLASS}`)
+            : null;
+        if (annotated) {
+          onAnnotationClick?.(annotationIdsOf(annotated));
+          return;
+        }
+
         const rawLink = onRawLink && e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href]") : null;
         const raw = rawLink ? parseKbRawHref(rawLink.getAttribute("href")) : null;
         if (raw && onRawLink) {
@@ -319,7 +341,8 @@ export function KbPageBody({
             key={`${change.kind}-${change.block.id}-${i}`}
             change={change}
             numbers={numbers}
-            highlights={blockHighlights(highlights, annotatedQuotes?.get(change.block.id) ?? NO_QUOTES)}
+            highlights={highlights}
+            annotations={annotationMarks?.get(change.block.id) ?? NO_MARKS}
           />
         ))}
       </div>
@@ -358,9 +381,4 @@ export function KbPageBody({
       )}
     </div>
   );
-}
-
-function blockHighlights(claims: readonly string[], quotes: readonly string[]): readonly string[] {
-  if (quotes.length === 0) return claims;
-  return [...claims, ...quotes];
 }

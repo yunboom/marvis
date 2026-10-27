@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -299,6 +299,62 @@ describe("page annotations", () => {
     await userEvent.type(within(panel).getByRole("textbox", { name: "Annotate this page" }), "整页都需要复核");
     await userEvent.click(within(panel).getByRole("button", { name: "Annotate" }));
     expect(mocked.createKnowledgeBaseAnnotation).toHaveBeenCalledWith("team", { page_id: "page-cb", body: "整页都需要复核" });
+  });
+
+  it("underlines sentences with open annotations without opening the panel", async () => {
+    const resolved = annotation({ id: "a-done", status: "resolved", quote: "幂等键保存 24 小时。", body: "已处理" });
+    const lost = annotation({ id: "a-gone", anchor_lost: true, quote: "幂等键保存 24 小时。", body: "原句没了" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, resolved, lost, DISMISSED]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await waitFor(() => expect(document.querySelectorAll("[data-block-id='b4'] mark.kb-annotated")).toHaveLength(1));
+    const mark = document.querySelector("[data-block-id='b4'] mark.kb-annotated")!;
+    expect(mark.textContent).toBe("渠道回调按订单号加幂等键去重。");
+    expect(mark.getAttribute("data-annotation-ids")).toBe("a-mine");
+    expect(screen.queryByRole("complementary", { name: /Page annotations/ })).not.toBeInTheDocument();
+  });
+
+  it("does not fetch annotations for a page without open ones", async () => {
+    mocked.getKnowledgeBasePage.mockResolvedValue({ ...PAGE, annotations_open: 0 });
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await screen.findByRole("heading", { level: 1, name: "支付回调" });
+    expect(mocked.listKnowledgeBaseAnnotations).not.toHaveBeenCalled();
+    expect(document.querySelector("mark.kb-annotated")).toBeNull();
+  });
+
+  it("opens the panel on the annotations of a clicked sentence and scrolls to the earliest", async () => {
+    const scrolled: Element[] = [];
+    const scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = scrollIntoView;
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const earlier = annotation({ id: "a-early", author_id: "user-2", body: "更早的一条", created_at: "2026-10-24T09:00:00Z" });
+    const other = annotation({ id: "a-other", quote: "幂等键保存 24 小时。", body: "另一句" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, earlier, other]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await waitFor(() => expect(document.querySelectorAll("mark.kb-annotated")).toHaveLength(2));
+    const mark = document.querySelector<HTMLElement>("mark[data-annotation-ids='a-mine,a-early']")!;
+    await userEvent.click(mark);
+
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 3" });
+    const card = (body: string) => within(panel).getByRole("article", { name: body });
+    expect(card("去重键已经改成渠道交易号。")).toHaveAttribute("aria-current", "true");
+    expect(card("更早的一条")).toHaveAttribute("aria-current", "true");
+    expect(card("另一句")).not.toHaveAttribute("aria-current");
+    await waitFor(() => expect(scrolled.at(-1)).toBe(card("更早的一条")));
+
+    // Clicking again keeps the panel open and scrolls to it again.
+    const calls = scrollIntoView.mock.calls.length;
+    await userEvent.click(document.querySelector<HTMLElement>("mark[data-annotation-ids='a-mine,a-early']")!);
+    expect(screen.getByRole("complementary", { name: "Page annotations 3" })).toBeInTheDocument();
+    await waitFor(() => expect(scrollIntoView.mock.calls.length).toBeGreaterThan(calls));
+    expect(scrolled.at(-1)).toBe(card("更早的一条"));
   });
 
   it("annotates a selected sentence", async () => {
