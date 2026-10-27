@@ -195,7 +195,7 @@ beforeEach(() => {
   slackListingRef.current = { installations: [], configured: false };
   telegramListingRef.current = { installations: [], configured: false };
   integrationHintsRef.current = new Set();
-  useAgentIntegrationHintStore.setState({ pendingAgentIds: [] });
+  useAgentIntegrationHintStore.setState({ seenAgentIds: [] });
 });
 
 describe("AgentOverviewPane MCP tab visibility", () => {
@@ -389,7 +389,6 @@ describe("AgentOverviewPane integration hint", () => {
   it("dots Capabilities and Integrations, and clears the hint for good once Integrations opens", async () => {
     larkListingRef.current = { installations: [], configured: true };
     integrationHintsRef.current = new Set([baseAgent.id]);
-    useAgentIntegrationHintStore.getState().markPending(baseAgent.id);
 
     renderPane([makeRuntime("claude")]);
     const capabilitiesTab = await screen.findByRole("tab", {
@@ -401,12 +400,12 @@ describe("AgentOverviewPane integration hint", () => {
     const tab = await screen.findByRole("tab", {
       name: /^Integrations\s*Integrations not set up$/i,
     });
-    expect(useAgentIntegrationHintStore.getState().pendingAgentIds).toEqual([
-      baseAgent.id,
-    ]);
+    expect(useAgentIntegrationHintStore.getState().seenAgentIds).toEqual([]);
 
     fireEvent.click(tab);
-    expect(useAgentIntegrationHintStore.getState().pendingAgentIds).toEqual([]);
+    expect(useAgentIntegrationHintStore.getState().seenAgentIds).toEqual([
+      baseAgent.id,
+    ]);
   });
 
   it("shows no dot when the agent is not hinted", async () => {

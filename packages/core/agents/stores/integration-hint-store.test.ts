@@ -25,7 +25,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   localStorage.clear();
-  useAgentIntegrationHintStore.setState({ pendingAgentIds: [] });
+  useAgentIntegrationHintStore.setState({ seenAgentIds: [] });
   setCurrentWorkspace(null, null);
 });
 
@@ -34,20 +34,15 @@ afterEach(() => {
 });
 
 describe("useAgentIntegrationHintStore", () => {
-  it("keeps a pending id once and drops it for good when seen", () => {
-    const { markPending, markSeen } = useAgentIntegrationHintStore.getState();
+  it("records each seen id once", () => {
+    const { markSeen } = useAgentIntegrationHintStore.getState();
 
-    markPending("agent_1");
-    markPending("agent_1");
-    markPending("agent_2");
-    expect(useAgentIntegrationHintStore.getState().pendingAgentIds).toEqual([
+    markSeen("agent_1");
+    markSeen("agent_1");
+    markSeen("agent_2");
+
+    expect(useAgentIntegrationHintStore.getState().seenAgentIds).toEqual([
       "agent_1",
-      "agent_2",
-    ]);
-
-    markSeen("agent_1");
-    markSeen("agent_1");
-    expect(useAgentIntegrationHintStore.getState().pendingAgentIds).toEqual([
       "agent_2",
     ]);
   });
@@ -55,22 +50,22 @@ describe("useAgentIntegrationHintStore", () => {
   it("persists per workspace and does not leak ids into another workspace", async () => {
     setCurrentWorkspace("acme", "ws_a");
     await flush();
-    useAgentIntegrationHintStore.getState().markPending("agent_1");
+    useAgentIntegrationHintStore.getState().markSeen("agent_1");
 
-    const raw = localStorage.getItem("marvis_agent_integration_hint:acme");
+    const raw = localStorage.getItem("marvis_agent_integration_seen:acme");
     expect(JSON.parse(raw as string).state).toEqual({
-      pendingAgentIds: ["agent_1"],
+      seenAgentIds: ["agent_1"],
     });
 
     setCurrentWorkspace("beta", "ws_b");
     await flush();
     await flush();
-    expect(useAgentIntegrationHintStore.getState().pendingAgentIds).toEqual([]);
+    expect(useAgentIntegrationHintStore.getState().seenAgentIds).toEqual([]);
 
     setCurrentWorkspace("acme", "ws_a");
     await flush();
     await flush();
-    expect(useAgentIntegrationHintStore.getState().pendingAgentIds).toEqual([
+    expect(useAgentIntegrationHintStore.getState().seenAgentIds).toEqual([
       "agent_1",
     ]);
   });

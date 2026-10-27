@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { buildCreateAgentRequest, type AgentDraft } from "@marvis/core/agents";
-import { useAgentIntegrationHintStore } from "@marvis/core/agents/stores";
 import { api, ApiError } from "@marvis/core/api";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
@@ -15,7 +14,6 @@ import {
 } from "@marvis/core/workspace/queries";
 import { useNavigation } from "../../navigation";
 import { withSquadParam } from "./squad-param";
-import { QODER_PROVIDER } from "./runtime-choice";
 import { useT } from "../../i18n";
 
 interface AgentCreateErrors {
@@ -60,9 +58,6 @@ export function useCreateAgentSubmit(options: {
   const paths = useWorkspacePaths();
   const navigation = useNavigation();
   const qc = useQueryClient();
-  const markIntegrationPending = useAgentIntegrationHintStore(
-    (s) => s.markPending,
-  );
 
   const [creating, setCreating] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -120,8 +115,6 @@ export function useCreateAgentSubmit(options: {
       }
 
       await onCreated?.(agent);
-      // Qoder agents have no Integrations tab, so there is nothing to point at.
-      if (runtimeProvider !== QODER_PROVIDER) markIntegrationPending(agent.id);
       cacheAgentResponse(qc, wsId, agent);
       // The create response is authoritative enough to open immediately.
       // Reconcile other list projections in the background instead of making

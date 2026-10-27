@@ -8,46 +8,39 @@ import {
 } from "../../platform/workspace-storage";
 import { defaultStorage } from "../../platform/storage";
 
-// Agents this user created whose Integrations tab they have not opened yet.
-// The red dot along the path to that tab reads this set; opening the tab once
-// removes the id for good. Only ids are stored — whether the agent is still
-// unconnected comes from the installation queries at render time.
+// Agents whose Integrations tab this user has opened at least once. The red
+// dot along the path to that tab shows for every other agent the user owns
+// that is still unconnected; opening the tab once adds the id for good. Only
+// ids are stored — connection state comes from the installation queries.
 export interface AgentIntegrationHintState {
-  pendingAgentIds: string[];
-  markPending: (agentId: string) => void;
+  seenAgentIds: string[];
   markSeen: (agentId: string) => void;
 }
 
 export const useAgentIntegrationHintStore = create<AgentIntegrationHintState>()(
   persist(
     (set) => ({
-      pendingAgentIds: [],
-      markPending: (agentId) =>
-        set((s) =>
-          s.pendingAgentIds.includes(agentId)
-            ? s
-            : { pendingAgentIds: [...s.pendingAgentIds, agentId] },
-        ),
+      seenAgentIds: [],
       markSeen: (agentId) =>
         set((s) =>
-          s.pendingAgentIds.includes(agentId)
-            ? { pendingAgentIds: s.pendingAgentIds.filter((id) => id !== agentId) }
-            : s,
+          s.seenAgentIds.includes(agentId)
+            ? s
+            : { seenAgentIds: [...s.seenAgentIds, agentId] },
         ),
     }),
     {
-      name: "marvis_agent_integration_hint",
+      name: "marvis_agent_integration_seen",
       storage: createJSONStorage(() =>
         createWorkspaceAwareStorage(defaultStorage),
       ),
-      partialize: (state) => ({ pendingAgentIds: state.pendingAgentIds }),
+      partialize: (state) => ({ seenAgentIds: state.seenAgentIds }),
       // A workspace with nothing persisted must not inherit the previous
       // workspace's ids.
       merge: (persisted, current) => ({
         ...current,
-        pendingAgentIds:
+        seenAgentIds:
           (persisted as Partial<AgentIntegrationHintState> | undefined)
-            ?.pendingAgentIds ?? [],
+            ?.seenAgentIds ?? [],
       }),
     },
   ),
