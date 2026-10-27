@@ -32,6 +32,7 @@ import { SquadsPage, SquadDetailPage as SquadDetailPageView } from "@marvis/view
 import {
   KbBuilderPage,
   KbAnnotationsPage,
+  KbStalePagesPage,
   KbHomePage,
   KbChangesPage,
   KbGraphPage,
@@ -284,6 +285,7 @@ export const appRoutes: RouteObject[] = [
                 handle: { title: "Configure knowledge base" },
               },
               { path: "annotations", element: <KbAnnotationsPage />, handle: { title: "Annotations" } },
+              { path: "stale", element: <KbStalePagesPage />, handle: { title: "Pages to re-check" } },
               { path: "jobs", element: <KbJobsPage />, handle: { title: "Knowledge base jobs" } },
               { path: "jobs/new", element: <KbJobPage />, handle: { title: "New job" } },
               { path: "jobs/:jobId", element: <KbJobPage />, handle: { title: "Knowledge base job" } },

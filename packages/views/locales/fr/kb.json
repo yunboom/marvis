@@ -321,6 +321,18 @@
     "update_failed": "Impossible de modifier l'annotation",
     "panel_empty": "Aucune annotation pour l'instant"
   },
+  "stale_list": {
+    "count_one": "{{count}} page",
+    "count_other": "{{count}} pages",
+    "page": "Page",
+    "reason": "Motif",
+    "overdue": "Date de revue dépassée",
+    "review_by": "À revoir avant le {{date}}",
+    "hand_off": "Confier à un agent",
+    "hand_off_all": "Tout confier à un agent",
+    "empty": "Aucune page à revérifier.",
+    "all_message": "Revérifie les pages de {{name}} dont la date de revue est dépassée."
+  },
   "job": {
     "nav": "Tâches de la base",
     "nav_running": "{{count}} en cours",

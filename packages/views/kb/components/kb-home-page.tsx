@@ -194,6 +194,7 @@ export function KbHomePage() {
                   tone="warning"
                   label={t(($) => $.home.stale_pages)}
                   count={pending.stale_pages}
+                  href={p.kbStale(kbSlug)}
                   hint={t(($) => $.home.stale_hint)}
                 />
               </div>

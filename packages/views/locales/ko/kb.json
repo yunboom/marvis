@@ -310,6 +310,17 @@
     "update_failed": "업데이트하지 못했습니다",
     "panel_empty": "아직 주석이 없습니다"
   },
+  "stale_list": {
+    "count_other": "페이지 {{count}}개",
+    "page": "페이지",
+    "reason": "사유",
+    "overdue": "검토 기한이 지났습니다",
+    "review_by": "{{date}}까지 재검토",
+    "hand_off": "에이전트에게 재검토 맡기기",
+    "hand_off_all": "모두 에이전트에게 맡기기",
+    "empty": "재검토가 필요한 페이지가 없습니다.",
+    "all_message": "「{{name}}」에서 검토 기한이 지난 페이지를 재검토하세요."
+  },
   "job": {
     "nav": "지식 베이스 작업",
     "nav_running": "{{count}}개 실행 중",

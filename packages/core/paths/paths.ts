@@ -104,6 +104,8 @@ function workspaceScoped(slug: string) {
     kbConfigSession: (kbSlug: string, sessionId: string) =>
       `${ws}/kb/${encode(kbSlug)}/config/${encode(sessionId)}`,
     kbAnnotations: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/annotations`,
+    /** Pages past their review date (design 2.5). */
+    kbStale: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/stale`,
     kbJobs: (kbSlug: string) => `${ws}/kb/${encode(kbSlug)}/jobs`,
     /** A new job; entry points bring in a starter and its context. */
     kbNewJob: (kbSlug: string, context: KbNewJobContext = {}) =>

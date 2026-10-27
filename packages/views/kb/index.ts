@@ -5,6 +5,7 @@ export {
   KbPageView,
   KbRevisionDiffPage,
   KbShell,
+  KbStalePagesPage,
   type KbRawFileActions,
 } from "./components";
 export { KbBuilderPage } from "./builder/kb-builder-page";

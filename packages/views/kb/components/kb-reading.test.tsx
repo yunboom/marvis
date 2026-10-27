@@ -10,6 +10,7 @@ import { NavigationProvider, type NavigationAdapter } from "../../navigation";
 import { KbHomePage } from "./kb-home-page";
 import { KbPageView } from "./kb-page-view";
 import { KbRevisionDiffPage } from "./kb-revision-diff-page";
+import { KbStalePagesPage } from "./kb-stale";
 import { KbShell } from "./kb-shell";
 
 vi.mock("@marvis/core/api", () => ({
@@ -22,6 +23,7 @@ vi.mock("@marvis/core/api", () => ({
     listKnowledgeBasePageHistory: vi.fn(),
     getKnowledgeBaseRevisionDiff: vi.fn(),
     listKnowledgeBaseAnnotations: vi.fn().mockResolvedValue([]),
+    listKnowledgeBaseStalePages: vi.fn(),
     listMembers: vi.fn().mockResolvedValue([]),
   },
 }));
@@ -472,6 +474,7 @@ describe("KbHomePage", () => {
     expect(screen.getByText("Includes 1 gap reported by agents")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /支付回调/ })).toHaveAttribute("href", "/acme/kb/team/p/page-cb");
     expect(screen.getByText("#14 每日知识沉淀")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Pages to re-check/ })).toHaveAttribute("href", "/acme/kb/team/stale");
   });
 
   it("shows the onboarding guide right after creation and dismisses it", async () => {
@@ -545,5 +548,40 @@ describe("KbRevisionDiffPage", () => {
     expect(await screen.findByRole("link", { name: /Initial version/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /#9处理批注/ })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Close history" })).toHaveAttribute("href", "/acme/kb/team/p/page-cb");
+  });
+});
+
+describe("KbStalePagesPage", () => {
+  it("lists pages past their review date and hands one or all to a health check", async () => {
+    mocked.getKnowledgeBase.mockResolvedValue(BASE);
+    mocked.listKnowledgeBaseStalePages.mockResolvedValue([
+      { page_id: "page-flow", path: "/release/flow", title: "发布流程", stale_after: "2026-10-20T00:00:00Z", claims: 6 },
+    ]);
+    const adapter = makeAdapter("/acme/kb/team/stale");
+    mount(<KbStalePagesPage />, adapter);
+
+    expect(await screen.findByRole("link", { name: "发布流程" })).toHaveAttribute("href", "/acme/kb/team/p/page-flow");
+    expect(screen.getByText("1 page")).toBeInTheDocument();
+    expect(screen.getByText("Due by " + new Date("2026-10-20T00:00:00Z").toLocaleDateString())).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Hand to an agent" }));
+    const one = new URL(vi.mocked(adapter.push).mock.calls[0]![0], "https://app.example");
+    expect(one.pathname).toBe("/acme/kb/team/jobs/new");
+    expect(one.searchParams.get("starter")).toBe("health");
+    expect(one.searchParams.get("page")).toBe("page-flow");
+
+    await userEvent.click(screen.getByRole("button", { name: "Hand all to an agent" }));
+    const all = new URL(vi.mocked(adapter.push).mock.calls[1]![0], "https://app.example");
+    expect(all.searchParams.get("starter")).toBe("health");
+    expect(all.searchParams.get("page")).toBeNull();
+  });
+
+  it("says so when no page needs re-checking", async () => {
+    mocked.getKnowledgeBase.mockResolvedValue(BASE);
+    mocked.listKnowledgeBaseStalePages.mockResolvedValue([]);
+    mount(<KbStalePagesPage />, makeAdapter("/acme/kb/team/stale"));
+
+    expect(await screen.findByText("No pages need re-checking.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Hand all to an agent" })).toBeDisabled();
   });
 });

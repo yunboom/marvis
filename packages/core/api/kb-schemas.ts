@@ -29,6 +29,7 @@ import type {
   KbMergeRequestOriginType,
   KbMrComment,
   KbRawFileItem,
+  KbStalePage,
   KbRawUploadedFile,
   KbGraph,
   KbDeleteResult,
@@ -970,6 +971,20 @@ const KbRawFileItemSchema = z
   .loose();
 
 export const KbRawFileListSchema = lenientArray(KbRawFileItemSchema);
+
+const KbStalePageSchema = z
+  .object({
+    page_id: z.string(),
+    path: text,
+    title: text,
+    stale_after: text,
+    claims: countSchema,
+  })
+  .loose();
+
+export const KbStalePageListSchema = lenientArray(KbStalePageSchema);
+
+export const EMPTY_KB_STALE_PAGE_LIST: KbStalePage[] = [];
 
 export const EMPTY_KB_RAW_FILE_LIST: KbRawFileItem[] = [];
 

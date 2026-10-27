@@ -300,6 +300,7 @@ import type {
   KbRawFileItem,
   KbRawUploadedFile,
   KbGraph,
+  KbStalePage,
   KbDeleteResult,
 } from "../types/kb";
 import {
@@ -315,12 +316,14 @@ import {
   kbMrCommentFallback,
   EMPTY_KB_GRAPH,
   EMPTY_KB_RAW_FILE_LIST,
+  EMPTY_KB_STALE_PAGE_LIST,
   EMPTY_KB_RAW_UPLOAD,
   KB_DELETE_RESULT_FALLBACK,
   KbDeleteResultSchema,
   KbGraphSchema,
   KbRawContentURLSchema,
   KbRawFileListSchema,
+  KbStalePageListSchema,
   KbRawUploadSchema,
   EMPTY_KB_JOB_LIST,
   EMPTY_KB_MERGE_REQUEST_CREATED,
@@ -5284,6 +5287,14 @@ export class ApiClient {
   async exportKnowledgeBase(kb: string): Promise<Blob> {
     const res = await this.fetchRaw(`/api/kb/bases/${encodeURIComponent(kb)}/export`);
     return res.blob();
+  }
+
+  /** Pages past their review date, the home page's "needs review" list. */
+  async listKnowledgeBaseStalePages(kb: string): Promise<KbStalePage[]> {
+    const raw = await this.fetch<unknown>(`/api/kb/bases/${encodeURIComponent(kb)}/stale`);
+    return parseWithFallback(raw, KbStalePageListSchema, EMPTY_KB_STALE_PAGE_LIST, {
+      endpoint: "GET /api/kb/bases/:kb/stale",
+    });
   }
 
   async getKnowledgeBaseGraph(kb: string): Promise<KbGraph> {

@@ -442,6 +442,7 @@ export type {
   CreateKbMrCommentRequest,
   KbRawKind,
   KbRawFileItem,
+  KbStalePage,
   KbRawUploadedFile,
   KbGraphNode,
   KbGraphEdge,

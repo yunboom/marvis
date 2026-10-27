@@ -5,14 +5,33 @@ import {
   EMPTY_KB_GRAPH,
   EMPTY_KB_RAW_FILE_LIST,
   EMPTY_KB_RAW_UPLOAD,
+  EMPTY_KB_STALE_PAGE_LIST,
   KB_DELETE_RESULT_FALLBACK,
   KbDeleteResultSchema,
   KbGraphSchema,
   KbRawFileListSchema,
   KbRawUploadSchema,
+  KbStalePageListSchema,
 } from "./kb-schemas";
 
 const opts = { endpoint: "test" };
+
+describe("stale page schema", () => {
+  it("keeps well-formed rows and drops ones without a page id", () => {
+    const row = { page_id: "p1", path: "/release/flow", title: "发布流程", stale_after: "2026-10-20T00:00:00Z", claims: 6 };
+    const parsed = parseWithFallback(
+      [row, { title: "no id" }, { page_id: "p2", claims: "x" }],
+      KbStalePageListSchema,
+      EMPTY_KB_STALE_PAGE_LIST,
+      opts,
+    );
+    expect(parsed).toEqual([row, { page_id: "p2", path: "", title: "", stale_after: "", claims: 0 }]);
+  });
+
+  it("falls back to an empty list on a non-array", () => {
+    expect(parseWithFallback({ error: "x" }, KbStalePageListSchema, EMPTY_KB_STALE_PAGE_LIST, opts)).toEqual([]);
+  });
+});
 
 const rawRow = {
   id: "raw-1",

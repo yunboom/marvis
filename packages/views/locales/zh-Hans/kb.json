@@ -310,6 +310,17 @@
     "update_failed": "操作失败",
     "panel_empty": "还没有批注"
   },
+  "stale_list": {
+    "count_other": "{{count}} 个页面",
+    "page": "页面",
+    "reason": "原因",
+    "overdue": "过了复核日期",
+    "review_by": "应在 {{date}} 前复核",
+    "hand_off": "交给智能体复核",
+    "hand_off_all": "全部交给智能体复核",
+    "empty": "没有需要复核的页面。",
+    "all_message": "复核「{{name}}」里过了复核日期的页面。"
+  },
   "job": {
     "nav": "知识库作业",
     "nav_running": "{{count}} 运行中",

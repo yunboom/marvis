@@ -310,6 +310,17 @@
     "update_failed": "更新できませんでした",
     "panel_empty": "まだ注釈はありません"
   },
+  "stale_list": {
+    "count_other": "{{count}} ページ",
+    "page": "ページ",
+    "reason": "理由",
+    "overdue": "確認期限を過ぎました",
+    "review_by": "{{date}} までに再確認",
+    "hand_off": "エージェントに再確認を任せる",
+    "hand_off_all": "すべてエージェントに任せる",
+    "empty": "再確認が必要なページはありません。",
+    "all_message": "「{{name}}」で確認期限を過ぎたページを再確認してください。"
+  },
   "job": {
     "nav": "ナレッジベースのジョブ",
     "nav_running": "{{count}} 件実行中",

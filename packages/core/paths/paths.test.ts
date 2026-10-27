@@ -42,6 +42,7 @@ describe("paths.workspace(slug)", () => {
     expect(ws.kbConfigSession("team", "s1")).toBe("/acme/kb/team/config/s1");
     expect(ws.kbPage("team", "p 1")).toBe("/acme/kb/team/p/p%201");
     expect(ws.kbAnnotations("team")).toBe("/acme/kb/team/annotations");
+    expect(ws.kbStale("team")).toBe("/acme/kb/team/stale");
     expect(ws.kbJobs("team")).toBe("/acme/kb/team/jobs");
     expect(ws.kbJob("team", "j1")).toBe("/acme/kb/team/jobs/j1");
     expect(ws.kbNewJob("team")).toBe("/acme/kb/team/jobs/new");

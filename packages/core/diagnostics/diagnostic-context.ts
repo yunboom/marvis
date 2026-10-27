@@ -76,6 +76,7 @@ const WORKSPACE_ROUTES: readonly RoutePattern[] = [
   ["kb", ":kb", "config"],
   ["kb", ":kb", "config", ":sessionId"],
   ["kb", ":kb", "annotations"],
+  ["kb", ":kb", "stale"],
   ["kb", ":kb", "jobs"],
   ["kb", ":kb", "jobs", "new"],
   ["kb", ":kb", "jobs", ":jobId"],

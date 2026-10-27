@@ -653,6 +653,17 @@ export interface CreateKbMrCommentRequest {
 export type KbRawKind = "source" | "asset";
 
 /** A row of the raw files tab. */
+/** A page past its review date (GET /api/kb/bases/{kb}/stale). */
+export interface KbStalePage {
+  page_id: string;
+  path: string;
+  title: string;
+  /** The review date it passed; RFC3339. */
+  stale_after: string;
+  /** How many claims the page makes. */
+  claims: number;
+}
+
 export interface KbRawFileItem {
   id: string;
   kind: KbRawKind;

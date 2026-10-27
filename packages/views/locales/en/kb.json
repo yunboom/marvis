@@ -321,6 +321,18 @@
     "update_failed": "Could not update the annotation",
     "panel_empty": "No annotations yet"
   },
+  "stale_list": {
+    "count_one": "{{count}} page",
+    "count_other": "{{count}} pages",
+    "page": "Page",
+    "reason": "Reason",
+    "overdue": "Review date passed",
+    "review_by": "Due by {{date}}",
+    "hand_off": "Hand to an agent",
+    "hand_off_all": "Hand all to an agent",
+    "empty": "No pages need re-checking.",
+    "all_message": "Re-check the pages in {{name}} whose review date has passed."
+  },
   "job": {
     "nav": "Knowledge base jobs",
     "nav_running": "{{count}} running",

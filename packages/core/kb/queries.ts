@@ -5,6 +5,7 @@ import type {
   KbAnnotationStatusFilter,
   KbBuilderMode,
   KbGraph,
+  KbStalePage,
   KbRawFileItem,
   KbBuilderSession,
   KbTemplates,
@@ -79,6 +80,7 @@ export const kbKeys = {
   raws: (wsId: string, kb: string) => [...kbKeys.all(wsId), "raws", kb] as const,
   /** The relationship graph; merges change it. */
   graph: (wsId: string, kb: string) => [...kbKeys.all(wsId), "graph", kb] as const,
+  stale: (wsId: string, kb: string) => [...kbKeys.all(wsId), "stale", kb] as const,
 };
 
 /** How many merge requests the review list and the change log show. */
@@ -138,6 +140,15 @@ export function kbRawFileListOptions(wsId: string, kb: string) {
 }
 
 /** Pages and links of a knowledge base; kb.mr.merged refreshes it. */
+/** Pages past their review date. */
+export function kbStalePagesOptions(wsId: string, kb: string) {
+  return queryOptions<KbStalePage[]>({
+    queryKey: kbKeys.stale(wsId, kb),
+    queryFn: () => api.listKnowledgeBaseStalePages(kb),
+    enabled: !!wsId && !!kb,
+  });
+}
+
 export function kbGraphOptions(wsId: string, kb: string) {
   return queryOptions<KbGraph>({
     queryKey: kbKeys.graph(wsId, kb),

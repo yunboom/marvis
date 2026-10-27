@@ -66,6 +66,7 @@ export function invalidateKbMainline(qc: QueryClient, wsId: string) {
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "history"] });
   void qc.invalidateQueries({ queryKey: kbKeys.searches(wsId) });
   void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "graph"] });
+  void qc.invalidateQueries({ queryKey: [...kbKeys.all(wsId), "stale"] });
 }
 
 /**
