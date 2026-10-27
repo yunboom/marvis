@@ -18,6 +18,7 @@ vi.mock("@marvis/core/paths", () => ({
   useWorkspacePaths: () => ({
     autopilots: () => "/ws/autopilots",
     issueDetail: (id: string) => `/ws/issues/${id}`,
+    autopilotRun: (id: string, runId: string) => `/ws/autopilots/${id}/runs/${runId}`,
     projectDetail: (id: string) => `/ws/projects/${id}`,
     agentDetail: (id: string) => `/ws/agents/${id}`,
   }),
@@ -219,6 +220,35 @@ describe("AutopilotDetailPage", () => {
     await user.click(screen.getByRole("button", { name: /1 skipped runs/ }));
 
     expect(screen.getByText("assignee offline")).toBeInTheDocument();
+  });
+
+  it("opens a run_only run on its run page, with no transcript button left", async () => {
+    runs = [
+      run({ id: "done", status: "completed", task_id: "11111111-1111-4111-8111-111111111111" }),
+      run({ id: "skip-1", status: "skipped", failure_reason: "assignee offline" }),
+    ];
+    renderPage();
+
+    const row = await screen.findByRole("link", { name: /Completed/ });
+    expect(row).toHaveAttribute("href", "/ws/autopilots/ap-1/runs/done");
+    expect(screen.queryByRole("button", { name: /execution log/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps create_issue runs without an issue as plain rows", async () => {
+    detail = {
+      autopilot: autopilot({ execution_mode: "create_issue" }),
+      triggers: [],
+      collaborators: [],
+    };
+    runs = [
+      run({ id: "failed", status: "failed", failure_reason: "runtime offline" }),
+      run({ id: "linked", status: "issue_created", issue_id: "iss-1" }),
+    ];
+    renderPage();
+
+    expect(await screen.findByText("runtime offline")).toBeInTheDocument();
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /Issue linked/ })).toHaveAttribute("href", "/ws/issues/iss-1");
   });
 
   it("hides the instructions block when there are none", async () => {

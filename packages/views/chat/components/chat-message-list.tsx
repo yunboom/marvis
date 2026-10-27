@@ -1179,6 +1179,48 @@ function TimelineView({
   );
 }
 
+/**
+ * A task's transcript rendered as one assistant turn outside a chat session,
+ * with the same fold, answer, elapsed caption and copy action as a chat reply.
+ * The autopilot run page shows its run task this way.
+ */
+export function TaskTimelineReply({
+  items,
+  isStreaming,
+  elapsedMs,
+  failed = false,
+}: {
+  items: ChatTimelineItem[];
+  isStreaming: boolean;
+  elapsedMs?: number | null;
+  failed?: boolean;
+}) {
+  const timeline = useMemo(() => transformTimeline(items), [items]);
+  const answer = splitTimeline(timeline).final.map((item) => item.content ?? "").join("");
+  const showCopy = !isStreaming && answer.trim().length > 0;
+  const showElapsed = !isStreaming && elapsedMs != null;
+
+  return (
+    <div className="w-full space-y-2">
+      {timeline.length > 0 && (
+        <TimelineView
+          items={timeline}
+          isStreaming={isStreaming}
+          phase={isStreaming ? "streaming" : "settled"}
+        />
+      )}
+      {(showElapsed || showCopy) && (
+        <div className="flex items-center gap-1.5">
+          {showElapsed && (
+            <ElapsedCaption variant={failed ? "failed" : "replied"} elapsedMs={elapsedMs} />
+          )}
+          {showCopy && <MessageCopyButton content={answer} />}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function OuterProcessFold({
   items,
   isStreaming,

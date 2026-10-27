@@ -151,11 +151,39 @@
   },
   "run": {
     "issue_linked": "已關聯任務",
-    "view_log": "檢視執行日誌",
     "skipped_group": {
       "label": "已跳過",
       "summary": "{{count}} 條跳過的執行"
     }
+  },
+  "run_page": {
+    "back": "返回自動化",
+    "title": "{{title}} · {{time}}",
+    "subtitle": "自動化執行",
+    "hide_panel": "收合執行資訊",
+    "show_panel": "展開執行資訊",
+    "panel_title": "執行資訊",
+    "field_status": "狀態",
+    "field_source": "來源",
+    "field_triggered_at": "觸發時間",
+    "field_completed_at": "完成時間",
+    "field_assignee": "執行者",
+    "field_autopilot": "自動化",
+    "field_failure": "失敗原因",
+    "field_payload": "Webhook 載荷",
+    "trigger": {
+      "schedule": "時間表觸發",
+      "manual": "手動執行",
+      "webhook": "Webhook 觸發",
+      "api": "API 觸發"
+    },
+    "runtime_online": "執行時線上",
+    "runtime_offline": "執行時離線",
+    "not_executed": "本次執行未進行。",
+    "transcript_failed": "執行過程載入失敗。",
+    "not_found": "找不到這次執行",
+    "forbidden": "無權檢視這次執行",
+    "load_failed": "執行載入失敗"
   },
   "webhook_payload": {
     "label": "Webhook 事件：",

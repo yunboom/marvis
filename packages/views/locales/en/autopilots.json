@@ -151,11 +151,39 @@
   },
   "run": {
     "issue_linked": "Issue linked",
-    "view_log": "View execution log",
     "skipped_group": {
       "label": "Skipped",
       "summary": "{{count}} skipped runs"
     }
+  },
+  "run_page": {
+    "back": "Back to autopilot",
+    "title": "{{title}} · {{time}}",
+    "subtitle": "Autopilot run",
+    "hide_panel": "Hide run details",
+    "show_panel": "Show run details",
+    "panel_title": "Run details",
+    "field_status": "Status",
+    "field_source": "Source",
+    "field_triggered_at": "Triggered",
+    "field_completed_at": "Finished",
+    "field_assignee": "Assignee",
+    "field_autopilot": "Autopilot",
+    "field_failure": "Failure reason",
+    "field_payload": "Webhook payload",
+    "trigger": {
+      "schedule": "Scheduled run",
+      "manual": "Manual run",
+      "webhook": "Webhook run",
+      "api": "API run"
+    },
+    "runtime_online": "Runtime online",
+    "runtime_offline": "Runtime offline",
+    "not_executed": "This run did not execute.",
+    "transcript_failed": "Couldn't load the execution log.",
+    "not_found": "Run not found",
+    "forbidden": "You don't have access to this run",
+    "load_failed": "Couldn't load this run"
   },
   "webhook_payload": {
     "label": "Webhook event:",

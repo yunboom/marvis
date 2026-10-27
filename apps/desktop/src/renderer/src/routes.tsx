@@ -4,6 +4,7 @@ import type { RouteObject } from "react-router-dom";
 import { IssueDetailPage } from "./pages/issue-detail-page";
 import { ProjectDetailPage } from "./pages/project-detail-page";
 import { AutopilotDetailPage } from "./pages/autopilot-detail-page";
+import { AutopilotRunPage } from "./pages/autopilot-run-page";
 import { SkillDetailPage } from "./pages/skill-detail-page";
 import { AgentDetailPage } from "./pages/agent-detail-page";
 import { AiBuilderSessionPage } from "./pages/ai-builder-session-page";
@@ -200,6 +201,11 @@ export const appRoutes: RouteObject[] = [
           {
             path: "autopilots/:id",
             element: <AutopilotDetailPage />,
+            handle: { title: "Autopilot" },
+          },
+          {
+            path: "autopilots/:id/runs/:runId",
+            element: <AutopilotRunPage />,
             handle: { title: "Autopilot" },
           },
           {

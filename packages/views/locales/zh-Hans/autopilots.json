@@ -151,11 +151,39 @@
   },
   "run": {
     "issue_linked": "已关联任务",
-    "view_log": "查看执行日志",
     "skipped_group": {
       "label": "已跳过",
       "summary": "{{count}} 条跳过的运行"
     }
+  },
+  "run_page": {
+    "back": "返回自动化",
+    "title": "{{title}} · {{time}}",
+    "subtitle": "自动化运行",
+    "hide_panel": "收起运行信息",
+    "show_panel": "展开运行信息",
+    "panel_title": "运行信息",
+    "field_status": "状态",
+    "field_source": "来源",
+    "field_triggered_at": "触发时间",
+    "field_completed_at": "完成时间",
+    "field_assignee": "执行者",
+    "field_autopilot": "自动化",
+    "field_failure": "失败原因",
+    "field_payload": "Webhook 载荷",
+    "trigger": {
+      "schedule": "时间表触发",
+      "manual": "手动运行",
+      "webhook": "Webhook 触发",
+      "api": "API 触发"
+    },
+    "runtime_online": "运行时在线",
+    "runtime_offline": "运行时离线",
+    "not_executed": "本次运行未执行。",
+    "transcript_failed": "执行过程加载失败。",
+    "not_found": "未找到这次运行",
+    "forbidden": "无权查看这次运行",
+    "load_failed": "运行加载失败"
   },
   "webhook_payload": {
     "label": "Webhook 事件：",

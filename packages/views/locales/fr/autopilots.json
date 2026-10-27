@@ -151,11 +151,39 @@
   },
   "run": {
     "issue_linked": "Tâche liée",
-    "view_log": "Voir le journal d'exécution",
     "skipped_group": {
       "label": "Ignorées",
       "summary": "{{count}} exécutions ignorées"
     }
+  },
+  "run_page": {
+    "back": "Retour à l'automatisation",
+    "title": "{{title}} · {{time}}",
+    "subtitle": "Exécution d'automatisation",
+    "hide_panel": "Masquer les détails",
+    "show_panel": "Afficher les détails",
+    "panel_title": "Détails de l'exécution",
+    "field_status": "Statut",
+    "field_source": "Source",
+    "field_triggered_at": "Déclenchée",
+    "field_completed_at": "Terminée",
+    "field_assignee": "Exécutant",
+    "field_autopilot": "Automatisation",
+    "field_failure": "Raison de l'échec",
+    "field_payload": "Payload webhook",
+    "trigger": {
+      "schedule": "Exécution planifiée",
+      "manual": "Exécution manuelle",
+      "webhook": "Exécution par webhook",
+      "api": "Exécution par API"
+    },
+    "runtime_online": "Runtime en ligne",
+    "runtime_offline": "Runtime hors ligne",
+    "not_executed": "Cette exécution n'a pas eu lieu.",
+    "transcript_failed": "Impossible de charger le journal d'exécution.",
+    "not_found": "Exécution introuvable",
+    "forbidden": "Vous n'avez pas accès à cette exécution",
+    "load_failed": "Impossible de charger cette exécution"
   },
   "webhook_payload": {
     "label": "Événement webhook :",
