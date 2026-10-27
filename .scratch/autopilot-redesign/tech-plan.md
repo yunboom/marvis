@@ -79,7 +79,7 @@
 **接口**
 
 - `POST /api/autopilots/{id}/runs/{runId}/chat`：获取或创建这次运行的对话，返回 `{ chat_session_id }`。
-  - 只接受 `run_only` 运行，`create_issue` 返回 409 `run_mode_unsupported`；要求 `run.task_id` 不为空且该任务已结束（completed / failed）。运行中返回 409 `run_in_progress`，前端在运行结束前不建会话；`task_id` 为空返回 409 `run_has_no_session`。
+  - 只接受 `run_only` 运行，`create_issue` 返回 409 `run_mode_unsupported`；要求 `run.task_id` 不为空，`task_id` 为空返回 409 `run_has_no_session`。运行中也可以创建（用户 2026-10-27 拍板：运行中允许发消息排队）。
   - 权限：调用者能查看该自动化。
   - 事务内 `SELECT … FOR UPDATE` 锁 run 行，已有 `chat_session_id` 直接返回；否则 `CreateChatSession`（agent = task.agent_id，project = autopilot.project_id，title = 自动化标题，creator = 第一个发消息的人），再用原 task 的 `session_id / work_dir / runtime_id` 调 `UpdateChatSessionSession` 预填续接指针，最后写回 `autopilot_run.chat_session_id`。
   - 原 task 因 `context_overflow` 等不适合续接的原因失败时不预填 session（过滤条件对齐 `GetLastTaskSession`），只预填 `work_dir`。
@@ -87,6 +87,7 @@
   - 访问控制：`loadChatSessionForUser` 现在只放行创建者（`handler/chat.go:282`）。会话挂在某次运行上时，改为按「能查看该自动化」放行；其余聊天不变。
   - 发送人：消息列表查询按 `chat_message.task_id` 关联 `agent_task_queue`，返回 `initiator_user_id` 作为 `sender_user_id`（可空，普通聊天前端回退到会话创建者）；schema 加可选字段。每次发送仍按发送人做 `canInvokeAgent` 检查，任务归属记发送人。
 - 多人同时发送：聊天本身按会话排队（同一会话有任务在跑时新消息进队列），无需额外处理。
+- 运行中发送：聊天队列只看同一聊天会话里的任务，运行的派发任务不在其中，需要补一处衔接——会话挂在运行上且派发任务未结束时，新消息的任务先挂起，派发任务结束（完成或失败）时再放行，同时把那时的 `session_id / work_dir` 写进会话指针。挂起放在后端，关页面不丢消息。现有 `deferred` 状态是失败重试用的，不是「等某个任务结束」，不能直接复用；实现时定挂起方式（新状态，或认领时检查派发任务是否结束）。
 - `GET /api/autopilots/{id}/runs/{runId}` 响应增加 `chat_session_id`（可空），schema 加可选字段 + 默认 `null`，补 malformed 响应测试。
 
 **上下文兜底**：runtime 换过或会话文件已丢失时无法续接。第一条用户消息由服务端拼一段前置说明（自动化标题、指令摘要、本次运行结果摘要 `task.result` 截断），以「服务端写入部分」的方式存（同知识库 job：页面只显示用户打的字）。
@@ -100,7 +101,7 @@
   - 顶栏：面包屑「自动化 / 标题 / 运行时间」+ 状态标签 + 运行信息面板开关。
   - 消息区第一块是「触发卡片」（来源 + 时间 + 指令摘要），第二块是原 task 的执行过程，用 `taskMessagesOptions(taskId)` 渲染成一轮智能体回复（与 `TranscriptButton` 同源，运行中实时刷新）。
   - 后续消息：照抄 `useKbJobConversation` 写 `useAutopilotRunConversation(sessionId)`，组合 `ChatMessageList` + `ChatQueue` + `ChatInput`（`draftKeyOverride` 隔离草稿），与聊天页行为一致：发送中、停止、排队、重试、附件。
-  - 会话懒创建：第一次发送前调 `POST …/chat` 拿 `chat_session_id`，再发送。运行未结束时允许打字，消息先进前端排队，运行结束后自动建会话并发出。
+  - 会话懒创建：第一次发送前调 `POST …/chat` 拿 `chat_session_id`，再发送。运行未结束时也能发，消息进同一个对话的队列，显示为排队中（复用 `ChatQueue`），运行结束后自动派给智能体。
   - 右侧面板：状态、来源、触发 / 完成时间、执行者、所属自动化、失败原因、Webhook 载荷（复用 `WebhookPayloadSlot`），以及一行「能查看这个自动化的成员共用这段对话。」。窄屏收起。
   - 离线 / 无权限：复用 `OfflineBanner`、`AgentAccessRevokedBanner`、`RuntimeRequiredBanner`。
 - 只有 `run_only` 运行进此页；`task_id` 为空的运行只显示运行信息，不显示输入框。`create_issue` 运行仍跳任务详情。
@@ -155,4 +156,4 @@
 
 1. 卡片上展示两行指令摘要，可以吗？（列表原来不显示指令）
 2. ~~续聊会话每人一个还是每次运行一个~~：已定一次运行共用一个对话（2026-10-27）。
-3. 运行中能否追问？方案默认：可以打字排队，运行结束后自动发出；不打断正在执行的运行。
+3. ~~运行中能否追问~~：已定允许，消息进对话队列，运行结束后发出（2026-10-27）。
