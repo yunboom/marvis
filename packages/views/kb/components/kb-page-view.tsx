@@ -74,8 +74,8 @@ export function KbDraftBar({ drafts, activeDraft }: { drafts: KbPageDraft[]; act
   const show = (draftId: string) => replace(withDraft(pathname, draftId));
 
   return (
-    <div className="mb-[18px] flex items-center gap-3 rounded-xl bg-info/5 px-3.5 py-2.5 text-label ring-1 ring-info/45 ring-inset">
-      <span className="rounded-md bg-info px-1.5 text-caption leading-5 text-primary-foreground">{t(($) => $.draft.label)}</span>
+    <div className="mb-[18px] flex items-center gap-3 rounded-xl bg-status-review/5 px-3.5 py-2.5 text-label ring-1 ring-status-review/45 ring-inset">
+      <span className="rounded-md bg-status-review px-1.5 text-caption leading-5 text-primary-foreground">{t(($) => $.draft.label)}</span>
       <span className="min-w-0 flex-1">
         {drafts.length > 1 ? t(($) => $.draft.multi, { count: drafts.length }) : t(($) => $.draft.single)}
       </span>
