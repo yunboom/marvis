@@ -80,7 +80,9 @@
     "quick_create_unconfirmed": "透過智慧體建立結果未確認",
     "autopilot_paused": "自動化已暫停",
     "children_done": "子任務已全部結束",
-    "autopilot_quota_exceeded": "自動化執行次數已用完"
+    "autopilot_quota_exceeded": "自動化執行次數已用完",
+    "kb_mr_changes_requested": "提交了評審",
+    "kb_mr_review_requested": "重新請求稽核"
   },
   "labels": {
     "set_status_to": "狀態設為",
@@ -95,7 +97,9 @@
     "created_with_agent": "透過智慧體建立：{{identifier}}",
     "failed_with_detail": "失敗：{{detail}}",
     "autopilot_quota_blocked": "執行已被阻止：額度已用完",
-    "children_done_stage": "第 {{stage}} 階段的子任務已全部結束"
+    "children_done_stage": "第 {{stage}} 階段的子任務已全部結束",
+    "kb_mr_changes_requested": "{{name}} 提交了評審",
+    "kb_mr_review_requested": "{{name}} 重新請求稽核"
   },
   "toasts": {
     "source_context_retry_started": "已使用原始上下文開始重試",
@@ -117,5 +121,15 @@
     "unarchive_failed": "取消歸檔失敗",
     "archived_load_failed": "無法載入已歸檔通知",
     "filters_load_failed": "無法載入篩選項"
+  },
+  "kb_review": {
+    "changes_requested_action": "提交了評審，變更請求改為「待解決」",
+    "review_requested_action": "重新請求稽核，變更請求回到「待稽核」",
+    "summary": "評審總結",
+    "your_summary": "你的評審總結",
+    "comments": "意見",
+    "view_all_other": "查看全部 {{count}} 條意見",
+    "view_feedback": "查看稽核意見",
+    "go_review": "去稽核頁"
   }
 }

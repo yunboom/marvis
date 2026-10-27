@@ -38,6 +38,8 @@ export function useTypeLabels(): Record<InboxItemType, string> {
     autopilot_paused: t(($) => $.types.autopilot_paused),
     autopilot_quota_exceeded: t(($) => $.types.autopilot_quota_exceeded),
     children_done: t(($) => $.types.children_done),
+    kb_mr_changes_requested: t(($) => $.types.kb_mr_changes_requested),
+    kb_mr_review_requested: t(($) => $.types.kb_mr_review_requested),
   };
 }
 
@@ -142,6 +144,18 @@ export function InboxDetailLabel({ item }: { item: InboxItem }) {
       const stage = details.stage != null ? String(details.stage) : "";
       if (stage) return <span>{t(($) => $.labels.children_done_stage, { stage })}</span>;
       return <span>{typeLabels[item.type]}</span>;
+    }
+    case "kb_mr_changes_requested":
+    case "kb_mr_review_requested": {
+      if (!item.actor_id) return <span>{typeLabels[item.type]}</span>;
+      const name = getActorName("member", item.actor_id);
+      return (
+        <span>
+          {item.type === "kb_mr_changes_requested"
+            ? t(($) => $.labels.kb_mr_changes_requested, { name })
+            : t(($) => $.labels.kb_mr_review_requested, { name })}
+        </span>
+      );
     }
     default:
       return <span>{typeLabels[item.type] ?? item.type}</span>;

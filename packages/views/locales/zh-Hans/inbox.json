@@ -80,7 +80,9 @@
     "quick_create_unconfirmed": "通过智能体创建结果未确认",
     "autopilot_paused": "自动化已暂停",
     "children_done": "子任务已全部结束",
-    "autopilot_quota_exceeded": "自动化执行次数已用完"
+    "autopilot_quota_exceeded": "自动化执行次数已用完",
+    "kb_mr_changes_requested": "提交了评审",
+    "kb_mr_review_requested": "重新请求审核"
   },
   "labels": {
     "set_status_to": "状态设为",
@@ -95,7 +97,9 @@
     "created_with_agent": "通过智能体创建：{{identifier}}",
     "failed_with_detail": "失败：{{detail}}",
     "autopilot_quota_blocked": "执行已被阻止：额度已用完",
-    "children_done_stage": "第 {{stage}} 阶段的子任务已全部结束"
+    "children_done_stage": "第 {{stage}} 阶段的子任务已全部结束",
+    "kb_mr_changes_requested": "{{name}} 提交了评审",
+    "kb_mr_review_requested": "{{name}} 重新请求审核"
   },
   "toasts": {
     "source_context_retry_started": "已使用原始上下文开始重试",
@@ -117,5 +121,15 @@
     "unarchive_failed": "取消归档失败",
     "archived_load_failed": "无法加载已归档通知",
     "filters_load_failed": "无法加载筛选项"
+  },
+  "kb_review": {
+    "changes_requested_action": "提交了评审，变更请求改为「待解决」",
+    "review_requested_action": "重新请求审核，变更请求回到「待审核」",
+    "summary": "评审总结",
+    "your_summary": "你的评审总结",
+    "comments": "意见",
+    "view_all_other": "查看全部 {{count}} 条意见",
+    "view_feedback": "查看审核意见",
+    "go_review": "去审核页"
   }
 }

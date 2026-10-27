@@ -109,6 +109,7 @@ import {
   resolveDetailItem,
 } from "./inbox-display";
 import { AutopilotQuotaNotice } from "./autopilot-quota-notice";
+import { KbReviewNotice, KbReviewNoticeAction, isKbReviewNotice } from "./kb-review-notice";
 import { useT } from "../../i18n";
 import { useIssueLimitUpgradePrompt } from "../../modals/use-issue-limit-upgrade-prompt";
 
@@ -874,6 +875,8 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
           item={detailItem}
           onOpenRecovery={showAutopilotQuotaRecoveryPrompt}
         />
+      ) : isKbReviewNotice(detailItem.type) ? (
+        <KbReviewNotice item={detailItem} />
       ) : detailItem.body ? (
         <div className="mt-4.5 whitespace-pre-wrap text-body leading-relaxed text-foreground">
           {detailItem.body}
@@ -888,6 +891,7 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
         </div>
       )}
       <div className="mt-5 flex flex-wrap gap-2">
+        {isKbReviewNotice(detailItem.type) && <KbReviewNoticeAction item={detailItem} />}
         {detailItem.type === "quick_create_failed" &&
           detailItem.details?.source_context_id &&
           detailItem.details?.task_id && (
