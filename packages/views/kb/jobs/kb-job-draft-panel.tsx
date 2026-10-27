@@ -175,7 +175,7 @@ export function KbJobDraftPanel({
         <>
           {job.checks.lint.map((finding, index) => (
             <span key={`lint-${index}`} className="flex items-start gap-1.5 text-label">
-              <span className="mt-1.5">
+              <span className="flex h-lh shrink-0 items-center">
                 <StateDot dot={finding.severity === "error" ? "red" : "amber"} />
               </span>
               <span className="min-w-0 flex-1 break-words">
@@ -185,7 +185,7 @@ export function KbJobDraftPanel({
           ))}
           {job.checks.conflicts.map((conflict, index) => (
             <span key={`conflict-${index}`} className="flex items-start gap-1.5 text-label">
-              <span className="mt-1.5">
+              <span className="flex h-lh shrink-0 items-center">
                 <StateDot dot="amber" />
               </span>
               <span className="min-w-0 flex-1 break-words">{t(($) => $.job.draft.conflict, { path: conflict.path })}</span>
