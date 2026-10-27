@@ -398,10 +398,10 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
         <div ref={scroller} className="relative min-w-0 flex-1 overflow-y-auto">
           <article
             className={cn(
-              // The text column is about 800px either way (912 - 2*56, 864 - 2*32),
-              // some 50 CJK characters a line at the 16px body.
-              "mx-auto w-full pb-10",
-              panel === "none" ? "max-w-[912px] px-14 pt-9" : "max-w-[864px] px-8 pt-7",
+              // The body fills the width beside any panel; the text column, with
+              // the title and banners, stops at 1080px (1176 - 2*48) and centers.
+              "mx-auto w-full max-w-[1176px] px-12 pb-10",
+              panel === "none" ? "pt-9" : "pt-7",
             )}
           >
             <KbPageBody
