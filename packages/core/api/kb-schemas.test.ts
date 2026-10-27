@@ -7,7 +7,7 @@ import {
   KnowledgeBaseDetailSchema,
   KnowledgeBaseListSchema,
 } from "./kb-schemas";
-import { countOpenMergeRequests } from "../kb/queries";
+import { countKbPending, countOpenMergeRequests } from "../kb/queries";
 import type { KnowledgeBase, KnowledgeBaseDetail } from "../types/kb";
 
 const base = {
@@ -58,8 +58,13 @@ describe("knowledge base list schema", () => {
       created_by: "",
       page_count: 0,
       content_version: 0,
+      created_at: "",
       pending: { annotations: 0, stale_pages: 0, open_mrs: 0 },
     });
+  });
+
+  it("degrades a malformed creation time to empty", () => {
+    expect(parseList([{ ...base, created_at: 1700000000 }])[0]?.created_at).toBe("");
   });
 
   it("degrades malformed pending counts to zero", () => {
@@ -101,5 +106,12 @@ describe("countOpenMergeRequests", () => {
     const [b] = parseList([{ ...base, id: "kb-2", pending: { open_mrs: 4 } }]);
     expect(countOpenMergeRequests([a!, b!])).toBe(5);
     expect(countOpenMergeRequests([])).toBe(0);
+  });
+});
+
+describe("countKbPending", () => {
+  it("sums open reviews, annotations and pages to re-check", () => {
+    const [parsed] = parseList([base]);
+    expect(countKbPending(parsed!.pending)).toBe(6);
   });
 });

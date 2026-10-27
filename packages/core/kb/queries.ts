@@ -25,6 +25,7 @@ import type {
   KbSearchResult,
   KnowledgeBase,
   KnowledgeBaseDetail,
+  KnowledgeBasePending,
 } from "../types/kb";
 
 /** Page size of a page tree level; the server caps it at 200. */
@@ -310,4 +311,9 @@ export function countOpenMergeRequests(bases: readonly KnowledgeBase[]): number 
   let total = 0;
   for (const base of bases) total += base.pending.open_mrs;
   return total;
+}
+
+/** Work waiting in one knowledge base: open reviews, open annotations and pages to re-check. */
+export function countKbPending(pending: KnowledgeBasePending): number {
+  return pending.open_mrs + pending.annotations + pending.stale_pages;
 }
