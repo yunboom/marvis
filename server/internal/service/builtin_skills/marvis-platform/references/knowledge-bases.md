@@ -79,17 +79,26 @@ Before you submit, check the draft. Errors block submission; fix any warning you
 
     marvis kb draft check <draft>
 
-Then open the change request. The summary is what the reviewer reads to decide, so say what changed, why, and what evidence it rests on.
+Then open the change request. Keep the title short: one sentence that says what changed, such as `Dedupe callbacks by channel transaction id`. The summary is what the reviewer reads to decide, so put what changed, why, the evidence it rests on and what you checked in `--summary`, not in the title.
 
-    marvis kb mr create --draft <draft> --title "Dedup callbacks by channel transaction id" \
+    marvis kb mr create --draft <draft> --title "Dedupe callbacks by channel transaction id" \
         --summary-file ./summary.md --risk medium --source custom
 
 ## After you submit
 
-The change request always shows the latest state of the draft. If a reviewer asks for changes, edit the same draft; do not open a second change request. A reviewer's comment starts a new run for you. Read the thread, make the change, and answer under the comment that asked for it so the conversation stays in one place.
+The change request always shows the latest state of the draft. A reviewer writes a review, comments on lines of the pages, and submits it with a summary. When the review asks for changes, the change request becomes changes requested and cannot be merged until the feedback is resolved.
+
+Read the published feedback: each submitted review with its summary, and every comment with its id and the line it quotes.
 
     marvis kb mr comment list 16
+
+Make the changes in the same draft. It is still the same change request, so do not open a second one. Check the draft again, then answer under each comment you addressed: what you changed, or why you left it. Each conversation then stays in one place.
+
     marvis kb mr comment add 16 --parent <comment id> --content-file ./reply.md
+
+When the feedback is resolved, a member requests review again and the reviewers are notified. Run it yourself only when you are asked to.
+
+    marvis kb mr ready 16
 
 Someone else's change may be merged while yours waits. If both touched the same block, the merge is refused. Bring main into your draft the way you would merge main into a branch, settle each conflicting block, check, and the change request can be merged again.
 
