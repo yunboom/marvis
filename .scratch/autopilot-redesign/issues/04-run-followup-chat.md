@@ -6,9 +6,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] 迁移：`autopilot_run.chat_session_id`（可空，软引用）+ 单独文件的 CONCURRENTLY 唯一索引；编号排在最大号之后，`*_rebrand_marvis` 仍最后，同步 rebrand 脚本 KEEP、migrate 并发索引表与引用文件名的测试；`make sqlc`、`make schema`
-- [ ] 获取或创建对话接口：只接受仅运行（创建任务 409）、要求运行有任务（否则 409）；锁运行行，已有就返回；新建时用运行任务的会话 ID / 工作目录 / 运行时预填续接指针（不适合续接的失败原因只填工作目录）
-- [ ] 运行详情响应带 `chat_session_id`；core schema 加可选字段 + malformed 测试
-- [ ] 前端：运行页对话照知识库作业页组合聊天消息列表、队列、输入框；第一次发送前先获取或创建对话；草稿与普通聊天隔离
-- [ ] 离线 / 智能体无权限 / 未绑定运行时横幅复用聊天的
-- [ ] 后端接口测试（testutil fixture）；`make test` 相关包、前端检查通过
+- [x] 迁移：`autopilot_run.chat_session_id`（可空，软引用）+ 单独文件的 CONCURRENTLY 唯一索引；编号排在最大号之后，`*_rebrand_marvis` 仍最后，同步 rebrand 脚本 KEEP、migrate 并发索引表与引用文件名的测试；`make sqlc`、`make schema`
+- [x] 获取或创建对话接口：只接受仅运行（创建任务 409）、要求运行有任务（否则 409）；锁运行行，已有就返回；新建时用运行任务的会话 ID / 工作目录 / 运行时预填续接指针（不适合续接的失败原因只填工作目录）
+- [x] 运行详情响应带 `chat_session_id`；core schema 加可选字段 + malformed 测试
+- [x] 前端：运行页对话照知识库作业页组合聊天消息列表、队列、输入框；第一次发送前先获取或创建对话；草稿与普通聊天隔离
+- [x] 离线 / 智能体无权限 / 未绑定运行时横幅复用聊天的
+- [x] 后端接口测试（testutil fixture）；`make test` 相关包、前端检查通过

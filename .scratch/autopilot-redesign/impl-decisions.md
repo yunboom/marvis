@@ -79,3 +79,31 @@
    - 选择：载荷只在来源是 Webhook 且有载荷时显示（与原弹窗一致），用现有 `WebhookPayloadPreview` 默认展开；触发卡片的元信息带上载荷里的事件名。
 23. **配套清理**（工单 03）
    - 选择：`RUN_VISUAL` 抽到 `run-status.ts` 供详情页和运行页共用；删除 `RunRow` 的 `TranscriptButton`、`syntheticTask`、`WebhookPayloadSlot` 和不再使用的 `run.view_log` 文案（六种语言）；`diagnostics` 路由表补上运行页路由，避免诊断上报把它当未知路径。设计稿右侧「能查看这个自动化的成员共用这段对话。」属于对话能力，留给工单 04。
+24. **迁移编号与 rebrand 顺延**（工单 04）
+   - 选择：`646_autopilot_run_chat_session` 加列，`647_autopilot_run_chat_session_uidx` 建部分唯一索引（`WHERE chat_session_id IS NOT NULL`，同时服务从会话反查运行）；rebrand 顺延为 `648`，同步脚本 `KEEP`、`cmd/migrate` 并发索引表和仓库 `CLAUDE.md` 里的编号。仓库里没有测试引用 rebrand 文件名。
+   - 理由：仓库迁移规则要求 rebrand 排最后、并发索引单独成文件。
+25. **获取或创建对话的判定顺序与权限**（工单 04）
+   - 选择：先查自动化（工作区成员可读，与运行详情同一道门）→ 运行属于该自动化（否则 404）→ `run_only`（否则 409 `run_mode_unsupported`）→ 有任务（否则 409 `run_has_no_session`）→ 对运行任务的智能体做 `canInvokeAgent`（否则 403）→ 已有会话直接返回 → 任务未到终态（completed / failed / cancelled）返回 409 `run_in_progress`。已有会话的返回放在运行中判定之前，工单 05 放开运行中时不用再挪。事务内先 `FOR UPDATE` 锁运行行、再拿工作区 `FOR KEY SHARE`（与所有建会话路径一致）和项目锁；项目已删除时会话不挂项目，不报错。
+   - 理由：工单要求；锁运行行保证并发首发只建一个会话。
+26. **新会话标记为显式创建**（工单 04）
+   - 问题：普通聊天接口（发消息、拉消息）只认「显式创建或已有非指令消息」的会话；对话在第一次发送前才建，建好时是空的，不标记就发不进去。
+   - 选择：建会话后调用 `MarkChatSessionExplicitlyCreated`，与聊天页新建会话一致（知识库作业建会话时同时写入首条消息，所以没标记）。
+   - 影响：这类会话会出现在创建者的聊天列表里，排除留给工单 06。
+27. **续接指针的预填**（工单 04）
+   - 选择：用运行任务的 `session_id / work_dir / runtime_id` 调 `UpdateChatSessionSession`；任务失败且 `service.ResumeUnsafeFailure(failure_reason, error)` 为真（与 `GetLastTaskSession` 的黑名单和错误文本守卫同源），或任务的 `retired_session_id` 就是它的 `session_id` 时，只填 `work_dir` 和 `runtime_id`。
+28. **运行响应带执行智能体**（工单 04）
+   - 选择：运行详情接口按 `task_id` 取任务，返回 `agent_id`（`omitempty`，列表不带，避免逐行查任务）；`chat_session_id` 随行数据在详情和列表都返回。运行页执行者、回复头像、运行信息里的执行者都优先用 `agent_id`，旧服务端没有时回退到自动化当前的 assignee。运行详情接口改为过 `AutopilotRunSchema`（之前直接 `as` 返回）。
+   - 理由：补工单 03 决策 19 的缺口；对话只能发给运行实际用的智能体。
+29. **运行页对话的组合方式**（工单 04）
+   - 问题：第一轮（触发卡片 + 执行过程）和追问消息要读成一段对话，但 `ChatMessageList` 自带虚拟滚动容器。
+   - 选择：给 `ChatMessageList` 加可选 `header`，通过 Virtuoso 上下文渲染在第一条消息之上（还有更早的分页未加载时不显示，避免第一轮悬在缺口上方）。有追问消息时第一轮作为 `header` 进聊天列表，整页一个滚动容器、打开落在最新消息；还没有追问时沿用工单 03 的普通滚动区。
+   - 理由：空列表时聊天列表要等「到达底部」的兜底计时才显示，直接用会让运行页首屏空白一段时间；改动只加一个可选 prop，聊天页不受影响。
+30. **运行未结束时的输入框**（工单 04）
+   - 选择：显示输入框但禁用，占位文字「运行结束后开放追问」（六种语言，`run_page.followup_after_run`）。`ChatInput` 加可选 `disabledPlaceholder`，优先级低于智能体归档 / 无权限 / 未绑定运行时的占位文字。工单 05 放开后删掉这个分支即可。
+   - 理由：`ChatInput` 禁用时默认占位是「会话已归档」，语义不对。
+31. **草稿与恢复**（工单 04）
+   - 选择：草稿和编辑器 key 都是 `autopilot-run:{runId}`，与普通聊天隔离，且会话建出来前后草稿不换槽。停止一轮后恢复草稿的请求原本按会话 ID 定位，`useAutopilotRunConversation` 把它改投到这个草稿槽。附件上传在可发送时开启（与聊天页一样只在无权限时关闭）。
+32. **横幅与禁用条件**（工单 04）
+   - 选择：照聊天窗口的单槽优先级：无权限 > 智能体已归档 > 未绑定运行时 > 离线 / 不稳定；智能体从工作区智能体列表（含已归档）取，权限用 `canAssignAgent`。执行者是小队（旧服务端没有 `agent_id` 且 assignee 是小队）时不显示输入框。
+33. **运行信息里的「共用这段对话」**（工单 04）
+   - 选择：本票不加。对话目前只对创建者可用，这句话在工单 06 放开共用访问时一起加。
