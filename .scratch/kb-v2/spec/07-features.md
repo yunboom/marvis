@@ -2761,3 +2761,21 @@ GET`/api/kb/annotations/{id}`
   "updated_at": "2026-10-24T17:40:00Z"                        // RFC3339
 }
 ```
+
+ 
+
+#### 7.15 收件箱分类
+
+设计稿 · 13.3 消息弹窗 · 全部 · 13.4 知识库 · 13.5 /inbox 页面 · 任务
+
+- 「消息」弹窗和 `/inbox` 页面在列表上方加分段「全部 / 任务 / 知识库 / 自动化」，四段等宽，各类带未读数，没有未读不显示数字（决策 108）。弹窗列表宽 380px，`/inbox` 列表默认宽 320px，仍可拖动。
+- 分类按通知类型（`InboxItemType`）归入，见下表；以后新增的知识库通知都归「知识库」。
+- 任务专属筛选（状态、优先级、没有智能体在工作）只在「全部」「任务」下出现，「知识库」「自动化」下隐藏；「只看未读」「来自」各类都保留。
+- 分类记在地址里：`?category=issue|kb|autopilot`，不带为「全部」。归档视图同样分类，归档接口 `GET /api/inbox/archived/page` 和 `GET /api/inbox/archived/facets` 加 `category` 参数，取值同上。
+- 现有的筛选、归档、全部标为已读、详情不变。
+
+| 分段 | `category` | 通知类型 | 
+| 全部 | 不带 | 全部类型 | 
+| 任务 | `issue` | issue_assigned、issue_subscribed、unassigned、assignee_changed、status_changed、priority_changed、start_date_changed、due_date_changed、new_comment、mentioned、review_requested、task_completed、task_failed、agent_blocked、agent_completed、reaction_added、children_done、quick_create_done、quick_create_failed、quick_create_unconfirmed | 
+| 知识库 | `kb` | kb_mr_changes_requested、kb_mr_review_requested | 
+| 自动化 | `autopilot` | autopilot_paused、autopilot_quota_exceeded |
