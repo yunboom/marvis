@@ -454,7 +454,6 @@
         "closed_no_reason": "#{{number}} 已被{{name}}關閉。草稿還在，可以繼續調整。",
         "merged": "#{{number}} 已由{{name}}合併，改動已生效。"
       },
-      "banner_review": "去稽核",
       "banner_view_page": "檢視頁面",
       "banner_comments": "檢視評論",
       "discard": "放棄草稿",

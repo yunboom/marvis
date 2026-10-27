@@ -454,7 +454,6 @@
         "closed_no_reason": "#{{number}} は{{name}}によりクローズされました。下書きは残っているので、調整を続けられます。",
         "merged": "#{{number}} は{{name}}によりマージされ、変更が反映されました。"
       },
-      "banner_review": "レビューへ",
       "banner_view_page": "ページを表示",
       "banner_comments": "コメントを表示",
       "discard": "下書きを破棄",

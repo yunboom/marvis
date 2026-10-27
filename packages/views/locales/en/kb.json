@@ -467,7 +467,6 @@
         "closed_no_reason": "{{name}} closed #{{number}}. The draft is kept; you can keep adjusting it.",
         "merged": "{{name}} merged #{{number}}. The changes are live."
       },
-      "banner_review": "Review",
       "banner_view_page": "View page",
       "banner_comments": "View comments",
       "discard": "Discard draft",

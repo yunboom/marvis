@@ -467,7 +467,6 @@
         "closed_no_reason": "{{name}} a fermé #{{number}}. Le brouillon est conservé ; vous pouvez continuer à l’ajuster.",
         "merged": "{{name}} a fusionné #{{number}}. Les modifications sont en ligne."
       },
-      "banner_review": "Examiner",
       "banner_view_page": "Voir la page",
       "banner_comments": "Voir les commentaires",
       "discard": "Abandonner le brouillon",

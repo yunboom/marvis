@@ -454,7 +454,6 @@
         "closed_no_reason": "#{{number}} 已被{{name}}关闭。草稿还在，可以继续调整。",
         "merged": "#{{number}} 已由{{name}}合并，改动已生效。"
       },
-      "banner_review": "去审核",
       "banner_view_page": "查看页面",
       "banner_comments": "查看评论",
       "discard": "放弃草稿",

@@ -358,6 +358,7 @@ describe("KbJobPage", () => {
 
     expect(within(panel).getByText("通用开发助手 submitted change request #16. The draft is in review and read-only here.")).toBeInTheDocument();
     expect(within(panel).getByText("Review #16").closest("a")).toHaveAttribute("href", "/acme/kb/team/reviews/16");
+    expect(within(within(panel).getByRole("status")).queryByRole("link")).toBeNull();
     expect(within(panel).queryByRole("button", { name: "Submit for review" })).toBeNull();
     expect(within(panel).queryByRole("button", { name: "Discard draft" })).toBeNull();
   });

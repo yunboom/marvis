@@ -150,7 +150,8 @@ export function KbJobDraftPanel({
       break;
   }
 
-  let banner: { dot: Dot; text: string; href: string; link: string } | null = null;
+  // The submitted banner has no link: the footer already offers the review button.
+  let banner: { dot: Dot; text: string; link?: { href: string; label: string } } | null = null;
   if (mr && state.view === "submitted" && !changesRequested) {
     banner = {
       dot: "blue",
@@ -158,15 +159,15 @@ export function KbJobDraftPanel({
         mr.author_type === "agent"
           ? t(($) => $.job.draft.banner.submitted_agent, { name: mr.author_name || job.agent_name, number: mr.number })
           : t(($) => $.job.draft.banner.submitted_self, { number: mr.number }),
-      href: p.kbMergeRequest(kbSlug, mr.number),
-      link: t(($) => $.job.draft.banner_review),
     };
   } else if (mr && state.view === "merged") {
     banner = {
       dot: "green",
       text: t(($) => $.job.draft.banner.merged, { number: mr.number, name: mr.merged_by_name }),
-      href: job.pages[0] ? p.kbPage(kbSlug, job.pages[0].page_id) : p.kbBase(kbSlug),
-      link: t(($) => $.job.draft.banner_view_page),
+      link: {
+        href: job.pages[0] ? p.kbPage(kbSlug, job.pages[0].page_id) : p.kbBase(kbSlug),
+        label: t(($) => $.job.draft.banner_view_page),
+      },
     };
   } else if (mr && state.reopened) {
     banner = {
@@ -174,8 +175,10 @@ export function KbJobDraftPanel({
       text: mr.close_reason
         ? t(($) => $.job.draft.banner.closed, { number: mr.number, name: mr.closed_by_name, reason: mr.close_reason })
         : t(($) => $.job.draft.banner.closed_no_reason, { number: mr.number, name: mr.closed_by_name }),
-      href: p.kbMergeRequest(kbSlug, mr.number),
-      link: t(($) => $.job.draft.banner_comments),
+      link: {
+        href: p.kbMergeRequest(kbSlug, mr.number),
+        label: t(($) => $.job.draft.banner_comments),
+      },
     };
   }
 
@@ -279,9 +282,11 @@ export function KbJobDraftPanel({
               >
                 <StateDot dot={banner.dot} />
                 <span className="min-w-0 flex-1">{banner.text}</span>
-                <AppLink href={banner.href} className="shrink-0 text-info hover:underline">
-                  {banner.link}
-                </AppLink>
+                {banner.link && (
+                  <AppLink href={banner.link.href} className="shrink-0 text-info hover:underline">
+                    {banner.link.label}
+                  </AppLink>
+                )}
               </div>
             )}
             <div className="flex items-center">
