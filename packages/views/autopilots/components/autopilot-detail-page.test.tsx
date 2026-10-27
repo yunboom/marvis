@@ -251,6 +251,25 @@ describe("AutopilotDetailPage", () => {
     expect(screen.getByRole("link", { name: /Issue linked/ })).toHaveAttribute("href", "/ws/issues/iss-1");
   });
 
+  it("opens past runs by what they produced after the autopilot switched modes", async () => {
+    detail = {
+      autopilot: autopilot({ execution_mode: "create_issue" }),
+      triggers: [],
+      collaborators: [],
+    };
+    runs = [
+      run({ id: "old-run-only", status: "completed", task_id: "11111111-1111-4111-8111-111111111111" }),
+      run({ id: "linked", status: "issue_created", issue_id: "iss-1" }),
+    ];
+    renderPage();
+
+    expect(await screen.findByRole("link", { name: /Completed/ })).toHaveAttribute(
+      "href",
+      "/ws/autopilots/ap-1/runs/old-run-only",
+    );
+    expect(screen.getByRole("link", { name: /Issue linked/ })).toHaveAttribute("href", "/ws/issues/iss-1");
+  });
+
   it("hides the instructions block when there are none", async () => {
     detail = { autopilot: autopilot({ description: null }), triggers: [], collaborators: [] };
     renderPage();

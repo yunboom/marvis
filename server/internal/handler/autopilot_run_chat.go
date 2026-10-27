@@ -16,10 +16,6 @@ import (
 	"github.com/yunboom/marvis/server/pkg/dbid"
 )
 
-// autopilotExecutionModeRunOnly is the execution mode whose runs execute as a
-// bare agent task; only these runs carry a follow-up conversation.
-const autopilotExecutionModeRunOnly = "run_only"
-
 // Error codes of the run follow-up chat endpoint.
 const (
 	autopilotRunChatCodeModeUnsupported = "run_mode_unsupported"
@@ -32,7 +28,9 @@ type AutopilotRunChatResponse struct {
 }
 
 // EnsureAutopilotRunChat returns the follow-up chat session of a run_only run,
-// creating it on first use. The run itself stays an autopilot task; the chat
+// creating it on first use. A run is judged by what it produced, not by the
+// autopilot's current mode, which may have changed since: a run with an issue
+// was a create_issue run and continues on that issue. The run itself stays an autopilot task; the chat
 // session continues the run task's provider session and work dir, so the
 // second turn onward goes through the ordinary chat endpoints. A session
 // created while the run executes starts without a resume pointer: the run's
@@ -63,7 +61,7 @@ func (h *Handler) EnsureAutopilotRunChat(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if autopilot.ExecutionMode != autopilotExecutionModeRunOnly {
+	if run.IssueID.Valid {
 		writeErrorCode(w, http.StatusConflict, autopilotRunChatCodeModeUnsupported, "only run_only runs have a conversation")
 		return
 	}

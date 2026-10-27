@@ -186,15 +186,21 @@ func TestEnsureAutopilotRunChat_Refusals(t *testing.T) {
 		name     string
 		mode     string
 		task     testutil.Cols
+		issue    bool
 		wantCode string
 	}{
-		{name: "create_issue run", mode: "create_issue", task: testutil.Cols{"status": "completed"}, wantCode: autopilotRunChatCodeModeUnsupported},
+		{name: "create_issue run", mode: "create_issue", task: testutil.Cols{"status": "completed"}, issue: true, wantCode: autopilotRunChatCodeModeUnsupported},
+		// The autopilot switched to run_only after this run created its issue.
+		{name: "create_issue run under a run_only autopilot", mode: "run_only", task: testutil.Cols{"status": "completed"}, issue: true, wantCode: autopilotRunChatCodeModeUnsupported},
 		{name: "run without a task", mode: "run_only", task: nil, wantCode: autopilotRunChatCodeNoSession},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fx := newRunChatFixture(t, tc.mode)
 			runID := fx.run(t, tc.task)
+			if tc.issue {
+				dbfx.Exec(t, `UPDATE autopilot_run SET issue_id = $1 WHERE id = $2`, dbfx.Issue(t, fx.title), runID)
+			}
 
 			var resp ensureRunChatResponse
 			testutil.Call(t, testHandler.EnsureAutopilotRunChat, ensureRunChatRequest(testUserID, fx.autopilotID, runID)).
@@ -206,6 +212,28 @@ func TestEnsureAutopilotRunChat_Refusals(t *testing.T) {
 				t.Fatal("a refused run got a chat session")
 			}
 		})
+	}
+}
+
+// A run_only run keeps its conversation after the autopilot switches to
+// create_issue: the run, not the autopilot's current mode, decides.
+func TestEnsureAutopilotRunChat_RunOnlyRunAfterModeSwitch(t *testing.T) {
+	if testHandler == nil {
+		t.Skip("database not available")
+	}
+	fx := newRunChatFixture(t, "create_issue")
+	runID := fx.run(t, testutil.Cols{
+		"status":     "completed",
+		"session_id": "provider-session-switched",
+		"work_dir":   "/tmp/run-chat-switched",
+		"runtime_id": fx.runtimeID,
+	})
+
+	var resp ensureRunChatResponse
+	testutil.Call(t, testHandler.EnsureAutopilotRunChat, ensureRunChatRequest(testUserID, fx.autopilotID, runID)).
+		Want(http.StatusOK).JSON(&resp)
+	if resp.ChatSessionID == "" {
+		t.Fatal("chat_session_id is empty")
 	}
 }
 

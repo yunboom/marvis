@@ -65,6 +65,7 @@ import { earliestScheduledRun } from "./next-run";
 import { AutopilotDialog } from "./autopilot-dialog";
 import { EditScheduleTriggerDialog } from "./edit-schedule-trigger-dialog";
 import { runNowToastKind, runNowBlockedKey } from "./run-now-toast";
+import { runDestination } from "./run-destination";
 import { RUN_VISUAL, runStatusOf } from "./run-status";
 import { WebhookDeliveriesSection } from "./webhook-deliveries-section";
 import { ProjectIcon } from "../../projects/components/project-icon";
@@ -84,7 +85,7 @@ function RunRow({
   nested = false,
 }: {
   run: AutopilotRun;
-  /** A run_only autopilot's runs open the run page; create_issue runs open their issue. */
+  /** Whether the autopilot runs run_only now; see runDestination. */
   runOnly: boolean;
   /** A run listed under the skipped group, indented past the group's chevron. */
   nested?: boolean;
@@ -99,11 +100,13 @@ function RunRow({
   // The summary says what the run produced; with nothing to say, it falls back
   // to the status itself so the icon never stands alone.
   const summaryIsStatus = !run.issue_id && !run.failure_reason;
-  const href = run.issue_id
-    ? wsPaths.issueDetail(run.issue_id)
-    : runOnly
-      ? wsPaths.autopilotRun(run.autopilot_id, run.id)
-      : null;
+  const destination = runDestination(run, runOnly);
+  const href =
+    destination === "issue" && run.issue_id
+      ? wsPaths.issueDetail(run.issue_id)
+      : destination === "run"
+        ? wsPaths.autopilotRun(run.autopilot_id, run.id)
+        : null;
 
   const content = (
     <>
