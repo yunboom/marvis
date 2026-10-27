@@ -680,6 +680,8 @@ func (h *Handler) loadKbPageDrafts(ctx context.Context, base db.KbBase, page *db
 		CreatedBy:       userUUID,
 		Statuses:        liveDraftStatuses,
 		PageID:          page.ID,
+		ReopenedStatus:  kb.DraftStatusOpen,
+		ClosedStatus:    kb.MergeRequestStatusClosed,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "list drafts page_id=%s", uuidToString(page.ID))

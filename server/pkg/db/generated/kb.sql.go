@@ -2380,6 +2380,15 @@ WHERE d.workspace_id = $1
   AND (d.created_by = $3 OR j.created_by = $3)
   AND d.status = ANY($4::text[])
   AND dp.page_id = $5
+  AND NOT (
+      d.status = $6::text
+      AND EXISTS (
+          SELECT 1 FROM kb_merge_request mr
+          WHERE mr.draft_id = d.id
+            AND mr.status = $7::text
+            AND mr.closed_at >= d.updated_at
+      )
+  )
 ORDER BY d.updated_at DESC, d.id
 `
 
@@ -2389,6 +2398,8 @@ type ListKbUserDraftsForPageParams struct {
 	CreatedBy       pgtype.UUID `json:"created_by"`
 	Statuses        []string    `json:"statuses"`
 	PageID          pgtype.UUID `json:"page_id"`
+	ReopenedStatus  string      `json:"reopened_status"`
+	ClosedStatus    string      `json:"closed_status"`
 }
 
 type ListKbUserDraftsForPageRow struct {
@@ -2408,7 +2419,10 @@ type ListKbUserDraftsForPageRow struct {
 // The caller's live drafts (their own, or linked to their jobs) that change a
 // page, most recently updated first,
 // with where each draft came from: a knowledge base job's chat, or the task
-// (issue or chat) that created it.
+// (issue or chat) that created it. Closing a merge request reopens its
+// draft; such a draft is left out until it is edited or submitted again,
+// that is while a closed request of it was closed no earlier than the
+// draft's last update (closing and reopening share one transaction's now()).
 func (q *Queries) ListKbUserDraftsForPage(ctx context.Context, arg ListKbUserDraftsForPageParams) ([]ListKbUserDraftsForPageRow, error) {
 	rows, err := q.db.Query(ctx, listKbUserDraftsForPage,
 		arg.WorkspaceID,
@@ -2416,6 +2430,8 @@ func (q *Queries) ListKbUserDraftsForPage(ctx context.Context, arg ListKbUserDra
 		arg.CreatedBy,
 		arg.Statuses,
 		arg.PageID,
+		arg.ReopenedStatus,
+		arg.ClosedStatus,
 	)
 	if err != nil {
 		return nil, err

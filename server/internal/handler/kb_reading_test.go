@@ -412,6 +412,63 @@ func TestGetKbPage(t *testing.T) {
 	getKbPage(t, "/payment", "", http.StatusBadRequest)
 }
 
+// TestGetKbPageDraftsAfterClose covers the caller's drafts whose merge
+// request was closed: closing reopens the draft, which stays out of the
+// page's draft list until it is edited or submitted again.
+func TestGetKbPageDraftsAfterClose(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	slug := fmt.Sprintf("read-closed-%d", time.Now().UnixNano())
+	base := insertTestKbBase(t, "Closed drafts KB", slug)
+	page := createTestKbPage(t, base, kb.NewPage{Slug: "callback", Title: "支付回调", Position: "a0", Markdown: "按渠道交易号去重。"})
+	closedAt := time.Now().Add(-time.Hour)
+
+	// draftOf creates the caller's draft of the page in a status, last
+	// updated at updatedAt.
+	draftOf := func(status string, updatedAt time.Time) string {
+		id := insertTestKbDraft(t, base, testUserID, 1)
+		insertTestKbDraftPage(t, id, page, kb.DraftOpUpdate, "", "a0", "callback", "支付回调",
+			kbTestBlocks(t, "bC01", "按流水号去重。"))
+		dbfx.Exec(t, `UPDATE kb_draft SET status = $2, updated_at = $3 WHERE id = $1`, id, status, updatedAt)
+
+		return id
+	}
+	// requestOf records a merge request of the draft; closed requests close at closedAt.
+	requestOf := func(draftID string, number int, status string) {
+		cols := testutil.Cols{
+			"workspace_id": testWorkspaceID, "knowledge_base_id": base, "number": number, "title": "Revert #1",
+			"source": "revert", "author_type": "member", "author_id": testUserID, "draft_id": draftID,
+			"status": status,
+		}
+		if status == kb.MergeRequestStatusClosed {
+			cols["closed_at"] = closedAt
+		}
+		dbfx.Insert(t, "kb_merge_request", cols)
+	}
+
+	untouched := draftOf(kb.DraftStatusOpen, closedAt)
+	requestOf(untouched, 41, kb.MergeRequestStatusClosed)
+
+	resubmitted := draftOf(kb.DraftStatusSubmitted, closedAt.Add(time.Minute))
+	requestOf(resubmitted, 42, kb.MergeRequestStatusClosed)
+	requestOf(resubmitted, 43, kb.MergeRequestStatusOpen)
+
+	edited := draftOf(kb.DraftStatusOpen, closedAt.Add(2*time.Minute))
+	requestOf(edited, 44, kb.MergeRequestStatusClosed)
+
+	got := getKbPage(t, page, "", http.StatusOK)
+
+	ids := make([]string, len(got.Drafts))
+	for i, d := range got.Drafts {
+		ids[i] = d.ID
+	}
+	if want := []string{edited, resubmitted}; strings.Join(ids, ",") != strings.Join(want, ",") {
+		t.Errorf("drafts = %v, want edited %s then resubmitted %s, not untouched %s", ids, edited, resubmitted, untouched)
+	}
+}
+
 func TestKbPageHistory(t *testing.T) {
 	if testHandler == nil || testPool == nil {
 		t.Skip("database not available")

@@ -252,7 +252,10 @@ ORDER BY mr.updated_at DESC, mr.number DESC;
 -- The caller's live drafts (their own, or linked to their jobs) that change a
 -- page, most recently updated first,
 -- with where each draft came from: a knowledge base job's chat, or the task
--- (issue or chat) that created it.
+-- (issue or chat) that created it. Closing a merge request reopens its
+-- draft; such a draft is left out until it is edited or submitted again,
+-- that is while a closed request of it was closed no earlier than the
+-- draft's last update (closing and reopening share one transaction's now()).
 SELECT
     d.id, d.title, d.status, d.updated_at,
     dp.op, dp.blocks,
@@ -273,6 +276,15 @@ WHERE d.workspace_id = sqlc.arg('workspace_id')
   AND (d.created_by = sqlc.arg('created_by') OR j.created_by = sqlc.arg('created_by'))
   AND d.status = ANY(sqlc.arg('statuses')::text[])
   AND dp.page_id = sqlc.arg('page_id')
+  AND NOT (
+      d.status = sqlc.arg('reopened_status')::text
+      AND EXISTS (
+          SELECT 1 FROM kb_merge_request mr
+          WHERE mr.draft_id = d.id
+            AND mr.status = sqlc.arg('closed_status')::text
+            AND mr.closed_at >= d.updated_at
+      )
+  )
 ORDER BY d.updated_at DESC, d.id;
 
 -- name: GetLatestKbMergeRequest :one
