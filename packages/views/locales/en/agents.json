@@ -278,6 +278,7 @@
     "mcp_config": "MCP",
     "composio_mcp": "MCP Apps",
     "integrations": "Integrations",
+    "integration_hint": "Integrations not set up",
     "runtime_config": "Routing",
     "qoder_agent": "QCA Agent",
     "discard_dialog_title": "Discard unsaved changes?",

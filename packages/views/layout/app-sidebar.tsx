@@ -89,6 +89,8 @@ import { projectDetailOptions } from "@marvis/core/projects/queries";
 import type { PinnedItem } from "@marvis/core/types";
 import { useLogout } from "../auth";
 import { ProjectIcon } from "../projects/components/project-icon";
+import { IntegrationHintDot } from "../agents/components/integration-hint-dot";
+import { useAgentIntegrationHints } from "../agents/use-agent-integration-hints";
 import { routeIconForPath } from "./route-icon-components";
 import { useT } from "../i18n";
 import {
@@ -191,6 +193,12 @@ const utilityNav: { key: NavKey; labelKey: NavLabelKey }[] = [
 
 const NAV_ITEM_CLASS_NAME =
   "h-[34px] gap-2.5 rounded-md px-3 text-body text-foreground [&_svg]:size-[18px] hover:not-data-active:bg-sidebar-accent/70 data-active:bg-sidebar-accent data-active:font-medium data-active:text-sidebar-accent-foreground";
+
+function AgentsIntegrationHintDot({ wsId }: { wsId: string | undefined }) {
+  const hasHint = useAgentIntegrationHints(wsId).size > 0;
+  if (!hasHint) return null;
+  return <IntegrationHintDot className="ml-auto" />;
+}
 
 function DraftDot() {
   const hasDraft = useIssueDraftStore((s) => s.hasDraft());
@@ -865,6 +873,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                       >
                         <Icon />
                         <span>{t(($) => $.nav[item.labelKey])}</span>
+                        {item.key === "agents" && <AgentsIntegrationHintDot wsId={wsId} />}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
