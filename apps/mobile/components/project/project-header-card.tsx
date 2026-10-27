@@ -1,5 +1,5 @@
 /**
- * Header card for the project detail screen. Icon tile stacked above
+ * Header card for the project detail screen. Large emoji icon centered above
  * the title, with the description shown in full (no truncation) below.
  *
  * Mirrors the visual emphasis of web's `project-header.tsx` but in a single
@@ -29,7 +29,7 @@ export function ProjectHeaderCard({ project, onEdit }: Props) {
       className="px-4 pt-4 pb-3 active:bg-secondary/40"
     >
       <View className="items-start gap-2">
-        <ProjectIcon icon={project.icon} size="tile" />
+        <ProjectIcon icon={project.icon} size="lg" />
         <Text
           className="text-2xl font-bold text-foreground"
           selectable

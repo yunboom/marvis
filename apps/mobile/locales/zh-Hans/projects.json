@@ -27,7 +27,7 @@
     "add_resource": "添加资源"
   },
   "form": {
-    "icon": "图标",
+    "icon_emoji": "图标（emoji）",
     "title": "标题",
     "title_placeholder": "项目标题",
     "description": "描述",
