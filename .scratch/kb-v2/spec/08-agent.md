@@ -1935,13 +1935,13 @@ SKILL.md Routing 表（改动后）
 English · 代码原文
 
 ```
-| `references/knowledge-bases.md` | Knowledge bases: a router to one reference per command — reading and searching pages, drafts and page edits, claims, change requests and review fixes, annotations, sources, stale pages, creating and configuring; working in a knowledge base job |
+| `references/knowledge-bases.md` | Knowledge bases: a router to one reference per command — reading and searching pages, iterating on and maintaining knowledge, creating and configuring |
 ```
 
 中文对照
 
 ```
-| `references/knowledge-bases.md` | 知识库：按命令分 reference 的路由 —— 读页面和搜索、草稿与页面编辑、论断、变更请求与审核修改、批注、资料、过期页面、新建和配置；在知识库作业里工作 |
+| `references/knowledge-bases.md` | 知识库：按命令分 reference 的路由 —— 读页面和搜索、迭代和维护知识、新建和配置 |
 ```
 
 references/knowledge-bases.md（路由）
