@@ -70,6 +70,7 @@ export function KbInfoPanel({
   page,
   kbSlug,
   draft = "",
+  diff = true,
   onClose,
   onOpenSource,
 }: {
@@ -77,6 +78,8 @@ export function KbInfoPanel({
   kbSlug: string;
   /** The draft being read; page links keep it. */
   draft?: string;
+  /** The draft's edits are marked; page links keep that too. */
+  diff?: boolean;
   onClose: () => void;
   onOpenSource: (source: KbSource) => void;
 }) {
@@ -146,7 +149,7 @@ export function KbInfoPanel({
       <Section title={t(($) => $.info.backlinks)}>
         <div className="flex flex-col gap-1 text-label">
           {page.backlinks.map((link) => (
-            <AppLink key={link.id} href={withDraft(p.kbPage(kbSlug, link.id), draft)} className="text-info hover:underline">
+            <AppLink key={link.id} href={withDraft(p.kbPage(kbSlug, link.id), draft, diff)} className="text-info hover:underline">
               {link.title}
             </AppLink>
           ))}

@@ -239,12 +239,12 @@ JOIN kb_merge_request mr ON mr.id = r.merge_request_id
 WHERE r.page_id = $1 AND r.id = $2;
 
 -- name: ListKbOpenMergeRequestsForPage :many
--- Open merge requests whose draft touches the page, newest first.
-SELECT mr.number, mr.title, mr.draft_id
+-- Merge requests in the given statuses whose draft touches the page, newest first.
+SELECT mr.number, mr.title, mr.draft_id, mr.status
 FROM kb_merge_request mr
 JOIN kb_draft_page dp ON dp.draft_id = mr.draft_id
 WHERE mr.knowledge_base_id = sqlc.arg('knowledge_base_id')
-  AND mr.status = sqlc.arg('status')::text
+  AND mr.status = ANY(sqlc.arg('statuses')::text[])
   AND dp.page_id = sqlc.arg('page_id')
 ORDER BY mr.updated_at DESC, mr.number DESC;
 

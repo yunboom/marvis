@@ -1842,18 +1842,18 @@ func (q *Queries) ListKbLinksFromPage(ctx context.Context, arg ListKbLinksFromPa
 }
 
 const listKbOpenMergeRequestsForPage = `-- name: ListKbOpenMergeRequestsForPage :many
-SELECT mr.number, mr.title, mr.draft_id
+SELECT mr.number, mr.title, mr.draft_id, mr.status
 FROM kb_merge_request mr
 JOIN kb_draft_page dp ON dp.draft_id = mr.draft_id
 WHERE mr.knowledge_base_id = $1
-  AND mr.status = $2::text
+  AND mr.status = ANY($2::text[])
   AND dp.page_id = $3
 ORDER BY mr.updated_at DESC, mr.number DESC
 `
 
 type ListKbOpenMergeRequestsForPageParams struct {
 	KnowledgeBaseID pgtype.UUID `json:"knowledge_base_id"`
-	Status          string      `json:"status"`
+	Statuses        []string    `json:"statuses"`
 	PageID          pgtype.UUID `json:"page_id"`
 }
 
@@ -1861,11 +1861,12 @@ type ListKbOpenMergeRequestsForPageRow struct {
 	Number  int32       `json:"number"`
 	Title   string      `json:"title"`
 	DraftID pgtype.UUID `json:"draft_id"`
+	Status  string      `json:"status"`
 }
 
-// Open merge requests whose draft touches the page, newest first.
+// Merge requests in the given statuses whose draft touches the page, newest first.
 func (q *Queries) ListKbOpenMergeRequestsForPage(ctx context.Context, arg ListKbOpenMergeRequestsForPageParams) ([]ListKbOpenMergeRequestsForPageRow, error) {
-	rows, err := q.db.Query(ctx, listKbOpenMergeRequestsForPage, arg.KnowledgeBaseID, arg.Status, arg.PageID)
+	rows, err := q.db.Query(ctx, listKbOpenMergeRequestsForPage, arg.KnowledgeBaseID, arg.Statuses, arg.PageID)
 	if err != nil {
 		return nil, err
 	}
@@ -1873,7 +1874,12 @@ func (q *Queries) ListKbOpenMergeRequestsForPage(ctx context.Context, arg ListKb
 	items := []ListKbOpenMergeRequestsForPageRow{}
 	for rows.Next() {
 		var i ListKbOpenMergeRequestsForPageRow
-		if err := rows.Scan(&i.Number, &i.Title, &i.DraftID); err != nil {
+		if err := rows.Scan(
+			&i.Number,
+			&i.Title,
+			&i.DraftID,
+			&i.Status,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

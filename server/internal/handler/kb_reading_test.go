@@ -308,7 +308,16 @@ func TestGetKbPage(t *testing.T) {
 	dbfx.Insert(t, "kb_merge_request", testutil.Cols{
 		"workspace_id": testWorkspaceID, "knowledge_base_id": base, "number": 18, "title": "退款回调也按渠道交易号去重",
 		"source": "custom", "author_type": "member", "author_id": someoneElse, "draft_id": theirDraft,
-		"updated_at": time.Now().Add(time.Minute),
+		"status": kb.MergeRequestStatusChangesRequested, "updated_at": time.Now().Add(time.Minute),
+	})
+	// A closed request on the page is not pending.
+	closedDraft := insertTestKbDraft(t, base, someoneElse, 1)
+	insertTestKbDraftPage(t, closedDraft, callback, kb.DraftOpUpdate, payment, "a0", "callback", "支付回调",
+		kbTestBlocks(t, blockID, "按退款单号去重。"))
+	dbfx.Insert(t, "kb_merge_request", testutil.Cols{
+		"workspace_id": testWorkspaceID, "knowledge_base_id": base, "number": 19, "title": "已关闭",
+		"source": "custom", "author_type": "member", "author_id": someoneElse, "draft_id": closedDraft,
+		"status": kb.MergeRequestStatusClosed,
 	})
 
 	page := getKbPage(t, callback, "", http.StatusOK)
@@ -355,8 +364,8 @@ func TestGetKbPage(t *testing.T) {
 	if page.PendingMR == nil || page.PendingMR.Number != 18 || page.PendingMRCount != 2 {
 		t.Errorf("pending_mr = %+v (%d)", page.PendingMR, page.PendingMRCount)
 	}
-	if len(page.PendingMRs) != 1 || page.PendingMRs[0].Number != 18 || page.PendingMRs[0].Status != kb.MergeRequestStatusOpen {
-		t.Errorf("pending_mrs = %+v, want only the other member's #18", page.PendingMRs)
+	if len(page.PendingMRs) != 1 || page.PendingMRs[0].Number != 18 || page.PendingMRs[0].Status != kb.MergeRequestStatusChangesRequested {
+		t.Errorf("pending_mrs = %+v, want only the other member's #18 with changes requested", page.PendingMRs)
 	}
 	if page.AnnotationsOpen != 1 {
 		t.Errorf("annotations_open = %d", page.AnnotationsOpen)
@@ -364,7 +373,8 @@ func TestGetKbPage(t *testing.T) {
 	if len(page.Drafts) != 1 || page.Drafts[0].ID != openDraft || page.Drafts[0].ChangedBlocks != 3 ||
 		page.Drafts[0].DraftChange != kb.DraftChangeModified {
 		t.Errorf("drafts = %+v, want the open draft with 3 changed blocks", page.Drafts)
-	} else if mr := page.Drafts[0].MergeRequest; mr == nil || mr.Number != 16 || mr.Title != "去重键改为渠道交易号" {
+	} else if mr := page.Drafts[0].MergeRequest; mr == nil || mr.Number != 16 || mr.Title != "去重键改为渠道交易号" ||
+		mr.Status != kb.MergeRequestStatusOpen {
 		t.Errorf("draft merge_request = %+v, want #16", mr)
 	}
 

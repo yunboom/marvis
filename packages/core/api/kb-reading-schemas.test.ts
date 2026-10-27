@@ -49,7 +49,7 @@ const page = {
   backlinks: [{ id: "page-2", title: "幂等键" }],
   pending_mr: { number: 18, title: "退款回调" },
   pending_mr_count: 2,
-  pending_mrs: [{ number: 18, title: "退款回调", status: "open" }],
+  pending_mrs: [{ number: 18, title: "退款回调", status: "changes_requested" }],
   annotations_open: 2,
   draft_change: "",
   drafts: [
@@ -61,7 +61,7 @@ const page = {
       draft_change: "modified",
       changed_blocks: 1,
       origin: { type: "chat", label: "回调去重键", ref_id: "s-1" },
-      merge_request: { number: 16, title: "去重键" },
+      merge_request: { number: 16, title: "去重键", status: "open" },
     },
   ],
 };

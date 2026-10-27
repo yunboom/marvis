@@ -185,6 +185,8 @@ const KbLastMergeSchema = z
 
 const KbMergeRequestRefSchema = z.object({ number: countSchema, title: text }).loose();
 
+const KbPendingMergeRequestSchema = z.object({ number: countSchema, title: text, status: text }).loose();
+
 const KbPageDraftSchema = z
   .object({
     id: z.string(),
@@ -197,11 +199,9 @@ const KbPageDraftSchema = z
       .object({ type: text, label: text, ref_id: text })
       .loose()
       .catch({ type: "none", label: "", ref_id: "" }),
-    merge_request: nullableObject(KbMergeRequestRefSchema),
+    merge_request: nullableObject(KbPendingMergeRequestSchema),
   })
   .loose();
-
-const KbPendingMergeRequestSchema = z.object({ number: countSchema, title: text, status: text }).loose();
 
 export const KbPageSchema = z
   .object({

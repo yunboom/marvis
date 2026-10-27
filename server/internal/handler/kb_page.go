@@ -106,13 +106,13 @@ type KbPageDraftResponse struct {
 	DraftChange   string                `json:"draft_change"`
 	ChangedBlocks int                   `json:"changed_blocks"`
 	Origin        KbDraftOriginResponse `json:"origin"`
-	// MergeRequest is the open merge request made from the draft, nil until
-	// it is submitted.
-	MergeRequest *KbMergeRequestRefResponse `json:"merge_request"`
+	// MergeRequest is the merge request under review made from the draft,
+	// nil until it is submitted.
+	MergeRequest *KbPendingMergeRequestResponse `json:"merge_request"`
 }
 
-// KbPendingMergeRequestResponse is another author's open merge request that
-// changes the page.
+// KbPendingMergeRequestResponse is a merge request under review (open or
+// changes requested) that changes the page.
 type KbPendingMergeRequestResponse struct {
 	Number int32  `json:"number"`
 	Title  string `json:"title"`
@@ -560,7 +560,7 @@ func (h *Handler) fillKbPageActivity(ctx context.Context, src kbPageSource, user
 
 	pending, err := h.Queries.ListKbOpenMergeRequestsForPage(ctx, db.ListKbOpenMergeRequestsForPageParams{
 		KnowledgeBaseID: src.base.ID,
-		Status:          kb.MergeRequestStatusOpen,
+		Statuses:        kbActiveMergeRequestStatuses,
 		PageID:          page.ID,
 	})
 	if err != nil {
@@ -605,14 +605,14 @@ func attachKbPageMergeRequests(view *KbPageResponse, pending []db.ListKbOpenMerg
 	for _, mr := range pending {
 		if i, ok := own[uuidToString(mr.DraftID)]; ok {
 			if view.Drafts[i].MergeRequest == nil {
-				view.Drafts[i].MergeRequest = &KbMergeRequestRefResponse{Number: mr.Number, Title: mr.Title}
+				view.Drafts[i].MergeRequest = &KbPendingMergeRequestResponse{Number: mr.Number, Title: mr.Title, Status: mr.Status}
 			}
 			continue
 		}
 		view.PendingMRs = append(view.PendingMRs, KbPendingMergeRequestResponse{
 			Number: mr.Number,
 			Title:  mr.Title,
-			Status: kb.MergeRequestStatusOpen,
+			Status: mr.Status,
 		})
 	}
 }

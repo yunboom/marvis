@@ -120,11 +120,11 @@ export interface KbPageDraft {
   draft_change: string;
   changed_blocks: number;
   origin: KbDraftOrigin;
-  /** The open merge request made from the draft; null until it is submitted. */
-  merge_request: KbMergeRequestRef | null;
+  /** The merge request under review made from the draft; null until it is submitted. */
+  merge_request: KbPendingMergeRequest | null;
 }
 
-/** Another author's open merge request that changes a page. */
+/** A merge request under review (open or changes requested) that changes a page. */
 export interface KbPendingMergeRequest {
   number: number;
   title: string;

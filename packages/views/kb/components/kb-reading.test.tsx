@@ -552,7 +552,7 @@ describe("KbPageView", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Page info" }));
     const info = screen.getByRole("complementary", { name: "Page info" });
-    expect(within(info).getByRole("link", { name: "幂等键" })).toHaveAttribute("href", "/acme/kb/team/p/page-idem?draft=d-1");
+    expect(within(info).getByRole("link", { name: "幂等键" })).toHaveAttribute("href", "/acme/kb/team/p/page-idem?draft=d-1&diff=0");
   });
 
   it("leaves page links of the official version alone", async () => {
@@ -618,6 +618,7 @@ describe("KbPageView read bar", () => {
     merge_request: mergeRequest,
   });
   const theirs = { number: 18, title: "退款回调也按渠道交易号去重", status: "open" };
+  const mine = { number: 16, title: "去重键改为渠道交易号", status: "open" };
 
   // The tag is the bar's only span with that text; the segment is a button.
   function tag(name: string): HTMLElement {
@@ -646,7 +647,7 @@ describe("KbPageView read bar", () => {
       pending_mr: { number: 16, title: "去重键改为渠道交易号" },
       pending_mr_count: 1,
       pending_mrs: [],
-      drafts: [ownDraft({ number: 16, title: "去重键改为渠道交易号" })],
+      drafts: [ownDraft(mine)],
     });
     mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
 
@@ -673,29 +674,61 @@ describe("KbPageView read bar", () => {
     expect(screen.queryByRole("button", { name: "Official" })).not.toBeInTheDocument();
   });
 
-  it("marks a submitted draft to resolve beside other changes and follows the one picked", async () => {
-    const user = userEvent.setup();
+  it("marks a submitted draft to resolve once its review asks for changes", async () => {
     mocked.getKnowledgeBasePage.mockResolvedValue({
       ...CALLBACK,
-      pending_mr: { number: 18, title: theirs.title },
-      pending_mr_count: 2,
-      pending_mrs: [theirs],
-      drafts: [ownDraft({ number: 16, title: "去重键改为渠道交易号" })],
+      pending_mr: { number: 16, title: mine.title },
+      pending_mr_count: 1,
+      pending_mrs: [],
+      drafts: [ownDraft({ ...mine, status: "changes_requested" })],
     });
     mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
 
     expect(await screen.findByText("To resolve #16 · 去重键改为渠道交易号")).toBeInTheDocument();
     expect(tag("To resolve")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View change" })).toHaveAttribute("href", "/acme/kb/team/reviews/16");
+  });
+
+  it("marks another author's change to resolve once its review asks for changes", async () => {
+    mocked.getKnowledgeBasePage.mockResolvedValue({
+      ...CALLBACK,
+      pending_mr: { number: 18, title: theirs.title },
+      pending_mr_count: 1,
+      pending_mrs: [{ ...theirs, status: "changes_requested" }],
+      drafts: [],
+    });
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    expect(await screen.findByText("To resolve #18 · 退款回调也按渠道交易号去重")).toBeInTheDocument();
+    expect(tag("To resolve")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View change" })).toHaveAttribute("href", "/acme/kb/team/reviews/18");
+  });
+
+  it("lists other changes beside the viewer's own and follows the one picked", async () => {
+    const user = userEvent.setup();
+    mocked.getKnowledgeBasePage.mockResolvedValue({
+      ...CALLBACK,
+      pending_mr: { number: 18, title: theirs.title },
+      pending_mr_count: 2,
+      pending_mrs: [{ ...theirs, status: "changes_requested" }],
+      drafts: [ownDraft(mine)],
+    });
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    // Other changes on the page do not change the viewer's own tag.
+    expect(await screen.findByText("Submitted for review #16 · 去重键改为渠道交易号")).toBeInTheDocument();
+    expect(tag("In review")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View change" })).toHaveAttribute("href", "/acme/kb/team/reviews/16");
 
     await user.click(screen.getByRole("button", { name: "1 more change in review" }));
-    await user.click(await screen.findByRole("menuitemradio", { name: "#18 · 退款回调也按渠道交易号去重" }));
-    expect(await screen.findByText("In review #18 · 退款回调也按渠道交易号去重")).toBeInTheDocument();
+    expect(await screen.findByRole("menuitemradio", { name: /^#16 · 去重键改为渠道交易号\s*In review$/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("menuitemradio", { name: /^#18 · 退款回调也按渠道交易号去重\s*To resolve$/ }));
+    expect(await screen.findByText("To resolve #18 · 退款回调也按渠道交易号去重")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View change" })).toHaveAttribute("href", "/acme/kb/team/reviews/18");
 
     await user.click(screen.getByRole("button", { name: "1 more change in review" }));
-    await user.click(await screen.findByRole("menuitemradio", { name: "#16 · 去重键改为渠道交易号" }));
-    expect(await screen.findByText("To resolve #16 · 去重键改为渠道交易号")).toBeInTheDocument();
+    await user.click(await screen.findByRole("menuitemradio", { name: /^#16 · 去重键改为渠道交易号\s*In review$/ }));
+    expect(await screen.findByText("Submitted for review #16 · 去重键改为渠道交易号")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View change" })).toHaveAttribute("href", "/acme/kb/team/reviews/16");
   });
 });

@@ -75,8 +75,8 @@ export function useDraftLabel() {
 }
 
 // The banner's state tags: the viewer's unsubmitted draft and changes in
-// review in 花青, a submitted draft that other open requests also change in
-// deep 藤黄 (#9a6b1c), which has no theme token.
+// review in 花青, a change whose review asked for changes in deep 藤黄
+// (#9a6b1c), which has no theme token.
 const BAR_TAG = "shrink-0 rounded-md px-1.5 text-caption leading-5 text-primary-foreground";
 const BAR_TAG_TONE = {
   draft: "bg-status-review",
@@ -88,20 +88,29 @@ type BarTone = keyof typeof BAR_TAG_TONE;
 // Radio value of the viewer's own entry in the other-changes menu.
 const OWN_CHANGE = "own";
 
+// A reviewer asked for changes; the request waits on its owner.
+const MR_CHANGES_REQUESTED = "changes_requested";
+
+/** The tone of a request under review: to resolve once changes are requested, otherwise in review. */
+function mergeRequestTone(mr: KbPendingMergeRequest): BarTone {
+  return mr.status === MR_CHANGES_REQUESTED ? "resolve" : "review";
+}
+
 /** Other authors' open requests on the page; an older backend names only the latest. */
 function otherMergeRequests(page: KbPage, ownDrafts: number): KbPendingMergeRequest[] {
   if (page.pending_mrs.length > 0) return page.pending_mrs;
   if (ownDrafts > 0 || !page.pending_mr) return [];
 
-  return [{ ...page.pending_mr, status: "open" }];
+  return [{ ...page.pending_mr, status: "" }];
 }
 
 /**
  * The banner over a page with a draft of the viewer's or changes in review.
- * It names the viewer's draft, or the request it was submitted as; other
- * authors' requests on the page are listed beside it and can be picked
- * instead. With a draft it carries the show changes switch and the official
- * / draft switch; a page the draft creates has no official version.
+ * It names the viewer's draft, or the request it was submitted as, tagged in
+ * review or to resolve by the request's status; other authors' requests on
+ * the page are listed beside it and can be picked instead. With a draft it
+ * carries the show changes switch and the official / draft switch; a page the
+ * draft creates has no official version.
  */
 export function KbReadBar({
   kbSlug,
@@ -134,36 +143,44 @@ export function KbReadBar({
   const added = (activeDraft ? page.draft_change : selected?.draft_change) === DRAFT_ADDED;
   const ownMr = selected?.merge_request ?? null;
 
+  const resolveText = (mr: KbPendingMergeRequest) =>
+    t(($) => $.draft.bar.resolve_text, { number: mr.number, title: mr.title });
+  const toneLabel = (value: BarTone) =>
+    value === "draft" ? t(($) => $.draft.label) : value === "resolve" ? t(($) => $.draft.bar.resolve) : t(($) => $.draft.bar.review);
+
   let tone: BarTone;
   let text: string;
   let target: { number: number } | null;
   if (pickedMr) {
-    tone = "review";
-    text = t(($) => $.draft.bar.review_text, { number: pickedMr.number, title: pickedMr.title });
+    tone = mergeRequestTone(pickedMr);
+    text =
+      tone === "resolve"
+        ? resolveText(pickedMr)
+        : t(($) => $.draft.bar.review_text, { number: pickedMr.number, title: pickedMr.title });
     target = pickedMr;
   } else if (selected && !ownMr) {
     tone = "draft";
     text = added ? "" : drafts.length > 1 ? t(($) => $.draft.multi, { count: drafts.length }) : t(($) => $.draft.single);
     target = null;
   } else if (ownMr) {
-    tone = others.length > 0 ? "resolve" : "review";
-    text =
-      others.length > 0
-        ? t(($) => $.draft.bar.resolve_text, { number: ownMr.number, title: ownMr.title })
-        : t(($) => $.draft.bar.submitted, { number: ownMr.number, title: ownMr.title });
+    tone = mergeRequestTone(ownMr);
+    text = tone === "resolve" ? resolveText(ownMr) : t(($) => $.draft.bar.submitted, { number: ownMr.number, title: ownMr.title });
     target = ownMr;
   } else {
     const latest = others[0]!;
-    tone = "review";
-    text = t(($) => $.page.pending_mr, {
-      count: page.pending_mrs.length > 0 ? others.length : Math.max(page.pending_mr_count, 1),
-      number: latest.number,
-      title: latest.title,
-    });
+    tone = mergeRequestTone(latest);
+    text =
+      tone === "resolve"
+        ? resolveText(latest)
+        : t(($) => $.page.pending_mr, {
+            count: page.pending_mrs.length > 0 ? others.length : Math.max(page.pending_mr_count, 1),
+            number: latest.number,
+            title: latest.title,
+          });
     target = latest;
   }
 
-  const tag = tone === "draft" ? t(($) => $.draft.label) : tone === "resolve" ? t(($) => $.draft.bar.resolve) : t(($) => $.draft.bar.review);
+  const tag = toneLabel(tone);
 
   return (
     <div className="mb-[18px] flex items-center gap-2.5 rounded-xl bg-status-review/5 px-3.5 py-2.5 text-label ring-1 ring-status-review/45 ring-inset">
@@ -192,11 +209,15 @@ export function KbReadBar({
               onValueChange={(value) => setPicked(value === OWN_CHANGE ? null : Number(value))}
             >
               <DropdownMenuRadioItem value={OWN_CHANGE}>
-                <span className="truncate">{ownMr ? `#${ownMr.number} · ${ownMr.title}` : draftLabel(selected)}</span>
+                <span className="min-w-0 flex-1 truncate">{ownMr ? `#${ownMr.number} · ${ownMr.title}` : draftLabel(selected)}</span>
+                <span className="shrink-0 text-caption text-muted-foreground">
+                  {toneLabel(ownMr ? mergeRequestTone(ownMr) : "draft")}
+                </span>
               </DropdownMenuRadioItem>
               {others.map((mr) => (
                 <DropdownMenuRadioItem key={mr.number} value={String(mr.number)}>
-                  <span className="truncate">{`#${mr.number} · ${mr.title}`}</span>
+                  <span className="min-w-0 flex-1 truncate">{`#${mr.number} · ${mr.title}`}</span>
+                  <span className="shrink-0 text-caption text-muted-foreground">{toneLabel(mergeRequestTone(mr))}</span>
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
@@ -523,7 +544,7 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
           />
         )}
         {panel === "info" && (
-          <KbInfoPanel page={page} kbSlug={kbSlug} draft={draft} onClose={() => setPanel("none")} onOpenSource={openSource} />
+          <KbInfoPanel page={page} kbSlug={kbSlug} draft={draft} diff={diff} onClose={() => setPanel("none")} onOpenSource={openSource} />
         )}
         {panel === "toc" && (
           <KbTocPanel page={page} activeBlockId={activeHeading} onJump={jumpTo} onClose={() => setPanel("none")} />
