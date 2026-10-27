@@ -229,6 +229,26 @@ beforeEach(() => {
 });
 
 describe("KbShell page tree", () => {
+  it("lists the graph in the navigation, current on its route, and not in the actions menu", async () => {
+    const user = userEvent.setup();
+    mount(
+      <KbShell>
+        <div />
+      </KbShell>,
+      makeAdapter("/acme/kb/team/graph"),
+    );
+
+    const nav = screen.getByRole("complementary", { name: "Knowledge base navigation" });
+    const graph = within(nav).getByRole("link", { name: "Graph" });
+    expect(graph).toHaveAttribute("href", "/acme/kb/team/graph");
+    expect(graph).toHaveAttribute("aria-current", "page");
+    expect(within(nav).getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
+
+    await user.click(within(nav).getByRole("button", { name: "Knowledge base actions" }));
+    await screen.findAllByRole("menuitem");
+    expect(screen.queryByRole("menuitem", { name: "Graph" })).not.toBeInTheDocument();
+  });
+
   it("expands the tree to the page being read and marks it", async () => {
     mount(
       <KbShell>

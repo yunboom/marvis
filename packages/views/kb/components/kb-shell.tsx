@@ -139,10 +139,6 @@ function KbMoreMenu({ kbSlug, canConfigure }: { kbSlug: string; canConfigure: bo
           <History className="size-3.5" />
           {t(($) => $.review.changes.title)}
         </DropdownMenuItem>
-        <DropdownMenuItem render={<AppLink href={p.kbGraph(kbSlug)} />}>
-          <Network className="size-3.5" />
-          {t(($) => $.nav.graph)}
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={copyLink}>
           <Link2 className="size-3.5" />
@@ -159,6 +155,7 @@ function KbNav({
   draft,
   diff,
   onJobs,
+  onGraph,
   onChanges,
 }: {
   kbSlug: string;
@@ -167,7 +164,8 @@ function KbNav({
   /** The draft's edits are marked in the tree. */
   diff: boolean;
   onJobs: boolean;
-  /** A page reached from the "…" menu (change log, management, graph): no nav row is current. */
+  onGraph: boolean;
+  /** A page reached from the "…" menu (change log, management): no nav row is current. */
   onChanges: boolean;
 }) {
   const { t } = useT("kb");
@@ -183,7 +181,7 @@ function KbNav({
 
   const pending = base ? base.pending.annotations + base.pending.stale_pages + base.pending.open_mrs : 0;
   const ancestorIds = page?.id === pageId ? page.breadcrumb.map((crumb) => crumb.id) : [];
-  const onHome = !pageId && !onJobs && !onChanges;
+  const onHome = !pageId && !onJobs && !onGraph && !onChanges;
 
   return (
     <aside
@@ -220,6 +218,14 @@ function KbNav({
             </span>
           )}
         </AppLink>
+        <AppLink
+          href={p.kbGraph(kbSlug)}
+          aria-current={onGraph ? "page" : undefined}
+          className={cn(NAV_ROW, onGraph && "bg-surface-selected font-medium text-foreground")}
+        >
+          <Network aria-hidden="true" className="size-4" />
+          <span className="flex-1">{t(($) => $.nav.graph)}</span>
+        </AppLink>
       </div>
       <div className="px-4 pt-2 pb-1 text-caption text-muted-foreground">{t(($) => $.nav.pages)}</div>
       <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
@@ -242,6 +248,7 @@ export function KbShell({ children }: { children: ReactNode }) {
 
   const jobView = parseKbJobRoute(pathname).view;
   const reviewView = parseKbReviewRoute(pathname).view;
+  const manageView = parseKbManageRoute(pathname).view;
 
   // The configuration builder (design 10.x), a job's conversation (9.2–9.17)
   // and review (8.x) are full-width flows of their own.
@@ -258,7 +265,8 @@ export function KbShell({ children }: { children: ReactNode }) {
           draft={draft}
           diff={readsDraftDiff(searchParams)}
           onJobs={jobView === "list"}
-          onChanges={reviewView === "changes" || parseKbManageRoute(pathname).view !== null}
+          onGraph={manageView === "graph"}
+          onChanges={reviewView === "changes" || manageView === "manage"}
         />}
       <div className="flex min-w-0 flex-1 flex-col">{children}</div>
     </div>
