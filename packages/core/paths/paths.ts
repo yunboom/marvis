@@ -72,6 +72,8 @@ function workspaceScoped(slug: string) {
     workflows: () => `${ws}/workflows`,
     autopilots: () => `${ws}/autopilots`,
     autopilotDetail: (id: string) => `${ws}/autopilots/${encode(id)}`,
+    autopilotRun: (id: string, runId: string) =>
+      `${ws}/autopilots/${encode(id)}/runs/${encode(runId)}`,
     agents: () => `${ws}/agents`,
     // Step 1 of agent creation: choose where the agent runs.
     newAgent: () => `${ws}/agents/new`,
