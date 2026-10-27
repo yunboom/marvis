@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/yunboom/marvis/server/internal/featureflags"
 	"github.com/yunboom/marvis/server/internal/issuestatus"
 	"github.com/yunboom/marvis/server/internal/testutil"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
@@ -171,7 +170,6 @@ func TestIssueResponseCarriesStatusGroup(t *testing.T) {
 func TestWorkflowNewStatusKeepsItsGroup(t *testing.T) {
 	seedTestCatalog(t)
 	resetDefaultWorkflow(t)
-	withFeatureFlag(t, testHandler, featureflags.ProjectWorkflowsV1, true)
 	statusName := "Waiting " + workflowTestSuffix()[10:]
 
 	var created IssueWorkflowResponse

@@ -342,7 +342,7 @@ Agent-specific overrides:
 | `MARVIS_CODEARTS_PATH` | Custom path to the `codearts` launcher or binary |
 | `MARVIS_CODEARTS_MODEL` | Override the CodeArts model used |
 | `MARVIS_OPENCLAW_PATH` | Custom path to the `openclaw` binary |
-| `MARVIS_OPENCLAW_MODEL` | Override the OpenClaw model used |
+| `MARVIS_OPENCLAW_MODEL` | Select the registered OpenClaw agent ID used by default; the agent's `runtime_config.model_override` persistently overrides its underlying model for all newly claimed runs until changed or cleared |
 | `MARVIS_OPENCLAW_CLI_TIMEOUT` | Deadline for each `openclaw config ...` call during task preparation (default 30s; accepts `45s` or `45`). Raise it when the local CLI is slow to start; the daemon also reads it from `backends.openclaw.cli_timeout` in the CLI config |
 | `MARVIS_HERMES_PATH` | Custom path to the `hermes` binary |
 | `MARVIS_HERMES_MODEL` | Override the Hermes model used |

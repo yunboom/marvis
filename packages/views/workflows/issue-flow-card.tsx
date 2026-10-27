@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { Settings, Workflow } from "lucide-react";
-import { useFeatureEnabled } from "@marvis/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { useProjectWithWorkflow } from "@marvis/core/issue-workflows";
@@ -29,7 +27,6 @@ export function IssueFlowCard({ projectId, currentStatus }: { projectId: string 
   const wsId = useWorkspaceId();
   const navigation = useNavigation();
   const paths = useWorkspacePaths();
-  const enabled = useFeatureEnabled(PROJECT_WORKFLOWS_V1_FLAG, false);
   const catalog = useIssueStatuses(wsId);
   const labelOf = useStatusLabel(wsId);
   const { project, workflow } = useProjectWithWorkflow(wsId, projectId);
@@ -87,7 +84,7 @@ export function IssueFlowCard({ projectId, currentStatus }: { projectId: string 
             );
           })}
         </ol>
-        {canCreateWorkflow && enabled && (
+        {canCreateWorkflow && (
           <div className="-mx-3 -mb-3 mt-2 border-t border-surface-border p-1">
             <Button
               variant="ghost"

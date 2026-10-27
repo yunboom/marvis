@@ -4,8 +4,6 @@ import { Fragment, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, LayoutTemplate, Plus } from "lucide-react";
 import { useAuthStore } from "@marvis/core/auth";
-import { useFeatureEnabled } from "@marvis/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import { statusColumnKeys } from "@marvis/core/issues";
@@ -62,16 +60,13 @@ const WORKFLOW_CARD =
  * Workflows page: the workflows on one tab, the status library they all draw
  * from on the other (`?tab=statuses`). `?workflow=<id>` (or `new`) opens the
  * editor in place, so a workflow is a linkable page rather than a dialog.
- * Without the workflows flag the page is the status library alone.
  */
 export function WorkflowsPage() {
   const { t } = useT("issues");
   const { t: tLayout } = useT("layout");
   const navigation = useNavigation();
   const wsId = useWorkspaceId();
-  const enabled = useFeatureEnabled(PROJECT_WORKFLOWS_V1_FLAG, false);
-  // The workflow endpoints answer 403 while the flag is off.
-  const { workflows, isLoaded } = useIssueWorkflows(enabled ? wsId : "");
+  const { workflows, isLoaded } = useIssueWorkflows(wsId);
   const { data: projects = [] } = useQuery(projectListOptions(wsId));
   const { data: members = [] } = useQuery(memberListOptions(wsId));
   const currentUser = useAuthStore((s) => s.user);
@@ -86,8 +81,8 @@ export function WorkflowsPage() {
   };
 
   const tab: WorkflowsPageTab =
-    !enabled || navigation.searchParams.get(TAB_PARAM) === STATUSES_TAB ? STATUSES_TAB : WORKFLOWS_TAB;
-  const open = enabled ? navigation.searchParams.get(WORKFLOW_PARAM) : null;
+    navigation.searchParams.get(TAB_PARAM) === STATUSES_TAB ? STATUSES_TAB : WORKFLOWS_TAB;
+  const open = navigation.searchParams.get(WORKFLOW_PARAM);
   const duplicateOf = navigation.searchParams.get(DUPLICATE_PARAM);
   const templateParam = navigation.searchParams.get(TEMPLATE_PARAM);
   const template = WORKFLOW_TEMPLATES.find((tpl) => tpl.id === templateParam)?.id ?? null;
@@ -141,18 +136,7 @@ export function WorkflowsPage() {
   }
 
   const title = tLayout(($) => $.nav.workflows);
-  const statusLibrary = <IssueStatusesTab workflowUsage={enabled ? usage : undefined} />;
-
-  if (!enabled) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col">
-        <CollectionPageHeader icon={ROUTE_ICON_COMPONENTS.Workflow} title={title} />
-        <div className={TAB_SCROLL}>
-          <div className={TAB_BODY}>{statusLibrary}</div>
-        </div>
-      </div>
-    );
-  }
+  const statusLibrary = <IssueStatusesTab workflowUsage={usage} />;
 
   const defaultProjects = projects.filter((p) => !p.workflow_id);
   const defaultRow = workflows.find((w) => w.is_default);

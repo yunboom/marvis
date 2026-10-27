@@ -5016,7 +5016,7 @@ ALTER TABLE ONLY public.runtime_profile
 --
 
 ALTER TABLE public.runtime_profile
-    ADD CONSTRAINT runtime_profile_protocol_family_check CHECK ((protocol_family = ANY (ARRAY['claude'::text, 'codebuddy'::text, 'codex'::text, 'copilot'::text, 'opencode'::text, 'codearts'::text, 'openclaw'::text, 'hermes'::text, 'pi'::text, 'cursor'::text, 'kimi'::text, 'reasonix'::text, 'dsh'::text, 'kiro'::text, 'antigravity'::text, 'qoder'::text, 'qoderclicn'::text, 'traecli'::text, 'deveco'::text, 'grok'::text, 'qwen'::text, 'qwenpaw'::text, 'mcode'::text, 'muse'::text, 'dim'::text, 'zeroclaw'::text]))) NOT VALID;
+    ADD CONSTRAINT runtime_profile_protocol_family_check CHECK ((protocol_family = ANY (ARRAY['claude'::text, 'codebuddy'::text, 'codex'::text, 'copilot'::text, 'opencode'::text, 'codearts'::text, 'openclaw'::text, 'hermes'::text, 'pi'::text, 'cursor'::text, 'kimi'::text, 'reasonix'::text, 'dsh'::text, 'kiro'::text, 'antigravity'::text, 'qoder'::text, 'qoderclicn'::text, 'traecli'::text, 'deveco'::text, 'grok'::text, 'qwen'::text, 'qwenpaw'::text, 'mcode'::text, 'muse'::text, 'dim'::text, 'zeroclaw'::text, 'devin'::text]))) NOT VALID;
 
 --
 -- Name: runtime_profile runtime_profile_workspace_id_display_name_key; Type: CONSTRAINT; Schema: public; Owner: -

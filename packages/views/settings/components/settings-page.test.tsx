@@ -6,7 +6,6 @@ import { configStore } from "@marvis/core/config";
 import {
   BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG,
   PLUGINS_V1_FLAG,
-  PROJECT_WORKFLOWS_V1_FLAG,
 } from "@marvis/core/feature-flags";
 import { renderWithI18n } from "../../test/i18n";
 
@@ -175,7 +174,6 @@ describe("SettingsPage Plugin feature flag", () => {
 
 describe("SettingsPage workflows", () => {
   it("leaves workflows and statuses to the Workflows page", () => {
-    configStore.getState().setFeatureFlags({ [PROJECT_WORKFLOWS_V1_FLAG]: true });
 
     renderWithI18n(<SettingsPage />);
     fireEvent.click(within(nav()).getByRole("button", { name: "Issues" }));

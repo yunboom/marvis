@@ -63,7 +63,7 @@
 
 看板四列和状态库共用一套状态分组（未开始 / 工作中 / 需介入 / 已结束），存在 `issue_status.status_group`；`category` 仍是生命周期类型（未开始 / 已开始 / 已完成 / 已关闭），平台行为只读它。为什么不复用 `category` 见 `docs/adr/0001-status-group-column.md`，术语见 `GLOSSARY.md`。
 
-- 规则：工作中和需介入同属已开始，已开始的自定义状态可在两者之间切换；已结束包含已完成和已关闭；内置状态分组固定（审核中、已阻塞是需介入）。迁移 `602_issue_status_group` 用约束锁住合法组合，插入没带分组时触发器按类型给默认值。
+- 规则：工作中和需介入同属已开始，已开始的自定义状态可在两者之间切换；已结束包含已完成和已关闭；内置状态分组固定（审核中、已阻塞是需介入）。迁移 `603_issue_status_group` 用约束锁住合法组合，插入没带分组时触发器按类型给默认值。
 - 后端：`issuestatus`（`Group*` 常量、`DefaultGroup`、`ValidGroup`、`Resolver.Group`、`CategoryNameAndGroup`）、状态接口的 `status_group`、任务响应和后台事件的 `status_group`、工作流新建状态可带分组、CLI `--fields status_group`。
 - 前端：core 的 `IssueStatusGroup`、`STATUS_GROUP_ORDER`、`defaultStatusGroup`、目录的 `groupOf` / `inGroup`；状态库（`issue-statuses-tab.tsx`）按分组排列、行尾显示生命周期类型；看板、状态选择器、「PR 合并后改为」下拉框按分组排序；工作流模板「等待反馈」放需介入。移动端未对齐。
 - 同步上游时：上游新增的按生命周期做行为判断的代码继续用 `category`，不要改读 `status_group`；上游新增的状态插入路径（迁移、种子数据、工作流模板）要带上 `status_group`；`issue-statuses-tab.tsx`、`status-options.ts`、`pr-merge-status-row.tsx` 冲突时保留按分组的结构，只合入上游新增的行为。

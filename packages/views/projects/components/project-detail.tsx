@@ -8,8 +8,6 @@ import { cn } from "@marvis/ui/lib/utils";
 import { copyText } from "@marvis/ui/lib/clipboard";
 import { toast } from "sonner";
 import type { Project, ProjectStatus, ProjectPriority } from "@marvis/core/types";
-import { useFeatureEnabled } from "@marvis/core/config";
-import { PROJECT_WORKFLOWS_V1_FLAG } from "@marvis/core/feature-flags";
 import { useAuthStore } from "@marvis/core/auth";
 import { projectDetailOptions } from "@marvis/core/projects/queries";
 import { useUpdateProject, useDeleteProject } from "@marvis/core/projects/mutations";
@@ -98,12 +96,9 @@ function PropRow({
   );
 }
 
-// The project's workflow (MUL-7420). Hidden while workflows are off, unless the
-// project already uses one — it can always switch back to Default.
+// The project's workflow (MUL-7420).
 function ProjectWorkflowPropRow({ project }: { project: Project }) {
   const { t } = useT("issues");
-  const enabled = useFeatureEnabled(PROJECT_WORKFLOWS_V1_FLAG, false);
-  if (!enabled && !project.workflow_id) return null;
   return (
     <PropRow label={t(($) => $.workflows.project.label)}>
       <ProjectWorkflowControl project={project} />

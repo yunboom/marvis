@@ -451,3 +451,14 @@
 7. **实时失效补漏**：`kb.base.changed` 一并失效首页（名称、简介在首页查询里）；`kb.draft.updated` 按 `page_ids` 失效这些页的已发布读取（草稿条）。
 8. **错误处理**：作业首条消息失败后的回收、全员对话读取、导出时读原始资料的错误不再吞掉（只有对象不存在时跳过，新增 `storage.IsNotFound`）。
 9. **未改的审查意见**：首页不画运行中的作业（设计稿 2.1 没有，导航行已有数量）；知识库检索下拉、Markdown 放大编辑框仍用手写结构（输入框要保持焦点、编辑区是整块编辑面，换成 Popover / Textarea 原语反而要覆盖大半样式）；ETag 未实现（spec 只在字段注释里提到，没有缓存需求）。
+
+## 合并 redesign
+
+把 `origin/feat/marvis-redesign`（`7a7424657`，含上游同步）合进本分支时的决定：
+
+1. **迁移编号**：对方把 fork 迁移顺延一位（飞书邀请 594–600、默认头像 601、状态分组 603，602 空缺），rebrand 在 604。本分支保留 `633_rebrand_marvis`，删掉 `603_rebrand_marvis` 和 `604_rebrand_marvis`；两边 rebrand SQL 内容相同，取哪份都一样。知识库迁移 604–632 不动，与对方 594–603 不重号。
+2. **并发索引表**（`cmd/migrate/main.go`）：飞书邀请条目用对方的新编号（595/597/598/599/600），后面接知识库的 607–630 条目。
+3. **认领响应字段**：`daemon/types.go`、`handler/agent.go` 两边都在 `Repos` 附近加字段，同时保留对方的 `ModelOverride` 和本分支的 `KnowledgeBases` / `KnowledgeBasesTruncated`。
+4. **mention 测试**：对方加了 Markdown 解析相关的用例，本分支加了「kb 链接不是提及」的用例，全部保留；kb 用例在对方的新解析器下仍通过。
+5. **繁体中文语言包**：上游新增 `zh-Hant`，没有知识库的 `kb.json` 和 `layout.nav.knowledge_base`，parity 测试会拦。用 OpenCC `s2twp` 从 `zh-Hans` 转出，再按现有 `zh-Hant` 的用词替换（`許可權`→`權限`、`賬`→`帳`、`郵箱`→`信箱`、`繫結`→`綁定`、`身份`→`身分`）。拿 `s2twp` 转现有 `zh-Hans` 文案，和上游的 `zh-Hant` 有 97.7% 完全一致，所以用词与上游保持一致（例如「审核」同样转成「稽核」）。没做人工校对。
+6. 本地 worktree 库 `marvis_kb_v2_270` 删掉重建后从头跑迁移（迁移改了编号）。
