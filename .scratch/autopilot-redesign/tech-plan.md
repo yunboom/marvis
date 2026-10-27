@@ -11,9 +11,9 @@
 | --- | --- | --- |
 | 列表页 | 表格 → 两列卡片；工具栏收成「范围分段 + 筛选图标 + 排序与显示图标 + 新建」 | 不改 |
 | 详情页 | 单列长页 → 左「配置」/ 右「指令 + 运行记录」两栏；编辑、删除收进顶栏 | 不改 |
-| 运行详情 | 只读日志弹窗 → 整页对话，可继续和智能体聊 | **新增 1 个接口 + 1 个迁移** |
+| 运行详情（仅运行） | 只读日志弹窗 → 整页多轮对话 | 一次运行 = 一个聊天会话，指令作为第一条消息（照知识库作业）；1 个迁移 |
 
-列表和详情只动外观与布局，功能逐项保留（见第 5 节对照清单）。运行续聊是唯一新增能力，按用户要求加入。
+列表和详情只动外观与布局，功能逐项保留（见第 5 节对照清单）。多轮对话是唯一新增能力，按用户要求加入。
 
 ## 2. 列表页
 
@@ -54,62 +54,44 @@
 - 危险区删除；删除按钮在顶栏，确认框文案不变。
 - 窄屏（< 980px）两栏堆叠成一栏，顺序：状态 → 指令 → 运行记录 → 其余配置。
 
-## 4. 运行对话页（新增能力）
+## 4. 运行对话页（新增能力：多轮对话）
 
-### 4.1 现状
+目标：「仅运行」的每次运行都能多轮对话。做法照知识库作业：**一次运行 = 一个聊天会话，指令作为第一条消息**。多轮对话、排队、续接会话、停止全部复用聊天现成能力。「创建任务」模式不变，运行记录点击仍跳任务详情。
 
-- `run_only` 运行入队时（`service/autopilot.go` 的 `dispatchRunOnly` → `CreateAutopilotTask`）不带 `session_id / work_dir / chat_session_id`，daemon 认领时也没有 resume 分支，每次运行都是全新会话。
-- 运行结束后，`CompleteAgentTask / FailAgentTask` 会把 `session_id / work_dir` 写回 task 行，因此**一次运行跑完，就有可以 resume 的会话**。
-- 聊天发消息时，daemon 认领聊天 task 会读 `chat_session.session_id / work_dir`；只有 `runtime_id` 一致才 resume（`handler/daemon.go:3644`），否则退回最近一条带 session 的聊天 task。
-- 已有「把聊天嵌进业务页」的先例：知识库 job（`kb_job.chat_session_id` + `kb-job-page.tsx` + `use-kb-job-conversation.ts`），并在聊天列表里用 `NOT EXISTS` 排除这些会话。
-- `create_issue` 运行不在本次范围：和现在一样跳到任务，在任务里评论 / @ 智能体继续（用户 2026-10-27 拍板）。
-- 结论：只给 `run_only` 运行开对话，以 `autopilot_run.task_id` 指向的任务为起点续聊。`task_id` 为空（跳过、派发前失败）的运行没有会话，不提供续聊。
-- 一次运行共用一个对话（用户 2026-10-27 拍板，见 4.2），不需要分叉：`run_only` 每次运行都是全新会话，这个会话只有这里会接着用。
+### 4.1 先例：知识库作业
 
-### 4.2 方案：一次运行一个共用对话，懒创建
+- 新建作业时建 `chat_session`（`handler/kb_job.go:550`），`kb_job.chat_session_id` 指向它。
+- 第一条消息由服务端用模板拼好（`internal/kb/job.go` 的 `JobFirstMessage`），经 `SendDirectChatMessage` 发出（`kb_job.go:398`）；服务端写的部分和成员打的字之间用 `MemberMessageMarker` 分隔，页面只显示成员部分。
+- 之后的多轮对话就是普通聊天。
 
-**数据**
+### 4.2 后端
 
-- 新迁移：
-  - `autopilot_run` 加 `chat_session_id UUID`（可空，软引用），配一个 `CREATE UNIQUE INDEX CONCURRENTLY` 唯一索引（单独一个迁移文件）。不加外键。
-  - 发送人不加列：每条用户消息都挂着这次入队的任务（`service/task.go:2486`，`CreateChatMessage` 写 `TaskID`），任务上的 `initiator_user_id` 就是真实发送人（迁移 117，为飞书群这类多人会话加的）。
-  - 迁移编号：当前最大是 `633_rebrand_marvis`，按仓库规则 rebrand 排最后：新迁移用 633 起，rebrand 顺延到最后，同步改 `scripts/rebrand-marvis.py` 的 `KEEP`、`cmd/migrate/main.go` 并发索引表和引用文件名的测试。
-- 聊天列表查询（`ListChatSessionsByCreator` 等）加 `NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)`，这些会话不出现在「我的对话」里。
-
-**接口**
-
-- `POST /api/autopilots/{id}/runs/{runId}/chat`：获取或创建这次运行的对话，返回 `{ chat_session_id }`。
-  - 只接受 `run_only` 运行，`create_issue` 返回 409 `run_mode_unsupported`；要求 `run.task_id` 不为空，`task_id` 为空返回 409 `run_has_no_session`。运行中也可以创建（用户 2026-10-27 拍板：运行中允许发消息排队）。
-  - 权限：调用者能查看该自动化。
-  - 事务内 `SELECT … FOR UPDATE` 锁 run 行，已有 `chat_session_id` 直接返回；否则 `CreateChatSession`（agent = task.agent_id，project = autopilot.project_id，title = 自动化标题，creator = 第一个发消息的人），然后把派发任务的 `agent_task_queue.chat_session_id` 指向这个会话，最后写回 `autopilot_run.chat_session_id`。
-    - 派发任务还没结束：不用预填，任务结束时现有逻辑会把 `session_id / work_dir / runtime_id` 写进会话指针（`service/task.go:4614`）。
-    - 派发任务已结束：用它的 `session_id / work_dir / runtime_id` 调 `UpdateChatSessionSession` 预填续接指针。原 task 因 `context_overflow` 等不适合续接的原因失败时不预填 session（过滤条件对齐 `GetLastTaskSession`），只预填 `work_dir`。
-- 发消息、停止、排队、拉消息复用现有聊天接口（`POST /api/chat/sessions/{id}/messages` 等）。改两处：
-  - 访问控制：`loadChatSessionForUser` 现在只放行创建者（`handler/chat.go:282`）。会话挂在某次运行上时，改为按「能查看该自动化」放行；其余聊天不变。
-  - 发送人：消息列表查询按 `chat_message.task_id` 关联 `agent_task_queue`，返回 `initiator_user_id` 作为 `sender_user_id`（可空，普通聊天前端回退到会话创建者）；schema 加可选字段。每次发送仍按发送人做 `canInvokeAgent` 检查，任务归属记发送人。
-- 多人同时发送：聊天本身按会话排队（同一会话有任务在跑时新消息进队列），无需额外处理。
-- 运行中发送：复用现有聊天排队，不新增机制。派发任务挂上 `chat_session_id` 后就属于这个对话，认领时「同一智能体、同一聊天会话已有任务在跑就不派」的规则（`pkg/db/queries/agent.sql:779`）让新消息自动排在运行后面；运行结束写回会话指针，下一条消息接着用。
-  - 提示词：自动化运行和聊天是两套提示词（`internal/daemon/prompt.go` 的 `buildAutopilotPrompt` / `buildChatPrompt`）。`buildPrompt` 先判断 `ChatSessionID`（`:305`）再判断 `AutopilotRunID`（`:311`），排队中的派发任务挂上对话后会被组装成聊天提示词、丢掉指令。修法：两个判断对调，带 `AutopilotRunID` 的任务始终用自动化提示词；补单测覆盖「同时带两个 ID」。
-  - 实现时还要核实：认领时聊天分支（`handler/daemon.go:3574`）与自动化分支（`:3835`）同时命中、重试匹配（`:2768`）仍按自动化任务处理。
-- `GET /api/autopilots/{id}/runs/{runId}` 响应增加 `chat_session_id`（可空），schema 加可选字段 + 默认 `null`，补 malformed 响应测试。
-
-**上下文兜底**：runtime 换过或会话文件已丢失时无法续接。第一条用户消息由服务端拼一段前置说明（自动化标题、指令摘要、本次运行结果摘要 `task.result` 截断），以「服务端写入部分」的方式存（同知识库 job：页面只显示用户打的字）。
-
-**清理**：删除自动化时，`DeleteAutopilot` 事务里一并归档关联的 chat_session。
+- **派发改成发聊天**：`dispatchRunOnly`（`service/autopilot.go`）里准入检查（额度、运行时、权限等）原样保留，只把「`CreateAutopilotTask` 入队」这一步换成：
+  1. 建 `chat_session`（agent = 执行智能体，project = 自动化的项目，title = 自动化标题，creator = 本次运行的负责人：手动触发是点击的人，定时 / Webhook 是规则负责人）。
+  2. 用模板拼第一条消息：触发来源、Webhook 载荷、自动化指令（内容同现在 `buildAutopilotPrompt` 里的这几项），经 `SendDirectChatMessage` 发出。
+  3. 入队的任务带上 `autopilot_run_id`，`SyncRunFromTask`（`service/autopilot.go:1194`，按 `task.AutopilotRunID` 同步）照常更新运行状态；`run.task_id`、`autopilot_run.chat_session_id` 指向这次的任务和会话。
+- **数据**：`autopilot_run` 加 `chat_session_id UUID`（可空，软引用），配 `CREATE UNIQUE INDEX CONCURRENTLY`（单独一个迁移文件）。不加外键。迁移编号排在上游最大号之后，`*_rebrand_marvis` 仍排最后，同步改 `scripts/rebrand-marvis.py` 的 `KEEP`、`cmd/migrate/main.go` 并发索引表和引用文件名的测试。
+- **聊天列表排除**：`ListChatSessionsByCreator` 等加 `NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)`，这些会话不出现在「我的对话」。
+- **共用访问**：一次运行一个对话，能查看该自动化的人都能看、都能发。`loadChatSessionForUser` 现在只放行创建者（`handler/chat.go:282`），会话挂在运行上时改为按「能查看该自动化」放行；每次发送仍按发送人做 `canInvokeAgent` 检查。
+- **发送人**：不加列。用户消息挂着入队的任务（`service/task.go:2486`），任务上的 `initiator_user_id` 就是发送人；消息列表查询按 `task_id` 关联返回 `sender_user_id`（可空，普通聊天前端回退到会话创建者）。
+- **运行中发消息**：同一会话有任务在跑时新消息自动排队（`pkg/db/queries/agent.sql:779`），不需要额外处理。
+- **接口**：运行详情响应加 `chat_session_id`（可空），schema 加可选字段并补 malformed 响应测试。发消息、停止、拉消息全部用现有聊天接口。
+- **清理**：删除自动化时一并归档这些会话。
+- **实现时核实**：
+  - 自动化专属的运行时规则（brief 里的自动化工作流段、`AutopilotIssueCommandsGuard`）在聊天任务上是否仍生效；不生效就把需要的规则写进第一条消息模板。
+  - 旧运行（改造前的 run_only）没有会话：页面只显示执行记录，不显示输入框。
 
 ### 4.3 前端
 
 - 路由：`/{ws}/autopilots/{id}/runs/{runId}`。web 加 `apps/web/app/[workspaceSlug]/(dashboard)/autopilots/[id]/runs/[runId]/page.tsx`；desktop 在 `routes.tsx` 加同名路由；`useWorkspacePaths` 加 `autopilotRun(id, runId)`。
-- 新组件 `packages/views/autopilots/components/autopilot-run-page.tsx`：
-  - 顶栏：面包屑「自动化 / 标题 / 运行时间」+ 状态标签 + 运行信息面板开关。
-  - 消息区第一块是「触发卡片」（来源 + 时间 + 指令摘要），第二块是原 task 的执行过程，用 `taskMessagesOptions(taskId)` 渲染成一轮智能体回复（与 `TranscriptButton` 同源，运行中实时刷新）。
-  - 后续消息：照抄 `useKbJobConversation` 写 `useAutopilotRunConversation(sessionId)`，组合 `ChatMessageList` + `ChatQueue` + `ChatInput`（`draftKeyOverride` 隔离草稿），与聊天页行为一致：发送中、停止、排队、重试、附件。
-  - 会话懒创建：第一次发送前调 `POST …/chat` 拿 `chat_session_id`，再发送。运行未结束时也能发，消息进同一个对话的队列，显示为排队中（复用 `ChatQueue`），运行结束后自动派给智能体。
-  - 右侧面板：状态、来源、触发 / 完成时间、执行者、所属自动化、失败原因、Webhook 载荷（复用 `WebhookPayloadSlot`），以及一行「能查看这个自动化的成员共用这段对话。」。窄屏收起。
+- 新组件 `packages/views/autopilots/components/autopilot-run-page.tsx`，照抄知识库作业页：
+  - `useAutopilotRunConversation(sessionId)` 仿 `use-kb-job-conversation.ts`，组合 `ChatMessageList` + `ChatQueue` + `ChatInput`，与聊天页一致：发送中、停止、排队、重试、附件。
+  - 第一条（服务端拼的）消息不按普通气泡显示，渲染成顶部的「触发卡片」（来源、时间、指令摘要）。
+  - 用户消息显示发送人。
+  - 右侧面板：状态、来源、触发 / 完成时间、执行者、所属自动化、失败原因、Webhook 载荷，以及一行「能查看这个自动化的成员共用这段对话。」。窄屏收起。
   - 离线 / 无权限：复用 `OfflineBanner`、`AgentAccessRevokedBanner`、`RuntimeRequiredBanner`。
-- 只有 `run_only` 运行进此页；`task_id` 为空的运行只显示运行信息，不显示输入框。`create_issue` 运行仍跳任务详情。
-- 原 `RunRow` 里的 `TranscriptButton` 与 `syntheticTask` 构造删除。
-- core：`autopilotRunChatOptions` / `useEnsureAutopilotRunChat` mutation，`AutopilotRun` schema 加 `chat_session_id`。
+- 详情页运行记录：「仅运行」点进此页，「创建任务」仍跳任务详情；原 `RunRow` 里的 `TranscriptButton` 与 `syntheticTask` 删除。
+- core：`AutopilotRun` schema 加 `chat_session_id`；聊天消息 schema 加可选 `sender_user_id`。
 
 ## 5. 现有功能对照清单
 
@@ -144,14 +126,14 @@
 
 1. 列表页卡片化（纯前端）。
 2. 详情页两栏（纯前端）。
-3. 后端：迁移 + 获取或创建会话接口 + 聊天列表排除 + 删除清理 + 测试（DB 测试用 `testutil` fixture）。
+3. 后端：派发改为「建会话 + 发第一条消息」、迁移、聊天列表排除、共用访问与发送人、删除清理 + 测试（DB 测试用 `testutil` fixture）。
 4. 前端运行对话页 + web / desktop 路由 + core schema。
-5. 校验：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`；本地 `make up` 跑一次 run_only 自动化，两个账号在同一运行页先后追问，确认消息带发送人、排队顺序执行、续接到同一会话和工作目录；create_issue 运行点击仍跳任务。
+5. 校验：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`；本地 `make up` 跑一次 run_only 自动化：运行状态正常同步；运行中用两个账号先后发消息，确认排队顺序执行、消息带发送人、接着同一会话多轮对话；create_issue 运行点击仍跳任务。
 
 ## 7. 风险
 
-- **resume 依赖同一 runtime**：智能体换过运行时则只继承工作目录或全新开始，靠第 4.2 的前置说明兜底。
-- **工作目录回收**：daemon 可能已回收 `work_dir`；需要确认 GC 策略，必要时改用 `durable_work_dir`（待核实）。
+- **续接依赖同一 runtime**：智能体换过运行时，聊天现有逻辑会退回沿用工作目录。
+- **工作目录回收**：隔了很久再追问时，daemon 可能已回收 `work_dir`；聊天现有逻辑如何处理待核实。
 - **列表信息密度**：卡片一屏约 8 个，比表格少；自动化数量通常不多，可接受。
 - **翻译**：新文案需同步 en / zh-Hans / zh-Hant / ja / ko / fr（`parity.test.ts` 会拦）。
 
