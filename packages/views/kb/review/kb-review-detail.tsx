@@ -1,22 +1,33 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, MessageSquare, X } from "lucide-react";
+import { ChevronRight, Loader2, MessageSquare, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuthStore } from "@marvis/core/auth";
 import { useWorkspaceId } from "@marvis/core/hooks";
-import { createShortcutChord } from "@marvis/core/shortcuts";
 import { isImeComposing } from "@marvis/core/utils";
 import { useWorkspacePaths } from "@marvis/core/paths";
-import { kbMergeRequestOptions, kbMrCommentListOptions } from "@marvis/core/kb/queries";
-import { useCloseKbMergeRequest, useCreateKbMrComment, useMergeKbMergeRequest } from "@marvis/core/kb/mutations";
+import { kbMergeRequestOptions, kbMrTimelineOptions } from "@marvis/core/kb/queries";
+import {
+  useCloseKbMergeRequest,
+  useCreateKbMrComment,
+  useDeleteKbMrComment,
+  useDiscardKbMrReview,
+  useMergeKbMergeRequest,
+  useOpenKbMrReview,
+  useRequestKbMrReview,
+  useSubmitKbMrReview,
+  useUpdateKbMrComment,
+} from "@marvis/core/kb/mutations";
 import type {
   KbDraftConflict,
   KbDraftPageChange,
   KbMergeRequestDetail,
   KbMrComment,
   KbMrCommentQuote,
-  KbMrCommentTrigger,
+  KbMrEvent,
+  KbMrTimelineEntry,
 } from "@marvis/core/types";
 import {
   AlertDialog,
@@ -30,14 +41,14 @@ import {
 } from "@marvis/ui/components/ui/alert-dialog";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Input } from "@marvis/ui/components/ui/input";
-import { SubmitButton } from "@marvis/ui/components/common/submit-button";
+import { Popover, PopoverContent, PopoverTrigger } from "@marvis/ui/components/ui/popover";
+import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { ShortcutKeycaps } from "../../common/shortcut-keycaps";
 import { AppLink } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
 import { KB_TAG } from "../components/kb-cite-card";
-import { KbFileCard, KbStateDot, useLintText, type KbDot } from "../components/kb-diff";
+import { KB_MR_STATUS_DOT, KbFileCard, KbStateDot, useLintText } from "../components/kb-diff";
 import { withDraft } from "../components/kb-page-tree";
 import { kbErrorCode } from "../utils/kb-api-error";
 import { kbOriginHref } from "./kb-review-route";
@@ -50,6 +61,7 @@ const MERGE_ERRORS = {
   unresolved_conflict: "conflict",
   job_running: "running",
   merge_request_not_open: "not_open",
+  changes_requested: "changes_requested",
 } as const;
 
 type MergeError = (typeof MERGE_ERRORS)[keyof typeof MERGE_ERRORS];
@@ -60,10 +72,8 @@ function mergeError(error: unknown): MergeError | "failed" {
   return Object.hasOwn(MERGE_ERRORS, code) ? MERGE_ERRORS[code as keyof typeof MERGE_ERRORS] : "failed";
 }
 
-/** The review composer sends on Cmd/Ctrl+Enter; plain Enter is a new line. */
-const SEND_SHORTCUT = createShortcutChord("Enter", { primary: true });
-
-const STATUS_DOT: Record<KbMergeRequestDetail["status"], KbDot> = { open: "blue", merged: "green", closed: "gray" };
+/** The newest activity entries shown before "show earlier". */
+const VISIBLE_ACTIVITY = 5;
 
 /** A comment's quote as it is about to be sent: the line and where it is. */
 interface DraftQuote {
@@ -76,6 +86,36 @@ interface DraftQuote {
 interface LineSelection {
   pageId: string;
   index: number;
+}
+
+/** A root comment with its replies, or an event, in timeline order. */
+type ActivityItem = { kind: "thread"; root: KbMrComment; replies: KbMrComment[] } | { kind: "event"; event: KbMrEvent };
+
+function toComment(entry: Extract<KbMrTimelineEntry, { type: "comment" }>): KbMrComment {
+  const { type: _type, ...comment } = entry;
+
+  return comment;
+}
+
+/** Groups the timeline into threads (replies under their root) and events. */
+function activityItems(timeline: KbMrTimelineEntry[]): ActivityItem[] {
+  const comments = timeline.filter((e): e is Extract<KbMrTimelineEntry, { type: "comment" }> => e.type === "comment").map(toComment);
+  const replies = new Map<string, KbMrComment[]>();
+  for (const c of comments) {
+    if (!c.parent_id) continue;
+    replies.set(c.parent_id, [...(replies.get(c.parent_id) ?? []), c]);
+  }
+
+  const out: ActivityItem[] = [];
+  for (const entry of timeline) {
+    if (entry.type === "event") {
+      if (entry.kind !== "unknown") out.push({ kind: "event", event: entry });
+      continue;
+    }
+    if (!entry.parent_id) out.push({ kind: "thread", root: toComment(entry), replies: replies.get(entry.id) ?? [] });
+  }
+
+  return out;
 }
 
 /** Words a merge request source; an unknown one shows as sent. */
@@ -116,17 +156,7 @@ function OriginLink({ kbSlug, mr }: { kbSlug: string; mr: KbMergeRequestDetail }
   );
 }
 
-function ConflictBanner({
-  conflicts,
-  pages,
-  onRebase,
-  canRebase,
-}: {
-  conflicts: KbDraftConflict[];
-  pages: KbDraftPageChange[];
-  onRebase: () => void;
-  canRebase: boolean;
-}) {
+function ConflictBanner({ conflicts, pages }: { conflicts: KbDraftConflict[]; pages: KbDraftPageChange[] }) {
   const { t } = useT("kb");
   const titleOf = (pageId: string, path: string) => pages.find((page) => page.page_id === pageId)?.title || path;
 
@@ -135,11 +165,6 @@ function ConflictBanner({
       <div className="flex items-center gap-2.5">
         <KbStateDot dot="red" />
         <span className="flex-1">{t(($) => $.review.conflict_banner)}</span>
-        {canRebase && (
-          <Button type="button" variant="outline" size="xs" onClick={onRebase}>
-            {t(($) => $.job.draft.rebase)}
-          </Button>
-        )}
       </div>
       {conflicts.map((conflict, index) => (
         <div key={index} className="flex items-center gap-3.5 pl-4 text-caption">
@@ -152,49 +177,6 @@ function ConflictBanner({
           )}
         </div>
       ))}
-    </div>
-  );
-}
-
-function TriggerRow({
-  kbSlug,
-  mr,
-  trigger,
-}: {
-  kbSlug: string;
-  mr: KbMergeRequestDetail;
-  trigger: KbMrCommentTrigger;
-}) {
-  const { t } = useT("kb");
-  const p = useWorkspacePaths();
-  // The job's agent works in the job's chat, which only opens from the job page.
-  const jobRun = mr.origin.type === "kb_job" && !!mr.origin.ref_id && trigger.agent_id === mr.review_agent?.id;
-  const runHref = jobRun
-    ? mr.origin.openable && mr.origin.ref_id
-      ? p.kbJob(kbSlug, mr.origin.ref_id)
-      : null
-    : trigger.chat_session_id
-        ? p.chatSession(trigger.chat_session_id)
-        : null;
-
-  return (
-    <div className="flex items-center gap-2 border-t border-border/60 pt-2 text-label">
-      <ActorAvatar actorType="agent" actorId={trigger.agent_id} name={trigger.agent_name || undefined} size="xs" profileLink={false} />
-      <span className="font-medium">{trigger.agent_name}</span>
-      {trigger.running ? (
-        <span className={cn(KB_TAG, "gap-1.5")}>
-          <KbStateDot dot="green" />
-          {t(($) => $.review.working)}
-        </span>
-      ) : (
-        <span className="text-caption text-faint-foreground">{t(($) => $.review.trigger_reason[trigger.reason === "mention" ? "mention" : "author"])}</span>
-      )}
-      <span className="flex-1" />
-      {runHref && (
-        <AppLink href={runHref} className="shrink-0 text-caption text-info hover:underline">
-          {t(($) => $.review.view_run)}
-        </AppLink>
-      )}
     </div>
   );
 }
@@ -215,56 +197,253 @@ function QuoteChip({ text, label, onRemove }: { text: string; label: string; onR
   );
 }
 
+/** A small text box that sends on Cmd/Ctrl+Enter or with its button. */
+function InlineEditor({
+  label,
+  initial = "",
+  submitLabel,
+  sending,
+  onSubmit,
+  onCancel,
+}: {
+  label: string;
+  initial?: string;
+  submitLabel: string;
+  sending: boolean;
+  onSubmit: (body: string) => Promise<boolean>;
+  onCancel: () => void;
+}) {
+  const { t } = useT("kb");
+  const [body, setBody] = useState(initial);
+  const canSend = !!body.trim() && !sending;
+  const send = () => {
+    if (!canSend) return;
+    void onSubmit(body.trim()).then((ok) => {
+      if (ok) setBody("");
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Textarea
+        aria-label={label}
+        autoFocus
+        rows={2}
+        value={body}
+        readOnly={sending}
+        onChange={(event) => setBody(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") onCancel();
+          if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey) || isImeComposing(event.nativeEvent)) return;
+          event.preventDefault();
+          send();
+        }}
+      />
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          {t(($) => $.review.cancel)}
+        </Button>
+        <Button type="button" size="sm" disabled={!canSend} onClick={send}>
+          {sending && <Loader2 className="size-3.5 animate-spin" />}
+          {submitLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CommentBody({
+  number,
+  comment,
+  pageTitle,
+}: {
+  number: number;
+  comment: KbMrComment;
+  pageTitle: (pageId: string) => string;
+}) {
+  const { t } = useT("kb");
+  const timeAgo = useTimeAgo();
+  const update = useUpdateKbMrComment();
+  const remove = useDeleteKbMrComment();
+  const [editing, setEditing] = useState(false);
+  const pending = comment.state === "pending";
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-2 text-label">
+        <ActorAvatar actorType={comment.author_type} actorId={comment.author_id} name={comment.author_name || undefined} size="xs" profileLink={false} />
+        <span className="font-medium">{comment.author_name}</span>
+        <span className="text-caption text-faint-foreground">{timeAgo(comment.created_at)}</span>
+        {pending && (
+          <>
+            <span className={cn(KB_TAG, "h-5 text-caption")}>{t(($) => $.review.pending)}</span>
+            <span className="flex-1" />
+            <button type="button" onClick={() => setEditing(true)} className="text-caption text-info hover:underline">
+              {t(($) => $.review.edit)}
+            </button>
+            <button
+              type="button"
+              disabled={remove.isPending}
+              onClick={() =>
+                remove.mutate(
+                  { number, commentId: comment.id },
+                  { onError: () => toast.error(t(($) => $.review.comment_failed)) },
+                )
+              }
+              className="text-caption text-info hover:underline"
+            >
+              {t(($) => $.review.delete)}
+            </button>
+          </>
+        )}
+      </div>
+      {comment.quote && <QuoteChip label={pageTitle(comment.quote.page_id)} text={comment.quote.text} />}
+      {editing ? (
+        <InlineEditor
+          label={t(($) => $.review.comment_label)}
+          initial={comment.body}
+          submitLabel={t(($) => $.review.save)}
+          sending={update.isPending}
+          onCancel={() => setEditing(false)}
+          onSubmit={(body) =>
+            update
+              .mutateAsync({ number, commentId: comment.id, body })
+              .then(() => {
+                setEditing(false);
+                return true;
+              })
+              .catch(() => {
+                toast.error(t(($) => $.review.comment_failed));
+                return false;
+              })
+          }
+        />
+      ) : (
+        <p className="text-body break-words whitespace-pre-wrap">{comment.body}</p>
+      )}
+    </div>
+  );
+}
+
 function CommentCard({
-  kbSlug,
-  mr,
+  number,
   comment,
   replies,
   pageTitle,
   onReply,
+  canReplyInline,
 }: {
-  kbSlug: string;
-  mr: KbMergeRequestDetail;
+  number: number;
   comment: KbMrComment;
   replies: KbMrComment[];
   pageTitle: (pageId: string) => string;
-  onReply: (comment: KbMrComment) => void;
+  /** Replies through the review's comment box; null when the viewer cannot. */
+  onReply: ((comment: KbMrComment) => void) | null;
+  /** The owner answers right in the thread. */
+  canReplyInline: boolean;
 }) {
   const { t } = useT("kb");
-  const timeAgo = useTimeAgo();
-
-  const body = (c: KbMrComment) => (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-label">
-        <ActorAvatar actorType={c.author_type} actorId={c.author_id} name={c.author_name || undefined} size="xs" profileLink={false} />
-        <span className="font-medium">{c.author_name}</span>
-        <span className="text-caption text-faint-foreground">{timeAgo(c.created_at)}</span>
-      </div>
-      {c.quote && <QuoteChip label={pageTitle(c.quote.page_id)} text={c.quote.text} />}
-      <p className="text-body break-words whitespace-pre-wrap">{c.body}</p>
-      {c.triggered.map((trigger) => (
-        <TriggerRow key={trigger.agent_id + (trigger.task_id ?? "")} kbSlug={kbSlug} mr={mr} trigger={trigger} />
-      ))}
-    </div>
-  );
+  const reply = useCreateKbMrComment();
+  const [replying, setReplying] = useState(false);
+  const published = comment.state === "published";
 
   return (
     <article className="flex flex-col gap-3 rounded-xl border bg-card px-3.5 py-3">
-      {body(comment)}
-      {replies.map((reply) => (
-        <div key={reply.id} className="border-t border-border/60 pt-3 pl-6">
-          {body(reply)}
+      <CommentBody number={number} comment={comment} pageTitle={pageTitle} />
+      {replies.map((r) => (
+        <div key={r.id} className="border-t border-border/60 pt-3 pl-6">
+          <CommentBody number={number} comment={r} pageTitle={pageTitle} />
         </div>
       ))}
-      <button type="button" onClick={() => onReply(comment)} className="self-start text-caption text-info hover:underline">
-        {t(($) => $.review.reply)}
-      </button>
+      {published && canReplyInline && (
+        <div className="border-t border-border/60 pt-2">
+          {replying ? (
+            <InlineEditor
+              label={t(($) => $.review.reply)}
+              submitLabel={t(($) => $.review.reply)}
+              sending={reply.isPending}
+              onCancel={() => setReplying(false)}
+              onSubmit={(body) =>
+                reply
+                  .mutateAsync({ number, data: { body, parent_id: comment.id } })
+                  .then(() => {
+                    setReplying(false);
+                    return true;
+                  })
+                  .catch(() => {
+                    toast.error(t(($) => $.review.comment_failed));
+                    return false;
+                  })
+              }
+            />
+          ) : (
+            <button type="button" onClick={() => setReplying(true)} className="w-full text-left text-label text-faint-foreground hover:text-muted-foreground">
+              {t(($) => $.review.reply_placeholder)}
+            </button>
+          )}
+        </div>
+      )}
+      {published && onReply && (
+        <button type="button" onClick={() => onReply(comment)} className="self-start text-caption text-info hover:underline">
+          {t(($) => $.review.reply)}
+        </button>
+      )}
     </article>
   );
 }
 
-function Composer({
-  mr,
+function EventRow({ event }: { event: KbMrEvent }) {
+  const { t } = useT("kb");
+  const timeAgo = useTimeAgo();
+  const payload = event.payload;
+  const count = typeof payload.comment_count === "number" ? payload.comment_count : 0;
+  const summary = typeof payload.summary === "string" ? payload.summary : "";
+  const reason = typeof payload.close_reason === "string" ? payload.close_reason : "";
+  const revertNumber = typeof payload.revert_number === "number" ? payload.revert_number : 0;
+  const fields = Array.isArray(payload.fields)
+    ? payload.fields.filter((f): f is "title" | "summary" | "risk" => f === "title" || f === "summary" || f === "risk")
+    : [];
+
+  let text = "";
+  switch (event.kind) {
+    case "review_submitted":
+      text = t(($) => $.review.event.review_submitted, { count });
+      break;
+    case "review_requested":
+      text = t(($) => $.review.event.review_requested);
+      break;
+    case "merged":
+      text = t(($) => $.review.event.merged);
+      break;
+    case "closed":
+      text = t(($) => $.review.event.closed);
+      break;
+    case "reverted":
+      text = t(($) => $.review.event.reverted, { number: revertNumber });
+      break;
+    case "edited":
+      text = t(($) => $.review.event.edited, {
+        fields: fields.map((f) => t(($) => $.review.field[f])).join(t(($) => $.review.field_separator)),
+      });
+      break;
+  }
+  const detail = event.kind === "review_submitted" ? summary : event.kind === "closed" ? reason : "";
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2 pl-1 text-label">
+        <ActorAvatar actorType={event.actor_type} actorId={event.actor_id} name={event.actor_name || undefined} size="xs" profileLink={false} />
+        <span className="min-w-0 text-muted-foreground">
+          <span className="font-medium text-foreground">{event.actor_name}</span> {text}
+        </span>
+        <span className="shrink-0 text-caption text-faint-foreground">{timeAgo(event.created_at)}</span>
+      </div>
+      {detail && <p className="pl-8 text-label break-words whitespace-pre-wrap">{detail}</p>}
+    </div>
+  );
+}
+
+function ReviewComposer({
   quote,
   replyTo,
   onClearQuote,
@@ -272,7 +451,6 @@ function Composer({
   onSend,
   sending,
 }: {
-  mr: KbMergeRequestDetail;
   quote: DraftQuote | null;
   replyTo: KbMrComment | null;
   onClearQuote: () => void;
@@ -328,38 +506,132 @@ function Composer({
           className="block field-sizing-content max-h-[40vh] w-full resize-none border-0 bg-transparent p-0 text-body leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
         />
       </div>
-      <div data-slot="comment-composer-toolbar" className="flex min-w-0 items-center gap-1 px-2 pb-2">
-        <div className="min-w-0 flex-1">
-          {mr.review_agent && mr.status === "open" && (
-            <span className="inline-flex h-8 min-w-0 max-w-full animate-in fade-in items-center gap-1.5 rounded-full bg-muted pr-2.5 pl-1.5 text-caption font-medium text-muted-foreground">
-              <ActorAvatar actorType="agent" actorId={mr.review_agent.id} name={mr.review_agent.name || undefined} size="xs" profileLink={false} />
-              <span className="truncate">{mr.review_agent.name}</span>
-              <span className="shrink-0 text-faint-foreground">{t(($) => $.review.trigger_hint)}</span>
-            </span>
-          )}
-        </div>
-        <SubmitButton
-          onClick={send}
-          disabled={!canSend}
-          loading={sending}
-          ariaLabel={t(($) => $.review.send)}
-          tooltip={
-            <>
-              {t(($) => $.review.send)}
-              <ShortcutKeycaps shortcut={SEND_SHORTCUT} decorative />
-            </>
-          }
-        />
+      <div data-slot="comment-composer-toolbar" className="flex min-w-0 items-center justify-end gap-1 px-2 pb-2">
+        <Button type="button" variant="outline" size="sm" disabled={!canSend} aria-busy={sending || undefined} onClick={send}>
+          {sending && <Loader2 className="size-3.5 animate-spin" />}
+          {t(($) => $.review.add_to_review)}
+        </Button>
       </div>
     </div>
   );
 }
 
+/** The review bar: what is pending, submit with an optional summary, or discard. */
+function ReviewBar({
+  number,
+  reviewId,
+  pendingCount,
+}: {
+  number: number;
+  reviewId: string;
+  pendingCount: number;
+}) {
+  const { t } = useT("kb");
+  const submit = useSubmitKbMrReview();
+  const discard = useDiscardKbMrReview();
+  const [submitting, setSubmitting] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
+  const [summary, setSummary] = useState("");
+  const canSubmit = (pendingCount > 0 || !!summary.trim()) && !submit.isPending;
+
+  const doSubmit = () => {
+    submit.mutate(
+      { number, reviewId, summary: summary.trim() },
+      {
+        onSuccess: () => {
+          setSubmitting(false);
+          setSummary("");
+          toast.success(t(($) => $.review.submitted_toast));
+        },
+        onError: () => toast.error(t(($) => $.review.submit_failed)),
+      },
+    );
+  };
+
+  return (
+    <div className="flex max-w-[720px] items-center gap-2 text-label">
+      <span className={cn(KB_TAG, "gap-1.5")}>
+        <KbStateDot dot="amber" />
+        {t(($) => $.review.reviewing)}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-muted-foreground">
+        {pendingCount > 0 ? t(($) => $.review.pending_count, { count: pendingCount }) : t(($) => $.review.pending_none)}
+      </span>
+      <Button type="button" variant="ghost" onClick={() => setDiscarding(true)}>
+        {t(($) => $.review.discard)}
+      </Button>
+      <Popover open={submitting} onOpenChange={setSubmitting}>
+        <PopoverTrigger render={<Button type="button" />}>
+          {pendingCount > 0 ? t(($) => $.review.submit_count, { count: pendingCount }) : t(($) => $.review.submit)}
+        </PopoverTrigger>
+        <PopoverContent align="end" side="top" className="flex w-[360px] flex-col gap-2.5 p-4">
+          <div className="text-body font-semibold">{t(($) => $.review.submit)}</div>
+          <Textarea
+            aria-label={t(($) => $.review.summary_label)}
+            placeholder={t(($) => $.review.summary_label)}
+            rows={3}
+            value={summary}
+            onChange={(event) => setSummary(event.target.value)}
+          />
+          <p className="text-caption text-muted-foreground">{t(($) => $.review.submit_note, { count: pendingCount })}</p>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setSubmitting(false)}>
+              {t(($) => $.review.cancel)}
+            </Button>
+            <Button type="button" disabled={!canSubmit} onClick={doSubmit}>
+              {submit.isPending && <Loader2 className="size-4 animate-spin" />}
+              {t(($) => $.review.submit)}
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <AlertDialog
+        open={discarding}
+        onOpenChange={(next) => {
+          if (!next && !discard.isPending) setDiscarding(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(($) => $.review.discard_confirm_title)}</AlertDialogTitle>
+            {pendingCount > 0 && (
+              <AlertDialogDescription>{t(($) => $.review.discard_confirm_description, { count: pendingCount })}</AlertDialogDescription>
+            )}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={discard.isPending}>{t(($) => $.review.cancel)}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={discard.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                discard.mutate(
+                  { number, reviewId },
+                  {
+                    onSuccess: () => setDiscarding(false),
+                    onError: () => toast.error(t(($) => $.review.discard_failed)),
+                  },
+                );
+              }}
+            >
+              {discard.isPending && <Loader2 className="size-4 animate-spin" />}
+              {t(($) => $.review.discard)}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
 /**
- * One merge request (designs 8.2–8.8): who opened it and from where, merge
+ * One merge request (designs 8.1–8.12): who opened it and from where, merge
  * and close, the conflict banner, the agent's summary and the checks, the
- * file cards (select a line to quote it), the comment thread and the
- * comment box. A merged request offers revert instead.
+ * file cards, and the activity (comments and events). A reviewer opens a
+ * review, quotes diff lines into pending comments only they see and submits
+ * them at once; the owner replies in the threads and asks for review again.
+ * A merged request offers revert instead.
  */
 export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: number }) {
   const { t } = useT("kb");
@@ -368,11 +640,14 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
   const timeAgo = useTimeAgo();
   const lintText = useLintText();
   const sourceLabel = useKbSourceLabel();
+  const userId = useAuthStore((s) => s.user?.id ?? "");
   const { data: mr, isLoading, isError } = useQuery(kbMergeRequestOptions(wsId, number));
-  const { data: comments = [] } = useQuery(kbMrCommentListOptions(wsId, number));
+  const { data: timeline = [] } = useQuery(kbMrTimelineOptions(wsId, number, "all"));
   const merge = useMergeKbMergeRequest();
   const close = useCloseKbMergeRequest();
   const comment = useCreateKbMrComment();
+  const openReview = useOpenKbMrReview();
+  const requestReview = useRequestKbMrReview();
 
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [selection, setSelection] = useState<LineSelection | null>(null);
@@ -381,11 +656,13 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
   const [confirmingClose, setConfirmingClose] = useState(false);
   const [closeReason, setCloseReason] = useState("");
   const [reverting, setReverting] = useState<KbRevertTarget | null>(null);
+  const [showEarlier, setShowEarlier] = useState(false);
 
-  const threads = useMemo(() => {
-    const roots = comments.filter((c) => !c.parent_id);
-    return roots.map((root) => ({ root, replies: comments.filter((c) => c.parent_id === root.id) }));
-  }, [comments]);
+  const items = useMemo(() => activityItems(timeline), [timeline]);
+  const pendingCount = useMemo(
+    () => timeline.filter((e) => e.type === "comment" && e.state === "pending").length,
+    [timeline],
+  );
 
   if (!mr || mr.number !== number) {
     return (
@@ -396,37 +673,63 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
   }
 
   const open = mr.status === "open";
-  const conflicts = open ? mr.checks.conflicts : [];
+  const changesRequested = mr.status === "changes_requested";
+  const active = open || changesRequested;
+  const isOwner = !!userId && mr.owner_id === userId;
+  const review = mr.pending_review;
+  const reviewing = !!review && active;
+  const canStartReview = open && mr.can_review && !review && !isOwner;
+  const conflicts = active ? mr.checks.conflicts : [];
   const lintErrors = mr.checks.lint.filter((f) => f.severity === "error").length;
   const canMerge = open && mr.can_merge && !mr.agent_running && conflicts.length === 0 && lintErrors === 0;
   const pageTitle = (pageId: string) => mr.pages.find((page) => page.page_id === pageId)?.title || pageId;
 
-  const mergeHint = !open
-    ? ""
-    : !mr.can_merge
-      ? t(($) => $.review.hint_member)
-      : conflicts.length > 0
-        ? t(($) => $.review.hint_conflict)
-        : mr.agent_running
-          ? t(($) => $.review.hint_running)
-          : "";
+  const mergeHint = changesRequested
+    ? isOwner
+      ? t(($) => $.review.hint_changes_owner)
+      : t(($) => $.review.hint_changes)
+    : !open
+      ? ""
+      : !mr.can_merge
+        ? t(($) => $.review.hint_member)
+        : conflicts.length > 0
+          ? t(($) => $.review.hint_conflict)
+          : mr.agent_running
+            ? t(($) => $.review.hint_running)
+            : "";
 
-  const sendComment = (body: string): Promise<boolean> =>
-    comment
-      .mutateAsync({
-        number,
-        data: { body, parent_id: replyTo?.id ?? null, quote: quote?.quote ?? null },
-      })
-      .then(() => {
-        setQuote(null);
-        setReplyTo(null);
-        setSelection(null);
-        return true;
-      })
+  const ensureReview = (): Promise<string | null> => {
+    if (review) return Promise.resolve(review.id);
+
+    return openReview
+      .mutateAsync(number)
+      .then((r) => r.id)
       .catch(() => {
-        toast.error(t(($) => $.review.comment_failed));
-        return false;
+        toast.error(t(($) => $.review.start_failed));
+        return null;
       });
+  };
+
+  const sendReviewComment = (body: string): Promise<boolean> =>
+    ensureReview().then((reviewId) => {
+      if (!reviewId) return false;
+
+      return comment
+        .mutateAsync({
+          number,
+          data: { body, review_id: reviewId, parent_id: replyTo?.id ?? null, quote: quote?.quote ?? null },
+        })
+        .then(() => {
+          setQuote(null);
+          setReplyTo(null);
+          setSelection(null);
+          return true;
+        })
+        .catch(() => {
+          toast.error(t(($) => $.review.comment_failed));
+          return false;
+        });
+    });
 
   const doMerge = () => {
     merge.mutate(
@@ -451,6 +754,10 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
     );
   };
 
+  const doRequestReview = () => {
+    requestReview.mutate(number, { onError: () => toast.error(t(($) => $.review.ready_failed)) });
+  };
+
   const addComment = () => {
     if (!selection) return;
     const page = mr.pages.find((pg) => pg.page_id === selection.pageId);
@@ -462,6 +769,7 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
       line: line.new_line || line.old_line,
     });
     setSelection(null);
+    if (!review) void ensureReview();
   };
 
   const summaryMeta = [
@@ -470,6 +778,11 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
   ]
     .filter(Boolean)
     .join(" · ");
+
+  const hiddenCount = showEarlier ? 0 : Math.max(0, items.length - VISIBLE_ACTIVITY);
+  const visibleItems = hiddenCount > 0 ? items.slice(-VISIBLE_ACTIVITY) : items;
+  // Diff lines quote into a review: a reviewer who can review, not the owner.
+  const canQuote = active && mr.can_review && !isOwner && (open || reviewing);
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -486,28 +799,40 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
               <span>{timeAgo(mr.created_at)}</span>
               <OriginLink kbSlug={kbSlug} mr={mr} />
             </div>
-            <h2 className="mt-1.5 text-title font-semibold break-words">{mr.title}</h2>
+            <div className="mt-1.5 flex min-w-0 items-center gap-2.5">
+              <h2 className="min-w-0 text-title font-semibold break-words">{mr.title}</h2>
+              <span className={cn(KB_TAG, "shrink-0 gap-1.5")}>
+                <KbStateDot dot={KB_MR_STATUS_DOT[mr.status]} />
+                {t(($) => $.review.status[mr.status])}
+              </span>
+            </div>
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <div className="flex items-center gap-2">
-              {open && mr.agent_running && mr.review_agent && (
+              {open && mr.agent_running && (
                 <span className={cn(KB_TAG, "h-7 gap-1.5 px-2.5")}>
                   <KbStateDot dot="green" />
-                  {t(($) => $.review.agent_working, { name: mr.review_agent.name })}
+                  {t(($) => $.review.agent_working)}
                 </span>
               )}
-              {!open && (
-                <span className={cn(KB_TAG, "gap-1.5")}>
-                  <KbStateDot dot={STATUS_DOT[mr.status]} />
-                  {t(($) => $.review.status[mr.status])}
-                </span>
+              {canStartReview && (
+                <Button type="button" variant="outline" disabled={openReview.isPending} onClick={() => void ensureReview()}>
+                  {openReview.isPending && <Loader2 className="size-4 animate-spin" />}
+                  {t(($) => $.review.start)}
+                </Button>
               )}
-              {open && mr.can_close && (
+              {mr.can_request_review && (
+                <Button type="button" variant="outline" disabled={requestReview.isPending} onClick={doRequestReview}>
+                  {requestReview.isPending && <Loader2 className="size-4 animate-spin" />}
+                  {t(($) => $.review.request_review)}
+                </Button>
+              )}
+              {active && mr.can_close && (
                 <Button type="button" variant="outline" disabled={close.isPending} onClick={() => setConfirmingClose(true)}>
                   {t(($) => $.review.close)}
                 </Button>
               )}
-              {open && (
+              {active && (
                 <Button type="button" disabled={!canMerge || merge.isPending} onClick={doMerge}>
                   {merge.isPending && <Loader2 className="size-4 animate-spin" />}
                   {t(($) => $.review.merge)}
@@ -535,26 +860,19 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
           </div>
         </div>
 
-        {conflicts.length > 0 && (
-          <ConflictBanner
-            conflicts={conflicts}
-            pages={mr.pages}
-            canRebase={!!mr.review_agent && !mr.agent_running}
-            onRebase={() => void sendComment(t(($) => $.job.draft.rebase_message, { draft: mr.draft_id }))}
-          />
-        )}
+        {conflicts.length > 0 && <ConflictBanner conflicts={conflicts} pages={mr.pages} />}
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-xl bg-surface-sunken/60 px-4 py-3.5">
+          <div className="h-[148px] overflow-y-auto rounded-xl bg-surface-sunken/60 px-4 py-3.5">
             <div className="mb-1.5 text-caption text-faint-foreground">
               {mr.author_type === "agent" ? t(($) => $.review.self_check) : t(($) => $.review.summary)}
             </div>
             <p className="text-label leading-relaxed break-words whitespace-pre-wrap">{mr.summary}</p>
             <div className="mt-2 text-caption text-muted-foreground">{summaryMeta}</div>
           </div>
-          <div className="flex flex-col gap-1.5 rounded-xl bg-surface-sunken/60 px-4 py-3.5">
+          <div className="flex h-[148px] flex-col gap-1.5 overflow-y-auto rounded-xl bg-surface-sunken/60 px-4 py-3.5">
             <div className="text-caption text-faint-foreground">{t(($) => $.review.checks)}</div>
-            {open ? (
+            {active ? (
               <>
                 {mr.checks.lint.map((finding, index) => (
                   <span key={index} className="flex items-start gap-2 text-label">
@@ -577,7 +895,7 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
               </>
             ) : (
               <span className="flex items-center gap-2 text-label">
-                <KbStateDot dot={STATUS_DOT[mr.status]} />
+                <KbStateDot dot={KB_MR_STATUS_DOT[mr.status]} />
                 {t(($) => $.review.status[mr.status])}
               </span>
             )}
@@ -598,11 +916,12 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
                 return next;
               })
             }
-            href={open ? withDraft(p.kbPage(kbSlug, page.page_id), mr.draft_id) : p.kbPage(kbSlug, page.page_id)}
-            selectedLine={selection?.pageId === page.page_id ? selection.index : -1}
-            onSelectLine={(index) =>
-              setSelection((prev) => (prev?.pageId === page.page_id && prev.index === index ? null : { pageId: page.page_id, index }))
-            }
+            href={active ? withDraft(p.kbPage(kbSlug, page.page_id), mr.draft_id) : p.kbPage(kbSlug, page.page_id)}
+            selectedLine={canQuote && selection?.pageId === page.page_id ? selection.index : -1}
+            onSelectLine={(index) => {
+              if (!canQuote) return;
+              setSelection((prev) => (prev?.pageId === page.page_id && prev.index === index ? null : { pageId: page.page_id, index }));
+            }}
             lineAction={
               <Button type="button" size="xs" onClick={addComment} className="shadow-md">
                 <MessageSquare className="size-3" />
@@ -613,37 +932,48 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
         ))}
 
         <section aria-label={t(($) => $.review.activity)} className="mt-2 flex max-w-[720px] flex-col gap-3 border-t pt-4">
-          <div className="flex items-center gap-2">
-            <h3 className="flex-1 text-body font-semibold">{t(($) => $.review.activity)}</h3>
-            {comments.length > 0 && (
-              <span className="text-caption text-muted-foreground">{t(($) => $.review.activity_count, { count: comments.length })}</span>
-            )}
-          </div>
-          {threads.map(({ root, replies }) => (
-            <CommentCard
-              key={root.id}
-              kbSlug={kbSlug}
-              mr={mr}
-              comment={root}
-              replies={replies}
-              pageTitle={pageTitle}
-              onReply={setReplyTo}
-            />
-          ))}
+          <h3 className="text-body font-semibold">{t(($) => $.review.activity)}</h3>
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowEarlier(true)}
+              className="flex items-center gap-1.5 self-start text-label text-muted-foreground transition-colors duration-(--motion-fast) ease-out hover:text-foreground"
+            >
+              <ChevronRight className="size-3 shrink-0" />
+              {t(($) => $.review.show_earlier, { count: hiddenCount })}
+            </button>
+          )}
+          {visibleItems.map((item) =>
+            item.kind === "event" ? (
+              <EventRow key={item.event.id} event={item.event} />
+            ) : (
+              <CommentCard
+                key={item.root.id}
+                number={number}
+                comment={item.root}
+                replies={item.replies}
+                pageTitle={pageTitle}
+                onReply={reviewing ? setReplyTo : null}
+                canReplyInline={isOwner && active}
+              />
+            ),
+          )}
         </section>
       </div>
 
-      <div className="shrink-0 px-[30px] pb-5">
-        <Composer
-          mr={mr}
-          quote={quote}
-          replyTo={replyTo}
-          onClearQuote={() => setQuote(null)}
-          onClearReply={() => setReplyTo(null)}
-          onSend={sendComment}
-          sending={comment.isPending}
-        />
-      </div>
+      {reviewing && review && (
+        <div className="flex shrink-0 flex-col gap-2.5 px-[30px] pb-5">
+          <ReviewBar number={number} reviewId={review.id} pendingCount={pendingCount} />
+          <ReviewComposer
+            quote={quote}
+            replyTo={replyTo}
+            onClearQuote={() => setQuote(null)}
+            onClearReply={() => setReplyTo(null)}
+            onSend={sendReviewComment}
+            sending={comment.isPending}
+          />
+        </div>
+      )}
 
       <AlertDialog
         open={confirmingClose}

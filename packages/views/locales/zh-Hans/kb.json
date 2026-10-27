@@ -86,7 +86,8 @@
     "sources": "引用来源",
     "missing_page": "这一页还没有写",
     "close_panel": "关闭",
-    "view_change": "查看修改"
+    "view_change": "查看修改",
+    "draft_forbidden": "没有权限查看这份草稿"
   },
   "draft": {
     "label": "草稿",
@@ -399,7 +400,8 @@
         "merged": "已合并",
         "closed": "已关闭 · 可重新提交",
         "nochange": "无需修改",
-        "discarded": "已放弃"
+        "discarded": "已放弃",
+        "changes_requested": "待解决"
       },
       "nodraft": "智能体建好草稿后，在这里显示改动。",
       "empty": "智能体推送改动后显示在这里。",
@@ -443,7 +445,7 @@
         "busy": "等智能体这一轮结束再提交",
         "lint_other": "有 {{count}} 个错误，修复后才能提交",
         "conflict": "可以直接提交，审核时再处理冲突",
-        "submitted": "之后的修改在审核页评论里继续，也可以在这里接着说",
+        "submitted": "审核人提交意见后会显示在这里，也可以在左边接着说",
         "closed": "调整后可重新提交，会开一个新的变更请求",
         "merged": "这段对话已结束",
         "running": "可以随时在左边补充要求"
@@ -481,6 +483,15 @@
       "annotations_all_message_other": "处理{{name}}的全部 {{count}} 条待处理批注。",
       "annotations_page_message_other": "处理「{{title}}」的 {{count}} 条待处理批注。",
       "annotations_kb_message_other": "处理整个知识库的 {{count}} 条待处理批注。"
+    },
+    "feedback": {
+      "label": "审核意见",
+      "title_other": "#{{number}} 有 {{count}} 条审核意见待解决",
+      "go_review": "去审核页",
+      "submitted": "提交了评审 · {{time}}",
+      "handoff": "交给智能体处理",
+      "handed_off": "已交给智能体",
+      "handoff_failed": "没有交给智能体"
     }
   },
   "review": {
@@ -491,23 +502,19 @@
     "conflict_banner": "主线改了同一段内容。",
     "conflict_main": "主线第 {{lines}} 行",
     "conflict_draft": "本分支第 {{lines}} 行",
-    "working": "正在工作",
-    "view_run": "查看执行过程",
     "remove_quote": "移除引用",
     "reply": "回复",
     "replying_to": "回复 {{name}}",
     "quote_line": "{{page}} 第 {{line}} 行",
     "comment_label": "评论",
-    "comment_placeholder": "留下评论...",
-    "trigger_hint": "发送后开始",
-    "send": "发送",
+    "comment_placeholder": "写评论，或选中 diff 的一行加入评论",
     "hint_member": "知识库创建者或 owner / admin 合并",
     "hint_conflict": "先解决冲突",
     "hint_running": "智能体改完后再合并",
     "comment_failed": "评论没有发出",
     "merged_toast": "已合并 #{{number}}",
     "close_failed": "没有关闭成功",
-    "agent_working": "{{name}} 在工作",
+    "agent_working": "智能体在工作",
     "close": "关闭",
     "merge": "合并",
     "revert": "回滚此次变更",
@@ -533,7 +540,6 @@
     "revert_submit": "提交回滚",
     "meta_other": "风险 {{risk}} · 影响 {{count}} 个页面",
     "meta_annotations_other": "处理 {{count}} 条批注",
-    "activity_count_other": "{{count}} 条动态",
     "close_confirm_annotations_other": "处理的 {{count}} 条批注会退回待处理。",
     "tabs": {
       "open": "待审核",
@@ -543,7 +549,8 @@
     "status": {
       "open": "待审核",
       "merged": "已合并",
-      "closed": "已关闭"
+      "closed": "已关闭",
+      "changes_requested": "待解决"
     },
     "empty": {
       "open": "没有待审核的修改",
@@ -566,16 +573,13 @@
       "issue": "任务 · {{label}}",
       "chat": "对话 · {{label}}"
     },
-    "trigger_reason": {
-      "author": "按评论修改",
-      "mention": "被 @ 后开始"
-    },
     "merge_error": {
       "stale": "草稿在你打开后又改过，刷新后再合并",
       "conflict": "与主线冲突，先解决冲突",
       "running": "智能体改完后再合并",
       "not_open": "这个变更请求已经结束",
-      "failed": "没有合并成功"
+      "failed": "没有合并成功",
+      "changes_requested": "待解决，负责人重新请求审核后可以合并"
     },
     "risk": {
       "low": "低",
@@ -589,6 +593,46 @@
       "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
       "header": "#{{number}} · {{author}} · {{merger}}合并",
       "revert_hint": "回滚会生成新的变更请求，合并后生效。"
+    },
+    "pending": "待提交",
+    "edit": "编辑",
+    "delete": "删除",
+    "save": "保存",
+    "reply_placeholder": "回复...",
+    "add_to_review": "加入评审",
+    "reviewing": "评审中",
+    "pending_count_other": "{{count}} 条待提交，只有你能看到",
+    "pending_none": "还没有待提交的评论",
+    "discard": "放弃评审",
+    "discard_confirm_title": "放弃这次评审？",
+    "discard_confirm_description_other": "{{count}} 条待提交的评论会被删除。",
+    "discard_failed": "没有放弃成功",
+    "submit": "提交评审",
+    "submit_count_other": "提交评审（{{count}} 条）",
+    "summary_label": "总结（选填）",
+    "submit_note_other": "{{count}} 条评论将对所有人可见，变更请求改为「待解决」，并通知负责人。",
+    "submitted_toast": "评审已提交",
+    "submit_failed": "评审没有提交成功",
+    "start": "开启评审",
+    "start_failed": "没有开启评审",
+    "request_review": "重新请求审核",
+    "ready_failed": "没有重新请求审核",
+    "hint_changes_owner": "按意见改完后重新请求审核",
+    "hint_changes": "待解决，负责人重新请求审核后可以合并",
+    "show_earlier_other": "展开更早 {{count}} 条动态",
+    "field_separator": "、",
+    "event": {
+      "review_submitted_other": "提交了评审 · {{count}} 条意见",
+      "review_requested": "重新请求审核",
+      "merged": "合并了这次变更",
+      "closed": "关闭了这次变更",
+      "reverted": "生成了回滚 #{{number}}",
+      "edited": "修改了{{fields}}"
+    },
+    "field": {
+      "title": "标题",
+      "summary": "说明",
+      "risk": "风险"
     }
   },
   "manage": {

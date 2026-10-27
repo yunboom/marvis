@@ -92,7 +92,8 @@
     "sources": "Sources",
     "missing_page": "Cette page n’est pas encore écrite",
     "close_panel": "Fermer",
-    "view_change": "Voir la modification"
+    "view_change": "Voir la modification",
+    "draft_forbidden": "Vous n'avez pas accès à ce brouillon"
   },
   "draft": {
     "label": "Brouillon",
@@ -411,7 +412,8 @@
         "merged": "Fusionné",
         "closed": "Fermé · peut être resoumis",
         "nochange": "Aucun changement nécessaire",
-        "discarded": "Abandonné"
+        "discarded": "Abandonné",
+        "changes_requested": "À corriger"
       },
       "nodraft": "Les modifications s’affichent ici une fois le brouillon créé par l’agent.",
       "empty": "Les modifications s’affichent ici dès que l’agent les écrit.",
@@ -457,7 +459,7 @@
         "lint_one": "{{count}} erreur à corriger avant de soumettre",
         "lint_other": "{{count}} erreurs à corriger avant de soumettre",
         "conflict": "Vous pouvez soumettre maintenant et résoudre les conflits en revue",
-        "submitted": "Continuez dans les commentaires de revue, ou ici",
+        "submitted": "Les remarques de la revue s'affichent ici ; vous pouvez continuer à gauche",
         "closed": "Ajustez puis resoumettez ; cela ouvre une nouvelle demande de modification",
         "merged": "Cette conversation est terminée",
         "running": "Complétez la demande à gauche à tout moment"
@@ -498,6 +500,16 @@
       "annotations_page_message_other": "Traite les {{count}} annotations en attente de « {{title}} ».",
       "annotations_kb_message_one": "Traite l’annotation en attente sur toute la base ({{count}}).",
       "annotations_kb_message_other": "Traite les {{count}} annotations en attente sur toute la base."
+    },
+    "feedback": {
+      "label": "Remarques de revue",
+      "title_one": "#{{number}} a {{count}} remarque à traiter",
+      "title_other": "#{{number}} a {{count}} remarques à traiter",
+      "go_review": "Aller à la revue",
+      "submitted": "a envoyé une revue · {{time}}",
+      "handoff": "Confier à l'agent",
+      "handed_off": "Confié à l'agent",
+      "handoff_failed": "Impossible de confier à l'agent"
     }
   },
   "review": {
@@ -508,23 +520,19 @@
     "conflict_banner": "La branche principale a modifié le même contenu.",
     "conflict_main": "Principale, lignes {{lines}}",
     "conflict_draft": "Branche, lignes {{lines}}",
-    "working": "En cours",
-    "view_run": "Voir l’exécution",
     "remove_quote": "Retirer la citation",
     "reply": "Répondre",
     "replying_to": "Réponse à {{name}}",
     "quote_line": "{{page}}, ligne {{line}}",
     "comment_label": "Commentaire",
-    "comment_placeholder": "Laisser un commentaire...",
-    "trigger_hint": "démarre à l’envoi",
-    "send": "Envoyer",
+    "comment_placeholder": "Écrire un commentaire, ou sélectionner une ligne du diff pour la citer",
     "hint_member": "Le créateur de la base ou un owner / admin fusionne",
     "hint_conflict": "Résolvez d’abord les conflits",
     "hint_running": "Fusionnez quand l’agent a terminé",
     "comment_failed": "Le commentaire n’a pas été envoyé",
     "merged_toast": "#{{number}} fusionnée",
     "close_failed": "Impossible de fermer",
-    "agent_working": "{{name}} travaille",
+    "agent_working": "L'agent travaille",
     "close": "Fermer",
     "merge": "Fusionner",
     "revert": "Annuler cette modification",
@@ -552,8 +560,6 @@
     "meta_other": "Risque {{risk}} · {{count}} pages modifiées",
     "meta_annotations_one": "{{count}} annotation traitée",
     "meta_annotations_other": "{{count}} annotations traitées",
-    "activity_count_one": "{{count}} élément",
-    "activity_count_other": "{{count}} éléments",
     "close_confirm_annotations_one": "L’annotation traitée repasse en attente.",
     "close_confirm_annotations_other": "Les {{count}} annotations traitées repassent en attente.",
     "tabs": {
@@ -564,7 +570,8 @@
     "status": {
       "open": "À revoir",
       "merged": "Fusionnée",
-      "closed": "Fermée"
+      "closed": "Fermée",
+      "changes_requested": "À corriger"
     },
     "empty": {
       "open": "Rien à revoir",
@@ -587,16 +594,13 @@
       "issue": "Ticket · {{label}}",
       "chat": "Conversation · {{label}}"
     },
-    "trigger_reason": {
-      "author": "Traite le commentaire",
-      "mention": "Démarré par mention"
-    },
     "merge_error": {
       "stale": "Le brouillon a changé depuis l’ouverture ; rechargez avant de fusionner",
       "conflict": "En conflit avec la branche principale ; résolvez d’abord",
       "running": "Fusionnez quand l’agent a terminé",
       "not_open": "Cette demande est terminée",
-      "failed": "Impossible de fusionner"
+      "failed": "Impossible de fusionner",
+      "changes_requested": "À corriger ; le responsable doit d'abord redemander une revue"
     },
     "risk": {
       "low": "faible",
@@ -610,6 +614,52 @@
       "row": "#{{number}} · {{source}} · {{author}} · {{date}}",
       "header": "#{{number}} · {{author}} · fusionnée par {{merger}}",
       "revert_hint": "L’annulation ouvre une nouvelle demande ; elle s’applique une fois fusionnée."
+    },
+    "pending": "En attente",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "reply_placeholder": "Répondre...",
+    "add_to_review": "Ajouter à la revue",
+    "reviewing": "Revue en cours",
+    "pending_count_one": "{{count}} commentaire en attente, visible par vous seul",
+    "pending_count_other": "{{count}} commentaires en attente, visibles par vous seul",
+    "pending_none": "Aucun commentaire en attente",
+    "discard": "Abandonner la revue",
+    "discard_confirm_title": "Abandonner cette revue ?",
+    "discard_confirm_description_one": "{{count}} commentaire en attente sera supprimé.",
+    "discard_confirm_description_other": "{{count}} commentaires en attente seront supprimés.",
+    "discard_failed": "Impossible d'abandonner la revue",
+    "submit": "Envoyer la revue",
+    "submit_count_one": "Envoyer la revue ({{count}})",
+    "submit_count_other": "Envoyer la revue ({{count}})",
+    "summary_label": "Résumé (facultatif)",
+    "submit_note_one": "{{count}} commentaire devient visible par tous, la demande passe à « À corriger » et son responsable est notifié.",
+    "submit_note_other": "{{count}} commentaires deviennent visibles par tous, la demande passe à « À corriger » et son responsable est notifié.",
+    "submitted_toast": "Revue envoyée",
+    "submit_failed": "Impossible d'envoyer la revue",
+    "start": "Commencer une revue",
+    "start_failed": "Impossible de commencer la revue",
+    "request_review": "Redemander une revue",
+    "ready_failed": "Impossible de redemander une revue",
+    "hint_changes_owner": "Redemandez une revue une fois les remarques traitées",
+    "hint_changes": "À corriger ; fusion possible quand le responsable redemande une revue",
+    "show_earlier_one": "Afficher {{count}} activité plus ancienne",
+    "show_earlier_other": "Afficher {{count}} activités plus anciennes",
+    "field_separator": ", ",
+    "event": {
+      "review_submitted_one": "a envoyé une revue · {{count}} commentaire",
+      "review_submitted_other": "a envoyé une revue · {{count}} commentaires",
+      "review_requested": "a redemandé une revue",
+      "merged": "a fusionné cette modification",
+      "closed": "a fermé cette modification",
+      "reverted": "a ouvert l'annulation #{{number}}",
+      "edited": "a modifié : {{fields}}"
+    },
+    "field": {
+      "title": "titre",
+      "summary": "description",
+      "risk": "risque"
     }
   },
   "manage": {
