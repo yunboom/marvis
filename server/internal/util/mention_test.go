@@ -63,6 +63,16 @@ func TestParseMentions(t *testing.T) {
 			content: `[@David\[TF\]](mention://agent/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) hi`,
 			want:    []Mention{{Type: "agent", ID: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}},
 		},
+		{
+			// Knowledge base links are plain links: they neither notify nor
+			// start an agent (spec 7.14).
+			name: "knowledge base links are not mentions",
+			content: "[Team](mention://kb/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) " +
+				"[Callback](mention://kb_page/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa#b8Xz) " +
+				"[#16 Dedup](mention://kb_mr/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa) " +
+				"[Annotation](mention://kb_annotation/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa)",
+			want: nil,
+		},
 	}
 
 	for _, tt := range tests {

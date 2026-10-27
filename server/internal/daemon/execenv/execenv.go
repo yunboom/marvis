@@ -23,6 +23,13 @@ type RepoContextForEnv struct {
 	Ref         string // optional default checkout ref for this task
 }
 
+// KnowledgeBaseForEnv describes a workspace knowledge base the brief lists.
+type KnowledgeBaseForEnv struct {
+	Slug        string // identifier the kb commands take
+	Name        string // user-entered name
+	Description string // user-entered one-line description; may be empty
+}
+
 // ProjectResourceForEnv describes a single resource attached to the issue's
 // project. The resource_ref payload is type-specific JSON; the agent reads
 // resources.json on disk for the full structure. This struct only carries
@@ -156,12 +163,20 @@ type TaskContextForEnv struct {
 	AgentInstructions             string // agent identity/persona instructions, injected into CLAUDE.md
 	AgentSkills                   []SkillContextForEnv
 	DisabledRuntimeSkills         []RuntimeSkillRefForEnv
-	Repos                         []RepoContextForEnv     // workspace repos available for checkout
-	ProjectID                     string                  // active project for this task, when present
-	ProjectTitle                  string                  // human-readable project title
-	ProjectDescription            string                  // durable project-level context, rendered into the brief's Project Context section
-	ProjectResources              []ProjectResourceForEnv // resources attached to the project
-	ChatSessionID                 string                  // non-empty for chat tasks
+	Repos                         []RepoContextForEnv // workspace repos available for checkout
+	// KnowledgeBases are the workspace's knowledge bases, rendered as the
+	// brief's Knowledge Bases section (spec 8.2). Durable workspace
+	// configuration like Repos: it changes only when knowledge bases are
+	// added, renamed or removed, so it keeps the prompt-cache prefix stable.
+	// Empty (no knowledge bases, or an old server) leaves the section out.
+	KnowledgeBases []KnowledgeBaseForEnv
+	// KnowledgeBasesTruncated is set when the server cut the list at its cap.
+	KnowledgeBasesTruncated bool
+	ProjectID               string                  // active project for this task, when present
+	ProjectTitle            string                  // human-readable project title
+	ProjectDescription      string                  // durable project-level context, rendered into the brief's Project Context section
+	ProjectResources        []ProjectResourceForEnv // resources attached to the project
+	ChatSessionID           string                  // non-empty for chat tasks
 	// ChatChannelType is the IM platform behind a chat session ("slack",
 	// "feishu", "wecom"); empty for a web/mobile chat. It names the surface in
 	// the brief's copy; what that surface can DELIVER is the separate field
