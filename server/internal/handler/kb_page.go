@@ -247,8 +247,9 @@ func (h *Handler) loadKbPageSource(w http.ResponseWriter, r *http.Request, ref, 
 	}, true
 }
 
-// loadKbDraftForReader loads a draft its creator, or the creator of the job
-// it is linked to, may read.
+// loadKbDraftForReader loads a draft the caller may read: its creator, the
+// creator of the job it is linked to, or whoever may merge into its
+// knowledge base (the knowledge base creator, a workspace owner or admin).
 func (h *Handler) loadKbDraftForReader(w http.ResponseWriter, r *http.Request, wsUUID pgtype.UUID, draftParam string) (db.KbDraft, bool) {
 	draftID, ok := parseUUIDOrBadRequest(w, draftParam, "draft")
 	if !ok {
@@ -270,11 +271,41 @@ func (h *Handler) loadKbDraftForReader(w http.ResponseWriter, r *http.Request, w
 		return db.KbDraft{}, false
 	}
 	if !readable {
-		writeError(w, http.StatusForbidden, "only the draft creator or the creator of its job can read it")
+		if readable, err = h.canMaintainKbOfDraft(r.Context(), draft, requestUserID(r)); err != nil {
+			h.writeKbInternalError(w, r, err)
+			return db.KbDraft{}, false
+		}
+	}
+	if !readable {
+		writeErrorCode(w, http.StatusForbidden, kbCodeForbidden, "only the draft creator, the creator of its job, the knowledge base creator or an owner or admin can read it")
 		return db.KbDraft{}, false
 	}
 
 	return draft, true
+}
+
+// canMaintainKbOfDraft reports whether a user may merge into the draft's
+// knowledge base (its creator, a workspace owner or admin); someone outside
+// the workspace may not.
+func (h *Handler) canMaintainKbOfDraft(ctx context.Context, draft db.KbDraft, userID string) (bool, error) {
+	member, err := h.getWorkspaceMember(ctx, userID, uuidToString(draft.WorkspaceID))
+	if err != nil {
+		if isNotFound(err) {
+			return false, nil
+		}
+
+		return false, errors.Wrapf(err, "load member of draft reader draft_id=%s", uuidToString(draft.ID))
+	}
+	base, err := h.Queries.GetKbBaseByID(ctx, db.GetKbBaseByIDParams{WorkspaceID: draft.WorkspaceID, ID: draft.KnowledgeBaseID})
+	if err != nil {
+		if isNotFound(err) {
+			return false, nil
+		}
+
+		return false, errors.Wrapf(err, "load knowledge base of draft draft_id=%s", uuidToString(draft.ID))
+	}
+
+	return canMaintainKb(member, base), nil
 }
 
 // canReadKbDraft reports whether a user may read a draft: its creator, or the

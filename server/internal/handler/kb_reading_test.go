@@ -354,8 +354,12 @@ func TestGetKbPage(t *testing.T) {
 	getKbPage(t, created, "", http.StatusNotFound)
 	getKbPage(t, slug+":/payment/manual", "draft="+openDraft, http.StatusOK)
 
+	// Someone else's draft: the workspace owner may read it, a plain member not.
 	otherDraft := insertTestKbDraft(t, base, "6a3c0a52-6f0e-4bb5-9c62-0d1f2e3a4b5e", 1)
-	getKbPage(t, callback, "draft="+otherDraft, http.StatusForbidden)
+	getKbPage(t, callback, "draft="+otherDraft, http.StatusOK)
+	plain := createPlainMember(t, fmt.Sprintf("kb-read-plain-%d@marvis.ai", time.Now().UnixNano()))
+	plainReq := withURLParam(newRequestAs(plain, http.MethodGet, "/api/kb/pages/x?draft="+otherDraft, nil), "id", callback)
+	testutil.Call(t, testHandler.GetKbPage, plainReq).Want(http.StatusForbidden)
 	getKbPage(t, "00000000-0000-0000-0000-000000000001", "", http.StatusNotFound)
 	getKbPage(t, slug+":/missing", "", http.StatusNotFound)
 	getKbPage(t, "/payment", "", http.StatusBadRequest)
