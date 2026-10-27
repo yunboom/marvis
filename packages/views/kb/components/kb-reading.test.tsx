@@ -266,7 +266,7 @@ describe("KbShell page tree", () => {
     expect(screen.getByText("7 pending")).toBeInTheDocument();
   });
 
-  it("loads a level when expanded and collapses it again", async () => {
+  it("opens on the top-level pages expanded and keeps a collapsed one closed", async () => {
     mocked.getKnowledgeBasePage.mockResolvedValue({ ...CALLBACK, breadcrumb: [] });
     mount(
       <KbShell>
@@ -275,12 +275,17 @@ describe("KbShell page tree", () => {
       makeAdapter("/acme/kb/team"),
     );
 
-    const expand = await screen.findByRole("button", { name: "Expand 产品与业务" });
-    expect(screen.queryByRole("link", { name: "支付" })).not.toBeInTheDocument();
-    await userEvent.click(expand);
     expect(await screen.findByRole("link", { name: "支付" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Collapse 产品与业务" })).toHaveAttribute("aria-expanded", "true");
+    // Second-level pages stay closed until opened.
+    expect(screen.queryByRole("link", { name: "支付回调" })).not.toBeInTheDocument();
+
     await userEvent.click(screen.getByRole("button", { name: "Collapse 产品与业务" }));
     expect(screen.queryByRole("link", { name: "支付" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Expand 产品与业务" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Expand 支付" }));
+    expect(await screen.findByRole("link", { name: "支付回调" })).toBeInTheDocument();
   });
 
   it("shows the tree as the draft would leave it, without draft labels, while its changes are off", async () => {

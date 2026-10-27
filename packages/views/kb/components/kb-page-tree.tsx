@@ -48,8 +48,51 @@ interface TreeContext {
   /** The draft's edits are marked: deleted pages stay, struck through, and rows carry their change. */
   diff: boolean;
   selectedId: string;
+  expansion: TreeExpansion;
+  toggle: (id: string, depth: number) => void;
+}
+
+/**
+ * Which rows of the tree are open. Top-level rows start open; `collapsed`
+ * remembers the ones the reader closed, `expanded` the deeper ones opened.
+ */
+export interface TreeExpansion {
   expanded: ReadonlySet<string>;
-  toggle: (id: string) => void;
+  collapsed: ReadonlySet<string>;
+}
+
+/** Whether a row at `depth` shows its children. */
+export function isTreeRowOpen(expansion: TreeExpansion, id: string, depth: number): boolean {
+  if (expansion.expanded.has(id)) return true;
+
+  return depth === 0 && !expansion.collapsed.has(id);
+}
+
+/** Opens a closed row or closes an open one. */
+export function toggleTreeRow(expansion: TreeExpansion, id: string, depth: number): TreeExpansion {
+  const expanded = new Set(expansion.expanded);
+  const collapsed = new Set(expansion.collapsed);
+
+  if (isTreeRowOpen(expansion, id, depth)) {
+    expanded.delete(id);
+    collapsed.add(id);
+  } else {
+    expanded.add(id);
+    collapsed.delete(id);
+  }
+
+  return { expanded, collapsed };
+}
+
+/** Opens every row in `ids`, e.g. the ancestors of the page being read. */
+export function expandTreeRows(expansion: TreeExpansion, ids: readonly string[]): TreeExpansion {
+  const missing = ids.filter((id) => !expansion.expanded.has(id) || expansion.collapsed.has(id));
+  if (missing.length === 0) return expansion;
+
+  const collapsed = new Set(expansion.collapsed);
+  for (const id of missing) collapsed.delete(id);
+
+  return { expanded: new Set([...expansion.expanded, ...missing]), collapsed };
 }
 
 function DraftTag({ change }: { change: DraftChange }) {
@@ -65,7 +108,7 @@ function DraftTag({ change }: { change: DraftChange }) {
 function TreeRow({ page, depth, ctx }: { page: KbTreePage; depth: number; ctx: TreeContext }) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
-  const open = ctx.expanded.has(page.id);
+  const open = isTreeRowOpen(ctx.expansion, page.id, depth);
   const selected = page.id === ctx.selectedId;
   const change = ctx.diff && isDraftChange(page.draft_change) ? page.draft_change : null;
 
@@ -83,7 +126,7 @@ function TreeRow({ page, depth, ctx }: { page: KbTreePage; depth: number; ctx: T
             type="button"
             aria-label={t(($) => (open ? $.tree.collapse : $.tree.expand), { title: page.title })}
             aria-expanded={open}
-            onClick={() => ctx.toggle(page.id)}
+            onClick={() => ctx.toggle(page.id, depth)}
             className="flex size-4 shrink-0 items-center justify-center rounded text-faint-foreground hover:text-foreground"
           >
             {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
@@ -190,28 +233,24 @@ interface KbPageTreeProps {
 
 /**
  * The page tree of one knowledge base. Each level is fetched when it is first
- * shown; opening a page expands its ancestors so their levels load together.
+ * shown; top-level pages start expanded, and opening a page expands its
+ * ancestors so their levels load together.
  */
 export function KbPageTree({ kbSlug, selectedId, ancestorIds, draft, diff = true }: KbPageTreeProps) {
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set(ancestorIds));
+  const [expansion, setExpansion] = useState<TreeExpansion>(() => ({
+    expanded: new Set(ancestorIds),
+    collapsed: new Set<string>(),
+  }));
 
   const ancestorKey = ancestorIds.join("/");
   useEffect(() => {
     if (!ancestorKey) return;
-    setExpanded((prev) => {
-      const missing = ancestorKey.split("/").filter((id) => !prev.has(id));
-      return missing.length === 0 ? prev : new Set([...prev, ...missing]);
-    });
+    setExpansion((prev) => expandTreeRows(prev, ancestorKey.split("/")));
   }, [ancestorKey]);
 
-  const toggle = useCallback((id: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const toggle = useCallback((id: string, depth: number) => {
+    setExpansion((prev) => toggleTreeRow(prev, id, depth));
   }, []);
 
-  return <TreeLevel parentId="" depth={0} ctx={{ kbSlug, draft, diff, selectedId, expanded, toggle }} />;
+  return <TreeLevel parentId="" depth={0} ctx={{ kbSlug, draft, diff, selectedId, expansion, toggle }} />;
 }
