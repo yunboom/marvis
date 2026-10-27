@@ -300,6 +300,7 @@ export type {
   AutopilotTrigger,
   AutopilotTriggerKind,
   AutopilotRun,
+  AutopilotRunChatResponse,
   AutopilotRunStatus,
   AutopilotRunSource,
   AutopilotQuotaUsage,

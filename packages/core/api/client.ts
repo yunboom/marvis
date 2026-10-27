@@ -162,6 +162,7 @@ import type {
   Autopilot,
   AutopilotTrigger,
   AutopilotRun,
+  AutopilotRunChatResponse,
   AutopilotQuotaUsage,
   CreateAutopilotRequest,
   UpdateAutopilotRequest,
@@ -449,6 +450,7 @@ import {
   ListAutopilotsResponseSchema,
   EMPTY_LIST_AUTOPILOTS_RESPONSE,
   AutopilotRunSchema,
+  AutopilotRunChatResponseSchema,
   AutopilotQuotaUsageSchema,
   FALLBACK_AUTOPILOT_RUN,
   CronPreviewResponseSchema,
@@ -5592,7 +5594,21 @@ export class ApiClient {
   // omit trigger_payload to keep them small (a webhook envelope can be
   // up to 256 KiB × limit rows), so the detail view fetches via this route.
   async getAutopilotRun(autopilotId: string, runId: string): Promise<AutopilotRun> {
-    return this.fetch(`/api/autopilots/${autopilotId}/runs/${runId}`);
+    const raw = await this.fetch<unknown>(`/api/autopilots/${autopilotId}/runs/${runId}`);
+    return parseWithFallback(raw, AutopilotRunSchema, FALLBACK_AUTOPILOT_RUN, {
+      endpoint: "GET /api/autopilots/:id/runs/:runId",
+    });
+  }
+
+  // Returns the run's follow-up chat session, creating it on first use.
+  async ensureAutopilotRunChat(autopilotId: string, runId: string): Promise<AutopilotRunChatResponse> {
+    const raw = await this.fetch<unknown>(`/api/autopilots/${autopilotId}/runs/${runId}/chat`, { method: "POST" });
+    const parsed = parseWithFallback(raw, AutopilotRunChatResponseSchema, { chat_session_id: "" }, {
+      endpoint: "POST /api/autopilots/:id/runs/:runId/chat",
+    });
+    if (!parsed.chat_session_id) throw new Error("run chat response has no chat_session_id");
+
+    return parsed;
   }
 
   async createAutopilotTrigger(autopilotId: string, data: CreateAutopilotTriggerRequest): Promise<AutopilotTrigger> {

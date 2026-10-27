@@ -1287,6 +1287,31 @@ describe("ApiClient", () => {
     ]);
   });
 
+  it("gets or creates a run's chat session and rejects a response without a session id", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ chat_session_id: "chat-1" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = new ApiClient("https://api.example.test");
+
+    await expect(client.ensureAutopilotRunChat("ap-1", "run-1")).resolves.toEqual({ chat_session_id: "chat-1" });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.example.test/api/autopilots/ap-1/runs/run-1/chat");
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe("POST");
+    await expect(client.ensureAutopilotRunChat("ap-1", "run-1")).rejects.toThrow();
+  });
+
   it("emits X-Client-* headers when identity is configured", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify([]), {

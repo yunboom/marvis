@@ -2632,6 +2632,14 @@ export const AutopilotRunSchema = z.object({
   trigger_payload: z.unknown().default(null),
   result: z.unknown().default(null),
   created_at: z.string().default(""),
+  chat_session_id: z.string().nullable().catch(null).optional(),
+  agent_id: z.string().nullable().catch(null).optional(),
+}).loose();
+
+// No default: a missing session id must fail validation so the caller does not
+// send a follow-up into a session that does not exist.
+export const AutopilotRunChatResponseSchema = z.object({
+  chat_session_id: z.string().min(1),
 }).loose();
 
 export const AutopilotQuotaUsageSchema = z.object({

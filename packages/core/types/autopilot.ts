@@ -133,6 +133,16 @@ export interface AutopilotRun {
   trigger_payload: unknown;
   result: unknown;
   created_at: string;
+  // The run's follow-up conversation (run_only runs). Null until the first
+  // follow-up is sent; older servers omit it.
+  chat_session_id?: string | null;
+  // The agent the run's task executed on. Only the run detail endpoint
+  // returns it; lists and older servers omit it.
+  agent_id?: string | null;
+}
+
+export interface AutopilotRunChatResponse {
+  chat_session_id: string;
 }
 
 export interface AutopilotQuotaUsage {

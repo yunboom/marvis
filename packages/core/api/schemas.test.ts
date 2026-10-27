@@ -18,6 +18,7 @@ import {
   TaskMessageListSchema,
   AutopilotQuotaUsageSchema,
   AutopilotRunSchema,
+  AutopilotRunChatResponseSchema,
   FALLBACK_AUTOPILOT_RUN,
   CommentTriggerPreviewSchema,
   DashboardAgentRunTimeListSchema,
@@ -1638,6 +1639,53 @@ describe("AutopilotRunSchema", () => {
     expect(parsed).toBe(FALLBACK_AUTOPILOT_RUN);
     expect(parsed.status).toBe("failed");
   });
+
+  it("keeps the follow-up chat session and the run's agent", () => {
+    const parsed = parseWithFallback(
+      { ...baseRun, chat_session_id: "chat-1", agent_id: "agent-1" },
+      AutopilotRunSchema,
+      FALLBACK_AUTOPILOT_RUN,
+      ENDPOINT,
+    );
+    expect(parsed.chat_session_id).toBe("chat-1");
+    expect(parsed.agent_id).toBe("agent-1");
+  });
+
+  it("tolerates an older server omitting chat_session_id and agent_id", () => {
+    const parsed = parseWithFallback(baseRun, AutopilotRunSchema, FALLBACK_AUTOPILOT_RUN, ENDPOINT);
+    expect(parsed.chat_session_id).toBeUndefined();
+    expect(parsed.agent_id).toBeUndefined();
+  });
+
+  it("drops a malformed chat_session_id instead of discarding the run", () => {
+    const parsed = parseWithFallback(
+      { ...baseRun, chat_session_id: 42, agent_id: { id: "agent-1" } },
+      AutopilotRunSchema,
+      FALLBACK_AUTOPILOT_RUN,
+      ENDPOINT,
+    );
+    expect(parsed.id).toBe("run-1");
+    expect(parsed.chat_session_id).toBeNull();
+    expect(parsed.agent_id).toBeNull();
+  });
+});
+
+describe("AutopilotRunChatResponseSchema", () => {
+  const ENDPOINT = { endpoint: "POST /api/autopilots/:id/runs/:runId/chat" };
+  const FALLBACK = { chat_session_id: "" };
+
+  it("parses the session id", () => {
+    expect(parseWithFallback({ chat_session_id: "chat-1" }, AutopilotRunChatResponseSchema, FALLBACK, ENDPOINT)).toEqual({
+      chat_session_id: "chat-1",
+    });
+  });
+
+  it.each([{}, { chat_session_id: "" }, { chat_session_id: null }, "not-an-object"])(
+    "falls back on a malformed response %#",
+    (raw) => {
+      expect(parseWithFallback(raw, AutopilotRunChatResponseSchema, FALLBACK, ENDPOINT)).toBe(FALLBACK);
+    },
+  );
 });
 
 describe("AutopilotQuotaUsageSchema", () => {
