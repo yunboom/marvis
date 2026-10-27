@@ -107,3 +107,19 @@
    - 选择：照聊天窗口的单槽优先级：无权限 > 智能体已归档 > 未绑定运行时 > 离线 / 不稳定；智能体从工作区智能体列表（含已归档）取，权限用 `canAssignAgent`。执行者是小队（旧服务端没有 `agent_id` 且 assignee 是小队）时不显示输入框。
 33. **运行信息里的「共用这段对话」**（工单 04）
    - 选择：本票不加。对话目前只对创建者可用，这句话在工单 06 放开共用访问时一起加。
+34. **运行结束写指针的挂点**（工单 05）
+   - 问题：方案写在 `SyncRunFromTask` 所在路径；工单建议放在 Complete / Fail 的同一事务。
+   - 选择：放进 `SettleTerminalTaskState`（`service/autopilot_run_chat.go` 的 `pinAutopilotRunChatSessions`）。它是所有终态写入（完成、失败、取消、清扫、批量取消）在同一事务里必经的入口，所以运行任务被停止或被清扫判失败时也会写。只处理带 `autopilot_run_id` 的任务，没有就不查库；先按运行 ID 批量 `FOR KEY SHARE` 锁运行行取 `chat_session_id`，再用一条 `UpdateChatSessionSessions`（unnest 批量更新，COALESCE 语义同 `UpdateChatSessionSession`）写入，不在循环里查库。指针内容复用工单 04 的规则，函数移到 service 改名 `RunChatResumePointer`，接口和写指针共用。
+   - 理由：指针和放行排队消息的状态翻转同一事务提交，认领不可能先于指针。不选 `SyncRunFromTask`：它在事务外异步执行，任务翻成终态后、指针写好前有窗口，排队消息会被认领并以空会话开跑。
+35. **获取或创建对话与运行结束的并发**（工单 05）
+   - 选择：运行中也创建会话，不预填；任务在运行行 `FOR UPDATE` 锁内重读，已到终态才预填。终态事务对运行行取 `FOR KEY SHARE`（与 `FOR UPDATE` 冲突、与运行状态更新的 `NO KEY UPDATE` 不冲突），且不按 `chat_session_id` 过滤，等锁后读到最新版本。
+   - 理由：两边任一先提交，另一边都能看到对方的结果，不会出现「会话建好但指针永远为空」。删掉 `run_in_progress` 错误码和对应测试。
+36. **认领时的阻塞范围**（工单 05）
+   - 选择：`ClaimAgentTask` 的 `NOT EXISTS` 按 `autopilot_run_id` 关联运行的全部任务判断（未结束集合 `queued / dispatched / running / waiting_local_directory / deferred`），而不只看 `autopilot_run.task_id`。只改这一条：它是唯一带串行化判断的认领查询，按运行时 / 批量认领的候选查询最终都走它，被挡的候选与其他串行化一样被跳过。用到 `autopilot_run_chat_session_uidx` 和 `(autopilot_run_id, created_at)` 部分索引。
+   - 理由：运行任务可重试失败时自动重试子任务带同一 `autopilot_run_id`，而 `task_id` 仍指向父任务；只看 `task_id` 会让追问在重试跑之前被认领。
+37. **运行中排队的前端呈现**（工单 05）
+   - 选择：运行中服务端的队首（仍是 `queued`）也当作排队消息：放进 `ChatQueue` 的第一行（内容取它的用户消息），对话里不显示；队首已离开 `queued` 时照常是进行中的一轮（`queueFollowUpsBehindRun`）。运行中「立即发送」不可用（不传队首状态）；「清空」同时移除这条队首，因为服务端清空只清队首之后的消息。
+   - 理由：设计稿 3.3 运行中发出的消息都在排队框里；运行结束后照聊天页的队首 / 排队逻辑继续。
+38. **运行中的「停止」**（工单 05）
+   - 选择：运行中输入框按钮与聊天页一致（空内容「停止」、有内容「排队发送」）；「停止」停的是运行任务本身，调 `cancelTaskById`（智能体活动页取消自动化任务用的同一接口），失败只记日志，与聊天页停止一致。删掉 `ChatInput` 的 `disabledPlaceholder` 和六种语言的 `run_page.followup_after_run`。
+   - 理由：设计稿 3.2「正在工作，输入框按钮为停止」，此时进行中的一轮就是运行本身。
