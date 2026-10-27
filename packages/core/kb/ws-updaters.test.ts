@@ -49,6 +49,15 @@ describe("invalidateKbDraft", () => {
     expect(invalidated(qc, other)).toBe(false);
     expect(invalidated(qc, throughDraft)).toBe(true);
   });
+
+  it("refreshes that draft's changes and no other draft's", () => {
+    const own = kbKeys.draft(WS, "d-1");
+    const other = kbKeys.draft(WS, "d-2");
+    const qc = seeded(own, other);
+    invalidateKbDraft(qc, WS, "d-1");
+    expect(invalidated(qc, own)).toBe(true);
+    expect(invalidated(qc, other)).toBe(false);
+  });
 });
 
 describe("invalidateKbBase", () => {

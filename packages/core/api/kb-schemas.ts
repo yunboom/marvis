@@ -16,6 +16,7 @@ import type {
   KnowledgeBasePending,
   KbSearchMode,
   KbSearchResult,
+  KbDraftDetail,
   KbDraftDiffLine,
   KbDraftStatus,
   KbJob,
@@ -697,19 +698,33 @@ const KbDraftConflictSchema = z
   })
   .loose();
 
+const KbDraftChecksSchema = z
+  .object({
+    lint: lenientArray(KbLintFindingSchema),
+    conflicts: lenientArray(KbDraftConflictSchema),
+  })
+  .loose()
+  .nullable()
+  .optional()
+  .catch(null)
+  .transform((v) => v ?? { lint: [], conflicts: [] });
+
 export const KbJobDetailSchema = KbJobSchema.extend({
   pages: lenientArray(KbDraftPageChangeSchema),
-  checks: z
-    .object({
-      lint: lenientArray(KbLintFindingSchema),
-      conflicts: lenientArray(KbDraftConflictSchema),
-    })
-    .loose()
-    .nullable()
-    .optional()
-    .catch(null)
-    .transform((v) => v ?? { lint: [], conflicts: [] }),
+  checks: KbDraftChecksSchema,
 }).loose();
+
+export const KbDraftDetailSchema = z
+  .object({
+    id: z.string(),
+    knowledge_base_id: text,
+    title: text,
+    version: countSchema,
+    status: z.enum(KB_DRAFT_STATUSES).catch("open"),
+    pages: lenientArray(KbDraftPageChangeSchema),
+    checks: KbDraftChecksSchema,
+  })
+  .loose();
 
 export const KbMergeRequestCreatedSchema = z
   .object({
@@ -749,6 +764,10 @@ export function kbJobFallback(id = ""): KbJob {
 
 export function kbJobDetailFallback(id = ""): KbJobDetail {
   return { ...kbJobFallback(id), pages: [], checks: { lint: [], conflicts: [] } };
+}
+
+export function kbDraftDetailFallback(id = ""): KbDraftDetail {
+  return { id, knowledge_base_id: "", title: "", version: 0, status: "open", pages: [], checks: { lint: [], conflicts: [] } };
 }
 
 export const EMPTY_KB_MERGE_REQUEST_CREATED: KbMergeRequestCreated = {
@@ -838,16 +857,7 @@ export const KbMergeRequestDetailSchema = KbMergeRequestSchema.extend({
   knowledge_base_slug: text,
   knowledge_base_name: text,
   pages: lenientArray(KbDraftPageChangeSchema),
-  checks: z
-    .object({
-      lint: lenientArray(KbLintFindingSchema),
-      conflicts: lenientArray(KbDraftConflictSchema),
-    })
-    .loose()
-    .nullable()
-    .optional()
-    .catch(null)
-    .transform((v) => v ?? { lint: [], conflicts: [] }),
+  checks: KbDraftChecksSchema,
   review_agent: nullableObject(z.object({ id: z.string(), name: text }).loose()),
   agent_running: flag,
   can_merge: flag,
