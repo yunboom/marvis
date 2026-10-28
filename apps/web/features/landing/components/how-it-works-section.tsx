@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuthStore } from "@marvis/core/auth";
 import { docsHrefForLocale, useLocale } from "../i18n";
-import { useDashboardCtaHref } from "../utils/use-dashboard-cta";
 import { GitHubMark, githubUrl } from "./shared";
 
 // The docs and GitHub links are hidden for now but kept, so turning them back
@@ -15,8 +13,6 @@ const secondaryLinkClassName =
 
 export function HowItWorksSection() {
   const { t, locale } = useLocale();
-  const user = useAuthStore((s) => s.user);
-  const ctaHref = useDashboardCtaHref();
 
   return (
     <section id="how-it-works" className="bg-[#0f0f0f] text-white">
@@ -40,33 +36,25 @@ export function HowItWorksSection() {
           ))}
         </ol>
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={ctaHref}
-            className="inline-flex h-11 items-center rounded-full bg-white px-6 font-medium text-[#0f0f0f] transition-colors hover:bg-white/90"
-          >
-            {user ? t.header.dashboard : t.howItWorks.cta}
-          </Link>
-          {SHOW_SECONDARY_LINKS ? (
-            <>
-              <Link
-                href={docsHrefForLocale(locale)}
-                className={secondaryLinkClassName}
-              >
-                {t.howItWorks.ctaDocs}
-              </Link>
-              <Link
-                href={githubUrl}
-                target="_blank"
-                rel="noreferrer"
-                className={secondaryLinkClassName}
-              >
-                <GitHubMark className="size-4" />
-                {t.howItWorks.ctaGithub}
-              </Link>
-            </>
-          ) : null}
-        </div>
+        {SHOW_SECONDARY_LINKS ? (
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={docsHrefForLocale(locale)}
+              className={secondaryLinkClassName}
+            >
+              {t.howItWorks.ctaDocs}
+            </Link>
+            <Link
+              href={githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={secondaryLinkClassName}
+            >
+              <GitHubMark className="size-4" />
+              {t.howItWorks.ctaGithub}
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

@@ -7,7 +7,7 @@ import { HowItWorksSection } from "./how-it-works-section";
 export function MarvisLanding() {
   return (
     <div className="min-h-full bg-[#f7f7f7] text-[#0f0f0f]">
-      <LandingHeader />
+      <LandingHeader showCta={false} />
       <main>
         <LandingHero />
         <HowItWorksSection />

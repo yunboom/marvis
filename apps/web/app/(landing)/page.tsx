@@ -4,7 +4,7 @@ import { RedirectIfAuthenticated } from "@/features/landing/components/redirect-
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Marvis — Project Management for Human + Agent Teams",
+    absolute: "Marvis",
   },
   description:
     "Source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills.",

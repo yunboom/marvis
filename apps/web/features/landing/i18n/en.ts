@@ -20,9 +20,7 @@ export function createEnDict(
     headlineLine2: "like you would to a teammate.",
     subheading:
       "Humans and agents, working in one place.",
-    cta: "Start free trial",
     downloadDesktop: "Download Desktop",
-    worksWith: "Works with 20+ AI coding tools",
     imageAlt: "Marvis board view \u2014 issues managed by humans and agents",
   },
 
@@ -36,7 +34,6 @@ export function createEnDict(
       { title: "Create an agent", description: "Name it, write instructions, add skills." },
       { title: "Assign a task", description: "Assign it like a teammate and watch it work." },
     ],
-    cta: "Get started",
     ctaGithub: "View on GitHub",
     ctaDocs: "Read the docs",
   },

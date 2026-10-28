@@ -23,9 +23,7 @@ export function createKoDict(
       headlineLine2: "동료에게 맡기듯이.",
       subheading:
         "사람과 에이전트가 한 곳에서 협업합니다.",
-      cta: "무료로 시작하기",
       downloadDesktop: "데스크톱 다운로드",
-      worksWith: "20개 이상의 AI 코딩 도구 지원",
       imageAlt: "사람과 AI 에이전트가 함께 태스크를 관리하는 Marvis 보드 화면",
     },
     howItWorks: {
@@ -38,7 +36,6 @@ export function createKoDict(
         { title: "에이전트 만들기", description: "이름, 지침, 스킬을 설정합니다." },
         { title: "작업 할당", description: "동료에게 맡기듯 할당하고 진행을 지켜봅니다." },
       ],
-      cta: "시작하기",
       ctaGithub: "GitHub에서 보기",
       ctaDocs: "문서 읽기",
     },
