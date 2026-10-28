@@ -1,65 +1,44 @@
 import { STATUS_GROUP_ORDER } from "./config/status";
-import {
-  WORKFLOW_ZONE_ORDER,
-  workflowZoneOf,
-  type WorkflowZone,
-} from "../issue-workflows/queries";
 import type { IssueStatus, IssueStatusCategory, IssueStatusGroup } from "../types";
 
 /**
- * The fixed columns of a status-grouped board. Boards outside a project use
- * one column per status group; a project board follows its workflow's zones
- * instead. Each column stacks one lane per visible status. The two key sets
- * do not overlap, so per-column state (scroll position) never mixes them.
+ * The fixed columns of a status-grouped board, one per status group. Each
+ * column stacks one lane per visible status; the status library edits which
+ * group a status sits in.
  */
-export type BoardStatusColumnKey = IssueStatusGroup | WorkflowZone;
+export type BoardStatusColumnKey = IssueStatusGroup;
 
-export const BOARD_STATUS_COLUMN_ORDER: readonly IssueStatusGroup[] = STATUS_GROUP_ORDER;
+export const BOARD_STATUS_COLUMN_ORDER: readonly BoardStatusColumnKey[] = STATUS_GROUP_ORDER;
 
 export interface BoardStatusColumn {
   key: BoardStatusColumnKey;
-  /** Visible status keys in this column, in their incoming order. */
+  /** Visible status keys in this column, in their incoming (catalog) order. */
   statuses: IssueStatus[];
 }
 
 /**
- * Distributes statuses over fixed columns. Always returns every column in
- * display order — a column whose statuses are all hidden or filtered out
- * comes back with an empty list so the surface can render its empty state
- * rather than reflowing the grid. Status order inside a column follows
- * `visibleStatuses`.
+ * Distributes the board's visible statuses over the four fixed columns.
+ *
+ * Always returns all four columns in display order — a column whose statuses
+ * are all hidden or filtered out comes back with an empty list so the surface
+ * can render its empty state rather than reflowing the grid. Status order
+ * inside a column follows `visibleStatuses`, which is already catalog-ordered.
  */
-function distributeStatuses<K extends BoardStatusColumnKey>(
-  order: readonly K[],
-  visibleStatuses: readonly IssueStatus[],
-  columnOf: (status: IssueStatus) => K,
-): BoardStatusColumn[] {
-  const byColumn = new Map<K, IssueStatus[]>(order.map((key) => [key, []]));
-  for (const status of visibleStatuses) {
-    byColumn.get(columnOf(status))!.push(status);
-  }
-
-  return order.map((key) => ({ key, statuses: byColumn.get(key)! }));
-}
-
-/** Splits the board's visible statuses into one column per status group. */
 export function groupStatusesIntoBoardColumns(
   visibleStatuses: readonly IssueStatus[],
   groupOf: (status: IssueStatus) => IssueStatusGroup,
 ): BoardStatusColumn[] {
-  return distributeStatuses(BOARD_STATUS_COLUMN_ORDER, visibleStatuses, groupOf);
-}
+  const byColumn = new Map<BoardStatusColumnKey, IssueStatus[]>(
+    BOARD_STATUS_COLUMN_ORDER.map((key) => [key, []]),
+  );
+  for (const status of visibleStatuses) {
+    byColumn.get(groupOf(status))!.push(status);
+  }
 
-/**
- * Splits a project board's visible statuses into its workflow's zones: start,
- * middle (shown as "Work"), blocked, end. A status the workflow does not list
- * (reachable through an explicit status filter) lands in the middle zone
- * unless it has a fixed place.
- */
-export function groupStatusesIntoWorkflowZones(
-  visibleStatuses: readonly IssueStatus[],
-): BoardStatusColumn[] {
-  return distributeStatuses(WORKFLOW_ZONE_ORDER, visibleStatuses, workflowZoneOf);
+  return BOARD_STATUS_COLUMN_ORDER.map((key) => ({
+    key,
+    statuses: byColumn.get(key)!,
+  }));
 }
 
 /**

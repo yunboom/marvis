@@ -10,12 +10,9 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
 import {
   groupStatusesIntoBoardColumns,
-  groupStatusesIntoWorkflowZones,
   isBoardLaneCollapsed,
-  type BoardStatusColumn,
   type BoardStatusColumnKey,
 } from "@marvis/core/issues";
-import { isWorkflowZone } from "@marvis/core/issue-workflows";
 import { useViewStore, useViewStoreApi } from "@marvis/core/issues/stores/view-store-context";
 import { Button } from "@marvis/ui/components/ui/button";
 import { cn } from "@marvis/ui/lib/utils";
@@ -63,64 +60,33 @@ export interface LaneSharedProps {
 }
 
 /**
- * The four columns of a status board. A project board with a workflow splits
- * into the workflow's zones (start / work / blocked / end); every other board
- * splits by status group (not started / working / needs attention / ended).
- */
-export function useBoardStatusColumns(
-  statuses: readonly IssueStatus[],
-  byWorkflowZone: boolean,
-): BoardStatusColumn[] {
-  const wsId = useWorkspaceId();
-  const { groupOf } = useIssueStatuses(wsId);
-
-  return useMemo(
-    () =>
-      byWorkflowZone
-        ? groupStatusesIntoWorkflowZones(statuses)
-        : groupStatusesIntoBoardColumns(statuses, groupOf),
-    [byWorkflowZone, statuses, groupOf],
-  );
-}
-
-/** The header of a status board column, for either column layout. */
-export function useBoardColumnTitle(): (key: BoardStatusColumnKey) => string {
-  const { t } = useT("issues");
-
-  return useCallback(
-    (key: BoardStatusColumnKey) =>
-      isWorkflowZone(key)
-        ? t(($) => $.workflows.editor.zone[key])
-        : t(($) => $.board.status_column[key]),
-    [t],
-  );
-}
-
-/**
- * The status board: four fixed columns (see `useBoardStatusColumns`), each
- * stacking one lane per visible status. Lanes keep the per-status droppable
- * ids of the classic board, so the board's drag handlers and column mirror
- * work unchanged.
+ * The status-grouped board: four fixed columns, one per status group (not
+ * started / working / needs attention / ended), each stacking one lane per
+ * visible status. Lanes
+ * keep the per-status droppable ids of the classic board, so the board's drag
+ * handlers and column mirror work unchanged.
  */
 export const StatusLaneBoard = memo(function StatusLaneBoard({
   groups,
   ...shared
 }: LaneSharedProps & { groups: StatusGroup[] }) {
-  const { scopeWorkflow } = useBoardWorkflow();
-  const statuses = useMemo(() => groups.map((group) => group.status), [groups]);
-  const statusColumns = useBoardStatusColumns(statuses, scopeWorkflow !== null);
+  const wsId = useWorkspaceId();
+  const { groupOf } = useIssueStatuses(wsId);
 
   const boardColumns = useMemo(() => {
     const byStatus = new Map(groups.map((group) => [group.status, group]));
 
-    return statusColumns.map((column) => ({
+    return groupStatusesIntoBoardColumns(
+      groups.map((group) => group.status),
+      groupOf,
+    ).map((column) => ({
       key: column.key,
       groups: column.statuses.flatMap((status) => {
         const group = byStatus.get(status);
         return group ? [group] : [];
       }),
     }));
-  }, [groups, statusColumns]);
+  }, [groups, groupOf]);
 
   return (
     <div
@@ -184,7 +150,7 @@ function StatusBoardColumn({
     (sum, group) => sum + laneCount(group, shared.columns, shared.statusPagination),
     0,
   );
-  const title = useBoardColumnTitle()(columnKey);
+  const title = t(($) => $.board.status_column[columnKey]);
 
   const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null);
   const restoreScrollRef = useRestoredScrollRef(`board:column:${columnKey}`);
