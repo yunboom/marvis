@@ -34,7 +34,7 @@ marvis kb update pay-troubleshoot --description "Payment, refund and order flows
 
 ## How to shape a knowledge base
 
-Members often do not know yet what their knowledge base should hold, and that is where you help most. Start from their job: once you know the role, from the starter they picked or from asking, you can work out the rest yourself.
+Members often do not know yet what their knowledge base should hold, and that is where you help most. Start from their job. When the starter they picked names it, you already have it; otherwise ask for their role in one short question, and only that, because what the knowledge base holds and when people use it are exactly what you are about to propose.
 
 Each role works from its own kind of knowledge. To give a few examples: support and sales depend on knowing the business well and on phrasing that works with customers, a UX designer on design guidelines, engineers on architecture notes and runbooks. These only hint at the range; what a given role really relies on is wider and more specific, and finding it is the point of your research. Look into what people in the member's role work from and build up over time. Search the web when you can, favouring official documentation and well-known handbooks, and say so when you cannot.
 
