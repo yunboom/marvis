@@ -15,6 +15,7 @@ const reorderMutate = vi.hoisted(() => vi.fn());
 const createMutate = vi.hoisted(() => vi.fn());
 const updateMutate = vi.hoisted(() => vi.fn());
 const archiveMutate = vi.hoisted(() => vi.fn());
+const deleteMutate = vi.hoisted(() => vi.fn());
 const navigatePush = vi.hoisted(() => vi.fn());
 const updateWorkspace = vi.hoisted(() => vi.fn());
 let workspaceSettings: Record<string, unknown> = {};
@@ -68,6 +69,7 @@ vi.mock("@marvis/core/issue-statuses/mutations", () => ({
   useCreateIssueStatus: () => ({ mutate: createMutate, isPending: false }),
   useUpdateIssueStatus: () => ({ mutate: updateMutate, isPending: false }),
   useArchiveIssueStatus: () => ({ mutate: archiveMutate, isPending: false }),
+  useDeleteIssueStatus: () => ({ mutate: deleteMutate, isPending: false }),
   useReorderIssueStatuses: () => ({ mutate: reorderMutate }),
 }));
 vi.mock("../../issues/utils/status-label", () => ({
@@ -81,6 +83,7 @@ vi.mock("../../i18n", () => ({
       return template.replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(params[k] ?? ""));
     },
   }),
+  useLocale: () => "en",
 }));
 
 function members() {
@@ -134,6 +137,7 @@ afterEach(() => {
   createMutate.mockClear();
   updateMutate.mockClear();
   archiveMutate.mockReset();
+  deleteMutate.mockReset();
   navigatePush.mockClear();
   updateWorkspace.mockReset();
   workspaceSettings = {};
@@ -464,6 +468,48 @@ describe("IssueStatusesTab", () => {
     // the workspace has one.
     expect(screen.queryByText("QA")).toBeNull();
     expect(archivedToggle()).toBeEnabled();
+  });
+
+  describe("permanent delete", () => {
+    const openArchivedMenu = async () => {
+      catalog = [entry({ key: "qa", name: "QA", archived_at: "2026-01-01T00:00:00Z" })];
+      render(<IssueStatusesTab />);
+      await userEvent.click(archivedToggle()!);
+      await userEvent.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "QA")));
+      await userEvent.click(await screen.findByRole("menuitem", { name: en.issue_statuses.actions.delete }));
+    };
+
+    it("is offered only on archived rows", async () => {
+      catalog = [entry({ key: "active", name: "Active" })];
+      render(<IssueStatusesTab />);
+      await userEvent.click(screen.getByLabelText(en.issue_statuses.actions.open.replace("{{name}}", "Active")));
+
+      await screen.findByRole("menuitem", { name: en.issue_statuses.actions.archive });
+      expect(screen.queryByRole("menuitem", { name: en.issue_statuses.actions.delete })).toBeNull();
+    });
+
+    it("closes the confirmation only after the server deletes the status", async () => {
+      await openArchivedMenu();
+      await userEvent.click(screen.getByRole("button", { name: en.issue_statuses.delete_dialog.confirm }));
+
+      expect(deleteMutate.mock.calls[0]![0]).toBe("qa");
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+      act(() => deleteMutate.mock.calls[0]![1].onSuccess());
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    });
+
+    it("names where a referenced status still appears and stops offering the delete", async () => {
+      deleteMutate.mockImplementation((_id, options) => options.onError(new ApiError("referenced", 409, "Conflict", {
+        code: "issue_status_referenced", references: ["activity", "inbox", "from_a_newer_server"],
+      })));
+      await openArchivedMenu();
+      await userEvent.click(screen.getByRole("button", { name: en.issue_statuses.delete_dialog.confirm }));
+
+      const dialog = screen.getByRole("alertdialog");
+      expect(within(dialog).getByText(en.issue_statuses.delete_dialog.referenced_title)).toBeInTheDocument();
+      expect(within(dialog).getByText(/issue activity, notifications, and other records/)).toBeInTheDocument();
+      expect(within(dialog).queryByRole("button", { name: en.issue_statuses.delete_dialog.confirm })).toBeNull();
+    });
   });
 
   // The category header used to repeat the sentence its built-in row already

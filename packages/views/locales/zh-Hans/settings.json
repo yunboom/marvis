@@ -13,7 +13,8 @@
       "open": "{{name}} 的操作",
       "edit": "编辑",
       "archive": "归档",
-      "reorder": "拖动排序 {{name}}"
+      "reorder": "拖动排序 {{name}}",
+      "delete": "永久删除"
     },
     "reorder_hint": "在分组内拖动排序，同步用于看板、列表和菜单。",
     "built_in_dialog": {},
@@ -57,6 +58,29 @@
       "cancel": "取消",
       "confirm": "归档",
       "failed": "归档失败。"
+    },
+    "delete_dialog": {
+      "title": "永久删除这个状态？",
+      "description": "删除后无法恢复。在任务、配置或历史记录中出现过的状态无法删除。",
+      "referenced_title": "无法删除",
+      "referenced": "这个状态在{{places}}中出现过，只能保持归档。",
+      "references": {
+        "issue": "任务",
+        "workflow": "工作流",
+        "pr_merge_setting": "PR 合并设置",
+        "saved_view": "保存的视图",
+        "wakeup": "唤醒",
+        "wakeup_receipt": "唤醒记录",
+        "agent_task": "智能体运行",
+        "activity": "任务动态",
+        "inbox": "消息通知",
+        "other": "其他记录"
+      },
+      "cancel": "取消",
+      "confirm": "删除",
+      "deleting": "正在删除…",
+      "close": "知道了",
+      "failed": "删除失败。"
     },
     "category_labels": {
       "unstarted": "未开始",
