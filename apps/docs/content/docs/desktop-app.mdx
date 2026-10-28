@@ -80,7 +80,7 @@ Updates are distributed per OS and CPU architecture:
 
 ## Connecting to a server
 
-Desktop connects to the Marvis server, which is the backend. The web app is optional.
+Desktop connects to the Marvis server, which is the backend. Deploy the web app alongside it: Google and Feishu sign-in and **Copy link** go through the web app.
 
 ### First launch
 
@@ -124,9 +124,9 @@ The setting applies to this computer only.
 
 ### Without a web app
 
-When the server has no web address, or the address is `localhost`, Desktop treats it as having no web app:
+When the server has no web address, or the address is `localhost`, Desktop treats it as having no web app. A deployed server should not be in this state; it comes up in local development:
 
-- the sign-in page hides the Google button. The Feishu button stays when Feishu login is set up on the server and its desktop callback address is registered in the Feishu developer console, see [Desktop and the web app](/self-host-quickstart#desktop-and-the-web-app). Desktop then opens Feishu sign-in in the browser and returns to the app when it finishes. Otherwise only email-code login remains;
+- the sign-in page hides the Google button. The Feishu button stays when Feishu login is set up on the server and `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` is set to a backend callback address registered in the Feishu developer console. Desktop then opens Feishu sign-in in the browser and returns to the app when it finishes. Otherwise only email-code login remains;
 - **Copy link** produces a `marvis://open?...` link, which opens in Desktop on any computer where Desktop is installed and connected to the same server.
 
 ## Presetting the server with desktop.json
@@ -183,7 +183,7 @@ This is **not** the CLI's `~/.marvis/config.json`, and the key names differ: the
 - `wsUrl`: swaps the `apiUrl` scheme to `ws` or `wss` and appends `/ws` to the path;
 - `appUrl`: strips the `api.` prefix when the host starts with `api.` and has at least three labels (`api.example.com` → `example.com`); otherwise it stays the same as `apiUrl`.
 
-A preset always has a web app address, derived when `appUrl` is omitted. To use Desktop without a web app, choose the server in the app instead.
+A preset always has a web app address, derived when `appUrl` is omitted.
 
 Usually `apiUrl` alone is enough. Override explicitly only when the derivation doesn't match your deployment; the three common cases:
 

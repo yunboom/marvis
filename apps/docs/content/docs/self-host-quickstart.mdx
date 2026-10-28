@@ -352,11 +352,11 @@ macOS asks for local network permission the first time, on the server and on eac
 
 ### Desktop and the web app
 
-Desktop needs only the backend. The web app is optional. To serve it on the same network, set `MARVIS_APP_URL=http://marvis.local:3000` in `.env`, and register `http://marvis.local:3000/auth/callback` as the callback address for Google and Feishu login.
+Desktop signs in with Google and Feishu through the web app, so deploy the web app alongside the backend. Set `MARVIS_APP_URL` in `.env` to a web address other computers can open, such as `http://marvis.local:3000`, and register `http://marvis.local:3000/auth/callback` as the callback address for Google and Feishu login.
 
 Without a web address, or with a `localhost` one, clients treat the server as having no web app, and Desktop hides the Google button. The CLI on the server's own computer is the exception: there a `localhost` web address works. See [Desktop app](/desktop-app#connecting-to-a-server).
 
-Feishu login in Desktop works without the web app. In the Feishu developer console, also register `http://marvis.local:13840/auth/lark/desktop-callback` as a redirect URL. The backend handles this callback itself, so Desktop keeps the Feishu button when only the backend runs. The backend builds this address from the host name it advertises and its port: a server advertised as `marvis-2.local`, or on another port, needs the matching address registered instead. With LAN discovery off, which is the default, set the registered address as `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` in `.env`.
+Leave `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` empty when deploying. It is for local development, where the web address is `localhost` and the backend handles the Feishu callback itself.
 
 #### Feishu invites
 
