@@ -11,8 +11,7 @@
 set -euo pipefail
 
 readonly REPO_SLUG=yunboom/marvis
-# Check runs that finished like this do not block a deploy.
-readonly CI_PASSING_CONCLUSIONS="success skipped neutral"
+readonly CI_WORKFLOW=CI
 
 info() { printf '==> %s\n' "$*"; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
@@ -39,19 +38,17 @@ main="$(git rev-parse origin/main)"
 [ "$sha" = "$main" ] || die "HEAD $sha is not origin/main $main; pull or push first"
 info "deploying origin/main $sha"
 
-runs="$(gh api --paginate "repos/$REPO_SLUG/commits/$sha/check-runs" \
-  --jq '.check_runs[] | [.name, .status, (.conclusion // "")] | @tsv')"
-[ -n "$runs" ] || die "no CI runs found for $sha yet"
+# The gate is the CI run that the push to main triggered. The nightly
+# scheduled run tests the same commit with a wider scope and is not the gate:
+# a nightly failure says nothing about whether this merge was green.
+run="$(gh run list --repo "$REPO_SLUG" --commit "$sha" --workflow "$CI_WORKFLOW" \
+  --event push --limit 1 --json status,conclusion,url \
+  --jq '.[0] // empty | [.status, .conclusion, .url] | @tsv')"
+[ -n "$run" ] || die "no $CI_WORKFLOW run from the push of $sha to main yet"
 
-pending="$(printf '%s\n' "$runs" | awk -F'\t' '$2 != "completed" {print "  " $1}')"
-[ -z "$pending" ] || die "CI is still running for $sha:
-$pending"
-
-failed="$(printf '%s\n' "$runs" | awk -F'\t' -v ok="$CI_PASSING_CONCLUSIONS" '
-  BEGIN { n = split(ok, list, " "); for (i = 1; i <= n; i++) pass[list[i]] = 1 }
-  !($3 in pass) {print "  " $1 " (" $3 ")"}')"
-[ -z "$failed" ] || die "CI did not pass for $sha:
-$failed"
-info "CI passed for $sha"
+IFS=$'\t' read -r run_status run_conclusion run_url <<< "$run"
+[ "$run_status" = "completed" ] || die "$CI_WORKFLOW is still running for $sha: $run_url"
+[ "$run_conclusion" = "success" ] || die "$CI_WORKFLOW did not pass for $sha ($run_conclusion): $run_url"
+info "$CI_WORKFLOW passed for $sha: $run_url"
 
 exec expect "$(dirname "$0")/jump.exp" "$sha" ${mode:+"$mode"}
