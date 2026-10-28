@@ -23,6 +23,7 @@ import {
 import { Button } from "@marvis/ui/components/ui/button";
 import { useT } from "@marvis/views/i18n";
 import { Loader2 } from "lucide-react";
+import { BASE_PATH } from "@/config/base-path";
 import { callbackErrorFrom, type CallbackError } from "./callback-error";
 
 const authLogger = createLogger("auth.callback");
@@ -78,7 +79,7 @@ function CallbackContent() {
       ? decodeURIComponent(cliStatePart.slice("cli_state:".length))
       : "";
 
-    const redirectUri = `${window.location.origin}/auth/callback`;
+    const redirectUri = `${window.location.origin}${BASE_PATH}/auth/callback`;
     // 按授权来源选择换取 token 的接口，其余流程 Google 与飞书一致。
     const exchangeCode = isLark
       ? () => api.larkLogin(code, redirectUri, "oauth")

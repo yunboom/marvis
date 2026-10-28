@@ -12,6 +12,7 @@ import { i18n, type Lang } from "@/lib/i18n";
 import { uiTranslations, localeLabels } from "@/lib/translations";
 import { DocsSettings } from "@/components/docs-settings";
 import { DocsSearchDialog } from "@/components/search-dialog";
+import { BASE_PATH } from "@/lib/base-path";
 
 // Inter (Latin UI face) is exposed under `--font-inter`. The full `--font-sans`
 // stack — Inter + the per-locale CJK fallback chain, including the Japanese-first
@@ -93,7 +94,7 @@ export default async function Layout({
             locales,
             translations: uiTranslations[lang],
           }}
-          search={{ SearchDialog: DocsSearchDialog, options: { api: "/docs/api/search" } }}
+          search={{ SearchDialog: DocsSearchDialog, options: { api: `${BASE_PATH}/api/search` } }}
         >
           <DocsFrameworkProvider>
             <DocsLayout

@@ -7,6 +7,7 @@ import {
   type NavigationAdapter,
 } from "@marvis/views/navigation";
 import { canGoBackInApp } from "./in-app-history";
+import { BASE_PATH } from "@/config/base-path";
 
 /**
  * Web half of the `marvis:navigate` bridge — the event shared content
@@ -31,7 +32,7 @@ function useInternalLinkHandler(router: ReturnType<typeof useRouter>) {
         detail?.disposition === "foreground-tab"
       ) {
         window.open(
-          window.location.origin + path,
+          window.location.origin + BASE_PATH + path,
           "_blank",
           "noopener,noreferrer",
         );
@@ -85,7 +86,9 @@ function NavigationProviderInner({
     searchParams: new URLSearchParams(searchParams.toString()),
     hash,
     getShareableUrl: (path: string) =>
-      typeof window === "undefined" ? path : window.location.origin + path,
+      typeof window === "undefined"
+        ? BASE_PATH + path
+        : window.location.origin + BASE_PATH + path,
     // router.prefetch is a no-op in dev mode by Next.js design; in production
     // it warms the RSC payload + route chunk so the next push() commits with
     // no network round-trip. Safe to call repeatedly — Next dedupes internally.

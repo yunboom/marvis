@@ -70,8 +70,24 @@ export function toInternalAppPath(
   // Opaque origins (file:, data:) compare equal to each other; only real web
   // origins identify the app.
   if (target.protocol !== "http:" && target.protocol !== "https:") return null;
-  if (!workspaceSlugForPath(target.pathname)) return null;
-  return `${target.pathname}${target.search}${target.hash}`;
+  const pathname = stripAppPathPrefix(target.pathname, app);
+  if (pathname === null) return null;
+  if (!workspaceSlugForPath(pathname)) return null;
+  return `${pathname}${target.search}${target.hash}`;
+}
+
+/**
+ * In-app path of `pathname` on an app mounted under a path prefix
+ * (`https://host/marvis` → `/marvis/acme/issues/1` is `/acme/issues/1`);
+ * `null` when the path lies outside the prefix, i.e. another app on the same
+ * origin. Without a prefix every path is the app's own.
+ */
+function stripAppPathPrefix(pathname: string, app: URL): string | null {
+  const prefix = app.pathname.replace(/\/+$/, "");
+  if (!prefix) return pathname;
+  if (pathname === prefix) return "/";
+  if (!pathname.startsWith(`${prefix}/`)) return null;
+  return pathname.slice(prefix.length);
 }
 
 /** An in-app entity page addressed by a link — the two kinds that have a chip. */
@@ -153,19 +169,33 @@ function toSameOriginPath(
   href: string,
   appOrigin?: string | null,
 ): string | null {
-  const base = appOrigin || RELATIVE_BASE;
+  let relative: URL;
+  try {
+    relative = new URL(href, RELATIVE_BASE);
+  } catch {
+    return null;
+  }
+  // A site-relative href is already an in-app path: content stores
+  // `/{slug}/...` without any deployment path prefix.
+  if (relative.origin === new URL(RELATIVE_BASE).origin) {
+    return `${relative.pathname}${relative.search}${relative.hash}`;
+  }
+  if (!appOrigin) return null;
+
   let target: URL;
   let expected: URL;
   try {
-    target = new URL(href, base);
-    expected = new URL(base);
+    target = new URL(href);
+    expected = new URL(appOrigin);
   } catch {
     return null;
   }
   // Opaque origins (`javascript:`, `data:`) stringify to "null" and can never
   // equal a real one, so they fall out here too.
   if (target.origin !== expected.origin) return null;
-  return `${target.pathname}${target.search}${target.hash}`;
+  const pathname = stripAppPathPrefix(target.pathname, expected);
+  if (pathname === null) return null;
+  return `${pathname}${target.search}${target.hash}`;
 }
 
 /**

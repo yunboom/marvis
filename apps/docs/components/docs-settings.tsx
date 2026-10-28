@@ -14,13 +14,13 @@ import {
 import { cn } from "@marvis/ui/lib/utils";
 import { i18n } from "@/lib/i18n";
 import { localeLabels } from "@/lib/translations";
+import { BASE_PATH } from "@/lib/base-path";
 
 // Sidebar-footer chrome: a language switch on the left and a theme switch
 // on the right. Replaces Fumadocs's default icon-only row, which buried
 // the language option behind a tiny globe. Each control shows the current
 // value as a label so the affordance is obvious at a glance.
 
-const BASE_PATH = "/docs";
 
 function switchLocalePath(pathname: string, target: string): string {
   // Next strips basePath before the router, so `pathname` starts at `/`

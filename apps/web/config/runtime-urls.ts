@@ -107,16 +107,20 @@ export function resolveBrowserWsUrl(env: RuntimeEnv): string | undefined {
   return apiUrl ? tryDeriveWsUrl(apiUrl) : undefined;
 }
 
+// `pathname` excludes the app's basePath (Next strips it). The backend always
+// serves at its own root, so API paths are forwarded as-is; the docs app is
+// built under `${basePath}/docs`, so docs paths get the prefix back.
 export function runtimeRewriteDestination(
   pathname: string,
   env: RuntimeEnv,
+  basePath = "",
 ): string | undefined {
   const docsUrl = resolveDocsUrl(env);
   if (pathname === "/docs") {
-    return docsUrl ? appendPath(docsUrl, "/docs") : undefined;
+    return docsUrl ? appendPath(docsUrl, `${basePath}/docs`) : undefined;
   }
   if (pathname.startsWith("/docs/")) {
-    return docsUrl ? appendPath(docsUrl, pathname) : undefined;
+    return docsUrl ? appendPath(docsUrl, `${basePath}${pathname}`) : undefined;
   }
 
   const remoteApiUrl = resolveRemoteApiUrl(env);

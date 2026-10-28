@@ -76,6 +76,16 @@
 - 写入：`TaskService.SendDirectChatMessageWithInstruction`（可见消息 + 隐藏指令同一事务）和 `createChatInstruction`（Mika 开场的无主指令）。只用于多步流程的场景：知识库任务的收录、健康检查、合并、定时运行，以及审核意见交接（`server/internal/kb/templates/instructions.md.tmpl`）。
 - 同步上游时：上游新增或修改的 `onboarding_kickoff` 判断一律改成 `instruction`（SQL、`protocol`、`chat.go`、`chat-message-list.tsx`、core schema），不要恢复第二个隐藏类型；上游的 `TaskInputIsOnboardingKickoffOnly` 部署窗口兼容逻辑已删除，不要合回。
 
+## 决策八：路径前缀部署（fork 独有）
+
+web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由构建参数 `NEXT_PUBLIC_BASE_PATH` 控制，不设时与上游一致；后端始终在根路径，不感知前缀。部署方法见 `SELF_HOSTING_ADVANCED.md` 的 Path Prefix 一节。
+
+- web：`apps/web/config/base-path.ts` 的 `BASE_PATH`，用于 Next 不会自动加前缀的地方：浏览器 API / WS 默认地址（`web-providers.tsx`）、OAuth 回调地址、导航适配器的 `getShareableUrl` 与新标签页、manifest 与图标、favicon 跳转、docs 转发（`runtime-urls.ts`）。
+- views：`useAppOrigin` 返回带路径前缀的基地址，`link-handler.ts` 识别站内链接时去掉前缀；裸 `<a href="/download">` 改用 `getShareableUrl`。
+- docs：`apps/docs/lib/base-path.ts` 与 `next.config.mjs` 的 basePath 为 `${前缀}/docs`；`Dockerfile.docs`，compose 的 `docs` 服务在 `docs` profile 下。
+- compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`。
+- 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`。
+
 ## 同步上游流程
 
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。

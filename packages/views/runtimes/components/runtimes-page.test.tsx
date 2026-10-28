@@ -44,7 +44,10 @@ vi.mock("../../navigation", () => ({
     </a>
   ),
   rowLinkInteractiveProps: {},
-  useNavigation: () => ({ push: vi.fn() }),
+  useNavigation: () => ({
+    push: vi.fn(),
+    getShareableUrl: (path: string) => `https://app.example/marvis${path}`,
+  }),
   useRowLink: () => () => ({}),
 }));
 
@@ -146,7 +149,7 @@ describe("RuntimesPage", () => {
     expect(screen.getByText("Run on this computer")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Download desktop/ })).toHaveAttribute(
       "href",
-      "/download",
+      "https://app.example/marvis/download",
     );
     expect(screen.getByText("Add another machine or server")).toBeInTheDocument();
   });

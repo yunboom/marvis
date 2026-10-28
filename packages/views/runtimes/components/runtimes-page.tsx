@@ -489,7 +489,7 @@ export function RuntimesPage({
                       description={t(($) => $.page.rows.this_computer_hint)}
                       action={
                         <a
-                          href="/download"
+                          href={navigation.getShareableUrl("/download")}
                           target="_blank"
                           rel="noreferrer"
                           className={cn(
@@ -582,6 +582,7 @@ function AddRuntimeMenu({
   onCloudRuntime: () => void;
 }) {
   const { t } = useT("runtimes");
+  const navigation = useNavigation();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -615,7 +616,13 @@ function AddRuntimeMenu({
               icon={<Laptop className="size-4 text-muted-foreground" />}
               title={t(($) => $.page.add_menu.this_computer)}
               description={t(($) => $.page.add_menu.this_computer_download)}
-              render={<a href="/download" target="_blank" rel="noreferrer" />}
+              render={
+                <a
+                  href={navigation.getShareableUrl("/download")}
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
             />
           )}
           <AddMenuItem

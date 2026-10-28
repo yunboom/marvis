@@ -7,12 +7,16 @@ import {
   resolveDocsUrl,
   resolveRemoteApiUrl,
 } from "./config/runtime-urls";
+import { normalizeBasePath } from "./config/base-path";
 import { createMDX } from "fumadocs-mdx/next";
 
 // Load root .env so local next.config.ts rewrites see REMOTE_API_URL / DOCS_URL.
 // Production requests use proxy.ts runtime rewrites, which read process.env
 // when the Next.js server runs instead of baking these URLs at build time.
 config({ path: resolve(__dirname, "../../.env") });
+
+// Read after dotenv so a root .env can set it too; see config/base-path.ts.
+const BASE_PATH = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH);
 
 // `next dev` falls back to the conventional localhost upstreams; builds use
 // the strict resolvers so prebuilt images keep unset upstreams unproxied.
@@ -39,6 +43,7 @@ const allowedDevOrigins = process.env.CORS_ALLOWED_ORIGINS
   : undefined;
 
 const nextConfig: NextConfig = {
+  ...(BASE_PATH ? { basePath: BASE_PATH } : {}),
   ...(process.env.STANDALONE === "true" ? { output: "standalone" as const } : {}),
   transpilePackages: ["@marvis/core", "@marvis/ui", "@marvis/views"],
   ...(allowedDevOrigins && allowedDevOrigins.length > 0
@@ -56,11 +61,11 @@ const nextConfig: NextConfig = {
         ? [
             {
               source: "/docs",
-              destination: `${docsUrl}/docs`,
+              destination: `${docsUrl}${BASE_PATH}/docs`,
             },
             {
               source: "/docs/:path*",
-              destination: `${docsUrl}/docs/:path*`,
+              destination: `${docsUrl}${BASE_PATH}/docs/:path*`,
             },
           ]
         : [],
