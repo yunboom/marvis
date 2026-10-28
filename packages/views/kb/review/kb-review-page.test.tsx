@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
@@ -322,7 +322,7 @@ describe("KbReviewPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add comment" }));
     expect(screen.getByText("Callback line 15")).toBeInTheDocument();
     await userEvent.type(screen.getByRole("textbox", { name: "Comment" }), "Say why.");
-    await userEvent.keyboard("{Control>}{Enter}{/Control}");
+    await userEvent.keyboard("{Enter}");
     await waitFor(() =>
       expect(mocked.createKnowledgeBaseMrComment).toHaveBeenCalledWith(16, {
         body: "Say why.",
@@ -380,6 +380,79 @@ describe("KbReviewPage", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Request review again" }));
     await waitFor(() => expect(mocked.requestKnowledgeBaseMrReview).toHaveBeenCalledWith(16));
+  });
+
+  describe("Enter in a comment box", () => {
+    it("adds to the review on Enter, breaks the line on Shift+Enter and only confirms an IME candidate", async () => {
+      mocked.createKnowledgeBaseMrComment.mockResolvedValue({ ...COMMENT, id: "c-2", state: "pending" });
+      await openReview(detail({ pending_review: REVIEW }));
+
+      const box = screen.getByRole("textbox", { name: "Comment" });
+      await userEvent.click(box);
+      await userEvent.keyboard("{Enter}");
+      expect(mocked.createKnowledgeBaseMrComment).not.toHaveBeenCalled();
+
+      await userEvent.type(box, "Say why.");
+      fireEvent.keyDown(box, { key: "Enter", keyCode: 229 });
+      fireEvent.keyDown(box, { key: "Enter", isComposing: true });
+      expect(mocked.createKnowledgeBaseMrComment).not.toHaveBeenCalled();
+
+      await userEvent.keyboard("{Shift>}{Enter}{/Shift}more");
+      expect(box).toHaveValue("Say why.\nmore");
+      expect(mocked.createKnowledgeBaseMrComment).not.toHaveBeenCalled();
+
+      await userEvent.keyboard("{Enter}");
+      await waitFor(() =>
+        expect(mocked.createKnowledgeBaseMrComment).toHaveBeenCalledWith(16, {
+          body: "Say why.\nmore",
+          review_id: "rv-1",
+          parent_id: null,
+          quote: null,
+        }),
+      );
+      expect(mocked.createKnowledgeBaseMrComment).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(box).toHaveValue(""));
+    });
+
+    it("saves an edited pending comment on Enter and cancels on Escape", async () => {
+      const pending: KbMrComment = { ...COMMENT, state: "pending" };
+      mocked.updateKnowledgeBaseMrComment.mockResolvedValue({ ...pending, body: "Say why it changed." });
+      await openReview(detail({ pending_review: REVIEW }), [asEntry(pending)]);
+
+      const activity = screen.getByRole("region", { name: "Activity" });
+      await userEvent.click(within(activity).getByRole("button", { name: "Edit" }));
+      await userEvent.keyboard("{Escape}");
+      expect(within(activity).queryByRole("textbox", { name: "Comment" })).not.toBeInTheDocument();
+
+      await userEvent.click(within(activity).getByRole("button", { name: "Edit" }));
+      const editor = within(activity).getByRole("textbox", { name: "Comment" });
+      await userEvent.clear(editor);
+      await userEvent.type(editor, "Say why it changed.{Enter}");
+      await waitFor(() => expect(mocked.updateKnowledgeBaseMrComment).toHaveBeenCalledWith(16, "c-1", "Say why it changed."));
+    });
+
+    it("sends an owner reply on Enter", async () => {
+      auth.state.user.id = "user-1";
+      mocked.createKnowledgeBaseMrComment.mockResolvedValue({ ...COMMENT, id: "c-9", review_id: null });
+      await openReview(detail({ status: "changes_requested" }), [asEntry(COMMENT)]);
+
+      await userEvent.click(screen.getByRole("button", { name: "Reply..." }));
+      await userEvent.type(screen.getByRole("textbox", { name: "Reply" }), "Done.{Enter}");
+      await waitFor(() => expect(mocked.createKnowledgeBaseMrComment).toHaveBeenCalledWith(16, { body: "Done.", parent_id: "c-1" }));
+    });
+
+    it("submits the review summary on Enter", async () => {
+      const pending: KbMrComment = { ...COMMENT, id: "c-2", state: "pending" };
+      mocked.submitKnowledgeBaseMrReview.mockResolvedValue({ ...REVIEW, state: "submitted" });
+      await openReview(detail({ pending_review: REVIEW }), [asEntry(pending)]);
+
+      await userEvent.click(screen.getByRole("button", { name: "Submit review (1)" }));
+      const summary = await screen.findByRole("textbox", { name: "Summary (optional)" });
+      await userEvent.type(summary, "One fix.{Shift>}{Enter}{/Shift}Two.");
+      expect(mocked.submitKnowledgeBaseMrReview).not.toHaveBeenCalled();
+      await userEvent.keyboard("{Enter}");
+      await waitFor(() => expect(mocked.submitKnowledgeBaseMrReview).toHaveBeenCalledWith(16, "rv-1", "One fix.\nTwo."));
+    });
   });
 
   it("mixes events into the activity and folds the earlier ones", async () => {

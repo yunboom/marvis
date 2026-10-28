@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from "@marvis/ui/components/ui/tabs";
 import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
+import { isSubmitEnter } from "../../common/submit-on-enter";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { kbErrorCode } from "../utils/kb-api-error";
@@ -89,9 +90,6 @@ function QuoteBox({ annotation }: { annotation: KbAnnotation }) {
   return <div className="rounded-lg bg-surface-sunken px-2.5 py-1.5 text-label text-muted-foreground">{annotation.quote}</div>;
 }
 
-// The keyCode a keydown reports while an input method is composing.
-const IME_KEY_CODE = 229;
-
 /** Writes the body of a new annotation: the composer of 5.2, 5.4 and 5.6. */
 export function KbAnnotationComposer({
   label,
@@ -123,10 +121,7 @@ export function KbAnnotationComposer({
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={(e) => {
-          // Enter submits and Shift+Enter breaks the line; an Enter that
-          // confirms an IME composition (keyCode 229 in some browsers) does neither.
-          const composing = e.nativeEvent.isComposing || e.keyCode === IME_KEY_CODE;
-          if (e.key === "Enter" && !e.shiftKey && !composing) {
+          if (isSubmitEnter(e)) {
             e.preventDefault();
             submit();
             return;
