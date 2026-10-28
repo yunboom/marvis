@@ -226,3 +226,58 @@ describe("probeServer", () => {
     });
   });
 });
+
+describe("probeServer with a path in the address", () => {
+  // 只有 `${base}/api/config` 命中 Marvis，其余路径都按 404 处理。
+  function serverAt(base: string) {
+    return vi.fn(async (input: RequestInfo | URL) =>
+      String(input) === `${base}/api/config`
+        ? new Response(JSON.stringify({ instance_id: "b" }))
+        : new Response("not found", { status: 404 }),
+    );
+  }
+
+  it("connects to a deployment under a path prefix", async () => {
+    const fetchImpl = serverAt("https://shared.example/marvis");
+
+    expect(
+      await probeServer("https://shared.example/marvis/", fetchImpl as unknown as typeof fetch),
+    ).toMatchObject({ kind: "ok", server: { url: "https://shared.example/marvis" } });
+  });
+
+  it("walks up from a pasted page URL to the server's base", async () => {
+    const fetchImpl = serverAt("https://shared.example/marvis");
+
+    expect(
+      await probeServer(
+        "https://shared.example/marvis/acme/issues/MUL-1",
+        fetchImpl as unknown as typeof fetch,
+      ),
+    ).toMatchObject({ kind: "ok", server: { url: "https://shared.example/marvis" } });
+    expect(fetchImpl.mock.calls.map(([input]) => String(input))).toEqual([
+      "https://shared.example/marvis/acme/issues/MUL-1/api/config",
+      "https://shared.example/marvis/acme/issues/api/config",
+      "https://shared.example/marvis/acme/api/config",
+      "https://shared.example/marvis/api/config",
+    ]);
+  });
+
+  it("falls back to the origin for a root deployment", async () => {
+    const fetchImpl = serverAt("http://m:3000");
+
+    expect(
+      await probeServer("http://m:3000/login?x=1", fetchImpl as unknown as typeof fetch),
+    ).toMatchObject({ kind: "ok", server: { url: "http://m:3000" } });
+  });
+
+  it("stops at an unreachable host instead of retrying every path", async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new TypeError("fetch failed");
+    });
+
+    expect(
+      await probeServer("http://m:3000/a/b", fetchImpl as unknown as typeof fetch),
+    ).toEqual({ kind: "unreachable" });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+});

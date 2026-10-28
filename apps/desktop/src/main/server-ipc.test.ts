@@ -86,12 +86,21 @@ describe("server controller", () => {
     expect(t.calls).toEqual(["write", "apply", "reload"]);
   });
 
-  it("select stores the normalized origin of the url", async () => {
+  it("select stores the normalized url", async () => {
     const t = controllerSetup();
 
-    await t.controller.select({ ...selected, url: "HTTP://Marvis.Local:13840/login?x=1" });
+    await t.controller.select({ ...selected, url: "HTTP://Marvis.Local:13840/?x=1" });
 
     expect(t.writeSelected).toHaveBeenCalledWith(USER_DATA_DIR, selected);
+  });
+
+  it("select keeps the path prefix of a server mounted under one", async () => {
+    const t = controllerSetup();
+    const prefixed: SelectedServer = { ...selected, url: "https://shared.example/marvis" };
+
+    await t.controller.select({ ...prefixed, url: "https://shared.example/marvis/" });
+
+    expect(t.writeSelected).toHaveBeenCalledWith(USER_DATA_DIR, prefixed);
   });
 
   it("select keeps a manual server without a web app", async () => {

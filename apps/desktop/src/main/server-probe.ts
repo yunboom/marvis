@@ -16,17 +16,46 @@ const MAX_CONFIG_BODY_BYTES = 1024 * 1024;
 // 网页地址不能指向回环主机：服务器自己配的 localhost 对其他电脑没有意义。
 const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
-// 请求 `<url>/api/config` 核实对方是不是 Marvis 服务器。
-//   - 网络错误或超时（3000 ms，.local 主机名 6000 ms）：unreachable
-//   - 非 2xx、响应体超过 1 MiB 或不是 JSON 对象：not_marvis
-//   - JSON 里没有 instance_id：too_old
+// 核实地址对应的是不是 Marvis 服务器，成功时 server.url 是确认过的服务器地址。
+//
+// 地址里的路径可能是部署前缀（https://host/marvis），也可能是粘贴进来的页面地址
+// （https://host/marvis/acme/issues/1、http://host:3000/login）。从完整路径开始，
+// 每次去掉末尾一段再试，取第一个确认是 Marvis 的地址；只有 not_marvis 才继续往上试，
+// 主机不可达或版本过旧时换路径也没用，直接返回。
 export async function probeServer(
   url: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<ProbeResult> {
-  const base = normalizeServerAddress(url);
-  if (!base) return { kind: "unreachable" };
+  const address = normalizeServerAddress(url);
+  if (!address) return { kind: "unreachable" };
 
+  let result: ProbeResult = { kind: "not_marvis" };
+  for (const base of baseCandidates(address)) {
+    result = await probeBase(base, fetchImpl);
+    if (result.kind !== "not_marvis") return result;
+  }
+
+  return result;
+}
+
+// https://host/a/b → https://host/a/b、https://host/a、https://host
+function baseCandidates(address: string): string[] {
+  const url = new URL(address);
+  const segments = url.pathname.split("/").filter(Boolean);
+  const candidates: string[] = [];
+  for (let n = segments.length; n >= 0; n--) {
+    const path = segments.slice(0, n).join("/");
+    candidates.push(path ? `${url.origin}/${path}` : url.origin);
+  }
+
+  return candidates;
+}
+
+// 请求 `<base>/api/config` 核实对方是不是 Marvis 服务器。
+//   - 网络错误或超时（3000 ms，.local 主机名 6000 ms）：unreachable
+//   - 非 2xx、响应体超过 1 MiB 或不是 JSON 对象：not_marvis
+//   - JSON 里没有 instance_id：too_old
+async function probeBase(base: string, fetchImpl: typeof fetch): Promise<ProbeResult> {
   const timeoutMs = isMdnsHostname(new URL(base).hostname) ? MDNS_PROBE_TIMEOUT_MS : PROBE_TIMEOUT_MS;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

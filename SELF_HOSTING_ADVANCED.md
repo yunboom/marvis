@@ -683,7 +683,7 @@ MARVIS_PUBLIC_URL=https://tools.example.com/marvis   # webhook URLs
 GOOGLE_REDIRECT_URI=https://tools.example.com/marvis/auth/callback
 ```
 
-Leave `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_WS_URL` empty: the browser derives `/marvis/api` and `/marvis/ws` from the prefix. Register `https://tools.example.com/marvis/auth/callback` with Google and Lark. Point the CLI and daemon at `https://tools.example.com/marvis`.
+Leave `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_WS_URL` empty: the browser derives `/marvis/api` and `/marvis/ws` from the prefix. Register `https://tools.example.com/marvis/auth/callback` with Google and Lark. Point the desktop app, the CLI and the daemon at `https://tools.example.com/marvis`; the desktop app also accepts any page URL under it and finds the prefix itself.
 
 Keep the prefix when proxying to the frontend and the docs (no URI after `proxy_pass`), and strip it for the WebSocket, which must reach the backend directly:
 

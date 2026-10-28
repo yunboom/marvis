@@ -83,7 +83,8 @@ web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由
 - web：`apps/web/config/base-path.ts` 的 `BASE_PATH`，用于 Next 不会自动加前缀的地方：浏览器 API / WS 默认地址（`web-providers.tsx`）、OAuth 回调地址、导航适配器的 `getShareableUrl` 与新标签页、manifest 与图标、favicon 跳转、docs 转发（`runtime-urls.ts`）。
 - views：`useAppOrigin` 返回带路径前缀的基地址，`link-handler.ts` 识别站内链接时去掉前缀；裸 `<a href="/download">` 改用 `getShareableUrl`。
 - docs：`apps/docs/lib/base-path.ts` 与 `next.config.mjs` 的 basePath 为 `${前缀}/docs`；`Dockerfile.docs`，compose 的 `docs` 服务在 `docs` profile 下。
-- compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`。
+- 桌面端：服务器地址保留路径（`normalizeServerAddress`），`probeServer` 从完整路径逐级向上探测 `/api/config`，粘贴页面地址也能找到前缀。
+- compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`；`turbo.json` 的 `globalEnv` 登记了 `NEXT_PUBLIC_BASE_PATH`。
 - 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`。
 
 ## 同步上游流程
