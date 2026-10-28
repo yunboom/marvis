@@ -446,12 +446,15 @@ jobs:
         run: helm show chart "$OCI_REGISTRY/marvis" --version "$CHART_VERSION"
 
   # Build the Desktop installers for Linux and Windows and upload them to
-  # the GitHub Release that the `release` job above just published. macOS
+  # the draft GitHub Release that the `release` job above created. macOS
   # Desktop continues to ship via the manual `release-desktop` skill so it
   # can be signed + notarized with Apple Developer credentials that are
   # not (yet) wired into CI.
   desktop:
     needs: release
+    # The publish job waits for this one; a stuck packager must not hold the
+    # release back indefinitely.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -504,9 +507,35 @@ jobs:
           # Same-tag reruns must also replace Desktop assets after the
           # publisher's default two-hour safety window has elapsed.
           EP_GH_IGNORE_TIME: "true"
+          # The release is still a draft here; without this the publisher's
+          # `releaseType: release` skips uploading to an existing draft.
+          EP_DRAFT: "true"
           # Disable code signing on Linux/Windows for now — the public
           # release is unsigned for these platforms, the CLI carries the
           # trust boundary. Set CSC_LINK in repo secrets to enable
           # Windows signing later.
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: node scripts/package.mjs --${{ matrix.target }} --x64 --arm64 --publish always
+
+  # Releases are immutable once published, so every job uploads into the draft
+  # GoReleaser creates and this job publishes it last. The standalone manifest
+  # must be on the release before it becomes latest, because the desktop app
+  # reads it from releases/latest; desktop installers are best effort and do
+  # not block publishing.
+  publish:
+    needs: [verify, release, standalone-bundles, desktop]
+    if: ${{ always() && needs.release.result == 'success' && needs.standalone-bundles.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.verify.outputs.tag_name }}
+          IS_STABLE: ${{ needs.verify.outputs.is_stable }}
+        run: |
+          set -euo pipefail
+          if [ "$IS_STABLE" = "true" ]; then
+            gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --draft=false --latest
+          else
+            gh release edit "$TAG" -R "$GITHUB_REPOSITORY" --draft=false --prerelease
+          fi

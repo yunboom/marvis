@@ -3,6 +3,10 @@ version: 2
 project_name: marvis
 
 release:
+  # Releases are immutable once published, so GoReleaser only creates a draft.
+  # The standalone bundles and desktop installers are uploaded into it, and the
+  # Release workflow's publish job publishes it last.
+  draft: true
   # GitHub rejects duplicate asset names with 422. On a same-tag rerun,
   # replace only the matching CLI artifact and retry the upload; unrelated
   # release assets (for example manually published macOS builds) stay intact.
