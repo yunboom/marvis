@@ -161,11 +161,16 @@ function InviteRow({ wsId, invite }: { wsId: string; invite: LarkInvite }) {
       data-status={status}
       className="flex items-center gap-3 border-b border-surface-border py-3 @max-xl:flex-wrap @max-xl:items-start @max-xl:gap-y-1"
     >
-      <div className={cn("flex min-w-0 flex-1 items-center gap-3", isDimmed && "opacity-55")}>
-        <TargetAvatar target={target} />
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <span className={cn("flex shrink-0", isDimmed && "opacity-60")}>
+          <TargetAvatar target={target} />
+        </span>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <span id={nameId} className="truncate text-body font-medium">
+            <span
+              id={nameId}
+              className={cn("truncate text-body font-medium", isDimmed && "text-muted-foreground")}
+            >
               {displayName}
             </span>
             <StatusChip status={status} />
@@ -181,8 +186,9 @@ function InviteRow({ wsId, invite }: { wsId: string; invite: LarkInvite }) {
       </div>
       <div
         className={cn(
-          "flex shrink-0 items-center gap-3.5 text-label text-muted-foreground @max-xl:order-3 @max-xl:basis-full @max-xl:flex-wrap @max-xl:gap-x-2.5 @max-xl:gap-y-1 @max-xl:pl-11",
-          isDimmed && "opacity-55",
+          "flex shrink-0 items-center gap-3.5 text-label @max-xl:order-3 @max-xl:basis-full @max-xl:flex-wrap @max-xl:gap-x-2.5 @max-xl:gap-y-1 @max-xl:pl-11",
+          // 失效的邀请用更浅的实色文字，不用透明度。
+          isDimmed ? "text-faint-foreground" : "text-muted-foreground",
         )}
       >
         <JoinedCell invite={invite} />
