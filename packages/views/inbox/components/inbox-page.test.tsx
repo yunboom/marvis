@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { ApiError } from "@marvis/core/api";
@@ -89,6 +89,7 @@ const markUnreadMutate = vi.fn();
 const markAllReadMutate = vi.fn();
 const archiveMutate = vi.fn();
 const unarchiveMutate = vi.fn();
+const deleteMutate = vi.fn();
 const retrySourceContextMutateAsync = vi.fn();
 const showIssueLimitUpgradePrompt = vi.hoisted(() => vi.fn());
 const showAutopilotQuotaRecoveryPrompt = vi.hoisted(() => vi.fn());
@@ -107,6 +108,7 @@ vi.mock("@marvis/core/inbox/mutations", () => {
     useMarkInboxUnread: () => ({ mutate: markUnreadMutate }),
     useArchiveInbox: () => ({ mutate: archiveMutate }),
     useUnarchiveInbox: () => ({ mutate: unarchiveMutate }),
+    useDeleteArchivedInbox: () => ({ mutate: deleteMutate, isPending: false }),
     useMarkAllInboxRead: () => ({ mutate: markAllReadMutate }),
     useArchiveAllInbox: mutation,
     useArchiveAllReadInbox: mutation,
@@ -222,6 +224,7 @@ let rowActions: {
   onMarkRead: (id: string) => void;
   onMarkUnread: (id: string) => void;
   onAction: (id: string) => void;
+  onDelete: (id: string) => void;
 } | null = null;
 vi.mock("./inbox-context-menu", () => ({
   InboxContextMenuProvider: ({
@@ -292,6 +295,7 @@ function reset() {
   markAllReadMutate.mockClear();
   archiveMutate.mockClear();
   unarchiveMutate.mockClear();
+  deleteMutate.mockClear();
   retrySourceContextMutateAsync.mockReset();
   retrySourceContextMutateAsync.mockResolvedValue({});
   showIssueLimitUpgradePrompt.mockClear();
@@ -1194,6 +1198,60 @@ describe("InboxPage", () => {
 
       expect(toast.error).toHaveBeenCalledTimes(1);
       expect(toast.success).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("permanent delete", () => {
+    type MutateOptions = {
+      onSuccess?: () => void;
+      onError?: (err: unknown) => void;
+    };
+
+    function renderArchived() {
+      reset();
+      layout.width = DESKTOP;
+      searchParams = new URLSearchParams("view=archived");
+      listData.archived = [
+        item({ id: "archived-1", issue_id: "issue-9", archived: true }),
+      ];
+      render(<InboxPage />);
+    }
+
+    // The test's `useT` names every control alike, so the confirm button is
+    // located structurally: it is the dialog's last action.
+    function confirmDelete() {
+      const buttons = within(screen.getByRole("alertdialog")).getAllByRole("button");
+      fireEvent.click(buttons[buttons.length - 1]!);
+    }
+
+    it("deletes only after confirmation and closes once the server succeeds", async () => {
+      renderArchived();
+      act(() => rowActions?.onDelete("archived-1"));
+
+      expect(deleteMutate).not.toHaveBeenCalled();
+      expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+
+      confirmDelete();
+      expect(deleteMutate).toHaveBeenCalledWith("archived-1", expect.anything());
+
+      const options = deleteMutate.mock.calls.at(-1)?.[1] as MutateOptions | undefined;
+      act(() => options?.onSuccess?.());
+
+      expect(toast.success).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    });
+
+    it("keeps the dialog open when the delete fails", async () => {
+      renderArchived();
+      act(() => rowActions?.onDelete("archived-1"));
+      await screen.findByRole("alertdialog");
+
+      confirmDelete();
+      const options = deleteMutate.mock.calls.at(-1)?.[1] as MutateOptions | undefined;
+      act(() => options?.onError?.(new Error("boom")));
+
+      expect(toast.error).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     });
   });
 

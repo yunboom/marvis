@@ -27,7 +27,8 @@
     "mark_unread": "标为未读",
     "archive": "归档",
     "unarchive": "取消归档",
-    "open_in_new_tab": "在新标签页打开"
+    "open_in_new_tab": "在新标签页打开",
+    "delete": "永久删除"
   },
   "list": {
     "loading_selection": "正在加载通知…",
@@ -106,7 +107,8 @@
   "toasts": {
     "source_context_retry_started": "已使用原始上下文开始重试",
     "archived": "已归档通知",
-    "unarchived": "已恢复通知"
+    "unarchived": "已恢复通知",
+    "deleted": "已删除通知"
   },
   "errors": {
     "archived_lookup_failed": "无法加载链接指向的通知",
@@ -122,7 +124,15 @@
     "archive_completed_failed": "归档已完成失败",
     "unarchive_failed": "取消归档失败",
     "archived_load_failed": "无法加载已归档通知",
-    "filters_load_failed": "无法加载筛选项"
+    "filters_load_failed": "无法加载筛选项",
+    "delete_failed": "删除失败"
+  },
+  "delete_dialog": {
+    "title": "永久删除这条通知？",
+    "description": "该任务下已归档的通知会一并删除，无法恢复。",
+    "cancel": "取消",
+    "confirm": "删除",
+    "deleting": "正在删除…"
   },
   "kb_review": {
     "changes_requested_action": "提交了评审，变更请求改为「待解决」",

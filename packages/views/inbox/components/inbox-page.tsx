@@ -37,6 +37,7 @@ import {
   useMarkInboxUnread,
   useArchiveInbox,
   useUnarchiveInbox,
+  useDeleteArchivedInbox,
   useMarkAllInboxRead,
   useArchiveAllInbox,
   useArchiveAllReadInbox,
@@ -109,6 +110,7 @@ import { useTimeAgo } from "./inbox-list-item";
 import { InboxList } from "./inbox-list";
 import { InboxFilterMenu } from "./inbox-filter-menu";
 import { InboxContextMenuProvider } from "./inbox-context-menu";
+import { InboxDeleteDialog } from "./inbox-delete-dialog";
 import { ALL_CATEGORY, ARCHIVED_VIEW_PARAM, CATEGORY_PARAM, type InboxView } from "./inbox-view";
 import { useTypeLabels } from "./inbox-detail-label";
 import {
@@ -388,6 +390,8 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
   const markUnreadMutation = useMarkInboxUnread();
   const archiveMutation = useArchiveInbox();
   const unarchiveMutation = useUnarchiveInbox();
+  const deleteMutation = useDeleteArchivedInbox();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const markAllReadMutation = useMarkAllInboxRead();
   const archiveAllMutation = useArchiveAllInbox();
   const archiveAllReadMutation = useArchiveAllReadInbox();
@@ -558,6 +562,27 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
           err instanceof Error && err.message
             ? err.message
             : t(($) => $.errors.unarchive_failed),
+        ),
+    });
+  };
+
+  // Deletion waits for the server before the row leaves the list, so the
+  // selection only moves once the delete has succeeded.
+  const handleConfirmDelete = () => {
+    const id = pendingDeleteId;
+    if (!id) return;
+    const list = selectionItems;
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        advanceSelectionPast(id, list);
+        setPendingDeleteId(null);
+        toast.success(t(($) => $.toasts.deleted));
+      },
+      onError: (err) =>
+        toast.error(
+          err instanceof Error && err.message
+            ? err.message
+            : t(($) => $.errors.delete_failed),
         ),
     });
   };
@@ -755,8 +780,15 @@ export function InboxPage({ surface = "page", closeAction }: InboxPageProps = {}
         onMarkRead: handleMarkRead,
         onMarkUnread: handleMarkUnread,
         onAction: isArchivedView ? handleUnarchive : handleArchive,
+        onDelete: setPendingDeleteId,
       }}
     >
+      <InboxDeleteDialog
+        open={pendingDeleteId !== null}
+        pending={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setPendingDeleteId(null)}
+      />
       <InboxList
         items={visibleItems}
         view={view}

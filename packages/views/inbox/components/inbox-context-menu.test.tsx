@@ -95,6 +95,7 @@ function renderRow({
     onMarkRead: vi.fn(),
     onMarkUnread: vi.fn(),
     onAction: vi.fn(),
+    onDelete: vi.fn(),
     ...actions,
   };
   render(
@@ -165,6 +166,29 @@ describe("inbox row context menu", () => {
     expect(screen.queryByText("Mark as read")).toBeNull();
   });
 
+  it("offers permanent delete only in the archived view", async () => {
+    const onDelete = vi.fn();
+    const { row } = renderRow({
+      entry: item({ id: "inbox-5", read: true, archived: true }),
+      view: "archived",
+      actions: { onDelete },
+    });
+
+    fireEvent.contextMenu(row);
+    fireEvent.click(await screen.findByText("Delete permanently"));
+
+    expect(onDelete).toHaveBeenCalledWith("inbox-5");
+  });
+
+  it("does not offer delete in the main view", async () => {
+    const { row } = renderRow();
+
+    fireEvent.contextMenu(row);
+    await screen.findByText("Archive");
+
+    expect(screen.queryByText("Delete permanently")).toBeNull();
+  });
+
   it("suppresses the browser's native menu so ours is the only one", async () => {
     const { row } = renderRow();
 
@@ -232,6 +256,16 @@ describe("inbox row compact menu", () => {
     expect(screen.queryByRole("menuitem", { name: "Mark as unread" })).toBeNull();
   });
 
+  it("offers permanent delete in the archived view", async () => {
+    const onDelete = vi.fn();
+    renderRow({ entry: item({ id: "inbox-5", archived: true }), view: "archived", actions: { onDelete } });
+
+    openMenu();
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete permanently" }));
+
+    expect(onDelete).toHaveBeenCalledWith("inbox-5");
+  });
+
   it("opens the referenced issue in a new tab", async () => {
     renderRow({ entry: item({ issue_id: "issue-9" }) });
 
@@ -251,7 +285,7 @@ describe("inbox row compact menu", () => {
       wrap(
         <InboxContextMenuProvider
           view="inbox"
-          actions={{ onMarkRead: vi.fn(), onMarkUnread: vi.fn(), onAction: vi.fn() }}
+          actions={{ onMarkRead: vi.fn(), onMarkUnread: vi.fn(), onAction: vi.fn(), onDelete: vi.fn() }}
         >
           <InboxListItem
             item={item()}

@@ -27,7 +27,8 @@
     "mark_unread": "標為未讀",
     "archive": "歸檔",
     "unarchive": "取消歸檔",
-    "open_in_new_tab": "在新標籤頁開啟"
+    "open_in_new_tab": "在新標籤頁開啟",
+    "delete": "永久刪除"
   },
   "list": {
     "loading_selection": "正在載入通知…",
@@ -106,7 +107,8 @@
   "toasts": {
     "source_context_retry_started": "已使用原始上下文開始重試",
     "archived": "已歸檔通知",
-    "unarchived": "已恢復通知"
+    "unarchived": "已恢復通知",
+    "deleted": "已刪除通知"
   },
   "errors": {
     "archived_lookup_failed": "無法載入連結指向的通知",
@@ -122,7 +124,15 @@
     "archive_completed_failed": "歸檔已完成失敗",
     "unarchive_failed": "取消歸檔失敗",
     "archived_load_failed": "無法載入已歸檔通知",
-    "filters_load_failed": "無法載入篩選項"
+    "filters_load_failed": "無法載入篩選項",
+    "delete_failed": "刪除失敗"
+  },
+  "delete_dialog": {
+    "title": "永久刪除這則通知？",
+    "description": "該任務下已歸檔的通知會一併刪除，無法復原。",
+    "cancel": "取消",
+    "confirm": "刪除",
+    "deleting": "正在刪除…"
   },
   "kb_review": {
     "changes_requested_action": "提交了評審，變更請求改為「待解決」",
