@@ -123,7 +123,7 @@ const REQUIRED_ASSET_KEYS: (keyof DownloadAssets)[] = [
 /**
  * Whether every platform/arch/format the /download page offers resolved
  * to a URL. A release that fails this is either mid-flight (CI has
- * uploaded Linux + Windows but the manually notarized Mac builds haven't
+ * uploaded some platforms but another platform's builds haven't
  * landed) or permanently broken (a packaging job failed and was never
  * re-run) — both render dead buttons, so both are worth stepping back
  * from. See `pickRelease` in `github-release.ts`.

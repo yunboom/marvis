@@ -4,8 +4,9 @@
 // client bundle and the server output, and a prebuilt image cannot change it.
 //
 // Next.js prefixes `<Link>`, `router.*`, `redirect()` and `_next` assets on its
-// own. Only URLs assembled by hand from `window.location.origin` or bare
-// site-relative fetches need this constant.
+// own. URLs assembled by hand from `window.location.origin`, bare
+// site-relative fetches, and string `src` values on next/image need this
+// constant.
 export function normalizeBasePath(raw: string | undefined): string {
   const trimmed = raw?.trim().replace(/^\/+|\/+$/g, "") ?? "";
   return trimmed ? `/${trimmed}` : "";

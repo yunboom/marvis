@@ -39,7 +39,6 @@ describe("AllPlatforms", () => {
           macX64Dmg: "https://downloads.test/mac-x64.dmg",
           macX64Zip: "https://downloads.test/mac-x64.zip",
         }}
-        fallbackHref="https://github.test/releases"
       />,
     );
 

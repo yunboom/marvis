@@ -3,19 +3,48 @@ import { useLocale } from "../../i18n";
 import type { DownloadAssets } from "../../utils/parse-release-assets";
 import { MacHintTrigger } from "./mac-hint";
 
-interface Props {
-  assets: DownloadAssets;
-  /** Where "view all releases" points; also the escape hatch when some
-   *  asset URLs couldn't be resolved (API down / parse failure). */
-  fallbackHref: string;
-}
+const ALL_RELEASES_PATH = "/download/releases";
 
 /**
  * Full matrix of platform + arch + format links. Always visible
  * regardless of which platform the Hero resolved to — lets power
  * users grab any build directly.
  */
-export function AllPlatforms({ assets, fallbackHref }: Props) {
+export function AllPlatforms({ assets }: { assets: DownloadAssets }) {
+  const { t } = useLocale();
+  const d = t.download.allPlatforms;
+
+  return (
+    <section
+      id="all-platforms"
+      className="mx-auto flex max-w-[880px] flex-col gap-5 px-5 pb-16 sm:px-8"
+    >
+      <h2 className="text-[24px] font-semibold sm:text-[28px]">{d.title}</h2>
+      <div className="overflow-hidden rounded-(--landing-radius-panel) bg-white">
+        <PlatformRows assets={assets} />
+      </div>
+      <Link
+        href={ALL_RELEASES_PATH}
+        className="self-start text-[13px] text-[#666] hover:text-[#7b4835]"
+      >
+        {t.download.footer.allReleases} →
+      </Link>
+    </section>
+  );
+}
+
+/**
+ * One row per platform/arch with its installer formats. The download page
+ * shows a missing format as disabled so the matrix keeps its shape; the
+ * release pages pass `hideMissing` and list only what that release shipped.
+ */
+export function PlatformRows({
+  assets,
+  hideMissing = false,
+}: {
+  assets: DownloadAssets;
+  hideMissing?: boolean;
+}) {
   const { t } = useLocale();
   const d = t.download.allPlatforms;
 
@@ -62,26 +91,18 @@ export function AllPlatforms({ assets, fallbackHref }: Props) {
     },
   ];
 
+  const visible = hideMissing
+    ? rows
+        .map((row) => ({ ...row, formats: row.formats.filter((f) => f.href) }))
+        .filter((row) => row.formats.length > 0)
+    : rows;
+
   return (
-    <section
-      id="all-platforms"
-      className="mx-auto flex max-w-[880px] flex-col gap-5 px-5 pb-16 sm:px-8"
-    >
-      <h2 className="text-[24px] font-semibold sm:text-[28px]">{d.title}</h2>
-      <div className="overflow-hidden rounded-(--landing-radius-panel) bg-white">
-        {rows.map((row) => (
-          <Row key={row.label} {...row} unavailable={d.unavailable} />
-        ))}
-      </div>
-      <Link
-        href={fallbackHref}
-        target="_blank"
-        rel="noreferrer"
-        className="self-start text-[13px] text-[#666] hover:text-[#7b4835]"
-      >
-        {t.download.footer.allReleases} →
-      </Link>
-    </section>
+    <>
+      {visible.map((row) => (
+        <Row key={row.label} {...row} unavailable={d.unavailable} />
+      ))}
+    </>
   );
 }
 

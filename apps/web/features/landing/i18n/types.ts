@@ -140,6 +140,25 @@ export type LandingDict = {
       safariMacHint: string;
       archFallbackHint: string;
     };
+    releases: {
+      back: string;
+      title: string;
+      sub: string;
+      latest: string;
+      notesLink: string;
+      expand: string;
+      collapse: string;
+      empty: string;
+    };
+    releaseDetail: {
+      back: string;
+      notesTitle: string;
+      notesFallback: string;
+      viewChangelog: string;
+      downloadsTitle: string;
+      cliHintPrefix: string;
+      cliHintLink: string;
+    };
     macHint: {
       trigger: string;
       title: string;
