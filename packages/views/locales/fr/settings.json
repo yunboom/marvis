@@ -1363,7 +1363,8 @@
         "none": "Aucun serveur trouvé sur le réseau local. L'ordinateur et le serveur doivent être sur le même réseau.",
         "or_address": "ou saisissez une adresse",
         "summary_manual": "Adresse saisie manuellement",
-        "summary_manual_hint": "Testez d'abord la connexion"
+        "summary_manual_hint": "Testez d'abord la connexion",
+        "back": "Retour"
       },
       "address": {
         "label": "Adresse du serveur",

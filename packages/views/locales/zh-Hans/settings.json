@@ -1353,7 +1353,8 @@
         "none": "局域网中没有找到服务器。电脑和服务器需要连在同一个局域网。",
         "or_address": "或输入地址",
         "summary_manual": "手动输入的地址",
-        "summary_manual_hint": "先测试连接"
+        "summary_manual_hint": "先测试连接",
+        "back": "返回"
       },
       "address": {
         "label": "服务器地址",

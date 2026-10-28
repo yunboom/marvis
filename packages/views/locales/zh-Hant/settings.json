@@ -1353,7 +1353,8 @@
         "none": "區域網中沒有找到伺服器。電腦和伺服器需要連在同一個區域網。",
         "or_address": "或輸入地址",
         "summary_manual": "手動輸入的地址",
-        "summary_manual_hint": "先測試連線"
+        "summary_manual_hint": "先測試連線",
+        "back": "返回"
       },
       "address": {
         "label": "伺服器地址",

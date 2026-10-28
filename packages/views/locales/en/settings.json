@@ -1363,7 +1363,8 @@
         "none": "No servers found on your local network. The computer and the server must be on the same network.",
         "or_address": "or enter an address",
         "summary_manual": "Address entered manually",
-        "summary_manual_hint": "Test the connection first"
+        "summary_manual_hint": "Test the connection first",
+        "back": "Back"
       },
       "address": {
         "label": "Server address",

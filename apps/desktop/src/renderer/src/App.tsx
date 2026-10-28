@@ -318,7 +318,7 @@ function AppContent() {
   }, [user, workspaceListReady, wsCount]);
 
   if (authStatus === "recovering") {
-    return <DesktopAuthRecoveryPage />;
+    return <DesktopAuthRecoveryPage canSwitchServer />;
   }
   if (isLoading || bootstrapping) {
     return (
@@ -331,6 +331,7 @@ function AppContent() {
   if (workspaceListUnavailable) {
     return (
       <DesktopAuthRecoveryPage
+        canSwitchServer
         isRetrying={workspaceListRetrying}
         onRetry={() => {
           void retryWorkspaceList();
