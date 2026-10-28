@@ -80,6 +80,10 @@ brews:
       name: homebrew-tap
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    # The tap repository and its token are not set up yet. Skip the formula
+    # until HOMEBREW_TAP_GITHUB_TOKEN exists, so a missing tap does not fail the
+    # release job and skip the jobs that depend on it.
+    skip_upload: '{{ if .Env.HOMEBREW_TAP_GITHUB_TOKEN }}false{{ else }}true{{ end }}'
     directory: Formula
     homepage: "https://github.com/yunboom/marvis"
     description: "Marvis CLI — local agent runtime and management tool for the Marvis platform"
