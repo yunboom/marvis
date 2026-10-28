@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Marvis 营销页</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#f7f7f7}
+a{color:#0f0f0f;text-decoration:none}a:hover{color:#7b4835}
+.m-only{display:none !important}
+@media (max-width: 720px){
+  .d-only{display:none !important}
+  .m-only{display:flex !important}
+  .wrap{padding-left:20px !important;padding-right:20px !important}
+  .hero{padding-top:48px !important;padding-bottom:40px !important}
+  .hero-h1{font-size:34px !important}
+  .sec{padding-top:56px !important;padding-bottom:56px !important}
+  .sec-h2{font-size:26px !important}
+}
+</style>
+</helmet>
+<div style="background: #f7f7f7; color: #0f0f0f; font-family: 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; font-size: 16px; line-height: 1.6">
+
+  <!-- 顶部导航：窄屏时导航和 GitHub 收进菜单按钮 -->
+  <div style="position: relative">
+    <header class="wrap" style="max-width: 1200px; margin: 0 auto; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+      <a href="#top" style="display: flex; align-items: center; gap: 10px">
+        <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 8px; background: #0f0f0f; color: #ffffff; display: grid; place-items: center; font-weight: 700; font-size: 15px">M</span>
+        <span style="font-weight: 600; font-size: 18px; letter-spacing: 0.01em">Marvis</span>
+      </a>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <a class="d-only" href="Changelog.dc.html" style="height: 40px; padding: 0 16px; border-radius: 999px; display: flex; align-items: center; font-size: 15px; color: #444444">更新日志</a>
+        <a href="#start" style="height: 40px; padding: 0 18px; border-radius: 999px; background: #0f0f0f; color: #ffffff; display: flex; align-items: center; font-size: 14px; font-weight: 500">开始使用</a>
+        <button class="m-only" type="button" aria-label="{{menuLabel}}" aria-expanded="{{menuExpanded}}" onClick="{{toggleMenu}}" style="{{menuButtonStyle}}">
+          <sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </sc-if>
+          <sc-if value="{{menuClosed}}" hint-placeholder-val="{{true}}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          </sc-if>
+        </button>
+      </div>
+    </header>
+
+    <!-- 菜单面板：只在窄屏出现，点任意链接或再点按钮收起 -->
+    <sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}">
+      <div class="m-only wrap" style="position: absolute; left: 0; right: 0; top: 76px; z-index: 10; padding: 0 32px; flex-direction: column">
+        <nav aria-label="主导航" style="border-radius: 24px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.10); padding: 8px; display: flex; flex-direction: column">
+          <a href="Changelog.dc.html" onClick="{{closeMenu}}" style="height: 48px; padding: 0 16px; border-radius: 16px; display: flex; align-items: center; font-size: 16px">更新日志</a>
+        </nav>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- 首屏 -->
+  <section id="top" class="wrap hero" style="max-width: 1200px; margin: 0 auto; padding: 96px 32px 72px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px">
+    <h1 class="hero-h1" style="margin: 0; font-size: 64px; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance">把任务交给智能体，<br>像交给同事一样。</h1>
+    <p style="margin: 0; font-size: 18px; color: #666666">人类和智能体，在一个工作台里协作。</p>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; margin-top: 8px">
+      <a href="#start" style="height: 48px; padding: 0 28px; border-radius: 999px; background: #0f0f0f; color: #ffffff; display: flex; align-items: center; font-weight: 500">免费开始</a>
+      <a href="Download.dc.html" style="height: 48px; padding: 0 24px; border-radius: 999px; background: #ffffff; border: 1px solid rgba(0,0,0,0.08); display: flex; align-items: center; gap: 8px; font-weight: 500">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>
+        下载桌面端
+      </a>
+    </div>
+
+    <div style="margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 14px">
+      <a href="#providers" style="font-size: 13px; color: #666666">支持 20+ 种 AI 编程工具 →</a>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 880px">
+        <sc-for list="{{providers}}" as="p" hint-placeholder-count="14">
+          <span title="{{p}}" style="height: 30px; padding: 0 12px; border-radius: 999px; background: #ffffff; border: 1px solid rgba(0,0,0,0.06); display: flex; align-items: center; font-size: 13px; color: #555555">{{p}}</span>
+        </sc-for>
+      </div>
+    </div>
+
+    <div role="img" aria-label="产品截图：看板视图，人类和智能体协同管理任务" style="margin-top: 40px; width: 100%; aspect-ratio: 2640 / 1781; max-width: 1136px; border-radius: 24px; background: #ffffff; border: 1px solid #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 24px 64px rgba(0,0,0,0.08); display: grid; place-items: center; color: #888888; font-size: 14px; padding: 16px; box-sizing: border-box">[产品截图：看板视图]</div>
+  </section>
+
+  <!-- 四步上手 -->
+  <section id="how-it-works" style="background: #0f0f0f; color: #ffffff">
+    <div class="wrap sec" style="max-width: 1200px; margin: 0 auto; padding: 96px 32px; display: flex; flex-direction: column; gap: 40px">
+      <h2 class="sec-h2" style="margin: 0; font-size: 40px; font-weight: 600; text-wrap: balance">一小时，招募第一个 AI 员工。</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+          <div style="border-radius: 24px; background: #1c1c1c; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+            <span style="font-size: 13px; color: #c9a593">{{s.no}}</span>
+            <span style="font-size: 18px; font-weight: 600">{{s.title}}</span>
+            <span style="font-size: 14px; color: #b3b3b3">{{s.desc}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px">
+        <a href="#start" style="height: 44px; padding: 0 24px; border-radius: 999px; background: #ffffff; color: #0f0f0f; display: flex; align-items: center; font-weight: 500">开始使用</a>
+        <!-- 暂时隐藏，不删除：「显示文档和 GitHub 按钮」开关打开后显示 -->
+        <sc-if value="{{showSecondaryLinks}}" hint-placeholder-val="{{false}}">
+          <a href="#docs" style="height: 44px; padding: 0 24px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.24); color: #ffffff; display: flex; align-items: center">阅读文档</a>
+          <a href="#github" style="height: 44px; padding: 0 24px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.24); color: #ffffff; display: flex; align-items: center">在 GitHub 上查看</a>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"menuOpen":{"editor":"boolean","default":false},"showSecondaryLinks":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":2300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { open: null };
+  }
+  renderVals() {
+    const open = this.state.open ?? (this.props.menuOpen ?? false);
+    const buttonBase = 'width: 40px; height: 40px; border-radius: 999px; border: 0; align-items: center; justify-content: center; cursor: pointer; ';
+    return {
+      menuOpen: open,
+      menuClosed: !open,
+      showSecondaryLinks: this.props.showSecondaryLinks ?? false,
+      menuExpanded: open ? 'true' : 'false',
+      menuLabel: open ? '关闭导航菜单' : '打开导航菜单',
+      menuButtonStyle: buttonBase + (open ? 'background: #0f0f0f' : 'background: #ffffff'),
+      toggleMenu: () => this.setState({ open: !open }),
+      closeMenu: () => this.setState({ open: false }),
+      providers: ['Claude Code', 'Codex', 'Cursor', 'GitHub Copilot', 'Antigravity', 'Qwen Code', 'Kimi CLI', 'DeepSeek Harness', 'MiniMax Code', 'CodeBuddy', 'Trae', 'Hermes', 'Pi', 'OpenCode'],
+      steps: [
+        { no: '01', title: '注册，创建工作区', desc: '邮箱验证后即可使用。' },
+        { no: '02', title: '连接你的电脑', desc: '运行 marvis setup。' },
+        { no: '03', title: '创建智能体', desc: '起名字，写指令，加技能。' },
+        { no: '04', title: '指派任务', desc: '像指派同事一样，看它干活。' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

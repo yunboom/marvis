@@ -1,0 +1,35 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-28T22:20:00+08:00" },
+  "title": "Marvis 营销页改版设计稿",
+  "launch": { "view": "canvas", "page": "landing" },
+  "pages": [
+    { "id": "landing", "name": "1 营销页" },
+    { "id": "download", "name": "2 下载页" },
+    { "id": "changelog", "name": "3 更新日志" },
+    { "id": "releases", "name": "4 所有版本与版本详情" }
+  ],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 2300, "title": "营销页 · 电脑", "expand": "fill", "page": "landing", "is_interactive": true },
+    "MainMobile.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 2700, "title": "营销页 · 手机（可点菜单）", "page": "landing", "is_interactive": true },
+    "MainMenu.dc.html": { "x": 1990, "y": 0, "w": 390, "h": 844, "title": "营销页 · 手机 · 菜单展开", "page": "landing" },
+    "Download.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 2200, "title": "下载页 · 电脑（可点须知）", "expand": "fill", "page": "download", "is_interactive": true },
+    "DownloadMobile.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 3000, "title": "下载页 · 手机（可点须知）", "page": "download", "is_interactive": true },
+    "DownloadHint.dc.html": { "x": 1990, "y": 0, "w": 390, "h": 844, "title": "下载页 · 手机 · 首次打开须知", "page": "download" },
+    "MacHintDialog.dc.html": { "x": 2460, "y": 0, "w": 480, "h": 640, "title": "组件 · Mac 首次打开须知对话框", "page": "download" },
+    "Changelog.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 2600, "title": "更新日志 · 电脑（可点目录）", "expand": "fill", "page": "changelog", "is_interactive": true },
+    "ChangelogMobile.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 3600, "title": "更新日志 · 手机", "page": "changelog" },
+    "Releases.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1500, "title": "所有版本 · 电脑（可展开）", "expand": "fill", "page": "releases", "is_interactive": true },
+    "ReleasesMobile.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 2100, "title": "所有版本 · 手机（可展开）", "page": "releases", "is_interactive": true },
+    "ReleaseDetail.dc.html": { "x": 0, "y": 1620, "w": 1440, "h": 1700, "title": "版本详情 v0.7.3 · 电脑", "expand": "fill", "page": "releases", "is_interactive": true },
+    "ReleaseDetailMobile.dc.html": { "x": 1520, "y": 2220, "w": 390, "h": 2600, "title": "版本详情 v0.7.3 · 手机", "page": "releases", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "MainMobile.dc.html", "MainMenu.dc.html", "Download.dc.html", "DownloadMobile.dc.html", "DownloadHint.dc.html", "MacHintDialog.dc.html", "Changelog.dc.html", "ChangelogMobile.dc.html", "Releases.dc.html", "ReleasesMobile.dc.html", "ReleaseDetail.dc.html", "ReleaseDetailMobile.dc.html"],
+  "notes": {
+    "heading": { "x": 0, "y": -300, "text": "Marvis 营销页 · 简约改版", "kind": "title1", "maxW": 2380, "page": "landing" },
+    "heading-download": { "x": 0, "y": -300, "text": "Marvis 下载页 · Mac 首次打开须知", "kind": "title1", "maxW": 2940, "page": "download" },
+    "heading-changelog": { "x": 0, "y": -300, "text": "更新日志", "kind": "title1", "maxW": 1910, "page": "changelog" },
+    "heading-releases": { "x": 0, "y": -300, "text": "所有版本 · 版本详情", "kind": "title1", "maxW": 1910, "page": "releases" }
+  },
+  "designSystems": []
+}
