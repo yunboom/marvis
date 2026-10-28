@@ -135,13 +135,15 @@ describe("RuntimesPage", () => {
     renderPage();
 
     expect(screen.getByText("Machines")).toBeInTheDocument();
-    expect(screen.getByText("Cloud services")).toBeInTheDocument();
+    expect(screen.getByText("Cloud services").parentElement).toHaveTextContent(
+      "Cloud services1",
+    );
     expect(screen.getByText("dev-machine.local")).toBeInTheDocument();
     expect(screen.getByText("Claude Managed Agents")).toBeInTheDocument();
     expect(screen.getByText("Not yet available")).toBeInTheDocument();
     expect(screen.queryByText("By Anthropic")).not.toBeInTheDocument();
 
-    // Qoder and Cursor are hidden for now.
+    // Qoder and Cursor are hidden from the group for now.
     expect(screen.queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
     expect(screen.queryByText("Not connected")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Connect" })).not.toBeInTheDocument();
@@ -171,6 +173,8 @@ describe("RuntimesPage", () => {
     expect(within(menu).getByText("Connected · Jiayuan's MacBook")).toBeInTheDocument();
     expect(within(menu).getByText("Other machine or server")).toBeInTheDocument();
     expect(within(menu).getByText("Claude Managed Agents")).toBeInTheDocument();
+    expect(within(menu).getByText("By Anthropic")).toBeInTheDocument();
+    expect(within(menu).getByText("Not yet available")).toBeInTheDocument();
     expect(within(menu).queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
     expect(within(menu).queryByText("Cursor Cloud Agents")).not.toBeInTheDocument();
   });
@@ -234,7 +238,7 @@ describe("RuntimesPage", () => {
     expect(screen.queryByText("build-server")).not.toBeInTheDocument();
   });
 
-  it("never lists the Qoder runtime, as a machine or a cloud service", () => {
+  it("never lists the Qoder runtime as a machine and keeps it in the counts", () => {
     const qoderRuntime = makeRuntime({
       id: "rt-qoder",
       daemon_id: "qoder-managed-ws-test",
@@ -257,7 +261,9 @@ describe("RuntimesPage", () => {
         within(screen.getByRole("group", { name: "Status" })).getByRole("button", {
           name: /^All/,
         }),
-      ).toHaveTextContent("1");
+      ).toHaveTextContent(
+        connection.configured ? "2" : "1",
+      );
       unmount();
     }
   });
