@@ -246,7 +246,7 @@ export function AvatarUploadControl({
         className,
         // Mirrors ActorAvatar's shape rule: agents and squads are rounded
         // squares, everything else a circle.
-        variant === "agent" || variant === "squad" ? "rounded-[28%]" : "rounded-full",
+        variant === "agent" || variant === "squad" ? "rounded-avatar" : "rounded-full",
       )}
       style={{ width: size, height: size }}
     >

@@ -1756,7 +1756,7 @@ function SwimLaneColumnCell({
   return (
     <div
       data-swimlane-cell={columnKey}
-      className="flex min-w-0 flex-col rounded-[16px] bg-surface-sunken p-1.5"
+      className="flex min-w-0 flex-col rounded-lane bg-surface-sunken p-1.5"
     >
       <div className="flex flex-col gap-1.5">
         {mainLanes.map((group) => (

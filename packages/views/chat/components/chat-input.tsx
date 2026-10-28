@@ -709,7 +709,7 @@ export function ChatInput({
           // A 52px pill while empty or one line; rounds less once it grows.
           // Focus only darkens the edge and deepens the shadow — no glow ring.
           "relative flex max-h-96 flex-col border border-input bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04),0_6px_20px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow,border-radius] duration-(--motion-fast) ease-out focus-within:border-ring focus-within:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_28px_rgb(0_0_0/0.07)]",
-          expanded ? "rounded-[22px]" : "rounded-[26px]",
+          expanded ? "rounded-composer" : "rounded-composer-pill",
           // Visual + interaction lock when there's no agent. We don't
           // toggle ContentEditor's editable mode (Tiptap can't switch
           // cleanly post-mount, and the prop has been removed); instead

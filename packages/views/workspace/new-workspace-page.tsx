@@ -296,7 +296,7 @@ function CreateWorkspaceForm({
               <span
                 aria-hidden
                 className={cn(
-                  "flex size-9 shrink-0 items-center justify-center rounded-[10px] text-body font-bold text-background",
+                  "flex size-9 shrink-0 items-center justify-center rounded-tile text-body font-bold text-background",
                   trimmedName ? "bg-foreground" : "bg-input",
                 )}
               >
@@ -319,7 +319,7 @@ function CreateWorkspaceForm({
           </SplitCardIntro>
 
           <SplitCardPane>
-            <div className="flex flex-1 flex-col overflow-y-auto rounded-[20px] bg-surface-sunken p-7 [@media(max-height:760px)]:p-6">
+            <div className="flex flex-1 flex-col overflow-y-auto rounded-pane bg-surface-sunken p-7 [@media(max-height:760px)]:p-6">
               <FieldGroup className="gap-6">
                 <Field>
                   <FieldLabel htmlFor="new-ws-name">

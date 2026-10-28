@@ -231,7 +231,7 @@ export function KbHistoryList({
             href={p.kbRevision(kbSlug, pageId, revision.revision_id)}
             aria-current={revision.revision_id === selectedRevisionId ? "page" : undefined}
             className={cn(
-              "flex flex-col gap-[3px] rounded-[10px] p-2.5 hover:bg-surface-hover",
+              "flex flex-col gap-[3px] rounded-tile p-2.5 hover:bg-surface-hover",
               revision.revision_id === selectedRevisionId && "bg-surface-selected hover:bg-surface-selected",
             )}
           >

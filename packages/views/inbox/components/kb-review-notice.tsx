@@ -103,7 +103,7 @@ export function KbReviewNotice({ item }: { item: InboxItem }) {
           <span className="text-caption text-faint-foreground">
             {changes ? t(($) => $.kb_review.summary) : t(($) => $.kb_review.your_summary)}
           </span>
-          <div className="rounded-[10px] bg-surface-sunken px-3.5 py-2.5 text-body whitespace-pre-wrap">{review.summary}</div>
+          <div className="rounded-tile bg-surface-sunken px-3.5 py-2.5 text-body whitespace-pre-wrap">{review.summary}</div>
         </div>
       )}
       {feedback.length > 0 && (

@@ -269,7 +269,7 @@ export function StandalonePrepareScreen({
         </SplitCardIntro>
 
         <SplitCardPane>
-          <div className="flex min-h-[320px] flex-1 flex-col justify-center rounded-[20px] bg-surface-sunken px-11 py-10 md:min-h-0">
+          <div className="flex min-h-[320px] flex-1 flex-col justify-center rounded-pane bg-surface-sunken px-11 py-10 md:min-h-0">
             {view === VIEW_DONE ? (
               <ReadyPanel version={status?.version ?? null} />
             ) : (

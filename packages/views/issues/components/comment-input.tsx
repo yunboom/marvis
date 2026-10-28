@@ -229,7 +229,7 @@ function CommentInput({ issueId, onSubmit, onAccepted, onEditAnnotation }: Comme
     <div
       {...dropZoneProps}
       data-slot="comment-composer"
-      className="relative flex flex-col rounded-[22px] border border-input bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04),0_6px_20px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow] duration-(--motion-fast) ease-out focus-within:border-ring focus-within:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_28px_rgb(0_0_0/0.07)]"
+      className="relative flex flex-col rounded-composer border border-input bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04),0_6px_20px_rgb(0_0_0/0.05)] transition-[border-color,box-shadow] duration-(--motion-fast) ease-out focus-within:border-ring focus-within:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_28px_rgb(0_0_0/0.07)]"
     >
       {attachmentsBlockSteer && <div className="px-3.5 pt-3">
         <SteerAttachmentNotice />

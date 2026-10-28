@@ -653,7 +653,7 @@ function TextField({
             "min-w-0 flex-1 truncate ring-1 ring-surface-border",
             large
               ? "h-11 rounded-xl bg-surface px-3.5 text-body-lg hover:bg-surface focus-visible:bg-surface md:text-body-lg"
-              : "h-9.5 rounded-[10px] bg-surface-sunken px-3 hover:bg-surface-sunken focus-visible:bg-surface-sunken",
+              : "h-9.5 rounded-tile bg-surface-sunken px-3 hover:bg-surface-sunken focus-visible:bg-surface-sunken",
             mono && "font-mono text-label md:text-label",
             readOnly && "text-muted-foreground",
           )}

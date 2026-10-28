@@ -59,7 +59,7 @@ describe("ChatQueue", () => {
     // (negative margin + z-0) while the composer's chrome stays untouched.
     expect(shell).toHaveClass("z-0", "-mb-3.5");
     expect(queue).toHaveClass(
-      "rounded-t-[18px]",
+      "rounded-t-xl",
       "bg-muted",
       "pb-4.5",
     );

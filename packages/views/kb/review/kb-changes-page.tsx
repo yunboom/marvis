@@ -28,7 +28,7 @@ function ChangeRow({ kbSlug, mr, selected }: { kbSlug: string; mr: KbMergeReques
         href={p.kbChange(kbSlug, mr.number)}
         aria-current={selected ? "page" : undefined}
         className={cn(
-          "flex flex-col gap-0.5 rounded-[10px] px-3 py-2.5 transition-colors hover:bg-surface-hover",
+          "flex flex-col gap-0.5 rounded-tile px-3 py-2.5 transition-colors hover:bg-surface-hover",
           selected && "bg-surface-selected hover:bg-surface-selected",
         )}
       >

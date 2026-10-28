@@ -339,7 +339,7 @@ function PickStep({
               <span
                 aria-hidden
                 className={cn(
-                  "flex size-9 shrink-0 items-center justify-center rounded-[10px] text-background",
+                  "flex size-9 shrink-0 items-center justify-center rounded-tile text-background",
                   summary.picked ? "bg-foreground" : "bg-input",
                 )}
               >
@@ -362,7 +362,7 @@ function PickStep({
           </SplitCardIntro>
 
           <SplitCardPane>
-            <div className="flex min-h-[320px] flex-1 flex-col overflow-y-auto rounded-[20px] bg-surface-sunken md:min-h-0">
+            <div className="flex min-h-[320px] flex-1 flex-col overflow-y-auto rounded-pane bg-surface-sunken md:min-h-0">
               <PickPane
                 servers={servers}
                 scanning={scanning}
@@ -566,7 +566,7 @@ function StandaloneRow({
           : "hover:bg-surface/60",
       )}
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-surface text-foreground ring-1 ring-surface-border">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface text-foreground ring-1 ring-surface-border">
         <Laptop className="size-4" aria-hidden />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -624,7 +624,7 @@ function ServerRow({ server, checked, onPick }: ServerRowProps) {
           : "hover:bg-surface/60",
       )}
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-surface text-muted-foreground ring-1 ring-surface-border">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-surface text-muted-foreground ring-1 ring-surface-border">
         <Server className="size-4" aria-hidden />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -655,7 +655,7 @@ function ServerRow({ server, checked, onPick }: ServerRowProps) {
 function ScanningPlaceholder() {
   return (
     <div aria-hidden className="flex h-14 animate-pulse items-center gap-3 px-2.5">
-      <span className="size-8 rounded-[9px] bg-skeleton" />
+      <span className="size-8 rounded-md bg-skeleton" />
       <span className="flex flex-col gap-1.5">
         <span className="h-2.5 w-30 rounded-full bg-skeleton" />
         <span className="h-2 w-45 rounded-full bg-skeleton" />

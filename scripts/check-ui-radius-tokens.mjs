@@ -4,7 +4,13 @@
  *
  * Bare Tailwind radius utilities are hidden constants in Tailwind v4,
  * bypassing our `--radius-*` scale. Fixed arbitrary lengths create the same
- * drift. The few 2–3px data-visualization marks below are intentional
+ * drift. Any named `rounded-*` utility passes: the derived ladder
+ * (`xs`…`4xl`) and the fixed role radii in packages/ui/styles/tokens.css
+ * (`row`, `dialog`, and the Marvis roles `avatar`, `tile`, `lane`, `pane`,
+ * `composer`, `composer-pill`). A surface whose radius matches none of them
+ * gets a new role token there, not an arbitrary value.
+ *
+ * The few 2–3px data-visualization marks below are intentional
  * micro-geometry, not product surfaces, and are allowlisted by exact file so
  * the exception cannot spread silently.
  *
