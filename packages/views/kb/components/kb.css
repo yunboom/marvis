@@ -32,6 +32,16 @@
   content: "]";
 }
 
+/*
+ * Links underline in their own text color. prose.css mixes the brand at 40%
+ * into the transparent background, which reads as a pale pink-grey line
+ * under brown text on the light theme; the full color matches the text.
+ */
+.kb-doc .rich-text-editor a,
+.kb-doc .rich-text-editor a:hover {
+  text-decoration-color: currentColor;
+}
+
 /* Links to pages that have not been written yet. */
 .kb-doc a[href="#kb-missing"] {
   cursor: default;
@@ -48,18 +58,31 @@
 }
 
 /*
- * Sentences with open annotations: a 藤黄 underline, highlighted as well
- * while the annotation panel is open. Clicking one opens its annotations.
+ * Sentences with open annotations: a yellow underline in --color-warning,
+ * the yellow of a pending annotation's dot and of the selected card's ring,
+ * highlighted as well while the annotation panel is open. Clicking one
+ * opens its annotations.
  */
 .kb-doc mark.kb-annotated {
   cursor: pointer;
   border-radius: 0;
   background-color: transparent;
   text-decoration-line: underline;
-  text-decoration-color: var(--color-status-progress);
+  text-decoration-color: var(--color-warning);
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
   text-decoration-skip-ink: none;
+}
+
+/*
+ * An annotated sentence on link text keeps the link's color but only the
+ * yellow underline: a link inside the mark drops its own line so the mark's
+ * shows, and a link holding the mark drops its line too, since a descendant
+ * cannot hide an ancestor's.
+ */
+.kb-doc mark.kb-annotated a,
+.kb-doc .rich-text-editor a:has(mark.kb-annotated) {
+  text-decoration-line: none;
 }
 
 .kb-doc.kb-annotations-open mark.kb-annotated {
