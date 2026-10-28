@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // runChatFixture is a run_only autopilot owned by the test user whose single
@@ -109,6 +110,7 @@ func TestEnsureAutopilotRunChat_CreatesSessionResumingTheRun(t *testing.T) {
 	if first.ChatSessionID == "" {
 		t.Fatal("chat_session_id is empty")
 	}
+	assertChatSessionSource(t, first.ChatSessionID, protocol.ChatSessionSourceAutopilotRun)
 
 	var agentID, creatorID, title, projectID, sessionID, workDir, runtimeID string
 	dbfx.QueryRow(t, `SELECT agent_id::text, creator_id::text, title, project_id::text, session_id, work_dir, runtime_id::text

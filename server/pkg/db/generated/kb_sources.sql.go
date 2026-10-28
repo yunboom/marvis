@@ -55,7 +55,9 @@ WITH src AS (
        AND cs.workspace_id = $5::uuid
        AND cs.status = 'active'
        AND ($9::uuid IS NULL OR cs.creator_id = $9::uuid)
-       AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
+       -- Ordinary chats and run follow-up chats; never a job's own chat or a
+       -- builder conversation.
+       AND cs.source = ANY($10::text[])
        AND ($6::timestamptz IS NULL OR lm.at > $6::timestamptz)
     UNION ALL
     SELECT 'raw'::text,
@@ -64,15 +66,15 @@ WITH src AS (
            r.name::text,
            r.created_at
       FROM kb_raw r
-     WHERE $10::bool
-       AND r.knowledge_base_id = $11::uuid
+     WHERE $11::bool
+       AND r.knowledge_base_id = $12::uuid
        AND r.kind = 'source'
        AND ($6::timestamptz IS NULL OR r.created_at > $6::timestamptz)
 ), marked AS (
     SELECT s.kind, s.uri, s.title, s.ref, s.updated_at,
            EXISTS (
                SELECT 1 FROM kb_claim cl
-                WHERE cl.knowledge_base_id = $11::uuid
+                WHERE cl.knowledge_base_id = $12::uuid
                   AND (cl.evidence @> jsonb_build_array(jsonb_build_object('uri', s.uri))
                        OR (s.kind = 'raw' AND EXISTS (
                            SELECT 1 FROM jsonb_array_elements(cl.evidence) e
@@ -98,6 +100,7 @@ type ListKbSourcesParams struct {
 	WantComment     bool               `json:"want_comment"`
 	WantChat        bool               `json:"want_chat"`
 	ChatCreator     pgtype.UUID        `json:"chat_creator"`
+	ChatSources     []string           `json:"chat_sources"`
 	WantRaw         bool               `json:"want_raw"`
 	KnowledgeBaseID pgtype.UUID        `json:"knowledge_base_id"`
 }
@@ -127,6 +130,7 @@ func (q *Queries) ListKbSources(ctx context.Context, arg ListKbSourcesParams) ([
 		arg.WantComment,
 		arg.WantChat,
 		arg.ChatCreator,
+		arg.ChatSources,
 		arg.WantRaw,
 		arg.KnowledgeBaseID,
 	)

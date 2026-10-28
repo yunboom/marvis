@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"github.com/yunboom/marvis/server/pkg/dbid"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // TestHotTableInsertsPersistUUIDv7 runs the converted INSERTs against Postgres
@@ -106,6 +107,7 @@ func TestHotTableInsertsPersistUUIDv7(t *testing.T) {
 			AgentID:     parseUUID(agentID),
 			CreatorID:   parseUUID(testUserID),
 			Title:       "uuidv7 chat",
+			Source:      protocol.ChatSessionSourceChat,
 		})
 		if err != nil {
 			t.Fatalf("CreateChatSession: %v", err)

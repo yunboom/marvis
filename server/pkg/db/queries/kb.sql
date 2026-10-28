@@ -638,11 +638,15 @@ JOIN LATERAL (
     FROM chat_message m
    WHERE m.chat_session_id = cs.id
      AND m.message_kind != 'channel_command'
+     -- A hidden instruction is never what the member last saw.
+     AND m.message_kind != 'instruction'
    ORDER BY m.created_at DESC
    LIMIT 1
 ) lm ON true
 WHERE cs.workspace_id = sqlc.arg('workspace_id')
   AND cs.status = 'active'
+  -- Job, run follow-up and builder chats are not workspace chats.
+  AND cs.source = sqlc.arg('source')
   AND (sqlc.narg('since')::timestamptz IS NULL OR lm.created_at > sqlc.narg('since')::timestamptz)
   AND (sqlc.narg('agent_id')::uuid IS NULL OR cs.agent_id = sqlc.narg('agent_id')::uuid)
 ORDER BY lm.created_at DESC, cs.id

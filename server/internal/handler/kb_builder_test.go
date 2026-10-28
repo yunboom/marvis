@@ -10,6 +10,7 @@ import (
 
 	"github.com/yunboom/marvis/server/internal/kb"
 	"github.com/yunboom/marvis/server/internal/testutil"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // cleanupKbBuilders removes every knowledge base builder carrier (its chat
@@ -80,6 +81,7 @@ func TestKbBuilderSessionLifecycle(t *testing.T) {
 	if n := dbfx.Count(t, `SELECT count(*) FROM kb_builder_session WHERE chat_session_id = $1 AND mode = 'create' AND knowledge_base_id IS NULL`, created.SessionID); n != 1 {
 		t.Fatalf("kb_builder_session rows = %d, want 1", n)
 	}
+	assertChatSessionSource(t, created.SessionID, protocol.ChatSessionSourceKbBuilder)
 
 	// Untouched conversations are not unfinished drafts.
 	if findKbBuilder(listKbBuilders(t, ""), created.SessionID) != nil {

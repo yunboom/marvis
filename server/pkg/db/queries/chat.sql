@@ -1,6 +1,7 @@
 -- name: CreateChatSession :one
-INSERT INTO chat_session (workspace_id, agent_id, creator_id, title, runtime_id, is_agent_intro, project_id, id)
-VALUES ($1, $2, $3, $4, (SELECT runtime_id FROM agent WHERE id = $2), $5, sqlc.narg('project_id'), COALESCE(sqlc.narg('id')::uuid, gen_random_uuid()))
+-- source decides where the conversation is shown; every caller states it.
+INSERT INTO chat_session (workspace_id, agent_id, creator_id, title, runtime_id, is_agent_intro, project_id, id, source)
+VALUES ($1, $2, $3, $4, (SELECT runtime_id FROM agent WHERE id = $2), $5, sqlc.narg('project_id'), COALESCE(sqlc.narg('id')::uuid, gen_random_uuid()), sqlc.arg('source'))
 RETURNING *;
 
 -- name: ClearChatSessionProjectByProject :exec
@@ -69,10 +70,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2 AND cs.status = 'active'
     OR
     lm.created_at IS NOT NULL
   )
-  -- A knowledge base job's chat lives on the job page, not in chat lists.
-  AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
-  -- An autopilot run's follow-up chat lives on the run page, not in chat lists.
-  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
+  -- Knowledge base job, run follow-up and builder chats live on their own pages.
+  AND cs.source = $3
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC;
 
 -- name: ListAllChatSessionsByCreator :many
@@ -112,10 +111,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2
     OR
     lm.created_at IS NOT NULL
   )
-  -- A knowledge base job's chat lives on the job page, not in chat lists.
-  AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
-  -- An autopilot run's follow-up chat lives on the run page, not in chat lists.
-  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
+  -- Knowledge base job, run follow-up and builder chats live on their own pages.
+  AND cs.source = $3
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC;
 
 -- name: ListAgentBuilderSessionsByCreator :many
@@ -1502,8 +1499,9 @@ WHERE atq.chat_session_id IS NOT NULL
   AND atq.regenerate_quick_actions_for IS NULL
   AND cs.workspace_id = $1
   AND cs.creator_id = $2
-  -- A run's follow-up chat is not a chat-window conversation.
-  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
+  -- Only chat-window conversations; job, run follow-up and builder chats show
+  -- their progress on their own pages.
+  AND cs.source = $3
 ORDER BY atq.created_at DESC;
 
 -- name: HasPendingChatTasksByCreator :one
@@ -1528,8 +1526,9 @@ SELECT EXISTS (
     AND cs.workspace_id = sqlc.arg(workspace_id)
     AND cs.creator_id = sqlc.arg(creator_id)
     AND cs.agent_id = ANY(sqlc.arg(agent_ids)::uuid[])
-    -- A run's follow-up chat is not a chat-window conversation.
-    AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
+    -- Only chat-window conversations; job, run follow-up and builder chats
+    -- show their progress on their own pages.
+    AND cs.source = sqlc.arg(source)
 ) AS has_pending;
 
 -- name: MarkChatSessionRead :exec
@@ -1569,10 +1568,12 @@ RETURNING *;
 -- name: ListChatDraftRestoresBySession :many
 -- An autopilot run's follow-up chat is shared by every member who can view
 -- the autopilot, so there each member only gets back the prompts they sent.
+-- shared_source is the source of such shared sessions (autopilot_run).
 SELECT dr.* FROM chat_draft_restore dr
+JOIN chat_session cs ON cs.id = dr.chat_session_id
 WHERE dr.chat_session_id = @chat_session_id
   AND (
-    NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = dr.chat_session_id)
+    cs.source <> @shared_source::text
     OR EXISTS (SELECT 1 FROM agent_task_queue t WHERE t.id = dr.task_id AND t.initiator_user_id = @user_id)
   )
 ORDER BY dr.created_at ASC;
@@ -1581,9 +1582,11 @@ ORDER BY dr.created_at ASC;
 -- Idempotent consume: deleting an already-consumed restore matches no row.
 -- Same per-sender rule as ListChatDraftRestoresBySession.
 DELETE FROM chat_draft_restore dr
+USING chat_session cs
 WHERE dr.id = @id AND dr.chat_session_id = @chat_session_id
+  AND cs.id = dr.chat_session_id
   AND (
-    NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = dr.chat_session_id)
+    cs.source <> @shared_source::text
     OR EXISTS (SELECT 1 FROM agent_task_queue t WHERE t.id = dr.task_id AND t.initiator_user_id = @user_id)
   );
 
@@ -1759,11 +1762,14 @@ RETURNING *;
 -- the session title. Mika's onboarding session used to be matched on its
 -- localized title from the client, which made the lookup both racy and
 -- language-dependent. Oldest wins so the answer stays stable once a member
--- has opened more than one session with the same agent.
+-- has opened more than one session with the same agent. Only chat-surface
+-- sessions count: a knowledge base job or run follow-up driven by the same
+-- agent is not the member's conversation with it.
 SELECT * FROM chat_session
 WHERE workspace_id = $1
   AND creator_id = $2
   AND agent_id = $3
   AND status = 'active'
+  AND source = $4
 ORDER BY created_at ASC
 LIMIT 1;

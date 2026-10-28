@@ -14,6 +14,7 @@ import (
 
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"github.com/yunboom/marvis/server/pkg/dbid"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 const agentBuilderInstructions = `You are Marvis Agent Builder. Help the user design one practical AI agent through a short conversation.
@@ -139,6 +140,7 @@ func (h *Handler) CreateAgentBuilderSession(w http.ResponseWriter, r *http.Reque
 		AgentID:     builder.ID,
 		CreatorID:   ownerUUID,
 		Title:       "Create an agent",
+		Source:      protocol.ChatSessionSourceAgentBuilder,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create agent builder session")

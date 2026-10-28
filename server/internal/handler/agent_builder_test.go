@@ -15,6 +15,7 @@ import (
 
 	"github.com/yunboom/marvis/server/internal/service"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func TestCreateAgentBuilderSessionCreatesIsolatedHiddenBuilder(t *testing.T) {
@@ -49,6 +50,7 @@ func TestCreateAgentBuilderSessionCreatesIsolatedHiddenBuilder(t *testing.T) {
 
 	first := create("builder-model-a")
 	second := create("builder-model-b")
+	assertChatSessionSource(t, first.SessionID, protocol.ChatSessionSourceAgentBuilder)
 	if first.BuilderAgentID == second.BuilderAgentID {
 		t.Fatalf("builder sessions unexpectedly shared an agent: %s", first.BuilderAgentID)
 	}

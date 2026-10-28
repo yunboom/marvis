@@ -17,6 +17,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/integrations/channel"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"github.com/yunboom/marvis/server/pkg/dbid"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // This file is the SHARED, channel-agnostic chat-session service every IM
@@ -337,6 +338,7 @@ func (s *ChatSession) createSessionAndBinding(ctx context.Context, in EnsureSess
 		AgentID:     in.AgentID,
 		CreatorID:   in.Sender,
 		Title:       "",
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		return pgtype.UUID{}, fmt.Errorf("create chat session: %w", err)
@@ -498,7 +500,7 @@ func (s *ChatSession) StartSession(ctx context.Context, in StartSessionInput) (S
 	}
 	session, err := qtx.CreateChatSession(ctx, db.CreateChatSessionParams{
 		ID: dbid.NewV7(), WorkspaceID: in.WorkspaceID, AgentID: in.AgentID,
-		CreatorID: in.Sender, Title: title,
+		CreatorID: in.Sender, Title: title, Source: protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		return StartSessionResult{}, fmt.Errorf("create started chat session: %w", err)

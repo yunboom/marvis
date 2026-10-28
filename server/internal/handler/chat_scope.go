@@ -10,6 +10,7 @@ import (
 
 	"github.com/yunboom/marvis/server/internal/util"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // Chat read scopes (spec 8.7). Without scope=workspace the chat reads keep
@@ -192,6 +193,7 @@ func chatLastMessageAfter(m *ChatLastMessage, since time.Time) bool {
 func (h *Handler) listWorkspaceChatSessions(w http.ResponseWriter, r *http.Request, workspaceID string, f chatListFilter) {
 	rows, err := h.Queries.ListKbWorkspaceChatSessions(r.Context(), db.ListKbWorkspaceChatSessionsParams{
 		WorkspaceID: parseUUID(workspaceID),
+		Source:      protocol.ChatSessionSourceChat,
 		Since:       f.since,
 		AgentID:     f.agentID,
 		RowLimit:    int32(f.limit),

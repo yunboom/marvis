@@ -133,6 +133,7 @@ func (h *Handler) CreateChatSession(w http.ResponseWriter, r *http.Request) {
 		CreatorID:   parseUUID(userID),
 		Title:       req.Title,
 		ProjectID:   projectID,
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create chat session")
@@ -197,6 +198,7 @@ func (h *Handler) ListChatSessions(w http.ResponseWriter, r *http.Request) {
 		rows, err := h.Queries.ListAllChatSessionsByCreator(r.Context(), db.ListAllChatSessionsByCreatorParams{
 			WorkspaceID: parseUUID(workspaceID),
 			CreatorID:   parseUUID(userID),
+			Source:      protocol.ChatSessionSourceChat,
 		})
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to list chat sessions")
@@ -227,6 +229,7 @@ func (h *Handler) ListChatSessions(w http.ResponseWriter, r *http.Request) {
 		rows, err := h.Queries.ListChatSessionsByCreator(r.Context(), db.ListChatSessionsByCreatorParams{
 			WorkspaceID: parseUUID(workspaceID),
 			CreatorID:   parseUUID(userID),
+			Source:      protocol.ChatSessionSourceChat,
 		})
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to list chat sessions")
@@ -1488,6 +1491,7 @@ func (h *Handler) ListChatDraftRestores(w http.ResponseWriter, r *http.Request) 
 
 	rows, err := h.Queries.ListChatDraftRestoresBySession(r.Context(), db.ListChatDraftRestoresBySessionParams{
 		ChatSessionID: session.ID,
+		SharedSource:  protocol.ChatSessionSourceAutopilotRun,
 		UserID:        parseUUID(userID),
 	})
 	if err != nil {
@@ -1558,6 +1562,7 @@ func (h *Handler) ConsumeChatDraftRestore(w http.ResponseWriter, r *http.Request
 	if _, err := h.Queries.DeleteChatDraftRestore(r.Context(), db.DeleteChatDraftRestoreParams{
 		ID:            restoreUUID,
 		ChatSessionID: session.ID,
+		SharedSource:  protocol.ChatSessionSourceAutopilotRun,
 		UserID:        parseUUID(userID),
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to consume draft restore")
@@ -1634,6 +1639,7 @@ func (h *Handler) ListPendingChatTasks(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.Queries.ListPendingChatTasksByCreator(r.Context(), db.ListPendingChatTasksByCreatorParams{
 		WorkspaceID: parseUUID(workspaceID),
 		CreatorID:   parseUUID(userID),
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to list pending chat tasks")
@@ -1722,6 +1728,7 @@ func (h *Handler) HasPendingChatTasks(w http.ResponseWriter, r *http.Request) {
 		WorkspaceID: parseUUID(workspaceID),
 		CreatorID:   parseUUID(userID),
 		AgentIds:    agentIDs,
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to check pending chat tasks")

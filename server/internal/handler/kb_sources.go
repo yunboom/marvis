@@ -11,6 +11,7 @@ import (
 
 	"github.com/yunboom/marvis/server/internal/kb"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // kbSourceKindComment is an issue comment in GET /api/kb/sources; its uri is
@@ -20,6 +21,12 @@ const kbSourceKindComment = "comment"
 // kbSourceKinds are the kinds GET /api/kb/sources lists, in the order the
 // kinds parameter documents them.
 var kbSourceKinds = []string{kb.SourceKindTask, kbSourceKindComment, kb.SourceKindChat, kb.SourceKindRaw}
+
+// kbIngestibleChatSources are the chat_session sources whose conversations a
+// knowledge base may ingest: ordinary chats and autopilot run follow-up chats.
+// A job's own chat and builder conversations are working material, not
+// knowledge.
+var kbIngestibleChatSources = []string{protocol.ChatSessionSourceChat, protocol.ChatSessionSourceAutopilotRun}
 
 // KbSource is one item of material a knowledge base can ingest.
 type KbSource struct {
@@ -103,6 +110,7 @@ func (h *Handler) ListKbSources(w http.ResponseWriter, r *http.Request) {
 		WantChat:        want[kb.SourceKindChat],
 		WantRaw:         want[kb.SourceKindRaw],
 		ChatCreator:     chatCreator,
+		ChatSources:     kbIngestibleChatSources,
 		IncludeIngested: includeIngested,
 		RowLimit:        int32(limit),
 		RowOffset:       int32(offset),
