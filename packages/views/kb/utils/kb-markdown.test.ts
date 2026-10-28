@@ -95,21 +95,51 @@ describe("prepareBlockMarkdown", () => {
     expect(out).toBe('支付回调说明见[<mark class="kb-annotated" data-annotation-ids="a-1">支付回调</mark>](/kb/team/p/page-pay)。');
   });
 
-  it("matches across collapsed whitespace and list markers but never splits markup or marks deleted text", () => {
-    const out = prepareBlockMarkdown("- 回调先验签，\n  再加锁。\n- **重试**三次。", {
+  it("matches across collapsed whitespace and keeps emphasis whole inside the mark", () => {
+    const out = prepareBlockMarkdown("- 回调先验签，\n  再加锁。\n- **重试**三次。\n- 重**试三**次。", {
       citeNumbers: numbers,
       annotations: [
         { quote: "回调先验签， 再加锁。", ids: ["a-1"] },
-        { quote: "重试三次", ids: ["a-2"] },
+        { quote: "重试三次", ids: ["a-2"], prefix: "再加锁。 " },
+        { quote: "试三", ids: ["a-3"] },
       ],
     });
-    expect(out).toBe('- <mark class="kb-annotated" data-annotation-ids="a-1">回调先验签，\n  再加锁。</mark>\n- **重试**三次。');
+    expect(out).toBe(
+      '- <mark class="kb-annotated" data-annotation-ids="a-1">回调先验签，\n  再加锁。</mark>\n' +
+        '- <mark class="kb-annotated" data-annotation-ids="a-2">**重试**三次</mark>。\n' +
+        '- 重<mark class="kb-annotated" data-annotation-ids="a-3">**试三**</mark>次。',
+    );
 
     const draft = prepareBlockMarkdown("渠道<del>按订单号</del><ins>按交易号</ins>去重。按订单号查询。", {
       citeNumbers: numbers,
       annotations: [{ quote: "按订单号", ids: ["a-3"] }],
     });
     expect(draft).toBe('渠道<del>按订单号</del><ins>按交易号</ins>去重。<mark class="kb-annotated" data-annotation-ids="a-3">按订单号</mark>查询。');
+  });
+});
+
+describe("annotations over several list items", () => {
+  // Regression: a quote selected across list items crossed the list markers
+  // and was left without any underline.
+  it("marks each item the quote covers with the same annotation", () => {
+    const content = "- 订单折扣和免运费折扣\n- 商品折扣和免运费折扣\n- 商品折扣和订单折扣\n- 其他";
+    const out = prepareBlockMarkdown(content, {
+      citeNumbers: new Map(),
+      annotations: [{ quote: "订单折扣和免运费折扣 商品折扣和免运费折扣 商品折扣和订单折扣", ids: ["a-1"] }],
+    });
+    const open = '<mark class="kb-annotated" data-annotation-ids="a-1">';
+    expect(out).toBe(
+      `- ${open}订单折扣和免运费折扣</mark>\n- ${open}商品折扣和免运费折扣</mark>\n- ${open}商品折扣和订单折扣</mark>\n- 其他`,
+    );
+  });
+
+  it("marks each paragraph and each side of a link edge separately", () => {
+    const out = prepareBlockMarkdown("先验签。\n\n再加锁，见[支付回调](/kb/p)说明。", {
+      citeNumbers: new Map(),
+      annotations: [{ quote: "先验签。 再加锁，见支付回调说明", ids: ["a-2"] }],
+    });
+    const open = '<mark class="kb-annotated" data-annotation-ids="a-2">';
+    expect(out).toBe(`${open}先验签。</mark>\n\n${open}再加锁，见</mark>[${open}支付回调</mark>](/kb/p)${open}说明</mark>。`);
   });
 });
 
