@@ -12,12 +12,12 @@ job starts. The vulnerability scan is fail-closed by default.
 
 The repository has immutable releases enabled: once a release is published, no
 asset can be added or replaced, and its tag cannot be reused. GoReleaser
-therefore creates a **draft**; the standalone bundles and the Linux and Windows
-desktop installers upload into it, and the `publish` job publishes it last, as
-latest for a stable tag. Publishing requires the standalone bundles to succeed
-and does not wait on the desktop installers succeeding. Upload the manually
-built macOS installers while the release is still a draft; after `publish`
-they can only go out with a new tag. If a run fails before `publish`, fix it
+therefore creates a **draft**; the standalone bundles and the Linux, Windows
+and macOS desktop installers upload into it, and the `publish` job publishes it
+last, as latest for a stable tag. Publishing requires the standalone bundles to
+succeed and waits for the desktop jobs to finish, but not for them to succeed;
+an installer that failed can only go out with a new tag. The macOS installers
+are unsigned (no Developer ID): CI ad-hoc signs them and skips notarization. If a run fails before `publish`, fix it
 and rerun the failed jobs on the same tag; a tag whose release was already
 published needs a new patch version.
 

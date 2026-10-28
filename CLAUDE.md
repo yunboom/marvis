@@ -85,7 +85,7 @@ CI 按路径只跑改动相关的作业（`.github/ci-paths.json`），main 上�
 
 web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由构建参数 `NEXT_PUBLIC_BASE_PATH` 控制，不设时与上游一致；后端始终在根路径，不感知前缀。部署方法见 `SELF_HOSTING_ADVANCED.md` 的 Path Prefix 一节。
 
-- web：`apps/web/config/base-path.ts` 的 `BASE_PATH`，用于 Next 不会自动加前缀的地方：浏览器 API / WS 默认地址（`web-providers.tsx`）、OAuth 回调地址、导航适配器的 `getShareableUrl` 与新标签页、manifest 与图标、favicon 跳转、docs 转发（`runtime-urls.ts`）。
+- web：`apps/web/config/base-path.ts` 的 `BASE_PATH`，用于 Next 不会自动加前缀的地方：浏览器 API / WS 默认地址（`web-providers.tsx`）、OAuth 回调地址、导航适配器的 `getShareableUrl` 与新标签页、manifest 与图标、favicon 跳转、docs 转发（`runtime-urls.ts`）、`next/image` 的字符串 `src`（不加前缀时图片优化接口返回 400）。
 - views：`useAppOrigin` 返回带路径前缀的基地址，`link-handler.ts` 识别站内链接时去掉前缀；裸 `<a href="/download">` 改用 `getShareableUrl`。
 - docs：`apps/docs/lib/base-path.ts` 与 `next.config.mjs` 的 basePath 为 `${前缀}/docs`；`Dockerfile.docs`，compose 的 `docs` 服务在 `docs` profile 下。
 - 桌面端：服务器地址保留路径（`normalizeServerAddress`），`probeServer` 从完整路径逐级向上探测 `/api/config`，粘贴页面地址也能找到前缀。

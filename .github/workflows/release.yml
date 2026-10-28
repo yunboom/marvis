@@ -463,6 +463,12 @@ jobs:
             target: linux
           - os: windows-latest
             target: win
+          # Unsigned: there is no Developer ID cert, so package.mjs skips
+          # notarization and electron-builder ad-hoc signs (enough for Apple
+          # Silicon to launch). Users clear quarantine once; see the
+          # download page's first-launch hint.
+          - os: macos-latest
+            target: mac
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout

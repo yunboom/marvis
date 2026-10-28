@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { useAuthStore } from "@marvis/core/auth";
+import { BASE_PATH } from "@/config/base-path";
 import { docsHrefForLocale, useLocale } from "../i18n";
 import { useDashboardCtaHref } from "../utils/use-dashboard-cta";
 
@@ -82,7 +83,9 @@ export function LandingHero() {
 
       <div className="mt-10 w-full max-w-[1136px] overflow-hidden rounded-(--landing-radius-panel) border border-white bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_64px_rgba(0,0,0,0.08)]">
         <Image
-          src="/images/landing-hero.webp"
+          // next/image does not prefix a string src with basePath, and the
+          // optimizer then fetches the unprefixed path and gets a 404.
+          src={`${BASE_PATH}/images/landing-hero.webp`}
           alt={t.hero.imageAlt}
           width={2640}
           height={1780}
