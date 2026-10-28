@@ -51,7 +51,8 @@
       },
       "cloud": {
         "title": "クラウドサービス",
-        "coming_soon": "未実装"
+        "coming_soon": "近日公開",
+        "not_yet_available": "未実装"
       }
     },
     "rows": {

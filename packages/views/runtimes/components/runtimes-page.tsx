@@ -129,8 +129,9 @@ const COMING_SOON_SERVICES = [
 
 const QODER_CLOUD_PROVIDER = "qoder_cloud";
 
-// Cloud services shown on this page and in the add menu. Qoder and Cursor are
-// hidden for now but kept, so turning them back on is a one-line change.
+// Cloud services shown in the cloud services group and the add menu: Claude
+// only for now. Qoder and Cursor are hidden there but kept, so turning them
+// back on is a one-line change.
 const VISIBLE_CLOUD_PROVIDERS: ReadonlySet<string> = new Set(["claude"]);
 
 const SHOW_QODER_CLOUD = VISIBLE_CLOUD_PROVIDERS.has(QODER_CLOUD_PROVIDER);
@@ -139,9 +140,9 @@ const VISIBLE_COMING_SOON_SERVICES = COMING_SOON_SERVICES.filter((service) =>
   VISIBLE_CLOUD_PROVIDERS.has(service.provider),
 );
 
-// Coming-soon services listed without the "By {vendor}" subtitle, in the
-// table and in the add menu.
-const NO_VENDOR_SUBTITLE_PROVIDERS: ReadonlySet<string> = new Set(["claude"]);
+// Coming-soon services tagged "not yet available" instead of "coming soon".
+// Their cloud services row also drops the "By {vendor}" subtitle.
+const NOT_YET_AVAILABLE_PROVIDERS: ReadonlySet<string> = new Set(["claude"]);
 
 // Track order: edge, name, harness, agents, workload, status, actions, edge.
 // Below @2xl only name, status and actions keep a track; the other cells are
@@ -291,7 +292,7 @@ export function RuntimesPage({
   }
 
   const isDesktop = hasLocalMachine === true;
-  const qoder = SHOW_QODER_CLOUD ? (qoderConnection ?? null) : null;
+  const qoder = qoderConnection ?? null;
   const qoderHref = paths.runtimeDetail(QODER_RUNTIME_LOCATOR);
   // Qoder's runtime registers like a machine, but it is listed once, as a
   // cloud service — never as a machine, even when this server cannot run
@@ -340,6 +341,7 @@ export function RuntimesPage({
   );
   const qoderConfigured = qoder?.configured === true;
   const showQoderRow =
+    SHOW_QODER_CLOUD &&
     qoder !== null &&
     matchesQuery(t(($) => $.qoder.cloud_title), "qoder") &&
     (statusFilter === "all" ||
@@ -360,7 +362,7 @@ export function RuntimesPage({
     visibleComingSoon.length === 0;
 
   const configuredCloudCount = qoderConfigured ? 1 : 0;
-  // The cloud group header counts the rows it actually lists.
+  // The cloud services header counts the rows the group actually lists.
   const cloudRowCount = (showQoderRow ? 1 : 0) + visibleComingSoon.length;
   const totalCount = machineList.length + configuredCloudCount;
   // Status counts follow the owner scope; search does not change them.
@@ -653,7 +655,7 @@ function AddRuntimeMenu({
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuLabel>{t(($) => $.page.add_menu.cloud_services)}</DropdownMenuLabel>
-          {qoder && (
+          {SHOW_QODER_CLOUD && qoder && (
             <AddMenuItem
               icon={<ProviderLogo provider="qoder_cloud" className="size-4" />}
               title={t(($) => $.qoder.cloud_title)}
@@ -683,14 +685,14 @@ function AddRuntimeMenu({
               key={service.provider}
               icon={<ProviderLogo provider={service.provider} className="size-4" />}
               title={service.name}
-              description={
-                NO_VENDOR_SUBTITLE_PROVIDERS.has(service.provider)
-                  ? undefined
-                  : t(($) => $.page.rows.provided_by, { vendor: service.vendor })
-              }
+              description={t(($) => $.page.rows.provided_by, {
+                vendor: service.vendor,
+              })}
               trailing={
                 <Badge variant="secondary" className="shrink-0">
-                  {t(($) => $.page.groups.cloud.coming_soon)}
+                  {NOT_YET_AVAILABLE_PROVIDERS.has(service.provider)
+                    ? t(($) => $.page.groups.cloud.not_yet_available)
+                    : t(($) => $.page.groups.cloud.coming_soon)}
                 </Badge>
               }
               disabled
@@ -1227,6 +1229,7 @@ function ComingSoonRow({
   vendor: string;
 }) {
   const { t } = useT("runtimes");
+  const notYetAvailable = NOT_YET_AVAILABLE_PROVIDERS.has(provider);
   return (
     <ListGridRow className={cn(ROW, "hover:bg-transparent")}>
       <NameCell
@@ -1239,7 +1242,7 @@ function ComingSoonRow({
         }
         title={name}
         subtitle={
-          NO_VENDOR_SUBTITLE_PROVIDERS.has(provider)
+          notYetAvailable
             ? undefined
             : t(($) => $.page.rows.provided_by, { vendor })
         }
@@ -1249,7 +1252,11 @@ function ComingSoonRow({
       <EmptyCell />
       <EmptyCell />
       <ListGridCell>
-        <span className={ROW_TAG}>{t(($) => $.page.groups.cloud.coming_soon)}</span>
+        <span className={ROW_TAG}>
+          {notYetAvailable
+            ? t(($) => $.page.groups.cloud.not_yet_available)
+            : t(($) => $.page.groups.cloud.coming_soon)}
+        </span>
       </ListGridCell>
       <ListGridCell aria-hidden="true" />
     </ListGridRow>
