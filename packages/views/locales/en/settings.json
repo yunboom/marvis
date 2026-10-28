@@ -13,7 +13,8 @@
       "open": "Actions for {{name}}",
       "edit": "Edit",
       "archive": "Archive",
-      "reorder": "Reorder {{name}}"
+      "reorder": "Reorder {{name}}",
+      "delete": "Delete permanently"
     },
     "reorder_hint": "Drag within a group to reorder boards, lists, and menus.",
     "built_in_dialog": {},
@@ -57,6 +58,29 @@
       "cancel": "Cancel",
       "confirm": "Archive",
       "failed": "Could not archive the status."
+    },
+    "delete_dialog": {
+      "title": "Delete this status permanently?",
+      "description": "This can't be undone. A status that appears in issues, settings or history can't be deleted.",
+      "referenced_title": "Can't delete this status",
+      "referenced": "It appears in {{places}}, so it stays archived.",
+      "references": {
+        "issue": "issues",
+        "workflow": "workflows",
+        "pr_merge_setting": "the PR merge setting",
+        "saved_view": "saved views",
+        "wakeup": "wakeups",
+        "wakeup_receipt": "wakeup history",
+        "agent_task": "agent runs",
+        "activity": "issue activity",
+        "inbox": "notifications",
+        "other": "other records"
+      },
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting…",
+      "close": "Got it",
+      "failed": "Failed to delete."
     },
     "category_labels": {
       "unstarted": "Unstarted",

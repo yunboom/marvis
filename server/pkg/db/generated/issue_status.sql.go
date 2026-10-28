@@ -141,6 +141,29 @@ func (q *Queries) CreateIssueStatusEntry(ctx context.Context, arg CreateIssueSta
 	return i, err
 }
 
+const deleteArchivedIssueStatusEntry = `-- name: DeleteArchivedIssueStatusEntry :execrows
+DELETE FROM issue_status
+WHERE id = $1::uuid
+  AND workspace_id = $2::uuid
+  AND is_system = false
+  AND archived_at IS NOT NULL
+`
+
+type DeleteArchivedIssueStatusEntryParams struct {
+	ID          pgtype.UUID `json:"id"`
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+}
+
+// Only an archived custom status: archiving already guaranteed no issue sits on
+// it and no workflow lists it, and an archived status cannot gain new history.
+func (q *Queries) DeleteArchivedIssueStatusEntry(ctx context.Context, arg DeleteArchivedIssueStatusEntryParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteArchivedIssueStatusEntry, arg.ID, arg.WorkspaceID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteIssueStatusEntriesForWorkspace = `-- name: DeleteIssueStatusEntriesForWorkspace :exec
 DELETE FROM issue_status WHERE workspace_id = $1::uuid
 `
@@ -325,6 +348,92 @@ func (q *Queries) ListIssueStatusEntries(ctx context.Context, arg ListIssueStatu
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listIssueStatusKeyReferences = `-- name: ListIssueStatusKeyReferences :many
+SELECT ref::text FROM (
+    SELECT 'issue' AS ref WHERE EXISTS (
+        SELECT 1 FROM issue
+        WHERE workspace_id = $1::uuid AND status = $2::text)
+    UNION ALL
+    SELECT 'workflow' WHERE EXISTS (
+        SELECT 1 FROM issue_workflow w
+        WHERE w.workspace_id = $1::uuid
+          AND (w.initial_status_key = $2::text OR EXISTS (
+              SELECT 1 FROM jsonb_array_elements(w.steps) AS step
+              WHERE $2::text IN (step->>'status_key', step->>'next_status_key', step->>'back_status_key'))))
+    UNION ALL
+    SELECT 'pr_merge_setting' WHERE EXISTS (
+        SELECT 1 FROM workspace
+        WHERE id = $1::uuid AND settings->>'pr_merge_status' = $2::text)
+    UNION ALL
+    SELECT 'saved_view' WHERE EXISTS (
+        SELECT 1 FROM issue_view
+        WHERE workspace_id = $1::uuid
+          AND query->'statusFilters' @> jsonb_build_array($2::text))
+    UNION ALL
+    SELECT 'wakeup' WHERE EXISTS (
+        SELECT 1 FROM issue_wakeup
+        WHERE workspace_id = $1::uuid
+          AND ((condition->>'type' = 'issue_field' AND condition->>'field' = 'status'
+                AND condition->>'value' = $2::text)
+               OR condition_state IN ('status:' || $2::text, 'issue:' || $2::text)))
+    UNION ALL
+    SELECT 'wakeup_receipt' WHERE EXISTS (
+        SELECT 1 FROM issue_wakeup_receipt r
+        JOIN issue_wakeup w ON w.id = r.wakeup_id
+        WHERE w.workspace_id = $1::uuid
+          AND jsonb_path_exists(r.payload, '$.** ? (@.status == $k || @.previous_status == $k)',
+                                jsonb_build_object('k', $2::text)))
+    UNION ALL
+    SELECT 'agent_task' WHERE EXISTS (
+        SELECT 1 FROM agent_task_queue t
+        JOIN issue i ON i.id = t.issue_id
+        WHERE i.workspace_id = $1::uuid AND t.workflow_step = $2::text)
+    UNION ALL
+    SELECT 'activity' WHERE EXISTS (
+        SELECT 1 FROM activity_log
+        WHERE workspace_id = $1::uuid AND action = 'status_changed'
+          AND $2::text IN (details->>'from', details->>'to'))
+    UNION ALL
+    SELECT 'inbox' WHERE EXISTS (
+        SELECT 1 FROM inbox_item
+        WHERE workspace_id = $1::uuid AND type = 'status_changed'
+          AND $2::text IN (details->>'from', details->>'to'))
+) AS refs
+`
+
+type ListIssueStatusKeyReferencesParams struct {
+	WorkspaceID pgtype.UUID `json:"workspace_id"`
+	Key         string      `json:"key"`
+}
+
+// Every place a status key is persisted, live configuration and history alike.
+// Rows store the key as text, never the status id, so a deleted row whose key
+// is still referenced would leave that reference unresolvable — and free the
+// key for a later status to inherit the old reference. Deletion is therefore
+// allowed only when this returns nothing. Call under the catalog lock.
+//
+// activity_log and inbox_item have no index on the status fields; this is a
+// rare admin action, and each EXISTS stops at the first match.
+func (q *Queries) ListIssueStatusKeyReferences(ctx context.Context, arg ListIssueStatusKeyReferencesParams) ([]string, error) {
+	rows, err := q.db.Query(ctx, listIssueStatusKeyReferences, arg.WorkspaceID, arg.Key)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var ref string
+		if err := rows.Scan(&ref); err != nil {
+			return nil, err
+		}
+		items = append(items, ref)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

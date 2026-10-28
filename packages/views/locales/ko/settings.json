@@ -13,7 +13,8 @@
       "open": "{{name}} 작업",
       "edit": "편집",
       "archive": "보관",
-      "reorder": "{{name}} 순서 변경"
+      "reorder": "{{name}} 순서 변경",
+      "delete": "영구 삭제"
     },
     "reorder_hint": "그룹 안에서 드래그하면 보드, 목록, 메뉴의 순서가 바뀝니다.",
     "built_in_dialog": {},
@@ -57,6 +58,29 @@
       "cancel": "취소",
       "confirm": "보관",
       "failed": "보관하지 못했습니다."
+    },
+    "delete_dialog": {
+      "title": "이 상태를 영구 삭제할까요?",
+      "description": "되돌릴 수 없습니다. 이슈, 설정, 기록에 나타난 상태는 삭제할 수 없습니다.",
+      "referenced_title": "삭제할 수 없습니다",
+      "referenced": "{{places}}에 나타나 있어 보관 상태로 유지됩니다.",
+      "references": {
+        "issue": "이슈",
+        "workflow": "워크플로",
+        "pr_merge_setting": "PR 병합 설정",
+        "saved_view": "저장된 보기",
+        "wakeup": "웨이크업",
+        "wakeup_receipt": "웨이크업 기록",
+        "agent_task": "에이전트 실행",
+        "activity": "이슈 활동",
+        "inbox": "알림",
+        "other": "기타 기록"
+      },
+      "cancel": "취소",
+      "confirm": "삭제",
+      "deleting": "삭제 중…",
+      "close": "확인",
+      "failed": "삭제하지 못했습니다."
     },
     "category_labels": {
       "unstarted": "시작 전",

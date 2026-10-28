@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { ApiError } from "../api/client";
-import { issueStatusArchiveConflictCount, createIssueStatusListStore } from "./archive";
+import { issueStatusArchiveConflictCount, issueStatusDeleteReferences, createIssueStatusListStore } from "./archive";
 import { getIssueSurfaceViewStore } from "../issues/stores/surface-view-store";
 import { useActiveIssueViewStore } from "../issue-views/active-view-store";
 import { useIssuesScopeStore } from "../issues/stores/issues-scope-store";
@@ -13,6 +13,14 @@ describe("archive precondition", () => {
       expect(issueStatusArchiveConflictCount(new ApiError("old server", 409, "Conflict", body))).toBeNull();
     }
     expect(issueStatusArchiveConflictCount(new Error("offline"))).toBeNull();
+  });
+
+  it("parses only a valid, structured delete-reference conflict", () => {
+    expect(issueStatusDeleteReferences(new ApiError("referenced", 409, "Conflict", { code: "issue_status_referenced", references: ["activity", "inbox"] }))).toEqual(["activity", "inbox"]);
+    for (const body of [null, {}, { code: "issue_status_in_use", issue_count: 1 }, { code: "issue_status_referenced", references: "activity" }, { code: "issue_status_not_archived" }]) {
+      expect(issueStatusDeleteReferences(new ApiError("old server", 409, "Conflict", body))).toBeNull();
+    }
+    expect(issueStatusDeleteReferences(new ApiError("gone", 404, "Not Found", { code: "issue_status_referenced", references: [] }))).toBeNull();
   });
 
   it("shows all matching work, including sub-issues and terminals, without changing a saved view", () => {

@@ -4610,6 +4610,11 @@ export class ApiClient {
    * keep it and keep behaving as their category prescribes; only new
    * assignments are refused. Built-in statuses return 403.
    */
+  /** Permanently deletes an archived custom status whose key is referenced nowhere. */
+  async deleteIssueStatus(id: string): Promise<void> {
+    await this.fetch(`/api/issue-statuses/${id}/permanent`, { method: "DELETE" });
+  }
+
   async archiveIssueStatus(id: string): Promise<IssueStatusEntry> {
     const raw = await this.fetch<unknown>(`/api/issue-statuses/${id}`, { method: "DELETE" });
     return parseWithFallback(raw, IssueStatusEntrySchema, EMPTY_ISSUE_STATUS_ENTRY, {

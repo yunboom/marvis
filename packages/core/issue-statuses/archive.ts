@@ -8,6 +8,21 @@ const inUseErrorSchema = z.object({
   issue_count: z.number().int().positive(),
 });
 
+const referencedErrorSchema = z.object({
+  code: z.literal("issue_status_referenced"),
+  references: z.array(z.string()),
+});
+
+/**
+ * Where a status key is still stored, from a refused permanent delete. Null
+ * when the error is anything else, including an old or malformed body.
+ */
+export function issueStatusDeleteReferences(error: unknown): string[] | null {
+  if (!(error instanceof ApiError) || error.status !== 409) return null;
+  const parsed = referencedErrorSchema.safeParse(error.body);
+  return parsed.success ? parsed.data.references : null;
+}
+
 /** Parse the archive conflict without trusting an old/malformed server body. */
 export function issueStatusArchiveConflictCount(error: unknown): number | null {
   if (!(error instanceof ApiError) || error.status !== 409) return null;

@@ -72,6 +72,14 @@ function useCatalogCache() {
           : null,
       );
     },
+    /** Drops a row the server confirmed deleted. */
+    removeEntry: (id: string) => {
+      writeStatuses(
+        (statuses) =>
+          statuses.some((s) => s.id === id) ? statuses.filter((s) => s.id !== id) : null,
+        -1,
+      );
+    },
     invalidate: () => {
       qc.invalidateQueries({ queryKey: issueStatusKeys.all(wsId) });
     },
@@ -140,6 +148,20 @@ export function useArchiveIssueStatus() {
       if (!entry?.id) return;
       patchEntry(entry.id, { archived_at: entry.archived_at });
     },
+    onError: invalidate,
+  });
+}
+
+/**
+ * Permanently deletes an archived custom status. Not optimistic: the server
+ * refuses while the key is referenced anywhere, history included, and that
+ * refusal is the common outcome the dialog has to show.
+ */
+export function useDeleteIssueStatus() {
+  const { removeEntry, invalidate } = useCatalogCache();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteIssueStatus(id),
+    onSuccess: (_data, id) => removeEntry(id),
     onError: invalidate,
   });
 }
