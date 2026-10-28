@@ -12,10 +12,19 @@ function declarations(selector: string): string {
   return match[1]!;
 }
 
+describe("kb.css tokens", () => {
+  // kb.css is imported by the component, outside Tailwind's pipeline, so the
+  // --color-* aliases from `@theme inline` are only defined at runtime when
+  // something else happens to use them; read the base tokens instead.
+  it("reads base color tokens, never the Tailwind --color-* aliases", () => {
+    expect(css).not.toMatch(/var\(--color-/);
+  });
+});
+
 describe("kb.css underlines", () => {
   it("underlines annotated sentences in the warning yellow", () => {
     const rule = declarations(".kb-doc mark.kb-annotated");
-    expect(rule).toMatch(/background-image:\s*linear-gradient\(var\(--color-warning\),\s*var\(--color-warning\)\)/);
+    expect(rule).toMatch(/background-image:\s*linear-gradient\(var\(--warning\),\s*var\(--warning\)\)/);
     expect(rule).toMatch(/box-decoration-break:\s*clone/);
     expect(rule).not.toMatch(/currentColor/);
   });
@@ -44,7 +53,7 @@ describe("kb.css underlines", () => {
     );
     expect(rule).toMatch(/text-decoration-line:\s*none/);
     expect(rule).toMatch(
-      /repeating-linear-gradient\(\s*to right,\s*var\(--color-warning\)[^,]*,\s*currentColor[^)]*\)/,
+      /repeating-linear-gradient\(\s*to right,\s*var\(--warning\)[^,]*,\s*currentColor[^)]*\)/,
     );
   });
 });
