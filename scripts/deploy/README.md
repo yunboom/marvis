@@ -11,7 +11,7 @@ make deploy-prod         # 部署
 
 - 本机能用 `ssh j` 登录跳板机（密钥登录），装有 `expect` 和已登录的 `gh`。
 - 在 `main` 分支上，工作区干净，`HEAD` 等于 `origin/main`。
-- 该提交推送到 main 时触发的那次 CI 已经通过；CI 未跑完或失败都会拒绝部署。每日定时跑的全量 CI 测试范围更大，不作为部署门槛。
+- 该提交推送到 main 时触发的那次 CI 已经跑完，且其中的测试和构建作业（`backend`、`frontend-build`、`frontend-test`、`frontend-views-test`）全部通过或被跳过（没改到对应范围时 CI 会跳过）。前端质量检查这类代码规范作业不作为部署门槛，但仍要按规范修复；每日定时跑的全量 CI 也不作为门槛。
 
 ## 流程
 

@@ -16,6 +16,10 @@ set -euo pipefail
 
 readonly REPO_SLUG=yunboom/marvis
 readonly CI_WORKFLOW=CI
+# CI jobs that must pass (or be skipped) for a deploy. `backend` aggregates
+# every backend job; the frontend aggregate also counts frontend-quality, so
+# its build and test jobs are named one by one.
+readonly CI_GATE_JOBS='^(backend|frontend-build|frontend-test|frontend-views-test.*)$'
 
 info() { printf '==> %s\n' "$*"; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
@@ -68,13 +72,23 @@ info "deploying origin/main $sha"
 # scheduled run tests the same commit with a wider scope and is not the gate:
 # a nightly failure says nothing about whether this merge was green.
 run="$(gh run list --repo "$REPO_SLUG" --commit "$sha" --workflow "$CI_WORKFLOW" \
-  --event push --limit 1 --json status,conclusion,url \
-  --jq '.[0] // empty | [.status, .conclusion, .url] | @tsv')"
+  --event push --limit 1 --json databaseId,status,url \
+  --jq '.[0] // empty | [.databaseId, .status, .url] | @tsv')"
 [ -n "$run" ] || die "no $CI_WORKFLOW run from the push of $sha to main yet"
 
-IFS=$'\t' read -r run_status run_conclusion run_url <<< "$run"
+IFS=$'\t' read -r run_id run_status run_url <<< "$run"
 [ "$run_status" = "completed" ] || die "$CI_WORKFLOW is still running for $sha: $run_url"
-[ "$run_conclusion" = "success" ] || die "$CI_WORKFLOW did not pass for $sha ($run_conclusion): $run_url"
-info "$CI_WORKFLOW passed for $sha: $run_url"
+
+# Only the jobs that test and build what ships gate a deploy; code-style
+# checks such as frontend-quality do not. A skipped job passes: CI skips
+# the scopes a push did not touch.
+jobs="$(gh run view "$run_id" --repo "$REPO_SLUG" --json jobs \
+  --jq '.jobs[] | [.name, .conclusion] | @tsv')"
+gated="$(printf '%s\n' "$jobs" | awk -F'\t' -v re="$CI_GATE_JOBS" '$1 ~ re')"
+[ -n "$gated" ] || die "$CI_WORKFLOW run for $sha has none of the gating jobs: $run_url"
+failed="$(printf '%s\n' "$gated" | awk -F'\t' '$2 != "success" && $2 != "skipped" {print "  " $1 " (" $2 ")"}')"
+[ -z "$failed" ] || die "$CI_WORKFLOW did not pass for $sha: $run_url
+$failed"
+info "$CI_WORKFLOW tests and builds passed for $sha: $run_url"
 
 exec expect "$(dirname "$0")/jump.exp" "$sha" "$env_file" ${mode:+"$mode"}
