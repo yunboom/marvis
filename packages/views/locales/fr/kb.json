@@ -177,22 +177,35 @@
     "starters": {
       "dev": {
         "title": "Base de connaissances technique",
-        "description": "Architecture, services et interfaces, procédures de dépannage, décisions techniques"
+        "description": "Architecture, services et interfaces, procédures de dépannage, décisions techniques",
+        "message": "Aide-moi à créer une base de connaissances pour les développeurs"
       },
       "qa": {
         "title": "Base de connaissances de test",
-        "description": "Méthodes de conception de tests, environnements, listes de régression, analyses de défauts"
+        "description": "Méthodes de conception de tests, environnements, listes de régression, analyses de défauts",
+        "message": "Aide-moi à créer une base de connaissances pour les testeurs"
       },
       "product": {
         "title": "Base de connaissances produit",
-        "description": "Descriptions des fonctions, règles métier, règles de facturation, réponses clients"
+        "description": "Descriptions des fonctions, règles métier, règles de facturation, réponses clients",
+        "message": "Aide-moi à créer une base de connaissances pour les chefs de produit"
       },
       "team": {
         "title": "Base de connaissances d'équipe",
-        "description": "Partagée par le développement, les tests et le produit, organisée par étiquettes de domaine"
+        "description": "Partagée par le développement, les tests et le produit, organisée par étiquettes de domaine",
+        "message": "Aide-moi à créer une base de connaissances partagée par le développement, les tests et le produit"
+      },
+      "agent_team": {
+        "title": "Équipe d'Agents",
+        "description": "Conserver les décisions et les leçons de l'équipe d'Agents issues des tickets et des discussions",
+        "message": "Aide-moi à créer une base de connaissances qui sert de mémoire à notre équipe d'Agents"
+      },
+      "other": {
+        "title": "Autre chose",
+        "description": "Indiquez votre poste, je suggérerai quoi capitaliser",
+        "message": "Aide-moi à créer une base de connaissances"
       }
     },
-    "starter_message": "{{title}} : {{description}}",
     "questions": {
       "readers": "Qui lit cette base de connaissances et que cherche-t-on le plus ?",
       "scope": "Qu'est-ce qui y entre, et qu'est-ce qui n'y entre pas ?",

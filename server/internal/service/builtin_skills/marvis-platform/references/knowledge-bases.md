@@ -1,6 +1,6 @@
 # Knowledge bases
 
-Agents write knowledge base pages into a draft; a person reviews the draft as a change request and merges it. Each knowledge base has its own `schema` (how to organise and write pages) and `purpose` (who reads it, what belongs): read both with `marvis kb get <kb>` before you write anything.
+The design of Marvis knowledge bases comes from Andrej Karpathy's LLM Wiki method. Agents write knowledge base pages into a draft; a person reviews the draft as a change request and merges it. Each knowledge base has its own `schema` (how to organise and write pages) and `purpose` (who reads it, what belongs): read both with `marvis kb get <kb>` before you write anything.
 
 ## Pick the scenario, then open only that reference
 

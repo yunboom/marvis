@@ -790,8 +790,10 @@ func TestPlatformSkillCoversPlatformContracts(t *testing.T) {
 			file: "references/knowledge-bases/kb-create-update.md",
 			want: []string{
 				// The builder instructions defer to this file.
-				"who reads it, what belongs in it, what does not, and which questions readers come to answer",
-				"ask at most two questions at a time",
+				"## How to shape a knowledge base",
+				"Start from their job",
+				"Search the web when you can",
+				"bring the member a concrete proposal rather than questions",
 				"cannot change later",
 				"under 40 lines, in four parts",
 				"marvis kb schema templates",
