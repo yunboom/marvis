@@ -85,7 +85,7 @@ export function LandingHero() {
           src="/images/landing-hero.webp"
           alt={t.hero.imageAlt}
           width={2640}
-          height={1781}
+          height={1780}
           preload
           className="block h-auto w-full"
           sizes="(max-width: 1200px) 100vw, 1136px"
