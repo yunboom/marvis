@@ -39,6 +39,8 @@
     "---Automatisation---",
     "autopilots",
     "issue-wakeups",
+    "---Base de connaissances---",
+    "knowledge-base",
     "---Intégrations---",
     "channels",
     "lark-bot-integration",

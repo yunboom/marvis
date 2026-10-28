@@ -1,0 +1,227 @@
+---
+title: Base de connaissances
+description: Les agents rédigent le savoir de l’équipe en pages sourcées et vérifiables ; les membres lisent, annotent et valident avant la fusion.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+Une base de connaissances rassemble en pages le savoir de l’équipe dispersé dans les tâches, les conversations, le code et les documents. Les agents rédigent et maintiennent les pages, et chaque fait cite sa source. Les membres lisent, annotent et valident ; une modification ne prend effet qu’une fois validée et fusionnée.
+
+<Callout type="info">
+Les membres ne peuvent pas modifier les pages directement dans l’interface. Pour changer un contenu, laissez une annotation ou lancez une [tâche de la base](#jobs) pour un agent.
+</Callout>
+
+## Comment une modification entre dans la base [#flow]
+
+Toutes les modifications suivent le même chemin :
+
+1. Un agent ajoute, modifie, déplace ou supprime des pages dans un **brouillon** ;
+2. Une fois les vérifications passées, le brouillon est **soumis en revue** sous forme de demande de modification ;
+3. Les membres la relisent et un mainteneur la **fusionne**. Les pages sont mises à jour et les versions précédentes restent dans l’historique de la page.
+
+Tant qu’il n’est pas fusionné, un brouillon n’est visible que par son auteur et les personnes autorisées ; les pages publiées ne changent pas.
+
+## Créer une base de connaissances [#create]
+
+Ouvrez **Base de connaissances** dans la barre latérale. Si l’espace de travail n’en a pas encore, cliquez sur **Nouvelle base de connaissances** ; sinon, créez-en une depuis le sélecteur de bases en haut à gauche ou le menu **⋯**.
+
+La partie gauche de l’écran est une conversation avec le **Constructeur de base de connaissances** ; la partie droite contient la configuration :
+
+1. Choisissez le runtime et le modèle utilisés par le constructeur ;
+2. Choisissez une carte de départ (développement, test, produit, toute l’équipe, mémoire d’équipe d’agents ou autre), ou décrivez la base voulue. Le constructeur pose des questions sur les lecteurs et l’usage, puis remplit la partie droite ;
+3. Vérifiez la configuration, puis cliquez sur **Créer**.
+
+| Réglage | Description |
+|---|---|
+| Nom, description | Affichés dans le sélecteur et sur l’accueil. |
+| Nom de répertoire | Le slug de la base. Lettres minuscules, chiffres et tirets uniquement ; il ne peut plus être modifié après la création. |
+| Objectif | Qui la lit, ce qu’elle couvre et ce qu’elle exclut, les usages typiques. Les agents le lisent en rédigeant les pages. |
+| Schema | Organisation et style des pages. **Par défaut** utilise le Schema intégré, en lecture seule ; **Personnalisé** se rédige librement. Une nouvelle base démarre avec un Schema personnalisé vide. |
+
+**Abandonner la création** supprime à la fois la conversation et la configuration. Une création inachevée est conservée pour la reprendre plus tard.
+
+Après la création, l’accueil propose un premier parcours : intégrer des sources, valider pour qu’elles prennent effet, lire et annoter, puis planifier la maintenance.
+
+### Modifier la configuration
+
+Dans le menu **⋯**, choisissez **Configurer la base de connaissances** pour reprendre la conversation avec le constructeur ou modifier directement l’objectif et le Schema. **Enregistrer** applique la modification immédiatement. Seuls le créateur de la base et les `owner` et `admin` de l’espace de travail peuvent la configurer.
+
+## Parcourir une base [#browse]
+
+Ouvrir **Base de connaissances** vous ramène à la dernière base consultée. La colonne de gauche, de haut en bas :
+
+- **Sélecteur de bases** — affiche le nombre d’éléments en attente de chaque base ;
+- **Menu ⋯** — Nouvelle base de connaissances, Configurer la base de connaissances, Gérer la base, Revue, Historique des modifications, Copier le lien ;
+- **Accueil**, **Tâches de la base**, **Graphe** ;
+- **Pages** — l’arborescence des pages.
+
+### Accueil
+
+L’accueil présente la description et trois types d’éléments **En attente** :
+
+- **Modifications à valider** — demandes de modification en attente de revue ;
+- **Annotations** — annotations non traitées, y compris les lacunes signalées par les agents ;
+- **Pages à revérifier** — pages dont la date de revérification est passée.
+
+En dessous, **Mises à jour récentes** liste les dernières modifications fusionnées. Quand des modifications attendent une revue, l’entrée **Base de connaissances** de la barre latérale affiche leur nombre ; cliquez dessus pour aller directement à la revue.
+
+### Lire une page
+
+Chaque fait d’une page porte une citation numérotée ; survolez-la pour voir la source — tâche, conversation, pull request, code, fichier ou page web. Les sources de code indiquent la version et les lignes vérifiées ; les sources de conversation ne s’ouvrent que pour la personne qui a démarré la conversation. **Sources**, en bas de page, les liste toutes.
+
+Trois bascules de panneau se trouvent en haut de la page :
+
+- **Annotations de la page** — voir et ajouter des annotations sur cette page ;
+- **Sommaire** — la structure des titres de la page ;
+- **Infos de la page** — la prochaine date de revérification, les domaines, le nombre de sources et les pages qui pointent vers celle-ci.
+
+Le menu **Plus** propose **Historique de la page**, **Demander à un agent de vérifier cette page** et **Copier le lien**.
+
+Les liens vers des pages pas encore écrites sont signalés comme tels. Cliquez sur **+** à un endroit de l’arborescence, choisissez **Demander à un agent d’écrire une page ici**, décrivez le contenu, et une tâche est créée.
+
+Si l’un de vos brouillons modifie la page affichée, une barre en haut permet de passer de **Officiel** à **Brouillon** et d’activer **Afficher les différences**.
+
+### Recherche
+
+- Le champ de recherche de l’accueil cherche dans la base courante et mène directement au passage trouvé ;
+- Appuyez sur <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>F</kbd> (<kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd> sous Windows / Linux) n’importe où dans une base pour chercher dans toutes les bases ;
+- Appuyez sur <kbd>⌘</kbd> <kbd>F</kbd> dans une page pour y chercher du texte.
+
+Par défaut, la recherche se fait par mots-clés. Une instance auto-hébergée qui définit `MARVIS_EMBEDDING_BASE_URL`, `MARVIS_EMBEDDING_API_KEY` et `MARVIS_EMBEDDING_MODEL`, avec l’extension pgvector dans Postgres, ajoute la recherche sémantique. Tout modèle compatible avec `/v1/embeddings` d’OpenAI renvoyant des vecteurs de 1024 dimensions convient.
+
+<Callout type="warning">
+Avec la recherche sémantique activée, le texte des pages fusionnées et chaque requête de recherche sont envoyés au service d’embedding. Les brouillons ne sont jamais envoyés.
+</Callout>
+
+### Graphe
+
+**Graphe**, dans la colonne de gauche, dessine toute la base à partir des liens entre pages, avec une couleur par page de premier niveau. Les pages sans lien et les pages pas encore écrites sont en pointillés. Cliquez sur un nœud pour ouvrir la page.
+
+## Annotations [#annotations]
+
+Quand un contenu est faux, incomplet ou daté, laissez une annotation ; les agents la lisent quand ils travaillent sur la page. Une annotation a l’une de ces trois portées :
+
+| Portée | Comment l’ajouter |
+|---|---|
+| Une phrase | Sélectionnez du texte dans une page et cliquez sur **Annoter**. L’agent voit la phrase d’origine. |
+| Une page | Ouvrez **Annotations de la page** et cliquez sur **Ajouter une annotation**. |
+| Toute la base | Sur l’accueil, ouvrez **Annotations de la base** et cliquez sur **Ajouter une annotation**. |
+
+États d’une annotation :
+
+| État | Signification |
+|---|---|
+| **En attente** | Aucune modification ne l’a encore traitée. |
+| **En cours** | Une demande de modification la traite et attend la fusion. Si cette demande est fermée, l’annotation repasse en attente. |
+| **Résolue** | La demande de modification qui la traitait a été fusionnée. |
+| **Ignorée** | Décision de ne rien changer. Vous pouvez la **Rouvrir**. |
+
+L’auteur de l’annotation, le créateur de la base, les `owner` et `admin` peuvent ignorer ou rouvrir une annotation.
+
+Quand la phrase d’origine est réécrite, l’annotation suit la nouvelle phrase ; quand elle est supprimée, l’annotation conserve le texte d’origine.
+
+**Confier à un agent** transmet une annotation ; le panneau d’annotations permet aussi de transmettre d’un coup toutes celles en attente. Dans les deux cas, une tâche est créée pour les traiter.
+
+## Tâches de la base [#jobs]
+
+Les tâches de la base sont le principal moyen d’écrire dans une base : vous discutez avec un agent, il modifie les pages dans un brouillon, vous vérifiez puis soumettez en revue.
+
+Ouvrez **Tâches de la base** dans la colonne de gauche et cliquez sur **Nouvelle tâche** :
+
+1. Choisissez l’**Agent**. Seuls les agents que vous pouvez utiliser et dont le runtime est disponible sont proposés ;
+2. Choisissez une carte de départ, ou décrivez le travail :
+
+| Tâche | Ce qu’elle fait |
+|---|---|
+| **Intégrer des sources** | Rédige en pages le savoir issu de tâches, de conversations, de code, de fichiers ou de pages web ; l’agent demande d’abord quoi intégrer. |
+| **Bilan de santé** | Repère les contenus datés, contradictoires ou manquants et les consigne en annotations, sans modifier les pages. |
+| **Fusionner les doublons** | Fusionne les pages en double ou qui se recoupent. |
+| **Traiter les annotations** | Modifie les pages selon les annotations. |
+| **Planifier l’intégration**, **Planifier un bilan de santé** | L’agent crée une [automatisation](/autopilots) exécutée selon un calendrier, à gérer ensuite depuis la page des automatisations. |
+
+Les annotations, **Demander à un agent de vérifier cette page**, le **+** de l’arborescence, les fichiers sources et la liste de revérification peuvent tous créer une tâche avec le contenu correspondant déjà renseigné.
+
+La conversation occupe la gauche de la page de la tâche ; vous pouvez ajouter des consignes ou l’arrêter à tout moment. **Modifications du brouillon**, à droite, liste les pages ajoutées, modifiées, déplacées et supprimées, ainsi que le résultat des **Vérifications avant soumission** :
+
+- Les **erreurs** doivent être corrigées avant de soumettre — par exemple un champ obligatoire manquant dans l’en-tête, un fait sans source, deux pages du même nom au même niveau ou un conflit non résolu ;
+- Les **avertissements** ne bloquent pas la soumission — par exemple une source de code sans version ou un lien vers une page pas encore écrite.
+
+**Demander à l’agent de corriger** traite les problèmes de vérification. Si la ligne principale a reçu entre-temps des modifications en conflit, cliquez sur **Demander à l’agent de se mettre à jour**.
+
+Quand tout est correct, cliquez sur **Soumettre en revue**. Le tour de l’agent doit être terminé, et seul le créateur du brouillon peut le soumettre ; le brouillon passe ensuite en lecture seule. **Abandonner le brouillon** annule les modifications et garde la tâche dans la liste.
+
+Seule la personne qui a lancé une tâche peut la voir et l’ouvrir. La liste se filtre par tâches en cours ou en échec. Archivez les tâches inutiles ; seules les tâches archivées peuvent être supprimées, ce qui efface aussi la conversation et abandonne tout brouillon non soumis.
+
+## Revue et fusion [#review]
+
+Choisissez **Revue** dans le menu **⋯**, ou passez par **Modifications à valider** sur l’accueil, le compteur de la barre latérale ou votre boîte de réception. États d’une demande de modification :
+
+| État | Signification |
+|---|---|
+| **À revoir** | En attente de revue. |
+| **À corriger** | Un relecteur a laissé des commentaires à l’auteur. |
+| **Fusionnée** | La modification a pris effet. |
+| **Fermée** | Terminée sans fusion. |
+
+La page de détail affiche le niveau de risque, le nombre de pages touchées et d’annotations traitées, le résumé de l’agent et celui de la modification, et si elle peut être fusionnée dans la ligne principale ; en dessous, les différences page par page et l’activité.
+
+### Laisser des commentaires de revue
+
+1. Cliquez sur **Commencer une revue** ;
+2. Sélectionnez des lignes dans les différences et cliquez sur **Ajouter à la revue** pour écrire un commentaire. Vous seul voyez les commentaires non envoyés ;
+3. Cliquez sur **Envoyer la revue**, avec un résumé facultatif. La demande passe **À corriger** et l’auteur est notifié.
+
+Depuis la page de la tâche, l’auteur peut **Confier à un agent** pour que l’agent révise le même brouillon et réponde à chaque commentaire, puis **Redemander une revue** pour remettre la demande en revue. Les membres qui ne sont pas mainteneurs ne peuvent pas relire leurs propres demandes de modification.
+
+### Fusionner, fermer et annuler
+
+- **Fusionner** — seuls le créateur de la base et les `owner` et `admin` peuvent fusionner. Une demande ne peut pas être fusionnée tant qu’elle a des conflits ou des erreurs de vérification, qu’un agent la modifie ou qu’elle est à corriger. Si quelqu’un a modifié les mêmes pages entre-temps, Marvis fusionne passage par passage ; seul un passage modifié des deux côtés crée un conflit.
+- **Fermer** — l’auteur et les mainteneurs peuvent fermer, avec un motif facultatif. Une demande fermée peut être **Resoumettre en revue** depuis la page de la tâche.
+- **Annuler** — les mainteneurs peuvent cliquer sur **Annuler cette modification** sur une demande fusionnée, dans l’**Historique des modifications** ou dans l’historique de la page. L’annulation porte sur toute la demande de modification et crée une demande inverse, qui prend effet une fois fusionnée. Elle ne peut pas se faire automatiquement si des modifications ultérieures ont touché le même contenu.
+
+**Historique des modifications** liste toutes les modifications fusionnées ; **Historique de la page** liste chaque version d’une page — ouvrez-en une pour voir ce qui a changé.
+
+## Pages à revérifier [#stale]
+
+Chaque page a une date de revérification. Une fois dépassée, la page apparaît dans **Pages à revérifier** sur l’accueil et est signalée dans l’arborescence et dans le texte. Depuis la liste de revérification, confiez une page ou toutes à un agent ; chaque fois, une tâche est créée.
+
+## Notifications [#notifications]
+
+La catégorie **Connaissances** de la boîte de réception regroupe les notifications des bases :
+
+- Les mainteneurs ou relecteurs sont notifiés quand une nouvelle demande de modification ou une annulation attend une revue, ou quand l’auteur redemande une revue ;
+- L’auteur est notifié quand un relecteur envoie sa revue.
+
+Une fois une demande fusionnée ou fermée, ses notifications obsolètes sont archivées automatiquement.
+
+## Les bases dans les tâches et les conversations [#agents]
+
+Quand ils exécutent des tâches, des conversations et des automatisations, les agents savent quelles bases existent dans l’espace de travail et peuvent chercher et lire des pages ; ils peuvent aussi soumettre des brouillons et des demandes de modification, qui indiquent la tâche, la conversation ou l’automatisation d’origine. Les agents lisent et écrivent les bases avec les commandes `marvis kb`, avec les mêmes droits que les membres dans l’interface.
+
+Quand un agent cite une base, une page, une demande de modification ou une annotation dans une réponse, elle s’affiche sous forme de carte cliquable. Un clic l’ouvre seulement ; personne n’est notifié.
+
+## Gérer une base [#manage]
+
+Choisissez **Gérer la base** dans le menu **⋯** :
+
+- **Fichiers sources** — importez des fichiers à intégrer par les agents, jusqu’à 100 Mo par fichier. Sélectionnez des fichiers et confiez-les à un agent pour créer une tâche d’intégration ; la liste indique les pages qui citent chaque fichier.
+- **Export** — **Exporter en zip** exporte chaque page en fichier Markdown avec frontmatter, les liens entre pages réécrits en chemins relatifs, prêts à ouvrir dans des outils comme Obsidian.
+- **Supprimer la base** — saisissez le nom de la base pour confirmer. La suppression ferme ses annotations et ses modifications en attente, et la base ne peut pas être restaurée depuis l’interface.
+
+## Permissions [#permissions]
+
+Les **mainteneurs** d’une base sont son créateur et les `owner` et `admin` de l’espace de travail.
+
+| Action | Qui |
+|---|---|
+| Lire, chercher, annoter, exporter, importer des fichiers sources, créer des tâches, relire | Tous les membres ; créer une tâche demande aussi l’accès à l’agent choisi |
+| Configurer, fusionner, annuler, supprimer la base | Mainteneurs |
+| Fermer une demande de modification, ignorer ou rouvrir une annotation | L’auteur ou les mainteneurs |
+| Soumettre un brouillon, redemander une revue | Le créateur du brouillon |
+| Voir une tâche | La personne qui l’a lancée |
+
+## Et ensuite
+
+- [Automatisations](/autopilots) — gérer l’intégration et les bilans de santé planifiés.
+- [Discuter avec des agents](/chat) — laisser les agents s’appuyer sur les bases en conversation.
+- [Boîte de réception et abonnements](/inbox) — traiter les notifications des bases.
