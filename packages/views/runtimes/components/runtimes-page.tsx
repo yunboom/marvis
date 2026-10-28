@@ -139,7 +139,8 @@ const VISIBLE_COMING_SOON_SERVICES = COMING_SOON_SERVICES.filter((service) =>
   VISIBLE_CLOUD_PROVIDERS.has(service.provider),
 );
 
-// Coming-soon rows listed without the "By {vendor}" subtitle.
+// Coming-soon services listed without the "By {vendor}" subtitle, in the
+// table and in the add menu.
 const NO_VENDOR_SUBTITLE_PROVIDERS: ReadonlySet<string> = new Set(["claude"]);
 
 // Track order: edge, name, harness, agents, workload, status, actions, edge.
@@ -359,6 +360,8 @@ export function RuntimesPage({
     visibleComingSoon.length === 0;
 
   const configuredCloudCount = qoderConfigured ? 1 : 0;
+  // The cloud group header counts the rows it actually lists.
+  const cloudRowCount = (showQoderRow ? 1 : 0) + visibleComingSoon.length;
   const totalCount = machineList.length + configuredCloudCount;
   // Status counts follow the owner scope; search does not change them.
   const scopedCount = scopedMachines.length + configuredCloudCount;
@@ -538,7 +541,7 @@ export function RuntimesPage({
 
                   <GroupHeader
                     title={t(($) => $.page.groups.cloud.title)}
-                    count={configuredCloudCount}
+                    count={cloudRowCount}
                   />
                   {showQoderRow && qoder && (
                     <QoderRow
@@ -680,9 +683,11 @@ function AddRuntimeMenu({
               key={service.provider}
               icon={<ProviderLogo provider={service.provider} className="size-4" />}
               title={service.name}
-              description={t(($) => $.page.rows.provided_by, {
-                vendor: service.vendor,
-              })}
+              description={
+                NO_VENDOR_SUBTITLE_PROVIDERS.has(service.provider)
+                  ? undefined
+                  : t(($) => $.page.rows.provided_by, { vendor: service.vendor })
+              }
               trailing={
                 <Badge variant="secondary" className="shrink-0">
                   {t(($) => $.page.groups.cloud.coming_soon)}

@@ -135,7 +135,9 @@ describe("RuntimesPage", () => {
     renderPage();
 
     expect(screen.getByText("Machines")).toBeInTheDocument();
-    expect(screen.getByText("Cloud services")).toBeInTheDocument();
+    expect(screen.getByText("Cloud services").parentElement).toHaveTextContent(
+      "Cloud services1",
+    );
     expect(screen.getByText("dev-machine.local")).toBeInTheDocument();
     expect(screen.getByText("Claude Managed Agents")).toBeInTheDocument();
     expect(screen.getByText("Not yet available")).toBeInTheDocument();
@@ -171,6 +173,7 @@ describe("RuntimesPage", () => {
     expect(within(menu).getByText("Connected · Jiayuan's MacBook")).toBeInTheDocument();
     expect(within(menu).getByText("Other machine or server")).toBeInTheDocument();
     expect(within(menu).getByText("Claude Managed Agents")).toBeInTheDocument();
+    expect(within(menu).queryByText("By Anthropic")).not.toBeInTheDocument();
     expect(within(menu).queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
     expect(within(menu).queryByText("Cursor Cloud Agents")).not.toBeInTheDocument();
   });
