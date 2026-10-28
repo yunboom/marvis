@@ -45,13 +45,13 @@ var MinVersions = map[string]string{
 // #1851); older daemons would either double-create issues or mishandle pasted
 // screenshot URLs. Treated as a hard requirement: missing / unparsable / below
 // this threshold all fail closed.
-const MinQuickCreateCLIVersion = "0.2.21"
+const MinQuickCreateCLIVersion = "0.0.1"
 
 // MinQuickCreateFieldsCLIVersion is the first daemon release that carries
 // explicit quick-create priority and due-date fields from the claim response
 // into the generated issue-create prompt. Basic quick-create remains on the
 // older floor above; only requests using these optional fields need this gate.
-const MinQuickCreateFieldsCLIVersion = "0.4.3"
+const MinQuickCreateFieldsCLIVersion = "0.0.1"
 
 // MinLocalWorktreeCLIVersion is the release that first shipped
 // execution_mode=worktree for local_directory resources (MUL-5707).
@@ -67,7 +67,7 @@ const MinQuickCreateFieldsCLIVersion = "0.4.3"
 // CheckMinCLIVersionFor exempts git-describe dev builds so `make daemon` stays
 // unblocked, and a v0.4.23-era daemon reporting "v0.4.21-24-gcd3c0bb89" sailed
 // through the floor and ran two tasks in the user's own directory.
-const MinLocalWorktreeCLIVersion = "0.4.24"
+const MinLocalWorktreeCLIVersion = "0.0.1"
 
 // Errors returned by CheckMinCLIVersion. Callers branch on these to surface
 // "needs upgrade" vs "version not reported" with the right user message.

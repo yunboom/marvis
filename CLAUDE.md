@@ -33,7 +33,7 @@
 - 字体栈 PingFang SC / Noto Sans SC 优先（`apps/web/app/globals.css`、`apps/desktop/src/renderer/src/globals.css`）。
 - Logo：`packages/ui/components/common/marvis-icon.tsx`（圆角方块 + 镂空 "M"），docs 站、移动端、favicon、桌面/PWA/移动端图标已同步；应用侧栏顶部显示 logo + "Marvis" 字标（`marvis-wordmark.tsx`，Marvis.app 的 SVG 字标）；侧栏默认宽 216px。
 - 状态与优先级色（`tokens.css` 的 `--status-*`、`--priority-*`）：状态用国画颜料（淡墨、藤黄、花青、石绿、朱砂），优先级是小圆点（紧急 / 高 / 中实心，低空心，无优先级是低的空心圈加斜线；创建任务工具栏的 ghost 药丸里放大到与状态圈同大）；浅色值对白底和 `#f7f7f7` 都要保持 3:1。自定义状态 / 标签色板是 `color-picker.tsx` 的 10 色国画色板。
-- 侧栏（`app-sidebar.tsx`）：新建任务是 logo 行右侧的加号按钮，不占导航行；收件箱不在导航里，改名「消息」，入口是工作区行右侧的铃铛（当前工作区有未读时显示红点），点开是 `MessageBox` 弹窗（`inbox/components/message-box.tsx`，内容就是 `InboxPage surface="dialog"`，选中项不写 URL）；`/inbox` 路由和 `?issue=` 深链保留为完整页面；「聊天」中文叫「我的对话」；工作区头像是黑底白字圆角方块（`workspace-avatar.tsx`）。同步上游时侧栏和 `inbox-page.tsx` 易冲突：保留这套入口，合入上游新增的行为。
+- 侧栏（`app-sidebar.tsx`）：新建任务是 logo 行右侧的加号按钮，不占导航行；收件箱不在导航里，改名「消息」，入口是工作区行右侧的铃铛（当前工作区有未读时显示红点），点开是 `MessageBox` 弹窗（`inbox/components/message-box.tsx`，内容就是 `InboxPage surface="dialog"`，选中项不写 URL）；`/inbox` 路由和 `?issue=` 深链保留为完整页面；「聊天」中文叫「我的对话」；底部工作区切换按钮显示登录人头像加工作区名，下拉列表里的工作区仍用黑底白字圆角方块（`workspace-avatar.tsx`）。同步上游时侧栏和 `inbox-page.tsx` 易冲突：保留这套入口，合入上游新增的行为。
 - 头像统一浅灰底黑字，成员圆形、智能体和小队圆角方形（`actor-avatar.tsx`）；智能体运行用绿色呼吸灯（`breathing-dot.tsx`、`base.css` 的 `animate-breathe`）。
 - 看板按状态分组时是四列泳道（未开始 / 工作中 / 需介入 / 已结束，按 `status_group` 分列，见决策六；`board-status-columns.ts`、`status-lane-board.tsx`）；泳道视图同样是这四列，每个格子直接渲染看板的 `StatusLane`，只是多了按负责人 / 项目 / 父任务分行（`swimlane-view.tsx`）；新建任务弹窗用「手动创建 / 智能体创建」标签和墨色 `BorderBeam variant="ink"`。同步上游时这些文件冲突，保留本 fork 的样式，只合入上游新增的行为。
 
@@ -96,6 +96,15 @@ web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由
 - 写入：`CreateChatSession` 必须传 `Source`；`createKbJobRows`、`ensureAutopilotRunChatSession`、`CreateKbBuilderSession`、`CreateAgentBuilderSession` 各写自己的值，其余路径写 `chat`。
 - 读取：聊天列表与未读（`ListChatSessionsByCreator`、`ListAllChatSessionsByCreator`）、运行中指示（`ListPendingChatTasksByCreator`、`HasPendingChatTasksByCreator`）、Mika 会话查找、工作区聊天列表（`ListKbWorkspaceChatSessions`）只读 `chat`；可收录的聊天来源（`ListKbSources`）读 `chat` 和 `autopilot_run`；草稿恢复按 `autopilot_run` 判断共享会话。智能体可见性过滤（`kind = 'user'`）保留不动。`chat_session_source_guard_test.go` 检查这些查询。
 - 同步上游时：上游新增的聊天列表类查询加 `source = 'chat'`（以 sqlc 参数传常量）；上游新增的建会话路径必须传 `Source`；不要恢复按 `kb_job` / `autopilot_run` 的 `NOT EXISTS` 排除。
+
+## 决策十：版本号从 v0.0.1 重新开始（fork 独有）
+
+Marvis 首次上线前没有用户，版本号与上游脱钩，从 `v0.0.1` 起按自己的节奏递增；上游的 tag 与发布记录不进本仓库。
+
+- 版本号来自 tag（release 工作流的 `${TAG#v}`、桌面端 `git describe --match 'v[0-9]*'`），本仓库只保留自己发的 `v*` tag 和 `pg-*`；本地 `remote.upstream.tagOpt=--no-tags`，同步上游不拉 tag。
+- 更新日志（`apps/web/features/landing/i18n/*.ts` 的 `changelog.entries`）从 v0.0.1 记起。
+- Marvis CLI 的版本门槛统一以我们自己的版本为准：`server/pkg/agent/version.go` 的 `Min*CLIVersion`、`server/internal/daemon/health.go` 的 `repoCheckoutMinCLIVersion`、`packages/core/runtimes/cli-version.ts` 的 `MIN_*_CLI_VERSION` 目前都是 0.0.1。第三方工具（codex、kimi、pi 等）的版本门槛与此无关。
+- 同步上游时：上游新增的更新日志条目不合入；上游新增或调高的 Marvis CLI 版本门槛改成「首个包含该能力的 Marvis 版本」（合并时尚未发布就填下一个版本号），不要保留上游的版本号。
 
 ## 同步上游流程
 

@@ -2,25 +2,16 @@
 
 import { LandingHeader } from "./landing-header";
 import { LandingHero } from "./landing-hero";
-import { FeaturesSection } from "./features-section";
 import { HowItWorksSection } from "./how-it-works-section";
-import { OpenSourceSection } from "./open-source-section";
-import { FAQSection } from "./faq-section";
-import { LandingFooter } from "./landing-footer";
 
 export function MarvisLanding() {
   return (
-    <>
-      <div className="relative">
-        <LandingHeader />
+    <div className="min-h-full bg-[#f7f7f7] text-[#0f0f0f]">
+      <LandingHeader />
+      <main>
         <LandingHero />
-      </div>
-
-      <FeaturesSection />
-      <HowItWorksSection />
-      <OpenSourceSection />
-      <FAQSection />
-      <LandingFooter />
-    </>
+        <HowItWorksSection />
+      </main>
+    </div>
   );
 }

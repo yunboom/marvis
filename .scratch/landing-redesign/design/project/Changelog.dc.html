@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Marvis 更新日志</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#f7f7f7}
+a{color:#0f0f0f;text-decoration:none}a:hover{color:#7b4835}
+.m-only{display:none !important}
+@media (max-width: 720px){
+  .d-only{display:none !important}
+  .m-only{display:flex !important}
+  .wrap{padding-left:20px !important;padding-right:20px !important}
+  .page-h1{font-size:30px !important}
+  .page{padding-top:40px !important}
+}
+</style>
+</helmet>
+<div style="background: #f7f7f7; color: #0f0f0f; font-family: 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; font-size: 16px; line-height: 1.6">
+
+  <header class="wrap" style="max-width: 1200px; margin: 0 auto; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px">
+      <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 8px; background: #0f0f0f; color: #ffffff; display: grid; place-items: center; font-weight: 700; font-size: 15px">M</span>
+      <span style="font-weight: 600; font-size: 18px">Marvis</span>
+    </a>
+    <div style="display: flex; align-items: center; gap: 8px">
+      <a class="d-only" href="Changelog.dc.html" aria-current="page" style="height: 40px; padding: 0 16px; border-radius: 999px; background: #ffffff; display: flex; align-items: center; font-size: 15px; font-weight: 500">更新日志</a>
+      <a href="#start" style="height: 40px; padding: 0 18px; border-radius: 999px; background: #0f0f0f; color: #ffffff; display: flex; align-items: center; font-size: 14px; font-weight: 500">开始使用</a>
+      <button class="m-only" type="button" aria-label="打开导航菜单" style="width: 40px; height: 40px; border-radius: 999px; border: 0; background: #ffffff; align-items: center; justify-content: center; cursor: pointer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap page" style="max-width: 1080px; margin: 0 auto; padding: 64px 32px 96px; display: flex; gap: 56px">
+    <!-- 左侧历史版本目录：只在大屏显示，点击切换高亮并跳到对应版本 -->
+    <aside class="d-only" style="flex: 0 0 180px; min-width: 0">
+      <nav aria-label="历史版本" style="position: sticky; top: 24px; display: flex; flex-direction: column; gap: 20px">
+        <sc-for list="{{months}}" as="m" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 12px; color: #888888; padding: 0 12px; margin-bottom: 4px">{{m.label}}</span>
+            <sc-for list="{{m.items}}" as="v" hint-placeholder-count="3">
+              <a href="{{v.href}}" onClick="{{v.pick}}" style="{{v.style}}">{{v.version}}</a>
+            </sc-for>
+          </div>
+        </sc-for>
+      </nav>
+    </aside>
+
+    <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 40px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <h1 class="page-h1" style="margin: 0; font-size: 44px; font-weight: 600">更新日志</h1>
+        <p style="margin: 0; color: #666666">Marvis 的最新更新和改进。</p>
+      </div>
+
+      <sc-for list="{{entries}}" as="e" hint-placeholder-count="3">
+        <article id="{{e.anchor}}" style="border-radius: 24px; background: #ffffff; padding: 28px; display: flex; flex-direction: column; gap: 18px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px">
+            <span style="height: 26px; padding: 0 10px; border-radius: 999px; background: #0f0f0f; color: #ffffff; font-size: 13px; font-weight: 500; display: flex; align-items: center">v{{e.version}}</span>
+            <span style="font-size: 13px; color: #888888">{{e.date}}</span>
+          </div>
+          <h2 style="margin: 0; font-size: 22px; line-height: 1.4; font-weight: 600; text-wrap: balance">{{e.title}}</h2>
+          <sc-for list="{{e.groups}}" as="g" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 13px; font-weight: 600; color: #7b4835">{{g.label}}</span>
+              <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+                <sc-for list="{{g.items}}" as="it" hint-placeholder-count="3">
+                  <li style="display: flex; gap: 10px; font-size: 15px; color: #444444"><span aria-hidden="true" style="flex: none; margin-top: 10px; width: 4px; height: 4px; border-radius: 999px; background: #bbbbbb"></span>{{it}}</li>
+                </sc-for>
+              </ul>
+            </div>
+          </sc-for>
+        </article>
+      </sc-for>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2600}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: '0.7.0' };
+  }
+  renderVals() {
+    const active = this.state.active;
+    const base = 'height: 32px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; font-size: 14px; ';
+    const item = (version) => ({
+      version: 'v' + version,
+      href: '#release-' + version.replace(/\./g, '-'),
+      pick: () => this.setState({ active: version }),
+      style: base + (version === active ? 'background: #ffffff; color: #0f0f0f; font-weight: 600' : 'color: #666666')
+    });
+    return {
+      months: [
+        { label: '2026 年 10 月', items: ['0.7.0', '0.6.5', '0.6.4', '0.6.3', '0.6.2', '0.6.1'].map(item) }
+      ],
+      entries: [
+        {
+          version: '0.7.0', anchor: 'release-0-7-0', date: '2026 年 10 月 23 日',
+          title: '全面开放 workflow 功能、Qoder Cloud Agents、运行时按成员共享',
+          groups: [
+            { label: '新功能', items: ['可以用 Qoder Cloud Agents 运行 Issue：创建智能体时先选机器或云服务，再关联 Qoder Cloud Agents 的智能体。', '运行时除了私有和公开，还能共享给指定成员；收紧访问前会先列出受影响的智能体。', '所有成员都能创建和复制工作流，创建者和管理员可以修改、删除和配置交接。'] },
+            { label: '改进', items: ['图标按钮的悬停提示更清楚，会显示名称、快捷键和不可用的原因。', '智能体指令支持编写和预览切换，显示字符数，保存栏始终可见。'] },
+            { label: '问题修复', items: ['Windows 上启动时不再弹出大量 Git 登录窗口。', '移动端重新连接后会停留在原页面，不再重置导航。'] }
+          ]
+        },
+        {
+          version: '0.6.5', anchor: 'release-0-6-5', date: '2026 年 10 月 21 日',
+          title: '项目外 Issue 状态更清楚、私有 CA 可同步仓库、后台更省、运行更稳',
+          groups: [ { label: '新功能', items: ['[本版本的新功能条目]'] }, { label: '问题修复', items: ['[本版本的问题修复条目]'] } ]
+        },
+        {
+          version: '0.6.4', anchor: 'release-0-6-4', date: '2026 年 10 月 20 日',
+          title: 'Markdown 表格交互、Muse Code、运行时转私有更安全、运行更稳',
+          groups: [ { label: '新功能', items: ['[本版本的新功能条目]'] }, { label: '改进', items: ['[本版本的改进条目]'] } ]
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -27,6 +27,8 @@
     --landing-radius-action: 12px;
     --landing-radius-menu: 14px;
     --landing-radius-card: 16px;
+    --landing-radius-tile: 20px;
+    --landing-radius-panel: 24px;
     --app-shell: oklch(0.964435 0.001327 286.375);
     --page-canvas: oklch(0.988087 0 0);
     --surface: oklch(1 0 0);

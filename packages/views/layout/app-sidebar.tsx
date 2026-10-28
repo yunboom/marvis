@@ -944,8 +944,13 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                   <DropdownMenuTrigger
                     render={
                       <SidebarMenuButton className="h-10 gap-2.5 rounded-md px-3 font-medium">
-                        <span className="relative">
-                          <WorkspaceAvatar name={workspace?.name ?? "M"} avatarUrl={workspace?.avatar_url} size="sm" />
+                        <span className="relative flex">
+                          <ActorAvatar
+                            name={user?.name ?? ""}
+                            initials={(user?.name ?? "U").charAt(0).toUpperCase()}
+                            avatarUrl={resolvePublicFileUrl(user?.avatar_url)}
+                            size="sm"
+                          />
                           {/* Shared brand dot: a pending invitation OR another
                               workspace with unread inbox items. The active
                               workspace's own unread is the bell's red dot

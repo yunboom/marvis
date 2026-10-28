@@ -1,21 +1,22 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Check, Copy, Terminal } from "lucide-react";
 import { CliInstallCommand } from "@marvis/views/common/cli-install-command";
 import { copyText } from "@marvis/ui/lib/clipboard";
 import { useLocale } from "../../i18n";
 
 const SETUP_CMD = "marvis setup";
 
+const COPIED_RESET_MS = 1800;
+
 /**
  * The landing palette bypasses the product tokens, so the shared platform
  * switch takes its list and trigger colours from here.
  */
 const PLATFORM_TABS = {
-  list: "border border-[#0a0d12]/10 bg-white",
+  list: "rounded-full bg-[#f2f2f2] p-1",
   trigger:
-    "text-[#0a0d12]/60 hover:text-[#0a0d12] data-active:bg-[#0a0d12]/5 data-active:text-[#0a0d12]",
+    "h-[30px] rounded-full px-3.5 text-[13px] text-[#666] hover:text-[#0f0f0f] data-active:bg-white data-active:text-[#0f0f0f]",
 };
 
 /**
@@ -29,57 +30,51 @@ export function CliSection() {
   const d = t.download.cli;
 
   return (
-    <section id="cli" className="bg-[#f7f7f5] py-20 text-[#0a0d12] sm:py-24">
-      <div className="mx-auto max-w-[820px] px-4 sm:px-6 lg:px-8">
-        <h2 className="landing-serif text-[2.2rem] leading-[1.1] tracking-[-0.03em] sm:text-[2.6rem]">
-          {d.title}
-        </h2>
-        <p className="mt-4 max-w-[620px] text-body-lg leading-7 text-[#0a0d12]/72">
-          {d.sub}
-        </p>
+    <section
+      id="cli"
+      className="mx-auto flex max-w-[880px] flex-col gap-5 px-5 pb-16 sm:px-8"
+    >
+      <div className="flex flex-col gap-1.5">
+        <h2 className="text-[24px] font-semibold sm:text-[28px]">{d.title}</h2>
+        <p className="text-[#666]">{d.sub}</p>
+      </div>
 
-        <div className="mt-10 flex flex-col gap-5">
-          <div>
-            <CommandLabel>{d.installLabel}</CommandLabel>
-            <CliInstallCommand
-              labels={{
-                group: d.platformGroup,
-                macosLinux: d.platformMacosLinux,
-                windows: d.platformWindows,
-              }}
-              classNames={PLATFORM_TABS}
-            >
-              {(cmd) => (
-                <CommandRow
-                  cmd={cmd}
-                  copyLabel={d.copyLabel}
-                  copiedLabel={d.copiedLabel}
-                />
-              )}
-            </CliInstallCommand>
-          </div>
-          <div>
-            <CommandLabel>{d.startLabel}</CommandLabel>
-            <CommandRow
-              cmd={SETUP_CMD}
-              copyLabel={d.copyLabel}
-              copiedLabel={d.copiedLabel}
-            />
-          </div>
+      <div className="flex flex-col gap-4 rounded-(--landing-radius-panel) bg-white p-[22px] sm:p-6">
+        <div className="flex flex-col gap-1.5">
+          <CommandLabel>{d.installLabel}</CommandLabel>
+          <CliInstallCommand
+            labels={{
+              group: d.platformGroup,
+              macosLinux: d.platformMacosLinux,
+              windows: d.platformWindows,
+            }}
+            classNames={PLATFORM_TABS}
+          >
+            {(cmd) => (
+              <CommandRow
+                cmd={cmd}
+                copyLabel={d.copyLabel}
+                copiedLabel={d.copiedLabel}
+              />
+            )}
+          </CliInstallCommand>
         </div>
-
-        <p className="mt-6 text-label text-[#0a0d12]/60">{d.sshNote}</p>
+        <div className="flex flex-col gap-1.5">
+          <CommandLabel>{d.startLabel}</CommandLabel>
+          <CommandRow
+            cmd={SETUP_CMD}
+            copyLabel={d.copyLabel}
+            copiedLabel={d.copiedLabel}
+          />
+        </div>
+        <p className="text-[13px] text-[#888]">{d.sshNote}</p>
       </div>
     </section>
   );
 }
 
 function CommandLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="mb-2 text-caption font-medium uppercase tracking-[0.08em] text-[#0a0d12]/55">
-      {children}
-    </p>
-  );
+  return <p className="text-[13px] text-[#888]">{children}</p>;
 }
 
 function CommandRow({
@@ -96,36 +91,21 @@ function CommandRow({
   const onCopy = async () => {
     if (await copyText(cmd)) {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      setTimeout(() => setCopied(false), COPIED_RESET_MS);
     }
   };
 
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-[#0a0d12]/10 bg-white px-4 py-3 font-mono text-label">
-      <Terminal
-        className="mt-0.5 size-4 shrink-0 text-[#0a0d12]/55"
-        aria-hidden
-      />
-      <code className="min-w-0 flex-1 whitespace-pre-wrap break-all">
+    <div className="flex items-center gap-3 rounded-(--landing-radius-action) bg-[#f7f7f7] py-2.5 pl-4 pr-2.5">
+      <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-[13px]">
         {cmd}
       </code>
       <button
         type="button"
         onClick={onCopy}
-        aria-label={copied ? copiedLabel : copyLabel}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-caption font-medium text-[#0a0d12]/70 transition-colors hover:bg-[#0a0d12]/5 hover:text-[#0a0d12]"
+        className="h-8 shrink-0 rounded-full bg-white px-3.5 text-[13px] hover:bg-[#f2f2f2]"
       >
-        {copied ? (
-          <>
-            <Check className="size-3.5" />
-            {copiedLabel}
-          </>
-        ) : (
-          <>
-            <Copy className="size-3.5" />
-            {copyLabel}
-          </>
-        )}
+        {copied ? copiedLabel : copyLabel}
       </button>
     </div>
   );

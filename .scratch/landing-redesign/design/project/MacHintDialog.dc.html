@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Mac 首次打开须知 · 对话框</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: fixed; inset: 0; z-index: 20; background: rgba(15,15,15,0.2); display: flex; align-items: center; justify-content: center; padding: 20px; font-family: 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif; color: #0f0f0f; line-height: 1.6">
+  <div role="dialog" aria-modal="true" aria-labelledby="mac-hint-title" style="width: 100%; max-width: 440px; border-radius: 24px; background: #ffffff; box-shadow: 0 24px 64px rgba(0,0,0,0.16); padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h2 id="mac-hint-title" style="margin: 0; font-size: 20px; font-weight: 600">首次在 Mac 上打开</h2>
+        <p style="margin: 0; font-size: 14px; color: #666666">安装包未经 Apple 签名，第一次打开会被系统拦截，处理一次即可。</p>
+      </div>
+      <button type="button" aria-label="关闭" onClick="{{close}}" style="flex: none; width: 32px; height: 32px; border-radius: 999px; border: 0; background: #f2f2f2; display: grid; place-items: center; cursor: pointer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f0f0f" stroke-width="2.2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px">
+      <li style="display: flex; gap: 12px; align-items: flex-start">
+        <span style="flex: none; width: 24px; height: 24px; border-radius: 999px; background: #f2ebe7; color: #7b4835; display: grid; place-items: center; font-size: 12px; font-weight: 600">1</span>
+        <span style="font-size: 15px">打开 .dmg，把 Marvis 拖进「应用程序」。</span>
+      </li>
+      <li style="display: flex; gap: 12px; align-items: flex-start">
+        <span style="flex: none; width: 24px; height: 24px; border-radius: 999px; background: #f2ebe7; color: #7b4835; display: grid; place-items: center; font-size: 12px; font-weight: 600">2</span>
+        <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 15px">提示「已损坏」或「无法验证开发者」时，在终端运行：</span>
+          <div style="display: flex; align-items: center; gap: 8px; border-radius: 12px; background: #f7f7f7; padding: 8px 8px 8px 14px">
+            <code style="flex: 1 1 auto; min-width: 0; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; overflow-x: auto; white-space: nowrap">xattr -cr /Applications/Marvis.app</code>
+            <button type="button" style="flex: none; height: 30px; padding: 0 12px; border-radius: 999px; border: 0; background: #ffffff; font: inherit; font-size: 13px; cursor: pointer">复制</button>
+          </div>
+        </div>
+      </li>
+      <li style="display: flex; gap: 12px; align-items: flex-start">
+        <span style="flex: none; width: 24px; height: 24px; border-radius: 999px; background: #f2ebe7; color: #7b4835; display: grid; place-items: center; font-size: 12px; font-weight: 600">3</span>
+        <span style="font-size: 15px">重新打开 Marvis。</span>
+      </li>
+    </ol>
+    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #666666; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 16px">
+      <span>不想用终端：在「系统设置 › 隐私与安全性」底部点「仍要打开」。</span>
+      <span>暂不支持自动更新，新版本请回到下载页下载。</span>
+    </div>
+    <button type="button" onClick="{{close}}" style="align-self: flex-end; height: 40px; padding: 0 22px; border-radius: 999px; border: 0; background: #0f0f0f; color: #ffffff; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer">知道了</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"onClose":{"editor":null},"$preview":{"width":480,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { close: this.props.onClose ?? (() => {}) };
+  }
+}
+</script>
+</body>
+</html>
