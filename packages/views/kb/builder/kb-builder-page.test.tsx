@@ -94,6 +94,7 @@ vi.mock("../../agents/create/builder-conversation", () => ({
     notice,
     runtimeOnline,
     disabledPlaceholder,
+    composerToolbar,
     onSend,
   }: {
     messages: ChatMessage[];
@@ -101,6 +102,7 @@ vi.mock("../../agents/create/builder-conversation", () => ({
     notice: ReactNode;
     runtimeOnline: boolean;
     disabledPlaceholder?: string;
+    composerToolbar?: ReactNode;
     onSend: (content: string, commitInput?: () => void) => Promise<boolean>;
   }) {
     const [text, setText] = useState("");
@@ -126,6 +128,7 @@ vi.mock("../../agents/create/builder-conversation", () => ({
         <button type="button" disabled={!runtimeOnline} onClick={() => void onSend(text, () => setText(""))}>
           Send
         </button>
+        {composerToolbar}
       </div>
     );
   },
@@ -353,6 +356,10 @@ describe("KbBuilderPage · runtime states", () => {
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveAttribute("placeholder", "Connect a runtime to chat");
     expect(screen.getByRole("button", { name: /^Engineering knowledge base/ })).toBeDisabled();
     expect(screen.getByText("You can create without the conversation")).toBeInTheDocument();
+    // The runtime pill stays usable: it is the way to connect one.
+    const trigger = await runtimeTrigger();
+    expect(trigger).toHaveAccessibleName("Runtime: No runtime available");
+    expect(trigger).toBeEnabled();
 
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "手填的库" } });
     fireEvent.change(screen.getByLabelText("Directory name"), { target: { value: "manual" } });

@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { Check, ChevronDown, Lock } from "lucide-react";
 import { isRuntimeUsableForUser, runtimeDisplayLabel } from "@marvis/core/runtimes";
 import type { MemberWithUser, RuntimeDevice } from "@marvis/core/types";
@@ -131,26 +130,27 @@ function KbRuntimeMenu({
         disabled={disabled}
         aria-label={`${t(($) => $.builder.runtime.label)}: ${label}`}
         title={label}
-        className="flex h-10 w-full min-w-0 items-center gap-2 rounded-lg border border-border bg-background px-3 text-left text-body transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        className="flex h-7.5 max-w-55 min-w-0 items-center gap-1.5 rounded-full px-2.5 text-left text-caption text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <StatusDot online={currentOnline} />
         {/* One truncating line, so a long machine name gives way first. */}
-        <span className="min-w-0 flex-1 truncate">
+        <span className="min-w-0 truncate">
           {currentParts ? (
             <>
-              <span className="font-medium">{currentParts.name}</span>
-              {currentParts.machine && <span className="text-muted-foreground"> · {currentParts.machine}</span>}
+              <span className="text-foreground">{currentParts.name}</span>
+              {currentParts.machine && <span> · {currentParts.machine}</span>}
             </>
           ) : (
-            <span className="text-muted-foreground">{label}</span>
+            label
           )}
         </span>
-        <ChevronDown
-          aria-hidden="true"
-          className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
-        />
+        <ChevronDown aria-hidden="true" className="size-3.5 shrink-0" />
       </PopoverTrigger>
-      <PopoverContent align="start" className="flex max-h-96 w-80 max-w-[calc(100vw-2rem)] flex-col p-1">
+      <PopoverContent
+        align="start"
+        side="top"
+        className="flex max-h-96 w-80 max-w-[calc(100vw-2rem)] flex-col p-1"
+      >
         <div role="listbox" aria-label={t(($) => $.builder.runtime.menu_label)} className="min-h-0 flex-1 overflow-y-auto">
           {group(t(($) => $.builder.runtime.mine), mine)}
           {group(t(($) => $.builder.runtime.others), others)}
@@ -169,8 +169,8 @@ function KbRuntimeMenu({
 
 /**
  * Where the builder runs: the runtime menu and, before the conversation
- * starts, the model, as one self-contained pair of equal-width controls. The
- * caller only places and sizes the pair.
+ * starts, the model, as one self-contained pair of pills. The caller only
+ * places the pair (today: the composer toolbar).
  */
 export function KbRuntimeControls({
   runtimes,
@@ -185,7 +185,6 @@ export function KbRuntimeControls({
   connectHref,
   model,
   className,
-  style,
 }: {
   runtimes: RuntimeDevice[];
   members: MemberWithUser[];
@@ -200,12 +199,11 @@ export function KbRuntimeControls({
   /** The model picker; omitted once the model is frozen onto a conversation. */
   model?: { value: string; onChange: (value: string) => void; disabled: boolean };
   className?: string;
-  style?: CSSProperties;
 }) {
   const runtime = runtimes.find((item) => item.id === runtimeId) ?? null;
 
   return (
-    <div className={cn("flex min-w-0 items-center gap-2 *:min-w-0 *:flex-1", className)} style={style}>
+    <div className={cn("flex min-w-0 items-center gap-0.5", className)}>
       <KbRuntimeMenu
         runtimes={runtimes}
         members={members}

@@ -49,7 +49,7 @@ export function ModelDropdown({
   /** Automatic value cleanup, separate from explicit user selections. */
   onAutomaticChange?: (value: string) => void;
   disabled?: boolean;
-  /** A single-line 40px trigger without the label row, for page headers. */
+  /** A ghost pill trigger without the label row, opening upward, for composer toolbars. */
   compact?: boolean;
 }) {
   const { t } = useT("agents");
@@ -138,8 +138,8 @@ export function ModelDropdown({
     if (compact) {
       return (
         <TooltipHint label={t(($) => $.model_dropdown.managed_by_runtime_hint)}>
-          <div className="flex h-10 w-full min-w-0 items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 text-body text-muted-foreground">
-            <Info className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <div className="flex h-7.5 max-w-45 min-w-0 items-center gap-1.5 rounded-full px-2.5 text-caption text-muted-foreground">
+            <Info className="size-3.5 shrink-0" aria-hidden="true" />
             <span className="truncate">{t(($) => $.model_dropdown.managed_by_runtime_title)}</span>
           </div>
         </TooltipHint>
@@ -183,15 +183,12 @@ export function ModelDropdown({
           <PopoverTrigger
             disabled={disabled}
             aria-label={`${t(($) => $.model_dropdown.label)}: ${triggerLabel}`}
-            className="flex h-10 w-full min-w-0 items-center gap-2 rounded-lg border border-border bg-background px-3 text-left text-body transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+            title={triggerLabel}
+            className="flex h-7.5 max-w-45 min-w-0 items-center gap-1.5 rounded-full px-2.5 text-left text-caption text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
           >
-            <Cpu className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <span className="shrink-0 text-muted-foreground">{t(($) => $.model_dropdown.label)}</span>
-            <span className="min-w-0 flex-1 truncate font-medium">{triggerLabel}</span>
-            <ChevronDown
-              aria-hidden="true"
-              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
-            />
+            <Cpu className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 truncate">{triggerLabel}</span>
+            <ChevronDown aria-hidden="true" className="size-3.5 shrink-0" />
           </PopoverTrigger>
         ) : (
         <PopoverTrigger
@@ -219,7 +216,8 @@ export function ModelDropdown({
         )}
         <PopoverContent
           align="start"
-          className="w-[var(--anchor-width)] p-0 overflow-hidden"
+          side={compact ? "top" : "bottom"}
+          className={compact ? "w-72 overflow-hidden p-0" : "w-[var(--anchor-width)] p-0 overflow-hidden"}
         >
           <div className="border-b border-border">
             <ModelSearchHeader

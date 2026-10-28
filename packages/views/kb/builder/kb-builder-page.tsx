@@ -83,17 +83,6 @@ const CONFIG_QUESTIONS = ["readers", "scope", "structure", "writing"] as const;
 
 /** Below this width of the builder area, chat and configuration become tabs (matches `@2xl`). */
 const NARROW_BUILDER_WIDTH = 672;
-/**
- * Horizontal padding of the configuration content. The header's runtime and
- * model controls span that content's width (panel width minus this padding on
- * both sides) and share its right edge.
- */
-const CONFIG_PADDING_X = 24;
-/**
- * The configuration panel's default width. The member can resize it, so the
- * header controls follow its live width rather than this constant.
- */
-const CONFIG_PANEL_WIDTH = 460;
 
 type BuilderPane = "chat" | "config";
 
@@ -165,7 +154,7 @@ function KbBuilderIntro({
     "rounded-xl bg-muted/60 px-3.5 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50";
 
   return (
-    <div className="flex flex-col gap-4 px-7 py-6 @max-2xl:px-4">
+    <div className="flex flex-col gap-4 px-7 py-6 @max-md:px-4">
       {banner}
       <p className="text-body leading-7">
         {mode === "create" ? t(($) => $.builder.intro_create) : t(($) => $.builder.intro_config)}
@@ -184,7 +173,7 @@ function KbBuilderIntro({
         </>
       ) : mode === "create" ? (
         <>
-          <div className="grid grid-cols-2 gap-2 @max-2xl:grid-cols-1">
+          <div className="grid grid-cols-2 gap-2 @max-md:grid-cols-1">
             {CREATE_STARTERS.map((key) => {
               const title = t(($) => $.builder.starters[key].title);
               const description = t(($) => $.builder.starters[key].description);
@@ -242,7 +231,7 @@ function KbBuilderNotice({
     <div
       role="status"
       className={cn(
-        "flex items-center gap-3 rounded-xl px-4 py-3.5 @max-2xl:flex-col @max-2xl:items-stretch",
+        "flex items-center gap-3 rounded-xl px-4 py-3.5 @max-md:flex-col @max-md:items-stretch",
         tone === "warning" ? "bg-warning/12" : "bg-muted",
       )}
     >
@@ -329,12 +318,7 @@ function KbBuilderWorkspace({
   const templates = useQuery(kbTemplatesOptions());
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({ id: "marvis_kb_builder_layout" });
   const { ref: bodyRef, width: bodyWidth } = useElementWidth<HTMLDivElement>();
-  const { ref: configRef, width: configWidth } = useElementWidth<HTMLDivElement>();
   const narrow = bodyWidth > 0 && bodyWidth < NARROW_BUILDER_WIDTH;
-  const controlsAlign =
-    !narrow && configWidth > 2 * CONFIG_PADDING_X
-      ? { width: configWidth - 2 * CONFIG_PADDING_X, insetRight: CONFIG_PADDING_X }
-      : undefined;
   const [pane, setPane] = useState<BuilderPane>("chat");
 
   const lastRuntimeId = useKbBuilderRuntimeStore((state) =>
@@ -703,6 +687,24 @@ function KbBuilderWorkspace({
     />
   );
 
+  const runtimeControls = (
+    <KbRuntimeControls
+      runtimes={runtimes}
+      members={members}
+      currentUserId={currentUserId}
+      runtimeId={runtimeId}
+      lastUsedId={lastRuntimeId}
+      runtimeDisabled={runtimeBusy}
+      menuOpen={runtimeMenuOpen}
+      onMenuOpenChange={setRuntimeMenuOpen}
+      onRuntimeSelect={(id) => void handleRuntimeSelect(id)}
+      connectHref={paths.runtimes()}
+      // The model is frozen onto the conversation when it starts, so it
+      // is chosen only before that, as on the old runtime step.
+      model={sessionId ? undefined : { value: model, onChange: setModel, disabled: !runtime || starting }}
+    />
+  );
+
   const conversation = (
     <BuilderConversation
       sessionId={sessionId}
@@ -725,6 +727,7 @@ function KbBuilderWorkspace({
       pendingTask={builder.pendingTask}
       runtimeOnline={composerEnabled}
       notice={notice}
+      composerToolbar={runtimeControls}
       disabledPlaceholder={
         starting
           ? undefined
@@ -741,11 +744,8 @@ function KbBuilderWorkspace({
   );
 
   const configuration = (
-    <div ref={configRef} className={cn("flex h-full min-h-0 flex-col bg-muted/10", !narrow && "border-l")}>
-      <div
-        className="min-h-0 flex-1 overflow-y-auto py-5"
-        style={{ paddingInline: narrow ? 16 : CONFIG_PADDING_X }}
-      >
+    <div className="flex h-full min-h-0 flex-col border-l bg-muted/10">
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <KbConfigPanel
           mode={mode}
           draft={draft}
@@ -757,12 +757,7 @@ function KbBuilderWorkspace({
           slugError={slugError}
         />
       </div>
-      <div
-        className={cn(
-          "flex shrink-0 items-center justify-end gap-2.5 border-t py-3 pl-5",
-          narrow ? "pr-4 pl-4" : "pr-20",
-        )}
-      >
+      <div className="flex shrink-0 items-center justify-end gap-2.5 border-t py-3 pr-20 pl-5">
         {formError ? (
           <p role="alert" className="mr-auto min-w-0 text-body text-destructive">
             {formError}
@@ -795,24 +790,6 @@ function KbBuilderWorkspace({
       creating={mode === "create"}
       subtitle={mode === "create" ? t(($) => $.builder.create_sub) : (base?.name ?? kbSlug)}
       onBack={onBack}
-      controlsAlign={controlsAlign}
-      controls={
-        <KbRuntimeControls
-          runtimes={runtimes}
-          members={members}
-          currentUserId={currentUserId}
-          runtimeId={runtimeId}
-          lastUsedId={lastRuntimeId}
-          runtimeDisabled={runtimeBusy || (runtimes.length === 0 && runtimesSettled)}
-          menuOpen={runtimeMenuOpen}
-          onMenuOpenChange={setRuntimeMenuOpen}
-          onRuntimeSelect={(id) => void handleRuntimeSelect(id)}
-          connectHref={paths.runtimes()}
-          // The model is frozen onto the conversation when it starts, so it
-          // is chosen only before that, as on the old runtime step.
-          model={sessionId ? undefined : { value: model, onChange: setModel, disabled: !runtime || starting }}
-        />
-      }
     >
       <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col">
         {narrow ? (
@@ -831,7 +808,7 @@ function KbBuilderWorkspace({
               {conversation}
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel id="config" defaultSize={CONFIG_PANEL_WIDTH} minSize={360} groupResizeBehavior="preserve-pixel-size">
+            <ResizablePanel id="config" defaultSize={520} minSize={360} groupResizeBehavior="preserve-pixel-size">
               {configuration}
             </ResizablePanel>
           </ResizablePanelGroup>

@@ -157,6 +157,7 @@ export function BuilderConversation({
   showHeader = true,
   notice,
   disabledPlaceholder,
+  composerToolbar,
 }: {
   sessionId: string;
   messages: ChatMessage[];
@@ -188,6 +189,8 @@ export function BuilderConversation({
   notice?: ReactNode;
   /** Composer placeholder while the runtime cannot answer. */
   disabledPlaceholder?: string;
+  /** Controls on a toolbar row under the composer (the runtime and model). */
+  composerToolbar?: ReactNode;
 }) {
   const { t } = useT("agents");
   const { t: tModals } = useT("modals");
@@ -299,6 +302,8 @@ export function BuilderConversation({
         isRunning={pending}
         disabled={!runtimeOnline}
         disabledPlaceholder={disabledPlaceholder}
+        leftAdornment={composerToolbar}
+        stackedToolbar={!!composerToolbar}
         agentName={chatTitle}
         draftKeyOverride={draftKey}
         editorKeyOverride={draftKey}

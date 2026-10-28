@@ -125,6 +125,8 @@ interface ChatInputProps {
   agentName?: string;
   /** Rendered at the bottom-left of the input bar — typically the agent picker. */
   leftAdornment?: ReactNode;
+  /** Always lays the editor above a toolbar row, even while it holds one line. */
+  stackedToolbar?: boolean;
   /** Chat @ suggestions: current/recent issue/project entries. */
   contextItems?: MentionItem[];
   /** Optional project context for the draft or current chat session. */
@@ -169,6 +171,7 @@ export function ChatInput({
   disabledPlaceholder,
   agentName,
   leftAdornment,
+  stackedToolbar,
   contextItems,
   projects = [],
   projectId,
@@ -655,7 +658,9 @@ export function ChatInput({
   // wider expanded editor can never fit the text back on one line and
   // flip-flop between the two layouts.
   const editorBoxRef = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [grown, setExpanded] = useState(false);
+  // A surface with a busy toolbar keeps it on its own row below the editor.
+  const expanded = grown || !!stackedToolbar;
   const hasDraftUploads = draftUploads.length > 0;
   useEffect(() => {
     if (hasNothingToSend && !hasDraftUploads) setExpanded(false);
