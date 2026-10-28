@@ -198,6 +198,28 @@ func TestApproxFind(t *testing.T) {
 	}
 }
 
+func TestRelocateDeletedFirstBlockDoesNotPanic(t *testing.T) {
+	page := anchorBlocks(
+		"b1", "world",
+		"b2", "团队综合知识库的入口：按要做的事找到对应页面。",
+	)
+	anchor, err := LocateQuote(page, "b1", "world", "", "")
+	if err != nil {
+		t.Fatalf("LocateQuote: %v", err)
+	}
+
+	// The annotated first block is deleted, so the remembered suffix now
+	// matches at the very start of the page and only the suffix side of the
+	// context survives (a merge request crashed on this, index -1).
+	rewritten := anchorBlocks("b2", "团队综合知识库的入口：按要做的事找到对应页面。")
+	got, outcome := Relocate(anchor, rewritten)
+	if outcome == AnchorRewritten || outcome == AnchorMoved {
+		if got.BlockID != "b2" || got.Quote == "" {
+			t.Errorf("relocated to %q in %s, want a sentence in b2", got.Quote, got.BlockID)
+		}
+	}
+}
+
 func TestRelocateShortQuoteDoesNotJump(t *testing.T) {
 	anchor, err := LocateQuote(annotatedPage, "b1", "去重", "", "")
 	if err != nil {
