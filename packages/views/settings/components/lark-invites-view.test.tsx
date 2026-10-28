@@ -257,6 +257,10 @@ describe("LarkInvitesView", () => {
     const { invalidate } = mount();
 
     await user.click(await screen.findByRole("button", { name: "Revoke" }));
+    const confirm = await screen.findByRole("alertdialog", { name: "Revoke Feishu invite?" });
+    expect(confirm).toHaveTextContent("The card sent to Group live can no longer be used to join.");
+    expect(mockApi.revokeLarkInvite).not.toHaveBeenCalled();
+    await user.click(within(confirm).getByRole("button", { name: "Revoke" }));
 
     await waitFor(() => expect(mockApi.revokeLarkInvite).toHaveBeenCalledWith("ws-1", "live"));
     await waitFor(() =>
@@ -273,10 +277,39 @@ describe("LarkInvitesView", () => {
     const { invalidate } = mount();
 
     await user.click(await screen.findByRole("button", { name: "Revoke" }));
+    const confirm = await screen.findByRole("alertdialog", { name: "Revoke Feishu invite?" });
+    await user.click(within(confirm).getByRole("button", { name: "Revoke" }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Could not revoke the invite"));
     expect(toast.success).not.toHaveBeenCalled();
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["workspaces", "ws-1", "lark-invites"] });
+  });
+
+  it("keeps the invite when the revoke is cancelled", async () => {
+    const user = userEvent.setup();
+    mockApi.listLarkInvites.mockResolvedValue([invite({ id: "live", status: "active" })]);
+    mount();
+
+    await user.click(await screen.findByRole("button", { name: "Revoke" }));
+    const confirm = await screen.findByRole("alertdialog", { name: "Revoke Feishu invite?" });
+    await user.click(within(confirm).getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(mockApi.revokeLarkInvite).not.toHaveBeenCalled();
+  });
+
+  it("offers sending from the empty state when the page passes a handler", async () => {
+    const user = userEvent.setup();
+    const onSend = vi.fn();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderWithI18n(
+      <QueryClientProvider client={client}>
+        <LarkInvitesView wsId="ws-1" onSend={onSend} />
+      </QueryClientProvider>,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Send Feishu invite" }));
+    expect(onSend).toHaveBeenCalledTimes(1);
   });
 
   it("shows the empty state", async () => {
@@ -309,8 +342,7 @@ describe("LarkInvitesView", () => {
     expect(screen.getByRole("button", { name: "撤销" })).toBeInTheDocument();
     expect(screen.getByText("有效")).toBeInTheDocument();
     expect(screen.getByText(/点击“加入工作区”的人直接成为成员/)).toBeInTheDocument();
-    for (const column of ["接收方", "角色", "已加入", "有效期", "发送人"]) {
-      expect(screen.getAllByText(column).length).toBeGreaterThan(0);
-    }
+    expect(screen.getByText("成员")).toBeInTheDocument();
+    expect(screen.getByText(/ 到期$/)).toBeInTheDocument();
   });
 });

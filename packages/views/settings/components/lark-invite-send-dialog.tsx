@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Search, X } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import type {
   LarkChat,
@@ -13,38 +13,24 @@ import type {
 } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
 import { Checkbox } from "@marvis/ui/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@marvis/ui/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@marvis/ui/components/ui/dialog";
 import { Input } from "@marvis/ui/components/ui/input";
 import { Label } from "@marvis/ui/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@marvis/ui/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@marvis/ui/components/ui/tabs";
 import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { cn } from "@marvis/ui/lib/utils";
 import { api, errorCode } from "@marvis/core/api";
-import { useAuthStore } from "@marvis/core/auth";
-import { useCurrentWorkspace } from "@marvis/core/paths";
 import { createSafeId } from "@marvis/core/utils";
 import { larkChatListOptions, workspaceKeys } from "@marvis/core/workspace/queries";
 import { ActorAvatar } from "../../common/actor-avatar";
-import { useLocale, useT } from "../../i18n";
+import { useT } from "../../i18n";
 import {
   ACTOR_TYPE,
   LarkChatAvatar,
   isLarkInviteErrorCode,
   useLarkInviteErrorText,
 } from "./lark-invite-shared";
+import { DIALOG_FULL_ON_NARROW, SegmentedRadio } from "./invite-controls";
 
 const TARGET_TAB = {
   chat: "chat",
@@ -58,6 +44,8 @@ const ROLE = {
   admin: "admin",
 } as const satisfies Record<string, MemberRole>;
 
+type InviteRole = (typeof ROLE)[keyof typeof ROLE];
+
 const SEND_STATUS = {
   sent: "sent",
   failed: "failed",
@@ -70,7 +58,13 @@ const CHIP_STATE = {
   unavailable: "unavailable",
 } as const;
 
-// 邮箱查不到时服务端返回 404，附带的错误码；这两个码在芯片上展示原因，其他错误弹 toast。
+// 弹窗的两个阶段：编辑发送内容、查看发送结果（有接收方没发出去时才进入）。
+const PHASE = {
+  edit: "edit",
+  result: "result",
+} as const;
+
+// 邮箱查不到时服务端返回 404，附带的错误码；这两个码在邮箱行上展示原因，其他错误弹 toast。
 const CHIP_UNAVAILABLE_CODES: readonly LarkInviteErrorCode[] = [
   "user_not_found",
   "user_not_in_app_scope",
@@ -85,7 +79,6 @@ const EXPIRY_HOURS = {
   month: EXPIRY_DAYS.month * HOURS_PER_DAY,
 } as const;
 const DEFAULT_EXPIRY_HOURS = EXPIRY_HOURS.week;
-const MS_PER_HOUR = 60 * 60 * 1000;
 
 // 与服务端 larkInviteMaxTargets、larkInviteNoteMaxRunes、max_uses 的上限一致。
 const MAX_TARGETS = 50;
@@ -93,6 +86,9 @@ const NOTE_MAX_LENGTH = 200;
 const MAX_USES_LIMIT = 2_147_483_647;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// 设置摘要里各项之间的分隔。
+const SUMMARY_SEPARATOR = " · ";
 
 type EmailChip =
   | { email: string; state: typeof CHIP_STATE.checking }
@@ -103,6 +99,11 @@ interface SendFailure {
   key: string;
   name: string;
   reason: string;
+}
+
+interface SendOutcome {
+  sentNames: string[];
+  failures: SendFailure[];
 }
 
 /** 人数上限输入框的取值：空表示不限（value 为 null），不是正整数或超出服务端上限时 valid 为 false。 */
@@ -119,8 +120,8 @@ function parseMaxUses(raw: string): { valid: boolean; value: number | null } {
 }
 
 /**
- * LarkInviteSendDialog 是发送飞书邀请卡片的弹窗：选群或输入邮箱，设置角色、有效期、
- * 人数上限和附言，右侧预览卡片。关闭后表单状态丢弃。
+ * LarkInviteSendDialog 是发送飞书邀请卡片的弹窗：选群或输入邮箱，邀请设置折叠成一行摘要，
+ * 点开后设置角色、有效期、人数上限和附言。有接收方没发出去时切到结果页。关闭后表单状态丢弃。
  */
 export function LarkInviteSendDialog({
   wsId,
@@ -142,7 +143,12 @@ export function LarkInviteSendDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent
+        className={cn(
+          "flex flex-col gap-0 overflow-hidden p-0 sm:max-h-[min(47.5rem,calc(100dvh-2rem))] sm:max-w-xl",
+          DIALOG_FULL_ON_NARROW,
+        )}
+      >
         <SendForm
           wsId={wsId}
           busy={busy}
@@ -166,12 +172,9 @@ function SendForm({
   onClose: () => void;
 }) {
   const { t } = useT("settings");
-  const locale = useLocale();
   const qc = useQueryClient();
   const errorText = useLarkInviteErrorText();
   const idPrefix = useId();
-  const inviter = useAuthStore((s) => s.user);
-  const workspace = useCurrentWorkspace();
   // 机器人加进新群后要能在下次打开弹窗时看到，全局 staleTime 是 Infinity，所以每次挂载都重新拉取。
   const chats = useQuery({ ...larkChatListOptions(wsId), refetchOnMount: "always" });
 
@@ -181,16 +184,18 @@ function SendForm({
   const [emailInput, setEmailInput] = useState("");
   const [emailInvalid, setEmailInvalid] = useState(false);
   const [chips, setChips] = useState<EmailChip[]>([]);
-  const [role, setRole] = useState<MemberRole>(ROLE.member);
+  const [role, setRole] = useState<InviteRole>(ROLE.member);
   const [expiryHours, setExpiryHours] = useState<number>(DEFAULT_EXPIRY_HOURS);
   const [maxUsesInput, setMaxUsesInput] = useState("");
   const [note, setNote] = useState("");
-  const [failures, setFailures] = useState<SendFailure[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [outcome, setOutcome] = useState<SendOutcome | null>(null);
   // 表单随弹窗打开挂载、关闭卸载，所以每次打开弹窗生成一个幂等键，这次打开里的每次提交都带上它：
   // 请求超时后再点一次，已经发出的接收方不会收到第二张卡片。
   const [idempotencyKey] = useState(createSafeId);
 
   const isChatTab = tab === TARGET_TAB.chat;
+  const phase = outcome ? PHASE.result : PHASE.edit;
   const chatList = useMemo(() => chats.data ?? [], [chats.data]);
   // 列群失败时服务端带稳定错误码（如应用没开机器人的 lark_not_configured），按码显示本地化文案；
   // 没有可识别的错误码时用通用的“加载失败”。
@@ -209,14 +214,12 @@ function SendForm({
   );
   const hasPendingLookup = chips.some((chip) => chip.state === CHIP_STATE.checking);
   const maxUses = parseMaxUses(maxUsesInput);
+  const maxUsesBlocks = isChatTab && !maxUses.valid;
   const targetCount = isChatTab ? selectedChatIds.length : foundEmails.length;
   const overLimit = targetCount > MAX_TARGETS;
-  const canSend =
-    targetCount > 0 &&
-    !overLimit &&
-    !busy &&
-    !hasPendingLookup &&
-    !(isChatTab && !maxUses.valid);
+  const canSend = targetCount > 0 && !overLimit && !busy && !hasPendingLookup && !maxUsesBlocks;
+  // 人数上限填错时设置区保持展开，让错误一直可见。
+  const showSettings = settingsOpen || maxUsesBlocks;
 
   const roleItems = [
     { value: ROLE.member, label: t(($) => $.members.roles.member.label) },
@@ -227,6 +230,21 @@ function SendForm({
     { value: String(EXPIRY_HOURS.week), label: t(($) => $.members.expiry_7d) },
     { value: String(EXPIRY_HOURS.month), label: t(($) => $.members.expiry_30d) },
   ];
+  const trimmedNote = note.trim();
+  const settingsSummary = [
+    roleItems.find((item) => item.value === role)?.label ?? "",
+    t(($) => $.members.lark.summary_expiry, {
+      expiry: expiryItems.find((item) => item.value === String(expiryHours))?.label ?? "",
+    }),
+    ...(isChatTab
+      ? [
+          maxUses.value !== null
+            ? t(($) => $.members.lark.summary_max_uses, { max: maxUses.value })
+            : t(($) => $.members.lark.summary_unlimited),
+        ]
+      : []),
+    ...(trimmedNote !== "" ? [t(($) => $.members.lark.summary_note)] : []),
+  ].join(SUMMARY_SEPARATOR);
 
   const toggleChat = (chatId: string, checked: boolean) => {
     setSelectedChatIds((current) =>
@@ -269,7 +287,7 @@ function SendForm({
         return;
       }
 
-      // 其他错误不是邮箱本身的问题：撤掉占位芯片，把邮箱放回输入框方便重试。
+      // 其他错误不是邮箱本身的问题：撤掉占位行，把邮箱放回输入框方便重试。
       setChips((current) => current.filter((chip) => chip.email !== email));
       setEmailInput((current) => (current === "" ? email : current));
       toast.error(
@@ -290,24 +308,19 @@ function SendForm({
     setChips((current) => current.filter((chip) => chip.email !== email));
   };
 
-  const buildFailures = (results: LarkInviteSendResult[]): SendFailure[] => {
-    const chatNames = new Map(chatList.map((chat) => [chat.chat_id, chat.name]));
-
-    return results.map((result, index) => ({
-      key: `${result.target.id}-${index}`,
-      // 解析接收方失败时服务端不带名字，群按群列表补上，个人显示邮箱。
-      name: result.target.name || chatNames.get(result.target.id) || result.target.id,
-      reason: errorText(result.error?.code),
-    }));
-  };
+  const chatNames = useMemo(
+    () => new Map(chatList.map((chat) => [chat.chat_id, chat.name])),
+    [chatList],
+  );
+  // 解析接收方失败时服务端不带名字，群按群列表补上，个人显示邮箱。
+  const targetName = (result: LarkInviteSendResult) =>
+    result.target.name || chatNames.get(result.target.id) || result.target.id;
 
   const handleSend = async () => {
     if (!canSend) return;
 
     onBusyChange(true);
-    setFailures([]);
 
-    const trimmedNote = note.trim();
     const request = {
       ...(isChatTab ? { chat_ids: selectedChatIds } : { user_emails: foundEmails }),
       role,
@@ -329,20 +342,24 @@ function SendForm({
         return;
       }
 
-      if (sent.length > 0) {
-        toast.success(t(($) => $.members.lark.sent_toast, { count: sent.length }));
-      }
-
       if (failed.length === 0) {
+        toast.success(t(($) => $.members.lark.sent_toast, { count: sent.length }));
         onClose();
         return;
       }
 
-      // 已发送的接收方从选择里去掉，重试只发失败的。
+      // 已发送的接收方从选择里去掉，返回修改后重试只发失败的。
       const sentIds = new Set(sent.map((result) => result.target.id));
       setSelectedChatIds((current) => current.filter((id) => !sentIds.has(id)));
       setChips((current) => current.filter((chip) => !sentIds.has(chip.email)));
-      setFailures(buildFailures(failed));
+      setOutcome({
+        sentNames: sent.map(targetName),
+        failures: failed.map((result, index) => ({
+          key: `${result.target.id}-${index}`,
+          name: targetName(result),
+          reason: errorText(result.error?.code),
+        })),
+      });
     } catch (error) {
       const code = errorCode(error);
       toast.error(errorText(isLarkInviteErrorCode(code) ? code : undefined));
@@ -357,240 +374,294 @@ function SendForm({
     if (value === TARGET_TAB.chat || value === TARGET_TAB.user) setTab(value);
   };
 
-  const chipHints = chips.flatMap((chip) =>
-    chip.state === CHIP_STATE.unavailable ? [chip] : [],
-  );
+  const settingsPanelId = `${idPrefix}-settings`;
 
   return (
     <>
-      <DialogHeader>
+      <DialogHeader className="shrink-0 px-6 pt-5 pb-3">
         <DialogTitle>{t(($) => $.members.lark.dialog_title)}</DialogTitle>
       </DialogHeader>
 
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_16rem]">
-        <div className="min-w-0 space-y-4">
-          <Tabs value={tab} onValueChange={handleTabChange}>
-            <TabsList>
-              <TabsTrigger value={TARGET_TAB.chat}>{t(($) => $.members.lark.tab_chat)}</TabsTrigger>
-              <TabsTrigger value={TARGET_TAB.user}>{t(($) => $.members.lark.tab_user)}</TabsTrigger>
-            </TabsList>
+      {phase === PHASE.result && outcome ? (
+        <SendResult
+          outcome={outcome}
+          onBack={() => setOutcome(null)}
+          onDone={onClose}
+        />
+      ) : (
+        <>
+          <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-6 pt-1 pb-4">
+            <Tabs value={tab} onValueChange={handleTabChange} className="gap-3.5">
+              <TabsList className="rounded-full">
+                <TabsTrigger value={TARGET_TAB.chat} className="rounded-full px-4">
+                  {t(($) => $.members.lark.tab_chat)}
+                  <span className="text-caption font-normal tabular-nums text-faint-foreground">
+                    {selectedChatIds.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value={TARGET_TAB.user} className="rounded-full px-4">
+                  {t(($) => $.members.lark.tab_user)}
+                  <span className="text-caption font-normal tabular-nums text-faint-foreground">
+                    {foundEmails.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value={TARGET_TAB.chat} className="space-y-2">
-              <div className="relative">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              <TabsContent value={TARGET_TAB.chat} className="space-y-2.5">
+                <div className="relative">
+                  <Search
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <Input
+                    type="search"
+                    value={chatQuery}
+                    onChange={(event) => setChatQuery(event.target.value)}
+                    placeholder={t(($) => $.members.lark.search_chat)}
+                    aria-label={t(($) => $.members.lark.search_chat)}
+                    className="pl-9"
+                  />
+                </div>
+                <ChatList
+                  idPrefix={idPrefix}
+                  loading={chats.isPending}
+                  failed={chats.isError}
+                  failedText={chatsErrorText}
+                  chats={visibleChats}
+                  filtered={chatList.length > 0}
+                  selectedIds={selectedChatIds}
+                  onToggle={toggleChat}
                 />
-                <Input
-                  type="search"
-                  value={chatQuery}
-                  onChange={(event) => setChatQuery(event.target.value)}
-                  placeholder={t(($) => $.members.lark.search_chat)}
-                  aria-label={t(($) => $.members.lark.search_chat)}
-                  className="pl-8"
-                />
-              </div>
-              <ChatList
-                idPrefix={idPrefix}
-                loading={chats.isPending}
-                failed={chats.isError}
-                failedText={chatsErrorText}
-                chats={visibleChats}
-                selectedIds={selectedChatIds}
-                onToggle={toggleChat}
-              />
-              <p className="text-caption text-muted-foreground">
-                {t(($) => $.members.lark.chat_hint)}
-              </p>
-            </TabsContent>
-
-            <TabsContent value={TARGET_TAB.user} className="space-y-2">
-              <div className="space-y-1.5">
-                <Label htmlFor={`${idPrefix}-email`}>{t(($) => $.members.lark.email_label)}</Label>
-                <Input
-                  id={`${idPrefix}-email`}
-                  type="email"
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={emailInput}
-                  onChange={(event) => {
-                    setEmailInput(event.target.value);
-                    setEmailInvalid(false);
-                  }}
-                  onKeyDown={handleEmailKeyDown}
-                  placeholder={t(($) => $.members.lark.email_placeholder)}
-                  aria-invalid={emailInvalid || undefined}
-                />
-                {emailInvalid ? (
-                  <p className="text-caption text-destructive">
-                    {t(($) => $.members.lark.email_invalid)}
-                  </p>
-                ) : null}
-              </div>
-              {chips.length > 0 ? (
-                <ul className="flex flex-wrap gap-2">
-                  {chips.map((chip) => (
-                    <EmailChipItem
-                      key={chip.email}
-                      chip={chip}
-                      onRemove={() => removeChip(chip.email)}
-                    />
-                  ))}
-                </ul>
-              ) : null}
-              {chipHints.map((chip) => (
-                <p key={chip.email} className="text-caption text-destructive">
-                  {chip.code === ERROR_USER_NOT_FOUND
-                    ? t(($) => $.members.lark.email_not_found, { email: chip.email })
-                    : errorText(chip.code)}
+                <p className="text-caption text-muted-foreground">
+                  {t(($) => $.members.lark.chat_hint)}
                 </p>
-              ))}
-              <p className="text-caption text-muted-foreground">
-                {t(($) => $.members.lark.user_hint)}
-              </p>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor={`${idPrefix}-role`}>{t(($) => $.members.lark.role_label)}</Label>
-              <Select
-                items={roleItems}
-                value={role}
-                onValueChange={(value) => {
-                  if (value === ROLE.member || value === ROLE.admin) setRole(value);
-                }}
+              <TabsContent value={TARGET_TAB.user} className="space-y-2.5">
+                <div className="space-y-1.5">
+                  <Label htmlFor={`${idPrefix}-email`}>{t(($) => $.members.lark.email_label)}</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id={`${idPrefix}-email`}
+                      type="email"
+                      autoComplete="off"
+                      spellCheck={false}
+                      value={emailInput}
+                      onChange={(event) => {
+                        setEmailInput(event.target.value);
+                        setEmailInvalid(false);
+                      }}
+                      onKeyDown={handleEmailKeyDown}
+                      placeholder={t(($) => $.members.lark.email_placeholder)}
+                      aria-invalid={emailInvalid || undefined}
+                      className="min-w-0 flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={emailInput.trim() === ""}
+                      onClick={() => void addEmail()}
+                    >
+                      {t(($) => $.members.lark.email_add)}
+                    </Button>
+                  </div>
+                  {emailInvalid ? (
+                    <p className="text-caption text-destructive">
+                      {t(($) => $.members.lark.email_invalid)}
+                    </p>
+                  ) : null}
+                </div>
+                {chips.length > 0 ? (
+                  <ul className="space-y-1.5">
+                    {chips.map((chip) => (
+                      <EmailRow key={chip.email} chip={chip} onRemove={() => removeChip(chip.email)} />
+                    ))}
+                  </ul>
+                ) : null}
+                <p className="text-caption text-muted-foreground">
+                  {t(($) => $.members.lark.user_hint)}
+                </p>
+              </TabsContent>
+            </Tabs>
+
+            <div className="rounded-option bg-surface-sunken">
+              <button
+                type="button"
+                aria-expanded={showSettings}
+                aria-controls={settingsPanelId}
+                onClick={() => setSettingsOpen(!showSettings)}
+                className="flex w-full items-center justify-between gap-2 rounded-option px-3.5 py-3 text-left focus-visible:outline-2 focus-visible:outline-ring"
               >
-                <SelectTrigger id={`${idPrefix}-role`} className="w-full">
-                  <SelectValue>
-                    {() => roleItems.find((item) => item.value === role)?.label}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {roleItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor={`${idPrefix}-expiry`}>{t(($) => $.members.lark.expiry_label)}</Label>
-              <Select
-                items={expiryItems}
-                value={String(expiryHours)}
-                onValueChange={(value) => {
-                  const hours = Number(value);
-                  if (Number.isFinite(hours) && hours > 0) setExpiryHours(hours);
-                }}
-              >
-                <SelectTrigger id={`${idPrefix}-expiry`} className="w-full">
-                  <SelectValue>
-                    {() =>
-                      expiryItems.find((item) => item.value === String(expiryHours))?.label
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {expiryItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {isChatTab ? (
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor={`${idPrefix}-max-uses`}>
-                  {t(($) => $.members.lark.max_uses_label)}
-                </Label>
-                <Input
-                  id={`${idPrefix}-max-uses`}
-                  type="number"
-                  min={1}
-                  step={1}
-                  inputMode="numeric"
-                  value={maxUsesInput}
-                  onChange={(event) => setMaxUsesInput(event.target.value)}
-                  placeholder={t(($) => $.members.lark.max_uses_placeholder)}
-                  aria-invalid={!maxUses.valid || undefined}
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-body font-medium">{t(($) => $.members.lark.settings_title)}</span>
+                  <span className="truncate text-caption text-muted-foreground">{settingsSummary}</span>
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "size-4 shrink-0 text-muted-foreground transition-transform duration-(--motion-fast)",
+                    showSettings && "rotate-180",
+                  )}
                 />
-              </div>
-            ) : null}
-
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor={`${idPrefix}-note`}>{t(($) => $.members.lark.note_label)}</Label>
-              <Textarea
-                id={`${idPrefix}-note`}
-                rows={2}
-                maxLength={NOTE_MAX_LENGTH}
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                placeholder={t(($) => $.members.lark.note_placeholder)}
-              />
+              </button>
+              {showSettings ? (
+                <div id={settingsPanelId} className="space-y-3 px-3.5 pb-3.5">
+                  <div className="space-y-1.5">
+                    <p className="text-caption text-muted-foreground">{t(($) => $.members.lark.role_label)}</p>
+                    <SegmentedRadio
+                      label={t(($) => $.members.lark.role_label)}
+                      options={roleItems}
+                      value={role}
+                      onChange={setRole}
+                      className="bg-field-hover"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-caption text-muted-foreground">{t(($) => $.members.lark.expiry_label)}</p>
+                    <SegmentedRadio
+                      label={t(($) => $.members.lark.expiry_label)}
+                      options={expiryItems}
+                      value={String(expiryHours)}
+                      onChange={(value) => setExpiryHours(Number(value))}
+                      className="bg-field-hover"
+                    />
+                  </div>
+                  {isChatTab ? (
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`${idPrefix}-max-uses`} className="text-caption font-normal text-muted-foreground">
+                        {t(($) => $.members.lark.max_uses_label)}
+                      </Label>
+                      <Input
+                        id={`${idPrefix}-max-uses`}
+                        type="number"
+                        min={1}
+                        step={1}
+                        inputMode="numeric"
+                        value={maxUsesInput}
+                        onChange={(event) => setMaxUsesInput(event.target.value)}
+                        placeholder={t(($) => $.members.lark.max_uses_placeholder)}
+                        aria-invalid={!maxUses.valid || undefined}
+                        className="bg-surface"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label htmlFor={`${idPrefix}-note`} className="text-caption font-normal text-muted-foreground">
+                        {t(($) => $.members.lark.note_label)}
+                      </Label>
+                      <span aria-hidden="true" className="text-caption tabular-nums text-faint-foreground">
+                        {t(($) => $.members.lark.note_count, {
+                          length: note.length,
+                          max: NOTE_MAX_LENGTH,
+                        })}
+                      </span>
+                    </div>
+                    <Textarea
+                      id={`${idPrefix}-note`}
+                      rows={2}
+                      maxLength={NOTE_MAX_LENGTH}
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                      placeholder={t(($) => $.members.lark.note_placeholder)}
+                      className="resize-none bg-surface"
+                    />
+                  </div>
+                </div>
+              ) : null}
             </div>
+
+            {overLimit ? (
+              <p className="text-caption text-destructive">
+                {t(($) => $.members.lark.target_limit, { max: MAX_TARGETS })}
+              </p>
+            ) : null}
           </div>
 
-          {overLimit ? (
-            <p className="text-caption text-destructive">
-              {t(($) => $.members.lark.target_limit, { max: MAX_TARGETS })}
-            </p>
-          ) : null}
-
-          {failures.length > 0 ? (
-            <div role="alert" className="space-y-1.5 rounded-lg bg-destructive/10 px-3 py-2.5">
-              <p className="text-label font-medium text-destructive">
-                {t(($) => $.members.lark.failed_title)}
-              </p>
-              <ul className="space-y-1">
-                {failures.map((failure) => (
-                  <li key={failure.key} className="flex min-w-0 flex-wrap gap-x-2 text-caption">
-                    <span className="min-w-0 truncate font-medium">{failure.name}</span>
-                    <span className="text-muted-foreground">{failure.reason}</span>
-                  </li>
-                ))}
-              </ul>
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-surface-border px-6 py-3.5">
+            <span className="text-caption text-muted-foreground">
+              {t(($) => $.members.lark.sender_hint)}
+            </span>
+            <div className="ml-auto flex gap-2">
+              <Button type="button" variant="ghost" disabled={busy} onClick={onClose}>
+                {t(($) => $.members.confirm_cancel)}
+              </Button>
+              <Button
+                type="button"
+                disabled={!canSend}
+                aria-busy={busy || undefined}
+                onClick={() => void handleSend()}
+              >
+                {busy ? <Loader2 aria-hidden="true" className="animate-spin" /> : null}
+                {busy
+                  ? t(($) => $.members.lark.sending)
+                  : isChatTab
+                    ? t(($) => $.members.lark.send_to_chats, { count: targetCount })
+                    : t(($) => $.members.lark.send_to_users, { count: targetCount })}
+              </Button>
             </div>
-          ) : null}
-        </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
 
-        <CardPreview
-          inviterName={inviter?.name ?? ""}
-          workspaceName={workspace?.name ?? ""}
-          note={note.trim()}
-          role={role}
-          expiryHours={expiryHours}
-          locale={locale}
-        />
+function SendResult({
+  outcome,
+  onBack,
+  onDone,
+}: {
+  outcome: SendOutcome;
+  onBack: () => void;
+  onDone: () => void;
+}) {
+  const { t } = useT("settings");
+  const separator = t(($) => $.layout.read_only.separator);
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pt-1 pb-6">
+      {outcome.sentNames.length > 0 ? (
+        <div className="flex items-start gap-3 rounded-option bg-identity-green px-4 py-3.5">
+          <Check aria-hidden="true" className="mt-0.5 size-4.5 shrink-0 text-identity-green-foreground" />
+          <div className="min-w-0">
+            <p className="text-body font-semibold">
+              {t(($) => $.members.lark.sent_toast, { count: outcome.sentNames.length })}
+            </p>
+            <p className="text-label break-words text-muted-foreground">
+              {outcome.sentNames.join(separator)}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <div role="alert" className="space-y-2">
+        <p className="text-label text-muted-foreground">
+          {t(($) => $.members.lark.failed_count, { count: outcome.failures.length })}
+        </p>
+        <ul className="space-y-1.5">
+          {outcome.failures.map((failure) => (
+            <li
+              key={failure.key}
+              className="flex items-center gap-3 rounded-option bg-destructive/10 px-3.5 py-3"
+            >
+              <AlertCircle aria-hidden="true" className="size-4 shrink-0 text-destructive" />
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate text-body font-medium">{failure.name}</span>
+                <span className="text-label text-destructive">{failure.reason}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <DialogFooter className="sm:items-center sm:justify-between">
-        <span className="text-caption text-muted-foreground">
-          {t(($) => $.members.lark.sender_hint)}
-        </span>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row">
-          <Button type="button" variant="outline" disabled={busy} onClick={onClose}>
-            {t(($) => $.members.confirm_cancel)}
-          </Button>
-          <Button
-            type="button"
-            disabled={!canSend}
-            aria-busy={busy || undefined}
-            onClick={() => void handleSend()}
-          >
-            {busy
-              ? t(($) => $.members.lark.sending)
-              : isChatTab
-                ? t(($) => $.members.lark.send_to_chats, { count: targetCount })
-                : t(($) => $.members.lark.send_to_users, { count: targetCount })}
-          </Button>
-        </div>
-      </DialogFooter>
-    </>
+      <div className="mt-auto flex justify-end gap-2 pt-2">
+        <Button variant="secondary" onClick={onBack}>
+          {t(($) => $.members.lark.back_to_edit)}
+        </Button>
+        <Button onClick={onDone}>{t(($) => $.members.done)}</Button>
+      </div>
+    </div>
   );
 }
 
@@ -600,6 +671,7 @@ function ChatList({
   failed,
   failedText,
   chats,
+  filtered,
   selectedIds,
   onToggle,
 }: {
@@ -609,6 +681,8 @@ function ChatList({
   /** 失败时显示的错误文案；为 null 时用通用的“加载失败”。 */
   failedText: string | null;
   chats: LarkChat[];
+  /** 群列表本身不空，只是被搜索词过滤空了。 */
+  filtered: boolean;
   selectedIds: string[];
   onToggle: (chatId: string, checked: boolean) => void;
 }) {
@@ -616,24 +690,31 @@ function ChatList({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center rounded-lg border border-surface-border py-10 text-muted-foreground">
+      <div className="flex items-center justify-center py-10 text-muted-foreground">
         <Loader2 aria-hidden="true" className="size-4 animate-spin" />
       </div>
     );
   }
 
-  if (failed || chats.length === 0) {
+  if (failed) {
     return (
-      <div className="rounded-lg border border-surface-border px-3 py-10 text-center text-body text-muted-foreground">
-        {failed
-          ? (failedText ?? t(($) => $.members.lark.chats_load_failed))
-          : t(($) => $.members.lark.chats_empty)}
+      <div className="flex items-center gap-2.5 rounded-option bg-destructive/10 px-4 py-3.5 text-body text-destructive">
+        <AlertCircle aria-hidden="true" className="size-4 shrink-0" />
+        {failedText ?? t(($) => $.members.lark.chats_load_failed)}
+      </div>
+    );
+  }
+
+  if (chats.length === 0) {
+    return (
+      <div className="rounded-option border border-dashed border-surface-border px-3 py-8 text-center text-body text-muted-foreground">
+        {filtered ? t(($) => $.members.lark.chats_no_match) : t(($) => $.members.lark.chats_empty)}
       </div>
     );
   }
 
   return (
-    <div className="max-h-56 divide-y divide-surface-border overflow-y-auto rounded-lg border border-surface-border">
+    <div className="max-h-72 space-y-0.5 overflow-y-auto">
       {chats.map((chat) => {
         const selected = selectedIds.includes(chat.chat_id);
         const inputId = `${idPrefix}-chat-${chat.chat_id}`;
@@ -644,7 +725,7 @@ function ChatList({
             htmlFor={inputId}
             // 选中的行悬停时保持选中底色，未选中的行悬停才变色。
             className={cn(
-              "flex cursor-pointer items-center gap-3 px-3 py-2",
+              "flex cursor-pointer items-center gap-3 rounded-option px-2.5 py-2",
               selected ? "bg-surface-selected" : "hover:bg-surface-hover",
             )}
           >
@@ -669,8 +750,9 @@ function ChatList({
   );
 }
 
-function EmailChipItem({ chip, onRemove }: { chip: EmailChip; onRemove: () => void }) {
+function EmailRow({ chip, onRemove }: { chip: EmailChip; onRemove: () => void }) {
   const { t } = useT("settings");
+  const errorText = useLarkInviteErrorText();
   const unavailable = chip.state === CHIP_STATE.unavailable;
 
   return (
@@ -678,107 +760,57 @@ function EmailChipItem({ chip, onRemove }: { chip: EmailChip; onRemove: () => vo
       data-testid={`lark-email-chip-${chip.email}`}
       data-state={chip.state}
       className={cn(
-        "inline-flex max-w-full items-center gap-2 rounded-full py-1 pr-1.5 pl-2 text-label",
-        unavailable
-          ? "border border-destructive/40 bg-destructive/10 text-destructive"
-          : "bg-field",
+        "flex items-center gap-3 rounded-option px-2.5 py-2",
+        unavailable ? "bg-destructive/10" : "bg-surface-sunken",
       )}
     >
       {chip.state === CHIP_STATE.found ? (
-        <>
-          <ActorAvatar
-            actorType={ACTOR_TYPE.member}
-            actorId={chip.user.open_id}
-            name={chip.user.name}
-            avatarUrl={chip.user.avatar_url}
-            size="xs"
-            profileLink={false}
-          />
-          <span className="min-w-0 truncate font-medium">{chip.user.name}</span>
-          <span className="min-w-0 truncate text-muted-foreground">{chip.email}</span>
-        </>
-      ) : chip.state === CHIP_STATE.checking ? (
-        <>
-          <Loader2 aria-hidden="true" className="size-3 animate-spin text-muted-foreground" />
-          <span className="min-w-0 truncate text-muted-foreground">{chip.email}</span>
-        </>
+        <ActorAvatar
+          actorType={ACTOR_TYPE.member}
+          actorId={chip.user.open_id}
+          name={chip.user.name}
+          avatarUrl={chip.user.avatar_url}
+          size="lg"
+          profileLink={false}
+        />
       ) : (
-        <span className="min-w-0 truncate">{chip.email}</span>
+        <span
+          aria-hidden="true"
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-full text-label font-semibold",
+            unavailable ? "bg-surface text-destructive" : "bg-field text-muted-foreground",
+          )}
+        >
+          {chip.state === CHIP_STATE.checking ? <Loader2 className="size-3.5 animate-spin" /> : "@"}
+        </span>
       )}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-body font-medium">
+          {chip.state === CHIP_STATE.found ? chip.user.name : chip.email}
+        </span>
+        <span
+          className={cn(
+            "truncate text-caption",
+            unavailable ? "text-destructive" : "text-muted-foreground",
+          )}
+        >
+          {chip.state === CHIP_STATE.found
+            ? chip.email
+            : chip.state === CHIP_STATE.checking
+              ? t(($) => $.members.lark.email_checking)
+              : chip.code === ERROR_USER_NOT_FOUND
+                ? t(($) => $.members.lark.email_not_found)
+                : errorText(chip.code)}
+        </span>
+      </span>
       <button
         type="button"
         onClick={onRemove}
         aria-label={t(($) => $.members.lark.email_remove, { email: chip.email })}
-        className="inline-flex size-4 shrink-0 items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/15"
+        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-hover hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
       >
-        <X aria-hidden="true" className="size-3" />
+        <X aria-hidden="true" className="size-3.5" />
       </button>
     </li>
-  );
-}
-
-/** 飞书卡片的静态预览，文案与服务端卡片一致，只随表单里的附言、角色和有效期变化。 */
-function CardPreview({
-  inviterName,
-  workspaceName,
-  note,
-  role,
-  expiryHours,
-  locale,
-}: {
-  inviterName: string;
-  workspaceName: string;
-  note: string;
-  role: MemberRole;
-  expiryHours: number;
-  locale: string;
-}) {
-  const { t } = useT("settings");
-  const titleId = useId();
-
-  const expiresOn = useMemo(
-    () =>
-      new Date(Date.now() + expiryHours * MS_PER_HOUR).toLocaleDateString(locale, {
-        month: "long",
-        day: "numeric",
-      }),
-    [expiryHours, locale],
-  );
-
-  return (
-    <section aria-labelledby={titleId} className="hidden min-w-0 md:block">
-      <p id={titleId} className="mb-2 text-caption text-muted-foreground">
-        {t(($) => $.members.lark.preview)}
-      </p>
-      <div className="overflow-hidden rounded-xl border border-surface-border bg-surface text-label">
-        <div className="bg-field px-3 py-2 text-body font-medium">
-          {t(($) => $.members.lark.preview_title)}
-        </div>
-        <div className="space-y-2 px-3 py-3">
-          <p>
-            {t(($) => $.members.lark.preview_sentence, {
-              inviter: inviterName,
-              workspace: workspaceName,
-            })}
-          </p>
-          {note !== "" ? (
-            <p className="break-words text-muted-foreground">
-              {t(($) => $.members.lark.preview_note, { note })}
-            </p>
-          ) : null}
-          <p className="text-muted-foreground">
-            {t(($) => $.members.lark.preview_role, {
-              role: t(($) => $.members.roles[role].label),
-            })}
-          </p>
-          <p className="text-muted-foreground">
-            {t(($) => $.members.lark.preview_expires, { date: expiresOn })}
-          </p>
-          <div className="rounded-lg bg-primary px-3 py-1.5 text-center font-medium text-primary-foreground">
-            {t(($) => $.members.lark.preview_join)}
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }
