@@ -64,14 +64,19 @@ vi.mock("../../common/actor-avatar", () => ({
   ActorAvatar: ({ name }: { name?: string }) => <span data-testid="avatar">{name}</span>,
 }));
 
-vi.mock("../../rich-content", () => ({
-  RichContent: ({ content }: { content: string }) => (
-    <div
-      data-testid="rich"
-      dangerouslySetInnerHTML={{ __html: content.replace(/\[([^\]]*)\]\(([^)]*)\)/g, '<a href="$2">$1</a>') }}
-    />
-  ),
-}));
+// Memoized like the real RichContent: a re-render of the page with the same
+// content keeps the rendered nodes, so a flashed sentence stays the same node.
+vi.mock("../../rich-content", async () => {
+  const { memo } = await import("react");
+  return {
+    RichContent: memo(({ content }: { content: string }) => (
+      <div
+        data-testid="rich"
+        dangerouslySetInnerHTML={{ __html: content.replace(/\[([^\]]*)\]\(([^)]*)\)/g, '<a href="$2">$1</a>') }}
+      />
+    )),
+  };
+});
 
 const mocked = vi.mocked(api);
 
@@ -413,9 +418,112 @@ describe("page annotations", () => {
       vi.advanceTimersByTime(1200);
     });
     expect(mark).not.toHaveAttribute("data-flash");
-    fireEvent.click(within(panel).getByRole("button", { name: /渠道回调按订单号加幂等键去重/ }));
+    fireEvent.click(within(panel).getByText("渠道回调按订单号加幂等键去重。"));
     expect(scrolled.at(-1)).toBe(document.querySelector("mark[data-annotation-ids='a-mine']"));
     expect(document.querySelector("mark[data-annotation-ids='a-mine']")).toHaveAttribute("data-flash", "true");
+  });
+
+  it("moves the selection to a clicked card and keeps it there while scrolling the page", async () => {
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const other = annotation({ id: "a-other", quote: "幂等键保存 24 小时。", body: "另一句" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, other]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await userEvent.click(await screen.findByRole("button", { name: "Page annotations" }));
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 2" });
+    const card = (body: string) => within(panel).getByRole("article", { name: body });
+    // Before any click the first anchored card carries the selection.
+    expect(card("去重键已经改成渠道交易号。")).toHaveAttribute("aria-current", "true");
+    expect(card("去重键已经改成渠道交易号。")).toHaveClass("ring-warning/60");
+    expect(card("另一句")).not.toHaveAttribute("aria-current");
+
+    await userEvent.click(card("另一句"));
+    expect(card("另一句")).toHaveAttribute("aria-current", "true");
+    expect(card("另一句")).toHaveClass("ring-warning/60");
+    expect(card("去重键已经改成渠道交易号。")).not.toHaveAttribute("aria-current");
+    expect(card("去重键已经改成渠道交易号。")).not.toHaveClass("ring-warning/60");
+    // The page scrolls to the sentence; the clicked card does not scroll the panel.
+    expect(scrolled.at(-1)).toBe(document.querySelector("mark[data-annotation-ids='a-other']"));
+    expect(document.querySelector("mark[data-annotation-ids='a-other']")).toHaveAttribute("data-flash", "true");
+    expect(scrolled).not.toContain(card("另一句"));
+
+    // Its buttons keep their own behavior and leave the selection alone.
+    await userEvent.click(within(card("去重键已经改成渠道交易号。")).getByRole("button", { name: "Dismiss" }));
+    expect(mocked.updateKnowledgeBaseAnnotation).toHaveBeenCalledWith("a-mine", { status: "dismissed" });
+    expect(card("另一句")).toHaveAttribute("aria-current", "true");
+  });
+
+  it("selects a card from the keyboard", async () => {
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const other = annotation({ id: "a-other", quote: "幂等键保存 24 小时。", body: "另一句" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, other]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    await userEvent.click(await screen.findByRole("button", { name: "Page annotations" }));
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 2" });
+    const target = within(panel).getByRole("article", { name: "另一句" });
+    expect(target).toHaveAttribute("tabindex", "0");
+
+    target.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(target).toHaveAttribute("aria-current", "true");
+    expect(scrolled.at(-1)).toBe(document.querySelector("mark[data-annotation-ids='a-other']"));
+
+    const first = within(panel).getByRole("article", { name: "去重键已经改成渠道交易号。" });
+    first.focus();
+    await userEvent.keyboard(" ");
+    expect(first).toHaveAttribute("aria-current", "true");
+    expect(target).not.toHaveAttribute("aria-current");
+  });
+
+  it("selects a card from its sentence and back from the card", async () => {
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) {
+      scrolled.push(this);
+    });
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+    const other = annotation({ id: "a-other", quote: "幂等键保存 24 小时。", body: "另一句" });
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([MINE, other]);
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    // The contents panel is showing; clicking a sentence switches to the annotations.
+    await userEvent.click(await screen.findByRole("button", { name: "Contents" }));
+    await waitFor(() => expect(document.querySelector("mark[data-annotation-ids='a-other']")).not.toBeNull());
+    expect(screen.queryByRole("complementary", { name: /Page annotations/ })).not.toBeInTheDocument();
+    await userEvent.click(document.querySelector<HTMLElement>("mark[data-annotation-ids='a-other']")!);
+
+    const panel = await screen.findByRole("complementary", { name: "Page annotations 2" });
+    expect(screen.getByRole("button", { name: "Contents" })).toHaveAttribute("aria-pressed", "false");
+    const card = (body: string) => within(panel).getByRole("article", { name: body });
+    expect(card("另一句")).toHaveAttribute("aria-current", "true");
+    expect(card("去重键已经改成渠道交易号。")).not.toHaveAttribute("aria-current");
+    await waitFor(() => expect(scrolled.at(-1)).toBe(card("另一句")));
+
+    await userEvent.click(card("去重键已经改成渠道交易号。"));
+    expect(card("去重键已经改成渠道交易号。")).toHaveAttribute("aria-current", "true");
+    expect(card("另一句")).not.toHaveAttribute("aria-current");
+
+    // And the sentence takes it back.
+    await userEvent.click(document.querySelector<HTMLElement>("mark[data-annotation-ids='a-other']")!);
+    expect(card("另一句")).toHaveAttribute("aria-current", "true");
+    expect(card("去重键已经改成渠道交易号。")).not.toHaveAttribute("aria-current");
   });
 
   it("falls back to the block when an annotation card's sentence is not on the page", async () => {

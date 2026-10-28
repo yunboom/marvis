@@ -414,11 +414,12 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
 
   const togglePanel = (next: Panel) => setPanel((current) => (current === next ? "none" : next));
 
-  // Opens the annotation panel on the annotations of a clicked sentence; a
-  // click while the panel is open keeps it open.
+  // A clicked sentence selects its annotations: the annotation panel opens,
+  // or replaces another panel, and scrolls to the earliest card. A click
+  // while the panel is open keeps it open.
   const focusAnnotations = (ids: string[]) => {
     setPanel("annotations");
-    setAnnotationFocus((current) => ({ ids, seq: (current?.seq ?? 0) + 1 }));
+    setAnnotationFocus((current) => ({ ids, seq: (current?.seq ?? 0) + 1, reveal: true }));
   };
 
   const jumpTo = (blockId: string) => {
@@ -442,6 +443,13 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
     setActiveHeading(annotation.block_id);
     mark.scrollIntoView?.({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
     flashMark(mark);
+  };
+
+  // A clicked card becomes the selection and scrolls the page to its
+  // sentence; the card is already in view, so the panel does not scroll.
+  const selectAnnotation = (annotation: KbAnnotation) => {
+    setAnnotationFocus((current) => ({ ids: [annotation.id], seq: (current?.seq ?? 0) + 1, reveal: false }));
+    if (annotation.block_id && !annotation.anchor_lost) jumpToAnnotation(annotation);
   };
 
   const openSource = (source: KbSource) => {
@@ -590,7 +598,8 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
             pageId={page.id}
             focusIds={annotationFocus?.ids}
             focusSeq={annotationFocus?.seq}
-            onJump={jumpToAnnotation}
+            revealFocus={annotationFocus?.reveal}
+            onSelect={selectAnnotation}
             onClose={() => {
               setPanel("none");
               setAnnotationFocus(null);
@@ -612,10 +621,15 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   );
 }
 
-/** The annotations a clicked sentence carries; `seq` repeats a click on the same one. */
+/**
+ * The selected annotations: those on a clicked sentence, or a clicked card.
+ * `seq` repeats a click on the same one; `reveal` scrolls the panel to the
+ * card, which a sentence click needs and a card click does not.
+ */
 interface AnnotationFocus {
   ids: string[];
   seq: number;
+  reveal: boolean;
 }
 
 /**

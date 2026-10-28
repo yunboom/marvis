@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
 import { MessageSquare, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -182,43 +182,52 @@ function useSetAnnotationStatus() {
 function PanelCard({
   annotation,
   highlighted,
-  focused = false,
   canChange,
-  onJump,
+  onSelect,
 }: {
   annotation: KbAnnotation;
+  /** The selected card: the one the reader clicked, or one on the sentence they clicked. */
   highlighted: boolean;
-  /** One of the annotations on the sentence the reader clicked. */
-  focused?: boolean;
   canChange: boolean;
-  onJump?: (annotation: KbAnnotation) => void;
+  /** Selects the card; the page scrolls to its sentence. */
+  onSelect?: (annotation: KbAnnotation) => void;
 }) {
   const { t } = useT("kb");
   const timeAgo = useTimeAgo();
   const status = useSetAnnotationStatus();
-  const jumpable = !!onJump && !!annotation.block_id && !annotation.anchor_lost;
+  const selectable = !!onSelect;
 
-  // Clicking anywhere on the card jumps too; its own buttons and a text
-  // selection inside it keep their behavior. The quote button below is the
-  // keyboard path.
-  const jumpFromCard = (event: ReactMouseEvent<HTMLElement>) => {
-    if (!jumpable) return;
+  // Clicking anywhere on the card selects it; its own buttons and a text
+  // selection inside it keep their behavior.
+  const selectFromClick = (event: ReactMouseEvent<HTMLElement>) => {
+    if (!onSelect) return;
     if (event.target instanceof Element && event.target.closest("button, a, input, textarea")) return;
     if (window.getSelection()?.isCollapsed === false) return;
 
-    onJump(annotation);
+    onSelect(annotation);
+  };
+
+  // The card itself is the keyboard path; keys on its buttons stay theirs.
+  const selectFromKey = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (!onSelect || event.target !== event.currentTarget) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+    onSelect(annotation);
   };
 
   return (
     <article
       aria-label={annotation.body}
-      aria-current={focused ? "true" : undefined}
+      aria-current={selectable && highlighted ? "true" : undefined}
       data-annotation-id={annotation.id}
-      onClick={jumpFromCard}
+      tabIndex={selectable ? 0 : undefined}
+      onClick={selectFromClick}
+      onKeyDown={selectFromKey}
       className={cn(
         "flex flex-col gap-1.5 rounded-xl border bg-card p-3",
-        jumpable && "cursor-pointer",
-        highlighted && "ring-[1.5px] ring-warning/60",
+        selectable && "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        highlighted && "ring-[1.5px] ring-warning/60 focus-visible:ring-warning",
       )}
     >
       <div className="flex items-center gap-1.5 text-label">
@@ -229,13 +238,7 @@ function PanelCard({
         {annotation.anchor_lost && <span className={cn(KB_TAG, "shrink-0")}>{t(($) => $.annotation.lost)}</span>}
         <StatusTag status={annotation.status} />
       </div>
-      {jumpable ? (
-        <button type="button" className="text-left" onClick={() => onJump(annotation)}>
-          <QuoteBox annotation={annotation} />
-        </button>
-      ) : (
-        <QuoteBox annotation={annotation} />
-      )}
+      <QuoteBox annotation={annotation} />
       <OriginalQuote annotation={annotation} />
       <div className="text-body whitespace-pre-wrap">{annotation.body}</div>
       {canChange && annotation.status === "pending" && (
@@ -264,19 +267,25 @@ export function KbAnnotationPanel({
   pageId,
   focusIds,
   focusSeq = 0,
+  revealFocus = true,
   onClose,
-  onJump,
+  onSelect,
 }: {
   kbSlug: string;
   createdBy: string | undefined;
   pageId?: string;
-  /** Annotations to highlight, those on a sentence the reader clicked; the earliest is scrolled to. */
+  /**
+   * The selected annotations: the card the reader clicked, or those on the
+   * sentence they clicked. Without any, the first anchored card is highlighted.
+   */
   focusIds?: readonly string[];
-  /** Changes on every click, so clicking the same sentence again scrolls again. */
+  /** Changes on every selection, so clicking the same sentence again scrolls again. */
   focusSeq?: number;
+  /** Scrolls the earliest selected card into view; off when the reader picked the card here. */
+  revealFocus?: boolean;
   onClose: () => void;
-  /** Scrolls the page to an annotation's sentence. */
-  onJump?: (annotation: KbAnnotation) => void;
+  /** A card was clicked or activated: it becomes the selection and the page scrolls to its sentence. */
+  onSelect?: (annotation: KbAnnotation) => void;
 }) {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
@@ -297,11 +306,11 @@ export function KbAnnotationPanel({
     undefined,
   )?.id;
   useEffect(() => {
-    if (!earliest) return;
+    if (!earliest || !revealFocus) return;
     list.current
       ?.querySelector<HTMLElement>(`[data-annotation-id="${CSS.escape(earliest)}"]`)
       ?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-  }, [earliest, focusSeq]);
+  }, [earliest, focusSeq, revealFocus]);
 
   return (
     <KbPanel
@@ -340,9 +349,8 @@ export function KbAnnotationPanel({
                 ? focused.includes(annotation)
                 : index === 0 && !!annotation.quote && !annotation.anchor_lost
             }
-            focused={focused.includes(annotation)}
             canChange={canChange(annotation)}
-            onJump={onJump}
+            onSelect={onSelect}
           />
         ))}
         {composing ? (
