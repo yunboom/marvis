@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { issueListOptions, issueDetailOptions } from "@marvis/core/issues/queries";
 import { useWorkspaceId } from "@marvis/core/hooks";
+import { MENTION_CHIP_CLASS } from "../../common/mention-chip";
 import { StatusIcon } from "./status-icon";
 
 /**
@@ -48,8 +49,7 @@ export interface IssueChipProps {
   className?: string;
 }
 
-const BASE_CLASS =
-  "issue-mention inline-flex min-w-0 max-w-[min(18rem,100%)] items-center gap-1.5 rounded-md border mx-0.5 px-2 py-0.5 text-caption";
+const BASE_CLASS = `issue-mention ${MENTION_CHIP_CLASS}`;
 
 export function IssueChip({
   issueId,

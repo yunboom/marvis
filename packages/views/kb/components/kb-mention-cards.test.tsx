@@ -317,6 +317,15 @@ describe("annotation card", () => {
     expect(screen.getByText("去重键已经改成渠道交易号（MAR-142），这句是旧的。")).toBeInTheDocument();
   });
 
+  it("sits on the text baseline, with no middle-aligned wrapper lifting it", async () => {
+    mount(<KbMention type="kb_annotation" id="a-1" label="批注 · 支付回调" />);
+
+    const label = await screen.findByText(/^支付回调 · 去重键已经改成/);
+    const chip = label.parentElement!;
+    expect(chip).toHaveClass("inline-flex", "align-baseline", "[&>span:not([aria-hidden])]:self-baseline");
+    expect(chip.closest(".align-middle")).toBeNull();
+  });
+
   it("opens the annotation list for one on the whole knowledge base", async () => {
     mocked.getKnowledgeBaseAnnotation.mockResolvedValue({
       ...ANNOTATION,
