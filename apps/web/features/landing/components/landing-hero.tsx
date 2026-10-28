@@ -41,7 +41,7 @@ export function LandingHero() {
         </Link>
       </div>
 
-      <div className="mt-10 w-full max-w-[1136px] overflow-hidden rounded-(--landing-radius-panel) border border-white bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_64px_rgba(0,0,0,0.08)]">
+      <div className="mt-4 w-full max-w-[1136px] overflow-hidden rounded-(--landing-radius-panel) border border-white bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_64px_rgba(0,0,0,0.08)]">
         <Image
           // next/image does not prefix a string src with basePath, and the
           // optimizer then fetches the unprefixed path and gets a 404.
