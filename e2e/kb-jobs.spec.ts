@@ -1,8 +1,11 @@
 import "./env";
 
+import { createHash, randomBytes } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import pg from "pg";
 import { createTestApi } from "./helpers";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || `http://localhost:${process.env.PORT || "13840"}`;
 
 // A knowledge base job end to end: the member starts it in the browser, the
 // agent's side (draft linked to the job, a page written into it) is played
@@ -68,8 +71,26 @@ test("start a knowledge base job, watch its draft arrive and submit it", async (
     await expect(draftSide.getByRole("button", { name: "Submit for review" })).toBeDisabled();
     await expect(page.getByText("Write the on-call page for payment callbacks.")).toBeVisible();
 
-    // The agent's side: link a draft to the job and write a page into it.
-    const draft = await api.requestJSON<{ id: string }>("POST", "/api/kb/drafts", { knowledge_base: slug, job_id: jobId });
+    // The agent's side: a draft created with the task token of the job's
+    // chat is linked to the job; then a page is written into it.
+    const task = await db.query<{ id: string }>(
+      `SELECT t.id FROM agent_task_queue t JOIN kb_job j ON j.chat_session_id = t.chat_session_id WHERE j.id = $1`,
+      [jobId],
+    );
+    const taskToken = `mat_${randomBytes(24).toString("hex")}`;
+    await db.query(
+      `INSERT INTO task_token (token_hash, task_id, agent_id, workspace_id, user_id, expires_at)
+       VALUES ($1, $2, $3, $4, $5, now() + interval '1 hour')`,
+      [createHash("sha256").update(taskToken).digest("hex"), task.rows[0]!.id, agentId, workspace.id, userId],
+    );
+    const created = await fetch(`${API_BASE}/api/kb/drafts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${taskToken}` },
+      body: JSON.stringify({ knowledge_base: slug }),
+    });
+    expect(created.status).toBe(201);
+    const draft = (await created.json()) as { id: string; job_id?: string };
+    expect(draft.job_id).toBe(jobId);
     await api.requestJSON("POST", `/api/kb/drafts/${draft.id}/pages`, {
       parent: `${slug}:/`,
       slug: "on-call",
@@ -106,6 +127,7 @@ test("start a knowledge base job, watch its draft arrive and submit it", async (
       await db.query(`DELETE FROM kb_base WHERE id = $1`, [baseId]);
     }
     if (agentId) {
+      await db.query(`DELETE FROM task_token WHERE agent_id = $1`, [agentId]);
       await db.query(`DELETE FROM agent_task_queue WHERE agent_id = $1`, [agentId]);
       await db.query(`DELETE FROM agent WHERE id = $1`, [agentId]);
     }

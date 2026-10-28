@@ -169,22 +169,35 @@
     "starters": {
       "dev": {
         "title": "研发知识库",
-        "description": "系统架构、服务与接口、排障手册、技术决策"
+        "description": "系统架构、服务与接口、排障手册、技术决策",
+        "message": "帮我创建一个研发岗位使用的知识库"
       },
       "qa": {
         "title": "测试知识库",
-        "description": "用例设计方法、测试环境、回归清单、缺陷复盘"
+        "description": "用例设计方法、测试环境、回归清单、缺陷复盘",
+        "message": "帮我创建一个测试岗位使用的知识库"
       },
       "product": {
         "title": "产品知识库",
-        "description": "功能说明、业务规则、计费规则、对客话术"
+        "description": "功能说明、业务规则、计费规则、对客话术",
+        "message": "帮我创建一个产品岗位使用的知识库"
       },
       "team": {
         "title": "团队综合知识库",
-        "description": "研发、测试、产品共用，按领域标签区分"
+        "description": "研发、测试、产品共用，按领域标签区分",
+        "message": "帮我创建一个研发、测试、产品共用的知识库"
+      },
+      "agent_team": {
+        "title": "Agent 团队",
+        "description": "从任务、对话里持续沉淀 Agent 团队的决策和经验",
+        "message": "帮我创建一个当作 Agent 团队记忆的知识库"
+      },
+      "other": {
+        "title": "其他知识库",
+        "description": "说说你的职位，我来推荐要沉淀什么",
+        "message": "帮我创建一个知识库"
       }
     },
-    "starter_message": "建一个{{title}}：{{description}}",
     "questions": {
       "readers": "这个知识库给谁看？他们最常查什么？",
       "scope": "收录哪些内容，哪些不收？",
@@ -318,8 +331,7 @@
     "review_by": "应在 {{date}} 前复核",
     "hand_off": "交给智能体复核",
     "hand_off_all": "全部交给智能体复核",
-    "empty": "没有需要复核的页面。",
-    "all_message": "复核「{{name}}」里过了复核日期的页面。"
+    "empty": "没有需要复核的页面。"
   },
   "job": {
     "nav": "知识库作业",
@@ -392,7 +404,6 @@
         "description": "建一个自动化，每周做一次健康检查"
       }
     },
-    "starter_message": "{{title}}：{{description}}",
     "names": {
       "ingest": "收录资料",
       "health": "健康检查",
@@ -484,16 +495,11 @@
     },
     "entry": {
       "check_page": "让智能体检查本页",
-      "check_page_message": "检查「{{title}}」这一页。",
       "write_here": "让智能体在这里写一页",
       "write_under": "在 {{title}} 下写一页",
       "write_label": "要写什么",
       "write_submit": "交给智能体",
-      "cancel": "取消",
-      "new_page_message": "在「{{title}}」下新增一页：{{text}}",
-      "annotations_all_message_other": "处理{{name}}的全部 {{count}} 条待处理批注。",
-      "annotations_page_message_other": "处理「{{title}}」的 {{count}} 条待处理批注。",
-      "annotations_kb_message_other": "处理整个知识库的 {{count}} 条待处理批注。"
+      "cancel": "取消"
     },
     "feedback": {
       "label": "审核意见",
@@ -504,6 +510,24 @@
       "handed_off": "已交给智能体",
       "handoff_failed": "没有交给智能体",
       "chat_message": "处理 #{{number}} 的审核意见"
+    },
+    "prompts": {
+      "starters": {
+        "ingest": "把资料收录进{{kb}}，先问我要收录哪些。",
+        "health": "检查{{kb}}里过期、矛盾或缺失的内容。",
+        "merge": "找出{{kb}}里内容重复的页面，列给我确认后再合并。",
+        "annotations": "处理{{kb}}里待处理的批注，先列给我选。",
+        "schedule_ingest": "为{{kb}}建一个自动化，每天收录当天的任务、评论和对话。",
+        "schedule_health": "为{{kb}}建一个自动化，每周做一次健康检查。"
+      },
+      "leads": {
+        "ingest": "把下面的资料收录进{{kb}}：",
+        "health_page": "检查{{kb}}里这一页过期、矛盾或缺失的内容：",
+        "annotations": "处理{{kb}}里的这些批注：",
+        "new_page": "在{{kb}}的这一页下新增一页：",
+        "stale_all": "复核{{kb}}里过了复核日期的页面。"
+      },
+      "annotation_label": "批注 · {{where}}"
     }
   },
   "review": {

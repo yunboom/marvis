@@ -177,22 +177,35 @@
     "starters": {
       "dev": {
         "title": "Base de connaissances technique",
-        "description": "Architecture, services et interfaces, procédures de dépannage, décisions techniques"
+        "description": "Architecture, services et interfaces, procédures de dépannage, décisions techniques",
+        "message": "Aide-moi à créer une base de connaissances pour les développeurs"
       },
       "qa": {
         "title": "Base de connaissances de test",
-        "description": "Méthodes de conception de tests, environnements, listes de régression, analyses de défauts"
+        "description": "Méthodes de conception de tests, environnements, listes de régression, analyses de défauts",
+        "message": "Aide-moi à créer une base de connaissances pour les testeurs"
       },
       "product": {
         "title": "Base de connaissances produit",
-        "description": "Descriptions des fonctions, règles métier, règles de facturation, réponses clients"
+        "description": "Descriptions des fonctions, règles métier, règles de facturation, réponses clients",
+        "message": "Aide-moi à créer une base de connaissances pour les chefs de produit"
       },
       "team": {
         "title": "Base de connaissances d'équipe",
-        "description": "Partagée par le développement, les tests et le produit, organisée par étiquettes de domaine"
+        "description": "Partagée par le développement, les tests et le produit, organisée par étiquettes de domaine",
+        "message": "Aide-moi à créer une base de connaissances partagée par le développement, les tests et le produit"
+      },
+      "agent_team": {
+        "title": "Équipe d'Agents",
+        "description": "Conserver les décisions et les leçons de l'équipe d'Agents issues des tickets et des discussions",
+        "message": "Aide-moi à créer une base de connaissances qui sert de mémoire à notre équipe d'Agents"
+      },
+      "other": {
+        "title": "Autre chose",
+        "description": "Indiquez votre poste, je suggérerai quoi capitaliser",
+        "message": "Aide-moi à créer une base de connaissances"
       }
     },
-    "starter_message": "{{title}} : {{description}}",
     "questions": {
       "readers": "Qui lit cette base de connaissances et que cherche-t-on le plus ?",
       "scope": "Qu'est-ce qui y entre, et qu'est-ce qui n'y entre pas ?",
@@ -329,8 +342,7 @@
     "review_by": "À revoir avant le {{date}}",
     "hand_off": "Confier à un agent",
     "hand_off_all": "Tout confier à un agent",
-    "empty": "Aucune page à revérifier.",
-    "all_message": "Revérifie les pages de {{name}} dont la date de revue est dépassée."
+    "empty": "Aucune page à revérifier."
   },
   "job": {
     "nav": "Tâches de la base",
@@ -403,7 +415,6 @@
         "description": "Créer une automatisation qui fait un bilan de santé chaque semaine"
       }
     },
-    "starter_message": "{{title}} : {{description}}",
     "names": {
       "ingest": "Intégrer des sources",
       "health": "Bilan de santé",
@@ -497,19 +508,11 @@
     },
     "entry": {
       "check_page": "Demander à un agent de vérifier cette page",
-      "check_page_message": "Vérifie la page « {{title}} ».",
       "write_here": "Demander à un agent d’écrire une page ici",
       "write_under": "Écrire une page sous {{title}}",
       "write_label": "Contenu à écrire",
       "write_submit": "Confier à un agent",
-      "cancel": "Annuler",
-      "new_page_message": "Ajoute une page sous « {{title}} » : {{text}}",
-      "annotations_all_message_one": "Traite l’annotation en attente de {{name}} ({{count}}).",
-      "annotations_all_message_other": "Traite les {{count}} annotations en attente de {{name}}.",
-      "annotations_page_message_one": "Traite l’annotation en attente de « {{title}} » ({{count}}).",
-      "annotations_page_message_other": "Traite les {{count}} annotations en attente de « {{title}} ».",
-      "annotations_kb_message_one": "Traite l’annotation en attente sur toute la base ({{count}}).",
-      "annotations_kb_message_other": "Traite les {{count}} annotations en attente sur toute la base."
+      "cancel": "Annuler"
     },
     "feedback": {
       "label": "Remarques de revue",
@@ -521,6 +524,24 @@
       "handed_off": "Confié à l'agent",
       "handoff_failed": "Impossible de confier à l'agent",
       "chat_message": "Traiter les remarques de revue de #{{number}}"
+    },
+    "prompts": {
+      "starters": {
+        "ingest": "Intègre des sources dans {{kb}}. Demande-moi d’abord lesquelles.",
+        "health": "Vérifie {{kb}} : contenus périmés, contradictoires ou manquants.",
+        "merge": "Trouve les pages de {{kb}} qui se répètent et liste-les pour que je confirme avant de les fusionner.",
+        "annotations": "Traite les annotations en attente de {{kb}}. Liste-les d’abord pour que je choisisse.",
+        "schedule_ingest": "Crée une automatisation pour {{kb}} qui intègre chaque jour les tickets, commentaires et conversations du jour.",
+        "schedule_health": "Crée une automatisation pour {{kb}} qui lance une vérification chaque semaine."
+      },
+      "leads": {
+        "ingest": "Intègre les sources ci-dessous dans {{kb}} :",
+        "health_page": "Vérifie cette page de {{kb}} : contenus périmés, contradictoires ou manquants :",
+        "annotations": "Traite ces annotations de {{kb}} :",
+        "new_page": "Ajoute une page dans {{kb}} sous cette page :",
+        "stale_all": "Revérifie les pages de {{kb}} dont la date de revue est dépassée."
+      },
+      "annotation_label": "Annotation · {{where}}"
     }
   },
   "review": {

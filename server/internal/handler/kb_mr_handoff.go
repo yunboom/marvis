@@ -2,7 +2,11 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pkg/errors"
@@ -13,12 +17,21 @@ import (
 	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
+// kbHandoffDefaultMessage is the hand-off line for clients that send none.
+const kbHandoffDefaultMessage = "Resolve the review feedback on #%d"
+
 // Error codes of the review hand-off.
 const (
 	kbCodeMergeRequestNotFromJob  = "merge_request_not_from_job"
 	kbCodeHandoffJobCreatorOnly   = "job_creator_only"
 	kbCodeHandoffNothingToResolve = "nothing_to_resolve"
 )
+
+// KbMrHandoffRequest carries the line the member's chat shows for the
+// hand-off, written in the member's language by the client.
+type KbMrHandoffRequest struct {
+	Message string `json:"message"`
+}
 
 // KbMrHandoffResponse is the chat turn the review feedback was sent in.
 type KbMrHandoffResponse struct {
@@ -27,18 +40,20 @@ type KbMrHandoffResponse struct {
 	TaskID        string `json:"task_id"`
 }
 
-// HandoffKbMrReview sends the review feedback still to be resolved into the
-// chat of the job the merge request came from, as a message from the member
-// (POST /api/kb/merge-requests/{number}/handoff), so the job's agent revises
-// the same draft. Only the job's creator may; the request must be
-// changes_requested and come from a job.
+// HandoffKbMrReview asks the agent of the job the merge request came from to
+// resolve its review feedback (POST /api/kb/merge-requests/{number}/handoff),
+// so it revises the same draft. The member's chat shows the short line the
+// client sends; the steps go with it as a hidden instruction
+// (kb.ReviewHandoffInstruction), and the agent reads the feedback itself.
+// Only the job's creator may; the request must be changes_requested, come
+// from a job and have submitted reviews still to resolve.
 func (h *Handler) HandoffKbMrReview(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
 	if !ok {
 		return
 	}
-	mr, base, ok := h.loadKbMergeRequest(w, r)
+	mr, _, ok := h.loadKbMergeRequest(w, r)
 	if !ok {
 		return
 	}
@@ -62,9 +77,24 @@ func (h *Handler) HandoffKbMrReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message, err := h.kbReviewHandoffMessage(ctx, base, mr)
-	if err != nil {
+	// The body is optional: clients released before it existed send none.
+	var req KbMrHandoffRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && !errors.Is(err, io.EOF) {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	message := strings.TrimSpace(req.Message)
+	if message == "" {
+		message = fmt.Sprintf(kbHandoffDefaultMessage, mr.Number)
+	}
+
+	if err := h.requireKbOpenReviewRound(ctx, mr); err != nil {
 		h.writeKbError(w, r, err)
+		return
+	}
+	instruction, err := kb.ReviewHandoffInstruction(int(mr.Number))
+	if err != nil {
+		h.writeKbInternalError(w, r, err)
 		return
 	}
 
@@ -78,7 +108,7 @@ func (h *Handler) HandoffKbMrReview(w http.ResponseWriter, r *http.Request) {
 		h.writeKbInternalError(w, r, errors.Wrapf(err, "load job agent agent_id=%s", uuidToString(origin.JobAgentID)))
 		return
 	}
-	sent, err := h.TaskService.SendDirectChatMessage(ctx, session, agent, parseUUID(userID), message, nil, kbActorMember, parseUUID(userID))
+	sent, err := h.TaskService.SendDirectChatMessageWithInstruction(ctx, session, agent, parseUUID(userID), message, instruction, nil, kbActorMember, parseUUID(userID))
 	if err != nil {
 		if errors.Is(err, service.ErrChatTaskAgentNoRuntime) || errors.Is(err, service.ErrChatTaskAgentArchived) || errors.Is(err, service.ErrChatSessionArchived) {
 			writeErrorCode(w, http.StatusUnprocessableEntity, kbCodeAgentUnavailable, "agent cannot run")
@@ -101,59 +131,18 @@ func (h *Handler) HandoffKbMrReview(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, KbMrHandoffResponse{ChatSessionID: sessionID, MessageID: uuidToString(sent.Message.ID), TaskID: uuidToString(sent.Task.ID)})
 }
 
-// kbReviewHandoffMessage renders the feedback still to be resolved: the
-// reviews submitted since the owner last asked for review, with their
-// summaries and comments.
-func (h *Handler) kbReviewHandoffMessage(ctx context.Context, base db.KbBase, mr db.KbMergeRequest) (string, error) {
+// requireKbOpenReviewRound fails with nothing_to_resolve unless a review
+// submitted since the owner last asked for review is waiting.
+func (h *Handler) requireKbOpenReviewRound(ctx context.Context, mr db.KbMergeRequest) error {
 	reviews, err := h.Queries.ListKbMrReviews(ctx, db.ListKbMrReviewsParams{MergeRequestID: mr.ID, SubmittedState: kb.ReviewStateSubmitted})
 	if err != nil {
-		return "", errors.Wrapf(err, "list reviews merge_request_id=%s", uuidToString(mr.ID))
+		return errors.Wrapf(err, "list reviews merge_request_id=%s", uuidToString(mr.ID))
 	}
-	round := kbOpenReviewRound(mr, reviews)
-	if len(round) == 0 {
-		return "", kbFail(http.StatusConflict, kbCodeHandoffNothingToResolve, "no review feedback is waiting")
-	}
-	comments, err := h.listKbMrComments(ctx, mr, pgtype.UUID{})
-	if err != nil {
-		return "", err
-	}
-	overlay, err := loadKbOverlay(ctx, h.Queries, base.ID, mr.DraftID)
-	if err != nil {
-		return "", err
+	if len(kbOpenReviewRound(mr, reviews)) == 0 {
+		return kbFail(http.StatusConflict, kbCodeHandoffNothingToResolve, "no review feedback is waiting")
 	}
 
-	actors := make([]kbActor, 0, len(round)+len(comments))
-	for _, rv := range round {
-		actors = append(actors, kbActor{kind: kbActorMember, id: rv.ReviewerUserID})
-	}
-	for _, c := range comments {
-		actors = append(actors, kbActor{kind: c.AuthorType, id: c.AuthorID})
-	}
-	names, err := h.loadKbActorNames(ctx, mr.WorkspaceID, actors)
-	if err != nil {
-		return "", err
-	}
-
-	in := kb.ReviewHandoffInput{Number: int(mr.Number), Title: mr.Title, DraftID: uuidToString(mr.DraftID)}
-	inRound := make(map[pgtype.UUID]bool, len(round))
-	for _, rv := range round {
-		inRound[rv.ID] = true
-		if rv.Summary != "" {
-			in.Summaries = append(in.Summaries, kb.ReviewHandoffSummary{Reviewer: names.name(kbActorMember, rv.ReviewerUserID), Text: rv.Summary})
-		}
-	}
-	for _, c := range comments {
-		if !inRound[c.ReviewID] {
-			continue
-		}
-		entry := kb.ReviewHandoffComment{ID: uuidToString(c.ID), Author: names.name(c.AuthorType, c.AuthorID), QuoteText: c.QuoteText, Body: c.Body}
-		if c.QuoteBlockID != "" {
-			entry.QuotePage = kbOverlayPageTitle(overlay, uuidOrEmpty(c.QuotePageID))
-		}
-		in.Comments = append(in.Comments, entry)
-	}
-
-	return kb.ReviewHandoffMessage(in)
+	return nil
 }
 
 // kbOpenReviewRound picks the submitted reviews still to be resolved: those
@@ -171,18 +160,4 @@ func kbOpenReviewRound(mr db.KbMergeRequest, reviews []db.KbMrReview) []db.KbMrR
 	}
 
 	return out
-}
-
-// kbOverlayPageTitle names a page of the draft, falling back to its id.
-func kbOverlayPageTitle(overlay kbOverlay, pageID string) string {
-	if node, ok := overlay.tree.Node(pageID); ok && node.Title != "" {
-		return node.Title
-	}
-	if row, ok := overlay.rows[pageID]; ok {
-		if t, _ := row.header[kb.MetaTitle].(string); t != "" {
-			return t
-		}
-	}
-
-	return pageID
 }

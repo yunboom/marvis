@@ -13,12 +13,12 @@ import (
 	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
-// TestAdoptOrphanOnboardingKickoff pins the handoff the instant opening depends
+// TestAdoptOrphanChatInstructions pins the handoff the instant opening depends
 // on: the kickoff row is written with no task, and the member's first real send
 // is what delivers it to a runtime. If this stops working the profile block and
 // the "you already greeted them" instruction never reach the model, and Mika
 // introduces herself a second time (MUL-5827).
-func TestAdoptOrphanOnboardingKickoff(t *testing.T) {
+func TestAdoptOrphanChatInstructions(t *testing.T) {
 	pool := newResolveOriginatorPool(t)
 	ctx := context.Background()
 	q := db.New(pool)
@@ -38,7 +38,7 @@ func TestAdoptOrphanOnboardingKickoff(t *testing.T) {
 	// The kickoff as OpenMikaOnboardingChat writes it: a user row with no task.
 	if _, err := pool.Exec(ctx, `
 		INSERT INTO chat_message (chat_session_id, role, content, message_kind)
-		VALUES ($1, 'user', 'kickoff context', 'onboarding_kickoff')`, chatSessionID); err != nil {
+		VALUES ($1, 'user', 'kickoff context', 'instruction')`, chatSessionID); err != nil {
 		t.Fatalf("seed orphan kickoff: %v", err)
 	}
 
@@ -46,18 +46,18 @@ func TestAdoptOrphanOnboardingKickoff(t *testing.T) {
 	if err := pool.QueryRow(ctx, `SELECT gen_random_uuid()::text`).Scan(&firstTaskID); err != nil {
 		t.Fatalf("new task id: %v", err)
 	}
-	if err := q.AdoptOrphanOnboardingKickoff(ctx, db.AdoptOrphanOnboardingKickoffParams{
+	if err := q.AdoptOrphanChatInstructions(ctx, db.AdoptOrphanChatInstructionsParams{
 		ChatSessionID: util.MustParseUUID(chatSessionID),
 		TaskID:        util.MustParseUUID(firstTaskID),
 	}); err != nil {
-		t.Fatalf("AdoptOrphanOnboardingKickoff: %v", err)
+		t.Fatalf("AdoptOrphanChatInstructions: %v", err)
 	}
 
 	input, err := q.ListChatInputMessages(ctx, util.MustParseUUID(firstTaskID))
 	if err != nil {
 		t.Fatalf("ListChatInputMessages: %v", err)
 	}
-	if len(input) != 1 || input[0].MessageKind != protocol.ChatMessageKindOnboardingKickoff {
+	if len(input) != 1 || input[0].MessageKind != protocol.ChatMessageKindInstruction {
 		t.Fatalf("first turn's input batch = %+v, want the adopted kickoff", input)
 	}
 
@@ -68,11 +68,11 @@ func TestAdoptOrphanOnboardingKickoff(t *testing.T) {
 	if err := pool.QueryRow(ctx, `SELECT gen_random_uuid()::text`).Scan(&secondTaskID); err != nil {
 		t.Fatalf("new task id: %v", err)
 	}
-	if err := q.AdoptOrphanOnboardingKickoff(ctx, db.AdoptOrphanOnboardingKickoffParams{
+	if err := q.AdoptOrphanChatInstructions(ctx, db.AdoptOrphanChatInstructionsParams{
 		ChatSessionID: util.MustParseUUID(chatSessionID),
 		TaskID:        util.MustParseUUID(secondTaskID),
 	}); err != nil {
-		t.Fatalf("AdoptOrphanOnboardingKickoff (second send): %v", err)
+		t.Fatalf("AdoptOrphanChatInstructions (second send): %v", err)
 	}
 	second, err := q.ListChatInputMessages(ctx, util.MustParseUUID(secondTaskID))
 	if err != nil {
@@ -120,7 +120,7 @@ func TestWriteChatCompletionOutcomeNeverStampsOnboardingOpening(t *testing.T) {
 		t.Fatalf("new task id: %v", err)
 	}
 	for _, row := range []struct{ kind, content string }{
-		{"onboarding_kickoff", "kickoff context"},
+		{"instruction", "kickoff context"},
 		{"message", "Turn our current goals into a project board"},
 	} {
 		if _, err := pool.Exec(ctx, `
@@ -151,13 +151,12 @@ func TestWriteChatCompletionOutcomeNeverStampsOnboardingOpening(t *testing.T) {
 	}
 }
 
-// TestWriteChatCompletionOutcomeStampsAPreDeployKickoffTurn covers the rolling
-// deploy: a kickoff task the PREVIOUS server enqueued, claimed by this one. Its
-// input is a kickoff and nothing else — the old shape — and its reply really is
-// that member's opening, so it must still be stamped. message_kind is
-// persisted and nothing recomputes it, so getting this wrong costs that session
-// its starter cards permanently.
-func TestWriteChatCompletionOutcomeStampsAPreDeployKickoffTurn(t *testing.T) {
+// TestWriteChatCompletionOutcomeNeverStampsAnInstructionOnlyTurn pins the
+// removal of the pre-deploy kickoff path: an input batch holding only a hidden
+// instruction is no longer read as an onboarding opening, since instructions
+// now also carry knowledge base job steps and the server writes the opening
+// itself.
+func TestWriteChatCompletionOutcomeNeverStampsAnInstructionOnlyTurn(t *testing.T) {
 	pool := newResolveOriginatorPool(t)
 	ctx := context.Background()
 	q := db.New(pool)
@@ -180,8 +179,8 @@ func TestWriteChatCompletionOutcomeStampsAPreDeployKickoffTurn(t *testing.T) {
 	}
 	if _, err := pool.Exec(ctx, `
 		INSERT INTO chat_message (chat_session_id, role, content, message_kind, task_id)
-		VALUES ($1, 'user', 'kickoff context', 'onboarding_kickoff', $2)`, chatSessionID, taskID); err != nil {
-		t.Fatalf("seed pre-deploy kickoff turn: %v", err)
+		VALUES ($1, 'user', 'kickoff context', 'instruction', $2)`, chatSessionID, taskID); err != nil {
+		t.Fatalf("seed instruction-only turn: %v", err)
 	}
 
 	svc := &TaskService{Queries: q, TxStarter: pool}
@@ -197,9 +196,8 @@ func TestWriteChatCompletionOutcomeStampsAPreDeployKickoffTurn(t *testing.T) {
 	if row == nil {
 		t.Fatal("writeChatCompletionOutcome wrote no row")
 	}
-	if row.MessageKind != protocol.ChatMessageKindOnboardingOpening {
-		t.Fatalf("pre-deploy kickoff reply kind = %q, want %q — that session loses its starter cards",
-			row.MessageKind, protocol.ChatMessageKindOnboardingOpening)
+	if row.MessageKind != protocol.ChatMessageKindMessage {
+		t.Fatalf("instruction-only turn reply kind = %q, want %q", row.MessageKind, protocol.ChatMessageKindMessage)
 	}
 }
 
@@ -234,7 +232,7 @@ func TestOnboardingKickoffSurvivesCancelAndReanchor(t *testing.T) {
 	// the send path actually produces.
 	if _, err := pool.Exec(ctx, `
 		INSERT INTO chat_message (chat_session_id, role, content, message_kind, task_id, created_at)
-		VALUES ($1, 'user', 'kickoff context', 'onboarding_kickoff', $2, now() - interval '5 minutes'),
+		VALUES ($1, 'user', 'kickoff context', 'instruction', $2, now() - interval '5 minutes'),
 		       ($1, 'user', 'my first message', 'message', $2, now())`, chatSessionID, taskID); err != nil {
 		t.Fatalf("seed first real turn: %v", err)
 	}
@@ -255,7 +253,7 @@ func TestOnboardingKickoffSurvivesCancelAndReanchor(t *testing.T) {
 	if len(batch) != 2 {
 		t.Fatalf("input batch = %d row(s), want the kickoff plus the member's message", len(batch))
 	}
-	if batch[0].MessageKind != protocol.ChatMessageKindOnboardingKickoff {
+	if batch[0].MessageKind != protocol.ChatMessageKindInstruction {
 		t.Fatalf("the runtime would read the member's message before the product context: %+v", batch)
 	}
 
@@ -276,7 +274,7 @@ func TestOnboardingKickoffSurvivesCancelAndReanchor(t *testing.T) {
 		 WHERE chat_session_id = $1 AND task_id IS NULL AND role = 'user'`, chatSessionID).Scan(&orphanKind); err != nil {
 		t.Fatalf("the kickoff did not survive the cancel as an unowned row: %v", err)
 	}
-	if orphanKind != protocol.ChatMessageKindOnboardingKickoff {
+	if orphanKind != protocol.ChatMessageKindInstruction {
 		t.Fatalf("unowned row kind = %q, want the kickoff", orphanKind)
 	}
 }
@@ -309,19 +307,19 @@ func TestFailedFirstTurnReleasesTheOnboardingKickoff(t *testing.T) {
 	}
 	if _, err := pool.Exec(ctx, `
 		INSERT INTO chat_message (chat_session_id, role, content, message_kind, task_id)
-		VALUES ($1, 'user', 'kickoff context', 'onboarding_kickoff', $2)`, chatSessionID, taskID); err != nil {
+		VALUES ($1, 'user', 'kickoff context', 'instruction', $2)`, chatSessionID, taskID); err != nil {
 		t.Fatalf("seed adopted kickoff: %v", err)
 	}
 
-	if err := q.ReleaseOnboardingKickoffFromTask(ctx, util.MustParseUUID(taskID)); err != nil {
-		t.Fatalf("ReleaseOnboardingKickoffFromTask: %v", err)
+	if err := q.ReleaseChatInstructionsFromTask(ctx, util.MustParseUUID(taskID)); err != nil {
+		t.Fatalf("ReleaseChatInstructionsFromTask: %v", err)
 	}
 
 	// Unowned again, so the member's next send re-adopts it.
 	var orphans int
 	if err := pool.QueryRow(ctx, `
 		SELECT count(*) FROM chat_message
-		 WHERE chat_session_id = $1 AND message_kind = 'onboarding_kickoff' AND task_id IS NULL`,
+		 WHERE chat_session_id = $1 AND message_kind = 'instruction' AND task_id IS NULL`,
 		chatSessionID).Scan(&orphans); err != nil {
 		t.Fatalf("count orphaned kickoffs: %v", err)
 	}
@@ -333,17 +331,17 @@ func TestFailedFirstTurnReleasesTheOnboardingKickoff(t *testing.T) {
 	if err := pool.QueryRow(ctx, `SELECT gen_random_uuid()::text`).Scan(&nextTaskID); err != nil {
 		t.Fatalf("new task id: %v", err)
 	}
-	if err := q.AdoptOrphanOnboardingKickoff(ctx, db.AdoptOrphanOnboardingKickoffParams{
+	if err := q.AdoptOrphanChatInstructions(ctx, db.AdoptOrphanChatInstructionsParams{
 		ChatSessionID: util.MustParseUUID(chatSessionID),
 		TaskID:        util.MustParseUUID(nextTaskID),
 	}); err != nil {
-		t.Fatalf("AdoptOrphanOnboardingKickoff: %v", err)
+		t.Fatalf("AdoptOrphanChatInstructions: %v", err)
 	}
 	batch, err := q.ListChatInputMessages(ctx, util.MustParseUUID(nextTaskID))
 	if err != nil {
 		t.Fatalf("ListChatInputMessages: %v", err)
 	}
-	if len(batch) != 1 || batch[0].MessageKind != protocol.ChatMessageKindOnboardingKickoff {
+	if len(batch) != 1 || batch[0].MessageKind != protocol.ChatMessageKindInstruction {
 		t.Fatalf("the retry-after-failure turn did not pick the kickoff back up: %+v", batch)
 	}
 }
@@ -392,7 +390,7 @@ func TestFailedFirstTurnHandsTheKickoffToAQueuedSuccessor(t *testing.T) {
 	taskA := seedTask("running")
 	if _, err := pool.Exec(ctx, `
 		INSERT INTO chat_message (chat_session_id, role, content, message_kind, task_id, created_at)
-		VALUES ($1, 'user', 'kickoff context', 'onboarding_kickoff', $2, now() - interval '5 minutes'),
+		VALUES ($1, 'user', 'kickoff context', 'instruction', $2, now() - interval '5 minutes'),
 		       ($1, 'user', 'first message', 'message', $2, now() - interval '2 minutes')`,
 		chatSessionID, taskA); err != nil {
 		t.Fatalf("seed turn A: %v", err)
@@ -409,8 +407,8 @@ func TestFailedFirstTurnHandsTheKickoffToAQueuedSuccessor(t *testing.T) {
 	}
 
 	// A dies.
-	if err := q.ReleaseOnboardingKickoffFromTask(ctx, util.MustParseUUID(taskA)); err != nil {
-		t.Fatalf("ReleaseOnboardingKickoffFromTask: %v", err)
+	if err := q.ReleaseChatInstructionsFromTask(ctx, util.MustParseUUID(taskA)); err != nil {
+		t.Fatalf("ReleaseChatInstructionsFromTask: %v", err)
 	}
 
 	batch, err := q.ListChatInputMessages(ctx, util.MustParseUUID(taskB))
@@ -420,7 +418,7 @@ func TestFailedFirstTurnHandsTheKickoffToAQueuedSuccessor(t *testing.T) {
 	if len(batch) != 2 {
 		t.Fatalf("B's input batch = %d row(s), want the kickoff plus B's message: %+v", len(batch), batch)
 	}
-	if batch[0].MessageKind != protocol.ChatMessageKindOnboardingKickoff {
+	if batch[0].MessageKind != protocol.ChatMessageKindInstruction {
 		t.Errorf("B would read the member's message before the product context: %+v", batch)
 	}
 	if batch[1].Content != "second message" {
@@ -431,7 +429,7 @@ func TestFailedFirstTurnHandsTheKickoffToAQueuedSuccessor(t *testing.T) {
 	var orphans int
 	if err := pool.QueryRow(ctx, `
 		SELECT count(*) FROM chat_message
-		 WHERE chat_session_id = $1 AND message_kind = 'onboarding_kickoff' AND task_id IS NULL`,
+		 WHERE chat_session_id = $1 AND message_kind = 'instruction' AND task_id IS NULL`,
 		chatSessionID).Scan(&orphans); err != nil {
 		t.Fatalf("count orphans: %v", err)
 	}
@@ -478,19 +476,19 @@ func TestReleaseSkipsAnAlreadyStartedSuccessor(t *testing.T) {
 	taskA := seedTask("running")
 	if _, err := pool.Exec(ctx, `
 		INSERT INTO chat_message (chat_session_id, role, content, message_kind, task_id)
-		VALUES ($1, 'user', 'kickoff context', 'onboarding_kickoff', $2)`, chatSessionID, taskA); err != nil {
+		VALUES ($1, 'user', 'kickoff context', 'instruction', $2)`, chatSessionID, taskA); err != nil {
 		t.Fatalf("seed kickoff: %v", err)
 	}
 	seedTask("dispatched") // successor already claimed
 
-	if err := q.ReleaseOnboardingKickoffFromTask(ctx, util.MustParseUUID(taskA)); err != nil {
-		t.Fatalf("ReleaseOnboardingKickoffFromTask: %v", err)
+	if err := q.ReleaseChatInstructionsFromTask(ctx, util.MustParseUUID(taskA)); err != nil {
+		t.Fatalf("ReleaseChatInstructionsFromTask: %v", err)
 	}
 
 	var orphans int
 	if err := pool.QueryRow(ctx, `
 		SELECT count(*) FROM chat_message
-		 WHERE chat_session_id = $1 AND message_kind = 'onboarding_kickoff' AND task_id IS NULL`,
+		 WHERE chat_session_id = $1 AND message_kind = 'instruction' AND task_id IS NULL`,
 		chatSessionID).Scan(&orphans); err != nil {
 		t.Fatalf("count orphans: %v", err)
 	}

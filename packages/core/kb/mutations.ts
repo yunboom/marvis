@@ -264,13 +264,14 @@ export function useRequestKbMrReview() {
   });
 }
 
-/** Sends the open review feedback into the job's chat for its agent. */
+/** Hands the open review feedback to the job's agent with a visible `message`. */
 export function useHandoffKbMrReview() {
   const qc = useQueryClient();
   const wsId = useWorkspaceId();
 
   return useMutation({
-    mutationFn: (number: number) => api.handoffKnowledgeBaseMrReview(number),
+    mutationFn: ({ number, message }: { number: number; message: string }) =>
+      api.handoffKnowledgeBaseMrReview(number, message),
     onSettled: () => invalidateKbJobs(qc, wsId),
   });
 }

@@ -169,22 +169,35 @@
     "starters": {
       "dev": {
         "title": "研發知識庫",
-        "description": "系統架構、服務與介面、排障手冊、技術決策"
+        "description": "系統架構、服務與介面、排障手冊、技術決策",
+        "message": "幫我建立一個研發職位使用的知識庫"
       },
       "qa": {
         "title": "測試知識庫",
-        "description": "用例設計方法、測試環境、迴歸清單、缺陷覆盤"
+        "description": "用例設計方法、測試環境、迴歸清單、缺陷覆盤",
+        "message": "幫我建立一個測試職位使用的知識庫"
       },
       "product": {
         "title": "產品知識庫",
-        "description": "功能說明、業務規則、計費規則、對客話術"
+        "description": "功能說明、業務規則、計費規則、對客話術",
+        "message": "幫我建立一個產品職位使用的知識庫"
       },
       "team": {
         "title": "團隊綜合知識庫",
-        "description": "研發、測試、產品共用，按領域標籤區分"
+        "description": "研發、測試、產品共用，按領域標籤區分",
+        "message": "幫我建立一個研發、測試、產品共用的知識庫"
+      },
+      "agent_team": {
+        "title": "Agent 團隊",
+        "description": "從任務、對話中持續沉澱 Agent 團隊的決策和經驗",
+        "message": "幫我建立一個當作 Agent 團隊記憶的知識庫"
+      },
+      "other": {
+        "title": "其他知識庫",
+        "description": "說說你的職位，我來推薦要沉澱什麼",
+        "message": "幫我建立一個知識庫"
       }
     },
-    "starter_message": "建一個{{title}}：{{description}}",
     "questions": {
       "readers": "這個知識庫給誰看？他們最常查什麼？",
       "scope": "收錄哪些內容，哪些不收？",
@@ -318,8 +331,7 @@
     "review_by": "應在 {{date}} 前複核",
     "hand_off": "交給智慧體複核",
     "hand_off_all": "全部交給智慧體複核",
-    "empty": "沒有需要複核的頁面。",
-    "all_message": "複核「{{name}}」裡過了複核日期的頁面。"
+    "empty": "沒有需要複核的頁面。"
   },
   "job": {
     "nav": "知識庫作業",
@@ -392,7 +404,6 @@
         "description": "建一個自動化，每週做一次健康檢查"
       }
     },
-    "starter_message": "{{title}}：{{description}}",
     "names": {
       "ingest": "收錄資料",
       "health": "健康檢查",
@@ -484,16 +495,11 @@
     },
     "entry": {
       "check_page": "讓智慧體檢查本頁",
-      "check_page_message": "檢查「{{title}}」這一頁。",
       "write_here": "讓智慧體在這裡寫一頁",
       "write_under": "在 {{title}} 下寫一頁",
       "write_label": "要寫什麼",
       "write_submit": "交給智慧體",
-      "cancel": "取消",
-      "new_page_message": "在「{{title}}」下新增一頁：{{text}}",
-      "annotations_all_message_other": "處理{{name}}的全部 {{count}} 條待處理批註。",
-      "annotations_page_message_other": "處理「{{title}}」的 {{count}} 條待處理批註。",
-      "annotations_kb_message_other": "處理整個知識庫的 {{count}} 條待處理批註。"
+      "cancel": "取消"
     },
     "feedback": {
       "label": "稽核意見",
@@ -504,6 +510,24 @@
       "handed_off": "已交給智慧體",
       "handoff_failed": "沒有交給智慧體",
       "chat_message": "處理 #{{number}} 的稽核意見"
+    },
+    "prompts": {
+      "starters": {
+        "ingest": "把資料收錄進{{kb}}，先問我要收錄哪些。",
+        "health": "檢查{{kb}}裡過期、矛盾或缺失的內容。",
+        "merge": "找出{{kb}}裡內容重複的頁面，列給我確認後再合併。",
+        "annotations": "處理{{kb}}裡待處理的批註，先列給我選。",
+        "schedule_ingest": "為{{kb}}建一個自動化，每天收錄當天的任務、評論和對話。",
+        "schedule_health": "為{{kb}}建一個自動化，每週做一次健康檢查。"
+      },
+      "leads": {
+        "ingest": "把下面的資料收錄進{{kb}}：",
+        "health_page": "檢查{{kb}}裡這一頁過期、矛盾或缺失的內容：",
+        "annotations": "處理{{kb}}裡的這些批註：",
+        "new_page": "在{{kb}}的這一頁下新增一頁：",
+        "stale_all": "複核{{kb}}裡過了複核日期的頁面。"
+      },
+      "annotation_label": "批註 · {{where}}"
     }
   },
   "review": {

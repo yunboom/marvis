@@ -23,18 +23,6 @@ vi.mock("../../chat/components/use-chat-controller", () => ({ seedAcceptedPendin
 
 const SESSION = "session-1";
 
-// What the server sends the agent when the member hands review feedback over
-// (kb review_handoff template).
-const HANDOFF = [
-  "Change request #4 (Refund policy (v2)) has review feedback to resolve.",
-  "",
-  "Comment `c-1` from Wang Fang:",
-  "Say why.",
-  "",
-  "To resolve it:",
-  "- Read the full feedback with `marvis kb mr comment list 4`.",
-].join("\n");
-
 const message = (id: string, role: string, content: string): ChatMessage => ({
   id,
   chat_session_id: SESSION,
@@ -80,26 +68,23 @@ function renderConversation(messages: ChatMessage[], pending: ChatPendingTask, l
 }
 
 describe("useKbJobConversation", () => {
-  it("shows a review hand-off as a short line in the member's language", () => {
+  it("shows every message exactly as it was sent", () => {
+    const first = "检查[团队知识库](mention://kb/kb-1)里过期、矛盾或缺失的内容。";
     renderConversation(
-      [
-        message("m1", "user", "Knowledge base: Team (`team`)\nJob: x\n\nHow to work:\n- ...\n\nMember's message:\n整理退款政策"),
-        message("m2", "assistant", "Done."),
-        message("m3", "user", HANDOFF),
-      ],
+      [message("m1", "user", first), message("m2", "assistant", "Done."), message("m3", "user", "处理 #4 的审核意见")],
       {},
       "zh-Hans",
     );
 
     const items = screen.getAllByRole("listitem").map((li) => li.textContent);
-    expect(items).toEqual(["整理退款政策", "Done.", "处理 #4 的审核意见"]);
+    expect(items).toEqual([first, "Done.", "处理 #4 的审核意见"]);
   });
 
-  it("shows a queued review hand-off as the same short line", () => {
+  it("shows a queued message as it was sent", () => {
     renderConversation([message("m1", "user", "hello")], {
       task_id: "task-running",
       supports_queue: true,
-      queued_tasks: [{ task_id: "task-m2", status: "queued", created_at: "", message_id: "m2", content: HANDOFF }],
+      queued_tasks: [{ task_id: "task-m2", status: "queued", created_at: "", message_id: "m2", content: "Resolve the review feedback on #4" }],
     });
 
     expect(screen.getByRole("list", { name: "queue" }).textContent).toBe("Resolve the review feedback on #4");

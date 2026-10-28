@@ -2108,15 +2108,15 @@ type ChatLastMessage struct {
 	Role          string  `json:"role"`
 	CreatedAt     string  `json:"created_at"`
 	FailureReason *string `json:"failure_reason"`
-	// MessageKind is 'message' (default) or 'no_response'. Hidden onboarding
-	// kickoff rows make buildChatLastMessage return nil and are never exposed.
+	// MessageKind is 'message' (default) or 'no_response'. Hidden instruction
+	// rows make buildChatLastMessage return nil and are never exposed.
 	MessageKind string `json:"message_kind"`
 }
 
 // buildChatLastMessage assembles the preview from list-row columns; returns nil
 // when there is no last message (the LEFT JOIN produced a NULL timestamp).
 func buildChatLastMessage(at pgtype.Timestamptz, content, role string, failure pgtype.Text, kind string) *ChatLastMessage {
-	if !at.Valid || kind == protocol.ChatMessageKindOnboardingKickoff {
+	if !at.Valid || kind == protocol.ChatMessageKindInstruction {
 		return nil
 	}
 	return &ChatLastMessage{
@@ -2141,8 +2141,8 @@ type ChatMessageResponse struct {
 	// ElapsedMs is the wall-clock duration from task creation to terminal
 	// state. Drives "Replied in 38s" / "Failed after 12s" captions.
 	ElapsedMs *int64 `json:"elapsed_ms"`
-	// MessageKind is additive. User-facing list handlers filter onboarding
-	// kickoff rows; clients still understand that kind as a compatibility guard.
+	// MessageKind is additive. User-facing list handlers filter instruction
+	// rows; clients still understand that kind as a compatibility guard.
 	MessageKind string `json:"message_kind"`
 	// QuickActions are sanitized follow-ups generated with this assistant turn.
 	// Always an empty array for legacy rows and user messages.
@@ -2193,11 +2193,11 @@ func chatMessageToResponse(m db.ChatMessage, attachments []AttachmentResponse) C
 // visibleChatMessages removes product-authored context that is sent to the
 // agent runtime but is never part of the member-visible conversation. The
 // daemon reads its task-scoped input through ListChatInputMessages, so this
-// user-facing filter does not remove the kickoff from Mika's execution.
+// user-facing filter does not remove an instruction from the agent's run.
 func visibleChatMessages(messages []db.ChatMessage) []db.ChatMessage {
 	visible := make([]db.ChatMessage, 0, len(messages))
 	for _, message := range messages {
-		if message.MessageKind == protocol.ChatMessageKindOnboardingKickoff {
+		if message.MessageKind == protocol.ChatMessageKindInstruction {
 			continue
 		}
 		visible = append(visible, message)
@@ -2231,8 +2231,8 @@ func normalizeMessageKind(kind string) string {
 	switch kind {
 	case protocol.ChatMessageKindNoResponse:
 		return protocol.ChatMessageKindNoResponse
-	case protocol.ChatMessageKindOnboardingKickoff:
-		return protocol.ChatMessageKindOnboardingKickoff
+	case protocol.ChatMessageKindInstruction:
+		return protocol.ChatMessageKindInstruction
 	case protocol.ChatMessageKindOnboardingOpening:
 		return protocol.ChatMessageKindOnboardingOpening
 	default:

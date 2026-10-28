@@ -10,9 +10,12 @@ import (
 
 var updateBuilderGolden = flag.Bool("update-builder-golden", false, "rewrite the builder instructions snapshots")
 
-// platformKnowledgeBasesReference is the platform skill reference the builder
-// instructions point at for how to create and configure a knowledge base.
-const platformKnowledgeBasesReference = "../service/builtin_skills/marvis-platform/references/knowledge-bases.md"
+// platformSkillDir is the platform skill the builder instructions defer to.
+const platformSkillDir = "../service/builtin_skills/marvis-platform/"
+
+// builderSkillReference is the reference file the builder instructions cite,
+// relative to the skill.
+const builderSkillReference = "references/knowledge-bases/kb-create-update.md"
 
 // TestBuilderInstructionsSnapshots locks the rendered instructions of both
 // builder modes.
@@ -72,21 +75,20 @@ func TestBuilderInstructionsByMode(t *testing.T) {
 	}
 }
 
-// TestBuilderInstructionsCiteAnExistingSkillSection guards the section name
-// the builder instructions defer to: renaming the heading in the platform
-// skill would leave the builder pointing at nothing.
-func TestBuilderInstructionsCiteAnExistingSkillSection(t *testing.T) {
-	reference, err := os.ReadFile(platformKnowledgeBasesReference)
+// TestBuilderInstructionsCiteAnExistingSkillReference guards the reference the
+// builder instructions defer to: moving or renaming it in the platform skill
+// would leave the builder pointing at nothing.
+func TestBuilderInstructionsCiteAnExistingSkillReference(t *testing.T) {
+	if !strings.Contains(builderInstructionsSource, "`"+builderSkillReference+"`") {
+		t.Fatalf("builder instructions no longer cite %q", builderSkillReference)
+	}
+
+	reference, err := os.ReadFile(platformSkillDir + builderSkillReference)
 	if err != nil {
 		t.Fatalf("read platform skill reference: %v", err)
 	}
-
-	const section = "Creating and configuring a knowledge base"
-	if !strings.Contains(builderInstructionsSource, `"`+section+`"`) {
-		t.Fatalf("builder instructions no longer cite %q", section)
-	}
-	if !strings.Contains(string(reference), "\n## "+section+"\n") {
-		t.Errorf("%s has no %q section", platformKnowledgeBasesReference, section)
+	if !strings.Contains(string(reference), "# kb create / kb update") {
+		t.Errorf("%s is not the create and configure reference", builderSkillReference)
 	}
 }
 
@@ -96,8 +98,7 @@ func TestBuilderInstructionsCiteAnExistingSkillSection(t *testing.T) {
 func TestPromptTemplatesAvoidRetiredTerms(t *testing.T) {
 	sources := map[string]string{
 		"builder instructions": builderInstructionsSource,
-		"job first message":    jobMessageSource,
-		"review handoff":       reviewHandoffSource,
+		"instructions":         instructionsSource,
 		"purpose template":     PurposeTemplate,
 	}
 	// Decision 107: review comments no longer start agent runs.
@@ -119,7 +120,7 @@ func TestDefaultTemplates(t *testing.T) {
 	if strings.Contains(DefaultSchema, "home page") || strings.Contains(DefaultSchema, "never delete or move it") {
 		t.Errorf("default schema still treats quickstart as a reserved home page")
 	}
-	if !strings.HasPrefix(PurposeTemplate, "# Purpose\n") || !strings.Contains(PurposeTemplate, "## Common questions") {
+	if !strings.HasPrefix(PurposeTemplate, "# Purpose\n") || !strings.Contains(PurposeTemplate, "## Typical uses") {
 		t.Errorf("purpose template = %q", PurposeTemplate)
 	}
 }

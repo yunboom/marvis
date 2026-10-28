@@ -10,7 +10,7 @@ import { useAuthStore } from "@marvis/core/auth";
 import { useChatStore } from "@marvis/core/chat";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { KB_NEW_JOB_PARAMS, useWorkspacePaths } from "@marvis/core/paths";
-import { kbBaseDetailOptions, kbJobOptions, kbKeys } from "@marvis/core/kb/queries";
+import { kbAnnotationListOptions, kbBaseDetailOptions, kbJobOptions, kbKeys, kbPageOptions } from "@marvis/core/kb/queries";
 import {
   useCreateKbJob,
   useDeleteKbJob,
@@ -48,19 +48,11 @@ import { AgentPicker } from "../../autopilots/components/pickers/agent-picker";
 import { canAssignAgent } from "../../issues/components/pickers/assignee-picker";
 import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
+import { pageTitle } from "../components/kb-page-body";
 import { KbJobDraftPanel } from "./kb-job-draft-panel";
 import { parseKbJobRoute } from "./kb-job-state";
+import { useKbJobRequests, useKbJobStarters, type KbJobRequestContext } from "./kb-job-prompts";
 import { useKbJobConversation } from "./use-kb-job-conversation";
-
-/** The opener cards of a new job (design 9.2); two of them schedule runs. */
-const STARTER_CARDS = [
-  { key: "ingest", starter: "ingest" },
-  { key: "health", starter: "health" },
-  { key: "merge", starter: "merge" },
-  { key: "annotations", starter: "annotations" },
-  { key: "schedule_ingest", starter: "schedule" },
-  { key: "schedule_health", starter: "schedule" },
-] as const satisfies readonly { key: string; starter: KbJobStarter }[];
 
 const KNOWN_STARTERS: readonly KbJobStarter[] = ["ingest", "health", "merge", "annotations", "new_page", "schedule", "custom"];
 
@@ -201,7 +193,8 @@ function EmptyDraftSide() {
  * A new job (designs 9.2, 9.8, 4.3): pick the executing agent, then start
  * from an opener card or describe the job. An entry point (annotations,
  * "check this page", the tree's "+", raw files) brings its context in the
- * URL and writes the request out in the composer.
+ * URL; the page writes the request out in the composer, links included, so
+ * the member sees exactly what will be sent.
  */
 function KbNewJob({ kbSlug }: { kbSlug: string }) {
   const { t } = useT("kb");
@@ -215,10 +208,12 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
   const createJob = useCreateKbJob();
 
   const starter = readStarter(searchParams.get(KB_NEW_JOB_PARAMS.starter));
-  const annotationIds = splitIds(searchParams.get(KB_NEW_JOB_PARAMS.annotations));
+  const annotationsParam = searchParams.get(KB_NEW_JOB_PARAMS.annotations);
+  const annotationIds = useMemo(() => splitIds(annotationsParam), [annotationsParam]);
   const pageId = searchParams.get(KB_NEW_JOB_PARAMS.page) ?? "";
-  const sources = splitIds(searchParams.get(KB_NEW_JOB_PARAMS.sources));
-  const prefill = searchParams.get(KB_NEW_JOB_PARAMS.message) ?? "";
+  const sourcesParam = searchParams.get(KB_NEW_JOB_PARAMS.sources);
+  const sources = useMemo(() => splitIds(sourcesParam), [sourcesParam]);
+  const typed = searchParams.get(KB_NEW_JOB_PARAMS.message) ?? "";
   const draftKey = `kb-job-new:${kbSlug}`;
 
   // The default executor must be one the member may invoke (spec 10); the
@@ -232,14 +227,38 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
   const chosen = agentId || runnable[0]?.id || "";
   const runtimeLabel = useAgentRuntimeLabel(chosen);
 
+  const promptBase = useMemo(() => ({ id: base?.id ?? "", name: base?.name ?? kbSlug }), [base?.id, base?.name, kbSlug]);
+  const starters = useKbJobStarters(promptBase);
+  const requests = useKbJobRequests();
+
+  // The brought-in page and annotations are named in the request, so their
+  // titles load before the request is written.
+  const pageQuery = useQuery(kbPageOptions(wsId, pageId, ""));
+  const annotationQuery = useQuery({
+    ...kbAnnotationListOptions(wsId, kbSlug, "all"),
+    enabled: !!wsId && !!kbSlug && annotationIds.length > 0,
+  });
+  const contextReady =
+    !!base && (!pageId || !pageQuery.isPending) && (annotationIds.length === 0 || !annotationQuery.isPending);
+  const request = useMemo(() => {
+    if (!contextReady || !starter) return typed;
+    const context: KbJobRequestContext = { sources, text: typed };
+    if (pageId) context.page = { id: pageId, title: pageQuery.data ? pageTitle(pageQuery.data) : kbSlug };
+    if (annotationIds.length) {
+      const byId = new Map((annotationQuery.data ?? []).map((a) => [a.id, a]));
+      context.annotations = annotationIds.map((id) => ({ id, where: byId.get(id)?.page_title || promptBase.name }));
+    }
+    return requests.compose(starter, promptBase, context);
+  }, [contextReady, starter, typed, pageId, pageQuery.data, annotationQuery.data, annotationIds, sources, promptBase, requests, kbSlug]);
+
   // The entry point's request goes into the composer once; the member picks
   // the agent and sends it.
   const prefilled = useRef(false);
   useEffect(() => {
-    if (prefilled.current || !prefill) return;
+    if (prefilled.current || !request || (starter && !contextReady)) return;
     prefilled.current = true;
-    useChatStore.getState().setInputDraft(draftKey, prefill);
-  }, [draftKey, prefill]);
+    useChatStore.getState().setInputDraft(draftKey, request);
+  }, [draftKey, request, starter, contextReady]);
 
   const start = async (data: Omit<CreateKbJobRequest, "agent_id">, commitInput?: () => void) => {
     if (!chosen) {
@@ -272,22 +291,18 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
                 <h2 className="text-title-lg font-semibold">{t(($) => $.job.start_question, { name: kbName })}</h2>
               </div>
               <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
-                {STARTER_CARDS.map((card) => {
-                  const cardTitle = t(($) => $.job.starters[card.key].title);
-                  const description = t(($) => $.job.starters[card.key].description);
-                  return (
-                    <button
-                      key={card.key}
-                      type="button"
-                      disabled={!chosen || createJob.isPending}
-                      onClick={() => void start({ starter: card.starter, name: cardTitle, message: t(($) => $.job.starter_message, { title: cardTitle, description }) })}
-                      className="flex flex-col gap-1 rounded-xl border bg-card px-3.5 py-3 text-left transition-colors hover:bg-surface-hover disabled:opacity-60"
-                    >
-                      <span className="text-body font-medium">{cardTitle}</span>
-                      <span className="text-caption leading-5 text-faint-foreground">{description}</span>
-                    </button>
-                  );
-                })}
+                {starters.map((card) => (
+                  <button
+                    key={card.key}
+                    type="button"
+                    disabled={!chosen || !base || createJob.isPending}
+                    onClick={() => void start({ starter: card.starter, name: card.label, message: card.prompt })}
+                    className="flex flex-col gap-1 rounded-xl border bg-card px-3.5 py-3 text-left transition-colors hover:bg-surface-hover disabled:opacity-60"
+                  >
+                    <span className="text-body font-medium">{card.label}</span>
+                    <span className="text-caption leading-5 text-faint-foreground">{card.description}</span>
+                  </button>
+                ))}
               </div>
               <p className="text-center text-caption text-faint-foreground">{t(($) => $.job.start_hint)}</p>
             </>
@@ -302,7 +317,6 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
                 message: content,
                 annotation_ids: annotationIds.length ? annotationIds : undefined,
                 page_id: pageId || undefined,
-                sources: sources.length ? sources : undefined,
               },
               commitInput,
             )

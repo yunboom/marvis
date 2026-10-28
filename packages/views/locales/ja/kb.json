@@ -169,22 +169,35 @@
     "starters": {
       "dev": {
         "title": "開発ナレッジベース",
-        "description": "システム構成、サービスとインターフェース、障害対応手順、技術的な決定"
+        "description": "システム構成、サービスとインターフェース、障害対応手順、技術的な決定",
+        "message": "エンジニア向けのナレッジベースを作成して"
       },
       "qa": {
         "title": "テストナレッジベース",
-        "description": "テスト設計手法、テスト環境、回帰チェックリスト、不具合の振り返り"
+        "description": "テスト設計手法、テスト環境、回帰チェックリスト、不具合の振り返り",
+        "message": "テスト担当者向けのナレッジベースを作成して"
       },
       "product": {
         "title": "プロダクトナレッジベース",
-        "description": "機能説明、業務ルール、課金ルール、顧客向けの回答"
+        "description": "機能説明、業務ルール、課金ルール、顧客向けの回答",
+        "message": "プロダクトマネージャー向けのナレッジベースを作成して"
       },
       "team": {
         "title": "チーム共通ナレッジベース",
-        "description": "開発・テスト・プロダクトで共用、領域タグで区別"
+        "description": "開発・テスト・プロダクトで共用、領域タグで区別",
+        "message": "開発・テスト・プロダクトで共用するナレッジベースを作成して"
+      },
+      "agent_team": {
+        "title": "Agent チーム",
+        "description": "課題やチャットから Agent チームの決定と経験を継続的に蓄積",
+        "message": "Agent チームの記憶として使うナレッジベースを作成して"
+      },
+      "other": {
+        "title": "その他のナレッジベース",
+        "description": "職種を教えてください。何を蓄積すべきか提案します",
+        "message": "ナレッジベースを作成して"
       }
     },
-    "starter_message": "{{title}}を作成：{{description}}",
     "questions": {
       "readers": "このナレッジベースは誰が読み、何を最もよく調べますか？",
       "scope": "何を収録し、何を収録しませんか？",
@@ -318,8 +331,7 @@
     "review_by": "{{date}} までに再確認",
     "hand_off": "エージェントに再確認を任せる",
     "hand_off_all": "すべてエージェントに任せる",
-    "empty": "再確認が必要なページはありません。",
-    "all_message": "「{{name}}」で確認期限を過ぎたページを再確認してください。"
+    "empty": "再確認が必要なページはありません。"
   },
   "job": {
     "nav": "ナレッジベースのジョブ",
@@ -392,7 +404,6 @@
         "description": "毎週ヘルスチェックを行う自動化を作ります"
       }
     },
-    "starter_message": "{{title}}：{{description}}",
     "names": {
       "ingest": "資料を取り込む",
       "health": "ヘルスチェック",
@@ -484,16 +495,11 @@
     },
     "entry": {
       "check_page": "このページをエージェントにチェックさせる",
-      "check_page_message": "「{{title}}」のページをチェックしてください。",
       "write_here": "ここにエージェントにページを書かせる",
       "write_under": "{{title}} の下にページを書く",
       "write_label": "書く内容",
       "write_submit": "エージェントに任せる",
-      "cancel": "キャンセル",
-      "new_page_message": "「{{title}}」の下に新しいページを追加：{{text}}",
-      "annotations_all_message_other": "{{name}}の未対応の注釈 {{count}} 件をすべて処理してください。",
-      "annotations_page_message_other": "「{{title}}」の未対応の注釈 {{count}} 件を処理してください。",
-      "annotations_kb_message_other": "ナレッジベース全体の未対応の注釈 {{count}} 件を処理してください。"
+      "cancel": "キャンセル"
     },
     "feedback": {
       "label": "レビューの指摘",
@@ -504,6 +510,24 @@
       "handed_off": "エージェントに任せました",
       "handoff_failed": "エージェントに任せられませんでした",
       "chat_message": "#{{number}} のレビューの指摘に対応"
+    },
+    "prompts": {
+      "starters": {
+        "ingest": "{{kb}}に資料を取り込んでください。取り込む資料を先に確認してください。",
+        "health": "{{kb}}の古い内容、矛盾、不足をチェックしてください。",
+        "merge": "{{kb}}で内容が重複しているページを探し、統合する前に一覧で確認させてください。",
+        "annotations": "{{kb}}の未対応の注釈を処理してください。先に一覧を見せて選ばせてください。",
+        "schedule_ingest": "{{kb}}に、毎日その日の課題・コメント・チャットを取り込むオートメーションを作成してください。",
+        "schedule_health": "{{kb}}に、毎週ヘルスチェックを行うオートメーションを作成してください。"
+      },
+      "leads": {
+        "ingest": "次の資料を{{kb}}に取り込んでください：",
+        "health_page": "{{kb}}のこのページの古い内容、矛盾、不足をチェックしてください：",
+        "annotations": "{{kb}}の次の注釈を処理してください：",
+        "new_page": "{{kb}}のこのページの下に新しいページを追加してください：",
+        "stale_all": "{{kb}}で確認期限を過ぎたページを再確認してください。"
+      },
+      "annotation_label": "注釈 · {{where}}"
     }
   },
   "review": {

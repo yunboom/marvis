@@ -40,10 +40,7 @@ func kbSubmittedJob(t *testing.T, f kbJobFixture) (string, string, KbMergeReques
 	var taskID string
 	dbfx.QueryRow(t, `SELECT id FROM agent_task_queue WHERE chat_session_id = $1`, sessionID).Scan(&taskID)
 	agent := asJobAgent(testUserID, f.agentID, taskID)
-	draftID := createKbDraftAs(t, f.slug, func(r *http.Request) {
-		agent(r)
-		r.Body = jsonBody(map[string]any{"knowledge_base": f.slug, "job_id": jobID})
-	})
+	draftID := createKbDraftAs(t, f.slug, agent)
 	blocks := blockIDsOf(t, kbFetch(t, f.pageID, "detail=with-ids", http.StatusOK))
 	opsReq := testutil.WithURLParams(newRequest(http.MethodPost, "/api/kb/drafts/x/pages/x/ops", map[string]any{
 		"version": kbPageHead(t, f.pageID),

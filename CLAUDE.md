@@ -68,6 +68,14 @@
 - 前端：core 的 `IssueStatusGroup`、`STATUS_GROUP_ORDER`、`defaultStatusGroup`、目录的 `groupOf` / `inGroup`；状态库（`issue-statuses-tab.tsx`）按分组排列、行尾显示生命周期类型；看板、状态选择器、「PR 合并后改为」下拉框按分组排序；工作流模板「等待反馈」放需介入。移动端未对齐。
 - 同步上游时：上游新增的按生命周期做行为判断的代码继续用 `category`，不要改读 `status_group`；上游新增的状态插入路径（迁移、种子数据、工作流模板）要带上 `status_group`；`issue-statuses-tab.tsx`、`status-options.ts`、`pr-merge-status-row.tsx` 冲突时保留按分组的结构，只合入上游新增的行为。
 
+## 决策七：通用隐藏指令 instruction（fork 独有）
+
+产品写给智能体、成员看不到的输入统一存成 `chat_message.message_kind = 'instruction'`，上游的 `onboarding_kickoff` 已并入（迁移 `647_chat_message_instruction_kind` 把旧行改成 `instruction`）。
+
+- 语义：随所在轮次的输入批次交给智能体，排在成员消息之前；停止 / 编辑 / 失败时交给下一个排队轮次或变为无主、由下一次发送接管；从不恢复进输入框；所有面向成员的接口、预览和客户端都过滤它。
+- 写入：`TaskService.SendDirectChatMessageWithInstruction`（可见消息 + 隐藏指令同一事务）和 `createChatInstruction`（Mika 开场的无主指令）。只用于多步流程的场景：知识库任务的收录、健康检查、合并、定时运行，以及审核意见交接（`server/internal/kb/templates/instructions.md.tmpl`）。
+- 同步上游时：上游新增或修改的 `onboarding_kickoff` 判断一律改成 `instruction`（SQL、`protocol`、`chat.go`、`chat-message-list.tsx`、core schema），不要恢复第二个隐藏类型；上游的 `TaskInputIsOnboardingKickoffOnly` 部署窗口兼容逻辑已删除，不要合回。
+
 ## 同步上游流程
 
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。

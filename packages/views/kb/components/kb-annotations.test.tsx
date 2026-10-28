@@ -227,13 +227,14 @@ describe("KbAnnotationsPage", () => {
     expect(screen.getByRole("tab", { name: /In progress\s*1/ })).toBeInTheDocument();
 
     // Handing every pending annotation to an agent opens a new job with them
-    // brought in and the request written out.
+    // brought in; the job page writes the request.
     await userEvent.click(screen.getByRole("button", { name: "Hand all to an agent (4)" }));
     const target = new URL(vi.mocked(adapter.push).mock.calls[0]![0], "https://app.example");
     expect(target.pathname).toBe("/acme/kb/team/jobs/new");
     expect(target.searchParams.get("starter")).toBe("annotations");
     expect(target.searchParams.get("annotations")?.split(",").sort()).toEqual(["a-followed", "a-kb", "a-lost", "a-mine"]);
-    expect(target.searchParams.get("message")).toBe("Handle all 4 pending annotations in 团队知识库.");
+    // The job page writes the request; the entry point only brings the ids.
+    expect(target.searchParams.get("message")).toBeNull();
 
     const mine = screen.getByText("去重键已经改成渠道交易号。").closest("li")!;
     expect(within(mine).getByRole("link", { name: "支付回调 · paragraph 2" })).toHaveAttribute(
@@ -289,8 +290,7 @@ describe("page annotations", () => {
     expect(within(panel).queryByText("不用管")).not.toBeInTheDocument();
     await userEvent.click(within(panel).getByRole("button", { name: "Hand off to an agent" }));
     expect(adapter.push).toHaveBeenCalledWith(
-      "/acme/kb/team/jobs/new?starter=annotations&annotations=a-mine&message=" +
-        encodeURIComponent("Handle the 1 pending annotation on “支付回调”.").replace(/%20/g, "+"),
+      "/acme/kb/team/jobs/new?starter=annotations&annotations=a-mine",
     );
     // The annotated sentence is marked on the page while the panel is open.
     await waitFor(() => expect(document.querySelector("[data-block-id='b4'] mark")?.textContent).toBe("渠道回调按订单号加幂等键去重。"));

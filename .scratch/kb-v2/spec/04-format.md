@@ -376,8 +376,8 @@ English · 代码原文
 ```
 # Purpose
 
-## Readers
-Who reads this knowledge base and what they do with it.
+## Readers and role
+Who uses this knowledge base and the role it plays in their work, for example a reference to look things up, business knowledge to master (products, pricing, rules, policies), a record of experience and lessons, a library of scripts and phrasing, or standards to follow; it can combine several.
 
 ## In scope
 What belongs here: systems, processes, kinds of decisions.
@@ -385,8 +385,8 @@ What belongs here: systems, processes, kinds of decisions.
 ## Out of scope
 What does not belong here, and where it lives instead.
 
-## Common questions
-3 to 8 questions readers come here to answer.
+## Typical uses
+3 to 8 concrete situations where someone uses it, such as "set up the dev environment on day one", "check which discount applies to a customer's order" or "reply to a refund request with the approved wording".
 ```
 
 中文对照
@@ -394,17 +394,17 @@ What does not belong here, and where it lives instead.
 ```
 # 目标
 
-## 读者
-谁读这个知识库，读了用来做什么。
+## 读者与定位
+谁在用这个知识库，它在他们工作里起什么作用：比如用来查阅的参考、要熟练掌握的业务知识（产品、价格、规则、政策）、经验和教训的积累、话术和表达的沉淀、要遵守的规范等，也可以几种兼有。
 
-## 收录
-收什么：哪些系统、流程、哪类决策。
+## 收录范围
+收录哪些内容：系统、流程、哪类决策。
 
-## 不收
-不收什么，这些内容在哪里。
+## 不收录
+不收哪些内容，以及这些内容在哪里。
 
-## 常查问题
-读者来这里要回答的 3–8 个问题。
+## 典型用法
+3 到 8 个具体的使用场景，比如「入职第一天照着搭开发环境」「确认客户订单能用哪个优惠」「回复客户退款咨询时套用标准话术」。
 ```
 
 4.7 格式检查规则（服务端与 CLI 共用 `server/internal/kb/lint`）

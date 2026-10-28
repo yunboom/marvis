@@ -11,7 +11,7 @@ vi.mock("@marvis/core/paths", async (importOriginal) => {
 });
 
 describe("KbNewPagePopover", () => {
-  it("opens a new-page job under the row's page with the request written out (designs 4.1–4.3)", async () => {
+  it("opens a new-page job under the row's page with what the member typed (designs 4.1–4.3)", async () => {
     const adapter: NavigationAdapter = {
       push: vi.fn(),
       replace: vi.fn(),
@@ -40,7 +40,7 @@ describe("KbNewPagePopover", () => {
     expect(Object.fromEntries(target.searchParams)).toEqual({
       starter: "new_page",
       page: "page-pay",
-      message: "Add a page under “支付”: 回调人工处理的操作步骤",
+      message: "回调人工处理的操作步骤",
     });
   });
 });

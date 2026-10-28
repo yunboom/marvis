@@ -69,7 +69,7 @@ const KB_BUILDER_TRANSPORT: BuilderSessionTransport = {
 /** Starter directions of a new knowledge base (design 1.2). */
 const NO_SESSIONS: KbBuilderSession[] = [];
 
-const CREATE_STARTERS = ["dev", "qa", "product", "team"] as const;
+const CREATE_STARTERS = ["dev", "qa", "product", "team", "agent_team", "other"] as const;
 /** Opening questions of a configuration (design 10.1). */
 const CONFIG_QUESTIONS = ["readers", "scope", "structure", "writing"] as const;
 
@@ -205,7 +205,7 @@ function KbBuilderIntro({
                 <button
                   key={key}
                   type="button"
-                  onClick={() => onSend(t(($) => $.builder.starter_message, { title, description }))}
+                  onClick={() => onSend(t(($) => $.builder.starters[key].message))}
                   className="flex flex-col gap-0.5 rounded-xl bg-muted/60 px-3.5 py-3 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="text-body font-medium">{title}</span>

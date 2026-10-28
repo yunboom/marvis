@@ -543,7 +543,6 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
                     p.kbNewJob(kbSlug, {
                       starter: "health",
                       page: page.id,
-                      message: t(($) => $.job.entry.check_page_message, { title }),
                     }),
                   )
           }

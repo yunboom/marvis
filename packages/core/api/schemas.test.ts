@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ChatMessageSchema,
   AppConfigSchema,
   WecomInstallationSchema,
   ListWecomInstallationsResponseSchema,
@@ -179,6 +180,18 @@ describe("ChatSessionSchema", () => {
 
     expect(parsed.map((session) => session.id)).toEqual(["chat-1", "onboarding-chat"]);
     expect(parsed[1]?.last_message?.message_kind).toBe("onboarding_opening");
+  });
+});
+
+describe("ChatMessageSchema message_kind", () => {
+  const row = { id: "m1", chat_session_id: "s1", role: "user", content: "x", task_id: null, created_at: "" };
+
+  it("keeps the hidden instruction kind so clients can filter it", () => {
+    expect(ChatMessageSchema.parse({ ...row, message_kind: "instruction" }).message_kind).toBe("instruction");
+  });
+
+  it("reads an unknown kind as an ordinary message", () => {
+    expect(ChatMessageSchema.parse({ ...row, message_kind: "future_kind" }).message_kind).toBe("message");
   });
 });
 describe("IssueSchema (via ListIssuesResponseSchema)", () => {

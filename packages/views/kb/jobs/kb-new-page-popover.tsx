@@ -30,7 +30,7 @@ export function KbNewPagePopover({ kbSlug, parentId, parentTitle }: { kbSlug: st
       p.kbNewJob(kbSlug, {
         starter: "new_page",
         page: parentId,
-        message: t(($) => $.job.entry.new_page_message, { title: parentTitle, text: request }),
+        message: request,
       }),
     );
   };
