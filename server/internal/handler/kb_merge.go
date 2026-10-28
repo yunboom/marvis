@@ -349,6 +349,12 @@ type kbMergeOutcome struct {
 }
 
 func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db.KbMergeRequest, draftVersion int64, userID, actorType, actorID string) (kbMergeOutcome, error) {
+	// 作者名在开事务前查：事务里再从连接池取连接，并发合并时会占满连接池、互相等锁而死锁。
+	names, err := h.loadKbActorNames(ctx, mr.WorkspaceID, []kbActor{{kind: mr.AuthorType, id: mr.AuthorID}})
+	if err != nil {
+		return kbMergeOutcome{}, err
+	}
+
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
 		return kbMergeOutcome{}, errors.Wrap(err, "begin merge")
@@ -414,10 +420,6 @@ func (h *Handler) mergeKbMergeRequest(ctx context.Context, base db.KbBase, mr db
 		}
 	}
 
-	names, err := h.loadKbActorNames(ctx, mr.WorkspaceID, []kbActor{{kind: mr.AuthorType, id: mr.AuthorID}})
-	if err != nil {
-		return kbMergeOutcome{}, err
-	}
 	generated := kb.Generated(names.name(mr.AuthorType, mr.AuthorID), time.Now())
 
 	write := kb.MainlineWrite{

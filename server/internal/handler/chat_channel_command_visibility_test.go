@@ -10,6 +10,7 @@ import (
 	"time"
 
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 func insertChatVisibilityMessage(t *testing.T, sessionID, content, messageKind string, channelIngested bool, createdAt time.Time) {
@@ -99,6 +100,7 @@ func TestChannelCommandVisibility_SessionProjectionUsesPublicMessages(t *testing
 	active, err := testHandler.Queries.ListChatSessionsByCreator(context.Background(), db.ListChatSessionsByCreatorParams{
 		WorkspaceID: parseUUID(testWorkspaceID),
 		CreatorID:   parseUUID(testUserID),
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		t.Fatalf("list active chat sessions: %v", err)
@@ -133,6 +135,7 @@ func TestChannelCommandVisibility_SessionProjectionUsesPublicMessages(t *testing
 	all, err := testHandler.Queries.ListAllChatSessionsByCreator(context.Background(), db.ListAllChatSessionsByCreatorParams{
 		WorkspaceID: parseUUID(testWorkspaceID),
 		CreatorID:   parseUUID(testUserID),
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		t.Fatalf("list all chat sessions: %v", err)

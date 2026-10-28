@@ -58,6 +58,7 @@ export function KbConfigPanel({
   draft,
   onChange,
   onSchemaModeChange,
+  schemaExample,
   justUpdated,
   nameError,
   slugError,
@@ -66,6 +67,8 @@ export function KbConfigPanel({
   draft: KbDraft;
   onChange: (patch: Partial<KbDraft>, field: KbDraftField) => void;
   onSchemaModeChange: (schemaMode: KnowledgeBaseSchemaMode) => void;
+  /** Shown as the empty custom schema's placeholder: the built-in schema. */
+  schemaExample?: string;
   justUpdated: ReadonlySet<KbDraftField>;
   nameError: string | null;
   slugError: string | null;
@@ -171,7 +174,7 @@ export function KbConfigPanel({
           rows={14}
           value={draft.schema}
           readOnly={schemaReadOnly}
-          placeholder={t(($) => $.builder.panel.schema_placeholder)}
+          placeholder={schemaExample || t(($) => $.builder.panel.schema_placeholder)}
           className={cn("font-mono text-caption leading-6", schemaReadOnly && "bg-muted text-muted-foreground")}
           onChange={(e) => onChange({ schema: e.target.value }, "schema")}
         />

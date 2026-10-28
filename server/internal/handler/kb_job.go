@@ -494,6 +494,7 @@ func (h *Handler) createKbJobRows(ctx context.Context, base db.KbBase, agent db.
 		AgentID:     agent.ID,
 		CreatorID:   parseUUID(userID),
 		Title:       name,
+		Source:      protocol.ChatSessionSourceKbJob,
 	})
 	if err != nil {
 		return db.KbJob{}, db.ChatSession{}, errors.Wrapf(err, "create job chat session knowledge_base_id=%s", uuidToString(base.ID))

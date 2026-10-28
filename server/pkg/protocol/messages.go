@@ -265,6 +265,23 @@ type ChatMessagePayload struct {
 	SenderUserID string `json:"sender_user_id,omitempty"`
 }
 
+// Chat session sources (chat_session.source): where a conversation is shown,
+// independent of which agent runs it. Only ChatSessionSourceChat sessions
+// appear in chat surfaces; the others live on their own pages.
+const (
+	// ChatSessionSourceChat is an ordinary conversation, including Mika
+	// onboarding and external channel chats.
+	ChatSessionSourceChat = "chat"
+	// ChatSessionSourceKbJob is a knowledge base job's conversation.
+	ChatSessionSourceKbJob = "kb_job"
+	// ChatSessionSourceAutopilotRun is an autopilot run's follow-up chat.
+	ChatSessionSourceAutopilotRun = "autopilot_run"
+	// ChatSessionSourceKbBuilder is a knowledge base builder conversation.
+	ChatSessionSourceKbBuilder = "kb_builder"
+	// ChatSessionSourceAgentBuilder is an agent builder conversation.
+	ChatSessionSourceAgentBuilder = "agent_builder"
+)
+
 // Chat message kinds (chat_message.message_kind). Additive: unknown values
 // degrade to ChatMessageKindMessage on older readers.
 const (

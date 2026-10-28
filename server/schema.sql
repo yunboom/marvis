@@ -1994,6 +1994,8 @@ CREATE TABLE public.chat_session (
     pinned_at timestamp with time zone,
     project_id uuid,
     explicitly_created_at timestamp with time zone,
+    source text DEFAULT 'chat'::text NOT NULL,
+    CONSTRAINT chat_session_source_check CHECK ((source = ANY (ARRAY['chat'::text, 'kb_job'::text, 'autopilot_run'::text, 'kb_builder'::text, 'agent_builder'::text]))),
     CONSTRAINT chat_session_status_check CHECK ((status = ANY (ARRAY['active'::text, 'archived'::text])))
 );
 

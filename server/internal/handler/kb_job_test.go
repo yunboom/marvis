@@ -162,6 +162,7 @@ func TestKbJobFlow(t *testing.T) {
 		t.Fatalf("created job = %v", created)
 	}
 	sessionID, _ := created["chat_session_id"].(string)
+	assertChatSessionSource(t, sessionID, protocol.ChatSessionSourceKbJob)
 
 	// The first message is the member's request as sent; handling
 	// annotations needs no hidden instruction.
@@ -171,7 +172,7 @@ func TestKbJobFlow(t *testing.T) {
 
 	// The job's chat stays out of the chat list.
 	sessions, err := testHandler.Queries.ListChatSessionsByCreator(context.Background(), db.ListChatSessionsByCreatorParams{
-		WorkspaceID: parseUUID(testWorkspaceID), CreatorID: parseUUID(testUserID),
+		WorkspaceID: parseUUID(testWorkspaceID), CreatorID: parseUUID(testUserID), Source: protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		t.Fatal(err)

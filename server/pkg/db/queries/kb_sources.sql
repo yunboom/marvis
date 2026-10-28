@@ -47,7 +47,9 @@ WITH src AS (
        AND cs.workspace_id = sqlc.arg('workspace_id')::uuid
        AND cs.status = 'active'
        AND (sqlc.narg('chat_creator')::uuid IS NULL OR cs.creator_id = sqlc.narg('chat_creator')::uuid)
-       AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
+       -- Ordinary chats and run follow-up chats; never a job's own chat or a
+       -- builder conversation.
+       AND cs.source = ANY(sqlc.arg('chat_sources')::text[])
        AND (sqlc.narg('since')::timestamptz IS NULL OR lm.at > sqlc.narg('since')::timestamptz)
     UNION ALL
     SELECT 'raw'::text,

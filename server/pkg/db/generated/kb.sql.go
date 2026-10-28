@@ -2497,19 +2497,24 @@ JOIN LATERAL (
     FROM chat_message m
    WHERE m.chat_session_id = cs.id
      AND m.message_kind != 'channel_command'
+     -- A hidden instruction is never what the member last saw.
+     AND m.message_kind != 'instruction'
    ORDER BY m.created_at DESC
    LIMIT 1
 ) lm ON true
 WHERE cs.workspace_id = $1
   AND cs.status = 'active'
-  AND ($2::timestamptz IS NULL OR lm.created_at > $2::timestamptz)
-  AND ($3::uuid IS NULL OR cs.agent_id = $3::uuid)
+  -- Job, run follow-up and builder chats are not workspace chats.
+  AND cs.source = $2
+  AND ($3::timestamptz IS NULL OR lm.created_at > $3::timestamptz)
+  AND ($4::uuid IS NULL OR cs.agent_id = $4::uuid)
 ORDER BY lm.created_at DESC, cs.id
-LIMIT $5 OFFSET $4
+LIMIT $6 OFFSET $5
 `
 
 type ListKbWorkspaceChatSessionsParams struct {
 	WorkspaceID pgtype.UUID        `json:"workspace_id"`
+	Source      string             `json:"source"`
 	Since       pgtype.Timestamptz `json:"since"`
 	AgentID     pgtype.UUID        `json:"agent_id"`
 	RowOffset   int32              `json:"row_offset"`
@@ -2537,6 +2542,7 @@ type ListKbWorkspaceChatSessionsRow struct {
 func (q *Queries) ListKbWorkspaceChatSessions(ctx context.Context, arg ListKbWorkspaceChatSessionsParams) ([]ListKbWorkspaceChatSessionsRow, error) {
 	rows, err := q.db.Query(ctx, listKbWorkspaceChatSessions,
 		arg.WorkspaceID,
+		arg.Source,
 		arg.Since,
 		arg.AgentID,
 		arg.RowOffset,

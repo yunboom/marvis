@@ -17,6 +17,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/service"
 	"github.com/yunboom/marvis/server/internal/util"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // This test keeps only the external IM transport outside the process. From the
@@ -313,6 +314,7 @@ func TestChannelChatCommandE2ERotatesRouteAndFreezesTaskDelivery(t *testing.T) {
 	}
 	listed, err := queries.ListChatSessionsByCreator(ctx, db.ListChatSessionsByCreatorParams{
 		WorkspaceID: util.MustParseUUID(testWorkspaceID), CreatorID: util.MustParseUUID(testUserID),
+		Source: protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		t.Fatalf("list Chats after bare /new: %v", err)

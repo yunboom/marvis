@@ -302,6 +302,7 @@ func (h *Handler) getOrCreateMikaSession(ctx context.Context, agent db.Agent, wo
 		WorkspaceID: wsUUID,
 		CreatorID:   creatorUUID,
 		AgentID:     agent.ID,
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err == nil {
 		if err := tx.Commit(ctx); err != nil {
@@ -318,6 +319,7 @@ func (h *Handler) getOrCreateMikaSession(ctx context.Context, agent db.Agent, wo
 		AgentID:     agent.ID,
 		CreatorID:   creatorUUID,
 		Title:       strings.TrimSpace(title),
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		return db.ChatSession{}, err

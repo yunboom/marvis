@@ -14,6 +14,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/service"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"github.com/yunboom/marvis/server/pkg/dbid"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // Error codes of the run follow-up chat endpoint.
@@ -150,6 +151,7 @@ func (h *Handler) ensureAutopilotRunChatSession(ctx context.Context, autopilot d
 		CreatorID:   parseUUID(userID),
 		Title:       autopilot.Title,
 		ProjectID:   projectID,
+		Source:      protocol.ChatSessionSourceAutopilotRun,
 	})
 	if err != nil {
 		return pgtype.UUID{}, errors.Wrapf(err, "create run chat session run_id=%s", uuidToString(runID))

@@ -14,6 +14,7 @@ import (
 	"github.com/yunboom/marvis/server/internal/kb"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"github.com/yunboom/marvis/server/pkg/dbid"
+	"github.com/yunboom/marvis/server/pkg/protocol"
 )
 
 // maxKbBuilderDraftBytes bounds one stored right-hand configuration. It is
@@ -232,6 +233,7 @@ func (h *Handler) CreateKbBuilderSession(w http.ResponseWriter, r *http.Request)
 		AgentID:     builder.ID,
 		CreatorID:   ownerUUID,
 		Title:       title,
+		Source:      protocol.ChatSessionSourceKbBuilder,
 	})
 	if err != nil {
 		h.writeKbInternalError(w, r, errors.Wrapf(err, "create knowledge base builder chat flow_id=%s", flowID))

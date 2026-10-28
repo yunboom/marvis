@@ -14,7 +14,7 @@
 - 范围是全部被 git 跟踪的文本和路径：代码标识符、注释、文案、文档、CLI 命令（`marvis`）、Go module（`github.com/yunboom/marvis/server`）、npm scope（`@marvis/*`）、环境变量（`MARVIS_*`）、docker compose 项目名、外部域名（`multica.ai` → `marvis.ai`）。本地项目目录也叫 `marvis`。
 - 仓库地址指向本 fork：主仓库 `multica-ai/multica` → `yunboom/marvis`（clone / issue / release / raw 安装脚本 / Releases API），本仓库 CI 发布的 ghcr 镜像与 Helm chart、Homebrew tap、桌面端更新源、release 工作流的 owner 判断都改为 `yunboom`。上游的其他仓库（`marvis-cli`、`dsh-marvis-runtime`）、npm 包 `@marvis-ai/*` 和测试夹具里的仓库名保持改名后的 `marvis-ai`，它们在 yunboom 下不存在。
 - 规则：大小写保持替换（`multica`/`Multica`/`MULTICA` → `marvis`/`Marvis`/`MARVIS`），`multicast` 不替换。
-- 改名由 `scripts/rebrand-marvis.py` 完成，脚本幂等，只保留以下文件里的旧名：脚本本身、本文件、`server/migrations/649_rebrand_marvis.*.sql`。新增必须保留旧名的文件时，同步加进脚本的 `KEEP`。
+- 改名由 `scripts/rebrand-marvis.py` 完成，脚本幂等，只保留以下文件里的旧名：脚本本身、本文件、`server/migrations/651_rebrand_marvis.*.sql`。新增必须保留旧名的文件时，同步加进脚本的 `KEEP`。
 - `marvis.ai` 等域名需自行持有，否则对应链接失效。
 
 ## 决策一补充：机器级标识统一用 marvis（2026-10-23 撤回 marvis-studio）
@@ -87,6 +87,15 @@ web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由
 - compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`；`turbo.json` 的 `globalEnv` 登记了 `NEXT_PUBLIC_BASE_PATH`。
 - 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`。
 
+## 决策九：会话来源 chat_session.source（fork 独有）
+
+会话在哪里展示由 `chat_session.source` 决定，与谁执行（`agent_id`）分开：知识库任务和自动化运行的追问照常由用户选的智能体执行，只是不进聊天界面。取值是 `protocol.ChatSessionSource*` 常量，迁移 `650_chat_session_source` 加列、约束并回填，决策记录见 `.scratch/chat-session-source/decisions.md`。
+
+- 取值：`chat`（普通聊天，含 Mika 开局和外部渠道聊天）、`kb_job`（知识库任务）、`autopilot_run`（运行追问）、`kb_builder`、`agent_builder`。
+- 写入：`CreateChatSession` 必须传 `Source`；`createKbJobRows`、`ensureAutopilotRunChatSession`、`CreateKbBuilderSession`、`CreateAgentBuilderSession` 各写自己的值，其余路径写 `chat`。
+- 读取：聊天列表与未读（`ListChatSessionsByCreator`、`ListAllChatSessionsByCreator`）、运行中指示（`ListPendingChatTasksByCreator`、`HasPendingChatTasksByCreator`）、Mika 会话查找、工作区聊天列表（`ListKbWorkspaceChatSessions`）只读 `chat`；可收录的聊天来源（`ListKbSources`）读 `chat` 和 `autopilot_run`；草稿恢复按 `autopilot_run` 判断共享会话。智能体可见性过滤（`kind = 'user'`）保留不动。`chat_session_source_guard_test.go` 检查这些查询。
+- 同步上游时：上游新增的聊天列表类查询加 `source = 'chat'`（以 sqlc 参数传常量）；上游新增的建会话路径必须传 `Source`；不要恢复按 `kb_job` / `autopilot_run` 的 `NOT EXISTS` 排除。
+
 ## 同步上游流程
 
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。
@@ -96,7 +105,7 @@ web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由
    - 上游新增路径（含 `multica`）由脚本 `git mv`，跑完检查 `git status`。
    - 上表列出的样式文件冲突：保留本 fork 的 Marvis 取值，只合入上游新增的 token / 组件 / 变体，并按上面的规则改成 Marvis 风格。
 3. 数据库迁移：
-   - 上游迁移文本里的旧名由脚本替换；已应用过旧名迁移的库靠 `*_rebrand_marvis`（当前 649）改名，它从系统目录查找旧名对象，幂等。
+   - 上游迁移文本里的旧名由脚本替换；已应用过旧名迁移的库靠 `*_rebrand_marvis`（当前 651）改名，它从系统目录查找旧名对象，幂等。
    - 迁移编号 129 之后必须唯一（`migrations_lint_test.go`）。上游新增编号与 fork 迁移撞号时，fork 迁移整体顺延到上游最大编号之后，`*_rebrand_marvis` 始终排在最后；同步改 `cmd/migrate/main.go` 的并发索引表、脚本 `KEEP` 和引用迁移文件名的测试。版本号按完整文件名记录，改号后会再执行一次：rebrand 迁移幂等，其他 fork 迁移不保证幂等，已跑过的本地库直接重建。
    - 上游新迁移若引入新的旧名数据库对象（列、函数体里的 `multica.*` 设置等），重新执行 589 的改名逻辑（可复制为新编号迁移）。
 4. 依赖与校验：`pnpm install`（工作区包名已变），`make sqlc`，`make schema`（重新生成 `server/schema.sql` 完整表结构快照，只读参考，迁移仍是唯一来源），然后 `pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`。

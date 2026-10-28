@@ -96,6 +96,7 @@ func newChatTitleTestSession(t *testing.T, title string) db.ChatSession {
 		AgentID:     chatTitleTestAgentID(t),
 		CreatorID:   parseUUID(testUserID),
 		Title:       title,
+		Source:      protocol.ChatSessionSourceChat,
 	})
 	if err != nil {
 		t.Fatalf("create chat session: %v", err)
