@@ -87,6 +87,15 @@ web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由
 - compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`；`turbo.json` 的 `globalEnv` 登记了 `NEXT_PUBLIC_BASE_PATH`。
 - 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`。
 
+## 决策九：会话来源 chat_session.source（fork 独有）
+
+会话在哪里展示由 `chat_session.source` 决定，与谁执行（`agent_id`）分开：知识库任务和自动化运行的追问照常由用户选的智能体执行，只是不进聊天界面。取值是 `protocol.ChatSessionSource*` 常量，迁移 `650_chat_session_source` 加列、约束并回填，决策记录见 `.scratch/chat-session-source/decisions.md`。
+
+- 取值：`chat`（普通聊天，含 Mika 开局和外部渠道聊天）、`kb_job`（知识库任务）、`autopilot_run`（运行追问）、`kb_builder`、`agent_builder`。
+- 写入：`CreateChatSession` 必须传 `Source`；`createKbJobRows`、`ensureAutopilotRunChatSession`、`CreateKbBuilderSession`、`CreateAgentBuilderSession` 各写自己的值，其余路径写 `chat`。
+- 读取：聊天列表与未读（`ListChatSessionsByCreator`、`ListAllChatSessionsByCreator`）、运行中指示（`ListPendingChatTasksByCreator`、`HasPendingChatTasksByCreator`）、Mika 会话查找、工作区聊天列表（`ListKbWorkspaceChatSessions`）只读 `chat`；可收录的聊天来源（`ListKbSources`）读 `chat` 和 `autopilot_run`；草稿恢复按 `autopilot_run` 判断共享会话。智能体可见性过滤（`kind = 'user'`）保留不动。`chat_session_source_guard_test.go` 检查这些查询。
+- 同步上游时：上游新增的聊天列表类查询加 `source = 'chat'`（以 sqlc 参数传常量）；上游新增的建会话路径必须传 `Source`；不要恢复按 `kb_job` / `autopilot_run` 的 `NOT EXISTS` 排除。
+
 ## 同步上游流程
 
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。
