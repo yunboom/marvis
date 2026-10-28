@@ -1,4 +1,4 @@
-.PHONY: help makehelp dev server daemon cli marvis build standalone-bundle test migrate-up migrate-down sqlc schema seed clean setup start stop check worktree-env setup-main start-main stop-main check-main setup-worktree start-worktree stop-worktree check-worktree remove-worktree db-up db-down db-drop db-reset selfhost selfhost-build selfhost-stop up down status list destroy gc env-exec api-dev web-dev desktop-dev
+.PHONY: help makehelp dev server daemon cli marvis build standalone-bundle test migrate-up migrate-down sqlc schema seed clean setup start stop check worktree-env setup-main start-main stop-main check-main setup-worktree start-worktree stop-worktree check-worktree remove-worktree db-up db-down db-drop db-reset selfhost selfhost-build selfhost-stop deploy-prod deploy-prod-check up down status list destroy gc env-exec api-dev web-dev desktop-dev
 
 MAIN_ENV_FILE ?= .env
 WORKTREE_ENV_FILE ?= .env.worktree
@@ -142,6 +142,12 @@ selfhost-stop: ## Stop the self-hosted Docker Compose stack
 	@echo "==> Stopping Marvis services..."
 	$(COMPOSE) -f docker-compose.selfhost.yml down
 	@echo "✓ All services stopped."
+
+deploy-prod: ## Deploy the tip of origin/main to production (main only, CI must pass)
+	@bash scripts/deploy/prod.sh
+
+deploy-prod-check: ## Run the production deploy guards and server checks without changing anything
+	@bash scripts/deploy/prod.sh --check
 
 # ---------- Environments ----------
 ##@ Environments

@@ -80,7 +80,7 @@ Les mises à jour sont distribuées par système d'exploitation et par architect
 
 ## Se connecter à un serveur
 
-Desktop se connecte au serveur Marvis, c'est-à-dire au backend. L'application web est facultative.
+Desktop se connecte au serveur Marvis, c'est-à-dire au backend. Déployez l'application web avec lui : la connexion Google et Feishu et **Copier le lien** passent par l'application web.
 
 ### Premier lancement
 
@@ -124,9 +124,9 @@ Ce réglage ne concerne que cet ordinateur.
 
 ### Sans application web
 
-Quand le serveur n'a pas d'adresse web, ou que cette adresse est `localhost`, Desktop le traite comme un serveur sans application web :
+Quand le serveur n'a pas d'adresse web, ou que cette adresse est `localhost`, Desktop le traite comme un serveur sans application web. Un serveur déployé ne doit pas être dans cet état ; il se présente en développement local :
 
-- la page de connexion masque le bouton Google. Le bouton Feishu reste affiché quand la connexion Feishu est configurée sur le serveur et que son adresse de rappel pour Desktop est enregistrée dans la console développeur Feishu, voir [Desktop et application web](/self-host-quickstart#desktop-et-application-web). Desktop ouvre alors la connexion Feishu dans le navigateur et revient dans l'application à la fin. Sinon, seule la connexion par code e-mail reste ;
+- la page de connexion masque le bouton Google. Le bouton Feishu reste affiché quand la connexion Feishu est configurée sur le serveur et que `MARVIS_LARK_LOGIN_DESKTOP_REDIRECT_URI` indique une adresse de rappel du backend enregistrée dans la console développeur Feishu. Desktop ouvre alors la connexion Feishu dans le navigateur et revient dans l'application à la fin. Sinon, seule la connexion par code e-mail reste ;
 - **Copier le lien** produit un lien `marvis://open?...`, qui s'ouvre dans Desktop sur tout ordinateur où Desktop est installé et connecté au même serveur.
 
 ## Préconfigurer le serveur avec desktop.json
@@ -183,7 +183,7 @@ Il ne s'agit **pas** du `~/.marvis/config.json` du CLI, et les noms de clés dif
 - `wsUrl` : remplace le schéma de `apiUrl` par `ws` ou `wss` et ajoute `/ws` au chemin ;
 - `appUrl` : retire le préfixe `api.` lorsque l'hôte commence par `api.` et comporte au moins trois niveaux (`api.example.com` → `example.com`) ; sinon, elle reste identique à `apiUrl`.
 
-Une configuration préconfigurée comporte toujours une adresse web, déduite quand `appUrl` est omis. Pour utiliser Desktop sans application web, choisissez plutôt le serveur dans l'application.
+Une configuration préconfigurée comporte toujours une adresse web, déduite quand `appUrl` est omis.
 
 En général, `apiUrl` seul suffit. Ne les définissez explicitement que si la déduction ne correspond pas à votre déploiement ; les trois cas courants :
 
