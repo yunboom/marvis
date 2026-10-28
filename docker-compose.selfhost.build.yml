@@ -19,3 +19,13 @@ services:
       dockerfile: Dockerfile.web
       args:
         NEXT_PUBLIC_APP_VERSION: dev
+        # Path prefix the app is served under, e.g. /marvis. Build-time only.
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
+
+  docs:
+    image: marvis-docs:dev
+    build:
+      context: .
+      dockerfile: Dockerfile.docs
+      args:
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}

@@ -1,3 +1,5 @@
+import { BASE_PATH } from "@/config/base-path";
+
 /**
  * Legacy `/favicon.ico` requests point at the real SVG favicon.
  *
@@ -34,6 +36,6 @@ export const dynamic = "force-dynamic";
 export function GET() {
   return new Response(null, {
     status: 308,
-    headers: { Location: "/favicon.svg" },
+    headers: { Location: `${BASE_PATH}/favicon.svg` },
   });
 }

@@ -13,6 +13,7 @@ import {
 } from "@/features/auth/auth-cookie";
 import { detectWebOS } from "@/platform/client-os";
 import { useUserLocaleSyncEnabled } from "@/platform/user-locale-sync";
+import { BASE_PATH } from "@/config/base-path";
 
 // Legacy token in localStorage → keep this session in token mode so users who
 // logged in before the cookie-auth migration stay authed. They migrate to
@@ -35,7 +36,17 @@ function hasLegacyToken(): boolean {
 function deriveWsUrl(): string | undefined {
   if (typeof window === "undefined") return undefined;
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${proto}//${window.location.host}/ws`;
+  return `${proto}//${window.location.host}${BASE_PATH}/ws`;
+}
+
+// Under a basePath the same-origin API proxy lives at `/<basePath>/api/**`,
+// so bare `/api/**` requests would miss the app. An absolute base (not just the
+// prefix) keeps helpers that build shareable URLs from it, such as autopilot
+// webhook URLs, absolute too.
+function deriveApiBaseUrl(): string | undefined {
+  if (!BASE_PATH) return undefined;
+  if (typeof window === "undefined") return BASE_PATH;
+  return `${window.location.origin}${BASE_PATH}`;
 }
 
 // Build-time version preferred (CI sets NEXT_PUBLIC_APP_VERSION to a git tag
@@ -68,7 +79,7 @@ export function WebProviders({
   const localeAdapter = useMemo(() => createBrowserCookieLocaleAdapter(), []);
   return (
     <CoreProvider
-      apiBaseUrl={apiBaseUrl}
+      apiBaseUrl={apiBaseUrl || deriveApiBaseUrl()}
       wsUrl={wsUrl || deriveWsUrl()}
       cookieAuth={cookieAuth}
       onLogin={setLoggedInCookie}
