@@ -139,7 +139,8 @@ function KbBuilderSetupStep({
       const session = await api.createKbBuilderSession({
         mode,
         knowledge_base_id: mode === "config" ? base?.id : undefined,
-        schema_mode: mode === "config" && base?.schema_mode === "custom" ? "custom" : "default",
+        // A new knowledge base starts on a custom schema the builder drafts.
+        schema_mode: mode === "create" || base?.schema_mode === "custom" ? "custom" : "default",
         runtime_id: selectedRuntime.id,
         model: draft.model.trim() || undefined,
       });
@@ -301,8 +302,10 @@ function KbBuilderWorkspace({
   const saved = useMemo(() => (base ? kbDraftFromBase(base) : null), [base]);
 
   const seed = useCallback(
-    (): KbDraft => (mode === "config" && base ? kbDraftFromBase(base) : { ...EMPTY_KB_DRAFT, schema: builtInSchema }),
-    [base, builtInSchema, mode],
+    // A new knowledge base starts on an empty custom schema; the built-in one
+    // shows as the field's example.
+    (): KbDraft => (mode === "config" && base ? kbDraftFromBase(base) : { ...EMPTY_KB_DRAFT, schemaMode: "custom" }),
+    [base, mode],
   );
   const draftSync = useKbDraftSync({
     sessionId,
@@ -538,6 +541,7 @@ function KbBuilderWorkspace({
                 draft={draft}
                 onChange={handleChange}
                 onSchemaModeChange={handleSchemaModeChange}
+                schemaExample={builtInSchema}
                 justUpdated={justUpdated}
                 nameError={nameError}
                 slugError={slugError}

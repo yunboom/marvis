@@ -222,7 +222,7 @@ describe("KbBuilderPage · runtime step", () => {
       expect(mocked.createKbBuilderSession).toHaveBeenCalledWith({
         mode: "create",
         knowledge_base_id: undefined,
-        schema_mode: "default",
+        schema_mode: "custom",
         runtime_id: "rt-1",
         model: undefined,
       }),
@@ -282,7 +282,7 @@ describe("KbBuilderPage · create conversation", () => {
     }
   });
 
-  it("fills the form from the builder reply, keeps the default schema read-only and creates", async () => {
+  it("fills the form from the builder reply, including its custom schema, and creates", async () => {
     h.messages = [draftReply];
     mocked.listKbBuilderSessions.mockResolvedValue([session()]);
     mocked.createKnowledgeBase.mockResolvedValue({ ...BASE, id: "kb-9", slug: "pay-troubleshoot", mention: "" });
@@ -291,12 +291,11 @@ describe("KbBuilderPage · create conversation", () => {
     expect(await screen.findByDisplayValue("支付排障手册")).toBeInTheDocument();
     expect(screen.getByLabelText("Directory name")).toHaveValue("pay-troubleshoot");
     expect(screen.getByLabelText("Purpose")).toHaveValue("# 目标\n\n读者：研发。");
-    expect(screen.getByText("Just updated")).toBeInTheDocument();
-    // The builder's schema is ignored in the default mode.
+    expect(screen.getAllByText("Just updated")).toHaveLength(2);
+    // A new knowledge base starts on a custom schema, so the builder's one applies.
     const schema = screen.getByLabelText("Schema");
-    expect(schema).toHaveValue(DEFAULT_SCHEMA);
-    expect(schema).toHaveAttribute("readonly");
-    expect(screen.getByText("Read-only")).toBeInTheDocument();
+    expect(schema).toHaveValue("# Ignored");
+    expect(schema).not.toHaveAttribute("readonly");
     expect(within(screen.getByRole("list", { name: "transcript" })).getByText("好的，起草了。")).toBeInTheDocument();
 
     // The configuration autosaves, with the applied reply.
@@ -304,7 +303,7 @@ describe("KbBuilderPage · create conversation", () => {
       () =>
         expect(mocked.saveKbBuilderDraft).toHaveBeenCalledWith(
           "s-1",
-          expect.objectContaining({ name: "支付排障手册", schema_mode: "default", schema: "", applied_message_id: "m-1" }),
+          expect.objectContaining({ name: "支付排障手册", schema_mode: "custom", schema: "# Ignored", applied_message_id: "m-1" }),
         ),
       { timeout: 2000 },
     );
@@ -316,7 +315,8 @@ describe("KbBuilderPage · create conversation", () => {
         slug: "pay-troubleshoot",
         description: "支付排障。",
         purpose: "# 目标\n\n读者：研发。",
-        schema_mode: "default",
+        schema_mode: "custom",
+        schema: "# Ignored",
       }),
     );
     await waitFor(() => expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/pay-troubleshoot?welcome=1"));
@@ -364,16 +364,18 @@ describe("KbBuilderPage · create conversation", () => {
     expect(screen.getByLabelText("Schema")).not.toHaveAttribute("readonly");
   });
 
-  it("switches to a custom schema seeded from the default one", async () => {
+  it("starts on an empty custom schema with the default one as its example", async () => {
     mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
 
-    await waitFor(() => expect(screen.getByLabelText("Schema")).toHaveValue(DEFAULT_SCHEMA));
-    fireEvent.click(screen.getByRole("tab", { name: "Custom" }));
-    expect(screen.getByLabelText("Schema")).not.toHaveAttribute("readonly");
-    fireEvent.change(screen.getByLabelText("Schema"), { target: { value: "# Team rules" } });
+    const schema = await screen.findByLabelText("Schema");
+    await waitFor(() => expect(schema).toHaveAttribute("placeholder", DEFAULT_SCHEMA));
+    expect(schema).toHaveValue("");
+    expect(schema).not.toHaveAttribute("readonly");
+    fireEvent.change(schema, { target: { value: "# Team rules" } });
 
     fireEvent.click(screen.getByRole("tab", { name: "Default" }));
     expect(screen.getByLabelText("Schema")).toHaveValue(DEFAULT_SCHEMA);
+    expect(screen.getByLabelText("Schema")).toHaveAttribute("readonly");
     fireEvent.click(screen.getByRole("tab", { name: "Custom" }));
     expect(screen.getByLabelText("Schema")).toHaveValue("# Team rules");
   });
@@ -418,6 +420,8 @@ describe("KbBuilderPage · create conversation", () => {
   it("shows the default schema enlarged as a read-only preview", async () => {
     mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
 
+    await waitFor(() => expect(screen.getByLabelText("Schema")).toHaveAttribute("placeholder", DEFAULT_SCHEMA));
+    fireEvent.click(screen.getByRole("tab", { name: "Default" }));
     fireEvent.click(await screen.findByRole("button", { name: "Expand to view" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).queryByRole("textbox")).toBeNull();
