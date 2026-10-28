@@ -11,7 +11,6 @@ set -euo pipefail
 readonly APP_DIR=/root/apps/marvis
 readonly REPO_DIR="$APP_DIR/repo"
 readonly ENV_FILE="$APP_DIR/.env"
-readonly ENV_TEMPLATE="$REPO_DIR/scripts/deploy/prod.env.example"
 readonly BACKUP_DIR="$APP_DIR/backups"
 readonly RELEASES_FILE="$APP_DIR/releases.log"
 readonly LOCK_FILE="$APP_DIR/deploy.lock"
@@ -64,39 +63,22 @@ verify_main() {
   info "commit $sha is the tip of origin/main"
 }
 
-# First deploy only: copy the template and fill every __GENERATE_*__
-# placeholder with fresh randomness. An existing .env is never touched.
+# The config is the local .env.prod, which jump.exp uploads before this runs;
+# a --check run only compares it, so the host may not have one yet.
 ensure_env() {
   local check_only=$1
   if [ -f "$ENV_FILE" ]; then
     info "using $ENV_FILE"
     return 0
   fi
-  if [ "$check_only" = 1 ]; then
-    info "$ENV_FILE is missing; a real deploy creates it from $ENV_TEMPLATE"
-    return 0
-  fi
-
-  [ -f "$ENV_TEMPLATE" ] || die "missing template $ENV_TEMPLATE"
-  local tmp="$ENV_FILE.tmp"
-  cp "$ENV_TEMPLATE" "$tmp"
-  sed -i "s|__GENERATE_HEX32__|$(openssl rand -hex 32)|" "$tmp"
-  sed -i "s|__GENERATE_HEX24__|$(openssl rand -hex 24)|" "$tmp"
-  sed -i "s|__GENERATE_B64_32__|$(openssl rand -base64 32)|" "$tmp"
-  if grep -qE '^[^#]*__GENERATE_' "$tmp"; then
-    rm -f "$tmp"
-    die "unfilled placeholder left in $ENV_TEMPLATE"
-  fi
-  chmod 600 "$tmp"
-  mv "$tmp" "$ENV_FILE"
-  info "created $ENV_FILE with generated secrets; edit it for Lark login, email and LLM, then redeploy"
+  [ "$check_only" = 1 ] || die "$ENV_FILE is missing; deploy with scripts/deploy/prod.sh, which uploads it"
+  info "$ENV_FILE is not installed yet"
 }
 
 check_host() {
   command -v docker >/dev/null || die "docker is not installed"
   docker compose version >/dev/null 2>&1 || die "docker compose plugin is not installed"
   command -v flock >/dev/null || die "flock is not installed"
-  command -v openssl >/dev/null || die "openssl is not installed"
   command -v curl >/dev/null || die "curl is not installed"
 }
 
