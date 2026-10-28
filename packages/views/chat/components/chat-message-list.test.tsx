@@ -622,7 +622,7 @@ describe("ChatMessageList quick actions skeleton", () => {
 });
 
 describe("ChatMessageList onboarding kickoff", () => {
-  it("hides the product-authored kickoff while rendering Mika's reply", async () => {
+  it("hides a hidden instruction while rendering Mika's reply", async () => {
     render(
       <I18nProvider locale="en" resources={TEST_RESOURCES}>
         <QueryClientProvider client={new QueryClient()}>
@@ -635,7 +635,7 @@ describe("ChatMessageList onboarding kickoff", () => {
                 content: "INTERNAL ONBOARDING PROMPT",
                 task_id: TASK_ID,
                 created_at: new Date(0).toISOString(),
-                message_kind: "onboarding_kickoff",
+                message_kind: "instruction",
               },
               {
                 id: "reply",

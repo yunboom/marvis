@@ -318,8 +318,7 @@
     "review_by": "{{date}}까지 재검토",
     "hand_off": "에이전트에게 재검토 맡기기",
     "hand_off_all": "모두 에이전트에게 맡기기",
-    "empty": "재검토가 필요한 페이지가 없습니다.",
-    "all_message": "「{{name}}」에서 검토 기한이 지난 페이지를 재검토하세요."
+    "empty": "재검토가 필요한 페이지가 없습니다."
   },
   "job": {
     "nav": "지식 베이스 작업",
@@ -392,7 +391,6 @@
         "description": "매주 상태 점검을 하는 자동화를 만듭니다"
       }
     },
-    "starter_message": "{{title}}: {{description}}",
     "names": {
       "ingest": "자료 수집",
       "health": "상태 점검",
@@ -484,16 +482,11 @@
     },
     "entry": {
       "check_page": "에이전트에게 이 페이지 점검 요청",
-      "check_page_message": "「{{title}}」 페이지를 점검하세요.",
       "write_here": "에이전트에게 여기에 페이지 작성 요청",
       "write_under": "{{title}} 아래에 페이지 작성",
       "write_label": "쓸 내용",
       "write_submit": "에이전트에게 맡기기",
-      "cancel": "취소",
-      "new_page_message": "「{{title}}」 아래에 새 페이지 추가: {{text}}",
-      "annotations_all_message_other": "{{name}}의 대기 중인 주석 {{count}}개를 모두 처리하세요.",
-      "annotations_page_message_other": "「{{title}}」의 대기 중인 주석 {{count}}개를 처리하세요.",
-      "annotations_kb_message_other": "지식 베이스 전체의 대기 중인 주석 {{count}}개를 처리하세요."
+      "cancel": "취소"
     },
     "feedback": {
       "label": "리뷰 의견",
@@ -504,6 +497,24 @@
       "handed_off": "에이전트에게 맡겼습니다",
       "handoff_failed": "에이전트에게 맡기지 못했습니다",
       "chat_message": "#{{number}}의 리뷰 의견 처리"
+    },
+    "prompts": {
+      "starters": {
+        "ingest": "{{kb}}에 자료를 수집하세요. 어떤 자료인지 먼저 물어보세요.",
+        "health": "{{kb}}에서 오래되거나 모순되거나 빠진 내용을 점검하세요.",
+        "merge": "{{kb}}에서 내용이 중복된 페이지를 찾아, 병합하기 전에 목록으로 확인받으세요.",
+        "annotations": "{{kb}}의 대기 중인 주석을 처리하세요. 먼저 목록을 보여 주고 고르게 해 주세요.",
+        "schedule_ingest": "{{kb}}에 매일 그날의 이슈, 댓글, 채팅을 수집하는 자동화를 만드세요.",
+        "schedule_health": "{{kb}}에 매주 상태 점검을 하는 자동화를 만드세요."
+      },
+      "leads": {
+        "ingest": "아래 자료를 {{kb}}에 수집하세요:",
+        "health_page": "{{kb}}의 이 페이지에서 오래되거나 모순되거나 빠진 내용을 점검하세요:",
+        "annotations": "{{kb}}의 다음 주석을 처리하세요:",
+        "new_page": "{{kb}}의 이 페이지 아래에 새 페이지를 추가하세요:",
+        "stale_all": "{{kb}}에서 검토 기한이 지난 페이지를 재검토하세요."
+      },
+      "annotation_label": "주석 · {{where}}"
     }
   },
   "review": {

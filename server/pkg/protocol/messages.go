@@ -272,11 +272,14 @@ const (
 	// without any text reply — a visible, deliberate terminal outcome rather
 	// than a silently-dropped turn (MUL-4351).
 	ChatMessageKindNoResponse = "no_response"
-	// ChatMessageKindOnboardingKickoff is the server-authored, hidden first
-	// turn used to start Mika's onboarding conversation. It is persisted so
-	// the runtime receives a normal immutable chat input batch. User-facing
-	// APIs filter it out; clients also ignore the kind defensively.
-	ChatMessageKindOnboardingKickoff = "onboarding_kickoff"
+	// ChatMessageKindInstruction is a product-authored user-role input that
+	// is delivered to the agent with a turn but never shown to the member:
+	// Mika's onboarding kickoff, or the process steps that go with a
+	// knowledge base job's visible request. It rides in the turn's input
+	// batch like any user row, survives stop and retry by moving on to the
+	// next turn, and is never restored into the composer. User-facing APIs
+	// filter it out; clients also ignore the kind defensively.
+	ChatMessageKindInstruction = "instruction"
 	// ChatMessageKindOnboardingOpening marks the assistant reply produced by
 	// the onboarding kickoff. The kickoff row itself never reaches clients, so
 	// the opening self-describes: chat renders the starter cards under this

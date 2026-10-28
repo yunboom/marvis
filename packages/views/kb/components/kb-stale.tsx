@@ -10,6 +10,7 @@ import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { parseKbRoute } from "../utils/kb-markdown";
+import { useKbJobRequests } from "../jobs/kb-job-prompts";
 import { formatShortDate } from "./kb-page-body";
 
 /**
@@ -26,17 +27,17 @@ export function KbStalePagesPage() {
   const { data: base } = useQuery(kbBaseDetailOptions(wsId, kbSlug));
   const { data: pages = [], isLoading } = useQuery(kbStalePagesOptions(wsId, kbSlug));
   const kbName = base?.name ?? kbSlug;
+  const requests = useKbJobRequests();
 
   const checkPage = (page: KbStalePage) =>
     push(
       p.kbNewJob(kbSlug, {
         starter: "health",
         page: page.page_id,
-        message: t(($) => $.job.entry.check_page_message, { title: page.title || page.path }),
       }),
     );
   const checkAll = () =>
-    push(p.kbNewJob(kbSlug, { starter: "health", message: t(($) => $.stale_list.all_message, { name: kbName }) }));
+    push(p.kbNewJob(kbSlug, { starter: "health", message: requests.staleAll({ id: base?.id ?? "", name: kbName }) }));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

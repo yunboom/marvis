@@ -164,11 +164,13 @@ var kbDraftCmd = &cobra.Command{
 
 var kbDraftCreateCmd = &cobra.Command{
 	Use:   "create <kb>",
-	Short: "Create a draft; with --job, link it to that job",
-	Long: `Create a draft, and link it to the job when --job is given. One merge request
-has one draft: from creating it, submitting it, to revising it after review,
-every read and write carries the same draft ID; however many rounds and
-pages you change, they all go into this draft.`,
+	Short: "Create a draft; in a knowledge base job's chat it is linked to that job",
+	Long: `Create a draft. Run from a knowledge base job's chat, the draft is linked to
+that job and the response carries its job_id. When the job already has a
+draft the command fails with job_draft_exists and that draft_id: keep writing
+into it. One merge request has one draft: from creating it, submitting it, to
+revising it after review, every read and write carries the same draft ID;
+however many rounds and pages you change, they all go into this draft.`,
 	Args: exactArgs(1),
 	RunE: runKbDraftCreate,
 }
@@ -301,7 +303,6 @@ func init() {
 	addKbOutput(kbClaimsListCmd, kbOutputTable)
 
 	kbDraftCreateCmd.Flags().String("title", "", "What this draft changes; unrelated to the merge request title")
-	kbDraftCreateCmd.Flags().String("job", "", "Job ID (full UUID), given in the first message; links the new draft to this job")
 	addKbOutput(kbDraftCreateCmd, kbOutputJSON)
 	addKbOutput(kbDraftCheckCmd, kbOutputJSON)
 	addKbOutput(kbDraftSyncCmd, kbOutputJSON)
@@ -917,9 +918,6 @@ func runKbClaimsList(cmd *cobra.Command, args []string) error {
 
 func runKbDraftCreate(cmd *cobra.Command, args []string) error {
 	body := map[string]any{"knowledge_base": args[0], "title": kbString(cmd, "title")}
-	if job := kbString(cmd, "job"); job != "" {
-		body["job_id"] = job
-	}
 
 	return kbCall(cmd, func(ctx context.Context, client *cli.APIClient) error {
 		var draft map[string]any

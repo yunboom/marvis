@@ -31,6 +31,12 @@ SELECT * FROM kb_job
 WHERE kb_job.workspace_id = $1 AND kb_job.id = $2
   AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL);
 
+-- name: GetKbJobByChatSession :one
+-- The job whose conversation is this chat session, if any.
+SELECT * FROM kb_job
+WHERE kb_job.workspace_id = $1 AND kb_job.chat_session_id = $2
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_job.knowledge_base_id AND b.deleted_at IS NULL);
+
 -- name: GetKbJobByDraft :one
 -- The job a draft is linked to.
 SELECT j.* FROM kb_job_draft jd
