@@ -1557,7 +1557,7 @@
       "no_handoff_step": "這一步不交接：任務進入時負責人不變，也不會啟動執行。",
       "zone": {
         "start": "開始",
-        "middle": "中間步驟",
+        "middle": "工作",
         "middle_caption_other": "{{count}} 步 · 由你安排",
         "blocked": "受阻",
         "blocked_caption": "任何一步都能進入",
@@ -1575,7 +1575,7 @@
         "locked": "固定步驟",
         "optional": "可選步驟",
         "optional_off": "可選步驟 · 已關閉",
-        "middle": "中間步驟",
+        "middle": "工作步驟",
         "new": "新建狀態"
       },
       "lock_why": "為什麼不能刪除「{{name}}」",

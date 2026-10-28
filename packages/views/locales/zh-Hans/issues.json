@@ -1557,7 +1557,7 @@
       "no_handoff_step": "这一步不交接：任务进入时负责人不变，也不会启动运行。",
       "zone": {
         "start": "开始",
-        "middle": "中间步骤",
+        "middle": "工作",
         "middle_caption_other": "{{count}} 步 · 由你安排",
         "blocked": "受阻",
         "blocked_caption": "任何一步都能进入",
@@ -1575,7 +1575,7 @@
         "locked": "固定步骤",
         "optional": "可选步骤",
         "optional_off": "可选步骤 · 已关闭",
-        "middle": "中间步骤",
+        "middle": "工作步骤",
         "new": "新建状态"
       },
       "lock_why": "为什么不能删除「{{name}}」",

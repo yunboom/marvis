@@ -1616,7 +1616,7 @@
       "no_handoff_step": "This step doesn't hand off: issues entering it keep their assignee and start no run.",
       "zone": {
         "start": "Start",
-        "middle": "Middle steps",
+        "middle": "Work",
         "middle_caption_one": "{{count}} step · yours to arrange",
         "middle_caption_other": "{{count}} steps · yours to arrange",
         "blocked": "Blocked",
@@ -1635,7 +1635,7 @@
         "locked": "Fixed step",
         "optional": "Optional step",
         "optional_off": "Optional step · off",
-        "middle": "Middle step",
+        "middle": "Work step",
         "new": "New status"
       },
       "lock_why": "Why {{name}} can't be removed",
