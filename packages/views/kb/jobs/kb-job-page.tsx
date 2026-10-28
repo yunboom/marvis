@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, ChevronDown, MoreHorizontal, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ApiError } from "@marvis/core/api";
@@ -10,13 +10,35 @@ import { useAuthStore } from "@marvis/core/auth";
 import { useChatStore } from "@marvis/core/chat";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { KB_NEW_JOB_PARAMS, useWorkspacePaths } from "@marvis/core/paths";
-import { kbBaseDetailOptions, kbJobOptions, kbKeys } from "@marvis/core/kb/queries";
-import { useCreateKbJob, useDiscardKbJob, useSubmitKbJob } from "@marvis/core/kb/mutations";
+import { kbAnnotationListOptions, kbBaseDetailOptions, kbJobOptions, kbKeys, kbPageOptions } from "@marvis/core/kb/queries";
+import {
+  useCreateKbJob,
+  useDeleteKbJob,
+  useDiscardKbJob,
+  useSetKbJobArchived,
+  useSubmitKbJob,
+} from "@marvis/core/kb/mutations";
 import { runtimeDisplayLabel } from "@marvis/core/runtimes";
 import { runtimeListOptions } from "@marvis/core/runtimes/queries";
 import { agentListOptions, memberListOptions } from "@marvis/core/workspace/queries";
 import type { CreateKbJobRequest, KbJobStarter } from "@marvis/core/types";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@marvis/ui/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { ChatInput } from "../../chat/components/chat-input";
@@ -26,19 +48,11 @@ import { AgentPicker } from "../../autopilots/components/pickers/agent-picker";
 import { canAssignAgent } from "../../issues/components/pickers/assignee-picker";
 import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
+import { pageTitle } from "../components/kb-page-body";
 import { KbJobDraftPanel } from "./kb-job-draft-panel";
 import { parseKbJobRoute } from "./kb-job-state";
+import { useKbJobRequests, useKbJobStarters, type KbJobRequestContext } from "./kb-job-prompts";
 import { useKbJobConversation } from "./use-kb-job-conversation";
-
-/** The opener cards of a new job (design 9.2); two of them schedule runs. */
-const STARTER_CARDS = [
-  { key: "ingest", starter: "ingest" },
-  { key: "health", starter: "health" },
-  { key: "merge", starter: "merge" },
-  { key: "annotations", starter: "annotations" },
-  { key: "schedule_ingest", starter: "schedule" },
-  { key: "schedule_health", starter: "schedule" },
-] as const satisfies readonly { key: string; starter: KbJobStarter }[];
 
 const KNOWN_STARTERS: readonly KbJobStarter[] = ["ingest", "health", "merge", "annotations", "new_page", "schedule", "custom"];
 
@@ -55,11 +69,14 @@ function JobShell({
   kbSlug,
   title,
   runtimeLabel,
+  actions,
   children,
 }: {
   kbSlug: string;
   title: string;
   runtimeLabel: string;
+  /** The job's ⋯ menu, once the job exists. */
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useT("kb");
@@ -70,7 +87,7 @@ function JobShell({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
-      <header className="flex h-[72px] shrink-0 items-center gap-3 border-b px-5">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b px-5">
         <IconButton
           type="button"
           variant="ghost"
@@ -90,6 +107,7 @@ function JobShell({
         {runtimeLabel && (
           <span className="max-w-64 truncate rounded-full bg-muted px-3 py-1 text-caption max-md:hidden">{runtimeLabel}</span>
         )}
+        {actions}
       </header>
       <div className="flex min-h-0 flex-1 max-lg:flex-col">{children}</div>
     </div>
@@ -175,7 +193,8 @@ function EmptyDraftSide() {
  * A new job (designs 9.2, 9.8, 4.3): pick the executing agent, then start
  * from an opener card or describe the job. An entry point (annotations,
  * "check this page", the tree's "+", raw files) brings its context in the
- * URL and writes the request out in the composer.
+ * URL; the page writes the request out in the composer, links included, so
+ * the member sees exactly what will be sent.
  */
 function KbNewJob({ kbSlug }: { kbSlug: string }) {
   const { t } = useT("kb");
@@ -189,10 +208,12 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
   const createJob = useCreateKbJob();
 
   const starter = readStarter(searchParams.get(KB_NEW_JOB_PARAMS.starter));
-  const annotationIds = splitIds(searchParams.get(KB_NEW_JOB_PARAMS.annotations));
+  const annotationsParam = searchParams.get(KB_NEW_JOB_PARAMS.annotations);
+  const annotationIds = useMemo(() => splitIds(annotationsParam), [annotationsParam]);
   const pageId = searchParams.get(KB_NEW_JOB_PARAMS.page) ?? "";
-  const sources = splitIds(searchParams.get(KB_NEW_JOB_PARAMS.sources));
-  const prefill = searchParams.get(KB_NEW_JOB_PARAMS.message) ?? "";
+  const sourcesParam = searchParams.get(KB_NEW_JOB_PARAMS.sources);
+  const sources = useMemo(() => splitIds(sourcesParam), [sourcesParam]);
+  const typed = searchParams.get(KB_NEW_JOB_PARAMS.message) ?? "";
   const draftKey = `kb-job-new:${kbSlug}`;
 
   // The default executor must be one the member may invoke (spec 10); the
@@ -206,14 +227,38 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
   const chosen = agentId || runnable[0]?.id || "";
   const runtimeLabel = useAgentRuntimeLabel(chosen);
 
+  const promptBase = useMemo(() => ({ id: base?.id ?? "", name: base?.name ?? kbSlug }), [base?.id, base?.name, kbSlug]);
+  const starters = useKbJobStarters(promptBase);
+  const requests = useKbJobRequests();
+
+  // The brought-in page and annotations are named in the request, so their
+  // titles load before the request is written.
+  const pageQuery = useQuery(kbPageOptions(wsId, pageId, ""));
+  const annotationQuery = useQuery({
+    ...kbAnnotationListOptions(wsId, kbSlug, "all"),
+    enabled: !!wsId && !!kbSlug && annotationIds.length > 0,
+  });
+  const contextReady =
+    !!base && (!pageId || !pageQuery.isPending) && (annotationIds.length === 0 || !annotationQuery.isPending);
+  const request = useMemo(() => {
+    if (!contextReady || !starter) return typed;
+    const context: KbJobRequestContext = { sources, text: typed };
+    if (pageId) context.page = { id: pageId, title: pageQuery.data ? pageTitle(pageQuery.data) : kbSlug };
+    if (annotationIds.length) {
+      const byId = new Map((annotationQuery.data ?? []).map((a) => [a.id, a]));
+      context.annotations = annotationIds.map((id) => ({ id, where: byId.get(id)?.page_title || promptBase.name }));
+    }
+    return requests.compose(starter, promptBase, context);
+  }, [contextReady, starter, typed, pageId, pageQuery.data, annotationQuery.data, annotationIds, sources, promptBase, requests, kbSlug]);
+
   // The entry point's request goes into the composer once; the member picks
   // the agent and sends it.
   const prefilled = useRef(false);
   useEffect(() => {
-    if (prefilled.current || !prefill) return;
+    if (prefilled.current || !request || (starter && !contextReady)) return;
     prefilled.current = true;
-    useChatStore.getState().setInputDraft(draftKey, prefill);
-  }, [draftKey, prefill]);
+    useChatStore.getState().setInputDraft(draftKey, request);
+  }, [draftKey, request, starter, contextReady]);
 
   const start = async (data: Omit<CreateKbJobRequest, "agent_id">, commitInput?: () => void) => {
     if (!chosen) {
@@ -246,22 +291,18 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
                 <h2 className="text-title-lg font-semibold">{t(($) => $.job.start_question, { name: kbName })}</h2>
               </div>
               <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
-                {STARTER_CARDS.map((card) => {
-                  const cardTitle = t(($) => $.job.starters[card.key].title);
-                  const description = t(($) => $.job.starters[card.key].description);
-                  return (
-                    <button
-                      key={card.key}
-                      type="button"
-                      disabled={!chosen || createJob.isPending}
-                      onClick={() => void start({ starter: card.starter, name: cardTitle, message: t(($) => $.job.starter_message, { title: cardTitle, description }) })}
-                      className="flex flex-col gap-1 rounded-xl border bg-card px-3.5 py-3 text-left transition-colors hover:bg-surface-hover disabled:opacity-60"
-                    >
-                      <span className="text-body font-medium">{cardTitle}</span>
-                      <span className="text-caption leading-5 text-faint-foreground">{description}</span>
-                    </button>
-                  );
-                })}
+                {starters.map((card) => (
+                  <button
+                    key={card.key}
+                    type="button"
+                    disabled={!chosen || !base || createJob.isPending}
+                    onClick={() => void start({ starter: card.starter, name: card.label, message: card.prompt })}
+                    className="flex flex-col gap-1 rounded-xl border bg-card px-3.5 py-3 text-left transition-colors hover:bg-surface-hover disabled:opacity-60"
+                  >
+                    <span className="text-body font-medium">{card.label}</span>
+                    <span className="text-caption leading-5 text-faint-foreground">{card.description}</span>
+                  </button>
+                ))}
               </div>
               <p className="text-center text-caption text-faint-foreground">{t(($) => $.job.start_hint)}</p>
             </>
@@ -276,7 +317,6 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
                 message: content,
                 annotation_ids: annotationIds.length ? annotationIds : undefined,
                 page_id: pageId || undefined,
-                sources: sources.length ? sources : undefined,
               },
               commitInput,
             )
@@ -290,6 +330,100 @@ function KbNewJob({ kbSlug }: { kbSlug: string }) {
       </section>
       <EmptyDraftSide />
     </JobShell>
+  );
+}
+
+/**
+ * The job's ⋯ menu, as the chat header's: archive, or once archived,
+ * unarchive and delete. Delete asks first, awaits the server, then leaves
+ * for the job list.
+ */
+function JobActions({ kbSlug, jobId, name, archived }: { kbSlug: string; jobId: string; name: string; archived: boolean }) {
+  const { t } = useT("kb");
+  const { t: tCommon } = useT("common");
+  const p = useWorkspacePaths();
+  const { push } = useNavigation();
+  const setArchived = useSetKbJobArchived();
+  const deleteJob = useDeleteKbJob();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const archive = (next: boolean) =>
+    setArchived.mutate(
+      { jobId, archived: next },
+      {
+        onError: (err) =>
+          toast.error(err instanceof ApiError && err.message ? err.message : t(($) => $.job.archive_failed)),
+      },
+    );
+  const doDelete = async () => {
+    try {
+      await deleteJob.mutateAsync(jobId);
+      setConfirmDelete(false);
+      push(p.kbJobs(kbSlug));
+    } catch (err) {
+      toast.error(err instanceof ApiError && err.message ? err.message : t(($) => $.job.delete_failed));
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <IconButton
+              label={tCommon(($) => $.more_actions)}
+              tooltipSide="bottom"
+              size="icon"
+              className="size-9 text-muted-foreground"
+            />
+          }
+        >
+          <MoreHorizontal className="size-4.5" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-auto">
+          {archived ? (
+            <>
+              <DropdownMenuItem onClick={() => archive(false)}>
+                <ArchiveRestore className="h-4 w-4" />
+                {t(($) => $.job.unarchive)}
+              </DropdownMenuItem>
+              {/* Hard delete is offered only once a job is archived. */}
+              <DropdownMenuItem variant="destructive" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-4 w-4" />
+                {t(($) => $.job.delete)}
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <DropdownMenuItem onClick={() => archive(true)}>
+              <Archive className="h-4 w-4" />
+              {t(($) => $.job.archive)}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={confirmDelete} onOpenChange={(open) => !deleteJob.isPending && setConfirmDelete(open)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(($) => $.job.delete_dialog.title)}</AlertDialogTitle>
+            <AlertDialogDescription>{t(($) => $.job.delete_dialog.description, { name })}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteJob.isPending}>{t(($) => $.job.delete_dialog.cancel)}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteJob.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void doDelete();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteJob.isPending ? t(($) => $.job.delete_dialog.confirming) : t(($) => $.job.delete_dialog.confirm)}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -330,6 +464,8 @@ function KbJobConversation({ kbSlug, jobId }: { kbSlug: string; jobId: string })
   }
 
   const ended = job.draft?.status === "merged" || job.draft?.status === "discarded" || job.merge_request?.status === "merged";
+  // An archived job's chat is read-only, as an archived chat is.
+  const readOnly = ended || job.archived;
   const queuedTasks = conversation.pendingTask?.queued_tasks ?? [];
 
   const onSubmit = () => {
@@ -350,7 +486,12 @@ function KbJobConversation({ kbSlug, jobId }: { kbSlug: string; jobId: string })
   };
 
   return (
-    <JobShell kbSlug={kbSlug} title={job.name} runtimeLabel={runtimeLabel}>
+    <JobShell
+      kbSlug={kbSlug}
+      title={job.name}
+      runtimeLabel={runtimeLabel}
+      actions={<JobActions kbSlug={kbSlug} jobId={jobId} name={job.name} archived={job.archived} />}
+    >
       <section aria-label={job.agent_name} className="flex min-h-0 min-w-0 flex-1 flex-col @container">
         <AgentRow agentId={job.agent_id} />
         {conversation.loading ? (
@@ -366,11 +507,13 @@ function KbJobConversation({ kbSlug, jobId }: { kbSlug: string; jobId: string })
             isFetchingOlderMessages={conversation.isFetchingOlderMessages}
             onLoadOlderMessages={conversation.fetchOlderMessages}
             onQuickAction={(action) => conversation.send(action.prompt)}
-            quickActionsDisabled={running || ended}
+            quickActionsDisabled={running || readOnly}
           />
         )}
-        {ended ? (
-          <p className="shrink-0 border-t px-6 py-4 text-center text-label text-muted-foreground">{t(($) => $.job.ended)}</p>
+        {readOnly ? (
+          <p className="shrink-0 border-t px-6 py-4 text-center text-label text-muted-foreground">
+            {job.archived ? t(($) => $.job.archived_notice) : t(($) => $.job.ended)}
+          </p>
         ) : (
           <>
             <ChatQueue

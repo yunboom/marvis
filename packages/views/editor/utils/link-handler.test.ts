@@ -311,3 +311,44 @@ describe("existing reserved-slug workspaces", () => {
     expect(navigatedPaths()).toEqual(["/chat/issues", "/acme/chat"]);
   });
 });
+
+describe("apps mounted under a path prefix", () => {
+  const APP_BASE = "https://shared.example/marvis";
+  const PROJECT_ID = "8f14e45f-ceea-4d0e-a1a2-9b1c0d3e4f5a";
+
+  it("strips the prefix from an absolute in-app URL", () => {
+    expect(
+      toInternalAppPath(`${APP_BASE}/acme/issues/MUL-1?tab=a`, APP_BASE),
+    ).toBe("/acme/issues/MUL-1?tab=a");
+    expect(
+      parseWorkspaceEntityLink(`${APP_BASE}/acme/projects/${PROJECT_ID}`, APP_BASE),
+    ).toEqual({ kind: "project", id: PROJECT_ID, slug: "acme" });
+  });
+
+  it("treats other apps on the same origin as external", () => {
+    expect(
+      toInternalAppPath("https://shared.example/ecommerce/issues/1", APP_BASE),
+    ).toBeNull();
+    expect(
+      toInternalAppPath("https://shared.example/marvis-other/issues/1", APP_BASE),
+    ).toBeNull();
+    expect(
+      parseWorkspaceEntityLink(
+        `https://shared.example/acme/projects/${PROJECT_ID}`,
+        APP_BASE,
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps stored site-relative paths in-app, since content never carries the prefix", () => {
+    expect(
+      parseWorkspaceEntityLink(`/acme/projects/${PROJECT_ID}`, APP_BASE),
+    ).toEqual({ kind: "project", id: PROJECT_ID, slug: "acme" });
+  });
+
+  it("navigates to the unprefixed path; the router adds the prefix back", () => {
+    openLink(`${APP_BASE}/acme/issues/MUL-1`, "acme", APP_BASE);
+    expect(navigatedPaths()).toEqual(["/acme/issues/MUL-1"]);
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+});

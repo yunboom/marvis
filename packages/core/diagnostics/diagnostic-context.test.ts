@@ -39,6 +39,9 @@ describe("bucketDiagnosticPath", () => {
     expect(bucketDiagnosticPath("/acme/issues/MUL-5345")).toBe("/:slug/issues/:id");
     expect(bucketDiagnosticPath("/acme/projects/p1")).toBe("/:slug/projects/:id");
     expect(bucketDiagnosticPath("/acme/autopilots/ap-7")).toBe("/:slug/autopilots/:id");
+    expect(bucketDiagnosticPath("/acme/autopilots/ap-7/runs/r-2")).toBe(
+      "/:slug/autopilots/:id/runs/:runId",
+    );
     expect(bucketDiagnosticPath("/acme/agents/agt_9")).toBe("/:slug/agents/:id");
     expect(bucketDiagnosticPath("/acme/members/m-3")).toBe("/:slug/members/:id");
     expect(bucketDiagnosticPath("/acme/squads/sq.4")).toBe("/:slug/squads/:id");

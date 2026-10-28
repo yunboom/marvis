@@ -71,8 +71,10 @@ export const SERVER_RETRY = "server:retry";
 
 const SCHEME_PREFIX = /^[a-z][a-z0-9+.-]*:\/\//i;
 
-// 把用户输入规整为 `scheme://host[:port]`：缺少协议时补 http://，
-// 丢弃路径、查询串、片段和账号信息。不是合法的 http(s) 地址时返回 null。
+// 把用户输入规整为 `scheme://host[:port][/path]`：缺少协议时补 http://，
+// 保留路径（服务器可能部署在 /marvis 这样的前缀下）但去掉末尾斜杠，
+// 丢弃查询串、片段和账号信息。不是合法的 http(s) 地址时返回 null。
+// 路径是部署前缀还是页面地址由 probeServer 探测时确定。
 export function normalizeServerAddress(input: string): string | null {
   const trimmed = input.trim();
   if (trimmed === "") return null;
@@ -88,7 +90,7 @@ export function normalizeServerAddress(input: string): string | null {
   if (url.protocol !== "http:" && url.protocol !== "https:") return null;
   if (url.hostname === "") return null;
 
-  return url.origin;
+  return url.origin + url.pathname.replace(/\/+$/, "");
 }
 
 // 控制字符（C0、DEL、C1）和会改变文字显示顺序的方向控制符。React 会转义 HTML，但不会去掉这些字符，

@@ -29,13 +29,13 @@
         <div style="display: flex; align-items: flex-start; gap: 12px">
           <div style="flex: 1; min-width: 0">
             <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px" class="muted"><span class="mono">#{{d.n}}</span><span>{{d.source}}</span><span>·</span><span class="av bot" style="width: 18px; height: 18px; font-size: 10px">通</span><span>通用开发助手</span><span class="faint">Claude（DJ-mayunpeng.local）</span><span>·</span><span>{{d.when}}</span><a href="#" style="color: #4f6f8a; text-decoration: none">打开对话</a></div>
-            <h2 style="font-size: 20px; font-weight: 600; margin: 6px 0 0">{{d.title}}</h2>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px"><h2 style="font-size: 20px; font-weight: 600; margin: 0">{{d.title}}</h2><span class="tag"><span class="{{stDot}}"></span>{{stText}}</span></div>
           </div>
           <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
-            <div style="display: flex; gap: 8px; align-items: center"><sc-if value="{{running}}" hint-placeholder-val="{{ false }}"><span class="tag" style="height: 28px; padding: 0 10px; gap: 6px; background: #fff; box-shadow: inset 0 0 0 1px #e8e8e8"><span class="dot d-green"></span>通用开发助手 在工作</span></sc-if><button class="btn">关闭</button><button class="btn btn-p" disabled="{{cannotMerge}}">合并</button></div>
+            <div style="display: flex; gap: 8px; align-items: center"><sc-if value="{{canStart}}" hint-placeholder-val="{{ true }}"><button class="btn btn-o">开启评审</button></sc-if><sc-if value="{{ownerChanges}}" hint-placeholder-val="{{ false }}"><button class="btn btn-o">重新请求审核</button></sc-if><sc-if value="{{showActions}}" hint-placeholder-val="{{ true }}"><button class="btn">关闭</button><button class="btn btn-p" disabled="{{cannotMerge}}">合并</button></sc-if></div>
             <sc-if value="{{member}}" hint-placeholder-val="{{ false }}"><span class="faint" style="font-size: 12px">owner 或 admin 合并</span></sc-if>
             <sc-if value="{{conflict}}" hint-placeholder-val="{{ false }}"><span class="faint" style="font-size: 12px">先解决冲突</span></sc-if>
-            <sc-if value="{{running}}" hint-placeholder-val="{{ false }}"><span class="faint" style="font-size: 12px">智能体改完后再合并</span></sc-if>
+            <sc-if value="{{changes}}" hint-placeholder-val="{{ false }}"><span class="faint" style="font-size: 12px">{{changesHint}}</span></sc-if>
           </div>
         </div>
         <sc-if value="{{conflict}}" hint-placeholder-val="{{ false }}">
@@ -45,8 +45,8 @@
           </div>
         </sc-if>
         <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
-          <div class="soft" style="padding: 14px 16px"><div class="faint" style="font-size: 12px; margin-bottom: 6px">智能体自查</div><div style="font-size: 13.5px; line-height: 1.7">{{d.summary}}</div><div class="muted" style="font-size: 12px; margin-top: 8px">{{d.meta}}</div></div>
-          <div class="soft" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 5px"><div class="faint" style="font-size: 12px; margin-bottom: 1px">检查</div>
+          <div class="soft" style="height: 148px; box-sizing: border-box; overflow-y: auto; padding: 14px 16px"><div class="faint" style="font-size: 12px; margin-bottom: 6px">智能体自查</div><div style="font-size: 13.5px; line-height: 1.7">{{d.summary}}</div><div class="muted" style="font-size: 12px; margin-top: 8px">{{d.meta}}</div></div>
+          <div class="soft" style="height: 148px; box-sizing: border-box; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 5px"><div class="faint" style="font-size: 12px; margin-bottom: 1px">检查</div>
             <span style="font-size: 13px"><span class="dot d-green" style="margin-right: 8px"></span>格式检查通过</span>
             <span style="font-size: 13px"><span class="dot d-green" style="margin-right: 8px"></span>没有引用过期的论断</span>
             <span style="font-size: 13px"><span class="{{mergeDot}}" style="margin-right: 8px"></span>{{mergeText}}</span>
@@ -66,58 +66,85 @@
         </div>
         <div style="border-top: 1px solid rgba(0,0,0,.06); margin-top: 8px; padding-top: 18px; display: flex; flex-direction: column; gap: 12px; max-width: 720px">
           <div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 15px; font-weight: 600; flex: 1">动态</span></div>
-          <div class="muted" style="font-size: 12.5px; display: flex; align-items: center; gap: 4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>{{actCount}}</div>
+          <div class="muted" style="font-size: 12.5px; display: flex; align-items: center; gap: 4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>展开更早 {{earlier}} 条动态</div>
+          <sc-if value="{{submitted}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 4px"><div style="display: flex; align-items: center; gap: 8px; font-size: 13px; padding-left: 4px"><span class="av" style="width: 20px; height: 20px; font-size: 10px">王</span><span class="muted"><span style="color: #0f0f0f; font-weight: 500">王芳</span> 提交了评审 · 3 条意见</span><span class="faint" style="font-size: 12px">10:41</span></div><div style="font-size: 13.5px; padding-left: 32px">去重原因和生效时间补上后再合并。</div></div>
+          </sc-if>
           <sc-if value="{{hasComment}}" hint-placeholder-val="{{ false }}">
             <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px"><span class="av">王</span><span style="font-weight: 500">王芳</span><span class="faint">10:38</span></div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px"><span class="av">王</span><span style="font-weight: 500">王芳</span><span class="faint">10:38</span><sc-if value="{{pending}}" hint-placeholder-val="{{ false }}"><span class="tag" style="height: 20px; font-size: 11.5px">待提交</span><span style="flex: 1"></span><a href="#" style="color: #4f6f8a; text-decoration: none">编辑</a><a href="#" style="color: #4f6f8a; text-decoration: none">删除</a></sc-if></div>
               <a href="#" style="font-size: 12.5px; color: #5c5c5c; background: #f7f7f7; border-radius: 8px; padding: 6px 8px; text-decoration: none; display: flex; gap: 6px"><span class="faint" style="flex: none">支付回调 第 15 行</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">渠道回调按渠道交易号加幂等键去重，重复回调直接返回成功。</span></a>
               <div style="font-size: 14px">补一下改成交易号的原因和生效时间。</div>
-              <sc-if value="{{running}}" hint-placeholder-val="{{ false }}"><div style="display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,.05); font-size: 13px"><span class="av bot">通</span><span style="font-weight: 500">通用开发助手</span><span class="tag" style="gap: 6px"><span class="dot d-green"></span>正在工作</span><span class="faint" style="flex: 1">修改「支付回调」</span><a href="#" style="font-size: 12.5px; color: #4f6f8a; text-decoration: none">查看执行过程</a></div></sc-if>
-              <sc-if value="{{done}}" hint-placeholder-val="{{ false }}"><div style="display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,.05)"><span class="av bot">通</span><div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px"><span style="font-weight: 500">通用开发助手</span><span class="faint">10:41</span></div><div style="font-size: 14px">已在第 16 行补充原因和生效时间，推送到本变更请求。</div><div style="display: flex; gap: 8px; font-size: 12.5px"><a href="#" style="color: #4f6f8a; text-decoration: none">看改动</a><span class="faint">·</span><a href="#" style="color: #4f6f8a; text-decoration: none">查看执行过程</a></div></div></div></sc-if>
+              <sc-if value="{{ownerChanges}}" hint-placeholder-val="{{ false }}"><div style="padding-top: 8px; border-top: 1px solid rgba(0,0,0,.05)"><span class="faint" style="font-size: 13px">回复...</span></div></sc-if>
+              <sc-if value="{{timeline}}" hint-placeholder-val="{{ false }}"><div style="padding-top: 8px; border-top: 1px solid rgba(0,0,0,.05); display: flex; gap: 8px; font-size: 13.5px"><span class="av" style="width: 20px; height: 20px; font-size: 10px">木</span><span><span style="font-weight: 500">木卫五</span><span class="faint" style="font-size: 12px"> 11:18</span><br>已补上改成交易号的原因，生效时间按 10 月 20 日的上线记录写。</span></div></sc-if>
             </div>
+            <sc-if value="{{notTimeline}}" hint-placeholder-val="{{ true }}"><div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px"><span class="av">王</span><span style="font-weight: 500">王芳</span><span class="faint">10:39</span><sc-if value="{{pending}}" hint-placeholder-val="{{ false }}"><span class="tag" style="height: 20px; font-size: 11.5px">待提交</span><span style="flex: 1"></span><a href="#" style="color: #4f6f8a; text-decoration: none">编辑</a><a href="#" style="color: #4f6f8a; text-decoration: none">删除</a></sc-if></div>
+              <span class="faint" style="font-size: 12.5px">回调人工处理</span>
+              <div style="font-size: 14px">缺少值班联系人和升级路径。</div>
+            </div>
+            <div class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px"><span class="av">王</span><span style="font-weight: 500">王芳</span><span class="faint">10:40</span><sc-if value="{{pending}}" hint-placeholder-val="{{ false }}"><span class="tag" style="height: 20px; font-size: 11.5px">待提交</span><span style="flex: 1"></span><a href="#" style="color: #4f6f8a; text-decoration: none">编辑</a><a href="#" style="color: #4f6f8a; text-decoration: none">删除</a></sc-if></div>
+              <span class="faint" style="font-size: 12.5px">幂等键</span>
+              <div style="font-size: 14px">链接还指向旧路径 /payment/idempotency。</div>
+            </div></sc-if>
+          </sc-if>
+          <sc-if value="{{timeline}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; padding-left: 4px"><span class="av" style="width: 20px; height: 20px; font-size: 10px">木</span><span class="muted"><span style="color: #0f0f0f; font-weight: 500">木卫五</span> 重新请求审核</span><span class="faint" style="font-size: 12px">11:20</span></div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; padding-left: 4px"><span class="av" style="width: 20px; height: 20px; font-size: 10px">木</span><span class="muted"><span style="color: #0f0f0f; font-weight: 500">木卫五</span> 合并了 #16</span><span class="faint" style="font-size: 12px">11:32</span></div>
           </sc-if>
         </div>
       </div>
-      <div style="padding: 0 30px 20px; flex: none">
+      <sc-if value="{{reviewing}}" hint-placeholder-val="{{ false }}"><div style="padding: 0 30px 20px; flex: none; display: flex; flex-direction: column; gap: 10px">
+        <div style="max-width: 720px; display: flex; align-items: center; gap: 8px; font-size: 13px"><span class="tag" style="gap: 6px"><span class="dot d-amber"></span>评审中</span><span class="muted" style="flex: 1">{{pendingText}}</span><button class="btn btn-g">放弃评审</button><button class="btn btn-p" disabled="{{cannotSubmit}}">{{submitText}}</button></div>
         <div style="max-width: 720px; border: 1px solid #e3e3e3; border-radius: 14px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05); padding: 12px 12px 10px 14px; display: flex; flex-direction: column; gap: 10px">
           <sc-if value="{{comment}}" hint-placeholder-val="{{ false }}"><div style="font-size: 12.5px; color: #5c5c5c; background: #f7f7f7; border-radius: 8px; padding: 6px 8px; display: flex; gap: 6px; align-items: center"><span class="faint" style="flex: none">支付回调 第 15 行</span><span style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">渠道回调按渠道交易号加幂等键去重，重复回调直接返回成功。</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="移除引用"><path d="M6 6l12 12M18 6 6 18"></path></svg></div><span style="font-size: 14px">补一下改成交易号的原因和生效时间。</span></sc-if>
-          <sc-if value="{{noComment}}" hint-placeholder-val="{{ true }}"><span class="faint" style="font-size: 14px">留下评论...</span></sc-if>
-          <div style="display: flex; align-items: center; gap: 6px"><span style="flex: 1"><span class="tag" style="height: 24px; gap: 6px; font-size: 12px" title="发送后开始：按评论修改这个变更请求"><span class="av bot" style="width: 16px; height: 16px; font-size: 9px">通</span>通用开发助手<span class="faint">{{triggerText}}</span></span></span>
+          <sc-if value="{{noComment}}" hint-placeholder-val="{{ true }}"><span class="faint" style="font-size: 14px">写评论，或选中 diff 的一行加入评论</span></sc-if>
+          <div style="display: flex; align-items: center; gap: 6px"><span style="flex: 1"></span>
             <button class="ib" aria-label="添加附件"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m20 11-8 8a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7"></path></svg></button>
-            <button aria-label="发送" style="width: 30px; height: 30px; border-radius: 15px; border: 0; background: #ececec; color: #9a9a9a; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button>
+            <button class="btn btn-o" style="height: 30px">加入评审</button>
           </div>
         </div>
-      </div>
+      </div></sc-if>
     </div>
   </main>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"sel":{"editor":"int","default":16},"comment":{"editor":"boolean","default":false},"member":{"editor":"boolean","default":false},"offline":{"editor":"boolean","default":false},"live":{"editor":"enum","default":"idle","options":["idle","running","done"]},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"sel":{"editor":"int","default":16},"comment":{"editor":"boolean","default":false},"member":{"editor":"boolean","default":false},"review":{"editor":"enum","default":"none","options":["none","pending","changes","timeline"]},"owner":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     var sel = this.props.sel ?? 16;
     var conflict = sel === 13;
     var member = !!this.props.member;
-    var live = this.props.live ?? 'idle';
-    var running = live === 'running' && sel === 16, done = live === 'done' && sel === 16;
+    var review = this.props.review ?? 'none';
+    var comment = !!this.props.comment;
+    var pending = review === 'pending' && sel === 16, changes = review === 'changes' && sel === 16;
+    var reviewing = pending || comment;
+    var timeline = review === 'timeline' && sel === 16;
     var list = [
-      { n: 16, title: '去重键改为渠道交易号，补回调人工处理', source: '处理批注', kbs: '团队知识库', state: '待审核', dot: 'dot d-blue' },
+      { n: 16, title: '去重键改为渠道交易号，补回调人工处理', source: '处理批注', kbs: '团队知识库', state: changes ? '待解决' : '待审核', dot: changes ? 'dot d-amber' : 'dot d-blue' },
       { n: 14, title: '每日知识沉淀 · 10-24', source: '每日沉淀', kbs: '团队知识库 · 支付中台', state: '待审核', dot: 'dot d-blue' },
       { n: 13, title: '合并重复页面：幂等键 / 幂等设计', source: '知识合并', kbs: '团队知识库 · 支付中台', state: '有冲突', dot: 'dot d-red' },
       { n: 12, title: '配置知识库：引用必须附核对版本', source: '配置', kbs: '团队知识库', state: '已合并', dot: 'dot d-green' }
     ];
     var details = {
-      16: { title: '去重键改为渠道交易号，补回调人工处理', source: '处理批注', when: '刚刚', summary: '按王芳的批注把去重键改为渠道交易号，引用 MAR-142；按聊天里的要求新增「回调人工处理」，并在支付回调里加链接。', meta: '风险 低 · 影响 2 个页面 · 处理 2 条批注', page: '支付回调', path: '产品与业务 / 支付' },
+      16: { title: '去重键改为渠道交易号，补回调人工处理', source: '处理批注', when: '刚刚', summary: '按王芳的批注把去重键改为渠道交易号，引用 MAR-142；按聊天里的要求新增「回调人工处理」，并在支付回调里加链接。核对了回调入口代码（handler.go L40–82）和 10 月 20 日的上线记录，生效时间以上线记录为准。「幂等键」页面里指向旧路径的链接这次没改，留给下一次健康检查；「回调人工处理」的值班联系人还缺，已在页面里标为待补。', meta: '风险 低 · 影响 2 个页面 · 处理 2 条批注', page: '支付回调', path: '产品与业务 / 支付' },
       13: { title: '合并重复页面：幂等键 / 幂等设计', source: '知识合并', when: '今天 08:40', summary: '把支付中台的「幂等设计」并入团队知识库的「幂等键」，旧页面改为指向新页面，并更新 3 处反向链接。', meta: '风险 中 · 影响 2 个页面', page: '幂等键', path: '产品与业务 / 支付' }
     };
     var d = Object.assign({ n: sel }, details[sel] || details[16]);
     return {
-      d: d, conflict: conflict, member: member, comment: !!this.props.comment,
-      cannotMerge: conflict || member || running,
-      triggerText: this.props.offline ? '运行时离线 · 上线后开始' : '发送后开始',
-      noComment: !this.props.comment, selStyle: this.props.comment ? 'background: rgba(79,111,138,.18); border-radius: 3px' : '',
-      running: running, done: done, hasComment: running || done, nextLn: done ? 17 : 16, addCount: done ? '+3' : '+2',
-      actCount: done ? '3 条动态' : '2 条动态',
+      d: d, conflict: conflict, member: member, comment: comment,
+      cannotMerge: conflict || member || changes,
+      timeline: timeline, notTimeline: !timeline, submitted: changes || timeline, showActions: !timeline,
+      earlier: timeline ? 4 : (changes ? 2 : 2),
+      canStart: !reviewing && !changes && !timeline && !member && !this.props.owner, changes: changes, pending: pending, reviewing: reviewing,
+      stText: timeline ? '已合并' : changes ? '待解决' : (sel === 13 ? '有冲突' : '待审核'), stDot: timeline ? 'dot d-green' : changes ? 'dot d-amber' : (sel === 13 ? 'dot d-red' : 'dot d-blue'),
+      pendingText: pending ? '3 条待提交，只有你能看到' : '还没有待提交的评论',
+      submitText: pending ? '提交评审（3 条）' : '提交评审', cannotSubmit: !pending,
+      ownerChanges: changes && !!this.props.owner, changesHint: this.props.owner ? '按意见改完后重新请求审核' : '待解决，负责人重新请求审核后可以合并',
+      noComment: !comment, selStyle: comment ? 'background: rgba(79,111,138,.18); border-radius: 3px' : '',
+      done: false, hasComment: pending || changes || timeline, nextLn: 16, addCount: '+2',
+      actCount: changes ? '5 条动态' : '2 条动态',
       mergeDot: conflict ? 'dot d-red' : 'dot d-green', mergeText: conflict ? '与主线冲突' : '可以合并到主线',
       items: list.map(function (c) { return Object.assign({}, c, { style: 'display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; background: ' + (c.n === sel ? 'rgba(0,0,0,.055)' : 'transparent') }); })
     };

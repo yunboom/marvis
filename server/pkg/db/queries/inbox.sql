@@ -145,6 +145,18 @@ RETURNING *;
 UPDATE inbox_item SET archived = false
 WHERE workspace_id = $1 AND recipient_type = $2 AND recipient_id = $3 AND issue_id = $4 AND archived = true;
 
+-- name: DeleteArchivedInboxGroup :execrows
+-- Permanent delete from the archived view. Same issue-level scope as archive
+-- and unarchive: the archived view shows one row per issue, so deleting that
+-- row removes every archived sibling for the issue. Only archived rows match,
+-- so an active notification can never be deleted through this path.
+DELETE FROM inbox_item
+WHERE workspace_id = sqlc.arg('workspace_id')
+  AND recipient_type = sqlc.arg('recipient_type')
+  AND recipient_id = sqlc.arg('recipient_id')
+  AND archived = true
+  AND (id = sqlc.arg('id') OR issue_id = sqlc.narg('issue_id')::uuid);
+
 -- name: ArchiveInboxByIssueAndType :many
 UPDATE inbox_item SET archived = true
 WHERE workspace_id = $1 AND issue_id = $2 AND type = $3 AND archived = false
@@ -180,8 +192,11 @@ WHERE newest.read = false
 GROUP BY newest.workspace_id;
 
 -- name: MarkAllInboxRead :execrows
+-- types narrows to one inbox category; empty marks every notification.
 UPDATE inbox_item SET read = true
-WHERE workspace_id = $1 AND recipient_type = 'member' AND recipient_id = $2 AND archived = false AND read = false;
+WHERE workspace_id = sqlc.arg(workspace_id) AND recipient_type = 'member' AND recipient_id = sqlc.arg(recipient_id)
+  AND archived = false AND read = false
+  AND (COALESCE(cardinality(sqlc.arg(types)::text[]), 0) = 0 OR type = ANY(sqlc.arg(types)::text[]));
 
 -- name: ArchiveAllInbox :execrows
 UPDATE inbox_item SET archived = true

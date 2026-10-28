@@ -32,7 +32,8 @@ Choisir un résultat l'ouvre. Maintenez `⌘` (`Ctrl` sous Windows et Linux) en 
 | Afficher ou masquer la barre latérale gauche | `⌘B` | `Ctrl+B` | |
 | Afficher ou masquer la barre latérale droite | `⌘/` | `Ctrl+/` | Uniquement sur les pages qui en ont une, comme une tâche. |
 | Afficher ou masquer la fenêtre de discussion | `⌘J` | `Ctrl+J` | À l'ouverture, le curseur se place dans la zone de saisie. Voir [Discuter depuis n'importe quelle page](/chat#discuter-depuis-nimporte-quelle-page). |
-| Rechercher dans la tâche | `⌘F` | `Ctrl+F` | Voir plus bas. |
+| Rechercher dans la page | `⌘F` | `Ctrl+F` | Voir plus bas. |
+| Rechercher dans les bases de connaissances | `⌘⇧F` | `Ctrl+Shift+F` | Recherche des pages dans toutes les bases de connaissances. Disponible dans une base de connaissances. |
 | Archiver la notification | `E` | `E` | Archive la notification ouverte dans la boîte de réception, ou la restaure quand vous consultez les archives. |
 | Envoyer | `⌘↵` | `Ctrl+Enter` | Envoie commentaires et messages de discussion, et sert aussi à créer des tâches. |
 | Revenir en arrière | `⌘[` | `Ctrl+[` | |
@@ -81,18 +82,20 @@ L'enregistrement refuse certaines combinaisons et en indique la raison sous les 
 
 - une combinaison déjà attribuée à une autre action ;
 - les combinaisons réservées au navigateur, à la fenêtre de bureau ou au système, comme `⌘W`, `⌘R`, `⌘Q`, `⌘,`, les touches d'édition (copier, coller…), `⌘0`–`⌘9` et les touches de zoom. Dans un navigateur, `⌘P`, `⌘L`, `⌘T`, `⌘N`, `⌘D` et `⌘U` sont aussi exclus ; l'application de bureau les accepte. Sous Windows et Linux, toute combinaison avec la touche Windows / Super est refusée ;
-- les actions qui fonctionnent aussi dans un champ de saisie, comme Ouvrir la recherche, la fenêtre de discussion ou Rechercher dans la tâche, exigent `⌘`, `Ctrl` ou `Control`, pour ne jamais se déclencher pendant la frappe ;
+- les actions qui fonctionnent aussi dans un champ de saisie, comme Ouvrir la recherche, la fenêtre de discussion ou Rechercher dans la page, exigent `⌘`, `Ctrl` ou `Control`, pour ne jamais se déclencher pendant la frappe ;
 - **Envoyer** ne peut être que `↵` ou `⌘↵`.
 
 <Callout>
 Si **Envoyer** est réglé sur `↵`, utilisez `Maj+Entrée` pour aller à la ligne : cela insère un paragraphe, poursuit une liste ou ajoute un saut de ligne dans un bloc de code.
 </Callout>
 
-## Rechercher dans une tâche
+## Rechercher dans la page
 
-Sur la page d'une tâche, `⌘F` ouvre la barre de recherche de Marvis plutôt que celle du navigateur. La recherche du navigateur ne voit que les commentaires affichés à l'écran ; celle-ci parcourt toute la chronologie, titre, description et commentaires compris.
+Sur la page d'une tâche ou d'une base de connaissances, `⌘F` ouvre la barre de recherche de Marvis plutôt que celle du navigateur. La recherche du navigateur ne voit que les commentaires affichés à l'écran ; celle-ci parcourt toute la chronologie, titre, description et commentaires compris.
 
 La casse est ignorée. La barre indique « position/total », ou « Aucune correspondance ». `↵` passe à la correspondance suivante, `Maj+Entrée` à la précédente, `Échap` ferme la barre. Un texte coupé par un changement de mise en forme (à moitié en gras, par exemple) n'est pas trouvé.
+
+Sur une page de base de connaissances, la barre cherche dans la page affichée.
 
 Dans l'application de bureau, seul l'onglet visible réagit à `⌘F`.
 

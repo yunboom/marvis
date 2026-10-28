@@ -18,5 +18,6 @@ export {
   useDeleteAutopilotTrigger,
   useRotateAutopilotTriggerWebhookToken,
   useReplayAutopilotDelivery,
+  useEnsureAutopilotRunChat,
 } from "./mutations";
 export { buildAutopilotWebhookUrl, maskAutopilotWebhookUrl } from "./webhook";

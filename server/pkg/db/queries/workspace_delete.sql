@@ -750,6 +750,12 @@ deleted_kb_mr_comments AS (
     WHERE kb_mr_comment.merge_request_id = kb_merge_request.id
       AND kb_merge_request.workspace_id = $1
 ),
+deleted_kb_mr_reviews AS (
+    DELETE FROM kb_mr_review WHERE kb_mr_review.workspace_id = $1
+),
+deleted_kb_mr_events AS (
+    DELETE FROM kb_mr_event WHERE kb_mr_event.workspace_id = $1
+),
 deleted_kb_builder_sessions AS (
     DELETE FROM kb_builder_session WHERE kb_builder_session.workspace_id = $1
 ),

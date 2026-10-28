@@ -12,15 +12,17 @@ export interface ChatPinnedAgent {
  * server or a future kind never breaks rendering.
  * - "message"     — an ordinary user/assistant message.
  * - "no_response" — a completed direct-chat turn that produced no text reply.
- * - "onboarding_kickoff" — a product-authored opening input that is sent to
- *   Mika but never rendered as a member message.
+ * - "instruction" — a hidden, product-authored input that is sent to the
+ *   agent with a member's turn but never rendered (onboarding context, the
+ *   process behind a knowledge base job request). The server leaves these
+ *   rows out of every member-facing response; clients filter them too.
  * - "onboarding_opening" — Mika's reply to the kickoff; chat renders the
  *   onboarding starter cards under it instead of quick-action chips.
  */
 export type ChatMessageKind =
   | "message"
   | "no_response"
-  | "onboarding_kickoff"
+  | "instruction"
   | "onboarding_opening";
 
 /**
@@ -172,6 +174,12 @@ export interface ChatMessage {
   message_kind?: ChatMessageKind;
   /** Up to three server-validated follow-ups generated with this reply. */
   quick_actions?: ChatQuickAction[];
+  /**
+   * The member who sent a user message (the initiator of the turn it
+   * started). Null or absent on assistant rows, on older servers and on turns
+   * with no initiator; surfaces showing senders fall back to the creator.
+   */
+  sender_user_id?: string | null;
 }
 
 export interface ChatMessagesCursor {

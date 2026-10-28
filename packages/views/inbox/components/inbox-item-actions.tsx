@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, ArchiveRestore, Check, CircleDot, ExternalLink } from "lucide-react";
+import { Archive, ArchiveRestore, Check, CircleDot, ExternalLink, Trash2 } from "lucide-react";
 import { paths, useWorkspaceSlug } from "@marvis/core/paths";
 import type { InboxItem } from "@marvis/core/types";
 import type { RowActionItem } from "../../common/row-actions-menu";
@@ -17,6 +17,8 @@ export interface InboxRowActions {
    * reversal-of-the-current-view the row's inline button performs.
    */
   onAction: (id: string) => void;
+  /** Archived view only: asks to permanently delete the row's notifications. */
+  onDelete: (id: string) => void;
 }
 
 /**
@@ -99,6 +101,20 @@ export function useInboxItemActions(
       onSelect: () => actions.onAction(item.id),
     },
   ]);
+
+  // Deletion is offered only on archived rows: a notification is archived
+  // (reversible) before it can be deleted (irreversible).
+  if (isArchivedView) {
+    groups.push([
+      {
+        key: "delete",
+        label: t(($) => $.context_menu.delete),
+        icon: <Trash2 className="h-4 w-4" />,
+        onSelect: () => actions.onDelete(item.id),
+        danger: true,
+      },
+    ]);
+  }
 
   return groups;
 }

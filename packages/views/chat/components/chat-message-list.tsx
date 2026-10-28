@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Virtuoso, type Components, type VirtuosoHandle } from "react-virtuoso";
@@ -95,6 +95,17 @@ interface ChatMessageListProps {
    * that reply until chat:quick_actions resolves it.
    */
   quickActionsPendingMessageId?: string | null;
+  /**
+   * Content that precedes the session's first message, such as the autopilot
+   * run a follow-up conversation continues. Shown once the oldest page is
+   * loaded, so it never sits above a gap of unloaded history.
+   */
+  header?: ReactNode;
+  /**
+   * Who sent a user message, shown above its bubble. Only surfaces where
+   * several members share one conversation pass it; the chat page does not.
+   */
+  renderUserMessageSender?: (message: ChatMessage) => ReactNode;
 }
 
 // ─── Virtuoso chrome ─────────────────────────────────────────────────────
@@ -115,6 +126,7 @@ interface ChatListContext {
   pendingTask: ChatPendingTask | null | undefined;
   liveTaskMessages: readonly TaskMessagePayload[] | undefined;
   availability: AgentAvailability | undefined;
+  header: ReactNode;
 }
 
 /**
@@ -143,6 +155,7 @@ function ChatListHeader({ context }: { context?: ChatListContext }) {
   const { t } = useT("chat");
   return (
     <div className={cn(CHAT_COLUMN, "pt-4")}>
+      {context?.header}
       {context?.isFetchingOlderMessages && (
         <div className="text-center text-caption text-muted-foreground">
           {t(($) => $.message_list.loading_older)}
@@ -192,6 +205,8 @@ export function ChatMessageList({
   quickActionsDisabled = false,
   onRegenerateQuickActions,
   quickActionsPendingMessageId = null,
+  header,
+  renderUserMessageSender,
 }: ChatMessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollContainerEl, setScrollContainerEl] = useState<HTMLDivElement | null>(null);
@@ -229,7 +244,7 @@ export function ChatMessageList({
   }, [messages]);
 
   // Mika's onboarding opening self-describes (message_kind stamped by the
-  // completion path — the hidden kickoff row never reaches clients) and
+  // completion path — the hidden instruction row never reaches clients) and
   // carries the product's starter cards instead of that turn's quick-action
   // chips (MUL-5765).
   const starterCardsMessageId = useMemo(
@@ -264,12 +279,11 @@ export function ChatMessageList({
   // Persisted messages plus, while a task is in flight, one synthetic trailing
   // row for it. When the assistant message persists, `hasLive` goes false and
   // the message takes the SAME key at the SAME position — an in-place data
-  // swap, not a remount. The onboarding kickoff is a server-authored carrier
-  // for Mika's first task, not something the member typed, so it never becomes
-  // a visible bubble.
+  // swap, not a remount. A hidden instruction is product-authored input the
+  // member never typed, so it never becomes a visible bubble.
   const renderItems: ChatRenderItem[] = useMemo(() => {
     const items: ChatRenderItem[] = messages
-      .filter((message) => message.message_kind !== "onboarding_kickoff")
+      .filter((message) => message.message_kind !== "instruction")
       .map((message) => ({
         key: messageRowKey(message),
         kind: "message" as const,
@@ -291,6 +305,7 @@ export function ChatMessageList({
     pendingTask,
     liveTaskMessages,
     availability,
+    header: hasOlderMessages ? null : header,
   };
 
   // Every previewable file in this session, in message order, so opening one
@@ -392,6 +407,7 @@ export function ChatMessageList({
               latestAssistantMessageId={latestAssistantMessageId}
               quickActionsPendingMessageId={quickActionsPendingMessageId}
               starterCardsMessageId={starterCardsMessageId}
+              renderUserMessageSender={renderUserMessageSender}
             />
           </div>
         )}
@@ -457,6 +473,7 @@ const MessageBubble = memo(function MessageBubble({
   latestAssistantMessageId,
   quickActionsPendingMessageId,
   starterCardsMessageId,
+  renderUserMessageSender,
 }: {
   item: ChatRenderItem;
   isPending: boolean;
@@ -467,6 +484,7 @@ const MessageBubble = memo(function MessageBubble({
   latestAssistantMessageId: string | null;
   quickActionsPendingMessageId: string | null;
   starterCardsMessageId: string | null;
+  renderUserMessageSender?: (message: ChatMessage) => ReactNode;
 }) {
   // The live row and the persisted assistant row both land here under one key,
   // and both render <AssistantMessage> — same component type, same position —
@@ -487,7 +505,8 @@ const MessageBubble = memo(function MessageBubble({
 
   if (message.role === "user") {
     return (
-      <div className="flex justify-end">
+      <div className="flex flex-col items-end gap-1">
+        {renderUserMessageSender?.(message)}
         <div className="max-w-[80%] break-words rounded-xl bg-muted px-4 py-2.5 text-body-lg">
           {/* User messages are authored as markdown in ContentEditor, so they
            * render through the SAME RichContent as assistant replies and as
@@ -1176,6 +1195,48 @@ function TimelineView({
         />
       )}
     </>
+  );
+}
+
+/**
+ * A task's transcript rendered as one assistant turn outside a chat session,
+ * with the same fold, answer, elapsed caption and copy action as a chat reply.
+ * The autopilot run page shows its run task this way.
+ */
+export function TaskTimelineReply({
+  items,
+  isStreaming,
+  elapsedMs,
+  failed = false,
+}: {
+  items: ChatTimelineItem[];
+  isStreaming: boolean;
+  elapsedMs?: number | null;
+  failed?: boolean;
+}) {
+  const timeline = useMemo(() => transformTimeline(items), [items]);
+  const answer = splitTimeline(timeline).final.map((item) => item.content ?? "").join("");
+  const showCopy = !isStreaming && answer.trim().length > 0;
+  const showElapsed = !isStreaming && elapsedMs != null;
+
+  return (
+    <div className="w-full space-y-2">
+      {timeline.length > 0 && (
+        <TimelineView
+          items={timeline}
+          isStreaming={isStreaming}
+          phase={isStreaming ? "streaming" : "settled"}
+        />
+      )}
+      {(showElapsed || showCopy) && (
+        <div className="flex items-center gap-1.5">
+          {showElapsed && (
+            <ElapsedCaption variant={failed ? "failed" : "replied"} elapsedMs={elapsedMs} />
+          )}
+          {showCopy && <MessageCopyButton content={answer} />}
+        </div>
+      )}
+    </div>
   );
 }
 

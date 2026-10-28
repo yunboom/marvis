@@ -261,7 +261,8 @@ const sentenceTerminators = "。！？；.!?;\n"
 
 // sentenceStart walks back from end (exclusive) to just after the previous
 // sentence end. The character right before end is skipped: it usually ends
-// the sentence being looked for.
+// the sentence being looked for. The result never goes below the page start,
+// which end can be when the remembered suffix now opens the page.
 func (pt pageText) sentenceStart(end, limit int) int {
 	i := end - 2
 	for ; i >= 0 && end-i <= limit; i-- {
@@ -270,7 +271,7 @@ func (pt pageText) sentenceStart(end, limit int) int {
 		}
 	}
 
-	return i + 1
+	return max(i+1, 0)
 }
 
 // sentenceEnd walks forward from start to the end of that sentence,

@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "@marvis/core/i18n/react";
@@ -114,7 +115,7 @@ function installDesktopAPI() {
   });
 }
 
-function renderScreen(props: { suggestedAddress?: string } = {}) {
+function renderScreen(props: ComponentProps<typeof ConnectServerScreen> = {}) {
   return render(
     <I18nProvider locale="zh-Hans" resources={RESOURCES}>
       <ConnectServerScreen {...props} />
@@ -479,5 +480,60 @@ describe("ConnectServerScreen standalone option", () => {
 
     expect(screen.getByRole("heading", { name: "下载已暂停" })).toBeInTheDocument();
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+  });
+});
+
+describe("ConnectServerScreen opened from an existing session", () => {
+  it("has no back button on first launch", () => {
+    renderScreen();
+
+    expect(screen.queryByRole("button", { name: "返回" })).not.toBeInTheDocument();
+  });
+
+  it("goes back to where it was opened from", () => {
+    const onBack = vi.fn();
+    renderScreen({ onBack });
+
+    fireEvent.click(screen.getByRole("button", { name: "返回" }));
+
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it("runs beforeSwitch before saving the picked server", async () => {
+    const order: string[] = [];
+    const beforeSwitch = vi.fn(async () => {
+      order.push("beforeSwitch");
+    });
+    mocks.select.mockImplementationOnce(async () => {
+      order.push("select");
+    });
+    renderScreen({ beforeSwitch });
+    settleDiscovery([designServer]);
+
+    fireEvent.click(screen.getByRole("radio", { name: /设计部 Marvis/ }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "连接" }));
+    });
+
+    expect(order).toEqual(["beforeSwitch", "select"]);
+  });
+
+  it("runs beforeSwitch before entering standalone mode", async () => {
+    initialStandaloneStatus = standaloneStatus({ phase: "stopped", version: "0.6.6" });
+    const order: string[] = [];
+    const beforeSwitch = vi.fn(async () => {
+      order.push("beforeSwitch");
+    });
+    mocks.standaloneEnter.mockImplementationOnce(async () => {
+      order.push("enter");
+    });
+    renderScreen({ beforeSwitch });
+    settleDiscovery([]);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "继续" }));
+    });
+
+    expect(order).toEqual(["beforeSwitch", "enter"]);
   });
 });

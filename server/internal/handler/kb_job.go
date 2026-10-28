@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"path"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -29,6 +28,11 @@ const (
 	kbJobStateFailed  = "failed"
 	kbJobStateStopped = "stopped"
 )
+
+// kbChatSessionArchived is the chat_session status of an archived job: the
+// job's chat carries its archived flag, so archiving a job and archiving its
+// chat are one write.
+const kbChatSessionArchived = "archived"
 
 // Terminal statuses of agent_task_queue a job state is derived from.
 const (
@@ -60,10 +64,6 @@ const kbLastReplyRunes = 140
 // kbMergeRequestTitleRunes caps a merge request title taken from a reply.
 const kbMergeRequestTitleRunes = 120
 
-// kbWholeBaseWhere is how an annotation on the whole knowledge base is named
-// in a job's first message.
-const kbWholeBaseWhere = "knowledge base"
-
 var kbJobStates = []string{kbJobStateRunning, kbJobStateFailed}
 
 // CreateKbJobRequest starts a job (POST /api/kb/bases/{kb}/jobs).
@@ -74,8 +74,6 @@ type CreateKbJobRequest struct {
 	Message       string   `json:"message"`
 	AnnotationIDs []string `json:"annotation_ids"`
 	PageID        *string  `json:"page_id"`
-	// Sources are the uris of the material an ingest job starts from.
-	Sources []string `json:"sources"`
 }
 
 // KbJobDraftSummary is the linked draft at a glance. Added and deleted are
@@ -115,6 +113,7 @@ type KbJobResponse struct {
 	DraftID         *string                   `json:"draft_id"`
 	CreatedBy       string                    `json:"created_by"`
 	State           string                    `json:"state"`
+	Archived        bool                      `json:"archived"`
 	LastReply       string                    `json:"last_reply"`
 	Draft           *KbJobDraftSummary        `json:"draft"`
 	MergeRequest    *KbJobMergeRequestSummary `json:"merge_request"`
@@ -149,7 +148,8 @@ type CreateKbMergeRequestRequest struct {
 }
 
 // ListKbJobs lists the caller's jobs of a knowledge base (GET
-// /api/kb/bases/{kb}/jobs), newest first; state=running|failed narrows it.
+// /api/kb/bases/{kb}/jobs), newest first, archived ones included and
+// flagged; state=running|failed narrows it to unarchived jobs in that state.
 func (h *Handler) ListKbJobs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
@@ -184,7 +184,7 @@ func (h *Handler) ListKbJobs(w http.ResponseWriter, r *http.Request) {
 
 	out := make([]KbJobResponse, 0, len(responses))
 	for _, job := range responses {
-		if state == "" || job.State == state {
+		if state == "" || (job.State == state && !job.Archived) {
 			out = append(out, job)
 		}
 	}
@@ -204,6 +204,7 @@ func (h *Handler) kbJobResponses(ctx context.Context, wsUUID pgtype.UUID, jobs [
 	}
 	rows, err := h.Queries.ListKbJobStates(ctx, db.ListKbJobStatesParams{
 		RunningStatuses: kbRunningTaskStatuses,
+		ArchivedStatus:  kbChatSessionArchived,
 		WorkspaceID:     wsUUID,
 		JobIds:          ids,
 	})
@@ -245,6 +246,7 @@ func kbJobResponse(job db.KbJob, row db.ListKbJobStatesRow, names kbActorNames) 
 		DraftID:         uuidToPtr(row.DraftID),
 		CreatedBy:       uuidToString(job.CreatedBy),
 		State:           kbJobState(row),
+		Archived:        row.Archived,
 		LastReply:       kbSnippet(row.LastReply, kbLastReplyRunes),
 		AnnotationIDs:   make([]string, len(job.AnnotationIds)),
 		PageID:          uuidToPtr(job.PageID),
@@ -312,9 +314,11 @@ func kbSnippet(text string, n int) string {
 }
 
 // CreateKbJob starts a job (POST /api/kb/bases/{kb}/jobs): a chat session
-// with the chosen agent, a kb_job row and the first message, which the
-// server writes from the spec 08.4 / 08.5 templates. No draft is created;
-// the agent creates one with kb draft create --job.
+// with the chosen agent, a kb_job row and the first message. The message is
+// the member's request exactly as the job page wrote and showed it; starters
+// whose request is a multi-step process add a hidden instruction
+// (kb.JobInstruction) to the same turn. No draft is created; the agent's kb
+// draft create in this chat links one.
 func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
@@ -369,16 +373,20 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input, pageID, err := h.kbJobContext(ctx, base, req, annotationIDs, message)
+	pageID, err := h.kbJobContext(ctx, base, req, annotationIDs)
 	if err != nil {
 		h.writeKbError(w, r, err)
+		return
+	}
+	instruction, err := kb.JobInstruction(req.Starter)
+	if err != nil {
+		h.writeKbInternalError(w, r, err)
 		return
 	}
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
 		name = kb.DefaultJobName(req.Starter, message)
 	}
-	input.JobName = name
 
 	job, session, err := h.createKbJobRows(ctx, base, agent, userID, name, req.Starter, annotationIDs, pageID)
 	if err != nil {
@@ -386,16 +394,7 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input.JobID = uuidToString(job.ID)
-	content, err := kb.JobFirstMessage(input)
-	if err != nil {
-		if discardErr := h.discardKbJobRows(ctx, job, session); discardErr != nil {
-			err = errors.Wrapf(discardErr, "discard job after render failure (%v)", err)
-		}
-		h.writeKbInternalError(w, r, err)
-		return
-	}
-	sent, err := h.TaskService.SendDirectChatMessage(ctx, session, agent, parseUUID(userID), content, nil, actorType, parseUUID(actorID))
+	sent, err := h.TaskService.SendDirectChatMessageWithInstruction(ctx, session, agent, parseUUID(userID), message, instruction, nil, actorType, parseUUID(actorID))
 	if err != nil {
 		// The job is useless without its first message: take it back so the
 		// member can retry instead of finding an empty job in the list.
@@ -416,7 +415,7 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 		ChatSessionID: sessionID,
 		MessageID:     uuidToString(sent.Message.ID),
 		Role:          "user",
-		Content:       content,
+		Content:       message,
 		TaskID:        uuidToString(sent.Task.ID),
 		CreatedAt:     timestampToString(sent.Message.CreatedAt),
 	})
@@ -434,95 +433,37 @@ func (h *Handler) CreateKbJob(w http.ResponseWriter, r *http.Request) {
 // kbAgentKindSystem marks the hidden carrier agents, which cannot run jobs.
 const kbAgentKindSystem = "system"
 
-// kbJobContext validates what an entry point brought in and fills the
-// starter section of the first message with it.
-func (h *Handler) kbJobContext(ctx context.Context, base db.KbBase, req CreateKbJobRequest, annotationIDs []pgtype.UUID, message string) (kb.JobMessageInput, pgtype.UUID, error) {
-	input := kb.JobMessageInput{Name: base.Name, Slug: base.Slug, Starter: req.Starter, Message: message}
-
-	tree, err := loadKbTreeWith(ctx, h.Queries, base.ID, nil)
-	if err != nil {
-		return input, pgtype.UUID{}, err
-	}
-	ref := func(path string) string { return base.Slug + ":" + path }
-
+// kbJobContext validates what an entry point brought in: the page (checked,
+// or the parent of a new page) and the annotations, which the job keeps.
+func (h *Handler) kbJobContext(ctx context.Context, base db.KbBase, req CreateKbJobRequest, annotationIDs []pgtype.UUID) (pgtype.UUID, error) {
 	var pageID pgtype.UUID
 	if req.PageID != nil && *req.PageID != "" {
 		id, err := optionalPgUUID(*req.PageID)
 		if err != nil {
-			return input, pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodeInvalidRequest, "page_id is not a uuid")
+			return pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodeInvalidRequest, "page_id is not a uuid")
 		}
-		node, found := tree.Node(uuidToString(id))
-		path, hasPath := tree.PathByPageID(uuidToString(id))
-		if !found || !hasPath {
-			return input, pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodePageNotFound, "page_id is not a page of this knowledge base")
+
+		tree, err := loadKbTreeWith(ctx, h.Queries, base.ID, nil)
+		if err != nil {
+			return pgtype.UUID{}, err
+		}
+		if _, found := tree.PathByPageID(uuidToString(id)); !found {
+			return pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodePageNotFound, "page_id is not a page of this knowledge base")
 		}
 		pageID = id
-		named := node.Title + " (`" + ref(path) + "`)"
-		input.Page = named
-		input.Pages = named
-		input.ParentTitle = node.Title
-		input.ParentPath = ref(path)
-	}
-	if input.ParentPath == "" {
-		input.ParentTitle = base.Name
-		input.ParentPath = ref("/")
 	}
 
 	if len(annotationIDs) > 0 {
-		annotations, err := h.kbJobAnnotations(ctx, base, tree, annotationIDs)
+		rows, err := h.Queries.ListKbAnnotationsByIDs(ctx, db.ListKbAnnotationsByIDsParams{KnowledgeBaseID: base.ID, Ids: annotationIDs})
 		if err != nil {
-			return input, pgtype.UUID{}, err
+			return pgtype.UUID{}, errors.Wrapf(err, "list job annotations knowledge_base_id=%s", uuidToString(base.ID))
 		}
-		input.Annotations = annotations
-	}
-
-	for _, uri := range req.Sources {
-		uri = strings.TrimSpace(uri)
-		if uri == "" {
-			continue
+		if len(rows) != len(slices.Compact(slices.SortedFunc(slices.Values(annotationIDs), compareUUID))) {
+			return pgtype.UUID{}, kbFail(http.StatusBadRequest, kbCodeAnnotationNotFound, "annotation_ids names an annotation outside this knowledge base")
 		}
-		input.Sources = append(input.Sources, kb.JobSource{URI: uri, Title: path.Base(uri)})
 	}
 
-	return input, pageID, nil
-}
-
-// kbJobAnnotations loads the annotations brought into a job; each must be an
-// annotation of this knowledge base.
-func (h *Handler) kbJobAnnotations(ctx context.Context, base db.KbBase, tree *kb.PageTree, ids []pgtype.UUID) ([]kb.JobAnnotation, error) {
-	rows, err := h.Queries.ListKbAnnotationsByIDs(ctx, db.ListKbAnnotationsByIDsParams{KnowledgeBaseID: base.ID, Ids: ids})
-	if err != nil {
-		return nil, errors.Wrapf(err, "list job annotations knowledge_base_id=%s", uuidToString(base.ID))
-	}
-	if len(rows) != len(slices.Compact(slices.SortedFunc(slices.Values(ids), compareUUID))) {
-		return nil, kbFail(http.StatusBadRequest, kbCodeAnnotationNotFound, "annotation_ids names an annotation outside this knowledge base")
-	}
-
-	byID := make(map[string]db.KbAnnotation, len(rows))
-	for _, row := range rows {
-		byID[uuidToString(row.ID)] = row
-	}
-	out := make([]kb.JobAnnotation, 0, len(rows))
-	for _, id := range ids {
-		row, ok := byID[uuidToString(id)]
-		if !ok {
-			continue
-		}
-		delete(byID, uuidToString(id))
-
-		where := kbWholeBaseWhere
-		if row.PageID.Valid {
-			path, _ := tree.PathByPageID(uuidToString(row.PageID))
-			where = base.Slug + ":" + path
-			if row.BlockID != "" {
-				where += "#^" + row.BlockID
-			}
-			where = "`" + where + "`"
-		}
-		out = append(out, kb.JobAnnotation{ID: uuidToString(row.ID), Where: where, Quote: row.Quote, Body: row.Body})
-	}
-
-	return out, nil
+	return pageID, nil
 }
 
 func compareUUID(a, b pgtype.UUID) int {
@@ -758,7 +699,7 @@ func (h *Handler) SubmitKbJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := requestUserID(r)
-	created, draft, err := h.openKbMergeRequest(ctx, base, parseUUID(*current.DraftID), kbOpenMergeRequest{
+	opened, err := h.openKbMergeRequest(ctx, base, parseUUID(*current.DraftID), kbOpenMergeRequest{
 		title:         title,
 		summary:       summary,
 		source:        kb.StarterSource(job.Starter),
@@ -773,9 +714,9 @@ func (h *Handler) SubmitKbJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.publishKbMergeRequestCreated(created, draft, &job, kbActorMember, userID)
+	h.publishKbMergeRequestCreated(opened, &job, kbActorMember, userID)
 
-	resp, err := h.kbMergeRequestResponseOf(ctx, created.MergeRequest)
+	resp, err := h.kbMergeRequestResponseOf(ctx, opened.MergeRequest)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -796,6 +737,7 @@ func (h *Handler) kbJobSubmitText(ctx context.Context, job db.KbJob, req SubmitK
 
 	rows, err := h.Queries.ListKbJobStates(ctx, db.ListKbJobStatesParams{
 		RunningStatuses: kbRunningTaskStatuses,
+		ArchivedStatus:  kbChatSessionArchived,
 		WorkspaceID:     job.WorkspaceID,
 		JobIds:          []pgtype.UUID{job.ID},
 	})
@@ -897,6 +839,162 @@ func (h *Handler) DiscardKbJob(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, responses[0])
 }
 
+// SetKbJobArchivedRequest archives or unarchives a job.
+type SetKbJobArchivedRequest struct {
+	Archived bool `json:"archived"`
+}
+
+// SetKbJobArchived archives or unarchives a job (PATCH
+// /api/kb/jobs/{id}/archive), as SetChatSessionArchived does a chat: the
+// archived flag is the job chat's status, so the conversation turns
+// read-only and the job moves behind the list's archived entry. Like a
+// web-only chat, archiving leaves a running turn alone.
+func (h *Handler) SetKbJobArchived(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var req SetKbJobArchivedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	job, base, ok := h.loadKbJobForCreator(w, r)
+	if !ok {
+		return
+	}
+
+	if _, err := h.Queries.SetChatSessionArchived(ctx, db.SetChatSessionArchivedParams{ID: job.ChatSessionID, Archived: req.Archived}); err != nil {
+		h.writeKbInternalError(w, r, errors.Wrapf(err, "set job archived job_id=%s archived=%t", uuidToString(job.ID), req.Archived))
+		return
+	}
+
+	h.publishKbJobUpdated(job, kbActorMember, requestUserID(r))
+
+	responses, err := h.kbJobResponses(ctx, base.WorkspaceID, []db.KbJob{job})
+	if err != nil {
+		h.writeKbInternalError(w, r, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, responses[0])
+}
+
+// kbDeletedJob is what deleting a job changed, for the events sent after it
+// commits.
+type kbDeletedJob struct {
+	purged      purgedChatSession
+	sessionGone bool
+	// discarded is the job's draft when the delete discarded it.
+	discarded *db.KbDraft
+}
+
+// DeleteKbJob hard-deletes a job with its chat (DELETE /api/kb/jobs/{id}),
+// the way DeleteChatSession deletes a chat: the chat's tasks are cancelled
+// and the chat is removed in the same transaction as the job. An unsubmitted
+// draft is discarded as DiscardKbJob does; a submitted or merged draft stays
+// with its merge requests, which only lose their link to the job. As with
+// chat, the server does not require the job to be archived first; the UI
+// offers delete only once it is.
+func (h *Handler) DeleteKbJob(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	job, _, ok := h.loadKbJobForCreator(w, r)
+	if !ok {
+		return
+	}
+
+	deleted, err := h.deleteKbJobRows(ctx, job)
+	if err != nil {
+		h.writeKbError(w, r, err)
+		return
+	}
+
+	workspaceID := uuidToString(job.WorkspaceID)
+	userID := requestUserID(r)
+	h.TaskService.BroadcastCancelledTasks(ctx, workspaceID, deleted.purged.cancelled, deleted.purged.reactionTargets)
+	if !deleted.sessionGone {
+		sessionID := uuidToString(job.ChatSessionID)
+		h.publishChat(protocol.EventChatSessionDeleted, workspaceID, kbActorMember, userID, sessionID, protocol.ChatSessionDeletedPayload{
+			ChatSessionID: sessionID,
+		})
+	}
+	h.publishKbJobUpdated(job, kbActorMember, userID)
+	if deleted.discarded != nil {
+		h.notifyKbDraftUpdated(ctx, *deleted.discarded, deleted.discarded.Version, kbActorMember, userID)
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// deleteKbJobRows removes a job, its chat and its draft link in one
+// transaction. Locks run job, chat, agent, tasks, then draft and merge
+// requests, the draft before its merge requests as merging takes them.
+func (h *Handler) deleteKbJobRows(ctx context.Context, job db.KbJob) (kbDeletedJob, error) {
+	tx, err := h.TxStarter.Begin(ctx)
+	if err != nil {
+		return kbDeletedJob{}, errors.Wrapf(err, "begin job delete job_id=%s", uuidToString(job.ID))
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	qtx := h.Queries.WithTx(tx)
+
+	// Serialises with a draft being linked to the job (linkKbJobDraft).
+	if _, err := qtx.GetKbJobForUpdate(ctx, db.GetKbJobForUpdateParams{WorkspaceID: job.WorkspaceID, ID: job.ID}); err != nil {
+		if isNotFound(err) {
+			return kbDeletedJob{}, kbFail(http.StatusNotFound, kbCodeJobNotFound, "job not found")
+		}
+
+		return kbDeletedJob{}, errors.Wrapf(err, "lock job job_id=%s", uuidToString(job.ID))
+	}
+
+	var out kbDeletedJob
+	if _, err := qtx.LockChatSessionForDelete(ctx, job.ChatSessionID); err != nil {
+		if !isNotFound(err) {
+			return kbDeletedJob{}, errors.Wrapf(err, "lock job chat session chat_session_id=%s", uuidToString(job.ChatSessionID))
+		}
+		out.sessionGone = true
+	}
+	if !out.sessionGone {
+		session, err := qtx.GetChatSessionInWorkspace(ctx, db.GetChatSessionInWorkspaceParams{ID: job.ChatSessionID, WorkspaceID: job.WorkspaceID})
+		if err != nil {
+			return kbDeletedJob{}, errors.Wrapf(err, "load job chat session chat_session_id=%s", uuidToString(job.ChatSessionID))
+		}
+		if out.purged, err = purgeChatSession(ctx, qtx, session); err != nil {
+			return kbDeletedJob{}, errors.Wrapf(err, "delete job chat session chat_session_id=%s", uuidToString(session.ID))
+		}
+	}
+
+	link, err := qtx.GetKbJobDraftByJob(ctx, job.ID)
+	switch {
+	case err == nil:
+		draft, err := lockKbDraft(ctx, qtx, db.KbDraft{WorkspaceID: job.WorkspaceID, ID: link.DraftID})
+		if err != nil {
+			return kbDeletedJob{}, err
+		}
+		if draft.Status == kb.DraftStatusOpen {
+			if _, err := qtx.SetKbDraftStatus(ctx, db.SetKbDraftStatusParams{ID: draft.ID, Status: kb.DraftStatusDiscarded}); err != nil {
+				return kbDeletedJob{}, errors.Wrapf(err, "discard draft draft_id=%s", uuidToString(draft.ID))
+			}
+			out.discarded = &draft
+		}
+	case !isNotFound(err):
+		return kbDeletedJob{}, errors.Wrapf(err, "load job draft job_id=%s", uuidToString(job.ID))
+	}
+
+	if err := qtx.DeleteKbJobDraftByJob(ctx, db.DeleteKbJobDraftByJobParams{WorkspaceID: job.WorkspaceID, JobID: job.ID}); err != nil {
+		return kbDeletedJob{}, errors.Wrapf(err, "unlink job draft job_id=%s", uuidToString(job.ID))
+	}
+	if err := qtx.ClearKbMergeRequestJob(ctx, db.ClearKbMergeRequestJobParams{WorkspaceID: job.WorkspaceID, JobID: job.ID}); err != nil {
+		return kbDeletedJob{}, errors.Wrapf(err, "detach job merge requests job_id=%s", uuidToString(job.ID))
+	}
+	if err := qtx.DeleteKbJob(ctx, db.DeleteKbJobParams{WorkspaceID: job.WorkspaceID, ID: job.ID}); err != nil {
+		return kbDeletedJob{}, errors.Wrapf(err, "delete job job_id=%s", uuidToString(job.ID))
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return kbDeletedJob{}, errors.Wrapf(err, "commit job delete job_id=%s", uuidToString(job.ID))
+	}
+
+	return out, nil
+}
+
 // CreateKbMergeRequest opens a merge request for a draft the caller may
 // write (POST /api/kb/merge-requests; kb mr create). A draft linked to a job
 // counts as that job's submit: the job page turns read-only.
@@ -980,7 +1078,7 @@ func (h *Handler) CreateKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	actorType, actorID := h.resolveActor(r, userID, uuidToString(wsUUID))
 
-	created, locked, err := h.openKbMergeRequest(ctx, base, draft.ID, kbOpenMergeRequest{
+	opened, err := h.openKbMergeRequest(ctx, base, draft.ID, kbOpenMergeRequest{
 		title:         title,
 		summary:       strings.TrimSpace(req.Summary),
 		source:        source,
@@ -995,9 +1093,9 @@ func (h *Handler) CreateKbMergeRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.publishKbMergeRequestCreated(created, locked, job, actorType, actorID)
+	h.publishKbMergeRequestCreated(opened, job, actorType, actorID)
 
-	resp, err := h.kbMergeRequestResponseOf(ctx, created.MergeRequest)
+	resp, err := h.kbMergeRequestResponseOf(ctx, opened.MergeRequest)
 	if err != nil {
 		h.writeKbInternalError(w, r, err)
 		return
@@ -1015,45 +1113,54 @@ type kbOpenMergeRequest struct {
 	annotationIDs                []pgtype.UUID
 }
 
+// kbOpenedMergeRequest is an opened merge request, its draft and the
+// approval notifications it sent, for the events published after commit.
+type kbOpenedMergeRequest struct {
+	kb.CreatedMergeRequest
+	draft    db.KbDraft
+	notified []db.InboxItem
+}
+
 // openKbMergeRequest checks a draft can be submitted and opens its merge
 // request in one transaction: the draft must be open with changes, no format
 // check may report an error, and it must have no open merge request.
-// Conflicts with the mainline do not block; review handles them.
-func (h *Handler) openKbMergeRequest(ctx context.Context, base db.KbBase, draftID pgtype.UUID, in kbOpenMergeRequest) (kb.CreatedMergeRequest, db.KbDraft, error) {
+// Conflicts with the mainline do not block; review handles them. The
+// knowledge base maintainers are asked to approve it.
+func (h *Handler) openKbMergeRequest(ctx context.Context, base db.KbBase, draftID pgtype.UUID, in kbOpenMergeRequest) (kbOpenedMergeRequest, error) {
 	tx, err := h.TxStarter.Begin(ctx)
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrap(err, "begin merge request create")
+		return kbOpenedMergeRequest{}, errors.Wrap(err, "begin merge request create")
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	qtx := h.Queries.WithTx(tx)
 
 	draft, err := lockKbDraft(ctx, qtx, db.KbDraft{WorkspaceID: base.WorkspaceID, ID: draftID})
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
 	}
-	if _, err := qtx.GetOpenKbMergeRequestByDraft(ctx, db.GetOpenKbMergeRequestByDraftParams{DraftID: draft.ID, Status: kb.MergeRequestStatusOpen}); err == nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeMergeRequestOpen, "the draft already has an open merge request")
+	if _, err := qtx.GetOpenKbMergeRequestByDraft(ctx, db.GetOpenKbMergeRequestByDraftParams{DraftID: draft.ID, Statuses: kbActiveMergeRequestStatuses}); err == nil {
+		return kbOpenedMergeRequest{}, kbFail(http.StatusConflict, kbCodeMergeRequestOpen, "the draft already has an open merge request")
 	} else if !isNotFound(err) {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrapf(err, "load open merge request draft_id=%s", uuidToString(draft.ID))
+		return kbOpenedMergeRequest{}, errors.Wrapf(err, "load open merge request draft_id=%s", uuidToString(draft.ID))
 	}
 	if draft.Status != kb.DraftStatusOpen {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeDraftNotOpen, "the draft is "+draft.Status+" and cannot be submitted")
+		return kbOpenedMergeRequest{}, kbFail(http.StatusConflict, kbCodeDraftNotOpen, "the draft is "+draft.Status+" and cannot be submitted")
 	}
 
 	overlay, err := loadKbOverlay(ctx, qtx, base.ID, draft.ID)
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
 	}
 	if len(overlay.rows) == 0 {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeDraftEmpty, "the draft changes nothing")
+		return kbOpenedMergeRequest{}, kbFail(http.StatusConflict, kbCodeDraftEmpty, "the draft changes nothing")
 	}
 	findings, err := lintKbDraftPages(ctx, qtx, base, overlay, nil)
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
 	}
 	for _, f := range findings {
 		if f.Severity == lint.SeverityError {
-			return kb.CreatedMergeRequest{}, db.KbDraft{}, kbFail(http.StatusConflict, kbCodeDraftCheckFailed, "the draft check reports errors; fix them before submitting")
+			return kbOpenedMergeRequest{}, kbFail(http.StatusConflict, kbCodeDraftCheckFailed, "the draft check reports errors; fix them before submitting")
 		}
 	}
 
@@ -1073,18 +1180,23 @@ func (h *Handler) openKbMergeRequest(ctx context.Context, base db.KbBase, draftI
 		AnnotationIDs: in.annotationIDs,
 	})
 	if err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, err
+		return kbOpenedMergeRequest{}, err
+	}
+	notified, _, err := notifyKbReviewNeeded(ctx, qtx, base, created.MergeRequest, in.authorType, in.authorID)
+	if err != nil {
+		return kbOpenedMergeRequest{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return kb.CreatedMergeRequest{}, db.KbDraft{}, errors.Wrap(err, "commit merge request create")
+		return kbOpenedMergeRequest{}, errors.Wrap(err, "commit merge request create")
 	}
 
-	return created, draft, nil
+	return kbOpenedMergeRequest{CreatedMergeRequest: created, draft: draft, notified: notified}, nil
 }
 
-func (h *Handler) publishKbMergeRequestCreated(created kb.CreatedMergeRequest, draft db.KbDraft, job *db.KbJob, actorType, actorID string) {
-	mr := created.MergeRequest
+func (h *Handler) publishKbMergeRequestCreated(opened kbOpenedMergeRequest, job *db.KbJob, actorType, actorID string) {
+	mr := opened.MergeRequest
+	draft := opened.draft
 	workspaceID := uuidToString(mr.WorkspaceID)
 	var jobID any
 	if job != nil {
@@ -1101,9 +1213,9 @@ func (h *Handler) publishKbMergeRequestCreated(created kb.CreatedMergeRequest, d
 	if job != nil {
 		h.publishKbJobUpdated(*job, actorType, actorID, draft.ID)
 	}
-	if len(created.Annotations) > 0 {
-		ids := make([]string, len(created.Annotations))
-		for i, id := range created.Annotations {
+	if len(opened.Annotations) > 0 {
+		ids := make([]string, len(opened.Annotations))
+		for i, id := range opened.Annotations {
 			ids[i] = uuidToString(id)
 		}
 		h.publish(protocol.EventKbAnnotationChanged, workspaceID, actorType, actorID, map[string]any{
@@ -1112,4 +1224,5 @@ func (h *Handler) publishKbMergeRequestCreated(created kb.CreatedMergeRequest, d
 			"page_ids":          []string{},
 		})
 	}
+	h.publishKbInbox(mr.WorkspaceID, kbInboxChanges{created: opened.notified}, actorType, actorID)
 }

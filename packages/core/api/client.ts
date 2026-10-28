@@ -4,6 +4,7 @@ import type { IssueWakeup, IssueWakeupInput, IssueWakeupSummaryRow, PausedWakeup
 import type { WorkspaceWakeupPage, WorkspaceWakeupFilters } from "../types/issue-wakeup";
 import { WorkspaceWakeupPageSchema, IssueWakeupSchema, IssueWakeupSummaryRowSchema, PausedWakeupSchema, SystemWakeupSchema, WakeupRunSchema, WorkspaceSystemWakeupSchema } from "./schemas";
 import type { ArchivedInboxFilters } from "../inbox/filter-store";
+import type { InboxCategory } from "../inbox/category";
 import type { ArchivedInboxPage, ArchivedInboxFacets } from "../types/inbox";
 import { parseQoderConnection, parseQoderCatalog, type QoderInput } from "../runtimes/qoder-schema";
 import { configStore } from "../config";
@@ -161,6 +162,7 @@ import type {
   Autopilot,
   AutopilotTrigger,
   AutopilotRun,
+  AutopilotRunChatResponse,
   AutopilotQuotaUsage,
   CreateAutopilotRequest,
   UpdateAutopilotRequest,
@@ -288,7 +290,6 @@ import type {
   UpdateKnowledgeBaseRequest,
   CreateKbJobRequest,
   KbJob,
-  KbDraftDetail,
   KbJobDetail,
   KbJobState,
   KbMergeRequestCreated,
@@ -296,6 +297,10 @@ import type {
   KbMergeRequestDetail,
   KbMergeRequestListStatus,
   KbMrComment,
+  KbMrCommentState,
+  KbMrReview,
+  KbMrTimelineEntry,
+  KbMrHandoff,
   CreateKbMrCommentRequest,
   KbRawKind,
   KbRawFileItem,
@@ -307,6 +312,14 @@ import type {
 import {
   EMPTY_KB_MERGE_REQUEST_LIST,
   EMPTY_KB_MR_COMMENT_LIST,
+  EMPTY_KB_MR_REVIEW_LIST,
+  EMPTY_KB_MR_TIMELINE,
+  EMPTY_KB_MR_HANDOFF,
+  KbMrReviewSchema,
+  KbMrReviewListSchema,
+  KbMrTimelineSchema,
+  KbMrHandoffSchema,
+  kbMrReviewFallback,
   KbMergeRequestDetailSchema,
   KbMergeRequestListSchema,
   KbMergeRequestSchema,
@@ -328,12 +341,10 @@ import {
   KbRawUploadSchema,
   EMPTY_KB_JOB_LIST,
   EMPTY_KB_MERGE_REQUEST_CREATED,
-  KbDraftDetailSchema,
   KbJobDetailSchema,
   KbJobListSchema,
   KbJobSchema,
   KbMergeRequestCreatedSchema,
-  kbDraftDetailFallback,
   kbJobDetailFallback,
   kbJobFallback,
   EMPTY_KB_BUILDER_SESSION_LIST,
@@ -439,6 +450,7 @@ import {
   ListAutopilotsResponseSchema,
   EMPTY_LIST_AUTOPILOTS_RESPONSE,
   AutopilotRunSchema,
+  AutopilotRunChatResponseSchema,
   AutopilotQuotaUsageSchema,
   FALLBACK_AUTOPILOT_RUN,
   CronPreviewResponseSchema,
@@ -3075,8 +3087,9 @@ export class ApiClient {
     });
   }
 
-  private archivedInboxParams(filters: ArchivedInboxFilters): URLSearchParams {
+  private archivedInboxParams(filters: ArchivedInboxFilters, category?: InboxCategory | null): URLSearchParams {
     const params = new URLSearchParams();
+    if (category) params.set("category", category);
     if (filters.statuses.length) params.set("statuses", [...filters.statuses].sort().join(","));
     if (filters.priorities.length) params.set("priorities", [...filters.priorities].sort().join(","));
     if (filters.actors.length) params.set("actors", [...filters.actors].sort().join(","));
@@ -3085,9 +3098,9 @@ export class ApiClient {
   }
 
   async listArchivedInboxPage(filters: ArchivedInboxFilters, options: {
-    cursor?: string | null; groupId?: string; signal?: AbortSignal;
+    cursor?: string | null; groupId?: string; signal?: AbortSignal; category?: InboxCategory | null;
   } = {}): Promise<ArchivedInboxPage> {
-    const params = this.archivedInboxParams(filters);
+    const params = this.archivedInboxParams(filters, options.category);
     params.set("limit", "50");
     if (options.cursor) params.set("cursor", options.cursor);
     if (options.groupId) params.set("group_id", options.groupId);
@@ -3099,8 +3112,12 @@ export class ApiClient {
     return page;
   }
 
-  async getArchivedInboxFacets(filters: ArchivedInboxFilters, signal?: AbortSignal): Promise<ArchivedInboxFacets> {
-    const raw = await this.fetch<unknown>(`/api/inbox/archived/facets?${this.archivedInboxParams(filters)}`, { signal });
+  async getArchivedInboxFacets(
+    filters: ArchivedInboxFilters,
+    signal?: AbortSignal,
+    category?: InboxCategory | null,
+  ): Promise<ArchivedInboxFacets> {
+    const raw = await this.fetch<unknown>(`/api/inbox/archived/facets?${this.archivedInboxParams(filters, category)}`, { signal });
     const facets = parseWithFallback<ArchivedInboxFacets | null>(raw, ArchivedInboxFacetsSchema, null, {
       endpoint: "GET /api/inbox/archived/facets",
     });
@@ -3110,6 +3127,12 @@ export class ApiClient {
 
   async unarchiveInbox(id: string): Promise<InboxItem> {
     return this.fetch(`/api/inbox/${id}/unarchive`, { method: "POST" });
+  }
+
+  // Permanent: removes an archived notification and its archived siblings for
+  // the same issue. The server refuses notifications that are not archived.
+  async deleteArchivedInbox(id: string): Promise<void> {
+    await this.fetch(`/api/inbox/${id}`, { method: "DELETE" });
   }
 
   // Raw unread ROW count — not the number any badge shows. The inbox renders
@@ -3133,8 +3156,9 @@ export class ApiClient {
     });
   }
 
-  async markAllInboxRead(): Promise<{ count: number }> {
-    return this.fetch("/api/inbox/mark-all-read", { method: "POST" });
+  /** Marks the active notifications read; `category` narrows to one inbox tab. */
+  async markAllInboxRead(category?: InboxCategory | null): Promise<{ count: number }> {
+    return this.fetch(`/api/inbox/mark-all-read${category ? `?category=${category}` : ""}`, { method: "POST" });
   }
 
   async archiveAllInbox(): Promise<{ count: number }> {
@@ -4586,6 +4610,11 @@ export class ApiClient {
    * keep it and keep behaving as their category prescribes; only new
    * assignments are refused. Built-in statuses return 403.
    */
+  /** Permanently deletes an archived custom status whose key is referenced nowhere. */
+  async deleteIssueStatus(id: string): Promise<void> {
+    await this.fetch(`/api/issue-statuses/${id}/permanent`, { method: "DELETE" });
+  }
+
   async archiveIssueStatus(id: string): Promise<IssueStatusEntry> {
     const raw = await this.fetch<unknown>(`/api/issue-statuses/${id}`, { method: "DELETE" });
     return parseWithFallback(raw, IssueStatusEntrySchema, EMPTY_ISSUE_STATUS_ENTRY, {
@@ -5141,14 +5170,6 @@ export class ApiClient {
     });
   }
 
-  /** A draft's changed pages and checks; its creator and the linked job's starter may read it. */
-  async getKbDraft(id: string): Promise<KbDraftDetail> {
-    const raw = await this.fetch<unknown>(`/api/kb/drafts/${encodeURIComponent(id)}`);
-    return parseWithFallback(raw, KbDraftDetailSchema, kbDraftDetailFallback(id), {
-      endpoint: "GET /api/kb/drafts/:id",
-    });
-  }
-
   /** Opens a merge request from the job's draft. */
   async submitKnowledgeBaseJob(id: string, data: { title?: string; summary?: string } = {}): Promise<KbMergeRequestCreated> {
     const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}/submit`, {
@@ -5165,6 +5186,22 @@ export class ApiClient {
     return parseWithFallback(raw, KbJobSchema, kbJobFallback(id), {
       endpoint: "POST /api/kb/jobs/:id/discard",
     });
+  }
+
+  /** Archives or unarchives a job; an archived job's chat is read-only. */
+  async setKnowledgeBaseJobArchived(id: string, archived: boolean): Promise<KbJob> {
+    const raw = await this.fetch<unknown>(`/api/kb/jobs/${encodeURIComponent(id)}/archive`, {
+      method: "PATCH",
+      body: JSON.stringify({ archived }),
+    });
+    return parseWithFallback(raw, KbJobSchema, kbJobFallback(id), {
+      endpoint: "PATCH /api/kb/jobs/:id/archive",
+    });
+  }
+
+  /** Hard-deletes a job and its chat; a submitted draft's merge request stays. */
+  async deleteKnowledgeBaseJob(id: string): Promise<void> {
+    await this.fetch(`/api/kb/jobs/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 
   /** Merge requests; the change log is `status: "merged"`. */
@@ -5235,8 +5272,11 @@ export class ApiClient {
     });
   }
 
-  async listKnowledgeBaseMrComments(ref: string | number): Promise<KbMrComment[]> {
-    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments`);
+  /** `state: "all"` adds the viewer's pending review comments to the published ones. */
+  async listKnowledgeBaseMrComments(ref: string | number, state: KbMrCommentState = "published"): Promise<KbMrComment[]> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments?state=${state}`,
+    );
     return parseWithFallback(raw, KbMrCommentListSchema, EMPTY_KB_MR_COMMENT_LIST, {
       endpoint: "GET /api/kb/merge-requests/:number/comments",
     });
@@ -5249,6 +5289,95 @@ export class ApiClient {
     });
     return parseWithFallback(raw, KbMrCommentSchema, kbMrCommentFallback(), {
       endpoint: "POST /api/kb/merge-requests/:number/comments",
+    });
+  }
+
+  /** Comments and events of a merge request, oldest first. */
+  async listKnowledgeBaseMrTimeline(ref: string | number, state: KbMrCommentState = "published"): Promise<KbMrTimelineEntry[]> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/merge-requests/${encodeURIComponent(String(ref))}/timeline?state=${state}`,
+    );
+    return parseWithFallback(raw, KbMrTimelineSchema, EMPTY_KB_MR_TIMELINE, {
+      endpoint: "GET /api/kb/merge-requests/:number/timeline",
+    });
+  }
+
+  /** Submitted reviews, plus the viewer's pending one last. */
+  async listKnowledgeBaseMrReviews(ref: string | number): Promise<KbMrReview[]> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/reviews`);
+    return parseWithFallback(raw, KbMrReviewListSchema, EMPTY_KB_MR_REVIEW_LIST, {
+      endpoint: "GET /api/kb/merge-requests/:number/reviews",
+    });
+  }
+
+  /** Starts the viewer's review, or returns the one already pending. */
+  async openKnowledgeBaseMrReview(ref: string | number): Promise<KbMrReview> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/reviews`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    return parseWithFallback(raw, KbMrReviewSchema, kbMrReviewFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/reviews",
+    });
+  }
+
+  /** Publishes the review; with neither comments nor a summary it is refused (422 review_empty). */
+  async submitKnowledgeBaseMrReview(ref: string | number, reviewId: string, summary = ""): Promise<KbMrReview> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/merge-requests/${encodeURIComponent(String(ref))}/reviews/${encodeURIComponent(reviewId)}/submit`,
+      { method: "POST", body: JSON.stringify({ summary }) },
+    );
+    return parseWithFallback(raw, KbMrReviewSchema, kbMrReviewFallback(reviewId), {
+      endpoint: "POST /api/kb/merge-requests/:number/reviews/:id/submit",
+    });
+  }
+
+  /** Drops the pending review and its comments. */
+  async discardKnowledgeBaseMrReview(ref: string | number, reviewId: string): Promise<void> {
+    await this.fetch(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/reviews/${encodeURIComponent(reviewId)}`, {
+      method: "DELETE",
+    });
+  }
+
+  /** Edits one of the caller's pending comments. */
+  async updateKnowledgeBaseMrComment(ref: string | number, commentId: string, body: string): Promise<KbMrComment> {
+    const raw = await this.fetch<unknown>(
+      `/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments/${encodeURIComponent(commentId)}`,
+      { method: "PATCH", body: JSON.stringify({ body }) },
+    );
+    return parseWithFallback(raw, KbMrCommentSchema, kbMrCommentFallback(commentId), {
+      endpoint: "PATCH /api/kb/merge-requests/:number/comments/:id",
+    });
+  }
+
+  /** Removes one of the caller's pending comments. */
+  async deleteKnowledgeBaseMrComment(ref: string | number, commentId: string): Promise<void> {
+    await this.fetch(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/comments/${encodeURIComponent(commentId)}`, {
+      method: "DELETE",
+    });
+  }
+
+  /** The owner asks for review again; changes_requested goes back to open. */
+  async requestKnowledgeBaseMrReview(ref: string | number): Promise<KbMergeRequest> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/ready`, {
+      method: "POST",
+    });
+    return parseWithFallback(raw, KbMergeRequestSchema, kbMergeRequestFallback(), {
+      endpoint: "POST /api/kb/merge-requests/:number/ready",
+    });
+  }
+
+  /**
+   * Hands the open review feedback to the job's agent: `message` is the
+   * visible line sent into the job's chat in the member's name.
+   */
+  async handoffKnowledgeBaseMrReview(ref: string | number, message: string): Promise<KbMrHandoff> {
+    const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/handoff`, {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    });
+    return parseWithFallback(raw, KbMrHandoffSchema, EMPTY_KB_MR_HANDOFF, {
+      endpoint: "POST /api/kb/merge-requests/:number/handoff",
     });
   }
 
@@ -5480,7 +5609,21 @@ export class ApiClient {
   // omit trigger_payload to keep them small (a webhook envelope can be
   // up to 256 KiB × limit rows), so the detail view fetches via this route.
   async getAutopilotRun(autopilotId: string, runId: string): Promise<AutopilotRun> {
-    return this.fetch(`/api/autopilots/${autopilotId}/runs/${runId}`);
+    const raw = await this.fetch<unknown>(`/api/autopilots/${autopilotId}/runs/${runId}`);
+    return parseWithFallback(raw, AutopilotRunSchema, FALLBACK_AUTOPILOT_RUN, {
+      endpoint: "GET /api/autopilots/:id/runs/:runId",
+    });
+  }
+
+  // Returns the run's follow-up chat session, creating it on first use.
+  async ensureAutopilotRunChat(autopilotId: string, runId: string): Promise<AutopilotRunChatResponse> {
+    const raw = await this.fetch<unknown>(`/api/autopilots/${autopilotId}/runs/${runId}/chat`, { method: "POST" });
+    const parsed = parseWithFallback(raw, AutopilotRunChatResponseSchema, { chat_session_id: "" }, {
+      endpoint: "POST /api/autopilots/:id/runs/:runId/chat",
+    });
+    if (!parsed.chat_session_id) throw new Error("run chat response has no chat_session_id");
+
+    return parsed;
   }
 
   async createAutopilotTrigger(autopilotId: string, data: CreateAutopilotTriggerRequest): Promise<AutopilotTrigger> {

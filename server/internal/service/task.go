@@ -2369,6 +2369,25 @@ func (s *TaskService) SendDirectChatMessage(
 	uploaderType string,
 	uploaderID pgtype.UUID,
 ) (*DirectChatSendResult, error) {
+	return s.SendDirectChatMessageWithInstruction(ctx, session, agent, initiatorUserID, content, "", attachmentIDs, uploaderType, uploaderID)
+}
+
+// SendDirectChatMessageWithInstruction is SendDirectChatMessage plus a hidden
+// instruction (protocol.ChatMessageKindInstruction) written into the same
+// turn's input batch in the same transaction, just before the member's
+// message. The agent receives both; the member sees only content. An empty
+// instruction writes none.
+func (s *TaskService) SendDirectChatMessageWithInstruction(
+	ctx context.Context,
+	session db.ChatSession,
+	agent db.Agent,
+	initiatorUserID pgtype.UUID,
+	content string,
+	instruction string,
+	attachmentIDs []pgtype.UUID,
+	uploaderType string,
+	uploaderID pgtype.UUID,
+) (*DirectChatSendResult, error) {
 	// Build the per-task Composio overlay before the transaction — it can do
 	// network I/O and must not run with a DB transaction open.
 	overlay := s.buildRuntimeMCPOverlay(ctx, initiatorUserID, agent)
@@ -2455,19 +2474,19 @@ func (s *TaskService) SendDirectChatMessage(
 		}
 		out.Task = task
 
-		// Adopt the onboarding kickoff, if this session still has an unowned one.
-		// It is written by OpenMikaOnboardingChat with no task, so this is the
-		// only thing that ever delivers it to a runtime — and it must happen
-		// before the member's own row is written, so the batch reads as
-		// "context, then their message" once ordered by created_at.
+		// Adopt the session's unowned instructions: the onboarding kickoff
+		// OpenMikaOnboardingChat writes with no task, or one released by a turn
+		// that died with no queued successor. This is the only thing that ever
+		// delivers them to a runtime — and it must happen before the member's
+		// own row is written, so the batch reads as "context, then their
+		// message" once ordered by created_at.
 		//
-		// A no-op for every other session: only Mika onboarding writes that kind,
-		// and only the first send of one finds it unowned.
-		if err := qtx.AdoptOrphanOnboardingKickoff(ctx, db.AdoptOrphanOnboardingKickoffParams{
+		// A no-op for every session without one.
+		if err := qtx.AdoptOrphanChatInstructions(ctx, db.AdoptOrphanChatInstructionsParams{
 			ChatSessionID: session.ID,
 			TaskID:        task.ID,
 		}); err != nil {
-			return fmt.Errorf("adopt onboarding kickoff: %w", err)
+			return fmt.Errorf("adopt chat instructions: %w", err)
 		}
 
 		// Initialize an explicitly empty Chat before inserting its first public
@@ -2495,6 +2514,12 @@ func (s *TaskService) SendDirectChatMessage(
 			return fmt.Errorf("create user chat message: %w", err)
 		}
 		out.Message = msg
+
+		if instruction != "" {
+			if _, err := createChatInstruction(ctx, qtx, session.ID, task.ID, instruction, beforeTimestamp(msg.CreatedAt)); err != nil {
+				return err
+			}
+		}
 
 		if len(attachmentIDs) > 0 {
 			bound, err := qtx.LinkAttachmentsToChatMessage(ctx, db.LinkAttachmentsToChatMessageParams{
@@ -2564,7 +2589,7 @@ func (s *TaskService) SendDirectChatMessage(
 // MikaOnboardingOpenResult carries the two rows that open a Mika conversation.
 type MikaOnboardingOpenResult struct {
 	// Kickoff is the hidden product context. It is written WITHOUT a task —
-	// the member's first real send adopts it (AdoptOrphanOnboardingKickoff).
+	// the member's first real send adopts it (AdoptOrphanChatInstructions).
 	Kickoff db.ChatMessage
 	// Opening is what the member reads, already final. No agent produced it,
 	// so it carries no task id, no elapsed time, and nothing to regenerate.
@@ -2605,15 +2630,11 @@ func (s *TaskService) OpenMikaOnboardingChat(ctx context.Context, session db.Cha
 			return ErrChatSessionAlreadyStarted
 		}
 
-		kickoffRow, err := qtx.CreateChatMessage(ctx, db.CreateChatMessageParams{
-			ID:            dbid.NewV7(),
-			ChatSessionID: session.ID,
-			Role:          "user",
-			Content:       kickoff,
-			MessageKind:   pgtype.Text{String: protocol.ChatMessageKindOnboardingKickoff, Valid: true},
-		})
+		// The kickoff is an instruction with no task yet; the member's first
+		// send adopts it (AdoptOrphanChatInstructions).
+		kickoffRow, err := createChatInstruction(ctx, qtx, session.ID, pgtype.UUID{}, kickoff, pgtype.Timestamptz{})
 		if err != nil {
-			return fmt.Errorf("create onboarding kickoff: %w", err)
+			return err
 		}
 		out.Kickoff = kickoffRow
 
@@ -3240,10 +3261,34 @@ func (s *TaskService) settleQueuedChatInput(
 // bound to the dead task would strand the onboarding context on a run that
 // will never happen.
 func deleteUserChatInput(ctx context.Context, qtx *db.Queries, inputOwnerID pgtype.UUID) (db.ChatMessage, error) {
-	if err := qtx.ReleaseOnboardingKickoffFromTask(ctx, inputOwnerID); err != nil {
-		return db.ChatMessage{}, fmt.Errorf("release onboarding kickoff: %w", err)
+	if err := qtx.ReleaseChatInstructionsFromTask(ctx, inputOwnerID); err != nil {
+		return db.ChatMessage{}, fmt.Errorf("release chat instructions: %w", err)
 	}
 	return qtx.DeleteUserChatMessageByTask(ctx, inputOwnerID)
+}
+
+// createChatInstruction writes a hidden instruction row. A valid taskID puts
+// it in that turn's input batch; without one it waits for the next send. A
+// valid createdAt fixes its position (see CreateChatInstruction).
+func createChatInstruction(ctx context.Context, qtx *db.Queries, sessionID, taskID pgtype.UUID, content string, createdAt pgtype.Timestamptz) (db.ChatMessage, error) {
+	row, err := qtx.CreateChatInstruction(ctx, db.CreateChatInstructionParams{
+		ID:            dbid.NewV7(),
+		ChatSessionID: sessionID,
+		Content:       content,
+		TaskID:        taskID,
+		CreatedAt:     createdAt,
+	})
+	if err != nil {
+		return db.ChatMessage{}, fmt.Errorf("create chat instruction: %w", err)
+	}
+
+	return row, nil
+}
+
+// beforeTimestamp is one microsecond before at, the timestamp resolution of
+// Postgres, so a row written at it sorts strictly before at.
+func beforeTimestamp(at pgtype.Timestamptz) pgtype.Timestamptz {
+	return pgtype.Timestamptz{Time: at.Time.Add(-time.Microsecond), Valid: at.Valid}
 }
 
 func (s *TaskService) finalizeCancelledChatMessage(ctx context.Context, task db.AgentTaskQueue, opts CancelTaskOptions) *CancelledChatMessageResult {
@@ -4888,29 +4933,9 @@ func (s *TaskService) writeChatCompletionOutcome(ctx context.Context, qtx *db.Qu
 	switch {
 	case !isEmpty:
 		params.Content = redact.Text(body)
-		// message_kind left NULL → COALESCE defaults to 'message'.
-		//
-		// The one exception is now a deploy-window case. The server writes the
-		// opening directly (MUL-5827), so no new task ever produces one — but a
-		// kickoff task enqueued by the previous server can still be claimed by
-		// this one, and its reply IS that member's opening. Leaving it a plain
-		// 'message' would permanently cost that session its starter cards.
-		//
-		// Gated on "the batch is a kickoff and nothing else", which is precisely
-		// the old shape: the new kickoff rides in alongside a real member
-		// message, and stamping that turn would render the cards a second time
-		// under a reply that is not an opening.
-		//
-		// Keyed on chatInputOwnerID, not task.ID: an auto-retry clone gets a
-		// fresh id while inheriting the root's chat_input_task_id (MUL-4351),
-		// and the kickoff user row stays bound to the root.
-		openingOnly, err := qtx.TaskInputIsOnboardingKickoffOnly(ctx, chatInputOwnerID(task))
-		if err != nil {
-			return nil, fmt.Errorf("check onboarding kickoff input: %w", err)
-		}
-		if openingOnly.Bool {
-			params.MessageKind = pgtype.Text{String: protocol.ChatMessageKindOnboardingOpening, Valid: true}
-		}
+		// message_kind left NULL → COALESCE defaults to 'message'. The server
+		// writes the onboarding opening itself (MUL-5827), so no run produces
+		// one.
 	case pendingAttachments > 0:
 		// Image/file-only reply: a real 'message' outcome with empty text — the
 		// attachment cards ARE the response, so it must not read as no_response.
@@ -5280,8 +5305,8 @@ func (s *TaskService) FailTaskWithTransition(ctx context.Context, taskID pgtype.
 			// root's chat_input_task_id, and the kickoff stays bound to that
 			// root, so the retry still reads it — releasing here would strip
 			// the context off a turn that is about to run.
-			if err := qtx.ReleaseOnboardingKickoffFromTask(ctx, chatInputOwnerID(t)); err != nil {
-				return fmt.Errorf("release onboarding kickoff: %w", err)
+			if err := qtx.ReleaseChatInstructionsFromTask(ctx, chatInputOwnerID(t)); err != nil {
+				return fmt.Errorf("release chat instructions: %w", err)
 			}
 			if _, err := createAssistantChatMessage(ctx, qtx, db.CreateChatMessageParams{
 				ID:            dbid.NewV7(),
@@ -6340,6 +6365,9 @@ func SettleTerminalTaskState(ctx context.Context, q *db.Queries, tasks ...db.Age
 	}
 	if _, err := q.SettleTerminalTaskSupplements(ctx, taskIDs); err != nil {
 		return fmt.Errorf("settle terminal task supplements: %w", err)
+	}
+	if err := pinAutopilotRunChatSessions(ctx, q, tasks...); err != nil {
+		return err
 	}
 	return SettleDeliveredDelegatedFailureRecoveries(ctx, q, tasks...)
 }

@@ -19,6 +19,7 @@ import { useT } from "@/lib/i18n";
 import {
   getAutopilotQuotaBody,
   getInboxDisplayTitle,
+  isInboxSheetNotice,
 } from "@/lib/inbox-display";
 
 function BillingRecovery({
@@ -122,9 +123,7 @@ export default function InboxNoticeDetail() {
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator />
         </View>
-      ) : !item ||
-        (item.type !== "autopilot_quota_exceeded" &&
-          item.type !== "autopilot_paused") ? (
+      ) : !item || !isInboxSheetNotice(item.type) ? (
         <View className="px-4 py-8">
           <Text className="text-sm text-muted-foreground text-center">
             {t("detail.unavailable")}

@@ -22,7 +22,11 @@
     },
     "scope_all": "Toutes",
     "no_matches": "Aucune automatisation correspondante",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "from_template": "À partir d'un modèle",
+    "never_run": "Jamais exécutée",
+    "next_run_at": "Prochaine {{time}}",
+    "created_at": "Créée le {{date}}"
   },
   "status": {
     "active": "Active",
@@ -73,6 +77,12 @@
     "paused_runtime_required": "En pause car l'assigné a perdu son runtime. Associez un runtime, puis réactivez cette automatisation.",
     "bind_runtime": "Associer un runtime",
     "edit": "Modifier",
+    "back": "Retour aux automatisations",
+    "section_status": "Statut",
+    "next_run": "Prochaine exécution : {{date}}",
+    "add": "Ajouter",
+    "instructions_expand": "Tout afficher",
+    "instructions_collapse": "Réduire",
     "run_now": "Exécuter maintenant",
     "running": "Exécution...",
     "toast_triggered": "Automatisation déclenchée",
@@ -87,10 +97,8 @@
     "run_blocked_quota_exceeded": "Non déclenché — la limite d'exécutions de la période est atteinte",
     "run_blocked_issue_limit_reached": "Non déclenchée : l'espace de travail a atteint sa limite de tâches",
     "run_blocked_generic": "Non déclenchée — l'exécution a été bloquée",
-    "section_properties": "Propriétés",
     "section_triggers": "Déclencheurs",
     "section_run_history": "Historique des exécutions",
-    "section_danger": "Zone de danger",
     "field_agent": "Agent",
     "field_created_by": "Créé par",
     "field_output_mode": "Mode de sortie",
@@ -143,11 +151,41 @@
   },
   "run": {
     "issue_linked": "Tâche liée",
-    "view_log": "Voir le journal d'exécution",
     "skipped_group": {
       "label": "Ignorées",
       "summary": "{{count}} exécutions ignorées"
     }
+  },
+  "run_page": {
+    "back": "Retour à l'automatisation",
+    "title": "{{title}} · {{time}}",
+    "subtitle": "Exécution d'automatisation",
+    "hide_panel": "Masquer les détails",
+    "show_panel": "Afficher les détails",
+    "panel_title": "Détails de l'exécution",
+    "field_status": "Statut",
+    "field_source": "Source",
+    "field_triggered_at": "Déclenchée",
+    "field_completed_at": "Terminée",
+    "field_assignee": "Exécutant",
+    "field_autopilot": "Automatisation",
+    "field_failure": "Raison de l'échec",
+    "field_payload": "Payload webhook",
+    "trigger": {
+      "schedule": "Exécution planifiée",
+      "manual": "Exécution manuelle",
+      "webhook": "Exécution par webhook",
+      "api": "Exécution par API"
+    },
+    "runtime_online": "Runtime en ligne",
+    "runtime_offline": "Runtime hors ligne",
+    "not_executed": "Cette exécution n'a pas eu lieu.",
+    "autopilot_deleted": "Cette automatisation a été supprimée. La conversation ne peut plus continuer.",
+    "shared_conversation": "Les membres qui peuvent voir cette automatisation partagent cette conversation.",
+    "transcript_failed": "Impossible de charger le journal d'exécution.",
+    "not_found": "Exécution introuvable",
+    "forbidden": "Vous n'avez pas accès à cette exécution",
+    "load_failed": "Impossible de charger cette exécution"
   },
   "webhook_payload": {
     "label": "Événement webhook :",
@@ -465,20 +503,16 @@
     "sort_by": "Trier par",
     "direction_asc": "Croissant",
     "direction_desc": "Décroissant",
-    "section_columns": "Colonnes"
+    "section_columns": "Champs affichés"
   },
   "actions": {
     "row_menu": "Actions de l'automatisation",
     "pause": "Mettre en pause",
     "resume": "Reprendre",
     "delete": "Supprimer",
-    "selected_one": "{{count}} sélectionnée",
-    "selected_other": "{{count}} sélectionnées",
-    "clear_selection": "Effacer la sélection",
     "delete_dialog": {
       "title": "Supprimer l'automatisation ?",
-      "description_one": "« {{name}} » et son historique d'exécutions seront définitivement supprimés.",
-      "description_other": "{{count}} automatisations et leur historique d'exécutions seront définitivement supprimés.",
+      "description": "« {{name}} » et son historique d'exécutions seront définitivement supprimés.",
       "warning": "Cette action est irréversible.",
       "cancel": "Annuler",
       "confirm": "Supprimer définitivement",

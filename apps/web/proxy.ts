@@ -5,6 +5,7 @@ import {
   resolveLocaleFromSignals,
 } from "./lib/locale-routing";
 import { runtimeRewriteDestination } from "./config/runtime-urls";
+import { BASE_PATH } from "./config/base-path";
 import { isOfficialMarketingHost } from "./lib/public-host";
 
 // Old workspace-scoped route segments that existed before the URL refactor
@@ -48,7 +49,7 @@ function nextWithLocale(req: NextRequest): NextResponse {
 // edge.
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const runtimeDestination = runtimeRewriteDestination(pathname, process.env);
+  const runtimeDestination = runtimeRewriteDestination(pathname, process.env, BASE_PATH);
   if (runtimeDestination) {
     const url = new URL(runtimeDestination);
     url.search = req.nextUrl.search;

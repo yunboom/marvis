@@ -622,7 +622,7 @@ describe("ChatMessageList quick actions skeleton", () => {
 });
 
 describe("ChatMessageList onboarding kickoff", () => {
-  it("hides the product-authored kickoff while rendering Mika's reply", async () => {
+  it("hides a hidden instruction while rendering Mika's reply", async () => {
     render(
       <I18nProvider locale="en" resources={TEST_RESOURCES}>
         <QueryClientProvider client={new QueryClient()}>
@@ -635,7 +635,7 @@ describe("ChatMessageList onboarding kickoff", () => {
                 content: "INTERNAL ONBOARDING PROMPT",
                 task_id: TASK_ID,
                 created_at: new Date(0).toISOString(),
-                message_kind: "onboarding_kickoff",
+                message_kind: "instruction",
               },
               {
                 id: "reply",
@@ -957,5 +957,44 @@ describe("ChatMessageList onboarding starter cards", () => {
       await screen.findByRole("button", { name: "Get a board up in minutes" }),
     ).toBeEnabled();
     expect(screen.getByRole("button", { name: "Later chip" })).toBeEnabled();
+  });
+});
+
+describe("ChatMessageList user message sender", () => {
+  it("renders the sender slot above user messages only", async () => {
+    render(
+      <I18nProvider locale="en" resources={TEST_RESOURCES}>
+        <QueryClientProvider client={new QueryClient()}>
+          <ChatMessageList
+            messages={[
+              {
+                id: "user-message",
+                chat_session_id: "s1",
+                role: "user",
+                content: "Which ones?",
+                task_id: TASK_ID,
+                created_at: new Date(0).toISOString(),
+                sender_user_id: "member-2",
+              },
+              {
+                id: "assistant-message",
+                chat_session_id: "s1",
+                role: "assistant",
+                content: "Three of them.",
+                task_id: TASK_ID,
+                created_at: new Date(1).toISOString(),
+              },
+            ]}
+            pendingTask={undefined}
+            availability="online"
+            renderUserMessageSender={(message) => <span>sent by {message.sender_user_id}</span>}
+          />
+        </QueryClientProvider>
+      </I18nProvider>,
+    );
+
+    expect(await screen.findByText("Which ones?")).toBeInTheDocument();
+    expect(screen.getAllByText(/^sent by/)).toHaveLength(1);
+    expect(screen.getByText("sent by member-2")).toBeInTheDocument();
   });
 });

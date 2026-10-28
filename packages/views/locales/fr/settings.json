@@ -13,7 +13,8 @@
       "open": "Actions pour {{name}}",
       "edit": "Modifier",
       "archive": "Archiver",
-      "reorder": "Réordonner {{name}}"
+      "reorder": "Réordonner {{name}}",
+      "delete": "Supprimer définitivement"
     },
     "reorder_hint": "Glissez les statuts au sein d’un groupe pour réordonner les tableaux, listes et menus.",
     "built_in_dialog": {},
@@ -57,6 +58,29 @@
       "cancel": "Annuler",
       "confirm": "Archiver",
       "failed": "L'état n'a pas pu être archivé."
+    },
+    "delete_dialog": {
+      "title": "Supprimer définitivement ce statut ?",
+      "description": "Cette action est irréversible. Un statut présent dans des tickets, des réglages ou l'historique ne peut pas être supprimé.",
+      "referenced_title": "Impossible de supprimer ce statut",
+      "referenced": "Il apparaît dans {{places}}, il reste donc archivé.",
+      "references": {
+        "issue": "des tickets",
+        "workflow": "des workflows",
+        "pr_merge_setting": "le réglage de fusion des PR",
+        "saved_view": "des vues enregistrées",
+        "wakeup": "des réveils",
+        "wakeup_receipt": "l'historique des réveils",
+        "agent_task": "des exécutions d'agent",
+        "activity": "l'activité des tickets",
+        "inbox": "des notifications",
+        "other": "d'autres enregistrements"
+      },
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "deleting": "Suppression…",
+      "close": "Compris",
+      "failed": "Échec de la suppression."
     },
     "category_labels": {
       "unstarted": "Non démarré",
@@ -255,8 +279,12 @@
         "description": "Ouvrir ou fermer la fenêtre de discussion flottante. À l'ouverture, le champ de message reçoit le focus."
       },
       "findInIssue": {
-        "label": "Rechercher dans la tâche",
-        "description": "Rechercher dans la tâche ouverte."
+        "label": "Rechercher dans la page",
+        "description": "Rechercher dans la tâche ou la page de base de connaissances ouverte."
+      },
+      "searchKnowledgeBases": {
+        "label": "Rechercher dans les bases de connaissances",
+        "description": "Rechercher des pages dans toutes les bases de connaissances. Disponible dans les bases de connaissances."
       },
       "archiveInboxItem": {
         "label": "Archiver la notification",
@@ -1335,7 +1363,8 @@
         "none": "Aucun serveur trouvé sur le réseau local. L'ordinateur et le serveur doivent être sur le même réseau.",
         "or_address": "ou saisissez une adresse",
         "summary_manual": "Adresse saisie manuellement",
-        "summary_manual_hint": "Testez d'abord la connexion"
+        "summary_manual_hint": "Testez d'abord la connexion",
+        "back": "Retour"
       },
       "address": {
         "label": "Adresse du serveur",

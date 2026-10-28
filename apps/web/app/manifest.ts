@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { BASE_PATH } from "@/config/base-path";
 
 /**
  * Installable web manifest. Start at /inbox so session-aware proxy routing
@@ -14,13 +15,14 @@ export const PWA_START_URL = "/inbox";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    id: "/",
+    // Manifest URLs are not basePath-aware, so every one carries it here.
+    id: `${BASE_PATH}/`,
     name: "Marvis",
     short_name: "Marvis",
     description:
       "Assign tasks to coding agents, track progress, and keep your team's work in one place.",
-    start_url: PWA_START_URL,
-    scope: "/",
+    start_url: `${BASE_PATH}${PWA_START_URL}`,
+    scope: `${BASE_PATH}/`,
     display: "standalone",
     // Splash-screen colours. The runtime status bar is driven by the
     // per-scheme `<meta name="theme-color">` pair in app/layout.tsx, which the
@@ -30,19 +32,19 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["productivity"],
     icons: [
       {
-        src: "/icons/icon-192.png",
+        src: `${BASE_PATH}/icons/icon-192.png`,
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/icon-512.png",
+        src: `${BASE_PATH}/icons/icon-512.png`,
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/icon-maskable-512.png",
+        src: `${BASE_PATH}/icons/icon-maskable-512.png`,
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
@@ -52,8 +54,8 @@ export default function manifest(): MetadataRoute.Manifest {
     // segments, so they resolve to the last workspace the same way start_url
     // does instead of needing a slug the manifest cannot know.
     shortcuts: [
-      { name: "Inbox", url: "/inbox" },
-      { name: "My Issues", url: "/my-issues" },
+      { name: "Inbox", url: `${BASE_PATH}/inbox` },
+      { name: "My Issues", url: `${BASE_PATH}/my-issues` },
     ],
   };
 }

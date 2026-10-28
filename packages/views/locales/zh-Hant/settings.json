@@ -13,7 +13,8 @@
       "open": "{{name}} 的操作",
       "edit": "編輯",
       "archive": "歸檔",
-      "reorder": "拖動排序 {{name}}"
+      "reorder": "拖動排序 {{name}}",
+      "delete": "永久刪除"
     },
     "reorder_hint": "在分組內拖動排序，同步用於看板、列表和選單。",
     "built_in_dialog": {},
@@ -57,6 +58,29 @@
       "cancel": "取消",
       "confirm": "歸檔",
       "failed": "歸檔失敗。"
+    },
+    "delete_dialog": {
+      "title": "永久刪除這個狀態？",
+      "description": "刪除後無法復原。在任務、設定或歷史紀錄中出現過的狀態無法刪除。",
+      "referenced_title": "無法刪除",
+      "referenced": "這個狀態在{{places}}中出現過，只能保持歸檔。",
+      "references": {
+        "issue": "任務",
+        "workflow": "工作流",
+        "pr_merge_setting": "PR 合併設定",
+        "saved_view": "儲存的檢視",
+        "wakeup": "喚醒",
+        "wakeup_receipt": "喚醒紀錄",
+        "agent_task": "智慧體執行",
+        "activity": "任務動態",
+        "inbox": "訊息通知",
+        "other": "其他紀錄"
+      },
+      "cancel": "取消",
+      "confirm": "刪除",
+      "deleting": "正在刪除…",
+      "close": "知道了",
+      "failed": "刪除失敗。"
     },
     "category_labels": {
       "unstarted": "未開始",
@@ -253,8 +277,12 @@
         "description": "開啟或關閉懸浮聊天窗，開啟時自動聚焦輸入框。"
       },
       "findInIssue": {
-        "label": "在任務中查詢",
-        "description": "搜尋當前開啟的任務詳情。"
+        "label": "在頁面中查詢",
+        "description": "搜尋當前開啟的任務詳情或知識庫頁面。"
+      },
+      "searchKnowledgeBases": {
+        "label": "搜尋全部知識庫",
+        "description": "在所有知識庫中搜尋頁面，在知識庫內可用。"
       },
       "archiveInboxItem": {
         "label": "歸檔通知",
@@ -1325,7 +1353,8 @@
         "none": "區域網中沒有找到伺服器。電腦和伺服器需要連在同一個區域網。",
         "or_address": "或輸入地址",
         "summary_manual": "手動輸入的地址",
-        "summary_manual_hint": "先測試連線"
+        "summary_manual_hint": "先測試連線",
+        "back": "返回"
       },
       "address": {
         "label": "伺服器地址",

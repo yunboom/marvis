@@ -345,3 +345,28 @@ describe("dev-only fallbacks", () => {
     expect(resolveDevDocsUrl({})).toBe("http://localhost:4000");
   });
 });
+
+describe("runtimeRewriteDestination under a basePath", () => {
+  const env = {
+    REMOTE_API_URL: "http://backend:13840",
+    DOCS_URL: "http://docs:4000",
+  };
+
+  it("forwards API paths to the backend root unchanged", () => {
+    expect(runtimeRewriteDestination("/api/config", env, "/marvis")).toBe(
+      "http://backend:13840/api/config",
+    );
+    expect(runtimeRewriteDestination("/ws", env, "/marvis")).toBe(
+      "http://backend:13840/ws",
+    );
+  });
+
+  it("puts the prefix back on docs paths, which are built under it", () => {
+    expect(runtimeRewriteDestination("/docs", env, "/marvis")).toBe(
+      "http://docs:4000/marvis/docs",
+    );
+    expect(runtimeRewriteDestination("/docs/zh/agents", env, "/marvis")).toBe(
+      "http://docs:4000/marvis/docs/zh/agents",
+    );
+  });
+});

@@ -4,6 +4,7 @@ import type { RouteObject } from "react-router-dom";
 import { IssueDetailPage } from "./pages/issue-detail-page";
 import { ProjectDetailPage } from "./pages/project-detail-page";
 import { AutopilotDetailPage } from "./pages/autopilot-detail-page";
+import { AutopilotRunPage } from "./pages/autopilot-run-page";
 import { SkillDetailPage } from "./pages/skill-detail-page";
 import { AgentDetailPage } from "./pages/agent-detail-page";
 import { AiBuilderSessionPage } from "./pages/ai-builder-session-page";
@@ -40,7 +41,7 @@ import {
   KbJobPage,
   KbJobsPage,
   KbReviewPage,
-  KbListPage,
+  KbEntryPage,
   KbPageView,
   KbRevisionDiffPage,
   KbShell,
@@ -203,6 +204,11 @@ export const appRoutes: RouteObject[] = [
             handle: { title: "Autopilot" },
           },
           {
+            path: "autopilots/:id/runs/:runId",
+            element: <AutopilotRunPage />,
+            handle: { title: "Autopilot" },
+          },
+          {
             path: "my-issues",
             element: <MyIssuesPage />,
             handle: { title: "My Issues" },
@@ -270,7 +276,7 @@ export const appRoutes: RouteObject[] = [
             element: <SquadDetailPageView />,
             handle: { title: "Squad" },
           },
-          { path: "kb", element: <KbListPage />, handle: { title: "Knowledge base" } },
+          { path: "kb", element: <KbEntryPage />, handle: { title: "Knowledge base" } },
           { path: "kb/new", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
           { path: "kb/new/:sessionId", element: <KbBuilderPage />, handle: { title: "New knowledge base" } },
           {

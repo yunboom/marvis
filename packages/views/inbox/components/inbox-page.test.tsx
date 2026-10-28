@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { ApiError } from "@marvis/core/api";
@@ -89,6 +89,7 @@ const markUnreadMutate = vi.fn();
 const markAllReadMutate = vi.fn();
 const archiveMutate = vi.fn();
 const unarchiveMutate = vi.fn();
+const deleteMutate = vi.fn();
 const retrySourceContextMutateAsync = vi.fn();
 const showIssueLimitUpgradePrompt = vi.hoisted(() => vi.fn());
 const showAutopilotQuotaRecoveryPrompt = vi.hoisted(() => vi.fn());
@@ -107,6 +108,7 @@ vi.mock("@marvis/core/inbox/mutations", () => {
     useMarkInboxUnread: () => ({ mutate: markUnreadMutate }),
     useArchiveInbox: () => ({ mutate: archiveMutate }),
     useUnarchiveInbox: () => ({ mutate: unarchiveMutate }),
+    useDeleteArchivedInbox: () => ({ mutate: deleteMutate, isPending: false }),
     useMarkAllInboxRead: () => ({ mutate: markAllReadMutate }),
     useArchiveAllInbox: mutation,
     useArchiveAllReadInbox: mutation,
@@ -222,6 +224,7 @@ let rowActions: {
   onMarkRead: (id: string) => void;
   onMarkUnread: (id: string) => void;
   onAction: (id: string) => void;
+  onDelete: (id: string) => void;
 } | null = null;
 vi.mock("./inbox-context-menu", () => ({
   InboxContextMenuProvider: ({
@@ -292,6 +295,7 @@ function reset() {
   markAllReadMutate.mockClear();
   archiveMutate.mockClear();
   unarchiveMutate.mockClear();
+  deleteMutate.mockClear();
   retrySourceContextMutateAsync.mockReset();
   retrySourceContextMutateAsync.mockResolvedValue({});
   showIssueLimitUpgradePrompt.mockClear();
@@ -362,9 +366,9 @@ describe("InboxPage", () => {
     render(<InboxPage />);
 
     const listPanel = screen.getByTestId("panel-list");
-    expect(listPanel).toHaveAttribute("data-default-size", "260");
+    expect(listPanel).toHaveAttribute("data-default-size", "320");
     expect(listPanel).toHaveAttribute("data-min-size", "240");
-    expect(listPanel).toHaveAttribute("data-max-size", "400");
+    expect(listPanel).toHaveAttribute("data-max-size", "440");
   });
 
   it("keeps the title unread count static", () => {
@@ -693,6 +697,58 @@ describe("InboxPage", () => {
     expect(replace).not.toHaveBeenCalled();
     expect(issueDetailProps.at(-1)?.issueId).toBe("issue-3");
     expect(issueDetailProps.at(-1)?.trailingActions).toBe(close);
+  });
+
+  it("narrows the list to a category tab and keeps it in the URL (decision 108)", () => {
+    reset();
+    layout.width = DESKTOP;
+    listData.active = [
+      item({ id: "issue-row", issue_id: "issue-a", read: false }),
+      item({ id: "kb-row", issue_id: null, type: "kb_mr_changes_requested", read: false }),
+      item({ id: "needed-row", issue_id: null, type: "kb_mr_review_needed", read: false }),
+      item({ id: "auto-row", issue_id: null, type: "autopilot_paused" }),
+      item({ id: "new-row", issue_id: null, type: "something_new" as InboxItem["type"] }),
+    ];
+    render(<InboxPage />);
+
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs).toHaveLength(4);
+    // Unread per tab; a tab without unread shows no number.
+    expect(tabs[0]).toHaveTextContent("Inbox3");
+    expect(tabs[1]).toHaveTextContent("Inbox1");
+    expect(tabs[2]).toHaveTextContent("Inbox2");
+    expect(tabs[3]).toHaveTextContent(/^Inbox$/);
+    expect(screen.getAllByTestId("row")).toHaveLength(5);
+
+    fireEvent.click(tabs[2]!);
+    expect(screen.getAllByTestId("row").map((row) => row.textContent).sort()).toEqual(["kb-row", "needed-row"]);
+    expect(replace).toHaveBeenLastCalledWith("/acme/inbox?category=kb");
+  });
+
+  it("reads the category from the URL and marks only it read", () => {
+    reset();
+    searchParams = new URLSearchParams("category=autopilot");
+    listData.active = [
+      item({ id: "issue-row", issue_id: "issue-a", read: false }),
+      item({ id: "auto-row", issue_id: null, type: "autopilot_paused", read: false }),
+    ];
+    render(<InboxPage />);
+
+    expect(screen.getAllByTestId("row").map((row) => row.textContent)).toEqual(["auto-row"]);
+    const buttons = screen.getAllByRole("button", { name: "Inbox" });
+    fireEvent.click(buttons.find((b) => !b.hasAttribute("aria-haspopup"))!);
+    expect(markAllReadMutate).toHaveBeenCalledWith("autopilot", expect.anything());
+  });
+
+  it("ignores the issue-only filters in a category without issues", () => {
+    reset();
+    searchParams = new URLSearchParams("category=kb");
+    listData.active = [item({ id: "kb-row", issue_id: null, type: "kb_mr_review_requested", read: true })];
+    useInboxFilterStore.getState().toggleIdleOnly("workspace-1");
+    useInboxFilterStore.getState().toggleStatusFilter("workspace-1", "done");
+    render(<InboxPage />);
+
+    expect(screen.getAllByTestId("row").map((row) => row.textContent)).toEqual(["kb-row"]);
   });
 
   it("puts mark-all-read in the header, not the batch menu", () => {
@@ -1142,6 +1198,60 @@ describe("InboxPage", () => {
 
       expect(toast.error).toHaveBeenCalledTimes(1);
       expect(toast.success).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("permanent delete", () => {
+    type MutateOptions = {
+      onSuccess?: () => void;
+      onError?: (err: unknown) => void;
+    };
+
+    function renderArchived() {
+      reset();
+      layout.width = DESKTOP;
+      searchParams = new URLSearchParams("view=archived");
+      listData.archived = [
+        item({ id: "archived-1", issue_id: "issue-9", archived: true }),
+      ];
+      render(<InboxPage />);
+    }
+
+    // The test's `useT` names every control alike, so the confirm button is
+    // located structurally: it is the dialog's last action.
+    function confirmDelete() {
+      const buttons = within(screen.getByRole("alertdialog")).getAllByRole("button");
+      fireEvent.click(buttons[buttons.length - 1]!);
+    }
+
+    it("deletes only after confirmation and closes once the server succeeds", async () => {
+      renderArchived();
+      act(() => rowActions?.onDelete("archived-1"));
+
+      expect(deleteMutate).not.toHaveBeenCalled();
+      expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+
+      confirmDelete();
+      expect(deleteMutate).toHaveBeenCalledWith("archived-1", expect.anything());
+
+      const options = deleteMutate.mock.calls.at(-1)?.[1] as MutateOptions | undefined;
+      act(() => options?.onSuccess?.());
+
+      expect(toast.success).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    });
+
+    it("keeps the dialog open when the delete fails", async () => {
+      renderArchived();
+      act(() => rowActions?.onDelete("archived-1"));
+      await screen.findByRole("alertdialog");
+
+      confirmDelete();
+      const options = deleteMutate.mock.calls.at(-1)?.[1] as MutateOptions | undefined;
+      act(() => options?.onError?.(new Error("boom")));
+
+      expect(toast.error).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     });
   });
 

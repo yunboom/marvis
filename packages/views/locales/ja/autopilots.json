@@ -22,7 +22,11 @@
     },
     "scope_all": "すべて",
     "no_matches": "該当する自動化はありません",
-    "retry": "再試行"
+    "retry": "再試行",
+    "from_template": "テンプレートから作成",
+    "never_run": "未実行",
+    "next_run_at": "次回 {{time}}",
+    "created_at": "{{date}} 作成"
   },
   "status": {
     "active": "アクティブ",
@@ -73,6 +77,12 @@
     "paused_runtime_required": "担当エージェントのランタイムが失われたため一時停止しました。ランタイムを設定してから再度有効にしてください。",
     "bind_runtime": "ランタイムを設定",
     "edit": "編集",
+    "back": "オートパイロットに戻る",
+    "section_status": "ステータス",
+    "next_run": "次回実行：{{date}}",
+    "add": "追加",
+    "instructions_expand": "すべて表示",
+    "instructions_collapse": "折りたたむ",
     "run_now": "今すぐ実行",
     "running": "実行中...",
     "toast_triggered": "オートパイロットを実行しました",
@@ -87,10 +97,8 @@
     "run_blocked_quota_exceeded": "実行されませんでした — この期間の実行上限に達しました",
     "run_blocked_issue_limit_reached": "実行されませんでした — ワークスペースのタスク数上限に達しました",
     "run_blocked_generic": "実行されませんでした — 実行がブロックされました",
-    "section_properties": "プロパティ",
     "section_triggers": "トリガー",
     "section_run_history": "実行履歴",
-    "section_danger": "危険な操作",
     "field_agent": "エージェント",
     "field_created_by": "作成者",
     "field_output_mode": "出力モード",
@@ -143,11 +151,41 @@
   },
   "run": {
     "issue_linked": "タスクをリンク済み",
-    "view_log": "実行ログを表示",
     "skipped_group": {
       "label": "スキップ済み",
       "summary": "スキップされた実行 {{count}} 件"
     }
+  },
+  "run_page": {
+    "back": "オートパイロットに戻る",
+    "title": "{{title}} · {{time}}",
+    "subtitle": "オートパイロットの実行",
+    "hide_panel": "実行情報を隠す",
+    "show_panel": "実行情報を表示",
+    "panel_title": "実行情報",
+    "field_status": "ステータス",
+    "field_source": "ソース",
+    "field_triggered_at": "トリガー日時",
+    "field_completed_at": "完了日時",
+    "field_assignee": "担当",
+    "field_autopilot": "オートパイロット",
+    "field_failure": "失敗の理由",
+    "field_payload": "Webhook ペイロード",
+    "trigger": {
+      "schedule": "スケジュール実行",
+      "manual": "手動実行",
+      "webhook": "Webhook 実行",
+      "api": "API 実行"
+    },
+    "runtime_online": "ランタイム オンライン",
+    "runtime_offline": "ランタイム オフライン",
+    "not_executed": "この実行は行われませんでした。",
+    "autopilot_deleted": "オートパイロットが削除されたため、会話を続けられません。",
+    "shared_conversation": "このオートパイロットを閲覧できるメンバーは、この会話を共有します。",
+    "transcript_failed": "実行ログを読み込めませんでした。",
+    "not_found": "実行が見つかりません",
+    "forbidden": "この実行を表示する権限がありません",
+    "load_failed": "実行を読み込めませんでした"
   },
   "webhook_payload": {
     "label": "Webhook イベント:",
@@ -464,18 +502,16 @@
     "sort_by": "並び替え",
     "direction_asc": "昇順",
     "direction_desc": "降順",
-    "section_columns": "列"
+    "section_columns": "表示項目"
   },
   "actions": {
     "row_menu": "自動化の操作",
     "pause": "一時停止",
     "resume": "再開",
     "delete": "削除",
-    "selected_other": "{{count}} 件選択中",
-    "clear_selection": "選択を解除",
     "delete_dialog": {
       "title": "自動化を削除しますか？",
-      "description_other": "{{count}} 件の自動化とその実行履歴を完全に削除します。",
+      "description": "「{{name}}」とその実行履歴を完全に削除します。",
       "warning": "この操作は取り消せません。",
       "cancel": "キャンセル",
       "confirm": "完全に削除",

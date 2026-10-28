@@ -32,6 +32,16 @@
   content: "]";
 }
 
+/*
+ * Links underline in their own text color. prose.css mixes the brand at 40%
+ * into the transparent background, which reads as a pale pink-grey line
+ * under brown text on the light theme; the full color matches the text.
+ */
+.kb-doc .rich-text-editor a,
+.kb-doc .rich-text-editor a:hover {
+  text-decoration-color: currentColor;
+}
+
 /* Links to pages that have not been written yet. */
 .kb-doc a[href="#kb-missing"] {
   cursor: default;
@@ -47,15 +57,99 @@
   color: inherit;
 }
 
+/*
+ * Sentences with open annotations: a yellow underline in --color-warning,
+ * the yellow of a pending annotation's dot and of the selected card's ring,
+ * highlighted as well while the annotation panel is open. Clicking one
+ * opens its annotations.
+ */
+.kb-doc mark.kb-annotated {
+  cursor: pointer;
+  border-radius: 0;
+  background-color: transparent;
+  text-decoration-line: underline;
+  text-decoration-color: var(--color-warning);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  text-decoration-skip-ink: none;
+}
+
+/*
+ * An annotated sentence on link text keeps the link's color but only the
+ * yellow underline: a link inside the mark drops its own line so the mark's
+ * shows, and a link holding the mark drops its line too, since a descendant
+ * cannot hide an ancestor's.
+ */
+.kb-doc mark.kb-annotated a,
+.kb-doc .rich-text-editor a:has(mark.kb-annotated) {
+  text-decoration-line: none;
+}
+
+.kb-doc.kb-annotations-open mark.kb-annotated {
+  border-radius: 3px;
+  background-color: color-mix(in oklch, var(--color-warning) 16%, transparent);
+}
+
+/*
+ * The sentence of a clicked annotation card: a 藤黄 glow that rises quickly
+ * and fades back to the sentence's own style. 1200ms matches MARK_FLASH_MS
+ * in kb-page-view.tsx, which clears data-flash afterwards.
+ */
+@keyframes kb-annotation-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  15% {
+    background-color: color-mix(in oklch, var(--color-warning) 40%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-warning) 40%, transparent);
+  }
+}
+
+.kb-doc mark.kb-annotated[data-flash="true"] {
+  border-radius: 3px;
+  animation: kb-annotation-flash 1200ms var(--ease-out) both;
+}
+
+/* Reduced motion: no pulse; the sentence stays highlighted until the flash clears. */
+@media (prefers-reduced-motion: reduce) {
+  .kb-doc mark.kb-annotated[data-flash="true"] {
+    animation: none;
+    background-color: color-mix(in oklch, var(--color-warning) 40%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-warning) 40%, transparent);
+  }
+}
+
 /* A draft's edits against the published page. */
 .kb-doc del {
   color: var(--color-destructive);
   background-color: color-mix(in oklch, var(--color-destructive) 8%, transparent);
 }
 
+/*
+ * Added text is green, mirroring the red of removed text. The light theme's
+ * success green reaches only ~2.7:1 on its own tint, so added text uses a
+ * darker step there (~5.2:1 on the 16% tint); the dark theme's success green
+ * already clears 4.5:1 (~5.8:1).
+ */
+.kb-doc {
+  --kb-added-text: oklch(0.48 0.13 152.26);
+}
+
+.dark .kb-doc {
+  --kb-added-text: var(--color-success);
+}
+
 .kb-doc ins {
   text-decoration: none;
+  color: var(--kb-added-text);
   background-color: color-mix(in oklch, var(--color-success) 16%, transparent);
+}
+
+.kb-doc :is(ins, .kb-block-added) :is(a, code, strong, em, h1, h2, h3, h4, h5, h6, blockquote, th, td),
+.kb-doc .kb-block-added ::marker {
+  color: var(--kb-added-text);
 }
 
 .kb-doc .kb-block-removed {
@@ -67,6 +161,109 @@
 }
 
 .kb-doc .kb-block-added {
+  color: var(--kb-added-text);
   background-color: color-mix(in oklch, var(--color-success) 10%, transparent);
   border-radius: 0.5rem;
+}
+
+/*
+ * Reading typography. RichContent's prose.css is tuned for short issue
+ * descriptions and comments (14px / 1.625); a knowledge base page is read at
+ * length, so its body is set larger and looser here, scoped to `.kb-doc` so
+ * descriptions, comments and chat keep the compact tier.
+ *
+ *   Body: 16px (the scale's 16px step), line-height 1.75 = 28px; CJK prose
+ *     reads best at 1.75-1.8.
+ *   Headings: h1 24 / h2 20 / h3 18 on the scale's own leading; h4 drops to
+ *     body size instead of 14px, so no heading is smaller than the text.
+ *   Spacing: 14px between paragraphs, more above a heading than below it.
+ */
+.kb-doc .rich-text-editor {
+  font-size: var(--text-title-sm);
+  line-height: 1.75;
+}
+
+.kb-doc .rich-text-editor :is(p, li) {
+  line-height: 1.75;
+}
+
+.kb-doc .rich-text-editor h1 {
+  font-size: var(--text-display-sm);
+  line-height: var(--text-display-sm--line-height);
+}
+
+.kb-doc .rich-text-editor h2 {
+  font-size: var(--text-title-lg);
+  line-height: var(--text-title-lg--line-height);
+}
+
+.kb-doc .rich-text-editor h3 {
+  font-size: var(--text-title);
+  line-height: var(--text-title--line-height);
+}
+
+.kb-doc .rich-text-editor h4 {
+  font-size: var(--text-title-sm);
+  line-height: 1.75;
+}
+
+/* Paragraphs inside one block; the block's own first and last child stay
+   flush so the spacing between blocks below is the only gap. */
+.kb-doc .rich-text-editor p {
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.kb-doc .rich-text-editor > :first-child {
+  margin-top: 0;
+}
+
+.kb-doc .rich-text-editor > :last-child {
+  margin-bottom: 0;
+}
+
+/* Each block is its own RichContent and a flex item, so prose margins neither
+   reach nor collapse across blocks; the gap between blocks is set here. */
+.kb-doc .kb-block + .kb-block {
+  margin-top: 14px;
+}
+
+.kb-doc .kb-block:has(.rich-text-editor > :is(h1, h2, h3, h4):last-child) + .kb-block {
+  margin-top: 8px;
+}
+
+.kb-doc .kb-block + .kb-block:has(.rich-text-editor > :is(h1, h2):first-child) {
+  margin-top: 32px;
+}
+
+.kb-doc .kb-block + .kb-block:has(.rich-text-editor > :is(h3, h4):first-child) {
+  margin-top: 24px;
+}
+
+/* Inline code: its global line-height 2 (28px in a monospace face with a
+   different baseline) pushed every line holding code 1px past 28px. A shorter
+   inline box sits inside the line; the background follows the glyphs, so the
+   pill looks the same. */
+.kb-doc .rich-text-editor :not(pre) > code {
+  line-height: 1.5;
+}
+
+/* Code blocks keep their 13px / 1.6 code; without this the pre's own 28px
+   line box (from the 16px / 1.75 body) would double-space every code line. */
+.kb-doc .rich-text-editor pre {
+  font-size: var(--text-label);
+  line-height: 1.6;
+}
+
+/* Table cells stay a step under body so columns fit; th keeps its 13px. */
+.kb-doc .rich-text-editor td {
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+}
+
+/* Mention chips: one step up from their 12px default so they do not shrink
+   against 16px text; 24px tall, inside the 28px line. */
+.kb-doc .rich-text-editor :is(.issue-mention, .project-chip, .kb-mention > span) {
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
 }

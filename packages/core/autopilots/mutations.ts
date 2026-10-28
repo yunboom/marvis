@@ -9,6 +9,7 @@ import type {
   GetAutopilotResponse,
   CreateAutopilotTriggerRequest,
   UpdateAutopilotTriggerRequest,
+  AutopilotRun,
 } from "../types";
 
 export function useCreateAutopilot() {
@@ -189,6 +190,22 @@ export function useReplayAutopilotDelivery() {
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: autopilotKeys.deliveries(wsId, vars.autopilotId) });
       qc.invalidateQueries({ queryKey: autopilotKeys.runs(wsId, vars.autopilotId) });
+    },
+  });
+}
+
+// Gets or creates a run's follow-up chat session and records it on the cached
+// run, so later sends skip the round trip.
+export function useEnsureAutopilotRunChat() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+  return useMutation({
+    mutationFn: ({ autopilotId, runId }: { autopilotId: string; runId: string }) =>
+      api.ensureAutopilotRunChat(autopilotId, runId),
+    onSuccess: (data, vars) => {
+      qc.setQueryData<AutopilotRun>(autopilotKeys.run(wsId, vars.autopilotId, vars.runId), (old) =>
+        old ? { ...old, chat_session_id: data.chat_session_id } : old,
+      );
     },
   });
 }

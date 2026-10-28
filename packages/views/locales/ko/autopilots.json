@@ -22,7 +22,11 @@
     },
     "scope_all": "전체",
     "no_matches": "일치하는 자동화가 없습니다",
-    "retry": "다시 시도"
+    "retry": "다시 시도",
+    "from_template": "템플릿으로 만들기",
+    "never_run": "실행 기록 없음",
+    "next_run_at": "다음 {{time}}",
+    "created_at": "{{date}} 생성"
   },
   "status": {
     "active": "활성",
@@ -73,6 +77,12 @@
     "paused_runtime_required": "담당 에이전트의 런타임이 없어 자동화가 일시 중지되었습니다. 런타임을 연결한 후 다시 활성화하세요.",
     "bind_runtime": "런타임 연결",
     "edit": "수정",
+    "back": "오토파일럿으로 돌아가기",
+    "section_status": "상태",
+    "next_run": "다음 실행: {{date}}",
+    "add": "추가",
+    "instructions_expand": "모두 보기",
+    "instructions_collapse": "접기",
     "run_now": "지금 실행",
     "running": "실행 중...",
     "toast_triggered": "오토파일럿을 실행했습니다",
@@ -87,10 +97,8 @@
     "run_blocked_quota_exceeded": "실행되지 않음 — 이 기간의 실행 한도에 도달했습니다",
     "run_blocked_issue_limit_reached": "실행되지 않음 — 워크스페이스가 태스크 수 한도에 도달했습니다",
     "run_blocked_generic": "실행되지 않음 — 실행이 차단되었습니다",
-    "section_properties": "속성",
     "section_triggers": "트리거",
     "section_run_history": "실행 기록",
-    "section_danger": "위험 영역",
     "field_agent": "에이전트",
     "field_created_by": "생성자",
     "field_output_mode": "출력 모드",
@@ -143,11 +151,41 @@
   },
   "run": {
     "issue_linked": "태스크 연결됨",
-    "view_log": "실행 로그 보기",
     "skipped_group": {
       "label": "건너뜀",
       "summary": "건너뛴 실행 {{count}}개"
     }
+  },
+  "run_page": {
+    "back": "오토파일럿으로 돌아가기",
+    "title": "{{title}} · {{time}}",
+    "subtitle": "오토파일럿 실행",
+    "hide_panel": "실행 정보 숨기기",
+    "show_panel": "실행 정보 표시",
+    "panel_title": "실행 정보",
+    "field_status": "상태",
+    "field_source": "출처",
+    "field_triggered_at": "트리거 시각",
+    "field_completed_at": "완료 시각",
+    "field_assignee": "담당",
+    "field_autopilot": "오토파일럿",
+    "field_failure": "실패 이유",
+    "field_payload": "Webhook 페이로드",
+    "trigger": {
+      "schedule": "일정 실행",
+      "manual": "수동 실행",
+      "webhook": "Webhook 실행",
+      "api": "API 실행"
+    },
+    "runtime_online": "런타임 온라인",
+    "runtime_offline": "런타임 오프라인",
+    "not_executed": "이 실행은 진행되지 않았습니다.",
+    "autopilot_deleted": "오토파일럿이 삭제되어 대화를 이어갈 수 없습니다.",
+    "shared_conversation": "이 자동화를 볼 수 있는 멤버가 이 대화를 함께 사용합니다.",
+    "transcript_failed": "실행 로그를 불러오지 못했습니다.",
+    "not_found": "실행을 찾을 수 없습니다",
+    "forbidden": "이 실행을 볼 권한이 없습니다",
+    "load_failed": "실행을 불러오지 못했습니다"
   },
   "webhook_payload": {
     "label": "Webhook 이벤트:",
@@ -464,18 +502,16 @@
     "sort_by": "정렬",
     "direction_asc": "오름차순",
     "direction_desc": "내림차순",
-    "section_columns": "열"
+    "section_columns": "표시 항목"
   },
   "actions": {
     "row_menu": "자동화 작업",
     "pause": "일시중지",
     "resume": "재개",
     "delete": "삭제",
-    "selected_other": "{{count}}개 선택됨",
-    "clear_selection": "선택 해제",
     "delete_dialog": {
       "title": "자동화를 삭제할까요?",
-      "description_other": "자동화 {{count}}개와 실행 기록이 영구 삭제됩니다.",
+      "description": "\"{{name}}\"와(과) 실행 기록이 영구 삭제됩니다.",
       "warning": "이 작업은 되돌릴 수 없습니다.",
       "cancel": "취소",
       "confirm": "영구 삭제",

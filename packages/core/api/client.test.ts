@@ -1287,6 +1287,31 @@ describe("ApiClient", () => {
     ]);
   });
 
+  it("gets or creates a run's chat session and rejects a response without a session id", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ chat_session_id: "chat-1" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = new ApiClient("https://api.example.test");
+
+    await expect(client.ensureAutopilotRunChat("ap-1", "run-1")).resolves.toEqual({ chat_session_id: "chat-1" });
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.example.test/api/autopilots/ap-1/runs/run-1/chat");
+    expect(fetchMock.mock.calls[0]?.[1]?.method).toBe("POST");
+    await expect(client.ensureAutopilotRunChat("ap-1", "run-1")).rejects.toThrow();
+  });
+
   it("emits X-Client-* headers when identity is configured", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify([]), {
@@ -1793,6 +1818,43 @@ describe("ApiClient", () => {
       await expect(client.listChatMessages("session-1")).resolves.toEqual([
         expect.objectContaining({ content: "safe reply", quick_actions: [] }),
       ]);
+    });
+
+    it("keeps a message whose sender is malformed and reads a valid sender", async () => {
+      const messages = [
+        {
+          id: "m1",
+          chat_session_id: "session-1",
+          role: "user",
+          content: "first",
+          task_id: "task-1",
+          created_at: "2026-06-01T00:00:00Z",
+          sender_user_id: "user-2",
+        },
+        {
+          id: "m2",
+          chat_session_id: "session-1",
+          role: "user",
+          content: "second",
+          task_id: "task-2",
+          created_at: "2026-06-01T00:00:01Z",
+          sender_user_id: 42,
+        },
+        {
+          id: "m3",
+          chat_session_id: "session-1",
+          role: "assistant",
+          content: "reply",
+          task_id: "task-2",
+          created_at: "2026-06-01T00:00:02Z",
+        },
+      ];
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(messages, 200)));
+
+      const client = new ApiClient("https://api.example.test");
+      const parsed = await client.listChatMessages("session-1");
+
+      expect(parsed.map((m) => m.sender_user_id)).toEqual(["user-2", null, undefined]);
     });
 
     it("falls back to an empty page for a malformed paged response", async () => {

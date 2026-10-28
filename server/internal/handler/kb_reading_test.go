@@ -216,6 +216,28 @@ func TestListKbPagesDraftOverlay(t *testing.T) {
 	testutil.Call(t, testHandler.ListKbPages, withURLParam(other, "kb", slug)).Want(http.StatusForbidden)
 }
 
+func TestListKbPagesNamesDraftDeletedPageByMainline(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	slug := fmt.Sprintf("overlay-del-%d", time.Now().UnixNano())
+	base := insertTestKbBase(t, "Overlay KB", slug)
+	disco := createTestKbPage(t, base, kb.NewPage{Slug: "discovery", Title: "服务发现", Position: "a0", Markdown: "d"})
+
+	// A deletion merged in from the mainline leaves the draft row without a header.
+	draft := insertTestKbDraft(t, base, testUserID, 2)
+	dbfx.InsertNoID(t, "kb_draft_page", testutil.Cols{
+		"draft_id": draft, "page_id": disco, "op": kb.DraftOpDelete, "parent_id": nil, "position": "a0",
+		"slug": "discovery", "frontmatter": "{}", "blocks": "[]", "claims": "[]",
+	}, "draft_id = $1 AND page_id = $2", draft, disco)
+
+	top := listKbLevel(t, slug, "draft="+draft, http.StatusOK)
+	if got := kbLevelTitles(top); got != "服务发现(deleted)" {
+		t.Fatalf("draft top level = %s, want the deleted page under its mainline title", got)
+	}
+}
+
 func getKbPage(t *testing.T, ref, query string, want int) KbPageResponse {
 	t.Helper()
 
@@ -278,6 +300,25 @@ func TestGetKbPage(t *testing.T) {
 		"workspace_id": testWorkspaceID, "knowledge_base_id": base, "number": 16, "title": "去重键改为渠道交易号",
 		"source": "custom", "author_type": "member", "author_id": testUserID, "draft_id": openDraft,
 	})
+	// Another member's open request on the same page.
+	someoneElse := "6a3c0a52-6f0e-4bb5-9c62-0d1f2e3a4b5f"
+	theirDraft := insertTestKbDraft(t, base, someoneElse, 1)
+	insertTestKbDraftPage(t, theirDraft, callback, kb.DraftOpUpdate, payment, "a0", "callback", "支付回调",
+		kbTestBlocks(t, blockID, "按退款单号去重。"))
+	dbfx.Insert(t, "kb_merge_request", testutil.Cols{
+		"workspace_id": testWorkspaceID, "knowledge_base_id": base, "number": 18, "title": "退款回调也按渠道交易号去重",
+		"source": "custom", "author_type": "member", "author_id": someoneElse, "draft_id": theirDraft,
+		"status": kb.MergeRequestStatusChangesRequested, "updated_at": time.Now().Add(time.Minute),
+	})
+	// A closed request on the page is not pending.
+	closedDraft := insertTestKbDraft(t, base, someoneElse, 1)
+	insertTestKbDraftPage(t, closedDraft, callback, kb.DraftOpUpdate, payment, "a0", "callback", "支付回调",
+		kbTestBlocks(t, blockID, "按退款单号去重。"))
+	dbfx.Insert(t, "kb_merge_request", testutil.Cols{
+		"workspace_id": testWorkspaceID, "knowledge_base_id": base, "number": 19, "title": "已关闭",
+		"source": "custom", "author_type": "member", "author_id": someoneElse, "draft_id": closedDraft,
+		"status": kb.MergeRequestStatusClosed,
+	})
 
 	page := getKbPage(t, callback, "", http.StatusOK)
 	if page.Path != "/payment/callback" || len(page.Breadcrumb) != 1 || page.Breadcrumb[0].Title != "支付" {
@@ -320,8 +361,11 @@ func TestGetKbPage(t *testing.T) {
 	if len(page.Backlinks) != 1 || page.Backlinks[0].ID != idem {
 		t.Errorf("backlinks = %+v", page.Backlinks)
 	}
-	if page.PendingMR == nil || page.PendingMR.Number != 16 || page.PendingMRCount != 1 {
+	if page.PendingMR == nil || page.PendingMR.Number != 18 || page.PendingMRCount != 2 {
 		t.Errorf("pending_mr = %+v (%d)", page.PendingMR, page.PendingMRCount)
+	}
+	if len(page.PendingMRs) != 1 || page.PendingMRs[0].Number != 18 || page.PendingMRs[0].Status != kb.MergeRequestStatusChangesRequested {
+		t.Errorf("pending_mrs = %+v, want only the other member's #18 with changes requested", page.PendingMRs)
 	}
 	if page.AnnotationsOpen != 1 {
 		t.Errorf("annotations_open = %d", page.AnnotationsOpen)
@@ -329,6 +373,9 @@ func TestGetKbPage(t *testing.T) {
 	if len(page.Drafts) != 1 || page.Drafts[0].ID != openDraft || page.Drafts[0].ChangedBlocks != 3 ||
 		page.Drafts[0].DraftChange != kb.DraftChangeModified {
 		t.Errorf("drafts = %+v, want the open draft with 3 changed blocks", page.Drafts)
+	} else if mr := page.Drafts[0].MergeRequest; mr == nil || mr.Number != 16 || mr.Title != "去重键改为渠道交易号" ||
+		mr.Status != kb.MergeRequestStatusOpen {
+		t.Errorf("draft merge_request = %+v, want #16", mr)
 	}
 
 	byPath := getKbPage(t, slug+":/payment/callback.md", "", http.StatusOK)
@@ -354,11 +401,72 @@ func TestGetKbPage(t *testing.T) {
 	getKbPage(t, created, "", http.StatusNotFound)
 	getKbPage(t, slug+":/payment/manual", "draft="+openDraft, http.StatusOK)
 
+	// Someone else's draft: the workspace owner may read it, a plain member not.
 	otherDraft := insertTestKbDraft(t, base, "6a3c0a52-6f0e-4bb5-9c62-0d1f2e3a4b5e", 1)
-	getKbPage(t, callback, "draft="+otherDraft, http.StatusForbidden)
+	getKbPage(t, callback, "draft="+otherDraft, http.StatusOK)
+	plain := createPlainMember(t, fmt.Sprintf("kb-read-plain-%d@marvis.ai", time.Now().UnixNano()))
+	plainReq := withURLParam(newRequestAs(plain, http.MethodGet, "/api/kb/pages/x?draft="+otherDraft, nil), "id", callback)
+	testutil.Call(t, testHandler.GetKbPage, plainReq).Want(http.StatusForbidden)
 	getKbPage(t, "00000000-0000-0000-0000-000000000001", "", http.StatusNotFound)
 	getKbPage(t, slug+":/missing", "", http.StatusNotFound)
 	getKbPage(t, "/payment", "", http.StatusBadRequest)
+}
+
+// TestGetKbPageDraftsAfterClose covers the caller's drafts whose merge
+// request was closed: closing reopens the draft, which stays out of the
+// page's draft list until it is edited or submitted again.
+func TestGetKbPageDraftsAfterClose(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	slug := fmt.Sprintf("read-closed-%d", time.Now().UnixNano())
+	base := insertTestKbBase(t, "Closed drafts KB", slug)
+	page := createTestKbPage(t, base, kb.NewPage{Slug: "callback", Title: "支付回调", Position: "a0", Markdown: "按渠道交易号去重。"})
+	closedAt := time.Now().Add(-time.Hour)
+
+	// draftOf creates the caller's draft of the page in a status, last
+	// updated at updatedAt.
+	draftOf := func(status string, updatedAt time.Time) string {
+		id := insertTestKbDraft(t, base, testUserID, 1)
+		insertTestKbDraftPage(t, id, page, kb.DraftOpUpdate, "", "a0", "callback", "支付回调",
+			kbTestBlocks(t, "bC01", "按流水号去重。"))
+		dbfx.Exec(t, `UPDATE kb_draft SET status = $2, updated_at = $3 WHERE id = $1`, id, status, updatedAt)
+
+		return id
+	}
+	// requestOf records a merge request of the draft; closed requests close at closedAt.
+	requestOf := func(draftID string, number int, status string) {
+		cols := testutil.Cols{
+			"workspace_id": testWorkspaceID, "knowledge_base_id": base, "number": number, "title": "Revert #1",
+			"source": "revert", "author_type": "member", "author_id": testUserID, "draft_id": draftID,
+			"status": status,
+		}
+		if status == kb.MergeRequestStatusClosed {
+			cols["closed_at"] = closedAt
+		}
+		dbfx.Insert(t, "kb_merge_request", cols)
+	}
+
+	untouched := draftOf(kb.DraftStatusOpen, closedAt)
+	requestOf(untouched, 41, kb.MergeRequestStatusClosed)
+
+	resubmitted := draftOf(kb.DraftStatusSubmitted, closedAt.Add(time.Minute))
+	requestOf(resubmitted, 42, kb.MergeRequestStatusClosed)
+	requestOf(resubmitted, 43, kb.MergeRequestStatusOpen)
+
+	edited := draftOf(kb.DraftStatusOpen, closedAt.Add(2*time.Minute))
+	requestOf(edited, 44, kb.MergeRequestStatusClosed)
+
+	got := getKbPage(t, page, "", http.StatusOK)
+
+	ids := make([]string, len(got.Drafts))
+	for i, d := range got.Drafts {
+		ids[i] = d.ID
+	}
+	if want := []string{edited, resubmitted}; strings.Join(ids, ",") != strings.Join(want, ",") {
+		t.Errorf("drafts = %v, want edited %s then resubmitted %s, not untouched %s", ids, edited, resubmitted, untouched)
+	}
 }
 
 func TestKbPageHistory(t *testing.T) {

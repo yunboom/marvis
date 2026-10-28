@@ -38,17 +38,13 @@ const API_CODE_RAW_NAME_INVALID = "raw_name_invalid";
 /** The OKF specification the export follows (design 11.2). */
 const OKF_SPEC_URL = "https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md";
 
-/** Breadcrumb of the knowledge base's own full pages: Knowledge base / name / title. */
+/** Breadcrumb of the knowledge base's own full pages: name / title. */
 export function KbPageCrumb({ kbSlug, name, title }: { kbSlug: string; name: string; title: string }) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
 
   return (
     <nav aria-label={t(($) => $.nav.breadcrumb)} className="flex min-w-0 flex-1 items-center gap-1.5 text-body text-muted-foreground">
-      <AppLink href={p.kb()} className="shrink-0 hover:text-foreground">
-        {t(($) => $.list.title)}
-      </AppLink>
-      <span aria-hidden="true">/</span>
       <AppLink href={p.kbBase(kbSlug)} className="shrink-0 hover:text-foreground">
         {name}
       </AppLink>

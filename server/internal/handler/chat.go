@@ -279,8 +279,7 @@ func (h *Handler) loadChatSessionForUser(w http.ResponseWriter, r *http.Request,
 		writeError(w, http.StatusNotFound, "chat session not found")
 		return db.ChatSession{}, false
 	}
-	if uuidToString(session.CreatorID) != userID {
-		writeError(w, http.StatusForbidden, "not your chat session")
+	if !h.authorizeChatSessionUser(w, r, session, userID) {
 		return db.ChatSession{}, false
 	}
 	return session, true
@@ -387,6 +386,9 @@ func (h *Handler) UpdateChatSession(w http.ResponseWriter, r *http.Request) {
 
 	session, ok := h.gatePublicChatSessionForUser(w, r, userID, workspaceID, sessionID)
 	if !ok {
+		return
+	}
+	if !requireChatSessionCreator(w, session, userID) {
 		return
 	}
 
@@ -506,6 +508,9 @@ func (h *Handler) SetChatSessionPinned(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if !requireChatSessionCreator(w, session, userID) {
+		return
+	}
 
 	updated, err := h.Queries.SetChatSessionPinned(r.Context(), db.SetChatSessionPinnedParams{
 		ID:     session.ID,
@@ -573,6 +578,9 @@ func (h *Handler) SetChatSessionArchived(w http.ResponseWriter, r *http.Request)
 
 	session, ok := h.gateChatSessionForUser(w, r, userID, workspaceID, sessionID)
 	if !ok {
+		return
+	}
+	if !requireChatSessionCreator(w, session, userID) {
 		return
 	}
 
@@ -705,6 +713,9 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if !requireChatSessionCreator(w, session, userID) {
+		return
+	}
 
 	tx, err := h.TxStarter.Begin(r.Context())
 	if err != nil {
@@ -728,72 +739,9 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Claim, clear, prioritize, and direct send all lock the agent before task
-	// rows. Keep delete on the same agent -> task suffix after its session lock,
-	// otherwise a builder-agent delete can deadlock with a concurrent claim.
-	if _, err := qtx.GetAgentForClaimUpdate(r.Context(), session.AgentID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to lock chat agent")
-		return
-	}
-
-	cancelled, err := qtx.CancelAgentTasksByChatSession(r.Context(), session.ID)
+	purged, err := purgeChatSession(r.Context(), qtx, session)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to cancel chat session tasks")
-		return
-	}
-	if err := service.SettleTerminalTaskState(r.Context(), qtx, cancelled...); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to settle terminal task state")
-		return
-	}
-
-	reactionTargets, err := service.CaptureChannelReactionTargets(r.Context(), qtx, cancelled)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to capture channel reaction targets")
-		return
-	}
-
-	// channel_chat_session_binding used to carry a chat_session FK with
-	// ON DELETE CASCADE; MUL-3515 §4 dropped every channel_* foreign key, so
-	// prune the binding here in the same tx that deletes its chat_session.
-	if err := qtx.DeleteChannelChatSessionBindingBySession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete chat session binding")
-		return
-	}
-	// channel_outbound_card_message is also keyed by chat_session_id with no FK
-	// and no reaper, so prune it in the same tx or a deleted chat session leaves
-	// permanent orphan card rows (#4810 follow-up).
-	if err := qtx.DeleteChannelOutboundCardMessagesBySession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete chat session outbound cards")
-		return
-	}
-	// chat_draft_restore is keyed by chat_session_id with no FK either, so its
-	// pending restores are pruned here rather than by a DB cascade (#5219). The
-	// LockChatSessionForDelete above doubles as the deleter half of the
-	// draft-restore protocol: FinalizeDeferredCancelledChat takes the same
-	// chat_session lock before inserting a restore, so it cannot slip one past
-	// this sweep (see LockChatSessionForTask in chat.sql).
-	if err := qtx.DeleteChatDraftRestoresBySession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete chat session draft restores")
-		return
-	}
-
-	// Same no-FK chore, for the agent configuration a builder conversation was
-	// editing. A no-op for ordinary chats, which never have one.
-	if err := qtx.DeleteAgentBuilderDraft(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete agent builder draft")
-		return
-	}
-	// And for the knowledge base builder's row; a no-op for other chats.
-	if err := qtx.DeleteKbBuilderSession(r.Context(), session.ID); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete knowledge base builder session")
-		return
-	}
-
-	if err := qtx.DeleteChatSession(r.Context(), db.DeleteChatSessionParams{
-		ID:          session.ID,
-		WorkspaceID: session.WorkspaceID,
-	}); err != nil {
-		writeError(w, http.StatusInternalServerError, "failed to delete chat session")
+		writeChatSessionPurgeError(w, sessionID, err)
 		return
 	}
 	if err := qtx.DeleteAgentLabelAssignmentsByAgent(r.Context(), session.AgentID); err != nil {
@@ -817,7 +765,7 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 	// The workspace has to come from the session we just deleted: the tasks were
 	// cancelled and returned before the delete, so they still carry its id, but
 	// the row they would be resolved through is gone by now.
-	h.TaskService.BroadcastCancelledTasks(r.Context(), workspaceID, cancelled, reactionTargets)
+	h.TaskService.BroadcastCancelledTasks(r.Context(), workspaceID, purged.cancelled, purged.reactionTargets)
 
 	resolvedSessionID := uuidToString(session.ID)
 	h.publishChat(protocol.EventChatSessionDeleted, workspaceID, "member", userID, resolvedSessionID, protocol.ChatSessionDeletedPayload{
@@ -825,6 +773,106 @@ func (h *Handler) DeleteChatSession(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// purgedChatSession is what purgeChatSession cancelled, for the caller to
+// broadcast once its transaction commits.
+type purgedChatSession struct {
+	cancelled       []db.AgentTaskQueue
+	reactionTargets map[string]*events.ChannelReactionTarget
+}
+
+// chatSessionPurgeError names the purge step that failed; its message is the
+// response the delete endpoints write.
+type chatSessionPurgeError struct {
+	message string
+	err     error
+}
+
+func (e *chatSessionPurgeError) Error() string { return e.message + ": " + e.err.Error() }
+
+func (e *chatSessionPurgeError) Unwrap() error { return e.err }
+
+func chatPurgeFailed(message string, err error) error {
+	return &chatSessionPurgeError{message: message, err: err}
+}
+
+// writeChatSessionPurgeError answers a failed purgeChatSession.
+func writeChatSessionPurgeError(w http.ResponseWriter, sessionID string, err error) {
+	var purgeErr *chatSessionPurgeError
+	if !errors.As(err, &purgeErr) {
+		purgeErr = &chatSessionPurgeError{message: "failed to delete chat session", err: err}
+	}
+	slog.Warn("purge chat session failed", "session_id", sessionID, "error", err)
+	writeError(w, http.StatusInternalServerError, purgeErr.message)
+}
+
+// purgeChatSession cancels a chat session's tasks and hard-deletes the session
+// with the rows keyed by it. It runs inside the caller's transaction, which
+// must already hold LockChatSessionForDelete on the session. The session's
+// agent and its labels are the caller's to clean up: only builder chats own
+// their agent. Shared by DeleteChatSession and DeleteKbJob.
+func purgeChatSession(ctx context.Context, qtx *db.Queries, session db.ChatSession) (purgedChatSession, error) {
+	// Claim, clear, prioritize, and direct send all lock the agent before task
+	// rows. Keep delete on the same agent -> task suffix after its session lock,
+	// otherwise a builder-agent delete can deadlock with a concurrent claim.
+	if _, err := qtx.GetAgentForClaimUpdate(ctx, session.AgentID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to lock chat agent", err)
+	}
+
+	cancelled, err := qtx.CancelAgentTasksByChatSession(ctx, session.ID)
+	if err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to cancel chat session tasks", err)
+	}
+	if err := service.SettleTerminalTaskState(ctx, qtx, cancelled...); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to settle terminal task state", err)
+	}
+
+	reactionTargets, err := service.CaptureChannelReactionTargets(ctx, qtx, cancelled)
+	if err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to capture channel reaction targets", err)
+	}
+
+	// channel_chat_session_binding used to carry a chat_session FK with
+	// ON DELETE CASCADE; MUL-3515 §4 dropped every channel_* foreign key, so
+	// prune the binding here in the same tx that deletes its chat_session.
+	if err := qtx.DeleteChannelChatSessionBindingBySession(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete chat session binding", err)
+	}
+	// channel_outbound_card_message is also keyed by chat_session_id with no FK
+	// and no reaper, so prune it in the same tx or a deleted chat session leaves
+	// permanent orphan card rows (#4810 follow-up).
+	if err := qtx.DeleteChannelOutboundCardMessagesBySession(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete chat session outbound cards", err)
+	}
+	// chat_draft_restore is keyed by chat_session_id with no FK either, so its
+	// pending restores are pruned here rather than by a DB cascade (#5219). The
+	// LockChatSessionForDelete the caller holds doubles as the deleter half of
+	// the draft-restore protocol: FinalizeDeferredCancelledChat takes the same
+	// chat_session lock before inserting a restore, so it cannot slip one past
+	// this sweep (see LockChatSessionForTask in chat.sql).
+	if err := qtx.DeleteChatDraftRestoresBySession(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete chat session draft restores", err)
+	}
+
+	// Same no-FK chore, for the agent configuration a builder conversation was
+	// editing. A no-op for ordinary chats, which never have one.
+	if err := qtx.DeleteAgentBuilderDraft(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete agent builder draft", err)
+	}
+	// And for the knowledge base builder's row; a no-op for other chats.
+	if err := qtx.DeleteKbBuilderSession(ctx, session.ID); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete knowledge base builder session", err)
+	}
+
+	if err := qtx.DeleteChatSession(ctx, db.DeleteChatSessionParams{
+		ID:          session.ID,
+		WorkspaceID: session.WorkspaceID,
+	}); err != nil {
+		return purgedChatSession{}, chatPurgeFailed("failed to delete chat session", err)
+	}
+
+	return purgedChatSession{cancelled: cancelled, reactionTargets: reactionTargets}, nil
 }
 
 // Chat Messages
@@ -1025,6 +1073,7 @@ func (h *Handler) SendChatMessage(w http.ResponseWriter, r *http.Request) {
 		Content:       req.Content,
 		TaskID:        uuidToString(task.ID),
 		CreatedAt:     timestampToString(msg.CreatedAt),
+		SenderUserID:  userID,
 	})
 
 	// First user message → kick off best-effort LLM auto-titling (MUL-4295).
@@ -1226,9 +1275,16 @@ func (h *Handler) ListChatMessages(w http.ResponseWriter, r *http.Request) {
 	}
 	groupedAtt := h.groupChatMessageAttachments(r.Context(), workspaceID, messageIDs)
 
+	senders, err := h.chatMessageSenders(r.Context(), messages)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to list chat messages")
+		return
+	}
+
 	resp := make([]ChatMessageResponse, len(messages))
 	for i, m := range messages {
 		resp[i] = chatMessageToResponse(m, groupedAtt[uuidToString(m.ID)])
+		resp[i].SenderUserID = senders[uuidToString(m.ID)]
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -1300,9 +1356,16 @@ func (h *Handler) ListChatMessagesPage(w http.ResponseWriter, r *http.Request) {
 	}
 	groupedAtt := h.groupChatMessageAttachments(r.Context(), workspaceID, messageIDs)
 
+	senders, err := h.chatMessageSenders(r.Context(), messages)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to list chat messages")
+		return
+	}
+
 	resp := make([]ChatMessageResponse, len(messages))
 	for i, m := range messages {
 		resp[i] = chatMessageToResponse(m, groupedAtt[uuidToString(m.ID)])
+		resp[i].SenderUserID = senders[uuidToString(m.ID)]
 	}
 	writeJSON(w, http.StatusOK, ChatMessagesPageResponse{
 		Messages:   resp,
@@ -1423,7 +1486,10 @@ func (h *Handler) ListChatDraftRestores(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	rows, err := h.Queries.ListChatDraftRestoresBySession(r.Context(), session.ID)
+	rows, err := h.Queries.ListChatDraftRestoresBySession(r.Context(), db.ListChatDraftRestoresBySessionParams{
+		ChatSessionID: session.ID,
+		UserID:        parseUUID(userID),
+	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to list draft restores")
 		return
@@ -1492,6 +1558,7 @@ func (h *Handler) ConsumeChatDraftRestore(w http.ResponseWriter, r *http.Request
 	if _, err := h.Queries.DeleteChatDraftRestore(r.Context(), db.DeleteChatDraftRestoreParams{
 		ID:            restoreUUID,
 		ChatSessionID: session.ID,
+		UserID:        parseUUID(userID),
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to consume draft restore")
 		return
@@ -1901,8 +1968,17 @@ func (h *Handler) CancelTaskByUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if uuidToString(cs.CreatorID) != userID {
-			writeError(w, http.StatusForbidden, "not your task")
-			return
+			// A run's follow-up chat is shared: any member who can use it may
+			// stop its turns and edit or remove its queued messages.
+			_, allowed, err := h.runChatAccess(r.Context(), cs, userID)
+			if err != nil {
+				h.writeAutopilotInternalError(w, r, err)
+				return
+			}
+			if !allowed {
+				writeError(w, http.StatusForbidden, "not your task")
+				return
+			}
 		}
 	} else {
 		// Issue / autopilot / quick_create tasks are all visible on the
@@ -2032,15 +2108,15 @@ type ChatLastMessage struct {
 	Role          string  `json:"role"`
 	CreatedAt     string  `json:"created_at"`
 	FailureReason *string `json:"failure_reason"`
-	// MessageKind is 'message' (default) or 'no_response'. Hidden onboarding
-	// kickoff rows make buildChatLastMessage return nil and are never exposed.
+	// MessageKind is 'message' (default) or 'no_response'. Hidden instruction
+	// rows make buildChatLastMessage return nil and are never exposed.
 	MessageKind string `json:"message_kind"`
 }
 
 // buildChatLastMessage assembles the preview from list-row columns; returns nil
 // when there is no last message (the LEFT JOIN produced a NULL timestamp).
 func buildChatLastMessage(at pgtype.Timestamptz, content, role string, failure pgtype.Text, kind string) *ChatLastMessage {
-	if !at.Valid || kind == protocol.ChatMessageKindOnboardingKickoff {
+	if !at.Valid || kind == protocol.ChatMessageKindInstruction {
 		return nil
 	}
 	return &ChatLastMessage{
@@ -2065,8 +2141,8 @@ type ChatMessageResponse struct {
 	// ElapsedMs is the wall-clock duration from task creation to terminal
 	// state. Drives "Replied in 38s" / "Failed after 12s" captions.
 	ElapsedMs *int64 `json:"elapsed_ms"`
-	// MessageKind is additive. User-facing list handlers filter onboarding
-	// kickoff rows; clients still understand that kind as a compatibility guard.
+	// MessageKind is additive. User-facing list handlers filter instruction
+	// rows; clients still understand that kind as a compatibility guard.
 	MessageKind string `json:"message_kind"`
 	// QuickActions are sanitized follow-ups generated with this assistant turn.
 	// Always an empty array for legacy rows and user messages.
@@ -2077,6 +2153,10 @@ type ChatMessageResponse struct {
 	// agent can `marvis attachment download <id>` rather than guessing
 	// from a markdown URL that may expire.
 	Attachments []AttachmentResponse `json:"attachments,omitempty"`
+	// SenderUserID is the member who sent a user message: the initiator of
+	// the turn it started. Null for assistant rows and for user rows whose
+	// turn carries no initiator; clients fall back to the session creator.
+	SenderUserID *string `json:"sender_user_id"`
 }
 
 func chatSessionToResponse(s db.ChatSession) ChatSessionResponse {
@@ -2113,11 +2193,11 @@ func chatMessageToResponse(m db.ChatMessage, attachments []AttachmentResponse) C
 // visibleChatMessages removes product-authored context that is sent to the
 // agent runtime but is never part of the member-visible conversation. The
 // daemon reads its task-scoped input through ListChatInputMessages, so this
-// user-facing filter does not remove the kickoff from Mika's execution.
+// user-facing filter does not remove an instruction from the agent's run.
 func visibleChatMessages(messages []db.ChatMessage) []db.ChatMessage {
 	visible := make([]db.ChatMessage, 0, len(messages))
 	for _, message := range messages {
-		if message.MessageKind == protocol.ChatMessageKindOnboardingKickoff {
+		if message.MessageKind == protocol.ChatMessageKindInstruction {
 			continue
 		}
 		visible = append(visible, message)
@@ -2151,8 +2231,8 @@ func normalizeMessageKind(kind string) string {
 	switch kind {
 	case protocol.ChatMessageKindNoResponse:
 		return protocol.ChatMessageKindNoResponse
-	case protocol.ChatMessageKindOnboardingKickoff:
-		return protocol.ChatMessageKindOnboardingKickoff
+	case protocol.ChatMessageKindInstruction:
+		return protocol.ChatMessageKindInstruction
 	case protocol.ChatMessageKindOnboardingOpening:
 		return protocol.ChatMessageKindOnboardingOpening
 	default:

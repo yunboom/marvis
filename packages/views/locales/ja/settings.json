@@ -13,7 +13,8 @@
       "open": "{{name}} の操作",
       "edit": "編集",
       "archive": "アーカイブ",
-      "reorder": "{{name}} を並べ替え"
+      "reorder": "{{name}} を並べ替え",
+      "delete": "完全に削除"
     },
     "reorder_hint": "グループ内でドラッグすると、ボード・一覧・メニューの順序が変わります。",
     "built_in_dialog": {},
@@ -57,6 +58,29 @@
       "cancel": "キャンセル",
       "confirm": "アーカイブ",
       "failed": "アーカイブできませんでした。"
+    },
+    "delete_dialog": {
+      "title": "このステータスを完全に削除しますか？",
+      "description": "元に戻せません。課題、設定、履歴に登場したステータスは削除できません。",
+      "referenced_title": "削除できません",
+      "referenced": "{{places}}に登場しているため、アーカイブのままになります。",
+      "references": {
+        "issue": "課題",
+        "workflow": "ワークフロー",
+        "pr_merge_setting": "PR マージ設定",
+        "saved_view": "保存済みビュー",
+        "wakeup": "ウェイクアップ",
+        "wakeup_receipt": "ウェイクアップ履歴",
+        "agent_task": "エージェントの実行",
+        "activity": "課題のアクティビティ",
+        "inbox": "通知",
+        "other": "その他の記録"
+      },
+      "cancel": "キャンセル",
+      "confirm": "削除",
+      "deleting": "削除中…",
+      "close": "OK",
+      "failed": "削除できませんでした。"
     },
     "category_labels": {
       "unstarted": "未着手",
@@ -253,8 +277,12 @@
         "description": "フローティングチャットを開閉します。開いたときは入力欄にフォーカスします。"
       },
       "findInIssue": {
-        "label": "タスク内を検索",
-        "description": "開いているタスクの詳細を検索します。"
+        "label": "ページ内を検索",
+        "description": "開いているタスクの詳細やナレッジベースのページを検索します。"
+      },
+      "searchKnowledgeBases": {
+        "label": "ナレッジベースを検索",
+        "description": "すべてのナレッジベースのページを検索します。ナレッジベース内で使用できます。"
       },
       "archiveInboxItem": {
         "label": "通知をアーカイブ",
@@ -1325,7 +1353,8 @@
         "none": "ローカルネットワーク上にサーバーが見つかりません。コンピュータとサーバーは同じネットワークに接続されている必要があります。",
         "or_address": "またはアドレスを入力",
         "summary_manual": "手動で入力したアドレス",
-        "summary_manual_hint": "先に接続をテストしてください"
+        "summary_manual_hint": "先に接続をテストしてください",
+        "back": "戻る"
       },
       "address": {
         "label": "サーバーのアドレス",

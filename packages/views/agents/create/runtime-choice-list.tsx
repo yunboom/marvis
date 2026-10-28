@@ -18,6 +18,7 @@ import type { QoderConnection } from "@marvis/core/runtimes/qoder";
 import { Button, buttonVariants } from "@marvis/ui/components/ui/button";
 import { cn } from "@marvis/ui/lib/utils";
 import { useT } from "../../i18n";
+import { useOptionalNavigation } from "../../navigation";
 import { ProviderLogo } from "../../runtimes/components/provider-logo";
 import { HealthDot, useHealthLabel } from "../../runtimes/components/shared";
 import {
@@ -547,6 +548,8 @@ export function RuntimeChoiceList({
   onAddRemote,
 }: RuntimeChoiceListProps) {
   const { t } = useT("agents");
+  const navigation = useOptionalNavigation();
+  const downloadUrl = navigation?.getShareableUrl("/download") ?? "/download";
   const [openOverrides, setOpenOverrides] = useState<ReadonlyMap<string, boolean>>(
     () => new Map(),
   );
@@ -614,7 +617,7 @@ export function RuntimeChoiceList({
                 {t(($) => $.creation_studio.runtime_step.web_local_title)}
               </span>
               <a
-                href="/download"
+                href={downloadUrl}
                 target="_blank"
                 rel="noreferrer"
                 className={buttonVariants({ size: "sm", variant: "outline" })}

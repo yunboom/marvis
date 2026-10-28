@@ -54,8 +54,8 @@ export const EMPTY_AUTOPILOT_FILTERS: AutopilotListFilters = {
   creators: [],
 };
 
-// User-hideable columns. Name and the structural columns (checkbox, kebab)
-// are always visible.
+// User-hideable fields of the list card's meta line ("Card fields" in the
+// display menu). The title, instructions preview and kebab are always shown.
 export type AutopilotColumnKey =
   | "assignee"
   | "trigger"

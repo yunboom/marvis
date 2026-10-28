@@ -28,22 +28,6 @@ export function parseKbJobRoute(pathname: string): KbJobRoute {
   return { view: "job", kbSlug, jobId: parts[4] };
 }
 
-/** The server writes this line between its part of a job's first message and the member's. */
-const MEMBER_MESSAGE_MARKER = "\nMember's message:\n";
-const FIRST_MESSAGE_PREFIX = "Knowledge base: ";
-
-/**
- * A job's first message is written by the server (knowledge base, job id,
- * how to work, starter section) ahead of what the member typed; the job page
- * shows only the member's part.
- */
-export function memberPartOfJobMessage(content: string): string {
-  if (!content.startsWith(FIRST_MESSAGE_PREFIX)) return content;
-  const at = content.indexOf(MEMBER_MESSAGE_MARKER);
-
-  return at < 0 ? content : content.slice(at + MEMBER_MESSAGE_MARKER.length);
-}
-
 /**
  * What the draft side of a job shows (designs 9.3–9.17):
  *  - nodraft: the agent has not created the draft (9.17), submit disabled

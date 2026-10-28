@@ -12,6 +12,7 @@ describe("paths.workspace(slug)", () => {
     expect(ws.projectDetail("p1")).toBe("/acme/projects/p1");
     expect(ws.autopilots()).toBe("/acme/autopilots");
     expect(ws.autopilotDetail("a1")).toBe("/acme/autopilots/a1");
+    expect(ws.autopilotRun("a1", "run 1")).toBe("/acme/autopilots/a1/runs/run%201");
     expect(ws.agents()).toBe("/acme/agents");
     expect(ws.newAgent()).toBe("/acme/agents/new");
     expect(ws.newAgentAi()).toBe("/acme/agents/new/ai");

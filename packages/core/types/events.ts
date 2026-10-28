@@ -37,6 +37,7 @@ export type WSEventType =
   | "inbox:unread"
   | "inbox:archived"
   | "inbox:unarchived"
+  | "inbox:deleted"
   | "inbox:batch-read"
   | "inbox:batch-archived"
   | "workspace:updated"
@@ -139,7 +140,10 @@ export interface KbMrCommentedPayload {
   merge_request_id: string;
   number: number;
   knowledge_base_id: string;
-  comment_id: string;
+  /** The direct comment posted; null when a review was submitted. */
+  comment_id: string | null;
+  /** The review submitted; null for a direct comment. */
+  review_id: string | null;
 }
 
 /** A knowledge base was created, configured or deleted (spec 9). */
@@ -275,6 +279,12 @@ export interface InboxArchivedPayload {
 }
 
 export interface InboxUnarchivedPayload {
+  item_id: string;
+  issue_id: string | null;
+  recipient_id: string;
+}
+
+export interface InboxDeletedPayload {
   item_id: string;
   issue_id: string | null;
   recipient_id: string;
@@ -486,6 +496,8 @@ export interface ChatMessageEventPayload {
   content: string;
   task_id?: string;
   created_at: string;
+  /** The member who sent the message; absent on older servers. */
+  sender_user_id?: string;
 }
 
 export interface ChatDonePayload {
@@ -674,6 +686,7 @@ export interface WSEventPayloadMap {
   "inbox:unread": InboxUnreadPayload;
   "inbox:archived": InboxArchivedPayload;
   "inbox:unarchived": InboxUnarchivedPayload;
+  "inbox:deleted": InboxDeletedPayload;
   "inbox:batch-read": InboxBatchReadPayload;
   "inbox:batch-archived": InboxBatchArchivedPayload;
   "workspace:updated": WorkspaceUpdatedPayload;

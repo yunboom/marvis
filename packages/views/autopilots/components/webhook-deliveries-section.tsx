@@ -119,8 +119,8 @@ export function WebhookDeliveriesSection({
   if (!hasWebhookTrigger) return null;
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-body font-medium text-muted-foreground uppercase tracking-wider">
+    <section className="flex min-w-0 flex-col gap-2">
+      <h2 className="flex min-h-7 items-center text-label text-muted-foreground">
         {t(($) => $.deliveries.section_title)}
       </h2>
       {isLoading ? (
@@ -130,11 +130,11 @@ export function WebhookDeliveriesSection({
           ))}
         </div>
       ) : deliveries.length === 0 ? (
-        <div className="rounded-md border border-dashed p-4 text-center text-body text-muted-foreground">
+        <div className="rounded-xl border border-dashed p-4 text-center text-body text-muted-foreground">
           {t(($) => $.deliveries.empty)}
         </div>
       ) : (
-        <div className="rounded-md border overflow-hidden">
+        <div className="overflow-hidden rounded-xl bg-surface-sunken">
           {deliveries.map((delivery) => (
             <DeliveryRow
               key={delivery.id}

@@ -12,6 +12,7 @@ import { KbBuilderPage } from "./kb-builder-page";
 
 const h = vi.hoisted(() => ({
   messages: [] as ChatMessage[],
+  missing: false,
   send: vi.fn().mockResolvedValue(true),
   destroy: vi.fn().mockResolvedValue(true),
   switchRuntime: vi.fn(),
@@ -57,7 +58,7 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("../../agents/create/use-builder-session", () => ({
   useBuilderSession: () => ({
     messages: h.messages,
-    missing: false,
+    missing: h.missing,
     messagesLoading: false,
     pendingTask: undefined,
     pending: false,
@@ -200,6 +201,7 @@ function mount(adapter: NavigationAdapter) {
 beforeEach(() => {
   vi.clearAllMocks();
   h.messages = [];
+  h.missing = false;
   mocked.listKbBuilderSessions.mockResolvedValue([]);
   mocked.getKnowledgeBaseTemplates.mockResolvedValue({ default_schema: DEFAULT_SCHEMA, purpose_template: "# Purpose" });
   mocked.getKnowledgeBase.mockResolvedValue(BASE);
@@ -260,13 +262,24 @@ describe("KbBuilderPage · create conversation", () => {
     '好的，起草了。\n<kb_draft>{"name":"支付排障手册","slug":"pay-troubleshoot","description":"支付排障。","purpose":"# 目标\\n\\n读者：研发。","schema":"# Ignored"}</kb_draft>',
   );
 
-  it("shows the opening starters and sends one", async () => {
+  it.each([
+    ["Engineering knowledge base", "Help me create a knowledge base for engineers"],
+    ["Agent team memory", "Help me create a knowledge base that serves as our agent team's memory"],
+    ["Something else", "Help me create a knowledge base"],
+  ])("shows the %s starter and sends its message", async (title, message) => {
     mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
 
-    fireEvent.click(await screen.findByRole("button", { name: /Engineering knowledge base/ }));
-    expect(h.send).toHaveBeenCalledWith(
-      "Engineering knowledge base: System architecture, services and interfaces, runbooks, technical decisions",
-    );
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${title}`) }));
+    expect(h.send).toHaveBeenCalledWith(message);
+  });
+
+  it("offers six starters", async () => {
+    mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
+
+    await screen.findByRole("button", { name: /Engineering knowledge base/ });
+    for (const title of ["Testing knowledge base", "Product knowledge base", "Team knowledge base", "Agent team memory", "Something else"]) {
+      expect(screen.getByRole("button", { name: new RegExp(`^${title}`) })).toBeInTheDocument();
+    }
   });
 
   it("fills the form from the builder reply, keeps the default schema read-only and creates", async () => {
@@ -308,6 +321,25 @@ describe("KbBuilderPage · create conversation", () => {
     );
     await waitFor(() => expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/pay-troubleshoot?welcome=1"));
     expect(mocked.setChatSessionArchived).toHaveBeenCalledWith("s-1", true);
+  });
+
+  it("goes to the new knowledge base even though archiving makes the conversation missing", async () => {
+    h.messages = [draftReply];
+    mocked.listKbBuilderSessions.mockResolvedValue([session()]);
+    mocked.createKnowledgeBase.mockResolvedValue({ ...BASE, id: "kb-9", slug: "pay-troubleshoot", mention: "" });
+    // Archiving retires the conversation, so the builder then reports it missing.
+    mocked.setChatSessionArchived.mockImplementation(async () => {
+      h.missing = true;
+      return {} as Awaited<ReturnType<typeof api.setChatSessionArchived>>;
+    });
+    const adapter = mount(makeAdapter("/acme/kb/new/s-1"));
+
+    await screen.findByDisplayValue("支付排障手册");
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() => expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/pay-troubleshoot?welcome=1"));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(adapter.replace).not.toHaveBeenCalledWith("/acme/kb/new");
   });
 
   it("restores a saved configuration instead of replaying the applied reply", async () => {

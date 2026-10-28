@@ -80,7 +80,7 @@ function KbWelcomeGuide({ name, onDismiss }: { name: string; onDismiss: () => vo
                 {index + 1}
               </span>
               <span className="flex flex-col gap-0.5">
-                <span className="flex items-center gap-2 font-medium">
+                <span className="flex items-center gap-2 text-body font-medium">
                   {t(($) => $.welcome.steps[step].title)}
                   {step === "ingest" && (
                     <span className="rounded-full bg-muted px-2 py-px text-micro font-normal text-muted-foreground">
@@ -138,10 +138,6 @@ export function KbHomePage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader>
         <nav aria-label={t(($) => $.nav.breadcrumb)} className="flex min-w-0 flex-1 items-center gap-1.5 text-body text-muted-foreground">
-          <AppLink href={p.kb()} className="shrink-0 hover:text-foreground">
-            {t(($) => $.list.title)}
-          </AppLink>
-          <span aria-hidden="true">/</span>
           <span aria-current="page" className="truncate font-medium text-foreground">
             {base.name}
           </span>
@@ -213,7 +209,7 @@ export function KbHomePage() {
                       className="flex items-center gap-3 border-b border-border/50 px-1 py-[11px] hover:bg-surface-hover"
                     >
                       <FileText aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="shrink-0 font-medium">{item.title}</span>
+                      <span className="shrink-0 text-body font-medium">{item.title}</span>
                       <span className="min-w-0 truncate text-label text-faint-foreground">{item.path}</span>
                       <span className="flex-1" />
                       <span className="min-w-0 truncate text-label text-faint-foreground">

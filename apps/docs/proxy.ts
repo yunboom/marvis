@@ -1,8 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { i18n } from "@/lib/i18n";
 
-const BASE_PATH = "/docs";
-
 // Self-contained i18n proxy. We don't use fumadocs-core's built-in
 // middleware because it isn't basePath-aware — both its rewrite targets
 // and redirect Location headers are built from the basePath-stripped path,
@@ -10,31 +8,38 @@ const BASE_PATH = "/docs";
 // inside a basePath-mounted app. Logic mirrors fumadocs's default-locale
 // flavor: hide `/en` prefix for the default language, keep `/zh` prefix
 // for other languages.
+
+// Marks a request this proxy already rewrote to the default-language route.
+// Next runs the proxy again on the rewritten `/en/...` path, where the strip
+// branch would redirect it straight back to the prefix-less URL — a loop.
+// A client sending the header itself only gets the non-canonical `/en/...`
+// page rendered in place.
+const LOCALE_REWRITE_HEADER = "x-docs-locale-rewrite";
+
 export function proxy(request: NextRequest) {
+  if (request.headers.has(LOCALE_REWRITE_HEADER)) return NextResponse.next();
+
   const pathname = request.nextUrl.pathname;
   const pathLocale = i18n.languages.find(
     (loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`),
   );
 
   if (!pathLocale) {
-    // No locale in URL → rewrite to the default-language route. Build the
-    // target from `request.url` (which includes basePath); `new URL(path,
-    // base)` replaces only the pathname, so we emit the full prefixed path
-    // once and Next does not double-add basePath.
-    const target = `${BASE_PATH}/${i18n.defaultLanguage}${pathname === "/" ? "" : pathname}`;
-    return NextResponse.rewrite(new URL(target, request.url));
+    // No locale in URL → rewrite to the default-language route. `nextUrl`'s
+    // pathname is basePath-stripped and it re-adds the basePath itself.
+    const url = request.nextUrl.clone();
+    url.pathname = `/${i18n.defaultLanguage}${pathname === "/" ? "" : pathname}`;
+    const headers = new Headers(request.headers);
+    headers.set(LOCALE_REWRITE_HEADER, "1");
+    return NextResponse.rewrite(url, { request: { headers } });
   }
 
   if (pathLocale === i18n.defaultLanguage) {
     // Explicit default-language prefix → strip it so the canonical URL
-    // is prefix-less. Use the same `new URL(target, request.url)` pattern
-    // as the rewrite branch above, then explicitly carry the search string
-    // through — otherwise marketing UTMs / referral params silently
-    // disappear on the locale strip.
-    const stripped = pathname.slice(`/${pathLocale}`.length);
-    const target = `${BASE_PATH}${stripped || "/"}`;
-    const url = new URL(target, request.url);
-    url.search = request.nextUrl.search;
+    // is prefix-less. The clone keeps the search string, so marketing UTMs /
+    // referral params survive the locale strip.
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice(`/${pathLocale}`.length) || "/";
     return NextResponse.redirect(url);
   }
 

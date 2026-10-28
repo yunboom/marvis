@@ -193,7 +193,7 @@ func (f cancelFinalizeFixture) attachUserMessageAttachment(t *testing.T, ctx con
 
 func (f cancelFinalizeFixture) draftRestores(t *testing.T, ctx context.Context) []db.ChatDraftRestore {
 	t.Helper()
-	rows, err := db.New(f.pool).ListChatDraftRestoresBySession(ctx, util.MustParseUUID(f.chatSessionID))
+	rows, err := db.New(f.pool).ListChatDraftRestoresBySession(ctx, db.ListChatDraftRestoresBySessionParams{ChatSessionID: util.MustParseUUID(f.chatSessionID)})
 	if err != nil {
 		t.Fatalf("list draft restores: %v", err)
 	}
@@ -402,7 +402,7 @@ func TestFinalizeDeferredCancelledChat_BroadcastLost_RestoreIsRecoverable(t *tes
 
 	svc.FinalizeDeferredCancelledChat(ctx, util.MustParseUUID(f.taskID))
 
-	restores, err := queries.ListChatDraftRestoresBySession(ctx, util.MustParseUUID(f.chatSessionID))
+	restores, err := queries.ListChatDraftRestoresBySession(ctx, db.ListChatDraftRestoresBySessionParams{ChatSessionID: util.MustParseUUID(f.chatSessionID)})
 	if err != nil {
 		t.Fatalf("list draft restores: %v", err)
 	}

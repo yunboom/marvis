@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BotOff, CircleDot, Filter, Mail, RotateCcw, SignalHigh, UserRound } from "lucide-react";
 import { PRIORITY_DISPLAY_ORDER } from "@marvis/core/issues/config";
+import { inboxCategoryHasIssues, inboxFiltersForCategory, type InboxCategory } from "@marvis/core/inbox/category";
 import {
   filterInboxItems,
   inboxActorKey,
@@ -78,6 +79,7 @@ export function InboxFilterMenu({
   priorityFilterSupport,
   activeIssueIds = EMPTY_ISSUE_IDS,
   archived = false,
+  category = null,
 }: {
   wsId: string;
   items: InboxItem[];
@@ -85,12 +87,15 @@ export function InboxFilterMenu({
   /** Issues an agent is running or queued on. */
   activeIssueIds?: ReadonlySet<string>;
   archived?: boolean;
+  /** The category tab; outside "All" and issues the issue-only filters hide. */
+  category?: InboxCategory | null;
 }) {
   const { t } = useT("inbox");
   const { t: tIssues } = useT("issues");
   const filters = useInboxFilters(wsId);
   const [open, setOpen] = useState(false);
-  const facetsQuery = useQuery({ ...archivedInboxFacetsOptions(wsId, filters), enabled: archived && open });
+  const facetsQuery = useQuery({ ...archivedInboxFacetsOptions(wsId, filters, category), enabled: archived && open });
+  const issueFilters = inboxCategoryHasIssues(category);
   const facets = archived ? facetsQuery.data : undefined;
   const toggleStatus = useInboxFilterStore((state) => state.toggleStatusFilter);
   const togglePriority = useInboxFilterStore(
@@ -120,9 +125,9 @@ export function InboxFilterMenu({
   );
   const statusOptions = useStatusOptions(wsId, inboxStatusKeys);
   const effectiveFilters = useMemo(() => {
-    const supported = inboxFiltersForPrioritySupport(filters, priorityFilterSupport);
+    const supported = inboxFiltersForCategory(inboxFiltersForPrioritySupport(filters, priorityFilterSupport), category);
     return archived ? inboxFiltersForArchive(supported) : supported;
-  }, [filters, priorityFilterSupport, archived]);
+  }, [filters, priorityFilterSupport, archived, category]);
   const activeCount = inboxFilterCount(effectiveFilters);
   const priorityFilteringSupported = priorityFilterSupport === "supported";
 
@@ -253,7 +258,7 @@ export function InboxFilterMenu({
           )}
         </DropdownMenuCheckboxItem>
         {/* The archive is filtered server-side, which has no idle dimension. */}
-        {!archived && (
+        {!archived && issueFilters && (
           <DropdownMenuCheckboxItem
             checked={effectiveFilters.idleOnly}
             onCheckedChange={() => toggleIdleOnly(wsId)}
@@ -312,6 +317,7 @@ export function InboxFilterMenu({
           </DropdownMenuSub>
         )}
 
+        {issueFilters && (
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <CircleDot className="size-3.5" />
@@ -350,8 +356,9 @@ export function InboxFilterMenu({
             })}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
+        )}
 
-        {priorityFilteringSupported ? (
+        {issueFilters && priorityFilteringSupported ? (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <SignalHigh className="size-3.5" />

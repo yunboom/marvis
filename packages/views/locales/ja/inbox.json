@@ -27,7 +27,8 @@
     "mark_unread": "未読にする",
     "archive": "アーカイブ",
     "unarchive": "アーカイブ解除",
-    "open_in_new_tab": "新しいタブで開く"
+    "open_in_new_tab": "新しいタブで開く",
+    "delete": "完全に削除"
   },
   "list": {
     "loading_selection": "通知を読み込み中…",
@@ -80,7 +81,10 @@
     "quick_create_unconfirmed": "エージェントでの作成結果は未確認",
     "autopilot_paused": "自動化を一時停止しました",
     "children_done": "サブタスクがすべて終わりました",
-    "autopilot_quota_exceeded": "自動化の実行上限に達しました"
+    "autopilot_quota_exceeded": "自動化の実行上限に達しました",
+    "kb_mr_changes_requested": "レビューで修正依頼",
+    "kb_mr_review_requested": "再レビュー依頼",
+    "kb_mr_review_needed": "承認待ち"
   },
   "labels": {
     "set_status_to": "ステータスを変更:",
@@ -95,12 +99,16 @@
     "created_with_agent": "エージェントで作成: {{identifier}}",
     "failed_with_detail": "失敗: {{detail}}",
     "autopilot_quota_blocked": "上限に達したため実行をブロックしました",
-    "children_done_stage": "ステージ {{stage}} のサブタスクがすべて終わりました"
+    "children_done_stage": "ステージ {{stage}} のサブタスクがすべて終わりました",
+    "kb_mr_changes_requested": "{{name}} がレビューを送信",
+    "kb_mr_review_requested": "{{name}} が再レビューを依頼",
+    "kb_mr_review_needed": "{{name}} が変更リクエストを提出"
   },
   "toasts": {
     "source_context_retry_started": "元のコンテキストで再試行を開始しました",
     "archived": "通知をアーカイブしました",
-    "unarchived": "通知を元に戻しました"
+    "unarchived": "通知を元に戻しました",
+    "deleted": "通知を削除しました"
   },
   "errors": {
     "archived_lookup_failed": "リンク先の通知を読み込めませんでした",
@@ -116,6 +124,32 @@
     "archive_completed_failed": "完了した項目をアーカイブできませんでした",
     "unarchive_failed": "アーカイブ解除に失敗しました",
     "archived_load_failed": "アーカイブ済み通知を読み込めませんでした",
-    "filters_load_failed": "フィルターを読み込めませんでした"
+    "filters_load_failed": "フィルターを読み込めませんでした",
+    "delete_failed": "削除できませんでした"
+  },
+  "delete_dialog": {
+    "title": "この通知を完全に削除しますか？",
+    "description": "この課題のアーカイブ済み通知はまとめて削除されます。元に戻せません。",
+    "cancel": "キャンセル",
+    "confirm": "削除",
+    "deleting": "削除中…"
+  },
+  "kb_review": {
+    "changes_requested_action": "がレビューを送信し、変更リクエストは「修正待ち」になりました",
+    "review_requested_action": "が再レビューを依頼し、変更リクエストは「レビュー待ち」に戻りました",
+    "summary": "レビューのまとめ",
+    "your_summary": "あなたのレビューのまとめ",
+    "comments": "指摘",
+    "view_all_other": "指摘 {{count}} 件をすべて見る",
+    "view_feedback": "指摘を見る",
+    "go_review": "レビューページへ",
+    "review_needed_action": "が変更リクエストを提出しました。承認が必要です"
+  },
+  "categories": {
+    "label": "通知の種類",
+    "all": "すべて",
+    "issue": "タスク",
+    "kb": "ナレッジ",
+    "autopilot": "自動化"
   }
 }

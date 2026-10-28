@@ -15,9 +15,12 @@ import type { UseInPageFindResult } from "../hooks/use-in-page-find";
 // `data-find-ignore` keeps the bar's own text out of the match walk.
 export function FindBar({
   find,
+  placeholder,
   className,
 }: {
   find: UseInPageFindResult;
+  /** Overrides the issue page's input placeholder for other hosts. */
+  placeholder?: string;
   className?: string;
 }) {
   const { t } = useT("issues");
@@ -70,8 +73,8 @@ export function FindBar({
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
         autoFocus
-        placeholder={t(($) => $.detail.find.placeholder)}
-        aria-label={t(($) => $.detail.find.placeholder)}
+        placeholder={placeholder ?? t(($) => $.detail.find.placeholder)}
+        aria-label={placeholder ?? t(($) => $.detail.find.placeholder)}
         className="h-7 w-44 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
       />
       <span className="min-w-[3.5rem] shrink-0 whitespace-nowrap text-right text-caption tabular-nums text-muted-foreground">

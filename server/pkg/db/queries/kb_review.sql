@@ -1,23 +1,28 @@
 -- name: GetKbMergeRequestByNumber :one
+-- Merge requests of a deleted knowledge base are not found.
 SELECT * FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id') AND number = sqlc.arg('number');
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id') AND kb_merge_request.number = sqlc.arg('number')
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbMergeRequestInWorkspace :one
 SELECT * FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id') AND id = sqlc.arg('id');
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id') AND kb_merge_request.id = sqlc.arg('id')
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: GetKbMergeRequestForUpdate :one
 SELECT * FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id') AND id = sqlc.arg('id')
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id') AND kb_merge_request.id = sqlc.arg('id')
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 FOR UPDATE;
 
 -- name: ListKbMergeRequests :many
 -- Merge requests of a workspace, optionally of one knowledge base, most
 -- recently updated first. Merged ones sort by merge time (the change log).
 SELECT * FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id')
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id')
   AND status = ANY(sqlc.arg('statuses')::text[])
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 ORDER BY COALESCE(merged_at, updated_at) DESC, number DESC
 LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
 
@@ -25,8 +30,9 @@ LIMIT sqlc.arg('row_limit') OFFSET sqlc.arg('row_offset');
 -- Per-status counts for the review list tabs.
 SELECT status, count(*)::bigint AS merge_request_count
 FROM kb_merge_request
-WHERE workspace_id = sqlc.arg('workspace_id')
+WHERE kb_merge_request.workspace_id = sqlc.arg('workspace_id')
   AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_merge_request.knowledge_base_id AND b.deleted_at IS NULL)
 GROUP BY status;
 
 -- name: ListKbMergeRequestsByIDs :many
@@ -258,39 +264,162 @@ FROM (
         unnest(sqlc.arg('claims')::jsonb[]) AS claims
 ) AS u;
 
+-- name: SetKbMergeRequestStatus :one
+-- Moves a merge request between open and changes_requested. Asking for
+-- review again (back to open) also stamps review_requested_at.
+UPDATE kb_merge_request SET
+    status = sqlc.arg('status'),
+    review_requested_at = CASE WHEN sqlc.arg('review_requested')::boolean THEN now() ELSE review_requested_at END,
+    updated_at = now()
+WHERE id = sqlc.arg('id')
+RETURNING *;
+
 -- name: CreateKbMrComment :one
 INSERT INTO kb_mr_comment (
-    merge_request_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id
+    merge_request_id, review_id, parent_id, quote_page_id, quote_block_id, quote_text, body, author_type, author_id
 ) VALUES (
-    sqlc.arg('merge_request_id'), sqlc.narg('parent_id'), sqlc.narg('quote_page_id'), sqlc.arg('quote_block_id'),
-    sqlc.arg('quote_text'), sqlc.arg('body'), sqlc.arg('author_type'), sqlc.arg('author_id')
+    sqlc.arg('merge_request_id'), sqlc.narg('review_id'), sqlc.narg('parent_id'), sqlc.narg('quote_page_id'),
+    sqlc.arg('quote_block_id'), sqlc.arg('quote_text'), sqlc.arg('body'), sqlc.arg('author_type'), sqlc.arg('author_id')
 )
 RETURNING *;
 
--- name: SetKbMrCommentTriggered :one
-UPDATE kb_mr_comment SET triggered = sqlc.arg('triggered')
-WHERE id = sqlc.arg('id')
-RETURNING *;
+-- name: ListKbMrComments :many
+-- A merge request's comments, oldest first: the published ones (direct
+-- comments and those of submitted reviews), plus, with pending_reviewer_user_id,
+-- the comments of that reviewer's pending review.
+SELECT c.* FROM kb_mr_comment c
+LEFT JOIN kb_mr_review rv ON rv.id = c.review_id
+WHERE c.merge_request_id = sqlc.arg('merge_request_id')
+  AND (
+    c.review_id IS NULL
+    OR rv.state = sqlc.arg('submitted_state')::text
+    OR rv.reviewer_user_id = sqlc.narg('pending_reviewer_user_id')::uuid
+  )
+ORDER BY c.created_at, c.id;
 
 -- name: GetKbMrComment :one
 SELECT * FROM kb_mr_comment
 WHERE merge_request_id = sqlc.arg('merge_request_id') AND id = sqlc.arg('id');
 
--- name: ListKbMrComments :many
-SELECT * FROM kb_mr_comment
+-- name: UpdateKbMrCommentBody :one
+UPDATE kb_mr_comment SET body = sqlc.arg('body')
+WHERE id = sqlc.arg('id')
+RETURNING *;
+
+-- name: DeleteKbMrComment :exec
+DELETE FROM kb_mr_comment WHERE id = sqlc.arg('id');
+
+-- name: DeleteKbMrReviewComments :exec
+DELETE FROM kb_mr_comment
+WHERE merge_request_id = sqlc.arg('merge_request_id')
+  AND review_id = sqlc.arg('review_id');
+
+-- name: CountKbMrReviewComments :many
+-- Comment counts of reviews, for the review list and submit.
+SELECT review_id, count(*)::bigint AS comment_count
+FROM kb_mr_comment
+WHERE merge_request_id = sqlc.arg('merge_request_id')
+  AND review_id = ANY(sqlc.arg('review_ids')::uuid[])
+GROUP BY review_id;
+
+-- name: OpenKbMrReview :one
+-- Starts the reviewer's pending review; returns no row when one is already
+-- pending (kb_mr_review_pending_uidx), so the caller reads that one instead.
+INSERT INTO kb_mr_review (workspace_id, merge_request_id, reviewer_user_id, state)
+VALUES (sqlc.arg('workspace_id'), sqlc.arg('merge_request_id'), sqlc.arg('reviewer_user_id'), sqlc.arg('state'))
+ON CONFLICT (merge_request_id, reviewer_user_id) WHERE state = 'pending' DO NOTHING
+RETURNING *;
+
+-- name: GetKbMrPendingReview :one
+SELECT * FROM kb_mr_review
+WHERE merge_request_id = sqlc.arg('merge_request_id')
+  AND reviewer_user_id = sqlc.arg('reviewer_user_id')
+  AND state = sqlc.arg('state')::text;
+
+-- name: GetKbMrReviewForUpdate :one
+SELECT * FROM kb_mr_review
+WHERE merge_request_id = sqlc.arg('merge_request_id') AND id = sqlc.arg('id')
+FOR UPDATE;
+
+-- name: GetKbMrReview :one
+SELECT * FROM kb_mr_review
+WHERE merge_request_id = sqlc.arg('merge_request_id') AND id = sqlc.arg('id');
+
+-- name: ListKbMrReviews :many
+-- A merge request's submitted reviews in submission order, plus the
+-- viewer's pending review (viewer_id) last.
+SELECT * FROM kb_mr_review
+WHERE merge_request_id = sqlc.arg('merge_request_id')
+  AND (state = sqlc.arg('submitted_state')::text OR reviewer_user_id = sqlc.narg('viewer_id')::uuid)
+ORDER BY submitted_at NULLS LAST, created_at, id;
+
+-- name: SubmitKbMrReview :one
+UPDATE kb_mr_review SET
+    state = sqlc.arg('state'),
+    summary = sqlc.arg('summary'),
+    submitted_at = now()
+WHERE id = sqlc.arg('id')
+RETURNING *;
+
+-- name: DeleteKbMrReview :exec
+DELETE FROM kb_mr_review WHERE id = sqlc.arg('id');
+
+-- name: ListKbMrReviewerUserIDs :many
+-- Members who submitted a review on the merge request.
+SELECT DISTINCT reviewer_user_id FROM kb_mr_review
+WHERE merge_request_id = sqlc.arg('merge_request_id')
+  AND state = sqlc.arg('state')::text;
+
+-- name: CreateKbMrEvent :exec
+INSERT INTO kb_mr_event (workspace_id, merge_request_id, actor_type, actor_id, kind, payload)
+VALUES (
+    sqlc.arg('workspace_id'), sqlc.arg('merge_request_id'), sqlc.arg('actor_type'), sqlc.arg('actor_id'),
+    sqlc.arg('kind'), sqlc.arg('payload')
+);
+
+-- name: ListKbMrEvents :many
+SELECT * FROM kb_mr_event
 WHERE merge_request_id = sqlc.arg('merge_request_id')
 ORDER BY created_at, id;
 
--- name: ListKbTaskStatuses :many
-SELECT id, status FROM agent_task_queue
-WHERE id = ANY(sqlc.arg('ids')::uuid[]);
+-- name: CreateKbMemberInboxItems :many
+-- Batch insert of one notification for several members; the id and
+-- recipient arrays are parallel. Recipients no longer in the workspace are
+-- skipped, like CreateInboxItem does.
+INSERT INTO inbox_item (
+    id, workspace_id, recipient_type, recipient_id, type, severity, title, body, actor_type, actor_id, details
+)
+SELECT
+    u.id, sqlc.arg('workspace_id')::uuid, sqlc.arg('recipient_type')::text, u.recipient_id,
+    sqlc.arg('type')::text, sqlc.arg('severity')::text, sqlc.arg('title')::text, sqlc.arg('body')::text,
+    sqlc.arg('actor_type')::text, sqlc.arg('actor_id')::uuid, sqlc.arg('details')::jsonb
+FROM (
+    SELECT
+        unnest(sqlc.arg('ids')::uuid[]) AS id,
+        unnest(sqlc.arg('recipient_ids')::uuid[]) AS recipient_id
+) AS u
+WHERE EXISTS (
+    SELECT 1 FROM member m
+    WHERE m.workspace_id = sqlc.arg('workspace_id')::uuid AND m.user_id = u.recipient_id
+)
+RETURNING *;
 
--- name: ListKbChatSessionsByIDs :many
-SELECT * FROM chat_session
+-- name: ArchiveKbMrInboxItems :many
+-- Archives the review notifications of merge requests that no longer ask
+-- for action; merge request numbers are unique within a workspace.
+UPDATE inbox_item SET archived = true
 WHERE workspace_id = sqlc.arg('workspace_id')
-  AND id = ANY(sqlc.arg('ids')::uuid[]);
+  AND type = ANY(sqlc.arg('types')::text[])
+  AND details->>'merge_request_number' IN (
+      SELECT n::text FROM unnest(sqlc.arg('merge_request_numbers')::int[]) AS n
+  )
+  AND archived = false
+RETURNING recipient_type, recipient_id;
 
--- name: ListKbAgentsByIDs :many
-SELECT * FROM agent
+-- name: ListKbMaintainerUserIDs :many
+-- Members who can merge the knowledge base's merge requests: its creator and
+-- the workspace roles passed in (owners and admins), as canMaintainKb.
+SELECT user_id FROM member
 WHERE workspace_id = sqlc.arg('workspace_id')
-  AND id = ANY(sqlc.arg('ids')::uuid[]);
+  AND (role = ANY(sqlc.arg('roles')::text[]) OR user_id = sqlc.arg('creator_id'))
+ORDER BY user_id;

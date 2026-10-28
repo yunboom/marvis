@@ -10,7 +10,17 @@ vi.mock("../../navigation", () => ({
 
 vi.mock("./inbox-page", () => ({
   MESSAGE_BOX_LAYER_ATTR: "data-message-box",
-  InboxPage: () => <button type="button">row</button>,
+  InboxPage: () => (
+    <>
+      <button type="button">row</button>
+      <a
+        href="/acme/issues"
+        onClick={(e) => e.preventDefault()}
+      >
+        same page link
+      </a>
+    </>
+  ),
 }));
 
 describe("MessageBox", () => {
@@ -25,5 +35,23 @@ describe("MessageBox", () => {
     fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
 
     expect(useMessageBoxStore.getState().open).toBe(false);
+  });
+
+  // The box otherwise closes on a pathname change, which a link to the page it
+  // was opened over never makes ("go review" while that review is behind it).
+  it("closes when a link inside is followed, even to the page behind it", async () => {
+    renderWithI18n(<MessageBox />);
+
+    fireEvent.click(await screen.findByRole("link", { name: "same page link" }));
+
+    expect(useMessageBoxStore.getState().open).toBe(false);
+  });
+
+  it("stays open when a link is opened in a new tab", async () => {
+    renderWithI18n(<MessageBox />);
+
+    fireEvent.click(await screen.findByRole("link", { name: "same page link" }), { metaKey: true });
+
+    expect(useMessageBoxStore.getState().open).toBe(true);
   });
 });

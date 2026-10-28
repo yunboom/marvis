@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS kb_mr_review_mr_idx;

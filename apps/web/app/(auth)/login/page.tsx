@@ -27,6 +27,7 @@ import { Button } from "@marvis/ui/components/ui/button";
 import { MarvisIcon } from "@marvis/ui/components/common/marvis-icon";
 import { Loader2 } from "lucide-react";
 import { setLoggedInCookie } from "@/features/auth/auth-cookie";
+import { BASE_PATH } from "@/config/base-path";
 import Link from "next/link";
 import {
   LARK_PROVIDER_STATE,
@@ -241,7 +242,7 @@ function LoginPageContent() {
         googleClientId
           ? {
               clientId: googleClientId,
-              redirectUri: `${window.location.origin}/auth/callback`,
+              redirectUri: `${window.location.origin}${BASE_PATH}/auth/callback`,
               state: googleState,
             }
           : undefined
@@ -250,7 +251,7 @@ function LoginPageContent() {
         larkLoginAppId
           ? {
               appId: larkLoginAppId,
-              redirectUri: `${window.location.origin}/auth/callback`,
+              redirectUri: `${window.location.origin}${BASE_PATH}/auth/callback`,
               state: larkState,
             }
           : undefined

@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Trash2,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,7 +37,11 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { useAuthStore } from "@marvis/core/auth";
 import { derivePRMergeStatus } from "@marvis/core/github";
 import { useCurrentWorkspace } from "@marvis/core/paths";
-import { issueStatusArchiveConflictCount, createIssueStatusListStore } from "@marvis/core/issue-statuses";
+import {
+  issueStatusArchiveConflictCount,
+  issueStatusDeleteReferences,
+  createIssueStatusListStore,
+} from "@marvis/core/issue-statuses";
 import { baselineFromQuery } from "@marvis/core/issue-views/baseline";
 import { IssueSurfaceWithStore } from "../../issues/surface/issue-surface";
 import { memberListOptions } from "@marvis/core/workspace/queries";
@@ -50,6 +55,7 @@ import {
 import {
   useArchiveIssueStatus,
   useCreateIssueStatus,
+  useDeleteIssueStatus,
   useReorderIssueStatuses,
   useUpdateIssueStatus,
 } from "@marvis/core/issue-statuses/mutations";
@@ -101,7 +107,7 @@ import {
 import { ColorPicker, COLOR_PICKER_PRESETS } from "../../common/color-picker";
 import { StatusIcon } from "../../issues/components/status-icon";
 import { useStatusLabel } from "../../issues/utils/status-label";
-import { useT } from "../../i18n";
+import { useLocale, useT } from "../../i18n";
 import { AppLink, useNavigation } from "../../navigation";
 import { SettingsReadOnlyNotice } from "./settings-layout";
 import { settingsHref } from "./settings-navigation";
@@ -162,6 +168,8 @@ export function IssueStatusesTab({
   const [editing, setEditing] = useState<IssueStatusEntry | null>(null);
   const [pendingArchive, setPendingArchive] = useState<IssueStatusEntry | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<IssueStatusEntry | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [inspection, setInspection] = useState<{ workspaceId: string; status: IssueStatusEntry } | null>(null);
   const [inspectionOpen, setInspectionOpen] = useState(false);
 
@@ -260,6 +268,9 @@ export function IssueStatusesTab({
                 onArchive={(entry) => {
                   setPendingArchive(entry); setArchiveOpen(true);
                 }}
+                onDelete={(entry) => {
+                  setPendingDelete(entry); setDeleteOpen(true);
+                }}
                 onViewIssues={viewIssues}
               />
             ))}
@@ -281,6 +292,7 @@ export function IssueStatusesTab({
         endOfStarted={endOfStarted}
       />
       <ArchiveStatusDialog open={archiveOpen && pendingArchive?.workspace_id === wsId} status={pendingArchive} onClose={() => setArchiveOpen(false)} onViewIssues={viewIssues} />
+      <DeleteStatusDialog open={deleteOpen && pendingDelete?.workspace_id === wsId} status={pendingDelete} onClose={() => setDeleteOpen(false)} />
       <Dialog open={inspectionOpen && inspection?.workspaceId === wsId} onOpenChange={setInspectionOpen} onOpenChangeComplete={(open) => !open && setInspection(null)}>
         <DialogContent className="flex h-[85dvh] flex-col overflow-hidden sm:max-w-6xl">
           {inspection?.workspaceId === wsId && <StatusIssueInspection key={`${wsId}:${inspection.status.key}`} status={inspection.status} onClose={() => setInspectionOpen(false)} />}
@@ -315,6 +327,7 @@ function GroupSection({
   onCreate,
   onEdit,
   onArchive,
+  onDelete,
   onViewIssues,
 }: {
   group: IssueStatusGroup;
@@ -333,6 +346,7 @@ function GroupSection({
   onCreate: () => void;
   onEdit: (status: IssueStatusEntry) => void;
   onArchive: (status: IssueStatusEntry) => void;
+  onDelete: (status: IssueStatusEntry) => void;
   onViewIssues: (status: IssueStatusEntry) => void;
 }) {
   const { t } = useT("settings");
@@ -448,6 +462,7 @@ function GroupSection({
                   isReordering={reorder.isPending}
                   onEdit={() => onEdit(entry)}
                   onArchive={() => onArchive(entry)}
+                  onDelete={() => onDelete(entry)}
                   onViewIssues={() => onViewIssues(entry)}
                   onMoveUp={canMove && peerIndex > 0
                     ? () => move(index, order.indexOf(peers[peerIndex - 1]!))
@@ -477,6 +492,7 @@ function StatusRow({
   isReordering,
   onEdit,
   onArchive,
+  onDelete,
   onViewIssues,
   onMoveUp,
   onMoveDown,
@@ -494,6 +510,7 @@ function StatusRow({
   isReordering: boolean;
   onEdit: () => void;
   onArchive: () => void;
+  onDelete: () => void;
   onViewIssues: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -586,6 +603,29 @@ function StatusRow({
         </span>
       )}
       {archived && <StatusIssuesButton variant="secondary" size="sm" onClick={onViewIssues} />}
+      {/* Archived rows are frozen; permanent deletion is the one action left. */}
+      {canManage && archived && !entry.is_system && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <IconButton
+                variant="ghost"
+                size="icon-sm"
+                label={t(($) => $.issue_statuses.actions.open, { name: label })}
+                className="shrink-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 data-popup-open:opacity-100 [@media(hover:hover)]:opacity-0 [@media(pointer:coarse)]:size-11 [@media(pointer:coarse)]:opacity-100"
+              >
+                <MoreHorizontal className="size-4" />
+              </IconButton>
+            }
+          />
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem variant="destructive" onClick={onDelete}>
+              <Trash2 className="size-4" />
+              {t(($) => $.issue_statuses.actions.delete)}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       {canManage && !archived && (
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -1008,6 +1048,109 @@ function ArchiveStatusDialog({
             {archive.isPending ? t(($) => $.issue_statuses.archive_dialog.archiving) : issueCount !== null ? t(($) => $.issue_statuses.archive_dialog.retry) : t(($) => $.issue_statuses.archive_dialog.confirm)}
           </AlertDialogAction>
           {issueCount !== null && status && <StatusIssuesButton disabled={archive.isPending} onClick={() => onViewIssues(status)} />}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// The places the server reports a status key is still stored. A newer server
+// may name one this client does not know; it reads as "other".
+const STATUS_REFERENCES = [
+  "issue",
+  "workflow",
+  "pr_merge_setting",
+  "saved_view",
+  "wakeup",
+  "wakeup_receipt",
+  "agent_task",
+  "activity",
+  "inbox",
+] as const;
+type StatusReference = (typeof STATUS_REFERENCES)[number] | "other";
+
+function toStatusReference(ref: string): StatusReference {
+  return (STATUS_REFERENCES as readonly string[]).includes(ref) ? (ref as StatusReference) : "other";
+}
+
+function DeleteStatusDialog({
+  status,
+  open,
+  onClose,
+}: {
+  status: IssueStatusEntry | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { t } = useT("settings");
+  const locale = useLocale();
+  const remove = useDeleteIssueStatus();
+  // Set once the server refuses: the dialog then explains where the key is
+  // still stored instead of offering the delete again.
+  const [references, setReferences] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (open) setReferences(null);
+  }, [open, status?.id]);
+
+  const places = references
+    ? new Intl.ListFormat(locale, { type: "conjunction" }).format(
+        [...new Set(references.map(toStatusReference))].map((ref) =>
+          t(($) => $.issue_statuses.delete_dialog.references[ref]),
+        ),
+      )
+    : "";
+
+  return (
+    <AlertDialog open={open} onOpenChange={(nextOpen) => !nextOpen && !remove.isPending && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {references
+              ? t(($) => $.issue_statuses.delete_dialog.referenced_title)
+              : t(($) => $.issue_statuses.delete_dialog.title)}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {references
+              ? t(($) => $.issue_statuses.delete_dialog.referenced, { places })
+              : t(($) => $.issue_statuses.delete_dialog.description)}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          {references ? (
+            <AlertDialogCancel>{t(($) => $.issue_statuses.delete_dialog.close)}</AlertDialogCancel>
+          ) : (
+            <>
+              <AlertDialogCancel disabled={remove.isPending}>
+                {t(($) => $.issue_statuses.delete_dialog.cancel)}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={remove.isPending}
+                onClick={() => {
+                  if (!status) return;
+                  remove.mutate(status.id, {
+                    onSuccess: onClose,
+                    onError: (error) => {
+                      const refs = issueStatusDeleteReferences(error);
+                      if (refs !== null) {
+                        setReferences(refs);
+                        return;
+                      }
+                      toast.error(
+                        error instanceof Error
+                          ? error.message
+                          : t(($) => $.issue_statuses.delete_dialog.failed),
+                      );
+                    },
+                  });
+                }}
+              >
+                {remove.isPending
+                  ? t(($) => $.issue_statuses.delete_dialog.deleting)
+                  : t(($) => $.issue_statuses.delete_dialog.confirm)}
+              </AlertDialogAction>
+            </>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

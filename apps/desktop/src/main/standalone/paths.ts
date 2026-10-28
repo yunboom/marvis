@@ -37,6 +37,8 @@ export interface StandaloneLayout {
   serverPidFile: string;
   serverLog: string;
   postgresLog: string;
+  // 单机模式自身的运行记录：下载、安装、启停的失败原因，供「查看日志」查看。
+  activityLog: string;
   serverDir(version: string): string;
   postgresDir(version: string): string;
   download(fileName: string): string;
@@ -67,6 +69,7 @@ export function standaloneLayout(root: string): StandaloneLayout {
     serverPidFile: join(runDir, "server.pid"),
     serverLog: join(logsDir, "server.log"),
     postgresLog: join(logsDir, "postgres.log"),
+    activityLog: join(logsDir, "standalone.log"),
     serverDir: (version) => join(versionsDir, safeSegment(version)),
     postgresDir: (version) => join(postgresRoot, safeSegment(version)),
     download: (fileName) => join(downloadsDir, safeSegment(fileName)),

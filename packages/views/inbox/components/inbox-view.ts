@@ -13,3 +13,9 @@
 export type InboxView = "inbox" | "archived";
 
 export const ARCHIVED_VIEW_PARAM = "archived";
+
+/** The URL parameter of the category tab (`?category=issue|kb|autopilot`); "All" has none. */
+export const CATEGORY_PARAM = "category";
+
+/** The "All" tab's value in the tab list, where null cannot be a value. */
+export const ALL_CATEGORY = "all";

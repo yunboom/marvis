@@ -27,7 +27,8 @@
     "mark_unread": "標為未讀",
     "archive": "歸檔",
     "unarchive": "取消歸檔",
-    "open_in_new_tab": "在新標籤頁開啟"
+    "open_in_new_tab": "在新標籤頁開啟",
+    "delete": "永久刪除"
   },
   "list": {
     "loading_selection": "正在載入通知…",
@@ -80,7 +81,10 @@
     "quick_create_unconfirmed": "透過智慧體建立結果未確認",
     "autopilot_paused": "自動化已暫停",
     "children_done": "子任務已全部結束",
-    "autopilot_quota_exceeded": "自動化執行次數已用完"
+    "autopilot_quota_exceeded": "自動化執行次數已用完",
+    "kb_mr_changes_requested": "提交了評審",
+    "kb_mr_review_requested": "重新請求稽核",
+    "kb_mr_review_needed": "待你稽核"
   },
   "labels": {
     "set_status_to": "狀態設為",
@@ -95,12 +99,16 @@
     "created_with_agent": "透過智慧體建立：{{identifier}}",
     "failed_with_detail": "失敗：{{detail}}",
     "autopilot_quota_blocked": "執行已被阻止：額度已用完",
-    "children_done_stage": "第 {{stage}} 階段的子任務已全部結束"
+    "children_done_stage": "第 {{stage}} 階段的子任務已全部結束",
+    "kb_mr_changes_requested": "{{name}} 提交了評審",
+    "kb_mr_review_requested": "{{name}} 重新請求稽核",
+    "kb_mr_review_needed": "{{name}} 提交了變更請求"
   },
   "toasts": {
     "source_context_retry_started": "已使用原始上下文開始重試",
     "archived": "已歸檔通知",
-    "unarchived": "已恢復通知"
+    "unarchived": "已恢復通知",
+    "deleted": "已刪除通知"
   },
   "errors": {
     "archived_lookup_failed": "無法載入連結指向的通知",
@@ -116,6 +124,32 @@
     "archive_completed_failed": "歸檔已完成失敗",
     "unarchive_failed": "取消歸檔失敗",
     "archived_load_failed": "無法載入已歸檔通知",
-    "filters_load_failed": "無法載入篩選項"
+    "filters_load_failed": "無法載入篩選項",
+    "delete_failed": "刪除失敗"
+  },
+  "delete_dialog": {
+    "title": "永久刪除這則通知？",
+    "description": "該任務下已歸檔的通知會一併刪除，無法復原。",
+    "cancel": "取消",
+    "confirm": "刪除",
+    "deleting": "正在刪除…"
+  },
+  "kb_review": {
+    "changes_requested_action": "提交了評審，變更請求改為「待解決」",
+    "review_requested_action": "重新請求稽核，變更請求回到「待稽核」",
+    "summary": "評審總結",
+    "your_summary": "你的評審總結",
+    "comments": "意見",
+    "view_all_other": "查看全部 {{count}} 條意見",
+    "view_feedback": "查看稽核意見",
+    "go_review": "去稽核頁",
+    "review_needed_action": "提交了變更請求，待你稽核"
+  },
+  "categories": {
+    "label": "通知類型",
+    "all": "全部",
+    "issue": "任務",
+    "kb": "知識庫",
+    "autopilot": "自動化"
   }
 }

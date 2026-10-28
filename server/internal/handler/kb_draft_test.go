@@ -150,32 +150,31 @@ func TestCreateKbDraftLinksJob(t *testing.T) {
 	f := newKbDraftFixture(t)
 	agentID := dbfx.Agent(t, fmt.Sprintf("kb-job-agent-%d", time.Now().UnixNano()), testRuntimeID)
 	session := dbfx.ChatSession(t, agentID)
-	insertJob := func(baseID, createdBy, chatSession string) string {
+	insertJob := func(createdBy, chatSession string) string {
 		return dbfx.Insert(t, "kb_job", testutil.Cols{
-			"workspace_id": testWorkspaceID, "knowledge_base_id": baseID, "name": "Job", "starter": "custom",
+			"workspace_id": testWorkspaceID, "knowledge_base_id": f.baseID, "name": "Job", "starter": "custom",
 			"agent_id": agentID, "chat_session_id": chatSession, "created_by": createdBy,
 		})
 	}
-	job := insertJob(f.baseID, testUserID, session)
+	job := insertJob(testUserID, session)
 	dbfx.Cleanup(t, `DELETE FROM kb_job_draft WHERE job_id = $1`, job)
+	inJob := asJobAgent(testUserID, agentID, dbfx.Task(t, agentID, testutil.Cols{"runtime_id": testRuntimeID, "chat_session_id": session}))
 
-	create := func(jobID string, mutate func(*http.Request), want int) map[string]any {
-		req := newRequest(http.MethodPost, "/api/kb/drafts", map[string]any{"knowledge_base": f.slug, "job_id": jobID})
-		if mutate != nil {
-			mutate(req)
-		}
+	create := func(want int) map[string]any {
+		req := newRequest(http.MethodPost, "/api/kb/drafts", map[string]any{"knowledge_base": f.slug})
+		inJob(req)
 
 		return testutil.Call(t, testHandler.CreateKbDraft, req).Want(want).Map()
 	}
 
-	linked := create(job, nil, http.StatusCreated)
+	linked := create(http.StatusCreated)
 	var draftOfJob string
 	dbfx.QueryRow(t, `SELECT draft_id::text FROM kb_job_draft WHERE job_id = $1`, job).Scan(&draftOfJob)
 	if draftOfJob != linked["id"] {
 		t.Fatalf("kb_job_draft draft = %s, want %v", draftOfJob, linked["id"])
 	}
 
-	dup := create(job, nil, http.StatusConflict)
+	dup := create(http.StatusConflict)
 	if dup["code"] != kbCodeJobDraftExists || dup["draft_id"] != draftOfJob {
 		t.Errorf("second link = %v, want job_draft_exists with draft_id", dup)
 	}
@@ -183,28 +182,18 @@ func TestCreateKbDraftLinksJob(t *testing.T) {
 		t.Errorf("drafts = %d, want the rejected draft rolled back", n)
 	}
 
-	other := insertTestKbBase(t, "Other KB", f.slug+"-o")
-	foreign := insertJob(other, testUserID, dbfx.ChatSession(t, agentID))
-	if got := create(foreign, nil, http.StatusNotFound); got["code"] != kbCodeJobNotFound {
-		t.Errorf("job of another knowledge base = %v", got)
-	}
-
+	// The job's creator need not be the runtime owner: the agent running in
+	// the job's chat links its draft all the same.
 	member := createPlainMember(t, fmt.Sprintf("kb-job-%d@marvis.ai", time.Now().UnixNano()))
-	notMine := insertJob(f.baseID, member, dbfx.ChatSession(t, agentID))
-	dbfx.Cleanup(t, `DELETE FROM kb_job_draft WHERE job_id = $1`, notMine)
-	if got := create(notMine, nil, http.StatusForbidden); got["code"] != kbCodeForbidden {
-		t.Errorf("job of another member = %v", got)
-	}
-
 	jobSession := dbfx.ChatSession(t, agentID)
-	agentJob := insertJob(f.baseID, member, jobSession)
+	agentJob := insertJob(member, jobSession)
 	dbfx.Cleanup(t, `DELETE FROM kb_job_draft WHERE job_id = $1`, agentJob)
 	task := dbfx.Task(t, agentID, testutil.Cols{"chat_session_id": jobSession, "runtime_id": testRuntimeID})
-	create(agentJob, func(r *http.Request) {
-		r.Header.Set("X-Actor-Source", "task_token")
-		r.Header.Set("X-Agent-ID", agentID)
-		r.Header.Set("X-Task-ID", task)
-	}, http.StatusCreated)
+	req := newRequest(http.MethodPost, "/api/kb/drafts", map[string]any{"knowledge_base": f.slug})
+	asJobAgent(testUserID, agentID, task)(req)
+	if got := testutil.Call(t, testHandler.CreateKbDraft, req).Want(http.StatusCreated).Map(); got["job_id"] != agentJob {
+		t.Errorf("draft in the chat of another member's job = %v", got)
+	}
 }
 
 func TestFetchKbPageScopes(t *testing.T) {
@@ -556,6 +545,55 @@ func TestKbDraftOnlyCreatorWrites(t *testing.T) {
 	member := createPlainMember(t, fmt.Sprintf("kb-draft-%d@marvis.ai", time.Now().UnixNano()))
 	req := testutil.WithURLParams(newRequestAs(member, http.MethodGet, "/api/kb/drafts/x", nil), "draftId", f.draftID)
 	testutil.Call(t, testHandler.GetKbDraft, req).Want(http.StatusForbidden)
+}
+
+// TestKbDraftReaders: besides its creator, a draft is read by whoever may
+// merge into the knowledge base (an owner or admin, the knowledge base
+// creator); other members get 403. The page's draft banner still lists the
+// reader's own drafts only.
+func TestKbDraftReaders(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	f := newKbDraftFixture(t)
+	blocks := blockIDsOf(t, kbFetch(t, f.pageA, "detail=with-ids", http.StatusOK))
+	kbOps(t, f.draftID, f.pageA, f.headA, http.StatusOK, map[string]any{"op": kb.OpBlockReplace, "block": blocks[2], "content": "By trade no."})
+
+	readDraft := func(userID string, want int) {
+		t.Helper()
+		req := testutil.WithURLParams(newRequestAs(userID, http.MethodGet, "/api/kb/drafts/x", nil), "draftId", f.draftID)
+		testutil.Call(t, testHandler.GetKbDraft, req).Want(want)
+	}
+	readPage := func(userID, query string, want int) KbPageResponse {
+		t.Helper()
+		req := withURLParam(newRequestAs(userID, http.MethodGet, "/api/kb/pages/x?"+query, nil), "id", f.pageA)
+		var got KbPageResponse
+		rec := testutil.Call(t, testHandler.GetKbPage, req).Want(want)
+		if want == http.StatusOK {
+			rec.JSON(&got)
+		}
+		return got
+	}
+
+	plain := createPlainMember(t, fmt.Sprintf("kb-draft-plain-%d@marvis.ai", time.Now().UnixNano()))
+	readDraft(plain, http.StatusForbidden)
+	readPage(plain, "draft="+f.draftID, http.StatusForbidden)
+
+	admin := createPlainMember(t, fmt.Sprintf("kb-draft-admin-%d@marvis.ai", time.Now().UnixNano()))
+	dbfx.Exec(t, `UPDATE member SET role = 'admin' WHERE workspace_id = $1 AND user_id = $2`, testWorkspaceID, admin)
+	readDraft(admin, http.StatusOK)
+	readPage(admin, "draft="+f.draftID, http.StatusOK)
+	if got := readPage(admin, "", http.StatusOK); len(got.Drafts) != 0 {
+		t.Errorf("admin's draft banner lists someone else's draft: %+v", got.Drafts)
+	}
+	if got := readPage(testUserID, "", http.StatusOK); len(got.Drafts) != 1 {
+		t.Errorf("creator's draft banner = %+v", got.Drafts)
+	}
+
+	creator := createPlainMember(t, fmt.Sprintf("kb-draft-creator-%d@marvis.ai", time.Now().UnixNano()))
+	dbfx.Exec(t, `UPDATE kb_base SET created_by = $2 WHERE id = $1`, f.baseID, creator)
+	readDraft(creator, http.StatusOK)
 }
 
 func TestListKbPagesTypeFilterAndTotal(t *testing.T) {

@@ -2,19 +2,26 @@ import { createMDX } from "fumadocs-mdx/next";
 
 const withMDX = createMDX();
 
+// Mirrors lib/base-path.ts: `/docs` behind the optional deployment prefix.
+const prefix = (process.env.NEXT_PUBLIC_BASE_PATH ?? "")
+  .trim()
+  .replace(/^\/+|\/+$/g, "");
+const basePath = `${prefix ? `/${prefix}` : ""}/docs`;
+
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
-  basePath: "/docs",
+  ...(process.env.STANDALONE === "true" ? { output: "standalone" } : {}),
+  basePath,
   // Visiting http://host/ (outside basePath) would otherwise 404 — redirect
   // to the docs root. basePath: false makes the source and destination
-  // literal (not re-prefixed with `/docs`), so the redirect runs before
+  // literal (not re-prefixed with the basePath), so the redirect runs before
   // basePath routing kicks in.
   async redirects() {
     return [
       {
         source: "/",
-        destination: "/docs",
+        destination: basePath,
         basePath: false,
         permanent: false,
       },

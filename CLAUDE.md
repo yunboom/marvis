@@ -14,7 +14,7 @@
 - 范围是全部被 git 跟踪的文本和路径：代码标识符、注释、文案、文档、CLI 命令（`marvis`）、Go module（`github.com/yunboom/marvis/server`）、npm scope（`@marvis/*`）、环境变量（`MARVIS_*`）、docker compose 项目名、外部域名（`multica.ai` → `marvis.ai`）。本地项目目录也叫 `marvis`。
 - 仓库地址指向本 fork：主仓库 `multica-ai/multica` → `yunboom/marvis`（clone / issue / release / raw 安装脚本 / Releases API），本仓库 CI 发布的 ghcr 镜像与 Helm chart、Homebrew tap、桌面端更新源、release 工作流的 owner 判断都改为 `yunboom`。上游的其他仓库（`marvis-cli`、`dsh-marvis-runtime`）、npm 包 `@marvis-ai/*` 和测试夹具里的仓库名保持改名后的 `marvis-ai`，它们在 yunboom 下不存在。
 - 规则：大小写保持替换（`multica`/`Multica`/`MULTICA` → `marvis`/`Marvis`/`MARVIS`），`multicast` 不替换。
-- 改名由 `scripts/rebrand-marvis.py` 完成，脚本幂等，只保留以下文件里的旧名：脚本本身、本文件、`server/migrations/633_rebrand_marvis.*.sql`。新增必须保留旧名的文件时，同步加进脚本的 `KEEP`。
+- 改名由 `scripts/rebrand-marvis.py` 完成，脚本幂等，只保留以下文件里的旧名：脚本本身、本文件、`server/migrations/649_rebrand_marvis.*.sql`。新增必须保留旧名的文件时，同步加进脚本的 `KEEP`。
 - `marvis.ai` 等域名需自行持有，否则对应链接失效。
 
 ## 决策一补充：机器级标识统一用 marvis（2026-10-23 撤回 marvis-studio）
@@ -68,6 +68,25 @@
 - 前端：core 的 `IssueStatusGroup`、`STATUS_GROUP_ORDER`、`defaultStatusGroup`、目录的 `groupOf` / `inGroup`；状态库（`issue-statuses-tab.tsx`）按分组排列、行尾显示生命周期类型；看板、状态选择器、「PR 合并后改为」下拉框按分组排序；工作流模板「等待反馈」放需介入。移动端未对齐。
 - 同步上游时：上游新增的按生命周期做行为判断的代码继续用 `category`，不要改读 `status_group`；上游新增的状态插入路径（迁移、种子数据、工作流模板）要带上 `status_group`；`issue-statuses-tab.tsx`、`status-options.ts`、`pr-merge-status-row.tsx` 冲突时保留按分组的结构，只合入上游新增的行为。
 
+## 决策七：通用隐藏指令 instruction（fork 独有）
+
+产品写给智能体、成员看不到的输入统一存成 `chat_message.message_kind = 'instruction'`，上游的 `onboarding_kickoff` 已并入（迁移 `648_chat_message_instruction_kind` 把旧行改成 `instruction`）。
+
+- 语义：随所在轮次的输入批次交给智能体，排在成员消息之前；停止 / 编辑 / 失败时交给下一个排队轮次或变为无主、由下一次发送接管；从不恢复进输入框；所有面向成员的接口、预览和客户端都过滤它。
+- 写入：`TaskService.SendDirectChatMessageWithInstruction`（可见消息 + 隐藏指令同一事务）和 `createChatInstruction`（Mika 开场的无主指令）。只用于多步流程的场景：知识库任务的收录、健康检查、合并、定时运行，以及审核意见交接（`server/internal/kb/templates/instructions.md.tmpl`）。
+- 同步上游时：上游新增或修改的 `onboarding_kickoff` 判断一律改成 `instruction`（SQL、`protocol`、`chat.go`、`chat-message-list.tsx`、core schema），不要恢复第二个隐藏类型；上游的 `TaskInputIsOnboardingKickoffOnly` 部署窗口兼容逻辑已删除，不要合回。
+
+## 决策八：路径前缀部署（fork 独有）
+
+web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由构建参数 `NEXT_PUBLIC_BASE_PATH` 控制，不设时与上游一致；后端始终在根路径，不感知前缀。部署方法见 `SELF_HOSTING_ADVANCED.md` 的 Path Prefix 一节。
+
+- web：`apps/web/config/base-path.ts` 的 `BASE_PATH`，用于 Next 不会自动加前缀的地方：浏览器 API / WS 默认地址（`web-providers.tsx`）、OAuth 回调地址、导航适配器的 `getShareableUrl` 与新标签页、manifest 与图标、favicon 跳转、docs 转发（`runtime-urls.ts`）。
+- views：`useAppOrigin` 返回带路径前缀的基地址，`link-handler.ts` 识别站内链接时去掉前缀；裸 `<a href="/download">` 改用 `getShareableUrl`。
+- docs：`apps/docs/lib/base-path.ts` 与 `next.config.mjs` 的 basePath 为 `${前缀}/docs`；`Dockerfile.docs`，compose 的 `docs` 服务在 `docs` profile 下。
+- 桌面端：服务器地址保留路径（`normalizeServerAddress`），`probeServer` 从完整路径逐级向上探测 `/api/config`，粘贴页面地址也能找到前缀。
+- compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`；`turbo.json` 的 `globalEnv` 登记了 `NEXT_PUBLIC_BASE_PATH`。
+- 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`。
+
 ## 同步上游流程
 
 1. `git fetch upstream`，在新分支上 `git merge upstream/main`。
@@ -77,7 +96,7 @@
    - 上游新增路径（含 `multica`）由脚本 `git mv`，跑完检查 `git status`。
    - 上表列出的样式文件冲突：保留本 fork 的 Marvis 取值，只合入上游新增的 token / 组件 / 变体，并按上面的规则改成 Marvis 风格。
 3. 数据库迁移：
-   - 上游迁移文本里的旧名由脚本替换；已应用过旧名迁移的库靠 `*_rebrand_marvis`（当前 633）改名，它从系统目录查找旧名对象，幂等。
+   - 上游迁移文本里的旧名由脚本替换；已应用过旧名迁移的库靠 `*_rebrand_marvis`（当前 649）改名，它从系统目录查找旧名对象，幂等。
    - 迁移编号 129 之后必须唯一（`migrations_lint_test.go`）。上游新增编号与 fork 迁移撞号时，fork 迁移整体顺延到上游最大编号之后，`*_rebrand_marvis` 始终排在最后；同步改 `cmd/migrate/main.go` 的并发索引表、脚本 `KEEP` 和引用迁移文件名的测试。版本号按完整文件名记录，改号后会再执行一次：rebrand 迁移幂等，其他 fork 迁移不保证幂等，已跑过的本地库直接重建。
    - 上游新迁移若引入新的旧名数据库对象（列、函数体里的 `multica.*` 设置等），重新执行 589 的改名逻辑（可复制为新编号迁移）。
 4. 依赖与校验：`pnpm install`（工作区包名已变），`make sqlc`，`make schema`（重新生成 `server/schema.sql` 完整表结构快照，只读参考，迁移仍是唯一来源），然后 `pnpm typecheck`、`pnpm lint`、`pnpm test`、`make test`。

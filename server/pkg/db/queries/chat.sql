@@ -58,6 +58,8 @@ LEFT JOIN LATERAL (
     FROM chat_message m
    WHERE m.chat_session_id = cs.id
      AND m.message_kind != 'channel_command'
+     -- A hidden instruction is never what the member last saw.
+     AND m.message_kind != 'instruction'
    ORDER BY m.created_at DESC
    LIMIT 1
 ) lm ON true
@@ -69,6 +71,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2 AND cs.status = 'active'
   )
   -- A knowledge base job's chat lives on the job page, not in chat lists.
   AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
+  -- An autopilot run's follow-up chat lives on the run page, not in chat lists.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC;
 
 -- name: ListAllChatSessionsByCreator :many
@@ -97,6 +101,8 @@ LEFT JOIN LATERAL (
     FROM chat_message m
    WHERE m.chat_session_id = cs.id
      AND m.message_kind != 'channel_command'
+     -- A hidden instruction is never what the member last saw.
+     AND m.message_kind != 'instruction'
    ORDER BY m.created_at DESC
    LIMIT 1
 ) lm ON true
@@ -108,6 +114,8 @@ WHERE cs.workspace_id = $1 AND cs.creator_id = $2
   )
   -- A knowledge base job's chat lives on the job page, not in chat lists.
   AND NOT EXISTS (SELECT 1 FROM kb_job j WHERE j.chat_session_id = cs.id)
+  -- An autopilot run's follow-up chat lives on the run page, not in chat lists.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY (cs.pinned_at IS NOT NULL) DESC, cs.pinned_at DESC, COALESCE(lm.created_at, cs.updated_at) DESC;
 
 -- name: ListAgentBuilderSessionsByCreator :many
@@ -287,6 +295,22 @@ SET session_id = COALESCE(sqlc.narg('session_id'), session_id),
     runtime_id = COALESCE(sqlc.narg('runtime_id'), runtime_id),
     updated_at = now()
 WHERE id = sqlc.arg('id');
+
+-- name: UpdateChatSessionSessions :exec
+-- Batch form of UpdateChatSessionSession with the same COALESCE semantics:
+-- an empty session_id / work_dir or a NULL runtime_id keeps the stored value.
+UPDATE chat_session cs
+SET session_id = COALESCE(NULLIF(p.session_id, ''), cs.session_id),
+    work_dir = COALESCE(NULLIF(p.work_dir, ''), cs.work_dir),
+    runtime_id = COALESCE(p.runtime_id, cs.runtime_id),
+    updated_at = now()
+FROM (
+    SELECT unnest(@ids::uuid[]) AS id,
+           unnest(@session_ids::text[]) AS session_id,
+           unnest(@work_dirs::text[]) AS work_dir,
+           unnest(@runtime_ids::uuid[]) AS runtime_id
+) AS p
+WHERE cs.id = p.id;
 
 -- name: ClearChatSessionSessionIfMatches :exec
 -- Drops the chat session's resume pointer, but only while it still points at
@@ -770,25 +794,27 @@ RETURNING task.*;
 -- name: DeleteUserChatMessageByTask :one
 -- Deletes the MEMBER-TYPED input of a cancelled/edited turn.
 --
--- The kickoff exclusion is load-bearing since MUL-5827: an onboarding session's
--- first real turn owns two user rows — the member's message and the adopted
--- kickoff — so an unqualified delete would take the kickoff with it. That row
--- is the only copy of the onboarding context and of "you have already greeted
--- them", so losing it makes Mika introduce herself a second time, and the
--- RETURNING row would be an arbitrary one of the two: cancel could hand the
--- member the product's internal prompt as their restored draft, and silently
--- drop what they actually typed. Callers release the kickoff separately
--- (ReleaseOnboardingKickoffFromTask) so the next send re-adopts it.
+-- The instruction exclusion is load-bearing since MUL-5827: a turn can own a
+-- hidden instruction (Mika's onboarding kickoff, a knowledge base job's
+-- process steps) next to the member's message, so an unqualified delete would
+-- take the instruction with it. That row is the only copy of the product
+-- context — for onboarding, of "you have already greeted them", so losing it
+-- makes Mika introduce herself a second time — and the RETURNING row would be
+-- an arbitrary one of the two: cancel could hand the member the product's
+-- internal prompt as their restored draft, and silently drop what they
+-- actually typed. Callers release the instructions separately
+-- (ReleaseChatInstructionsFromTask) so the next send re-adopts them.
 DELETE FROM chat_message
 WHERE task_id = $1
   AND role = 'user'
-  AND message_kind <> 'onboarding_kickoff'
+  AND message_kind <> 'instruction'
 RETURNING *;
 
--- name: ReleaseOnboardingKickoffFromTask :exec
--- Hands an adopted kickoff on to the session's next un-started turn when its
--- own turn dies (terminal failure, cancel, edit), falling back to unowned when
--- there is no such turn.
+-- name: ReleaseChatInstructionsFromTask :exec
+-- Hands a turn's hidden instructions on to the session's next un-started turn
+-- when their own turn dies (terminal failure, cancel, edit), falling back to
+-- unowned when there is no such turn. The onboarding kickoff is the case the
+-- reasoning below was written for; every instruction follows the same rule.
 --
 -- Handing off rather than simply clearing to NULL is what closes the queued
 -- successor case. Adoption happens inside a send's transaction, so a message
@@ -825,7 +851,7 @@ SET task_id = (
 )
 WHERE task_id = $1
   AND role = 'user'
-  AND message_kind = 'onboarding_kickoff';
+  AND message_kind = 'instruction';
 
 -- name: ListChatMessages :many
 -- IMPORTANT: the visible-head selector below is also used by
@@ -1021,14 +1047,15 @@ WITH latest_visible AS (
     WHERE claimed_input.task_id = @task_id
       AND claimed_input.role = 'user'
       AND NOT claimed_input.channel_ingested
-      -- The adopted onboarding kickoff is never a visible row, so it has no
-      -- turn boundary to correct — and reanchoring it would actively break the
+      -- A hidden instruction (such as the onboarding kickoff) is never a
+      -- visible row, so it has no turn boundary to correct — and reanchoring
+      -- it would actively break the
       -- one thing its position controls. It is deliberately older than the
       -- member's message so the runtime reads "context, then their words";
       -- moving it to dispatch time reverses that, and because the batch's two
       -- rows would then share one timestamp, their order falls to random UUIDs
       -- (MUL-5827).
-      AND claimed_input.message_kind <> 'onboarding_kickoff'
+      AND claimed_input.message_kind <> 'instruction'
 )
 UPDATE chat_message AS claimed_input
 SET created_at = GREATEST(
@@ -1054,10 +1081,10 @@ SET created_at = sqlc.arg('assistant_created_at')::timestamptz + interval '1 mic
 WHERE queued_input.chat_session_id = $1
   AND queued_input.role = 'user'
   AND NOT queued_input.channel_ingested
-  -- Same exclusion, same reason as ReanchorClaimedDirectChatInput: the hidden
-  -- kickoff has no visible position to fix, and moving it would put the
+  -- Same exclusion, same reason as ReanchorClaimedDirectChatInput: a hidden
+  -- instruction has no visible position to fix, and moving it would put the
   -- product's context after the member's message inside one input batch.
-  AND queued_input.message_kind <> 'onboarding_kickoff'
+  AND queued_input.message_kind <> 'instruction'
   AND queued_input.created_at <= sqlc.arg('assistant_created_at')::timestamptz
   AND EXISTS (
     SELECT 1
@@ -1475,6 +1502,8 @@ WHERE atq.chat_session_id IS NOT NULL
   AND atq.regenerate_quick_actions_for IS NULL
   AND cs.workspace_id = $1
   AND cs.creator_id = $2
+  -- A run's follow-up chat is not a chat-window conversation.
+  AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ORDER BY atq.created_at DESC;
 
 -- name: HasPendingChatTasksByCreator :one
@@ -1499,6 +1528,8 @@ SELECT EXISTS (
     AND cs.workspace_id = sqlc.arg(workspace_id)
     AND cs.creator_id = sqlc.arg(creator_id)
     AND cs.agent_id = ANY(sqlc.arg(agent_ids)::uuid[])
+    -- A run's follow-up chat is not a chat-window conversation.
+    AND NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = cs.id)
 ) AS has_pending;
 
 -- name: MarkChatSessionRead :exec
@@ -1536,14 +1567,32 @@ VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: ListChatDraftRestoresBySession :many
-SELECT * FROM chat_draft_restore
-WHERE chat_session_id = $1
-ORDER BY created_at ASC;
+-- An autopilot run's follow-up chat is shared by every member who can view
+-- the autopilot, so there each member only gets back the prompts they sent.
+SELECT dr.* FROM chat_draft_restore dr
+WHERE dr.chat_session_id = @chat_session_id
+  AND (
+    NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = dr.chat_session_id)
+    OR EXISTS (SELECT 1 FROM agent_task_queue t WHERE t.id = dr.task_id AND t.initiator_user_id = @user_id)
+  )
+ORDER BY dr.created_at ASC;
 
 -- name: DeleteChatDraftRestore :execrows
 -- Idempotent consume: deleting an already-consumed restore matches no row.
-DELETE FROM chat_draft_restore
-WHERE id = $1 AND chat_session_id = $2;
+-- Same per-sender rule as ListChatDraftRestoresBySession.
+DELETE FROM chat_draft_restore dr
+WHERE dr.id = @id AND dr.chat_session_id = @chat_session_id
+  AND (
+    NOT EXISTS (SELECT 1 FROM autopilot_run r WHERE r.chat_session_id = dr.chat_session_id)
+    OR EXISTS (SELECT 1 FROM agent_task_queue t WHERE t.id = dr.task_id AND t.initiator_user_id = @user_id)
+  );
+
+-- name: ListChatMessageSenders :many
+-- The member who sent each listed turn: a user message's task is the turn it
+-- started, and that task's initiator is its sender.
+SELECT id AS task_id, initiator_user_id FROM agent_task_queue
+WHERE id = ANY(@task_ids::uuid[])
+  AND initiator_user_id IS NOT NULL;
 
 -- name: DeleteChatDraftRestoresBySession :exec
 -- chat_draft_restore carries no chat_session FK (MUL-3515), so DeleteChatSession
@@ -1622,40 +1671,6 @@ WHERE task_id = $1 AND role = 'assistant'
 ORDER BY created_at DESC
 LIMIT 1;
 
--- name: TaskInputIsOnboardingKickoffOnly :one
--- Whether this input batch is a kickoff and NOTHING else — the shape only a
--- pre-MUL-5827 opening task has, where the kickoff was a turn of its own.
---
--- Reachable exclusively during a rolling deploy: a kickoff task enqueued by the
--- old server and claimed by the new one. The reply to it is still that member's
--- opening, so it still has to be stamped, or their session permanently renders
--- without the starter cards (the kind is persisted; nothing recomputes it).
---
--- The "and nothing else" half is what makes this safe to keep: an input batch
--- that pairs the kickoff with a real member message is the NEW shape, and
--- stamping that turn would render the starter cards a second time under a reply
--- that is not an opening.
---
--- Delete this once no pre-deploy kickoff tasks can still be in flight; nothing
--- creates this shape any more.
---
--- $1 is the INPUT-OWNING task id — COALESCE(task.chat_input_task_id, task.id),
--- i.e. chatInputOwnerID — never a retry clone's own id, since the whole retry
--- chain consumes the root's input batch (MUL-4351).
-SELECT
-    EXISTS (
-        SELECT 1 FROM chat_message AS kickoff
-        WHERE kickoff.task_id = sqlc.arg(task_id)
-          AND kickoff.role = 'user'
-          AND kickoff.message_kind = 'onboarding_kickoff'
-    )
-    AND NOT EXISTS (
-        SELECT 1 FROM chat_message AS typed
-        WHERE typed.task_id = sqlc.arg(task_id)
-          AND typed.role = 'user'
-          AND typed.message_kind <> 'onboarding_kickoff'
-    ) AS kickoff_only;
-
 -- name: CreateMikaOnboardingOpening :one
 -- Mika's opening reply, written by the server rather than produced by an agent
 -- run (MUL-5827). Paired with the hidden kickoff row in one transaction, which
@@ -1680,24 +1695,43 @@ VALUES (
 )
 RETURNING *;
 
--- name: AdoptOrphanOnboardingKickoff :exec
--- Hands the session's unowned kickoff row to the member's first real turn.
+-- name: AdoptOrphanChatInstructions :exec
+-- Hands the session's unowned instructions to the member's next turn.
 --
--- The kickoff is written with no task_id (nothing runs for the opening any
--- more), so it would never reach a runtime on its own. Adopting it into the
--- first send's input batch is what carries the onboarding skill instruction and
--- the profile block into the run that does the first real work — and, because
--- the kickoff quotes the opening the member already read, what stops Mika from
+-- An instruction is unowned when it was written before any turn existed (the
+-- onboarding kickoff: nothing runs for the opening any more) or when its turn
+-- died with no queued successor (ReleaseChatInstructionsFromTask). It would
+-- never reach a runtime on its own. Adopting it into the next send's input
+-- batch is what carries the product context into the run that does the work —
+-- for onboarding, the skill instruction and profile block, and, because the
+-- kickoff quotes the opening the member already read, what stops Mika from
 -- introducing herself a second time.
 --
--- Idempotent by construction: exactly one such row can exist per session, and
--- the task_id IS NULL predicate means later sends adopt nothing.
+-- Idempotent: the task_id IS NULL predicate means later sends adopt nothing.
 UPDATE chat_message
 SET task_id = $2
 WHERE chat_session_id = $1
   AND role = 'user'
-  AND message_kind = 'onboarding_kickoff'
+  AND message_kind = 'instruction'
   AND task_id IS NULL;
+
+-- name: CreateChatInstruction :one
+-- Writes a hidden instruction row. With a task it joins that turn's input
+-- batch; without one it waits for the next send to adopt it. created_at is
+-- passed in rather than defaulted: now() is the transaction timestamp, and an
+-- instruction written in the same transaction as the member's message must
+-- sort strictly before it, so the runtime reads "context, then their words".
+INSERT INTO chat_message (chat_session_id, role, content, task_id, message_kind, created_at, id)
+VALUES (
+    sqlc.arg(chat_session_id),
+    'user',
+    sqlc.arg(content),
+    sqlc.narg(task_id),
+    'instruction',
+    COALESCE(sqlc.narg(created_at)::timestamptz, now()),
+    sqlc.arg(id)
+)
+RETURNING *;
 
 -- name: GetLatestAssistantChatMessageForSession :one
 -- The session's most recent assistant turn, used as the regeneration target

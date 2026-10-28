@@ -142,9 +142,15 @@ function serverSummaryLine(url: string, version: string): string {
 // 两栏布局与引导页一致：左栏标题、已选项摘要和按钮，右栏是选项列表和地址栏。
 export function ConnectServerScreen({
   suggestedAddress,
+  beforeSwitch,
+  onBack,
 }: {
   /** 预填进地址栏的地址（开发模式下的本地后端）；缺省用默认地址。 */
   suggestedAddress?: string;
+  /** 保存选择前执行，例如已登录时先退出旧服务器的账号。 */
+  beforeSwitch?: () => Promise<void>;
+  /** 提供时在按钮下方显示「返回」，回到打开这个页面的地方。 */
+  onBack?: () => void;
 }) {
   const [step, setStep] = useState<Step>(STEP_PICK);
   const [setupValue, setSetupValue] = useState<StandaloneSetupInput | null>(null);
@@ -191,6 +197,8 @@ export function ConnectServerScreen({
       status={status}
       onSetupStandalone={openSetup}
       onEnterFailed={openPrepare}
+      beforeSwitch={beforeSwitch}
+      onBack={onBack}
     />
   );
 }
@@ -201,9 +209,18 @@ interface PickStepProps {
   onSetupStandalone: () => void;
   /** 进入单机模式失败：转到状态页显示原因。 */
   onEnterFailed: () => void;
+  beforeSwitch?: () => Promise<void>;
+  onBack?: () => void;
 }
 
-function PickStep({ suggestedAddress, status, onSetupStandalone, onEnterFailed }: PickStepProps) {
+function PickStep({
+  suggestedAddress,
+  status,
+  onSetupStandalone,
+  onEnterFailed,
+  beforeSwitch,
+  onBack,
+}: PickStepProps) {
   const { t } = useT("settings");
   const [pick, setPick] = useState<UserPick | null>(null);
   const [address, setAddress] = useState(suggestedAddress ?? DEFAULT_SERVER_ADDRESS);
@@ -258,6 +275,7 @@ function PickStep({ suggestedAddress, status, onSetupStandalone, onEnterFailed }
   const handleEnterStandalone = async () => {
     setConnecting(true);
     try {
+      if (beforeSwitch) await beforeSwitch();
       // 主进程选定本机、重载窗口，并用 auth:token 送来管理员登录凭证。
       await window.desktopAPI.standalone.enter();
     } catch {
@@ -272,6 +290,7 @@ function PickStep({ suggestedAddress, status, onSetupStandalone, onEnterFailed }
 
     setConnecting(true);
     try {
+      if (beforeSwitch) await beforeSwitch();
       // 保存后主进程会重载所有窗口，页面随即回到登录页。
       await window.desktopAPI.server.select(summaryTarget.selected);
     } catch (err) {
@@ -362,7 +381,7 @@ function PickStep({ suggestedAddress, status, onSetupStandalone, onEnterFailed }
             </div>
           </SplitCardPane>
 
-          <SplitCardActions>
+          <SplitCardActions className="gap-2">
             <Button
               size="lg"
               className={PRIMARY_BUTTON_CLASS}
@@ -373,6 +392,17 @@ function PickStep({ suggestedAddress, status, onSetupStandalone, onEnterFailed }
               {connecting && <Loader2 className="size-4 animate-spin" aria-hidden />}
               {primaryLabel}
             </Button>
+            {onBack && (
+              <Button
+                variant="ghost"
+                size="lg"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={connecting}
+                onClick={onBack}
+              >
+                {t(($) => $.desktop.server.connect.back)}
+              </Button>
+            )}
           </SplitCardActions>
         </SplitCard>
       </div>

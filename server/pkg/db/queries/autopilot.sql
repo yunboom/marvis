@@ -414,6 +414,56 @@ SELECT count(*)::bigint FROM updated_run;
 SELECT * FROM autopilot_run
 WHERE id = $1;
 
+-- name: LockAutopilotRunForUpdate :one
+-- Serializes get-or-create of a run's follow-up chat session.
+SELECT * FROM autopilot_run
+WHERE id = $1
+FOR UPDATE;
+
+-- name: LockAutopilotRunChatSessionsForTaskSettle :many
+-- Locks the runs of tasks entering a terminal state so a follow-up chat
+-- session created concurrently (EnsureAutopilotRunChat holds FOR UPDATE while
+-- it links one) is either seen here or sees the settled task. No filter on
+-- chat_session_id: a row whose link is still uncommitted must be waited on,
+-- and FOR KEY SHARE returns its latest version once that commits.
+SELECT id, chat_session_id FROM autopilot_run
+WHERE id = ANY(@run_ids::uuid[])
+ORDER BY id
+FOR KEY SHARE;
+
+-- name: SetAutopilotRunChatSession :exec
+UPDATE autopilot_run
+SET chat_session_id = $2
+WHERE id = $1;
+
+-- name: GetAutopilotByRunChatSession :one
+-- The autopilot owning the run a follow-up chat session continues. Members who
+-- can view that autopilot share the session instead of only its creator.
+SELECT a.* FROM autopilot a
+JOIN autopilot_run r ON r.autopilot_id = a.id
+WHERE r.chat_session_id = @chat_session_id AND a.workspace_id = @workspace_id;
+
+-- name: GetLatestSettledAutopilotRunTaskWithSession :one
+-- The newest settled task of a run that recorded a provider session: the
+-- auto-retry child when the run task was retried, else the run task itself.
+SELECT * FROM agent_task_queue
+WHERE autopilot_run_id = @autopilot_run_id
+  -- task status set: service.TerminalTaskStatuses
+  AND status IN ('completed', 'failed', 'cancelled')
+  AND session_id IS NOT NULL
+ORDER BY created_at DESC, id DESC
+LIMIT 1;
+
+-- name: ArchiveAutopilotRunChatSessions :exec
+-- Archives the follow-up chat sessions of every run of an autopilot when the
+-- autopilot is deleted. Archived sessions refuse new messages.
+UPDATE chat_session cs
+SET status = 'archived', updated_at = now()
+FROM autopilot_run r
+WHERE r.autopilot_id = @autopilot_id
+  AND r.chat_session_id = cs.id
+  AND cs.status = 'active';
+
 -- name: ListAutopilotRuns :many
 SELECT * FROM autopilot_run
 WHERE autopilot_id = $1

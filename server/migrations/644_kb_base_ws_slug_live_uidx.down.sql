@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS kb_base_ws_slug_live_uidx;

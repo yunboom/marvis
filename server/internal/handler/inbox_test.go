@@ -354,3 +354,62 @@ func truncateForLog(s string) string {
 	}
 	return s
 }
+
+func TestDeleteArchivedInboxItemRemovesArchivedIssueGroup(t *testing.T) {
+	workspaceID := dbfx.Workspace(t, "Delete archived inbox", "delete-archived-"+uuid.NewString())
+	dbfx.Member(t, workspaceID, testUserID, "owner")
+	issueID := dbfx.Issue(t, "Archived issue", testutil.Cols{"workspace_id": workspaceID})
+	otherIssueID := dbfx.Issue(t, "Other archived issue", testutil.Cols{"workspace_id": workspaceID})
+
+	insert := func(issueID, title string, archived bool) string {
+		t.Helper()
+		return dbfx.Insert(t, "inbox_item", testutil.Cols{
+			"workspace_id":   workspaceID,
+			"recipient_type": "member",
+			"recipient_id":   testUserID,
+			"type":           "status_changed",
+			"severity":       "info",
+			"issue_id":       issueID,
+			"title":          title,
+			"archived":       archived,
+		})
+	}
+	targetID := insert(issueID, "archived newest", true)
+	insert(issueID, "archived sibling", true)
+	activeSiblingID := insert(issueID, "active sibling", false)
+	otherIssueItemID := insert(otherIssueID, "other issue", true)
+
+	testutil.Call(t, inboxWorkspaceHandler(testHandler.DeleteArchivedInboxItem),
+		testutil.WithURLParams(inboxRequest(http.MethodDelete, "/api/inbox/"+targetID, workspaceID), "id", targetID)).
+		Want(http.StatusNoContent)
+
+	if got := dbfx.Count(t,
+		"SELECT count(*) FROM inbox_item WHERE issue_id = $1 AND archived = true", issueID); got != 0 {
+		t.Fatalf("archived rows left in the deleted issue group = %d, want 0", got)
+	}
+	if got := dbfx.Count(t,
+		"SELECT count(*) FROM inbox_item WHERE id = ANY($1::uuid[])", []string{activeSiblingID, otherIssueItemID}); got != 2 {
+		t.Fatalf("untouched rows = %d, want the active sibling and the other issue's row kept", got)
+	}
+}
+
+func TestDeleteArchivedInboxItemRefusesActiveItem(t *testing.T) {
+	workspaceID := dbfx.Workspace(t, "Delete active inbox", "delete-active-"+uuid.NewString())
+	dbfx.Member(t, workspaceID, testUserID, "owner")
+	itemID := dbfx.Insert(t, "inbox_item", testutil.Cols{
+		"workspace_id":   workspaceID,
+		"recipient_type": "member",
+		"recipient_id":   testUserID,
+		"type":           "new_comment",
+		"severity":       "info",
+		"title":          "still active",
+	})
+
+	testutil.Call(t, inboxWorkspaceHandler(testHandler.DeleteArchivedInboxItem),
+		testutil.WithURLParams(inboxRequest(http.MethodDelete, "/api/inbox/"+itemID, workspaceID), "id", itemID)).
+		Want(http.StatusConflict)
+
+	if got := dbfx.Count(t, "SELECT count(*) FROM inbox_item WHERE id = $1", itemID); got != 1 {
+		t.Fatalf("active row count = %d, want it kept", got)
+	}
+}

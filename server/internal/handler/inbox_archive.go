@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/yunboom/marvis/server/internal/inbox"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 )
 
@@ -68,6 +69,9 @@ func parseArchivedInboxFilters(w http.ResponseWriter, r *http.Request) (db.Archi
 			*target = slices.Compact(*target)
 		}
 	}
+	if p.Types, ok = parseInboxCategory(w, r); !ok {
+		return p, false
+	}
 	if raw := q.Get("unread_only"); raw != "" {
 		if raw != "true" && raw != "false" {
 			writeError(w, http.StatusBadRequest, "invalid unread_only")
@@ -76,6 +80,18 @@ func parseArchivedInboxFilters(w http.ResponseWriter, r *http.Request) (db.Archi
 		p.UnreadOnly = raw == "true"
 	}
 	return p, true
+}
+
+// parseInboxCategory reads the optional category query parameter (decision
+// 108) as the notification types it narrows to; empty means every type.
+func parseInboxCategory(w http.ResponseWriter, r *http.Request) ([]string, bool) {
+	types, ok := inbox.CategoryTypes(r.URL.Query().Get("category"))
+	if !ok {
+		writeError(w, http.StatusBadRequest, "category must be issue, kb or autopilot")
+		return nil, false
+	}
+
+	return types, true
 }
 
 // A cursor is tied to the recipient and filters, so it cannot accidentally
@@ -96,6 +112,7 @@ func (h *Handler) ListArchivedInboxPage(w http.ResponseWriter, r *http.Request) 
 	p := db.ListArchivedInboxPageParams{
 		WorkspaceID: filters.WorkspaceID, RecipientID: filters.RecipientID,
 		Statuses: filters.Statuses, Priorities: filters.Priorities, Actors: filters.Actors, UnreadOnly: filters.UnreadOnly,
+		Types: filters.Types,
 	}
 	limit := 50
 	if raw := r.URL.Query().Get("limit"); raw != "" {

@@ -87,6 +87,20 @@ export function getInboxDisplayTitle(item: InboxItem): string {
   return item.title;
 }
 
+/**
+ * Issue-less notices that open in the inbox sheet. Knowledge base reviews
+ * have no mobile page yet, so their sheet shows the stored title and summary.
+ */
+export function isInboxSheetNotice(type: InboxItem["type"]): boolean {
+  return (
+    type === "autopilot_quota_exceeded" ||
+    type === "autopilot_paused" ||
+    type === "kb_mr_changes_requested" ||
+    type === "kb_mr_review_requested" ||
+    type === "kb_mr_review_needed"
+  );
+}
+
 export function getInboxNavigationTarget(
   item: InboxItem,
   workspace: string | null,
@@ -104,10 +118,7 @@ export function getInboxNavigationTarget(
       },
     };
   }
-  if (
-    item.type === "autopilot_quota_exceeded" ||
-    item.type === "autopilot_paused"
-  ) {
+  if (isInboxSheetNotice(item.type)) {
     return {
       pathname: "/[workspace]/inbox/[id]" as const,
       params: { workspace, id: item.id },

@@ -2227,7 +2227,10 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Patch("/reorder", h.ReorderIssueStatuses)
 				r.Route("/{id}", func(r chi.Router) {
 					r.Patch("/", h.UpdateIssueStatus)
+					// DELETE on the status itself archives: installed clients
+					// depend on it. Permanent removal has its own path.
 					r.Delete("/", h.ArchiveIssueStatus)
+					r.Delete("/permanent", h.DeleteIssueStatus)
 				})
 			})
 
@@ -2316,6 +2319,8 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Get("/jobs/{jobId}", h.GetKbJob)
 				r.Post("/jobs/{jobId}/submit", h.SubmitKbJob)
 				r.Post("/jobs/{jobId}/discard", h.DiscardKbJob)
+				r.Patch("/jobs/{jobId}/archive", h.SetKbJobArchived)
+				r.Delete("/jobs/{jobId}", h.DeleteKbJob)
 				r.Post("/merge-requests", h.CreateKbMergeRequest)
 				// Review: merge requests are listed and read by every
 				// member; merge, revert and close check the knowledge base
@@ -2328,6 +2333,18 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Post("/merge-requests/{number}/revert", h.RevertKbMergeRequest)
 				r.Get("/merge-requests/{number}/comments", h.ListKbMrComments)
 				r.Post("/merge-requests/{number}/comments", h.CreateKbMrComment)
+				r.Patch("/merge-requests/{number}/comments/{commentId}", h.UpdateKbMrComment)
+				r.Delete("/merge-requests/{number}/comments/{commentId}", h.DeleteKbMrComment)
+				r.Get("/merge-requests/{number}/timeline", h.ListKbMrTimeline)
+				// Reviews (decision 107): a reviewer batches comments in a
+				// pending review only they see, then submits it; the owner
+				// asks for review again with ready.
+				r.Get("/merge-requests/{number}/reviews", h.ListKbMrReviews)
+				r.Post("/merge-requests/{number}/reviews", h.OpenKbMrReview)
+				r.Delete("/merge-requests/{number}/reviews/{reviewId}", h.DiscardKbMrReview)
+				r.Post("/merge-requests/{number}/reviews/{reviewId}/submit", h.SubmitKbMrReview)
+				r.Post("/merge-requests/{number}/ready", h.RequestKbMrReview)
+				r.Post("/merge-requests/{number}/handoff", h.HandoffKbMrReview)
 			})
 
 			// Squads
@@ -2362,6 +2379,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 					r.Post("/trigger", h.TriggerAutopilot)
 					r.Get("/runs", h.ListAutopilotRuns)
 					r.Get("/runs/{runId}", h.GetAutopilotRun)
+					r.Post("/runs/{runId}/chat", h.EnsureAutopilotRunChat)
 					r.Get("/deliveries", h.ListAutopilotDeliveries)
 					r.Get("/deliveries/{deliveryId}", h.GetAutopilotDelivery)
 					r.Post("/deliveries/{deliveryId}/replay", h.ReplayAutopilotDelivery)
@@ -2655,6 +2673,7 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Post("/{id}/unread", h.MarkInboxUnread)
 				r.Post("/{id}/archive", h.ArchiveInboxItem)
 				r.Post("/{id}/unarchive", h.UnarchiveInboxItem)
+				r.Delete("/{id}", h.DeleteArchivedInboxItem)
 			})
 
 			// Notification preferences

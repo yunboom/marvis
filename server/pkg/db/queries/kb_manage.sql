@@ -35,8 +35,11 @@ WHERE r.knowledge_base_id = sqlc.arg('knowledge_base_id')
 ORDER BY r.created_at DESC, r.id;
 
 -- name: GetKbRawInWorkspace :one
+-- Raw files of a deleted knowledge base are not found; their objects stay in
+-- storage.
 SELECT * FROM kb_raw
-WHERE workspace_id = sqlc.arg('workspace_id') AND id = sqlc.arg('id');
+WHERE kb_raw.workspace_id = sqlc.arg('workspace_id') AND kb_raw.id = sqlc.arg('id')
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_raw.knowledge_base_id AND b.deleted_at IS NULL);
 
 -- name: ListKbRawCitations :many
 -- Which live pages cite which raw:// uris in their claims' evidence.
@@ -89,83 +92,34 @@ LEFT JOIN kb_page t ON t.id = l.to_page_id
 WHERE l.knowledge_base_id = sqlc.arg('knowledge_base_id')
   AND (l.to_page_id IS NULL OR (t.deleted_at IS NULL AND t.id IS NOT NULL AND l.to_page_id <> l.from_page_id));
 
--- name: ListKbOpenMergeRequestNumbers :many
-SELECT number FROM kb_merge_request
+-- name: CloseKbActiveMergeRequestsByBase :many
+-- Closes the active merge requests of a knowledge base being deleted and
+-- returns their numbers.
+UPDATE kb_merge_request SET
+    status = sqlc.arg('closed_status'),
+    closed_by = sqlc.arg('closed_by'),
+    closed_at = now(),
+    updated_at = now()
 WHERE knowledge_base_id = sqlc.arg('knowledge_base_id')
-  AND status = sqlc.arg('status')
-ORDER BY number;
-
--- name: ListKbRawStorageKeys :many
-SELECT storage_key FROM kb_raw
-WHERE knowledge_base_id = sqlc.arg('knowledge_base_id');
+  AND status = ANY(sqlc.arg('statuses')::text[])
+RETURNING number;
 
 -- name: ListWorkspaceKbRawStorageKeys :many
 SELECT storage_key FROM kb_raw
 WHERE workspace_id = sqlc.arg('workspace_id');
 
--- name: DeleteKbBlockEmbeddingsByBase :exec
-DELETE FROM kb_block_embedding
-WHERE knowledge_base_id = sqlc.arg('knowledge_base_id');
-
--- name: DeleteKnowledgeBase :exec
--- Removes a knowledge base and every row that belongs to it. The tables carry
--- no foreign keys; child tables without knowledge_base_id go through their
--- parent before the parent rows are removed. kb_block_embedding is optional
--- (migration 606) and swept separately.
-WITH deleted_kb_config_revisions AS (
-    DELETE FROM kb_config_revision WHERE kb_config_revision.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_builder_sessions AS (
-    DELETE FROM kb_builder_session WHERE kb_builder_session.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_raws AS (
-    DELETE FROM kb_raw WHERE kb_raw.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_pages AS (
-    DELETE FROM kb_page WHERE kb_page.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_page_revisions AS (
-    DELETE FROM kb_page_revision WHERE kb_page_revision.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_claims AS (
-    DELETE FROM kb_claim WHERE kb_claim.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_links AS (
-    DELETE FROM kb_link WHERE kb_link.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_draft_pages AS (
-    DELETE FROM kb_draft_page
-    USING kb_draft
-    WHERE kb_draft_page.draft_id = kb_draft.id
-      AND kb_draft.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_drafts AS (
-    DELETE FROM kb_draft WHERE kb_draft.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_job_drafts AS (
-    DELETE FROM kb_job_draft
-    USING kb_job
-    WHERE kb_job_draft.job_id = kb_job.id
-      AND kb_job.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_jobs AS (
-    DELETE FROM kb_job WHERE kb_job.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_annotations AS (
-    DELETE FROM kb_annotation WHERE kb_annotation.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_mr_comments AS (
-    DELETE FROM kb_mr_comment
-    USING kb_merge_request
-    WHERE kb_mr_comment.merge_request_id = kb_merge_request.id
-      AND kb_merge_request.knowledge_base_id = sqlc.arg('knowledge_base_id')
-),
-deleted_kb_merge_requests AS (
-    DELETE FROM kb_merge_request WHERE kb_merge_request.knowledge_base_id = sqlc.arg('knowledge_base_id')
-)
-DELETE FROM kb_base
-WHERE kb_base.id = sqlc.arg('knowledge_base_id');
+-- name: SoftDeleteKbBase :exec
+-- Deleting a knowledge base only marks it: its rows and raw file objects
+-- stay, and every read leaves it out. The slug is free again for a new
+-- knowledge base (kb_base_ws_slug_live_uidx).
+UPDATE kb_base SET
+    deleted_at = now(),
+    deleted_by = sqlc.arg('deleted_by'),
+    updated_at = now()
+WHERE id = sqlc.arg('id') AND deleted_at IS NULL;
 
 -- name: GetKbRawByID :one
 -- A raw file by id alone, for capability URLs that carry no workspace.
-SELECT * FROM kb_raw WHERE id = sqlc.arg('id');
+SELECT * FROM kb_raw
+WHERE kb_raw.id = sqlc.arg('id')
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = kb_raw.knowledge_base_id AND b.deleted_at IS NULL);

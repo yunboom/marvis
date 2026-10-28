@@ -13,15 +13,13 @@ import { useChatDraftRestore } from "../../chat/components/use-chat-draft-restor
 import { useChatTaskActions } from "../../chat/components/use-chat-task-actions";
 import { seedAcceptedPendingTask } from "../../chat/components/use-chat-controller";
 import { useT } from "../../i18n";
-import { memberPartOfJobMessage } from "./kb-job-state";
 
 const CHAT_VIRTUOSO_INITIAL_FIRST_ITEM_INDEX = 1_000_000;
 
 /**
  * The conversation of one job: the job's chat session, sent, stopped and
- * queued exactly like the chat page (designs 9.11, 9.16). The first message
- * shows only what the member typed; the server-written part goes to the
- * agent.
+ * queued exactly like the chat page (designs 9.11, 9.16). Every message shows
+ * exactly what was sent.
  */
 export function useKbJobConversation(sessionId: string) {
   const { t } = useT("chat");
@@ -33,14 +31,14 @@ export function useKbJobConversation(sessionId: string) {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery(chatMessagesPageOptions(sessionId));
-  const { data: pendingTask, isLoading: pendingLoading } = useQuery(pendingChatTaskOptions(sessionId));
+  const { data: serverPendingTask, isLoading: pendingLoading } = useQuery(pendingChatTaskOptions(sessionId));
+
+  const pendingTask = serverPendingTask;
 
   const pages = useMemo(() => (sessionId ? data?.pages ?? [] : []), [sessionId, data]);
   const messages = useMemo<ChatMessage[]>(() => {
     const all = [...pages].reverse().flatMap((page) => page.messages);
-    return hideQueuedChatMessages(all, pendingTask).map((message) =>
-      message.role === "user" ? { ...message, content: memberPartOfJobMessage(message.content) } : message,
-    );
+    return hideQueuedChatMessages(all, pendingTask);
   }, [pages, pendingTask]);
   const olderMessageCount = pages.slice(1).reduce((count, page) => count + page.messages.length, 0);
 
@@ -117,13 +115,6 @@ export function useKbJobConversation(sessionId: string) {
     });
   }, [pendingTaskId, sessionId, taskActions]);
 
-  // A stopped first turn restores the whole server-written message; the
-  // composer only ever held the member's part.
-  const restore = useMemo(
-    () => (restoreDraftRequest ? { ...restoreDraftRequest, content: memberPartOfJobMessage(restoreDraftRequest.content) } : null),
-    [restoreDraftRequest],
-  );
-
   return {
     messages,
     loading: !!sessionId && (messagesLoading || pendingLoading),
@@ -135,7 +126,7 @@ export function useKbJobConversation(sessionId: string) {
     fetchOlderMessages: () => void fetchNextPage(),
     send,
     stop,
-    restoreDraftRequest: restore,
+    restoreDraftRequest,
     handleRestoreDraftApplied,
     queue: taskActions,
   };

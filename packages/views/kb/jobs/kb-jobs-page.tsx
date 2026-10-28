@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Archive, ArchiveRestore, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ApiError } from "@marvis/core/api";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbBaseDetailOptions, kbJobListOptions, type KbJobListState } from "@marvis/core/kb/queries";
+import { useDeleteKbJob, useSetKbJobArchived } from "@marvis/core/kb/mutations";
 import type { KbJob } from "@marvis/core/types";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
 import { Tabs, TabsList, TabsTrigger } from "@marvis/ui/components/ui/tabs";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
+import { RowActionsMenu, type RowActionItem } from "../../common/row-actions-menu";
+import { ConfirmRow, RowAction } from "../../common/row-inline-actions";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
@@ -21,39 +26,136 @@ type Filter = "all" | KbJobListState;
 
 const FILTERS: readonly Filter[] = ["all", "running", "failed"];
 
-function JobRow({ kbSlug, job }: { kbSlug: string; job: KbJob }) {
+const ROW_CLASS = "flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-3.5 py-3";
+
+/**
+ * One job. The main view offers archive; the archived view is the only place
+ * a job can be deleted (unarchive + delete, with an inline confirm), as the
+ * chat list does.
+ */
+function JobRow({ kbSlug, job, archivedView }: { kbSlug: string; job: KbJob; archivedView: boolean }) {
   const { t } = useT("kb");
   const p = useWorkspacePaths();
   const timeAgo = useTimeAgo();
-  const flagged = job.state === "running" || job.state === "failed";
+  const setArchived = useSetKbJobArchived();
+  const deleteJob = useDeleteKbJob();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const flagged = !archivedView && (job.state === "running" || job.state === "failed");
+
+  const archive = (archived: boolean) =>
+    setArchived.mutate(
+      { jobId: job.id, archived },
+      {
+        onError: (err) =>
+          toast.error(err instanceof ApiError && err.message ? err.message : t(($) => $.job.archive_failed)),
+      },
+    );
+  const confirmDelete = async () => {
+    try {
+      await deleteJob.mutateAsync(job.id);
+    } catch (err) {
+      toast.error(err instanceof ApiError && err.message ? err.message : t(($) => $.job.delete_failed));
+      setConfirmingDelete(false);
+    }
+  };
+
+  const actions: RowActionItem[] = archivedView
+    ? [
+        {
+          key: "unarchive",
+          icon: <ArchiveRestore className="size-3.5" />,
+          label: t(($) => $.job.unarchive),
+          onSelect: () => archive(false),
+        },
+        {
+          key: "delete",
+          icon: <Trash2 className="size-3.5" />,
+          label: t(($) => $.job.delete),
+          danger: true,
+          onSelect: () => setConfirmingDelete(true),
+        },
+      ]
+    : [
+        {
+          key: "archive",
+          icon: <Archive className="size-3.5" />,
+          label: t(($) => $.job.archive),
+          onSelect: () => archive(true),
+        },
+      ];
+
+  const subtitle: ReactNode = confirmingDelete ? (
+    <ConfirmRow
+      label={t(($) => $.job.delete_dialog.title)}
+      cancelText={t(($) => $.job.delete_dialog.cancel)}
+      confirmText={
+        deleteJob.isPending ? t(($) => $.job.delete_dialog.confirming) : t(($) => $.job.delete_dialog.confirm)
+      }
+      pending={deleteJob.isPending}
+      onCancel={() => setConfirmingDelete(false)}
+      onConfirm={() => void confirmDelete()}
+    />
+  ) : (
+    <div className="truncate text-label text-faint-foreground">
+      {job.last_reply ? `${job.agent_name} · ${job.last_reply}` : job.agent_name}
+    </div>
+  );
+
+  const body = (
+    <>
+      <ActorAvatar actorType="agent" actorId={job.agent_id} name={job.agent_name || undefined} size="lg" profileLink={false} />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <span className="min-w-0 truncate text-body font-semibold">{job.name}</span>
+          {flagged && (
+            <span className={cn(KB_TAG, "gap-1.5")}>
+              <span
+                aria-hidden="true"
+                className={cn("size-1.5 rounded-full", job.state === "running" ? "bg-success" : "bg-destructive")}
+              />
+              {t(($) => $.job.state[job.state])}
+            </span>
+          )}
+          <span className="flex-1" />
+          <span className="shrink-0 text-caption text-faint-foreground">{timeAgo(job.updated_at || job.created_at)}</span>
+        </div>
+        {subtitle}
+      </div>
+    </>
+  );
 
   return (
-    <li>
-      <AppLink
-        href={p.kbJob(kbSlug, job.id)}
-        className="flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-colors hover:bg-surface-hover"
-      >
-        <ActorAvatar actorType="agent" actorId={job.agent_id} name={job.agent_name || undefined} size="lg" profileLink={false} />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <div className="flex items-center gap-2">
-            <span className="min-w-0 truncate text-body font-semibold">{job.name}</span>
-            {flagged && (
-              <span className={cn(KB_TAG, "gap-1.5")}>
-                <span
-                  aria-hidden="true"
-                  className={cn("size-1.5 rounded-full", job.state === "running" ? "bg-success" : "bg-destructive")}
-                />
-                {t(($) => $.job.state[job.state])}
-              </span>
-            )}
-            <span className="flex-1" />
-            <span className="shrink-0 text-caption text-faint-foreground">{timeAgo(job.updated_at || job.created_at)}</span>
+    <li
+      className={cn(
+        "group/row relative flex items-center rounded-2xl transition-colors",
+        confirmingDelete ? "bg-destructive/5" : "hover:bg-surface-hover",
+      )}
+    >
+      {confirmingDelete ? (
+        <div className={ROW_CLASS}>{body}</div>
+      ) : (
+        <AppLink href={p.kbJob(kbSlug, job.id)} className={ROW_CLASS}>
+          {body}
+        </AppLink>
+      )}
+      {!confirmingDelete && (
+        <>
+          <span className="pr-2 [@media(hover:hover)]:hidden">
+            <RowActionsMenu label={t(($) => $.job.row_actions)} groups={[actions]} />
+          </span>
+          <div className="absolute inset-y-0 right-2 hidden items-center gap-0.5 rounded-2xl bg-gradient-to-l from-surface-hover from-60% to-transparent pl-10 pr-1 [@media(hover:hover)]:group-hover/row:flex [@media(hover:hover)]:group-focus-within/row:flex">
+            {actions.map((action) => (
+              <RowAction
+                key={action.key}
+                icon={action.icon}
+                label={action.label}
+                danger={action.danger}
+                onClick={action.onSelect}
+              />
+            ))}
           </div>
-          <div className="truncate text-label text-faint-foreground">
-            {job.last_reply ? `${job.agent_name} · ${job.last_reply}` : job.agent_name}
-          </div>
-        </div>
-      </AppLink>
+        </>
+      )}
     </li>
   );
 }
@@ -66,11 +168,22 @@ export function KbJobsPage() {
   const { pathname } = useNavigation();
   const { kbSlug } = parseKbJobRoute(pathname);
   const [filter, setFilter] = useState<Filter>("all");
+  const [view, setView] = useState<"jobs" | "archived">("jobs");
   const { data: base } = useQuery(kbBaseDetailOptions(wsId, kbSlug));
-  const { data: jobs = [], isLoading } = useQuery(kbJobListOptions(wsId, kbSlug));
+  const { data: allJobs = [], isLoading } = useQuery(kbJobListOptions(wsId, kbSlug));
 
+  // One list, split locally like the chat list: archived jobs live behind
+  // the archived entry and leave the main view and its filters.
+  const jobs = allJobs.filter((job) => !job.archived);
+  const archived = allJobs.filter((job) => job.archived);
   const running = jobs.filter((job) => job.state === "running").length;
   const rows = filter === "all" ? jobs : jobs.filter((job) => job.state === filter);
+
+  // Back to the main view once the archive drains, so it never strands the
+  // member on an empty list.
+  useEffect(() => {
+    if (view === "archived" && !isLoading && archived.length === 0) setView("jobs");
+  }, [view, isLoading, archived.length]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -102,25 +215,58 @@ export function KbJobsPage() {
             </IconButton>
           </div>
 
-          <Tabs value={filter} onValueChange={(next) => setFilter(next as Filter)}>
-            <TabsList>
-              {FILTERS.map((value) => (
-                <TabsTrigger key={value} value={value}>
-                  {t(($) => $.job.tabs[value])}
-                  {value === "running" && running > 0 && <span className="ml-1 tabular-nums">{running}</span>}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          {view === "archived" ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setView("jobs")}
+                className="flex h-9 w-full items-center gap-1.5 rounded-lg px-2.5 text-left text-label font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground"
+              >
+                <ChevronLeft className="size-4 shrink-0" aria-hidden="true" />
+                <span className="truncate">{t(($) => $.job.archived_title)}</span>
+                <span className="ml-auto shrink-0 tabular-nums">{archived.length}</span>
+              </button>
+              <ul className="flex flex-col gap-1">
+                {archived.map((job) => (
+                  <JobRow key={job.id} kbSlug={kbSlug} job={job} archivedView />
+                ))}
+              </ul>
+            </>
+          ) : (
+            <>
+              <Tabs value={filter} onValueChange={(next) => setFilter(next as Filter)}>
+                <TabsList>
+                  {FILTERS.map((value) => (
+                    <TabsTrigger key={value} value={value}>
+                      {t(($) => $.job.tabs[value])}
+                      {value === "running" && running > 0 && <span className="ml-1 tabular-nums">{running}</span>}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
 
-          {!isLoading && rows.length === 0 && (
-            <p className="py-6 text-label text-muted-foreground">{t(($) => $.job.empty)}</p>
+              {!isLoading && rows.length === 0 && (
+                <p className="py-6 text-label text-muted-foreground">{t(($) => $.job.empty)}</p>
+              )}
+              <ul className="flex flex-col gap-1">
+                {rows.map((job) => (
+                  <JobRow key={job.id} kbSlug={kbSlug} job={job} archivedView={false} />
+                ))}
+              </ul>
+              {archived.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setView("archived")}
+                  className="flex h-10 w-full items-center gap-2.5 rounded-lg px-3.5 text-left text-label text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground"
+                >
+                  <Archive className="size-4 shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 flex-1 truncate font-medium">{t(($) => $.job.archived_title)}</span>
+                  <span className="shrink-0 tabular-nums">{archived.length}</span>
+                  <ChevronRight className="size-4 shrink-0 text-faint-foreground" aria-hidden="true" />
+                </button>
+              )}
+            </>
           )}
-          <ul className="flex flex-col gap-1">
-            {rows.map((job) => (
-              <JobRow key={job.id} kbSlug={kbSlug} job={job} />
-            ))}
-          </ul>
         </div>
       </div>
     </div>

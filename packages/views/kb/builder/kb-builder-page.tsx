@@ -69,7 +69,7 @@ const KB_BUILDER_TRANSPORT: BuilderSessionTransport = {
 /** Starter directions of a new knowledge base (design 1.2). */
 const NO_SESSIONS: KbBuilderSession[] = [];
 
-const CREATE_STARTERS = ["dev", "qa", "product", "team"] as const;
+const CREATE_STARTERS = ["dev", "qa", "product", "team", "agent_team", "other"] as const;
 /** Opening questions of a configuration (design 10.1). */
 const CONFIG_QUESTIONS = ["readers", "scope", "structure", "writing"] as const;
 
@@ -197,7 +197,7 @@ function KbBuilderIntro({
       </p>
       {mode === "create" ? (
         <>
-          <div className="grid grid-cols-1 gap-2 @lg:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2">
             {CREATE_STARTERS.map((key) => {
               const title = t(($) => $.builder.starters[key].title);
               const description = t(($) => $.builder.starters[key].description);
@@ -205,7 +205,7 @@ function KbBuilderIntro({
                 <button
                   key={key}
                   type="button"
-                  onClick={() => onSend(t(($) => $.builder.starter_message, { title, description }))}
+                  onClick={() => onSend(t(($) => $.builder.starters[key].message))}
                   className="flex flex-col gap-0.5 rounded-xl bg-muted/60 px-3.5 py-3 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="text-body font-medium">{title}</span>
@@ -359,9 +359,13 @@ function KbBuilderWorkspace({
     [builder.messages],
   );
 
+  // Creating archives the conversation and discarding deletes it, so it goes
+  // missing right as we leave; only a conversation lost while still open
+  // sends the member back to the setup step.
+  const leavingRef = useRef(false);
   const { missing } = builder;
   useEffect(() => {
-    if (missing) onMissing();
+    if (missing && !leavingRef.current) onMissing();
   }, [missing, onMissing]);
 
   const handleChange = (patch: Partial<KbDraft>, field: KbDraftField) => {
@@ -425,6 +429,7 @@ function KbBuilderWorkspace({
       if (!request) return;
       try {
         const created = await createBase.mutateAsync(request);
+        leavingRef.current = true;
         await retire();
         navigation.replace(`${paths.kbBase(created.slug || request.slug)}?welcome=1`);
       } catch (err) {
@@ -459,7 +464,11 @@ function KbBuilderWorkspace({
   };
 
   const discard = async () => {
-    if (!(await builder.destroy())) return;
+    leavingRef.current = true;
+    if (!(await builder.destroy())) {
+      leavingRef.current = false;
+      return;
+    }
     setConfirmingDiscard(false);
     onDiscarded();
   };
@@ -534,7 +543,7 @@ function KbBuilderWorkspace({
                 slugError={slugError}
               />
             </div>
-            <div className="flex shrink-0 items-center justify-end gap-2.5 border-t px-5 py-3">
+            <div className="flex shrink-0 items-center justify-end gap-2.5 border-t py-3 pr-20 pl-5">
               {formError ? (
                 <p role="alert" className="mr-auto min-w-0 text-body text-destructive">
                   {formError}

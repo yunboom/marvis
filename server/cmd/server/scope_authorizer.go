@@ -18,14 +18,16 @@ type scopeAuthQuerier interface {
 	GetAgentTask(ctx context.Context, id pgtype.UUID) (db.AgentTaskQueue, error)
 	GetIssue(ctx context.Context, id pgtype.UUID) (db.Issue, error)
 	GetChatSession(ctx context.Context, id pgtype.UUID) (db.ChatSession, error)
+	GetAutopilotByRunChatSession(ctx context.Context, arg db.GetAutopilotByRunChatSessionParams) (db.Autopilot, error)
 }
 
 // dbScopeAuthorizer implements realtime.ScopeAuthorizer for the per-task and
 // per-chat scopes (workspace/user scopes are validated by the hub itself
 // against the connection identity). It returns true only when the requested
 // resource exists, belongs to the caller's workspace, and — for chat
-// resources — was created by the caller (mirroring the HTTP creator-only
-// access model).
+// resources — was created by the caller, or is an autopilot run's follow-up
+// chat, which every member who can view the autopilot shares (mirroring the
+// HTTP chat access model).
 type dbScopeAuthorizer struct{ q scopeAuthQuerier }
 
 func newScopeAuthorizer(q scopeAuthQuerier) *dbScopeAuthorizer { return &dbScopeAuthorizer{q: q} }
@@ -70,21 +72,14 @@ func (a *dbScopeAuthorizer) AuthorizeScope(ctx context.Context, userID, workspac
 			}
 			return issue.WorkspaceID == wsUUID, nil
 		}
-		// Chat tasks: only the chat session's creator may subscribe, mirroring
-		// the HTTP layer's creator-only access on chat resources.
+		// Chat tasks: the same members as the task's chat session, mirroring
+		// the HTTP layer's chat access.
 		if task.ChatSessionID.Valid {
 			sess, err := a.q.GetChatSession(ctx, task.ChatSessionID)
 			if err != nil {
 				return scopeLookupErr(err)
 			}
-			if sess.WorkspaceID != wsUUID {
-				return false, nil
-			}
-			uidUUID, err := util.ParseUUID(userID)
-			if err != nil || sess.CreatorID != uidUUID {
-				return false, nil
-			}
-			return true, nil
+			return a.chatSessionAllowed(ctx, sess, userID, wsUUID)
 		}
 		return false, nil
 	case realtime.ScopeChat:
@@ -92,21 +87,35 @@ func (a *dbScopeAuthorizer) AuthorizeScope(ctx context.Context, userID, workspac
 		if err != nil {
 			return scopeLookupErr(err)
 		}
-		if sess.WorkspaceID != wsUUID {
-			return false, nil
-		}
-		// Chat sessions are private to their creator (see handler/chat.go:
-		// GetChatSession / SendChatMessage / MarkChatSessionRead all enforce
-		// CreatorID == userID). The realtime layer must not weaken this:
-		// otherwise any workspace member who learns a session_id could
-		// subscribe to chat:message / chat:done / chat:session_read for a
-		// peer's private chat.
-		uidUUID, err := util.ParseUUID(userID)
-		if err != nil || sess.CreatorID != uidUUID {
-			return false, nil
-		}
-		return true, nil
+		return a.chatSessionAllowed(ctx, sess, userID, wsUUID)
 	default:
 		return false, nil
 	}
+}
+
+// chatSessionAllowed mirrors the HTTP chat gate. Chat sessions are private to
+// their creator (handler/chat.go loadChatSessionForUser), so a workspace
+// member who learns a session_id cannot subscribe to chat:message / chat:done
+// / chat:session_read for a peer's private chat. The one exception is an
+// autopilot run's follow-up chat, shared by every member of its workspace.
+func (a *dbScopeAuthorizer) chatSessionAllowed(ctx context.Context, sess db.ChatSession, userID string, wsUUID pgtype.UUID) (bool, error) {
+	if sess.WorkspaceID != wsUUID {
+		return false, nil
+	}
+	uidUUID, err := util.ParseUUID(userID)
+	if err != nil {
+		return false, nil
+	}
+	if sess.CreatorID == uidUUID {
+		return true, nil
+	}
+
+	if _, err := a.q.GetAutopilotByRunChatSession(ctx, db.GetAutopilotByRunChatSessionParams{
+		ChatSessionID: sess.ID,
+		WorkspaceID:   wsUUID,
+	}); err != nil {
+		return scopeLookupErr(err)
+	}
+
+	return true, nil
 }

@@ -10,6 +10,27 @@ const mocks = vi.hoisted(() => ({
   current: vi.fn(),
   retry: vi.fn(),
   openLogs: vi.fn(),
+  stop: vi.fn(),
+  logout: vi.fn(),
+}));
+
+vi.mock("../server/use-logout-before-switch", () => ({
+  useLogoutBeforeSwitch: () => mocks.logout,
+}));
+
+// 连接页自己的流程有单独的测试，这里只验证切换与返回的接线。
+vi.mock("../server/connect-server-screen", () => ({
+  ConnectServerScreen: ({ beforeSwitch, onBack }: { beforeSwitch: () => Promise<void>; onBack: () => void }) => (
+    <div>
+      <p>connect-screen</p>
+      <button type="button" onClick={() => void beforeSwitch()}>
+        pick
+      </button>
+      <button type="button" onClick={onBack}>
+        back
+      </button>
+    </div>
+  ),
 }));
 
 let pushStatus: (status: StandaloneStatus) => void = () => {};
@@ -46,6 +67,8 @@ beforeEach(() => {
   mocks.current.mockReset();
   mocks.retry.mockReset().mockResolvedValue(undefined);
   mocks.openLogs.mockReset().mockResolvedValue(undefined);
+  mocks.stop.mockReset().mockResolvedValue(undefined);
+  mocks.logout.mockReset().mockResolvedValue(undefined);
 
   Object.defineProperty(window, "desktopAPI", {
     configurable: true,
@@ -54,6 +77,7 @@ beforeEach(() => {
       standalone: {
         retry: mocks.retry,
         openLogs: mocks.openLogs,
+        stop: mocks.stop,
         onStatus: (callback: (next: StandaloneStatus) => void) => {
           pushStatus = callback;
           return () => {};
@@ -105,5 +129,26 @@ describe("StandaloneGate", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "查看日志" }));
     expect(mocks.openLogs).toHaveBeenCalledOnce();
+  });
+
+  it("switches to another server from a failed start and can go back", async () => {
+    mocks.current.mockResolvedValue(selected("standalone"));
+    renderGate();
+    await act(async () => {});
+    act(() => pushStatus(status({ phase: "failed", error: { code: "start_failed" } })));
+
+    fireEvent.click(screen.getByRole("button", { name: "切换服务器" }));
+    expect(screen.getByText("connect-screen")).toBeInTheDocument();
+
+    // 换服务器前先退出旧账号，再停掉本机服务。
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "pick" }));
+    });
+    expect(mocks.logout).toHaveBeenCalledOnce();
+    expect(mocks.stop).toHaveBeenCalledOnce();
+    expect(mocks.logout.mock.invocationCallOrder[0]).toBeLessThan(mocks.stop.mock.invocationCallOrder[0]);
+
+    fireEvent.click(screen.getByRole("button", { name: "back" }));
+    expect(screen.getByRole("heading", { name: "单机模式暂时无法使用" })).toBeInTheDocument();
   });
 });

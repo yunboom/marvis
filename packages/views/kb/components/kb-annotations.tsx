@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type RefObject } from "react";
 import { MessageSquare, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -89,6 +89,9 @@ function QuoteBox({ annotation }: { annotation: KbAnnotation }) {
   return <div className="rounded-lg bg-surface-sunken px-2.5 py-1.5 text-label text-muted-foreground">{annotation.quote}</div>;
 }
 
+// The keyCode a keydown reports while an input method is composing.
+const IME_KEY_CODE = 229;
+
 /** Writes the body of a new annotation: the composer of 5.2, 5.4 and 5.6. */
 export function KbAnnotationComposer({
   label,
@@ -120,9 +123,13 @@ export function KbAnnotationComposer({
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !e.nativeEvent.isComposing) {
+          // Enter submits and Shift+Enter breaks the line; an Enter that
+          // confirms an IME composition (keyCode 229 in some browsers) does neither.
+          const composing = e.nativeEvent.isComposing || e.keyCode === IME_KEY_CODE;
+          if (e.key === "Enter" && !e.shiftKey && !composing) {
             e.preventDefault();
             submit();
+            return;
           }
           if (e.key === "Escape") onCancel();
         }}
@@ -176,24 +183,51 @@ function PanelCard({
   annotation,
   highlighted,
   canChange,
-  onJump,
+  onSelect,
 }: {
   annotation: KbAnnotation;
+  /** The selected card: the one the reader clicked, or one on the sentence they clicked. */
   highlighted: boolean;
   canChange: boolean;
-  onJump?: (blockId: string) => void;
+  /** Selects the card; the page scrolls to its sentence. */
+  onSelect?: (annotation: KbAnnotation) => void;
 }) {
   const { t } = useT("kb");
   const timeAgo = useTimeAgo();
   const status = useSetAnnotationStatus();
-  const jumpable = !!onJump && !!annotation.block_id && !annotation.anchor_lost;
+  const selectable = !!onSelect;
+
+  // Clicking anywhere on the card selects it; its own buttons and a text
+  // selection inside it keep their behavior.
+  const selectFromClick = (event: ReactMouseEvent<HTMLElement>) => {
+    if (!onSelect) return;
+    if (event.target instanceof Element && event.target.closest("button, a, input, textarea")) return;
+    if (window.getSelection()?.isCollapsed === false) return;
+
+    onSelect(annotation);
+  };
+
+  // The card itself is the keyboard path; keys on its buttons stay theirs.
+  const selectFromKey = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (!onSelect || event.target !== event.currentTarget) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+    onSelect(annotation);
+  };
 
   return (
     <article
       aria-label={annotation.body}
+      aria-current={selectable && highlighted ? "true" : undefined}
+      data-annotation-id={annotation.id}
+      tabIndex={selectable ? 0 : undefined}
+      onClick={selectFromClick}
+      onKeyDown={selectFromKey}
       className={cn(
         "flex flex-col gap-1.5 rounded-xl border bg-card p-3",
-        highlighted && "ring-[1.5px] ring-warning/60",
+        selectable && "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        highlighted && "ring-[1.5px] ring-warning/60 focus-visible:ring-warning",
       )}
     >
       <div className="flex items-center gap-1.5 text-label">
@@ -204,13 +238,7 @@ function PanelCard({
         {annotation.anchor_lost && <span className={cn(KB_TAG, "shrink-0")}>{t(($) => $.annotation.lost)}</span>}
         <StatusTag status={annotation.status} />
       </div>
-      {jumpable ? (
-        <button type="button" className="text-left" onClick={() => onJump(annotation.block_id)}>
-          <QuoteBox annotation={annotation} />
-        </button>
-      ) : (
-        <QuoteBox annotation={annotation} />
-      )}
+      <QuoteBox annotation={annotation} />
       <OriginalQuote annotation={annotation} />
       <div className="text-body whitespace-pre-wrap">{annotation.body}</div>
       {canChange && annotation.status === "pending" && (
@@ -237,14 +265,27 @@ export function KbAnnotationPanel({
   kbSlug,
   createdBy,
   pageId,
+  focusIds,
+  focusSeq = 0,
+  revealFocus = true,
   onClose,
-  onJump,
+  onSelect,
 }: {
   kbSlug: string;
   createdBy: string | undefined;
   pageId?: string;
+  /**
+   * The selected annotations: the card the reader clicked, or those on the
+   * sentence they clicked. Without any, the first anchored card is highlighted.
+   */
+  focusIds?: readonly string[];
+  /** Changes on every selection, so clicking the same sentence again scrolls again. */
+  focusSeq?: number;
+  /** Scrolls the earliest selected card into view; off when the reader picked the card here. */
+  revealFocus?: boolean;
   onClose: () => void;
-  onJump?: (blockId: string) => void;
+  /** A card was clicked or activated: it becomes the selection and the page scrolls to its sentence. */
+  onSelect?: (annotation: KbAnnotation) => void;
 }) {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
@@ -257,7 +298,19 @@ export function KbAnnotationPanel({
   const p = useWorkspacePaths();
   const { push } = useNavigation();
   const pendingIds = open.filter((annotation) => annotation.status === "pending").map((annotation) => annotation.id);
-  const pageTitle = open.find((annotation) => annotation.page_title)?.page_title ?? "";
+  const list = useRef<HTMLDivElement>(null);
+
+  const focused = focusIds ? open.filter((annotation) => focusIds.includes(annotation.id)) : [];
+  const earliest = focused.reduce<KbAnnotation | undefined>(
+    (first, annotation) => (!first || annotation.created_at < first.created_at ? annotation : first),
+    undefined,
+  )?.id;
+  useEffect(() => {
+    if (!earliest || !revealFocus) return;
+    list.current
+      ?.querySelector<HTMLElement>(`[data-annotation-id="${CSS.escape(earliest)}"]`)
+      ?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+  }, [earliest, focusSeq, revealFocus]);
 
   return (
     <KbPanel
@@ -275,9 +328,6 @@ export function KbAnnotationPanel({
               p.kbNewJob(kbSlug, {
                 starter: "annotations",
                 annotations: pendingIds,
-                message: pageId
-                  ? t(($) => $.job.entry.annotations_page_message, { count: pendingIds.length, title: pageTitle })
-                  : t(($) => $.job.entry.annotations_kb_message, { count: pendingIds.length }),
               }),
             )
           }
@@ -286,7 +336,7 @@ export function KbAnnotationPanel({
         </Button>
       }
     >
-      <div className="flex flex-col gap-2.5">
+      <div ref={list} className="flex flex-col gap-2.5">
         {open.length === 0 && !composing && (
           <p className="text-label text-muted-foreground">{t(($) => $.annotation.panel_empty)}</p>
         )}
@@ -294,9 +344,13 @@ export function KbAnnotationPanel({
           <PanelCard
             key={annotation.id}
             annotation={annotation}
-            highlighted={index === 0 && !!annotation.quote && !annotation.anchor_lost}
+            highlighted={
+              focused.length > 0
+                ? focused.includes(annotation)
+                : index === 0 && !!annotation.quote && !annotation.anchor_lost
+            }
             canChange={canChange(annotation)}
-            onJump={onJump}
+            onSelect={onSelect}
           />
         ))}
         {composing ? (
@@ -442,7 +496,6 @@ export function KbAnnotationsPage() {
               p.kbNewJob(kbSlug, {
                 starter: "annotations",
                 annotations: all.filter((annotation) => annotation.status === "pending").map((annotation) => annotation.id),
-                message: t(($) => $.job.entry.annotations_all_message, { count: counts.pending, name: base?.name ?? kbSlug }),
               }),
             )
           }

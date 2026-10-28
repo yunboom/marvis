@@ -1607,6 +1607,7 @@ CREATE TABLE public.autopilot_run (
     webhook_delivery_id uuid,
     quota_reservation_id uuid,
     reason_code text,
+    chat_session_id uuid,
     CONSTRAINT autopilot_run_source_check CHECK ((source = ANY (ARRAY['schedule'::text, 'manual'::text, 'webhook'::text, 'api'::text]))),
     CONSTRAINT autopilot_run_status_check CHECK ((status = ANY (ARRAY['issue_created'::text, 'running'::text, 'completed'::text, 'failed'::text, 'skipped'::text])))
 );
@@ -2813,6 +2814,8 @@ CREATE TABLE public.kb_base (
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    deleted_by uuid,
     CONSTRAINT kb_base_schema_mode_check CHECK ((schema_mode = ANY (ARRAY['default'::text, 'custom'::text])))
 );
 
@@ -2991,10 +2994,11 @@ CREATE TABLE public.kb_merge_request (
     close_reason text DEFAULT ''::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    review_requested_at timestamp with time zone,
     CONSTRAINT kb_merge_request_author_type_check CHECK ((author_type = ANY (ARRAY['member'::text, 'agent'::text]))),
     CONSTRAINT kb_merge_request_risk_check CHECK ((risk = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text]))),
     CONSTRAINT kb_merge_request_source_check CHECK ((source = ANY (ARRAY['ingest'::text, 'health'::text, 'merge'::text, 'annotations'::text, 'new_page'::text, 'revert'::text, 'custom'::text]))),
-    CONSTRAINT kb_merge_request_status_check CHECK ((status = ANY (ARRAY['open'::text, 'merged'::text, 'closed'::text])))
+    CONSTRAINT kb_merge_request_status_check CHECK ((status = ANY (ARRAY['open'::text, 'changes_requested'::text, 'merged'::text, 'closed'::text])))
 );
 
 --
@@ -3012,8 +3016,41 @@ CREATE TABLE public.kb_mr_comment (
     author_type text NOT NULL,
     author_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    triggered jsonb DEFAULT '[]'::jsonb NOT NULL,
+    review_id uuid,
     CONSTRAINT kb_mr_comment_author_type_check CHECK ((author_type = ANY (ARRAY['member'::text, 'agent'::text])))
+);
+
+--
+-- Name: kb_mr_event; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_mr_event (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    merge_request_id uuid NOT NULL,
+    actor_type text NOT NULL,
+    actor_id uuid NOT NULL,
+    kind text NOT NULL,
+    payload jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT kb_mr_event_actor_type_check CHECK ((actor_type = ANY (ARRAY['member'::text, 'agent'::text])))
+);
+
+--
+-- Name: kb_mr_review; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.kb_mr_review (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workspace_id uuid NOT NULL,
+    merge_request_id uuid NOT NULL,
+    reviewer_user_id uuid NOT NULL,
+    state text DEFAULT 'pending'::text NOT NULL,
+    summary text DEFAULT ''::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    submitted_at timestamp with time zone,
+    CONSTRAINT kb_mr_review_check CHECK (((state = 'submitted'::text) = (submitted_at IS NOT NULL))),
+    CONSTRAINT kb_mr_review_state_check CHECK ((state = ANY (ARRAY['pending'::text, 'submitted'::text])))
 );
 
 --
@@ -4739,6 +4776,20 @@ ALTER TABLE ONLY public.kb_mr_comment
     ADD CONSTRAINT kb_mr_comment_pkey PRIMARY KEY (id);
 
 --
+-- Name: kb_mr_event kb_mr_event_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_mr_event
+    ADD CONSTRAINT kb_mr_event_pkey PRIMARY KEY (id);
+
+--
+-- Name: kb_mr_review kb_mr_review_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.kb_mr_review
+    ADD CONSTRAINT kb_mr_review_pkey PRIMARY KEY (id);
+
+--
 -- Name: kb_page kb_page_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5370,6 +5421,12 @@ CREATE INDEX agent_task_wakeup_terminal_idx ON public.agent_task_queue USING btr
 --
 
 CREATE INDEX agent_to_label_label_idx ON public.agent_to_label USING btree (label_id);
+
+--
+-- Name: autopilot_run_chat_session_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX autopilot_run_chat_session_uidx ON public.autopilot_run USING btree (chat_session_id) WHERE (chat_session_id IS NOT NULL);
 
 --
 -- Name: channel_chat_context_generation_session_revision_idx; Type: INDEX; Schema: public; Owner: -
@@ -7052,10 +7109,10 @@ CREATE INDEX issue_wakeup_workspace_history_idx ON public.issue_wakeup USING btr
 CREATE INDEX kb_annotation_base_status_idx ON public.kb_annotation USING btree (knowledge_base_id, status);
 
 --
--- Name: kb_base_ws_slug_uidx; Type: INDEX; Schema: public; Owner: -
+-- Name: kb_base_ws_slug_live_uidx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX kb_base_ws_slug_uidx ON public.kb_base USING btree (workspace_id, slug);
+CREATE UNIQUE INDEX kb_base_ws_slug_live_uidx ON public.kb_base USING btree (workspace_id, slug) WHERE (deleted_at IS NULL);
 
 --
 -- Name: kb_block_embedding_base_idx; Type: INDEX; Schema: public; Owner: -
@@ -7124,16 +7181,34 @@ CREATE INDEX kb_link_from_idx ON public.kb_link USING btree (from_page_id);
 CREATE INDEX kb_link_to_idx ON public.kb_link USING btree (to_page_id);
 
 --
+-- Name: kb_mr_active_draft_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_mr_active_draft_uidx ON public.kb_merge_request USING btree (draft_id) WHERE (status = ANY (ARRAY['open'::text, 'changes_requested'::text]));
+
+--
 -- Name: kb_mr_comment_idx; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX kb_mr_comment_idx ON public.kb_mr_comment USING btree (merge_request_id, created_at);
 
 --
--- Name: kb_mr_open_draft_uidx; Type: INDEX; Schema: public; Owner: -
+-- Name: kb_mr_event_mr_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX kb_mr_open_draft_uidx ON public.kb_merge_request USING btree (draft_id) WHERE (status = 'open'::text);
+CREATE INDEX kb_mr_event_mr_idx ON public.kb_mr_event USING btree (merge_request_id, created_at);
+
+--
+-- Name: kb_mr_review_mr_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX kb_mr_review_mr_idx ON public.kb_mr_review USING btree (merge_request_id, submitted_at);
+
+--
+-- Name: kb_mr_review_pending_uidx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX kb_mr_review_pending_uidx ON public.kb_mr_review USING btree (merge_request_id, reviewer_user_id) WHERE (state = 'pending'::text);
 
 --
 -- Name: kb_mr_ws_number_uidx; Type: INDEX; Schema: public; Owner: -

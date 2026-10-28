@@ -214,6 +214,7 @@ export function applyChatMessageToCache(
       content: payload.content ?? "",
       task_id: payload.task_id ?? null,
       created_at: payload.created_at ?? new Date().toISOString(),
+      ...(payload.sender_user_id ? { sender_user_id: payload.sender_user_id } : {}),
     });
   }
   invalidateChatMessageQueries(qc, sessionId);

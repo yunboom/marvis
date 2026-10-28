@@ -464,8 +464,8 @@ export function AutopilotListToolbar({
         </DropdownMenu>
 
         {/* Display settings — same paradigm as skills: sort select +
-            direction toggle + column switches, mutating the same store the
-            list header sort buttons use. */}
+            direction toggle + card field switches. The cards have no header,
+            so this is the only place to sort. */}
         <Popover>
           <Tooltip>
             <PopoverTrigger

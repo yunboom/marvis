@@ -224,6 +224,13 @@ func (h *Handler) loadKbLevel(ctx context.Context, base db.KbBase, draft *db.KbD
 			if err != nil {
 				return nil, false, nil, 0, errors.Wrapf(err, "draft page page_id=%s", id)
 			}
+			// A deleted page may carry no header in the draft; it is named
+			// by its mainline version.
+			if row.Op == kb.DraftOpDelete && row.MainTitle.Valid {
+				header.Title = row.MainTitle.String
+				header.Type = row.MainType.String
+				header.Description = row.MainDescription.String
+			}
 			if pageType != "" && !strings.EqualFold(header.Type, pageType) {
 				continue
 			}

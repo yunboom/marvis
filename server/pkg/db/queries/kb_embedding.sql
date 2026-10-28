@@ -55,13 +55,14 @@ USING kb_page p
 WHERE e.page_id = p.id AND p.deleted_at IS NOT NULL;
 
 -- name: ListKbPagesNeedingEmbedding :many
--- Live pages, after a keyset cursor, without vectors of the current model or
--- changed since they were indexed. Pages without any text to embed come back
--- on every pass; indexing them is a no-op.
+-- Live pages of live knowledge bases, after a keyset cursor, without vectors
+-- of the current model or changed since they were indexed. Pages without any
+-- text to embed come back on every pass; indexing them is a no-op.
 SELECT p.id
 FROM kb_page p
 WHERE p.id > sqlc.arg('after_id')::uuid
   AND p.deleted_at IS NULL
+  AND EXISTS (SELECT 1 FROM kb_base b WHERE b.id = p.knowledge_base_id AND b.deleted_at IS NULL)
   AND (
     NOT EXISTS (
         SELECT 1 FROM kb_block_embedding e
@@ -84,7 +85,9 @@ WITH nearest AS MATERIALIZED (
     SELECT e.page_id, e.block_id, (e.embedding <=> sqlc.arg('query')::text::vector) AS distance
     FROM kb_block_embedding e
     JOIN kb_page p ON p.id = e.page_id
+    JOIN kb_base b ON b.id = e.knowledge_base_id
     WHERE e.workspace_id = sqlc.arg('workspace_id')
+      AND b.deleted_at IS NULL
       AND e.model = sqlc.arg('model')::text
       AND (sqlc.narg('knowledge_base_id')::uuid IS NULL OR e.knowledge_base_id = sqlc.narg('knowledge_base_id')::uuid)
       AND p.deleted_at IS NULL
@@ -110,4 +113,4 @@ WHERE p.id = ANY(sqlc.arg('page_ids')::uuid[])
 SELECT p.id, p.knowledge_base_id, b.slug AS kb_slug, p.title, p.type, p.blocks
 FROM kb_page p
 JOIN kb_base b ON b.id = p.knowledge_base_id
-WHERE p.id = ANY(sqlc.arg('page_ids')::uuid[]) AND p.deleted_at IS NULL;
+WHERE p.id = ANY(sqlc.arg('page_ids')::uuid[]) AND p.deleted_at IS NULL AND b.deleted_at IS NULL;

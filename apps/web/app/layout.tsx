@@ -14,6 +14,7 @@ import {
   resolveBrowserWsUrl,
 } from "@/config/runtime-urls";
 import { resolveGoogleAnalyticsId } from "@/config/google-analytics";
+import { BASE_PATH } from "@/config/base-path";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import "./globals.css";
 
@@ -83,11 +84,12 @@ export const metadata: Metadata = {
   description:
     "Source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills.",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    shortcut: ["/favicon.svg"],
+    // Metadata URLs are not basePath-aware, so public assets carry it here.
+    icon: [{ url: `${BASE_PATH}/favicon.svg`, type: "image/svg+xml" }],
+    shortcut: [`${BASE_PATH}/favicon.svg`],
     // iOS never reads the manifest's icons for the home screen; it needs its
     // own opaque, full-bleed square and rounds the corners itself.
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    apple: [{ url: `${BASE_PATH}/icons/apple-touch-icon.png`, sizes: "180x180" }],
   },
   // Home-screen behaviour: launch without browser chrome, and label the icon
   // "Marvis" rather than the long SEO <title>. `capable` renders the

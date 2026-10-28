@@ -665,6 +665,60 @@ See [WebSocket for LAN / Non-localhost Access](#websocket-for-lan--non-localhost
 
 This keeps cookies, CORS, and the WebSocket origin check on a single origin. It is both the configuration least likely to break and the safer one: the session cookie stays host-only, so no sibling subdomain can ever receive it. An `api.example.com` vhost can still be kept for CLI and daemon use: those clients authenticate with a `mul_` personal access token over `Authorization: Bearer`, which never goes through the cookie or CSRF path.
 
+### Path Prefix (Shared Domain)
+
+The same-origin layout can also live under a path on a domain that serves other apps, e.g. `https://tools.example.com/marvis/`. The web app and the docs site must know the prefix when they are built, because Next.js writes it into every page and asset URL; the backend stays at its own root and never sees the prefix. The published images are built for the root path, so build your own:
+
+```bash
+NEXT_PUBLIC_BASE_PATH=/marvis docker compose \
+  -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml \
+  --profile docs up -d --build
+```
+
+```bash
+# Backend
+FRONTEND_ORIGIN=https://tools.example.com            # origin only, no path
+MARVIS_APP_URL=https://tools.example.com/marvis      # links in emails and chat cards
+MARVIS_PUBLIC_URL=https://tools.example.com/marvis   # webhook URLs
+GOOGLE_REDIRECT_URI=https://tools.example.com/marvis/auth/callback
+```
+
+Leave `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_WS_URL` empty: the browser derives `/marvis/api` and `/marvis/ws` from the prefix. Register `https://tools.example.com/marvis/auth/callback` with Google and Lark. Point the desktop app, the CLI and the daemon at `https://tools.example.com/marvis`; the desktop app also accepts any page URL under it and finds the prefix itself.
+
+Keep the prefix when proxying to the frontend and the docs (no URI after `proxy_pass`), and strip it for the WebSocket, which must reach the backend directly:
+
+```nginx
+location = /marvis { return 301 /marvis/; }
+
+location = /marvis/ws {
+    proxy_pass http://127.0.0.1:13840/ws;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 86400;
+}
+
+location /marvis/docs {
+    proxy_pass http://127.0.0.1:4000;
+    proxy_set_header Host $host;
+}
+
+location /marvis/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    client_max_body_size 100m;
+}
+```
+
+If nginx itself runs in a container, it cannot reach the host's `127.0.0.1`; set `MARVIS_BIND_ADDRESS` to the Docker bridge gateway (commonly `172.17.0.1`) and proxy to that address, or attach nginx to the compose network and use the service names.
+
+A path is not a browser security boundary. Every app on the domain shares one origin with Marvis: their pages can call the Marvis API with the visitor's session and read Marvis's `localStorage`. Share a domain only with apps you operate and trust; otherwise give Marvis its own subdomain.
+
 ## LAN / Non-localhost Access
 
 By default, Marvis works on `localhost`. If you access it from another machine on the LAN (e.g. `http://192.168.1.100:3000`), you need to tell the backend to accept that origin:

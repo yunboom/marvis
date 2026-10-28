@@ -154,7 +154,9 @@ export function InboxListItem({
             {/* Pointer-only affordance: revealed on hover, and on keyboard
                 focus anywhere in the row so it is reachable by Tab. Touch has
                 neither, so it stays hidden on a pointer that cannot hover and
-                the compact menu below carries the same action. */}
+                the compact menu below carries the same action. It is 2px
+                taller than the 20px title line; `-my-px` keeps it from growing
+                the row on hover, which made neighbouring rows jump. */}
             <DeferredTooltip
               content={actionLabel}
               trigger={
@@ -165,7 +167,7 @@ export function InboxListItem({
                     e.stopPropagation();
                     onAction();
                   }}
-                  className="hidden size-5.5 items-center justify-center rounded-sm bg-secondary text-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-surface-selected focus-visible:ring-1 focus-visible:ring-ring [@media(hover:hover)]:group-hover:inline-flex [@media(hover:hover)]:group-focus-within:inline-flex"
+                  className="-my-px hidden size-5.5 items-center justify-center rounded-sm bg-secondary text-foreground outline-none transition-colors duration-(--motion-fast) ease-out hover:bg-surface-selected focus-visible:ring-1 focus-visible:ring-ring [@media(hover:hover)]:group-hover:inline-flex [@media(hover:hover)]:group-focus-within:inline-flex"
                 >
                   <ActionIcon className="h-3.5 w-3.5" />
                 </button>

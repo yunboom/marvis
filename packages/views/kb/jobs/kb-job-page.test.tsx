@@ -4,11 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { api } from "@marvis/core/api";
-import type { ChatPendingTask, KbJobDetail, KnowledgeBaseDetail } from "@marvis/core/types";
+import type { ChatPendingTask, KbJobDetail, KbMergeRequestDetail, KnowledgeBaseDetail } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
 import { KbJobPage } from "./kb-job-page";
-import { kbJobPanelState, memberPartOfJobMessage, parseKbJobRoute } from "./kb-job-state";
+import { kbJobPanelState, parseKbJobRoute } from "./kb-job-state";
 
 vi.mock("@marvis/core/api", () => {
   class ApiError extends Error {
@@ -24,14 +24,22 @@ vi.mock("@marvis/core/api", () => {
     dispatchReasonCode: () => null,
     api: {
       getKnowledgeBase: vi.fn(),
+      getKnowledgeBasePage: vi.fn(),
+      listKnowledgeBaseAnnotations: vi.fn(),
       getKnowledgeBaseJob: vi.fn(),
       createKnowledgeBaseJob: vi.fn(),
       submitKnowledgeBaseJob: vi.fn(),
       discardKnowledgeBaseJob: vi.fn(),
+      setKnowledgeBaseJobArchived: vi.fn(),
+      deleteKnowledgeBaseJob: vi.fn(),
       listAgents: vi.fn(),
       listMembers: vi.fn(),
       listRuntimes: vi.fn(),
       sendChatMessage: vi.fn(),
+      getKnowledgeBaseMergeRequest: vi.fn(),
+      listKnowledgeBaseMrComments: vi.fn(),
+      handoffKnowledgeBaseMrReview: vi.fn(),
+      requestKnowledgeBaseMrReview: vi.fn(),
     },
   };
 });
@@ -171,6 +179,7 @@ function job(over: Partial<KbJobDetail> = {}): KbJobDetail {
     draft_id: "draft-1",
     created_by: "user-1",
     state: "idle",
+    archived: false,
     last_reply: "",
     draft: { version: 3, status: "open", pages: 1, added: 1, deleted: 1 },
     merge_request: null,
@@ -213,7 +222,7 @@ function makeAdapter(pathname: string, search = ""): NavigationAdapter {
   };
 }
 
-function mount(adapter: NavigationAdapter) {
+function mount(adapter: NavigationAdapter, locale: "en" | "zh-Hans" = "en") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   renderWithI18n(
     <QueryClientProvider client={client}>
@@ -221,6 +230,7 @@ function mount(adapter: NavigationAdapter) {
         <KbJobPage />
       </NavigationProvider>
     </QueryClientProvider>,
+    { locale },
   );
 }
 
@@ -250,12 +260,6 @@ describe("job state helpers", () => {
     expect(parseKbJobRoute("/acme/kb/team/jobs/new")).toEqual({ view: "new", kbSlug: "team", jobId: "" });
     expect(parseKbJobRoute("/acme/kb/team/jobs/j%201")).toEqual({ view: "job", kbSlug: "team", jobId: "j 1" });
     expect(parseKbJobRoute("/acme/kb/team/p/x").view).toBeNull();
-  });
-
-  it("shows only the member's part of the first message", () => {
-    const first = "Knowledge base: Team (`team`)\nJob: x\n\nHow to work:\n- ...\n\nMember's message:\n处理 4 条批注。";
-    expect(memberPartOfJobMessage(first)).toBe("处理 4 条批注。");
-    expect(memberPartOfJobMessage("just a follow-up")).toBe("just a follow-up");
   });
 
   it("covers the edge cases of designs 9.9–9.17", () => {
@@ -354,8 +358,52 @@ describe("KbJobPage", () => {
 
     expect(within(panel).getByText("通用开发助手 submitted change request #16. The draft is in review and read-only here.")).toBeInTheDocument();
     expect(within(panel).getByText("Review #16").closest("a")).toHaveAttribute("href", "/acme/kb/team/reviews/16");
+    expect(within(within(panel).getByRole("status")).queryByRole("link")).toBeNull();
     expect(within(panel).queryByRole("button", { name: "Submit for review" })).toBeNull();
     expect(within(panel).queryByRole("button", { name: "Discard draft" })).toBeNull();
+  });
+
+  it("shows the open review feedback, hands it to the agent and asks for review again (9.18)", async () => {
+    const reviewed = { reviewer_user_id: "user-2", reviewer_name: "王芳", state: "submitted" as const, merge_request_id: "mr-1", created_at: "" };
+    mocked.getKnowledgeBaseMergeRequest.mockResolvedValue({
+      ...({} as KbMergeRequestDetail),
+      number: 16,
+      pages: job().pages,
+      // A review answered before the last request for review is resolved.
+      review_requested_at: "2026-10-25T10:00:00Z",
+      reviews: [
+        { ...reviewed, id: "rv-0", summary: "Old.", comment_count: 1, submitted_at: "2026-10-25T09:00:00Z" },
+        { ...reviewed, id: "rv-1", summary: "去重原因补上后再合并。", comment_count: 1, submitted_at: "2026-10-25T10:40:00Z" },
+      ],
+    });
+    const comment = { merge_request_id: "mr-1", parent_id: null, author_type: "member", author_id: "user-2", author_name: "王芳", state: "published" as const, created_at: "" };
+    mocked.listKnowledgeBaseMrComments.mockResolvedValue([
+      { ...comment, id: "c-0", review_id: "rv-0", quote: null, body: "旧意见" },
+      { ...comment, id: "c-1", review_id: "rv-1", quote: { page_id: "page-cb", block_id: "b4", text: "按渠道交易号去重。" }, body: "补一下原因。" },
+    ]);
+    mocked.handoffKnowledgeBaseMrReview.mockResolvedValue({ chat_session_id: "chat-1", message_id: "m-1", task_id: "t-1" });
+    const panel = await openJob(
+      job({
+        draft: { version: 3, status: "submitted", pages: 1, added: 1, deleted: 1 },
+        merge_request: { id: "mr-1", number: 16, title: "t", status: "changes_requested", author_type: "member", author_id: "user-1", author_name: "我", merged_by_name: "", closed_by_name: "", close_reason: "" },
+      }),
+    );
+
+    const feedback = await within(panel).findByRole("region", { name: "Review feedback" });
+    expect(within(feedback).getByText("#16 has 1 comment to resolve")).toBeInTheDocument();
+    expect(within(feedback).getByText("去重原因补上后再合并。")).toBeInTheDocument();
+    expect(within(feedback).getByText("支付回调 · 按渠道交易号去重。")).toBeInTheDocument();
+    expect(within(feedback).queryByText("旧意见")).toBeNull();
+    expect(within(feedback).getByRole("link", { name: "Go to review" })).toHaveAttribute("href", "/acme/kb/team/reviews/16");
+    expect(within(panel).getByText("Changes requested")).toBeInTheDocument();
+
+    await userEvent.click(within(feedback).getByRole("button", { name: "Hand to agent" }));
+    // The chat gets a short visible line; the agent reads the feedback itself.
+    await waitFor(() => expect(mocked.handoffKnowledgeBaseMrReview).toHaveBeenCalledWith(16, "Resolve the review feedback on #16"));
+
+    expect(within(panel).queryByText("Review #16")).toBeNull();
+    await userEvent.click(within(panel).getByRole("button", { name: "Request review again" }));
+    await waitFor(() => expect(mocked.requestKnowledgeBaseMrReview).toHaveBeenCalledWith(16));
   });
 
   it("offers resubmitting after the change request is closed (9.14)", async () => {
@@ -391,19 +439,62 @@ describe("KbJobPage", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Discard draft" }));
     await waitFor(() => expect(mocked.discardKnowledgeBaseJob).toHaveBeenCalledWith("job-1"));
   });
+
+  it("archives from the ⋯ menu and offers no delete until archived", async () => {
+    mocked.setKnowledgeBaseJobArchived.mockResolvedValue({ ...job(), archived: true });
+    await openJob(job());
+
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(screen.queryByRole("menuitem", { name: "Delete" })).toBeNull();
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Archive" }));
+    await waitFor(() => expect(mocked.setKnowledgeBaseJobArchived).toHaveBeenCalledWith("job-1", true));
+  });
+
+  it("turns read-only once archived and deletes after confirming, then leaves for the list", async () => {
+    mocked.deleteKnowledgeBaseJob.mockResolvedValue(undefined);
+    mocked.getKnowledgeBaseJob.mockResolvedValue(job({ archived: true }));
+    const adapter = makeAdapter("/acme/kb/team/jobs/job-1");
+    mount(adapter);
+    await screen.findByRole("region", { name: "Draft changes" });
+
+    expect(screen.queryByRole("form", { name: "composer" })).toBeNull();
+    expect(screen.getByText("This job is archived")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "More actions" }));
+    expect(await screen.findByRole("menuitem", { name: "Unarchive" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(mocked.deleteKnowledgeBaseJob).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(mocked.deleteKnowledgeBaseJob).toHaveBeenCalledWith("job-1"));
+    await waitFor(() => expect(adapter.push).toHaveBeenCalledWith("/acme/kb/team/jobs"));
+  });
 });
 
 describe("new job", () => {
-  it("starts a job brought in from the annotations page with the chosen agent", async () => {
+  const annotation = (id: string, pageTitle: string) => ({ id, page_title: pageTitle, status: "pending" });
+
+  it("writes the annotations brought in as links in the composer and starts the job", async () => {
     mocked.createKnowledgeBaseJob.mockResolvedValue({ ...job(), id: "job-9" });
-    const adapter = makeAdapter("/acme/kb/team/jobs/new", "starter=annotations&annotations=a-1,a-2&message=处理 2 条");
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([annotation("a-1", "支付回调"), annotation("a-2", ""), annotation("a-3", "x")] as never);
+    const adapter = makeAdapter("/acme/kb/team/jobs/new", "starter=annotations&annotations=a-1,a-2");
     mount(adapter);
 
     expect(await screen.findByRole("heading", { name: "Handle annotations" })).toBeInTheDocument();
     await screen.findByText("通用开发助手");
-    // The entry point's request is written into the composer's draft.
-    expect(setInputDraft).toHaveBeenCalledWith("kb-job-new:team", "处理 2 条");
-    await userEvent.type(screen.getByRole("textbox", { name: "message" }), "处理 2 条");
+    await waitFor(() =>
+      expect(setInputDraft).toHaveBeenCalledWith(
+        "kb-job-new:team",
+        [
+          "Handle these annotations in [团队知识库](mention://kb/kb-1):",
+          "",
+          "- [Annotation · 支付回调](mention://kb_annotation/a-1)",
+          "- [Annotation · 团队知识库](mention://kb_annotation/a-2)",
+        ].join("\n"),
+      ),
+    );
+    await userEvent.type(screen.getByRole("textbox", { name: "message" }), "先改回调那条");
     await userEvent.click(screen.getByRole("button", { name: "send" }));
 
     await waitFor(() =>
@@ -411,16 +502,69 @@ describe("new job", () => {
         agent_id: "agent-1",
         starter: "annotations",
         name: "Handle annotations",
-        message: "处理 2 条",
+        message: "先改回调那条",
         annotation_ids: ["a-1", "a-2"],
         page_id: undefined,
-        sources: undefined,
       }),
     );
     expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team/jobs/job-9");
   });
 
-  it("starts from an opener card", async () => {
+  it("writes the request in the member's language", async () => {
+    mocked.listKnowledgeBaseAnnotations.mockResolvedValue([annotation("a-1", "支付回调"), annotation("a-2", "")] as never);
+    mount(makeAdapter("/acme/kb/team/jobs/new", "starter=annotations&annotations=a-1,a-2"), "zh-Hans");
+
+    await waitFor(() =>
+      expect(setInputDraft).toHaveBeenCalledWith(
+        "kb-job-new:team",
+        [
+          "处理[团队知识库](mention://kb/kb-1)里的这些批注：",
+          "",
+          "- [批注 · 支付回调](mention://kb_annotation/a-1)",
+          "- [批注 · 团队知识库](mention://kb_annotation/a-2)",
+        ].join("\n"),
+      ),
+    );
+  });
+
+  it("lists the raw files brought in for ingesting", async () => {
+    const search = new URLSearchParams({ starter: "ingest", sources: "raw://sources/spec-v3.pdf,raw://sources/渠道 规范.pdf" });
+    mount(makeAdapter("/acme/kb/team/jobs/new", search.toString()), "zh-Hans");
+
+    await waitFor(() =>
+      expect(setInputDraft).toHaveBeenCalledWith(
+        "kb-job-new:team",
+        ["把下面的资料收录进[团队知识库](mention://kb/kb-1)：", "", "- `spec-v3.pdf`", "- `渠道 规范.pdf`"].join("\n"),
+      ),
+    );
+  });
+
+  it("links the page to check, and puts what the member typed after a new page's parent", async () => {
+    mocked.getKnowledgeBasePage.mockResolvedValue({ id: "page-cb", path: "/payment/callback", frontmatter: { title: "支付回调" } } as never);
+    mount(makeAdapter("/acme/kb/team/jobs/new", "starter=health&page=page-cb"));
+
+    await waitFor(() =>
+      expect(setInputDraft).toHaveBeenCalledWith(
+        "kb-job-new:team",
+        "Check this page of [团队知识库](mention://kb/kb-1) for stale, contradictory or missing content:\n\n[支付回调](mention://kb_page/page-cb)",
+      ),
+    );
+  });
+
+  it("follows a new page's parent with the member's request", async () => {
+    mocked.getKnowledgeBasePage.mockResolvedValue({ id: "page-pay", path: "/payment", frontmatter: { title: "支付" } } as never);
+    const search = new URLSearchParams({ starter: "new_page", page: "page-pay", message: "回调人工处理的操作步骤" });
+    mount(makeAdapter("/acme/kb/team/jobs/new", search.toString()), "zh-Hans");
+
+    await waitFor(() =>
+      expect(setInputDraft).toHaveBeenCalledWith(
+        "kb-job-new:team",
+        "在[团队知识库](mention://kb/kb-1)的这一页下新增一页：\n\n[支付](mention://kb_page/page-pay)\n\n回调人工处理的操作步骤",
+      ),
+    );
+  });
+
+  it("sends an opener card's prompt as is", async () => {
     mocked.createKnowledgeBaseJob.mockResolvedValue({ ...job(), id: "job-10" });
     mount(makeAdapter("/acme/kb/team/jobs/new"));
 
@@ -432,7 +576,28 @@ describe("new job", () => {
         agent_id: "agent-1",
         starter: "health",
         name: "Health check",
-        message: "Health check: Find stale pages, contradictions, orphan pages and claims whose code changed",
+        message: "Check [团队知识库](mention://kb/kb-1) for stale, contradictory or missing content.",
+      }),
+    );
+  });
+
+  it("sends only what the member typed for a job described in their own words", async () => {
+    mocked.createKnowledgeBaseJob.mockResolvedValue({ ...job(), id: "job-11" });
+    mount(makeAdapter("/acme/kb/team/jobs/new"));
+
+    await screen.findByText("通用开发助手");
+    expect(setInputDraft).not.toHaveBeenCalled();
+    await userEvent.type(screen.getByRole("textbox", { name: "message" }), "整理退款流程");
+    await userEvent.click(screen.getByRole("button", { name: "send" }));
+
+    await waitFor(() =>
+      expect(mocked.createKnowledgeBaseJob).toHaveBeenCalledWith("team", {
+        agent_id: "agent-1",
+        starter: "custom",
+        name: undefined,
+        message: "整理退款流程",
+        annotation_ids: undefined,
+        page_id: undefined,
       }),
     );
   });

@@ -1,48 +1,47 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   AlertCircle,
-  BarChart3,
-  Bug,
+  ChevronDown,
   Clock,
   Code,
-  FileSearch,
-  GitPullRequest,
-  Newspaper,
   Pause,
   Plus,
-  Shield,
   Webhook,
   Zap,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { DISPATCH_REASON } from "@marvis/core/constants/dispatch-reason";
 import { autopilotListOptions } from "@marvis/core/autopilots/queries";
 import {
   useAutopilotsViewStore,
-  AUTOPILOT_DEFAULT_HIDDEN_COLUMNS,
   AUTOPILOT_SCOPES,
   type AutopilotColumnKey,
   type AutopilotScope,
-  type AutopilotSortField,
 } from "@marvis/core/autopilots/stores";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { useActorName } from "@marvis/core/workspace/hooks";
 import type { Autopilot } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
-import { Checkbox } from "@marvis/ui/components/ui/checkbox";
 import {
-  LIST_GRID_BOTTOM_CLEARANCE,
-  ListGrid,
-  ListGridBody,
-  ListGridCell,
-  ListGridHeader,
-  ListGridHeaderCell,
-  ListGridRow,
-  type ListGridSortDirection,
-} from "@marvis/ui/components/ui/list-grid";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@marvis/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import {
   Tabs,
@@ -50,14 +49,12 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@marvis/ui/components/ui/tabs";
+import { cn } from "@marvis/ui/lib/utils";
 import { WorkspaceWakeupCreate, WorkspaceWakeups } from "./workspace-wakeups";
 import { useNavigation, useRowLink } from "../../navigation";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { formatInTimeZone } from "../../common/format-in-time-zone";
-import { cn } from "@marvis/ui/lib/utils";
 import {
-  COLLECTION_ROW,
-  COLLECTION_ROW_SELECTED,
   COLLECTION_TABLE_INSET,
   CollectionPageHeader,
   CollectionPageHeaderAction,
@@ -69,243 +66,54 @@ import {
   AutopilotListToolbar,
   actorFilterValue,
 } from "./autopilot-list-toolbar";
-import {
-  AutopilotBatchToolbar,
-  AutopilotRowActions,
-} from "./autopilot-list-actions";
-import type { ScheduleConfig } from "./schedule-editor/model";
+import { AutopilotRowActions } from "./autopilot-list-actions";
+import { AUTOPILOT_TEMPLATES, type AutopilotTemplate } from "./autopilot-templates";
+import { instructionsPreview } from "./instructions-preview";
+import { RUN_VISUAL } from "./run-status";
 import { useLocale, useT, useTimeAgo } from "../../i18n";
 
-// Column template — single source of truth for header, rows, and skeletons.
-// Same conventions as the skills list (see list-grid.tsx and the comment
-// there): deterministic var-width tracks (rows are virtualized), and
-// TWO-ZONE responsiveness:
-// - Container ≥ @2xl (672px): WYSIWYG — every user-enabled column renders;
-//   the grid carries min-width = Σ(enabled tracks + gaps) and the wrapper
-//   scrolls horizontally when the enabled set outgrows the container. An
-//   enabled column must NEVER silently vanish (the "dead toggle" bug).
-// - Container < @2xl: static core set (name + assignee), no horizontal
-//   scroll, column toggles don't apply.
-const GRID_COLS =
-  "grid-cols-[0.25rem_1rem_minmax(120px,1fr)_var(--apc-assignee)_1.75rem_0.25rem] " +
-  "@2xl:grid-cols-[0.25rem_1rem_minmax(200px,1fr)_var(--apc-assignee)_var(--apc-trigger)_var(--apc-lastrun)_var(--apc-nextrun)_var(--apc-mode)_var(--apc-creator)_var(--apc-created)_1.75rem_0.25rem]";
+// Card geometry is the virtualizer's fixed-size contract: every card is
+// exactly CARD_HEIGHT (title + two preview lines + one meta line), and each
+// virtual row is one line of cards plus the gap below it.
+const CARD_HEIGHT = 128;
+const CARD_GAP = 12;
+const CARD_ROW_HEIGHT = CARD_HEIGHT + CARD_GAP;
 
-// 表头：40px 灰色圆角带，取代 ListGridHeader 默认的白底 + 渐隐。
-const TABLE_HEAD_BAND =
-  "h-10 rounded-lg bg-surface-sunken after:hidden [&_[role=columnheader]]:text-label [&_[role=columnheader]_button]:text-label";
+// Two cards per row from this container width up (Tailwind's @2xl, which
+// the loading skeleton uses for the same switch); one card below it.
+const TWO_COLUMN_MIN_WIDTH = 672;
 
-// h-12 rows; the virtualizer's fixed-size contract.
-const ROW_HEIGHT = 48;
-
-// Single source for hideable column widths: track vars and the grid's
-// min-width derive from the same numbers.
-const COLUMN_WIDTHS: Record<AutopilotColumnKey, number> = {
-  assignee: 160,
-  trigger: 176,
-  lastRun: 128,
-  nextRun: 128,
-  mode: 104,
-  creator: 144,
-  created: 104,
-};
-
-// Fixed tracks (edges 4+4, checkbox 16, name min 200, kebab 28) plus the
-// 11 gap-x-3 gaps between the wide template's 12 tracks (zero-width tracks
-// still carry gaps).
-const FIXED_TRACKS_WIDTH = 252 + 11 * 12;
-
-function columnTrackVars(
-  isVisible: (key: AutopilotColumnKey) => boolean,
-): React.CSSProperties {
-  const width = (key: AutopilotColumnKey) =>
-    isVisible(key) ? `${COLUMN_WIDTHS[key]}px` : "0px";
-  const minWidth =
-    FIXED_TRACKS_WIDTH +
-    (Object.keys(COLUMN_WIDTHS) as AutopilotColumnKey[]).reduce(
-      (sum, key) => sum + (isVisible(key) ? COLUMN_WIDTHS[key] : 0),
-      0,
-    );
-  return {
-    "--apc-assignee": width("assignee"),
-    "--apc-trigger": width("trigger"),
-    "--apc-lastrun": width("lastRun"),
-    "--apc-nextrun": width("nextRun"),
-    "--apc-mode": width("mode"),
-    "--apc-creator": width("creator"),
-    "--apc-created": width("created"),
-    "--apc-minw": `${minWidth}px`,
-  } as React.CSSProperties;
-}
-
-// Templates for the empty state (unchanged from the previous page version).
-// Prompts stay raw English because they're injected directly into the
-// agent's task input.
-
-type TemplateId =
-  | "daily_news"
-  | "pr_review"
-  | "bug_triage"
-  | "weekly_progress"
-  | "dependency_audit"
-  | "documentation_check";
-
-interface AutopilotTemplate {
-  id: TemplateId;
-  prompt: string;
-  icon: typeof Zap;
-  schedule: Pick<ScheduleConfig, "time" | "days">;
-}
-
-const WEEKDAYS: ScheduleConfig["days"] = {
-  kind: "weekly",
-  daysOfWeek: [1, 2, 3, 4, 5],
-};
-const MONDAY: ScheduleConfig["days"] = { kind: "weekly", daysOfWeek: [1] };
-
-const TEMPLATES: AutopilotTemplate[] = [
-  {
-    id: "daily_news",
-    prompt: `1. Search the web for news and announcements published today only (strictly today's date)
-2. Filter for topics relevant to our team and industry
-3. For each item, write a short summary including: title, source, key takeaways
-4. Compile everything into a single digest post
-5. Post the digest as a comment on this issue and @mention all workspace members`,
-    icon: Newspaper,
-    schedule: { time: { kind: "at", time: "09:00" }, days: { kind: "every" } },
-  },
-  {
-    id: "pr_review",
-    prompt: `1. List all open pull requests in the repository
-2. Identify PRs that have been open for more than 24 hours without a review
-3. For each stale PR, note the author, age, and a one-line summary of the change
-4. Post a comment on this issue listing all stale PRs with links
-5. @mention the team to remind them to review`,
-    icon: GitPullRequest,
-    schedule: { time: { kind: "at", time: "10:00" }, days: WEEKDAYS },
-  },
-  {
-    id: "bug_triage",
-    prompt: `1. List all backlog issues that have not been prioritized
-2. For each issue, read the description and any attached logs or screenshots
-3. Assess severity (critical / high / medium / low) based on user impact and scope
-4. Set the priority field on the issue accordingly
-5. Add a comment explaining your assessment and suggested next steps`,
-    icon: Bug,
-    schedule: { time: { kind: "at", time: "09:00" }, days: WEEKDAYS },
-  },
-  {
-    id: "weekly_progress",
-    prompt: `1. Gather all issues completed (status "done") in the past 7 days
-2. Gather all issues currently in progress
-3. Identify any blocked issues and their blockers
-4. Calculate key metrics: issues closed, issues opened, net change
-5. Write a structured weekly report with sections: Completed, In Progress, Blocked, Metrics
-6. Post the report as a comment on this issue`,
-    icon: BarChart3,
-    schedule: { time: { kind: "at", time: "17:00" }, days: MONDAY },
-  },
-  {
-    id: "dependency_audit",
-    prompt: `1. Run dependency audit tools on the project (npm audit, go vuln check, etc.)
-2. Identify any packages with known security vulnerabilities
-3. List outdated packages that are more than 2 major versions behind
-4. For each finding, note the severity, affected package, and recommended fix
-5. Post a summary report as a comment with actionable items`,
-    icon: Shield,
-    schedule: { time: { kind: "at", time: "08:00" }, days: MONDAY },
-  },
-  {
-    id: "documentation_check",
-    prompt: `1. List all code changes merged in the past 7 days (via git log)
-2. For each significant change, check if related documentation was updated
-3. Identify any new APIs, config options, or features missing documentation
-4. Create a list of documentation gaps with file paths and suggested content
-5. Post the findings as a comment on this issue`,
-    icon: FileSearch,
-    schedule: { time: { kind: "at", time: "14:00" }, days: MONDAY },
-  },
-];
+const CARD_SURFACE =
+  "rounded-2xl border border-border bg-card transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)";
 
 // 页内 Tab：40px 高，文字两侧留 2px，下划线压在分隔线上。
 const PAGE_TAB_TRIGGER =
   "h-full flex-none rounded-none px-0.5 group-data-horizontal/tabs:after:-bottom-px";
 
-// Cells
+// Columns follow the scroll container's width, not the viewport: the page
+// lives inside resizable shells (sidebar, desktop split panes). The container
+// only mounts once the list query resolves, so measuring keys off the mounted
+// element itself; a ref read on the page's first render would still be null
+// and leave every card on its own line.
+function useCardColumns(el: HTMLElement | null): number {
+  const [columns, setColumns] = useState(1);
 
-function CheckboxCell({
-  checked,
-  onToggle,
-}: {
-  checked: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <ListGridCell className="justify-center px-0">
-      <button
-        type="button"
-        aria-pressed={checked}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle();
-        }}
-        className={cn(
-          "-m-1.5 flex items-center p-1.5",
-          !checked &&
-            "opacity-0 transition-opacity duration-(--motion-fast) ease-out group-hover/row:opacity-100 group-hover/row:duration-(--motion-instant)",
-        )}
-      >
-        <Checkbox
-          checked={checked}
-          tabIndex={-1}
-          className="pointer-events-none"
-        />
-      </button>
-    </ListGridCell>
-  );
+  useLayoutEffect(() => {
+    if (!el) return;
+
+    const update = () =>
+      setColumns(el.clientWidth >= TWO_COLUMN_MIN_WIDTH ? 2 : 1);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [el]);
+
+  return columns;
 }
 
-function NameCell({ autopilot }: { autopilot: Autopilot }) {
-  const { t } = useT("autopilots");
-  return (
-    <ListGridCell className="gap-1.5">
-      <span className="min-w-0 truncate text-body font-medium">
-        {autopilot.title}
-      </span>
-      {/* Paused marker: in the "all" scope active and paused rows mix, so a
-          paused automation needs an inline signal. */}
-      {autopilot.status === "paused" && (
-        <span
-          title={
-            autopilot.pause_reason === "agent_runtime_required"
-              ? t(($) => $.status.paused_runtime_required)
-              : t(($) => $.status.paused)
-          }
-          className="flex shrink-0 items-center text-warning"
-        >
-          <Pause className="size-3" />
-        </span>
-      )}
-    </ListGridCell>
-  );
-}
-
-function AssigneeCell({ autopilot }: { autopilot: Autopilot }) {
-  const { getActorName } = useActorName();
-  return (
-    <ListGridCell className="gap-2">
-      <ActorAvatar
-        actorType={autopilot.assignee_type}
-        actorId={autopilot.assignee_id}
-        size="sm"
-        enableHoverCard={autopilot.assignee_type === "agent"}
-        showStatusDot={autopilot.assignee_type === "agent"}
-      />
-      <span className="min-w-0 truncate text-label text-muted-foreground">
-        {getActorName(autopilot.assignee_type, autopilot.assignee_id)}
-      </span>
-    </ListGridCell>
-  );
-}
+// Card meta line
 
 const TRIGGER_ICONS: Record<string, typeof Zap> = {
   schedule: Clock,
@@ -313,315 +121,324 @@ const TRIGGER_ICONS: Record<string, typeof Zap> = {
   api: Code,
 };
 
-function TriggerCell({ autopilot }: { autopilot: Autopilot }) {
-  const { t } = useT("autopilots");
-  const kinds = autopilot.trigger_kinds ?? [];
-  if (kinds.length === 0) {
-    return (
-      <ListGridCell className="hidden @2xl:flex">
-        <span className="text-label text-faint-foreground">—</span>
-      </ListGridCell>
-    );
-  }
-  return (
-    <ListGridCell className="hidden gap-3 @2xl:flex">
-      {kinds.map((kind) => {
-        // Server-driven enum: unknown kinds get a generic icon + raw label.
-        const Icon = TRIGGER_ICONS[kind] ?? Zap;
-        const label =
-          kind === "schedule" || kind === "webhook" || kind === "api"
-            ? t(($) => $.trigger_kind[kind])
-            : kind;
-        return (
-          <span
-            key={kind}
-            className="flex min-w-0 items-center gap-1 whitespace-nowrap text-label text-muted-foreground"
-          >
-            <Icon className="size-3.25 shrink-0" />
-            <span className="truncate">{label}</span>
-          </span>
-        );
-      })}
-    </ListGridCell>
-  );
-}
-
 // Dot color per last run outcome. Server-driven enum — unknown values fall
 // through to the neutral dot, never crash (API compatibility rule).
 function runStatusDotClass(status: string | null | undefined): string {
-  switch (status) {
-    case "completed":
-    case "issue_created":
-      return "bg-success";
-    case "failed":
-      return "bg-destructive";
-    case "skipped":
-      return "bg-warning";
-    case "running":
-      return "bg-info";
-    default:
-      return "bg-faint-foreground";
-  }
+  return status && isKnownRunStatus(status) ? RUN_VISUAL[status].dot : "bg-faint-foreground";
 }
 
-function LastRunCell({ autopilot }: { autopilot: Autopilot }) {
-  const { t } = useT("autopilots");
-  const timeAgo = useTimeAgo();
-  if (!autopilot.last_run_at) {
-    return (
-      <ListGridCell className="hidden @2xl:flex">
-        <span className="text-label text-faint-foreground">—</span>
-      </ListGridCell>
-    );
-  }
-  const status = autopilot.last_run_status;
-  const knownStatus =
-    status === "issue_created" ||
-    status === "running" ||
-    status === "completed" ||
-    status === "failed" ||
-    status === "skipped"
-      ? status
-      : null;
-  return (
-    <ListGridCell className="hidden gap-2 @2xl:flex">
-      <span
-        title={
-          knownStatus
-            ? t(($) => $.run_status[knownStatus])
-            : (status ?? undefined)
-        }
-        className={`size-1.5 shrink-0 rounded-full ${runStatusDotClass(status)}`}
-      />
-      <span className="whitespace-nowrap text-label tabular-nums text-muted-foreground">
-        {timeAgo(autopilot.last_run_at)}
-      </span>
-    </ListGridCell>
-  );
+const KNOWN_RUN_STATUSES = [
+  "issue_created",
+  "running",
+  "completed",
+  "failed",
+  "skipped",
+] as const;
+
+type KnownRunStatus = (typeof KNOWN_RUN_STATUSES)[number];
+
+function isKnownRunStatus(status: string): status is KnownRunStatus {
+  return (KNOWN_RUN_STATUSES as readonly string[]).includes(status);
 }
 
-function NextRunCell({ autopilot }: { autopilot: Autopilot }) {
-  const { i18n } = useT("autopilots");
-  const next = autopilot.next_run_at;
-  return (
-    <ListGridCell className="hidden @2xl:flex">
-      {next ? (
-        <span className="whitespace-nowrap text-label tabular-nums text-muted-foreground">
-          {formatInTimeZone(next, undefined, i18n.language)}
-        </span>
-      ) : (
-        <span className="text-label text-faint-foreground">—</span>
-      )}
-    </ListGridCell>
-  );
-}
+const META_ITEM = "flex min-w-0 shrink-0 items-center gap-1.5 whitespace-nowrap";
 
-function ModeCell({ autopilot }: { autopilot: Autopilot }) {
-  const { t } = useT("autopilots");
-  const mode = autopilot.execution_mode;
-  const label =
-    mode === "create_issue" || mode === "run_only"
-      ? t(($) => $.execution_mode[mode])
-      : mode;
-  return (
-    <ListGridCell className="hidden @2xl:flex">
-      <span className="truncate text-label text-muted-foreground">
-        {label}
-      </span>
-    </ListGridCell>
-  );
-}
-
-function CreatorCell({ autopilot }: { autopilot: Autopilot }) {
+function ActorMeta({ type, id }: { type: string; id: string }) {
   const { getActorName } = useActorName();
   return (
-    <ListGridCell className="hidden gap-2 @2xl:flex">
-      <ActorAvatar
-        actorType={autopilot.created_by_type}
-        actorId={autopilot.created_by_id}
-        size="sm"
-      />
-      <span className="min-w-0 truncate text-label text-muted-foreground">
-        {getActorName(autopilot.created_by_type, autopilot.created_by_id)}
-      </span>
-    </ListGridCell>
+    <span className={META_ITEM}>
+      <ActorAvatar actorType={type} actorId={id} size="sm" />
+      <span className="truncate">{getActorName(type, id)}</span>
+    </span>
   );
 }
 
-// Header row
-
-function AutopilotListHeader({
-  sortField,
-  sortDirection,
-  onSort,
-  allSelected,
-  someSelected,
-  onToggleAll,
-  isColVisible,
+function CardMeta({
+  autopilot,
+  isVisible,
 }: {
-  sortField: AutopilotSortField;
-  sortDirection: ListGridSortDirection;
-  onSort: (field: AutopilotSortField) => void;
-  allSelected: boolean;
-  someSelected: boolean;
-  onToggleAll: () => void;
-  isColVisible: (key: AutopilotColumnKey) => boolean;
+  autopilot: Autopilot;
+  isVisible: (key: AutopilotColumnKey) => boolean;
+}) {
+  const { t, i18n } = useT("autopilots");
+  const timeAgo = useTimeAgo();
+  const locale = useLocale();
+
+  const items: { key: AutopilotColumnKey; node: ReactNode }[] = [];
+
+  if (isVisible("assignee")) {
+    items.push({
+      key: "assignee",
+      node: (
+        <ActorMeta type={autopilot.assignee_type} id={autopilot.assignee_id} />
+      ),
+    });
+  }
+
+  const kinds = autopilot.trigger_kinds ?? [];
+  if (isVisible("trigger") && kinds.length > 0) {
+    // Server-driven enum: unknown kinds get a generic icon + raw label.
+    const Icon = TRIGGER_ICONS[kinds[0] ?? ""] ?? Zap;
+    const label = kinds
+      .map((kind) =>
+        kind === "schedule" || kind === "webhook" || kind === "api"
+          ? t(($) => $.trigger_kind[kind])
+          : kind,
+      )
+      .join(" + ");
+    items.push({
+      key: "trigger",
+      node: (
+        <span className={META_ITEM}>
+          <Icon aria-hidden="true" className="size-3.25 shrink-0" />
+          <span className="truncate">{label}</span>
+        </span>
+      ),
+    });
+  }
+
+  if (isVisible("lastRun")) {
+    const status = autopilot.last_run_status;
+    items.push({
+      key: "lastRun",
+      node: autopilot.last_run_at ? (
+        <span className={META_ITEM}>
+          <span
+            title={
+              status && isKnownRunStatus(status)
+                ? t(($) => $.run_status[status])
+                : (status ?? undefined)
+            }
+            className={cn(
+              "size-1.5 shrink-0 rounded-full",
+              runStatusDotClass(status),
+            )}
+          />
+          <span className="tabular-nums">{timeAgo(autopilot.last_run_at)}</span>
+        </span>
+      ) : (
+        <span className={cn(META_ITEM, "text-faint-foreground")}>
+          {t(($) => $.page.never_run)}
+        </span>
+      ),
+    });
+  }
+
+  if (isVisible("nextRun") && autopilot.next_run_at) {
+    items.push({
+      key: "nextRun",
+      node: (
+        <span className={cn(META_ITEM, "tabular-nums")}>
+          {t(($) => $.page.next_run_at, {
+            time: formatInTimeZone(autopilot.next_run_at, undefined, i18n.language),
+          })}
+        </span>
+      ),
+    });
+  }
+
+  if (isVisible("mode")) {
+    const mode = autopilot.execution_mode;
+    items.push({
+      key: "mode",
+      node: (
+        <span className={META_ITEM}>
+          {mode === "create_issue" || mode === "run_only"
+            ? t(($) => $.execution_mode[mode])
+            : mode}
+        </span>
+      ),
+    });
+  }
+
+  if (isVisible("creator")) {
+    items.push({
+      key: "creator",
+      node: (
+        <ActorMeta
+          type={autopilot.created_by_type}
+          id={autopilot.created_by_id}
+        />
+      ),
+    });
+  }
+
+  if (isVisible("created")) {
+    items.push({
+      key: "created",
+      node: (
+        <span className={cn(META_ITEM, "tabular-nums")}>
+          {t(($) => $.page.created_at, {
+            date: new Date(autopilot.created_at).toLocaleDateString(locale),
+          })}
+        </span>
+      ),
+    });
+  }
+
+  return (
+    <div className="flex h-5 min-w-0 items-center overflow-hidden text-label text-muted-foreground">
+      {items.map(({ key, node }, index) => (
+        <Fragment key={key}>
+          {index > 0 && (
+            <span
+              aria-hidden="true"
+              className="shrink-0 px-1.5 text-faint-foreground"
+            >
+              ·
+            </span>
+          )}
+          {node}
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+// Card
+
+function AutopilotCard({
+  autopilot,
+  isVisible,
+  linkProps,
+}: {
+  autopilot: Autopilot;
+  isVisible: (key: AutopilotColumnKey) => boolean;
+  linkProps: ReturnType<ReturnType<typeof useRowLink>>;
 }) {
   const { t } = useT("autopilots");
-  const sorted = (field: AutopilotSortField) =>
-    sortField === field ? sortDirection : false;
-  const anySelected = allSelected || someSelected;
+  const titleId = useId();
+  const preview = useMemo(
+    () => instructionsPreview(autopilot.description),
+    [autopilot.description],
+  );
+
   return (
-    <ListGridHeader className={TABLE_HEAD_BAND}>
-      <div className="flex items-center justify-center">
-        <button
-          type="button"
-          aria-pressed={allSelected}
-          onClick={onToggleAll}
-          className={`-m-1.5 flex items-center p-1.5 ${
-            anySelected
-              ? ""
-              : "opacity-0 transition-opacity group-hover/header:opacity-100"
-          }`}
-        >
-          <Checkbox
-            checked={allSelected}
-            indeterminate={someSelected && !allSelected}
-            tabIndex={-1}
-            className="pointer-events-none"
-          />
-        </button>
+    <div
+      role="listitem"
+      aria-labelledby={titleId}
+      className={cn(
+        CARD_SURFACE,
+        "group/card relative flex min-w-0 cursor-pointer flex-col gap-1.5 px-4.5 py-4",
+      )}
+      style={{ height: CARD_HEIGHT }}
+      {...linkProps}
+    >
+      <div className="flex min-w-0 items-center gap-2 pr-8">
+        <span id={titleId} className="min-w-0 truncate text-body-lg font-semibold">
+          {autopilot.title}
+        </span>
+        {/* Paused marker: in the "all" scope active and paused cards mix, so
+            a paused automation needs an inline signal. */}
+        {autopilot.status === "paused" && (
+          <span
+            title={
+              autopilot.pause_reason === DISPATCH_REASON.agentRuntimeRequired
+                ? t(($) => $.status.paused_runtime_required)
+                : t(($) => $.status.paused)
+            }
+            className="flex shrink-0 items-center text-warning"
+          >
+            <Pause className="size-3.25" />
+          </span>
+        )}
       </div>
-      <ListGridHeaderCell sorted={sorted("name")} onSort={() => onSort("name")}>
-        {t(($) => $.page.table.name)}
-      </ListGridHeaderCell>
-      {isColVisible("assignee") ? (
-        <ListGridHeaderCell>
-          {t(($) => $.page.table.assignee)}
-        </ListGridHeaderCell>
-      ) : (
-        <ListGridHeaderCell className="px-0" />
-      )}
-      {isColVisible("trigger") ? (
-        <ListGridHeaderCell className="hidden @2xl:flex">
-          {t(($) => $.page.table.trigger)}
-        </ListGridHeaderCell>
-      ) : (
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-      )}
-      {isColVisible("lastRun") ? (
-        <ListGridHeaderCell
-          className="hidden @2xl:flex"
-          sorted={sorted("lastRun")}
-          onSort={() => onSort("lastRun")}
-        >
-          {t(($) => $.page.table.last_run)}
-        </ListGridHeaderCell>
-      ) : (
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-      )}
-      {isColVisible("nextRun") ? (
-        <ListGridHeaderCell
-          className="hidden @2xl:flex"
-          sorted={sorted("nextRun")}
-          onSort={() => onSort("nextRun")}
-        >
-          {t(($) => $.page.table.next_run)}
-        </ListGridHeaderCell>
-      ) : (
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-      )}
-      {isColVisible("mode") ? (
-        <ListGridHeaderCell className="hidden @2xl:flex">
-          {t(($) => $.page.table.mode)}
-        </ListGridHeaderCell>
-      ) : (
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-      )}
-      {isColVisible("creator") ? (
-        <ListGridHeaderCell className="hidden @2xl:flex">
-          {t(($) => $.page.table.created_by)}
-        </ListGridHeaderCell>
-      ) : (
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-      )}
-      {isColVisible("created") ? (
-        <ListGridHeaderCell
-          className="hidden @2xl:flex"
-          sorted={sorted("created")}
-          onSort={() => onSort("created")}
-        >
-          {t(($) => $.page.table.created)}
-        </ListGridHeaderCell>
-      ) : (
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-      )}
-      <span aria-hidden="true" />
-    </ListGridHeader>
+      <p className="line-clamp-2 h-10 text-label leading-5 text-muted-foreground">
+        {preview}
+      </p>
+      <CardMeta autopilot={autopilot} isVisible={isVisible} />
+      <div className="absolute top-3 right-3">
+        <AutopilotRowActions row={autopilot} />
+      </div>
+    </div>
   );
 }
 
-// 骨架行名称宽度交错，避免整齐划一的条纹感。
-const SKELETON_NAME_WIDTHS = ["w-40", "w-32", "w-44", "w-28", "w-36", "w-34"];
+// 骨架卡片标题宽度交错，避免整齐划一的条纹感。
+const SKELETON_TITLE_WIDTHS = ["w-40", "w-32", "w-44", "w-28", "w-36", "w-34"];
 
 function LoadingSkeleton() {
   return (
-    <ListGrid
-      className={GRID_COLS}
-      style={columnTrackVars(
-        (key) => !AUTOPILOT_DEFAULT_HIDDEN_COLUMNS.includes(key),
-      )}
-    >
-      <ListGridHeader className={TABLE_HEAD_BAND}>
-        <span aria-hidden="true" />
-        <ListGridHeaderCell>
-          <Skeleton className="h-3 w-12 rounded-full" />
-        </ListGridHeaderCell>
-        <ListGridHeaderCell>
-          <Skeleton className="h-3 w-12 rounded-full" />
-        </ListGridHeaderCell>
-        <ListGridHeaderCell className="hidden @2xl:flex">
-          <Skeleton className="h-3 w-14 rounded-full" />
-        </ListGridHeaderCell>
-        <ListGridHeaderCell className="hidden @2xl:flex">
-          <Skeleton className="h-3 w-14 rounded-full" />
-        </ListGridHeaderCell>
-        <ListGridHeaderCell className="hidden @2xl:flex">
-          <Skeleton className="h-3 w-14 rounded-full" />
-        </ListGridHeaderCell>
-        {/* mode/creator/created are hidden by default — keep their tracks
-            mapped with empty placeholders. */}
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-        <ListGridHeaderCell className="hidden px-0 @2xl:flex" />
-        <span aria-hidden="true" />
-      </ListGridHeader>
-      {SKELETON_NAME_WIDTHS.map((width, i) => (
-        <ListGridRow key={i} className={cn(COLLECTION_ROW, "hover:bg-transparent")}>
-          <span aria-hidden="true" />
-          <ListGridCell>
-            <Skeleton className={cn("h-3.25 max-w-full rounded-full", width)} />
-          </ListGridCell>
-          <ListGridCell className="gap-2">
+    <div className="grid grid-cols-1 gap-3 @2xl:grid-cols-2">
+      {SKELETON_TITLE_WIDTHS.map((width, i) => (
+        <div
+          key={i}
+          className="flex flex-col gap-1.5 rounded-2xl border border-border px-4.5 py-4"
+          style={{ height: CARD_HEIGHT }}
+        >
+          <Skeleton className={cn("my-1 h-3.5 max-w-full rounded-full", width)} />
+          <div className="flex h-10 flex-col justify-center gap-2">
+            <Skeleton className="h-2.75 w-full rounded-full" />
+            <Skeleton className="h-2.75 w-2/3 rounded-full" />
+          </div>
+          <div className="flex h-5 items-center gap-2">
             <Skeleton className="size-5 rounded-full" />
-            <Skeleton className="h-2.75 w-12 rounded-full" />
-          </ListGridCell>
-          <ListGridCell className="hidden @2xl:flex">
             <Skeleton className="h-2.75 w-16 rounded-full" />
-          </ListGridCell>
-          <ListGridCell className="hidden @2xl:flex">
             <Skeleton className="h-2.75 w-14 rounded-full" />
-          </ListGridCell>
-          <ListGridCell className="hidden @2xl:flex">
-            <Skeleton className="h-2.75 w-14 rounded-full" />
-          </ListGridCell>
-          <ListGridCell className="hidden px-0 @2xl:flex" />
-          <ListGridCell className="hidden px-0 @2xl:flex" />
-          <ListGridCell className="hidden px-0 @2xl:flex" />
-          <span aria-hidden="true" />
-        </ListGridRow>
+          </div>
+        </div>
       ))}
-    </ListGrid>
+    </div>
+  );
+}
+
+// "New autopilot" menu: a blank start plus every template, available with
+// or without existing autopilots.
+
+function NewAutopilotMenu({
+  onCreate,
+}: {
+  onCreate: (template?: AutopilotTemplate) => void;
+}) {
+  const { t } = useT("autopilots");
+  const label = t(($) => $.page.new_autopilot);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            size="sm"
+            variant="default"
+            aria-label={label}
+            className="h-9 w-9 gap-1.5 px-0 text-body md:w-auto md:pr-3 md:pl-3.5"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+            <span className="hidden md:inline">{label}</span>
+            <ChevronDown aria-hidden="true" className="hidden size-3.5 md:inline" />
+          </Button>
+        }
+      />
+      <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuItem onClick={() => onCreate()}>
+          <Plus className="size-4" />
+          {t(($) => $.page.start_blank)}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{t(($) => $.page.from_template)}</DropdownMenuLabel>
+          {AUTOPILOT_TEMPLATES.map((tpl) => {
+            const Icon = tpl.icon;
+            return (
+              <DropdownMenuItem
+                key={tpl.id}
+                className="items-start"
+                onClick={() => onCreate(tpl)}
+              >
+                <Icon className="mt-0.5 size-4" />
+                <span className="flex min-w-0 flex-col gap-px">
+                  <span>{t(($) => $.templates[tpl.id].title)}</span>
+                  <span className="text-caption text-muted-foreground">
+                    {t(($) => $.templates[tpl.id].summary)}
+                  </span>
+                </span>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -632,7 +449,6 @@ export function AutopilotsPage() {
   const tab =
     navigation.searchParams.get("tab") === "wakeups" ? "wakeups" : "autopilots";
   const { t } = useT("autopilots");
-  const locale = useLocale();
   const wsId = useWorkspaceId();
   const wsPaths = useWorkspacePaths();
   const rowLink = useRowLink();
@@ -650,9 +466,6 @@ export function AutopilotsPage() {
   const [wakeupCreateOpen, setWakeupCreateOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
     useState<AutopilotTemplate | null>(null);
-  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
-    new Set(),
-  );
   // Persisted scope may hold a retired value (e.g. "archived" from an older
   // build) — fall back to "all" instead of stranding the user on an
   // unreachable scope.
@@ -663,24 +476,14 @@ export function AutopilotsPage() {
   const sortDirection = useAutopilotsViewStore((s) => s.sortDirection);
   const hiddenColumns = useAutopilotsViewStore((s) => s.hiddenColumns);
   const filters = useAutopilotsViewStore((s) => s.filters);
-  const handleSort = useAutopilotsViewStore((s) => s.toggleSort);
   const handleSortFieldSelect = useAutopilotsViewStore((s) => s.setSortField);
   const setSortDirection = useAutopilotsViewStore((s) => s.setSortDirection);
   const toggleColumn = useAutopilotsViewStore((s) => s.toggleColumn);
   const toggleFilter = useAutopilotsViewStore((s) => s.toggleFilter);
   const clearFilters = useAutopilotsViewStore((s) => s.clearFilters);
 
-  const isColVisible = (key: AutopilotColumnKey) =>
+  const isFieldVisible = (key: AutopilotColumnKey) =>
     !hiddenColumns.includes(key);
-
-  const toggleSelected = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   // Scope counts come from the FULL set (filters never affect them — they
   // are stage inventories, not result counts). API-archived rows (no UI
@@ -764,26 +567,20 @@ export function AutopilotsPage() {
     return filtered;
   }, [scopeRows, filters, sortField, sortDirection]);
 
-  // Row virtualization — same wiring as the skills list: headless math,
-  // offsets as padding on the body, fixed-height rows.
-  const listScrollRef = useRef<HTMLDivElement | null>(null);
+  // Card virtualization: one virtual item per line of cards, fixed height,
+  // offsets applied as padding on the list.
+  const [listScrollEl, setListScrollEl] = useState<HTMLDivElement | null>(null);
+  const columns = useCardColumns(listScrollEl);
   const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => listScrollRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 10,
+    count: Math.ceil(rows.length / columns),
+    getScrollElement: () => listScrollEl,
+    estimateSize: () => CARD_ROW_HEIGHT,
+    overscan: 5,
   });
 
   const openCreate = (template?: AutopilotTemplate) => {
     setSelectedTemplate(template ?? null);
     setCreateOpen(true);
-  };
-
-  const selectedRows = rows.filter((a) => selectedIds.has(a.id));
-  const allSelected = rows.length > 0 && selectedRows.length === rows.length;
-  const someSelected = selectedRows.length > 0 && !allSelected;
-  const handleToggleAll = () => {
-    setSelectedIds(allSelected ? new Set() : new Set(rows.map((a) => a.id)));
   };
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -798,10 +595,8 @@ export function AutopilotsPage() {
   const showEmpty = !isLoading && !listError && totalCount === 0;
 
   return (
-    // relative: positioning anchor for the batch toolbar (page-centered,
-    // not viewport-centered).
     <Tabs
-      className="relative flex flex-1 min-h-0 flex-col gap-0"
+      className="flex flex-1 min-h-0 flex-col gap-0"
       value={tab}
       onValueChange={(value) => {
         const params = new URLSearchParams(navigation.searchParams);
@@ -819,12 +614,7 @@ export function AutopilotsPage() {
         count={tab === "autopilots" ? totalCount : undefined}
         actions={
           tab === "autopilots" ? (
-            <CollectionPageHeaderAction
-              icon={Plus}
-              variant="default"
-              label={t(($) => $.page.new_autopilot)}
-              onClick={() => openCreate()}
-            />
+            <NewAutopilotMenu onCreate={openCreate} />
           ) : (
             <CollectionPageHeaderAction
               icon={Plus}
@@ -899,13 +689,13 @@ export function AutopilotsPage() {
               {t(($) => $.page.empty.hint)}
             </p>
             <div className="mt-7 grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {TEMPLATES.map((tpl) => {
+              {AUTOPILOT_TEMPLATES.map((tpl) => {
                 const Icon = tpl.icon;
                 return (
                   <button
                     key={tpl.id}
                     type="button"
-                    className="flex items-start gap-3 rounded-xl border border-border p-3.5 text-left transition-colors duration-(--motion-fast) ease-out hover:bg-accent hover:duration-(--motion-instant)"
+                    className={cn(CARD_SURFACE, "flex items-start gap-3 p-3.5 text-left")}
                     onClick={() => openCreate(tpl)}
                   >
                     <Icon className="mt-px size-5 shrink-0 text-muted-foreground" />
@@ -950,110 +740,57 @@ export function AutopilotsPage() {
               visibleCount={rows.length}
             />
             <div
-              ref={listScrollRef}
-              className={cn("min-h-0 flex-1 overflow-auto @container", COLLECTION_TABLE_INSET)}
+              ref={setListScrollEl}
+              className={cn("min-h-0 flex-1 overflow-y-auto pt-1 pb-6", COLLECTION_TABLE_INSET)}
             >
-              <ListGrid
-                className={`${GRID_COLS} @2xl:min-w-[var(--apc-minw)]`}
-                style={columnTrackVars(isColVisible)}
-              >
-                <AutopilotListHeader
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  allSelected={allSelected}
-                  someSelected={someSelected}
-                  onToggleAll={handleToggleAll}
-                  isColVisible={isColVisible}
-                />
-                <ListGridBody
+              {rows.length === 0 ? (
+                <div className="py-16 text-center text-body text-muted-foreground">
+                  {t(($) => $.page.no_matches)}
+                </div>
+              ) : (
+                <div
+                  role="list"
+                  aria-label={t(($) => $.page.title)}
                   style={{
                     paddingTop: virtualPadding.top,
-                    paddingBottom:
-                      virtualPadding.bottom + LIST_GRID_BOTTOM_CLEARANCE,
+                    paddingBottom: virtualPadding.bottom,
                   }}
                 >
-                  {rows.length === 0 && (
-                    <div className="col-span-full py-16 text-center text-body text-muted-foreground">
-                      {t(($) => $.page.no_matches)}
-                    </div>
-                  )}
                   {virtualItems.map((vi) => {
-                    const autopilot = rows[vi.index];
-                    if (!autopilot) return null;
+                    const lineCards = rows.slice(
+                      vi.index * columns,
+                      vi.index * columns + columns,
+                    );
                     return (
-                      <ListGridRow
-                        key={autopilot.id}
-                        className={cn(
-                          COLLECTION_ROW,
-                          "cursor-pointer",
-                          selectedIds.has(autopilot.id) && COLLECTION_ROW_SELECTED,
-                        )}
-                        {...rowLink(
-                          wsPaths.autopilotDetail(autopilot.id),
-                          autopilot.title,
-                        )}
+                      <div
+                        key={vi.key}
+                        role="none"
+                        className="grid"
+                        style={{
+                          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                          columnGap: CARD_GAP,
+                          paddingBottom: CARD_GAP,
+                        }}
                       >
-                        <CheckboxCell
-                          checked={selectedIds.has(autopilot.id)}
-                          onToggle={() => toggleSelected(autopilot.id)}
-                        />
-                        <NameCell autopilot={autopilot} />
-                        {isColVisible("assignee") ? (
-                          <AssigneeCell autopilot={autopilot} />
-                        ) : (
-                          <ListGridCell className="px-0" />
-                        )}
-                        {isColVisible("trigger") ? (
-                          <TriggerCell autopilot={autopilot} />
-                        ) : (
-                          <ListGridCell className="hidden px-0 @2xl:flex" />
-                        )}
-                        {isColVisible("lastRun") ? (
-                          <LastRunCell autopilot={autopilot} />
-                        ) : (
-                          <ListGridCell className="hidden px-0 @2xl:flex" />
-                        )}
-                        {isColVisible("nextRun") ? (
-                          <NextRunCell autopilot={autopilot} />
-                        ) : (
-                          <ListGridCell className="hidden px-0 @2xl:flex" />
-                        )}
-                        {isColVisible("mode") ? (
-                          <ModeCell autopilot={autopilot} />
-                        ) : (
-                          <ListGridCell className="hidden px-0 @2xl:flex" />
-                        )}
-                        {isColVisible("creator") ? (
-                          <CreatorCell autopilot={autopilot} />
-                        ) : (
-                          <ListGridCell className="hidden px-0 @2xl:flex" />
-                        )}
-                        {isColVisible("created") ? (
-                          <ListGridCell className="hidden whitespace-nowrap text-label tabular-nums text-muted-foreground @2xl:flex">
-                            {new Date(autopilot.created_at).toLocaleDateString(
-                              locale,
+                        {lineCards.map((autopilot) => (
+                          <AutopilotCard
+                            key={autopilot.id}
+                            autopilot={autopilot}
+                            isVisible={isFieldVisible}
+                            linkProps={rowLink(
+                              wsPaths.autopilotDetail(autopilot.id),
+                              autopilot.title,
                             )}
-                          </ListGridCell>
-                        ) : (
-                          <ListGridCell className="hidden px-0 @2xl:flex" />
-                        )}
-                        <ListGridCell className="justify-end px-0">
-                          <AutopilotRowActions row={autopilot} />
-                        </ListGridCell>
-                      </ListGridRow>
+                          />
+                        ))}
+                      </div>
                     );
                   })}
-                </ListGridBody>
-              </ListGrid>
+                </div>
+              )}
             </div>
           </>
         )}
-
-        <AutopilotBatchToolbar
-          rows={selectedRows}
-          onClear={() => setSelectedIds(new Set())}
-        />
 
         {createOpen && (
           <AutopilotDialog

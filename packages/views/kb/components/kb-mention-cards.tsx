@@ -21,7 +21,7 @@ import { useT, useTimeAgo } from "../../i18n";
 import { AppLink } from "../../navigation";
 import { blockPlainText, blockSection } from "../utils/kb-markdown";
 import { formatShortDate, pageTitle } from "./kb-page-body";
-import { KbStateDot, type KbDot } from "./kb-diff";
+import { KB_MR_STATUS_DOT, KbStateDot, type KbDot } from "./kb-diff";
 
 /**
  * Knowledge base links in messages and comments (spec 7.14):
@@ -291,8 +291,6 @@ function KbPageCard({ page, base, blockId }: { page: KbPage; base: KnowledgeBase
 
 // Merge request
 
-const MR_DOT: Record<KbMergeRequestDetail["status"], KbDot> = { open: "blue", merged: "green", closed: "gray" };
-
 export function KbChangeMentionCard({ mrId, label }: { mrId: string; label: string }) {
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
@@ -325,7 +323,7 @@ function KbChangeCard({ mr }: { mr: KbMergeRequestDetail }) {
     <>
       <CardSection>
         <CardRow>
-          <KbStateDot dot={MR_DOT[mr.status] ?? "gray"} />
+          <KbStateDot dot={KB_MR_STATUS_DOT[mr.status] ?? "gray"} />
           <span>
             #{mr.number} · {t(($) => $.review.status[mr.status])}
           </span>

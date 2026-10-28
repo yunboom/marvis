@@ -983,12 +983,14 @@ export const ChatMessageSchema = z.object({
   failure_reason: z.string().nullable().optional(),
   elapsed_ms: z.number().nullable().optional(),
   message_kind: z
-    .enum(["message", "no_response", "onboarding_kickoff", "onboarding_opening"])
+    .enum(["message", "no_response", "instruction", "onboarding_opening"])
     .catch("message")
     .optional(),
   // Optional additive data degrades independently: a malformed suggestion
   // must not hide the assistant reply that contains it.
   quick_actions: z.array(ChatQuickActionSchema).catch([]).optional().default([]),
+  // Who sent a user message; absent on older servers and assistant rows.
+  sender_user_id: z.string().nullable().catch(null).optional(),
 }).loose();
 
 export const ChatMessageListSchema = z.array(ChatMessageSchema).default([]);
@@ -2168,7 +2170,7 @@ const ChatLastMessageSchema = z.object({
   message_kind: z.enum([
     "message",
     "no_response",
-    "onboarding_kickoff",
+    "instruction",
     "onboarding_opening",
   ]).optional().catch(undefined),
 }).loose();
@@ -2632,6 +2634,14 @@ export const AutopilotRunSchema = z.object({
   trigger_payload: z.unknown().default(null),
   result: z.unknown().default(null),
   created_at: z.string().default(""),
+  chat_session_id: z.string().nullable().catch(null).optional(),
+  agent_id: z.string().nullable().catch(null).optional(),
+}).loose();
+
+// No default: a missing session id must fail validation so the caller does not
+// send a follow-up into a session that does not exist.
+export const AutopilotRunChatResponseSchema = z.object({
+  chat_session_id: z.string().min(1),
 }).loose();
 
 export const AutopilotQuotaUsageSchema = z.object({

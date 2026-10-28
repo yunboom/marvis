@@ -5,6 +5,7 @@ import { inboxKeys, mapArchivedInboxCache, patchArchivedInboxCaches, type Archiv
 import { onInboxInvalidate, onInboxSummaryInvalidate } from "./ws-updaters";
 import { useWorkspaceId } from "../hooks";
 import type { InboxItem } from "../types";
+import { inboxCategoryOf, type InboxCategory } from "./category";
 
 /**
  * Refresh workspace inbox lists and the account-level unread summary after a
@@ -165,17 +166,48 @@ export function useUnarchiveInbox() {
   });
 }
 
+/**
+ * Permanently delete an archived notification and its archived siblings for
+ * the same issue.
+ *
+ * Not optimistic: deletion is irreversible, so the confirmation waits for the
+ * server. Once it succeeds the group leaves the archived caches at once, then
+ * both lists refresh from the server.
+ */
+export function useDeleteArchivedInbox() {
+  const qc = useQueryClient();
+  const wsId = useWorkspaceId();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteArchivedInbox(id),
+    onSuccess: (_data, id) => {
+      let issueId: string | null | undefined;
+      for (const [, data] of qc.getQueriesData<ArchivedInboxCache>({ queryKey: inboxKeys.archived(wsId) })) {
+        if (data) mapArchivedInboxCache(data, (items) => {
+          issueId ??= items.find((item) => item.id === id)?.issue_id;
+          return items;
+        });
+      }
+      patchArchivedInboxCaches(qc, wsId, (items) => items.filter((item) =>
+        !(item.id === id || (issueId && item.issue_id === issueId))));
+    },
+    onSettled: () => {
+      refreshInboxAfterWrite(qc, wsId);
+    },
+  });
+}
+
+/** Marks the active notifications read: all of them, or one inbox tab's (`category`). */
 export function useMarkAllInboxRead() {
   const qc = useQueryClient();
   const wsId = useWorkspaceId();
   return useMutation({
-    mutationFn: () => api.markAllInboxRead(),
-    onMutate: async () => {
+    mutationFn: (category: InboxCategory | null | void) => api.markAllInboxRead(category ?? null),
+    onMutate: async (category) => {
       await qc.cancelQueries({ queryKey: inboxKeys.list(wsId) });
       const prev = qc.getQueryData<InboxItem[]>(inboxKeys.list(wsId));
       qc.setQueryData<InboxItem[]>(inboxKeys.list(wsId), (old) =>
         old?.map((item) =>
-          !item.archived ? { ...item, read: true } : item,
+          !item.archived && (!category || inboxCategoryOf(item.type) === category) ? { ...item, read: true } : item,
         ),
       );
       return { prev };
