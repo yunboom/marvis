@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchLatestRelease } from "./github-release";
+import { fetchLatestRelease, fetchRecentReleases } from "./github-release";
 
 /** The twelve desktop artifacts a finished release carries. */
 function completeAssets(version: string) {
@@ -171,5 +171,31 @@ describe("fetchLatestRelease", () => {
     const result = await fetchLatestRelease();
     expect(result.version).toBeNull();
     expect(result.assets).toEqual({});
+  });
+});
+
+describe("fetchRecentReleases", () => {
+  it("lists stable releases newest first with their parsed assets", async () => {
+    mockFetchWithReleases([
+      releasePayload({ tag: "v0.0.2-rc.1", prerelease: true }),
+      releasePayload({ tag: "v0.0.2", assets: macOnlyAssets("0.0.2") }),
+      releasePayload({ tag: "v0.0.1", assets: completeAssets("0.0.1") }),
+    ]);
+
+    const result = await fetchRecentReleases();
+    expect(result.map((r) => r.version)).toEqual(["v0.0.2", "v0.0.1"]);
+    expect(result[0]!.publishedAt).toBe("2026-08-17T10:00:00Z");
+    expect(result[0]!.assets.macArm64Dmg).toContain("mac-arm64.dmg");
+    expect(result[0]!.assets.winX64Exe).toBeUndefined();
+  });
+
+  it("returns an empty list when the API errors", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("rate limited", { status: 403 })),
+    );
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    expect(await fetchRecentReleases()).toEqual([]);
   });
 });

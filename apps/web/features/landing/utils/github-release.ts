@@ -34,8 +34,13 @@ export interface LatestRelease {
 // the page has to fall back to showing the newest one as-is. Releases
 // ship roughly daily, so that is days of head room — while staying one
 // cheap request.
-const GITHUB_RELEASES_URL =
-  "https://api.github.com/repos/yunboom/marvis/releases?per_page=5";
+const LATEST_CANDIDATES = 5;
+
+// The all-releases page lists this many recent versions; older ones stay on
+// the server-side API but are not linked from the site.
+const RELEASE_LIST_SIZE = 20;
+
+const GITHUB_RELEASES_URL = "https://api.github.com/repos/yunboom/marvis/releases";
 
 const REVALIDATE_SECONDS = 300;
 
@@ -48,7 +53,20 @@ interface GitHubReleasePayload {
   assets?: Array<{ name: string; browser_download_url: string }>;
 }
 
-export async function fetchLatestRelease(): Promise<LatestRelease> {
+/** One published version as the in-site release pages show it. */
+export interface ReleaseSummary {
+  version: string;
+  publishedAt: string | null;
+  assets: DownloadAssets;
+}
+
+/**
+ * Newest stable releases, newest first. Throws on network / API errors so
+ * each caller picks its own degradation.
+ */
+async function fetchStableReleases(
+  perPage: number,
+): Promise<GitHubReleasePayload[]> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
@@ -64,21 +82,43 @@ export async function fetchLatestRelease(): Promise<LatestRelease> {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  try {
-    const res = await fetch(GITHUB_RELEASES_URL, {
-      next: { revalidate: REVALIDATE_SECONDS },
-      headers,
-    });
-    if (!res.ok) {
-      throw new Error(`GitHub API responded ${res.status}`);
-    }
-    const data = (await res.json()) as GitHubReleasePayload[];
+  const res = await fetch(`${GITHUB_RELEASES_URL}?per_page=${perPage}`, {
+    next: { revalidate: REVALIDATE_SECONDS },
+    headers,
+  });
+  if (!res.ok) {
+    throw new Error(`GitHub API responded ${res.status}`);
+  }
+  const data = (await res.json()) as GitHubReleasePayload[];
 
-    // Defensive filter — Marvis doesn't publish prereleases or drafts
-    // today, but the endpoint returns them if that ever changes. A
-    // prerelease shadowing a stable version on /download would be a
-    // regression.
-    const stable = data.filter((r) => !r.prerelease && !r.draft);
+  // Defensive filter — Marvis doesn't publish prereleases or drafts
+  // today, but the endpoint returns them if that ever changes. A
+  // prerelease shadowing a stable version on /download would be a
+  // regression.
+  return data.filter((r) => !r.prerelease && !r.draft);
+}
+
+/** Recent stable releases for the all-releases and release-detail pages;
+ *  an empty list when GitHub cannot be reached. */
+export async function fetchRecentReleases(): Promise<ReleaseSummary[]> {
+  try {
+    const stable = await fetchStableReleases(RELEASE_LIST_SIZE);
+    return stable
+      .filter((r) => r.tag_name)
+      .map((r) => ({
+        version: r.tag_name!,
+        publishedAt: r.published_at ?? null,
+        assets: parseReleaseAssets(r.assets ?? []),
+      }));
+  } catch (err) {
+    console.warn("[download] fetchRecentReleases failed:", err);
+    return [];
+  }
+}
+
+export async function fetchLatestRelease(): Promise<LatestRelease> {
+  try {
+    const stable = await fetchStableReleases(LATEST_CANDIDATES);
     const chosen = pickRelease(stable);
     if (!chosen) {
       return emptyRelease();
