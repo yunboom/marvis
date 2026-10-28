@@ -534,7 +534,7 @@ function KbBuilderWorkspace({
                 slugError={slugError}
               />
             </div>
-            <div className="flex shrink-0 items-center justify-end gap-2.5 border-t px-5 py-3">
+            <div className="flex shrink-0 items-center justify-end gap-2.5 border-t py-3 pr-20 pl-5">
               {formError ? (
                 <p role="alert" className="mr-auto min-w-0 text-body text-destructive">
                   {formError}
