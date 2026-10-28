@@ -2227,7 +2227,10 @@ func NewRouterWithOptions(pool *pgxpool.Pool, hub *realtime.Hub, bus *events.Bus
 				r.Patch("/reorder", h.ReorderIssueStatuses)
 				r.Route("/{id}", func(r chi.Router) {
 					r.Patch("/", h.UpdateIssueStatus)
+					// DELETE on the status itself archives: installed clients
+					// depend on it. Permanent removal has its own path.
 					r.Delete("/", h.ArchiveIssueStatus)
+					r.Delete("/permanent", h.DeleteIssueStatus)
 				})
 			})
 

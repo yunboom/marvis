@@ -115,6 +115,75 @@ SELECT COUNT(*)::bigint FROM issue
 WHERE workspace_id = sqlc.arg('workspace_id')::uuid
   AND status = sqlc.arg('key')::text;
 
+-- name: ListIssueStatusKeyReferences :many
+-- Every place a status key is persisted, live configuration and history alike.
+-- Rows store the key as text, never the status id, so a deleted row whose key
+-- is still referenced would leave that reference unresolvable — and free the
+-- key for a later status to inherit the old reference. Deletion is therefore
+-- allowed only when this returns nothing. Call under the catalog lock.
+--
+-- activity_log and inbox_item have no index on the status fields; this is a
+-- rare admin action, and each EXISTS stops at the first match.
+SELECT ref::text FROM (
+    SELECT 'issue' AS ref WHERE EXISTS (
+        SELECT 1 FROM issue
+        WHERE workspace_id = sqlc.arg('workspace_id')::uuid AND status = sqlc.arg('key')::text)
+    UNION ALL
+    SELECT 'workflow' WHERE EXISTS (
+        SELECT 1 FROM issue_workflow w
+        WHERE w.workspace_id = sqlc.arg('workspace_id')::uuid
+          AND (w.initial_status_key = sqlc.arg('key')::text OR EXISTS (
+              SELECT 1 FROM jsonb_array_elements(w.steps) AS step
+              WHERE sqlc.arg('key')::text IN (step->>'status_key', step->>'next_status_key', step->>'back_status_key'))))
+    UNION ALL
+    SELECT 'pr_merge_setting' WHERE EXISTS (
+        SELECT 1 FROM workspace
+        WHERE id = sqlc.arg('workspace_id')::uuid AND settings->>'pr_merge_status' = sqlc.arg('key')::text)
+    UNION ALL
+    SELECT 'saved_view' WHERE EXISTS (
+        SELECT 1 FROM issue_view
+        WHERE workspace_id = sqlc.arg('workspace_id')::uuid
+          AND query->'statusFilters' @> jsonb_build_array(sqlc.arg('key')::text))
+    UNION ALL
+    SELECT 'wakeup' WHERE EXISTS (
+        SELECT 1 FROM issue_wakeup
+        WHERE workspace_id = sqlc.arg('workspace_id')::uuid
+          AND ((condition->>'type' = 'issue_field' AND condition->>'field' = 'status'
+                AND condition->>'value' = sqlc.arg('key')::text)
+               OR condition_state IN ('status:' || sqlc.arg('key')::text, 'issue:' || sqlc.arg('key')::text)))
+    UNION ALL
+    SELECT 'wakeup_receipt' WHERE EXISTS (
+        SELECT 1 FROM issue_wakeup_receipt r
+        JOIN issue_wakeup w ON w.id = r.wakeup_id
+        WHERE w.workspace_id = sqlc.arg('workspace_id')::uuid
+          AND jsonb_path_exists(r.payload, '$.** ? (@.status == $k || @.previous_status == $k)',
+                                jsonb_build_object('k', sqlc.arg('key')::text)))
+    UNION ALL
+    SELECT 'agent_task' WHERE EXISTS (
+        SELECT 1 FROM agent_task_queue t
+        JOIN issue i ON i.id = t.issue_id
+        WHERE i.workspace_id = sqlc.arg('workspace_id')::uuid AND t.workflow_step = sqlc.arg('key')::text)
+    UNION ALL
+    SELECT 'activity' WHERE EXISTS (
+        SELECT 1 FROM activity_log
+        WHERE workspace_id = sqlc.arg('workspace_id')::uuid AND action = 'status_changed'
+          AND sqlc.arg('key')::text IN (details->>'from', details->>'to'))
+    UNION ALL
+    SELECT 'inbox' WHERE EXISTS (
+        SELECT 1 FROM inbox_item
+        WHERE workspace_id = sqlc.arg('workspace_id')::uuid AND type = 'status_changed'
+          AND sqlc.arg('key')::text IN (details->>'from', details->>'to'))
+) AS refs;
+
+-- name: DeleteArchivedIssueStatusEntry :execrows
+-- Only an archived custom status: archiving already guaranteed no issue sits on
+-- it and no workflow lists it, and an archived status cannot gain new history.
+DELETE FROM issue_status
+WHERE id = sqlc.arg('id')::uuid
+  AND workspace_id = sqlc.arg('workspace_id')::uuid
+  AND is_system = false
+  AND archived_at IS NOT NULL;
+
 -- name: DeleteIssueStatusEntriesForWorkspace :exec
 -- No foreign keys by project rule, so workspace teardown cleans up here.
 DELETE FROM issue_status WHERE workspace_id = sqlc.arg('workspace_id')::uuid;

@@ -523,6 +523,85 @@ func (h *Handler) ArchiveIssueStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, issueStatusToResponse(archived))
 }
 
+// DeleteIssueStatus permanently removes an archived custom status whose key is
+// referenced nowhere — no issue, workflow, setting, saved view or wakeup, and
+// no history. Rows store the key as text, so deleting a referenced status would
+// leave history pointing at a key a later status could inherit.
+func (h *Handler) DeleteIssueStatus(w http.ResponseWriter, r *http.Request) {
+	entry, wsUUID, member, ok := h.loadIssueStatusForAdmin(w, r)
+	if !ok {
+		return
+	}
+
+	if entry.IsSystem {
+		writeError(w, http.StatusForbidden, "built-in statuses cannot be deleted")
+		return
+	}
+	if !entry.ArchivedAt.Valid {
+		writeJSON(w, http.StatusConflict, map[string]any{
+			"error": "cannot delete status: archive it first",
+			"code":  "issue_status_not_archived",
+		})
+		return
+	}
+
+	// Check and delete under the EXCLUSIVE catalog lock, the same one archive
+	// and workflow edits take, so the reference census holds until the commit.
+	tx, err := h.TxStarter.Begin(r.Context())
+	if err != nil {
+		slog.Warn("DeleteIssueStatus begin failed", append(logger.RequestAttrs(r), "error", err)...)
+		writeError(w, http.StatusInternalServerError, "failed to delete issue status")
+		return
+	}
+	defer tx.Rollback(r.Context())
+	qtx := h.Queries.WithTx(tx)
+
+	if err := qtx.LockIssueStatusCatalog(r.Context(), wsUUID); err != nil {
+		slog.Warn("DeleteIssueStatus lock failed", append(logger.RequestAttrs(r), "error", err)...)
+		writeError(w, http.StatusInternalServerError, "failed to delete issue status")
+		return
+	}
+	refs, err := qtx.ListIssueStatusKeyReferences(r.Context(), db.ListIssueStatusKeyReferencesParams{
+		WorkspaceID: wsUUID,
+		Key:         entry.Key,
+	})
+	if err != nil {
+		slog.Warn("DeleteIssueStatus reference check failed", append(logger.RequestAttrs(r), "error", err)...)
+		writeError(w, http.StatusInternalServerError, "failed to check status references")
+		return
+	}
+	if len(refs) > 0 {
+		writeJSON(w, http.StatusConflict, map[string]any{
+			"error":      fmt.Sprintf("cannot delete status: it is still referenced (%s)", strings.Join(refs, ", ")),
+			"code":       "issue_status_referenced",
+			"references": refs,
+		})
+		return
+	}
+
+	deleted, err := qtx.DeleteArchivedIssueStatusEntry(r.Context(), db.DeleteArchivedIssueStatusEntryParams{
+		ID:          entry.ID,
+		WorkspaceID: wsUUID,
+	})
+	if err != nil {
+		slog.Warn("DeleteIssueStatus failed", append(logger.RequestAttrs(r), "error", err)...)
+		writeError(w, http.StatusInternalServerError, "failed to delete issue status")
+		return
+	}
+	if deleted == 0 {
+		writeError(w, http.StatusNotFound, "issue status not found")
+		return
+	}
+	if err := tx.Commit(r.Context()); err != nil {
+		slog.Warn("DeleteIssueStatus commit failed", append(logger.RequestAttrs(r), "error", err)...)
+		writeError(w, http.StatusInternalServerError, "failed to delete issue status")
+		return
+	}
+
+	h.publishIssueStatusChanged(uuidToString(wsUUID), member, "deleted")
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // loadIssueStatusForAdmin resolves the {id} path param inside the caller's
 // workspace and enforces the owner/admin gate. The member it resolved is
 // returned so the write can name its actor on the realtime event.
