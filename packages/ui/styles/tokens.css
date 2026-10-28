@@ -116,6 +116,10 @@
     --radius-pane: 1.25rem;
     --radius-composer: 1.375rem;
     --radius-composer-pill: 1.625rem;
+    /* rounded-option is a selectable option row on a setup screen (14px);
+       rounded-hero is a large split hero card (28px). */
+    --radius-option: 0.875rem;
+    --radius-hero: 1.75rem;
 }
 
 /* Motion: durations and curves (Marvis motion spec). Leaving is faster than

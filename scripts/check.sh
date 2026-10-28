@@ -82,6 +82,18 @@ echo "==> Checking PostgreSQL..."
 bash scripts/ensure-postgres.sh "$ENV_FILE"
 
 # --------------------------------------------------------------------------
+# Frontend quality gates and lint: the same checks CI's frontend-build job runs
+# (.github/actions/frontend-quality), so a PR that passes here passes there.
+# --------------------------------------------------------------------------
+echo ""
+echo "==> Frontend quality checks and lint..."
+bash scripts/check-ui-wildcard-exports.test.sh || { EXIT_CODE=1; exit 1; }
+node scripts/check-ui-wildcard-exports.mjs || { EXIT_CODE=1; exit 1; }
+node --test scripts/check-ui-radius-tokens.test.mjs || { EXIT_CODE=1; exit 1; }
+node scripts/check-ui-radius-tokens.mjs || { EXIT_CODE=1; exit 1; }
+pnpm lint || { EXIT_CODE=1; exit 1; }
+
+# --------------------------------------------------------------------------
 # Step 1: TypeScript typecheck
 # --------------------------------------------------------------------------
 echo ""

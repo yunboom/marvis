@@ -560,7 +560,7 @@ function StandaloneRow({
       aria-checked={checked}
       onClick={onPick}
       className={cn(
-        "flex min-h-17 items-center gap-3 rounded-[14px] py-2 pr-3.5 pl-2.5 text-left outline-none transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        "flex min-h-17 items-center gap-3 rounded-option py-2 pr-3.5 pl-2.5 text-left outline-none transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         checked
           ? "bg-surface shadow-[0_0_0_1.5px_var(--color-foreground)]"
           : "hover:bg-surface/60",
@@ -618,7 +618,7 @@ function ServerRow({ server, checked, onPick }: ServerRowProps) {
       disabled={!server.compatible}
       onClick={onPick}
       className={cn(
-        "flex min-h-14 items-center gap-3 rounded-[14px] py-2 pr-3.5 pl-2.5 text-left outline-none transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-14 items-center gap-3 rounded-option py-2 pr-3.5 pl-2.5 text-left outline-none transition-[background-color,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50",
         checked
           ? "bg-surface shadow-[0_0_0_1.5px_var(--color-foreground)]"
           : "hover:bg-surface/60",
