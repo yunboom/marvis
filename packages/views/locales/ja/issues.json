@@ -1557,7 +1557,7 @@
       "no_handoff_step": "このステップは引き継ぎません。入っても担当者は変わらず、実行も始まりません。",
       "zone": {
         "start": "開始",
-        "middle": "作業",
+        "middle": "中間ステップ",
         "middle_caption_other": "{{count}} ステップ · 自由に並べ替え",
         "blocked": "ブロック",
         "blocked_caption": "どのステップからも移動可能",
@@ -1575,7 +1575,7 @@
         "locked": "固定ステップ",
         "optional": "任意ステップ",
         "optional_off": "任意ステップ · オフ",
-        "middle": "作業ステップ",
+        "middle": "中間ステップ",
         "new": "新しいステータス"
       },
       "lock_why": "「{{name}}」を削除できない理由",

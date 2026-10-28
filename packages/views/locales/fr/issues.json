@@ -1616,7 +1616,7 @@
       "no_handoff_step": "Cette étape ne relaie pas : le responsable ne change pas et aucune exécution ne démarre.",
       "zone": {
         "start": "Début",
-        "middle": "Travail",
+        "middle": "Étapes intermédiaires",
         "middle_caption_one": "{{count}} étape · à vous de l’ordonner",
         "middle_caption_other": "{{count}} étapes · à vous de les ordonner",
         "blocked": "Bloqué",
@@ -1635,7 +1635,7 @@
         "locked": "Étape fixe",
         "optional": "Étape facultative",
         "optional_off": "Étape facultative · désactivée",
-        "middle": "Étape de travail",
+        "middle": "Étape intermédiaire",
         "new": "Nouveau statut"
       },
       "lock_why": "Pourquoi {{name}} ne peut pas être retiré",

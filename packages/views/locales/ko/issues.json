@@ -1557,7 +1557,7 @@
       "no_handoff_step": "이 단계는 인계하지 않습니다. 들어와도 담당자는 그대로이고 실행도 시작되지 않습니다.",
       "zone": {
         "start": "시작",
-        "middle": "작업",
+        "middle": "중간 단계",
         "middle_caption_other": "{{count}}단계 · 자유롭게 정렬",
         "blocked": "차단됨",
         "blocked_caption": "어느 단계에서든 이동 가능",
@@ -1575,7 +1575,7 @@
         "locked": "고정 단계",
         "optional": "선택 단계",
         "optional_off": "선택 단계 · 꺼짐",
-        "middle": "작업 단계",
+        "middle": "중간 단계",
         "new": "새 상태"
       },
       "lock_why": "{{name}}을(를) 삭제할 수 없는 이유",
