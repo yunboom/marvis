@@ -62,27 +62,76 @@
  * the yellow of a pending annotation's dot and of the selected card's ring,
  * highlighted as well while the annotation panel is open. Clicking one
  * opens its annotations.
+ *
+ * The underline is a background line rather than a text decoration so it can
+ * be composed with a link's: a descendant cannot hide or recolor an
+ * ancestor's text decoration, but a descendant's background paints over its
+ * ancestor's. The bottom padding sets the line below the text as far as the
+ * old 4px underline offset; the second, empty layer clips the highlight and
+ * the flash to the text so they keep their size. Each wrapped line fragment
+ * gets its own line.
  */
+.kb-doc {
+  --kb-underline-offset: 3px;
+  --kb-annotation-line: 2px;
+  --kb-link-line: 1px;
+  --kb-underline-dash: 4px;
+}
+
 .kb-doc mark.kb-annotated {
   cursor: pointer;
   border-radius: 0;
+  padding-bottom: var(--kb-underline-offset);
   background-color: transparent;
-  text-decoration-line: underline;
-  text-decoration-color: var(--color-warning);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
-  text-decoration-skip-ink: none;
+  background-image: linear-gradient(var(--color-warning), var(--color-warning)), none;
+  background-size: 100% var(--kb-annotation-line);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-clip: border-box, content-box;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /*
- * An annotated sentence on link text keeps the link's color but only the
- * yellow underline: a link inside the mark drops its own line so the mark's
- * shows, and a link holding the mark drops its line too, since a descendant
- * cannot hide an ancestor's.
+ * A link holding an annotated sentence draws its currentColor underline the
+ * same way, at the annotation's offset so the two lines meet.
  */
-.kb-doc mark.kb-annotated a,
-.kb-doc .rich-text-editor a:has(mark.kb-annotated) {
+.kb-doc .rich-text-editor a:has(mark.kb-annotated),
+.kb-doc .rich-text-editor a:has(mark.kb-annotated):hover {
+  padding-bottom: var(--kb-underline-offset);
   text-decoration-line: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 100% var(--kb-link-line);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/*
+ * Where an annotated sentence and a link overlap, the line alternates short
+ * yellow and link-colored dashes so both read: the inner element paints the
+ * dashes over the outer one's solid line. Citation markers sit raised and
+ * keep no line.
+ */
+.kb-doc .rich-text-editor a mark.kb-annotated,
+.kb-doc mark.kb-annotated a:not([href^="#kb-cite-"]),
+.kb-doc mark.kb-annotated a:not([href^="#kb-cite-"]):hover {
+  padding-bottom: var(--kb-underline-offset);
+  text-decoration-line: none;
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--color-warning) 0 var(--kb-underline-dash),
+      currentColor var(--kb-underline-dash) calc(2 * var(--kb-underline-dash))
+    ),
+    none;
+  background-size: 100% var(--kb-annotation-line);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-clip: border-box, content-box;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .kb-doc.kb-annotations-open mark.kb-annotated {
