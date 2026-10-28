@@ -95,7 +95,7 @@ export function ChatQueue({
             // 14px hidden behind the composer plus a visible 4px breathing room.
             // mx-3.5 pulls the rear card in from the composer's edges so the
             // stack reads as two distinct layers.
-            "mx-3.5 overflow-hidden rounded-t-[18px] bg-muted pb-4.5",
+            "mx-3.5 overflow-hidden rounded-t-xl bg-muted pb-4.5",
             "animate-in fade-in slide-in-from-bottom-2 duration-300",
           )}
         >
@@ -112,7 +112,7 @@ export function ChatQueue({
                 <div
                   key={task.task_id}
                   data-slot="chat-queue-row"
-                  className="flex min-h-8.5 min-w-0 items-center gap-2 rounded-[10px] pr-1 pl-2.5 text-label transition-colors hover:bg-surface-selected animate-in fade-in duration-200"
+                  className="flex min-h-8.5 min-w-0 items-center gap-2 rounded-tile pr-1 pl-2.5 text-label transition-colors hover:bg-surface-selected animate-in fade-in duration-200"
                 >
                   <ListEnd
                     data-slot="chat-queue-item-icon"

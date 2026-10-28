@@ -49,7 +49,7 @@ function formatDate(date: string, locale: string): string {
 // wrapper's own outline would be a square box around the card); the peeked
 // color wins when both apply.
 const BOARD_CARD_SURFACE =
-  "rounded-[12px] bg-card px-3.5 py-3 shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_1px_2px_rgb(0_0_0/0.04)] transition-shadow duration-(--motion-fast) ease-out dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] group-hover/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] group-hover/card:duration-(--motion-instant) group-data-[popup-open]/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] dark:group-hover/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] dark:group-data-[popup-open]/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] group-focus-visible/card:ring-[1.5px] group-focus-visible/card:ring-ring group-has-[>a:focus-visible]/card:ring-[1.5px] group-has-[>a:focus-visible]/card:ring-ring group-data-[peeked]/card:ring-[1.5px] group-data-[peeked]/card:ring-foreground!";
+  "rounded-lg bg-card px-3.5 py-3 shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_1px_2px_rgb(0_0_0/0.04)] transition-shadow duration-(--motion-fast) ease-out dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.06)] group-hover/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] group-hover/card:duration-(--motion-instant) group-data-[popup-open]/card:shadow-[0_0_0_1px_rgb(0_0_0/0.09),0_1px_3px_rgb(0_0_0/0.06)] dark:group-hover/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] dark:group-data-[popup-open]/card:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] group-focus-visible/card:ring-[1.5px] group-focus-visible/card:ring-ring group-has-[>a:focus-visible]/card:ring-[1.5px] group-has-[>a:focus-visible]/card:ring-ring group-data-[peeked]/card:ring-[1.5px] group-data-[peeked]/card:ring-foreground!";
 
 // Inline meta item on the project / labels line: plain muted text, no pill.
 const BOARD_CARD_META_ITEM = "inline-flex min-w-0 items-center gap-1";
@@ -125,7 +125,7 @@ export function DragLift({ children, className }: { children: ReactNode; classNa
       {...{ [DRAG_LIFT_ATTR]: "" }}
       data-lifted={lifted ? "" : undefined}
       className={cn(
-        "cursor-grabbing rounded-[12px] transition-[scale,rotate,box-shadow] duration-(--motion-fast) ease-out motion-reduce:transition-none data-[lifted]:scale-[1.02] data-[lifted]:rotate-[1.5deg] data-[lifted]:shadow-menu",
+        "cursor-grabbing rounded-lg transition-[scale,rotate,box-shadow] duration-(--motion-fast) ease-out motion-reduce:transition-none data-[lifted]:scale-[1.02] data-[lifted]:rotate-[1.5deg] data-[lifted]:shadow-menu",
         className,
       )}
     >

@@ -6,7 +6,7 @@ import {
   resetDiagnosticContext,
   setDiagnosticRoute,
 } from "./diagnostic-context";
-import { paths } from "../paths";
+import { KB_MANAGE_TABS, paths } from "../paths";
 
 afterEach(() => {
   resetDiagnosticContext();
@@ -165,9 +165,15 @@ describe("route coverage stays in step with paths.ts", () => {
       root: paths.root,
     } as Record<string, (...args: string[]) => string>;
 
-    return [...Object.values(scoped), ...Object.values(global)].map((build) =>
-      build(RAW_ID, RAW_SECOND_ID),
-    );
+    // kbManage's second argument is a closed tab set, not an id, so it is
+    // built once per real tab instead of with a raw value.
+    const { kbManage, ...rest } = scoped;
+    return [
+      ...[...Object.values(rest), ...Object.values(global)].map((build) =>
+        build(RAW_ID, RAW_SECOND_ID),
+      ),
+      ...KB_MANAGE_TABS.map((tab) => kbManage!(RAW_ID, tab)),
+    ];
   }
 
   it("never lets a slug or an id through, for any builder", () => {

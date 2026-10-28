@@ -232,9 +232,13 @@ describe("preview theme isolation", () => {
 
 describe("Dialog motion token contract", () => {
   it("preserves default timing and round trips edited motion through history, persistence and export", () => {
-    expect(baseline.shared["--dialog-enter-duration"]).toBe("50ms");
-    expect(baseline.shared["--dialog-exit-duration"]).toBe("50ms");
-    expect(baseline.shared["--dialog-enter-easing"]).toBe("ease-out");
+    expect(baseline.shared["--dialog-enter-duration"]).toBe(
+      "var(--motion-base)",
+    );
+    expect(baseline.shared["--dialog-exit-duration"]).toBe(
+      "var(--motion-instant)",
+    );
+    expect(baseline.shared["--dialog-enter-easing"]).toBe("var(--ease-out)");
     let draft = updateToken(
       emptyDraft(),
       "shared",
@@ -271,7 +275,12 @@ describe("Dialog motion token contract", () => {
         .present,
     ).toEqual(draft);
     expect(
-      updateToken(draft, "shared", "--dialog-enter-duration", "50ms").shared,
+      updateToken(
+        draft,
+        "shared",
+        "--dialog-enter-duration",
+        "var(--motion-base)",
+      ).shared,
     ).not.toHaveProperty("--dialog-enter-duration");
   });
   it("rejects incorrect units, unbounded timings and arbitrary easing CSS", () => {

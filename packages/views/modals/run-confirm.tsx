@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -108,6 +108,7 @@ export function RunConfirmModal({
   // spinner (the write is not instant — the disabled-only state read as frozen).
   const [pendingAction, setPendingAction] = useState<"go" | "suppress" | null>(null);
   const submitting = pendingAction !== null;
+  const confirmRef = useRef<HTMLButtonElement>(null);
 
   const updateIssue = useUpdateIssue();
   const batchUpdate = useBatchUpdateIssues();
@@ -231,7 +232,16 @@ export function RunConfirmModal({
           phrases, not "Cancel"/"Save". In French they measure ~435px with the
           send-shortcut keycaps against the 352px the default leaves, so the
           dialog's overflow-auto showed a horizontal scrollbar. */}
-      <DialogContent className="sm:max-w-lg" onKeyDown={onDialogKeyDown}>
+      {/* Initial focus goes to the confirm button, not the dialog's first
+          tabbable control ("Don't start yet"). With `send` on plain Enter (the
+          default) the handler yields to a focused button, so whichever button
+          holds focus is what Enter does, and it must be the action the keycap
+          advertises. */}
+      <DialogContent
+        className="sm:max-w-lg"
+        initialFocus={confirmRef}
+        onKeyDown={onDialogKeyDown}
+      >
         <DialogHeader>
           <DialogTitle>
             {isPromote
@@ -249,7 +259,12 @@ export function RunConfirmModal({
           <Button type="button" variant="outline" disabled={submitting} onClick={() => submit(true)}>
             {pendingAction === "suppress" ? <Spinner className="size-4" /> : t(($) => $.run_confirm.dont_start)}
           </Button>
-          <Button type="button" disabled={submitting} onClick={() => submit(false)}>
+          <Button
+            ref={confirmRef}
+            type="button"
+            disabled={submitting}
+            onClick={() => submit(false)}
+          >
             {pendingAction === "go" ? (
               <Spinner className="size-4" />
             ) : (

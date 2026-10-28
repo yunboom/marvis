@@ -164,7 +164,7 @@ function KbSearchResults({ query, data, isError, onPick, baseNames }: KbSearchRe
               <AppLink
                 href={hitHref(p.kbPage, hit)}
                 onClick={onPick}
-                className="flex flex-col gap-[3px] rounded-[10px] p-2.5 hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-none"
+                className="flex flex-col gap-[3px] rounded-tile p-2.5 hover:bg-surface-hover focus-visible:bg-surface-hover focus-visible:outline-none"
               >
                 <span className="flex min-w-0 items-baseline gap-2">
                   <span className="shrink-0 font-medium">{hit.title}</span>

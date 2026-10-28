@@ -66,7 +66,7 @@ function ActorAvatar({
         className,
         // The shape class stays last so a call-site `className` can never
         // override it — avatar shape is a hard invariant, not a per-site choice.
-        square ? "rounded-[28%]" : "rounded-full"
+        square ? "rounded-avatar" : "rounded-full"
       )}
       style={{ width: diameter, height: diameter, fontSize: scaled(0.45) }}
     >
