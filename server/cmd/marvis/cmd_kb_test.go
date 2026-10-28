@@ -68,25 +68,23 @@ func runKbTestCmd(t *testing.T, c *cobra.Command, args ...string) (string, error
 	return captureStdout(t, func() error { return c.RunE(c, c.Flags().Args()) })
 }
 
-func TestKbDraftCreateSendsJob(t *testing.T) {
+func TestKbDraftCreateRequest(t *testing.T) {
 	seen := newKbTestServer(t, http.StatusCreated, map[string]any{"id": "d1", "version": 0, "status": "open"})
 
-	out, err := runKbTestCmd(t, kbDraftCreateCmd, "team", "--title", "Daily", "--job", "11111111-1111-4111-8111-111111111111")
+	out, err := runKbTestCmd(t, kbDraftCreateCmd, "team", "--title", "Daily")
 	if err != nil {
 		t.Fatalf("draft create: %v", err)
 	}
 	req := (*seen)[0]
 	if req.Method != http.MethodPost || req.Path != "/api/kb/drafts" ||
-		req.Body["knowledge_base"] != "team" || req.Body["title"] != "Daily" || req.Body["job_id"] != "11111111-1111-4111-8111-111111111111" {
+		req.Body["knowledge_base"] != "team" || req.Body["title"] != "Daily" {
 		t.Errorf("request = %+v", req)
+	}
+	if _, ok := req.Body["job_id"]; ok {
+		t.Errorf("job_id sent: %+v", req.Body)
 	}
 	if !strings.Contains(out, `"id": "d1"`) {
 		t.Errorf("output = %s", out)
-	}
-
-	_, _ = runKbTestCmd(t, kbDraftCreateCmd, "team")
-	if _, ok := (*seen)[1].Body["job_id"]; ok {
-		t.Errorf("job_id sent without --job: %+v", (*seen)[1].Body)
 	}
 }
 
@@ -277,7 +275,7 @@ func TestKbDraftFlagHelp(t *testing.T) {
 			t.Errorf("%s --draft help = %q", c.CommandPath(), usage)
 		}
 	}
-	if !strings.Contains(kbDraftCreateCmd.Long, "One merge request\nhas one draft") || kbDraftCreateCmd.Flags().Lookup("job") == nil {
+	if !strings.Contains(kbDraftCreateCmd.Long, "One merge request has one draft") || kbDraftCreateCmd.Flags().Lookup("job") != nil {
 		t.Errorf("kb draft create help = %q", kbDraftCreateCmd.Long)
 	}
 }

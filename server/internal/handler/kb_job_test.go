@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -98,6 +97,17 @@ func asJobAgent(runtimeOwner, agentID, taskID string) func(*http.Request) {
 	}
 }
 
+// createKbJobDraft creates a draft as the agent running in the job's chat,
+// which links it to the job.
+func createKbJobDraft(t *testing.T, f kbJobFixture, jobID string) string {
+	t.Helper()
+
+	var taskID string
+	dbfx.QueryRow(t, `SELECT t.id FROM agent_task_queue t JOIN kb_job j ON j.chat_session_id = t.chat_session_id WHERE j.id = $1 ORDER BY t.created_at LIMIT 1`, jobID).Scan(&taskID)
+
+	return createKbDraftAs(t, f.slug, asJobAgent(testUserID, f.agentID, taskID))
+}
+
 // kbEventRecorder collects one event type for the given knowledge base.
 type kbEventRecorder struct {
 	mu     sync.Mutex
@@ -153,23 +163,10 @@ func TestKbJobFlow(t *testing.T) {
 	}
 	sessionID, _ := created["chat_session_id"].(string)
 
-	// The first message is the 08.4 + 08.5 template with the job id and the
-	// annotation brought in.
-	var content string
-	dbfx.QueryRow(t, `SELECT content FROM chat_message WHERE chat_session_id = $1 AND role = 'user'`, sessionID).Scan(&content)
-	want, err := kb.JobFirstMessage(kb.JobMessageInput{
-		Name: "Job KB", Slug: f.slug, JobID: jobID, Starter: kb.StarterAnnotations, JobName: "处理批注",
-		Message: "Handle the annotation.",
-		Annotations: []kb.JobAnnotation{{
-			ID: f.annotationID, Where: "`" + f.slug + ":/callback#^" + blockIDsOf(t, kbFetch(t, f.pageID, "detail=with-ids", http.StatusOK))[1] + "`",
-			Quote: "Dedup by order id.", Body: "It is the channel transaction id now.",
-		}},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if content != want {
-		t.Fatalf("first message:\n%s\nwant:\n%s", content, want)
+	// The first message is the member's request as sent; handling
+	// annotations needs no hidden instruction.
+	if got := kbJobInput(t, sessionID); len(got) != 1 || got[0] != (kbJobInputRow{protocol.ChatMessageKindMessage, "Handle the annotation."}) {
+		t.Fatalf("first turn input = %+v", got)
 	}
 
 	// The job's chat stays out of the chat list.
@@ -200,10 +197,15 @@ func TestKbJobFlow(t *testing.T) {
 	var taskID string
 	dbfx.QueryRow(t, `SELECT id FROM agent_task_queue WHERE chat_session_id = $1`, sessionID).Scan(&taskID)
 	agent := asJobAgent(runtimeOwner, f.agentID, taskID)
-	draftID := createKbDraftAs(t, f.slug, func(r *http.Request) {
-		agent(r)
-		r.Body = jsonBody(map[string]any{"knowledge_base": f.slug, "job_id": jobID})
-	})
+	// No job id: running in the job's chat links the draft to the job.
+	draftReq := newRequest(http.MethodPost, "/api/kb/drafts", map[string]any{"knowledge_base": f.slug, "title": "t"})
+	agent(draftReq)
+	var draft KbDraftResponse
+	testutil.Call(t, testHandler.CreateKbDraft, draftReq).Want(http.StatusCreated).JSON(&draft)
+	if draft.JobID == nil || *draft.JobID != jobID {
+		t.Fatalf("draft created in the job chat = %+v, want job %s", draft, jobID)
+	}
+	draftID := draft.ID
 	if n := len(jobEvents.all()); n < 2 {
 		t.Errorf("kb.job.updated events = %d, want job created and draft linked", n)
 	}
@@ -372,12 +374,146 @@ func TestCreateKbJobRejects(t *testing.T) {
 		t.Errorf("rejected requests left %d jobs", n)
 	}
 
-	// A page brought in by "check this page" names it in the first message.
+	// A page brought in by "check this page" is kept on the job.
 	created := createKbJob(t, f.slug, body(map[string]any{"page_id": f.pageID}), http.StatusCreated)
-	var content string
-	dbfx.QueryRow(t, `SELECT content FROM chat_message WHERE chat_session_id = $1`, created["chat_session_id"]).Scan(&content)
-	if !strings.Contains(content, "Scope: the page Callback (`"+f.slug+":/callback`)") || created["page_id"] != f.pageID {
-		t.Errorf("health job first message:\n%s", content)
+	if created["page_id"] != f.pageID {
+		t.Errorf("health job page = %v", created["page_id"])
+	}
+}
+
+// kbJobInputRow is one user row of a job's first turn.
+type kbJobInputRow struct {
+	kind, content string
+}
+
+// kbJobInput reads the first turn's input batch in the order the agent
+// receives it.
+func kbJobInput(t *testing.T, sessionID string) []kbJobInputRow {
+	t.Helper()
+
+	rows, err := testPool.Query(context.Background(), `
+		SELECT message_kind, content FROM chat_message
+		WHERE chat_session_id = $1 AND role = 'user'
+		ORDER BY created_at, id`, sessionID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	var out []kbJobInputRow
+	for rows.Next() {
+		var row kbJobInputRow
+		if err := rows.Scan(&row.kind, &row.content); err != nil {
+			t.Fatal(err)
+		}
+		out = append(out, row)
+	}
+
+	return out
+}
+
+// TestCreateKbJobStoresTheVisibleMessage: the member's request is stored and
+// shown exactly as sent. Starters whose request is a multi-step process add
+// their steps as a hidden instruction ahead of it in the same turn; the
+// member's chat never lists it.
+func TestCreateKbJobStoresTheVisibleMessage(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	f := newKbJobFixture(t)
+	visible := "把下面的资料收录进[Job KB](mention://kb/" + f.baseID + ")：\n- `spec-v3.pdf`\n- `渠道对接.md`"
+	created := createKbJob(t, f.slug, map[string]any{
+		"agent_id": f.agentID, "starter": kb.StarterIngest, "name": "收录资料", "message": visible,
+	}, http.StatusCreated)
+	sessionID, _ := created["chat_session_id"].(string)
+
+	instruction, err := kb.JobInstruction(kb.StarterIngest)
+	if err != nil || instruction == "" {
+		t.Fatalf("ingest instruction = %q, %v", instruction, err)
+	}
+	want := []kbJobInputRow{{protocol.ChatMessageKindInstruction, instruction}, {protocol.ChatMessageKindMessage, visible}}
+	if got := kbJobInput(t, sessionID); !slices.Equal(got, want) {
+		t.Fatalf("first turn input = %+v\nwant %+v", got, want)
+	}
+
+	// The member's chat shows the request alone, unchanged.
+	req := withChatTestWorkspaceCtx(t, testutil.WithURLParams(newRequest(http.MethodGet, "/api/chat/sessions/x/messages", nil), "sessionId", sessionID))
+	var shown []ChatMessageResponse
+	testutil.Call(t, testHandler.ListChatMessages, req).Want(http.StatusOK).JSON(&shown)
+	if len(shown) != 1 || shown[0].Content != visible || shown[0].MessageKind != protocol.ChatMessageKindMessage {
+		t.Errorf("member's chat = %+v", shown)
+	}
+
+	// A free-text job sends the member's text alone.
+	custom := createKbJob(t, f.slug, map[string]any{
+		"agent_id": f.agentID, "starter": kb.StarterCustom, "message": "把退款排障那页拆成两页",
+	}, http.StatusCreated)
+	customSession, _ := custom["chat_session_id"].(string)
+	if got := kbJobInput(t, customSession); len(got) != 1 || got[0] != (kbJobInputRow{protocol.ChatMessageKindMessage, "把退款排障那页拆成两页"}) {
+		t.Errorf("custom job input = %+v", got)
+	}
+}
+
+// TestCreateKbDraftLinksTheJobOfTheCallingChat: an agent's kb draft create in
+// a job's chat links the draft to that job; a draft created anywhere else, or
+// for another knowledge base, stays unlinked, and a job_id in the body links
+// nothing; a second draft in the same job is refused with the first one's id.
+func TestCreateKbDraftLinksTheJobOfTheCallingChat(t *testing.T) {
+	if testHandler == nil || testPool == nil {
+		t.Skip("database not available")
+	}
+
+	f := newKbJobFixture(t)
+	startJob := func() (jobID, taskID string) {
+		created := createKbJob(t, f.slug, map[string]any{"agent_id": f.agentID, "starter": kb.StarterCustom, "message": "m"}, http.StatusCreated)
+		jobID, _ = created["id"].(string)
+		dbfx.QueryRow(t, `SELECT id FROM agent_task_queue WHERE chat_session_id = $1`, created["chat_session_id"]).Scan(&taskID)
+
+		return jobID, taskID
+	}
+	createDraft := func(baseRef string, body map[string]any, mutate func(*http.Request), want int) map[string]any {
+		body["knowledge_base"] = baseRef
+		req := newRequest(http.MethodPost, "/api/kb/drafts", body)
+		if mutate != nil {
+			mutate(req)
+		}
+
+		return testutil.Call(t, testHandler.CreateKbDraft, req).Want(want).Map()
+	}
+
+	jobID, taskID := startJob()
+	inJob := asJobAgent(testUserID, f.agentID, taskID)
+	first := createDraft(f.slug, map[string]any{}, inJob, http.StatusCreated)
+	if first["job_id"] != jobID {
+		t.Fatalf("draft in the job chat = %v, want job %s", first, jobID)
+	}
+	if got := createDraft(f.slug, map[string]any{}, inJob, http.StatusConflict); got["code"] != kbCodeJobDraftExists || got["draft_id"] != first["id"] {
+		t.Errorf("second draft in the job chat = %v", got)
+	}
+
+	// Another knowledge base from inside the job chat: no link.
+	other := insertTestKbBase(t, "Other", f.slug+"-o")
+	if got := createDraft(other, map[string]any{}, inJob, http.StatusCreated); got["job_id"] != nil {
+		t.Errorf("draft of another knowledge base = %v", got)
+	}
+
+	// A task outside any job chat: no link.
+	outside := dbfx.Task(t, f.agentID, testutil.Cols{"runtime_id": handlerTestRuntimeID(t)})
+	if got := createDraft(f.slug, map[string]any{}, asJobAgent(testUserID, f.agentID, outside), http.StatusCreated); got["job_id"] != nil {
+		t.Errorf("draft outside a job chat = %v", got)
+	}
+	if got := createDraft(f.slug, map[string]any{}, nil, http.StatusCreated); got["job_id"] != nil {
+		t.Errorf("member's draft = %v", got)
+	}
+
+	// A job_id in the body is not read: the draft stays unlinked.
+	otherJob, _ := startJob()
+	if got := createDraft(f.slug, map[string]any{"job_id": otherJob}, nil, http.StatusCreated); got["job_id"] != nil {
+		t.Errorf("draft with job_id in the body = %v", got)
+	}
+	if n := dbfx.Count(t, `SELECT count(*) FROM kb_job_draft WHERE job_id = $1`, otherJob); n != 0 {
+		t.Errorf("job_id in the body linked %d drafts", n)
 	}
 }
 
@@ -398,9 +534,7 @@ func TestKbJobDraftEndings(t *testing.T) {
 		return jobID, sessionID
 	}
 	linkDraft := func(jobID string) string {
-		return createKbDraftAs(t, f.slug, func(r *http.Request) {
-			r.Body = jsonBody(map[string]any{"knowledge_base": f.slug, "job_id": jobID})
-		})
+		return createKbJobDraft(t, f, jobID)
 	}
 
 	// Empty draft: nothing to submit.

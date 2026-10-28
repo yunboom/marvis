@@ -244,7 +244,7 @@ export function ChatMessageList({
   }, [messages]);
 
   // Mika's onboarding opening self-describes (message_kind stamped by the
-  // completion path — the hidden kickoff row never reaches clients) and
+  // completion path — the hidden instruction row never reaches clients) and
   // carries the product's starter cards instead of that turn's quick-action
   // chips (MUL-5765).
   const starterCardsMessageId = useMemo(
@@ -279,12 +279,11 @@ export function ChatMessageList({
   // Persisted messages plus, while a task is in flight, one synthetic trailing
   // row for it. When the assistant message persists, `hasLive` goes false and
   // the message takes the SAME key at the SAME position — an in-place data
-  // swap, not a remount. The onboarding kickoff is a server-authored carrier
-  // for Mika's first task, not something the member typed, so it never becomes
-  // a visible bubble.
+  // swap, not a remount. A hidden instruction is product-authored input the
+  // member never typed, so it never becomes a visible bubble.
   const renderItems: ChatRenderItem[] = useMemo(() => {
     const items: ChatRenderItem[] = messages
-      .filter((message) => message.message_kind !== "onboarding_kickoff")
+      .filter((message) => message.message_kind !== "instruction")
       .map((message) => ({
         key: messageRowKey(message),
         kind: "message" as const,

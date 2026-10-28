@@ -37,22 +37,21 @@ var kbDiffKinds = map[string]string{
 	kb.DiffDeleted: kbDiffDelete,
 }
 
-// CreateKbDraftRequest starts a draft. JobID links it to a knowledge base
-// job in the same transaction.
+// CreateKbDraftRequest starts a draft.
 type CreateKbDraftRequest struct {
-	KnowledgeBase string  `json:"knowledge_base"`
-	Title         string  `json:"title"`
-	JobID         *string `json:"job_id"`
+	KnowledgeBase string `json:"knowledge_base"`
+	Title         string `json:"title"`
 }
 
 // KbDraftResponse is a created draft. The task that created it is recorded
-// but not returned.
+// but not returned; JobID names the job the draft was linked to, if any.
 type KbDraftResponse struct {
-	ID              string `json:"id"`
-	KnowledgeBaseID string `json:"knowledge_base_id"`
-	Title           string `json:"title"`
-	Version         int64  `json:"version"`
-	Status          string `json:"status"`
+	ID              string  `json:"id"`
+	KnowledgeBaseID string  `json:"knowledge_base_id"`
+	Title           string  `json:"title"`
+	Version         int64   `json:"version"`
+	Status          string  `json:"status"`
+	JobID           *string `json:"job_id,omitempty"`
 }
 
 // KbDraftDiffLine is one line of a changed page's diff.
@@ -122,8 +121,9 @@ type KbSyncResponse struct {
 }
 
 // CreateKbDraft starts a draft (POST /api/kb/drafts). Called with a task
-// token it records the task in kb_draft.task_id; with job_id it links the
-// draft to that knowledge base job.
+// token it records the task in kb_draft.task_id, and an agent running in a
+// knowledge base job's chat gets its draft linked to that job, so the job id
+// never has to travel through the conversation.
 func (h *Handler) CreateKbDraft(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, ok := requireUserID(w, r)
@@ -145,19 +145,22 @@ func (h *Handler) CreateKbDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var jobID pgtype.UUID
-	if req.JobID != nil && *req.JobID != "" {
-		if jobID, ok = parseUUIDOrBadRequest(w, *req.JobID, "job_id"); !ok {
-			return
-		}
-	}
-
 	actorType, actorID := h.resolveActor(r, userID, uuidToString(base.WorkspaceID))
 	var task *db.AgentTaskQueue
 	if actorType == kbActorAgent {
 		if t, found := h.taskFromRequestHeader(r); found {
 			task = &t
 		}
+	}
+
+	var jobID pgtype.UUID
+	if task != nil {
+		found, err := h.kbJobOfTaskChat(ctx, base, *task)
+		if err != nil {
+			h.writeKbInternalError(w, r, err)
+			return
+		}
+		jobID = found
 	}
 
 	tx, err := h.TxStarter.Begin(ctx)
@@ -186,7 +189,7 @@ func (h *Handler) CreateKbDraft(w http.ResponseWriter, r *http.Request) {
 
 	var job *db.KbJob
 	if jobID.Valid {
-		linked, err := linkKbJobDraft(ctx, qtx, base, draft, jobID, userID, actorType, actorID, task)
+		linked, err := linkKbJobDraft(ctx, qtx, base, draft, jobID, userID)
 		if err != nil {
 			h.writeKbError(w, r, err)
 			return
@@ -207,19 +210,48 @@ func (h *Handler) CreateKbDraft(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	writeJSON(w, http.StatusCreated, KbDraftResponse{
+	resp := KbDraftResponse{
 		ID:              uuidToString(draft.ID),
 		KnowledgeBaseID: uuidToString(draft.KnowledgeBaseID),
 		Title:           draft.Title,
 		Version:         draft.Version,
 		Status:          draft.Status,
-	})
+	}
+	if job != nil {
+		id := uuidToString(job.ID)
+		resp.JobID = &id
+	}
+
+	writeJSON(w, http.StatusCreated, resp)
 }
 
-// linkKbJobDraft links a new draft to a job: the job must be of the same
-// knowledge base, the caller its creator or the agent running in its chat,
-// and the job must not have a draft yet.
-func linkKbJobDraft(ctx context.Context, q *db.Queries, base db.KbBase, draft db.KbDraft, jobID pgtype.UUID, userID, actorType, actorID string, task *db.AgentTaskQueue) (db.KbJob, error) {
+// kbJobOfTaskChat finds the job of this knowledge base whose chat the task
+// runs in. A task outside any job chat, or in the chat of another knowledge
+// base's job, gets no job.
+func (h *Handler) kbJobOfTaskChat(ctx context.Context, base db.KbBase, task db.AgentTaskQueue) (pgtype.UUID, error) {
+	if !task.ChatSessionID.Valid {
+		return pgtype.UUID{}, nil
+	}
+
+	job, err := h.Queries.GetKbJobByChatSession(ctx, db.GetKbJobByChatSessionParams{WorkspaceID: base.WorkspaceID, ChatSessionID: task.ChatSessionID})
+	if err != nil {
+		if isNotFound(err) {
+			return pgtype.UUID{}, nil
+		}
+
+		return pgtype.UUID{}, errors.Wrapf(err, "load job of chat chat_session_id=%s", uuidToString(task.ChatSessionID))
+	}
+	if job.KnowledgeBaseID != base.ID {
+		return pgtype.UUID{}, nil
+	}
+
+	return job.ID, nil
+}
+
+// linkKbJobDraft links a new draft to the job whose chat created it
+// (kbJobOfTaskChat already matched the knowledge base and the chat); the job
+// must not have a draft yet.
+func linkKbJobDraft(ctx context.Context, q *db.Queries, base db.KbBase, draft db.KbDraft, jobID pgtype.UUID, userID string) (db.KbJob, error) {
 	job, err := q.GetKbJobForUpdate(ctx, db.GetKbJobForUpdateParams{WorkspaceID: base.WorkspaceID, ID: jobID})
 	if err != nil {
 		if isNotFound(err) {
@@ -228,16 +260,6 @@ func linkKbJobDraft(ctx context.Context, q *db.Queries, base db.KbBase, draft db
 
 		return db.KbJob{}, errors.Wrapf(err, "load job job_id=%s", uuidToString(jobID))
 	}
-	if job.KnowledgeBaseID != base.ID {
-		return db.KbJob{}, kbFail(http.StatusNotFound, kbCodeJobNotFound, "job not found in this knowledge base")
-	}
-
-	runsInJob := actorType == kbActorAgent && task != nil &&
-		actorID == uuidToString(job.AgentID) && task.ChatSessionID == job.ChatSessionID
-	if uuidToString(job.CreatedBy) != userID && !runsInJob {
-		return db.KbJob{}, kbFail(http.StatusForbidden, kbCodeForbidden, "only the job creator or the agent running the job can link its draft")
-	}
-
 	existing, err := q.GetKbJobDraftByJob(ctx, job.ID)
 	switch {
 	case err == nil:

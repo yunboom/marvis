@@ -111,9 +111,7 @@ func TestKbJobDelete(t *testing.T) {
 		return jobID, sessionID
 	}
 	linkDraft := func(jobID string) string {
-		return createKbDraftAs(t, f.slug, func(r *http.Request) {
-			r.Body = jsonBody(map[string]any{"knowledge_base": f.slug, "job_id": jobID})
-		})
+		return createKbJobDraft(t, f, jobID)
 	}
 
 	// A running job with an open draft.

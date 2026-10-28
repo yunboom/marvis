@@ -159,47 +159,6 @@ func TestMergePageMatrix(t *testing.T) {
 	})
 }
 
-func TestReviewHandoffMessage(t *testing.T) {
-	got, err := ReviewHandoffMessage(ReviewHandoffInput{
-		Number: 16, Title: "Dedup key", DraftID: "d-1",
-		Summaries: []ReviewHandoffSummary{{Reviewer: "Wang Fang", Text: "Two things to fix."}},
-		Comments: []ReviewHandoffComment{
-			{ID: "c-1", Author: "Wang Fang", QuotePage: "Callback", QuoteText: "Dedup by trade no.", Body: "Say why."},
-			{ID: "c-2", Author: "Li Lei", Body: "Add an example."},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	want := "Change request #16 (Dedup key) has review feedback to resolve.\n\n" +
-		"Review summary from Wang Fang:\nTwo things to fix.\n\n" +
-		"Comment `c-1` from Wang Fang, on the page \"Callback\":\n> Dedup by trade no.\nSay why.\n\n" +
-		"Comment `c-2` from Li Lei:\nAdd an example.\n\n" +
-		"To resolve it:\n" +
-		"- Read the full feedback with `marvis kb mr comment list 16`.\n" +
-		"- Make the changes in the same draft (`d-1`). It is the same change request; do not open a new one.\n" +
-		"- Run `marvis kb draft check d-1` when you are done.\n" +
-		"- Answer under each comment with `marvis kb mr comment add 16 --parent <comment id> --content-file ./reply.md`: " +
-		"what you changed, or why you left it.\n" +
-		"- Then tell me what you changed, so I can request review again."
-	if got != want {
-		t.Errorf("message:\n%s\nwant:\n%s", got, want)
-	}
-
-	// The job page shows a short line in place of the message, keyed on its lead.
-	if m := ReviewHandoffLead.FindStringSubmatch(got); m == nil || m[1] != "16" {
-		t.Errorf("lead match = %q", m)
-	}
-	titled, err := ReviewHandoffMessage(ReviewHandoffInput{Number: 3, Title: "Fix (a) typo\nsecond line", DraftID: "d-1"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if m := ReviewHandoffLead.FindStringSubmatch(titled); m == nil || m[1] != "3" {
-		t.Errorf("lead match with an odd title = %q", m)
-	}
-}
-
 func TestRevertPage(t *testing.T) {
 	page := func(blocks ...string) PageVersion {
 		return PageVersion{Slug: "s", Frontmatter: map[string]any{"title": "T"}, Blocks: testBlocks(blocks...)}

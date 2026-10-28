@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -421,32 +424,61 @@ func TestKbMrReviewHandoff(t *testing.T) {
 	testutil.Call(t, testHandler.HandoffKbMrReview, handoff).Want(http.StatusConflict)
 
 	review := openKbReview(t, mr.Number, asReviewer, http.StatusCreated)
-	comment := addKbReviewComment(t, mr.Number, review.ID, map[string]any{"body": "Say why."}, asReviewer)
+	addKbReviewComment(t, mr.Number, review.ID, map[string]any{"body": "Say why."}, asReviewer)
 	submitKbReview(t, mr.Number, review.ID, "One fix.", asReviewer, http.StatusOK)
 
 	testutil.Call(t, testHandler.HandoffKbMrReview, kbMRRequest(http.MethodPost, mr.Number, nil, asReviewer)).Want(http.StatusForbidden)
+
+	// The member's chat shows the short line the client sends; the steps go
+	// with it as a hidden instruction, and the agent reads the feedback
+	// itself.
+	line := fmt.Sprintf("处理 #%d 的审核意见", mr.Number)
 	var got KbMrHandoffResponse
-	testutil.Call(t, testHandler.HandoffKbMrReview, kbMRRequest(http.MethodPost, mr.Number, nil, nil)).Want(http.StatusCreated).JSON(&got)
+	testutil.Call(t, testHandler.HandoffKbMrReview, kbMRRequest(http.MethodPost, mr.Number, map[string]any{"message": line}, nil)).Want(http.StatusCreated).JSON(&got)
 	if got.ChatSessionID != sessionID || got.TaskID == "" {
 		t.Errorf("handoff = %+v", got)
 	}
-
-	var content string
-	dbfx.QueryRow(t, `SELECT content FROM chat_message WHERE chat_session_id = $1 AND role = 'user' ORDER BY created_at DESC LIMIT 1`, sessionID).Scan(&content)
-	want, err := kb.ReviewHandoffMessage(kb.ReviewHandoffInput{
-		Number: mr.Number, Title: mr.Title, DraftID: mr.DraftID,
-		Summaries: []kb.ReviewHandoffSummary{{Reviewer: "AP Perm Member", Text: "One fix."}},
-		Comments:  []kb.ReviewHandoffComment{{ID: comment.ID, Author: "AP Perm Member", Body: "Say why."}},
-	})
+	instruction, err := kb.ReviewHandoffInstruction(mr.Number)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if content != want {
-		t.Errorf("job chat message:\n%s\nwant:\n%s", content, want)
+	want := []kbJobInputRow{{protocol.ChatMessageKindInstruction, instruction}, {protocol.ChatMessageKindMessage, line}}
+	if input := kbTurnInput(t, got.TaskID); !slices.Equal(input, want) {
+		t.Errorf("hand-off turn input = %+v\nwant %+v", input, want)
 	}
-	// The agent gets the whole prompt; the job page shows a short line keyed
-	// on its lead.
-	if m := kb.ReviewHandoffLead.FindStringSubmatch(content); m == nil || m[1] != strconv.Itoa(mr.Number) {
-		t.Errorf("job chat message lead = %q, want change request #%d", m, mr.Number)
+	if !strings.Contains(instruction, fmt.Sprintf("marvis kb mr comment list %d", mr.Number)) {
+		t.Errorf("hand-off instruction does not say how to read the feedback:\n%s", instruction)
 	}
+
+	// A client that sends no line gets the English default.
+	dbfx.Exec(t, `UPDATE agent_task_queue SET status = 'completed' WHERE chat_session_id = $1`, sessionID)
+	testutil.Call(t, testHandler.HandoffKbMrReview, kbMRRequest(http.MethodPost, mr.Number, nil, nil)).Want(http.StatusCreated).JSON(&got)
+	if input := kbTurnInput(t, got.TaskID); len(input) != 2 || input[1].content != fmt.Sprintf("Resolve the review feedback on #%d", mr.Number) {
+		t.Errorf("default hand-off input = %+v", input)
+	}
+}
+
+// kbTurnInput reads one turn's input batch in the order the agent receives it.
+func kbTurnInput(t *testing.T, taskID string) []kbJobInputRow {
+	t.Helper()
+
+	rows, err := testPool.Query(context.Background(), `
+		SELECT message_kind, content FROM chat_message
+		WHERE task_id = $1 AND role = 'user'
+		ORDER BY created_at, id`, taskID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	var out []kbJobInputRow
+	for rows.Next() {
+		var row kbJobInputRow
+		if err := rows.Scan(&row.kind, &row.content); err != nil {
+			t.Fatal(err)
+		}
+		out = append(out, row)
+	}
+
+	return out
 }

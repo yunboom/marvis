@@ -5362,10 +5362,14 @@ export class ApiClient {
     });
   }
 
-  /** Sends the open review feedback into the job's chat for its agent. */
-  async handoffKnowledgeBaseMrReview(ref: string | number): Promise<KbMrHandoff> {
+  /**
+   * Hands the open review feedback to the job's agent: `message` is the
+   * visible line sent into the job's chat in the member's name.
+   */
+  async handoffKnowledgeBaseMrReview(ref: string | number, message: string): Promise<KbMrHandoff> {
     const raw = await this.fetch<unknown>(`/api/kb/merge-requests/${encodeURIComponent(String(ref))}/handoff`, {
       method: "POST",
+      body: JSON.stringify({ message }),
     });
     return parseWithFallback(raw, KbMrHandoffSchema, EMPTY_KB_MR_HANDOFF, {
       endpoint: "POST /api/kb/merge-requests/:number/handoff",

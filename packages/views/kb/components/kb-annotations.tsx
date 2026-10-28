@@ -289,7 +289,6 @@ export function KbAnnotationPanel({
   const p = useWorkspacePaths();
   const { push } = useNavigation();
   const pendingIds = open.filter((annotation) => annotation.status === "pending").map((annotation) => annotation.id);
-  const pageTitle = open.find((annotation) => annotation.page_title)?.page_title ?? "";
   const list = useRef<HTMLDivElement>(null);
 
   const focused = focusIds ? open.filter((annotation) => focusIds.includes(annotation.id)) : [];
@@ -320,9 +319,6 @@ export function KbAnnotationPanel({
               p.kbNewJob(kbSlug, {
                 starter: "annotations",
                 annotations: pendingIds,
-                message: pageId
-                  ? t(($) => $.job.entry.annotations_page_message, { count: pendingIds.length, title: pageTitle })
-                  : t(($) => $.job.entry.annotations_kb_message, { count: pendingIds.length }),
               }),
             )
           }
@@ -492,7 +488,6 @@ export function KbAnnotationsPage() {
               p.kbNewJob(kbSlug, {
                 starter: "annotations",
                 annotations: all.filter((annotation) => annotation.status === "pending").map((annotation) => annotation.id),
-                message: t(($) => $.job.entry.annotations_all_message, { count: counts.pending, name: base?.name ?? kbSlug }),
               }),
             )
           }

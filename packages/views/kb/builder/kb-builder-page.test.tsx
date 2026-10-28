@@ -260,13 +260,24 @@ describe("KbBuilderPage · create conversation", () => {
     '好的，起草了。\n<kb_draft>{"name":"支付排障手册","slug":"pay-troubleshoot","description":"支付排障。","purpose":"# 目标\\n\\n读者：研发。","schema":"# Ignored"}</kb_draft>',
   );
 
-  it("shows the opening starters and sends one", async () => {
+  it.each([
+    ["Engineering knowledge base", "Help me create a knowledge base for engineers"],
+    ["Agent team", "Help me create a knowledge base that serves as our agent team's memory"],
+    ["Something else", "Help me create a knowledge base"],
+  ])("shows the %s starter and sends its message", async (title, message) => {
     mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
 
-    fireEvent.click(await screen.findByRole("button", { name: /Engineering knowledge base/ }));
-    expect(h.send).toHaveBeenCalledWith(
-      "Engineering knowledge base: System architecture, services and interfaces, runbooks, technical decisions",
-    );
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${title}`) }));
+    expect(h.send).toHaveBeenCalledWith(message);
+  });
+
+  it("offers six starters", async () => {
+    mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
+
+    await screen.findByRole("button", { name: /Engineering knowledge base/ });
+    for (const title of ["Testing knowledge base", "Product knowledge base", "Team knowledge base", "Agent team", "Something else"]) {
+      expect(screen.getByRole("button", { name: new RegExp(`^${title}`) })).toBeInTheDocument();
+    }
   });
 
   it("fills the form from the builder reply, keeps the default schema read-only and creates", async () => {
