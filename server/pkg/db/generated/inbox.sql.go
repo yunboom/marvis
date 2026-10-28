@@ -324,6 +324,41 @@ func (q *Queries) CreateInboxItem(ctx context.Context, arg CreateInboxItemParams
 	return i, err
 }
 
+const deleteArchivedInboxGroup = `-- name: DeleteArchivedInboxGroup :execrows
+DELETE FROM inbox_item
+WHERE workspace_id = $1
+  AND recipient_type = $2
+  AND recipient_id = $3
+  AND archived = true
+  AND (id = $4 OR issue_id = $5::uuid)
+`
+
+type DeleteArchivedInboxGroupParams struct {
+	WorkspaceID   pgtype.UUID `json:"workspace_id"`
+	RecipientType string      `json:"recipient_type"`
+	RecipientID   pgtype.UUID `json:"recipient_id"`
+	ID            pgtype.UUID `json:"id"`
+	IssueID       pgtype.UUID `json:"issue_id"`
+}
+
+// Permanent delete from the archived view. Same issue-level scope as archive
+// and unarchive: the archived view shows one row per issue, so deleting that
+// row removes every archived sibling for the issue. Only archived rows match,
+// so an active notification can never be deleted through this path.
+func (q *Queries) DeleteArchivedInboxGroup(ctx context.Context, arg DeleteArchivedInboxGroupParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteArchivedInboxGroup,
+		arg.WorkspaceID,
+		arg.RecipientType,
+		arg.RecipientID,
+		arg.ID,
+		arg.IssueID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getInboxItem = `-- name: GetInboxItem :one
 SELECT id, workspace_id, recipient_type, recipient_id, type, severity, issue_id, title, body, read, archived, created_at, actor_type, actor_id, details FROM inbox_item
 WHERE id = $1

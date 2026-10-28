@@ -348,6 +348,43 @@ func (h *Handler) UnarchiveInboxItem(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+// DeleteArchivedInboxItem permanently removes an archived notification and its
+// archived siblings for the same issue. Active notifications are refused: the
+// archive is the only place deletion is offered, so a notification has to be
+// archived (reversible) before it can be deleted (irreversible).
+func (h *Handler) DeleteArchivedInboxItem(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	item, ok := h.loadInboxItemForUser(w, r, id)
+	if !ok {
+		return
+	}
+	if !item.Archived {
+		writeError(w, http.StatusConflict, "only archived notifications can be deleted")
+		return
+	}
+
+	if _, err := h.Queries.DeleteArchivedInboxGroup(r.Context(), db.DeleteArchivedInboxGroupParams{
+		WorkspaceID:   item.WorkspaceID,
+		RecipientType: item.RecipientType,
+		RecipientID:   item.RecipientID,
+		ID:            item.ID,
+		IssueID:       item.IssueID,
+	}); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to delete")
+		return
+	}
+
+	userID := requestUserID(r)
+	workspaceID := uuidToString(item.WorkspaceID)
+	h.publish(protocol.EventInboxDeleted, workspaceID, "member", userID, map[string]any{
+		"item_id":      uuidToString(item.ID),
+		"issue_id":     uuidToPtr(item.IssueID),
+		"recipient_id": uuidToString(item.RecipientID),
+	})
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) CountUnreadInbox(w http.ResponseWriter, r *http.Request) {
 	userID, ok := requireUserID(w, r)
 	if !ok {
