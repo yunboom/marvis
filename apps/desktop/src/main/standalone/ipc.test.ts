@@ -1,8 +1,13 @@
 // @vitest-environment node
+import { existsSync } from "node:fs";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   STANDALONE_INSTALL,
+  STANDALONE_OPEN_LOGS,
   STANDALONE_SWITCH_REMOTE,
   VALIDATION_REQUIRED,
   defaultStandaloneSettings,
@@ -64,6 +69,29 @@ describe("registerStandaloneIpc", () => {
       ok: false,
       errors: { "settings.adminEmail": VALIDATION_REQUIRED },
     });
+  });
+
+  it("creates the logs directory before opening it", async () => {
+    const { handlers, ipcMain } = fakeIpc();
+    const logsDir = join(await mkdtemp(join(tmpdir(), "standalone-ipc-")), "logs");
+    const manager = { logsDir: () => logsDir } as unknown as StandaloneManager;
+    const openPath = vi.fn(async () => "");
+    registerStandaloneIpc({ ipcMain, manager, broadcast: vi.fn(), openPath, selectRemote: vi.fn() });
+
+    await handlers.get(STANDALONE_OPEN_LOGS)!({});
+
+    expect(existsSync(logsDir)).toBe(true);
+    expect(openPath).toHaveBeenCalledWith(logsDir);
+  });
+
+  it("reports a failure to open the logs", async () => {
+    const { handlers, ipcMain } = fakeIpc();
+    const logsDir = join(await mkdtemp(join(tmpdir(), "standalone-ipc-")), "logs");
+    const manager = { logsDir: () => logsDir } as unknown as StandaloneManager;
+    const openPath = vi.fn(async () => "no application to open the folder");
+    registerStandaloneIpc({ ipcMain, manager, broadcast: vi.fn(), openPath, selectRemote: vi.fn() });
+
+    await expect(handlers.get(STANDALONE_OPEN_LOGS)!({})).rejects.toThrow(/open logs failed/);
   });
 
   it("switches to the remote server before stopping standalone mode", async () => {
