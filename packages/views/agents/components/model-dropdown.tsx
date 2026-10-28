@@ -15,6 +15,7 @@ import {
 } from "@marvis/ui/components/ui/popover";
 import { Label } from "@marvis/ui/components/ui/label";
 import { useT } from "../../i18n";
+import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { UnavailableModelsNote } from "./unavailable-models-note";
 import { ModelSearchHeader } from "./model-search-header";
 
@@ -39,6 +40,7 @@ export function ModelDropdown({
   onChange,
   onAutomaticChange = onChange,
   disabled,
+  compact = false,
 }: {
   runtimeId: string | null;
   runtimeOnline: boolean;
@@ -47,6 +49,8 @@ export function ModelDropdown({
   /** Automatic value cleanup, separate from explicit user selections. */
   onAutomaticChange?: (value: string) => void;
   disabled?: boolean;
+  /** A single-line 40px trigger without the label row, for page headers. */
+  compact?: boolean;
 }) {
   const { t } = useT("agents");
   const queryClient = useQueryClient();
@@ -131,6 +135,16 @@ export function ModelDropdown({
         : t(($) => $.model_dropdown.runtime_offline_manual));
 
   if (!supported && !modelsQuery.isLoading) {
+    if (compact) {
+      return (
+        <TooltipHint label={t(($) => $.model_dropdown.managed_by_runtime_hint)}>
+          <div className="flex h-10 w-full min-w-0 items-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 text-body text-muted-foreground">
+            <Info className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{t(($) => $.model_dropdown.managed_by_runtime_title)}</span>
+          </div>
+        </TooltipHint>
+      );
+    }
     return (
       <div className="flex flex-col min-w-0">
         <div className="flex h-6 items-center">
@@ -151,6 +165,7 @@ export function ModelDropdown({
 
   return (
     <div className="flex flex-col min-w-0">
+      {!compact && (
       <div className="flex h-6 items-center justify-between">
         <Label className="text-caption text-muted-foreground">{t(($) => $.model_dropdown.label)}</Label>
         {modelsQuery.isError && (
@@ -162,7 +177,23 @@ export function ModelDropdown({
           </span>
         )}
       </div>
+      )}
       <Popover open={open} onOpenChange={setOpen}>
+        {compact ? (
+          <PopoverTrigger
+            disabled={disabled}
+            aria-label={`${t(($) => $.model_dropdown.label)}: ${triggerLabel}`}
+            className="flex h-10 w-full min-w-0 items-center gap-2 rounded-lg border border-border bg-background px-3 text-left text-body transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+          >
+            <Cpu className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="shrink-0 text-muted-foreground">{t(($) => $.model_dropdown.label)}</span>
+            <span className="min-w-0 flex-1 truncate font-medium">{triggerLabel}</span>
+            <ChevronDown
+              aria-hidden="true"
+              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+            />
+          </PopoverTrigger>
+        ) : (
         <PopoverTrigger
           disabled={disabled}
           className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5 mt-1.5 text-left text-body transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
@@ -185,6 +216,7 @@ export function ModelDropdown({
             className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
           />
         </PopoverTrigger>
+        )}
         <PopoverContent
           align="start"
           className="w-[var(--anchor-width)] p-0 overflow-hidden"

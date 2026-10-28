@@ -154,15 +154,9 @@
   },
   "builder": {
     "create_title": "新建知识库",
-    "create_sub": "通过对话创建",
+    "create_sub": "通过对话搭建，也可以直接填右侧",
     "config_title": "配置知识库",
-    "via_chat": "通过对话配置",
-    "setup_create_title": "通过对话创建知识库",
-    "setup_config_title": "通过对话配置知识库",
-    "setup_description": "选择构建器运行的运行时和模型。",
     "chat_title": "知识库构建器",
-    "change_runtime": "更换",
-    "change_runtime_label": "更换运行时",
     "intro_create": "想建一个什么样的知识库？选一个方向开始，我来起草名称、目标和 Schema，再一起细调。",
     "intro_config": "我会根据你的需求修改目标和 Schema。可以从下面的问题开始，也可以直接说想改什么。",
     "describe_hint": "也可以直接描述你的需求。",
@@ -262,6 +256,50 @@
       "forbidden": "只有知识库创建者或工作区 owner、admin 可以配置",
       "create_failed": "创建知识库失败",
       "save_failed": "保存配置失败"
+    },
+    "runtime": {
+      "label": "运行时",
+      "menu_label": "选择运行时",
+      "mine": "我的",
+      "others": "其他人的",
+      "online": "在线",
+      "offline": "离线",
+      "none": "没有可用的运行时",
+      "last_used": "上次使用",
+      "locked": "这是 {{owner}} 的私有运行时，没有共享给你",
+      "locked_unnamed": "这是私有运行时，没有共享给你",
+      "connect": "连接新的运行时"
+    },
+    "notice": {
+      "none_title": "还没有可用的运行时",
+      "none_body_create": "连接一台电脑后就能用对话搭建；也可以直接在右侧填写后创建。",
+      "none_body_config": "连接一台电脑后就能用对话调整；也可以直接在右侧修改后保存。",
+      "connect": "连接运行时",
+      "offline_title": "{{name}} 离线",
+      "offline_body": "在 {{host}} 上打开 Marvis，或换一个在线的运行时。右侧可以继续手填。",
+      "change": "更换运行时",
+      "went_offline_title": "运行时刚刚离线",
+      "went_offline_body": "对话停在这里，已生成的配置保留在右侧。换一个在线的运行时可以接着聊。",
+      "failed_title": "构建器没能启动",
+      "failed_body": "这个运行时刚刚离线或不可用。换一个运行时后会重新发送这条消息。"
+    },
+    "starting": "正在 {{runtime}} 上启动构建器…",
+    "composer": {
+      "none": "连接运行时后可以对话",
+      "offline": "运行时离线，换一个在线的运行时后继续"
+    },
+    "manual_hint_create": "不用对话也能创建",
+    "manual_hint_config": "不用对话也能保存",
+    "drafts_hint": "继续之前的对话，或在这里重新开始",
+    "tabs": {
+      "label": "视图",
+      "chat": "对话",
+      "config": "配置"
+    },
+    "forbidden": {
+      "title": "没有配置这个知识库的权限",
+      "body": "只有知识库创建者、工作区所有者和管理员可以配置。",
+      "back": "返回知识库"
     }
   },
   "welcome": {

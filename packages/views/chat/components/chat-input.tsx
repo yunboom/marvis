@@ -119,6 +119,8 @@ interface ChatInputProps {
    *  one, both are true and "create an agent" would be the wrong instruction. */
   agentAccessRevoked?: boolean;
   agentRuntimeRequired?: boolean;
+  /** Placeholder while `disabled`, for surfaces that know the exact reason. */
+  disabledPlaceholder?: string;
   /** Name of the currently selected agent, used in the placeholder. */
   agentName?: string;
   /** Rendered at the bottom-left of the input bar — typically the agent picker. */
@@ -164,6 +166,7 @@ export function ChatInput({
   agentArchived,
   agentAccessRevoked,
   agentRuntimeRequired,
+  disabledPlaceholder,
   agentName,
   leftAdornment,
   contextItems,
@@ -610,7 +613,9 @@ export function ChatInput({
     : noAgent
     ? t(($) => $.input.placeholder_no_agent)
     : disabled
-      ? agentArchived
+      ? disabledPlaceholder
+        ? disabledPlaceholder
+        : agentArchived
         ? t(($) => $.input.placeholder_archived_agent)
         : agentRuntimeRequired
           ? t(($) => $.input.placeholder_runtime_required)

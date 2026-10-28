@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { api, ApiError } from "@marvis/core/api";
-import { EMPTY_AGENT_DRAFT } from "@marvis/core/agents";
+import { kbBuilderRuntimeKey, useKbBuilderRuntimeStore } from "@marvis/core/kb";
 import type { ChatMessage, KbBuilderSession, KnowledgeBaseDetail, RuntimeDevice } from "@marvis/core/types";
 import { renderWithI18n } from "../../test/i18n";
 import { NavigationProvider, type NavigationAdapter } from "../../navigation";
@@ -32,6 +32,7 @@ vi.mock("@marvis/core/api", async (importOriginal) => {
       saveKbBuilderDraft: vi.fn().mockResolvedValue(undefined),
       setChatSessionArchived: vi.fn().mockResolvedValue({}),
       listRuntimes: vi.fn(),
+      listMembers: vi.fn(),
     },
   };
 });
@@ -74,43 +75,60 @@ vi.mock("../../agents/create/use-builder-session", () => ({
   }),
 }));
 
-vi.mock("../../agents/create/use-create-agent-form", () => ({
-  useCreateAgentForm: () => {
-    const [draft, setDraft] = useState({ ...EMPTY_AGENT_DRAFT, runtimeId: "rt-1" });
-    return {
-      draft,
-      setDraft,
-      selectedRuntime: RUNTIME,
-      runtimes: [RUNTIME],
-      runtimesLoading: false,
-      members: [],
-      currentUserId: "user-1",
-    };
-  },
+// The model picker reads the runtime's model catalog; its own tests cover it.
+vi.mock("../../agents/components/model-dropdown", () => ({
+  ModelDropdown: ({ disabled }: { disabled?: boolean }) => (
+    <button type="button" disabled={disabled}>
+      Model
+    </button>
+  ),
 }));
 
 // The conversation column renders its own chat; here it shows the empty
-// state the page hands it, or the (already decoded) messages.
+// state the page hands it, or the (already decoded) messages, the notice, and
+// a composer that sends through the page.
 vi.mock("../../agents/create/builder-conversation", () => ({
-  BuilderConversation: ({ messages, emptyState }: { messages: ChatMessage[]; emptyState: ReactNode }) =>
-    messages.length === 0 ? (
-      <div>{emptyState}</div>
-    ) : (
-      <ul aria-label="transcript">
-        {messages.map((message) => (
-          <li key={message.id}>{message.content}</li>
-        ))}
-      </ul>
-    ),
-  BuilderSetup: ({ title, banner, onStart }: { title: string; banner: ReactNode; onStart: () => void }) => (
-    <div>
-      {banner}
-      <h2>{title}</h2>
-      <button type="button" onClick={onStart}>
-        Start
-      </button>
-    </div>
-  ),
+  BuilderConversation: function MockConversation({
+    messages,
+    emptyState,
+    notice,
+    runtimeOnline,
+    disabledPlaceholder,
+    onSend,
+  }: {
+    messages: ChatMessage[];
+    emptyState: ReactNode;
+    notice: ReactNode;
+    runtimeOnline: boolean;
+    disabledPlaceholder?: string;
+    onSend: (content: string, commitInput?: () => void) => Promise<boolean>;
+  }) {
+    const [text, setText] = useState("");
+    return (
+      <div>
+        {messages.length === 0 ? (
+          <div>{emptyState}</div>
+        ) : (
+          <ul aria-label="transcript">
+            {messages.map((message) => (
+              <li key={message.id}>{message.content}</li>
+            ))}
+          </ul>
+        )}
+        {notice}
+        <textarea
+          aria-label="Message"
+          disabled={!runtimeOnline}
+          placeholder={runtimeOnline ? "" : disabledPlaceholder}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+        />
+        <button type="button" disabled={!runtimeOnline} onClick={() => void onSend(text, () => setText(""))}>
+          Send
+        </button>
+      </div>
+    );
+  },
 }));
 
 vi.mock("react-resizable-panels", () => ({ useDefaultLayout: () => ({}) }));
@@ -126,14 +144,21 @@ vi.mock("../../rich-content", () => ({
 
 const mocked = vi.mocked(api);
 
-const RUNTIME = {
-  id: "rt-1",
-  name: "Claude",
-  status: "online",
-  owner_id: "user-1",
-  provider: "claude",
-  visibility: "private",
-} as unknown as RuntimeDevice;
+function makeRuntime(overrides: Partial<RuntimeDevice> = {}): RuntimeDevice {
+  return {
+    id: "rt-1",
+    name: "Claude",
+    status: "online",
+    owner_id: "user-1",
+    provider: "claude",
+    visibility: "private",
+    device_info: "laptop",
+    ...overrides,
+  } as unknown as RuntimeDevice;
+}
+
+const RUNTIME = makeRuntime();
+const RUNTIME_2 = makeRuntime({ id: "rt-2", name: "Codex", provider: "codex" });
 
 const DEFAULT_SCHEMA = "# Schema\n\nBuilt-in rules.";
 
@@ -206,17 +231,37 @@ beforeEach(() => {
   mocked.getKnowledgeBaseTemplates.mockResolvedValue({ default_schema: DEFAULT_SCHEMA, purpose_template: "# Purpose" });
   mocked.getKnowledgeBase.mockResolvedValue(BASE);
   mocked.listRuntimes.mockResolvedValue([RUNTIME]);
+  mocked.listMembers.mockResolvedValue([{ user_id: "user-1", role: "member", name: "Me" }] as never);
   mocked.saveKbBuilderDraft.mockResolvedValue(undefined);
   mocked.setChatSessionArchived.mockResolvedValue({} as never);
 });
 
-describe("KbBuilderPage · runtime step", () => {
-  it("starts a create conversation and opens it on its runtime", async () => {
+afterEach(() => useKbBuilderRuntimeStore.setState({ byKey: {} }));
+
+const runtimeTrigger = () => screen.findByRole("button", { name: /^Runtime: / });
+
+describe("KbBuilderPage · direct entry", () => {
+  it("opens straight on the conversation and configuration, with starters", async () => {
+    mount(makeAdapter("/acme/kb/new"));
+
+    const starter = await screen.findByRole("button", { name: /^Engineering knowledge base/ });
+    await waitFor(() => expect(starter).toBeEnabled());
+    expect(screen.getByRole("button", { name: /^Testing knowledge base/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+    expect(await runtimeTrigger()).toHaveAccessibleName("Runtime: Claude");
+    expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
+    expect(mocked.createKbBuilderSession).not.toHaveBeenCalled();
+  });
+
+  it("starts the conversation on the first starter and sends it there", async () => {
+    // An unfinished draft does not have to be dismissed first.
+    mocked.listKbBuilderSessions.mockResolvedValue([session({ session_id: "s-old" })]);
     mocked.createKbBuilderSession.mockResolvedValue({ session_id: "s-new", builder_agent_id: "a", runtime_id: "rt-1" });
     const adapter = mount(makeAdapter("/acme/kb/new"));
 
-    expect(await screen.findByRole("heading", { name: "Create a knowledge base through conversation" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    await screen.findByRole("button", { name: /You have 1 unfinished creation/ });
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Engineering knowledge base/ })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: /^Engineering knowledge base/ }));
 
     await waitFor(() =>
       expect(mocked.createKbBuilderSession).toHaveBeenCalledWith({
@@ -227,7 +272,54 @@ describe("KbBuilderPage · runtime step", () => {
         model: undefined,
       }),
     );
+    await waitFor(() => expect(h.send).toHaveBeenCalledWith("Help me create a knowledge base for engineers", undefined, "s-new"));
     expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/new/s-new?runtime=rt-1");
+    expect(useKbBuilderRuntimeStore.getState().byKey[kbBuilderRuntimeKey("ws-1", "user-1")]).toBe("rt-1");
+  });
+
+  it("starts the conversation on a composer send and clears the composer", async () => {
+    let resolveStart: (value: { session_id: string; builder_agent_id: string; runtime_id: string }) => void = () => {};
+    mocked.createKbBuilderSession.mockReturnValue(new Promise((resolve) => (resolveStart = resolve)));
+    mount(makeAdapter("/acme/kb/new"));
+
+    const composer = await screen.findByRole("textbox", { name: "Message" });
+    await waitFor(() => expect(composer).toBeEnabled());
+    fireEvent.change(composer, { target: { value: "给研发看" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(await screen.findByText("Starting the builder on Claude…")).toBeInTheDocument();
+    expect(screen.getByText("给研发看")).toBeInTheDocument();
+    expect(composer).toHaveValue("");
+    expect(composer).toBeDisabled();
+
+    await act(async () => resolveStart({ session_id: "s-new", builder_agent_id: "a", runtime_id: "rt-1" }));
+    expect(h.send).toHaveBeenCalledWith("给研发看", undefined, "s-new");
+  });
+
+  it("starts a configuration with the base's schema mode", async () => {
+    mocked.getKnowledgeBase.mockResolvedValue({ ...BASE, schema_mode: "custom" });
+    mocked.createKbBuilderSession.mockResolvedValue({ session_id: "s-cfg", builder_agent_id: "a", runtime_id: "rt-1" });
+    const adapter = mount(makeAdapter("/acme/kb/team/config"));
+
+    await screen.findByDisplayValue("团队知识库");
+    const question = await screen.findByRole("button", { name: /Who reads this knowledge base/ });
+    await waitFor(() => expect(question).toBeEnabled());
+    fireEvent.click(question);
+
+    await waitFor(() =>
+      expect(mocked.createKbBuilderSession).toHaveBeenCalledWith(
+        expect.objectContaining({ mode: "config", knowledge_base_id: "kb-1", schema_mode: "custom" }),
+      ),
+    );
+    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team/config/s-cfg?runtime=rt-1");
+  });
+
+  it("opens on the runtime used last when it is online", async () => {
+    mocked.listRuntimes.mockResolvedValue([RUNTIME, RUNTIME_2]);
+    useKbBuilderRuntimeStore.getState().setLastRuntime("ws-1", "user-1", "rt-2");
+    mount(makeAdapter("/acme/kb/new"));
+
+    await waitFor(async () => expect(await runtimeTrigger()).toHaveAccessibleName("Runtime: Codex"));
   });
 
   it("offers the single unfinished creation directly", async () => {
@@ -239,21 +331,155 @@ describe("KbBuilderPage · runtime step", () => {
     expect(mocked.listKbBuilderSessions).toHaveBeenCalledWith({ mode: "create", kb: undefined });
   });
 
-  it("starts a configuration with the base's schema mode", async () => {
-    mocked.getKnowledgeBase.mockResolvedValue({ ...BASE, schema_mode: "custom" });
-    mocked.createKbBuilderSession.mockResolvedValue({ session_id: "s-cfg", builder_agent_id: "a", runtime_id: "rt-1" });
-    const adapter = mount(makeAdapter("/acme/kb/team/config"));
+  it("opens the picker when there are several unfinished creations", async () => {
+    mocked.listKbBuilderSessions.mockResolvedValue([session({ session_id: "s-a" }), session({ session_id: "s-b" })]);
+    const adapter = mount(makeAdapter("/acme/kb/new"));
 
-    expect(await screen.findByRole("heading", { name: "Configure the knowledge base through conversation" })).toBeInTheDocument();
-    await screen.findByText("团队知识库");
-    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    fireEvent.click(await screen.findByRole("button", { name: /You have 2 unfinished creations/ }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("Creation drafts");
+    expect(adapter.replace).not.toHaveBeenCalled();
+  });
+});
+
+describe("KbBuilderPage · runtime states", () => {
+  it("without a runtime, disables the chat and still creates from the form", async () => {
+    mocked.listRuntimes.mockResolvedValue([]);
+    mocked.createKnowledgeBase.mockResolvedValue({ ...BASE, id: "kb-9", slug: "manual", mention: "" });
+    const adapter = mount(makeAdapter("/acme/kb/new"));
+
+    expect(await screen.findByText("No runtime available yet")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Connect runtime" })).toHaveAttribute("href", "/acme/runtimes");
+    expect(screen.getByRole("textbox", { name: "Message" })).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveAttribute("placeholder", "Connect a runtime to chat");
+    expect(screen.getByRole("button", { name: /^Engineering knowledge base/ })).toBeDisabled();
+    expect(screen.getByText("You can create without the conversation")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "手填的库" } });
+    fireEvent.change(screen.getByLabelText("Directory name"), { target: { value: "manual" } });
+    fireEvent.change(screen.getByLabelText("Schema"), { target: { value: "# Rules" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() =>
-      expect(mocked.createKbBuilderSession).toHaveBeenCalledWith(
-        expect.objectContaining({ mode: "config", knowledge_base_id: "kb-1", schema_mode: "custom" }),
-      ),
+      expect(mocked.createKnowledgeBase).toHaveBeenCalledWith(expect.objectContaining({ name: "手填的库", slug: "manual" })),
     );
-    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team/config/s-cfg?runtime=rt-1");
+    await waitFor(() => expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/manual?welcome=1"));
+    expect(mocked.createKbBuilderSession).not.toHaveBeenCalled();
+    expect(mocked.setChatSessionArchived).not.toHaveBeenCalled();
+    expect(mocked.saveKbBuilderDraft).not.toHaveBeenCalled();
+  });
+
+  it("saves a configuration without a runtime", async () => {
+    mocked.listRuntimes.mockResolvedValue([]);
+    mocked.updateKnowledgeBase.mockResolvedValue({ ...BASE, mention: "" });
+    mount(makeAdapter("/acme/kb/team/config"));
+
+    await screen.findByDisplayValue("团队知识库");
+    expect(await screen.findByText("You can save without the conversation")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Purpose"), { target: { value: "# 新目标" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(mocked.updateKnowledgeBase).toHaveBeenCalledWith("team", expect.objectContaining({ purpose: "# 新目标" })),
+    );
+    expect(mocked.createKbBuilderSession).not.toHaveBeenCalled();
+  });
+
+  it("shows an offline runtime and keeps the chat closed", async () => {
+    mocked.listRuntimes.mockResolvedValue([makeRuntime({ status: "offline" })]);
+    mount(makeAdapter("/acme/kb/new"));
+
+    expect(await screen.findByText("Claude is offline")).toBeInTheDocument();
+    expect(screen.getByText(/Open Marvis on laptop/)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Message" })).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveAttribute(
+      "placeholder",
+      "Runtime offline. Switch to an online runtime to continue",
+    );
+    expect(screen.getByText("You can create without the conversation")).toBeInTheDocument();
+  });
+
+  it("says so when the runtime goes offline mid-conversation and keeps the form", async () => {
+    h.messages = [reply("好的")];
+    mocked.listRuntimes.mockResolvedValue([makeRuntime({ status: "offline" })]);
+    mocked.listKbBuilderSessions.mockResolvedValue([session()]);
+    mount(makeAdapter("/acme/kb/new/s-1"));
+
+    expect(await screen.findByText("The runtime just went offline")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Message" })).toBeDisabled();
+    expect(screen.getByLabelText("Name")).toBeEnabled();
+  });
+
+  it("keeps the message when the start fails and resends it on another runtime", async () => {
+    mocked.listRuntimes.mockResolvedValue([RUNTIME, RUNTIME_2]);
+    mocked.createKbBuilderSession
+      .mockRejectedValueOnce(new ApiError("runtime offline", 409, "Conflict"))
+      .mockResolvedValueOnce({ session_id: "s-new", builder_agent_id: "a", runtime_id: "rt-2" });
+    const adapter = mount(makeAdapter("/acme/kb/new"));
+
+    const starter = await screen.findByRole("button", { name: /^Engineering knowledge base/ });
+    await waitFor(() => expect(starter).toBeEnabled());
+    fireEvent.click(starter);
+
+    expect(await screen.findByText("The builder could not start")).toBeInTheDocument();
+    expect(screen.getByText("Help me create a knowledge base for engineers")).toBeInTheDocument();
+    expect(h.send).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Change runtime" }));
+    fireEvent.click(await screen.findByRole("option", { name: /Codex/ }));
+
+    await waitFor(() =>
+      expect(mocked.createKbBuilderSession).toHaveBeenLastCalledWith(expect.objectContaining({ runtime_id: "rt-2" })),
+    );
+    await waitFor(() => expect(h.send).toHaveBeenCalledWith("Help me create a knowledge base for engineers", undefined, "s-new"));
+    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/new/s-new?runtime=rt-2");
+  });
+
+  it("groups the runtimes and locks the ones that cannot be picked", async () => {
+    mocked.listRuntimes.mockResolvedValue([
+      RUNTIME,
+      makeRuntime({ id: "rt-off", name: "Gemini", status: "offline" }),
+      makeRuntime({ id: "rt-locked", name: "Qoder", owner_id: "user-2", visibility: "private" }),
+    ]);
+    mocked.listMembers.mockResolvedValue([
+      { user_id: "user-1", role: "member", name: "Me" },
+      { user_id: "user-2", role: "member", name: "马安" },
+    ] as never);
+    mount(makeAdapter("/acme/kb/new"));
+
+    await waitFor(async () => expect(await runtimeTrigger()).toBeEnabled());
+    fireEvent.click(await runtimeTrigger());
+
+    const mine = await screen.findByRole("group", { name: "Mine" });
+    expect(within(mine).getByRole("option", { name: /Claude/ })).toHaveAttribute("aria-selected", "true");
+    expect(within(mine).getByRole("option", { name: /Gemini/ })).toHaveAttribute("aria-disabled", "true");
+    const others = screen.getByRole("group", { name: "Others'" });
+    const locked = within(others).getByRole("option", { name: /Qoder/ });
+    expect(locked).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("link", { name: "Connect a new runtime" })).toHaveAttribute("href", "/acme/runtimes");
+
+    fireEvent.click(locked);
+    expect(await runtimeTrigger()).toHaveAccessibleName("Runtime: Claude");
+  });
+});
+
+describe("KbBuilderPage · access", () => {
+  it("shows a notice instead of the builder to a member who cannot configure", async () => {
+    mocked.getKnowledgeBase.mockResolvedValue({ ...BASE, created_by: "user-9" });
+    const adapter = mount(makeAdapter("/acme/kb/team/config"));
+
+    expect(await screen.findByText("You cannot configure this knowledge base")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Name")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Back to the knowledge base" }));
+    expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/team");
+  });
+
+  it("lets a workspace admin configure someone else's base", async () => {
+    mocked.getKnowledgeBase.mockResolvedValue({ ...BASE, created_by: "user-9" });
+    mocked.listMembers.mockResolvedValue([{ user_id: "user-1", role: "admin", name: "Me" }] as never);
+    mount(makeAdapter("/acme/kb/team/config"));
+
+    expect(await screen.findByDisplayValue("团队知识库")).toBeInTheDocument();
+    expect(screen.queryByText("You cannot configure this knowledge base")).toBeNull();
   });
 });
 
@@ -269,8 +495,10 @@ describe("KbBuilderPage · create conversation", () => {
   ])("shows the %s starter and sends its message", async (title, message) => {
     mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
 
-    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${title}`) }));
-    expect(h.send).toHaveBeenCalledWith(message);
+    const starter = await screen.findByRole("button", { name: new RegExp(`^${title}`) });
+    await waitFor(() => expect(starter).toBeEnabled());
+    fireEvent.click(starter);
+    expect(h.send).toHaveBeenCalledWith(message, undefined);
   });
 
   it("offers six starters", async () => {

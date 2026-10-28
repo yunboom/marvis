@@ -243,12 +243,17 @@ export function useBuilderSession(options: {
    *
    * Optional because the empty-state prompt buttons call this directly, with
    * no composer to clear.
+   *
+   * `targetSessionId` addresses a conversation the caller created in this same
+   * turn, before its id has reached this hook's props.
    */
   const send = async (
     content: string,
     commitInput?: () => void,
+    targetSessionId?: string,
   ): Promise<boolean> => {
     const text = content.trim();
+    const sessionId = targetSessionId || options.sessionId;
     // switchingRuntime blocks the send while a rebind is in flight: the server
     // serialises the two anyway, but letting the message through would mean the
     // user cannot tell which runtime answered it.
