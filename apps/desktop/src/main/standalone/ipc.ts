@@ -1,3 +1,5 @@
+import { mkdir } from "node:fs/promises";
+
 import type { SelectedServer } from "../../shared/server-discovery";
 import {
   INTEGRATION_KEY_ENVS,
@@ -167,7 +169,12 @@ export function registerStandaloneIpc(deps: StandaloneIpcDeps): void {
   });
 
   ipcMain.handle(STANDALONE_OPEN_DIR, () => deps.openPath(manager.dataRoot()));
-  ipcMain.handle(STANDALONE_OPEN_LOGS, () => deps.openPath(manager.logsDir()));
+  // 安装早期失败时日志目录还不存在，shell.openPath 打开不存在的路径只返回错误文字、界面没有反应。
+  ipcMain.handle(STANDALONE_OPEN_LOGS, async () => {
+    await mkdir(manager.logsDir(), { recursive: true });
+    const error = await deps.openPath(manager.logsDir());
+    if (typeof error === "string" && error) throw new Error(`open logs failed: ${error}`);
+  });
 
   // 已探测通过的远程服务器：先切换过去，再停掉单机模式（本机数据保留）。
   ipcMain.handle(STANDALONE_SWITCH_REMOTE, async (_event, value) => {

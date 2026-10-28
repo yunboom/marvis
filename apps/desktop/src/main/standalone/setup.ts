@@ -15,6 +15,7 @@ import {
 import { listLocalAddresses } from "../lan-browser";
 import { probeServer } from "../server-probe";
 import { readSelectedServer } from "../server-selection";
+import { createActivityLogger } from "./activity-log";
 import type { SecretCodec } from "./config-store";
 import { registerStandaloneIpc, standaloneStatusPublisher } from "./ipc";
 import { StandaloneManager } from "./manager";
@@ -43,15 +44,12 @@ export interface StandaloneSetupDeps {
   deliverToken: (token: string) => void;
 }
 
-function log(message: string, extra?: Record<string, unknown>): void {
-  console.log(`[standalone] ${message}`, extra ?? "");
-}
-
 // 创建单机模式管理器、注册 IPC、按上次的选择自动启动，并在退出前停掉本地服务。
 export async function setupStandalone(deps: StandaloneSetupDeps): Promise<StandaloneManager> {
   const layout = standaloneLayout(
     standaloneRoot(app.getPath("appData"), { isDev: deps.isDev, appName: app.getName() }),
   );
+  const log = createActivityLogger(layout.activityLog);
 
   const manager = new StandaloneManager({
     layout,
