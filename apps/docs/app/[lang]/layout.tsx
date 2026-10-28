@@ -2,7 +2,7 @@ import "../global.css";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import { DocsFrameworkProvider } from "@/components/i18n-frame-provider";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { Inter, Geist_Mono, Source_Serif_4 } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { cn } from "@marvis/ui/lib/utils";
@@ -27,24 +27,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
-});
-
-// Editorial serif used for headings and showpiece elements. Italic style is
-// deliberately NOT loaded — italic in CJK is a synthetic slant that breaks
-// glyph design. Emphasis in docs is carried by brand color + weight, never
-// font-style. Mirrors apps/web/app/layout.tsx for the upright family.
-const sourceSerif = Source_Serif_4({
-  subsets: ["latin"],
-  style: ["normal"],
-  variable: "--font-serif",
-  fallback: [
-    "ui-serif",
-    "Iowan Old Style",
-    "Apple Garamond",
-    "Baskerville",
-    "Times New Roman",
-    "serif",
-  ],
 });
 
 export const metadata: Metadata = {
@@ -84,7 +66,6 @@ export default async function Layout({
         "antialiased",
         inter.variable,
         geistMono.variable,
-        sourceSerif.variable,
       )}
     >
       <body className="font-sans">

@@ -7,13 +7,13 @@ import { prefixLocale } from "@/lib/locale-link";
 
 
 /**
- * NumberedCards — three-column ruled-divider grid with No.01/02/03 serif
+ * NumberedCards — three-column ruled-divider grid with No.01/02/03
  * numbers. Showpiece component; replaces fumadocs's <Cards> on the welcome
  * page. Top + bottom heavy rules frame the row.
  */
 export function NumberedCards({ children }: { children: ReactNode }) {
   return (
-    <div className="not-prose my-9 grid grid-cols-1 border-y border-[var(--docs-rule)] md:grid-cols-3">
+    <div className="not-prose my-9 grid grid-cols-1 border-y border-border md:grid-cols-3">
       {children}
     </div>
   );
@@ -46,14 +46,14 @@ export function NumberedCard({
       <div className="font-mono text-[0.6875rem] uppercase tracking-[0.08em] text-muted-foreground">
         {number ? `No. ${number}` : null}
       </div>
-      <div className="font-[family-name:var(--font-serif)] text-[1.375rem] leading-[1.25] tracking-[-0.015em] text-foreground transition-colors group-hover:text-[var(--primary)]">
+      <div className="text-[1.125rem] font-semibold leading-[1.4] text-foreground transition-colors group-hover:text-muted-foreground">
         {title}
       </div>
       <div className="text-[0.84375rem] leading-[1.55] text-muted-foreground">
         {children}
       </div>
       {tag ? (
-        <div className="mt-1 font-mono text-[0.625rem] uppercase tracking-[0.06em] text-[var(--primary)]">
+        <div className="mt-1 font-mono text-[0.625rem] uppercase tracking-[0.06em] text-[var(--brand)]">
           {tag}
         </div>
       ) : null}
@@ -62,7 +62,7 @@ export function NumberedCard({
 }
 
 /**
- * NumberedSteps — large serif step numbers, ruled-row separators.
+ * NumberedSteps — large step numbers, ruled-row separators.
  * Use for sequential walkthroughs (install → login → start → assign).
  */
 export function NumberedSteps({ children }: { children: ReactNode }) {
@@ -80,11 +80,11 @@ export function Step({
 }) {
   return (
     <div className="grid grid-cols-[3.5rem_1fr] gap-5 border-b border-border py-5">
-      <div className="font-[family-name:var(--font-serif)] text-[2rem] font-normal leading-none tracking-[-0.02em] text-[var(--primary)]">
+      <div className="text-[1.75rem] font-semibold leading-none tracking-[-0.02em] text-[var(--brand)]">
         {number}
       </div>
       <div>
-        <div className="mb-1 font-[family-name:var(--font-serif)] text-[1.25rem] leading-[1.3] tracking-[-0.01em] text-foreground">
+        <div className="mb-1 text-[1.0625rem] font-semibold leading-[1.4] text-foreground">
           {title}
         </div>
         <div className="text-[0.9375rem] leading-[1.6] text-muted-foreground">
