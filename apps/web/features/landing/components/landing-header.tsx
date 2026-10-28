@@ -12,7 +12,8 @@ import { useDashboardCtaHref } from "../utils/use-dashboard-cta";
 
 const CHANGELOG_PATH = "/changelog";
 
-export function LandingHeader() {
+/** `showCta` is off on the landing page, whose hero carries the only CTA. */
+export function LandingHeader({ showCta = true }: { showCta?: boolean }) {
   const { t } = useLocale();
   const user = useAuthStore((s) => s.user);
   const pathname = usePathname();
@@ -46,12 +47,14 @@ export function LandingHeader() {
               {t.header.changelog}
             </Link>
           </nav>
-          <Link
-            href={ctaHref}
-            className="inline-flex h-10 items-center rounded-full bg-[#0f0f0f] px-[18px] text-[14px] font-medium text-white transition-colors hover:bg-[#0f0f0f]/88"
-          >
-            {ctaLabel}
-          </Link>
+          {showCta ? (
+            <Link
+              href={ctaHref}
+              className="inline-flex h-10 items-center rounded-full bg-[#0f0f0f] px-[18px] text-[14px] font-medium text-white transition-colors hover:bg-[#0f0f0f]/88"
+            >
+              {ctaLabel}
+            </Link>
+          ) : null}
           <button
             type="button"
             aria-label={isMenuOpen ? t.header.closeMenu : t.header.openMenu}

@@ -23,9 +23,7 @@ export function createJaDict(
       headlineLine2: "同僚に頼むように。",
       subheading:
         "人とエージェントが、ひとつのワークスペースで協働。",
-      cta: "無料トライアルを始める",
       downloadDesktop: "デスクトップ版をダウンロード",
-      worksWith: "20+ の AI コーディングツールに対応",
       imageAlt: "人間と AI エージェントがタスクを管理する Marvis のボード画面",
     },
     howItWorks: {
@@ -38,7 +36,6 @@ export function createJaDict(
         { title: "エージェントを作成", description: "名前、指示、スキルを設定します。" },
         { title: "タスクを割り当て", description: "同僚と同じように割り当てて、作業を見守ります。" },
       ],
-      cta: "はじめる",
       ctaGithub: "GitHub で見る",
       ctaDocs: "ドキュメントを読む",
     },

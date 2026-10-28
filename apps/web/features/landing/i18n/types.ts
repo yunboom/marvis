@@ -59,15 +59,12 @@ export type LandingDict = {
     headlineLine1: string;
     headlineLine2: string;
     subheading: string;
-    cta: string;
     downloadDesktop: string;
-    worksWith: string;
     imageAlt: string;
   };
   howItWorks: {
     headline: string;
     steps:{ title: string; description: string }[];
-    cta: string;
     ctaGithub: string;
     ctaDocs: string;
   };

@@ -20,9 +20,7 @@ export function createZhDict(
     headlineLine2: "像交给同事一样。",
     subheading:
       "人类和智能体，在一个工作台里协作。",
-    cta: "免费开始",
     downloadDesktop: "下载桌面端",
-    worksWith: "支持 20+ 种 AI 编程工具",
     imageAlt: "Marvis \u770b\u677f\u89c6\u56fe\u2014\u2014\u4eba\u7c7b\u548c 智能体 \u534f\u540c\u7ba1\u7406\u4efb\u52a1",
   },
 
@@ -36,7 +34,6 @@ export function createZhDict(
       { title: "创建智能体", description: "起名字，写指令，加技能。" },
       { title: "指派任务", description: "像指派同事一样，看它干活。" },
     ],
-    cta: "开始使用",
     ctaGithub: "在 GitHub 上查看",
     ctaDocs: "阅读文档",
   },

@@ -5,32 +5,11 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 import { useAuthStore } from "@marvis/core/auth";
 import { BASE_PATH } from "@/config/base-path";
-import { docsHrefForLocale, useLocale } from "../i18n";
+import { useLocale } from "../i18n";
 import { useDashboardCtaHref } from "../utils/use-dashboard-cta";
 
-/**
- * A sample of the runtime catalog; the "20+" label links to the full list in
- * `/docs/providers`, so the row does not need to grow with every new runtime.
- */
-const HERO_PROVIDERS = [
-  "Claude Code",
-  "Codex",
-  "Cursor",
-  "GitHub Copilot",
-  "Antigravity",
-  "Qwen Code",
-  "Kimi CLI",
-  "DeepSeek Harness",
-  "MiniMax Code",
-  "CodeBuddy",
-  "Trae",
-  "Hermes",
-  "Pi",
-  "OpenCode",
-];
-
 export function LandingHero() {
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const user = useAuthStore((s) => s.user);
   const ctaHref = useDashboardCtaHref();
 
@@ -51,7 +30,7 @@ export function LandingHero() {
           href={ctaHref}
           className="inline-flex h-12 items-center rounded-full bg-[#0f0f0f] px-7 font-medium text-white transition-colors hover:bg-[#0f0f0f]/88"
         >
-          {user ? t.header.dashboard : t.hero.cta}
+          {user ? t.header.dashboard : t.header.cta}
         </Link>
         <Link
           href="/download"
@@ -62,26 +41,7 @@ export function LandingHero() {
         </Link>
       </div>
 
-      <div className="mt-8 flex flex-col items-center gap-3.5">
-        <Link
-          href={`${docsHrefForLocale(locale)}/providers`}
-          className="text-[13px] text-[#666] transition-colors hover:text-[#7b4835]"
-        >
-          {t.hero.worksWith} →
-        </Link>
-        <ul className="flex max-w-[880px] flex-wrap justify-center gap-2">
-          {HERO_PROVIDERS.map((name) => (
-            <li
-              key={name}
-              className="flex h-[30px] items-center rounded-full border border-black/6 bg-white px-3 text-[13px] text-[#555]"
-            >
-              {name}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="mt-10 w-full max-w-[1136px] overflow-hidden rounded-(--landing-radius-panel) border border-white bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_64px_rgba(0,0,0,0.08)]">
+      <div className="mt-4 w-full max-w-[1136px] overflow-hidden rounded-(--landing-radius-panel) border border-white bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_24px_64px_rgba(0,0,0,0.08)]">
         <Image
           // next/image does not prefix a string src with basePath, and the
           // optimizer then fetches the unprefixed path and gets a 404.
