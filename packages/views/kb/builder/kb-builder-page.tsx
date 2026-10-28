@@ -359,9 +359,13 @@ function KbBuilderWorkspace({
     [builder.messages],
   );
 
+  // Creating archives the conversation and discarding deletes it, so it goes
+  // missing right as we leave; only a conversation lost while still open
+  // sends the member back to the setup step.
+  const leavingRef = useRef(false);
   const { missing } = builder;
   useEffect(() => {
-    if (missing) onMissing();
+    if (missing && !leavingRef.current) onMissing();
   }, [missing, onMissing]);
 
   const handleChange = (patch: Partial<KbDraft>, field: KbDraftField) => {
@@ -425,6 +429,7 @@ function KbBuilderWorkspace({
       if (!request) return;
       try {
         const created = await createBase.mutateAsync(request);
+        leavingRef.current = true;
         await retire();
         navigation.replace(`${paths.kbBase(created.slug || request.slug)}?welcome=1`);
       } catch (err) {
@@ -459,7 +464,11 @@ function KbBuilderWorkspace({
   };
 
   const discard = async () => {
-    if (!(await builder.destroy())) return;
+    leavingRef.current = true;
+    if (!(await builder.destroy())) {
+      leavingRef.current = false;
+      return;
+    }
     setConfirmingDiscard(false);
     onDiscarded();
   };
