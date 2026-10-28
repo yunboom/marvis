@@ -154,6 +154,45 @@ it.each(["empty", "error"])(
 );
 
 describe("autopilot cards", () => {
+  it("lays cards out two per line once the list mounts after loading", async () => {
+    // The scroll container only exists after the list query resolves, so the
+    // column measurement must start when it mounts, not on the page's first render.
+    const width = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(1000);
+    try {
+      renderPage([
+        autopilot({ id: "a1", title: "Daily standup" }),
+        autopilot({ id: "a2", title: "Weekly report" }),
+      ]);
+
+      const first = await screen.findByRole("listitem", { name: "Daily standup" });
+      const second = screen.getByRole("listitem", { name: "Weekly report" });
+      expect(first.parentElement).toBe(second.parentElement);
+      expect(first.parentElement?.style.gridTemplateColumns).toBe(
+        "repeat(2, minmax(0, 1fr))",
+      );
+    } finally {
+      width.mockRestore();
+    }
+  });
+
+  it("keeps a lone card at half width instead of stretching across the line", async () => {
+    const width = vi
+      .spyOn(HTMLElement.prototype, "clientWidth", "get")
+      .mockReturnValue(1000);
+    try {
+      renderPage([autopilot({ id: "a1", title: "Daily standup" })]);
+
+      const card = await screen.findByRole("listitem", { name: "Daily standup" });
+      expect(card.parentElement?.style.gridTemplateColumns).toBe(
+        "repeat(2, minmax(0, 1fr))",
+      );
+    } finally {
+      width.mockRestore();
+    }
+  });
+
   it("shows the title, a plain-text instructions preview and the default meta fields", async () => {
     renderPage([
       autopilot({

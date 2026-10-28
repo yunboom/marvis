@@ -5,10 +5,8 @@ import {
   useId,
   useLayoutEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
-  type RefObject,
 } from "react";
 import {
   AlertCircle,
@@ -93,12 +91,14 @@ const PAGE_TAB_TRIGGER =
   "h-full flex-none rounded-none px-0.5 group-data-horizontal/tabs:after:-bottom-px";
 
 // Columns follow the scroll container's width, not the viewport: the page
-// lives inside resizable shells (sidebar, desktop split panes).
-function useCardColumns(ref: RefObject<HTMLElement | null>): number {
+// lives inside resizable shells (sidebar, desktop split panes). The container
+// only mounts once the list query resolves, so measuring keys off the mounted
+// element itself; a ref read on the page's first render would still be null
+// and leave every card on its own line.
+function useCardColumns(el: HTMLElement | null): number {
   const [columns, setColumns] = useState(1);
 
   useLayoutEffect(() => {
-    const el = ref.current;
     if (!el) return;
 
     const update = () =>
@@ -108,7 +108,7 @@ function useCardColumns(ref: RefObject<HTMLElement | null>): number {
     observer.observe(el);
 
     return () => observer.disconnect();
-  }, [ref]);
+  }, [el]);
 
   return columns;
 }
@@ -569,11 +569,11 @@ export function AutopilotsPage() {
 
   // Card virtualization: one virtual item per line of cards, fixed height,
   // offsets applied as padding on the list.
-  const listScrollRef = useRef<HTMLDivElement | null>(null);
-  const columns = useCardColumns(listScrollRef);
+  const [listScrollEl, setListScrollEl] = useState<HTMLDivElement | null>(null);
+  const columns = useCardColumns(listScrollEl);
   const rowVirtualizer = useVirtualizer({
     count: Math.ceil(rows.length / columns),
-    getScrollElement: () => listScrollRef.current,
+    getScrollElement: () => listScrollEl,
     estimateSize: () => CARD_ROW_HEIGHT,
     overscan: 5,
   });
@@ -740,7 +740,7 @@ export function AutopilotsPage() {
               visibleCount={rows.length}
             />
             <div
-              ref={listScrollRef}
+              ref={setListScrollEl}
               className={cn("min-h-0 flex-1 overflow-y-auto pt-1 pb-6", COLLECTION_TABLE_INSET)}
             >
               {rows.length === 0 ? (
