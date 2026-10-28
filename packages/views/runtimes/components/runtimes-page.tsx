@@ -127,6 +127,21 @@ const COMING_SOON_SERVICES = [
   { provider: "claude", name: "Claude Managed Agents", vendor: "Anthropic" },
 ];
 
+const QODER_CLOUD_PROVIDER = "qoder_cloud";
+
+// Cloud services shown on this page and in the add menu. Qoder and Cursor are
+// hidden for now but kept, so turning them back on is a one-line change.
+const VISIBLE_CLOUD_PROVIDERS: ReadonlySet<string> = new Set(["claude"]);
+
+const SHOW_QODER_CLOUD = VISIBLE_CLOUD_PROVIDERS.has(QODER_CLOUD_PROVIDER);
+
+const VISIBLE_COMING_SOON_SERVICES = COMING_SOON_SERVICES.filter((service) =>
+  VISIBLE_CLOUD_PROVIDERS.has(service.provider),
+);
+
+// Coming-soon rows listed without the "By {vendor}" subtitle.
+const NO_VENDOR_SUBTITLE_PROVIDERS: ReadonlySet<string> = new Set(["claude"]);
+
 // Track order: edge, name, harness, agents, workload, status, actions, edge.
 // Below @2xl only name, status and actions keep a track; the other cells are
 // `hidden @2xl:flex` and drop out of subgrid placement. MUST stay a literal
@@ -275,7 +290,7 @@ export function RuntimesPage({
   }
 
   const isDesktop = hasLocalMachine === true;
-  const qoder = qoderConnection ?? null;
+  const qoder = SHOW_QODER_CLOUD ? (qoderConnection ?? null) : null;
   const qoderHref = paths.runtimeDetail(QODER_RUNTIME_LOCATOR);
   // Qoder's runtime registers like a machine, but it is listed once, as a
   // cloud service — never as a machine, even when this server cannot run
@@ -330,7 +345,7 @@ export function RuntimesPage({
       (qoderConfigured && matchesStatus(qoderIsOnline(qoder))));
   const visibleComingSoon =
     statusFilter === "all"
-      ? COMING_SOON_SERVICES.filter((service) =>
+      ? VISIBLE_COMING_SOON_SERVICES.filter((service) =>
           matchesQuery(service.name, service.vendor),
         )
       : [];
@@ -660,7 +675,7 @@ function AddRuntimeMenu({
               onClick={onCloudRuntime}
             />
           )}
-          {COMING_SOON_SERVICES.map((service) => (
+          {VISIBLE_COMING_SOON_SERVICES.map((service) => (
             <AddMenuItem
               key={service.provider}
               icon={<ProviderLogo provider={service.provider} className="size-4" />}
@@ -872,7 +887,7 @@ function NameCell({
   title: string;
   href?: string;
   badge?: ReactNode;
-  subtitle: string;
+  subtitle?: string;
   muted?: boolean;
 }) {
   return (
@@ -900,9 +915,11 @@ function NameCell({
           )}
           {badge}
         </span>
-        <span className="block truncate text-label text-muted-foreground">
-          {subtitle}
-        </span>
+        {subtitle && (
+          <span className="block truncate text-label text-muted-foreground">
+            {subtitle}
+          </span>
+        )}
       </span>
     </ListGridCell>
   );
@@ -1216,7 +1233,11 @@ function ComingSoonRow({
           </RowTile>
         }
         title={name}
-        subtitle={t(($) => $.page.rows.provided_by, { vendor })}
+        subtitle={
+          NO_VENDOR_SUBTITLE_PROVIDERS.has(provider)
+            ? undefined
+            : t(($) => $.page.rows.provided_by, { vendor })
+        }
         muted
       />
       <EmptyCell />
