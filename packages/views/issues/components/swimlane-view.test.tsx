@@ -28,14 +28,24 @@ const mockListChildrenByParents = vi.hoisted(() =>
 const mockGetAgentTaskSnapshot = vi.hoisted(() =>
   vi.fn().mockResolvedValue([]),
 );
+const mockListIssueWorkflows = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ workflows: [] }),
+);
+const mockListProjects = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ projects: [], total: 0 }),
+);
 vi.mock("@marvis/core/api", () => ({
   api: {
     listChildrenByParents: mockListChildrenByParents,
     getAgentTaskSnapshot: mockGetAgentTaskSnapshot,
+    listIssueWorkflows: mockListIssueWorkflows,
+    listProjects: mockListProjects,
   },
   getApi: () => ({
     listChildrenByParents: mockListChildrenByParents,
     getAgentTaskSnapshot: mockGetAgentTaskSnapshot,
+    listIssueWorkflows: mockListIssueWorkflows,
+    listProjects: mockListProjects,
   }),
   setApiInstance: vi.fn(),
 }));
@@ -383,6 +393,8 @@ describe("SwimLaneView", () => {
     mockViewState.agentRunningFilter = false;
     mockListChildrenByParents.mockResolvedValue({ issues: [] });
     mockGetAgentTaskSnapshot.mockResolvedValue([]);
+    mockListIssueWorkflows.mockResolvedValue({ workflows: [] });
+    mockListProjects.mockResolvedValue({ projects: [], total: 0 });
   });
 
   it("renders the four status board groups as column headers", () => {
@@ -398,6 +410,43 @@ describe("SwimLaneView", () => {
     }
     // Concrete statuses head the groups inside each cell.
     expect(screen.getAllByText("In Progress").length).toBeGreaterThan(0);
+  });
+
+  it("uses the workflow's zones as columns on a project with a workflow", async () => {
+    mockListProjects.mockResolvedValue({
+      projects: [{ id: "proj-1", title: "App", workflow_id: "wf-1", lead_type: null, lead_id: null }],
+      total: 1,
+    });
+    mockListIssueWorkflows.mockResolvedValue({
+      workflows: [
+        {
+          id: "wf-1",
+          name: "Delivery",
+          description: "",
+          is_default: false,
+          project_ids: ["proj-1"],
+          steps: ["todo", "in_progress", "in_review", "blocked", "done", "cancelled"].map(
+            (status_key) => ({ status_key, handler: { type: "none" }, instructions: "" }),
+          ),
+        },
+      ],
+    });
+    renderWithI18n(
+      <SwimLaneView
+        issues={mockIssues}
+        visibleStatuses={["todo", "in_progress", "in_review", "blocked", "done", "cancelled"]}
+        onMoveIssue={vi.fn()}
+        projectId="proj-1"
+      />,
+    );
+
+    expect(await screen.findByRole("heading", { level: 2, name: "Work" })).toBeInTheDocument();
+    expect(
+      Array.from(document.querySelectorAll("[data-swimlane-column]")).map((el) =>
+        el.getAttribute("data-swimlane-column"),
+      ),
+    ).toEqual(["start", "middle", "blocked", "end"]);
+    expect(screen.queryByRole("heading", { level: 2, name: "Needs attention" })).toBeNull();
   });
 
 

@@ -2,8 +2,9 @@
  * @vitest-environment jsdom
  *
  * Status board: four fixed columns of per-status lanes. Covers the lane
- * wiring — routing into columns, collapse persistence, the "N more" preview
- * cut, server paging on expand, and focus mode.
+ * wiring — routing into columns (status groups, or workflow zones on a
+ * project board), collapse persistence, the "N more" preview cut, server
+ * paging on expand, and focus mode.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, screen, within } from "@testing-library/react";
@@ -18,12 +19,18 @@ import { BoardView } from "./board-view";
 
 vi.mock("@marvis/core/hooks", () => ({ useWorkspaceId: () => "ws-1" }));
 
+const apiData = vi.hoisted(() => ({
+  statuses: [] as unknown[],
+  workflows: [] as unknown[],
+  projects: [] as unknown[],
+}));
+
 vi.mock("@marvis/core/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@marvis/core/api")>();
   const api = {
-    listIssueStatuses: async () => ({ statuses: [], categories: [], total: 0 }),
-    listIssueWorkflows: async () => ({ workflows: [] }),
-    listProjects: async () => ({ projects: [], total: 0 }),
+    listIssueStatuses: async () => ({ statuses: apiData.statuses, categories: [], total: 0 }),
+    listIssueWorkflows: async () => ({ workflows: apiData.workflows }),
+    listProjects: async () => ({ projects: apiData.projects, total: apiData.projects.length }),
   };
   return { ...actual, api, getApi: () => api };
 });
@@ -159,11 +166,22 @@ describe("Status lane board", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    apiData.statuses = [];
+    apiData.workflows = [];
+    apiData.projects = [];
   });
 
   function render({
     statusPagination,
-  }: { statusPagination?: IssueStatusPagination } = {}) {
+    issues = ISSUES,
+    visibleStatuses = VISIBLE,
+    projectId,
+  }: {
+    statusPagination?: IssueStatusPagination;
+    issues?: Issue[];
+    visibleStatuses?: IssueStatus[];
+    projectId?: string;
+  } = {}) {
     const store = getIssueSurfaceViewStore(
       `board-lanes-${Math.floor(Math.random() * 1e9)}`,
     );
@@ -173,8 +191,9 @@ describe("Status lane board", () => {
         <ViewStoreProvider store={store}>
           <IssueContextMenuProvider>
             <BoardView
-              issues={ISSUES}
-              visibleStatuses={VISIBLE}
+              issues={issues}
+              visibleStatuses={visibleStatuses}
+              projectId={projectId}
               onMoveIssue={() => {}}
               onCreateIssue={() => {}}
               statusPagination={statusPagination}
@@ -201,6 +220,49 @@ describe("Status lane board", () => {
     expect(column("Needs attention").querySelector('[data-board-lane="in_review"]')).toBeTruthy();
     expect(column("Needs attention").querySelector('[data-board-lane="blocked"]')).toBeTruthy();
     expect(column("Ended").querySelector('[data-board-lane="cancelled"]')).toBeTruthy();
+  });
+
+  it("splits a project board with a workflow into its zones", async () => {
+    apiData.statuses = [
+      { key: "dev", name: "Dev", category: "started", status_group: "working", position: 1, is_system: false },
+      { key: "qa", name: "QA", category: "started", status_group: "needs_attention", position: 2, is_system: false },
+    ];
+    apiData.projects = [{ id: "proj-1", title: "App", workflow_id: "wf-1", lead_type: null, lead_id: null }];
+    apiData.workflows = [
+      {
+        id: "wf-1",
+        name: "Delivery",
+        description: "",
+        is_default: false,
+        project_ids: ["proj-1"],
+        steps: ["backlog", "todo", "dev", "in_review", "qa", "blocked", "done", "cancelled"].map(
+          (status_key) => ({ status_key, handler: { type: "none" }, instructions: "" }),
+        ),
+      },
+    ];
+    const workflowOrder: IssueStatus[] = ["backlog", "todo", "dev", "in_review", "qa", "blocked", "done", "cancelled"];
+    render({
+      projectId: "proj-1",
+      issues: [...ISSUES, makeIssue("dev1", "dev", 1), makeIssue("qa1", "qa", 1)].map((issue) => ({
+        ...issue,
+        project_id: "proj-1",
+      })),
+      visibleStatuses: workflowOrder,
+    });
+
+    const work = await screen.findByRole("region", { name: "Work" });
+    expect(
+      Array.from(document.querySelectorAll("[data-board-status-column]")).map(
+        (el) => el.getAttribute("data-board-status-column"),
+      ),
+    ).toEqual(["start", "middle", "blocked", "end"]);
+    const lanesOf = (el: HTMLElement) =>
+      Array.from(el.querySelectorAll("[data-board-lane]")).map((node) => node.getAttribute("data-board-lane"));
+    expect(lanesOf(column("Start"))).toEqual(["backlog", "todo"]);
+    expect(lanesOf(work)).toEqual(["dev", "in_review", "qa"]);
+    expect(lanesOf(column("Blocked"))).toEqual(["blocked"]);
+    expect(lanesOf(column("End"))).toEqual(["done", "cancelled"]);
+    expect(screen.queryByRole("region", { name: "Needs attention" })).toBeNull();
   });
 
   it("collapses empty and closed lanes by default", () => {

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  groupStatusesIntoBoardColumns,
   issueStatusCategory,
   statusColumnKeys,
   type BoardStatusColumn,
@@ -44,12 +43,19 @@ import { useWorkspacePaths } from "@marvis/core/paths";
 import { useWorkspaceId } from "@marvis/core/hooks";
 import type { IssueStatusCatalog } from "@marvis/core/issue-statuses";
 import { useIssueStatuses } from "@marvis/core/issue-statuses/hooks";
+import { useProjectWorkflow } from "@marvis/core/issue-workflows";
 import { useActorName } from "@marvis/core/workspace/hooks";
 import { childrenByParentsOptions, issueKeys } from "@marvis/core/issues/queries";
 import { sortIssues } from "../utils/sort";
 import { BUILT_IN_STATUS_ORDER } from "@marvis/core/issues/config";
 import { BoardCardContent, DragLift, issueDropAnimation } from "./board-card";
-import { StatusLane, useFocusedLane, type StatusGroup } from "./status-lane-board";
+import {
+  StatusLane,
+  useBoardColumnTitle,
+  useBoardStatusColumns,
+  useFocusedLane,
+  type StatusGroup,
+} from "./status-lane-board";
 import { StatusIcon } from "./status-icon";
 import { InfiniteScrollSentinel } from "./infinite-scroll-sentinel";
 import { AppLink } from "../../navigation";
@@ -650,7 +656,7 @@ function SwimLaneViewImpl({
 
   const wsId = useWorkspaceId();
   const statusCatalog = useIssueStatuses(wsId);
-  const { groupOf, entryOf } = statusCatalog;
+  const { entryOf } = statusCatalog;
   // Board order for `sort=status`, archived included: an issue can still sit
   // on an archived status and has to rank with the rest (MUL-7379).
   const statusSortOrder = useMemo(() => statusColumnKeys(statusCatalog, true), [statusCatalog]);
@@ -692,12 +698,12 @@ function SwimLaneViewImpl({
 
   // The controller supplies exact status keys in catalog order.
   const sortedStatuses = visibleStatuses;
-  // Columns are the status board's four fixed groups; each cell stacks one
-  // group per concrete status, so droppables stay keyed by status.
-  const boardColumns = useMemo(
-    () => groupStatusesIntoBoardColumns(sortedStatuses, groupOf),
-    [sortedStatuses, groupOf],
-  );
+  // Columns match the status board's four: the project workflow's zones on a
+  // project, status groups elsewhere. Each cell stacks one group per concrete
+  // status, so droppables stay keyed by status.
+  const projectWorkflow = useProjectWorkflow(wsId, projectId);
+  const boardColumns = useBoardStatusColumns(sortedStatuses, projectWorkflow !== null);
+  const columnTitle = useBoardColumnTitle();
 
   const laneLabels = useMemo(
     () => ({
@@ -1438,7 +1444,7 @@ function SwimLaneViewImpl({
             {t(($) => $.table.load_more_failed_retry)}
           </button>
         )}
-        {/* Sticky column header row — the status board's four categories. Lane
+        {/* Sticky column header row — the status board's four columns. Lane
             headers stick right below it (top-10 = this row's height). */}
         <div className="sticky top-0 z-20 bg-background pb-2">
           <div className={SWIMLANE_GRID_CLASS}>
@@ -1449,7 +1455,7 @@ function SwimLaneViewImpl({
                 className="flex h-8 min-w-0 items-center gap-2 px-1.5"
               >
                 <h2 className="truncate text-body font-semibold">
-                  {t(($) => $.board.status_column[column.key])}
+                  {columnTitle(column.key)}
                 </h2>
                 <span className="shrink-0 text-label tabular-nums text-faint-foreground">
                   {column.statuses.reduce((sum, status) => sum + (statusTotals.get(status) ?? 0), 0)}

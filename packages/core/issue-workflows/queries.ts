@@ -50,9 +50,12 @@ export function defaultWorkflow(workflows: readonly IssueWorkflow[] | undefined)
 
 /** Statuses with fixed places at the ends of a workflow, in the order they sit. */
 export const WORKFLOW_HEAD_STATUSES = ["backlog", "todo"] as const;
-export const WORKFLOW_TAIL_STATUSES = ["blocked", "done", "cancelled"] as const;
+/** The side status any step can move to when stuck; it keeps a zone of its own. */
+export const WORKFLOW_BLOCKED_STATUS = "blocked";
+export const WORKFLOW_TAIL_STATUSES = [WORKFLOW_BLOCKED_STATUS, "done", "cancelled"] as const;
 /** Fixed statuses a workflow may leave out; the others every workflow lists. */
 export const WORKFLOW_OPTIONAL_STATUSES = ["backlog", "blocked"] as const;
+const HEAD_STATUSES = new Set<string>(WORKFLOW_HEAD_STATUSES);
 const FIXED_STATUSES = new Set<string>([...WORKFLOW_HEAD_STATUSES, ...WORKFLOW_TAIL_STATUSES]);
 const OPTIONAL_STATUSES = new Set<string>(WORKFLOW_OPTIONAL_STATUSES);
 const NO_HANDOFF_STATUSES = new Set(["backlog", "done", "cancelled"]);
@@ -75,6 +78,46 @@ export function statusAcceptsHandoff(statusKey: string): boolean {
 /** The columns between the fixed head and tail, in order. */
 export function workflowMiddleKeys(workflow: Pick<IssueWorkflow, "steps">): string[] {
   return workflow.steps.map((s) => s.status_key).filter((k) => !FIXED_STATUSES.has(k));
+}
+
+/**
+ * The four zones of a workflow, in display order: the fixed head, the steps
+ * the team arranges, the blocked side status, and the fixed end. The workflow
+ * editor and project boards both lay a workflow out this way.
+ */
+export const WORKFLOW_ZONE_START = "start";
+export const WORKFLOW_ZONE_MIDDLE = "middle";
+export const WORKFLOW_ZONE_BLOCKED = "blocked";
+export const WORKFLOW_ZONE_END = "end";
+
+export type WorkflowZone =
+  | typeof WORKFLOW_ZONE_START
+  | typeof WORKFLOW_ZONE_MIDDLE
+  | typeof WORKFLOW_ZONE_BLOCKED
+  | typeof WORKFLOW_ZONE_END;
+
+export const WORKFLOW_ZONE_ORDER: readonly WorkflowZone[] = [
+  WORKFLOW_ZONE_START,
+  WORKFLOW_ZONE_MIDDLE,
+  WORKFLOW_ZONE_BLOCKED,
+  WORKFLOW_ZONE_END,
+];
+
+/** Whether a key names a workflow zone. */
+export function isWorkflowZone(key: string): key is WorkflowZone {
+  return (WORKFLOW_ZONE_ORDER as readonly string[]).includes(key);
+}
+
+/**
+ * The zone a status sits in. Every status without a fixed place is a middle
+ * step, including one the workflow does not list.
+ */
+export function workflowZoneOf(statusKey: string): WorkflowZone {
+  if (HEAD_STATUSES.has(statusKey)) return WORKFLOW_ZONE_START;
+  if (statusKey === WORKFLOW_BLOCKED_STATUS) return WORKFLOW_ZONE_BLOCKED;
+  if (FIXED_STATUSES.has(statusKey)) return WORKFLOW_ZONE_END;
+
+  return WORKFLOW_ZONE_MIDDLE;
 }
 
 /**

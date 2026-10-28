@@ -4,6 +4,7 @@ import { buildIssueStatusCatalog } from "../issue-statuses";
 import type { IssueStatusEntry } from "../types";
 import {
   groupStatusesIntoBoardColumns,
+  groupStatusesIntoWorkflowZones,
   isBoardLaneCollapsed,
 } from "./board-status-columns";
 import { visibleStatusKeys } from "./status-category";
@@ -76,6 +77,53 @@ describe("groupStatusesIntoBoardColumns", () => {
     expect(legacy.groupOf("review_2")).toBe("working");
     expect(legacy.groupOf("blocked")).toBe("needs_attention");
     expect(legacy.groupOf("unknown_key")).toBe("not_started");
+  });
+});
+
+describe("groupStatusesIntoWorkflowZones", () => {
+  function zonesOf(statuses: string[]) {
+    return Object.fromEntries(
+      groupStatusesIntoWorkflowZones(statuses).map((column) => [column.key, column.statuses]),
+    );
+  }
+
+  it("lays a workflow out as start, middle, blocked, end", () => {
+    const columns = groupStatusesIntoWorkflowZones([
+      "backlog",
+      "todo",
+      "dev",
+      "in_review",
+      "qa",
+      "blocked",
+      "done",
+      "cancelled",
+    ]);
+
+    expect(columns).toEqual([
+      { key: "start", statuses: ["backlog", "todo"] },
+      { key: "middle", statuses: ["dev", "in_review", "qa"] },
+      { key: "blocked", statuses: ["blocked"] },
+      { key: "end", statuses: ["done", "cancelled"] },
+    ]);
+  });
+
+  it("keeps workflow order inside the middle zone, whatever the status group", () => {
+    expect(zonesOf(["todo", "qa", "waiting_customer", "in_progress", "done"]).middle).toEqual([
+      "qa",
+      "waiting_customer",
+      "in_progress",
+    ]);
+  });
+
+  it("puts a status the workflow does not list in the middle zone", () => {
+    expect(zonesOf(["triage", "shipped"]).middle).toEqual(["triage", "shipped"]);
+  });
+
+  it("keeps every zone when the workflow leaves out backlog and blocked", () => {
+    const columns = zonesOf(["todo", "in_progress", "done", "cancelled"]);
+
+    expect(columns.blocked).toEqual([]);
+    expect(columns.start).toEqual(["todo"]);
   });
 });
 
