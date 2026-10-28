@@ -595,9 +595,20 @@ Run 'make down' here first — a leftover instance answers /health with 200 and 
   die "api never became healthy. Log: $(log_file api)"
 }
 
+# Where the web app answers. With NEXT_PUBLIC_BASE_PATH set (e.g. /marvis)
+# every page lives under the prefix and the bare port root is a 404, so probes
+# and printed links must carry it.
+web_url() {
+  local prefix="${NEXT_PUBLIC_BASE_PATH:-}"
+  # Trim every leading and trailing slash, as apps/web/config/base-path.ts does.
+  prefix="${prefix#"${prefix%%[!/]*}"}"
+  prefix="${prefix%"${prefix##*[!/]}"}"
+  printf 'http://localhost:%s%s' "$FRONTEND_PORT" "${prefix:+/$prefix}"
+}
+
 start_web() {
   local waited=0 listener
-  if curl -sf --max-time 15 "http://localhost:${FRONTEND_PORT}" >/dev/null 2>&1; then
+  if curl -sf --max-time 15 "$(web_url)" >/dev/null 2>&1; then
     listener="$(record_component_listener web "$FRONTEND_PORT" || true)"
     if [ -n "$listener" ]; then
       ok "web already running on :$FRONTEND_PORT (pid $listener)"
@@ -612,13 +623,13 @@ start_web() {
   info "web launching (pid $(cat "$(pid_file web)")), log: $(log_file web)"
 
   while [ "$waited" -lt 300 ]; do
-    if curl -sf --max-time 15 "http://localhost:${FRONTEND_PORT}" >/dev/null 2>&1; then
+    if curl -sf --max-time 15 "$(web_url)" >/dev/null 2>&1; then
       listener="$(record_component_listener web "$FRONTEND_PORT" || true)"
       if [ -z "$listener" ]; then
         stop_component web
         die "Web on :$FRONTEND_PORT is not descended from the process this environment launched."
       fi
-      ok "web serving http://localhost:$FRONTEND_PORT (pid ${listener:-?})"
+      ok "web serving $(web_url) (pid ${listener:-?})"
       return 0
     fi
     component_pid web >/dev/null || { tail -20 "$(log_file web)" | sed 's/^/    /' >&2; die "web exited during startup. Log: $(log_file web)"; }
@@ -636,7 +647,7 @@ write_profile_config() {
   cat > "$config" <<EOF
 {
   "server_url": "http://localhost:${BACKEND_PORT}",
-  "app_url": "http://localhost:${FRONTEND_PORT}",
+  "app_url": "$(web_url)",
   "token": "$(json_escape "$pat")",
   "workspace_id": "$(json_escape "$ws")",
   "workspaces_root": "$(json_escape "$WORKSPACES_ROOT")"
@@ -935,13 +946,13 @@ component_state() {
       fi
       ;;
     web)
-      if curl -sf --max-time 10 "http://localhost:${FRONTEND_PORT}" >/dev/null 2>&1 \
+      if curl -sf --max-time 10 "$(web_url)" >/dev/null 2>&1 \
         && listener_belongs_to_component web "$FRONTEND_PORT"; then
-        printf 'running|http://localhost:%s|pid %s' "$FRONTEND_PORT" "$(port_listener_pid "$FRONTEND_PORT")"
+        printf 'running|%s|pid %s' "$(web_url)" "$(port_listener_pid "$FRONTEND_PORT")"
       elif [ -n "$(port_listener_pid "$FRONTEND_PORT")" ]; then
-        printf 'mismatch|http://localhost:%s|listener is not owned by this environment' "$FRONTEND_PORT"
+        printf 'mismatch|%s|listener is not owned by this environment' "$(web_url)"
       else
-        printf 'stopped|http://localhost:%s|' "$FRONTEND_PORT"
+        printf 'stopped|%s|' "$(web_url)"
       fi
       ;;
     daemon)
@@ -1025,7 +1036,7 @@ print_status_json() {
 print_handoff() {
   local entrypoint
   if component_selected web; then
-    entrypoint="Open        http://localhost:${FRONTEND_PORT}/${WORKSPACE_SLUG}/issues"
+    entrypoint="Open        $(web_url)/${WORKSPACE_SLUG}/issues"
   elif component_selected desktop; then
     entrypoint="Desktop     renderer http://localhost:${DESKTOP_RENDERER_PORT} → backend :${BACKEND_PORT}"
   else
