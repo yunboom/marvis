@@ -537,6 +537,34 @@ describe("navigation item presentation", () => {
     expect(screen.queryByTestId("sidebar-menu-sub")).not.toBeNull();
   });
 
+  it("nests Squads under Agents, collapsed by default", () => {
+    const { container } = render(<AppSidebar />);
+    const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-agents"]');
+
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelector('button[data-href="/acme/squads"]')).toBeNull();
+
+    fireEvent.click(toggle!);
+    const squads = screen
+      .getByTestId("sidebar-menu-sub")
+      .querySelector<HTMLElement>('button[data-href="/acme/squads"]');
+    expect(squads).not.toBeNull();
+  });
+
+  it("starts the Agents sub-nav open on the Squads page", () => {
+    navigation.current = { pathname: "/acme/squads" };
+    const { container } = render(<AppSidebar />);
+    const toggle = container.querySelector<HTMLElement>('button[aria-controls="sidebar-sub-nav-agents"]');
+    const squads = screen
+      .getByTestId("sidebar-menu-sub")
+      .querySelector<HTMLElement>('button[data-href="/acme/squads"]');
+
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    expect(squads?.dataset.active).toBe("true");
+    expect(container.querySelectorAll('button[data-href="/acme/squads"]')).toHaveLength(1);
+    navigation.current = { pathname: "/acme/issues" };
+  });
+
   it("keeps Help out of the sidebar", () => {
     render(<AppSidebar />);
 
@@ -653,12 +681,12 @@ describe("AI team nav — Knowledge base", () => {
     container.querySelector<HTMLElement>('button[data-href="/acme/kb"]');
   const badge = (container: HTMLElement) => container.querySelector<HTMLElement>('[data-testid="kb-open-mr-badge"]');
 
-  it("places Knowledge base right after Squads", () => {
+  it("places Knowledge base right after Agents", () => {
     const { container } = renderWithI18n(<AppSidebar />);
     const hrefs = Array.from(container.querySelectorAll<HTMLElement>("button[data-href]")).map(
       (el) => el.dataset.href,
     );
-    expect(hrefs.indexOf("/acme/kb")).toBe(hrefs.indexOf("/acme/squads") + 1);
+    expect(hrefs.indexOf("/acme/kb")).toBe(hrefs.indexOf("/acme/agents") + 1);
     expect(kbNav(container)).toHaveTextContent("Knowledge base");
   });
 

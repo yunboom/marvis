@@ -178,14 +178,14 @@ const workNav: { key: NavKey; labelKey: NavLabelKey }[] = [
   { key: "autopilots", labelKey: "autopilots" },
 ];
 
-// Second-level rows rendered under a work nav item.
-const workSubNav: Partial<Record<NavKey, { key: NavKey; labelKey: NavLabelKey }[]>> = {
+// Second-level rows rendered under a nav item.
+const subNavByParent: Partial<Record<NavKey, { key: NavKey; labelKey: NavLabelKey }[]>> = {
   projects: [{ key: "workflows", labelKey: "workflows" }],
+  agents: [{ key: "squads", labelKey: "squads" }],
 };
 
 const aiTeamNav: { key: NavKey; labelKey: NavLabelKey }[] = [
   { key: "agents", labelKey: "agents" },
-  { key: "squads", labelKey: "squads" },
   { key: "kb", labelKey: "knowledge_base" },
   { key: "skills", labelKey: "skills" },
   { key: "runtimes", labelKey: "runtimes" },
@@ -596,8 +596,8 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   // route; landing on a sub route later reopens its group.
   const [collapsedSubNav, setCollapsedSubNav] = useState<Partial<Record<NavKey, boolean>>>(() => {
     const collapsed: Partial<Record<NavKey, boolean>> = {};
-    for (const key of Object.keys(workSubNav) as NavKey[]) {
-      collapsed[key] = !workSubNav[key]?.some((sub) => isNavActive(pathname, p[sub.key]()));
+    for (const key of Object.keys(subNavByParent) as NavKey[]) {
+      collapsed[key] = !subNavByParent[key]?.some((sub) => isNavActive(pathname, p[sub.key]()));
     }
     return collapsed;
   });
@@ -614,8 +614,8 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
     }
     setCollapsedSubNav((current) => (current[key] ? { ...current, [key]: false } : current));
   };
-  const activeSubNavParent = (Object.keys(workSubNav) as NavKey[]).find((key) =>
-    workSubNav[key]?.some((sub) => isNavActive(pathname, p[sub.key]())),
+  const activeSubNavParent = (Object.keys(subNavByParent) as NavKey[]).find((key) =>
+    subNavByParent[key]?.some((sub) => isNavActive(pathname, p[sub.key]())),
   );
   useEffect(() => {
     if (activeSubNavParent) {
@@ -629,6 +629,54 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
   // pin is active the plain nav row for its surface stays highlighted too.
   // Accepted — suppressing it would need every view detail lifted up here.
   const isActivePinnedRoute = displayedPinned.some((pin) => pathname === getPinHref(pin));
+  const renderSubNav = (
+    parentKey: NavKey,
+    label: string,
+    subNav: { key: NavKey; labelKey: NavLabelKey }[],
+  ) => {
+    const subOpen = !collapsedSubNav[parentKey];
+
+    return (
+      <>
+        <SidebarMenuAction
+          aria-expanded={subOpen}
+          aria-controls={`sidebar-sub-nav-${parentKey}`}
+          aria-label={
+            subOpen
+              ? t(($) => $.sidebar.collapse_sub_nav, { label })
+              : t(($) => $.sidebar.expand_sub_nav, { label })
+          }
+          onClick={() => toggleSubNav(parentKey)}
+          className="top-[7px] right-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+        >
+          {subOpen ? <ChevronUp className="!size-3.5" /> : <ChevronDown className="!size-3.5" />}
+        </SidebarMenuAction>
+        {subOpen && (
+          <SidebarMenuSub
+            id={`sidebar-sub-nav-${parentKey}`}
+            className="mx-0 mt-0.5 translate-x-0 gap-0.5 border-l-0 p-0"
+          >
+            {subNav.map((sub) => {
+              const subHref = p[sub.key]();
+              const SubIcon = routeIconForPath(subHref);
+              return (
+                <SidebarMenuSubItem key={sub.key}>
+                  <SidebarMenuSubButton
+                    isActive={!isActivePinnedRoute && isNavActive(pathname, subHref)}
+                    render={<AppLink href={subHref} />}
+                    className="h-[34px] translate-x-0 gap-2.5 rounded-md pr-3 pl-10 text-foreground hover:bg-sidebar-accent/70 data-active:font-medium [&>svg]:size-[18px] [&>svg]:text-current"
+                  >
+                    <SubIcon />
+                    <span>{t(($) => $.nav[sub.labelKey])}</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
+          </SidebarMenuSub>
+        )}
+      </>
+    );
+  };
 
   const handleDragStart = useCallback(() => {
     isDraggingRef.current = true;
@@ -817,9 +865,8 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                   const href = p[item.key]();
                   const Icon = routeIconForPath(href);
                   const isActive = !isActivePinnedRoute && isNavActive(pathname, href);
-                  const subNav = workSubNav[item.key];
+                  const subNav = subNavByParent[item.key];
                   const label = t(($) => $.nav[item.labelKey]);
-                  const subOpen = !collapsedSubNav[item.key];
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
@@ -830,44 +877,7 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                         <Icon />
                         <span>{label}</span>
                       </SidebarMenuButton>
-                      {subNav && (
-                        <SidebarMenuAction
-                          aria-expanded={subOpen}
-                          aria-controls={`sidebar-sub-nav-${item.key}`}
-                          aria-label={
-                            subOpen
-                              ? t(($) => $.sidebar.collapse_sub_nav, { label })
-                              : t(($) => $.sidebar.expand_sub_nav, { label })
-                          }
-                          onClick={() => toggleSubNav(item.key)}
-                          className="top-[7px] right-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-                        >
-                          {subOpen ? <ChevronUp className="!size-3.5" /> : <ChevronDown className="!size-3.5" />}
-                        </SidebarMenuAction>
-                      )}
-                      {subNav && subOpen && (
-                        <SidebarMenuSub
-                          id={`sidebar-sub-nav-${item.key}`}
-                          className="mx-0 mt-0.5 translate-x-0 gap-0.5 border-l-0 p-0"
-                        >
-                          {subNav.map((sub) => {
-                            const subHref = p[sub.key]();
-                            const SubIcon = routeIconForPath(subHref);
-                            return (
-                              <SidebarMenuSubItem key={sub.key}>
-                                <SidebarMenuSubButton
-                                  isActive={!isActivePinnedRoute && isNavActive(pathname, subHref)}
-                                  render={<AppLink href={subHref} />}
-                                  className="h-[34px] translate-x-0 gap-2.5 rounded-md pr-3 pl-10 text-foreground hover:bg-sidebar-accent/70 data-active:font-medium [&>svg]:size-[18px] [&>svg]:text-current"
-                                >
-                                  <SubIcon />
-                                  <span>{t(($) => $.nav[sub.labelKey])}</span>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            );
-                          })}
-                        </SidebarMenuSub>
-                      )}
+                      {subNav && renderSubNav(item.key, label, subNav)}
                     </SidebarMenuItem>
                   );
                 })}
@@ -884,18 +894,22 @@ export function AppSidebar({ topSlot, searchSlot, headerClassName, headerStyle }
                   const Icon = routeIconForPath(href);
                   const isActive = isNavActive(pathname, href);
                   const kbBadge = item.key === "kb" && kbOpenMergeRequests > 0;
+                  const subNav = subNavByParent[item.key];
+                  const label = t(($) => $.nav[item.labelKey]);
                   return (
                     <SidebarMenuItem key={item.key}>
                       <SidebarMenuButton
                         isActive={isActive}
                         render={<AppLink href={href} />}
-                        className={cn(NAV_ITEM_CLASS_NAME, kbBadge && "pr-9")}
+                        className={cn(NAV_ITEM_CLASS_NAME, (kbBadge || subNav) && "pr-9")}
+                        onClick={subNav ? (e) => handleParentNavClick(item.key, href, e) : undefined}
                       >
                         <Icon />
-                        <span>{t(($) => $.nav[item.labelKey])}</span>
+                        <span>{label}</span>
                         {item.key === "agents" && <AgentsIntegrationHintDot wsId={wsId} />}
                       </SidebarMenuButton>
                       {kbBadge && <KbReviewsBadge bases={knowledgeBases ?? []} count={kbOpenMergeRequests} />}
+                      {subNav && renderSubNav(item.key, label, subNav)}
                     </SidebarMenuItem>
                   );
                 })}
