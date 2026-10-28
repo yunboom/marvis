@@ -1199,7 +1199,7 @@ describe("AgentCreatePanel", () => {
       const user = userEvent.setup();
       // The runtime IS in the list and reports a real, below-minimum version —
       // the case the gate exists for. We must keep failing closed here.
-      mockRuntimesData.list = [{ id: "runtime-1", metadata: { cli_version: "0.0.1" } }];
+      mockRuntimesData.list = [{ id: "runtime-1", metadata: { cli_version: "0.0.0" } }];
 
       renderPanel({ onClose: vi.fn(), isExpanded: false, setIsExpanded: vi.fn() });
 

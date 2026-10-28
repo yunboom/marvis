@@ -38,7 +38,7 @@ describe("useChatProjectContextSupport", () => {
   });
 
   it("returns false when the bound runtime reports a stale release version", async () => {
-    vi.mocked(api.listRuntimes).mockResolvedValue([runtimeRow("v0.4.9")] as never);
+    vi.mocked(api.listRuntimes).mockResolvedValue([runtimeRow("v0.0.0")] as never);
 
     const { result } = renderSupport({ runtime_id: "runtime-1" });
 
