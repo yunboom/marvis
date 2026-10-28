@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * DocsHero — editorial showpiece header for landing-style pages.
+ * DocsHero — showpiece header for landing-style pages.
  *
  * Escapes prose scope to run its own type scale. Title accepts ReactNode so
  * callers can pass <em> spans for brand-color emphasis (italic is avoided —
@@ -20,17 +20,17 @@ export function DocsHero({
   return (
     <section className="not-prose mb-7 pt-2">
       {eyebrow ? (
-        <p className="mb-5 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <p className="mb-3.5 text-caption font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {eyebrow}
         </p>
       ) : null}
       <h1
-        className={`${subtitle ? "mb-5" : "mb-0"} font-[family-name:var(--font-serif)] text-[2.25rem] font-normal leading-[1.05] tracking-[-0.025em] text-foreground sm:text-[2.75rem]`}
+        className={`${subtitle ? "mb-4" : "mb-0"} text-[1.875rem] font-semibold leading-[1.35] tracking-[-0.015em] text-foreground sm:text-[2.125rem]`}
       >
         {title}
       </h1>
       {subtitle ? (
-        <p className="max-w-[36rem] font-[family-name:var(--font-serif)] text-[1.25rem] leading-[1.5] tracking-[-0.005em] text-[oklch(from_var(--foreground)_calc(l+0.06)_c_h)]">
+        <p className="max-w-[36rem] text-[1rem] leading-[1.7] text-muted-foreground">
           {subtitle}
         </p>
       ) : null}
@@ -65,13 +65,13 @@ export function DocsFeatureCard({
   return (
     <Link
       href={href}
-      className="group flex flex-col gap-3 rounded-[4px] border border-border bg-card p-5 no-underline transition-all hover:border-[var(--primary)]"
+      className="group flex flex-col gap-3 rounded-[14px] bg-card p-5 no-underline shadow-[0_0_0_1px_var(--surface-border)] transition-colors hover:bg-[var(--surface-hover)]"
     >
-      <div className="flex size-9 items-center justify-center text-[var(--accent-foreground)] [&_svg]:size-[20px]">
+      <div className="flex size-9 items-center justify-center text-foreground [&_svg]:size-[20px]">
         {icon}
       </div>
       <div className="flex flex-col gap-1.5">
-        <span className="font-[family-name:var(--font-serif)] text-[1.0625rem] font-medium tracking-[-0.01em] text-foreground">
+        <span className="text-[0.9375rem] font-medium text-foreground">
           {title}
         </span>
         <p className="text-sm leading-[1.55] text-muted-foreground">

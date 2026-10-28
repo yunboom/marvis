@@ -47,7 +47,7 @@ export default async function Page({
         title={
           <>
             {copy.titleLead}
-            <em className="font-medium not-italic text-[var(--primary)]">
+            <em className="not-italic text-[var(--brand)]">
               {copy.titleAccent}
             </em>
           </>

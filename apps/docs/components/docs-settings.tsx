@@ -1,6 +1,6 @@
 "use client";
 
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Globe, Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -66,7 +66,7 @@ export function DocsSettings({ locale }: { locale: string }) {
   };
 
   return (
-    <div className="flex w-full items-center justify-end gap-2">
+    <div className="flex w-full items-center justify-between gap-2">
       {/* Language — left pill. Shows current language name. */}
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -77,6 +77,7 @@ export function DocsSettings({ locale }: { locale: string }) {
               className="font-normal text-muted-foreground"
               aria-label="Switch language"
             >
+              <Globe className="size-[15px]" />
               {localeLabels[locale as keyof typeof localeLabels] ?? locale}
             </Button>
           }

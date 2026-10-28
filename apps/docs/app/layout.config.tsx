@@ -9,11 +9,13 @@ import { ArrowUpRight } from "lucide-react";
 function MarvisMark() {
   return (
     <svg viewBox="0 0 100 100" className="size-[1em]" aria-hidden="true">
-      <mask id="marvis-docs-mark">
-        <rect width="100" height="100" fill="white" />
-        <polygon points="27,70 27,30 39,30 50,50 61,30 73,30 73,70 63,70 63,46 54,62 46,62 37,46 37,70" fill="black" />
-      </mask>
-      <rect width="100" height="100" rx="26" fill="currentColor" mask="url(#marvis-docs-mark)" />
+      {/* One even-odd path cuts the "M" out of the square, so the mark needs
+          no <mask> id that would collide between its several renders. */}
+      <path
+        fillRule="evenodd"
+        fill="currentColor"
+        d="M26 0h48a26 26 0 0 1 26 26v48a26 26 0 0 1-26 26H26A26 26 0 0 1 0 74V26A26 26 0 0 1 26 0ZM27 70V30h12l11 20 11-20h12v40H63V46l-9 16h-8l-9-16v24Z"
+      />
     </svg>
   );
 }
@@ -48,7 +50,12 @@ const externalLinkText = (label: string) => (
 export const baseOptions: BaseLayoutProps = {
   nav: {
     title: (
-      <span className="font-semibold text-base">Marvis Docs</span>
+      <>
+        <span className="text-[1.375rem]">
+          <MarvisMark />
+        </span>
+        <span>Marvis Docs</span>
+      </>
     ),
   },
   links: [
