@@ -4,7 +4,7 @@ import { cn } from "@marvis/ui/lib/utils";
 // Rounded squares, not circles: circles are member avatars. `sm` is 18px so it
 // sits in the sidebar's 18px icon column.
 const sizeMap = {
-  sm: "size-[18px] text-micro rounded-[5px]",
+  sm: "size-[18px] text-micro rounded-avatar",
   md: "h-7 w-7 text-caption rounded-lg",
   lg: "h-9 w-9 text-body rounded-tile",
 } as const;

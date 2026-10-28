@@ -127,7 +127,7 @@ function TreeRow({ page, depth, ctx }: { page: KbTreePage; depth: number; ctx: T
             aria-label={t(($) => (open ? $.tree.collapse : $.tree.expand), { title: page.title })}
             aria-expanded={open}
             onClick={() => ctx.toggle(page.id, depth)}
-            className="flex size-4 shrink-0 items-center justify-center rounded text-faint-foreground hover:text-foreground"
+            className="flex size-4 shrink-0 items-center justify-center rounded-xs text-faint-foreground hover:text-foreground"
           >
             {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
           </button>

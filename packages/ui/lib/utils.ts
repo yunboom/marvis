@@ -33,6 +33,8 @@ const twMerge = extendTailwindMerge({
         "pane",
         "composer",
         "composer-pill",
+        "option",
+        "hero",
       ],
       shadow: ["control", "surface", "menu", "toast", "floating"],
       ease: ["standard", "spring"],

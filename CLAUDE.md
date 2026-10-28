@@ -9,6 +9,10 @@
 - `origin` = `git@github.com:yunboom/marvis.git`（本 fork，https://github.com/yunboom/marvis ，提交和推送到这里）
 - `upstream` = `https://github.com/multica-ai/multica.git`（上游，只拉取）
 
+## 提交前验证
+
+CI 按路径只跑改动相关的作业（`.github/ci-paths.json`），main 上没被触发的作业可能早就红了，一旦改到那片路径才暴露，还会挡住生产部署。所以提 PR 前跑 `make check`：它和 CI 的前端质量检查（wildcard 导出、圆角 token）、lint、类型检查、单测、Go 测试、E2E 一致；不要只跑改动相关的几个测试就推。
+
 ## 决策一：品牌全量改名 Multica → Marvis
 
 - 范围是全部被 git 跟踪的文本和路径：代码标识符、注释、文案、文档、CLI 命令（`marvis`）、Go module（`github.com/yunboom/marvis/server`）、npm scope（`@marvis/*`）、环境变量（`MARVIS_*`）、docker compose 项目名、外部域名（`multica.ai` → `marvis.ai`）。本地项目目录也叫 `marvis`。
