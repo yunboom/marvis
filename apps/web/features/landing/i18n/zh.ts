@@ -7,229 +7,38 @@ export function createZhDict(
 ): LandingDict {
   return {
   header: {
-    github: "GitHub",
     cta: "\u5f00\u59cb\u4f7f\u7528",
     dashboard: "\u8fdb\u5165\u5de5\u4f5c\u53f0",
-    docs: "\u6587\u6863",
     changelog: "\u66f4\u65b0\u65e5\u5fd7",
-    useCases: "\u6848\u4f8b",
     navigation: "\u4e3b\u5bfc\u822a",
     openMenu: "\u6253\u5f00\u5bfc\u822a\u83dc\u5355",
     closeMenu: "\u5173\u95ed\u5bfc\u822a\u83dc\u5355",
   },
 
   hero: {
-    headlineLine1: "\u4f60\u7684\u4e0b\u4e00\u6279\u5458\u5de5",
-    headlineLine2: "\u4e0d\u662f\u4eba\u7c7b\u3002",
+    headlineLine1: "把任务交给智能体，",
+    headlineLine2: "像交给同事一样。",
     subheading:
-      "Marvis 是一个源码公开的平台，\u5c06\u7f16\u7801 智能体 \u53d8\u6210\u771f\u6b63\u7684\u961f\u53cb\u3002\u5206\u914d\u4efb\u52a1\u3001\u8ddf\u8e2a\u8fdb\u5ea6\u3001\u79ef\u7d2f\u6280\u80fd\u2014\u2014\u5728\u4e00\u4e2a\u5730\u65b9\u7ba1\u7406\u4f60\u7684\u4eba\u7c7b + 智能体 \u56e2\u961f\u3002",
+      "人类和智能体，在一个工作台里协作。",
     cta: "免费开始",
     downloadDesktop: "下载桌面端",
-    talkToSales: "联系商务",
     worksWith: "支持 20+ 种 AI 编程工具",
     imageAlt: "Marvis \u770b\u677f\u89c6\u56fe\u2014\u2014\u4eba\u7c7b\u548c 智能体 \u534f\u540c\u7ba1\u7406\u4efb\u52a1",
   },
 
-  features: {
-    teammates: {
-      label: "\u56e2\u961f\u534f\u4f5c",
-      title: "\u50cf\u5206\u914d\u7ed9\u540c\u4e8b\u4e00\u6837\u5206\u914d\u7ed9 智能体",
-      description:
-        "智能体 \u4e0d\u662f\u88ab\u52a8\u5de5\u5177\u2014\u2014\u5b83\u4eec\u662f\u4e3b\u52a8\u53c2\u4e0e\u8005\u3002\u5b83\u4eec\u62e5\u6709\u4e2a\u4eba\u8d44\u6599\u3001\u62a5\u544a\u72b6\u6001\u3001\u521b\u5efa\u4efb\u52a1\u3001\u53d1\u8868\u8bc4\u8bba\u3001\u66f4\u65b0\u72b6\u6001\u3002\u4f60\u7684\u6d3b\u52a8\u6d41\u5c55\u793a\u4eba\u7c7b\u548c 智能体 \u5e76\u80a9\u5de5\u4f5c\u3002",
-      cards: [
-        {
-          title: "智能体 \u51fa\u73b0\u5728\u6307\u6d3e\u4eba\u9009\u62e9\u5668\u4e2d",
-          description:
-            "\u4eba\u7c7b\u548c 智能体 \u51fa\u73b0\u5728\u540c\u4e00\u4e2a\u4e0b\u62c9\u83dc\u5355\u91cc\u3002\u628a\u4efb\u52a1\u5206\u914d\u7ed9 智能体 \u548c\u5206\u914d\u7ed9\u540c\u4e8b\u6ca1\u6709\u4efb\u4f55\u533a\u522b\u3002",
-        },
-        {
-          title: "\u81ea\u4e3b\u53c2\u4e0e",
-          description:
-            "智能体 \u4e3b\u52a8\u521b\u5efa\u4efb\u52a1\u3001\u53d1\u8868\u8bc4\u8bba\u3001\u66f4\u65b0\u72b6\u6001\u2014\u2014\u800c\u4e0d\u662f\u53ea\u5728\u88ab\u63d0\u793a\u65f6\u624d\u884c\u52a8\u3002",
-        },
-        {
-          title: "\u7edf\u4e00\u7684\u6d3b\u52a8\u65f6\u95f4\u7ebf",
-          description:
-            "\u6574\u4e2a\u56e2\u961f\u5171\u7528\u4e00\u4e2a\u6d3b\u52a8\u6d41\u3002\u4eba\u7c7b\u548c 智能体 \u7684\u64cd\u4f5c\u4ea4\u66ff\u5c55\u793a\uff0c\u4f60\u59cb\u7ec8\u77e5\u9053\u53d1\u751f\u4e86\u4ec0\u4e48\u3001\u662f\u8c01\u505a\u7684\u3002",
-        },
-      ],
-    },
-    autonomous: {
-      label: "\u81ea\u4e3b\u6267\u884c",
-      title: "\u8bbe\u7f6e\u540e\u65e0\u9700\u7ba1\u7406\u2014\u2014智能体 \u5728\u4f60\u7761\u89c9\u65f6\u5de5\u4f5c",
-      description:
-        "不只是提示-响应。完整的 task 生命周期管理：入队、领取、启动、完成或失败。智能体 主动报告阻塞，你通过 WebSocket 获取实时进度。",
-      cards: [
-        {
-          title: "\u5b8c\u6574\u7684\u4efb\u52a1\u751f\u547d\u5468\u671f",
-          description:
-            "\u6bcf\u4e2a\u4efb\u52a1\u7ecf\u5386\u5165\u961f \u2192 \u9886\u53d6 \u2192 \u542f\u52a8 \u2192 \u5b8c\u6210/\u5931\u8d25\u3002\u6ca1\u6709\u65e0\u58f0\u5931\u8d25\u2014\u2014\u6bcf\u6b21\u72b6\u6001\u8f6c\u6362\u90fd\u88ab\u8ddf\u8e2a\u548c\u5e7f\u64ad\u3002",
-        },
-        {
-          title: "\u4e3b\u52a8\u62a5\u544a\u963b\u585e",
-          description:
-            "\u5f53 智能体 \u9047\u5230\u56f0\u96be\u65f6\uff0c\u4f1a\u7acb\u5373\u53d1\u51fa\u8b66\u62a5\u3002\u4e0d\u7528\u7b49\u51e0\u4e2a\u5c0f\u65f6\u540e\u624d\u53d1\u73b0\u4ec0\u4e48\u90fd\u6ca1\u53d1\u751f\u3002",
-        },
-        {
-          title: "\u5b9e\u65f6\u8fdb\u5ea6\u63a8\u9001",
-          description:
-            "\u57fa\u4e8e WebSocket \u7684\u5b9e\u65f6\u66f4\u65b0\u3002\u5b9e\u65f6\u89c2\u770b 智能体 \u5de5\u4f5c\uff0c\u6216\u968f\u65f6\u67e5\u770b\u2014\u2014\u65f6\u95f4\u7ebf\u59cb\u7ec8\u662f\u6700\u65b0\u7684\u3002",
-        },
-      ],
-    },
-    skills: {
-      label: "\u6280\u80fd\u5e93",
-      title: "\u6bcf\u4e2a\u89e3\u51b3\u65b9\u6848\u90fd\u6210\u4e3a\u5168\u56e2\u961f\u53ef\u590d\u7528\u7684\u6280\u80fd",
-      description:
-        "\u6280\u80fd\u662f\u53ef\u590d\u7528\u7684\u80fd\u529b\u5b9a\u4e49\u2014\u2014\u4ee3\u7801\u3001\u914d\u7f6e\u548c\u4e0a\u4e0b\u6587\u6253\u5305\u5728\u4e00\u8d77\u3002\u53ea\u9700\u7f16\u5199\u4e00\u6b21\uff0c\u56e2\u961f\u4e2d\u6bcf\u4e2a 智能体 \u90fd\u80fd\u4f7f\u7528\u3002\u4f60\u7684\u6280\u80fd\u5e93\u968f\u65f6\u95f4\u4e0d\u65ad\u79ef\u7d2f\u3002",
-      cards: [
-        {
-          title: "\u53ef\u590d\u7528\u7684\u6280\u80fd\u5b9a\u4e49",
-          description:
-            "\u5c06\u77e5\u8bc6\u5c01\u88c5\u6210\u4efb\u4f55 智能体 \u90fd\u80fd\u6267\u884c\u7684\u6280\u80fd\u3002\u90e8\u7f72\u5230\u6d4b\u8bd5\u73af\u5883\u3001\u7f16\u5199\u8fc1\u79fb\u3001\u5ba1\u67e5 PR\u2014\u2014\u5168\u90e8\u4ee3\u7801\u5316\u3002",
-        },
-        {
-          title: "\u5168\u56e2\u961f\u5171\u4eab",
-          description:
-            "\u4e00\u4e2a\u4eba\u7684\u6280\u80fd\u5c31\u662f\u6bcf\u4e2a 智能体 \u7684\u6280\u80fd\u3002\u7f16\u5199\u4e00\u6b21\uff0c\u5168\u56e2\u961f\u53d7\u76ca\u3002",
-        },
-        {
-          title: "\u590d\u5408\u589e\u957f",
-          description:
-            "\u7b2c 1 \u5929\uff1a\u4f60\u6559 智能体 \u90e8\u7f72\u3002\u7b2c 30 \u5929\uff1a\u6bcf\u4e2a 智能体 \u90fd\u80fd\u90e8\u7f72\u3001\u5199\u6d4b\u8bd5\u3001\u505a\u4ee3\u7801\u5ba1\u67e5\u3002\u56e2\u961f\u80fd\u529b\u6307\u6570\u7ea7\u589e\u957f\u3002",
-        },
-      ],
-    },
-    runtimes: {
-      label: "\u8fd0\u884c\u65f6",
-      title: "\u4e00\u4e2a\u63a7\u5236\u53f0\u7ba1\u7406\u6240\u6709\u7b97\u529b",
-      description:
-        "\u672c\u5730\u5b88\u62a4\u8fdb\u7a0b\u548c\u4e91\u7aef\u8fd0\u884c\u65f6\uff0c\u5728\u540c\u4e00\u4e2a\u9762\u677f\u4e2d\u7ba1\u7406\u3002\u5b9e\u65f6\u76d1\u63a7\u5728\u7ebf/\u79bb\u7ebf\u72b6\u6001\u3001\u4f7f\u7528\u91cf\u56fe\u8868\u548c\u6d3b\u52a8\u70ed\u529b\u56fe\u3002\u81ea\u52a8\u68c0\u6d4b\u672c\u673a\u5df2\u5b89\u88c5\u7684 28 \u6b3e\u652f\u6301\u7684 AI \u7f16\u7a0b\u5de5\u5177\u3002",
-      cards: [
-        {
-          title: "\u7edf\u4e00\u8fd0\u884c\u65f6\u9762\u677f",
-          description:
-            "\u672c\u5730\u5b88\u62a4\u8fdb\u7a0b\u548c\u4e91\u7aef\u8fd0\u884c\u65f6\u5728\u540c\u4e00\u89c6\u56fe\u4e2d\u3002\u65e0\u9700\u5728\u4e0d\u540c\u7ba1\u7406\u754c\u9762\u4e4b\u95f4\u5207\u6362\u3002",
-        },
-        {
-          title: "\u5b9e\u65f6\u76d1\u63a7",
-          description:
-            "\u5728\u7ebf/\u79bb\u7ebf\u72b6\u6001\u3001\u4f7f\u7528\u91cf\u56fe\u8868\u548c\u6d3b\u52a8\u70ed\u529b\u56fe\u3002\u968f\u65f6\u4e86\u89e3\u4f60\u7684\u7b97\u529b\u5728\u505a\u4ec0\u4e48\u3002",
-        },
-        {
-          title: "\u9996\u6b21\u542f\u52a8\u81ea\u52a8\u6ce8\u518c",
-          description:
-            "Marvis \u626b\u63cf\u672c\u673a\u7684 28 \u6b3e\u652f\u6301\u7684 AI \u7f16\u7a0b\u5de5\u5177\u2014\u2014Antigravity\u3001Claude Code\u3001CodeBuddy\u3001CodeArts\u3001Codex\u3001Copilot\u3001Cursor\u3001DeepSeek Harness\u3001DevEco Code\u3001Devin CLI\u3001Dim\u3001Grok\u3001Hermes\u3001Kimi\u3001Kiro CLI\u3001MiniMax Code\u3001Muse Code\u3001Oh-My-Pi\u3001OpenClaw\u3001OpenCode\u3001Pi\u3001Qoder\u3001Qoder CN\u3001Qwen Code\u3001QwenPaw\u3001Reasonix\u3001Trae CLI\u3001ZeroClaw\u2014\u2014\u5e76\u4e3a\u6bcf\u6b3e\u5df2\u5b89\u88c5\u7684\u5de5\u5177\u6ce8\u518c\u4e00\u4e2a\u8fd0\u884c\u65f6\u3002",
-        },
-      ],
-    },
-  },
-
   howItWorks: {
-    label: "\u5f00\u59cb\u4f7f\u7528",
-    headlineMain: "\u62db\u52df\u4f60\u7684\u7b2c\u4e00\u4e2a AI \u5458\u5de5",
-    headlineFaded: "\u53ea\u9700\u4e00\u5c0f\u65f6\u3002",
+    headline: "一小时，招募第一个 AI 员工。",
     steps: [
-      {
-        title: allowSignup ? "注册并创建您的工作空间" : "登录到您的工作空间",
-        description: allowSignup
-          ? "输入您的邮箱，验证代码后即可使用。工作空间会自动创建——无需设置向导或配置表单。"
-          : "输入您的邮箱，验证代码后即可登录到您的工作空间——无需设置向导或配置表单。",
-      },
-      {
-        title: "\u5b89\u88c5 CLI \u5e76\u8fde\u63a5\u4f60\u7684\u673a\u5668",
-        description:
-          "运行 marvis setup——它会引导你完成 OAuth 登录、启动守护进程、并扫描 28 款支持的 AI 编程工具（Antigravity、Claude Code、CodeBuddy、CodeArts、Codex、Copilot、Cursor、DeepSeek Harness、DevEco Code、Devin CLI、Dim、Grok、Hermes、Kimi、Kiro CLI、MiniMax Code、Muse Code、Oh-My-Pi、OpenClaw、OpenCode、Pi、Qoder、Qoder CN、Qwen Code、QwenPaw、Reasonix、Trae CLI、ZeroClaw）。本机已安装的工具会被自动注册成运行时。",
-      },
-      {
-        title: "\u521b\u5efa\u4f60\u7684\u7b2c\u4e00\u4e2a 智能体",
-        description:
-          "\u7ed9\u5b83\u8d77\u4e2a\u540d\u5b57\uff0c\u5199\u597d\u6307\u4ee4\uff0c\u9644\u52a0\u6280\u80fd\uff0c\u8bbe\u7f6e\u89e6\u53d1\u5668\u3002\u9009\u62e9\u5b83\u4f55\u65f6\u6fc0\u6d3b\uff1a\u88ab\u6307\u6d3e\u65f6\u3001\u6709\u8bc4\u8bba\u65f6\u3001\u88ab @\u63d0\u53ca\u65f6\u3002",
-      },
-      {
-        title: "\u6307\u6d3e\u4e00\u4e2a\u4efb\u52a1\u5e76\u89c2\u5bdf\u5b83\u5de5\u4f5c",
-        description:
-          "从指派人下拉菜单中选择你的 智能体——就像指派给同事一样。task 自动入队、领取、执行。实时观看进度。",
-      },
+      allowSignup
+        ? { title: "注册，创建工作区", description: "邮箱验证后即可使用。" }
+        : { title: "登录工作区", description: "邮箱验证后即可登录。" },
+      { title: "连接你的电脑", description: "运行 marvis setup。" },
+      { title: "创建智能体", description: "起名字，写指令，加技能。" },
+      { title: "指派任务", description: "像指派同事一样，看它干活。" },
     ],
-    cta: "\u5f00\u59cb\u4f7f\u7528",
-    ctaGithub: "\u5728 GitHub \u4e0a\u67e5\u770b",
-    ctaDocs: "\u9605\u8bfb\u6587\u6863",
-  },
-
-  openSource: {
-    label: "源码公开",
-    headlineLine1: "每一行代码，",
-    headlineLine2: "都由你掌控。",
-    description:
-      "Marvis 的源代码完全公开。审查每一行代码，免费自托管，塑造人类 + 智能体 协作的未来。把 Marvis 作为托管服务提供给他人，需要商业授权。",
-    cta: "在 GitHub 上 Star",
-    licensingCta: "了解授权方式 →",
-    highlights: [
-      {
-        title: "\u968f\u5904\u81ea\u6258\u7ba1",
-        description:
-          "\u5728\u4f60\u81ea\u5df1\u7684\u57fa\u7840\u8bbe\u65bd\u4e0a\u8fd0\u884c Marvis\u3002Docker Compose\u3001\u5355\u4e2a\u4e8c\u8fdb\u5236\u6216 Kubernetes——工作区数据始终保存在你自己掌控的服务器上。",
-      },
-      {
-        title: "\u65e0\u4f9b\u5e94\u5546\u9501\u5b9a",
-        description:
-          "\u81ea\u5e26 LLM \u63d0\u4f9b\u5546\u3001\u66f4\u6362 智能体 \u540e\u7aef\u3001\u6269\u5c55 API\u3002\u4f60\u62e5\u6709\u6574\u4e2a\u6280\u672f\u6808\u7684\u63a7\u5236\u6743\u3002",
-      },
-      {
-        title: "\u9ed8\u8ba4\u900f\u660e",
-        description:
-          "\u6bcf\u4e00\u884c\u4ee3\u7801\u90fd\u53ef\u5ba1\u8ba1\u3002\u786e\u5207\u4e86\u89e3\u4f60\u7684 智能体 \u5982\u4f55\u505a\u51b3\u7b56\u3001\u4efb\u52a1\u5982\u4f55\u8def\u7531\u3001\u6570\u636e\u6d41\u5411\u4f55\u65b9\u3002",
-      },
-      {
-        title: "\u793e\u533a\u9a71\u52a8",
-        description:
-          "\u4e0e\u793e\u533a\u4e00\u8d77\u5efa\u8bbe\uff0c\u800c\u4e0d\u4ec5\u4ec5\u662f\u4e3a\u793e\u533a\u5efa\u8bbe\u3002\u8d21\u732e\u6280\u80fd\u3001\u96c6\u6210\u548c 智能体 \u540e\u7aef\uff0c\u8ba9\u6bcf\u4e2a\u4eba\u53d7\u76ca\u3002",
-      },
-    ],
-  },
-
-  faq: {
-    label: "\u5e38\u89c1\u95ee\u9898",
-    headline: "\u95ee\u4e0e\u7b54\u3002",
-    items: [
-      {
-        question: "Marvis \u652f\u6301\u54ea\u4e9b\u7f16\u7801 智能体\uff1f",
-        answer:
-          "Marvis \u5f00\u7bb1\u5373\u7528\u652f\u6301 28 \u6b3e AI \u7f16\u7a0b\u5de5\u5177\uff1aAntigravity\u3001Claude Code\u3001CodeBuddy\u3001CodeArts\u3001Codex\u3001Copilot\u3001Cursor\u3001DeepSeek Harness\u3001DevEco Code\u3001Devin CLI\u3001Dim\u3001Grok\u3001Hermes\u3001Kimi\u3001Kiro CLI\u3001MiniMax Code\u3001Muse Code\u3001Oh-My-Pi\u3001OpenClaw\u3001OpenCode\u3001Pi\u3001Qoder\u3001Qoder CN\u3001Qwen Code\u3001QwenPaw\u3001Reasonix\u3001Trae CLI\u3001ZeroClaw\u3002\u5b88\u62a4\u8fdb\u7a0b\u4f1a\u81ea\u52a8\u68c0\u6d4b\u672c\u673a\u5df2\u5b89\u88c5\u7684 CLI \u5e76\u4e3a\u6bcf\u6b3e\u6ce8\u518c\u4e00\u4e2a\u8fd0\u884c\u65f6\u3002因为源码公开，你也可以自己添加后端。 自托管部署还可以使用 QCA PAT 和已有 QCA 智能体，将 Qoder Cloud Agents 配置为执行任务的托管远端运行时。",
-      },
-      {
-        question: "\u9700\u8981\u81ea\u6258\u7ba1\u5417\uff0c\u8fd8\u662f\u6709\u4e91\u7248\u672c\uff1f",
-        answer:
-          "\u4e24\u8005\u90fd\u6709\u3002\u4f60\u53ef\u4ee5\u7528 Docker Compose \u6216 Kubernetes \u5728\u81ea\u5df1\u7684\u57fa\u7840\u8bbe\u65bd\u4e0a\u81ea\u6258\u7ba1 Marvis\uff0c\u4e5f\u53ef\u4ee5\u4f7f\u7528\u6211\u4eec\u7684\u6258\u7ba1\u4e91\u7248\u672c\u3002你的数据，你选择。",
-      },
-      {
-        question: "可以商用吗？",
-        answer:
-          "可以。在你自己的组织内部使用 Marvis 是免费的，包括为整个团队自托管。只有两种情况需要商业授权：把 Marvis 提供给组织外部的人使用（比如作为托管服务或代运维服务），或者把它嵌入你销售或分发的产品中。常见场景见[授权说明](/licensing)。",
-      },
-      {
-        question:
-          "\u8fd9\u548c\u76f4\u63a5\u7528\u7f16\u7801 智能体 \u6709\u4ec0\u4e48\u533a\u522b\uff1f",
-        answer:
-          "\u7f16\u7801 智能体 \u64c5\u957f\u6267\u884c\u3002Marvis \u6dfb\u52a0\u7684\u662f\u7ba1\u7406\u5c42\uff1a\u4efb\u52a1\u961f\u5217\u3001\u56e2\u961f\u534f\u4f5c\u3001\u6280\u80fd\u590d\u7528\u3001\u8fd0\u884c\u65f6\u76d1\u63a7\uff0c\u4ee5\u53ca\u6bcf\u4e2a 智能体 \u5728\u505a\u4ec0\u4e48\u7684\u7edf\u4e00\u89c6\u56fe\u3002\u628a\u5b83\u60f3\u8c61\u6210\u4f60\u7684 智能体 \u7684\u9879\u76ee\u7ecf\u7406\u3002",
-      },
-      {
-        question: "智能体 \u80fd\u81ea\u4e3b\u5904\u7406\u957f\u65f6\u95f4\u4efb\u52a1\u5417\uff1f",
-        answer:
-          "\u53ef\u4ee5\u3002Marvis \u7ba1\u7406\u5b8c\u6574\u7684\u4efb\u52a1\u751f\u547d\u5468\u671f\u2014\u2014\u5165\u961f\u3001\u9886\u53d6\u3001\u6267\u884c\u3001\u5b8c\u6210\u6216\u5931\u8d25\u3002智能体 \u4e3b\u52a8\u62a5\u544a\u963b\u585e\u5e76\u5b9e\u65f6\u63a8\u9001\u8fdb\u5ea6\u3002\u4f60\u53ef\u4ee5\u968f\u65f6\u67e5\u770b\uff0c\u4e5f\u53ef\u4ee5\u8ba9\u5b83\u4eec\u8fd0\u884c\u6574\u665a\u3002",
-      },
-      {
-        question: "\u6211\u7684\u4ee3\u7801\u5b89\u5168\u5417\uff1f智能体 \u5728\u54ea\u91cc\u6267\u884c\uff1f",
-        answer:
-          "智能体在你的机器（通过本地守护进程）或你连接的运行时上运行，直接在你的代码仓库里工作。工作区里的内容——任务、评论、聊天消息、附件，以及智能体上报的进度——由 Marvis 存储；智能体所用的编码工具会把提示词和代码发送给你配置的模型服务商。想让工作区数据留在自己的服务器上，可以自托管 Marvis。详见[隐私政策](/privacy)。",
-      },
-      {
-        question: "\u6211\u53ef\u4ee5\u8fd0\u884c\u591a\u5c11\u4e2a 智能体\uff1f",
-        answer:
-          "\u53d6\u51b3\u4e8e\u4f60\u7684\u786c\u4ef6\u3002\u6bcf\u4e2a 智能体 \u6709\u53ef\u914d\u7f6e\u7684\u5e76\u53d1\u9650\u5236\uff0c\u4f60\u53ef\u4ee5\u8fde\u63a5\u591a\u53f0\u673a\u5668\u4f5c\u4e3a\u8fd0\u884c\u65f6\u3002自托管时没有任何人为限制。",
-      },
-    ],
+    cta: "开始使用",
+    ctaGithub: "在 GitHub 上查看",
+    ctaDocs: "阅读文档",
   },
 
   footer: {
@@ -240,9 +49,7 @@ export function createZhDict(
       product: {
         label: "\u4ea7\u54c1",
         links: [
-          { label: "\u529f\u80fd\u7279\u6027", href: "#features" },
           { label: "\u5982\u4f55\u5de5\u4f5c", href: "#how-it-works" },
-          { label: "\u6848\u4f8b", href: "/usecases" },
           { label: "更新日志", href: "/changelog" },
           { label: "下载", href: "/download" },
         ],
@@ -259,51 +66,13 @@ export function createZhDict(
       company: {
         label: "\u5173\u4e8e",
         links: [
-          { label: "关于我们", href: "/about" },
           { label: "授权说明", href: "/licensing" },
-          { label: "隐私政策", href: "/privacy" },
           { label: "\u8054\u7cfb\u5546\u52a1", href: "/contact-sales" },
           { label: "GitHub", href: githubUrl },
         ],
       },
     },
     copyright: "\u00a9 {year} Marvis. \u4fdd\u7559\u6240\u6709\u6743\u5229\u3002",
-  },
-
-  about: {
-    title: "\u5173\u4e8e Marvis",
-    nameLine: {
-      prefix: "Marvis\u2014\u2014",
-      mult: "Mult",
-      iplexed: "iplexed ",
-      i: "I",
-      nformationAnd: "nformation and ",
-      c: "C",
-      omputing: "omputing ",
-      a: "A",
-      gent: "gent\u3002",
-    },
-    paragraphs: [
-      "\u8fd9\u4e2a\u540d\u5b57\u662f\u5728\u5411 20 \u4e16\u7eaa 60 \u5e74\u4ee3\u5177\u6709\u5f00\u521b\u610f\u4e49\u7684\u64cd\u4f5c\u7cfb\u7edf Multics \u81f4\u610f\u3002Multics \u9996\u521b\u4e86\u5206\u65f6\u7cfb\u7edf\uff0c\u8ba9\u591a\u4e2a\u7528\u6237\u80fd\u591f\u5171\u4eab\u540c\u4e00\u53f0\u673a\u5668\uff0c\u540c\u65f6\u53c8\u50cf\u5404\u81ea\u72ec\u5360\u5b83\u4e00\u6837\u4f7f\u7528\u3002Unix \u5219\u662f\u5728\u6709\u610f\u7b80\u5316 Multics \u7684\u57fa\u7840\u4e0a\u8bde\u751f\u7684\uff0c\u5f3a\u8c03\u4e00\u4e2a\u7528\u6237\u3001\u4e00\u4e2a\u4efb\u52a1\u3001\u4e00\u79cd\u4f18\u96c5\u7684\u54f2\u5b66\u3002",
-      "\u6211\u4eec\u8ba4\u4e3a\uff0c\u7c7b\u4f3c\u7684\u8f6c\u6298\u70b9\u6b63\u5728\u518d\u6b21\u51fa\u73b0\u3002\u51e0\u5341\u5e74\u6765\uff0c\u8f6f\u4ef6\u56e2\u961f\u4e00\u76f4\u5904\u4e8e\u4e00\u79cd\u5355\u7ebf\u7a0b\u7684\u5de5\u4f5c\u6a21\u5f0f\uff0c\u4e00\u4e2a\u5de5\u7a0b\u5e08\u5904\u7406\u4e00\u4e2a\u4efb\u52a1\uff0c\u4e00\u6b21\u53ea\u4e13\u6ce8\u4e8e\u4e00\u4e2a\u4e0a\u4e0b\u6587\u3002AI agents \u6539\u53d8\u4e86\u8fd9\u4e2a\u7b49\u5f0f\u3002Marvis \u5c06\u201c\u5206\u65f6\u201d\u91cd\u65b0\u5e26\u56de\u8fd9\u4e2a\u65f6\u4ee3\uff0c\u53ea\u4e0d\u8fc7\u4eca\u5929\u5728\u7cfb\u7edf\u4e2d\u8fdb\u884c\u591a\u8def\u590d\u7528\u7684\u201c\u7528\u6237\u201d\uff0c\u65e2\u5305\u62ec\u4eba\u7c7b\uff0c\u4e5f\u5305\u62ec\u81ea\u4e3b\u4ee3\u7406\u3002",
-      "在 Marvis 中，agents 是一级团队成员。它们会被分配任务，汇报进展，提出阻塞，并交付代码，就像人类同事一样。任务分配、活动时间线、task 生命周期，以及运行时基础设施，Marvis 从第一天起就是围绕这一理念构建的。",
-      "\u548c\u5f53\u5e74\u7684 Multics \u4e00\u6837\uff0c\u8fd9\u4e00\u5224\u65ad\u5efa\u7acb\u5728\u201c\u591a\u8def\u590d\u7528\u201d\u4e4b\u4e0a\u3002\u4e00\u4e2a\u5c0f\u56e2\u961f\u4e0d\u8be5\u56e0\u4e3a\u4eba\u6570\u5c11\u5c31\u663e\u5f97\u80fd\u529b\u6709\u9650\u3002\u6709\u4e86\u5408\u9002\u7684\u7cfb\u7edf\uff0c\u4e24\u540d\u5de5\u7a0b\u5e08\u52a0\u4e0a\u4e00\u7ec4 agents\uff0c\u5c31\u80fd\u53d1\u6325\u51fa\u4e8c\u5341\u4eba\u56e2\u961f\u7684\u63a8\u8fdb\u901f\u5ea6\u3002",
-      "Marvis 的源代码公开，并且可以免费自托管，工作区数据始终保存在你自己的基础设施中。\u4f60\u53ef\u4ee5\u5ba1\u67e5\u6bcf\u4e00\u884c\u4ee3\u7801\uff0c\u6269\u5c55 API\uff0c\u63a5\u5165\u81ea\u5df1\u7684 LLM providers\uff0c\u4e5f\u53ef\u4ee5\u5411\u793e\u533a\u8d21\u732e\u4ee3\u7801\u3002",
-    ],
-    cta: "在 GitHub 上查看",
-    team: {
-      title: "Marvis 背后的团队",
-      paragraphs: [
-        "Marvis 由一支从 2021 年起就一起工作的小团队打造。在 Marvis 之前，我们做过面向开发者的 AI 搜索引擎 devv.ai。2025 年，我们开始解决自己反复遇到的问题：一个小团队到底该怎样和 AI 智能体一起把事情做完。这就是 Marvis。",
-        "Marvis 的源代码公开，也可以自托管：在基于它构建之前，你可以读完每一行代码；自托管的部署完全运行在你自己的基础设施上。商业使用的规则，我们在[授权说明](/licensing)里写清楚了。",
-      ],
-      contacts: [
-        { label: "商业授权与合作", linkLabel: "联系商务", href: "/contact-sales" },
-        { label: "授权规则", linkLabel: "授权说明", href: "/licensing" },
-        { label: "社区与支持", linkLabel: "Discord", href: discordUrl },
-        { label: "源代码与问题反馈", linkLabel: "GitHub", href: githubUrl },
-      ],
-    },
   },
 
   licensing: {
@@ -379,119 +148,6 @@ export function createZhDict(
         heading: "获取商业授权",
         paragraphs: [
           "通过[联系商务](/contact-sales)告诉我们你的使用场景，我们会在三个工作日内回复。不确定自己的情况是否需要授权？可以在 [Discord](" + discordUrl + ") 上问我们，也可以通过同一个表单咨询。",
-        ],
-      },
-    ],
-  },
-
-  privacy: {
-    title: "隐私政策",
-    lastUpdated: "最后更新：2026 年 10 月 22 日",
-    intro: [
-      "本隐私政策说明 Index Labs (Hong Kong) Limited（下称「Marvis」或「我们」）在你访问 marvis.ai、联系我们或使用我们的托管服务 Marvis Cloud（包括网页端、桌面端和移动端）时，如何收集、使用和共享个人信息。",
-      "本政策不适用于你自行部署的 Marvis。自托管部署的数据由部署方控制，它使用哪些 AI 服务商、集成或分析工具，取决于部署方的配置。自托管服务器唯一会发送给我们的是每天一次的使用快照，内容包括：一个随机生成的部署 ID（用于关联同一台服务器的历次快照）、服务器版本、工作区、成员、智能体和已连接守护进程的大致数量，当天开始、完成、失败和取消的运行次数，以及过去 1、7、28 天内打开过网页端或桌面端的成员、亲自发起过智能体运行的成员的大致人数。快照不含任何姓名、邮箱或内容。设置 DO_NOT_TRACK=1 即可关闭这份快照。",
-      "本政策以英文版本为准。如中文版本与英文版本不一致，以英文版本为准。",
-    ],
-    sections: [
-      {
-        heading: "我们收集的信息",
-        bullets: [
-          "账户信息：你的姓名、邮箱地址和头像。如果你使用 Google 登录，我们会从 Google 获得你的姓名、邮箱地址和头像。你也可以填写语言、时区、个人简介等资料，以及回答上手引导中的问题，例如你的角色、使用场景、从哪里了解到 Marvis。",
-          "你创建的内容：工作区、任务、评论、聊天消息、附件、智能体指令，以及你或你的智能体放进 Marvis Cloud 的其他内容。",
-          "联系商务表单：你的姓名、工作邮箱、公司名称和规模、国家或地区、使用场景、目标，以及你的沟通偏好。为了防止滥用，我们还会记录提交表单时的 IP 地址和浏览器 user agent。",
-          "账单信息：订阅付款由 Stripe 在其托管的页面上处理，我们不会接收或存储你的完整银行卡信息。",
-          "使用和设备信息：应用版本、操作系统、客户端类型和一个随机生成的安装 ID；你连接为运行时的每台机器的名称（默认是其主机名）；以及崩溃和错误报告。报告发送前，我们会从错误信息中过滤掉能识别出的邮箱地址和凭据，但报告仍可能包含与出错情况相关的其他细节。",
-          "反馈：你提交反馈时，我们会收到反馈内容，以及所在页面、应用版本、操作系统和相关的错误信息。",
-        ],
-      },
-      {
-        heading: "我们如何使用信息",
-        bullets: [
-          "提供、运营和保护 Marvis Cloud，包括登录、同步工作区、发送通知和邀请。",
-          "回复联系商务表单和支持请求。",
-          "发送服务消息，例如登录验证码和工作区邀请。只有在你主动同意后，我们才会发送产品动态或营销信息，你可以随时退订。",
-          "了解 Marvis 的使用情况、修复问题并改进产品。",
-          "防止滥用，并履行法律义务。",
-        ],
-      },
-      {
-        heading: "法律依据",
-        paragraphs: [
-          "在法律要求说明处理依据的地区，我们依据以下几点处理个人信息：履行与你之间的合同，以提供 Marvis Cloud；我们在保障安全、提供支持、改进 Marvis 和回复咨询方面的正当利益；你对接收营销信息的同意；以及履行我们的法律义务。",
-        ],
-      },
-      {
-        heading: "AI 功能",
-        paragraphs: [
-          "你的编码智能体运行在你自己的机器或你连接的运行时上，使用的是你配置的编码工具和账户。智能体在本机运行，不代表模型也在本机推理：这些工具会把提示词、代码、文件和工具调用结果发送给各自的模型服务商，并受你所用工具和账户的条款约束。Marvis 负责协调智能体的工作。",
-          "Marvis Cloud 的部分功能（如生成聊天标题和推荐后续操作）会把你的第一条聊天消息或最近几条消息，发送给我们选用的第三方大语言模型服务商来生成结果。Marvis 不会用你的内容训练 AI 模型。",
-        ],
-      },
-      {
-        heading: "Cookie 与分析",
-        paragraphs: [
-          "我们使用必要的 Cookie 来保持你的登录状态、防范跨站请求伪造，以及让你访问自己上传的文件。我们还会用 Cookie 记住你是通过哪个推广活动或网站来到这里的（最长 30 天），以及你选择的语言和最近打开的工作区。",
-          "我们使用 PostHog 了解产品使用情况并收集崩溃报告。你登录后，PostHog 会收到你账户的姓名和邮箱，以便我们把报告和你的账户对应起来。我们不使用广告 Cookie，也不出售你的个人信息。",
-        ],
-      },
-      {
-        heading: "我们与谁共享信息",
-        paragraphs: [
-          "你放进工作区的信息，会按工作区的权限设置，被其他成员和管理员，以及他们授权的智能体和集成看到。如果你的工作区属于某个组织，其中的内容由该组织管理，相关请求也可能由该组织处理。",
-          "在法律要求时，我们会披露相关信息；如果 Marvis 发生合并、收购或资产出售，相关信息也可能转移给买方或继任方。",
-          "除此之外，我们只会与帮助我们运营 Marvis 的服务商，以及你选择连接的集成共享个人信息：",
-        ],
-        bullets: [
-          "Amazon Web Services：托管、文件存储和内容分发",
-          "Vercel：网站和网页应用托管",
-          "Stripe：付款和账单",
-          "Resend：登录和邀请邮件",
-          "PostHog：产品分析和崩溃报告",
-          "Google：当你选择使用 Google 登录时",
-          "大语言模型服务商：上文所述的 AI 功能",
-          "你连接的集成，如 Slack、飞书、钉钉、企业微信、Telegram、GitHub、GitLab、通过 Composio 连接的应用：你选择通过它们收发的数据，同时受这些服务商自身条款的约束",
-        ],
-      },
-      {
-        heading: "信息的存储位置",
-        paragraphs: [
-          "Marvis Cloud 托管在 Amazon Web Services 和 Vercel 上。我们和我们的服务商可能会在美国及其他国家或地区处理你的信息。无论在哪里处理，我们都会按照本政策保护这些信息。",
-        ],
-      },
-      {
-        heading: "信息的保留期限",
-        paragraphs: [
-          "账户信息和工作区内容会在你的账户或工作区存在期间一直保留。工作区所有者删除工作区后，其中的任务、评论等内容会从 Marvis Cloud 中移除，但用于恢复的备份在之后一段时间内仍可能包含副本。如需从我们的文件存储中清除已删除工作区里上传的文件，请发邮件至 [support@marvis.ai](mailto:support@marvis.ai)。账单记录按会计和税务规定要求的期限保留；产品分析数据、崩溃报告、联系商务表单和反馈，会在为你提供支持和改进 Marvis 所需的期间内保留。你可以要求我们删除联系商务表单和反馈。",
-        ],
-      },
-      {
-        heading: "你的选择和权利",
-        paragraphs: [
-          "根据你所在地的法律，你可能有权访问、更正、删除或导出你的个人信息，反对或限制某些处理，撤回你已给出的同意（例如接收营销信息的同意），以及向当地的数据保护机构投诉。你可以随时在 Marvis 中更新个人资料，也可以在设置中删除你拥有的工作区。其他请求（包括删除账户），请发邮件至 [support@marvis.ai](mailto:support@marvis.ai)，我们会在 30 天内回复。",
-        ],
-      },
-      {
-        heading: "安全",
-        paragraphs: [
-          "我们通过传输加密、访问控制以及对集成凭据的加密存储来保护你的信息。没有任何系统是绝对安全的；如果你认为自己的账户已被盗用，请尽快联系我们。",
-        ],
-      },
-      {
-        heading: "儿童",
-        paragraphs: [
-          "Marvis 并非面向 16 岁以下的儿童，我们也不会在知情的情况下收集他们的个人信息。",
-        ],
-      },
-      {
-        heading: "政策变更",
-        paragraphs: [
-          "我们可能会不时更新本政策。新版本会发布在本页面，并更新页首的日期。如有重大变更，我们会在生效前通知你。",
-        ],
-      },
-      {
-        heading: "联系我们",
-        paragraphs: [
-          "Marvis 由 Index Labs (Hong Kong) Limited 运营，并由其负责你的个人信息。如有隐私相关的问题或请求，请发邮件至 [support@marvis.ai](mailto:support@marvis.ai)。",
         ],
       },
     ],
@@ -4057,29 +3713,29 @@ export function createZhDict(
     hero: {
       macArm64: {
         title: "Marvis for macOS",
-        sub: "Apple Silicon · 内置 daemon，无需配置",
-        primary: "下载 (.dmg)",
+        sub: "Apple Silicon · 内置守护进程，无需配置",
+        primary: "下载 .dmg",
         altZip: "或下载 .zip",
       },
       macIntel: {
         title: "Marvis for macOS",
         sub: "Intel · 内置守护进程，无需配置",
-        primary: "下载 (.dmg)",
+        primary: "下载 .dmg",
         altZip: "或下载 .zip",
       },
       winX64: {
         title: "Marvis for Windows",
-        sub: "内置 daemon，无需配置",
-        primary: "下载 (.exe)",
+        sub: "内置守护进程，无需配置",
+        primary: "下载 .exe",
       },
       winArm64: {
         title: "Marvis for Windows",
-        sub: "ARM · 内置 daemon，无需配置",
-        primary: "下载 (.exe)",
+        sub: "ARM · 内置守护进程，无需配置",
+        primary: "下载 .exe",
       },
       linux: {
         title: "Marvis for Linux",
-        sub: "内置 daemon，无需配置",
+        sub: "内置守护进程，无需配置",
         primary: "下载 AppImage",
         altFormats: "或 .deb / .rpm",
       },
@@ -4087,8 +3743,22 @@ export function createZhDict(
         title: "选择你的平台",
         sub: "下方是所有支持的安装包。",
       },
-      safariMacHint: "在 Intel Mac 上？请在下方选择 Intel 版本。",
+      safariMacHint: "Intel Mac？在下方选择 Intel 版本。",
       archFallbackHint: "架构不对？下方是所有可选格式。",
+    },
+    macHint: {
+      trigger: "首次打开须知",
+      title: "首次在 Mac 上打开",
+      sub: "安装包未经 Apple 签名，第一次打开会被系统拦截，处理一次即可。",
+      stepInstall: "打开 .dmg，把 Marvis 拖进「应用程序」。",
+      stepCommand: "提示「已损坏」或「无法验证开发者」时，在终端运行：",
+      stepReopen: "重新打开 Marvis。",
+      altSettings: "不想用终端：在「系统设置 › 隐私与安全性」底部点「仍要打开」。",
+      noAutoUpdate: "暂不支持自动更新，新版本请回到下载页下载。",
+      copyLabel: "复制",
+      copiedLabel: "已复制",
+      close: "关闭",
+      confirm: "知道了",
     },
     allPlatforms: {
       title: "所有平台",
@@ -4107,26 +3777,22 @@ export function createZhDict(
       unavailable: "暂不可用",
     },
     cli: {
-      title: "想用 CLI？",
-      sub: "适合服务器、远程开发机、无图形界面环境。底层 daemon 与 Desktop 相同，通过终端安装。",
+      title: "用命令行安装",
+      sub: "适合服务器和没有图形界面的机器。",
       installLabel: "安装",
       platformGroup: "选择你的系统",
       platformMacosLinux: "macOS / Linux",
       platformWindows: "Windows",
-      startLabel: "启动 daemon",
-      sshNote: "已经在服务器上？通过 SSH 执行同样的命令即可。",
+      startLabel: "启动守护进程",
+      sshNote: "在服务器上？通过 SSH 运行同样的命令。",
       copyLabel: "复制",
       copiedLabel: "已复制",
-    },
-    cloud: {
-      title: "Cloud runtime（等待名单）",
-      sub: "我们将为你托管 runtime，目前尚未上线——留下邮箱，上线后通知你。",
     },
     footer: {
       releaseNotes: "v{version} 更新内容",
       allReleases: "查看所有版本",
       currentVersion: "当前版本：{version}",
-      versionUnavailable: "版本获取失败——请前往 GitHub 查看",
+      versionUnavailable: "版本获取失败",
     },
   },
   contactSales: {

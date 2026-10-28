@@ -1,5 +1,3 @@
-import { cn } from "@marvis/ui/lib/utils";
-
 export const githubUrl = "https://github.com/yunboom/marvis";
 export const twitterUrl = "https://x.com/MarvisAI";
 export const discordUrl = "https://discord.gg/W8gYBn226t";
@@ -40,50 +38,5 @@ export function XMark({ className }: { className?: string }) {
     >
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
-  );
-}
-
-export function ImageIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3.5" y="5" width="17" height="14" rx="2.5" />
-      <circle cx="9" cy="10" r="1.6" />
-      <path d="m20.5 16-4.8-4.8a1 1 0 0 0-1.4 0L8 17.5" />
-      <path d="m11.5 14.5 1.8-1.8a1 1 0 0 1 1.4 0l2.8 2.8" />
-    </svg>
-  );
-}
-
-export function headerButtonClassName(
-  tone: "ghost" | "solid",
-  variant: "dark" | "light" = "dark",
-) {
-  return cn(
-    "inline-flex items-center justify-center gap-2 rounded-(--landing-radius-button) px-4 py-2.5 text-label font-semibold transition-colors",
-    variant === "dark"
-      ? tone === "solid"
-        ? "bg-white text-[#0a0d12] hover:bg-white/92"
-        : "border border-white/18 bg-black/16 text-white backdrop-blur-sm hover:bg-black/24"
-      : tone === "solid"
-        ? "bg-[#0a0d12] text-white hover:bg-[#0a0d12]/88"
-        : "border border-[#0a0d12]/12 bg-white text-[#0a0d12] hover:bg-[#0a0d12]/5",
-  );
-}
-
-export function heroButtonClassName(tone: "ghost" | "solid") {
-  return cn(
-    "inline-flex items-center justify-center gap-2 rounded-(--landing-radius-action) px-5 py-3 text-body font-semibold transition-colors",
-    tone === "solid"
-      ? "bg-white text-[#0a0d12] hover:bg-white/92"
-      : "border border-white/18 bg-black/16 text-white backdrop-blur-sm hover:bg-black/24",
   );
 }

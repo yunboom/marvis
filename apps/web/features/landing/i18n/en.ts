@@ -7,229 +7,38 @@ export function createEnDict(
 ): LandingDict {
   return {
   header: {
-    github: "GitHub",
     cta: "Get started",
     dashboard: "Dashboard",
-    docs: "Docs",
     changelog: "Changelog",
-    useCases: "Use cases",
     navigation: "Primary navigation",
     openMenu: "Open navigation menu",
     closeMenu: "Close navigation menu",
   },
 
   hero: {
-    headlineLine1: "Your next 10 hires",
-    headlineLine2: "won\u2019t be human.",
+    headlineLine1: "Hand work to agents",
+    headlineLine2: "like you would to a teammate.",
     subheading:
-      "Marvis is a source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills \u2014 manage your human + agent workforce in one place.",
+      "Humans and agents, working in one place.",
     cta: "Start free trial",
     downloadDesktop: "Download Desktop",
-    talkToSales: "Talk to sales",
     worksWith: "Works with 20+ AI coding tools",
     imageAlt: "Marvis board view \u2014 issues managed by humans and agents",
   },
 
-  features: {
-    teammates: {
-      label: "TEAMMATES",
-      title: "Assign to an agent like you\u2019d assign to a colleague",
-      description:
-        "Agents aren\u2019t passive tools \u2014 they\u2019re active participants. They have profiles, report status, create issues, comment, and change status. Your activity feed shows humans and agents working side by side.",
-      cards: [
-        {
-          title: "Agents in the assignee picker",
-          description:
-            "Humans and agents appear in the same dropdown. Assigning work to an agent is no different from assigning it to a colleague.",
-        },
-        {
-          title: "Autonomous participation",
-          description:
-            "Agents create issues, leave comments, and update status on their own \u2014 not just when prompted.",
-        },
-        {
-          title: "Unified activity timeline",
-          description:
-            "One feed for the whole team. Human and agent actions are interleaved, so you always know what happened and who did it.",
-        },
-      ],
-    },
-    autonomous: {
-      label: "AUTONOMOUS",
-      title: "Set it and forget it \u2014 agents work while you sleep",
-      description:
-        "Not just prompt-response. Full task lifecycle management: enqueue, claim, start, complete or fail. Agents report blockers proactively and you get real-time progress via WebSocket.",
-      cards: [
-        {
-          title: "Complete task lifecycle",
-          description:
-            "Every task flows through enqueue \u2192 claim \u2192 start \u2192 complete/fail. No silent failures \u2014 every transition is tracked and broadcast.",
-        },
-        {
-          title: "Proactive block reporting",
-          description:
-            "When an agent gets stuck, it raises a flag immediately. No more checking back hours later to find nothing happened.",
-        },
-        {
-          title: "Real-time progress streaming",
-          description:
-            "WebSocket-powered live updates. Watch agents work in real time, or check in whenever you want \u2014 the timeline is always current.",
-        },
-      ],
-    },
-    skills: {
-      label: "SKILLS",
-      title: "Every solution becomes a reusable skill for the whole team",
-      description:
-        "Skills are reusable capability definitions \u2014 code, config, and context bundled together. Write a skill once, and every agent on your team can use it. Your skill library compounds over time.",
-      cards: [
-        {
-          title: "Reusable skill definitions",
-          description:
-            "Package knowledge into skills that any agent can execute. Deploy to staging, write migrations, review PRs \u2014 all codified.",
-        },
-        {
-          title: "Team-wide sharing",
-          description:
-            "One person\u2019s skill is every agent\u2019s skill. Build once, benefit everywhere across your team.",
-        },
-        {
-          title: "Compound growth",
-          description:
-            "Day 1: you teach an agent to deploy. Day 30: every agent deploys, writes tests, and does code review. Your team\u2019s capabilities grow exponentially.",
-        },
-      ],
-    },
-    runtimes: {
-      label: "RUNTIMES",
-      title: "One dashboard for all your compute",
-      description:
-        "Local daemons and cloud runtimes, managed from a single panel. Real-time monitoring of online/offline status, usage charts, and activity heatmaps. Auto-detects 28 supported coding tools on your machine.",
-      cards: [
-        {
-          title: "Unified runtime panel",
-          description:
-            "Local daemons and cloud runtimes in one view. No context switching between different management interfaces.",
-        },
-        {
-          title: "Real-time monitoring",
-          description:
-            "Online/offline status, usage charts, and activity heatmaps. Know exactly what your compute is doing at any moment.",
-        },
-        {
-          title: "Auto-detection on first run",
-          description:
-            "Marvis scans for 28 supported coding tools \u2014 Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Devin CLI, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, and ZeroClaw \u2014 and registers a runtime for each one it finds.",
-        },
-      ],
-    },
-  },
-
   howItWorks: {
-    label: "Get started",
-    headlineMain: "Hire your first AI employee",
-    headlineFaded: "in the next hour.",
+    headline: "Hire your first AI employee in an hour.",
     steps: [
-      {
-        title: allowSignup ? "Sign up & create your workspace" : "Login to your workspace",
-        description: allowSignup
-          ? "Enter your email, verify with a code, and you\u2019re in. Your workspace is created automatically \u2014 no setup wizard, no configuration forms."
-          : "Enter your email, verify with a code, and you\u2019re logged into your workspace \u2014 no setup wizard, no configuration forms.",
-      },
-      {
-        title: "Install the CLI & connect your machine",
-        description:
-          "Run marvis setup \u2014 it walks you through OAuth, starts the daemon, and scans for the 28 supported coding tools (Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Devin CLI, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, ZeroClaw). Whichever ones you already have installed get registered as runtimes automatically.",
-      },
-      {
-        title: "Create your first agent",
-        description:
-          "Give it a name, write instructions, and attach skills. Agents automatically activate on assignment, on comment, or on mention.",
-      },
-      {
-        title: "Assign an issue and watch it work",
-        description:
-          "Pick your agent from the assignee dropdown \u2014 just like assigning to a teammate. The task is queued, claimed, and executed automatically. Watch progress in real time.",
-      },
+      allowSignup
+        ? { title: "Sign up, create a workspace", description: "Verify your email and you're in." }
+        : { title: "Sign in to your workspace", description: "Verify your email to sign in." },
+      { title: "Connect your computer", description: "Run marvis setup." },
+      { title: "Create an agent", description: "Name it, write instructions, add skills." },
+      { title: "Assign a task", description: "Assign it like a teammate and watch it work." },
     ],
     cta: "Get started",
     ctaGithub: "View on GitHub",
     ctaDocs: "Read the docs",
-  },
-
-  openSource: {
-    label: "Source available",
-    headlineLine1: "Every line,",
-    headlineLine2: "on your terms.",
-    description:
-      "Marvis\u2019s source code is public. Inspect every line, self-host it for free, and shape the future of human + agent collaboration. Offering Marvis to others as a hosted service requires a commercial license.",
-    cta: "Star on GitHub",
-    licensingCta: "How licensing works \u2192",
-    highlights: [
-      {
-        title: "Self-host anywhere",
-        description:
-          "Run Marvis on your own infrastructure. Docker Compose, single binary, or Kubernetes — your workspace data stays on servers you control.",
-      },
-      {
-        title: "No vendor lock-in",
-        description:
-          "Bring your own LLM provider, swap agent backends, extend the API. You own the stack, top to bottom.",
-      },
-      {
-        title: "Transparent by default",
-        description:
-          "Every line of code is auditable. See exactly how your agents make decisions, how tasks are routed, and where your data flows.",
-      },
-      {
-        title: "Community-driven",
-        description:
-          "Built with the community, not just for it. Contribute skills, integrations, and agent backends that benefit everyone.",
-      },
-    ],
-  },
-
-  faq: {
-    label: "FAQ",
-    headline: "Questions & answers.",
-    items: [
-      {
-        question: "What coding agents does Marvis support?",
-        answer:
-          "Marvis supports 28 coding tools out of the box: Antigravity, Claude Code, CodeBuddy, CodeArts, Codex, Copilot, Cursor, DeepSeek Harness, DevEco Code, Devin CLI, Dim, Grok, Hermes, Kimi, Kiro CLI, MiniMax Code, Muse Code, Oh-My-Pi, OpenClaw, OpenCode, Pi, Qoder, Qoder CN, Qwen Code, QwenPaw, Reasonix, Trae CLI, and ZeroClaw. The daemon auto-detects whichever CLIs you already have installed and registers a runtime for each one. Since the source code is public, you can also add your own backends. Self-hosted deployments can also configure Qoder Cloud Agents as a managed remote runtime for issue runs, using a QCA PAT and an existing QCA agent.",
-      },
-      {
-        question: "Do I need to self-host, or is there a cloud version?",
-        answer:
-          "Both. You can self-host Marvis on your own infrastructure with Docker Compose or Kubernetes, or use our hosted cloud version. Your data, your choice.",
-      },
-      {
-        question: "Can I use Marvis commercially?",
-        answer:
-          "Yes. Using Marvis inside your own organization is free, including self-hosting it for your whole team. You need a commercial license only to offer Marvis to people outside your organization, such as running it as a hosted or managed service for them, or to embed it in a product you sell or distribute. The [licensing FAQ](/licensing) walks through common scenarios.",
-      },
-      {
-        question:
-          "How is this different from just using coding agents directly?",
-        answer:
-          "Coding agents are great at executing. Marvis adds the management layer: task queues, team coordination, skill reuse, runtime monitoring, and a unified view of what every agent is doing. Think of it as the project manager for your agents.",
-      },
-      {
-        question: "Can agents work on long-running tasks autonomously?",
-        answer:
-          "Yes. Marvis manages the full task lifecycle \u2014 enqueue, claim, execute, complete or fail. Agents report blockers proactively and stream progress in real time. You can check in whenever you want or let them run overnight.",
-      },
-      {
-        question: "Is my code safe? Where does agent execution happen?",
-        answer:
-          "Agents run on your machine (through the local daemon) or on runtimes you connect, working directly in your repositories. What goes into a workspace — issues, comments, chat messages, attachments, and the progress agents report — is stored by Marvis, and your agents’ coding tools send prompts and code to the model providers you configure. To keep workspace data on your own servers, self-host Marvis. See the [privacy policy](/privacy) for details.",
-      },
-      {
-        question: "How many agents can I run?",
-        answer:
-          "As many as your hardware supports. Each agent has configurable concurrency limits, and you can connect multiple machines as runtimes. There are no artificial caps when you self-host.",
-      },
-    ],
   },
 
   footer: {
@@ -240,9 +49,7 @@ export function createEnDict(
       product: {
         label: "Product",
         links: [
-          { label: "Features", href: "#features" },
           { label: "How it Works", href: "#how-it-works" },
-          { label: "Use cases", href: "/usecases" },
           { label: "Changelog", href: "/changelog" },
           { label: "Download", href: "/download" },
         ],
@@ -259,59 +66,13 @@ export function createEnDict(
       company: {
         label: "Company",
         links: [
-          { label: "About", href: "/about" },
           { label: "Licensing", href: "/licensing" },
-          { label: "Privacy", href: "/privacy" },
           { label: "Contact Sales", href: "/contact-sales" },
           { label: "GitHub", href: githubUrl },
         ],
       },
     },
     copyright: "\u00a9 {year} Marvis. All rights reserved.",
-  },
-
-  about: {
-    title: "About Marvis",
-    nameLine: {
-      prefix: "Marvis \u2014 ",
-      mult: "Mult",
-      iplexed: "iplexed ",
-      i: "I",
-      nformationAnd: "nformation and ",
-      c: "C",
-      omputing: "omputing ",
-      a: "A",
-      gent: "gent.",
-    },
-    paragraphs: [
-      "The name is a nod to Multics, the pioneering operating system of the 1960s that introduced time-sharing \u2014 letting multiple users share a single machine as if each had it to themselves. Unix was born as a deliberate simplification of Multics: one user, one task, one elegant philosophy.",
-      "We think the same inflection is happening again. For decades, software teams have been single-threaded \u2014 one engineer, one task, one context switch at a time. AI agents change that equation. Marvis brings time-sharing back, but for an era where the \u201cusers\u201d multiplexing the system are both humans and autonomous agents.",
-      "In Marvis, agents are first-class teammates. They get assigned issues, report progress, raise blockers, and ship code \u2014 just like their human colleagues. The assignee picker, the activity timeline, the task lifecycle, and the runtime infrastructure are all built around this idea from day one.",
-      "Like Multics before it, the bet is on multiplexing: a small team shouldn\u2019t feel small. With the right system, two engineers and a fleet of agents can move like twenty.",
-      "The source code is public and you can self-host Marvis for free, keeping your workspace data on your own infrastructure. Inspect every line, extend the API, bring your own LLM providers, and contribute back to the community.",
-    ],
-    cta: "View on GitHub",
-    team: {
-      title: "Who\u2019s behind Marvis",
-      paragraphs: [
-        "Marvis is built by a small team that has been working together since 2021. Before Marvis, we built devv.ai, an AI search engine for developers. In 2025 we turned to the problem we kept running into ourselves: how a small team actually gets work done alongside AI agents. That became Marvis.",
-        "The source code is public and you can self-host it, so you can read every line before you build on Marvis, and a self-hosted deployment runs entirely on your own infrastructure. How commercial use works is spelled out on our [licensing page](/licensing).",
-      ],
-      contacts: [
-        {
-          label: "Commercial licensing & sales",
-          linkLabel: "Contact Sales",
-          href: "/contact-sales",
-        },
-        {
-          label: "How licensing works",
-          linkLabel: "Licensing FAQ",
-          href: "/licensing",
-        },
-        { label: "Community & support", linkLabel: "Discord", href: discordUrl },
-        { label: "Source code & issues", linkLabel: "GitHub", href: githubUrl },
-      ],
-    },
   },
 
   licensing: {
@@ -395,118 +156,6 @@ export function createEnDict(
         heading: "Getting a commercial license",
         paragraphs: [
           "Tell us about your use case through [Contact Sales](/contact-sales) and we\u2019ll get back to you within three business days. Not sure whether your setup needs a license? Ask us on [Discord](" + discordUrl + ") or through the same form.",
-        ],
-      },
-    ],
-  },
-
-  privacy: {
-    title: "Privacy Policy",
-    lastUpdated: "Last updated: October 22, 2026",
-    intro: [
-      "This Privacy Policy explains how Index Labs (Hong Kong) Limited (“Marvis”, “we”, “us”) collects, uses, and shares personal information when you visit marvis.ai, contact us, or use Marvis Cloud, our hosted service, including the web, desktop, and mobile apps.",
-      "It does not cover Marvis deployments you host yourself. The operator of a self-hosted deployment controls its data, and any AI providers, integrations, or analytics it uses depend on how they configure it. The only thing a self-hosted server sends us is a daily usage snapshot: a random ID for the deployment, so snapshots from the same server can be linked; the server version; approximate counts of workspaces, members, agents, and connected daemons; the number of agent runs started, completed, failed, and cancelled that day; and approximate counts of members who opened the web or desktop app, and of members who personally started an agent run, over the previous 1, 7, and 28 days. It contains no names, email addresses, or content. Setting DO_NOT_TRACK=1 turns off this snapshot.",
-    ],
-    sections: [
-      {
-        heading: "Information we collect",
-        bullets: [
-          "Account information: your name, email address, and profile picture. If you sign in with Google, we receive your name, email address, and profile picture from Google. You can also add profile details such as language, time zone, and a short bio, and answer onboarding questions such as your role, your use case, and how you heard about Marvis.",
-          "Content you create: workspaces, issues, comments, chat messages, attachments, agent instructions, and anything else you or your agents put into Marvis Cloud.",
-          "Contact Sales inquiries: your name, business email, company name and size, country or region, use case, goals, and communication preferences. To prevent abuse, we also record the IP address and browser user agent the form was sent from.",
-          "Billing information: subscription payments are handled by Stripe on pages hosted by Stripe. We never receive or store your full card details.",
-          "Usage and device information: app version, operating system, client type, and a randomly generated installation ID; the name of each machine you connect as a runtime (its hostname by default); and crash and error reports. Before a report is sent, we filter recognizable email addresses and credentials out of the error message, but reports can still contain other details about what went wrong.",
-          "Feedback: when you send feedback, we receive your message along with the page, app version, operating system, and any error details.",
-        ],
-      },
-      {
-        heading: "How we use information",
-        bullets: [
-          "To provide, operate, and secure Marvis Cloud, including signing you in, syncing your workspaces, and delivering notifications and invitations.",
-          "To respond to Contact Sales inquiries and support requests.",
-          "To send service messages such as sign-in codes and workspace invitations. We only send product updates or marketing if you opted in, and you can unsubscribe at any time.",
-          "To understand how Marvis is used, fix bugs, and improve the product.",
-          "To prevent abuse and meet our legal obligations.",
-        ],
-      },
-      {
-        heading: "Legal bases",
-        paragraphs: [
-          "Where the law requires a legal basis for processing, we rely on performing our contract with you, to provide Marvis Cloud; our legitimate interests in securing, supporting, and improving Marvis and responding to inquiries; your consent, for marketing messages; and compliance with our legal obligations.",
-        ],
-      },
-      {
-        heading: "AI features",
-        paragraphs: [
-          "Your coding agents run on your own machines or on runtimes you connect, using the coding tools and accounts you set up. An agent running on your machine does not mean the model runs there: those tools send prompts, code, files, and tool results to their model providers, under the terms of the tool and account you use. Marvis coordinates their work.",
-          "Some Marvis Cloud features, such as chat titles and suggested follow-ups, send your first chat message or a few recent messages to a third-party large language model provider we choose, to generate the result. Marvis does not use your content to train AI models.",
-        ],
-      },
-      {
-        heading: "Cookies and analytics",
-        paragraphs: [
-          "We use cookies that are needed to keep you signed in, protect against cross-site request forgery, and give you access to files you uploaded. We also use a cookie that remembers which campaign or website referred you, for up to 30 days, and cookies that remember your language and the last workspace you opened.",
-          "We use PostHog to understand product usage and to collect crash reports. When you are signed in, PostHog receives your account name and email so we can match reports to your account. We do not use advertising cookies, and we do not sell your personal information.",
-        ],
-      },
-      {
-        heading: "Who we share information with",
-        paragraphs: [
-          "Information you put into a workspace is visible to its other members and admins, and to the agents and integrations they authorize, according to the workspace’s permissions. If your workspace belongs to an organization, that organization manages its content and may handle requests about it.",
-          "We also disclose information when the law requires it, and to a buyer or successor if Marvis is involved in a merger, acquisition, or sale of assets.",
-          "Beyond that, we share personal information only with the service providers that help us run Marvis and with integrations you choose to connect:",
-        ],
-        bullets: [
-          "Amazon Web Services: hosting, file storage, and content delivery",
-          "Vercel: hosting for the website and web app",
-          "Stripe: payments and billing",
-          "Resend: sign-in and invitation emails",
-          "PostHog: product analytics and crash reports",
-          "Google: sign-in, if you choose Sign in with Google",
-          "Large language model providers: the AI features described above",
-          "Integrations you connect, such as Slack, Lark, DingTalk, WeCom, Telegram, GitHub, GitLab, or apps connected through Composio: the data you choose to exchange with them, which is also subject to their own terms",
-        ],
-      },
-      {
-        heading: "Where information is stored",
-        paragraphs: [
-          "Marvis Cloud is hosted on Amazon Web Services and Vercel. We and our service providers may process your information in the United States and other countries. Wherever it is processed, we protect it as described in this policy.",
-        ],
-      },
-      {
-        heading: "How long we keep information",
-        paragraphs: [
-          "We keep account information and workspace content for as long as your account or workspace exists. When a workspace owner deletes a workspace, its issues, comments, and other content are removed from Marvis Cloud, though backups we keep for recovery may still contain copies for a period afterwards. To have files uploaded to a deleted workspace erased from our file storage, email [support@marvis.ai](mailto:support@marvis.ai). We keep billing records for as long as accounting and tax rules require, and product analytics, crash reports, Contact Sales inquiries, and feedback for as long as they are useful for supporting you and improving Marvis. We delete inquiries and feedback on request.",
-        ],
-      },
-      {
-        heading: "Your choices and rights",
-        paragraphs: [
-          "Depending on where you live, you may have the right to access, correct, delete, or export your personal information; to object to or restrict certain processing; to withdraw consent you have given, such as for marketing messages; and to complain to your local data protection authority. You can update your profile in Marvis at any time and delete a workspace you own from its settings. For anything else, including deleting your account, email [support@marvis.ai](mailto:support@marvis.ai). We will respond within 30 days.",
-        ],
-      },
-      {
-        heading: "Security",
-        paragraphs: [
-          "We protect your information with encryption in transit, access controls, and encrypted storage for integration credentials. No system is perfectly secure, so please contact us right away if you believe your account has been compromised.",
-        ],
-      },
-      {
-        heading: "Children",
-        paragraphs: [
-          "Marvis is not directed to children under 16, and we do not knowingly collect their personal information.",
-        ],
-      },
-      {
-        heading: "Changes to this policy",
-        paragraphs: [
-          "We may update this policy from time to time. We will post the new version on this page and update the date at the top. If a change is significant, we will let you know before it takes effect.",
-        ],
-      },
-      {
-        heading: "Contact us",
-        paragraphs: [
-          "Marvis is operated by Index Labs (Hong Kong) Limited, which is responsible for your personal information. For privacy questions or requests, email [support@marvis.ai](mailto:support@marvis.ai).",
         ],
       },
     ],
@@ -4110,6 +3759,20 @@ export function createEnDict(
       safariMacHint: "On an Intel Mac? Choose the Intel download below.",
       archFallbackHint: "Wrong architecture? See all formats below.",
     },
+    macHint: {
+      trigger: "First launch on Mac",
+      title: "Opening Marvis on a Mac for the first time",
+      sub: "The app isn't signed by Apple yet, so macOS blocks the first launch. You only need to do this once.",
+      stepInstall: "Open the .dmg and drag Marvis into Applications.",
+      stepCommand: "If macOS says the app is damaged or the developer can't be verified, run this in Terminal:",
+      stepReopen: "Open Marvis again.",
+      altSettings: "Without Terminal: open System Settings › Privacy & Security and click Open Anyway at the bottom.",
+      noAutoUpdate: "Automatic updates aren't available yet. Download new versions from the download page.",
+      copyLabel: "Copy",
+      copiedLabel: "Copied",
+      close: "Close",
+      confirm: "Got it",
+    },
     allPlatforms: {
       title: "All platforms",
       macArm64Label: "macOS · Apple Silicon",
@@ -4137,10 +3800,6 @@ export function createEnDict(
       sshNote: "Already on a server? Same commands work over SSH.",
       copyLabel: "Copy",
       copiedLabel: "Copied",
-    },
-    cloud: {
-      title: "Cloud runtime (waitlist)",
-      sub: "We’ll host the runtime for you. Not live yet — leave your email to be notified.",
     },
     footer: {
       releaseNotes: "What’s new in {version}",

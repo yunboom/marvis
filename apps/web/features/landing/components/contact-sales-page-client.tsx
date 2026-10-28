@@ -153,7 +153,7 @@ export function ContactSalesPageClient() {
 
   return (
     <>
-      <LandingHeader variant="light" />
+      <LandingHeader />
       <main className="bg-[#f7f8fa] text-[#0a0d12]">
         <div
           ref={successAnchorRef}

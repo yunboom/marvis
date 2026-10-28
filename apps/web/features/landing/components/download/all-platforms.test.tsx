@@ -23,6 +23,7 @@ vi.mock("../../i18n", () => ({
           unavailable: "Not available",
         },
         footer: { allReleases: "View all releases" },
+        macHint: { trigger: "First launch on Mac" },
       },
     },
   }),

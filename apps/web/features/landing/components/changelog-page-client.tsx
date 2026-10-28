@@ -7,8 +7,8 @@ import {
   useRef,
   useState,
 } from "react";
+import { cn } from "@marvis/ui/lib/utils";
 import { LandingHeader } from "./landing-header";
-import { LandingFooter } from "./landing-footer";
 import { useLocale } from "../i18n";
 import type { Locale } from "../i18n/types";
 
@@ -95,13 +95,13 @@ function anchorId(version: string) {
 
 function ChangeList({ items }: { items: string[] }) {
   return (
-    <ul className="mt-2 space-y-2">
+    <ul className="flex flex-col gap-2">
       {items.map((change) => (
-        <li
-          key={change}
-          className="flex items-start gap-2.5 text-body leading-[1.7] text-[#0a0d12]/60 sm:text-body-lg"
-        >
-          <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-[#0a0d12]/30" />
+        <li key={change} className="flex gap-2.5 text-[15px] text-[#444]">
+          <span
+            aria-hidden="true"
+            className="mt-2.5 size-1 shrink-0 rounded-full bg-[#bbb]"
+          />
           {change}
         </li>
       ))}
@@ -180,156 +180,93 @@ export function ChangelogPageClient() {
     };
 
   return (
-    <>
-      <LandingHeader variant="light" />
-      <main className="bg-white text-[#0a0d12]">
-        <div className="mx-auto max-w-[1080px] px-4 py-16 sm:px-6 sm:py-20 lg:py-24">
-          <div className="lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-16">
-            <aside className="hidden lg:block">
-              <nav
-                aria-label={t.changelog.toc}
-                className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto pb-8 pr-2"
-              >
-                <h3 className="text-micro font-semibold uppercase tracking-[0.14em] text-[#0a0d12]/50">
-                  {t.changelog.toc}
-                </h3>
-
-                <div className="relative mt-5">
-                  <span
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-[4px] top-7 bottom-2 w-px bg-[#0a0d12]/10"
-                  />
-
-                  <ol className="space-y-5">
-                    {groups.map((group) => (
-                      <li key={group.key}>
-                        <p className="ml-6 text-micro font-semibold uppercase tracking-[0.12em] text-[#0a0d12]/45">
-                          {monthYearLabel(group.year, group.month, locale)}
-                        </p>
-
-                        <ol className="mt-1.5">
-                          {group.entries.map((release) => {
-                            const isActive =
-                              release.version === activeVersion;
-                            const { day } = parseDate(release.date);
-                            return (
-                              <li key={release.version}>
-                                <a
-                                  href={`#${anchorId(release.version)}`}
-                                  onClick={jumpTo(release.version)}
-                                  aria-current={isActive ? "true" : undefined}
-                                  className={[
-                                    "group relative flex items-center gap-3 rounded-md py-1 pr-2 text-label transition-colors",
-                                    isActive
-                                      ? "text-[#0a0d12]"
-                                      : "text-[#0a0d12]/55 hover:text-[#0a0d12]/80",
-                                  ].join(" ")}
-                                >
-                                  <span
-                                    aria-hidden="true"
-                                    className={[
-                                      "relative z-10 block size-[9px] shrink-0 rounded-full border transition-all duration-200",
-                                      isActive
-                                        ? "border-[#0a0d12] bg-[#0a0d12] ring-4 ring-[#0a0d12]/8"
-                                        : "border-[#0a0d12]/25 bg-white group-hover:border-[#0a0d12]/60",
-                                    ].join(" ")}
-                                  />
-                                  <span
-                                    className={[
-                                      "w-[1.25rem] shrink-0 text-right tabular-nums",
-                                      isActive
-                                        ? "font-semibold"
-                                        : "font-medium",
-                                    ].join(" ")}
-                                  >
-                                    {day}
-                                  </span>
-                                  <span className="tabular-nums text-micro text-[#0a0d12]/35">
-                                    v{release.version}
-                                  </span>
-                                </a>
-                              </li>
-                            );
-                          })}
-                        </ol>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </nav>
-            </aside>
-
-            <div className="mx-auto min-w-0 max-w-[720px] lg:mx-0">
-              <h1 className="landing-serif text-[2.6rem] leading-[1.05] tracking-[-0.03em] sm:text-[3.4rem]">
-                {t.changelog.title}
-              </h1>
-              <p className="mt-4 text-body-lg leading-7 text-[#0a0d12]/60 sm:text-title-sm">
-                {t.changelog.subtitle}
-              </p>
-
-              <div className="mt-16 space-y-16">
-                {entries.map((release) => {
-                  const hasCategorized =
-                    release.features || release.improvements || release.fixes;
+    <div className="min-h-full bg-[#f7f7f7] text-[#0f0f0f]">
+      <LandingHeader />
+      <main className="mx-auto flex max-w-[1080px] gap-14 px-5 pb-24 pt-10 sm:px-8 sm:pt-16">
+        <aside className="hidden w-[180px] shrink-0 lg:block">
+          <nav
+            aria-label={t.changelog.toc}
+            className="sticky top-6 flex max-h-[calc(100vh-3rem)] flex-col gap-5 overflow-y-auto pb-8"
+          >
+            {groups.map((group) => (
+              <div key={group.key} className="flex flex-col gap-1">
+                <p className="mb-1 px-3 text-[12px] text-[#888]">
+                  {monthYearLabel(group.year, group.month, locale)}
+                </p>
+                {group.entries.map((release) => {
+                  const isActive = release.version === activeVersion;
                   return (
-                    <section
+                    <a
                       key={release.version}
-                      id={anchorId(release.version)}
-                      data-version={release.version}
-                      className="relative scroll-mt-28"
-                    >
-                      <div className="flex items-baseline gap-3">
-                        <span className="text-label font-semibold tabular-nums">
-                          v{release.version}
-                        </span>
-                        <span className="text-label text-[#0a0d12]/40">
-                          {fullDateLabel(release.date, locale)}
-                        </span>
-                      </div>
-                      <h2 className="mt-2 text-title-lg font-semibold leading-snug sm:text-display-sm">
-                        {release.title}
-                      </h2>
-
-                      {hasCategorized ? (
-                        <div className="mt-4 space-y-5">
-                          {release.features && release.features.length > 0 && (
-                            <div>
-                              <h3 className="text-label font-semibold uppercase tracking-wide text-[#0a0d12]/50">
-                                {categoryLabels.features}
-                              </h3>
-                              <ChangeList items={release.features} />
-                            </div>
-                          )}
-                          {release.improvements &&
-                            release.improvements.length > 0 && (
-                              <div>
-                                <h3 className="text-label font-semibold uppercase tracking-wide text-[#0a0d12]/50">
-                                  {categoryLabels.improvements}
-                                </h3>
-                                <ChangeList items={release.improvements} />
-                              </div>
-                            )}
-                          {release.fixes && release.fixes.length > 0 && (
-                            <div>
-                              <h3 className="text-label font-semibold uppercase tracking-wide text-[#0a0d12]/50">
-                                {categoryLabels.fixes}
-                              </h3>
-                              <ChangeList items={release.fixes} />
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <ChangeList items={release.changes} />
+                      href={`#${anchorId(release.version)}`}
+                      onClick={jumpTo(release.version)}
+                      aria-current={isActive ? "true" : undefined}
+                      className={cn(
+                        "flex h-8 items-center rounded-(--landing-radius-control) px-3 text-[14px] tabular-nums transition-colors",
+                        isActive
+                          ? "bg-white font-semibold text-[#0f0f0f]"
+                          : "text-[#666] hover:text-[#7b4835]",
                       )}
-                    </section>
+                    >
+                      v{release.version}
+                    </a>
                   );
                 })}
               </div>
-            </div>
+            ))}
+          </nav>
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col gap-10">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-[30px] font-semibold sm:text-[44px]">
+              {t.changelog.title}
+            </h1>
+            <p className="text-[#666]">{t.changelog.subtitle}</p>
           </div>
+
+          {entries.map((release) => {
+            const categorized = [
+              { label: categoryLabels.features, items: release.features },
+              { label: categoryLabels.improvements, items: release.improvements },
+              { label: categoryLabels.fixes, items: release.fixes },
+            ].filter((g) => g.items && g.items.length > 0);
+            return (
+              <article
+                key={release.version}
+                id={anchorId(release.version)}
+                data-version={release.version}
+                className="flex scroll-mt-6 flex-col gap-[18px] rounded-(--landing-radius-panel) bg-white p-[22px] sm:p-7"
+              >
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <span className="flex h-[26px] items-center rounded-full bg-[#0f0f0f] px-2.5 text-[13px] font-medium tabular-nums text-white">
+                    v{release.version}
+                  </span>
+                  <span className="text-[13px] text-[#888]">
+                    {fullDateLabel(release.date, locale)}
+                  </span>
+                </div>
+                <h2 className="text-balance text-[22px] font-semibold leading-[1.4]">
+                  {release.title}
+                </h2>
+
+                {categorized.length > 0 ? (
+                  categorized.map((group) => (
+                    <div key={group.label} className="flex flex-col gap-2">
+                      <h3 className="text-[13px] font-semibold text-[#7b4835]">
+                        {group.label}
+                      </h3>
+                      <ChangeList items={group.items ?? []} />
+                    </div>
+                  ))
+                ) : (
+                  <ChangeList items={release.changes} />
+                )}
+              </article>
+            );
+          })}
         </div>
       </main>
-      <LandingFooter />
-    </>
+    </div>
   );
 }
