@@ -12,6 +12,9 @@ import (
 // 本文件集中构造飞书邀请卡片（卡片 JSON 2.0）和卡片回调响应。
 // 卡片 JSON 一律用结构体序列化，不拼字符串；用户提供的文本（附言、发送人名、智能体名、工作区名）
 // 只放进 plain_text 元素。markdown 元素只承载固定文案，插入的角色名经 escapeLarkInviteMarkdown 转义。
+//
+// 卡片不用 header：标题行是 column_set（logo 方块 + 标题和副标题 + 状态），颜色全部引用 config.style.color
+// 里的自定义 token，按钮是 interactive_container 做的胶囊。
 
 // larkInviteActionJoin 是“加入工作区”按钮回传值里的 action。
 const larkInviteActionJoin = "join_workspace"
@@ -30,28 +33,71 @@ const (
 const (
 	larkCardSchemaVersion = "2.0"
 
-	larkCardTagPlainText = "plain_text"
-	larkCardTagMarkdown  = "markdown"
-	larkCardTagDiv       = "div"
-	larkCardTagHR        = "hr"
-	larkCardTagButton    = "button"
-
-	larkCardButtonPrimary = "primary"
-	larkCardButtonDefault = "default"
+	larkCardTagPlainText            = "plain_text"
+	larkCardTagMarkdown             = "markdown"
+	larkCardTagDiv                  = "div"
+	larkCardTagColumnSet            = "column_set"
+	larkCardTagColumn               = "column"
+	larkCardTagInteractiveContainer = "interactive_container"
+	larkCardTagPersonList           = "person_list"
 
 	larkCardBehaviorCallback = "callback"
 	larkCardBehaviorOpenURL  = "open_url"
 
-	larkCardTemplateBlue  = "blue"
-	larkCardTemplateGrey  = "grey"
-	larkCardTemplateGreen = "green"
+	larkCardWidthModeCompact = "compact"
+	larkCardDirectionColumn  = "vertical"
+	larkCardFlexModeNone     = "none"
+	larkCardWidthAuto        = "auto"
+	larkCardWidthWeighted    = "weighted"
+	larkCardWidthFill        = "fill"
+	larkCardAlignCenter      = "center"
 
+	larkCardTextSizeHeading  = "heading-4"
 	larkCardTextSizeNotation = "notation"
-	larkCardTextColorGrey    = "grey"
+
+	larkCardPersonSizeExtraSmall = "extra_small"
 
 	// larkCardResponseTypeRaw 表示回调响应里的卡片是原始卡片 JSON。
 	larkCardResponseTypeRaw = "raw"
 )
+
+// 卡片的尺寸和间距。
+const (
+	larkInviteCardBodyPadding    = "18px 18px 18px 18px"
+	larkInviteCardBodySpacing    = "12px"
+	larkInviteCardTitleSpacing   = "12px"
+	larkInviteCardJoinedSpacing  = "8px"
+	larkInviteCardNoSpacing      = "0px"
+	larkInviteCardLogoSize       = "36px"
+	larkInviteCardLogoRadius     = "10px"
+	larkInviteCardNotePadding    = "12px 14px 12px 14px"
+	larkInviteCardNoteMaxLines   = 4
+	larkInviteCardSubtitleLines  = 1
+	larkInviteCardPillHeight     = "40px"
+	larkInviteCardPillRadius     = "20px"
+	larkInviteCardNoPadding      = "0px"
+	larkInviteCardColumnWeight   = 1
+	larkInviteCardMaxJoinedFaces = 5
+)
+
+// 卡片引用的自定义颜色 token，取值见 larkInviteCardColors；green 是飞书内置颜色。
+const (
+	larkCardColorInk   = "ink"
+	larkCardColorOnInk = "on-ink"
+	larkCardColorFaint = "faint"
+	larkCardColorBlock = "block"
+	larkCardColorLine  = "line"
+	larkCardColorGreen = "green"
+)
+
+// larkInviteCardColors 是 config.style.color 里的自定义颜色，浅色和深色模式各一套。
+var larkInviteCardColors = map[string]larkCardColor{
+	larkCardColorInk:   {LightMode: "rgba(15,15,15,1)", DarkMode: "rgba(240,240,240,1)"},
+	larkCardColorOnInk: {LightMode: "rgba(255,255,255,1)", DarkMode: "rgba(15,15,15,1)"},
+	larkCardColorFaint: {LightMode: "rgba(136,136,136,1)", DarkMode: "rgba(150,150,150,1)"},
+	larkCardColorBlock: {LightMode: "rgba(247,247,247,1)", DarkMode: "rgba(255,255,255,0.06)"},
+	larkCardColorLine:  {LightMode: "rgba(227,227,227,1)", DarkMode: "rgba(255,255,255,0.16)"},
+}
 
 // 卡片回调响应里 toast 的类型。
 const (
@@ -67,32 +113,55 @@ const (
 	larkInviteRoleAdmin  = "admin"
 )
 
+// larkInviteBotName 是发送卡片的飞书应用（机器人）名字。
+const larkInviteBotName = "Marvis Workbench"
+
 // 卡片产品文案。
 const (
-	larkInviteTitleActive  = "工作区邀请"
-	larkInviteTitleInvalid = "邀请已失效"
+	// larkInviteTitleActiveFormat 的参数是工作区名。
+	larkInviteTitleActiveFormat = "加入 %s"
+	larkInviteTitleInvalid      = "邀请已失效"
 	// larkInviteTitleJoinedFormat 的参数是工作区名。
 	larkInviteTitleJoinedFormat = "已加入 %s"
 
-	// larkInviteSentenceFormat 的参数依次是发送人、工作区名。正文句子以 plain_text 渲染，名字不加粗。
-	larkInviteSentenceFormat = "%s 邀请你加入工作区 %s"
-	// larkInviteAgentSentenceFormat 的参数依次是智能体名、发送人、工作区名。
-	larkInviteAgentSentenceFormat = "%s 代 %s 邀请你加入工作区 %s"
-	larkInviteJoinedBody          = "打开 Marvis，用飞书登录即可使用。"
+	// larkInviteSubtitleFormat 的参数依次是发送人、机器人名。
+	larkInviteSubtitleFormat = "%s 邀请 · %s"
+	// larkInviteAgentSubtitleFormat 的参数依次是智能体名、发送人、机器人名。
+	larkInviteAgentSubtitleFormat = "%s 代 %s 邀请 · %s"
 
-	// larkInviteNoteFormat 的参数是附言，前后加中文引号。
-	larkInviteNoteFormat = "“%s”"
+	// larkInviteSummaryFormat 的参数依次是发送人、工作区名。summary 是会话列表里的预览文字。
+	larkInviteSummaryFormat = "%s 邀请你加入 %s"
+	// larkInviteAgentSummaryFormat 的参数依次是智能体名、发送人、工作区名。
+	larkInviteAgentSummaryFormat = "%s 代 %s 邀请你加入 %s"
+	// larkInviteAnonymousSummaryFormat 的参数是工作区名，发送人和智能体都已删除时使用。
+	larkInviteAnonymousSummaryFormat = "邀请你加入 %s"
 
-	larkInviteFieldRole    = "角色"
-	larkInviteFieldExpires = "有效期至"
-	// larkInviteFieldFormat 的参数依次是字段名、字段值。
-	larkInviteFieldFormat = "**%s**：%s"
+	larkInviteStatusLabelJoined  = "已加入"
+	larkInviteStatusLabelExpired = "已过期"
+	larkInviteStatusLabelRevoked = "已撤销"
+
+	larkInviteJoinedBody = "打开 Marvis，用飞书登录即可使用。"
+
+	larkInviteMetaRole = "角色"
+	// larkInviteMetaExpiresFormat 的参数是有效期。
+	larkInviteMetaExpiresFormat = "%s 前有效"
+	larkInviteMetaUnlimited     = "人数不限"
+	// larkInviteMetaMaxUsesFormat 的参数是人数上限。
+	larkInviteMetaMaxUsesFormat = "最多 %d 人"
+	larkInviteMetaSeparator     = "　·　"
+	// larkInviteMetaActiveFormat 的参数依次是“角色”、角色名、其余字段；角色名加粗，其余为灰色。
+	larkInviteMetaActiveFormat = "<font color='grey'>%s</font> **%s**　<font color='grey'>·　%s</font>"
+	// larkInviteMetaInvalidFormat 的参数同上，失效时整行灰色、不加粗。
+	larkInviteMetaInvalidFormat = "<font color='grey'>%s %s　·　%s</font>"
 
 	larkInviteRoleMemberLabel = "成员"
 	larkInviteRoleAdminLabel  = "管理员"
 
+	larkInviteLogoLetter     = "M"
 	larkInviteButtonJoin     = "加入工作区"
+	larkInviteButtonLearn    = "了解 Marvis"
 	larkInviteButtonDownload = "下载 Marvis"
+	larkInviteButtonOpen     = "打开 Marvis"
 
 	// larkInviteJoinedCountFormat 的参数是已加入人数。
 	larkInviteJoinedCountFormat = "%d 人已加入"
@@ -123,37 +192,71 @@ type larkInviteCardView struct {
 	Role      string
 	Note      string
 	ExpiresAt time.Time
-	// JoinedCount 为 0 时不显示“已加入”人数。
+	// IsGroup 为 true 表示群卡片：显示人数上限和已加入人数。
+	IsGroup bool
+	// MaxUses 是群卡片人数上限，0 表示不限。
+	MaxUses int
+	// JoinedCount 为 0 时不显示“已加入”行。
 	JoinedCount int
+	// JoinedOpenIDs 是已加入的人的飞书 open_id，最近加入的在前；为空时“已加入”行只有人数。
+	JoinedOpenIDs []string
+	// InvalidStatus 是失效的原因，取 larkInviteStatusExpired 或 larkInviteStatusRevoked。
+	InvalidStatus string
 	// InvalidReason 是失效状态的底部说明，例如“10 月 20 日已过期”“已撤销”。
 	InvalidReason string
-	// DownloadURL 为空时不显示下载按钮。
-	DownloadURL string
+	// Links 是卡片上各个链接的地址。
+	Links larkInviteCardLinks
+}
+
+// larkInviteCardLinks 是卡片上的链接，地址为空时对应入口按下文的规则省略或降级。
+type larkInviteCardLinks struct {
+	// Landing 是 Marvis 网页首页（含路径前缀）。非空时 logo 可点击、次按钮是“了解 Marvis”；
+	// 为空时 logo 不可点击、次按钮退回“下载 Marvis”。
+	Landing string
+	// Download 是桌面端下载地址，只在 Landing 为空时用于次按钮，也为空时不显示次按钮。
+	Download string
+	// Login 是已加入卡片“打开 Marvis”的链接（网页登录页，登录后进入工作区），为空时不显示这个按钮。
+	Login string
 }
 
 // larkCard 是卡片 JSON 2.0 的根对象。
 type larkCard struct {
 	Schema string         `json:"schema"`
 	Config larkCardConfig `json:"config"`
-	Header larkCardHeader `json:"header"`
 	Body   larkCardBody   `json:"body"`
 }
 
 // larkCardConfig 是卡片全局配置。
 type larkCardConfig struct {
 	// UpdateMulti 为 true 时，卡片更新对所有接收人可见。
-	UpdateMulti bool `json:"update_multi"`
+	UpdateMulti bool            `json:"update_multi"`
+	WidthMode   string          `json:"width_mode"`
+	Summary     larkCardSummary `json:"summary"`
+	Style       larkCardStyle   `json:"style"`
 }
 
-// larkCardHeader 是卡片标题栏。
-type larkCardHeader struct {
-	Title    larkCardText `json:"title"`
-	Template string       `json:"template"`
+// larkCardSummary 是会话列表里的预览文字。
+type larkCardSummary struct {
+	Content string `json:"content"`
+}
+
+// larkCardStyle 是卡片的自定义样式。
+type larkCardStyle struct {
+	Color map[string]larkCardColor `json:"color"`
+}
+
+// larkCardColor 是自定义颜色在浅色和深色模式下的取值（RGBA）。
+type larkCardColor struct {
+	LightMode string `json:"light_mode"`
+	DarkMode  string `json:"dark_mode"`
 }
 
 // larkCardBody 是卡片正文。
 type larkCardBody struct {
-	Elements []any `json:"elements"`
+	Direction       string `json:"direction"`
+	Padding         string `json:"padding"`
+	VerticalSpacing string `json:"vertical_spacing"`
+	Elements        []any  `json:"elements"`
 }
 
 // larkCardText 是 plain_text 文本对象。
@@ -162,12 +265,15 @@ type larkCardText struct {
 	Content   string `json:"content"`
 	TextSize  string `json:"text_size,omitempty"`
 	TextColor string `json:"text_color,omitempty"`
+	TextAlign string `json:"text_align,omitempty"`
+	Lines     int    `json:"lines,omitempty"`
 }
 
 // larkCardMarkdown 是 markdown 元素。
 type larkCardMarkdown struct {
-	Tag     string `json:"tag"`
-	Content string `json:"content"`
+	Tag      string `json:"tag"`
+	Content  string `json:"content"`
+	TextSize string `json:"text_size,omitempty"`
 }
 
 // larkCardDiv 是承载 plain_text 的 div 元素。
@@ -176,21 +282,60 @@ type larkCardDiv struct {
 	Text larkCardText `json:"text"`
 }
 
-// larkCardHRElement 是分割线元素。
-type larkCardHRElement struct {
-	Tag string `json:"tag"`
+// larkCardColumnSet 是分栏元素。
+type larkCardColumnSet struct {
+	Tag               string           `json:"tag"`
+	FlexMode          string           `json:"flex_mode"`
+	HorizontalSpacing string           `json:"horizontal_spacing,omitempty"`
+	BackgroundStyle   string           `json:"background_style,omitempty"`
+	Columns           []larkCardColumn `json:"columns"`
 }
 
-// larkCardButton 是按钮元素。
-type larkCardButton struct {
-	Tag       string             `json:"tag"`
-	Text      larkCardText       `json:"text"`
-	Type      string             `json:"type"`
-	Disabled  bool               `json:"disabled"`
-	Behaviors []larkCardBehavior `json:"behaviors"`
+// larkCardColumn 是分栏里的一列。
+type larkCardColumn struct {
+	Tag             string `json:"tag"`
+	Width           string `json:"width"`
+	Weight          int    `json:"weight,omitempty"`
+	VerticalAlign   string `json:"vertical_align,omitempty"`
+	VerticalSpacing string `json:"vertical_spacing,omitempty"`
+	Padding         string `json:"padding,omitempty"`
+	BackgroundStyle string `json:"background_style,omitempty"`
+	Elements        []any  `json:"elements"`
 }
 
-// larkCardBehavior 是按钮点击行为：回调或打开链接。
+// larkCardInteractiveContainer 是可点击的容器，卡片用它做 logo 和胶囊按钮。
+type larkCardInteractiveContainer struct {
+	Tag             string             `json:"tag"`
+	Width           string             `json:"width"`
+	Height          string             `json:"height"`
+	BackgroundStyle string             `json:"background_style,omitempty"`
+	HasBorder       bool               `json:"has_border,omitempty"`
+	BorderColor     string             `json:"border_color,omitempty"`
+	CornerRadius    string             `json:"corner_radius"`
+	Padding         string             `json:"padding"`
+	HorizontalAlign string             `json:"horizontal_align"`
+	VerticalAlign   string             `json:"vertical_align"`
+	Disabled        bool               `json:"disabled,omitempty"`
+	Behaviors       []larkCardBehavior `json:"behaviors"`
+	Elements        []any              `json:"elements"`
+}
+
+// larkCardPersonList 是人员列表元素，卡片用它显示已加入的人的头像。
+type larkCardPersonList struct {
+	Tag               string           `json:"tag"`
+	Persons           []larkCardPerson `json:"persons"`
+	ShowName          bool             `json:"show_name"`
+	ShowAvatar        bool             `json:"show_avatar"`
+	Size              string           `json:"size"`
+	DropInvalidUserID bool             `json:"drop_invalid_user_id"`
+}
+
+// larkCardPerson 是人员列表里的一个人，ID 是 open_id。
+type larkCardPerson struct {
+	ID string `json:"id"`
+}
+
+// larkCardBehavior 是点击行为：回调或打开链接。
 type larkCardBehavior struct {
 	Type       string                  `json:"type"`
 	Value      *larkInviteCallbackData `json:"value,omitempty"`
@@ -223,23 +368,32 @@ type larkInviteCardResponse struct {
 
 // buildLarkInviteCard 按展示状态生成邀请卡片 JSON（schema 2.0，config.update_multi=true）。
 func buildLarkInviteCard(v larkInviteCardView) (string, error) {
-	card := larkCard{
-		Schema: larkCardSchemaVersion,
-		Config: larkCardConfig{UpdateMulti: true},
-	}
-
+	var elements []any
 	switch v.State {
 	case larkInviteCardActive:
-		card.Header = larkInviteHeader(larkInviteTitleActive, larkCardTemplateBlue)
-		card.Body.Elements = larkInviteOpenElements(v, false)
+		elements = larkInviteActiveElements(v)
 	case larkInviteCardInvalid:
-		card.Header = larkInviteHeader(larkInviteTitleInvalid, larkCardTemplateGrey)
-		card.Body.Elements = larkInviteOpenElements(v, true)
+		elements = larkInviteInvalidElements(v)
 	case larkInviteCardJoined:
-		card.Header = larkInviteHeader(fmt.Sprintf(larkInviteTitleJoinedFormat, v.WorkspaceName), larkCardTemplateGreen)
-		card.Body.Elements = larkInviteJoinedElements(v)
+		elements = larkInviteJoinedElements(v)
 	default:
 		return "", errors.Errorf("unknown lark invite card state %q", string(v.State))
+	}
+
+	card := larkCard{
+		Schema: larkCardSchemaVersion,
+		Config: larkCardConfig{
+			UpdateMulti: true,
+			WidthMode:   larkCardWidthModeCompact,
+			Summary:     larkCardSummary{Content: larkInviteSummary(v)},
+			Style:       larkCardStyle{Color: larkInviteCardColors},
+		},
+		Body: larkCardBody{
+			Direction:       larkCardDirectionColumn,
+			Padding:         larkInviteCardBodyPadding,
+			VerticalSpacing: larkInviteCardBodySpacing,
+			Elements:        elements,
+		},
 	}
 
 	raw, err := json.Marshal(card)
@@ -272,115 +426,394 @@ func buildLarkInviteCardResponse(kind, content string, card string) ([]byte, err
 	return raw, nil
 }
 
-// larkInviteHeader 构造卡片标题栏，标题为 plain_text。
-func larkInviteHeader(title, template string) larkCardHeader {
-	return larkCardHeader{
-		Title:    larkCardText{Tag: larkCardTagPlainText, Content: title},
-		Template: template,
-	}
-}
+// larkInviteActiveElements 构造邀请中状态的正文：标题行、附言、角色和有效期、加入和次按钮、群卡片的已加入行。
+func larkInviteActiveElements(v larkInviteCardView) []any {
+	elements := []any{larkInviteTitleRow(larkInviteTitleRowOptions{
+		Title:      fmt.Sprintf(larkInviteTitleActiveFormat, v.WorkspaceName),
+		Subtitle:   larkInviteSubtitle(v),
+		LogoBG:     larkCardColorInk,
+		LandingURL: v.Links.Landing,
+	})}
+	elements = appendLarkInviteNote(elements, v.Note, false)
+	elements = append(elements,
+		larkInviteMeta(v, false),
+		larkInviteJoinButton(v.InviteID, false),
+	)
+	elements = appendLarkInviteSecondary(elements, v.Links)
 
-// larkInviteOpenElements 构造邀请中和已失效状态的正文，两者结构一致，失效时主按钮禁用并显示失效说明。
-func larkInviteOpenElements(v larkInviteCardView, invalid bool) []any {
-	elements := []any{larkCardDiv{
-		Tag:  larkCardTagDiv,
-		Text: larkCardText{Tag: larkCardTagPlainText, Content: larkInviteSentence(v)},
-	}}
-
-	if v.Note != "" {
-		elements = append(elements, larkCardDiv{
-			Tag:  larkCardTagDiv,
-			Text: larkCardText{Tag: larkCardTagPlainText, Content: fmt.Sprintf(larkInviteNoteFormat, v.Note)},
-		})
-	}
-
-	fields := strings.Join([]string{
-		fmt.Sprintf(larkInviteFieldFormat, larkInviteFieldRole, escapeLarkInviteMarkdown(larkInviteRoleLabel(v.Role))),
-		fmt.Sprintf(larkInviteFieldFormat, larkInviteFieldExpires, formatLarkInviteDate(v.ExpiresAt)),
-	}, "\n")
-	elements = append(elements, larkCardMarkdown{Tag: larkCardTagMarkdown, Content: fields})
-
-	elements = append(elements, larkCardButton{
-		Tag:      larkCardTagButton,
-		Text:     larkCardText{Tag: larkCardTagPlainText, Content: larkInviteButtonJoin},
-		Type:     larkCardButtonPrimary,
-		Disabled: invalid,
-		Behaviors: []larkCardBehavior{{
-			Type:  larkCardBehaviorCallback,
-			Value: &larkInviteCallbackData{Action: larkInviteActionJoin, InviteID: v.InviteID},
-		}},
-	})
-	elements = appendLarkInviteDownload(elements, v.DownloadURL)
-
-	var footer []string
-	if invalid && v.InvalidReason != "" {
-		footer = append(footer, v.InvalidReason)
-	}
-
-	return appendLarkInviteFooter(elements, footer, v.JoinedCount)
-}
-
-// larkInviteJoinedElements 构造已加入状态的正文，没有加入按钮。
-func larkInviteJoinedElements(v larkInviteCardView) []any {
-	elements := []any{larkCardMarkdown{Tag: larkCardTagMarkdown, Content: larkInviteJoinedBody}}
-	elements = appendLarkInviteDownload(elements, v.DownloadURL)
-
-	return appendLarkInviteFooter(elements, nil, v.JoinedCount)
-}
-
-// appendLarkInviteDownload 在下载地址非空时追加“下载 Marvis”链接按钮。
-func appendLarkInviteDownload(elements []any, downloadURL string) []any {
-	if downloadURL == "" {
-		return elements
-	}
-
-	return append(elements, larkCardButton{
-		Tag:       larkCardTagButton,
-		Text:      larkCardText{Tag: larkCardTagPlainText, Content: larkInviteButtonDownload},
-		Type:      larkCardButtonDefault,
-		Behaviors: []larkCardBehavior{{Type: larkCardBehaviorOpenURL, DefaultURL: downloadURL}},
-	})
-}
-
-// appendLarkInviteFooter 追加底部说明：先是 notes，再是“{n} 人已加入”，n 为 0 时不显示；没有任何内容时不加分割线。
-func appendLarkInviteFooter(elements []any, notes []string, joinedCount int) []any {
-	lines := append([]string(nil), notes...)
-	if joinedCount > 0 {
-		lines = append(lines, fmt.Sprintf(larkInviteJoinedCountFormat, joinedCount))
-	}
-	if len(lines) == 0 {
-		return elements
-	}
-
-	elements = append(elements, larkCardHRElement{Tag: larkCardTagHR})
-	for _, line := range lines {
-		elements = append(elements, larkCardDiv{
-			Tag: larkCardTagDiv,
-			Text: larkCardText{
-				Tag:       larkCardTagPlainText,
-				Content:   line,
-				TextSize:  larkCardTextSizeNotation,
-				TextColor: larkCardTextColorGrey,
-			},
-		})
+	if v.IsGroup && v.JoinedCount > 0 {
+		elements = append(elements, larkInviteJoinedRow(v))
 	}
 
 	return elements
 }
 
-// larkInviteSentence 生成正文句子（plain_text，名字原样插入），智能体代发时带上智能体名。
-// 发送人已删除、名字为空时：有智能体就以智能体为发送人，都没有就只剩“邀请你加入工作区 {工作区}”。
-func larkInviteSentence(v larkInviteCardView) string {
+// larkInviteInvalidElements 构造已失效状态的正文：结构同邀请中，logo、标题、附言和字段变灰，加入按钮禁用，
+// 底部是失效说明；不显示已加入行。
+func larkInviteInvalidElements(v larkInviteCardView) []any {
+	elements := []any{larkInviteTitleRow(larkInviteTitleRowOptions{
+		Title:       larkInviteTitleInvalid,
+		TitleColor:  larkCardColorFaint,
+		Subtitle:    larkInviteSubtitle(v),
+		LogoBG:      larkCardColorFaint,
+		LandingURL:  v.Links.Landing,
+		Status:      larkInviteInvalidStatusLabel(v.InvalidStatus),
+		StatusColor: larkCardColorFaint,
+	})}
+	elements = appendLarkInviteNote(elements, v.Note, true)
+	elements = append(elements,
+		larkInviteMeta(v, true),
+		larkInviteJoinButton(v.InviteID, true),
+	)
+	elements = appendLarkInviteSecondary(elements, v.Links)
+
+	if v.InvalidReason != "" {
+		elements = append(elements, larkInviteNotation(v.InvalidReason))
+	}
+
+	return elements
+}
+
+// larkInviteJoinedElements 构造已加入状态的正文（个人卡片点击加入后）：没有附言和字段，
+// 主按钮是“打开 Marvis”，没有登录地址时只留次按钮。
+func larkInviteJoinedElements(v larkInviteCardView) []any {
+	elements := []any{
+		larkInviteTitleRow(larkInviteTitleRowOptions{
+			Title:       fmt.Sprintf(larkInviteTitleJoinedFormat, v.WorkspaceName),
+			Subtitle:    larkInviteBotName,
+			LogoBG:      larkCardColorInk,
+			LandingURL:  v.Links.Landing,
+			Status:      larkInviteStatusLabelJoined,
+			StatusColor: larkCardColorGreen,
+		}),
+		larkCardDiv{Tag: larkCardTagDiv, Text: larkCardText{Tag: larkCardTagPlainText, Content: larkInviteJoinedBody}},
+	}
+
+	if v.Links.Login != "" {
+		elements = append(elements, larkInvitePrimaryPill(larkInviteButtonOpen, larkCardBehavior{Type: larkCardBehaviorOpenURL, DefaultURL: v.Links.Login}, false))
+	}
+
+	return appendLarkInviteSecondary(elements, v.Links)
+}
+
+// larkInviteTitleRowOptions 是标题行的内容和颜色，颜色为空时用默认文字色；Status 为空时不显示状态。
+type larkInviteTitleRowOptions struct {
+	Title       string
+	TitleColor  string
+	Subtitle    string
+	LogoBG      string
+	LandingURL  string
+	Status      string
+	StatusColor string
+}
+
+// larkInviteTitleRow 构造标题行：左侧 logo 方块，中间标题和副标题，右侧可选的状态文字。
+func larkInviteTitleRow(o larkInviteTitleRowOptions) larkCardColumnSet {
+	columns := []larkCardColumn{
+		larkInviteLogoColumn(o.LogoBG, o.LandingURL),
+		{
+			Tag:             larkCardTagColumn,
+			Width:           larkCardWidthWeighted,
+			Weight:          larkInviteCardColumnWeight,
+			VerticalAlign:   larkCardAlignCenter,
+			VerticalSpacing: larkInviteCardNoSpacing,
+			Elements: []any{
+				larkCardDiv{Tag: larkCardTagDiv, Text: larkCardText{
+					Tag:       larkCardTagPlainText,
+					Content:   o.Title,
+					TextSize:  larkCardTextSizeHeading,
+					TextColor: o.TitleColor,
+				}},
+				larkCardDiv{Tag: larkCardTagDiv, Text: larkCardText{
+					Tag:       larkCardTagPlainText,
+					Content:   o.Subtitle,
+					TextSize:  larkCardTextSizeNotation,
+					TextColor: larkCardColorFaint,
+					Lines:     larkInviteCardSubtitleLines,
+				}},
+			},
+		},
+	}
+
+	if o.Status != "" {
+		columns = append(columns, larkCardColumn{
+			Tag:           larkCardTagColumn,
+			Width:         larkCardWidthAuto,
+			VerticalAlign: larkCardAlignCenter,
+			Elements: []any{larkCardDiv{Tag: larkCardTagDiv, Text: larkCardText{
+				Tag:       larkCardTagPlainText,
+				Content:   o.Status,
+				TextSize:  larkCardTextSizeNotation,
+				TextColor: o.StatusColor,
+			}}},
+		})
+	}
+
+	return larkCardColumnSet{
+		Tag:               larkCardTagColumnSet,
+		FlexMode:          larkCardFlexModeNone,
+		HorizontalSpacing: larkInviteCardTitleSpacing,
+		Columns:           columns,
+	}
+}
+
+// larkInviteLogoColumn 构造标题行左侧的 logo 列。有首页地址时 logo 是圆角的可点击容器，点开首页；
+// 没有时退回带底色的普通列，列不支持圆角，是直角方块。
+func larkInviteLogoColumn(background, landingURL string) larkCardColumn {
+	letter := larkCardDiv{Tag: larkCardTagDiv, Text: larkCardText{
+		Tag:       larkCardTagPlainText,
+		Content:   larkInviteLogoLetter,
+		TextSize:  larkCardTextSizeHeading,
+		TextColor: larkCardColorOnInk,
+		TextAlign: larkCardAlignCenter,
+	}}
+
+	if landingURL == "" {
+		return larkCardColumn{
+			Tag:             larkCardTagColumn,
+			Width:           larkInviteCardLogoSize,
+			VerticalAlign:   larkCardAlignCenter,
+			BackgroundStyle: background,
+			Elements:        []any{letter},
+		}
+	}
+
+	return larkCardColumn{
+		Tag:           larkCardTagColumn,
+		Width:         larkCardWidthAuto,
+		VerticalAlign: larkCardAlignCenter,
+		Elements: []any{larkCardInteractiveContainer{
+			Tag:             larkCardTagInteractiveContainer,
+			Width:           larkInviteCardLogoSize,
+			Height:          larkInviteCardLogoSize,
+			BackgroundStyle: background,
+			CornerRadius:    larkInviteCardLogoRadius,
+			Padding:         larkInviteCardNoPadding,
+			HorizontalAlign: larkCardAlignCenter,
+			VerticalAlign:   larkCardAlignCenter,
+			Behaviors:       []larkCardBehavior{{Type: larkCardBehaviorOpenURL, DefaultURL: landingURL}},
+			Elements:        []any{letter},
+		}},
+	}
+}
+
+// appendLarkInviteNote 在附言非空时追加灰底附言块，失效时文字变灰。
+func appendLarkInviteNote(elements []any, note string, faint bool) []any {
+	if note == "" {
+		return elements
+	}
+
+	text := larkCardText{Tag: larkCardTagPlainText, Content: note, Lines: larkInviteCardNoteMaxLines}
+	if faint {
+		text.TextColor = larkCardColorFaint
+	}
+
+	return append(elements, larkCardColumnSet{
+		Tag:             larkCardTagColumnSet,
+		FlexMode:        larkCardFlexModeNone,
+		BackgroundStyle: larkCardColorBlock,
+		Columns: []larkCardColumn{{
+			Tag:      larkCardTagColumn,
+			Width:    larkCardWidthWeighted,
+			Weight:   larkInviteCardColumnWeight,
+			Padding:  larkInviteCardNotePadding,
+			Elements: []any{larkCardDiv{Tag: larkCardTagDiv, Text: text}},
+		}},
+	})
+}
+
+// larkInviteMeta 构造“角色 · 有效期 · 人数”一行（markdown，只含固定文案、日期和转义后的角色名）。
+// 群卡片带人数上限；失效时整行变灰。
+func larkInviteMeta(v larkInviteCardView, invalid bool) larkCardMarkdown {
+	parts := []string{fmt.Sprintf(larkInviteMetaExpiresFormat, formatLarkInviteDate(v.ExpiresAt))}
+	if v.IsGroup {
+		parts = append(parts, larkInviteMaxUsesLabel(v.MaxUses))
+	}
+	rest := strings.Join(parts, larkInviteMetaSeparator)
+	role := escapeLarkInviteMarkdown(larkInviteRoleLabel(v.Role))
+
+	format := larkInviteMetaActiveFormat
+	if invalid {
+		format = larkInviteMetaInvalidFormat
+	}
+
+	return larkCardMarkdown{
+		Tag:      larkCardTagMarkdown,
+		Content:  fmt.Sprintf(format, larkInviteMetaRole, role, rest),
+		TextSize: larkCardTextSizeNotation,
+	}
+}
+
+// larkInviteMaxUsesLabel 返回群卡片的人数说明，0 表示不限。
+func larkInviteMaxUsesLabel(maxUses int) string {
+	if maxUses <= 0 {
+		return larkInviteMetaUnlimited
+	}
+
+	return fmt.Sprintf(larkInviteMetaMaxUsesFormat, maxUses)
+}
+
+// larkInviteJoinButton 构造“加入工作区”主按钮，回传 action 和 invite_id；失效时禁用。
+func larkInviteJoinButton(inviteID string, disabled bool) larkCardInteractiveContainer {
+	return larkInvitePrimaryPill(larkInviteButtonJoin, larkCardBehavior{
+		Type:  larkCardBehaviorCallback,
+		Value: &larkInviteCallbackData{Action: larkInviteActionJoin, InviteID: inviteID},
+	}, disabled)
+}
+
+// larkInvitePrimaryPill 构造黑底白字的胶囊主按钮；禁用时换成浅灰底、灰字。
+func larkInvitePrimaryPill(label string, behavior larkCardBehavior, disabled bool) larkCardInteractiveContainer {
+	background, textColor := larkCardColorInk, larkCardColorOnInk
+	if disabled {
+		background, textColor = larkCardColorLine, larkCardColorFaint
+	}
+
+	pill := larkInvitePill(label, textColor, behavior)
+	pill.BackgroundStyle = background
+	pill.Disabled = disabled
+
+	return pill
+}
+
+// appendLarkInviteSecondary 追加描边的次按钮：有首页地址时是“了解 Marvis”，否则退回“下载 Marvis”，
+// 两个地址都为空时不加。
+func appendLarkInviteSecondary(elements []any, links larkInviteCardLinks) []any {
+	label, target := larkInviteButtonLearn, links.Landing
+	if target == "" {
+		label, target = larkInviteButtonDownload, links.Download
+	}
+	if target == "" {
+		return elements
+	}
+
+	pill := larkInvitePill(label, "", larkCardBehavior{Type: larkCardBehaviorOpenURL, DefaultURL: target})
+	pill.HasBorder = true
+	pill.BorderColor = larkCardColorLine
+
+	return append(elements, pill)
+}
+
+// larkInvitePill 构造通栏胶囊按钮的公共部分：高度、圆角、居中的 plain_text 文字和点击行为。
+func larkInvitePill(label, textColor string, behavior larkCardBehavior) larkCardInteractiveContainer {
+	return larkCardInteractiveContainer{
+		Tag:             larkCardTagInteractiveContainer,
+		Width:           larkCardWidthFill,
+		Height:          larkInviteCardPillHeight,
+		CornerRadius:    larkInviteCardPillRadius,
+		Padding:         larkInviteCardNoPadding,
+		HorizontalAlign: larkCardAlignCenter,
+		VerticalAlign:   larkCardAlignCenter,
+		Behaviors:       []larkCardBehavior{behavior},
+		Elements: []any{larkCardDiv{Tag: larkCardTagDiv, Text: larkCardText{
+			Tag:       larkCardTagPlainText,
+			Content:   label,
+			TextColor: textColor,
+			TextAlign: larkCardAlignCenter,
+		}}},
+	}
+}
+
+// larkInviteJoinedRow 构造群卡片的已加入行：有 open_id 时先放最多 larkInviteCardMaxJoinedFaces 个头像，
+// 再是“{n} 人已加入”。
+func larkInviteJoinedRow(v larkInviteCardView) larkCardColumnSet {
+	var columns []larkCardColumn
+
+	if len(v.JoinedOpenIDs) > 0 {
+		ids := v.JoinedOpenIDs[:min(len(v.JoinedOpenIDs), larkInviteCardMaxJoinedFaces)]
+		persons := make([]larkCardPerson, 0, len(ids))
+		for _, id := range ids {
+			persons = append(persons, larkCardPerson{ID: id})
+		}
+
+		columns = append(columns, larkCardColumn{
+			Tag:           larkCardTagColumn,
+			Width:         larkCardWidthAuto,
+			VerticalAlign: larkCardAlignCenter,
+			Elements: []any{larkCardPersonList{
+				Tag:               larkCardTagPersonList,
+				Persons:           persons,
+				ShowName:          false,
+				ShowAvatar:        true,
+				Size:              larkCardPersonSizeExtraSmall,
+				DropInvalidUserID: true,
+			}},
+		})
+	}
+
+	columns = append(columns, larkCardColumn{
+		Tag:           larkCardTagColumn,
+		Width:         larkCardWidthWeighted,
+		Weight:        larkInviteCardColumnWeight,
+		VerticalAlign: larkCardAlignCenter,
+		Elements:      []any{larkInviteNotation(fmt.Sprintf(larkInviteJoinedCountFormat, v.JoinedCount))},
+	})
+
+	return larkCardColumnSet{
+		Tag:               larkCardTagColumnSet,
+		FlexMode:          larkCardFlexModeNone,
+		HorizontalSpacing: larkInviteCardJoinedSpacing,
+		Columns:           columns,
+	}
+}
+
+// larkInviteNotation 构造灰色小字的 plain_text 行。
+func larkInviteNotation(content string) larkCardDiv {
+	return larkCardDiv{Tag: larkCardTagDiv, Text: larkCardText{
+		Tag:       larkCardTagPlainText,
+		Content:   content,
+		TextSize:  larkCardTextSizeNotation,
+		TextColor: larkCardColorFaint,
+	}}
+}
+
+// larkInviteSubtitle 生成标题下的副标题“{发送人} 邀请 · Marvis Workbench”，智能体代发时带上智能体名。
+// 发送人已删除、名字为空时：有智能体就以智能体为发送人，都没有就只剩机器人名。
+func larkInviteSubtitle(v larkInviteCardView) string {
 	if v.AgentName != "" && v.InviterName != "" {
-		return fmt.Sprintf(larkInviteAgentSentenceFormat, v.AgentName, v.InviterName, v.WorkspaceName)
+		return fmt.Sprintf(larkInviteAgentSubtitleFormat, v.AgentName, v.InviterName, larkInviteBotName)
 	}
 
-	sender := v.InviterName
+	sender := larkInviteCardSender(v)
 	if sender == "" {
-		sender = v.AgentName
+		return larkInviteBotName
 	}
 
-	return strings.TrimSpace(fmt.Sprintf(larkInviteSentenceFormat, sender, v.WorkspaceName))
+	return fmt.Sprintf(larkInviteSubtitleFormat, sender, larkInviteBotName)
+}
+
+// larkInviteSummary 生成会话列表里的预览文字，发送人的取法同 larkInviteSubtitle。
+func larkInviteSummary(v larkInviteCardView) string {
+	if v.AgentName != "" && v.InviterName != "" {
+		return fmt.Sprintf(larkInviteAgentSummaryFormat, v.AgentName, v.InviterName, v.WorkspaceName)
+	}
+
+	sender := larkInviteCardSender(v)
+	if sender == "" {
+		return fmt.Sprintf(larkInviteAnonymousSummaryFormat, v.WorkspaceName)
+	}
+
+	return fmt.Sprintf(larkInviteSummaryFormat, sender, v.WorkspaceName)
+}
+
+// larkInviteCardSender 返回单独署名时的发送人：优先发送人，发送人已删除时用智能体名。
+func larkInviteCardSender(v larkInviteCardView) string {
+	if v.InviterName != "" {
+		return v.InviterName
+	}
+
+	return v.AgentName
+}
+
+// larkInviteInvalidStatusLabel 把失效原因转成标题行右侧的状态文字。
+func larkInviteInvalidStatusLabel(status string) string {
+	switch status {
+	case larkInviteStatusRevoked:
+		return larkInviteStatusLabelRevoked
+	case larkInviteStatusExpired:
+		return larkInviteStatusLabelExpired
+	default:
+		return ""
+	}
 }
 
 // larkInviteRoleLabel 把角色取值转成展示文案，未知角色原样返回。
