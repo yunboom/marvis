@@ -13,6 +13,17 @@
 
 CI 按路径只跑改动相关的作业（`.github/ci-paths.json`），main 上没被触发的作业可能早就红了，一旦改到那片路径才暴露，还会挡住生产部署。所以提 PR 前跑 `make check`：它和 CI 的前端质量检查（wildcard 导出、圆角 token）、lint、类型检查、单测、Go 测试、E2E 一致；不要只跑改动相关的几个测试就推。
 
+## 发布流程
+
+网页（营销页、下载页、产品 web、文档站、后端）发布到生产，和桌面端 / CLI 发版是两件事：前者部署 main 的某个提交，后者给 main 打 `v*` tag。
+
+1. 开发：在 worktree 的功能分支上改，提 PR 前跑 `make check`（见上）。合并 main 由用户在 GitHub 上操作，agent 不合并、不推 main。
+2. 合并后等 main 上这个提交的两条 push 运行都通过：`CI`（`backend`、`frontend-build`、`frontend-test`、`frontend-views-test` 成功或因路径跳过）和 `Production images`（构建 `ghcr.io/yunboom/<镜像>:prod-<sha>`）。CI 偶发超时就重跑失败的作业，真失败就开修复 PR 再走一遍，不绕过门禁。
+3. 部署：`make deploy-prod` 只能在签出 `main` 分支、工作区干净且 `HEAD == origin/main` 的目录运行。主工作区常在别的分支上，所以用专用的 `.claude/worktrees/deploy-main` worktree：`git fetch origin && git merge --ff-only origin/main` 后执行 `make deploy-prod`。脚本经跳板机把本地主工作区的 `.env.prod` 同步到 prototype、拉取镜像、备份数据库、重启并做健康检查，细节见 `scripts/deploy/README.md`。
+4. 部署后用公网地址验收：`https://omniai.shoplazza.site/marvis` 下的首页、`/download`、`/changelog`、`/login`、`/docs` 返回 200，改过的页面在手机宽度上打开看一遍（图片、链接、弹窗），不能只看状态码。
+5. 发版（需用户确认）：在部署过的 main 提交上打 annotated tag `vX.Y.Z` 并推送，`release.yml` 构建 CLI、镜像、单机模式服务端包和 Linux / Windows / macOS 桌面安装包（macOS 未签名，ad-hoc 签名、跳过公证），全部上传到草稿后由 `publish` 转为 Latest。版本号规则见决策十；同时在 `apps/web/features/landing/i18n/*.ts` 的 `changelog.entries` 写好这个版本的条目。
+6. tag 一经发布不能复用。发布前发现问题：取消 Release 运行、删掉还没发布的 tag，修好后在新提交上重打同一个版本；已发布的版本只能出新的补丁号。删除远端 tag 需要用户自己执行或授权。
+
 ## 决策一：品牌全量改名 Multica → Marvis
 
 - 范围是全部被 git 跟踪的文本和路径：代码标识符、注释、文案、文档、CLI 命令（`marvis`）、Go module（`github.com/yunboom/marvis/server`）、npm scope（`@marvis/*`）、环境变量（`MARVIS_*`）、docker compose 项目名、外部域名（`multica.ai` → `marvis.ai`）。本地项目目录也叫 `marvis`。
