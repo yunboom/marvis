@@ -188,7 +188,7 @@
         "message": "開発・テスト・プロダクトで共用するナレッジベースを作成して"
       },
       "agent_team": {
-        "title": "Agent チーム",
+        "title": "Agent チームの記憶",
         "description": "課題やチャットから Agent チームの決定と経験を継続的に蓄積",
         "message": "Agent チームの記憶として使うナレッジベースを作成して"
       },

@@ -196,7 +196,7 @@
         "message": "Aide-moi à créer une base de connaissances partagée par le développement, les tests et le produit"
       },
       "agent_team": {
-        "title": "Équipe d'Agents",
+        "title": "Mémoire de l'équipe d'Agents",
         "description": "Conserver les décisions et les leçons de l'équipe d'Agents issues des tickets et des discussions",
         "message": "Aide-moi à créer une base de connaissances qui sert de mémoire à notre équipe d'Agents"
       },

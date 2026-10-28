@@ -188,7 +188,7 @@
         "message": "개발, 테스트, 제품 팀이 함께 쓸 지식 베이스를 만들어 줘"
       },
       "agent_team": {
-        "title": "Agent 팀",
+        "title": "Agent 팀 기억",
         "description": "이슈와 채팅에서 Agent 팀의 결정과 경험을 꾸준히 쌓기",
         "message": "Agent 팀의 기억으로 쓸 지식 베이스를 만들어 줘"
       },

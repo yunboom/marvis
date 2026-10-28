@@ -196,7 +196,7 @@
         "message": "Help me create a knowledge base shared by engineering, testing and product"
       },
       "agent_team": {
-        "title": "Agent team",
+        "title": "Agent team memory",
         "description": "Keep the agent team's decisions and lessons from issues and chats",
         "message": "Help me create a knowledge base that serves as our agent team's memory"
       },

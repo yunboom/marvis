@@ -262,7 +262,7 @@ describe("KbBuilderPage · create conversation", () => {
 
   it.each([
     ["Engineering knowledge base", "Help me create a knowledge base for engineers"],
-    ["Agent team", "Help me create a knowledge base that serves as our agent team's memory"],
+    ["Agent team memory", "Help me create a knowledge base that serves as our agent team's memory"],
     ["Something else", "Help me create a knowledge base"],
   ])("shows the %s starter and sends its message", async (title, message) => {
     mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
@@ -275,7 +275,7 @@ describe("KbBuilderPage · create conversation", () => {
     mount(makeAdapter("/acme/kb/new/s-1", "runtime=rt-1"));
 
     await screen.findByRole("button", { name: /Engineering knowledge base/ });
-    for (const title of ["Testing knowledge base", "Product knowledge base", "Team knowledge base", "Agent team", "Something else"]) {
+    for (const title of ["Testing knowledge base", "Product knowledge base", "Team knowledge base", "Agent team memory", "Something else"]) {
       expect(screen.getByRole("button", { name: new RegExp(`^${title}`) })).toBeInTheDocument();
     }
   });
