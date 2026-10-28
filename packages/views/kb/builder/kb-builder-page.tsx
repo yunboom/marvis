@@ -197,7 +197,7 @@ function KbBuilderIntro({
       </p>
       {mode === "create" ? (
         <>
-          <div className="grid grid-cols-1 gap-2 @lg:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2">
             {CREATE_STARTERS.map((key) => {
               const title = t(($) => $.builder.starters[key].title);
               const description = t(($) => $.builder.starters[key].description);
