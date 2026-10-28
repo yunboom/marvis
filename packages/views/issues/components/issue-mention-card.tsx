@@ -67,7 +67,7 @@ export function IssueMentionCard({ issueId, fallbackLabel }: IssueMentionCardPro
       <AppLink
         href={p.issueDetail(issueId)}
         newTabTitle={fallbackLabel}
-        className="issue-mention align-middle"
+        className="issue-mention"
         onMouseDown={
           peek
             ? (event) => {

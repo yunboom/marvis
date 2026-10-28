@@ -35,6 +35,12 @@
   vertical-align: middle;
 }
 
+/* Mention chips align their label with the text baseline themselves
+   (MENTION_CHIP_CLASS); a middle-aligned wrapper would shift them off it. */
+.rich-text-editor [data-node-view-wrapper].mention-chip-node {
+  vertical-align: baseline;
+}
+
 /* Block-level NodeViews (fileCard) need to override the inline default above */
 .rich-text-editor .file-card-node {
   display: block !important;

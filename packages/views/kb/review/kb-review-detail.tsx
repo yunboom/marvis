@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuthStore } from "@marvis/core/auth";
 import { useWorkspaceId } from "@marvis/core/hooks";
-import { isImeComposing } from "@marvis/core/utils";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbMergeRequestOptions, kbMrTimelineOptions } from "@marvis/core/kb/queries";
 import {
@@ -45,6 +44,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@marvis/ui/components/u
 import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
+import { isSubmitEnter } from "../../common/submit-on-enter";
 import { AppLink } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
 import { KB_TAG } from "../components/kb-cite-card";
@@ -197,7 +197,7 @@ function QuoteChip({ text, label, onRemove }: { text: string; label: string; onR
   );
 }
 
-/** A small text box that sends on Cmd/Ctrl+Enter or with its button. */
+/** A small text box that sends on Enter or with its button; Esc cancels. */
 function InlineEditor({
   label,
   initial = "",
@@ -234,7 +234,7 @@ function InlineEditor({
         onChange={(event) => setBody(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Escape") onCancel();
-          if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey) || isImeComposing(event.nativeEvent)) return;
+          if (!isSubmitEnter(event)) return;
           event.preventDefault();
           send();
         }}
@@ -499,7 +499,7 @@ function ReviewComposer({
           readOnly={sending}
           onChange={(event) => setBody(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key !== "Enter" || !(event.metaKey || event.ctrlKey) || isImeComposing(event.nativeEvent)) return;
+            if (!isSubmitEnter(event)) return;
             event.preventDefault();
             send();
           }}
@@ -535,6 +535,7 @@ function ReviewBar({
   const canSubmit = (pendingCount > 0 || !!summary.trim()) && !submit.isPending;
 
   const doSubmit = () => {
+    if (!canSubmit) return;
     submit.mutate(
       { number, reviewId, summary: summary.trim() },
       {
@@ -572,6 +573,11 @@ function ReviewBar({
             rows={3}
             value={summary}
             onChange={(event) => setSummary(event.target.value)}
+            onKeyDown={(event) => {
+              if (!isSubmitEnter(event)) return;
+              event.preventDefault();
+              doSubmit();
+            }}
           />
           <p className="text-caption text-muted-foreground">{t(($) => $.review.submit_note, { count: pendingCount })}</p>
           <div className="flex justify-end gap-2">

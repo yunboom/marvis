@@ -5,7 +5,7 @@ export {
   useIsNavigating,
   useReportNavigating,
 } from "./context";
-export { AppLink } from "./app-link";
+export { AppLink, APP_LINK_ATTR } from "./app-link";
 export { currentPath } from "./current-path";
 export { resolveClickIntent } from "./click-intent";
 export type { LinkClickIntent } from "./click-intent";

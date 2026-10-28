@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { projectListOptions, projectDetailOptions } from "@marvis/core/projects/queries";
 import { useWorkspaceId } from "@marvis/core/hooks";
+import { MENTION_CHIP_CLASS } from "../../common/mention-chip";
 import { ProjectIcon } from "./project-icon";
 import { useT } from "../../i18n";
 
@@ -24,8 +25,7 @@ export interface ProjectChipProps {
   className?: string;
 }
 
-const BASE_CLASS =
-  "project-chip inline-flex min-w-0 max-w-[min(18rem,100%)] items-center gap-1.5 rounded-md border mx-0.5 px-2 py-0.5 text-caption";
+const BASE_CLASS = `project-chip ${MENTION_CHIP_CLASS}`;
 
 export function ProjectChip({
   projectId,

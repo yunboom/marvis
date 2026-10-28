@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@marvis/ui/components/ui/dialog";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
-import { useNavigation } from "../../navigation";
+import { APP_LINK_ATTR, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { InboxPage, MESSAGE_BOX_LAYER_ATTR } from "./inbox-page";
 
@@ -51,10 +51,11 @@ export function MessageBox() {
   // A link to the page the box was opened over ("go review" with that review
   // behind it) never changes the pathname, so following any in-app link closes
   // the box directly. A modified or middle click opens a new tab and keeps it.
+  // AppLink is matched by its marker: on desktop its href is the web URL.
   const closeOnFollowedLink = (event: React.MouseEvent) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    const link = (event.target as Element | null)?.closest?.("a[href]");
-    if (!link || !link.getAttribute("href")?.startsWith("/")) return;
+    const link = (event.target as Element | null)?.closest?.(`a[${APP_LINK_ATTR}], a[href^="/"]`);
+    if (!link) return;
     setOpen(false);
   };
 

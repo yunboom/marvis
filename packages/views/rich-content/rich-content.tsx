@@ -120,7 +120,7 @@ function useClosedFence(offset: number | undefined): ClosedFence | undefined {
  */
 function IssueMentionLink({ issueId, label }: { issueId: string; label?: string }) {
   return (
-    <span className="inline align-middle" onClick={(e) => e.stopPropagation()}>
+    <span className="inline" onClick={(e) => e.stopPropagation()}>
       <IssueMentionCard issueId={issueId} fallbackLabel={label} />
     </span>
   );
@@ -162,7 +162,7 @@ function IdentifierIssueMentionLink({
  */
 function ProjectMentionLink({ projectId, label }: { projectId: string; label?: string }) {
   return (
-    <span className="inline align-middle" onClick={(e) => e.stopPropagation()}>
+    <span className="inline" onClick={(e) => e.stopPropagation()}>
       <ProjectMentionCard projectId={projectId} fallbackLabel={label} />
     </span>
   );

@@ -4,6 +4,9 @@ import { forwardRef } from "react";
 import { resolveClickIntent } from "./click-intent";
 import { useNavigation } from "./context";
 
+/** Attribute every AppLink anchor carries; its href is not a reliable in-app marker. */
+export const APP_LINK_ATTR = "data-app-link";
+
 interface AppLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   href: string;
   /**
@@ -138,6 +141,9 @@ export const AppLink = forwardRef<HTMLAnchorElement, AppLinkProps>(
         // onClick/onAuxClick/onMouseEnter/onFocus through {...rest}. AppLink
         // owns these four events.
         {...props}
+        // Marks an in-app link whatever its href renders as (desktop renders
+        // the web URL), for surfaces that react to a followed link.
+        {...{ [APP_LINK_ATTR]: "" }}
         onClick={handleClick}
         onAuxClick={handleAuxClick}
         onMouseEnter={handleMouseEnter}

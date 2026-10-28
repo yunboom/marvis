@@ -11,11 +11,10 @@
  * inside `[data-node-view-wrapper]`, so the AppLink inside the card owns the
  * click alone.
  *
- * Issue chip sizing: must fit within the paragraph line box (14px * 1.625 =
- * 22.75px). Card is text-caption (12px) + py-0.5 + border ≈ 22px total. The
- * `vertical-align: middle` rule on `[data-node-view-wrapper]` in CSS handles
- * line-box alignment; setting it on an inner element has no effect because
- * the wrapper is the outermost inline element.
+ * Chip alignment: the chip sits on the text baseline (see MENTION_CHIP_CLASS).
+ * The wrapper is the outermost inline element, so it carries
+ * `mention-chip-node`, which resets the editor's `vertical-align: middle` on
+ * node views to the baseline; otherwise the wrapper would shift the chip.
  */
 
 import { NodeViewWrapper } from "@tiptap/react";
@@ -33,7 +32,7 @@ export function MentionView({ node }: NodeViewProps) {
     return (
       <NodeViewWrapper
         as="span"
-        className="inline"
+        className="mention-chip-node inline"
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         <IssueMentionCard issueId={id} fallbackLabel={label} />
@@ -45,7 +44,7 @@ export function MentionView({ node }: NodeViewProps) {
     return (
       <NodeViewWrapper
         as="span"
-        className="inline"
+        className="mention-chip-node inline"
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         <ProjectMentionCard projectId={id} fallbackLabel={label} />
@@ -57,7 +56,7 @@ export function MentionView({ node }: NodeViewProps) {
     return (
       <NodeViewWrapper
         as="span"
-        className="inline"
+        className="mention-chip-node inline"
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         <KbMention type={type} id={id} label={label} />

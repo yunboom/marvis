@@ -24,8 +24,8 @@
  *
  * Inline elements (mention cards, inline code) that exceed line-height:
  *   The browser auto-expands the line box for lines containing taller inline
- *   elements. Controlled via vertical-align on [data-node-view-wrapper] and
- *   box-decoration-break: clone on inline code.
+ *   elements. Mention chips sit on the text baseline (MENTION_CHIP_CLASS) and
+ *   fit inside the line; inline code uses box-decoration-break: clone.
  */
 
 /* Long unbreakable tokens (paths, URLs, identifiers) wrap mid-word instead

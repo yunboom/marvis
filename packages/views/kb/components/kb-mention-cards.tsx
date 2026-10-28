@@ -17,6 +17,7 @@ import type { KbAnnotation, KbMergeRequestDetail, KbPage, KnowledgeBase } from "
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@marvis/ui/components/ui/hover-card";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
+import { MENTION_CHIP_CLASS } from "../../common/mention-chip";
 import { useT, useTimeAgo } from "../../i18n";
 import { AppLink } from "../../navigation";
 import { blockPlainText, blockSection } from "../utils/kb-markdown";
@@ -70,10 +71,8 @@ export function KbMention({ type, id, label }: { type: KbMentionType; id: string
 
 // Shared chip
 
-// Same box as IssueChip: it must sit inside a 14px line and never outgrow a
-// line of prose or a chat bubble.
-const CHIP_CLASS =
-  "inline-flex min-w-0 max-w-[min(18rem,100%)] items-center gap-1.5 rounded-md border mx-0.5 px-2 py-0.5 text-caption align-middle";
+// Same box as IssueChip.
+const CHIP_CLASS = MENTION_CHIP_CLASS;
 
 function ChipBody({ icon: Icon, lead, title, tail }: { icon: LucideIcon; lead?: string; title: string; tail?: string }) {
   return (
@@ -103,10 +102,10 @@ function FallbackText({ label, note }: { label: string; note?: string }) {
  */
 function KbChipLink({ href, label, card, children }: { href: string; label: string; card: ReactNode; children: ReactNode }) {
   return (
-    <span className="inline align-middle" onClick={(e) => e.stopPropagation()}>
+    <span className="inline" onClick={(e) => e.stopPropagation()}>
       <HoverCard>
         <HoverCardTrigger render={<span />}>
-          <AppLink href={href} newTabTitle={label || undefined} className="kb-mention align-middle">
+          <AppLink href={href} newTabTitle={label || undefined} className="kb-mention">
             <span className={cn(CHIP_CLASS, "cursor-pointer transition-colors hover:bg-accent")}>{children}</span>
           </AppLink>
         </HoverCardTrigger>

@@ -88,6 +88,14 @@ describe("IssueChip", () => {
       .toHaveClass("min-w-0", "truncate");
   });
 
+  it("aligns its labels with the text baseline", () => {
+    render(<IssueChip issueId="issue-1" />);
+
+    const chip = screen.getByText("MUL-3405").parentElement!;
+    expect(chip).toHaveClass("align-baseline", "[&>span:not([aria-hidden])]:self-baseline");
+    expect(chip).not.toHaveClass("align-middle");
+  });
+
   it("paints a custom status with its catalog color instead of the category token", () => {
     render(<IssueChip issueId="issue-2" />);
 
