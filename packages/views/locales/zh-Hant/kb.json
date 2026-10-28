@@ -188,9 +188,9 @@
         "message": "幫我建立一個研發、測試、產品共用的知識庫"
       },
       "agent_team": {
-        "title": "Agent團隊記憶",
-        "description": "從任務、對話中持續沉澱 Agent團隊的決策和經驗",
-        "message": "幫我建立一個當作 Agent團隊記憶的知識庫"
+        "title": "Agent 團隊記憶",
+        "description": "從任務、對話中持續沉澱 Agent 團隊的決策和經驗",
+        "message": "幫我建立一個當作 Agent 團隊記憶的知識庫"
       },
       "other": {
         "title": "其他知識庫",
