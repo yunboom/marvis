@@ -29,7 +29,8 @@
     "mark_unread": "Mark as unread",
     "archive": "Archive",
     "unarchive": "Unarchive",
-    "open_in_new_tab": "Open in new tab"
+    "open_in_new_tab": "Open in new tab",
+    "delete": "Delete permanently"
   },
   "list": {
     "loading_selection": "Loading notification…",
@@ -108,7 +109,8 @@
   "toasts": {
     "source_context_retry_started": "Retry started with the original context",
     "archived": "Notification archived",
-    "unarchived": "Notification restored"
+    "unarchived": "Notification restored",
+    "deleted": "Notification deleted"
   },
   "errors": {
     "archived_lookup_failed": "Failed to load the linked notification",
@@ -124,7 +126,15 @@
     "archive_completed_failed": "Failed to archive completed",
     "unarchive_failed": "Failed to unarchive",
     "archived_load_failed": "Failed to load archived notifications",
-    "filters_load_failed": "Could not load filters"
+    "filters_load_failed": "Could not load filters",
+    "delete_failed": "Failed to delete"
+  },
+  "delete_dialog": {
+    "title": "Delete this notification permanently?",
+    "description": "Archived notifications for this issue are deleted together. This can't be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "deleting": "Deleting…"
   },
   "kb_review": {
     "changes_requested_action": "submitted a review; the change request now needs changes",

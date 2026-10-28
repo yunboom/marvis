@@ -3129,6 +3129,12 @@ export class ApiClient {
     return this.fetch(`/api/inbox/${id}/unarchive`, { method: "POST" });
   }
 
+  // Permanent: removes an archived notification and its archived siblings for
+  // the same issue. The server refuses notifications that are not archived.
+  async deleteArchivedInbox(id: string): Promise<void> {
+    await this.fetch(`/api/inbox/${id}`, { method: "DELETE" });
+  }
+
   // Raw unread ROW count — not the number any badge shows. The inbox renders
   // one row per issue, so a single issue with three unread notifications
   // counts once there and three times here. `getInboxUnreadSummary` is the
