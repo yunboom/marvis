@@ -40,6 +40,6 @@ Each role works from its own kind of knowledge. To give a few examples: support 
 
 Then bring the member a concrete proposal rather than questions: what the knowledge base is for, what goes in and what stays out, a few sections with an example of what each holds, and the situations people will use it in. They keep, drop or add, and you write the purpose from what they settle on: in their language, under 40 lines, in four parts, namely who uses it and what for, what belongs, what does not and where it lives instead, and 3 to 8 typical uses.
 
-Most knowledge bases use the default schema. Write a custom one only when the team needs its own sections or page types; get the default schema with `marvis kb schema templates` and use it as a reference.
+Most knowledge bases use the default schema. Write a custom one only when the team needs its own sections or page types, in the member's language like the purpose; get the default schema with `marvis kb schema templates` and use it as a reference.
 
 Pages follow Open Knowledge Format v0.2 (https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).

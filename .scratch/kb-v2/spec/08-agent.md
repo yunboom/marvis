@@ -3156,7 +3156,7 @@ Each role works from its own kind of knowledge. To give a few examples: support 
 
 Then bring the member a concrete proposal rather than questions: what the knowledge base is for, what goes in and what stays out, a few sections with an example of what each holds, and the situations people will use it in. They keep, drop or add, and you write the purpose from what they settle on: in their language, under 40 lines, in four parts, namely who uses it and what for, what belongs, what does not and where it lives instead, and 3 to 8 typical uses.
 
-Most knowledge bases use the default schema. Write a custom one only when the team needs its own sections or page types; get the default schema with `marvis kb schema templates` and use it as a reference.
+Most knowledge bases use the default schema. Write a custom one only when the team needs its own sections or page types, in the member's language like the purpose; get the default schema with `marvis kb schema templates` and use it as a reference.
 
 Pages follow Open Knowledge Format v0.2 (https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
 ````
@@ -3206,7 +3206,7 @@ marvis kb update pay-troubleshoot --description "Payment, refund and order flows
 
 然后给成员一份具体的建议，而不是一串问题：这个知识库用来做什么，收什么、不收什么，分几个区、每个区放什么并各举一个例子，以及大家会在哪些场景用到它。成员在此基础上保留、删减或补充，你再按定下来的内容写目标：用成员的语言，不超过 40 行，分四部分——谁在用、用来做什么，收什么，不收什么、这些内容在哪里，以及 3 到 8 个典型用法。
 
-多数知识库用默认 Schema。只有团队需要自己的分区或页面类型时才写自定义 Schema，用 `marvis kb schema templates` 获取默认 Schema 作为参考。
+多数知识库用默认 Schema。只有团队需要自己的分区或页面类型时才写自定义 Schema，和目标一样用成员的语言写；用 `marvis kb schema templates` 获取默认 Schema 作为参考。
 
 页面遵循 Open Knowledge Format v0.2（https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md）。
 ````
