@@ -94,7 +94,7 @@ function KbSwitcher({ kbSlug, name }: { kbSlug: string; name: string }) {
           <button
             type="button"
             aria-label={t(($) => $.nav.switch)}
-            className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-[10px] px-2 hover:bg-surface-hover data-popup-open:bg-surface-hover"
+            className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-tile px-2 hover:bg-surface-hover data-popup-open:bg-surface-hover"
           >
             <KbInitial name={name} />
             <span className="min-w-0 truncate font-semibold">{name}</span>

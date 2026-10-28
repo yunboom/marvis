@@ -27,6 +27,7 @@
 ## 决策二：视觉与交互照搬 Marvis.app
 
 - 设计 token（`packages/ui/styles/tokens.css`）：纯中性灰阶、`#f7f7f7` 外壳、`#0f0f0f` 主色、`#7b4835` 品牌色、`0.75rem` 基础圆角、Marvis 阴影；颜色写成等价的 `oklch()`（UI Lab 只认这种格式）。
+- 圆角（`tokens.css` 的 `--radius-*`）：除 `xs`…`4xl` 阶梯外，Marvis 的角色圆角是固定值：头像 `avatar` 28%、小卡片与图标块 `tile` 10px、看板泳道 `lane` 16px、大面板 `pane` 20px、输入框外壳 `composer` 22px、单行聊天输入框 `composer-pill` 26px、行 `row` 8px、弹窗 `dialog` 20px。新代码用这些名字，不写任意值；`scripts/check-ui-radius-tokens.mjs` 会拦，新增角色要同步登记到 `packages/ui/lib/utils.ts` 的 tailwind-merge 配置。
 - 偏离 Marvis 的地方：次要文字 `--muted-foreground` 用 `#666`、`--faint-foreground` 用 `#888`（Marvis 原值 45% 黑达不到 WCAG AA，`apps/web/app/text-contrast.test.ts` 会拦）；hover/selected 等填充色用不透明等效值（sticky 表头不能透出内容）。
 - 动效（`packages/ui/styles/base.css`）：菜单 `menu-unfold`（scaleY .8→1，150ms ease-out）、弹层 `popover-pop-in`（scale .92→1）、弹窗 50ms 纯淡入、Tooltip 200ms 淡入、logo `logo-intro`、`spring-rise`。
 - 共享组件（`packages/ui/components/ui/` 下 button、dialog、alert-dialog、sheet、dropdown-menu、context-menu、select、popover、hover-card、tooltip、input、textarea、tabs、sidebar）：药丸按钮、填充式输入框、36px 菜单项、分段式 Tabs。

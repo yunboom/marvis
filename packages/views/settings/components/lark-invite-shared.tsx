@@ -86,7 +86,7 @@ export function LarkChatAvatar({
       data-shape="square"
       aria-hidden="true"
       className={cn(
-        "inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-[28%] text-label font-semibold",
+        "inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-avatar text-label font-semibold",
         !showImage && "bg-surface text-foreground ring-1 ring-surface-border",
         className,
       )}

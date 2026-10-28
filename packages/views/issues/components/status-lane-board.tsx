@@ -190,7 +190,7 @@ function StatusBoardColumn({
           </div>
         )}
       </header>
-      <div className="flex min-h-0 flex-1 flex-col rounded-[16px] bg-surface-sunken p-1.5">
+      <div className="flex min-h-0 flex-1 flex-col rounded-lane bg-surface-sunken p-1.5">
         <div className="relative min-h-0 flex-1">
           <div
             ref={scrollRef}

@@ -33,7 +33,7 @@ function ReviewRow({ kbSlug, mr, selected }: { kbSlug: string; mr: KbMergeReques
         href={p.kbMergeRequest(kbSlug, mr.number)}
         aria-current={selected ? "page" : undefined}
         className={cn(
-          "flex flex-col gap-1 rounded-[10px] px-3 py-2.5 transition-colors hover:bg-surface-hover",
+          "flex flex-col gap-1 rounded-tile px-3 py-2.5 transition-colors hover:bg-surface-hover",
           selected && "bg-surface-selected hover:bg-surface-selected",
         )}
       >

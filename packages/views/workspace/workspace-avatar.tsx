@@ -6,7 +6,7 @@ import { cn } from "@marvis/ui/lib/utils";
 const sizeMap = {
   sm: "size-[18px] text-micro rounded-[5px]",
   md: "h-7 w-7 text-caption rounded-lg",
-  lg: "h-9 w-9 text-body rounded-[10px]",
+  lg: "h-9 w-9 text-body rounded-tile",
 } as const;
 
 interface WorkspaceAvatarProps {
