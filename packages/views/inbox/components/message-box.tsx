@@ -48,6 +48,16 @@ export function MessageBox() {
     if (pathname !== openedAtRef.current) setOpen(false);
   }, [open, pathname, setOpen]);
 
+  // A link to the page the box was opened over ("go review" with that review
+  // behind it) never changes the pathname, so following any in-app link closes
+  // the box directly. A modified or middle click opens a new tab and keeps it.
+  const closeOnFollowedLink = (event: React.MouseEvent) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const link = (event.target as Element | null)?.closest?.("a[href]");
+    if (!link || !link.getAttribute("href")?.startsWith("/")) return;
+    setOpen(false);
+  };
+
   return (
     <Dialog
       open={open}
@@ -73,6 +83,7 @@ export function MessageBox() {
         ref={contentRef}
         initialFocus={contentRef}
         showCloseButton={false}
+        onClick={closeOnFollowedLink}
         {...{ [MESSAGE_BOX_LAYER_ATTR]: "" }}
         className="flex h-[min(54rem,calc(100dvh-4rem))] w-[min(84rem,calc(100vw-4rem))] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
       >
