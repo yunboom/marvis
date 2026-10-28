@@ -35,6 +35,11 @@ exit "${PREREQUISITE_STATUS:-0}"
 FAKE
 printf 'exit 0\n' >"$TEST_DIR/scripts/test-go.test.sh"
 printf 'exit 0\n' >"$TEST_DIR/scripts/test-go.sh"
+printf 'exit 0\n' >"$TEST_DIR/scripts/check-ui-wildcard-exports.test.sh"
+cat >"$TEST_DIR/bin/node" <<'FAKE'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"$CHECK_TEST_DIR/node-calls"
+FAKE
 cat >"$TEST_DIR/bin/pnpm" <<'FAKE'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >>"$CHECK_TEST_DIR/pnpm-calls"
@@ -100,8 +105,12 @@ run_case() {
 
 run_case 'prerequisite failure' 37 '' PREREQUISITE_STATUS=37
 [ ! -s "$TEST_DIR/pnpm-calls" ] || fail 'continued after prerequisite failure'
+run_case 'guarded lint failure' 1 '' FAIL_PHASE=lint
+grep -q '^typecheck$' "$TEST_DIR/pnpm-calls" && fail 'continued after lint failure'
 run_case 'guarded typecheck failure' 1 '' FAIL_PHASE=typecheck
 run_case 'success with existing services' 0 ''
+grep -q '^lint$' "$TEST_DIR/pnpm-calls" || fail 'did not run lint'
+grep -q 'check-ui-radius-tokens.mjs' "$TEST_DIR/node-calls" || fail 'did not run the radius check'
 grep -q '^exec playwright test$' "$TEST_DIR/pnpm-calls" || fail 'did not reach E2E'
 run_case 'success with owned services' 0 'backend
 frontend' START_SERVICES=backend:frontend
