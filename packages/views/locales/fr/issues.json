@@ -1612,6 +1612,8 @@
       "step_off_short": "Désactivé",
       "step_off": "Désactivé : ce workflow n’utilise pas ce statut. Activez-le dans la liste des étapes pour l’utiliser.",
       "status_new_hint": "Nouveau statut. Il sera ajouté à la bibliothèque de statuts à l’enregistrement.",
+      "status_group": "Groupe du tableau",
+      "status_group_hint": "Détermine la colonne du tableau où il apparaît.",
       "no_other_status": "Tous les statuts sont déjà des étapes.",
       "no_handoff_step": "Cette étape ne relaie pas : le responsable ne change pas et aucune exécution ne démarre.",
       "zone": {

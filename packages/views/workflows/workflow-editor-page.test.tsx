@@ -71,6 +71,23 @@ describe("WorkflowEditorPage", () => {
     });
   });
 
+  it("saves the board group picked for a new status", async () => {
+    createWorkflow.mockResolvedValue({ id: "wf-1" });
+    renderEditor();
+    await addNewStatus("Review");
+
+    const group = screen.getByRole("radiogroup", { name: "Board group" });
+    expect(within(group).getByRole("radio", { name: "Working" }).getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(within(group).getByRole("radio", { name: "Needs attention" }));
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), { target: { value: "Release" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() => expect(createWorkflow).toHaveBeenCalled());
+    const steps = createWorkflow.mock.calls[0]![0].steps as { new_status?: unknown }[];
+    expect(steps.find((step) => step.new_status)?.new_status).toEqual({ name: "Review", status_group: "needs_attention" });
+  });
+
   it("resolves a default next over the unsaved steps, as the save will", async () => {
     renderEditor();
     await addNewStatus("QA");

@@ -1612,6 +1612,8 @@
       "step_off_short": "Off",
       "step_off": "Switched off: this workflow leaves the status out. Turn it on in the step list to use it.",
       "status_new_hint": "A new status. It is added to the status library when you save.",
+      "status_group": "Board group",
+      "status_group_hint": "Sets which board column it appears in.",
       "no_other_status": "Every status is already a step.",
       "no_handoff_step": "This step doesn't hand off: issues entering it keep their assignee and start no run.",
       "zone": {
