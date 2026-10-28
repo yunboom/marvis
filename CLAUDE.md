@@ -85,7 +85,7 @@ web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由
 - docs：`apps/docs/lib/base-path.ts` 与 `next.config.mjs` 的 basePath 为 `${前缀}/docs`；`Dockerfile.docs`，compose 的 `docs` 服务在 `docs` profile 下。
 - 桌面端：服务器地址保留路径（`normalizeServerAddress`），`probeServer` 从完整路径逐级向上探测 `/api/config`，粘贴页面地址也能找到前缀。
 - compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`；`turbo.json` 的 `globalEnv` 登记了 `NEXT_PUBLIC_BASE_PATH`。
-- 生产部署：`make deploy-prod` 经跳板机部署 origin/main 到 prototype，只允许 main 且 CI 通过，见 `scripts/deploy/README.md`。
+- 生产部署：`make deploy-prod` 经跳板机部署 origin/main 到 prototype，只允许 main 且 CI 的测试与构建作业通过；镜像由 `prod-images.yml` 在 GitHub Actions 构建（prototype 的 CentOS 7 内核下 Node 22 的 `pnpm install` 会 EPERM），服务器只拉取；生产配置是本地主工作区的 `.env.prod`，见 `scripts/deploy/README.md`。
 - 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`。
 
 ## 决策九：会话来源 chat_session.source（fork 独有）

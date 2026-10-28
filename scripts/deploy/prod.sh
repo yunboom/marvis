@@ -16,6 +16,7 @@ set -euo pipefail
 
 readonly REPO_SLUG=yunboom/marvis
 readonly CI_WORKFLOW=CI
+readonly IMAGES_WORKFLOW=prod-images.yml
 # CI jobs that must pass (or be skipped) for a deploy. `backend` aggregates
 # every backend job; the frontend aggregate also counts frontend-quality, so
 # its build and test jobs are named one by one.
@@ -90,5 +91,15 @@ failed="$(printf '%s\n' "$gated" | awk -F'\t' '$2 != "success" && $2 != "skipped
 [ -z "$failed" ] || die "$CI_WORKFLOW did not pass for $sha: $run_url
 $failed"
 info "$CI_WORKFLOW tests and builds passed for $sha: $run_url"
+
+# The host pulls the images this workflow pushed for the commit.
+images_run="$(gh run list --repo "$REPO_SLUG" --commit "$sha" --workflow "$IMAGES_WORKFLOW" \
+  --event push --limit 1 --json status,conclusion,url \
+  --jq '.[0] // empty | [.status, .conclusion, .url] | @tsv')"
+[ -n "$images_run" ] || die "no \"$IMAGES_WORKFLOW\" run from the push of $sha yet"
+IFS=$'\t' read -r images_status images_conclusion images_url <<< "$images_run"
+[ "$images_status" = "completed" ] || die "\"$IMAGES_WORKFLOW\" is still building $sha: $images_url"
+[ "$images_conclusion" = "success" ] || die "\"$IMAGES_WORKFLOW\" failed for $sha ($images_conclusion): $images_url"
+info "images built for $sha: $images_url"
 
 exec expect "$(dirname "$0")/jump.exp" "$sha" "$env_file" ${mode:+"$mode"}

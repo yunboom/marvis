@@ -19,7 +19,8 @@ make deploy-prod         # 部署
 | --- | --- | --- |
 | `prod.sh` | 本机 | 检查本地的 `.env.prod`、分支、工作区、提交和 CI，然后调用 `jump.exp` |
 | `jump.exp` | 本机 | 登录跳板机，在菜单输入 `prototype` 进入服务器，上传 `.env.prod`，把仓库检出到 origin/main 最新提交后以 root 执行 `server.sh`，把它的退出码作为本地结果 |
-| `server.sh` | 服务器 | 再次确认提交是 origin/main 最新提交，按提交号构建三个镜像（前缀 `/marvis`），备份数据库，切换容器，检查健康；失败时切回上一版镜像 |
+| `.github/workflows/prod-images.yml` | GitHub Actions | 每次推送到 main 时构建后端、网页端、文档站三个镜像（网页端和文档站带 `/marvis` 前缀），推送为 `ghcr.io/yunboom/<镜像>:prod-<提交号>` |
+| `server.sh` | 服务器 | 再次确认提交是 origin/main 最新提交，从 ghcr 拉取这个提交的三个镜像，备份数据库，切换容器，检查健康；失败时切回上一版镜像 |
 | `prod.env.example` | 本机 | 生产配置模板，首次部署时复制为主工作区根目录的 `.env.prod` 并生成密钥 |
 
 ## 生产配置
@@ -31,6 +32,8 @@ make deploy-prod         # 部署
 `.env.prod` 丢失后重新生成会得到新的密钥，旧的数据库密码和加密密钥就对不上了，所以要自己保留一份备份；服务器的 `env-backups/` 里也有历史版本。
 
 跳板机不接受不带终端的远程命令，也不允许直连资产，所以 `jump.exp` 模拟人工操作菜单。跳板机的提示符改了只需要调整这个文件。
+
+镜像不在服务器上构建：prototype 是 CentOS 7（内核 3.10），Node 22 在它的 Docker 里执行 `pnpm install` 会报 `EPERM: operation not permitted, write`（Node 20 正常，Node 22 运行时也正常），所以构建放在 GitHub Actions，服务器只拉取。部署前除了 CI，还要求这个提交的 `Production images` 工作流成功。
 
 服务器上执行的 `server.sh` 总是 origin/main 上的版本，本地改动这几个脚本不会影响服务器上的校验。
 
@@ -48,8 +51,9 @@ make deploy-prod         # 部署
 
 ## 首次部署后要手动做的事
 
-1. 备份 `/root/nginx/conf.d/domain.conf` 为 `domain.conf.bak.<时间>`，在 443 的 server 块里加入 `/marvis/`、`/marvis/ws`、`/marvis/docs` 三段 location（见仓库根目录 `SELF_HOSTING_ADVANCED.md` 的 Path Prefix 一节，代理目标换成 `host.docker.internal`），然后执行 `docker exec nginx-proxy nginx -t && docker exec nginx-proxy nginx -s reload`。注意 `/root/nginx/domain.conf` 是旧副本，改它不会生效。
-2. 在飞书开放平台登记重定向地址 `https://omniai.shoplazza.site/marvis/auth/callback`。
+1. `Production images` 工作流第一次跑完后，在 GitHub 上把新建的 `marvis-docs` 容器包设为公开（Package settings → Change visibility）。`marvis-backend`、`marvis-web` 已经是公开的；包是私有的时候服务器拉取需要登录凭证。
+2. 备份 `/root/nginx/conf.d/domain.conf` 为 `domain.conf.bak.<时间>`，在 443 的 server 块里加入 `/marvis/`、`/marvis/ws`、`/marvis/docs` 三段 location（见仓库根目录 `SELF_HOSTING_ADVANCED.md` 的 Path Prefix 一节，代理目标换成 `host.docker.internal`），然后执行 `docker exec nginx-proxy nginx -t && docker exec nginx-proxy nginx -s reload`。注意 `/root/nginx/domain.conf` 是旧副本，改它不会生效。
+3. 在飞书开放平台登记重定向地址 `https://omniai.shoplazza.site/marvis/auth/callback`。
 
 ## 回滚与数据库
 
