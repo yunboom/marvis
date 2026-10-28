@@ -119,10 +119,14 @@ interface ChatInputProps {
    *  one, both are true and "create an agent" would be the wrong instruction. */
   agentAccessRevoked?: boolean;
   agentRuntimeRequired?: boolean;
+  /** Placeholder while `disabled`, for surfaces that know the exact reason. */
+  disabledPlaceholder?: string;
   /** Name of the currently selected agent, used in the placeholder. */
   agentName?: string;
   /** Rendered at the bottom-left of the input bar — typically the agent picker. */
   leftAdornment?: ReactNode;
+  /** Always lays the editor above a toolbar row, even while it holds one line. */
+  stackedToolbar?: boolean;
   /** Chat @ suggestions: current/recent issue/project entries. */
   contextItems?: MentionItem[];
   /** Optional project context for the draft or current chat session. */
@@ -164,8 +168,10 @@ export function ChatInput({
   agentArchived,
   agentAccessRevoked,
   agentRuntimeRequired,
+  disabledPlaceholder,
   agentName,
   leftAdornment,
+  stackedToolbar,
   contextItems,
   projects = [],
   projectId,
@@ -610,7 +616,9 @@ export function ChatInput({
     : noAgent
     ? t(($) => $.input.placeholder_no_agent)
     : disabled
-      ? agentArchived
+      ? disabledPlaceholder
+        ? disabledPlaceholder
+        : agentArchived
         ? t(($) => $.input.placeholder_archived_agent)
         : agentRuntimeRequired
           ? t(($) => $.input.placeholder_runtime_required)
@@ -650,7 +658,9 @@ export function ChatInput({
   // wider expanded editor can never fit the text back on one line and
   // flip-flop between the two layouts.
   const editorBoxRef = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [grown, setExpanded] = useState(false);
+  // A surface with a busy toolbar keeps it on its own row below the editor.
+  const expanded = grown || !!stackedToolbar;
   const hasDraftUploads = draftUploads.length > 0;
   useEffect(() => {
     if (hasNothingToSend && !hasDraftUploads) setExpanded(false);

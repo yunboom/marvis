@@ -1,89 +1,21 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Check } from "lucide-react";
-import { isRuntimeUsableForUser, runtimeDisplayLabel } from "@marvis/core/runtimes";
-import type { RuntimeDevice } from "@marvis/core/types";
-import { Button } from "@marvis/ui/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@marvis/ui/components/ui/dropdown-menu";
-import { AgentCreateChip, AgentCreateShell } from "../../agents/create/create-shell";
+import { cn } from "@marvis/ui/lib/utils";
+import { AgentCreateShell } from "../../agents/create/create-shell";
 import { useT } from "../../i18n";
 
-/**
- * The runtime the conversation runs on, with "Change" next to it (designs 1.9
- * and 10.x). Only online runtimes this member may use are offered; the switch
- * itself is the caller's, because it must rebind the carrier first.
- */
-export function KbRuntimeChip({
-  runtimes,
-  currentUserId,
-  runtimeId,
-  disabled,
-  onSwitch,
-}: {
-  runtimes: RuntimeDevice[];
-  currentUserId: string | null;
-  runtimeId: string;
-  disabled: boolean;
-  onSwitch: (runtimeId: string) => void;
-}) {
-  const { t } = useT("kb");
-  const current = runtimes.find((runtime) => runtime.id === runtimeId) ?? null;
-  const usable = runtimes.filter(
-    (runtime) => runtime.status === "online" && isRuntimeUsableForUser(runtime, currentUserId),
-  );
-
-  if (!current) return null;
-
-  return (
-    <AgentCreateChip>
-      <span className="truncate">{runtimeDisplayLabel(current)}</span>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              disabled={disabled}
-              aria-label={t(($) => $.builder.change_runtime_label)}
-              className="h-5 px-1.5"
-            />
-          }
-        >
-          {t(($) => $.builder.change_runtime)}
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
-          {usable.map((runtime) => (
-            <DropdownMenuItem key={runtime.id} onClick={() => onSwitch(runtime.id)}>
-              <span className="min-w-0 flex-1 truncate">{runtimeDisplayLabel(runtime)}</span>
-              {runtime.id === runtimeId && <Check aria-hidden="true" className="size-3.5" />}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </AgentCreateChip>
-  );
-}
-
-/** Chrome of the builder routes: back, the flow title, and context chips. */
+/** Chrome of the builder routes: back and the flow title. */
 export function KbBuilderShell({
   creating,
   subtitle,
   onBack,
-  runtimeChip,
   children,
 }: {
   creating: boolean;
-  /** Under the title: "Create through conversation", or the base's name. */
+  /** Under the title: how the page works, or the base's name. */
   subtitle: string;
   onBack: () => void;
-  runtimeChip?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useT("kb");
@@ -93,14 +25,41 @@ export function KbBuilderShell({
       title={creating ? t(($) => $.builder.create_title) : t(($) => $.builder.config_title)}
       step={subtitle}
       onBack={onBack}
-      chips={
-        <>
-          <AgentCreateChip>{t(($) => $.builder.via_chat)}</AgentCreateChip>
-          {runtimeChip}
-        </>
-      }
     >
       {children}
     </AgentCreateShell>
+  );
+}
+
+const PANES = ["chat", "config"] as const;
+
+/** Narrow layout: switches between the conversation and the configuration. */
+export function KbBuilderPaneTabs({
+  pane,
+  onChange,
+}: {
+  pane: "chat" | "config";
+  onChange: (pane: "chat" | "config") => void;
+}) {
+  const { t } = useT("kb");
+
+  return (
+    <div role="tablist" aria-label={t(($) => $.builder.tabs.label)} className="flex shrink-0 gap-1 px-4 pt-2.5">
+      {PANES.map((id) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={pane === id}
+          onClick={() => onChange(id)}
+          className={cn(
+            "h-9 flex-1 rounded-full text-caption transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            pane === id ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-surface-hover",
+          )}
+        >
+          {id === "chat" ? t(($) => $.builder.tabs.chat) : t(($) => $.builder.tabs.config)}
+        </button>
+      ))}
+    </div>
   );
 }

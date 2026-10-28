@@ -162,15 +162,9 @@
   },
   "builder": {
     "create_title": "Nouvelle base de connaissances",
-    "create_sub": "Créer par conversation",
+    "create_sub": "Construisez-la par conversation, ou remplissez directement la partie droite",
     "config_title": "Configurer la base de connaissances",
-    "via_chat": "Configuré par conversation",
-    "setup_create_title": "Créer une base de connaissances par conversation",
-    "setup_config_title": "Configurer la base de connaissances par conversation",
-    "setup_description": "Choisissez l'environnement d'exécution et le modèle du constructeur.",
     "chat_title": "Constructeur de base de connaissances",
-    "change_runtime": "Changer",
-    "change_runtime_label": "Changer d'environnement d'exécution",
     "intro_create": "Quelle base de connaissances voulez-vous ? Choisissez une direction : je rédige le nom, l'objectif et le schéma, puis nous les affinons ensemble.",
     "intro_config": "Je modifie l'objectif et le schéma selon vos besoins. Partez d'une question ci-dessous ou dites ce que vous voulez changer.",
     "describe_hint": "Vous pouvez aussi décrire votre besoin.",
@@ -272,6 +266,50 @@
       "forbidden": "Seul le créateur de la base ou un propriétaire ou administrateur peut la configurer",
       "create_failed": "Impossible de créer la base de connaissances",
       "save_failed": "Impossible d'enregistrer la configuration"
+    },
+    "runtime": {
+      "label": "Runtime",
+      "menu_label": "Choisir le runtime",
+      "mine": "Les miens",
+      "others": "Ceux des autres",
+      "online": "En ligne",
+      "offline": "Hors ligne",
+      "none": "Aucun runtime disponible",
+      "last_used": "Dernier utilisé",
+      "locked": "Ce runtime privé appartient à {{owner}} et n'est pas partagé avec vous",
+      "locked_unnamed": "Ce runtime privé n'est pas partagé avec vous",
+      "connect": "Connecter un nouveau runtime"
+    },
+    "notice": {
+      "none_title": "Aucun runtime disponible pour l'instant",
+      "none_body_create": "Connectez un ordinateur pour construire par conversation, ou remplissez la partie droite et créez.",
+      "none_body_config": "Connectez un ordinateur pour ajuster par conversation, ou modifiez la partie droite et enregistrez.",
+      "connect": "Connecter un runtime",
+      "offline_title": "{{name}} est hors ligne",
+      "offline_body": "Ouvrez Marvis sur {{host}}, ou passez à un runtime en ligne. Vous pouvez continuer à modifier la partie droite.",
+      "change": "Changer de runtime",
+      "went_offline_title": "Le runtime vient de passer hors ligne",
+      "went_offline_body": "La conversation s'arrête ici et la configuration à droite est conservée. Passez à un runtime en ligne pour continuer.",
+      "failed_title": "Le constructeur n'a pas pu démarrer",
+      "failed_body": "Ce runtime vient de passer hors ligne ou n'est pas disponible. Changez de runtime et ce message sera renvoyé."
+    },
+    "starting": "Démarrage du constructeur sur {{runtime}}…",
+    "composer": {
+      "none": "Connectez un runtime pour discuter",
+      "offline": "Runtime hors ligne. Passez à un runtime en ligne pour continuer"
+    },
+    "manual_hint_create": "Vous pouvez créer sans la conversation",
+    "manual_hint_config": "Vous pouvez enregistrer sans la conversation",
+    "drafts_hint": "Reprenez une conversation précédente, ou recommencez ici",
+    "tabs": {
+      "label": "Vue",
+      "chat": "Conversation",
+      "config": "Configuration"
+    },
+    "forbidden": {
+      "title": "Vous ne pouvez pas configurer cette base de connaissances",
+      "body": "Seuls le créateur de la base de connaissances et les propriétaires et administrateurs de l'espace de travail peuvent la configurer.",
+      "back": "Retour à la base de connaissances"
     }
   },
   "welcome": {

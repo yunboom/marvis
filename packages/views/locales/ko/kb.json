@@ -154,15 +154,9 @@
   },
   "builder": {
     "create_title": "새 지식 베이스",
-    "create_sub": "대화로 만들기",
+    "create_sub": "대화로 만들거나 오른쪽에 직접 입력하세요",
     "config_title": "지식 베이스 설정",
-    "via_chat": "대화로 설정",
-    "setup_create_title": "대화로 지식 베이스 만들기",
-    "setup_config_title": "대화로 지식 베이스 설정",
-    "setup_description": "빌더가 실행될 런타임과 모델을 선택하세요.",
     "chat_title": "지식 베이스 빌더",
-    "change_runtime": "변경",
-    "change_runtime_label": "런타임 변경",
     "intro_create": "어떤 지식 베이스를 만들까요? 방향을 고르면 이름, 목적, 스키마 초안을 만들고 함께 다듬습니다.",
     "intro_config": "필요에 맞게 목적과 스키마를 수정합니다. 아래 질문에서 시작하거나 바꾸고 싶은 점을 말해 주세요.",
     "describe_hint": "필요한 내용을 직접 설명해도 됩니다.",
@@ -262,6 +256,50 @@
       "forbidden": "지식 베이스 작성자나 워크스페이스 소유자, 관리자만 설정할 수 있습니다",
       "create_failed": "지식 베이스를 만들지 못했습니다",
       "save_failed": "설정을 저장하지 못했습니다"
+    },
+    "runtime": {
+      "label": "런타임",
+      "menu_label": "런타임 선택",
+      "mine": "내 런타임",
+      "others": "다른 사람의 런타임",
+      "online": "온라인",
+      "offline": "오프라인",
+      "none": "사용할 수 있는 런타임이 없습니다",
+      "last_used": "최근 사용",
+      "locked": "{{owner}}의 비공개 런타임으로, 공유되지 않았습니다",
+      "locked_unnamed": "공유되지 않은 비공개 런타임입니다",
+      "connect": "새 런타임 연결"
+    },
+    "notice": {
+      "none_title": "아직 사용할 수 있는 런타임이 없습니다",
+      "none_body_create": "컴퓨터를 연결하면 대화로 만들 수 있습니다. 오른쪽에 입력해 바로 만들 수도 있습니다.",
+      "none_body_config": "컴퓨터를 연결하면 대화로 조정할 수 있습니다. 오른쪽을 수정해 바로 저장할 수도 있습니다.",
+      "connect": "런타임 연결",
+      "offline_title": "{{name}} 오프라인",
+      "offline_body": "{{host}}에서 Marvis를 열거나 온라인 런타임으로 바꾸세요. 오른쪽은 계속 수정할 수 있습니다.",
+      "change": "런타임 변경",
+      "went_offline_title": "런타임이 방금 오프라인이 되었습니다",
+      "went_offline_body": "대화는 여기서 멈추고 오른쪽 설정은 유지됩니다. 온라인 런타임으로 바꾸면 이어서 대화할 수 있습니다.",
+      "failed_title": "빌더를 시작하지 못했습니다",
+      "failed_body": "이 런타임이 오프라인이거나 사용할 수 없습니다. 런타임을 바꾸면 이 메시지를 다시 보냅니다."
+    },
+    "starting": "{{runtime}}에서 빌더를 시작하는 중…",
+    "composer": {
+      "none": "런타임을 연결하면 대화할 수 있습니다",
+      "offline": "런타임이 오프라인입니다. 온라인 런타임으로 바꿔 계속하세요"
+    },
+    "manual_hint_create": "대화 없이도 만들 수 있습니다",
+    "manual_hint_config": "대화 없이도 저장할 수 있습니다",
+    "drafts_hint": "이전 대화를 이어 가거나 여기서 새로 시작하세요",
+    "tabs": {
+      "label": "보기",
+      "chat": "대화",
+      "config": "설정"
+    },
+    "forbidden": {
+      "title": "이 지식 베이스를 설정할 권한이 없습니다",
+      "body": "지식 베이스 작성자와 워크스페이스 소유자, 관리자만 설정할 수 있습니다.",
+      "back": "지식 베이스로 돌아가기"
     }
   },
   "welcome": {
