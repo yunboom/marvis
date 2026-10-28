@@ -4,6 +4,7 @@ import { I18nProvider } from "@marvis/core/i18n/react";
 import { RESOURCES } from "@marvis/views/locales";
 import type { StandaloneProgress, StandaloneStatus } from "../../../../shared/standalone";
 import {
+  PREPARE_MODE_GATE,
   PREPARE_MODE_SETUP,
   StandalonePrepareScreen,
   type StandalonePrepareScreenProps,
@@ -175,6 +176,31 @@ describe("StandalonePrepareScreen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "查看日志" }));
     expect(mocks.openLogs).toHaveBeenCalledOnce();
+  });
+
+  it("goes back to the connect screen after a failed install", async () => {
+    const onCancelled = vi.fn();
+    renderScreen({ onCancelled });
+    push(status({ phase: "failed", error: { code: "manifest" } }));
+
+    expect(screen.queryByRole("button", { name: "切换服务器" })).not.toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "返回" }));
+    });
+
+    expect(mocks.cancel).toHaveBeenCalledOnce();
+    expect(onCancelled).toHaveBeenCalledOnce();
+  });
+
+  it("offers switching servers when the local server fails at launch", () => {
+    const onSwitchServer = vi.fn();
+    renderScreen({ mode: PREPARE_MODE_GATE, onSwitchServer });
+    push(status({ phase: "failed", version: "0.6.6", error: { code: "start_failed" } }));
+
+    expect(screen.queryByRole("button", { name: "返回" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "切换服务器" }));
+
+    expect(onSwitchServer).toHaveBeenCalledOnce();
   });
 
   it.each([

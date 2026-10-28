@@ -133,12 +133,20 @@ export interface StandalonePrepareScreenProps {
   mode: PrepareMode;
   /** 端口被占用时「修改设置」回到设置表单；只在 setup 模式提供。 */
   onEditSettings?: () => void;
-  /** 取消准备后回到连接页。 */
+  /** 取消准备后回到连接页；失败或停止时也用它提供「返回」。只在 setup 模式提供。 */
   onCancelled?: () => void;
+  /** 启动失败或停止时「切换服务器」，打开连接页换一台服务器。只在 gate 模式提供。 */
+  onSwitchServer?: () => void;
 }
 
 // 「准备资源」页：左栏标题、说明与按钮，右栏阶段条、进度与就绪状态。由主进程推送的状态驱动。
-export function StandalonePrepareScreen({ status, mode, onEditSettings, onCancelled }: StandalonePrepareScreenProps) {
+export function StandalonePrepareScreen({
+  status,
+  mode,
+  onEditSettings,
+  onCancelled,
+  onSwitchServer,
+}: StandalonePrepareScreenProps) {
   const { t } = useT("settings");
   const [busy, setBusy] = useState<BusyAction | null>(null);
 
@@ -171,7 +179,8 @@ export function StandalonePrepareScreen({ status, mode, onEditSettings, onCancel
       },
       t(($) => $.desktop.standalone.prepare.action_failed),
     );
-  const handleOpenLogs = () => void api.openLogs();
+  const handleOpenLogs = () =>
+    void api.openLogs().catch(() => toast.error(t(($) => $.desktop.standalone.prepare.action_failed)));
 
   const errorMessage = (): string => {
     const port = error?.port ?? DEFAULT_STANDALONE_PORT;
@@ -304,6 +313,28 @@ export function StandalonePrepareScreen({ status, mode, onEditSettings, onCancel
           {canRetry && !offerEditSettings && (
             <Button variant="ghost" size="lg" className={SECONDARY_BUTTON_CLASS} onClick={handleOpenLogs}>
               {t(($) => $.desktop.standalone.prepare.view_logs)}
+            </Button>
+          )}
+          {canRetry && onCancelled && (
+            <Button
+              variant="ghost"
+              size="lg"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={busy !== null}
+              onClick={handleCancel}
+            >
+              {t(($) => $.desktop.standalone.setup.back)}
+            </Button>
+          )}
+          {canRetry && onSwitchServer && (
+            <Button
+              variant="ghost"
+              size="lg"
+              className={SECONDARY_BUTTON_CLASS}
+              disabled={busy !== null}
+              onClick={onSwitchServer}
+            >
+              {t(($) => $.desktop.server.banner.switch)}
             </Button>
           )}
           {canCancel && (
