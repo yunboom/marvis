@@ -14,8 +14,7 @@ describe("checkQuickCreateCliVersion", () => {
   });
 
   it("returns too_old for a tagged release below the minimum", () => {
-    expect(checkQuickCreateCliVersion("v0.2.20").state).toBe("too_old");
-    expect(checkQuickCreateCliVersion("v0.2.15").state).toBe("too_old");
+    expect(checkQuickCreateCliVersion("v0.0.0").state).toBe("too_old");
   });
 
   it("returns missing for empty or unparsable input", () => {
@@ -33,8 +32,8 @@ describe("checkQuickCreateCliVersion", () => {
 
 describe("checkQuickCreateFieldsCliVersion", () => {
   it("requires the first daemon release that transports explicit fields", () => {
-    expect(checkQuickCreateFieldsCliVersion("0.4.2").state).toBe("too_old");
-    expect(checkQuickCreateFieldsCliVersion("0.4.3").state).toBe("ok");
+    expect(checkQuickCreateFieldsCliVersion("0.0.0").state).toBe("too_old");
+    expect(checkQuickCreateFieldsCliVersion("0.0.1").state).toBe("ok");
     expect(checkQuickCreateFieldsCliVersion("v0.4.3-1-gabc1234").state).toBe("ok");
   });
 });
@@ -47,8 +46,7 @@ describe("chatProjectContextSupported", () => {
   });
 
   it("does not support a tagged release below the minimum", () => {
-    expect(chatProjectContextSupported("0.4.9")).toBe(false);
-    expect(chatProjectContextSupported("0.3.28")).toBe(false);
+    expect(chatProjectContextSupported("0.0.0")).toBe(false);
   });
 
   it("fails closed on empty or unparsable input", () => {

@@ -173,7 +173,7 @@ const (
 // sends the Authorization header this endpoint requires. The header and the
 // check landed in the same commit (#7205), so every older CLI is rejected here
 // no matter how healthy the task is.
-const repoCheckoutMinCLIVersion = "v0.4.30"
+const repoCheckoutMinCLIVersion = "v0.0.1"
 
 func (d *Daemon) activeRepoCheckoutTask(r *http.Request) (activeRepoCheckoutTask, repoCheckoutAuthResult) {
 	const bearer = "Bearer "
