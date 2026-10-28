@@ -72,13 +72,26 @@ vi.mock("../i18n", () => ({
   }),
 }));
 
+// The light-DOM DialogContent cannot move focus, so it records what the real
+// Popup would focus on open.
+const dialogFocus = vi.hoisted(() => ({
+  initialFocus: undefined as unknown,
+}));
+
 // Keep the ui primitives as light DOM so the logic is what's under test.
 vi.mock("@marvis/ui/components/ui/dialog", () => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   // Keeps the real Popup's prop passthrough, which the send chord binds to.
-  DialogContent: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-    <div data-testid="dialog-content" {...props}>{children}</div>
-  ),
+  DialogContent: ({
+    children,
+    initialFocus,
+    ...props
+  }: React.HTMLAttributes<HTMLDivElement> & { initialFocus?: unknown }) => {
+    dialogFocus.initialFocus = initialFocus;
+    return (
+      <div data-testid="dialog-content" {...props}>{children}</div>
+    );
+  },
   DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -103,9 +116,10 @@ beforeEach(() => {
   mockToast.error.mockClear();
   mockToast.success.mockClear();
   mockToast.warning.mockClear();
+  dialogFocus.initialFocus = undefined;
   // The real shortcut store drives both the submit chord and the keycap hint,
-  // and jsdom's platform follows the host OS — pin it so the chord is ⌘+Enter
-  // everywhere, not Ctrl+Enter on a Linux CI runner.
+  // and jsdom's platform follows the host OS — pin it so a remapped Mod+Enter
+  // is ⌘+Enter everywhere, not Ctrl+Enter on a Linux CI runner.
   configureShortcutPlatform("macos");
   useShortcutStore.setState({ overrides: {} });
 });
@@ -117,6 +131,11 @@ afterEach(() => {
 
 const confirmButton = () => screen.getByRole("button", { name: "Confirm assignment" });
 const dialog = () => screen.getByTestId("dialog-content");
+// `send` defaults to plain Enter; the chord cases remap it to ⌘+Enter.
+const remapSendToModEnter = () =>
+  useShortcutStore.setState({
+    overrides: { send: createShortcutChord("Enter", { primary: true }) },
+  });
 
 const single = {
   issueIds: ["issue-1"],
@@ -237,10 +256,10 @@ describe("RunConfirmModal", () => {
   // The chord is bound on the dialog, not on a single control, so it confirms
   // wherever focus happens to be.
 
-  it("confirms on the send chord typed anywhere in the dialog", async () => {
+  it("confirms on the send key typed anywhere in the dialog", async () => {
     const onClose = vi.fn();
     render(<RunConfirmModal onClose={onClose} data={single} />);
-    fireEvent.keyDown(dialog(), { key: "Enter", metaKey: true });
+    fireEvent.keyDown(dialog(), { key: "Enter" });
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
     expect(mockUpdate).toHaveBeenCalledWith({
       id: "issue-1",
@@ -252,8 +271,8 @@ describe("RunConfirmModal", () => {
 
   it("confirms from a focused footer button, which the chord cannot activate", async () => {
     // Chromium fires no click for ⌘/Ctrl+Enter on a focused button, so without
-    // the dialog handling it there the chord is simply dead. The dialog focuses
-    // its first tabbable child, which is now a footer button.
+    // the dialog handling it there the chord is simply dead.
+    remapSendToModEnter();
     render(<RunConfirmModal onClose={vi.fn()} data={single} />);
     fireEvent.keyDown(screen.getByText("Don't start yet"), { key: "Enter", metaKey: true });
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
@@ -261,31 +280,39 @@ describe("RunConfirmModal", () => {
     expect(mockUpdate.mock.calls[0]![0].suppress_run).toBeUndefined();
   });
 
-  it("yields to a focused button when send is remapped to plain Enter", () => {
+  it("yields to a focused button when send is plain Enter", () => {
     // A bare Enter DOES activate a focused button, so confirming here as well
     // would double-write — and on "Don't start yet" the two would disagree.
-    useShortcutStore.setState({ overrides: { send: createShortcutChord("Enter") } });
     render(<RunConfirmModal onClose={vi.fn()} data={single} />);
     fireEvent.keyDown(screen.getByText("Don't start yet"), { key: "Enter" });
     fireEvent.keyDown(confirmButton(), { key: "Enter" });
     expect(mockUpdate).not.toHaveBeenCalled();
   });
 
-  it("submits once for a held chord, and never for an IME's committing Enter", async () => {
+  it("focuses the confirm button on open, so the default Enter confirms", () => {
+    // With focus on the first tabbable control, plain Enter would activate
+    // "Don't start yet" while the confirm button advertises Enter.
     render(<RunConfirmModal onClose={vi.fn()} data={single} />);
-    fireEvent.keyDown(dialog(), { key: "Enter", metaKey: true, isComposing: true });
-    fireEvent.keyDown(dialog(), { key: "Enter", metaKey: true, repeat: true });
+    expect(
+      (dialogFocus.initialFocus as React.RefObject<HTMLElement | null>).current,
+    ).toBe(confirmButton());
+  });
+
+  it("submits once for a held key, and never for an IME's committing Enter", async () => {
+    render(<RunConfirmModal onClose={vi.fn()} data={single} />);
+    fireEvent.keyDown(dialog(), { key: "Enter", isComposing: true });
+    fireEvent.keyDown(dialog(), { key: "Enter", repeat: true });
     expect(mockUpdate).not.toHaveBeenCalled();
-    fireEvent.keyDown(dialog(), { key: "Enter", metaKey: true });
+    fireEvent.keyDown(dialog(), { key: "Enter" });
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
   });
 
-  it("follows a remapped send chord instead of hardcoding ⌘+Enter", async () => {
-    useShortcutStore.setState({ overrides: { send: createShortcutChord("Enter") } });
+  it("follows a remapped send chord instead of hardcoding Enter", async () => {
+    remapSendToModEnter();
     render(<RunConfirmModal onClose={vi.fn()} data={single} />);
-    fireEvent.keyDown(dialog(), { key: "Enter", metaKey: true });
-    expect(mockUpdate).not.toHaveBeenCalled();
     fireEvent.keyDown(dialog(), { key: "Enter" });
+    expect(mockUpdate).not.toHaveBeenCalled();
+    fireEvent.keyDown(dialog(), { key: "Enter", metaKey: true });
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
   });
 
