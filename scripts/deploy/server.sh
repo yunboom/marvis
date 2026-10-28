@@ -2,7 +2,7 @@
 # Production deploy, run as root on the prototype host by scripts/deploy/jump.exp
 # after it has checked the repo out at the tip of origin/main.
 #
-#   server.sh <commit>          build, back up, switch, health-check, roll back on failure
+#   server.sh <commit>          pull, back up, switch, health-check, roll back on failure
 #   server.sh --check <commit>  run every precondition and change nothing
 #
 # The host runs CentOS 7 with git 1.8: no `git -C`, so every git call cds first.
@@ -11,11 +11,11 @@ set -euo pipefail
 readonly APP_DIR=/root/apps/marvis
 readonly REPO_DIR="$APP_DIR/repo"
 readonly ENV_FILE="$APP_DIR/.env"
-readonly ENV_TEMPLATE="$REPO_DIR/scripts/deploy/prod.env.example"
 readonly BACKUP_DIR="$APP_DIR/backups"
 readonly RELEASES_FILE="$APP_DIR/releases.log"
 readonly LOCK_FILE="$APP_DIR/deploy.lock"
 readonly BASE_PATH=/marvis
+readonly REGISTRY=ghcr.io/yunboom
 readonly KEEP_BACKUPS=10
 readonly KEEP_RELEASES=3
 readonly HEALTH_TIMEOUT_SECONDS=180
@@ -64,39 +64,22 @@ verify_main() {
   info "commit $sha is the tip of origin/main"
 }
 
-# First deploy only: copy the template and fill every __GENERATE_*__
-# placeholder with fresh randomness. An existing .env is never touched.
+# The config is the local .env.prod, which jump.exp uploads before this runs;
+# a --check run only compares it, so the host may not have one yet.
 ensure_env() {
   local check_only=$1
   if [ -f "$ENV_FILE" ]; then
     info "using $ENV_FILE"
     return 0
   fi
-  if [ "$check_only" = 1 ]; then
-    info "$ENV_FILE is missing; a real deploy creates it from $ENV_TEMPLATE"
-    return 0
-  fi
-
-  [ -f "$ENV_TEMPLATE" ] || die "missing template $ENV_TEMPLATE"
-  local tmp="$ENV_FILE.tmp"
-  cp "$ENV_TEMPLATE" "$tmp"
-  sed -i "s|__GENERATE_HEX32__|$(openssl rand -hex 32)|" "$tmp"
-  sed -i "s|__GENERATE_HEX24__|$(openssl rand -hex 24)|" "$tmp"
-  sed -i "s|__GENERATE_B64_32__|$(openssl rand -base64 32)|" "$tmp"
-  if grep -qE '^[^#]*__GENERATE_' "$tmp"; then
-    rm -f "$tmp"
-    die "unfilled placeholder left in $ENV_TEMPLATE"
-  fi
-  chmod 600 "$tmp"
-  mv "$tmp" "$ENV_FILE"
-  info "created $ENV_FILE with generated secrets; edit it for Lark login, email and LLM, then redeploy"
+  [ "$check_only" = 1 ] || die "$ENV_FILE is missing; deploy with scripts/deploy/prod.sh, which uploads it"
+  info "$ENV_FILE is not installed yet"
 }
 
 check_host() {
   command -v docker >/dev/null || die "docker is not installed"
   docker compose version >/dev/null 2>&1 || die "docker compose plugin is not installed"
   command -v flock >/dev/null || die "flock is not installed"
-  command -v openssl >/dev/null || die "openssl is not installed"
   command -v curl >/dev/null || die "curl is not installed"
 }
 
@@ -104,35 +87,23 @@ image_exists() {
   docker image inspect "$1" >/dev/null 2>&1
 }
 
-build_images() {
-  local sha=$1
-  cd "$REPO_DIR"
-
-  if image_exists "$BACKEND_IMAGE:$sha"; then
-    info "$BACKEND_IMAGE:$sha already built"
-  else
-    info "building $BACKEND_IMAGE:$sha"
-    docker build -f Dockerfile -t "$BACKEND_IMAGE:$sha" \
-      --build-arg VERSION="$sha" --build-arg COMMIT="$sha" \
-      --build-arg DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" .
-  fi
-
-  if image_exists "$WEB_IMAGE:$sha"; then
-    info "$WEB_IMAGE:$sha already built"
-  else
-    info "building $WEB_IMAGE:$sha"
-    docker build -f Dockerfile.web -t "$WEB_IMAGE:$sha" \
-      --build-arg NEXT_PUBLIC_APP_VERSION="$sha" \
-      --build-arg NEXT_PUBLIC_BASE_PATH="$BASE_PATH" .
-  fi
-
-  if image_exists "$DOCS_IMAGE:$sha"; then
-    info "$DOCS_IMAGE:$sha already built"
-  else
-    info "building $DOCS_IMAGE:$sha"
-    docker build -f Dockerfile.docs -t "$DOCS_IMAGE:$sha" \
-      --build-arg NEXT_PUBLIC_BASE_PATH="$BASE_PATH" .
-  fi
+# The images are built by .github/workflows/prod-images.yml, not here: this
+# host's kernel (3.10) makes pnpm install under Node 22 fail with EPERM.
+# Pulled images are re-tagged `<name>:<commit>` so switching, rollback and
+# pruning only ever deal with local tags.
+pull_images() {
+  local sha=$1 image remote
+  for image in "$BACKEND_IMAGE" "$WEB_IMAGE" "$DOCS_IMAGE"; do
+    if image_exists "$image:$sha"; then
+      info "$image:$sha already present"
+      continue
+    fi
+    remote="$REGISTRY/$image:prod-$sha"
+    info "pulling $remote"
+    docker pull -q "$remote" >/dev/null || die "cannot pull $remote; has the Production images workflow finished for $sha?"
+    docker tag "$remote" "$image:$sha"
+    docker image rm "$remote" >/dev/null
+  done
 }
 
 # Migrations only move forward, so a dump taken before the switch is the only
@@ -255,6 +226,12 @@ main() {
   local previous
   previous="$(last_release)"
   if [ "$check_only" = 1 ]; then
+    local image
+    for image in "$BACKEND_IMAGE" "$WEB_IMAGE" "$DOCS_IMAGE"; do
+      docker manifest inspect "$REGISTRY/$image:prod-$sha" >/dev/null 2>&1 \
+        || die "$REGISTRY/$image:prod-$sha is not published or not public"
+    done
+    info "images for $sha are published"
     info "check passed; current release: ${previous:-none}"
     return 0
   fi
@@ -262,7 +239,7 @@ main() {
     info "$sha is already the current release; redeploying it"
   fi
 
-  build_images "$sha"
+  pull_images "$sha"
   LAST_BACKUP=""
   backup_database "$previous"
   switch_to "$sha"

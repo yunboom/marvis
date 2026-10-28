@@ -1,0 +1,83 @@
+# Production images for `make deploy-prod` (scripts/deploy/README.md).
+#
+# The production host (CentOS 7, kernel 3.10) cannot build the Node images:
+# pnpm install under Node 22 fails there with EPERM. So every push to main
+# builds the images here and pushes them as `prod-<commit>`; the host only
+# pulls them. The web app and docs are built for the /marvis path prefix, so
+# these tags are not interchangeable with the release images.
+name: Production images
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: prod-images-${{ github.sha }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  BASE_PATH: /marvis
+
+jobs:
+  image:
+    name: ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: marvis-backend
+            dockerfile: Dockerfile
+            title: Marvis Backend
+          - image: marvis-web
+            dockerfile: Dockerfile.web
+            title: Marvis Web
+          - image: marvis-docs
+            dockerfile: Dockerfile.docs
+            title: Marvis Docs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute image labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.title }}
+            org.opencontainers.image.description=${{ matrix.title }} for the production deploy under ${{ env.BASE_PATH }}
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          pull: true
+          push: true
+          platforms: linux/amd64
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:prod-${{ github.sha }}
+          cache-from: type=gha,scope=prod-${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=prod-${{ matrix.image }}
+          build-args: |
+            VERSION=${{ github.sha }}
+            COMMIT=${{ github.sha }}
+            NEXT_PUBLIC_APP_VERSION=${{ github.sha }}
+            NEXT_PUBLIC_BASE_PATH=${{ env.BASE_PATH }}

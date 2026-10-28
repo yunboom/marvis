@@ -38,7 +38,12 @@ COPY --from=deps /app ./
 # Copy source
 COPY package.json turbo.json pnpm-workspace.yaml ./
 COPY apps/docs/ apps/docs/
-COPY packages/ packages/
+# Only the workspace packages the docs app depends on: copying the rest would
+# add workspace projects whose dependencies the deps stage never installed,
+# and the offline re-link below would fail on them.
+COPY packages/ui/ packages/ui/
+COPY packages/tsconfig/ packages/tsconfig/
+COPY packages/eslint-config/ packages/eslint-config/
 
 # Re-link after source overlay; also regenerates the fumadocs .source index
 RUN pnpm install --frozen-lockfile --offline
