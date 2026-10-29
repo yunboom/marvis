@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"net"
 	"net/http"
+	"net/url"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -75,6 +77,18 @@ const (
 const (
 	larkInviteSendStatusSent   = "sent"
 	larkInviteSendStatusFailed = "failed"
+)
+
+// 卡片链接的组成部分：网页登录页、登录后跳转参数和工作区首页。
+const (
+	larkInviteLoginPath      = "/login"
+	larkInviteLoginNextParam = "next"
+	// larkInviteWorkspaceHomeFormat 的参数是工作区 slug，与前端 paths.workspace(slug).issues() 一致。
+	larkInviteWorkspaceHomeFormat = "/%s/issues"
+
+	larkInviteSchemeHTTP  = "http"
+	larkInviteSchemeHTTPS = "https"
+	larkInviteLocalhost   = "localhost"
 )
 
 // larkInviteRoleOwner 是工作区所有者角色，只用于权限判断，邀请不能授予这个角色。
@@ -298,7 +312,9 @@ type larkInviteSender struct {
 // larkInviteCardNames 是卡片正文里的工作区名、发送人名和代发智能体名。
 type larkInviteCardNames struct {
 	Workspace string
-	Inviter   string
+	// WorkspaceSlug 用于已加入卡片“打开 Marvis”登录后进入的工作区。
+	WorkspaceSlug string
+	Inviter       string
 	// Agent 在不是智能体代发时为空。
 	Agent string
 }
@@ -1129,11 +1145,54 @@ func (h *Handler) deleteUnsentLarkInvite(ctx context.Context, sc larkInviteSendC
 
 // larkInviteCardViewOf 由邀请行和名字构造卡片数据；群卡片带已加入人数。
 func (h *Handler) larkInviteCardViewOf(inv db.LarkInvite, names larkInviteCardNames, state larkInviteCardState) larkInviteCardView {
-	return newLarkInviteCardView(inv, names, state, h.LarkInviteDownloadURL)
+	return newLarkInviteCardView(inv, names, state, h.larkInviteCardLinks(names))
 }
 
-// newLarkInviteCardView 由邀请行、名字和下载地址构造卡片数据；群卡片带已加入人数。
-func newLarkInviteCardView(inv db.LarkInvite, names larkInviteCardNames, state larkInviteCardState, downloadURL string) larkInviteCardView {
+// larkInviteCardLinks 返回卡片上的链接：首页和登录页取网页地址（larkInviteAppURL），下载取桌面端下载地址。
+func (h *Handler) larkInviteCardLinks(names larkInviteCardNames) larkInviteCardLinks {
+	return newLarkInviteCardLinks(h.cfg.AppURL, h.LarkInviteDownloadURL, names.WorkspaceSlug)
+}
+
+// newLarkInviteCardLinks 由网页地址、下载地址和工作区 slug 生成卡片链接。网页地址不可用时首页和登录页留空。
+func newLarkInviteCardLinks(appURL, downloadURL, workspaceSlug string) larkInviteCardLinks {
+	links := larkInviteCardLinks{Download: downloadURL}
+
+	app := larkInviteAppURL(appURL)
+	if app == "" {
+		return links
+	}
+
+	links.Landing = app
+	if workspaceSlug != "" {
+		next := url.Values{larkInviteLoginNextParam: {fmt.Sprintf(larkInviteWorkspaceHomeFormat, url.PathEscape(workspaceSlug))}}
+		links.Login = app + larkInviteLoginPath + "?" + next.Encode()
+	}
+
+	return links
+}
+
+// larkInviteAppURL 校验卡片链接用的网页地址（MARVIS_APP_URL，未设置时为 FRONTEND_ORIGIN；按路径前缀部署时含前缀），
+// 返回去掉末尾斜杠的地址。没配置、不是 http(s) 或指向本机时返回空串：卡片在受邀人的飞书里打开，本机地址点不开。
+func larkInviteAppURL(raw string) string {
+	raw = strings.TrimRight(strings.TrimSpace(raw), "/")
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" || (u.Scheme != larkInviteSchemeHTTP && u.Scheme != larkInviteSchemeHTTPS) {
+		return ""
+	}
+
+	host := u.Hostname()
+	if strings.EqualFold(host, larkInviteLocalhost) {
+		return ""
+	}
+	if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
+		return ""
+	}
+
+	return raw
+}
+
+// newLarkInviteCardView 由邀请行、名字和链接构造卡片数据；群卡片带人数上限和已加入人数。
+func newLarkInviteCardView(inv db.LarkInvite, names larkInviteCardNames, state larkInviteCardState, links larkInviteCardLinks) larkInviteCardView {
 	view := larkInviteCardView{
 		State:         state,
 		InviteID:      uuidToString(inv.ID),
@@ -1143,10 +1202,14 @@ func newLarkInviteCardView(inv db.LarkInvite, names larkInviteCardNames, state l
 		Role:          inv.Role,
 		Note:          inv.Note,
 		ExpiresAt:     inv.ExpiresAt.Time,
-		DownloadURL:   downloadURL,
+		Links:         links,
 	}
 	if inv.TargetType == larkInviteTargetChat {
+		view.IsGroup = true
 		view.JoinedCount = int(inv.UseCount)
+		if inv.MaxUses.Valid {
+			view.MaxUses = int(inv.MaxUses.Int32)
+		}
 	}
 
 	return view
@@ -1154,24 +1217,27 @@ func newLarkInviteCardView(inv db.LarkInvite, names larkInviteCardNames, state l
 
 // larkInviteInvalidCardView 构造失效状态的卡片数据，底部说明按撤销或过期生成。
 func (h *Handler) larkInviteInvalidCardView(inv db.LarkInvite, names larkInviteCardNames, now time.Time) larkInviteCardView {
-	return newLarkInviteInvalidCardView(inv, names, h.LarkInviteDownloadURL, now)
+	return newLarkInviteInvalidCardView(inv, names, h.larkInviteCardLinks(names), now)
 }
 
-// newLarkInviteInvalidCardView 构造失效状态的卡片数据，底部说明按撤销或过期生成。
-func newLarkInviteInvalidCardView(inv db.LarkInvite, names larkInviteCardNames, downloadURL string, now time.Time) larkInviteCardView {
-	view := newLarkInviteCardView(inv, names, larkInviteCardInvalid, downloadURL)
+// newLarkInviteInvalidCardView 构造失效状态的卡片数据，状态文字和底部说明按撤销或过期生成。
+func newLarkInviteInvalidCardView(inv db.LarkInvite, names larkInviteCardNames, links larkInviteCardLinks, now time.Time) larkInviteCardView {
+	view := newLarkInviteCardView(inv, names, larkInviteCardInvalid, links)
 	view.InvalidReason = larkInviteInvalidReason(inv, now)
+	if status := larkInviteStatus(inv, now); status == larkInviteStatusRevoked || status == larkInviteStatusExpired {
+		view.InvalidStatus = status
+	}
 
 	return view
 }
 
 // larkInviteLatestCardView 按邀请的当前状态构造群卡片数据：撤销或过期时为失效卡片，否则为邀请中卡片。
-func larkInviteLatestCardView(inv db.LarkInvite, names larkInviteCardNames, downloadURL string, now time.Time) larkInviteCardView {
+func larkInviteLatestCardView(inv db.LarkInvite, names larkInviteCardNames, links larkInviteCardLinks, now time.Time) larkInviteCardView {
 	switch larkInviteStatus(inv, now) {
 	case larkInviteStatusRevoked, larkInviteStatusExpired:
-		return newLarkInviteInvalidCardView(inv, names, downloadURL, now)
+		return newLarkInviteInvalidCardView(inv, names, links, now)
 	default:
-		return newLarkInviteCardView(inv, names, larkInviteCardActive, downloadURL)
+		return newLarkInviteCardView(inv, names, larkInviteCardActive, links)
 	}
 }
 
@@ -1217,7 +1283,7 @@ func (h *Handler) loadLarkInviteCardNames(ctx context.Context, workspaceID, user
 	if err != nil {
 		return larkInviteCardNames{}, errors.Wrapf(err, "get workspace workspace_id=%s", uuidToString(workspaceID))
 	}
-	names := larkInviteCardNames{Workspace: ws.Name}
+	names := larkInviteCardNames{Workspace: ws.Name, WorkspaceSlug: ws.Slug}
 
 	user, err := h.Queries.GetUser(ctx, userID)
 	switch {

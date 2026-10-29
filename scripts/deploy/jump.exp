@@ -2,41 +2,74 @@
 # Run scripts/deploy/server.sh on the prototype host through the JumpServer
 # bastion behind `ssh j`.
 #
-#   expect jump.exp <commit> [--check]
+#   expect jump.exp <commit> <env-file> [--check]
 #
 # The bastion refuses remote commands without a TTY ("No PTY requested.") and
 # rejects direct asset logins, so this drives its menu: type the asset name at
-# `Opt>`, wait for the shell prompt, then send one command. That command checks
-# the repo out at the tip of origin/main before running server.sh, so the
-# deploy logic that runs is always main's own. Exits with server.sh's status.
+# `Opt>`, wait for the shell prompt, then type into that shell.
+#
+# It first uploads <env-file> as the host's production .env (base64 over a
+# heredoc, with the terminal echo off so secrets are not printed), then runs a
+# script that installs it, checks the repo out at the tip of origin/main and
+# execs main's own server.sh. Exits with server.sh's status.
 #
 # Only this file knows the bastion's prompts; adjust it if they change.
 
-if {[llength $argv] < 1} {
-  puts stderr "usage: jump.exp <commit> \[--check\]"
+if {[llength $argv] < 2} {
+  puts stderr "usage: jump.exp <commit> <env-file> \[--check\]"
   exit 2
 }
 set sha [lindex $argv 0]
-set mode [lindex $argv 1]
+set env_file [lindex $argv 1]
+set mode [lindex $argv 2]
 if {![regexp {^[0-9a-f]{40}$} $sha]} {
   puts stderr "invalid commit: $sha"
   exit 2
 }
+if {$mode ne "" && $mode ne "--check"} {
+  puts stderr "unknown mode: $mode"
+  exit 2
+}
+if {![file readable $env_file]} {
+  puts stderr "cannot read $env_file"
+  exit 2
+}
+set env_b64 [exec openssl base64 -in $env_file]
 
 set asset "prototype"
-set repo_url "https://github.com/yunboom/marvis.git"
-set app_dir "/root/apps/marvis"
-set repo_dir "$app_dir/repo"
 
-set remote "set -e;\
- mkdir -p $app_dir;\
- if \[ ! -d $repo_dir/.git \]; then git clone -q $repo_url $repo_dir; fi;\
- cd $repo_dir;\
- git fetch -q origin main;\
- git checkout -q -f FETCH_HEAD;\
- git clean -fdq;\
- exec bash scripts/deploy/server.sh $mode $sha"
-set command "sudo -n bash -c '$remote'; echo MARVIS_DEPLOY_EXIT=\$?"
+# Runs as root on the host. In --check mode the uploaded file is compared and
+# discarded; otherwise it replaces .env, keeping the old one in env-backups/.
+set remote_script {
+set -e
+app=/root/apps/marvis
+repo=$app/repo
+cd "$app"
+[ -s .env.incoming ] || { echo "ERROR: env upload failed"; exit 1; }
+if [ "@MODE@" = "--check" ]; then
+  if [ ! -f .env ]; then echo "==> .env would be created"
+  elif cmp -s .env .env.incoming; then echo "==> .env is up to date"
+  else echo "==> .env would change: $(diff <(cut -d= -f1 .env | sort -u) <(cut -d= -f1 .env.incoming | sort -u) >/dev/null && echo values || echo keys and values)"
+  fi
+  rm -f .env.incoming
+else
+  if [ -f .env ] && ! cmp -s .env .env.incoming; then
+    mkdir -p env-backups
+    cp -p .env "env-backups/.env.$(date +%Y%m%d-%H%M%S)"
+    echo "==> previous .env saved in env-backups/"
+  fi
+  mv .env.incoming .env
+  chmod 600 .env
+  echo "==> .env installed"
+fi
+if [ ! -d "$repo/.git" ]; then git clone -q https://github.com/yunboom/marvis.git "$repo"; fi
+cd "$repo"
+git fetch -q origin main
+git checkout -q -f FETCH_HEAD
+git clean -fdq
+exec bash scripts/deploy/server.sh @MODE@ @SHA@
+}
+set remote_script [string map [list @MODE@ $mode @SHA@ $sha] $remote_script]
 
 log_user 1
 set timeout 30
@@ -54,9 +87,29 @@ expect {
   eof { puts stderr "\nconnection closed while logging into $asset"; exit 1 }
 }
 
+# Upload the env file without echoing it back.
+send "stty -echo\r"
+expect -re {\$ $}
+log_user 0
+send "sudo -n bash -c 'umask 077; mkdir -p /root/apps/marvis; base64 -d > /root/apps/marvis/.env.incoming' <<'__MARVIS_ENV__'\r"
+foreach line [split $env_b64 "\n"] {
+  send -- "$line\r"
+}
+send "__MARVIS_ENV__\r"
+expect -re {\$ $}
+send "stty echo\r"
+expect -re {\$ $}
+log_user 1
+puts "\n==> uploaded [file tail $env_file]"
+
 # Image builds take a while; server.sh prints as it goes.
 set timeout 3600
-send -- "$command\r"
+send "sudo -n bash -s <<'__MARVIS_DEPLOY__'\r"
+foreach line [split $remote_script "\n"] {
+  send -- "$line\r"
+}
+send "__MARVIS_DEPLOY__\r"
+send "echo MARVIS_DEPLOY_EXIT=\$?\r"
 set status 1
 expect {
   -re {MARVIS_DEPLOY_EXIT=([0-9]+)} { set status $expect_out(1,string) }

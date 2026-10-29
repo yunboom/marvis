@@ -31,13 +31,6 @@ export function isZhLocale(locale: Locale): boolean {
   return locale === "zh-Hans" || locale === "zh-Hant";
 }
 
-type FeatureSection = {
-  label: string;
-  title: string;
-  description: string;
-  cards: { title: string; description: string }[];
-};
-
 // Long-form page copy. Paragraphs and bullets may embed `[label](href)`
 // links, rendered by InlineLinks.
 export type DocumentSection = {
@@ -55,12 +48,9 @@ export type ContactSalesOption = { value: string; label: string };
 
 export type LandingDict = {
   header: {
-    github: string;
     cta: string;
     dashboard: string;
-    docs: string;
     changelog: string;
-    useCases: string;
     navigation: string;
     openMenu: string;
     closeMenu: string;
@@ -69,40 +59,14 @@ export type LandingDict = {
     headlineLine1: string;
     headlineLine2: string;
     subheading: string;
-    cta: string;
     downloadDesktop: string;
-    talkToSales: string;
-    worksWith: string;
     imageAlt: string;
   };
-  features: {
-    teammates: FeatureSection;
-    autonomous: FeatureSection;
-    skills: FeatureSection;
-    runtimes: FeatureSection;
-  };
   howItWorks: {
-    label: string;
-    headlineMain: string;
-    headlineFaded: string;
-    steps: { title: string; description: string }[];
-    cta: string;
+    headline: string;
+    steps:{ title: string; description: string }[];
     ctaGithub: string;
     ctaDocs: string;
-  };
-  openSource: {
-    label: string;
-    headlineLine1: string;
-    headlineLine2: string;
-    description: string;
-    cta: string;
-    licensingCta: string;
-    highlights: { title: string; description: string }[];
-  };
-  faq: {
-    label: string;
-    headline: string;
-    items: { question: string; answer: string }[];
   };
   footer: {
     tagline: string;
@@ -113,27 +77,6 @@ export type LandingDict = {
       company: FooterGroup;
     };
     copyright: string;
-  };
-  about: {
-    title: string;
-    nameLine: {
-      prefix: string;
-      mult: string;
-      iplexed: string;
-      i: string;
-      nformationAnd: string;
-      c: string;
-      omputing: string;
-      a: string;
-      gent: string;
-    };
-    paragraphs: string[];
-    cta: string;
-    team: {
-      title: string;
-      paragraphs: string[];
-      contacts: { label: string; linkLabel: string; href: string }[];
-    };
   };
   licensing: {
     title: string;
@@ -147,12 +90,6 @@ export type LandingDict = {
       notRequired: string;
       items: { scenario: string; example?: string; required: boolean }[];
     };
-    sections: DocumentSection[];
-  };
-  privacy: {
-    title: string;
-    lastUpdated: string;
-    intro: string[];
     sections: DocumentSection[];
   };
   changelog: {
@@ -200,6 +137,39 @@ export type LandingDict = {
       safariMacHint: string;
       archFallbackHint: string;
     };
+    releases: {
+      back: string;
+      title: string;
+      sub: string;
+      latest: string;
+      notesLink: string;
+      expand: string;
+      collapse: string;
+      empty: string;
+    };
+    releaseDetail: {
+      back: string;
+      notesTitle: string;
+      notesFallback: string;
+      viewChangelog: string;
+      downloadsTitle: string;
+      cliHintPrefix: string;
+      cliHintLink: string;
+    };
+    macHint: {
+      trigger: string;
+      title: string;
+      sub: string;
+      stepInstall: string;
+      stepCommand: string;
+      stepReopen: string;
+      altSettings: string;
+      noAutoUpdate: string;
+      copyLabel: string;
+      copiedLabel: string;
+      close: string;
+      confirm: string;
+    };
     allPlatforms: {
       title: string;
       macArm64Label: string;
@@ -228,7 +198,6 @@ export type LandingDict = {
       copyLabel: string;
       copiedLabel: string;
     };
-    cloud: { title: string; sub: string };
     footer: {
       releaseNotes: string;
       allReleases: string;

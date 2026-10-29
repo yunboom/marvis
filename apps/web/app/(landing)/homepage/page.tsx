@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { MarvisLanding } from "@/features/landing/components/marvis-landing";
 
 export const metadata: Metadata = {
-  title: "Homepage",
+  title: { absolute: "Marvis" },
   description:
     "Marvis — source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills.",
   openGraph: {
-    title: "Marvis — Project Management for Human + Agent Teams",
+    title: "Marvis",
     description:
       "Manage your human + agent workforce in one place.",
     url: "/homepage",

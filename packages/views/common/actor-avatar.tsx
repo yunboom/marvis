@@ -362,7 +362,7 @@ function ActorAvatarHoverCardShell({
   const tabIndex = standalone ? 0 : -1;
   // The focus ring follows the avatar: agents and squads are rounded squares.
   const className = standalone
-    ? `inline-flex cursor-pointer ${square ? "rounded-[28%]" : "rounded-full"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`
+    ? `inline-flex cursor-pointer ${square ? "rounded-avatar" : "rounded-full"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`
     : "inline-flex cursor-pointer";
 
   return (

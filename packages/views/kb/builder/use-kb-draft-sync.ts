@@ -14,6 +14,8 @@ const AUTOSAVE_DELAY_MS = 800;
  * everything it depends on has arrived, then autosave edits. Autosave is armed
  * only after the restore, so an empty initial form can never overwrite a
  * stored configuration; the restore also gates merging builder replies.
+ * Without a conversation nothing is autosaved: the form lives on this page
+ * until a conversation starts or the knowledge base is created.
  */
 export function useKbDraftSync(options: {
   sessionId: string;
@@ -34,10 +36,12 @@ export function useKbDraftSync(options: {
   const [appliedMessageId, markApplied] = useState<string | null>(null);
   const savedRef = useRef<StoredKbDraft | null>(null);
 
+  // A page without a conversation yet restores straight to the seed; the
+  // conversation it later starts adopts the form as it stands.
   useEffect(() => {
-    if (!sessionId || restored || !ready) return;
+    if (restored || !ready) return;
 
-    if (stored) {
+    if (sessionId && stored) {
       markApplied(stored.applied_message_id);
       savedRef.current = stored;
       setDraft(fromStoredKbDraft(stored, defaultSchema));

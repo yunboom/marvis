@@ -23,6 +23,7 @@ vi.mock("../../i18n", () => ({
           unavailable: "Not available",
         },
         footer: { allReleases: "View all releases" },
+        macHint: { trigger: "First launch on Mac" },
       },
     },
   }),
@@ -38,7 +39,6 @@ describe("AllPlatforms", () => {
           macX64Dmg: "https://downloads.test/mac-x64.dmg",
           macX64Zip: "https://downloads.test/mac-x64.zip",
         }}
-        fallbackHref="https://github.test/releases"
       />,
     );
 

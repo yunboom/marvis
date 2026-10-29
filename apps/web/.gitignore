@@ -1,2 +1,4 @@
 .vercel
-.source/
+# next dev writes these agent hints on every start
+/AGENTS.md
+/CLAUDE.md

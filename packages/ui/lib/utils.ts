@@ -14,7 +14,8 @@ import { extendTailwindMerge } from "tailwind-merge"
  * beats size, colour beats colour, and the two coexist. Keep this list in sync
  * with the `--text-*` steps in `packages/ui/styles/tokens.css`.
  *
- * The role radii (`rounded-row`, `rounded-dialog`), elevation steps
+ * The role radii (`rounded-row`, `rounded-dialog`, `rounded-avatar`, ...;
+ * see `--radius-*` in tokens.css), elevation steps
  * (`shadow-menu`, ...) and motion curves (`ease-standard`, `ease-spring`) are
  * registered for the same reason: unknown names would otherwise fall into a
  * colour group or no group, and a call-site `rounded-lg` would not replace a
@@ -23,7 +24,18 @@ import { extendTailwindMerge } from "tailwind-merge"
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      radius: ["row", "dialog"],
+      radius: [
+        "row",
+        "dialog",
+        "avatar",
+        "tile",
+        "lane",
+        "pane",
+        "composer",
+        "composer-pill",
+        "option",
+        "hero",
+      ],
       shadow: ["control", "surface", "menu", "toast", "floating"],
       ease: ["standard", "spring"],
     },

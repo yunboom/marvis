@@ -311,49 +311,4 @@ func TestQuickCreateIssueParentTrustBoundary(t *testing.T) {
 			}
 		})
 	}
-
-	t.Run("legacy daemon only rejects requests using explicit fields", func(t *testing.T) {
-		if _, err := testPool.Exec(ctx,
-			`UPDATE agent_runtime SET metadata = jsonb_build_object('cli_version', '0.4.2') WHERE id = $1`,
-			runtimeID,
-		); err != nil {
-			t.Fatalf("set legacy daemon version: %v", err)
-		}
-		defer testPool.Exec(ctx,
-			`UPDATE agent_runtime SET metadata = jsonb_build_object('cli_version', $1::text) WHERE id = $2`,
-			agent.MinQuickCreateFieldsCLIVersion, runtimeID,
-		)
-
-		before := countQuickCreateTasks(t)
-		w := httptest.NewRecorder()
-		req := newRequest("POST", "/api/issues/quick-create", map[string]any{
-			"agent_id": agentID,
-			"prompt":   "Explicit priority needs the new daemon transport",
-			"priority": "high",
-		})
-		testHandler.QuickCreateIssue(w, req)
-		if w.Code != http.StatusUnprocessableEntity {
-			t.Fatalf("explicit fields on 0.4.2: expected 422, got %d: %s", w.Code, w.Body.String())
-		}
-		if got := countQuickCreateTasks(t); got != before {
-			t.Fatalf("unsupported explicit fields must not enqueue: expected %d, got %d", before, got)
-		}
-
-		w = httptest.NewRecorder()
-		req = newRequest("POST", "/api/issues/quick-create", map[string]any{
-			"agent_id": agentID,
-			"prompt":   "Basic quick create remains backward compatible",
-		})
-		testHandler.QuickCreateIssue(w, req)
-		if w.Code != http.StatusAccepted {
-			t.Fatalf("basic quick create on 0.4.2: expected 202, got %d: %s", w.Code, w.Body.String())
-		}
-		var resp QuickCreateIssueResponse
-		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
-			t.Fatalf("decode response: %v", err)
-		}
-		t.Cleanup(func() {
-			testPool.Exec(context.Background(), `DELETE FROM agent_task_queue WHERE id = $1`, resp.TaskID)
-		})
-	})
 }

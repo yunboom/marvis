@@ -20,7 +20,7 @@ export function SplitCard({ className, ...props }: React.ComponentProps<"div">) 
   return (
     <Card
       className={cn(
-        "w-full max-w-[960px] gap-0 overflow-hidden rounded-[28px] border-0 p-0 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border dark:shadow-none",
+        "w-full max-w-[960px] gap-0 overflow-hidden rounded-hero border-0 p-0 shadow-[0_24px_32px_rgba(0,0,0,0.06)] ring-1 ring-surface-border dark:shadow-none",
         "md:grid md:h-[clamp(480px,calc(100svh-7rem),600px)] md:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] md:grid-rows-[1fr_auto]",
         className,
       )}

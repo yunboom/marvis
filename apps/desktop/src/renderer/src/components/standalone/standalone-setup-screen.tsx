@@ -113,7 +113,7 @@ export function StandaloneSetupScreen({ value, onChange, onBack, onStarted }: St
         </SplitCardIntro>
 
         <SplitCardPane>
-          <div className="flex min-h-[320px] flex-1 flex-col overflow-y-auto rounded-[20px] bg-surface-sunken p-5 md:min-h-0">
+          <div className="flex min-h-[320px] flex-1 flex-col overflow-y-auto rounded-pane bg-surface-sunken p-5 md:min-h-0">
             {value && (
               <StandaloneSetupForm
                 value={value}

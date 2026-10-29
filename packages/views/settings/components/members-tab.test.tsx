@@ -6,7 +6,11 @@ import { configStore } from "@marvis/core/config";
 import { BILLING_WORKSPACE_SUBSCRIPTIONS_FLAG } from "@marvis/core/feature-flags";
 import { renderWithI18n } from "../../test/i18n";
 
-const mockCreateMember = vi.hoisted(() => vi.fn());
+const mockApi = vi.hoisted(() => ({
+  createMember: vi.fn(),
+  createShareLink: vi.fn(),
+  revokeShareLink: vi.fn(),
+}));
 // The URL the settings router holds; `setSearch` stands in for navigation.
 const url = vi.hoisted(() => {
   const listeners = new Set<() => void>();
@@ -66,7 +70,7 @@ vi.mock("@marvis/core/paths", () => ({
 }));
 vi.mock("@marvis/core/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@marvis/core/api")>()),
-  api: { createMember: mockCreateMember },
+  api: mockApi,
 }));
 vi.mock("@marvis/core/auth", () => {
   const state = { user: { id: "user-1" } };
@@ -109,6 +113,20 @@ const member = (id: string, name: string, role: string) => ({
   avatar_url: null,
   created_at: "2025-01-08T00:00:00Z",
 });
+
+type User = ReturnType<typeof userEvent.setup>;
+
+// The header "Invite" menu lists each item as "<label><hint>"; return the labels.
+async function inviteMenuItems(user: User): Promise<string[]> {
+  await user.click(screen.getByRole("button", { name: "Invite" }));
+  const items = await screen.findAllByRole("menuitem");
+  return items.map((item) => item.querySelector("span.font-medium")?.textContent ?? "");
+}
+
+async function openInviteMenuItem(user: User, label: string) {
+  await user.click(screen.getByRole("button", { name: "Invite" }));
+  await user.click(await screen.findByRole("menuitem", { name: new RegExp(`^${label}`) }));
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -210,36 +228,183 @@ describe("MembersTab", () => {
   });
 
   it("invites from a dialog and closes it once the invitation is sent", async () => {
-    mockCreateMember.mockResolvedValue({});
+    mockApi.createMember.mockResolvedValue({});
     const user = userEvent.setup();
     renderWithI18n(<MembersTab />);
 
-    await user.click(screen.getByRole("button", { name: "Invite member" }));
-    const dialog = await screen.findByRole("dialog", { name: "Invite member" });
+    await openInviteMenuItem(user, "Invite by email");
+    const dialog = await screen.findByRole("dialog", { name: "Invite by email" });
     await user.type(within(dialog).getByRole("textbox", { name: "Email" }), "new@acme.dev");
-    await user.click(within(dialog).getByRole("button", { name: "Invite" }));
+    await user.click(within(dialog).getByRole("radio", { name: /^Admin/ }));
+    await user.click(within(dialog).getByRole("button", { name: "Send invite" }));
 
     await waitFor(() =>
-      expect(mockCreateMember).toHaveBeenCalledWith("ws-1", {
+      expect(mockApi.createMember).toHaveBeenCalledWith("ws-1", {
         email: "new@acme.dev",
-        role: "member",
+        role: "admin",
       }),
     );
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
   it("keeps the invite dialog open when sending fails", async () => {
-    mockCreateMember.mockRejectedValue(new Error("nope"));
+    mockApi.createMember.mockRejectedValue(new Error("nope"));
     const user = userEvent.setup();
     renderWithI18n(<MembersTab />);
 
-    await user.click(screen.getByRole("button", { name: "Invite member" }));
-    const dialog = await screen.findByRole("dialog", { name: "Invite member" });
+    await openInviteMenuItem(user, "Invite by email");
+    const dialog = await screen.findByRole("dialog", { name: "Invite by email" });
     await user.type(within(dialog).getByRole("textbox", { name: "Email" }), "new@acme.dev");
-    await user.click(within(dialog).getByRole("button", { name: "Invite" }));
+    await user.click(within(dialog).getByRole("button", { name: "Send invite" }));
 
-    await waitFor(() => expect(mockCreateMember).toHaveBeenCalled());
-    expect(screen.getByRole("dialog", { name: "Invite member" })).toBeInTheDocument();
+    await waitFor(() => expect(mockApi.createMember).toHaveBeenCalled());
+    expect(screen.getByRole("dialog", { name: "Invite by email" })).toBeInTheDocument();
+  });
+
+  describe("invite menu", () => {
+    it("offers every flow the current admin can use", async () => {
+      data.larkStatus = { enabled: true };
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      expect(await inviteMenuItems(user)).toEqual(["Invite by email", "Feishu invites", "Share links"]);
+    });
+
+    it("leaves out Feishu when the server has no bot", async () => {
+      data.larkStatus = { enabled: false };
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      expect(await inviteMenuItems(user)).toEqual(["Invite by email", "Share links"]);
+    });
+
+    it("leaves out share links when the client cannot give a web address", async () => {
+      data.larkStatus = { enabled: true };
+      shareable.url = (path) => `marvis://open?path=${encodeURIComponent(path)}`;
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      expect(await inviteMenuItems(user)).toEqual(["Invite by email", "Feishu invites"]);
+    });
+
+    it("is absent for plain members", () => {
+      data.larkStatus = { enabled: true };
+      data.members = [
+        member("user-1", "Ada Lovelace", "member"),
+        member("user-2", "Grace Hopper", "owner"),
+      ];
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.queryByRole("button", { name: "Invite" })).toBeNull();
+    });
+
+    it("opens the Feishu send dialog", async () => {
+      data.larkStatus = { enabled: true };
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      await openInviteMenuItem(user, "Feishu invites");
+
+      expect(await screen.findByRole("dialog", { name: "Send Feishu invite" })).toBeInTheDocument();
+    });
+  });
+
+  describe("empty lists", () => {
+    it("offers the email invite from the empty pending list", async () => {
+      data.invitations = [];
+      url.set("tab=members&section=invitations");
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      expect(screen.getByText("No pending invitations.")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Invite by email" }));
+
+      expect(await screen.findByRole("dialog", { name: "Invite by email" })).toBeInTheDocument();
+    });
+
+    it("offers link creation from the empty share-link list", async () => {
+      url.set("tab=members&section=links");
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      await user.click(screen.getByRole("button", { name: "Create share link" }));
+
+      expect(await screen.findByRole("dialog", { name: "Create share link" })).toBeInTheDocument();
+    });
+  });
+
+  describe("share links", () => {
+    const link = {
+      id: "link-1",
+      workspace_id: "ws-1",
+      code: "abc123",
+      role: "member",
+      max_uses: null,
+      use_count: 2,
+      expires_at: null,
+      created_at: "2025-03-01T00:00:00Z",
+    };
+
+    it("shows the new link with a copy button instead of closing", async () => {
+      shareable.url = (path) => `https://app.example.com${path}`;
+      mockApi.createShareLink.mockResolvedValue({ ...link, role: "admin" });
+      const user = userEvent.setup();
+      // user-event installs its own clipboard on setup, so the spy goes on after it.
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+      Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+      renderWithI18n(<MembersTab />);
+
+      await openInviteMenuItem(user, "Share links");
+      const dialog = await screen.findByRole("dialog", { name: "Create share link" });
+      await user.click(within(dialog).getByRole("radio", { name: "Admin" }));
+      await user.click(within(dialog).getByRole("radio", { name: "30 days" }));
+      await user.click(within(dialog).getByRole("button", { name: "Generate link" }));
+
+      await waitFor(() =>
+        expect(mockApi.createShareLink).toHaveBeenCalledWith("ws-1", { role: "admin", expires_in: 720 }),
+      );
+      expect(
+        await within(dialog).findByText("https://app.example.com/join?code=abc123"),
+      ).toBeInTheDocument();
+      expect(within(dialog).getByText("Role after joining: Admin · Valid for: 30 days")).toBeInTheDocument();
+
+      await user.click(within(dialog).getByRole("button", { name: "Copy link" }));
+      expect(writeText).toHaveBeenCalledWith("https://app.example.com/join?code=abc123");
+      expect(within(dialog).getByRole("button", { name: "Copy link" })).toHaveTextContent("Copied");
+
+      await user.click(within(dialog).getByRole("button", { name: "Done" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    });
+
+    it("asks before revoking a link", async () => {
+      data.shareLinks = [link];
+      mockApi.revokeShareLink.mockResolvedValue(undefined);
+      url.set("tab=members&section=links");
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      await user.click(screen.getByRole("button", { name: "Revoke link" }));
+      const confirm = await screen.findByRole("alertdialog", { name: "Revoke share link?" });
+      expect(mockApi.revokeShareLink).not.toHaveBeenCalled();
+
+      await user.click(within(confirm).getByRole("button", { name: "Revoke" }));
+      await waitFor(() => expect(mockApi.revokeShareLink).toHaveBeenCalledWith("ws-1", "link-1"));
+    });
+
+    it("keeps the link when the revoke is cancelled", async () => {
+      data.shareLinks = [link];
+      url.set("tab=members&section=links");
+      const user = userEvent.setup();
+      renderWithI18n(<MembersTab />);
+
+      await user.click(screen.getByRole("button", { name: "Revoke link" }));
+      const confirm = await screen.findByRole("alertdialog", { name: "Revoke share link?" });
+      await user.click(within(confirm).getByRole("button", { name: "Cancel" }));
+
+      await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+      expect(mockApi.revokeShareLink).not.toHaveBeenCalled();
+    });
   });
 
   it("links seat usage to billing when subscriptions are on", () => {
@@ -264,7 +429,7 @@ describe("MembersTab", () => {
     renderWithI18n(<MembersTab />);
 
     expect(screen.getByRole("note")).toHaveTextContent("Ask Grace Hopper");
-    expect(screen.queryByRole("button", { name: "Invite member" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Invite" })).toBeNull();
     expect(screen.queryByRole("tab", { name: /Share links/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
   });
@@ -278,7 +443,7 @@ describe("MembersTab", () => {
     expect(screen.queryByRole("tab", { name: /Share links/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Create share link" })).toBeNull();
     // 邮件邀请不受影响，深链指向的分享链接页回到成员列表。
-    expect(screen.getByRole("button", { name: "Invite member" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Invite" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Members\s*3/ })).toHaveAttribute("aria-selected", "true");
   });
 
@@ -385,30 +550,27 @@ describe("MembersTab", () => {
       expect(screen.getByRole("tab", { name: /Feishu invites/ })).toBeInTheDocument();
     });
 
-    it("lists the invites under the tab, keeps it in the URL and offers the send button there only", async () => {
+    it("lists the invites under the tab and keeps it in the URL", async () => {
       data.larkStatus = { enabled: true };
       data.larkInvites = [larkInvite("a", "active")];
       const user = userEvent.setup();
       renderWithI18n(<MembersTab />);
 
-      expect(screen.queryByRole("button", { name: "Send Feishu invite" })).toBeNull();
       await user.click(screen.getByRole("tab", { name: /Feishu invites/ }));
 
       expect(url.get()).toBe("tab=members&section=lark");
       expect(await screen.findByText("Group a")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Send Feishu invite" })).toBeInTheDocument();
-
-      await user.click(screen.getByRole("tab", { name: /Members\s*3/ }));
+      // 有邀请时发送入口只在标题旁的“邀请”菜单里。
       expect(screen.queryByRole("button", { name: "Send Feishu invite" })).toBeNull();
     });
 
-    it("opens the send dialog from the toolbar button", async () => {
+    it("opens the send dialog from the empty list", async () => {
       data.larkStatus = { enabled: true };
       url.set("tab=members&section=lark");
       const user = userEvent.setup();
       renderWithI18n(<MembersTab />);
 
-      await user.click(screen.getByRole("button", { name: "Send Feishu invite" }));
+      await user.click(await screen.findByRole("button", { name: "Send Feishu invite" }));
 
       expect(await screen.findByRole("dialog", { name: "Send Feishu invite" })).toBeInTheDocument();
     });

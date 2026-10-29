@@ -4,12 +4,12 @@ import { RedirectIfAuthenticated } from "@/features/landing/components/redirect-
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Marvis — Project Management for Human + Agent Teams",
+    absolute: "Marvis",
   },
   description:
     "Source-available platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills.",
   openGraph: {
-    title: "Marvis — Project Management for Human + Agent Teams",
+    title: "Marvis",
     description:
       "Manage your human + agent workforce in one place.",
     url: "/",

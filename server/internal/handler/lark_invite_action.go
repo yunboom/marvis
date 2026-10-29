@@ -40,7 +40,7 @@ const (
 	larkInviteMsgNotInvitee          = "此邀请仅限受邀人使用"
 	larkInviteMsgNoEmail             = "飞书账号没有邮箱，无法加入"
 	larkInviteMsgSignupProhibited    = "当前服务器不允许注册新账号"
-	larkInviteMsgNotInAppScope       = "你不在 Marvis 应用的可用范围内，请联系管理员"
+	larkInviteMsgNotInAppScope       = "你不在 " + larkInviteBotName + " 的可用范围内，请联系管理员"
 	larkInviteMsgUserNotFound        = "未找到你的飞书账号信息，请联系管理员"
 	larkInviteMsgAccountDisabled     = "账号已停用，请联系管理员"
 	larkInviteMsgFailed              = "加入失败，请稍后重试"
@@ -523,10 +523,10 @@ func (h *Handler) patchLarkInviteCardAsync(ctx context.Context, inviteID pgtype.
 	}
 
 	patcher := larkInviteCardPatcher{
-		api:         h.LarkInviteAPI,
-		creds:       h.LarkInviteCreds,
-		queries:     h.Queries,
-		downloadURL: h.LarkInviteDownloadURL,
+		api:     h.LarkInviteAPI,
+		creds:   h.LarkInviteCreds,
+		queries: h.Queries,
+		links:   h.larkInviteCardLinks(names),
 	}
 	patchCtx := context.WithoutCancel(ctx)
 
@@ -548,10 +548,10 @@ func (h *Handler) patchLarkInviteCardAsync(ctx context.Context, inviteID pgtype.
 
 // larkInviteCardPatcher 是异步更新卡片用到的依赖，在回调的 goroutine 里从 Handler 取出。
 type larkInviteCardPatcher struct {
-	api         lark.InviteAPIClient
-	creds       lark.InstallationCredentials
-	queries     *db.Queries
-	downloadURL string
+	api     lark.InviteAPIClient
+	creds   lark.InstallationCredentials
+	queries *db.Queries
+	links   larkInviteCardLinks
 }
 
 // patchLatest 重新读取邀请，按最新状态更新卡片：撤销或过期时改成失效卡片，否则改成邀请中卡片和当前的已加入人数。
@@ -563,7 +563,10 @@ func (p larkInviteCardPatcher) patchLatest(ctx context.Context, inviteID pgtype.
 		return err
 	}
 
-	view := larkInviteLatestCardView(inv, names, p.downloadURL, time.Now())
+	view := larkInviteLatestCardView(inv, names, p.links, time.Now())
+	if err := p.loadJoinedFaces(ctx, &view, inviteID); err != nil {
+		return err
+	}
 	if err := patchLarkInviteCard(ctx, p.api, p.creds, inviteID, messageID, view); err != nil {
 		return err
 	}
@@ -576,12 +579,34 @@ func (p larkInviteCardPatcher) patchLatest(ctx context.Context, inviteID pgtype.
 		return err
 	}
 
-	recheck := larkInviteLatestCardView(latest, names, p.downloadURL, time.Now())
+	recheck := larkInviteLatestCardView(latest, names, p.links, time.Now())
 	if recheck.State != larkInviteCardInvalid {
 		return nil
 	}
 
 	return patchLarkInviteCard(ctx, p.api, p.creds, inviteID, messageID, recheck)
+}
+
+// loadJoinedFaces 为邀请中的群卡片读取已加入的人的 open_id，“已加入”行据此显示头像。
+// 加入记录按加入时间倒序，最多取 larkInviteCardMaxJoinedFaces 个。
+func (p larkInviteCardPatcher) loadJoinedFaces(ctx context.Context, view *larkInviteCardView, inviteID pgtype.UUID) error {
+	if view.State != larkInviteCardActive || !view.IsGroup || view.JoinedCount == 0 {
+		return nil
+	}
+
+	joins, err := p.queries.ListLarkInviteJoinsByInviteIDs(ctx, []pgtype.UUID{inviteID})
+	if err != nil {
+		return errors.Wrapf(err, "list lark invite joins for card patch invite_id=%s", uuidToString(inviteID))
+	}
+
+	joins = joins[:min(len(joins), larkInviteCardMaxJoinedFaces)]
+	ids := make([]string, 0, len(joins))
+	for _, j := range joins {
+		ids = append(ids, j.LarkOpenID)
+	}
+	view.JoinedOpenIDs = ids
+
+	return nil
 }
 
 // reload 读取邀请的最新状态，邀请已不存在时 found 为 false。

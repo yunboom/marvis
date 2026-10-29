@@ -154,6 +154,10 @@ export function BuilderConversation({
   draftKey: draftKeyOverride,
   transformContent = stripBuilderDraft,
   emptyState,
+  showHeader = true,
+  notice,
+  disabledPlaceholder,
+  composerToolbar,
 }: {
   sessionId: string;
   messages: ChatMessage[];
@@ -179,6 +183,14 @@ export function BuilderConversation({
   transformContent?: (content: string) => string;
   /** Replaces the agent builder's empty state before the first message. */
   emptyState?: ReactNode;
+  /** False when the page header already shows the title and runtime state. */
+  showHeader?: boolean;
+  /** Rendered above the composer: why it is disabled and what to do next. */
+  notice?: ReactNode;
+  /** Composer placeholder while the runtime cannot answer. */
+  disabledPlaceholder?: string;
+  /** Controls on a toolbar row under the composer (the runtime and model). */
+  composerToolbar?: ReactNode;
 }) {
   const { t } = useT("agents");
   const { t: tModals } = useT("modals");
@@ -195,23 +207,25 @@ export function BuilderConversation({
     // `@container`: this is one column of the studio's split layout, so the
     // shared chat gutter must size against the column, not the viewport.
     <section className="flex h-full min-h-0 flex-col bg-background @container">
-      <header className="flex min-h-14 shrink-0 items-center justify-between gap-4 border-b px-5 py-2.5">
-        <div className="min-w-0">
-          <h2 className="truncate text-body font-semibold">{chatTitle}</h2>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5 text-caption text-muted-foreground">
-          <span
-            className={cn(
-              "size-2 rounded-full",
-              runtimeOnline ? "bg-success" : "bg-muted-foreground/40",
-            )}
-            aria-hidden="true"
-          />
-          {runtimeOnline
-            ? t(($) => $.creation_studio.builder.runtime_online)
-            : t(($) => $.creation_studio.builder.runtime_offline)}
-        </div>
-      </header>
+      {showHeader && (
+        <header className="flex min-h-14 shrink-0 items-center justify-between gap-4 border-b px-5 py-2.5">
+          <div className="min-w-0">
+            <h2 className="truncate text-body font-semibold">{chatTitle}</h2>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5 text-caption text-muted-foreground">
+            <span
+              className={cn(
+                "size-2 rounded-full",
+                runtimeOnline ? "bg-success" : "bg-muted-foreground/40",
+              )}
+              aria-hidden="true"
+            />
+            {runtimeOnline
+              ? t(($) => $.creation_studio.builder.runtime_online)
+              : t(($) => $.creation_studio.builder.runtime_offline)}
+          </div>
+        </header>
+      )}
 
       {loading ? (
         <ChatMessageSkeleton />
@@ -251,6 +265,8 @@ export function BuilderConversation({
         </div>
       )}
 
+      {notice ? <div className={cn("mb-3", CHAT_GUTTER)}>{notice}</div> : null}
+
       {error ? (
         <div className={cn("mb-3", CHAT_GUTTER)}>
           <div
@@ -285,6 +301,9 @@ export function BuilderConversation({
         onStop={onStop}
         isRunning={pending}
         disabled={!runtimeOnline}
+        disabledPlaceholder={disabledPlaceholder}
+        leftAdornment={composerToolbar}
+        stackedToolbar={!!composerToolbar}
         agentName={chatTitle}
         draftKeyOverride={draftKey}
         editorKeyOverride={draftKey}

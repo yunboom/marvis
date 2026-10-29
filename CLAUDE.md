@@ -9,6 +9,10 @@
 - `origin` = `git@github.com:yunboom/marvis.git`（本 fork，https://github.com/yunboom/marvis ，提交和推送到这里）
 - `upstream` = `https://github.com/multica-ai/multica.git`（上游，只拉取）
 
+## 提交前验证
+
+CI 按路径只跑改动相关的作业（`.github/ci-paths.json`），main 上没被触发的作业可能早就红了，一旦改到那片路径才暴露，还会挡住生产部署。所以提 PR 前跑 `make check`：它和 CI 的前端质量检查（wildcard 导出、圆角 token）、lint、类型检查、单测、Go 测试、E2E 一致；不要只跑改动相关的几个测试就推。
+
 ## 决策一：品牌全量改名 Multica → Marvis
 
 - 范围是全部被 git 跟踪的文本和路径：代码标识符、注释、文案、文档、CLI 命令（`marvis`）、Go module（`github.com/yunboom/marvis/server`）、npm scope（`@marvis/*`）、环境变量（`MARVIS_*`）、docker compose 项目名、外部域名（`multica.ai` → `marvis.ai`）。本地项目目录也叫 `marvis`。
@@ -27,13 +31,14 @@
 ## 决策二：视觉与交互照搬 Marvis.app
 
 - 设计 token（`packages/ui/styles/tokens.css`）：纯中性灰阶、`#f7f7f7` 外壳、`#0f0f0f` 主色、`#7b4835` 品牌色、`0.75rem` 基础圆角、Marvis 阴影；颜色写成等价的 `oklch()`（UI Lab 只认这种格式）。
+- 圆角（`tokens.css` 的 `--radius-*`）：除 `xs`…`4xl` 阶梯外，Marvis 的角色圆角是固定值：头像 `avatar` 28%、小卡片与图标块 `tile` 10px、看板泳道 `lane` 16px、大面板 `pane` 20px、输入框外壳 `composer` 22px、单行聊天输入框 `composer-pill` 26px、行 `row` 8px、弹窗 `dialog` 20px。新代码用这些名字，不写任意值；`scripts/check-ui-radius-tokens.mjs` 会拦，新增角色要同步登记到 `packages/ui/lib/utils.ts` 的 tailwind-merge 配置。
 - 偏离 Marvis 的地方：次要文字 `--muted-foreground` 用 `#666`、`--faint-foreground` 用 `#888`（Marvis 原值 45% 黑达不到 WCAG AA，`apps/web/app/text-contrast.test.ts` 会拦）；hover/selected 等填充色用不透明等效值（sticky 表头不能透出内容）。
 - 动效（`packages/ui/styles/base.css`）：菜单 `menu-unfold`（scaleY .8→1，150ms ease-out）、弹层 `popover-pop-in`（scale .92→1）、弹窗 50ms 纯淡入、Tooltip 200ms 淡入、logo `logo-intro`、`spring-rise`。
 - 共享组件（`packages/ui/components/ui/` 下 button、dialog、alert-dialog、sheet、dropdown-menu、context-menu、select、popover、hover-card、tooltip、input、textarea、tabs、sidebar）：药丸按钮、填充式输入框、36px 菜单项、分段式 Tabs。
 - 字体栈 PingFang SC / Noto Sans SC 优先（`apps/web/app/globals.css`、`apps/desktop/src/renderer/src/globals.css`）。
 - Logo：`packages/ui/components/common/marvis-icon.tsx`（圆角方块 + 镂空 "M"），docs 站、移动端、favicon、桌面/PWA/移动端图标已同步；应用侧栏顶部显示 logo + "Marvis" 字标（`marvis-wordmark.tsx`，Marvis.app 的 SVG 字标）；侧栏默认宽 216px。
 - 状态与优先级色（`tokens.css` 的 `--status-*`、`--priority-*`）：状态用国画颜料（淡墨、藤黄、花青、石绿、朱砂），优先级是小圆点（紧急 / 高 / 中实心，低空心，无优先级是低的空心圈加斜线；创建任务工具栏的 ghost 药丸里放大到与状态圈同大）；浅色值对白底和 `#f7f7f7` 都要保持 3:1。自定义状态 / 标签色板是 `color-picker.tsx` 的 10 色国画色板。
-- 侧栏（`app-sidebar.tsx`）：新建任务是 logo 行右侧的加号按钮，不占导航行；收件箱不在导航里，改名「消息」，入口是工作区行右侧的铃铛（当前工作区有未读时显示红点），点开是 `MessageBox` 弹窗（`inbox/components/message-box.tsx`，内容就是 `InboxPage surface="dialog"`，选中项不写 URL）；`/inbox` 路由和 `?issue=` 深链保留为完整页面；「聊天」中文叫「我的对话」；工作区头像是黑底白字圆角方块（`workspace-avatar.tsx`）。同步上游时侧栏和 `inbox-page.tsx` 易冲突：保留这套入口，合入上游新增的行为。
+- 侧栏（`app-sidebar.tsx`）：新建任务是 logo 行右侧的加号按钮，不占导航行；收件箱不在导航里，改名「消息」，入口是工作区行右侧的铃铛（当前工作区有未读时显示红点），点开是 `MessageBox` 弹窗（`inbox/components/message-box.tsx`，内容就是 `InboxPage surface="dialog"`，选中项不写 URL）；`/inbox` 路由和 `?issue=` 深链保留为完整页面；「聊天」中文叫「我的对话」；底部工作区切换按钮显示登录人头像加工作区名，下拉列表里的工作区仍用黑底白字圆角方块（`workspace-avatar.tsx`）。同步上游时侧栏和 `inbox-page.tsx` 易冲突：保留这套入口，合入上游新增的行为。
 - 头像统一浅灰底黑字，成员圆形、智能体和小队圆角方形（`actor-avatar.tsx`）；智能体运行用绿色呼吸灯（`breathing-dot.tsx`、`base.css` 的 `animate-breathe`）。
 - 看板按状态分组时是四列泳道（未开始 / 工作中 / 需介入 / 已结束，按 `status_group` 分列，见决策六；`board-status-columns.ts`、`status-lane-board.tsx`）；泳道视图同样是这四列，每个格子直接渲染看板的 `StatusLane`，只是多了按负责人 / 项目 / 父任务分行（`swimlane-view.tsx`）；新建任务弹窗用「手动创建 / 智能体创建」标签和墨色 `BorderBeam variant="ink"`。同步上游时这些文件冲突，保留本 fork 的样式，只合入上游新增的行为。
 
@@ -80,12 +85,12 @@
 
 web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由构建参数 `NEXT_PUBLIC_BASE_PATH` 控制，不设时与上游一致；后端始终在根路径，不感知前缀。部署方法见 `SELF_HOSTING_ADVANCED.md` 的 Path Prefix 一节。
 
-- web：`apps/web/config/base-path.ts` 的 `BASE_PATH`，用于 Next 不会自动加前缀的地方：浏览器 API / WS 默认地址（`web-providers.tsx`）、OAuth 回调地址、导航适配器的 `getShareableUrl` 与新标签页、manifest 与图标、favicon 跳转、docs 转发（`runtime-urls.ts`）。
+- web：`apps/web/config/base-path.ts` 的 `BASE_PATH`，用于 Next 不会自动加前缀的地方：浏览器 API / WS 默认地址（`web-providers.tsx`）、OAuth 回调地址、导航适配器的 `getShareableUrl` 与新标签页、manifest 与图标、favicon 跳转、docs 转发（`runtime-urls.ts`）、`next/image` 的字符串 `src`（不加前缀时图片优化接口返回 400）。
 - views：`useAppOrigin` 返回带路径前缀的基地址，`link-handler.ts` 识别站内链接时去掉前缀；裸 `<a href="/download">` 改用 `getShareableUrl`。
 - docs：`apps/docs/lib/base-path.ts` 与 `next.config.mjs` 的 basePath 为 `${前缀}/docs`；`Dockerfile.docs`，compose 的 `docs` 服务在 `docs` profile 下。
 - 桌面端：服务器地址保留路径（`normalizeServerAddress`），`probeServer` 从完整路径逐级向上探测 `/api/config`，粘贴页面地址也能找到前缀。
 - compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`；`turbo.json` 的 `globalEnv` 登记了 `NEXT_PUBLIC_BASE_PATH`。
-- 生产部署：`make deploy-prod` 经跳板机部署 origin/main 到 prototype，只允许 main 且 CI 通过，见 `scripts/deploy/README.md`。
+- 生产部署：`make deploy-prod` 经跳板机部署 origin/main 到 prototype，只允许 main 且 CI 的测试与构建作业通过；镜像由 `prod-images.yml` 在 GitHub Actions 构建（prototype 的 CentOS 7 内核下 Node 22 的 `pnpm install` 会 EPERM），服务器只拉取；生产配置是本地主工作区的 `.env.prod`，见 `scripts/deploy/README.md`。
 - 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`。
 
 ## 决策九：会话来源 chat_session.source（fork 独有）
@@ -96,6 +101,15 @@ web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由
 - 写入：`CreateChatSession` 必须传 `Source`；`createKbJobRows`、`ensureAutopilotRunChatSession`、`CreateKbBuilderSession`、`CreateAgentBuilderSession` 各写自己的值，其余路径写 `chat`。
 - 读取：聊天列表与未读（`ListChatSessionsByCreator`、`ListAllChatSessionsByCreator`）、运行中指示（`ListPendingChatTasksByCreator`、`HasPendingChatTasksByCreator`）、Mika 会话查找、工作区聊天列表（`ListKbWorkspaceChatSessions`）只读 `chat`；可收录的聊天来源（`ListKbSources`）读 `chat` 和 `autopilot_run`；草稿恢复按 `autopilot_run` 判断共享会话。智能体可见性过滤（`kind = 'user'`）保留不动。`chat_session_source_guard_test.go` 检查这些查询。
 - 同步上游时：上游新增的聊天列表类查询加 `source = 'chat'`（以 sqlc 参数传常量）；上游新增的建会话路径必须传 `Source`；不要恢复按 `kb_job` / `autopilot_run` 的 `NOT EXISTS` 排除。
+
+## 决策十：版本号从 v0.0.1 重新开始（fork 独有）
+
+Marvis 首次上线前没有用户，版本号与上游脱钩，从 `v0.0.1` 起按自己的节奏递增；上游的 tag 与发布记录不进本仓库。
+
+- 版本号来自 tag（release 工作流的 `${TAG#v}`、桌面端 `git describe --match 'v[0-9]*'`），本仓库只保留自己发的 `v*` tag 和 `pg-*`；本地 `remote.upstream.tagOpt=--no-tags`，同步上游不拉 tag。
+- 更新日志（`apps/web/features/landing/i18n/*.ts` 的 `changelog.entries`）从 v0.0.1 记起。
+- Marvis CLI 的版本门槛统一以我们自己的版本为准：`server/pkg/agent/version.go` 的 `Min*CLIVersion`、`server/internal/daemon/health.go` 的 `repoCheckoutMinCLIVersion`、`packages/core/runtimes/cli-version.ts` 的 `MIN_*_CLI_VERSION` 目前都是 0.0.1。第三方工具（codex、kimi、pi 等）的版本门槛与此无关。
+- 同步上游时：上游新增的更新日志条目不合入；上游新增或调高的 Marvis CLI 版本门槛改成「首个包含该能力的 Marvis 版本」（合并时尚未发布就填下一个版本号），不要保留上游的版本号。
 
 ## 同步上游流程
 

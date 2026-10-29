@@ -100,6 +100,11 @@ async function selectChats(user: ReturnType<typeof userEvent.setup>, ...names: s
   }
 }
 
+// 邀请设置默认折叠成一行摘要，改设置前先展开。
+async function openSettings(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: /^Invite settings/ }));
+}
+
 async function addEmail(user: ReturnType<typeof userEvent.setup>, email: string) {
   const input = screen.getByRole("textbox", { name: "Email" });
   await user.type(input, `${email}{Enter}`);
@@ -199,10 +204,9 @@ describe("LarkInviteSendDialog groups", () => {
 
     await selectChats(user, "Group 1");
 
-    await user.click(screen.getByRole("combobox", { name: "Role after joining" }));
-    await user.click(await screen.findByRole("option", { name: "Admin" }));
-    await user.click(screen.getByRole("combobox", { name: "Valid for" }));
-    await user.click(await screen.findByRole("option", { name: "30 days" }));
+    await openSettings(user);
+    await user.click(screen.getByRole("radio", { name: "Admin" }));
+    await user.click(screen.getByRole("radio", { name: "30 days" }));
     await user.type(screen.getByRole("spinbutton", { name: "Member limit" }), "20");
     await user.type(screen.getByRole("textbox", { name: "Note" }), "Welcome aboard");
     await user.click(screen.getByRole("button", { name: "Send to 1 group" }));
@@ -220,7 +224,9 @@ describe("LarkInviteSendDialog groups", () => {
   });
 
   it("limits the note to 200 characters", async () => {
+    const user = userEvent.setup();
     mount();
+    await openSettings(user);
     expect(screen.getByRole("textbox", { name: "Note" })).toHaveAttribute("maxlength", "200");
   });
 
@@ -228,6 +234,7 @@ describe("LarkInviteSendDialog groups", () => {
     const user = userEvent.setup();
     mount();
     await selectChats(user, "Group 1");
+    await openSettings(user);
     const limit = screen.getByRole("spinbutton", { name: "Member limit" });
     const send = screen.getByRole("button", { name: "Send to 1 group" });
 
@@ -247,11 +254,12 @@ describe("LarkInviteSendDialog groups", () => {
   it("only offers the member limit on the groups tab", async () => {
     const user = userEvent.setup();
     mount();
+    await openSettings(user);
 
     expect(screen.getByRole("spinbutton", { name: "Member limit" })).toBeInTheDocument();
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
     expect(screen.queryByRole("spinbutton", { name: "Member limit" })).toBeNull();
-    await user.click(screen.getByRole("tab", { name: "Groups" }));
+    await user.click(screen.getByRole("tab", { name: /^Groups/ }));
     expect(screen.getByRole("spinbutton", { name: "Member limit" })).toBeInTheDocument();
   });
 
@@ -317,7 +325,7 @@ describe("LarkInviteSendDialog people", () => {
     mockApi.sendLarkInvites.mockResolvedValue([sent("ada@acme.dev", "Ada Lovelace", "user")]);
     mount();
 
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
     await addEmail(user, "ada@acme.dev");
     await addEmail(user, "ghost@acme.dev");
 
@@ -332,9 +340,7 @@ describe("LarkInviteSendDialog people", () => {
     const missing = await screen.findByTestId("lark-email-chip-ghost@acme.dev");
     expect(missing).toHaveAttribute("data-state", "unavailable");
     expect(missing.className).toMatch(/destructive/);
-    expect(
-      screen.getByText("ghost@acme.dev is not in Feishu and will be skipped."),
-    ).toBeInTheDocument();
+    expect(within(missing).getByText("Not in Feishu, will be skipped")).toBeInTheDocument();
 
     // 只有查到的邮箱计入人数，也只有它进提交参数。
     const send = screen.getByRole("button", { name: "Send to 1 person" });
@@ -353,7 +359,7 @@ describe("LarkInviteSendDialog people", () => {
   it("does not look up the same email twice and normalizes its case", async () => {
     const user = userEvent.setup();
     mount();
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
 
     await addEmail(user, "Ada@Acme.dev");
     await addEmail(user, "ada@acme.dev");
@@ -366,7 +372,7 @@ describe("LarkInviteSendDialog people", () => {
   it("rejects text that is not an email without calling the server", async () => {
     const user = userEvent.setup();
     mount();
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
 
     await addEmail(user, "not-an-email");
 
@@ -381,20 +387,20 @@ describe("LarkInviteSendDialog people", () => {
       new ApiError("outside scope", 404, "Not Found", { error: "outside scope", code: "user_not_in_app_scope" }),
     );
     mount();
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
 
     await addEmail(user, "far@acme.dev");
 
     const chip = await screen.findByTestId("lark-email-chip-far@acme.dev");
     expect(chip).toHaveAttribute("data-state", "unavailable");
-    expect(screen.getByText("This person is outside the app's availability scope")).toBeInTheDocument();
+    expect(within(chip).getByText("Outside Marvis Workbench’s availability scope")).toBeInTheDocument();
   });
 
   it("keeps the typed email and reports an unexpected lookup failure", async () => {
     const user = userEvent.setup();
     mockApi.lookupLarkUser.mockRejectedValue(new Error("network down"));
     mount();
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
 
     await addEmail(user, "ada@acme.dev");
 
@@ -406,7 +412,7 @@ describe("LarkInviteSendDialog people", () => {
   it("removes a chip", async () => {
     const user = userEvent.setup();
     mount();
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
     await addEmail(user, "ada@acme.dev");
     await screen.findByTestId("lark-email-chip-ada@acme.dev");
 
@@ -422,7 +428,7 @@ describe("LarkInviteSendDialog people", () => {
     mount();
 
     await selectChats(user, "Group 1");
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
     await addEmail(user, "ada@acme.dev");
     await screen.findByTestId("lark-email-chip-ada@acme.dev");
     await user.click(screen.getByRole("button", { name: "Send to 1 person" }));
@@ -434,7 +440,7 @@ describe("LarkInviteSendDialog people", () => {
 });
 
 describe("LarkInviteSendDialog results", () => {
-  it("lists every failed receiver with its mapped reason and keeps the dialog open", async () => {
+  it("switches to a result screen with the sent summary and every failed receiver", async () => {
     const user = userEvent.setup();
     mockApi.sendLarkInvites.mockResolvedValue([
       sent("oc_1", "Group 1"),
@@ -448,18 +454,23 @@ describe("LarkInviteSendDialog results", () => {
     await user.click(screen.getByRole("button", { name: "Send to 3 groups" }));
 
     const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("2 not sent")).toBeInTheDocument();
     expect(within(alert).getByText("Group 2")).toBeInTheDocument();
-    expect(within(alert).getByText("The Marvis bot is not in this group")).toBeInTheDocument();
+    expect(within(alert).getByText("Marvis Workbench is not in this group")).toBeInTheDocument();
     expect(within(alert).getByText("Design")).toBeInTheDocument();
     expect(within(alert).getByText("Sending failed")).toBeInTheDocument();
     expect(within(alert).queryByText("Group 1")).toBeNull();
     expect(within(alert).queryByText(/server text/)).toBeNull();
 
-    expect(toast.success).toHaveBeenCalledWith("1 card sent");
+    // 已发出的写在结果页上，不再另弹 toast。
+    expect(screen.getByText("1 card sent")).toBeInTheDocument();
+    expect(screen.getByText("Group 1")).toBeInTheDocument();
+    expect(toast.success).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["workspaces", "ws-1", "lark-invites"] });
 
-    // 已发送的群从选择里去掉，重试只发失败的。
+    // 返回修改后，已发送的群从选择里去掉，重试只发失败的。
+    await user.click(screen.getByRole("button", { name: "Back to edit" }));
     expect(screen.getByRole("button", { name: "Send to 2 groups" })).toBeEnabled();
     expect(screen.getByRole("checkbox", { name: /^Group 1/ })).toHaveAttribute("aria-checked", "false");
   });
@@ -475,6 +486,7 @@ describe("LarkInviteSendDialog results", () => {
     await selectChats(user, "Group 1", "Group 2");
     await user.click(screen.getByRole("button", { name: "Send to 2 groups" }));
     // 重试只发失败的群，沿用这次打开弹窗时生成的键，服务端据此避免重复发卡片。
+    await user.click(await screen.findByRole("button", { name: "Back to edit" }));
     await user.click(await screen.findByRole("button", { name: "Send to 1 group" }));
     await waitFor(() => expect(mockApi.sendLarkInvites).toHaveBeenCalledTimes(2));
 
@@ -507,6 +519,7 @@ describe("LarkInviteSendDialog results", () => {
     await user.click(screen.getByRole("button", { name: "Send to 1 group" }));
 
     expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(screen.queryByText(/card sent|cards sent/)).toBeNull();
     expect(toast.success).not.toHaveBeenCalled();
   });
 
@@ -516,14 +529,14 @@ describe("LarkInviteSendDialog results", () => {
       failed("ada@acme.dev", "ada@acme.dev", "user_not_in_app_scope", "user"),
     ]);
     mount();
-    await user.click(screen.getByRole("tab", { name: "People" }));
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
     await addEmail(user, "ada@acme.dev");
     await screen.findByTestId("lark-email-chip-ada@acme.dev");
     await user.click(screen.getByRole("button", { name: "Send to 1 person" }));
 
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText("ada@acme.dev")).toBeInTheDocument();
-    expect(within(alert).getByText("This person is outside the app's availability scope")).toBeInTheDocument();
+    expect(within(alert).getByText("Outside Marvis Workbench’s availability scope")).toBeInTheDocument();
   });
 
   it("treats an empty result list as submitted instead of nothing sent", async () => {
@@ -586,24 +599,74 @@ describe("LarkInviteSendDialog results", () => {
   });
 });
 
-describe("LarkInviteSendDialog preview", () => {
-  it("mirrors the card with the inviter, workspace, note, role and expiry", async () => {
+describe("LarkInviteSendDialog layout", () => {
+  it("has no card preview", () => {
+    mount();
+    expect(screen.queryByRole("region", { name: "Card preview" })).toBeNull();
+    expect(screen.queryByText("Join workspace")).toBeNull();
+  });
+
+  it("collapses the settings into a summary that follows the choices", async () => {
     const user = userEvent.setup();
     mount();
 
-    const preview = screen.getByRole("region", { name: "Card preview" });
-    expect(within(preview).getByText("Workspace invite")).toBeInTheDocument();
-    expect(within(preview).getByText("Ada Lovelace invites you to the workspace Acme")).toBeInTheDocument();
-    expect(within(preview).getByText("Join workspace")).toBeInTheDocument();
-    expect(within(preview).getByText(/Role/)).toHaveTextContent("Member");
+    const toggle = screen.getByRole("button", { name: /^Invite settings/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveTextContent("Member · Valid for 7 days · No member limit");
+    expect(screen.queryByRole("radio", { name: "Admin" })).toBeNull();
 
-    await user.type(screen.getByRole("textbox", { name: "Note" }), "See you there");
-    expect(within(preview).getByText("“See you there”")).toBeInTheDocument();
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await user.click(screen.getByRole("radio", { name: "Admin" }));
+    await user.click(screen.getByRole("radio", { name: "30 days" }));
+    await user.type(screen.getByRole("spinbutton", { name: "Member limit" }), "20");
+    await user.type(screen.getByRole("textbox", { name: "Note" }), "Hi");
+    expect(screen.getByText("2 / 200")).toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveTextContent("Admin · Valid for 30 days · Up to 20 members · With note");
+
+    // 个人邀请没有人数上限，摘要里也不提。
+    await user.click(screen.getByRole("tab", { name: /^People/ }));
+    expect(toggle).toHaveTextContent("Admin · Valid for 30 days · With note");
+  });
+
+  it("keeps the settings open while the member limit is invalid", async () => {
+    const user = userEvent.setup();
+    mount();
+
+    await openSettings(user);
+    await user.type(screen.getByRole("spinbutton", { name: "Member limit" }), "0");
+    await user.click(screen.getByRole("button", { name: /^Invite settings/ }));
+
+    expect(screen.getByRole("spinbutton", { name: "Member limit" })).toBeInTheDocument();
+  });
+
+  it("counts the chosen receivers on each switch", async () => {
+    const user = userEvent.setup();
+    mount();
+
+    await selectChats(user, "Group 1", "Group 2");
+    expect(screen.getByRole("tab", { name: /^Groups/ })).toHaveTextContent("Groups2");
+    expect(screen.getByRole("tab", { name: /^People/ })).toHaveTextContent("People0");
+  });
+
+  it("closes from the result screen", async () => {
+    const user = userEvent.setup();
+    mockApi.sendLarkInvites.mockResolvedValue([failed("oc_1", "Group 1", "send_failed")]);
+    const { onOpenChange } = mount();
+
+    await selectChats(user, "Group 1");
+    await user.click(screen.getByRole("button", { name: "Send to 1 group" }));
+    await user.click(await screen.findByRole("button", { name: "Done" }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it("states that the card is sent as the bot", () => {
     mount();
-    expect(screen.getByText("Sent as the Marvis bot")).toBeInTheDocument();
+    expect(screen.getByText("Sent as Marvis Workbench")).toBeInTheDocument();
   });
 
   it("renders the Chinese copy", async () => {
@@ -616,10 +679,11 @@ describe("LarkInviteSendDialog preview", () => {
     );
 
     expect(screen.getByRole("heading", { name: "发送飞书邀请" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "群聊" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "个人" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^群聊/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /^个人/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "发送到 0 个群" })).toBeInTheDocument();
-    expect(screen.getByText("以 Marvis 机器人的名义发送")).toBeInTheDocument();
+    expect(screen.getByText("以 Marvis Workbench 的名义发送")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^邀请设置/ })).toHaveTextContent("成员 · 7 天内有效 · 人数不限");
     expect(await screen.findByRole("checkbox", { name: /^Group 1/ })).toBeInTheDocument();
   });
 });

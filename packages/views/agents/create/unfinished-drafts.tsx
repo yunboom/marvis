@@ -32,6 +32,7 @@ export function UnfinishedDraftsBanner<S extends UnfinishedDraft = AgentBuilderS
   sessions,
   onResume,
   bannerLabel,
+  bannerHint,
   dialogTitle,
   describe,
   className,
@@ -41,6 +42,8 @@ export function UnfinishedDraftsBanner<S extends UnfinishedDraft = AgentBuilderS
   /** Copy for other builders (the knowledge base builder); defaults to the
    *  agent builder's. */
   bannerLabel?: string;
+  /** A second line under the label. */
+  bannerHint?: string;
   dialogTitle?: string;
   /** Title and preview of one row; defaults to the agent builder's decoding. */
   describe?: (session: S) => { title: string; preview: string };
@@ -81,11 +84,16 @@ export function UnfinishedDraftsBanner<S extends UnfinishedDraft = AgentBuilderS
         <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground">
           <MessageSquare className="size-4" aria-hidden="true" />
         </span>
-        <span className="min-w-0 flex-1 text-body">
-          {bannerLabel ??
-            t(($) => $.creation_studio.drafts.banner, {
-              count: sessions.length,
-            })}
+        <span className="flex min-w-0 flex-1 flex-col text-body">
+          <span>
+            {bannerLabel ??
+              t(($) => $.creation_studio.drafts.banner, {
+                count: sessions.length,
+              })}
+          </span>
+          {bannerHint ? (
+            <span className="text-caption text-faint-foreground">{bannerHint}</span>
+          ) : null}
         </span>
         <ChevronRight
           className="size-4 shrink-0 text-muted-foreground"

@@ -130,7 +130,7 @@ function RawFilesSection({ kbSlug }: { kbSlug: string }) {
       <div role="table" aria-label={t(($) => $.manage.raw.title)}>
         <div
           role="row"
-          className="grid h-9 grid-cols-[28px_2.4fr_1.4fr_1fr_1fr] items-center rounded-[10px] bg-surface-sunken px-2.5 text-caption text-muted-foreground"
+          className="grid h-9 grid-cols-[28px_2.4fr_1.4fr_1fr_1fr] items-center rounded-tile bg-surface-sunken px-2.5 text-caption text-muted-foreground"
         >
           <span role="columnheader">
             <Checkbox

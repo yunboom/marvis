@@ -304,12 +304,30 @@ func assertNoInvitePatches(t *testing.T, api *fakeInviteAPI) {
 func decodeLarkInviteCardJSON(t *testing.T, raw []byte) (title, text string) {
 	t.Helper()
 
-	var card larkCard
+	var card struct {
+		Body struct {
+			Elements []struct {
+				Columns []struct {
+					Elements []struct {
+						Text struct {
+							Content string `json:"content"`
+						} `json:"text"`
+					} `json:"elements"`
+				} `json:"columns"`
+			} `json:"elements"`
+		} `json:"body"`
+	}
 	if err := json.Unmarshal(raw, &card); err != nil {
 		t.Fatalf("decode card: %v, raw = %s", err, raw)
 	}
 
-	return card.Header.Title.Content, string(raw)
+	// 标题在第一个元素（标题行）的第二列（logo 列之后）的第一个文本里。
+	elements := card.Body.Elements
+	if len(elements) == 0 || len(elements[0].Columns) < 2 || len(elements[0].Columns[1].Elements) == 0 {
+		t.Fatalf("card has no title row: %s", raw)
+	}
+
+	return elements[0].Columns[1].Elements[0].Text.Content, string(raw)
 }
 
 func TestLarkInviteAction_JoinsChatCard(t *testing.T) {
@@ -359,8 +377,12 @@ func TestLarkInviteAction_JoinsChatCard(t *testing.T) {
 		t.Fatalf("patch ctx deadline=%v err=%v, want own timeout and not canceled with the callback", patches[0].HasDeadline, patches[0].CtxErr)
 	}
 	title, text := decodeLarkInviteCardJSON(t, []byte(patches[0].CardJSON))
-	if title != larkInviteTitleActive || !strings.Contains(text, fmt.Sprintf(larkInviteJoinedCountFormat, 1)) {
+	if title != fmt.Sprintf(larkInviteTitleActiveFormat, larkInviteActionWorkspaceName) || !strings.Contains(text, fmt.Sprintf(larkInviteJoinedCountFormat, 1)) {
 		t.Fatalf("patched card title = %q, want active card with joined count: %s", title, patches[0].CardJSON)
+	}
+	// 已加入行带上加入人的头像（person_list 里的 open_id）。
+	if !strings.Contains(text, `"persons":[{"id":"`+openID+`"}]`) {
+		t.Fatalf("patched card has no avatar for %s: %s", openID, patches[0].CardJSON)
 	}
 }
 

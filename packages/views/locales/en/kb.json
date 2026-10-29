@@ -162,15 +162,9 @@
   },
   "builder": {
     "create_title": "New knowledge base",
-    "create_sub": "Create through conversation",
+    "create_sub": "Build it through conversation, or fill in the right side directly",
     "config_title": "Configure knowledge base",
-    "via_chat": "Configured through conversation",
-    "setup_create_title": "Create a knowledge base through conversation",
-    "setup_config_title": "Configure the knowledge base through conversation",
-    "setup_description": "Choose the runtime and model the builder runs on.",
     "chat_title": "Knowledge base builder",
-    "change_runtime": "Change",
-    "change_runtime_label": "Change runtime",
     "intro_create": "What kind of knowledge base do you want? Pick a direction and I will draft the name, purpose and schema, then we refine them together.",
     "intro_config": "I will change the purpose and schema to match what you need. Start from a question below, or say what you want to change.",
     "describe_hint": "Or describe what you need.",
@@ -272,6 +266,50 @@
       "forbidden": "Only the knowledge base creator or a workspace owner or admin can configure it",
       "create_failed": "Could not create the knowledge base",
       "save_failed": "Could not save the configuration"
+    },
+    "runtime": {
+      "label": "Runtime",
+      "menu_label": "Choose runtime",
+      "mine": "Mine",
+      "others": "Others'",
+      "online": "Online",
+      "offline": "Offline",
+      "none": "No runtime available",
+      "last_used": "Last used",
+      "locked": "This is {{owner}}'s private runtime and is not shared with you",
+      "locked_unnamed": "This private runtime is not shared with you",
+      "connect": "Connect a new runtime"
+    },
+    "notice": {
+      "none_title": "No runtime available yet",
+      "none_body_create": "Connect a computer to build through conversation, or fill in the right side and create.",
+      "none_body_config": "Connect a computer to adjust through conversation, or edit the right side and save.",
+      "connect": "Connect runtime",
+      "offline_title": "{{name}} is offline",
+      "offline_body": "Open Marvis on {{host}}, or switch to an online runtime. You can keep editing on the right.",
+      "change": "Change runtime",
+      "went_offline_title": "The runtime just went offline",
+      "went_offline_body": "The conversation stops here and the configuration on the right is kept. Switch to an online runtime to continue.",
+      "failed_title": "The builder could not start",
+      "failed_body": "This runtime just went offline or is unavailable. Switch runtime and this message is sent again."
+    },
+    "starting": "Starting the builder on {{runtime}}…",
+    "composer": {
+      "none": "Connect a runtime to chat",
+      "offline": "Runtime offline. Switch to an online runtime to continue"
+    },
+    "manual_hint_create": "You can create without the conversation",
+    "manual_hint_config": "You can save without the conversation",
+    "drafts_hint": "Continue an earlier conversation, or start over here",
+    "tabs": {
+      "label": "View",
+      "chat": "Chat",
+      "config": "Configuration"
+    },
+    "forbidden": {
+      "title": "You cannot configure this knowledge base",
+      "body": "Only the knowledge base creator and workspace owners and admins can configure it.",
+      "back": "Back to the knowledge base"
     }
   },
   "welcome": {

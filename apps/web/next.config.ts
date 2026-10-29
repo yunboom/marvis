@@ -8,7 +8,6 @@ import {
   resolveRemoteApiUrl,
 } from "./config/runtime-urls";
 import { normalizeBasePath } from "./config/base-path";
-import { createMDX } from "fumadocs-mdx/next";
 
 // Load root .env so local next.config.ts rewrites see REMOTE_API_URL / DOCS_URL.
 // Production requests use proxy.ts runtime rewrites, which read process.env
@@ -102,6 +101,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withMDX = createMDX() as (config: NextConfig) => NextConfig;
-
-export default withMDX(nextConfig);
+export default nextConfig;

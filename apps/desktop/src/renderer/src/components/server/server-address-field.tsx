@@ -146,7 +146,7 @@ export function ServerAddressField({
           "flex flex-col gap-2",
           variant === "card" && "mt-1.5 rounded-xl border p-2.5 transition-colors",
           variant === "card" && (selected ? "border-foreground bg-field" : "border-surface-border"),
-          pane && "rounded-[14px] py-2.5 pr-3.5 pl-2.5 transition-[background-color,box-shadow]",
+          pane && "rounded-option py-2.5 pr-3.5 pl-2.5 transition-[background-color,box-shadow]",
           pane && selected && "bg-surface shadow-[0_0_0_1.5px_var(--color-foreground)]",
         )}
       >

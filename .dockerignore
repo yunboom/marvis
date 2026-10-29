@@ -35,10 +35,12 @@ coverage
 /docs/
 *.md
 
-# Dockerfile.web needs the web workspace and root dependency patch inputs.
+# Dockerfile.web needs the web workspace and root dependency patch inputs;
+# Dockerfile.docs needs the docs workspace.
 # Default-exclude other app files so they do not enter the build context.
 /apps/*
 !/apps/web/
+!/apps/docs/
 !/apps/mobile
 /apps/mobile/*
 !/apps/mobile/patches

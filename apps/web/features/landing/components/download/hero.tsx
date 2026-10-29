@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { useLocale } from "../../i18n";
 import type { DetectResult } from "../../utils/os-detect";
 import type { DownloadAssets } from "../../utils/parse-release-assets";
-import { heroButtonClassName } from "../shared";
+import { MacHintTrigger } from "./mac-hint";
 
 interface Props {
   detected: DetectResult | null;
@@ -29,17 +29,14 @@ export function DownloadHero({
   const content = resolveContent(detected, assets, versionUnavailable, d);
 
   return (
-    <section className="relative overflow-hidden bg-[#05070b] text-white">
-      <BackdropGradient />
-      <div className="relative z-10 mx-auto max-w-[1120px] px-4 pb-24 pt-32 text-center sm:px-6 sm:pt-40 lg:px-8 lg:pb-28">
-        <h1 className="mx-auto max-w-[880px] landing-serif text-[3rem] leading-[1.02] tracking-[-0.035em] drop-shadow-[0_10px_34px_rgba(0,0,0,0.32)] sm:text-[4rem] lg:text-[5rem]">
-          {content.title}
-        </h1>
-        <p className="mx-auto mt-6 max-w-[620px] text-body-lg leading-7 text-white/84 sm:text-title">
-          {content.sub}
-        </p>
+    <section className="mx-auto flex max-w-[1200px] flex-col items-center gap-5 px-5 pb-14 pt-12 text-center sm:px-8 sm:pt-[72px]">
+      <h1 className="text-[34px] font-semibold tracking-[-0.01em] sm:text-[52px]">
+        {content.title}
+      </h1>
+      <p className="text-[#666]">{content.sub}</p>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+      {content.primary || content.alt ? (
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
           {content.primary ? (
             <PrimaryCta
               href={content.primary.href}
@@ -47,33 +44,30 @@ export function DownloadHero({
             >
               <Download className="size-4" aria-hidden />
               {content.primary.label}
-              {!content.primary.disabled && (
-                <ArrowRight className="size-4" aria-hidden />
-              )}
             </PrimaryCta>
           ) : null}
           {content.alt ? (
             <Link
               href={content.alt.href}
-              className={heroButtonClassName("ghost")}
+              className="inline-flex h-12 items-center rounded-full border border-black/8 bg-white px-[22px] text-[#0f0f0f] transition-colors hover:text-[#7b4835]"
             >
               {content.alt.label}
             </Link>
           ) : null}
         </div>
+      ) : null}
 
-        {content.hint ? (
-          <p className="mx-auto mt-5 max-w-[520px] text-label text-white/64">
-            {content.hint}
-          </p>
-        ) : null}
+      {detected?.os === "mac" ? <MacHintTrigger size="lg" /> : null}
 
-        {versionUnavailable ? (
-          <p className="mx-auto mt-6 max-w-[520px] text-caption uppercase tracking-[0.14em] text-white/50">
-            {t.download.footer.versionUnavailable}
-          </p>
-        ) : null}
-      </div>
+      {content.hint ? (
+        <p className="text-[13px] text-[#888]">{content.hint}</p>
+      ) : null}
+
+      {versionUnavailable ? (
+        <p className="text-[13px] text-[#888]">
+          {t.download.footer.versionUnavailable}
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -220,28 +214,18 @@ function PrimaryCta({
     return (
       <span
         aria-disabled="true"
-        className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-(--landing-radius-action) border border-white/15 bg-white/8 px-5 py-3 text-body font-semibold text-white/60"
+        className="inline-flex h-12 cursor-not-allowed items-center gap-2 rounded-full bg-[#f2f2f2] px-7 font-medium text-[#9a9a9a]"
       >
         {children}
       </span>
     );
   }
   return (
-    <a href={href} className={heroButtonClassName("solid")}>
+    <a
+      href={href}
+      className="inline-flex h-12 items-center gap-2 rounded-full bg-[#0f0f0f] px-7 font-medium text-white transition-colors hover:bg-[#0f0f0f]/88"
+    >
       {children}
     </a>
-  );
-}
-
-function BackdropGradient() {
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0"
-      style={{
-        background:
-          "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(80,120,255,0.18), transparent 60%), radial-gradient(ellipse 50% 40% at 50% 80%, rgba(255,90,90,0.08), transparent 60%)",
-      }}
-    />
   );
 }

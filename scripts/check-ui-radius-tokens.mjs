@@ -4,7 +4,13 @@
  *
  * Bare Tailwind radius utilities are hidden constants in Tailwind v4,
  * bypassing our `--radius-*` scale. Fixed arbitrary lengths create the same
- * drift. The few 2–3px data-visualization marks below are intentional
+ * drift. Any named `rounded-*` utility passes: the derived ladder
+ * (`xs`…`4xl`) and the fixed role radii in packages/ui/styles/tokens.css
+ * (`row`, `dialog`, and the Marvis roles `avatar`, `tile`, `lane`, `pane`,
+ * `composer`, `composer-pill`). A surface whose radius matches none of them
+ * gets a new role token there, not an arbitrary value.
+ *
+ * The few 2–3px data-visualization marks below are intentional
  * micro-geometry, not product surfaces, and are allowlisted by exact file so
  * the exception cannot spread silently.
  *
@@ -25,7 +31,6 @@ const directionalRadius = "(?:t|r|b|l|s|e|x|y|tl|tr|br|bl|ss|se|es|ee)";
 const fixedCssLength = /^(?:\d+(?:\.\d+)?|\.\d+)(?:px|rem|em|%|cm|mm|in|pt|pc|q|vh|vw|vmin|vmax|ch|ex|lh|rlh|cap|ic)$/;
 
 const microGeometryAllowlist = new Set([
-  "apps/web/features/landing/components/features-section.tsx:rounded-[2px]",
   "packages/ui/components/ui/chart.tsx:rounded-[2px]",
   "packages/views/common/task-transcript/run-timeline.tsx:rounded-[3px]",
   "packages/views/dashboard/components/errors-tab.tsx:rounded-[2px]",

@@ -43,7 +43,7 @@ export function KbNewPagePopover({ kbSlug, parentId, parentTitle }: { kbSlug: st
             type="button"
             aria-label={t(($) => $.job.entry.write_here)}
             title={t(($) => $.job.entry.write_here)}
-            className="flex size-5 shrink-0 items-center justify-center rounded text-faint-foreground opacity-0 group-hover/tree:opacity-100 hover:bg-surface-selected hover:text-foreground focus-visible:opacity-100 data-popup-open:opacity-100"
+            className="flex size-5 shrink-0 items-center justify-center rounded-xs text-faint-foreground opacity-0 group-hover/tree:opacity-100 hover:bg-surface-selected hover:text-foreground focus-visible:opacity-100 data-popup-open:opacity-100"
           />
         }
       >

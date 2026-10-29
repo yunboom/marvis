@@ -154,15 +154,9 @@
   },
   "builder": {
     "create_title": "新建知識庫",
-    "create_sub": "透過對話建立",
+    "create_sub": "透過對話搭建，也可以直接填右側",
     "config_title": "配置知識庫",
-    "via_chat": "透過對話配置",
-    "setup_create_title": "透過對話建立知識庫",
-    "setup_config_title": "透過對話配置知識庫",
-    "setup_description": "選擇構建器執行的執行時和模型。",
     "chat_title": "知識庫構建器",
-    "change_runtime": "更換",
-    "change_runtime_label": "更換執行時",
     "intro_create": "想建一個什麼樣的知識庫？選一個方向開始，我來起草名稱、目標和 Schema，再一起細調。",
     "intro_config": "我會根據你的需求修改目標和 Schema。可以從下面的問題開始，也可以直接說想改什麼。",
     "describe_hint": "也可以直接描述你的需求。",
@@ -262,6 +256,50 @@
       "forbidden": "只有知識庫建立者或工作區 owner、admin 可以配置",
       "create_failed": "建立知識庫失敗",
       "save_failed": "儲存配置失敗"
+    },
+    "runtime": {
+      "label": "執行時",
+      "menu_label": "選擇執行時",
+      "mine": "我的",
+      "others": "其他人的",
+      "online": "線上",
+      "offline": "離線",
+      "none": "沒有可用的執行時",
+      "last_used": "上次使用",
+      "locked": "這是 {{owner}} 的私有執行時，沒有共享給你",
+      "locked_unnamed": "這是私有執行時，沒有共享給你",
+      "connect": "連接新的執行時"
+    },
+    "notice": {
+      "none_title": "還沒有可用的執行時",
+      "none_body_create": "連接一台電腦後就能用對話搭建；也可以直接在右側填寫後建立。",
+      "none_body_config": "連接一台電腦後就能用對話調整；也可以直接在右側修改後儲存。",
+      "connect": "連接執行時",
+      "offline_title": "{{name}} 離線",
+      "offline_body": "在 {{host}} 上開啟 Marvis，或換一個線上的執行時。右側可以繼續手填。",
+      "change": "更換執行時",
+      "went_offline_title": "執行時剛剛離線",
+      "went_offline_body": "對話停在這裡，已產生的配置保留在右側。換一個線上的執行時可以接著聊。",
+      "failed_title": "構建器沒能啟動",
+      "failed_body": "這個執行時剛剛離線或無法使用。換一個執行時後會重新傳送這則訊息。"
+    },
+    "starting": "正在 {{runtime}} 上啟動構建器…",
+    "composer": {
+      "none": "連接執行時後可以對話",
+      "offline": "執行時離線，換一個線上的執行時後繼續"
+    },
+    "manual_hint_create": "不用對話也能建立",
+    "manual_hint_config": "不用對話也能儲存",
+    "drafts_hint": "繼續之前的對話，或在這裡重新開始",
+    "tabs": {
+      "label": "檢視",
+      "chat": "對話",
+      "config": "配置"
+    },
+    "forbidden": {
+      "title": "沒有配置這個知識庫的權限",
+      "body": "只有知識庫建立者、工作區擁有者和管理員可以配置。",
+      "back": "返回知識庫"
     }
   },
   "welcome": {

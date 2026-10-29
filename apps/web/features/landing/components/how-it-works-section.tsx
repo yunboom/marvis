@@ -1,67 +1,60 @@
 "use client";
 
 import Link from "next/link";
-import { useAuthStore } from "@marvis/core/auth";
 import { docsHrefForLocale, useLocale } from "../i18n";
-import { useDashboardCtaHref } from "../utils/use-dashboard-cta";
-import { GitHubMark, githubUrl, heroButtonClassName } from "./shared";
+import { GitHubMark, githubUrl } from "./shared";
+
+// The docs and GitHub links are hidden for now but kept, so turning them back
+// on is a one-line change.
+const SHOW_SECONDARY_LINKS = false;
+
+const secondaryLinkClassName =
+  "inline-flex h-11 items-center gap-2 rounded-full border border-white/24 px-6 text-white transition-colors hover:bg-white/8";
 
 export function HowItWorksSection() {
   const { t, locale } = useLocale();
-  const user = useAuthStore((s) => s.user);
-  const ctaHref = useDashboardCtaHref();
 
   return (
-    <section id="how-it-works" className="bg-[#05070b] text-white">
-      <div className="mx-auto max-w-[1320px] px-4 py-24 sm:px-6 sm:py-32 lg:px-8 lg:py-40">
-        <p className="text-micro font-semibold uppercase tracking-[0.16em] text-white/40">
-          {t.howItWorks.label}
-        </p>
-        <h2 className="mt-4 landing-serif text-[2.6rem] leading-[1.05] tracking-[-0.03em] sm:text-[3.4rem] lg:text-[4.2rem]">
-          {t.howItWorks.headlineMain}
-          <br />
-          <span className="text-white/40">{t.howItWorks.headlineFaded}</span>
+    <section id="how-it-works" className="bg-[#0f0f0f] text-white">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-14 sm:px-8 sm:py-24">
+        <h2 className="text-balance text-[26px] font-semibold sm:text-[40px]">
+          {t.howItWorks.headline}
         </h2>
 
-        <div className="mt-20 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
           {t.howItWorks.steps.map((step, i) => (
-            <div
-              key={i}
-              className="flex flex-col bg-[#05070b] p-8 lg:p-10"
+            <li
+              key={step.title}
+              className="flex flex-col gap-2.5 rounded-(--landing-radius-panel) bg-[#1c1c1c] p-6"
             >
-              <span className="text-label font-semibold tabular-nums text-white/28">
+              <span className="text-[13px] tabular-nums text-[#c9a593]">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <h3 className="mt-4 text-title font-semibold leading-snug text-white sm:text-title">
-                {step.title}
-              </h3>
-              <p className="mt-3 text-body leading-[1.7] text-white/50 sm:text-body-lg">
-                {step.description}
-              </p>
-            </div>
+              <h3 className="text-[18px] font-semibold">{step.title}</h3>
+              <p className="text-[14px] text-[#b3b3b3]">{step.description}</p>
+            </li>
           ))}
-        </div>
+        </ol>
 
-        <div className="mt-14 flex flex-wrap items-center gap-4">
-          <Link href={ctaHref} className={heroButtonClassName("solid")}>
-            {user ? t.header.dashboard : t.howItWorks.cta}
-          </Link>
-          <Link
-            href={docsHrefForLocale(locale)}
-            className={heroButtonClassName("ghost")}
-          >
-            {t.howItWorks.ctaDocs}
-          </Link>
-          <Link
-            href={githubUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={heroButtonClassName("ghost")}
-          >
-            <GitHubMark className="size-4" />
-            {t.howItWorks.ctaGithub}
-          </Link>
-        </div>
+        {SHOW_SECONDARY_LINKS ? (
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={docsHrefForLocale(locale)}
+              className={secondaryLinkClassName}
+            >
+              {t.howItWorks.ctaDocs}
+            </Link>
+            <Link
+              href={githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={secondaryLinkClassName}
+            >
+              <GitHubMark className="size-4" />
+              {t.howItWorks.ctaGithub}
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

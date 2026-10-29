@@ -51,7 +51,8 @@
       },
       "cloud": {
         "title": "Cloud services",
-        "coming_soon": "Coming soon"
+        "coming_soon": "Coming soon",
+        "not_yet_available": "Not yet available"
       }
     },
     "rows": {

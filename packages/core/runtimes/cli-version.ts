@@ -10,8 +10,8 @@
  * authoritative trust boundary, the frontend just lets us tell the user
  * "your daemon needs an upgrade" before they hit submit.
  */
-export const MIN_QUICK_CREATE_CLI_VERSION = "0.2.21";
-export const MIN_QUICK_CREATE_FIELDS_CLI_VERSION = "0.4.3";
+export const MIN_QUICK_CREATE_CLI_VERSION = "0.0.1";
+export const MIN_QUICK_CREATE_FIELDS_CLI_VERSION = "0.0.1";
 
 export type CliVersionState = "ok" | "too_old" | "missing";
 
@@ -99,7 +99,7 @@ export function readRuntimeCliVersion(metadata: Record<string, unknown> | undefi
  * Frontend-only constant: there is no server preview endpoint computing this,
  * so there is no server twin to keep in lockstep with.
  */
-export const MIN_CHAT_PROJECT_CONTEXT_CLI_VERSION = "0.4.10";
+export const MIN_CHAT_PROJECT_CONTEXT_CLI_VERSION = "0.0.1";
 
 /**
  * Whether a daemon-reported CLI version is new enough to inject a chat

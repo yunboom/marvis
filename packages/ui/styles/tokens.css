@@ -100,9 +100,26 @@
     --radius-4xl: calc(var(--radius) * 3);
     /* Role radii that sit off the ladder: rounded-row is a row inside a
        menu, list, tooltip, or segmented control (8px); rounded-dialog is a
-       modal card (20px). Shell cards use rounded-2xl (24px). */
+       modal card (20px). Shell cards use rounded-2xl (24px).
+       The Marvis roles below are fixed, not derived from --radius:
+       rounded-avatar is the squircle for member, agent and squad avatars
+       (28% of the side); rounded-tile is a small card, panel or icon tile
+       (10px); rounded-lane is a board lane or swimlane cell (16px);
+       rounded-pane is a large setup panel (20px); rounded-composer is a
+       chat or comment input shell (22px), and rounded-composer-pill is the
+       chat input while it is still a single line (26px). */
     --radius-row: 0.5rem;
     --radius-dialog: 1.25rem;
+    --radius-avatar: 28%;
+    --radius-tile: 0.625rem;
+    --radius-lane: 1rem;
+    --radius-pane: 1.25rem;
+    --radius-composer: 1.375rem;
+    --radius-composer-pill: 1.625rem;
+    /* rounded-option is a selectable option row on a setup screen (14px);
+       rounded-hero is a large split hero card (28px). */
+    --radius-option: 0.875rem;
+    --radius-hero: 1.75rem;
 }
 
 /* Motion: durations and curves (Marvis motion spec). Leaving is faster than
