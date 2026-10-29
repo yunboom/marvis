@@ -288,9 +288,15 @@ func newAPIClient(cmd *cobra.Command) (*cli.APIClient, error) {
 	return client, nil
 }
 
+// marvisProductionURL 是 Marvis 生产环境的地址。网页端部署在 /marvis 路径前缀下，
+// 同一前缀由 nginx 转发到后端，所以 API 与网页端共用这一个地址，daemon 的
+// WebSocket 由它派生为 wss://omniai.shoplazza.site/marvis/api/daemon/ws。
+const marvisProductionURL = "https://omniai.shoplazza.site/marvis"
+
+// defaultCloudServerURL 和 defaultCloudAppURL 是 `marvis setup` 不带子命令时连接的默认目标。
 const (
-	defaultCloudServerURL = "https://api.marvis.ai"
-	defaultCloudAppURL    = "https://marvis.ai"
+	defaultCloudServerURL = marvisProductionURL
+	defaultCloudAppURL    = marvisProductionURL
 )
 
 func tryResolveServerURL(cmd *cobra.Command) string {

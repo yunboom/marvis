@@ -28,6 +28,19 @@ func TestResolveLoginTokenServerURLDefaultsToCloud(t *testing.T) {
 	}
 }
 
+// 默认目标是生产环境：API 与网页端共用带 /marvis 前缀的地址，规范化后路径前缀保留。
+func TestDefaultCloudTargetsProduction(t *testing.T) {
+	const want = "https://omniai.shoplazza.site/marvis"
+
+	if defaultCloudServerURL != want || defaultCloudAppURL != want {
+		t.Fatalf("defaults = (%q, %q), want both %q", defaultCloudServerURL, defaultCloudAppURL, want)
+	}
+
+	if got := normalizeAPIBaseURL(defaultCloudServerURL); got != want {
+		t.Fatalf("normalizeAPIBaseURL(default) = %q, want %q", got, want)
+	}
+}
+
 func TestResolveLoginTokenServerURLPrefersConfiguredServer(t *testing.T) {
 	t.Chdir(t.TempDir())
 	redirectTestHome(t, t.TempDir())

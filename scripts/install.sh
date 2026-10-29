@@ -438,7 +438,7 @@ run_default() {
   printf "\n"
   printf "  ${BOLD}Next: configure your environment${RESET}\n"
   printf "\n"
-  printf "     ${CYAN}marvis setup${RESET}                # Connect to Marvis Cloud (marvis.ai)\n"
+  printf "     ${CYAN}marvis setup${RESET}                # Connect to Marvis (omniai.shoplazza.site/marvis)\n"
   printf "     ${CYAN}marvis setup self-host${RESET}       # Connect to a self-hosted server\n"
   printf "\n"
   print_remote_server_token_hint
