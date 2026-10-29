@@ -57,7 +57,7 @@ print_remote_server_token_hint() {
 
   printf "  ${BOLD}Looks like a remote/SSH session.${RESET} Browser login may not be able to call back to this machine's localhost.\n"
   printf "  Token login is usually simpler here:\n"
-  printf "     1. On your local computer, open ${CYAN}https://marvis.ai/settings?tab=tokens${RESET}\n"
+  printf "     1. On your local computer, open ${CYAN}https://omniai.shoplazza.site/marvis/settings?tab=tokens${RESET}\n"
   printf "        and create a token under ${BOLD}Settings > API Tokens${RESET}.\n"
   printf "     2. On this server, run:\n"
   printf "        ${CYAN}marvis login --token <YOUR_TOKEN>${RESET}\n"
@@ -438,7 +438,7 @@ run_default() {
   printf "\n"
   printf "  ${BOLD}Next: configure your environment${RESET}\n"
   printf "\n"
-  printf "     ${CYAN}marvis setup${RESET}                # Connect to Marvis Cloud (marvis.ai)\n"
+  printf "     ${CYAN}marvis setup${RESET}                # Connect to Marvis (omniai.shoplazza.site/marvis)\n"
   printf "     ${CYAN}marvis setup self-host${RESET}       # Connect to a self-hosted server\n"
   printf "\n"
   print_remote_server_token_hint

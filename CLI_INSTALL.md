@@ -140,7 +140,7 @@ marvis auth status
 Expected output should show the authenticated user and server URL.
 
 **If login fails:**
-- If no browser is available (headless environment), the user can generate a Personal Access Token at `https://marvis.ai/settings?tab=tokens` and run: `marvis login --token <mul_...>` (use `--token=` with an empty value to be prompted interactively).
+- If no browser is available (headless environment), the user can generate a Personal Access Token at `https://omniai.shoplazza.site/marvis/settings?tab=tokens` (or the self-hosted app URL) and run: `marvis login --token <mul_...>` (use `--token=` with an empty value to be prompted interactively).
 - If the server URL needs to be customized: `marvis config set server_url <url>` before logging in.
 
 ---

@@ -1,6 +1,6 @@
 # Marvis installer for Windows - one command to get started.
 #
-# Install CLI (default): connects to marvis.ai
+# Install CLI (default): connects to https://omniai.shoplazza.site/marvis
 #   irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex
 #
 # Self-host: starts a local Marvis server + installs CLI + configures
@@ -495,7 +495,7 @@ function Start-DefaultInstall {
     Write-Host ""
     Write-Host "  Next: configure your environment"
     Write-Host ""
-    Write-Host "     marvis setup               " -NoNewline; Write-Host "# Connect to Marvis Cloud (marvis.ai)" -ForegroundColor DarkGray
+    Write-Host "     marvis setup               " -NoNewline; Write-Host "# Connect to Marvis (omniai.shoplazza.site/marvis)" -ForegroundColor DarkGray
     Write-Host "     marvis setup self-host      " -NoNewline; Write-Host "# Connect to a self-hosted server" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  Self-hosting? Install the server first:"

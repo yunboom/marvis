@@ -927,7 +927,7 @@ marvis issue list --project <project-id>
 ## Setup
 
 ```bash
-# One-command setup for Marvis Cloud: configure, authenticate, and start the daemon
+# One-command setup for Marvis (https://omniai.shoplazza.site/marvis): configure, authenticate, and start the daemon
 marvis setup
 
 # For local self-hosted deployments
@@ -940,7 +940,7 @@ marvis setup self-host --port 9090 --frontend-port 4000
 marvis setup self-host --server-url https://api.example.com --app-url https://app.example.com
 ```
 
-`marvis setup` configures the CLI, opens your browser for authentication, and starts the daemon — all in one step. Use `marvis setup self-host` to connect to a self-hosted server instead of Marvis Cloud.
+`marvis setup` configures the CLI, opens your browser for authentication, and starts the daemon — all in one step. Use `marvis setup self-host` to connect to a self-hosted server instead of the default Marvis instance at https://omniai.shoplazza.site/marvis.
 
 ## Configuration
 
