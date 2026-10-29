@@ -8,8 +8,23 @@ type UpdateState =
   | { status: "idle" }
   | { status: "ready"; version: string };
 
-function changelogUrl(version: string): string {
-  return `https://marvis.ai/changelog#release-${version.replace(/\./g, "-")}`;
+/**
+ * 当前连接的服务器网页端上，某个版本的更新日志地址。
+ *
+ * appUrl 已带部署路径前缀（如 https://omniai.shoplazza.site/marvis），锚点与
+ * 网页端更新日志页 `release-<版本号用连字符>` 一致。服务器没有网页端时
+ * appUrl 为空串，返回 null，不显示入口。
+ */
+export function changelogUrl(appUrl: string, version: string): string | null {
+  if (!appUrl) return null;
+
+  return `${appUrl.replace(/\/+$/, "")}/changelog#release-${version.replace(/\./g, "-")}`;
+}
+
+function connectedAppUrl(): string {
+  const runtimeConfig = window.desktopAPI.runtimeConfig;
+
+  return runtimeConfig?.ok ? runtimeConfig.config.appUrl : "";
 }
 
 export function UpdateNotification() {
@@ -26,6 +41,8 @@ export function UpdateNotification() {
 
   if (state.status === "idle") return null;
   if (dismissed) return null;
+
+  const releaseNotesUrl = changelogUrl(connectedAppUrl(), state.version);
 
   return (
     <div className="fixed bottom-4 right-4 z-50 w-80 rounded-xl border border-border bg-surface-raised p-4 shadow-toast animate-in slide-in-from-bottom-2 fade-in duration-(--motion-slow) ease-out">
@@ -47,15 +64,15 @@ export function UpdateNotification() {
             v{state.version} will be applied on next launch.
           </p>
           <div className="mt-3 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                window.desktopAPI.openExternal(changelogUrl(state.version))
-              }
-              className="inline-flex h-8 items-center rounded-full border border-input bg-background px-3.5 text-caption font-medium text-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent"
-            >
-              See changelog
-            </button>
+            {releaseNotesUrl && (
+              <button
+                type="button"
+                onClick={() => window.desktopAPI.openExternal(releaseNotesUrl)}
+                className="inline-flex h-8 items-center rounded-full border border-input bg-background px-3.5 text-caption font-medium text-foreground transition-colors duration-(--motion-fast) ease-out hover:bg-accent"
+              >
+                See changelog
+              </button>
+            )}
             <button
               type="button"
               onClick={() => window.updater.installUpdate()}
