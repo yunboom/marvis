@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Info, X } from "lucide-react";
+import { ChevronRight, Info, TriangleAlert, X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -92,9 +92,16 @@ function MacHintContent() {
         ))}
       </ol>
 
-      <div className="flex flex-col gap-1.5 border-t border-black/6 pt-4 text-[13px] text-[#666]">
-        <span>{d.altSettings}</span>
+      <p
+        data-testid="mac-hint-no-auto-update"
+        className="flex items-start gap-2 rounded-(--landing-radius-action) bg-[#fef3f2] px-3.5 py-3 text-[14px] font-medium text-[#b42318]"
+      >
+        <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
         <span>{d.noAutoUpdate}</span>
+      </p>
+
+      <div className="border-t border-black/6 pt-4 text-[13px] text-[#666]">
+        {d.altSettings}
       </div>
 
       <DialogClose className="inline-flex h-10 items-center self-end rounded-full bg-[#0f0f0f] px-[22px] text-[14px] font-medium text-white hover:bg-[#0f0f0f]/88">

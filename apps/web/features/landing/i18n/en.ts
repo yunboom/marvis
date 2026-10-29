@@ -251,7 +251,7 @@ export function createEnDict(
       stepCommand: "If macOS says the app is damaged or the developer can't be verified, run this in Terminal:",
       stepReopen: "Open Marvis again.",
       altSettings: "Without Terminal: open System Settings › Privacy & Security and click Open Anyway at the bottom.",
-      noAutoUpdate: "Automatic updates aren't available yet. Download new versions from the download page.",
+      noAutoUpdate: "Automatic updates aren't available yet. The installer isn't signed with an Apple Developer account, so macOS won't let the app replace itself. Download new versions from the download page.",
       copyLabel: "Copy",
       copiedLabel: "Copied",
       close: "Close",

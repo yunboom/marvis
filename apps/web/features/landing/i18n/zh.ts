@@ -243,7 +243,7 @@ export function createZhDict(
       stepCommand: "提示「已损坏」或「无法验证开发者」时，在终端运行：",
       stepReopen: "重新打开 Marvis。",
       altSettings: "不想用终端：在「系统设置 › 隐私与安全性」底部点「仍要打开」。",
-      noAutoUpdate: "暂不支持自动更新，新版本请回到下载页下载。",
+      noAutoUpdate: "暂不支持自动更新。安装包没有 Apple 开发者账号签名，macOS 不允许应用自动替换自己，新版本请回到下载页下载。",
       copyLabel: "复制",
       copiedLabel: "已复制",
       close: "关闭",
