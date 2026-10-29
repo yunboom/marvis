@@ -54,4 +54,61 @@ describe("AllPlatforms", () => {
       "https://downloads.test/mac-x64.zip",
     );
   });
+
+  it("labels rows served from an older release with that version", () => {
+    render(
+      <AllPlatforms
+        latestVersion="v0.0.3"
+        assets={{
+          macArm64Dmg: "https://downloads.test/v0.0.3/mac-arm64.dmg",
+          winX64Exe: "https://downloads.test/v0.0.2/win-x64.exe",
+          linuxArm64AppImage: "https://downloads.test/v0.0.3/linux-arm64.AppImage",
+          linuxArm64Deb: "https://downloads.test/v0.0.2/linux-arm64.deb",
+        }}
+        assetVersions={{
+          macArm64Dmg: "v0.0.3",
+          winX64Exe: "v0.0.2",
+          linuxArm64AppImage: "v0.0.3",
+          linuxArm64Deb: "v0.0.2",
+        }}
+      />,
+    );
+
+    const rowOf = (label: string) =>
+      screen.getByText(label).parentElement!.parentElement!;
+
+    expect(
+      within(rowOf("macOS · Apple Silicon")).queryByRole("link", {
+        name: "v0.0.3",
+      }),
+    ).toBeNull();
+    expect(
+      within(rowOf("Windows · x64")).getByRole("link", { name: "v0.0.2" }),
+    ).toHaveAttribute("href", "/download/releases/v0.0.2");
+
+    // Mixed sources: only the older format carries the version.
+    const linuxArm = rowOf("Linux · ARM64");
+    const debLink = within(linuxArm).getByRole("link", { name: ".deb" });
+    expect(
+      within(debLink.parentElement!).getByRole("link", { name: "v0.0.2" }),
+    ).toBeInTheDocument();
+    expect(within(linuxArm).getAllByRole("link", { name: "v0.0.2" })).toHaveLength(1);
+  });
+
+  it("keeps formats no recent release carries disabled", () => {
+    render(
+      <AllPlatforms
+        latestVersion="v0.0.3"
+        assets={{ macArm64Dmg: "https://downloads.test/v0.0.3/mac-arm64.dmg" }}
+        assetVersions={{ macArm64Dmg: "v0.0.3" }}
+      />,
+    );
+
+    const winRow = screen.getByText("Windows · x64").parentElement!.parentElement!;
+    expect(within(winRow).queryByRole("link")).toBeNull();
+    expect(within(winRow).getByText(".exe")).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
 });

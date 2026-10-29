@@ -23,7 +23,7 @@ function completeAssets(version: string) {
   }));
 }
 
-/** What a release looks like before the Windows/Linux jobs upload. */
+/** A release built with the default desktop platforms (macOS only). */
 function macOnlyAssets(version: string) {
   return completeAssets(version).filter((a) => a.name.includes("-mac-"));
 }
@@ -61,7 +61,7 @@ afterEach(() => {
 });
 
 describe("fetchLatestRelease", () => {
-  it("uses the latest release when its desktop assets are complete", async () => {
+  it("offers every download from the latest release when it is complete", async () => {
     mockFetchWithReleases([
       releasePayload({ tag: "v0.2.14", assets: completeAssets("0.2.14") }),
       releasePayload({ tag: "v0.2.13", assets: completeAssets("0.2.13") }),
@@ -70,59 +70,55 @@ describe("fetchLatestRelease", () => {
     const result = await fetchLatestRelease();
     expect(result.version).toBe("v0.2.14");
     expect(result.assets.winX64Exe).toContain("0.2.14");
+    expect(new Set(Object.values(result.assetVersions))).toEqual(
+      new Set(["v0.2.14"]),
+    );
   });
 
-  // MUL-6313: v0.4.28's Windows packaging job failed and its Linux job
-  // never finished, so the newest release carried Mac builds only and
-  // /download rendered every Windows and Linux button as disabled.
-  it("steps back to the newest complete release when the latest is missing platforms", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
+  // Releases build only the macOS installers unless Windows/Linux are
+  // enabled for that tag, so those buttons must keep pointing at the newest
+  // release that has them instead of going disabled.
+  it("takes macOS from a macOS-only latest release and Windows/Linux from an older full one", async () => {
     mockFetchWithReleases([
-      releasePayload({ tag: "v0.4.28", assets: macOnlyAssets("0.4.28") }),
-      releasePayload({ tag: "v0.4.27", assets: completeAssets("0.4.27") }),
+      releasePayload({ tag: "v0.0.3", assets: macOnlyAssets("0.0.3") }),
+      releasePayload({ tag: "v0.0.2", assets: completeAssets("0.0.2") }),
     ]);
 
     const result = await fetchLatestRelease();
-    expect(result.version).toBe("v0.4.27");
-    expect(result.htmlUrl).toContain("v0.4.27");
-    expect(result.assets.winX64Exe).toContain("0.4.27");
-    expect(result.assets.linuxArm64Rpm).toContain("0.4.27");
+    expect(result.version).toBe("v0.0.3");
+    expect(result.assets.macArm64Dmg).toContain("0.0.3");
+    expect(result.assets.macX64Zip).toContain("0.0.3");
+    expect(result.assets.winX64Exe).toContain("0.0.2");
+    expect(result.assets.linuxArm64Rpm).toContain("0.0.2");
+    expect(result.assetVersions).toMatchObject({
+      macArm64Dmg: "v0.0.3",
+      macX64Zip: "v0.0.3",
+      winX64Exe: "v0.0.2",
+      winArm64Exe: "v0.0.2",
+      linuxAmd64Deb: "v0.0.2",
+      linuxArm64Rpm: "v0.0.2",
+    });
   });
 
-  // The old implementation only stepped back for the first hour after
-  // publish, so a permanently broken release started showing dead
-  // buttons once that window elapsed. Completeness carries no clock.
-  it("keeps stepping back regardless of how old the incomplete release is", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-    mockFetchWithReleases([
-      {
-        ...releasePayload({
-          tag: "v0.4.28",
-          assets: macOnlyAssets("0.4.28"),
-        }),
-        published_at: "2020-01-01T00:00:00Z",
-      },
-      releasePayload({ tag: "v0.4.27", assets: completeAssets("0.4.27") }),
-    ]);
-
-    const result = await fetchLatestRelease();
-    expect(result.version).toBe("v0.4.27");
-  });
-
-  it("searches past several incomplete releases", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("picks each format from the newest release that has it", async () => {
     mockFetchWithReleases([
       releasePayload({ tag: "v0.5.2", assets: macOnlyAssets("0.5.2") }),
-      releasePayload({ tag: "v0.5.1", assets: [] }),
-      releasePayload({ tag: "v0.5.0", assets: macOnlyAssets("0.5.0") }),
+      releasePayload({
+        tag: "v0.5.1",
+        assets: completeAssets("0.5.1").filter((a) => a.name.endsWith(".deb")),
+      }),
+      releasePayload({ tag: "v0.5.0", assets: [] }),
       releasePayload({ tag: "v0.4.9", assets: completeAssets("0.4.9") }),
     ]);
 
     const result = await fetchLatestRelease();
-    expect(result.version).toBe("v0.4.9");
+    expect(result.assetVersions.linuxAmd64Deb).toBe("v0.5.1");
+    expect(result.assetVersions.linuxAmd64AppImage).toBe("v0.4.9");
+    expect(result.assetVersions.winArm64Exe).toBe("v0.4.9");
+    expect(result.assetVersions.macArm64Dmg).toBe("v0.5.2");
   });
 
-  it("falls back to the latest release when no candidate is complete", async () => {
+  it("leaves a platform out when no recent release has it", async () => {
     mockFetchWithReleases([
       releasePayload({ tag: "v0.4.28", assets: macOnlyAssets("0.4.28") }),
       releasePayload({ tag: "v0.4.27", assets: macOnlyAssets("0.4.27") }),
@@ -132,17 +128,39 @@ describe("fetchLatestRelease", () => {
     expect(result.version).toBe("v0.4.28");
     expect(result.assets.macArm64Dmg).toContain("0.4.28");
     expect(result.assets.winX64Exe).toBeUndefined();
+    expect(result.assets.linuxAmd64AppImage).toBeUndefined();
+    expect(result.assetVersions.winX64Exe).toBeUndefined();
   });
 
-  it("skips prereleases and drafts in the candidate list", async () => {
+  it("skips prereleases and drafts", async () => {
     mockFetchWithReleases([
-      releasePayload({ tag: "v0.2.15-rc.1", prerelease: true }),
-      releasePayload({ tag: "v0.2.14-draft", draft: true }),
+      releasePayload({
+        tag: "v0.2.15-rc.1",
+        prerelease: true,
+        assets: completeAssets("0.2.15-rc.1"),
+      }),
+      releasePayload({
+        tag: "v0.2.15",
+        draft: true,
+        assets: completeAssets("0.2.15"),
+      }),
       releasePayload({ tag: "v0.2.14", assets: completeAssets("0.2.14") }),
     ]);
 
     const result = await fetchLatestRelease();
     expect(result.version).toBe("v0.2.14");
+    expect(result.assets.winX64Exe).toContain("0.2.14");
+  });
+
+  it("shares the release list request with the release pages", async () => {
+    const fetchMock = mockFetchWithReleases([]);
+
+    await fetchLatestRelease();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      "https://api.github.com/repos/yunboom/marvis/releases?per_page=20",
+    );
   });
 
   it("returns an empty release shape when the API errors", async () => {
@@ -156,13 +174,13 @@ describe("fetchLatestRelease", () => {
     expect(result).toEqual({
       version: null,
       publishedAt: null,
-      htmlUrl: null,
       assets: {},
+      assetVersions: {},
     });
     expect(warnSpy).toHaveBeenCalled();
   });
 
-  it("returns an empty release shape when all candidates are filtered out", async () => {
+  it("returns an empty release shape when all releases are filtered out", async () => {
     mockFetchWithReleases([
       releasePayload({ tag: "v0.2.15-rc.1", prerelease: true }),
       releasePayload({ tag: "v0.2.14-draft", draft: true }),

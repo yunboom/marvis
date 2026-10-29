@@ -234,6 +234,32 @@ describe("setupAutoUpdater", () => {
     expect(ctx.checkForUpdates).toHaveBeenCalledTimes(1);
   });
 
+  it("reports up to date when the latest release has no metadata for this platform", async () => {
+    const missing = Object.assign(
+      new Error("Cannot find latest.yml in the latest release artifacts"),
+      { code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND" },
+    );
+    ctx.checkForUpdates.mockRejectedValueOnce(missing);
+    setupAutoUpdater(() => null);
+
+    await expect(invokeIpc("updater:check")).resolves.toEqual({
+      ok: true,
+      currentVersion: "0.3.17",
+      latestVersion: "0.3.17",
+      available: false,
+    });
+  });
+
+  it("still surfaces other manual check failures", async () => {
+    ctx.checkForUpdates.mockRejectedValueOnce(new Error("network down"));
+    setupAutoUpdater(() => null);
+
+    await expect(invokeIpc("updater:check")).resolves.toEqual({
+      ok: false,
+      error: "network down",
+    });
+  });
+
   it("forwards update progress to a live renderer", () => {
     const { win, send } = makeWindow();
     setupAutoUpdater(() => win);

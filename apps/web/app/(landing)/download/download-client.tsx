@@ -39,7 +39,11 @@ export function DownloadClient({ release }: { release: LatestRelease }) {
           assets={release.assets}
           versionUnavailable={versionUnavailable}
         />
-        <AllPlatforms assets={release.assets} />
+        <AllPlatforms
+          assets={release.assets}
+          assetVersions={release.assetVersions}
+          latestVersion={release.version}
+        />
         <CliSection />
         <VersionInfo version={release.version} />
       </main>
