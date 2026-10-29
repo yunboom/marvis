@@ -9,11 +9,12 @@ type UpdateState =
   | { status: "ready"; version: string };
 
 /**
- * 当前连接的服务器网页端上，某个版本的更新日志地址。
+ * Changelog URL for a release on the connected server's web app.
  *
- * appUrl 已带部署路径前缀（如 https://omniai.shoplazza.site/marvis），锚点与
- * 网页端更新日志页 `release-<版本号用连字符>` 一致。服务器没有网页端时
- * appUrl 为空串，返回 null，不显示入口。
+ * appUrl already carries the deployment path prefix (e.g.
+ * https://omniai.shoplazza.site/marvis); the anchor matches the web changelog
+ * page's `release-<version with dashes>`. A server without a web app has an
+ * empty appUrl, which returns null so the link is hidden.
  */
 export function changelogUrl(appUrl: string, version: string): string | null {
   if (!appUrl) return null;
