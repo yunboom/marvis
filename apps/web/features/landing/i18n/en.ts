@@ -169,6 +169,15 @@ export function createEnDict(
     },
     entries: [
       {
+        version: "0.0.2",
+        date: "2026-10-29",
+        title: "Improvements and fixes",
+        changes: [
+          "The CLI connects to Marvis by default. Running marvis setup no longer asks for a server address.",
+          "Fixed \"See changelog\" in the desktop update prompt not opening.",
+        ],
+      },
+      {
         version: "0.0.1",
         date: "2026-10-28",
         title: "The first Marvis release",

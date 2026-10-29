@@ -83,6 +83,15 @@ export function createKoDict(
       },
       entries: [
         {
+          version: "0.0.2",
+          date: "2026-10-29",
+          title: "개선 및 버그 수정",
+          changes: [
+            "CLI가 기본으로 Marvis에 연결됩니다. marvis setup 실행 시 서버 주소를 입력할 필요가 없습니다.",
+            "데스크톱 업데이트 알림에서 ‘변경 내역 보기’가 열리지 않던 문제를 수정했습니다.",
+          ],
+        },
+        {
           version: "0.0.1",
           date: "2026-10-28",
           title: "Marvis 첫 번째 릴리스",

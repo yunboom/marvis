@@ -161,6 +161,15 @@ export function createZhDict(
     },
     entries: [
       {
+        version: "0.0.2",
+        date: "2026-10-29",
+        title: "改进与修复",
+        changes: [
+          "CLI 默认连接 Marvis，运行 marvis setup 不用再填服务器地址。",
+          "修复桌面端更新提示里「查看更新日志」打不开的问题。",
+        ],
+      },
+      {
         version: "0.0.1",
         date: "2026-10-28",
         title: "Marvis 首个版本",
