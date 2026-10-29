@@ -7,6 +7,7 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbTreeLevelOptions } from "@marvis/core/kb/queries";
 import type { KbTreePage } from "@marvis/core/types";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { AppLink } from "../../navigation";
 import { useT } from "../../i18n";
@@ -161,6 +162,9 @@ function TreeRow({ page, depth, ctx }: { page: KbTreePage; depth: number; ctx: T
   );
 }
 
+/** Row widths of a loading tree level, varied so it reads as a list of titles. */
+const TREE_SKELETON_WIDTHS = ["72%", "58%", "66%", "48%"] as const;
+
 function TreeLevel({ parentId, depth, ctx }: { parentId: string; depth: number; ctx: TreeContext }) {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
@@ -188,7 +192,13 @@ function TreeLevel({ parentId, depth, ctx }: { parentId: string; depth: number; 
 
   if (isLoading) {
     return (
-      <div className="h-8 animate-pulse rounded-lg bg-surface-sunken/60" style={{ marginLeft: 6 + depth * 16 }} />
+      <div className="flex flex-col gap-px" style={{ marginLeft: 6 + depth * 16 }}>
+        {TREE_SKELETON_WIDTHS.slice(0, depth === 0 ? 4 : 3).map((width, i) => (
+          <div key={i} className="flex h-8 items-center">
+            <Skeleton className="h-7" style={{ width }} />
+          </div>
+        ))}
+      </div>
     );
   }
 

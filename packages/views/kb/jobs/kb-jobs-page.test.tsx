@@ -110,6 +110,16 @@ beforeEach(() => {
   mocked.listKnowledgeBaseJobs.mockResolvedValue([ACTIVE, ARCHIVED]);
 });
 
+describe("KbJobsPage loading", () => {
+  it("draws row skeletons, not the empty state, while the jobs load", () => {
+    mocked.listKnowledgeBaseJobs.mockReturnValue(new Promise(() => {}));
+    mount();
+
+    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("No jobs yet")).toBeNull();
+  });
+});
+
 describe("KbJobsPage archive", () => {
   it("keeps archived jobs out of the main view and offers only archive there", async () => {
     mount();

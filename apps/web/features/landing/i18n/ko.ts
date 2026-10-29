@@ -83,6 +83,15 @@ export function createKoDict(
       },
       entries: [
         {
+          version: "0.0.2",
+          date: "2026-10-29",
+          title: "개선 및 버그 수정",
+          changes: [
+            "CLI가 기본으로 Marvis에 연결됩니다. marvis setup 실행 시 서버 주소를 입력할 필요가 없습니다.",
+            "데스크톱 업데이트 알림에서 ‘변경 내역 보기’가 열리지 않던 문제를 수정했습니다.",
+          ],
+        },
+        {
           version: "0.0.1",
           date: "2026-10-28",
           title: "Marvis 첫 번째 릴리스",
@@ -233,7 +242,7 @@ export function createKoDict(
         stepCommand: "'손상됨' 또는 '개발자를 확인할 수 없음'이 표시되면 터미널에서 실행합니다:",
         stepReopen: "Marvis를 다시 엽니다.",
         altSettings: "터미널 없이: '시스템 설정 › 개인정보 보호 및 보안' 하단에서 '그래도 열기'를 클릭합니다.",
-        noAutoUpdate: "자동 업데이트는 아직 지원하지 않습니다. 새 버전은 다운로드 페이지에서 받으세요.",
+        noAutoUpdate: "자동 업데이트는 아직 지원하지 않습니다. 설치 파일이 Apple 개발자 계정으로 서명되지 않아 macOS가 앱의 자동 교체를 허용하지 않습니다. 새 버전은 다운로드 페이지에서 받으세요.",
         copyLabel: "복사",
         copiedLabel: "복사됨",
         close: "닫기",

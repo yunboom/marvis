@@ -6,13 +6,14 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbBaseDetailOptions, kbMergeRequestListOptions } from "@marvis/core/kb/queries";
 import type { KbMergeRequest, KbMergeRequestListStatus } from "@marvis/core/types";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@marvis/ui/components/ui/tabs";
 import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { KB_MR_STATUS_DOT, KbStateDot } from "../components/kb-diff";
-import { KbReviewDetail, useKbSourceLabel } from "./kb-review-detail";
+import { KbReviewDetail, KbReviewDetailSkeleton, useKbSourceLabel } from "./kb-review-detail";
 import { parseKbReviewRoute } from "./kb-review-route";
 
 type Tab = "open" | "ended" | "all";
@@ -50,6 +51,20 @@ function ReviewRow({ kbSlug, mr, selected }: { kbSlug: string; mr: KbMergeReques
         </span>
       </AppLink>
     </li>
+  );
+}
+
+/** Merge request rows while the list loads, the height of a loaded row. */
+export function KbMrRowSkeletons() {
+  return (
+    <>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <li key={i} aria-hidden="true" className="flex flex-col gap-2 rounded-tile px-3 py-3">
+          <Skeleton className="h-3.5 w-4/5" />
+          <Skeleton className="h-3 w-1/2" />
+        </li>
+      ))}
+    </>
   );
 }
 
@@ -106,6 +121,7 @@ export function KbReviewPage() {
             <p className="px-4 py-6 text-label text-muted-foreground">{t(($) => $.review.empty[tab])}</p>
           )}
           <ul className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-3">
+            {isLoading && <KbMrRowSkeletons />}
             {list.map((mr) => (
               <ReviewRow key={mr.id} kbSlug={kbSlug} mr={mr} selected={mr.number === selected} />
             ))}
@@ -113,9 +129,11 @@ export function KbReviewPage() {
         </aside>
         {selected > 0 ? (
           <KbReviewDetail key={selected} kbSlug={kbSlug} number={selected} />
+        ) : isLoading ? (
+          <KbReviewDetailSkeleton />
         ) : (
           <div className="flex flex-1 items-center justify-center text-body text-muted-foreground">
-            {isLoading ? null : t(($) => $.review.select)}
+            {t(($) => $.review.select)}
           </div>
         )}
       </div>

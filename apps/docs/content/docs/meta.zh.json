@@ -39,6 +39,8 @@
     "---自动化---",
     "autopilots",
     "issue-wakeups",
+    "---知识库---",
+    "knowledge-base",
     "---集成---",
     "channels",
     "lark-bot-integration",

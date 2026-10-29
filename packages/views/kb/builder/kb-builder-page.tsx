@@ -699,6 +699,7 @@ function KbBuilderWorkspace({
       onMenuOpenChange={setRuntimeMenuOpen}
       onRuntimeSelect={(id) => void handleRuntimeSelect(id)}
       connectHref={paths.runtimes()}
+      loading={!runtimesSettled}
       // The model is frozen onto the conversation when it starts, so it
       // is chosen only before that, as on the old runtime step.
       model={sessionId ? undefined : { value: model, onChange: setModel, disabled: !runtime || starting }}

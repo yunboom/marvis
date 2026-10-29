@@ -247,6 +247,27 @@ describe("review route helpers", () => {
 });
 
 describe("KbReviewPage", () => {
+  it("draws list and detail skeletons, not the empty state, while the list loads", () => {
+    mocked.listKnowledgeBaseMergeRequests.mockReturnValue(new Promise(() => {}));
+    mount(<KbReviewPage />, "/acme/kb/team/reviews");
+
+    const list = screen.getByRole("complementary", { name: "Change requests" });
+    expect(list.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("Nothing waiting for review")).toBeNull();
+    expect(document.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThan(
+      list.querySelectorAll('[data-slot="skeleton"]').length,
+    );
+  });
+
+  it("draws the detail skeleton while the selected request loads", () => {
+    mocked.getKnowledgeBaseMergeRequest.mockReturnValue(new Promise(() => {}));
+    mocked.listKnowledgeBaseMrTimeline.mockResolvedValue([]);
+    mount(<KbReviewPage />, "/acme/kb/team/reviews/16");
+
+    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("This change request does not exist")).toBeNull();
+  });
+
   it("lists open requests and merges with the draft version shown", async () => {
     mocked.mergeKnowledgeBaseMergeRequest.mockResolvedValue(mergeRequest({ status: "merged" }));
     await openReview(detail());
@@ -508,6 +529,15 @@ describe("KbReviewPage", () => {
 });
 
 describe("KbChangesPage", () => {
+  it("draws row skeletons, not the empty state, while the change log loads", () => {
+    mocked.listKnowledgeBaseMergeRequests.mockReturnValue(new Promise(() => {}));
+    mount(<KbChangesPage />, "/acme/kb/team/changes");
+
+    const list = screen.getByRole("complementary", { name: "Merged changes" });
+    expect(list.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("No merged changes yet")).toBeNull();
+  });
+
   it("lists merged requests and shows the selected one's changes", async () => {
     const merged = mergeRequest({ status: "merged", merged_by_name: "Li Lei", merged_at: "2026-10-25T11:02:00Z" });
     mocked.listKnowledgeBaseMergeRequests.mockResolvedValue([merged]);

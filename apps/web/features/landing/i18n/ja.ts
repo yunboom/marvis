@@ -83,6 +83,15 @@ export function createJaDict(
       },
       entries: [
         {
+          version: "0.0.2",
+          date: "2026-10-29",
+          title: "改善とバグ修正",
+          changes: [
+            "CLI はデフォルトで Marvis に接続します。marvis setup でサーバーアドレスを入力する必要はなくなりました。",
+            "デスクトップ版の更新通知で「更新履歴を見る」が開けない問題を修正しました。",
+          ],
+        },
+        {
           version: "0.0.1",
           date: "2026-10-28",
           title: "Marvis 最初のリリース",
@@ -233,7 +242,7 @@ export function createJaDict(
         stepCommand: "「壊れている」「開発元を検証できません」と表示されたら、ターミナルで実行します：",
         stepReopen: "Marvis をもう一度開きます。",
         altSettings: "ターミナルを使わない場合：「システム設定 › プライバシーとセキュリティ」の下部で「このまま開く」をクリックします。",
-        noAutoUpdate: "自動アップデートには未対応です。新しいバージョンはダウンロードページから入手してください。",
+        noAutoUpdate: "自動アップデートには未対応です。インストーラーが Apple デベロッパーアカウントで署名されていないため、macOS はアプリによる自動置き換えを許可しません。新しいバージョンはダウンロードページから入手してください。",
         copyLabel: "コピー",
         copiedLabel: "コピーしました",
         close: "閉じる",

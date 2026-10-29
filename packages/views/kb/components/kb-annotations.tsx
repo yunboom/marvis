@@ -11,6 +11,7 @@ import { isOpenAnnotation, kbAnnotationListOptions, kbBaseDetailOptions } from "
 import { useCreateKbAnnotation, useUpdateKbAnnotationStatus } from "@marvis/core/kb/mutations";
 import type { CreateKbAnnotationRequest, KbAnnotation, KbAnnotationStatus } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@marvis/ui/components/ui/tabs";
 import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { cn } from "@marvis/ui/lib/utils";
@@ -504,6 +505,17 @@ export function KbAnnotationsPage() {
           <p className="py-6 text-label text-muted-foreground">{t(($) => $.annotation.empty)}</p>
         )}
         <ul>
+          {isLoading &&
+            Array.from({ length: 4 }).map((_, i) => (
+              <li key={i} aria-hidden="true" className="flex flex-col gap-2.5 border-b border-border/50 px-1 py-3.5">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="size-4 shrink-0 rounded-full" />
+                  <Skeleton className="h-3.5 w-16" />
+                  <Skeleton className="h-3.5 w-24" />
+                </div>
+                <Skeleton className="h-4 w-full max-w-[560px]" />
+              </li>
+            ))}
           {rows.map((annotation) => (
             <ListRow key={annotation.id} annotation={annotation} kbSlug={kbSlug} canChange={canChange(annotation)} />
           ))}

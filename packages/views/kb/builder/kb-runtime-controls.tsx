@@ -5,6 +5,7 @@ import { isRuntimeUsableForUser, runtimeDisplayLabel } from "@marvis/core/runtim
 import type { MemberWithUser, RuntimeDevice } from "@marvis/core/types";
 import { TooltipHint } from "@marvis/ui/components/common/tooltip-hint";
 import { Popover, PopoverContent, PopoverTrigger } from "@marvis/ui/components/ui/popover";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { ModelDropdown } from "../../agents/components/model-dropdown";
 import { useT } from "../../i18n";
@@ -184,6 +185,7 @@ export function KbRuntimeControls({
   onRuntimeSelect,
   connectHref,
   model,
+  loading = false,
   className,
 }: {
   runtimes: RuntimeDevice[];
@@ -198,9 +200,20 @@ export function KbRuntimeControls({
   connectHref: string;
   /** The model picker; omitted once the model is frozen onto a conversation. */
   model?: { value: string; onChange: (value: string) => void; disabled: boolean };
+  /** The runtime list has not arrived yet; the pills hold their place. */
+  loading?: boolean;
   className?: string;
 }) {
   const runtime = runtimes.find((item) => item.id === runtimeId) ?? null;
+
+  if (loading) {
+    return (
+      <div aria-hidden="true" className={cn("flex min-w-0 items-center gap-0.5", className)}>
+        <Skeleton className="h-7.5 w-36 min-w-0 rounded-full" />
+        {model && <Skeleton className="h-7.5 w-20 min-w-0 rounded-full" />}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex min-w-0 items-center gap-0.5", className)}>

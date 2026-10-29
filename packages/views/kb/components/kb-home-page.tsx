@@ -7,6 +7,7 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { isOpenAnnotation, kbAnnotationListOptions, kbHomeOptions } from "@marvis/core/kb/queries";
 import { Button } from "@marvis/ui/components/ui/button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
@@ -100,6 +101,43 @@ function KbWelcomeGuide({ name, onDismiss }: { name: string; onDismiss: () => vo
   );
 }
 
+/** The home page's layout while it loads: title, pending cards, recent pages. */
+function KbHomeSkeleton() {
+  return (
+    <div className="min-h-0 flex-1 overflow-hidden">
+      <div className="flex max-w-[900px] flex-col gap-7 px-14 py-8">
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-8 w-48 max-w-full" />
+          <Skeleton className="h-4 w-80 max-w-full" />
+        </div>
+        <div className="flex flex-col gap-2.5">
+          <Skeleton className="h-4 w-16" />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-2.5 rounded-xl border bg-card p-4">
+                <Skeleton className="h-3.5 w-20" />
+                <Skeleton className="h-7 w-10" />
+                <Skeleton className="h-3 w-28 max-w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col">
+          <Skeleton className="mb-2 h-4 w-20" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 border-b border-border/50 px-1 py-3">
+              <Skeleton className="size-4 shrink-0" />
+              <Skeleton className="h-4 w-40 max-w-[45%]" />
+              <span className="flex-1" />
+              <Skeleton className="h-3.5 w-16 shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * The home page of a knowledge base is an overview: the base, its pending
  * work and recently merged pages. It embeds no page body.
@@ -125,9 +163,13 @@ export function KbHomePage() {
         <PageHeader>
           <span className="text-body text-muted-foreground">{t(($) => $.list.title)}</span>
         </PageHeader>
-        <div className="flex flex-1 items-center justify-center text-body text-muted-foreground">
-          {isError || !isLoading ? t(($) => $.home.not_found) : null}
-        </div>
+        {isError || !isLoading ? (
+          <div className="flex flex-1 items-center justify-center text-body text-muted-foreground">
+            {t(($) => $.home.not_found)}
+          </div>
+        ) : (
+          <KbHomeSkeleton />
+        )}
       </div>
     );
   }

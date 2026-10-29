@@ -15,6 +15,7 @@ import {
 } from "@marvis/core/kb/queries";
 import type { KbAnnotation, KbBlock, KbPage, KbPageDraft, KbPendingMergeRequest, KbSource } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { Switch } from "@marvis/ui/components/ui/switch";
 import { Toggle } from "@marvis/ui/components/ui/toggle";
 import {
@@ -370,6 +371,28 @@ function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
 
+/** The reading column while the page loads, laid out like the loaded article. */
+function KbPageSkeleton() {
+  return (
+    <div className="min-h-0 flex-1 overflow-hidden">
+      <div className="mx-auto w-full max-w-[1176px] space-y-6 px-12 pt-9 pb-10">
+        <Skeleton className="h-[30px] w-[62%] rounded-lg" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+        <Skeleton className="h-5 w-40 max-w-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface KbPageViewProps {
   /** Opens or downloads raw files cited by the page. */
   rawFileActions?: KbRawFileActions;
@@ -463,18 +486,23 @@ export function KbPageView({ rawFileActions: rawFileActionsProp }: KbPageViewPro
   };
 
   if (!loaded) {
+    const message = draftForbidden
+      ? t(($) => $.page.draft_forbidden)
+      : isError || (!isLoading && !page?.id)
+        ? t(($) => $.page.not_found)
+        : null;
+
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <PageHeader>
           <span className="text-body text-muted-foreground">{base?.name}</span>
+          {!message && <Skeleton className="h-4 w-28" />}
         </PageHeader>
-        <div className="flex flex-1 items-center justify-center text-body text-muted-foreground">
-          {draftForbidden
-            ? t(($) => $.page.draft_forbidden)
-            : isError || (!isLoading && !page?.id)
-              ? t(($) => $.page.not_found)
-              : null}
-        </div>
+        {message ? (
+          <div className="flex flex-1 items-center justify-center text-body text-muted-foreground">{message}</div>
+        ) : (
+          <KbPageSkeleton />
+        )}
       </div>
     );
   }
