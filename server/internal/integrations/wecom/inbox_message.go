@@ -10,6 +10,8 @@ import (
 	"os"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // inboxMarkdownMaxLen is the budget this card is written to, in RUNES.
@@ -39,15 +41,12 @@ const inboxMarkdownMaxLen = 4000
 // their own profile language that picks the pack (outbound.go).
 
 // inboxAppURL resolves the frontend URL for building the "view detail" link.
-// Priority: WECOM_APP_URL → MARVIS_APP_URL → FRONTEND_ORIGIN. Only HTTPS
-// values are accepted; a non-HTTPS override is silently dropped so a
+// Priority: WECOM_APP_URL (a full URL, used as is) → the web app URL
+// (MARVIS_APP_URL or FRONTEND_ORIGIN, plus MARVIS_BASE_PATH). Only HTTPS
+// values are accepted; a non-HTTPS value is silently dropped so a
 // misconfigured env cannot leak an http:// URL into a user chat.
 func inboxAppURL() string {
-	for _, name := range []string{"WECOM_APP_URL", "MARVIS_APP_URL", "FRONTEND_ORIGIN"} {
-		v := strings.TrimSpace(os.Getenv(name))
-		if v == "" {
-			continue
-		}
+	for _, v := range []string{strings.TrimSpace(os.Getenv("WECOM_APP_URL")), util.AppURLFromEnv()} {
 		if !strings.HasPrefix(v, "https://") {
 			continue
 		}

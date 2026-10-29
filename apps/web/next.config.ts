@@ -15,7 +15,7 @@ import { normalizeBasePath } from "./config/base-path";
 config({ path: resolve(__dirname, "../../.env") });
 
 // Read after dotenv so a root .env can set it too; see config/base-path.ts.
-const BASE_PATH = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH);
+const BASE_PATH = normalizeBasePath(process.env.MARVIS_BASE_PATH);
 
 // `next dev` falls back to the conventional localhost upstreams; builds use
 // the strict resolvers so prebuilt images keep unset upstreams unproxied.
@@ -43,6 +43,8 @@ const allowedDevOrigins = process.env.CORS_ALLOWED_ORIGINS
 
 const nextConfig: NextConfig = {
   ...(BASE_PATH ? { basePath: BASE_PATH } : {}),
+  // Inline the prefix into client and server bundles; config/base-path.ts reads it.
+  env: { MARVIS_BASE_PATH: BASE_PATH },
   ...(process.env.STANDALONE === "true" ? { output: "standalone" as const } : {}),
   transpilePackages: ["@marvis/core", "@marvis/ui", "@marvis/views"],
   ...(allowedDevOrigins && allowedDevOrigins.length > 0

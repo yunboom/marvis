@@ -366,6 +366,8 @@ func TestGitHubConnectRepositoryReturnTarget(t *testing.T) {
 
 func TestGitHubSetupCallbackRepositoryReturnTarget(t *testing.T) {
 	t.Setenv("GITHUB_WEBHOOK_SECRET", "test-secret-123")
+	t.Setenv("MARVIS_APP_URL", "")
+	t.Setenv("MARVIS_BASE_PATH", "")
 	t.Setenv("FRONTEND_ORIGIN", "https://app.marvis.test/")
 	wsID := "11111111-2222-3333-4444-555555555555"
 	state, err := signStateForReturn(wsID, githubReturnToRepositories)
@@ -385,6 +387,21 @@ func TestGitHubSetupCallbackRepositoryReturnTarget(t *testing.T) {
 	}
 	if got := rec.Header().Get("Location"); got != "https://app.marvis.test/settings?tab=repositories&github_error=bad_installation_id" {
 		t.Fatalf("redirect = %q, want repository settings error", got)
+	}
+}
+
+// TestGitHubSetupCallbackKeepsBasePath 确认按路径前缀部署时，GitHub 安装回跳带上 MARVIS_BASE_PATH。
+func TestGitHubSetupCallbackKeepsBasePath(t *testing.T) {
+	t.Setenv("GITHUB_WEBHOOK_SECRET", "test-secret-123")
+	t.Setenv("MARVIS_APP_URL", "https://tools.marvis.test")
+	t.Setenv("MARVIS_BASE_PATH", "/marvis")
+
+	req := httptest.NewRequest(http.MethodGet, "/api/github/setup?installation_id=1", nil)
+	rec := httptest.NewRecorder()
+	(&Handler{}).GitHubSetupCallback(rec, req)
+
+	if got := rec.Header().Get("Location"); !strings.HasPrefix(got, "https://tools.marvis.test/marvis/settings?") {
+		t.Fatalf("redirect = %q, want it under https://tools.marvis.test/marvis", got)
 	}
 }
 

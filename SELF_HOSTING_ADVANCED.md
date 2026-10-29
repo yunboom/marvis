@@ -667,10 +667,10 @@ This keeps cookies, CORS, and the WebSocket origin check on a single origin. It 
 
 ### Path Prefix (Shared Domain)
 
-The same-origin layout can also live under a path on a domain that serves other apps, e.g. `https://tools.example.com/marvis/`. The web app and the docs site must know the prefix when they are built, because Next.js writes it into every page and asset URL; the backend stays at its own root and never sees the prefix. The published images are built for the root path, so build your own:
+The same-origin layout can also live under a path on a domain that serves other apps, e.g. `https://tools.example.com/marvis/`. The prefix is configured once, in `MARVIS_BASE_PATH`. The web app and the docs site read it when they are built, because Next.js writes it into every page and asset URL; the backend image takes the same build argument and appends it to `MARVIS_APP_URL` when it builds links in emails, chat cards and invite cards. The backend still serves at its own root. The published images are built for the root path, so build your own:
 
 ```bash
-NEXT_PUBLIC_BASE_PATH=/marvis docker compose \
+MARVIS_BASE_PATH=/marvis docker compose \
   -f docker-compose.selfhost.yml -f docker-compose.selfhost.build.yml \
   --profile docs up -d --build
 ```
@@ -678,10 +678,12 @@ NEXT_PUBLIC_BASE_PATH=/marvis docker compose \
 ```bash
 # Backend
 FRONTEND_ORIGIN=https://tools.example.com            # origin only, no path
-MARVIS_APP_URL=https://tools.example.com/marvis      # links in emails and chat cards
-MARVIS_PUBLIC_URL=https://tools.example.com/marvis   # webhook URLs
+MARVIS_APP_URL=https://tools.example.com             # origin only; the prefix is appended
+MARVIS_PUBLIC_URL=https://tools.example.com/marvis   # full backend URL for webhooks and attachments
 GOOGLE_REDIRECT_URI=https://tools.example.com/marvis/auth/callback
 ```
+
+`MARVIS_PUBLIC_URL` is the backend's own address, so it is written out in full: here the backend is reached through the prefixed vhost, while a local setup points it straight at the backend port. `GOOGLE_REDIRECT_URI` is only a fallback for the address the web app sends, and must match what is registered with Google.
 
 Leave `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_WS_URL` empty: the browser derives `/marvis/api` and `/marvis/ws` from the prefix. Register `https://tools.example.com/marvis/auth/callback` with Google and Lark. Point the desktop app, the CLI and the daemon at `https://tools.example.com/marvis`; the desktop app also accepts any page URL under it and finds the prefix itself.
 

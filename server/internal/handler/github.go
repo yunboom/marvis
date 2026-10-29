@@ -27,6 +27,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/yunboom/marvis/server/internal/issuestatus"
 	"github.com/yunboom/marvis/server/internal/middleware"
+	"github.com/yunboom/marvis/server/internal/util"
 	db "github.com/yunboom/marvis/server/pkg/db/generated"
 	"github.com/yunboom/marvis/server/pkg/protocol"
 )
@@ -505,7 +506,7 @@ func (h *Handler) GitHubSetupCallback(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	installationIDStr := q.Get("installation_id")
 	state := q.Get("state")
-	frontend := strings.TrimSpace(os.Getenv("FRONTEND_ORIGIN"))
+	frontend := util.AppURLFromEnv()
 	if frontend == "" {
 		frontend = "http://localhost:3000"
 	}

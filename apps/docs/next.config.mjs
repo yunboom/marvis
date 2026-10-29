@@ -3,7 +3,7 @@ import { createMDX } from "fumadocs-mdx/next";
 const withMDX = createMDX();
 
 // Mirrors lib/base-path.ts: `/docs` behind the optional deployment prefix.
-const prefix = (process.env.NEXT_PUBLIC_BASE_PATH ?? "")
+const prefix = (process.env.MARVIS_BASE_PATH ?? "")
   .trim()
   .replace(/^\/+|\/+$/g, "");
 const basePath = `${prefix ? `/${prefix}` : ""}/docs`;
@@ -11,6 +11,8 @@ const basePath = `${prefix ? `/${prefix}` : ""}/docs`;
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
+  // Inline the prefix into the bundles; lib/base-path.ts reads it.
+  env: { MARVIS_BASE_PATH: prefix ? `/${prefix}` : "" },
   ...(process.env.STANDALONE === "true" ? { output: "standalone" } : {}),
   basePath,
   // Visiting http://host/ (outside basePath) would otherwise 404 — redirect

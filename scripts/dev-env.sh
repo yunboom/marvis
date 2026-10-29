@@ -595,11 +595,11 @@ Run 'make down' here first — a leftover instance answers /health with 200 and 
   die "api never became healthy. Log: $(log_file api)"
 }
 
-# Where the web app answers. With NEXT_PUBLIC_BASE_PATH set (e.g. /marvis)
+# Where the web app answers. With MARVIS_BASE_PATH set (e.g. /marvis)
 # every page lives under the prefix and the bare port root is a 404, so probes
 # and printed links must carry it.
 web_url() {
-  local prefix="${NEXT_PUBLIC_BASE_PATH:-}"
+  local prefix="${MARVIS_BASE_PATH:-}"
   # Trim every leading and trailing slash, as apps/web/config/base-path.ts does.
   prefix="${prefix#"${prefix%%[!/]*}"}"
   prefix="${prefix%"${prefix##*[!/]}"}"

@@ -83,15 +83,17 @@ CI 按路径只跑改动相关的作业（`.github/ci-paths.json`），main 上�
 
 ## 决策八：路径前缀部署（fork 独有）
 
-web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），由构建参数 `NEXT_PUBLIC_BASE_PATH` 控制，不设时与上游一致；后端始终在根路径，不感知前缀。部署方法见 `SELF_HOSTING_ADVANCED.md` 的 Path Prefix 一节。
+web 和 docs 支持部署在共享域名的子路径下（如 `/marvis`），前缀只在 `MARVIS_BASE_PATH` 一处配置，不设时与上游一致。后端仍在根路径提供服务，但读同一个变量拼网页链接。部署方法见 `SELF_HOSTING_ADVANCED.md` 的 Path Prefix 一节。
 
+- 一个 key：web / docs 的 `next.config` 读 `MARVIS_BASE_PATH` 作 basePath，并经 `env` 写进前端代码；三个镜像都接收同名构建参数并写进镜像环境（prod 只在 `prod-images.yml` 的 `BASE_PATH` 配置，`server.sh` 健康检查从网页镜像读取）；本地 `make up` 从 `.env` 读。compose 运行时不传它，空值会覆盖镜像里的值。
+- 后端：网页地址统一用 `util.AppURLFromEnv()`，即 `MARVIS_APP_URL`（未设置时 `FRONTEND_ORIGIN`）加前缀，两者只写协议和域名；邮件、GitHub 回跳、企微、飞书卡片、daemon 配置都走它。`MARVIS_PUBLIC_URL` 是后端完整地址，不自动拼前缀（本地直连后端端口，prod 经 nginx 前缀转发；它会写进持久化的附件链接）。
 - web：`apps/web/config/base-path.ts` 的 `BASE_PATH`，用于 Next 不会自动加前缀的地方：浏览器 API / WS 默认地址（`web-providers.tsx`）、OAuth 回调地址、导航适配器的 `getShareableUrl` 与新标签页、manifest 与图标、favicon 跳转、docs 转发（`runtime-urls.ts`）、`next/image` 的字符串 `src`（不加前缀时图片优化接口返回 400）。
 - views：`useAppOrigin` 返回带路径前缀的基地址，`link-handler.ts` 识别站内链接时去掉前缀；裸 `<a href="/download">` 改用 `getShareableUrl`。
 - docs：`apps/docs/lib/base-path.ts` 与 `next.config.mjs` 的 basePath 为 `${前缀}/docs`；`Dockerfile.docs`，compose 的 `docs` 服务在 `docs` profile 下。
 - 桌面端：服务器地址保留路径（`normalizeServerAddress`），`probeServer` 从完整路径逐级向上探测 `/api/config`，粘贴页面地址也能找到前缀。
-- compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`；`turbo.json` 的 `globalEnv` 登记了 `NEXT_PUBLIC_BASE_PATH`。
+- compose：`MARVIS_BIND_ADDRESS` 控制端口绑定地址，默认 `127.0.0.1`；`turbo.json` 的 `globalEnv` 登记了 `MARVIS_BASE_PATH`。
 - 生产部署：`make deploy-prod` 经跳板机部署 origin/main 到 prototype，只允许 main 且 CI 的测试与构建作业通过；镜像由 `prod-images.yml` 在 GitHub Actions 构建（prototype 的 CentOS 7 内核下 Node 22 的 `pnpm install` 会 EPERM），服务器只拉取；生产配置是本地主工作区的 `.env.prod`，见 `scripts/deploy/README.md`。
-- 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`。
+- 同步上游时：上游新增的手拼根路径（`window.location.origin + path`、裸 `href="/..."`、metadata / manifest 里的 public 资源路径）要接上 `BASE_PATH` 或 `getShareableUrl`；上游后端新增的网页链接改用 `util.AppURLFromEnv()`，不要直接读 `FRONTEND_ORIGIN` / `MARVIS_APP_URL`。
 
 ## 决策九：会话来源 chat_session.source（fork 独有）
 

@@ -1171,7 +1171,7 @@ func newLarkInviteCardLinks(appURL, workspaceSlug string) larkInviteCardLinks {
 	return links
 }
 
-// larkInviteAppURL 校验卡片链接用的网页地址（MARVIS_APP_URL，未设置时为 FRONTEND_ORIGIN；按路径前缀部署时含前缀），
+// larkInviteAppURL 校验卡片链接用的网页地址（util.AppURLFromEnv：MARVIS_APP_URL，未设置时为 FRONTEND_ORIGIN，再加 MARVIS_BASE_PATH），
 // 返回去掉末尾斜杠的地址。没配置或不是 http(s) 时返回空串。
 func larkInviteAppURL(raw string) string {
 	raw = strings.TrimRight(strings.TrimSpace(raw), "/")

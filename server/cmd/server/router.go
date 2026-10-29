@@ -141,15 +141,11 @@ func allowedOrigins() []string {
 	return origins
 }
 
-// appURLFromEnv resolves the user-facing web app URL. It prefers
-// MARVIS_APP_URL and falls back to FRONTEND_ORIGIN, matching how the backend
-// resolves the app URL elsewhere (handler.daemonSetupURLsFromEnv) and the CLI
-// login flow (cmd/marvis tryResolveAppURL). Empty when neither is set.
+// appURLFromEnv resolves the user-facing web app URL: MARVIS_APP_URL (falling
+// back to FRONTEND_ORIGIN) plus the MARVIS_BASE_PATH prefix, matching
+// handler.daemonSetupURLsFromEnv. Empty when neither origin is set.
 func appURLFromEnv() string {
-	if v := strings.TrimRight(strings.TrimSpace(os.Getenv("MARVIS_APP_URL")), "/"); v != "" {
-		return v
-	}
-	return strings.TrimRight(strings.TrimSpace(os.Getenv("FRONTEND_ORIGIN")), "/")
+	return util.AppURLFromEnv()
 }
 
 // pluginActionBaseURL resolves the versioned public base a hook handler calls

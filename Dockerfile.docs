@@ -49,9 +49,9 @@ COPY packages/eslint-config/ packages/eslint-config/
 RUN pnpm install --frozen-lockfile --offline
 
 # Deployment path prefix, baked into Next's basePath (docs serve at
-# `${NEXT_PUBLIC_BASE_PATH}/docs`). Empty serves them at /docs.
-ARG NEXT_PUBLIC_BASE_PATH=
-ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
+# `${MARVIS_BASE_PATH}/docs`). Empty serves them at /docs.
+ARG MARVIS_BASE_PATH=
+ENV MARVIS_BASE_PATH=$MARVIS_BASE_PATH
 ENV STANDALONE=true
 
 RUN pnpm --filter @marvis/docs build
