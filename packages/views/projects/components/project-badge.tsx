@@ -84,7 +84,7 @@ export function ProjectPriorityBadge({ project, handleUpdate, triggerClassName, 
             priorityTextClass(project.priority),
             triggerClassName
           )}>
-            <PriorityIcon priority={project.priority} inheritColor />
+            <PriorityIcon priority={project.priority} />
             <span>{priorityLabels[project.priority]}</span>
           </button>
         }
