@@ -6,6 +6,7 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { kbBaseDetailOptions, kbGraphOptions } from "@marvis/core/kb/queries";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import type { KbGraphNode } from "@marvis/core/types";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { PageHeader } from "../../layout/page-header";
 import { useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
@@ -76,6 +77,7 @@ export function KbGraphPage() {
           <span className="text-faint-foreground">{t(($) => $.graph.hint)}</span>
         </div>
         <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border bg-card">
+          {isLoading && <Skeleton className="absolute inset-0 rounded-none" />}
           {!isLoading && graph && graph.nodes.length === 0 && (
             <p className="absolute inset-0 flex items-center justify-center text-body text-muted-foreground">{t(($) => $.graph.empty)}</p>
           )}

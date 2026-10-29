@@ -8,6 +8,7 @@ import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbBaseDetailOptions, kbPageOptions, kbRevisionDiffOptions } from "@marvis/core/kb/queries";
 import type { KbDiffHunk, KbDiffLine } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
 import { PageHeader } from "../../layout/page-header";
@@ -64,6 +65,34 @@ function HunkCard({ hunk }: { hunk: KbDiffHunk }) {
     </div>
   );
 }
+
+/** The author line and hunk cards while the diff loads. */
+function HunkSkeletons() {
+  return (
+    <>
+      <Skeleton className="h-4 w-64 max-w-full" />
+      {DIFF_SKELETON_LINES.map((lines, i) => (
+        <div key={i} aria-hidden="true" className="overflow-hidden rounded-xl border">
+          <div className="flex items-center gap-2 border-b bg-surface-sunken/60 px-3 py-2.5">
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="ml-auto h-3 w-10" />
+          </div>
+          <div className="flex flex-col gap-2.5 px-3 py-3">
+            {lines.map((width, j) => (
+              <Skeleton key={j} className="h-3.5" style={{ width }} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** Line widths of the loading hunk cards. */
+const DIFF_SKELETON_LINES = [
+  ["92%", "78%", "85%", "60%"],
+  ["70%", "88%", "52%"],
+] as const;
 
 /** One revision of a page compared with the revision before it. */
 export function KbRevisionDiffPage() {
@@ -161,10 +190,10 @@ export function KbRevisionDiffPage() {
               )}
               {diff?.hunks.map((hunk, i) => <HunkCard key={i} hunk={hunk} />)}
             </>
+          ) : isError || !isLoading ? (
+            <p className="text-body text-muted-foreground">{t(($) => $.history.not_found)}</p>
           ) : (
-            (isError || !isLoading) && (
-              <p className="text-body text-muted-foreground">{t(($) => $.history.not_found)}</p>
-            )
+            <HunkSkeletons />
           )}
         </div>
         <KbHistoryPanel kbSlug={kbSlug} pageId={pageId} selectedRevisionId={revisionId} />

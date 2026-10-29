@@ -11,6 +11,7 @@ import { kbBaseDetailOptions, kbJobListOptions, type KbJobListState } from "@mar
 import { useDeleteKbJob, useSetKbJobArchived } from "@marvis/core/kb/mutations";
 import type { KbJob } from "@marvis/core/types";
 import { IconButton } from "@marvis/ui/components/common/icon-button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@marvis/ui/components/ui/tabs";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
@@ -249,6 +250,20 @@ export function KbJobsPage() {
                 <p className="py-6 text-label text-muted-foreground">{t(($) => $.job.empty)}</p>
               )}
               <ul className="flex flex-col gap-1">
+                {isLoading &&
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <li key={i} aria-hidden="true" className={ROW_CLASS}>
+                      <Skeleton className="size-8 shrink-0 rounded-avatar" />
+                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-48 max-w-[60%]" />
+                          <span className="flex-1" />
+                          <Skeleton className="h-3 w-12 shrink-0" />
+                        </div>
+                        <Skeleton className="h-3 w-64 max-w-[80%]" />
+                      </div>
+                    </li>
+                  ))}
                 {rows.map((job) => (
                   <JobRow key={job.id} kbSlug={kbSlug} job={job} archivedView={false} />
                 ))}

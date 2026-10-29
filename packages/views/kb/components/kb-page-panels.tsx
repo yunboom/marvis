@@ -7,6 +7,7 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbPageHistoryOptions } from "@marvis/core/kb/queries";
 import type { KbPage, KbRevision, KbSource } from "@marvis/core/types";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { AppLink } from "../../navigation";
 import { useT, useTimeAgo } from "../../i18n";
@@ -225,6 +226,13 @@ export function KbHistoryList({
 
   return (
     <ol className="-m-1.5 flex flex-col gap-1">
+      {isLoading &&
+        Array.from({ length: 4 }).map((_, i) => (
+          <li key={i} aria-hidden="true" className="flex flex-col gap-2 p-2.5">
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-3 w-3/5" />
+          </li>
+        ))}
       {revisions.map((revision) => (
         <li key={revision.revision_id}>
           <AppLink

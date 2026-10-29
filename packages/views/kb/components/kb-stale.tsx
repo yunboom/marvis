@@ -6,6 +6,7 @@ import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbBaseDetailOptions, kbStalePagesOptions } from "@marvis/core/kb/queries";
 import type { KbStalePage } from "@marvis/core/types";
 import { Button } from "@marvis/ui/components/ui/button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
@@ -64,6 +65,23 @@ export function KbStalePagesPage() {
       <div className="min-h-0 flex-1 overflow-y-auto px-6">
         {!isLoading && pages.length === 0 && (
           <p className="py-6 text-label text-muted-foreground">{t(($) => $.stale_list.empty)}</p>
+        )}
+        {isLoading && (
+          <div aria-hidden="true">
+            <div className="flex h-10 items-center border-b">
+              <Skeleton className="h-3 w-16" />
+            </div>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex h-16 items-center gap-4 border-b border-border/60">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <Skeleton className="h-4 w-48 max-w-full" />
+                  <Skeleton className="h-3 w-32 max-w-full" />
+                </div>
+                <Skeleton className="h-4 w-[30%] max-md:hidden" />
+                <Skeleton className="h-8 w-24 shrink-0 rounded-full" />
+              </div>
+            ))}
+          </div>
         )}
         {pages.length > 0 && (
           <table className="w-full table-fixed text-label">

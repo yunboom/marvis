@@ -93,6 +93,15 @@ describe("KbEntryPage", () => {
     await waitFor(() => expect(adapter.replace).toHaveBeenCalledWith("/acme/kb/payments"));
   });
 
+  it("draws row skeletons, not the empty state, while the list loads", () => {
+    listKnowledgeBases.mockReturnValue(new Promise(() => {}));
+
+    mount();
+
+    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("No knowledge bases yet")).toBeNull();
+  });
+
   it("shows the empty state with a create link when the workspace has no knowledge base", async () => {
     listKnowledgeBases.mockResolvedValue([]);
 

@@ -41,6 +41,7 @@ import {
 import { Button } from "@marvis/ui/components/ui/button";
 import { Input } from "@marvis/ui/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@marvis/ui/components/ui/popover";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { Textarea } from "@marvis/ui/components/ui/textarea";
 import { cn } from "@marvis/ui/lib/utils";
 import { ActorAvatar } from "../../common/actor-avatar";
@@ -632,6 +633,39 @@ function ReviewBar({
 }
 
 /**
+ * A merge request while it loads: header, summary and checks boxes, and a
+ * few activity rows, laid out like the loaded detail.
+ */
+export function KbReviewDetailSkeleton({ boxes = true, className }: { boxes?: boolean; className?: string }) {
+  return (
+    <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col gap-3.5 overflow-hidden px-[30px] py-[22px]", className)}>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-3.5 w-56 max-w-full" />
+        <Skeleton className="h-6 w-80 max-w-full" />
+      </div>
+      {boxes && (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Skeleton className="h-[148px] w-full rounded-xl" />
+          <Skeleton className="h-[148px] w-full rounded-xl max-md:hidden" />
+        </div>
+      )}
+      <Skeleton className="h-28 w-full rounded-xl" />
+      <div className="flex flex-col gap-3 pt-1">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <Skeleton className="size-6 shrink-0 rounded-full" />
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <Skeleton className="h-3.5 w-40 max-w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
  * One merge request (designs 8.1–8.12): who opened it and from where, merge
  * and close, the conflict banner, the agent's summary and the checks, the
  * file cards, and the activity (comments and events). A reviewer opens a
@@ -671,9 +705,11 @@ export function KbReviewDetail({ kbSlug, number }: { kbSlug: string; number: num
   );
 
   if (!mr || mr.number !== number) {
+    if (isLoading && !isError) return <KbReviewDetailSkeleton />;
+
     return (
       <div className="flex flex-1 items-center justify-center text-body text-muted-foreground">
-        {isLoading && !isError ? <Loader2 className="size-4 animate-spin" /> : t(($) => $.review.not_found)}
+        {t(($) => $.review.not_found)}
       </div>
     );
   }
