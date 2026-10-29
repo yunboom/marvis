@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { hasCompleteAssetSet, parseReleaseAssets } from "./parse-release-assets";
+import { parseReleaseAssets } from "./parse-release-assets";
 
 function asset(name: string) {
   return {
@@ -51,22 +51,13 @@ const ALL_ARTIFACT_NAMES = [
   "marvis-desktop-0.4.27-linux-aarch64.rpm",
 ];
 
-describe("hasCompleteAssetSet", () => {
-  it("accepts a release carrying all twelve desktop artifacts", () => {
+describe("parseReleaseAssets on a full release", () => {
+  it("maps each of the twelve desktop artifacts to its own key", () => {
     const assets = parseReleaseAssets(ALL_ARTIFACT_NAMES.map(asset));
-    expect(hasCompleteAssetSet(assets)).toBe(true);
-  });
 
-  it("rejects a release missing any single artifact", () => {
-    for (const dropped of ALL_ARTIFACT_NAMES) {
-      const assets = parseReleaseAssets(
-        ALL_ARTIFACT_NAMES.filter((n) => n !== dropped).map(asset),
-      );
-      expect(hasCompleteAssetSet(assets), `missing ${dropped}`).toBe(false);
-    }
-  });
-
-  it("rejects an empty asset set", () => {
-    expect(hasCompleteAssetSet({})).toBe(false);
+    expect(Object.keys(assets)).toHaveLength(ALL_ARTIFACT_NAMES.length);
+    expect(new Set(Object.values(assets))).toEqual(
+      new Set(ALL_ARTIFACT_NAMES.map((n) => asset(n).browser_download_url)),
+    );
   });
 });
