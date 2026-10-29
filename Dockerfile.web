@@ -50,8 +50,8 @@ ARG NEXT_PUBLIC_APP_VERSION=dev
 ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 # Deployment path prefix (e.g. /marvis), baked into Next's basePath. Empty
 # serves the app at the root, which is what the published images use.
-ARG NEXT_PUBLIC_BASE_PATH=
-ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
+ARG MARVIS_BASE_PATH=
+ENV MARVIS_BASE_PATH=$MARVIS_BASE_PATH
 ENV STANDALONE=true
 
 # Build the web app (standalone output for minimal runtime)

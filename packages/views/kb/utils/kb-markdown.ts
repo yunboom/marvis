@@ -95,10 +95,12 @@ export function prepareBlockMarkdown(content: string, options: PrepareBlockOptio
 /**
  * How a character of a block's Markdown reads on the page: shown as written
  * (`text`), markup that shows nothing such as link brackets and destinations,
- * tags, emphasis and list markers (`markup`), or markup that reads as a space
- * (`gap`): a citation, which the server drops as one when anchoring.
+ * tags and list markers (`markup`), emphasis and escapes that show nothing
+ * but must stay inside a mark that touches them (`inline`), or markup that
+ * reads as a space (`gap`): a citation, which the server drops as one when
+ * anchoring.
  */
-type CharRole = "text" | "markup" | "gap";
+type CharRole = "text" | "markup" | "inline" | "gap";
 
 // Markup of prepared Markdown, in the order roles are claimed: a character
 // keeps the first role given to it.
@@ -146,13 +148,13 @@ function readableText(markdown: string): ReadableText {
     claim(labelEnd, match.index + match[0].length, "markup");
   }
   claimAll(LINE_MARKERS, "markup");
-  claimAll(ESCAPE, "markup");
-  claimAll(EMPHASIS_MARKERS, "markup");
+  claimAll(ESCAPE, "inline");
+  claimAll(EMPHASIS_MARKERS, "inline");
 
   let text = "";
   const from: number[] = [];
   for (let i = 0; i < markdown.length; i++) {
-    if (roles[i] === "markup") continue;
+    if (roles[i] === "markup" || roles[i] === "inline") continue;
 
     const char = markdown[i]!;
     if (roles[i] === "gap" || /\s/.test(char)) {
@@ -185,18 +187,75 @@ function contextScore(text: string, start: number, end: number, prefix: string, 
 }
 
 /**
- * Wraps each annotated sentence in a mark. The sentence is looked up in the
+ * The pieces of markdown[start:end] that can each carry a mark: runs of shown
+ * text split at markup a mark cannot cross (list and heading markers, link
+ * brackets and destinations, tags, citations) and at paragraph breaks, so a
+ * sentence over several list items gets one mark per item. Emphasis and
+ * escapes next to a piece are pulled inside it, since a mark between a
+ * delimiter and its text stops the delimiter from closing; a piece whose
+ * emphasis does not pair up is dropped rather than broken.
+ */
+function markPieces(markdown: string, roles: readonly CharRole[], start: number, end: number): { start: number; end: number }[] {
+  const runs: { start: number; end: number }[] = [];
+  let runStart = -1;
+  for (let i = start; i <= end; i++) {
+    const inRun = i < end && (roles[i] === "text" || roles[i] === "inline");
+    if (inRun && runStart < 0) runStart = i;
+    if (!inRun && runStart >= 0) {
+      let from = runStart;
+      for (const paragraph of markdown.slice(runStart, i).split(PARAGRAPH_BREAK)) {
+        runs.push({ start: from, end: from + paragraph.length });
+        from += paragraph.length;
+      }
+      runStart = -1;
+    }
+  }
+
+  const pieces: { start: number; end: number }[] = [];
+  for (const run of runs) {
+    let s = run.start;
+    let e = run.end;
+    while (s < e && /\s/.test(markdown[s]!)) s++;
+    while (e > s && /\s/.test(markdown[e - 1]!)) e--;
+    if (!roles.slice(s, e).includes("text")) continue;
+
+    while (s > 0 && roles[s - 1] === "inline") s--;
+    while (e < markdown.length && roles[e] === "inline") e++;
+    if (!emphasisPairsUp(markdown.slice(s, e))) continue;
+
+    pieces.push({ start: s, end: e });
+  }
+
+  return pieces;
+}
+
+const PARAGRAPH_BREAK = /(?<=\n[ \t]*\n)/;
+
+/** Whether every emphasis delimiter in a piece of Markdown has its partner. */
+function emphasisPairsUp(markdown: string): boolean {
+  const counts = new Map<string, number>();
+  for (const [marker] of markdown.replace(ESCAPED_CHAR, "").matchAll(EMPHASIS_MARKERS)) {
+    counts.set(marker, (counts.get(marker) ?? 0) + 1);
+  }
+
+  return [...counts.values()].every((count) => count % 2 === 0);
+}
+
+const ESCAPED_CHAR = /\\[!-/:-@[-`{-~]/g;
+
+/**
+ * Wraps each annotated sentence in marks. The sentence is looked up in the
  * text the block shows, as the server anchored it, never in link
  * destinations, citations or deleted text; when it repeats, the occurrence
  * whose surroundings match the remembered context wins. A sentence that
- * crosses markup (a link edge, emphasis) is left unmarked rather than
- * splitting that markup.
+ * crosses markup gets one mark per piece between that markup (see
+ * markPieces), all carrying the same annotation ids.
  */
 function markAnnotatedSentences(markdown: string, marks: readonly KbQuoteMark[]): string {
   if (marks.length === 0) return markdown;
 
   const readable = readableText(markdown);
-  const placed: { start: number; end: number; ids: string[] }[] = [];
+  const placed: { start: number; end: number; ids: string[]; pieces: { start: number; end: number }[] }[] = [];
   for (const mark of marks) {
     const quote = collapseSpaces(mark.quote);
     const ids = mark.ids.filter((id) => ANNOTATION_ID.test(id));
@@ -204,28 +263,28 @@ function markAnnotatedSentences(markdown: string, marks: readonly KbQuoteMark[])
 
     const prefix = (mark.prefix ?? "").replace(/\s+/g, " ");
     const suffix = (mark.suffix ?? "").replace(/\s+/g, " ");
-    let best: { start: number; end: number; score: number } | null = null;
+    let best: { start: number; end: number; score: number; pieces: { start: number; end: number }[] } | null = null;
     for (let at = readable.text.indexOf(quote); at >= 0; at = readable.text.indexOf(quote, at + 1)) {
       const start = readable.from[at]!;
       const end = readable.from[at + quote.length - 1]! + 1;
-      if (readable.roles.slice(start, end).some((role) => role !== "text")) continue;
-      // A mark cannot span two paragraphs of the block.
-      if (/\n[ \t]*\n/.test(markdown.slice(start, end))) continue;
+      const pieces = markPieces(markdown, readable.roles, start, end);
+      if (pieces.length === 0) continue;
 
       const score = contextScore(readable.text, at, at + quote.length, prefix, suffix);
-      if (!best || score > best.score) best = { start, end, score };
+      if (!best || score > best.score) best = { start: pieces[0]!.start, end: pieces[pieces.length - 1]!.end, score, pieces };
     }
     if (!best) continue;
 
-    // Annotations on the same sentence share its mark; marks cannot nest.
-    const { start, end } = best;
+    // Annotations on the same sentence share its marks; marks cannot nest.
+    const { start, end, pieces } = best;
     const same = placed.find((other) => other.start === start && other.end === end);
     if (same) same.ids.push(...ids);
-    else if (!placed.some((other) => start < other.end && other.start < end)) placed.push({ start, end, ids: [...ids] });
+    else if (!placed.some((other) => start < other.end && other.start < end)) placed.push({ start, end, ids: [...ids], pieces });
   }
 
+  const wraps = placed.flatMap(({ ids, pieces }) => pieces.map((piece) => ({ ...piece, ids })));
   let out = markdown;
-  for (const { start, end, ids } of placed.sort((a, b) => b.start - a.start)) {
+  for (const { start, end, ids } of wraps.sort((a, b) => b.start - a.start)) {
     const open = `<mark class="${KB_ANNOTATED_CLASS}" ${KB_ANNOTATION_IDS_ATTR}="${ids.join(",")}">`;
     out = out.slice(0, start) + open + out.slice(start, end) + "</mark>" + out.slice(end);
   }

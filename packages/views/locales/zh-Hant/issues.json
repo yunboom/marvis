@@ -1553,6 +1553,8 @@
       "step_off_short": "未啟用",
       "step_off": "已關閉：這個工作流不使用這個狀態。在左側列表開啟開關即可使用。",
       "status_new_hint": "新狀態，儲存時加入狀態庫。",
+      "status_group": "看板分組",
+      "status_group_hint": "決定在看板的哪一欄顯示。",
       "no_other_status": "所有狀態都已經是步驟了。",
       "no_handoff_step": "這一步不交接：任務進入時負責人不變，也不會啟動執行。",
       "zone": {

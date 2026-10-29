@@ -14,7 +14,6 @@ readonly ENV_FILE="$APP_DIR/.env"
 readonly BACKUP_DIR="$APP_DIR/backups"
 readonly RELEASES_FILE="$APP_DIR/releases.log"
 readonly LOCK_FILE="$APP_DIR/deploy.lock"
-readonly BASE_PATH=/marvis
 readonly REGISTRY=ghcr.io/yunboom
 readonly KEEP_BACKUPS=10
 readonly KEEP_RELEASES=3
@@ -140,12 +139,19 @@ url_ok() {
   curl -fsSL -o /dev/null --max-time 5 "$1"
 }
 
+# Value of KEY in IMAGE's baked environment, or empty. The path prefix lives
+# only in the images (prod-images.yml build arg), not in the env file.
+image_env() {
+  docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$1" | sed -n "s|^$2=||p" | tail -n 1
+}
+
 wait_healthy() {
-  local bind backend web docs deadline
+  local tag=$1 bind base_path backend web docs deadline
   bind="$(env_value MARVIS_BIND_ADDRESS 127.0.0.1)"
+  base_path="$(image_env "$WEB_IMAGE:$tag" MARVIS_BASE_PATH)"
   backend="http://$bind:$(env_value PORT 13840)/readyz"
-  web="http://$bind:$(env_value FRONTEND_PORT 3000)$BASE_PATH/login"
-  docs="http://$bind:$(env_value DOCS_PORT 4000)$BASE_PATH/docs"
+  web="http://$bind:$(env_value FRONTEND_PORT 3000)$base_path/login"
+  docs="http://$bind:$(env_value DOCS_PORT 4000)$base_path/docs"
   deadline=$(( $(date +%s) + HEALTH_TIMEOUT_SECONDS ))
 
   info "waiting for $backend, $web and $docs"
@@ -192,7 +198,7 @@ rollback() {
   else
     warn "rolling back to $previous"
     switch_to "$previous"
-    if wait_healthy; then
+    if wait_healthy "$previous"; then
       warn "rolled back to $previous"
     else
       warn "rollback to $previous is unhealthy too"
@@ -244,7 +250,7 @@ main() {
   backup_database "$previous"
   switch_to "$sha"
 
-  if wait_healthy; then
+  if wait_healthy "$sha"; then
     record_release "$sha"
     prune_images
     info "deployed $sha"

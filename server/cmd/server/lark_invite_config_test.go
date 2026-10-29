@@ -15,20 +15,18 @@ const (
 	testLarkLoginAppSecretEnv = "MARVIS_LARK_LOGIN_APP_SECRET"
 	testLarkInviteAppID       = "cli_invite_app"
 	testLarkInviteAppSecret   = "invite-app-secret"
-	testDesktopDownloadURL    = "https://example.com/download"
 )
 
 // setLarkInviteEnv 一次性设置飞书邀请相关的全部环境变量，空串等同于未设置。
-func setLarkInviteEnv(t *testing.T, enabled, appID, appSecret, downloadURL string) {
+func setLarkInviteEnv(t *testing.T, enabled, appID, appSecret string) {
 	t.Helper()
 
 	t.Setenv(larkInviteEnabledEnv, enabled)
 	t.Setenv(testLarkLoginAppIDEnv, appID)
 	t.Setenv(testLarkLoginAppSecretEnv, appSecret)
-	t.Setenv(desktopDownloadURLEnv, downloadURL)
 }
 
-// assertLarkInviteOff 断言飞书邀请的四个字段都保持零值。
+// assertLarkInviteOff 断言飞书邀请的三个字段都保持零值。
 func assertLarkInviteOff(t *testing.T, h *handler.Handler) {
 	t.Helper()
 
@@ -40,9 +38,6 @@ func assertLarkInviteOff(t *testing.T, h *handler.Handler) {
 	}
 	if h.LarkInviteCreds != (lark.InstallationCredentials{}) {
 		t.Errorf("LarkInviteCreds should stay zero, got %+v", h.LarkInviteCreds)
-	}
-	if h.LarkInviteDownloadURL != "" {
-		t.Errorf("LarkInviteDownloadURL should stay empty, got %q", h.LarkInviteDownloadURL)
 	}
 }
 
@@ -77,7 +72,7 @@ func TestLarkInviteEnabled(t *testing.T) {
 
 func TestConfigureLarkInvite(t *testing.T) {
 	t.Run("switch off", func(t *testing.T) {
-		setLarkInviteEnv(t, "", testLarkInviteAppID, testLarkInviteAppSecret, testDesktopDownloadURL)
+		setLarkInviteEnv(t, "", testLarkInviteAppID, testLarkInviteAppSecret)
 
 		h := &handler.Handler{}
 		configureLarkInvite(h)
@@ -86,7 +81,7 @@ func TestConfigureLarkInvite(t *testing.T) {
 	})
 
 	t.Run("switch explicitly false", func(t *testing.T) {
-		setLarkInviteEnv(t, "false", testLarkInviteAppID, testLarkInviteAppSecret, testDesktopDownloadURL)
+		setLarkInviteEnv(t, "false", testLarkInviteAppID, testLarkInviteAppSecret)
 
 		h := &handler.Handler{}
 		configureLarkInvite(h)
@@ -95,7 +90,7 @@ func TestConfigureLarkInvite(t *testing.T) {
 	})
 
 	t.Run("missing app id", func(t *testing.T) {
-		setLarkInviteEnv(t, "true", "", testLarkInviteAppSecret, testDesktopDownloadURL)
+		setLarkInviteEnv(t, "true", "", testLarkInviteAppSecret)
 
 		h := &handler.Handler{}
 		configureLarkInvite(h)
@@ -104,7 +99,7 @@ func TestConfigureLarkInvite(t *testing.T) {
 	})
 
 	t.Run("missing app secret", func(t *testing.T) {
-		setLarkInviteEnv(t, "true", testLarkInviteAppID, "", testDesktopDownloadURL)
+		setLarkInviteEnv(t, "true", testLarkInviteAppID, "")
 
 		h := &handler.Handler{}
 		configureLarkInvite(h)
@@ -113,7 +108,7 @@ func TestConfigureLarkInvite(t *testing.T) {
 	})
 
 	t.Run("seat capacity enabled", func(t *testing.T) {
-		setLarkInviteEnv(t, "true", testLarkInviteAppID, testLarkInviteAppSecret, testDesktopDownloadURL)
+		setLarkInviteEnv(t, "true", testLarkInviteAppID, testLarkInviteAppSecret)
 
 		h := &handler.Handler{SeatCapacity: seatcapacity.NewUnavailable(errors.New("cloud url malformed"))}
 		configureLarkInvite(h)
@@ -122,7 +117,7 @@ func TestConfigureLarkInvite(t *testing.T) {
 	})
 
 	t.Run("all conditions met", func(t *testing.T) {
-		setLarkInviteEnv(t, "true", testLarkInviteAppID, testLarkInviteAppSecret, testDesktopDownloadURL)
+		setLarkInviteEnv(t, "true", testLarkInviteAppID, testLarkInviteAppSecret)
 
 		h := &handler.Handler{}
 		configureLarkInvite(h)
@@ -141,23 +136,6 @@ func TestConfigureLarkInvite(t *testing.T) {
 		}
 		if h.LarkInviteCreds != wantCreds {
 			t.Errorf("LarkInviteCreds = %+v, want %+v", h.LarkInviteCreds, wantCreds)
-		}
-		if h.LarkInviteDownloadURL != testDesktopDownloadURL {
-			t.Errorf("LarkInviteDownloadURL = %q, want %q", h.LarkInviteDownloadURL, testDesktopDownloadURL)
-		}
-	})
-
-	t.Run("download url optional and trimmed", func(t *testing.T) {
-		setLarkInviteEnv(t, "yes", testLarkInviteAppID, testLarkInviteAppSecret, "  ")
-
-		h := &handler.Handler{}
-		configureLarkInvite(h)
-
-		if h.LarkInviteAPI == nil || h.LarkInviteConn == nil {
-			t.Fatal("feature should be on without a download url")
-		}
-		if h.LarkInviteDownloadURL != "" {
-			t.Errorf("LarkInviteDownloadURL = %q, want empty", h.LarkInviteDownloadURL)
 		}
 	})
 }

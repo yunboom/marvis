@@ -11,6 +11,9 @@ services:
         VERSION: ${VERSION:-dev}
         COMMIT: ${COMMIT:-unknown}
         DATE: ${DATE:-unknown}
+        # Path prefix the app is served under, e.g. /marvis. Build-time only;
+        # the backend uses it to build web links.
+        MARVIS_BASE_PATH: ${MARVIS_BASE_PATH:-}
 
   frontend:
     image: marvis-web:dev
@@ -20,7 +23,7 @@ services:
       args:
         NEXT_PUBLIC_APP_VERSION: dev
         # Path prefix the app is served under, e.g. /marvis. Build-time only.
-        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
+        MARVIS_BASE_PATH: ${MARVIS_BASE_PATH:-}
 
   docs:
     image: marvis-docs:dev
@@ -28,4 +31,4 @@ services:
       context: .
       dockerfile: Dockerfile.docs
       args:
-        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
+        MARVIS_BASE_PATH: ${MARVIS_BASE_PATH:-}

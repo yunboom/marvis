@@ -368,7 +368,7 @@ Workspace owners and admins can send an invite card to a Feishu chat or person, 
 4. Set the availability scope to cover everyone you may invite. People outside it cannot join from a card.
 5. Publish a new version of the app.
 
-Then set `MARVIS_LARK_INVITE_ENABLED=true` in `.env` and run `docker compose -f docker-compose.selfhost.yml up -d`. Optionally, set `MARVIS_DESKTOP_DOWNLOAD_URL` to show a **下载 Marvis** (Download Marvis) button on cards. Feishu invites are unavailable when Marvis Cloud seat capacity is enabled.
+Then set `MARVIS_LARK_INVITE_ENABLED=true` in `.env` and run `docker compose -f docker-compose.selfhost.yml up -d`. The **了解 Marvis** (Learn about Marvis) button on cards opens `/homepage` under `MARVIS_APP_URL`. Feishu invites are unavailable when Marvis Cloud seat capacity is enabled.
 
 <Callout type="warning">
 Turn on Feishu invites in only one deployment per Feishu app. Feishu delivers each card click to one of the app's long connections, so a click that reaches a deployment with the switch off is lost.

@@ -367,7 +367,7 @@ Desktop 的 Google 和飞书登录经过网页端，部署时同时部署网页�
 4. 把可用范围设为覆盖所有可能被邀请的人。范围外的人无法通过卡片加入。
 5. 发布新版本。
 
-然后在 `.env` 里设置 `MARVIS_LARK_INVITE_ENABLED=true`，运行 `docker compose -f docker-compose.selfhost.yml up -d`。可选设置 `MARVIS_DESKTOP_DOWNLOAD_URL`，卡片上会显示“下载 Marvis”按钮。开启 Marvis Cloud 席位容量时，飞书邀请不可用。
+然后在 `.env` 里设置 `MARVIS_LARK_INVITE_ENABLED=true`，运行 `docker compose -f docker-compose.selfhost.yml up -d`。卡片上的“了解 Marvis”按钮打开 `MARVIS_APP_URL` 下的 `/homepage`。开启 Marvis Cloud 席位容量时，飞书邀请不可用。
 
 <Callout type="warning">
 同一个飞书应用只在一个部署里开启飞书邀请。飞书把每次卡片点击推给该应用的任意一条长连接，推到未开启的部署时，这次点击会丢失。

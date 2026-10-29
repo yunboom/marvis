@@ -19,7 +19,7 @@ make deploy-prod         # 部署
 | --- | --- | --- |
 | `prod.sh` | 本机 | 检查本地的 `.env.prod`、分支、工作区、提交和 CI，然后调用 `jump.exp` |
 | `jump.exp` | 本机 | 登录跳板机，在菜单输入 `prototype` 进入服务器，上传 `.env.prod`，把仓库检出到 origin/main 最新提交后以 root 执行 `server.sh`，把它的退出码作为本地结果 |
-| `.github/workflows/prod-images.yml` | GitHub Actions | 每次推送到 main 时构建后端、网页端、文档站三个镜像（网页端和文档站带 `/marvis` 前缀），推送为 `ghcr.io/yunboom/<镜像>:prod-<提交号>` |
+| `.github/workflows/prod-images.yml` | GitHub Actions | 每次推送到 main 时构建后端、网页端、文档站三个镜像，路径前缀取工作流里的 `BASE_PATH`（`/marvis`），同时写进三个镜像，推送为 `ghcr.io/yunboom/<镜像>:prod-<提交号>` |
 | `server.sh` | 服务器 | 再次确认提交是 origin/main 最新提交，从 ghcr 拉取这个提交的三个镜像，备份数据库，切换容器，检查健康；失败时切回上一版镜像 |
 | `prod.env.example` | 本机 | 生产配置模板，首次部署时复制为主工作区根目录的 `.env.prod` 并生成密钥 |
 

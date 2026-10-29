@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"net"
 	"net/http"
 	"net/url"
 	"runtime/debug"
@@ -79,8 +78,10 @@ const (
 	larkInviteSendStatusFailed = "failed"
 )
 
-// 卡片链接的组成部分：网页登录页、登录后跳转参数和工作区首页。
+// 卡片链接的组成部分：营销页、网页登录页、登录后跳转参数和工作区首页。
 const (
+	// larkInviteLandingPath 是营销页。不用 /：/ 会把已登录的人直接跳进工作区。
+	larkInviteLandingPath    = "/homepage"
 	larkInviteLoginPath      = "/login"
 	larkInviteLoginNextParam = "next"
 	// larkInviteWorkspaceHomeFormat 的参数是工作区 slug，与前端 paths.workspace(slug).issues() 一致。
@@ -88,7 +89,6 @@ const (
 
 	larkInviteSchemeHTTP  = "http"
 	larkInviteSchemeHTTPS = "https"
-	larkInviteLocalhost   = "localhost"
 )
 
 // larkInviteRoleOwner 是工作区所有者角色，只用于权限判断，邀请不能授予这个角色。
@@ -1148,21 +1148,21 @@ func (h *Handler) larkInviteCardViewOf(inv db.LarkInvite, names larkInviteCardNa
 	return newLarkInviteCardView(inv, names, state, h.larkInviteCardLinks(names))
 }
 
-// larkInviteCardLinks 返回卡片上的链接：首页和登录页取网页地址（larkInviteAppURL），下载取桌面端下载地址。
+// larkInviteCardLinks 返回卡片上的链接，都取网页地址（larkInviteAppURL）。
 func (h *Handler) larkInviteCardLinks(names larkInviteCardNames) larkInviteCardLinks {
-	return newLarkInviteCardLinks(h.cfg.AppURL, h.LarkInviteDownloadURL, names.WorkspaceSlug)
+	return newLarkInviteCardLinks(h.cfg.AppURL, names.WorkspaceSlug)
 }
 
-// newLarkInviteCardLinks 由网页地址、下载地址和工作区 slug 生成卡片链接。网页地址不可用时首页和登录页留空。
-func newLarkInviteCardLinks(appURL, downloadURL, workspaceSlug string) larkInviteCardLinks {
-	links := larkInviteCardLinks{Download: downloadURL}
+// newLarkInviteCardLinks 由网页地址和工作区 slug 生成卡片链接。网页地址不可用时全部留空。
+func newLarkInviteCardLinks(appURL, workspaceSlug string) larkInviteCardLinks {
+	var links larkInviteCardLinks
 
 	app := larkInviteAppURL(appURL)
 	if app == "" {
 		return links
 	}
 
-	links.Landing = app
+	links.Landing = app + larkInviteLandingPath
 	if workspaceSlug != "" {
 		next := url.Values{larkInviteLoginNextParam: {fmt.Sprintf(larkInviteWorkspaceHomeFormat, url.PathEscape(workspaceSlug))}}
 		links.Login = app + larkInviteLoginPath + "?" + next.Encode()
@@ -1171,20 +1171,12 @@ func newLarkInviteCardLinks(appURL, downloadURL, workspaceSlug string) larkInvit
 	return links
 }
 
-// larkInviteAppURL 校验卡片链接用的网页地址（MARVIS_APP_URL，未设置时为 FRONTEND_ORIGIN；按路径前缀部署时含前缀），
-// 返回去掉末尾斜杠的地址。没配置、不是 http(s) 或指向本机时返回空串：卡片在受邀人的飞书里打开，本机地址点不开。
+// larkInviteAppURL 校验卡片链接用的网页地址（util.AppURLFromEnv：MARVIS_APP_URL，未设置时为 FRONTEND_ORIGIN，再加 MARVIS_BASE_PATH），
+// 返回去掉末尾斜杠的地址。没配置或不是 http(s) 时返回空串。
 func larkInviteAppURL(raw string) string {
 	raw = strings.TrimRight(strings.TrimSpace(raw), "/")
 	u, err := url.Parse(raw)
 	if err != nil || u.Host == "" || (u.Scheme != larkInviteSchemeHTTP && u.Scheme != larkInviteSchemeHTTPS) {
-		return ""
-	}
-
-	host := u.Hostname()
-	if strings.EqualFold(host, larkInviteLocalhost) {
-		return ""
-	}
-	if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
 		return ""
 	}
 

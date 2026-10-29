@@ -16,6 +16,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/resend/resend-go/v2"
+
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 // maxSubjectFieldRunes bounds how much user-controlled text (workspace name,
@@ -366,7 +368,7 @@ func (s *EmailService) SendVerificationCode(to, code string) error {
 // SendInvitationEmail notifies the invitee that they have been invited to a workspace.
 // invitationID is included in the URL so the email deep-links to /invite/{id}.
 func (s *EmailService) SendInvitationEmail(to, inviterName, workspaceName, invitationID string) error {
-	appURL := strings.TrimSpace(os.Getenv("FRONTEND_ORIGIN"))
+	appURL := util.AppURLFromEnv()
 	if appURL == "" {
 		appURL = "https://marvis.ai"
 	}

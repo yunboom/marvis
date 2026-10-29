@@ -46,6 +46,12 @@ RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 # `docker run` all inherit this; pass MARVIS_LAN_DISCOVERY=true to override.
 ENV MARVIS_LAN_DISCOVERY=false
 
+# Path prefix the web app is served under (e.g. /marvis), the same build arg the
+# web and docs images take. The backend appends it to MARVIS_APP_URL when
+# building web links, so a prefixed deploy configures the prefix only here.
+ARG MARVIS_BASE_PATH=
+ENV MARVIS_BASE_PATH=$MARVIS_BASE_PATH
+
 EXPOSE 13840
 
 ENTRYPOINT ["./entrypoint.sh"]

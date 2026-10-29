@@ -8,6 +8,7 @@ import (
 
 	"github.com/yunboom/marvis/server/internal/analytics"
 	"github.com/yunboom/marvis/server/internal/featureflags"
+	"github.com/yunboom/marvis/server/internal/util"
 )
 
 type AppConfig struct {
@@ -187,16 +188,12 @@ func daemonSetupURLsFromEnv() (string, string) {
 	return serverURL, appURL
 }
 
-// resolveFrontendAppURL returns the operator-configured frontend origin
-// (MARVIS_APP_URL, falling back to FRONTEND_ORIGIN), normalized. Shared by
-// the daemon-setup URLs and the managed-cloud detection so both read the same
-// signal.
+// resolveFrontendAppURL returns the operator-configured web app URL
+// (MARVIS_APP_URL, falling back to FRONTEND_ORIGIN, plus MARVIS_BASE_PATH).
+// Shared by the daemon-setup URLs and the managed-cloud detection so both read
+// the same signal.
 func resolveFrontendAppURL() string {
-	appURL := normalizePublicURL(os.Getenv("MARVIS_APP_URL"))
-	if appURL == "" {
-		appURL = normalizePublicURL(os.Getenv("FRONTEND_ORIGIN"))
-	}
-	return appURL
+	return util.AppURLFromEnv()
 }
 
 func normalizePublicURL(raw string) string {

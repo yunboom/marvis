@@ -157,11 +157,10 @@ const (
 	larkInviteRoleMemberLabel = "成员"
 	larkInviteRoleAdminLabel  = "管理员"
 
-	larkInviteLogoLetter     = "M"
-	larkInviteButtonJoin     = "加入工作区"
-	larkInviteButtonLearn    = "了解 Marvis"
-	larkInviteButtonDownload = "下载 Marvis"
-	larkInviteButtonOpen     = "打开 Marvis"
+	larkInviteLogoLetter  = "M"
+	larkInviteButtonJoin  = "加入工作区"
+	larkInviteButtonLearn = "了解 Marvis"
+	larkInviteButtonOpen  = "打开 Marvis"
 
 	// larkInviteJoinedCountFormat 的参数是已加入人数。
 	larkInviteJoinedCountFormat = "%d 人已加入"
@@ -208,13 +207,10 @@ type larkInviteCardView struct {
 	Links larkInviteCardLinks
 }
 
-// larkInviteCardLinks 是卡片上的链接，地址为空时对应入口按下文的规则省略或降级。
+// larkInviteCardLinks 是卡片上的链接，地址为空时省略对应入口。
 type larkInviteCardLinks struct {
-	// Landing 是 Marvis 网页首页（含路径前缀）。非空时 logo 可点击、次按钮是“了解 Marvis”；
-	// 为空时 logo 不可点击、次按钮退回“下载 Marvis”。
+	// Landing 是 Marvis 营销页（含路径前缀）。非空时 logo 可点击、显示“了解 Marvis”次按钮。
 	Landing string
-	// Download 是桌面端下载地址，只在 Landing 为空时用于次按钮，也为空时不显示次按钮。
-	Download string
 	// Login 是已加入卡片“打开 Marvis”的链接（网页登录页，登录后进入工作区），为空时不显示这个按钮。
 	Login string
 }
@@ -675,18 +671,13 @@ func larkInvitePrimaryPill(label string, behavior larkCardBehavior, disabled boo
 	return pill
 }
 
-// appendLarkInviteSecondary 追加描边的次按钮：有首页地址时是“了解 Marvis”，否则退回“下载 Marvis”，
-// 两个地址都为空时不加。
+// appendLarkInviteSecondary 追加描边的“了解 Marvis”次按钮，营销页地址为空时不加。
 func appendLarkInviteSecondary(elements []any, links larkInviteCardLinks) []any {
-	label, target := larkInviteButtonLearn, links.Landing
-	if target == "" {
-		label, target = larkInviteButtonDownload, links.Download
-	}
-	if target == "" {
+	if links.Landing == "" {
 		return elements
 	}
 
-	pill := larkInvitePill(label, "", larkCardBehavior{Type: larkCardBehaviorOpenURL, DefaultURL: target})
+	pill := larkInvitePill(larkInviteButtonLearn, "", larkCardBehavior{Type: larkCardBehaviorOpenURL, DefaultURL: links.Landing})
 	pill.HasBorder = true
 	pill.BorderColor = larkCardColorLine
 

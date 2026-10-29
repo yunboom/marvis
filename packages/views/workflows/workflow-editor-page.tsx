@@ -114,7 +114,12 @@ const NEW_WORKFLOW_MIDDLE = ["in_progress", "in_review"];
 /** A middle column of the draft: a library status, or one to create on save. */
 type DraftColumn =
   | { id: string; status_key: string }
-  | { id: string; new_name: string; category?: "unstarted" | "started"; status_group?: "working" | "needs_attention" };
+  | { id: string; new_name: string; category?: "unstarted" | "started"; status_group?: NewStatusGroup };
+
+/** The board group a new started status can take; the server defaults to working. */
+type NewStatusGroup = "working" | "needs_attention";
+
+const NEW_STATUS_GROUPS: readonly NewStatusGroup[] = ["working", "needs_attention"];
 
 /** What entering a column does, keyed in the draft by column id. */
 type Handoff = Pick<IssueWorkflowStep, "handler" | "instructions" | "next_status_key" | "back_status_key">;
@@ -302,6 +307,11 @@ export function WorkflowEditorPage({
     selectedColumn && "status_key" in selectedColumn
       ? { status_key: selectedColumn.status_key, ...(draft.handoffs[selectedColumn.id] ?? NO_HANDOFF) }
       : null;
+  const setNewStatusGroup = (id: string, group: NewStatusGroup) =>
+    setDraft((d) => ({
+      ...d,
+      middle: d.middle.map((c) => (c.id === id && "new_name" in c ? { ...c, status_group: group } : c)),
+    }));
   const patchHandoff = (id: string, patch: Partial<Handoff>) =>
     setDraft((d) => ({ ...d, handoffs: { ...d.handoffs, [id]: { ...(d.handoffs[id] ?? NO_HANDOFF), ...patch } } }));
 
@@ -658,6 +668,7 @@ export function WorkflowEditorPage({
           onReplaceStatus={(key) => replaceStatus(current, key)}
           onRemove={canEdit && middleIds.has(current.id) ? () => removeColumn(current) : undefined}
           onPatch={(patch) => patchHandoff(current.id, patch)}
+          onGroupChange={(group) => setNewStatusGroup(current.id, group)}
           onPreview={
             saved && "status_key" in current && saved.steps.some((s) => s.status_key === current.status_key)
               ? () => setPreviewOpen(true)
@@ -1051,6 +1062,7 @@ function StepDetail({
   onReplaceStatus,
   onRemove,
   onPatch,
+  onGroupChange,
   onPreview,
   defaultNextLabel,
 }: {
@@ -1065,6 +1077,8 @@ function StepDetail({
   onReplaceStatus: (key: string) => void;
   onRemove?: () => void;
   onPatch: (patch: Partial<Handoff>) => void;
+  /** Picks the board group of a status the save will create. */
+  onGroupChange: (group: NewStatusGroup) => void;
   onPreview?: () => void;
   /** The default next status's label, resolved over the whole draft. */
   defaultNextLabel: string;
@@ -1166,6 +1180,37 @@ function StepDetail({
             </div>
           )}
         </DetailField>
+        {"new_name" in column && column.category !== "unstarted" && (
+          <DetailField label={t(($) => $.workflows.editor.status_group)} hint={t(($) => $.workflows.editor.status_group_hint)}>
+            <div
+              role="radiogroup"
+              aria-label={t(($) => $.workflows.editor.status_group)}
+              className="flex gap-0.5 rounded-lg bg-field p-0.75"
+            >
+              {NEW_STATUS_GROUPS.map((group) => {
+                const selected = (column.status_group ?? "working") === group;
+                return (
+                  <button
+                    key={group}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    disabled={!canEdit}
+                    onClick={() => onGroupChange(group)}
+                    className={cn(
+                      "min-h-8 min-w-0 flex-1 rounded-md px-1.5 py-1 text-center text-label leading-tight transition-colors duration-(--motion-fast) ease-out disabled:cursor-default",
+                      selected
+                        ? "bg-surface font-medium text-foreground shadow-control dark:bg-white/12"
+                        : "text-muted-foreground enabled:hover:text-foreground",
+                    )}
+                  >
+                    {t(($) => $.board.status_column[group])}
+                  </button>
+                );
+              })}
+            </div>
+          </DetailField>
+        )}
         <DetailField label={t(($) => $.workflows.editor.on_enter)}>
           {off ? (
             <p className="text-caption leading-5 text-muted-foreground">{t(($) => $.workflows.editor.step_off)}</p>
