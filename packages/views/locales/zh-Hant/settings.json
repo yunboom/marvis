@@ -1345,13 +1345,14 @@
     "server": {
       "connect": {
         "title": "連線到 Marvis 伺服器",
-        "subtitle": "在這臺電腦上使用，或連線區域網中已有的伺服器。之後可以在設定裡更換。",
+        "subtitle": "連線 Marvis 雲端服務、在這臺電腦上使用，或連線區域網中的伺服器。之後可以在設定裡更換。",
         "lan_heading": "區域網中的伺服器",
+        "cloud_heading": "雲端服務",
+        "cloud_option": "Marvis 雲端服務",
         "scanning": "正在查詢",
         "rescan": "重新查詢",
         "local_badge": "本機",
         "none": "區域網中沒有找到伺服器。電腦和伺服器需要連在同一個區域網。",
-        "or_address": "或輸入地址",
         "summary_manual": "手動輸入的地址",
         "summary_manual_hint": "先測試連線",
         "back": "返回"

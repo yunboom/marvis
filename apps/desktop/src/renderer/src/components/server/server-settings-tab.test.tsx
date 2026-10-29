@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "@marvis/core/i18n/react";
 import { RESOURCES } from "@marvis/views/locales";
 import {
-  DEFAULT_SERVER_ADDRESS,
+  MARVIS_CLOUD_SERVER_URL,
   SERVER_SOURCE_LAN,
   SERVER_SOURCE_MANUAL,
   type DiscoveredServer,
@@ -200,7 +200,10 @@ function manualSwitchButton(): HTMLElement {
   });
 }
 
+// 地址栏默认是空的，测试前先填上。
 async function runProbe(result: ProbeResult) {
+  const input = screen.getByRole("textbox", { name: "服务器地址" }) as HTMLInputElement;
+  if (input.value === "") fireEvent.change(input, { target: { value: "http://192.168.1.58:13840" } });
   mocks.probe.mockResolvedValueOnce(result);
   fireEvent.click(screen.getByRole("button", { name: "测试连接" }));
   // 等“正在测试”的最短显示时长过去，结果才会落地。
@@ -419,7 +422,9 @@ describe("ServerSettingsTab", () => {
     await openTab([devServer]);
 
     const input = screen.getByRole("textbox", { name: "服务器地址" }) as HTMLInputElement;
-    expect(input.value).toBe(DEFAULT_SERVER_ADDRESS);
+    expect(input.value).toBe("");
+    expect(input).toHaveAttribute("placeholder", MARVIS_CLOUD_SERVER_URL);
+    expect(screen.getByRole("button", { name: "测试连接" })).toBeDisabled();
     expect(manualSwitchButton()).toBeDisabled();
 
     // 测试失败：仍不能切换，输入框标红。

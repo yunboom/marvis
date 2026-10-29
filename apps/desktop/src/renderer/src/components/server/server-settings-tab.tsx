@@ -16,7 +16,7 @@ import { cn } from "@marvis/ui/lib/utils";
 import { SettingsSection, SettingsTab } from "@marvis/views/settings";
 import { useT } from "@marvis/views/i18n";
 import {
-  DEFAULT_SERVER_ADDRESS,
+  MARVIS_CLOUD_SERVER_URL,
   SERVER_SOURCE_LAN,
   SERVER_SOURCE_MANUAL,
   SERVER_SOURCE_STANDALONE,
@@ -173,7 +173,7 @@ function RemoteServerSettings() {
   const { servers, scanning, rescan } = useLanServers();
   const logoutBeforeSwitch = useLogoutBeforeSwitch();
 
-  const [address, setAddress] = useState(DEFAULT_SERVER_ADDRESS);
+  const [address, setAddress] = useState("");
   const [probe, setProbe] = useState<ProbeResult | null>(null);
   // 目标在对话框关闭后仍保留，避免关闭动画期间内容消失。
   const [target, setTarget] = useState<SwitchTarget | null>(null);
@@ -251,6 +251,7 @@ function RemoteServerSettings() {
           variant="plain"
           value={address}
           onChange={setAddress}
+          placeholder={MARVIS_CLOUD_SERVER_URL}
           result={probe}
           onResult={setProbe}
           actions={

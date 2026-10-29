@@ -1,5 +1,6 @@
-// 输入框的默认地址：mDNS 主机名 + 后端默认端口。
-export const DEFAULT_SERVER_ADDRESS = "http://marvis.local:13840";
+// Marvis 云服务（生产环境）的地址，部署在 /marvis 路径前缀下，与命令行的 marvisProductionURL 一致。
+// 连接页把它作为「Marvis 云服务」选项，地址栏用它作示例。
+export const MARVIS_CLOUD_SERVER_URL = "https://omniai.shoplazza.site/marvis";
 
 // 已选服务器的来源：局域网发现 / 手动输入 / 本机单机模式。
 export const SERVER_SOURCE_LAN = "lan";
