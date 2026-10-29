@@ -342,3 +342,13 @@ describe("ProjectsPage compact row navigation", () => {
     open.mockRestore();
   });
 });
+
+describe("ProjectsPage priority cell", () => {
+  it("colours the trigger dot by priority, matching the menu", () => {
+    renderProjects();
+
+    // The mocked dropdown renders the trigger before the menu items.
+    const [triggerDot] = projectRow().querySelectorAll('[data-slot="priority-icon"]');
+    expect(triggerDot).toHaveClass("text-priority-high");
+  });
+});
