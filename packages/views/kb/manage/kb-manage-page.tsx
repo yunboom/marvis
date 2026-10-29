@@ -22,6 +22,7 @@ import {
 import { Button, buttonVariants } from "@marvis/ui/components/ui/button";
 import { Checkbox } from "@marvis/ui/components/ui/checkbox";
 import { Input } from "@marvis/ui/components/ui/input";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { PageHeader } from "../../layout/page-header";
 import { AppLink, useNavigation } from "../../navigation";
@@ -149,6 +150,20 @@ function RawFilesSection({ kbSlug }: { kbSlug: string }) {
         {!isLoading && files.length === 0 && (
           <p className="px-2.5 py-6 text-label text-muted-foreground">{t(($) => $.manage.raw.empty)}</p>
         )}
+        {isLoading &&
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              aria-hidden="true"
+              className="grid h-11 grid-cols-[28px_2.4fr_1.4fr_1fr_1fr] items-center border-b px-2.5"
+            >
+              <Skeleton className="size-4 rounded-xs" />
+              <Skeleton className="h-4 w-4/5" />
+              <Skeleton className="h-3.5 w-3/4" />
+              <Skeleton className="h-3.5 w-2/3" />
+              <Skeleton className="h-3.5 w-1/2" />
+            </div>
+          ))}
         {files.map((file) => (
           <RawFileRow
             key={file.id}

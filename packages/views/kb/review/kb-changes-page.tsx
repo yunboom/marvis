@@ -13,7 +13,8 @@ import { AppLink, useNavigation } from "../../navigation";
 import { useT } from "../../i18n";
 import { KbFileCard } from "../components/kb-diff";
 import { formatShortDate } from "../components/kb-page-body";
-import { useKbSourceLabel } from "./kb-review-detail";
+import { KbReviewDetailSkeleton, useKbSourceLabel } from "./kb-review-detail";
+import { KbMrRowSkeletons } from "./kb-review-page";
 import { parseKbReviewRoute } from "./kb-review-route";
 import { KbRevertDialog, type KbRevertTarget } from "./kb-revert-dialog";
 
@@ -46,15 +47,22 @@ function ChangeRow({ kbSlug, mr, selected }: { kbSlug: string; mr: KbMergeReques
   );
 }
 
+/** A merged request while it loads, in the change detail's gutters. */
+function ChangeDetailSkeleton() {
+  return <KbReviewDetailSkeleton boxes={false} className="gap-3 px-7 py-5" />;
+}
+
 function ChangeDetail({ kbSlug, number }: { kbSlug: string; number: number }) {
   const { t } = useT("kb");
   const wsId = useWorkspaceId();
   const p = useWorkspacePaths();
-  const { data: mr } = useQuery(kbMergeRequestOptions(wsId, number));
+  const { data: mr, isLoading } = useQuery(kbMergeRequestOptions(wsId, number));
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const [reverting, setReverting] = useState<KbRevertTarget | null>(null);
 
-  if (!mr || mr.number !== number) return <div className="flex-1" />;
+  if (!mr || mr.number !== number) {
+    return isLoading ? <ChangeDetailSkeleton /> : <div className="flex-1" />;
+  }
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto px-7 py-5">
@@ -134,12 +142,17 @@ export function KbChangesPage() {
             <p className="px-2 py-6 text-label text-muted-foreground">{t(($) => $.review.changes.empty)}</p>
           )}
           <ul className="flex flex-col gap-0.5">
+            {isLoading && <KbMrRowSkeletons />}
             {list.map((mr) => (
               <ChangeRow key={mr.id} kbSlug={kbSlug} mr={mr} selected={mr.number === selected} />
             ))}
           </ul>
         </aside>
-        {selected > 0 && <ChangeDetail key={selected} kbSlug={kbSlug} number={selected} />}
+        {selected > 0 ? (
+          <ChangeDetail key={selected} kbSlug={kbSlug} number={selected} />
+        ) : (
+          isLoading && <ChangeDetailSkeleton />
+        )}
       </div>
     </div>
   );

@@ -153,6 +153,15 @@ beforeEach(() => {
 });
 
 describe("raw files tab", () => {
+  it("draws table-row skeletons, not the empty state, while the files load", async () => {
+    mocked.listKnowledgeBaseRawFiles.mockReturnValue(new Promise(() => {}));
+    mount(<KbManagePage />, "/acme/kb/team/manage");
+
+    const table = await screen.findByRole("table", { name: "Raw files" });
+    expect(table.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("No raw files yet")).toBeNull();
+  });
+
   it("lists files with uploader and citing pages, and opens a row in the preview", async () => {
     mount(<KbManagePage />, "/acme/kb/team/manage");
 
@@ -252,6 +261,14 @@ describe("graph", () => {
       { from: "p1", to: "/payment/refund" },
     ],
   };
+
+  it("draws a canvas skeleton, not the empty state, while the graph loads", () => {
+    mocked.getKnowledgeBaseGraph.mockReturnValue(new Promise(() => {}));
+    mount(<KbGraphPage />, "/acme/kb/team/graph");
+
+    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("No pages yet")).toBeNull();
+  });
 
   it("draws groups, highlights neighbours on hover and opens pages", async () => {
     mocked.getKnowledgeBaseGraph.mockResolvedValue(GRAPH);

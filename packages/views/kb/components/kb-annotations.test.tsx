@@ -685,3 +685,29 @@ describe("KbHomePage annotations", () => {
     expect(mocked.createKnowledgeBaseAnnotation).toHaveBeenCalledWith("team", { body: "缺少回滚步骤" });
   });
 });
+
+describe("KB loading states", () => {
+  it("draws the home skeleton, not the not-found text, while the home loads", () => {
+    mocked.getKnowledgeBaseHome.mockReturnValue(new Promise(() => {}));
+    mount(<KbHomePage />, makeAdapter("/acme/kb/team"));
+
+    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("This knowledge base does not exist or was deleted")).toBeNull();
+  });
+
+  it("draws the page skeleton, not the not-found text, while a page loads", () => {
+    mocked.getKnowledgeBasePage.mockReturnValue(new Promise(() => {}));
+    mount(<KbPageView />, makeAdapter("/acme/kb/team/p/page-cb"));
+
+    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("This page does not exist or was deleted")).toBeNull();
+  });
+
+  it("draws row skeletons, not the empty state, while annotations load", () => {
+    mocked.listKnowledgeBaseAnnotations.mockReturnValue(new Promise(() => {}));
+    mount(<KbAnnotationsPage />, makeAdapter("/acme/kb/team/annotations"));
+
+    expect(document.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("No annotations")).toBeNull();
+  });
+});

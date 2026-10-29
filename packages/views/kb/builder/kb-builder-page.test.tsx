@@ -345,6 +345,17 @@ describe("KbBuilderPage · direct entry", () => {
 });
 
 describe("KbBuilderPage · runtime states", () => {
+  it("holds the runtime pill's place while the runtimes load", async () => {
+    mocked.listRuntimes.mockReturnValue(new Promise(() => {}));
+    mount(makeAdapter("/acme/kb/new"));
+
+    const composer = await screen.findByRole("textbox", { name: "Message" });
+    const form = composer.closest("form") ?? document.body;
+    expect(form.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /^Runtime: / })).toBeNull();
+    expect(screen.queryByText("No runtime available yet")).toBeNull();
+  });
+
   it("without a runtime, disables the chat and still creates from the form", async () => {
     mocked.listRuntimes.mockResolvedValue([]);
     mocked.createKnowledgeBase.mockResolvedValue({ ...BASE, id: "kb-9", slug: "manual", mention: "" });

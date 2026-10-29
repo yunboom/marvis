@@ -7,6 +7,7 @@ import { useWorkspaceId } from "@marvis/core/hooks";
 import { useWorkspacePaths } from "@marvis/core/paths";
 import { kbBaseListOptions, pickEntryKnowledgeBase, useKbLastOpenedStore } from "@marvis/core/kb";
 import { buttonVariants } from "@marvis/ui/components/ui/button";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { AppLink, useNavigation } from "../../navigation";
 import { CollectionPageHeader, CollectionPageState } from "../../layout/collection-page";
@@ -41,7 +42,18 @@ export function KbEntryPage() {
     navigation.replace(targetPath);
   }, [navigation, targetPath]);
 
-  if (isPending || target) return <div className="flex min-h-0 flex-1 flex-col" />;
+  if (isPending || target) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <CollectionPageHeader icon={KbIcon} title={t(($) => $.list.title)} />
+        <div className="flex flex-col gap-2 px-4 py-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

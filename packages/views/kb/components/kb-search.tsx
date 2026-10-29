@@ -11,6 +11,7 @@ import type { KbSearchHit, KbSearchResult } from "@marvis/core/types";
 import { isImeComposing } from "@marvis/core/utils";
 import { Dialog, DialogContent, DialogTitle } from "@marvis/ui/components/ui/dialog";
 import { Input } from "@marvis/ui/components/ui/input";
+import { Skeleton } from "@marvis/ui/components/ui/skeleton";
 import { cn } from "@marvis/ui/lib/utils";
 import { COLLECTION_SEARCH_ICON, COLLECTION_SEARCH_INPUT } from "../../layout/collection-page";
 import { AppLink, useNavigation } from "../../navigation";
@@ -50,6 +51,29 @@ function hitHref(kbPage: (slug: string, pageId: string) => string, hit: KbSearch
 }
 
 /**
+ * The first request for a query is in flight with nothing to show yet; later
+ * queries keep the previous hits on screen while they run.
+ */
+function isFirstSearch(query: string, data: KbSearchResult | undefined, isError: boolean, isFetching: boolean): boolean {
+  return query !== "" && data === undefined && !isError && isFetching;
+}
+
+/** Result rows while the first search runs. */
+function KbSearchSkeleton() {
+  return (
+    <div aria-hidden="true" className="flex flex-col">
+      <Skeleton className="mx-2.5 mt-1 mb-2 h-3 w-16" />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex flex-col gap-2 p-2.5">
+          <Skeleton className="h-4 w-2/5" />
+          <Skeleton className="h-3.5 w-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
  * Search box of a knowledge base (design 6.1, 6.2): hits open in a panel
  * under the box, each linking to its page at the matching block.
  */
@@ -68,7 +92,8 @@ export function KbSearchBox({ kbSlug }: { kbSlug: string }) {
     placeholderData: keepPreviousData,
   });
 
-  const showPanel = open && query !== "" && (data !== undefined || isError);
+  const firstSearch = isFirstSearch(query, data, isError, isFetching);
+  const showPanel = open && query !== "" && (data !== undefined || isError || firstSearch);
   const hits = data?.hits ?? [];
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -115,7 +140,11 @@ export function KbSearchBox({ kbSlug }: { kbSlug: string }) {
           aria-label={t(($) => $.search.placeholder)}
           className="absolute top-[calc(100%+8px)] right-0 z-50 w-[460px] max-w-[calc(100vw-32px)] rounded-xl border bg-popover p-2 text-popover-foreground shadow-lg"
         >
-          <KbSearchResults query={query} data={data} isError={isError} onPick={() => setOpen(false)} />
+          {firstSearch ? (
+            <KbSearchSkeleton />
+          ) : (
+            <KbSearchResults query={query} data={data} isError={isError} onPick={() => setOpen(false)} />
+          )}
         </div>
       )}
     </div>
@@ -226,6 +255,7 @@ function KbGlobalSearchContent({ onClose }: { onClose: () => void }) {
     ...kbSearchOptions(wsId, query),
     placeholderData: keepPreviousData,
   });
+  const firstSearch = isFirstSearch(query, data, isError, isFetching);
   const { data: bases = [] } = useQuery(kbBaseListOptions(wsId));
   const baseNames = useMemo(() => new Map(bases.map((base) => [base.slug, base.name])), [bases]);
 
@@ -257,9 +287,13 @@ function KbGlobalSearchContent({ onClose }: { onClose: () => void }) {
           className="h-10 border-0 bg-transparent pl-9 shadow-none focus-visible:ring-0"
         />
       </div>
-      {query !== "" && (data !== undefined || isError) && (
+      {query !== "" && (data !== undefined || isError || firstSearch) && (
         <div className="p-2">
-          <KbSearchResults query={query} data={data} isError={isError} onPick={onClose} baseNames={baseNames} />
+          {firstSearch ? (
+            <KbSearchSkeleton />
+          ) : (
+            <KbSearchResults query={query} data={data} isError={isError} onPick={onClose} baseNames={baseNames} />
+          )}
         </div>
       )}
     </DialogContent>

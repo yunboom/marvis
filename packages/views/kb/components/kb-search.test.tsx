@@ -105,6 +105,17 @@ describe("KbSearchBox", () => {
     expect(screen.getAllByText("回调", { selector: "b" }).length).toBeGreaterThan(0);
   });
 
+  it("draws result skeletons in the panel while the first search runs", async () => {
+    mocked.searchKnowledgeBases.mockReturnValue(new Promise(() => {}));
+    mount();
+
+    await userEvent.type(screen.getByRole("searchbox"), "回调");
+
+    const panel = await screen.findByRole("region", { name: "在本知识库搜索" });
+    expect(panel.querySelector('[data-slot="skeleton"]')).not.toBeNull();
+    expect(screen.queryByText("换个关键词试试。")).not.toBeInTheDocument();
+  });
+
   it("says so when nothing is found", async () => {
     mocked.searchKnowledgeBases.mockResolvedValue({ mode: "keyword", total: 0, hits: [] });
     mount();
