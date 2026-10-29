@@ -30,6 +30,11 @@ import {
   type DeviceOption,
   type HarnessOption,
 } from "./runtime-choice";
+import {
+  NOT_YET_AVAILABLE_PROVIDERS,
+  SHOW_QODER_CLOUD,
+  VISIBLE_COMING_SOON_SERVICES,
+} from "../../runtimes/cloud-services";
 
 export type QoderChoiceState =
   | "not_configured"
@@ -50,10 +55,7 @@ export function qoderChoiceState(
 
 const QODER_NAME = "Qoder Cloud Agents";
 
-const COMING_SOON = [
-  { provider: "cursor", name: "Cursor Cloud Agents", vendor: "Cursor" },
-  { provider: "claude", name: "Claude Managed Agents", vendor: "Anthropic" },
-];
+
 
 const ROW = "flex w-full min-w-0 items-center gap-3 px-4 text-left";
 const INTERACTIVE =
@@ -565,9 +567,12 @@ export function RuntimeChoiceList({
     : devices;
   const showWebRow = !localAvailable && !searching;
 
-  const showQoder = !!qoder && !!qoderState && (!q || QODER_NAME.toLowerCase().includes(q));
+  const showQoder =
+    SHOW_QODER_CLOUD && !!qoder && !!qoderState && (!q || QODER_NAME.toLowerCase().includes(q));
   const matchedCloud = cloud.filter((option) => harnessMatches(option, "", query));
-  const soon = COMING_SOON.filter((item) => !q || item.name.toLowerCase().includes(q));
+  const soon = VISIBLE_COMING_SOON_SERVICES.filter(
+    (item) => !q || item.name.toLowerCase().includes(q),
+  );
 
   const showMachines = matchedDevices.length > 0 || showWebRow || !searching;
   const showCloud = showQoder || matchedCloud.length > 0 || soon.length > 0;
@@ -685,7 +690,7 @@ export function RuntimeChoiceList({
           <GroupHeader
             icon={Cloud}
             title={t(($) => $.creation_studio.runtime_step.groups.cloud)}
-            count={(showQoder ? 1 : 0) + matchedCloud.length}
+            count={(showQoder ? 1 : 0) + matchedCloud.length + soon.length}
           />
           {showQoder && qoder && qoderState ? (
             <QoderRow
@@ -723,13 +728,19 @@ export function RuntimeChoiceList({
                 <span className="block truncate text-body">
                   <Highlight text={item.name} query={query} />
                 </span>
-                <span className="block truncate text-caption text-faint-foreground">
-                  {t(($) => $.creation_studio.runtime_step.hosted_by, {
-                    vendor: item.vendor,
-                  })}
-                </span>
+                {NOT_YET_AVAILABLE_PROVIDERS.has(item.provider) ? null : (
+                  <span className="block truncate text-caption text-faint-foreground">
+                    {t(($) => $.creation_studio.runtime_step.hosted_by, {
+                      vendor: item.vendor,
+                    })}
+                  </span>
+                )}
               </span>
-              <Badge>{t(($) => $.creation_studio.runtime_step.coming_soon)}</Badge>
+              <Badge>
+                {NOT_YET_AVAILABLE_PROVIDERS.has(item.provider)
+                  ? t(($) => $.creation_studio.runtime_step.not_yet_available)
+                  : t(($) => $.creation_studio.runtime_step.coming_soon)}
+              </Badge>
             </div>
           ))}
         </>

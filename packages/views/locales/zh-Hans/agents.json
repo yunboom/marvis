@@ -409,6 +409,7 @@
       "no_match": "没有与「{{query}}」匹配的结果",
       "hosted_by": "由 {{vendor}} 提供",
       "coming_soon": "即将推出",
+      "not_yet_available": "待实现",
       "qoder_status": {
         "not_configured": "未连接",
         "starting": "启动中",
