@@ -1017,6 +1017,7 @@
       "no_match": "「{{query}}」に一致する項目はありません",
       "hosted_by": "提供：{{vendor}}",
       "coming_soon": "近日公開",
+      "not_yet_available": "未実装",
       "qoder_status": {
         "not_configured": "未接続",
         "starting": "起動中",
