@@ -4,11 +4,13 @@ The `marvis` CLI connects your local machine to Marvis. It handles authenticatio
 
 ## Installation
 
-### Homebrew (macOS/Linux)
+### Install script (macOS/Linux)
 
 ```bash
-brew install yunboom/tap/marvis
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 ```
+
+On Windows, run `irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex` in PowerShell.
 
 ### Build from Source
 
@@ -20,12 +22,6 @@ cp server/bin/marvis /usr/local/bin/marvis
 ```
 
 ### Update
-
-```bash
-brew upgrade yunboom/tap/marvis
-```
-
-For install script or manual installs, use:
 
 ```bash
 marvis update

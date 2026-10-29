@@ -31,7 +31,7 @@ Wait for the server output `✓ Marvis server is running and CLI is ready!` befo
 git clone https://github.com/yunboom/marvis.git
 cd marvis
 make selfhost
-brew install yunboom/tap/marvis
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 marvis setup self-host
 ```
 

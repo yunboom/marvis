@@ -29,37 +29,23 @@ marvis version
 
 > **Windows users:** Skip to [Option C: Windows (PowerShell)](#option-c-windows-powershell) below.
 
-### Option A: Homebrew (preferred — macOS/Linux)
-
-Check if Homebrew is available:
+### Option A: Install script (preferred — macOS/Linux)
 
 ```bash
-which brew
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 ```
 
-If `brew` is found, install via Homebrew:
-
-```bash
-brew install yunboom/tap/marvis
-```
-
-Then verify:
+The script downloads the latest CLI binary from GitHub Releases. Then verify:
 
 ```bash
 marvis version
 ```
 
-If the version prints successfully, skip to **Step 3**.
+If the version prints successfully, skip to **Step 3**. To upgrade later, run `marvis update`.
 
-To upgrade later, run:
+### Option B: Download from GitHub Releases manually (macOS/Linux)
 
-```bash
-brew upgrade yunboom/tap/marvis
-```
-
-### Option B: Download from GitHub Releases (macOS/Linux, no Homebrew)
-
-If Homebrew is not available, download the binary directly.
+If the install script cannot run, download the binary directly.
 
 Detect OS and architecture, then download the correct archive:
 

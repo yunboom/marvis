@@ -59,10 +59,10 @@ Open http://localhost:3000. To log in, configure `RESEND_API_KEY` in `.env` for 
 
 > **Prerequisites:** Docker and Docker Compose must be installed. The script checks for this and provides install links if missing.
 >
-> **CLI only?** If the self-host server is already running and you only need the CLI on a macOS/Linux machine, install it with Homebrew:
+> **CLI only?** If the self-host server is already running and you only need the CLI on a macOS/Linux machine, run the installer without `--with-server`:
 >
 > ```bash
-> brew install yunboom/tap/marvis
+> curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 > ```
 
 ---
@@ -115,7 +115,7 @@ Each team member who wants to run AI agents locally needs to:
 ### a) Install the CLI and an AI agent
 
 ```bash
-brew install yunboom/tap/marvis
+curl -fsSL https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.sh | bash
 ```
 
 You also need at least one AI agent CLI installed:
