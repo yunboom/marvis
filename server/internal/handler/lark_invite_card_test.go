@@ -14,9 +14,8 @@ type larkCardDoc map[string]any
 
 // 测试用的卡片链接。
 const (
-	testLarkInviteLandingURL  = "https://example.com/marvis"
-	testLarkInviteLoginURL    = "https://example.com/marvis/login?next=%2Fdev%2Fissues"
-	testLarkInviteDownloadURL = "https://example.com/download"
+	testLarkInviteLandingURL = "https://example.com/marvis/homepage"
+	testLarkInviteLoginURL   = "https://example.com/marvis/login?next=%2Fdev%2Fissues"
 )
 
 // parseLarkInviteCardForTest 解析 buildLarkInviteCard 的输出。
@@ -275,9 +274,8 @@ func newLarkInviteViewForTest() larkInviteCardView {
 		JoinedCount:   3,
 		JoinedOpenIDs: []string{"ou_a", "ou_b", "ou_c"},
 		Links: larkInviteCardLinks{
-			Landing:  testLarkInviteLandingURL,
-			Download: testLarkInviteDownloadURL,
-			Login:    testLarkInviteLoginURL,
+			Landing: testLarkInviteLandingURL,
+			Login:   testLarkInviteLoginURL,
 		},
 	}
 }
@@ -694,8 +692,8 @@ func TestBuildLarkInviteCard_Joined(t *testing.T) {
 	})
 }
 
-// TestBuildLarkInviteCard_LinkFallbacks 覆盖没有首页地址时 logo 不可点击、次按钮退回下载，两个地址都没有时不显示次按钮。
-func TestBuildLarkInviteCard_LinkFallbacks(t *testing.T) {
+// TestBuildLarkInviteCard_WithoutLanding 覆盖没有营销页地址时 logo 不可点击、不显示“了解 Marvis”。
+func TestBuildLarkInviteCard_WithoutLanding(t *testing.T) {
 	view := newLarkInviteViewForTest()
 	view.Links.Landing = ""
 	doc, raw := buildLarkInviteDocForTest(t, view)
@@ -709,16 +707,6 @@ func TestBuildLarkInviteCard_LinkFallbacks(t *testing.T) {
 		t.Fatalf("card links to the landing page without a landing URL: %s", raw)
 	}
 
-	download, ok := doc.pillByText(t, "下载 Marvis")
-	if !ok {
-		t.Fatalf("download pill missing: %v", doc.pills(t))
-	}
-	if b := behaviorOf(t, download); b["type"] != "open_url" || b["default_url"] != testLarkInviteDownloadURL {
-		t.Fatalf("download behavior = %v", b)
-	}
-
-	view.Links.Download = ""
-	doc, _ = buildLarkInviteDocForTest(t, view)
 	if pills := doc.pills(t); len(pills) != 1 {
 		t.Fatalf("pills = %v, want only the join pill", pills)
 	}
@@ -735,18 +723,22 @@ func TestNewLarkInviteCardLinks(t *testing.T) {
 			name:   "path prefix",
 			appURL: "https://example.com/marvis/",
 			slug:   "dev",
-			want:   larkInviteCardLinks{Landing: testLarkInviteLandingURL, Download: testLarkInviteDownloadURL, Login: testLarkInviteLoginURL},
+			want:   larkInviteCardLinks{Landing: testLarkInviteLandingURL, Login: testLarkInviteLoginURL},
 		},
-		{name: "no workspace slug", appURL: "https://example.com", want: larkInviteCardLinks{Landing: "https://example.com", Download: testLarkInviteDownloadURL}},
-		{name: "unset", slug: "dev", want: larkInviteCardLinks{Download: testLarkInviteDownloadURL}},
-		{name: "localhost", appURL: "http://localhost:3000", slug: "dev", want: larkInviteCardLinks{Download: testLarkInviteDownloadURL}},
-		{name: "loopback ip", appURL: "http://127.0.0.1:3000", slug: "dev", want: larkInviteCardLinks{Download: testLarkInviteDownloadURL}},
-		{name: "not http", appURL: "marvis://open", slug: "dev", want: larkInviteCardLinks{Download: testLarkInviteDownloadURL}},
+		{name: "no workspace slug", appURL: "https://example.com", want: larkInviteCardLinks{Landing: "https://example.com/homepage"}},
+		{
+			name:   "localhost",
+			appURL: "http://localhost:3000",
+			slug:   "dev",
+			want:   larkInviteCardLinks{Landing: "http://localhost:3000/homepage", Login: "http://localhost:3000/login?next=%2Fdev%2Fissues"},
+		},
+		{name: "unset", slug: "dev", want: larkInviteCardLinks{}},
+		{name: "not http", appURL: "marvis://open", slug: "dev", want: larkInviteCardLinks{}},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := newLarkInviteCardLinks(tc.appURL, testLarkInviteDownloadURL, tc.slug); got != tc.want {
+			if got := newLarkInviteCardLinks(tc.appURL, tc.slug); got != tc.want {
 				t.Fatalf("links = %+v, want %+v", got, tc.want)
 			}
 		})

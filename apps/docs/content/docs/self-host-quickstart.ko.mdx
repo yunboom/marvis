@@ -367,7 +367,7 @@ Web 주소가 없거나 `localhost`이면 클라이언트는 Web 앱이 없는 �
 4. 사용 가능 범위에 초대할 수 있는 모든 사람이 포함되도록 설정합니다. 범위 밖의 사람은 카드로 참여할 수 없습니다.
 5. 앱의 새 버전을 게시합니다.
 
-그다음 `.env`에 `MARVIS_LARK_INVITE_ENABLED=true`를 설정하고 `docker compose -f docker-compose.selfhost.yml up -d`를 실행합니다. 선택적으로 `MARVIS_DESKTOP_DOWNLOAD_URL`을 설정하면 카드에 "下载 Marvis"(Marvis 다운로드) 버튼이 표시됩니다. Marvis Cloud 좌석 용량이 켜져 있으면 Feishu 초대는 사용할 수 없습니다.
+그다음 `.env`에 `MARVIS_LARK_INVITE_ENABLED=true`를 설정하고 `docker compose -f docker-compose.selfhost.yml up -d`를 실행합니다. 카드의 "了解 Marvis"(Marvis 알아보기) 버튼은 `MARVIS_APP_URL` 아래의 `/homepage`를 엽니다. Marvis Cloud 좌석 용량이 켜져 있으면 Feishu 초대는 사용할 수 없습니다.
 
 <Callout type="warning">
 Feishu 앱 하나당 한 배포에서만 Feishu 초대를 켜세요. Feishu는 카드 클릭을 앱의 장기 연결 중 하나로 보내므로, 스위치가 꺼진 배포에 도착한 클릭은 사라집니다.

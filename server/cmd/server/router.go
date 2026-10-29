@@ -2761,8 +2761,6 @@ func buildLarkConnector(installSvc *lark.InstallationService, apiClient lark.API
 const (
 	// larkInviteEnabledEnv 是飞书邀请卡片的总开关，默认关闭。
 	larkInviteEnabledEnv = "MARVIS_LARK_INVITE_ENABLED"
-	// desktopDownloadURLEnv 是邀请卡片上“下载 Marvis”按钮的链接，为空时卡片不显示该按钮。
-	desktopDownloadURLEnv = "MARVIS_DESKTOP_DOWNLOAD_URL"
 
 	// 下面三个与按 agent 绑定的飞书机器人共用同一组部署级覆盖项。
 	larkHTTPBaseURLEnv     = "MARVIS_LARK_HTTP_BASE_URL"
@@ -2795,8 +2793,8 @@ func larkInviteEnabled() bool {
 
 // configureLarkInvite 按开关把飞书邀请卡片接到 handler 上。
 // 开关开启、飞书登录应用凭据齐全、席位容量未开启（没连 Cloud）三者同时满足才启用，
-// 启用时设置 LarkInviteAPI、LarkInviteCreds、LarkInviteDownloadURL、LarkInviteConn；
-// 否则四个字段都保持零值，相关接口返回 lark_not_configured，并在启动日志里写明原因。
+// 启用时设置 LarkInviteAPI、LarkInviteCreds、LarkInviteConn；
+// 否则三个字段都保持零值，相关接口返回 lark_not_configured，并在启动日志里写明原因。
 // 本函数只构造对象，不连飞书；长连接由 main 在 sweepCtx 下启动。
 func configureLarkInvite(h *handler.Handler) {
 	if !larkInviteEnabled() {
@@ -2832,17 +2830,14 @@ func configureLarkInvite(h *handler.Handler) {
 		return
 	}
 
-	downloadURL := strings.TrimSpace(os.Getenv(desktopDownloadURLEnv))
-
 	h.LarkInviteAPI = lark.NewInviteAPIClient(lark.HTTPClientConfig{
 		BaseURL: strings.TrimSpace(os.Getenv(larkHTTPBaseURLEnv)),
 		Logger:  slog.Default(),
 	})
 	h.LarkInviteCreds = creds
-	h.LarkInviteDownloadURL = downloadURL
 	h.LarkInviteConn = conn
 
-	slog.Info("lark invite cards enabled", "app_id", appID, "download_button", downloadURL != "")
+	slog.Info("lark invite cards enabled", "app_id", appID)
 }
 
 // buildLarkInviteConnection 构造飞书登录应用的卡片回调长连接，写法对照 buildLarkConnector，

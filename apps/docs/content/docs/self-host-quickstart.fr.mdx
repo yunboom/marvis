@@ -368,7 +368,7 @@ Les propriétaires et administrateurs d'un espace de travail peuvent envoyer une
 4. Réglez la portée de disponibilité pour couvrir toutes les personnes que vous pourriez inviter. Les personnes hors de cette portée ne peuvent pas rejoindre depuis une carte.
 5. Publiez une nouvelle version de l'application.
 
-Définissez ensuite `MARVIS_LARK_INVITE_ENABLED=true` dans `.env` et exécutez `docker compose -f docker-compose.selfhost.yml up -d`. En option, `MARVIS_DESKTOP_DOWNLOAD_URL` affiche un bouton **下载 Marvis** (Télécharger Marvis) sur les cartes. Les invitations Feishu sont indisponibles lorsque la capacité de sièges Marvis Cloud est activée.
+Définissez ensuite `MARVIS_LARK_INVITE_ENABLED=true` dans `.env` et exécutez `docker compose -f docker-compose.selfhost.yml up -d`. Le bouton **了解 Marvis** (Découvrir Marvis) des cartes ouvre `/homepage` sous `MARVIS_APP_URL`. Les invitations Feishu sont indisponibles lorsque la capacité de sièges Marvis Cloud est activée.
 
 <Callout type="warning">
 N'activez les invitations Feishu que dans un seul déploiement par application Feishu. Feishu transmet chaque clic sur une carte à l'une des connexions longues de l'application ; un clic reçu par un déploiement où l'option est désactivée est perdu.

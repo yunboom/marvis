@@ -371,8 +371,6 @@ type Handler struct {
 	LarkInviteAPI lark.InviteAPIClient
 	// LarkInviteCreds 是飞书登录应用的凭据，飞书邀请的所有开放平台调用都用它。
 	LarkInviteCreds lark.InstallationCredentials
-	// LarkInviteDownloadURL 是卡片上“下载 Marvis”按钮的链接，为空时不显示该按钮。
-	LarkInviteDownloadURL string
 	// LarkInviteConn 是飞书登录应用的卡片回调长连接，由 main 在 sweepCtx 下启动；nil 表示飞书邀请不可用。
 	LarkInviteConn *lark.InviteConnection
 	// SlackInstall owns the bring-your-own-app Slack install lifecycle (register

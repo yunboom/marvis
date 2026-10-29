@@ -367,7 +367,7 @@ Web アドレスがない場合、または `localhost` の場合、クライア
 4. 利用可能範囲を、招待する可能性のある全員が含まれるように設定する。範囲外の人はカードから参加できません。
 5. アプリの新しいバージョンを公開する。
 
-続いて `.env` に `MARVIS_LARK_INVITE_ENABLED=true` を設定し、`docker compose -f docker-compose.selfhost.yml up -d` を実行します。任意で `MARVIS_DESKTOP_DOWNLOAD_URL` を設定すると、カードに「下载 Marvis」（Marvis をダウンロード）ボタンが表示されます。Marvis Cloud のシート容量が有効な場合、Feishu 招待は使えません。
+続いて `.env` に `MARVIS_LARK_INVITE_ENABLED=true` を設定し、`docker compose -f docker-compose.selfhost.yml up -d` を実行します。カードの「了解 Marvis」（Marvis について）ボタンは `MARVIS_APP_URL` 配下の `/homepage` を開きます。Marvis Cloud のシート容量が有効な場合、Feishu 招待は使えません。
 
 <Callout type="warning">
 Feishu 招待は、1 つの Feishu アプリにつき 1 つのデプロイでのみ有効にしてください。Feishu はカードのクリックをアプリの長時間接続のいずれか 1 つに届けるため、スイッチがオフのデプロイに届いたクリックは失われます。
