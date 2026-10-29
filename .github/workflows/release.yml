@@ -19,7 +19,61 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Desktop installers build only for the platforms listed in the repository
+  # variable RELEASE_DESKTOP_PLATFORMS (comma-separated subset of mac,win,linux;
+  # unset or empty means mac). Everything else still ships for every platform.
+  # Runs first so a typo stops the release before anything is published. See
+  # .github/RELEASING.md.
+  desktop-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.matrix.outputs.include }}
+    steps:
+      - name: Select desktop platforms
+        id: matrix
+        shell: bash
+        env:
+          PLATFORMS: ${{ vars.RELEASE_DESKTOP_PLATFORMS }}
+        run: |
+          set -euo pipefail
+          # Keep each platform's runner and target exactly as before; only the
+          # selection is configurable. macOS is unsigned (no Developer ID):
+          # package.mjs skips notarization and electron-builder ad-hoc signs,
+          # which is enough for Apple Silicon to launch. Users clear quarantine
+          # once; see the download page's first-launch hint.
+          declare -A entries=(
+            [linux]='{"os":"ubuntu-latest","target":"linux"}'
+            [win]='{"os":"windows-latest","target":"win"}'
+            [mac]='{"os":"macos-latest","target":"mac"}'
+          )
+          platforms="${PLATFORMS:-}"
+          requested="${platforms//[[:space:]]/}"
+          requested="${requested:-mac}"
+          declare -A selected=()
+          IFS=',' read -ra names <<< "$requested"
+          for name in "${names[@]}"; do
+            [ -z "$name" ] && continue
+            if [ -z "${entries[$name]+set}" ]; then
+              echo "::error::RELEASE_DESKTOP_PLATFORMS has unknown platform '$name'; use a comma-separated subset of mac,win,linux."
+              exit 1
+            fi
+            selected[$name]=1
+          done
+          if [ "${#selected[@]}" -eq 0 ]; then
+            echo "::error::RELEASE_DESKTOP_PLATFORMS='$platforms' selects no platform; use a comma-separated subset of mac,win,linux."
+            exit 1
+          fi
+          include=""
+          for name in linux win mac; do
+            if [ -n "${selected[$name]+set}" ]; then
+              include="${include:+$include,}${entries[$name]}"
+            fi
+          done
+          echo "Desktop matrix: [$include]"
+          echo "include=[$include]" >> "$GITHUB_OUTPUT"
+
   verify:
+    needs: desktop-matrix
     runs-on: ubuntu-latest
     outputs:
       tag_name: ${{ steps.release_meta.outputs.tag_name }}
@@ -445,30 +499,17 @@ jobs:
       - name: Verify published chart
         run: helm show chart "$OCI_REGISTRY/marvis" --version "$CHART_VERSION"
 
-  # Build the Desktop installers for Linux and Windows and upload them to
-  # the draft GitHub Release that the `release` job above created. macOS
-  # Desktop continues to ship via the manual `release-desktop` skill so it
-  # can be signed + notarized with Apple Developer credentials that are
-  # not (yet) wired into CI.
+  # Build the Desktop installers selected by `desktop-matrix` and upload them
+  # to the draft GitHub Release that the `release` job above created.
   desktop:
-    needs: release
+    needs: [desktop-matrix, release]
     # The publish job waits for this one; a stuck packager must not hold the
     # release back indefinitely.
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            target: linux
-          - os: windows-latest
-            target: win
-          # Unsigned: there is no Developer ID cert, so package.mjs skips
-          # notarization and electron-builder ad-hoc signs (enough for Apple
-          # Silicon to launch). Users clear quarantine once; see the
-          # download page's first-launch hint.
-          - os: macos-latest
-            target: mac
+        include: ${{ fromJSON(needs.desktop-matrix.outputs.include) }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
