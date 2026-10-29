@@ -469,6 +469,43 @@ describe("KbBuilderPage · runtime states", () => {
   });
 });
 
+describe("KbBuilderPage · narrow layout", () => {
+  // jsdom has no layout: report every observed element at phone width.
+  beforeEach(() => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(private readonly callback: ResizeObserverCallback) {}
+        observe() {
+          this.callback([], this as unknown as ResizeObserver);
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(390);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("switches between chat and configuration, keeping the composer clear of the chat launcher", async () => {
+    mount(makeAdapter("/acme/kb/new"));
+
+    const chat = await screen.findByRole("tabpanel", { name: "Chat" });
+    expect(screen.getByRole("tab", { name: "Chat" })).toHaveAttribute("aria-selected", "true");
+    expect(within(chat).getByRole("textbox", { name: "Message" })).toBeInTheDocument();
+    expect(chat).toHaveClass("pb-chat-launcher");
+    expect(screen.queryByLabelText("Name")).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Configuration" }));
+    const config = screen.getByRole("tabpanel", { name: "Configuration" });
+    expect(within(config).getByLabelText("Name")).toBeInTheDocument();
+    expect(config).not.toHaveClass("pb-chat-launcher");
+  });
+});
+
 describe("KbBuilderPage · access", () => {
   it("shows a notice instead of the builder to a member who cannot configure", async () => {
     mocked.getKnowledgeBase.mockResolvedValue({ ...BASE, created_by: "user-9" });

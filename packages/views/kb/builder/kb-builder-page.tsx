@@ -795,7 +795,17 @@ function KbBuilderWorkspace({
         {narrow ? (
           <>
             <KbBuilderPaneTabs pane={pane} onChange={setPane} />
-            <div className="flex min-h-0 flex-1 flex-col">{pane === "chat" ? conversation : configuration}</div>
+            {/* Narrow, the composer spans the full width and its send button
+                would sit under the chat launcher, so the chat pane reserves
+                the launcher's corner below it. The configuration footer
+                already keeps its buttons clear of the corner. */}
+            <div
+              role="tabpanel"
+              aria-label={pane === "chat" ? t(($) => $.builder.tabs.chat) : t(($) => $.builder.tabs.config)}
+              className={cn("flex min-h-0 flex-1 flex-col", pane === "chat" && "pb-chat-launcher")}
+            >
+              {pane === "chat" ? conversation : configuration}
+            </div>
           </>
         ) : (
           <ResizablePanelGroup
