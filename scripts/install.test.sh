@@ -23,8 +23,15 @@ STUB
   cat >"$stub_bin/curl" <<'STUB'
 #!/usr/bin/env bash
 if [[ "$*" == *"-sI"* ]]; then
-  printf 'HTTP/2 302\r\nlocation: https://github.com/yunboom/marvis/releases/tag/v0.3.2\r\n'
+  if [[ "${MARVIS_TEST_NO_RELEASE:-}" == "1" ]]; then
+    printf 'HTTP/2 302\r\nlocation: https://github.com/yunboom/marvis/releases\r\n'
+  else
+    printf 'HTTP/2 302\r\nlocation: https://github.com/yunboom/marvis/releases/tag/v0.3.2\r\n'
+  fi
   exit 0
+fi
+if [[ "$*" == *"homebrew-tap"* && "${MARVIS_TEST_TAP_MISSING:-}" == "1" ]]; then
+  exit 22
 fi
 
 out=""
@@ -509,8 +516,82 @@ STUB
   fi
 }
 
+# Brew stub that fails the test if the installer touches Homebrew at all.
+_write_untouchable_brew() {
+  cat >"$1/stub-bin/brew" <<'STUB'
+#!/usr/bin/env bash
+echo "brew $* should not run when the tap is not published" >&2
+exit 99
+STUB
+  chmod +x "$1/stub-bin/brew"
+}
+
+test_missing_tap_skips_homebrew_quietly() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  _setup_sandbox "$tmp"
+  _write_untouchable_brew "$tmp"
+
+  if ! PATH="$tmp/stub-bin:$tmp/install-bin:/usr/bin:/bin" \
+    MARVIS_BIN_DIR="$tmp/install-bin" \
+    MARVIS_TEST_ARCHIVE="$tmp/marvis.tar.gz" \
+    MARVIS_TEST_TAP_MISSING=1 \
+    bash "$ROOT_DIR/scripts/install.sh" >"$tmp/install.out" 2>"$tmp/install.err"; then
+    echo "install.sh exited non-zero with a missing tap" >&2
+    cat "$tmp/install.out" "$tmp/install.err" >&2 || true
+    return 1
+  fi
+  if [[ ! -x "$tmp/install-bin/marvis" ]]; then
+    echo "expected release binary at $tmp/install-bin/marvis" >&2
+    return 1
+  fi
+  if grep -q "should not run" "$tmp/install.err" || grep -q "Homebrew output" "$tmp/install.err"; then
+    echo "expected no Homebrew invocation or diagnostic tail with a missing tap" >&2
+    cat "$tmp/install.err" >&2 || true
+    return 1
+  fi
+  if ! grep -q "is not published. Installing from GitHub Releases" "$tmp/install.out"; then
+    echo "expected a one-line notice that the tap is skipped" >&2
+    cat "$tmp/install.out" >&2 || true
+    return 1
+  fi
+}
+
+test_no_published_release_fails_with_clear_message() {
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+
+  _setup_sandbox "$tmp"
+  _write_untouchable_brew "$tmp"
+
+  if PATH="$tmp/stub-bin:$tmp/install-bin:/usr/bin:/bin" \
+    MARVIS_BIN_DIR="$tmp/install-bin" \
+    MARVIS_TEST_ARCHIVE="$tmp/marvis.tar.gz" \
+    MARVIS_TEST_TAP_MISSING=1 \
+    MARVIS_TEST_NO_RELEASE=1 \
+    bash "$ROOT_DIR/scripts/install.sh" >"$tmp/install.out" 2>"$tmp/install.err"; then
+    echo "install.sh must fail when no release is published" >&2
+    return 1
+  fi
+  if ! grep -q "Could not find a published Marvis release" "$tmp/install.err"; then
+    echo "expected an explicit no-release failure" >&2
+    cat "$tmp/install.err" >&2 || true
+    return 1
+  fi
+  if grep -q "Downloading" "$tmp/install.out"; then
+    echo "must not try to download from a non-tag release URL" >&2
+    cat "$tmp/install.out" >&2 || true
+    return 1
+  fi
+}
+
 test_brew_install_failure_falls_back_to_release_binary
 test_brew_tap_failure_falls_back_to_release_binary
+test_missing_tap_skips_homebrew_quietly
+test_no_published_release_fails_with_clear_message
 test_remote_ssh_install_prints_token_login_hint
 test_local_install_does_not_print_token_login_hint
 test_with_server_uses_compose_published_ports

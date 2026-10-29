@@ -17,7 +17,11 @@ set -euo pipefail
 REPO_URL="https://github.com/yunboom/marvis.git"
 REPO_WEB_URL="https://github.com/yunboom/marvis"  # without .git, for GitHub web APIs
 INSTALL_DIR="${MARVIS_INSTALL_DIR:-$HOME/.marvis/server}"
-BREW_PACKAGE="yunboom/tap/marvis"
+BREW_TAP="yunboom/tap"
+BREW_PACKAGE="$BREW_TAP/marvis"
+# The formula the tap would install. Probing it first keeps a missing tap
+# repository from costing a slow `brew tap` and a page of unrelated output.
+BREW_FORMULA_URL="https://raw.githubusercontent.com/yunboom/homebrew-tap/main/Formula/marvis.rb"
 
 # Host ports Compose reported after `up -d`; set by setup_server and reused by
 # the summary so the health check and the printed URLs cannot diverge.
@@ -117,11 +121,23 @@ _dump_brew_log() {
   fi
 }
 
+brew_tap_available() {
+  curl -fsSL --max-time 15 -o /dev/null "$BREW_FORMULA_URL" 2>/dev/null
+}
+
 install_cli_brew() {
+  if ! brew_tap_available; then
+    info "Homebrew tap $BREW_TAP is not published. Installing from GitHub Releases instead."
+    return 1
+  fi
+
   info "Installing Marvis CLI via Homebrew..."
   local brew_log
   brew_log=$(mktemp)
-  if ! brew tap yunboom/tap >"$brew_log" 2>&1; then
+  # Auto-update before tap/install prints every new upstream formula and cask,
+  # which buries the actual failure in the diagnostic tail.
+  export HOMEBREW_NO_AUTO_UPDATE=1
+  if ! brew tap "$BREW_TAP" >"$brew_log" 2>&1; then
     warn "Failed to add Homebrew tap. Falling back to GitHub Releases binary install."
     _dump_brew_log "$brew_log"
     rm -f "$brew_log"
@@ -147,11 +163,10 @@ install_cli_brew() {
 install_cli_binary() {
   info "Installing Marvis CLI from GitHub Releases..."
 
-  # Get latest release tag
   local latest
-  latest=$(curl -sI "$REPO_WEB_URL/releases/latest" 2>/dev/null | grep -i '^location:' | sed 's/.*tag\///' | tr -d '\r\n' || true)
+  latest=$(get_latest_version)
   if [ -z "$latest" ]; then
-    fail "Could not determine latest release. Check your network connection."
+    fail "Could not find a published Marvis release at $REPO_WEB_URL/releases. Check your network connection, or retry once a release is published."
   fi
 
   local version="${latest#v}"
@@ -200,9 +215,16 @@ add_to_path() {
   done
 }
 
+# Tag of the latest published release, or empty when there is none.
+# Without a published release GitHub redirects /releases/latest to /releases,
+# which has no tag segment; only a redirect to /releases/tag/<tag> counts.
 get_latest_version() {
+  local location
   # grep exits 1 when no match; use `|| true` to avoid triggering pipefail
-  curl -sI "$REPO_WEB_URL/releases/latest" 2>/dev/null | grep -i '^location:' | sed 's/.*tag\///' | tr -d '\r\n' || true
+  location=$(curl -sI "$REPO_WEB_URL/releases/latest" 2>/dev/null | grep -i '^location:' | tr -d '\r\n' || true)
+  case "$location" in
+    */releases/tag/*) printf '%s' "${location##*/releases/tag/}" ;;
+  esac
 }
 
 get_selfhost_ref() {
