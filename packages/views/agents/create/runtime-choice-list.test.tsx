@@ -157,25 +157,21 @@ describe("RuntimeChoiceList", () => {
     expect(screen.getByText(/Tasks run on Bohan's machine/)).toBeInTheDocument();
   });
 
-  it("lets an admin connect Qoder in place, and tells a member to ask an admin", () => {
-    const props = mount();
-    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
-    expect(props.onConnectQoder).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole("button", { name: /Qoder Cloud Agents/ })).toBeNull();
-
-    cleanup();
-    mount({ canManage: false });
+  it("lists only Claude under cloud services, tagged not yet available", () => {
+    mount();
+    // Qoder and Cursor are hidden from the group for now (runtimes/cloud-services.ts).
+    expect(screen.queryByText("Qoder Cloud Agents")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cursor Cloud Agents")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Connect" })).toBeNull();
-    expect(screen.getByText("Ask an admin to connect")).toBeInTheDocument();
+
+    const claude = screen.getByText("Claude Managed Agents").closest("[aria-disabled='true']");
+    expect(claude).not.toBeNull();
+    expect(claude).toHaveTextContent("Not yet available");
+    expect(claude).not.toHaveTextContent("Anthropic");
   });
 
-  it("keeps Qoder discoverable but unselectable without server encryption setup", () => {
+  it("reports an unconfigured Qoder when the server cannot encrypt credentials", () => {
     const qoder = { ...unconnectedQoder, available: false };
-    const props = mount({ qoder, qoderState: qoderChoiceState(qoder, false) });
-    expect(screen.getByText("Qoder Cloud Agents")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
-    expect(props.onConnectQoder).toHaveBeenCalledOnce();
-    expect(props.onSelectQoder).not.toHaveBeenCalled();
     expect(qoderChoiceState({ ...qoder, configured: true, enabled: true, status: "online" }, true))
       .toBe("not_configured");
   });

@@ -102,6 +102,11 @@ import { HealthDot, useHealthLabel } from "./shared";
 import { useT, useTimeAgo } from "../../i18n";
 import { DOCS_LINKS_ENABLED } from "../../common/docs-locale";
 import { daemonRuntimesDocsHref } from "./runtime-docs";
+import {
+  NOT_YET_AVAILABLE_PROVIDERS,
+  SHOW_QODER_CLOUD,
+  VISIBLE_COMING_SOON_SERVICES,
+} from "../cloud-services";
 
 export interface RuntimesPageProps {
   /** Desktop-only daemon id used to identify this device. */
@@ -122,27 +127,6 @@ const STATUS_FILTERS: StatusFilter[] = ["all", "online", "offline"];
 type OwnerScope = "mine" | "all";
 const OWNER_SCOPES: OwnerScope[] = ["mine", "all"];
 
-const COMING_SOON_SERVICES = [
-  { provider: "cursor", name: "Cursor Cloud Agents", vendor: "Cursor" },
-  { provider: "claude", name: "Claude Managed Agents", vendor: "Anthropic" },
-];
-
-const QODER_CLOUD_PROVIDER = "qoder_cloud";
-
-// Cloud services shown in the cloud services group and the add menu: Claude
-// only for now. Qoder and Cursor are hidden there but kept, so turning them
-// back on is a one-line change.
-const VISIBLE_CLOUD_PROVIDERS: ReadonlySet<string> = new Set(["claude"]);
-
-const SHOW_QODER_CLOUD = VISIBLE_CLOUD_PROVIDERS.has(QODER_CLOUD_PROVIDER);
-
-const VISIBLE_COMING_SOON_SERVICES = COMING_SOON_SERVICES.filter((service) =>
-  VISIBLE_CLOUD_PROVIDERS.has(service.provider),
-);
-
-// Coming-soon services tagged "not yet available" instead of "coming soon".
-// Their cloud services row also drops the "By {vendor}" subtitle.
-const NOT_YET_AVAILABLE_PROVIDERS: ReadonlySet<string> = new Set(["claude"]);
 
 // Track order: edge, name, harness, agents, workload, status, actions, edge.
 // Below @2xl only name, status and actions keep a track; the other cells are

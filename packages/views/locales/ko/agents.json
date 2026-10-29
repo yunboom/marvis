@@ -1017,6 +1017,7 @@
       "no_match": "“{{query}}”와 일치하는 항목이 없습니다",
       "hosted_by": "제공: {{vendor}}",
       "coming_soon": "출시 예정",
+      "not_yet_available": "구현 예정",
       "qoder_status": {
         "not_configured": "연결 안 됨",
         "starting": "시작 중",

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "@marvis/core/i18n/react";
 import { RESOURCES } from "@marvis/views/locales";
 import {
-  DEFAULT_SERVER_ADDRESS,
+  MARVIS_CLOUD_SERVER_URL,
   SERVER_SOURCE_LAN,
   SERVER_SOURCE_MANUAL,
   type DiscoveredServer,
@@ -140,7 +140,13 @@ function addressInput(): HTMLInputElement {
   return screen.getByRole("textbox", { name: "服务器地址" }) as HTMLInputElement;
 }
 
+// 手动输入的示例地址：地址栏默认是空的，测试前先填上。
+const MANUAL_ADDRESS = "http://192.168.1.20:13840";
+
 async function runProbe(result: ProbeResult) {
+  if (addressInput().value === "") {
+    fireEvent.change(addressInput(), { target: { value: MANUAL_ADDRESS } });
+  }
   mocks.probe.mockResolvedValueOnce(result);
   fireEvent.click(screen.getByRole("button", { name: "测试连接" }));
   // 让 probe 的 Promise 落地，并走完“正在测试”的最短显示时长。
@@ -164,8 +170,8 @@ describe("ConnectServerScreen", () => {
     renderScreen();
     settleDiscovery([designServer, devServer, oldServer]);
 
-    // radio 是「在这台电脑上使用」和三个服务器行，地址栏不是 radio。
-    expect(screen.getAllByRole("radio")).toHaveLength(4);
+    // radio 是「Marvis 云服务」「在这台电脑上使用」和三个服务器行，地址栏不是 radio。
+    expect(screen.getAllByRole("radio")).toHaveLength(5);
 
     const design = screen.getByRole("radio", { name: /设计部 Marvis/ });
     const dev = screen.getByRole("radio", { name: /marvis-dev/ });
@@ -215,11 +221,12 @@ describe("ConnectServerScreen", () => {
     expect(screen.getByRole("button", { name: "连接" })).toBeEnabled();
   });
 
-  it("pre-fills the address field and only enables connect after a successful test", async () => {
+  it("starts the address field empty and only enables connect after a successful test", async () => {
     renderScreen();
     settleDiscovery([designServer]);
 
-    expect(addressInput().value).toBe(DEFAULT_SERVER_ADDRESS);
+    expect(addressInput().value).toBe("");
+    expect(addressInput()).toHaveAttribute("placeholder", MARVIS_CLOUD_SERVER_URL);
 
     // 选中地址栏：没测试通过之前不能连接。
     fireEvent.focus(addressInput());
@@ -229,7 +236,7 @@ describe("ConnectServerScreen", () => {
 
     await runProbe({ kind: "ok", server: designServer });
 
-    expect(mocks.probe).toHaveBeenCalledWith(DEFAULT_SERVER_ADDRESS);
+    expect(mocks.probe).toHaveBeenCalledWith(MANUAL_ADDRESS);
     expect(screen.getByText("可以连接 · 设计部 Marvis · v0.6.5")).toBeInTheDocument();
     // 连接以 manual 来源保存。
     await act(async () => {
@@ -317,7 +324,8 @@ describe("ConnectServerScreen", () => {
     expect(
       screen.getByText("局域网中没有找到服务器。电脑和服务器需要连在同一个局域网。"),
     ).toBeInTheDocument();
-    expect(screen.queryByText("局域网中的服务器")).not.toBeInTheDocument();
+    // 没有找到时小标题仍在，空状态放在它下面。
+    expect(screen.getByText("局域网中的服务器")).toBeInTheDocument();
     expect(addressGroup()).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("radio", { name: /在这台电脑上使用/ })).toHaveAttribute("aria-checked", "true");
 
@@ -331,6 +339,7 @@ describe("ConnectServerScreen", () => {
     renderScreen();
     settleDiscovery([]);
 
+    fireEvent.change(addressInput(), { target: { value: MANUAL_ADDRESS } });
     mocks.probe.mockResolvedValueOnce({ kind: "ok", server: designServer });
     fireEvent.click(screen.getByRole("button", { name: "测试连接" }));
     await act(async () => {
@@ -415,7 +424,7 @@ describe("ConnectServerScreen standalone option", () => {
     expect(local).toHaveTextContent("单机模式");
     expect(local).toHaveTextContent("首次使用需下载约 40 MB 资源");
     expect(
-      screen.getByText("在这台电脑上使用，或连接局域网中已有的服务器。之后可以在设置里更换。"),
+      screen.getByText("连接 Marvis 云服务、在这台电脑上使用，或连接局域网中的服务器。之后可以在设置里更换。"),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "下一步" }));
@@ -535,5 +544,152 @@ describe("ConnectServerScreen opened from an existing session", () => {
     });
 
     expect(order).toEqual(["beforeSwitch", "enter"]);
+  });
+});
+
+const cloudServer = lanServer({
+  url: MARVIS_CLOUD_SERVER_URL,
+  name: "prod",
+  version: "v0.0.2",
+  instanceId: "inst-cloud",
+  host: "omniai.shoplazza.site",
+  appUrl: MARVIS_CLOUD_SERVER_URL,
+});
+
+function cloudRadio(): HTMLElement {
+  return screen.getByRole("radio", { name: /Marvis 云服务/ });
+}
+
+// 走完云服务的探测和“正在测试”的最短显示时长。
+async function settleCloudProbe() {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(PROBE_MIN_DISPLAY_MS);
+  });
+}
+
+describe("ConnectServerScreen on first launch", () => {
+  it("preselects the cloud server, tests it at once and connects after the user clicks", async () => {
+    mocks.probe.mockResolvedValueOnce({ kind: "ok", server: cloudServer });
+    renderScreen({ firstRun: true });
+    settleDiscovery([]);
+
+    expect(cloudRadio()).toHaveAttribute("aria-checked", "true");
+    expect(cloudRadio()).toHaveTextContent("正在测试");
+    expect(mocks.probe).toHaveBeenCalledExactlyOnceWith(MARVIS_CLOUD_SERVER_URL);
+    expect(screen.getByRole("button", { name: "连接" })).toBeDisabled();
+
+    await settleCloudProbe();
+
+    expect(cloudRadio()).toHaveTextContent("omniai.shoplazza.site/marvis");
+    expect(screen.getByText("omniai.shoplazza.site · v0.0.2")).toBeInTheDocument();
+    // 测试通过也不自动连接。
+    expect(mocks.select).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "连接" }));
+    });
+
+    expect(mocks.select).toHaveBeenCalledWith({
+      url: MARVIS_CLOUD_SERVER_URL,
+      name: "prod",
+      instanceId: "inst-cloud",
+      source: SERVER_SOURCE_MANUAL,
+      appUrl: MARVIS_CLOUD_SERVER_URL,
+    });
+  });
+
+  it("shows the failure on the cloud row and retries it", async () => {
+    mocks.probe.mockResolvedValueOnce({ kind: "unreachable" });
+    renderScreen({ firstRun: true });
+    settleDiscovery([]);
+    await settleCloudProbe();
+
+    // 失败原因在云服务行下方，地址栏里没有结果行。
+    expect(screen.getAllByText("无法连接到这个地址", { selector: "[role=status] span" })).toHaveLength(1);
+    expect(within(addressGroup()).queryByRole("status")).toBeNull();
+    expect(screen.getByRole("button", { name: "连接" })).toBeDisabled();
+
+    mocks.probe.mockResolvedValueOnce({ kind: "ok", server: cloudServer });
+    fireEvent.click(screen.getByRole("button", { name: "重试" }));
+    expect(cloudRadio()).toHaveTextContent("正在测试");
+    await settleCloudProbe();
+
+    expect(mocks.probe).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("无法连接到这个地址")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "连接" })).toBeEnabled();
+  });
+
+  it("leaves the manual address empty, untested and without an error", async () => {
+    mocks.probe.mockResolvedValueOnce({ kind: "ok", server: cloudServer });
+    renderScreen({ firstRun: true });
+    settleDiscovery([]);
+    await settleCloudProbe();
+
+    expect(addressInput().value).toBe("");
+    expect(addressInput()).toHaveAttribute("placeholder", MARVIS_CLOUD_SERVER_URL);
+    expect(addressInput()).not.toHaveAttribute("aria-invalid");
+    expect(addressGroup()).not.toHaveAttribute("aria-current");
+    expect(within(addressGroup()).queryByRole("status")).toBeNull();
+    // 只测了云服务。
+    expect(mocks.probe).toHaveBeenCalledExactlyOnceWith(MARVIS_CLOUD_SERVER_URL);
+  });
+
+  it("keeps the dev suggested address in the field", async () => {
+    mocks.probe.mockResolvedValueOnce({ kind: "ok", server: cloudServer });
+    renderScreen({ firstRun: true, suggestedAddress: "http://localhost:18920" });
+    await settleCloudProbe();
+
+    expect(addressInput().value).toBe("http://localhost:18920");
+    expect(cloudRadio()).toHaveAttribute("aria-checked", "true");
+  });
+});
+
+describe("ConnectServerScreen switching from a saved server", () => {
+  it("keeps this computer as the default and tests the cloud only once it is picked", async () => {
+    renderScreen({ onBack: vi.fn() });
+    settleDiscovery([designServer]);
+
+    expect(screen.getByRole("radio", { name: /在这台电脑上使用/ })).toHaveAttribute("aria-checked", "true");
+    expect(cloudRadio()).toHaveAttribute("aria-checked", "false");
+    expect(mocks.probe).not.toHaveBeenCalled();
+
+    mocks.probe.mockResolvedValueOnce({ kind: "ok", server: cloudServer });
+    fireEvent.click(cloudRadio());
+    await settleCloudProbe();
+
+    expect(mocks.probe).toHaveBeenCalledExactlyOnceWith(MARVIS_CLOUD_SERVER_URL);
+    expect(screen.getByRole("button", { name: "连接" })).toBeEnabled();
+  });
+});
+
+describe("ConnectServerScreen sections", () => {
+  it.each([
+    ["servers are found", [designServer]],
+    ["nothing is found", []],
+  ] as const)("titles every section in order when %s", (_, list) => {
+    renderScreen();
+    settleDiscovery([...list]);
+
+    const headings = ["云服务", "这台电脑", "局域网中的服务器", "其他地址"].map((label) =>
+      screen.getByText(label, { selector: "span" }),
+    );
+    for (let i = 1; i < headings.length; i++) {
+      expect(headings[i - 1]!.compareDocumentPosition(headings[i]!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    }
+  });
+
+  // 回归：选中的地址栏已有墨色描边，测试失败时输入框不再叠一圈红色描边，错误由红色结果行表达。
+  it("shows one indicator on a failed manual address: the selection outline plus red result text", async () => {
+    renderScreen();
+    settleDiscovery([]);
+
+    fireEvent.focus(addressInput());
+    await runProbe({ kind: "unreachable" });
+
+    expect(addressGroup()).toHaveAttribute("aria-current", "true");
+    expect(addressGroup().className).toContain("shadow-[0_0_0_1.5px_var(--color-foreground)]");
+    expect(addressInput()).toHaveAttribute("aria-invalid", "true");
+    expect(addressInput().className).not.toMatch(/destructive/);
+    expect(within(addressGroup()).getByRole("status").className).toContain("text-destructive");
   });
 });

@@ -1345,13 +1345,14 @@
     "server": {
       "connect": {
         "title": "连接到 Marvis 服务器",
-        "subtitle": "在这台电脑上使用，或连接局域网中已有的服务器。之后可以在设置里更换。",
+        "subtitle": "连接 Marvis 云服务、在这台电脑上使用，或连接局域网中的服务器。之后可以在设置里更换。",
         "lan_heading": "局域网中的服务器",
+        "cloud_heading": "云服务",
+        "cloud_option": "Marvis 云服务",
         "scanning": "正在查找",
         "rescan": "重新查找",
         "local_badge": "本机",
         "none": "局域网中没有找到服务器。电脑和服务器需要连在同一个局域网。",
-        "or_address": "或输入地址",
         "summary_manual": "手动输入的地址",
         "summary_manual_hint": "先测试连接",
         "back": "返回"

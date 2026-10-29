@@ -1,17 +1,18 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_SERVER_ADDRESS,
   isMdnsHostname,
+  MARVIS_CLOUD_SERVER_URL,
   mdnsHostname,
   normalizeServerAddress,
   preferredIPv4,
   sanitizeDisplayText,
 } from "./server-discovery";
 
-describe("DEFAULT_SERVER_ADDRESS", () => {
-  it("points at the mDNS host on the backend port", () => {
-    expect(DEFAULT_SERVER_ADDRESS).toBe("http://marvis.local:13840");
+describe("MARVIS_CLOUD_SERVER_URL", () => {
+  it("is the production deployment under the /marvis prefix and survives normalization", () => {
+    expect(MARVIS_CLOUD_SERVER_URL).toBe("https://omniai.shoplazza.site/marvis");
+    expect(normalizeServerAddress(MARVIS_CLOUD_SERVER_URL)).toBe(MARVIS_CLOUD_SERVER_URL);
   });
 });
 

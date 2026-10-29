@@ -422,6 +422,7 @@
       "no_match": "Nothing matches “{{query}}”",
       "hosted_by": "By {{vendor}}",
       "coming_soon": "Coming soon",
+      "not_yet_available": "Not yet available",
       "qoder_status": {
         "not_configured": "Not connected",
         "starting": "Starting",
