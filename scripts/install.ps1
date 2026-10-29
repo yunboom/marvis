@@ -1,6 +1,6 @@
 # Marvis installer for Windows - one command to get started.
 #
-# Install CLI (default): connects to https://omniai.shoplazza.site/marvis
+# Install CLI (default): connects to marvis.ai
 #   irm https://raw.githubusercontent.com/yunboom/marvis/main/scripts/install.ps1 | iex
 #
 # Self-host: starts a local Marvis server + installs CLI + configures
