@@ -1,43 +1,43 @@
 import {
-  hasCompleteAssetSet,
   parseReleaseAssets,
   type DownloadAssets,
 } from "./parse-release-assets";
 
 /**
- * Server-side fetcher for the latest downloadable Marvis release,
- * designed to run inside a Next.js server component. Response is cached
- * by the Next.js fetch cache for 5 minutes (Vercel ISR) so hitting
- * /download costs at most one GitHub API call per region per 5 minutes.
+ * Server-side fetchers for the /download pages, designed to run inside
+ * Next.js server components. Responses are cached by the Next.js fetch cache
+ * for 5 minutes (Vercel ISR), and every page reads the same release list, so
+ * /download and the release pages together cost at most one GitHub API call
+ * per region per 5 minutes.
  *
- * Desktop assets don't all land at the same time: each platform's CI
- * packaging job uploads on its own schedule, and a job can also fail
- * outright and leave a release permanently short of some platforms. Either way the newest
- * release is not always the newest *downloadable* one, so we pull a
- * short window of recent releases and show the newest whose desktop
- * asset set is complete — every button on the page then resolves to a
- * real file.
+ * A release does not always carry every desktop installer: releases build the
+ * macOS installers by default and Windows/Linux only when enabled (see
+ * RELEASE_DESKTOP_PLATFORMS in .github/RELEASING.md), and a packaging job can
+ * also fail. /download therefore offers each format from the newest release
+ * that has it, so a macOS-only release does not disable the Windows and Linux
+ * buttons.
  *
- * On any failure (network, rate limit, malformed payload) returns a
- * `null`-shaped result and logs — the page degrades to a "version
- * unavailable" view rather than 500ing.
+ * On any failure (network, rate limit, malformed payload) the fetchers return
+ * an empty result and log — the page degrades to a "version unavailable" view
+ * rather than 500ing.
  */
 
+/** The release a desktop download comes from, keyed by asset. */
+export type AssetVersions = Partial<Record<keyof DownloadAssets, string>>;
+
 export interface LatestRelease {
+  /** Newest stable release; null when GitHub cannot be reached. */
   version: string | null;
   publishedAt: string | null;
-  htmlUrl: string | null;
+  /** Each format's download from the newest release that carries it. */
   assets: DownloadAssets;
+  /** Which release each entry of `assets` comes from. */
+  assetVersions: AssetVersions;
 }
 
-// Five candidates tolerates four consecutive incomplete releases before
-// the page has to fall back to showing the newest one as-is. Releases
-// ship roughly daily, so that is days of head room — while staying one
-// cheap request.
-const LATEST_CANDIDATES = 5;
-
 // The all-releases page lists this many recent versions; older ones stay on
-// the server-side API but are not linked from the site.
+// the server-side API but are not linked from the site. /download looks for
+// each platform's installers within the same window.
 const RELEASE_LIST_SIZE = 20;
 
 const GITHUB_RELEASES_URL = "https://api.github.com/repos/yunboom/marvis/releases";
@@ -47,7 +47,6 @@ const REVALIDATE_SECONDS = 300;
 interface GitHubReleasePayload {
   tag_name?: string;
   published_at?: string;
-  html_url?: string;
   prerelease?: boolean;
   draft?: boolean;
   assets?: Array<{ name: string; browser_download_url: string }>;
@@ -64,9 +63,7 @@ export interface ReleaseSummary {
  * Newest stable releases, newest first. Throws on network / API errors so
  * each caller picks its own degradation.
  */
-async function fetchStableReleases(
-  perPage: number,
-): Promise<GitHubReleasePayload[]> {
+async function fetchStableReleases(): Promise<GitHubReleasePayload[]> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
@@ -82,7 +79,7 @@ async function fetchStableReleases(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${GITHUB_RELEASES_URL}?per_page=${perPage}`, {
+  const res = await fetch(`${GITHUB_RELEASES_URL}?per_page=${RELEASE_LIST_SIZE}`, {
     next: { revalidate: REVALIDATE_SECONDS },
     headers,
   });
@@ -98,11 +95,11 @@ async function fetchStableReleases(
   return data.filter((r) => !r.prerelease && !r.draft);
 }
 
-/** Recent stable releases for the all-releases and release-detail pages;
- *  an empty list when GitHub cannot be reached. */
+/** Recent stable releases, newest first, for every /download page; an empty
+ *  list when GitHub cannot be reached. */
 export async function fetchRecentReleases(): Promise<ReleaseSummary[]> {
   try {
-    const stable = await fetchStableReleases(RELEASE_LIST_SIZE);
+    const stable = await fetchStableReleases();
     return stable
       .filter((r) => r.tag_name)
       .map((r) => ({
@@ -117,64 +114,44 @@ export async function fetchRecentReleases(): Promise<ReleaseSummary[]> {
 }
 
 export async function fetchLatestRelease(): Promise<LatestRelease> {
-  try {
-    const stable = await fetchStableReleases(LATEST_CANDIDATES);
-    const chosen = pickRelease(stable);
-    if (!chosen) {
-      return emptyRelease();
-    }
-
-    return {
-      version: chosen.release.tag_name ?? null,
-      publishedAt: chosen.release.published_at ?? null,
-      htmlUrl: chosen.release.html_url ?? null,
-      assets: chosen.assets,
-    };
-  } catch (err) {
-    console.warn("[download] fetchLatestRelease failed:", err);
+  const releases = await fetchRecentReleases();
+  const latest = releases[0];
+  if (!latest) {
     return emptyRelease();
   }
+
+  return {
+    version: latest.version,
+    publishedAt: latest.publishedAt,
+    ...newestAssets(releases),
+  };
 }
 
-interface PickedRelease {
-  release: GitHubReleasePayload;
-  assets: DownloadAssets;
-}
-
-/**
- * Newest release whose desktop assets are all present. Falls back to the
- * newest release overall when no candidate is complete — the page then
- * shows what does exist plus its "all releases" escape hatch, which
- * still beats reporting no version at all.
- */
-function pickRelease(
-  candidates: GitHubReleasePayload[],
-): PickedRelease | undefined {
-  const parsed = candidates.map((release) => ({
-    release,
-    assets: parseReleaseAssets(release.assets ?? []),
-  }));
-
-  const complete = parsed.find((c) => hasCompleteAssetSet(c.assets));
-  if (complete) {
-    if (complete !== parsed[0]) {
-      // Worth a line in the logs: a release that never completes its
-      // asset set is invisible on /download until someone notices.
-      console.warn(
-        `[download] skipping ${parsed[0]?.release.tag_name ?? "latest release"}` +
-          ` — incomplete desktop assets; showing ${complete.release.tag_name}`,
-      );
+/** For each asset, the newest release (list is newest first) that has it. */
+function newestAssets(
+  releases: ReleaseSummary[],
+): Pick<LatestRelease, "assets" | "assetVersions"> {
+  const assets: DownloadAssets = {};
+  const assetVersions: AssetVersions = {};
+  for (const release of releases) {
+    for (const [key, url] of Object.entries(release.assets) as [
+      keyof DownloadAssets,
+      string | undefined,
+    ][]) {
+      if (!url || assets[key]) continue;
+      assets[key] = url;
+      assetVersions[key] = release.version;
     }
-    return complete;
   }
-  return parsed[0];
+
+  return { assets, assetVersions };
 }
 
 function emptyRelease(): LatestRelease {
   return {
     version: null,
     publishedAt: null,
-    htmlUrl: null,
     assets: {},
+    assetVersions: {},
   };
 }

@@ -12,8 +12,8 @@ job starts. The vulnerability scan is fail-closed by default.
 
 The repository has immutable releases enabled: once a release is published, no
 asset can be added or replaced, and its tag cannot be reused. GoReleaser
-therefore creates a **draft**; the standalone bundles and the Linux, Windows
-and macOS desktop installers upload into it, and the `publish` job publishes it
+therefore creates a **draft**; the standalone bundles and the desktop
+installers upload into it, and the `publish` job publishes it
 last, as latest for a stable tag. Publishing requires the standalone bundles to
 succeed and waits for the desktop jobs to finish, but not for them to succeed;
 an installer that failed can only go out with a new tag. The macOS installers
@@ -28,6 +28,28 @@ while the `setup-go` version manifest catches up with an official Go release.
 When raising the security floor, update all Go workflows and the pinned
 Go builder image in `Dockerfile` together so shipped binaries also receive
 the fixes.
+
+## Desktop platforms
+
+A release builds only the macOS desktop installers by default. The CLI,
+standalone server bundles, container images and Helm chart still ship for
+every platform. The repository variable `RELEASE_DESKTOP_PLATFORMS` selects the
+desktop platforms: a comma-separated subset of `mac,win,linux`, `mac` when
+unset or empty. An unknown value fails the Release workflow before anything is
+published.
+
+To also ship Windows and Linux installers, set the variable before pushing
+the tag and delete it once the run has finished:
+
+```bash
+gh variable set RELEASE_DESKTOP_PLATFORMS --repo yunboom/marvis --body "mac,win,linux"
+gh variable delete RELEASE_DESKTOP_PLATFORMS --repo yunboom/marvis
+```
+
+The download page offers each installer from the newest release that has it
+and shows the version next to installers older than the latest release.
+Installed Windows and Linux apps find no update while the latest release has
+no installer for them.
 
 ## Standalone-mode resources
 

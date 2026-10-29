@@ -59,6 +59,19 @@ type RendererChannel =
   | "updater:download-progress"
   | "updater:update-downloaded";
 
+// Desktop installers for some platforms can be left out of a release (see
+// RELEASE_DESKTOP_PLATFORMS in .github/RELEASING.md), so the latest release may
+// carry no update metadata for this platform. electron-updater reports that as
+// ERR_UPDATER_CHANNEL_FILE_NOT_FOUND; it means "nothing newer for this
+// platform", not a failure the user can act on.
+export function isMissingPlatformUpdateError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { code?: unknown }).code === "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND"
+  );
+}
+
 function isDestroyedObjectError(err: unknown): boolean {
   return err instanceof Error && err.message.includes("Object has been destroyed");
 }
@@ -130,6 +143,7 @@ export function setupAutoUpdater(getMainWindow: () => BrowserWindow | null): voi
         return checkForUpdatesOnce();
       })
       .catch((err) => {
+        if (isMissingPlatformUpdateError(err)) return;
         console.error(errorMessage, err);
       });
   };
@@ -192,6 +206,10 @@ export function setupAutoUpdater(getMainWindow: () => BrowserWindow | null): voi
   });
 
   autoUpdater.on("error", (err) => {
+    if (isMissingPlatformUpdateError(err)) {
+      console.info("No update published for this platform in the latest release");
+      return;
+    }
     console.error("Auto-updater error:", err);
   });
 
@@ -260,6 +278,15 @@ export function setupAutoUpdater(getMainWindow: () => BrowserWindow | null): voi
         available: result?.isUpdateAvailable ?? false,
       };
     } catch (err) {
+      if (isMissingPlatformUpdateError(err)) {
+        const currentVersion = app.getVersion();
+        return {
+          ok: true,
+          currentVersion,
+          latestVersion: currentVersion,
+          available: false,
+        };
+      }
       return {
         ok: false,
         error: err instanceof Error ? err.message : String(err),
