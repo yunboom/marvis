@@ -157,4 +157,23 @@ describe("runtime config", () => {
       appUrl: "",
     });
   });
+
+  it("keeps the /marvis prefix for the API, WebSocket and web login of the cloud server", () => {
+    const config = runtimeConfigFromServer({
+      url: "https://omniai.shoplazza.site/marvis",
+      name: "prod",
+      instanceId: "cloud",
+      source: "manual",
+      appUrl: "https://omniai.shoplazza.site/marvis",
+    });
+
+    expect(config).toEqual({
+      schemaVersion: 1,
+      apiUrl: "https://omniai.shoplazza.site/marvis",
+      wsUrl: "wss://omniai.shoplazza.site/marvis/ws",
+      appUrl: "https://omniai.shoplazza.site/marvis",
+    });
+    // 登录页（含飞书登录）在浏览器里打开 `${appUrl}/login`。
+    expect(`${config.appUrl}/login`).toBe("https://omniai.shoplazza.site/marvis/login");
+  });
 });

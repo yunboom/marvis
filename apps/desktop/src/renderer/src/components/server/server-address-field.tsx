@@ -20,11 +20,12 @@ import {
 /** 测试中状态的最短显示时长：本机探测只要几毫秒，状态一闪而过会像闪烁。 */
 export const PROBE_MIN_DISPLAY_MS = 300;
 
-function delay(ms: number): Promise<void> {
+export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function probeAddress(address: string): Promise<ProbeResult> {
+// 通过主进程探测地址。
+export async function probeAddress(address: string): Promise<ProbeResult> {
   try {
     return await window.desktopAPI.server.probe(address);
   } catch {
@@ -36,6 +37,8 @@ async function probeAddress(address: string): Promise<ProbeResult> {
 export interface ServerAddressFieldProps {
   value: string;
   onChange: (value: string) => void;
+  /** 输入框为空时显示的示例地址。 */
+  placeholder?: string;
   /** 当前地址的测试结果；没测过、测试中或地址被修改后为 null。 */
   result: ProbeResult | null;
   /** 测试连接有结果时回调；地址被修改时回调 null。重新测试期间保留上一次的结果。 */
@@ -54,7 +57,8 @@ export interface ServerAddressFieldProps {
   actions?: ReactNode;
 }
 
-// 服务器地址输入框 + “测试连接”。测试结果就地显示，失败时输入框描边变红。
+// 服务器地址输入框 + “测试连接”。测试结果就地显示，失败时结果行变红；
+// card / plain 下输入框描边也变红，pane 下这一行已有选中描边，输入框保持中性描边，避免两层描边叠在一起。
 // 测试中结果行换成同高的“正在测试”，按钮文字不变，避免高度、宽度和摘要来回跳。
 // 结果由父组件持有，切到别的步骤再回来时仍然保留。
 // 输入框、按钮和结果行都是可交互或需要被朗读的内容，所以外层用 group 而不是 radio
@@ -62,6 +66,7 @@ export interface ServerAddressFieldProps {
 export function ServerAddressField({
   value,
   onChange,
+  placeholder,
   result,
   onResult,
   selected = false,
@@ -159,12 +164,13 @@ export function ServerAddressField({
             autoComplete="off"
             spellCheck={false}
             aria-invalid={failed || undefined}
+            placeholder={placeholder}
             value={value}
             onChange={(event) => handleChange(event.target.value)}
             className={cn(
               "h-10 flex-1 rounded-lg border px-3 text-body md:text-body",
               pane
-                ? "border-transparent bg-surface ring-1 ring-surface-border hover:bg-surface focus-visible:bg-surface aria-invalid:ring-destructive"
+                ? "border-transparent bg-surface ring-1 ring-surface-border hover:bg-surface focus-visible:bg-surface aria-invalid:border-transparent aria-invalid:ring-1 aria-invalid:ring-surface-border dark:aria-invalid:border-transparent dark:aria-invalid:ring-surface-border"
                 : cn("font-mono", selected ? "border-input bg-background" : "border-transparent"),
             )}
           />
@@ -196,7 +202,8 @@ function ProbeTestingLine() {
   );
 }
 
-function ProbeResultLine({ result }: { result: ProbeResult }) {
+// 测试结果行：成功为绿色，失败为红色并给出原因。连接页的云服务选项也用它。
+export function ProbeResultLine({ result }: { result: ProbeResult }) {
   const { t } = useT("settings");
   const ok = result.kind === "ok";
 

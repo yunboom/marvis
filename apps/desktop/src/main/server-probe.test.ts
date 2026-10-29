@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { MARVIS_CLOUD_SERVER_URL } from "../shared/server-discovery";
 import { probeServer } from "./server-probe";
 
 const json = (body: unknown) => async () =>
@@ -260,6 +261,34 @@ describe("probeServer with a path in the address", () => {
       "https://shared.example/marvis/acme/api/config",
       "https://shared.example/marvis/api/config",
     ]);
+  });
+
+  it("resolves the Marvis cloud server through /api/config under its /marvis prefix", async () => {
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) =>
+      String(input) === "https://omniai.shoplazza.site/marvis/api/config"
+        ? new Response(
+            JSON.stringify({
+              server_name: "prod",
+              server_version: "v0.0.2",
+              instance_id: "cloud",
+              daemon_app_url: "https://omniai.shoplazza.site/marvis",
+            }),
+          )
+        : new Response("not found", { status: 404 }),
+    );
+
+    expect(await probeServer(MARVIS_CLOUD_SERVER_URL, fetchImpl as unknown as typeof fetch)).toEqual({
+      kind: "ok",
+      server: {
+        url: "https://omniai.shoplazza.site/marvis",
+        name: "prod",
+        version: "v0.0.2",
+        instanceId: "cloud",
+        host: "omniai.shoplazza.site",
+        appUrl: "https://omniai.shoplazza.site/marvis",
+      },
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
   it("falls back to the origin for a root deployment", async () => {

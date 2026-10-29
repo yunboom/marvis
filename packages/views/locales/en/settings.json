@@ -1355,13 +1355,14 @@
     "server": {
       "connect": {
         "title": "Connect to a Marvis server",
-        "subtitle": "Use Marvis on this computer, or connect to a server on your local network. You can change this later in Settings.",
+        "subtitle": "Connect to Marvis Cloud, use Marvis on this computer, or connect to a server on your local network. You can change this later in Settings.",
         "lan_heading": "Servers on your local network",
+        "cloud_heading": "Cloud",
+        "cloud_option": "Marvis Cloud",
         "scanning": "Searching",
         "rescan": "Search again",
         "local_badge": "This computer",
         "none": "No servers found on your local network. The computer and the server must be on the same network.",
-        "or_address": "or enter an address",
         "summary_manual": "Address entered manually",
         "summary_manual_hint": "Test the connection first",
         "back": "Back"

@@ -472,7 +472,7 @@ export default function App() {
         // 还没有选择服务器：这个分支没有挂 CoreProvider，单独提供 i18n。
         // 选定服务器后主进程会重载窗口，随后进入登录页。
         <I18nProvider locale={locale} resources={resources}>
-          <ConnectServerScreen suggestedAddress={runtimeConfigResult.suggestedAddress} />
+          <ConnectServerScreen firstRun suggestedAddress={runtimeConfigResult.suggestedAddress} />
         </I18nProvider>
       ) : (
         <BlockingRuntimeConfigError message={runtimeConfigResult.error.message} />
