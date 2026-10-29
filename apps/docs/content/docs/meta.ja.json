@@ -39,6 +39,8 @@
     "---自動化---",
     "autopilots",
     "issue-wakeups",
+    "---ナレッジベース---",
+    "knowledge-base",
     "---連携---",
     "channels",
     "lark-bot-integration",

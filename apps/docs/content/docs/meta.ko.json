@@ -39,6 +39,8 @@
     "---자동화---",
     "autopilots",
     "issue-wakeups",
+    "---지식 베이스---",
+    "knowledge-base",
     "---연동---",
     "channels",
     "lark-bot-integration",

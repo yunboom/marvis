@@ -1,0 +1,227 @@
+---
+title: Knowledge base
+description: Agents write team knowledge into cited, reviewable pages; members read, annotate, and review before changes merge.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+A knowledge base turns team knowledge scattered across issues, chats, code, and documents into pages. Agents write and maintain the pages, and every fact carries its source. Members read, annotate, and review; a change takes effect only after it is reviewed and merged.
+
+<Callout type="info">
+Members can't edit pages directly in the UI. To change content, leave an annotation or start a [knowledge base job](#jobs) for an agent.
+</Callout>
+
+## How changes reach a knowledge base [#flow]
+
+Every change follows the same path:
+
+1. An agent adds, edits, moves, or deletes pages in a **draft**;
+2. Once the draft passes its checks, it is **submitted for review** as a change request;
+3. Members review it and a maintainer **merges** it. The pages update, and earlier versions stay in page history.
+
+Until a draft merges, only its author and people with access can see it; the published pages are unaffected.
+
+## Create a knowledge base [#create]
+
+Open **Knowledge base** in the sidebar. If the workspace has none yet, click **New knowledge base**; otherwise create one from the knowledge base switcher at the top left or the **⋯** menu.
+
+The left side of the page is a conversation with the **Knowledge base builder**; the right side is the configuration:
+
+1. Choose the runtime and model the builder runs on;
+2. Pick a starter card (engineering, QA, product, whole team, agent team memory, or other), or describe the knowledge base you want. The builder asks about readers and purpose and fills in the right side;
+3. Check the configuration, then click **Create**.
+
+| Setting | Description |
+|---|---|
+| Name, description | Shown in the switcher and on the home page. |
+| Directory name | The knowledge base slug. Lowercase letters, digits, and hyphens only; it can't be changed after creation. |
+| Purpose | Who reads it, what it covers, what it leaves out, and typical uses. Agents read it when writing pages. |
+| Schema | How pages are organized and written. **Default** uses the built-in schema and is read-only; **Custom** is yours to write. New knowledge bases start on an empty custom schema. |
+
+Click **Discard creation** to drop the conversation and the configuration together. Unfinished creations are kept so you can come back to them.
+
+After creation, the home page suggests a first round: ingest sources, review so they take effect, read and annotate, then schedule maintenance.
+
+### Change the configuration
+
+Choose **Configure knowledge base** in the **⋯** menu to keep talking to the builder or edit the purpose and schema directly. **Save** applies the change immediately. Only the knowledge base creator and workspace `owner` and `admin` can configure it.
+
+## Browse a knowledge base [#browse]
+
+Opening **Knowledge base** returns you to the one you viewed last. The left column, top to bottom:
+
+- **Knowledge base switcher** — shows each knowledge base's pending count;
+- **⋯ menu** — New knowledge base, Configure knowledge base, Manage knowledge base, Review, Change log, Copy link;
+- **Home**, **Knowledge base jobs**, **Graph**;
+- **Pages** — the page tree.
+
+### Home
+
+The home page shows the description and three kinds of **Pending** items:
+
+- **Changes to review** — change requests waiting for review;
+- **Annotations** — unhandled annotations, including gaps reported by agents;
+- **Pages to re-check** — pages past their review date.
+
+**Recently updated** below lists the latest merged changes. When changes are waiting for review, the sidebar's **Knowledge base** entry shows the count; click it to go straight to review.
+
+### Read a page
+
+Every fact in a page carries a numbered citation; hover it to see the source — an issue, chat, pull request, code, file, or web page. Code sources show the version and lines that were checked; chat sources open only for the person who started the chat. **Sources** at the end of the page lists them all.
+
+Three panel toggles sit at the top of the page:
+
+- **Page annotations** — view and add annotations on this page;
+- **Contents** — the page's heading outline;
+- **Page info** — the next review date, domains, source count, and which pages link here.
+
+The **More** menu has **Page history**, **Ask an agent to check this page**, and **Copy link**.
+
+Links to pages that haven't been written yet are marked as such. Click **+** at a spot in the page tree and choose **Ask an agent to write a page here**, describe what to write, and a job starts.
+
+If one of your drafts changes the current page, a bar at the top lets you switch between **Official** and **Draft** and turn on **Show changes**.
+
+### Search
+
+- The search box on the home page searches the current knowledge base and jumps to the matching passage;
+- Press <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>F</kbd> (<kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd> on Windows / Linux) anywhere in a knowledge base to search all knowledge bases;
+- Press <kbd>⌘</kbd> <kbd>F</kbd> on a page to find text in it.
+
+Search is keyword-only by default. A self-hosted instance that sets `MARVIS_EMBEDDING_BASE_URL`, `MARVIS_EMBEDDING_API_KEY`, and `MARVIS_EMBEDDING_MODEL`, with the pgvector extension in Postgres, adds semantic search. Any OpenAI-compatible `/v1/embeddings` model that returns 1024-dimension vectors works.
+
+<Callout type="warning">
+With semantic search on, the text of merged pages and every search query are sent to the embedding service. Drafts are never sent.
+</Callout>
+
+### Graph
+
+**Graph** in the left column draws the whole knowledge base from the links between pages, colored by top-level page. Pages with no links and pages not yet written are drawn dashed. Click a node to open the page.
+
+## Annotations [#annotations]
+
+When something is wrong, missing, or out of date, leave an annotation; agents see it when they work on the page. Annotations come in three scopes:
+
+| Scope | How to add |
+|---|---|
+| A sentence | Select text on a page and click **Annotate**. The agent sees the original sentence. |
+| A page | Open **Page annotations** and click **Add annotation**. |
+| The whole knowledge base | Open **Knowledge base annotations** on the home page and click **Add annotation**. |
+
+Annotation states:
+
+| State | Meaning |
+|---|---|
+| **Pending** | No change has addressed it yet. |
+| **In progress** | A change request addresses it and is waiting to merge. If that change request is closed, it returns to pending. |
+| **Resolved** | The change request that addressed it has merged. |
+| **Dismissed** | Decided not to change. You can **Reopen** it. |
+
+The annotation's author, the knowledge base creator, and `owner` and `admin` can dismiss or reopen an annotation.
+
+When the original sentence is rewritten, the annotation follows the new sentence; when it is deleted, the annotation keeps the original text.
+
+**Hand off to an agent** sends one annotation; the annotation panel can also hand off all pending annotations at once. Either way, a job starts to handle them.
+
+## Knowledge base jobs [#jobs]
+
+Jobs are the main way to write to a knowledge base: you talk with an agent, it edits pages in a draft, and you check the draft and submit it for review.
+
+Open **Knowledge base jobs** in the left column and click **New job**:
+
+1. Choose the **Agent**. Only agents you're allowed to use, with an available runtime, are listed;
+2. Pick a starter card, or describe the work:
+
+| Job | What it does |
+|---|---|
+| **Ingest sources** | Writes knowledge from issues, chats, code, files, or web pages into pages; the agent first asks what to ingest. |
+| **Health check** | Looks for outdated, conflicting, and missing content and records findings as annotations without editing pages. |
+| **Merge duplicates** | Merges duplicate or overlapping pages. |
+| **Handle annotations** | Edits pages to address annotations. |
+| **Schedule ingestion**, **Schedule a health check** | Has the agent create an [autopilot](/autopilots) that runs on a schedule; manage it on the Autopilot page afterwards. |
+
+Annotations, **Ask an agent to check this page**, the page tree's **+**, raw files, and the re-check list can all start a job with the relevant content already filled in.
+
+The conversation is on the left of the job page; add requirements or stop at any time. **Draft changes** on the right lists the added, edited, moved, and deleted pages and the result of **Checks before submitting**:
+
+- **Errors** must be fixed before submitting — for example, a missing required header field, a fact without a source, two pages with the same name at one level, or an unresolved conflict;
+- **Warnings** don't block submitting — for example, a code source without a version, or a link to a page not written yet.
+
+**Ask the agent to fix** handles check problems. If the mainline gained conflicting changes in the meantime, click **Ask the agent to update from the mainline**.
+
+When the draft looks right, click **Submit for review**. The agent's turn must have finished, and only the draft's creator can submit; the draft becomes read-only after submitting. **Discard draft** drops the changes and keeps the job in the list.
+
+Only the person who started a job can see and open it. Filter the list by running or failed. Archive jobs you don't need; only archived jobs can be deleted, which removes the conversation too and discards any unsubmitted draft.
+
+## Review and merge [#review]
+
+Choose **Review** in the **⋯** menu, or come in from **Changes to review** on the home page, the sidebar count, or your inbox. Change request states:
+
+| State | Meaning |
+|---|---|
+| **In review** | Waiting for review. |
+| **Changes requested** | A reviewer left comments for the author. |
+| **Merged** | The change has taken effect. |
+| **Closed** | Ended without merging. |
+
+The detail page shows the risk level, how many pages it affects and annotations it handles, the agent's summary and the change summary, and whether it can merge into the mainline; below are per-page diffs and activity.
+
+### Leave review comments
+
+1. Click **Start review**;
+2. Select lines in the diff and click **Add to review** to write a comment. Only you can see pending comments;
+3. Click **Submit review**, optionally with a summary. The change request moves to **Changes requested** and the author is notified.
+
+From the job page, the author can **Hand off to an agent** to have the agent revise the same draft and reply to each comment, then **Request review again** to move the change request back to in review. Members who aren't maintainers can't review their own change requests.
+
+### Merge, close, and revert
+
+- **Merge** — only the knowledge base creator and `owner` and `admin` can merge. A change request can't merge while it has conflicts or check errors, while an agent is editing it, or while changes are requested. If someone else changed the same pages in the meantime, Marvis merges by passage; only a passage changed on both sides is a conflict.
+- **Close** — the author and maintainers can close, with an optional reason. A closed change request can be **Resubmit for review** from the job page.
+- **Revert** — maintainers can click **Revert this change** on a merged change request, in the **Change log**, or in page history. A revert covers the whole change request and creates a reverse change request that takes effect once merged. It can't revert automatically if later changes touched the same content.
+
+**Change log** lists every merged change; **Page history** lists each version of a page — open one to see what changed.
+
+## Pages to re-check [#stale]
+
+Every page has a review date. Once it passes, the page appears under **Pages to re-check** on the home page and is marked in the page tree and the page body. From the re-check list, hand a single page or all of them to an agent; each starts a job.
+
+## Notifications [#notifications]
+
+The **Knowledge** category in the inbox collects knowledge base notifications:
+
+- Maintainers or reviewers are notified when a new change request or revert is waiting for review, or when the author requests review again;
+- The author is notified when a reviewer submits a review.
+
+Once a change request merges or closes, its stale notifications are archived automatically.
+
+## Knowledge bases in issues and chats [#agents]
+
+When agents run issues, chats, and autopilots, they know which knowledge bases the workspace has and can search and read pages; they can also submit drafts and change requests, which show the issue, chat, or autopilot they came from. Agents read and write knowledge bases with `marvis kb` commands, under the same permissions members have in the UI.
+
+When an agent references a knowledge base, page, change request, or annotation in a reply, it shows as a clickable card. Clicking only opens it; nobody is notified.
+
+## Manage a knowledge base [#manage]
+
+Choose **Manage knowledge base** in the **⋯** menu:
+
+- **Raw files** — upload files for agents to ingest, up to 100 MB per file. Select files and hand them to an agent to start an ingest job; the list shows which pages cite each file.
+- **Export** — **Export zip** exports every page as a Markdown file with frontmatter, with links between pages rewritten as relative paths, ready to open in tools such as Obsidian.
+- **Delete knowledge base** — type the knowledge base name to confirm. Deleting closes its annotations and pending changes, and it can't be restored from the UI.
+
+## Permissions [#permissions]
+
+A knowledge base's **maintainers** are its creator and the workspace `owner` and `admin`.
+
+| Action | Who |
+|---|---|
+| Read, search, annotate, export, upload raw files, start jobs, review | All members; starting a job also requires access to the chosen agent |
+| Configure, merge, revert, delete the knowledge base | Maintainers |
+| Close a change request; dismiss or reopen an annotation | The author or maintainers |
+| Submit a draft, request review again | The draft's creator |
+| View a job | The person who started it |
+
+## Next
+
+- [Autopilots](/autopilots) — manage scheduled ingestion and health checks.
+- [Chat with agents](/chat) — have agents draw on knowledge bases in chat.
+- [Inbox and subscriptions](/inbox) — handle knowledge base notifications.
