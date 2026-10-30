@@ -647,7 +647,7 @@ NEXT_PUBLIC_WS_URL=                  # empty
 REMOTE_API_URL=http://backend:13840   # target the Next.js rewrites proxy /v1, /api, /auth and /uploads to
 ```
 
-Serve everything from the single `app.example.com` vhost. HTTP works out of the box, because Next.js rewrites forward `/v1`, `/api`, `/auth` and `/uploads` to `REMOTE_API_URL`. WebSockets do **not** go through those rewrites, so add a `/ws` block to the frontend vhost that reaches the backend directly:
+Serve everything from the single `app.example.com` vhost. HTTP works out of the box, because Next.js rewrites forward `/v1`, `/api`, `/auth` and `/uploads` to `REMOTE_API_URL`. WebSockets do **not** go through those rewrites, so add blocks to the frontend vhost that reach the backend directly: `/ws` for browsers and the desktop app, and `/api/daemon/ws` for daemons pointed at this vhost:
 
 ```nginx
 # Add to the app.example.com server block above
@@ -659,7 +659,18 @@ location /ws {
     proxy_set_header Host $host;
     proxy_read_timeout 86400;
 }
+
+location = /api/daemon/ws {
+    proxy_pass http://localhost:13840;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 86400;
+}
 ```
+
+Without the second block the daemon's upgrade reaches the backend through the Next.js rewrite with the `Upgrade` header dropped: the backend logs `daemon websocket upgrade failed ... 'upgrade' token not found in 'Connection' header` and answers `400`, and the daemon falls back to HTTP polling, so task dispatch lags and runtimes can briefly show offline.
 
 See [WebSocket for LAN / Non-localhost Access](#websocket-for-lan--non-localhost-access) for why the rewrites cannot carry the `Upgrade` handshake.
 
@@ -687,13 +698,22 @@ GOOGLE_REDIRECT_URI=https://tools.example.com/marvis/auth/callback
 
 Leave `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_WS_URL` empty: the browser derives `/marvis/api` and `/marvis/ws` from the prefix. Register `https://tools.example.com/marvis/auth/callback` with Google and Lark. Point the desktop app, the CLI and the daemon at `https://tools.example.com/marvis`; the desktop app also accepts any page URL under it and finds the prefix itself.
 
-Keep the prefix when proxying to the frontend and the docs (no URI after `proxy_pass`), and strip it for the WebSocket, which must reach the backend directly:
+Keep the prefix when proxying to the frontend and the docs (no URI after `proxy_pass`), and strip it for the two WebSockets, which must reach the backend directly: `/marvis/ws` for browsers and the desktop app, `/marvis/api/daemon/ws` for daemons. Without the daemon block, `/marvis/api/daemon/ws` falls into `location /marvis/` and loses its `Upgrade` header on the way through the frontend (see the same-origin note above):
 
 ```nginx
 location = /marvis { return 301 /marvis/; }
 
 location = /marvis/ws {
     proxy_pass http://127.0.0.1:13840/ws;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_read_timeout 86400;
+}
+
+location = /marvis/api/daemon/ws {
+    proxy_pass http://127.0.0.1:13840/api/daemon/ws;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
